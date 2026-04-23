@@ -13,7 +13,8 @@ Optimiseur de portefeuille boursier intelligent alimenté par l'IA. L'applicatio
 | Build | Gradle (Kotlin DSL) |
 | IA | Claude API (Anthropic) |
 | BDD | PostgreSQL |
-| Infra locale | Docker Compose |
+| Infra locale | Tilt + Docker Compose |
+| CI | GitHub Actions |
 
 ## Structure cible
 
@@ -22,9 +23,10 @@ trade/
 ├── frontend/          # Angular 21
 ├── backend/           # Kotlin + Spring Boot
 │   └── build.gradle.kts
-├── devops/            # Scripts d'infra, configs déploiement
+├── docs/              # Documentation projet
 ├── .github/workflows/ # CI GitHub Actions (backend + frontend)
 ├── SOURCES.md         # Référence des sources de données ingérées
+├── README.md
 └── docker-compose.yml
 ```
 
@@ -106,8 +108,7 @@ Le backend démarre avec le profil `local` (`application-local.yml`).
 | Ingestion RSS (backend) | ✅ Fait | Module `ingestion/` — `FeedSource`, `FeedArticle`, `RssFetcherService` (Rome), scheduler 15 min prod / 5 min local, déduplication par `guid`, `GET /api/ingestion/articles`, `POST /api/ingestion/fetch` |
 | Reset BDD Tilt | ✅ Fait | Bouton `db:reset` dans Tilt — drop schema + touch `application.yml` pour redémarrage géré par Tilt (Flyway rejoue les migrations) |
 | Config YAML | ✅ Fait | Migration `application.properties` → `application.yml` / `application-local.yml` |
-| Appel Claude API | ⏳ À faire | Module `analysis/` |
-| Affichage recommandations | ⏳ À faire | Component `recommendations/` |
+| README + docs | ✅ Fait | `README.md` sommaire + `docs/commit-conventions.md` (Conventional Commits) |
 | Appel Claude API | ⏳ À faire | Module `analysis/` |
 | Affichage recommandations | ⏳ À faire | Component `recommendations/` |
 
