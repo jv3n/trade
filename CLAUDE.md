@@ -22,6 +22,9 @@ trade/
 ├── frontend/          # Angular 21
 ├── backend/           # Kotlin + Spring Boot
 │   └── build.gradle.kts
+├── devops/            # Scripts d'infra, configs déploiement
+├── .github/workflows/ # CI GitHub Actions (backend + frontend)
+├── SOURCES.md         # Référence des sources de données ingérées
 └── docker-compose.yml
 ```
 
@@ -82,6 +85,10 @@ Le backend démarre avec le profil `local` (`application-local.properties`).
 
 - **Mettre à jour ce fichier** au fil de chaque feature implémentée : ajouter la feature dans le suivi ci-dessous, marquer son statut, et noter toute décision technique importante prise en cours de route.
 
+- **Ce principe de mise à jour continue est le cœur de métier de l'application elle-même.** PortfolioAI est conçu pour mesurer la qualité de ses propres recommandations dans le temps et s'améliorer en conséquence. Ce CLAUDE.md doit refléter exactement cet esprit : chaque écart entre ce qu'on pensait savoir faire et ce qu'on a réellement implémenté doit être tracé ici immédiatement. Ne jamais laisser ce fichier dériver par rapport à la réalité du code.
+
+- **Concrètement** : dès qu'une décision technique est prise (choix d'une lib, abandon d'une approche, correction d'un bug d'architecture), l'inscrire dans le suivi ou dans les conventions. Ce fichier est la mémoire vivante du projet — comme le module `observability/` le sera pour les recommandations IA.
+
 ## Suivi des features
 
 ### Phase 1 — MVP
@@ -94,6 +101,7 @@ Le backend démarre avec le profil `local` (`application-local.properties`).
 | Navigation (header) | ✅ Fait | `mat-toolbar` Material sticky, liens avec icônes, état actif, Settings en icône à droite |
 | Catalogue des sources | ✅ Fait | `SOURCES.md` — référence de 22 sources (RSS, marché, macro, crypto) avec métadonnées |
 | Page Settings — sources | ✅ Fait | Toggles par catégorie (état local), tags Clé API / Payant, compteur actives/total — persistance backend à venir |
+| CI GitHub Actions | ✅ Fait | `.github/workflows/backend.yml` (Gradle + PostgreSQL service) et `frontend.yml` (Vitest, pas Karma) — déclenchés sur changements de chemin uniquement |
 | Ingestion flux économiques | ⏳ À faire | RSS + APIs financières — sources définies dans `SOURCES.md` |
 | Appel Claude API | ⏳ À faire | Module `analysis/` |
 | Affichage recommandations | ⏳ À faire | Component `recommendations/` |
