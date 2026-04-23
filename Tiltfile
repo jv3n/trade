@@ -40,6 +40,19 @@ local_resource(
     links = [link("http://{}:4200".format(host), "App")],
 )
 
+# ────────────────────────────────────────────────
+# Reset BDD — drop schéma + redémarrage backend automatique
+# ────────────────────────────────────────────────
+
+local_resource(
+    name = "db:reset",
+    cmd = "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && touch backend/src/main/resources/application.yml",
+    trigger_mode = TRIGGER_MODE_MANUAL,
+    auto_init = False,
+    resource_deps = ["postgres"],
+    labels = ["db-tools"],
+)
+
 # Affichage des liens utiles
 print("Frontend : http://{}:4200".format(host))
 print("Backend  : http://{}:8080".format(host))

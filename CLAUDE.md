@@ -70,16 +70,17 @@ URLs exposées :
 - Backend : `http://localhost:8080`
 - Health : `http://localhost:8080/actuator/health`
 
-Le backend démarre avec le profil `local` (`application-local.properties`).
+Le backend démarre avec le profil `local` (`application-local.yml`).
 
 ## Conventions
 
 - Kotlin idiomatique (data classes, sealed classes, extension functions)
-- Spring Boot avec Kotlin DSL Gradle
+- Spring Boot avec Kotlin DSL Gradle — config en **YAML** (`application.yml` / `application-local.yml`)
 - Angular avec standalone components (Angular 21)
 - Angular Material pour tous les composants UI (thème configuré dans `styles.scss`)
 - Material Icons chargées via npm (`material-icons`) déclaré dans `angular.json` styles
 - Tests d'intégration sur vrai PostgreSQL (pas de mocks BDD)
+- Frontend testé avec **Vitest** (pas Karma) — `--browsers=ChromeHeadless` ne s'applique pas
 
 ## Instructions pour Claude
 
@@ -102,7 +103,11 @@ Le backend démarre avec le profil `local` (`application-local.properties`).
 | Catalogue des sources | ✅ Fait | `SOURCES.md` — référence de 22 sources (RSS, marché, macro, crypto) avec métadonnées |
 | Page Settings — sources | ✅ Fait | Toggles par catégorie (état local), tags Clé API / Payant, compteur actives/total — persistance backend à venir |
 | CI GitHub Actions | ✅ Fait | `.github/workflows/backend.yml` (Gradle + PostgreSQL service) et `frontend.yml` (Vitest, pas Karma) — déclenchés sur changements de chemin uniquement |
-| Ingestion flux économiques | ⏳ À faire | RSS + APIs financières — sources définies dans `SOURCES.md` |
+| Ingestion RSS (backend) | ✅ Fait | Module `ingestion/` — `FeedSource`, `FeedArticle`, `RssFetcherService` (Rome), scheduler 15 min prod / 5 min local, déduplication par `guid`, `GET /api/ingestion/articles`, `POST /api/ingestion/fetch` |
+| Reset BDD Tilt | ✅ Fait | Bouton `db:reset` dans Tilt — drop schema + touch `application.yml` pour redémarrage géré par Tilt (Flyway rejoue les migrations) |
+| Config YAML | ✅ Fait | Migration `application.properties` → `application.yml` / `application-local.yml` |
+| Appel Claude API | ⏳ À faire | Module `analysis/` |
+| Affichage recommandations | ⏳ À faire | Component `recommendations/` |
 | Appel Claude API | ⏳ À faire | Module `analysis/` |
 | Affichage recommandations | ⏳ À faire | Component `recommendations/` |
 
