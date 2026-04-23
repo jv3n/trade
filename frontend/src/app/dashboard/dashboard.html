@@ -89,7 +89,24 @@
           <!-- Tableau des actifs -->
           <div class="assets-section">
             <div class="assets-header">
-              <h3>Actifs</h3>
+              <div class="assets-header-left">
+                <h3>Actifs</h3>
+                <button
+                  class="btn-ai-analyze"
+                  [class.loading]="analyzing()"
+                  [disabled]="analyzing()"
+                  (click)="runAnalysis()"
+                >
+                  @if (analyzing()) {
+                    <span class="btn-ai-spinner"></span>
+                    <span>Analyse en cours… ({{ analyzeElapsed() }}s)</span>
+                  } @else {
+                    <span class="btn-ai-glow"></span>
+                    <mat-icon>auto_awesome</mat-icon>
+                    <span>Analyser avec l'IA</span>
+                  }
+                </button>
+              </div>
               <button class="btn-primary" (click)="showAddAsset.set(!showAddAsset())">+ Ajouter un actif</button>
             </div>
 
@@ -146,6 +163,49 @@
               <p class="empty-state">Aucun actif dans ce portefeuille.</p>
             }
           </div>
+
+          <!-- Recommandation IA -->
+          @if (lastRecommendation(); as rec) {
+            <div class="recommendation-section">
+              <div class="recommendation-header">
+                <div class="recommendation-title">
+                  <mat-icon>auto_awesome</mat-icon>
+                  <h3>Recommandation IA</h3>
+                  @if (rec.confidence !== null) {
+                    <span class="confidence-badge" [class.high]="rec.confidence >= 70" [class.medium]="rec.confidence >= 40 && rec.confidence < 70" [class.low]="rec.confidence < 40">
+                      {{ rec.confidence }}% de confiance
+                    </span>
+                  }
+                </div>
+                <span class="recommendation-date">{{ rec.generatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+
+              <p class="recommendation-context">{{ rec.contextSummary }}</p>
+              <p class="recommendation-content">{{ rec.content }}</p>
+
+              @if (rec.actions.length > 0) {
+                <div class="recommendation-actions">
+                  <h4>Actions suggérées</h4>
+                  <div class="action-list">
+                    @for (action of rec.actions; track action.ticker) {
+                      <div class="action-card">
+                        <div class="action-top">
+                          <span class="action-ticker">{{ action.ticker }}</span>
+                          <span class="action-badge {{ actionClass(action.action) }}">{{ action.action }}</span>
+                          @if (action.targetWeight !== null) {
+                            <span class="action-weight">{{ action.targetWeight }}%</span>
+                          }
+                        </div>
+                        @if (action.rationale) {
+                          <p class="action-rationale">{{ action.rationale }}</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
 
         </div>
       } @else {

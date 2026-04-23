@@ -131,6 +131,125 @@
   }
 }
 
+
+// Section recommandation
+.recommendation-section {
+  margin-top: 1.5rem;
+  background: #141824;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.recommendation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.recommendation-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  mat-icon { color: #7c6af7; }
+
+  h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+}
+
+.confidence-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 12px;
+
+  &.high   { background: #1a3a2a; color: #4ade80; }
+  &.medium { background: #2a2a1a; color: #facc15; }
+  &.low    { background: #3a1515; color: #fca5a5; }
+}
+
+.recommendation-date {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.recommendation-context {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+  margin: 0 0 0.75rem;
+}
+
+.recommendation-content {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+  margin: 0 0 1.25rem;
+  white-space: pre-line;
+}
+
+.recommendation-actions {
+  h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0 0 0.75rem;
+  }
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.action-card {
+  background: #1a1f2e;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.action-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.3rem;
+}
+
+.action-ticker {
+  font-weight: 700;
+  font-family: monospace;
+  color: #7c6af7;
+  font-size: 0.9rem;
+}
+
+.action-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+
+  &.action-buy    { background: #1a3a2a; color: #4ade80; }
+  &.action-sell   { background: #3a1515; color: #fca5a5; }
+  &.action-hold   { background: #1e3a5f; color: #60a5fa; }
+  &.action-reduce { background: #2a2a1a; color: #facc15; }
+}
+
+.action-weight {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.action-rationale {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
 .portfolio-value {
   text-align: right;
 
@@ -168,6 +287,79 @@
     font-weight: 600;
     margin: 0;
   }
+}
+
+.assets-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-ai-analyze {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem 0.45rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  background: linear-gradient(135deg, #6d28d9, #7c6af7, #a78bfa);
+  color: #fff;
+  transition: opacity 0.2s, transform 0.15s;
+  letter-spacing: 0.01em;
+
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    opacity: 0.92;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  // Halo animé en idle
+  .btn-ai-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 50%, rgba(167, 139, 250, 0.35), transparent 70%);
+    animation: glow-pulse 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  // Spinner en chargement
+  .btn-ai-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 // Tableau

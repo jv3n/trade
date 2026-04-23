@@ -83,6 +83,9 @@ Le backend démarre avec le profil `local` (`application-local.yml`).
 - Material Icons chargées via npm (`material-icons`) déclaré dans `angular.json` styles
 - Tests d'intégration sur vrai PostgreSQL (pas de mocks BDD)
 - Frontend testé avec **Vitest** (pas Karma) — `--browsers=ChromeHeadless` ne s'applique pas
+- `@Async` Spring : ne jamais appeler une méthode `@Async` depuis `this` (auto-invocation bypass le proxy AOP). Toujours mettre le code async dans un bean séparé.
+- LLM local : Ollama + `qwen2:1.5b` dans Docker (`ollama/ollama:latest`, port 11434, volume `ollama_data`). Modèle tiré via `tilt up` (resource `llm:pull-qwen2`). Mistral 7B et phi3:mini trop lents sur M1 pour un usage interactif.
+- `application-local.yml` est gitignore — contient les clés API et config sensible. Ne jamais committer de clés dans le repo.
 
 ## Instructions pour Claude
 
@@ -109,8 +112,13 @@ Le backend démarre avec le profil `local` (`application-local.yml`).
 | Reset BDD Tilt | ✅ Fait | Bouton `db:reset` dans Tilt — drop schema + touch `application.yml` pour redémarrage géré par Tilt (Flyway rejoue les migrations) |
 | Config YAML | ✅ Fait | Migration `application.properties` → `application.yml` / `application-local.yml` |
 | README + docs | ✅ Fait | `README.md` sommaire + `docs/commit-conventions.md` (Conventional Commits) |
-| Appel Claude API | ⏳ À faire | Module `analysis/` |
-| Affichage recommandations | ⏳ À faire | Component `recommendations/` |
+| Appel LLM (Claude / Ollama) | ✅ Fait | Module `analysis/` — `LlmClient` interface, `ClaudeClient` (prod, `@ConditionalOnProperty`), `OllamaClient` (local, Mistral 7B dans Docker). `llm.provider: claude\|ollama` dans `application.yml` |
+| Analyse IA async | ✅ Fait | `AnalysisService.startAsync()` → crée un job → `AnalysisRunner.run()` (`@Async @Transactional`). `AnalysisJobStore` (ConcurrentHashMap). API : `POST /api/portfolios/{id}/recommendations` → 202, `GET .../jobs/{jobId}`, `GET .../recommendations/{recId}`. Fix bug self-invocation Spring AOP : `@Async` sur bean séparé (`AnalysisRunner`), pas sur `this`. Dépendance circulaire résolue : toute la logique métier dans `AnalysisRunner`, `AnalysisService` ne fait que créer le job et déléguer. |
+| Affichage recommandations (dashboard) | ✅ Fait | Polling RxJS (`interval + switchMap + takeWhile`), bouton "Analyser avec l'IA" avec spinner CSS + timer elapsed, section recommandation avec confidence badge, actions BUY/SELL/HOLD/REDUCE colorées |
+| Seed data Tilt | ✅ Fait | `scripts/seed.sql` — portefeuille démo ~100k€ (VOO, QQQ, BND, AAPL, MSFT, NVDA, GOOGL, AMZN, BTC, ETH). Bouton `db:seed` dans Tilt. |
+| Robustesse analyse IA | ✅ Fait | Timeout HTTP 45s sur OllamaClient, lecture réponse en bytes bruts (contourne `application/octet-stream`), extracteur JSON robuste (strip markdown), `@Transactional(readOnly=true)` sur controller pour fix `LazyInitializationException`, `GlobalExceptionHandler` → 404 sur `NoSuchElementException`, gestion 404 dans le polling frontend. |
+| Affichage recommandations (page history) | ⏳ À faire | Component `recommendations/` — historique complet |
+| Persistance Settings | ⏳ À faire | Sauvegarder les toggles sources en base |
 
 ### Phase 2 — Traçabilité
 _À venir_

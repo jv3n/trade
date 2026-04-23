@@ -1,22 +1,34 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Subscription } from 'rxjs';
 import { PortfolioService, Portfolio, Asset, CreatePortfolioRequest, CreateAssetRequest, AssetType } from '../core/portfolio.service';
+import { AnalysisService, Recommendation } from '../core/analysis.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatTooltipModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   private readonly portfolioService = inject(PortfolioService);
+  private readonly analysisService = inject(AnalysisService);
+  private pollSub?: Subscription;
+  private timerSub?: Subscription;
 
   portfolios = signal<Portfolio[]>([]);
   selectedPortfolio = signal<Portfolio | null>(null);
   assets = signal<Asset[]>([]);
   loading = signal(false);
+  analyzing = signal(false);
+  analyzeElapsed = signal(0);
   error = signal<string | null>(null);
+  lastRecommendation = signal<Recommendation | null>(null);
 
   showCreatePortfolio = signal(false);
   showAddAsset = signal(false);
@@ -50,7 +62,7 @@ export class Dashboard implements OnInit {
         }
         this.loading.set(false);
       },
-      error: (err) => {
+      error: () => {
         this.error.set('Erreur lors du chargement des portefeuilles');
         this.loading.set(false);
       }
@@ -59,6 +71,7 @@ export class Dashboard implements OnInit {
 
   selectPortfolio(portfolio: Portfolio) {
     this.selectedPortfolio.set(portfolio);
+    this.lastRecommendation.set(null);
     this.portfolioService.getAssets(portfolio.id).subscribe({
       next: (assets) => this.assets.set(assets),
       error: () => this.error.set('Erreur lors du chargement des actifs')
@@ -86,6 +99,7 @@ export class Dashboard implements OnInit {
           const remaining = this.portfolios();
           this.selectedPortfolio.set(remaining[0] ?? null);
           this.assets.set([]);
+          this.lastRecommendation.set(null);
           if (remaining[0]) this.selectPortfolio(remaining[0]);
         }
       },
@@ -123,7 +137,62 @@ export class Dashboard implements OnInit {
     });
   }
 
+  runAnalysis() {
+    const portfolio = this.selectedPortfolio();
+    if (!portfolio || this.analyzing()) return;
+    this.analyzing.set(true);
+    this.analyzeElapsed.set(0);
+    this.lastRecommendation.set(null);
+
+    // Timer d'affichage
+    this.timerSub = new Subscription();
+    const timerInterval = setInterval(() => this.analyzeElapsed.update(v => v + 1), 1000);
+    this.timerSub.add(() => clearInterval(timerInterval));
+
+    this.analysisService.startAnalysis(portfolio.id).subscribe({
+      next: (job) => {
+        this.pollSub = this.analysisService.pollJob(portfolio.id, job.jobId).subscribe({
+          next: (updatedJob) => {
+            if (updatedJob.status === 'DONE' && updatedJob.recommendationId) {
+              this.analysisService.getRecommendation(portfolio.id, updatedJob.recommendationId).subscribe({
+                next: (rec) => {
+                  this.lastRecommendation.set(rec);
+                  this.stopAnalyzing();
+                }
+              });
+            } else if (updatedJob.status === 'ERROR') {
+              this.error.set(`Erreur IA : ${updatedJob.error}`);
+              this.stopAnalyzing();
+            }
+          },
+          error: () => {
+            this.error.set('Erreur lors du polling du job d\'analyse');
+            this.stopAnalyzing();
+          }
+        });
+      },
+      error: () => {
+        this.error.set('Erreur lors du démarrage de l\'analyse IA');
+        this.stopAnalyzing();
+      }
+    });
+  }
+
+  private stopAnalyzing() {
+    this.analyzing.set(false);
+    this.timerSub?.unsubscribe();
+    this.pollSub?.unsubscribe();
+  }
+
+  ngOnDestroy() {
+    this.stopAnalyzing();
+  }
+
   clearError() {
     this.error.set(null);
+  }
+
+  actionClass(action: string): string {
+    return { BUY: 'action-buy', SELL: 'action-sell', HOLD: 'action-hold', REDUCE: 'action-reduce' }[action] ?? '';
   }
 }
