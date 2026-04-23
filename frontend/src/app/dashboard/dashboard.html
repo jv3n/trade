@@ -1,0 +1,159 @@
+<div class="dashboard">
+
+  <!-- En-tête -->
+  <header class="dashboard-header">
+    <h1>PortfolioAI</h1>
+    <p class="disclaimer">⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.</p>
+  </header>
+
+  <!-- Erreur -->
+  @if (error()) {
+    <div class="error-banner">
+      {{ error() }}
+      <button (click)="clearError()">✕</button>
+    </div>
+  }
+
+  <div class="dashboard-body">
+
+    <!-- Colonne gauche : liste des portefeuilles -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Portefeuilles</h2>
+        <button class="btn-icon" (click)="showCreatePortfolio.set(!showCreatePortfolio())">+</button>
+      </div>
+
+      @if (showCreatePortfolio()) {
+        <form class="form-inline" (ngSubmit)="createPortfolio()">
+          <input
+            type="text"
+            placeholder="Nom du portefeuille"
+            [(ngModel)]="newPortfolio.name"
+            name="portfolioName"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Description (optionnel)"
+            [(ngModel)]="newPortfolio.description"
+            name="portfolioDesc"
+          />
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Créer</button>
+            <button type="button" class="btn-ghost" (click)="showCreatePortfolio.set(false)">Annuler</button>
+          </div>
+        </form>
+      }
+
+      @if (loading()) {
+        <p class="loading">Chargement...</p>
+      } @else {
+        <ul class="portfolio-list">
+          @for (p of portfolios(); track p.id) {
+            <li
+              class="portfolio-item"
+              [class.active]="selectedPortfolio()?.id === p.id"
+              (click)="selectPortfolio(p)"
+            >
+              <div class="portfolio-item-info">
+                <span class="portfolio-name">{{ p.name }}</span>
+                <span class="portfolio-count">{{ p.assetCount }} actif(s)</span>
+              </div>
+              <button class="btn-danger-icon" (click)="$event.stopPropagation(); deletePortfolio(p)">✕</button>
+            </li>
+          } @empty {
+            <li class="empty-state">Aucun portefeuille — créez-en un !</li>
+          }
+        </ul>
+      }
+    </aside>
+
+    <!-- Colonne droite : détail du portefeuille sélectionné -->
+    <main class="main-content">
+      @if (selectedPortfolio(); as portfolio) {
+        <div class="portfolio-detail">
+
+          <div class="portfolio-detail-header">
+            <div>
+              <h2>{{ portfolio.name }}</h2>
+              @if (portfolio.description) {
+                <p class="portfolio-description">{{ portfolio.description }}</p>
+              }
+            </div>
+            <div class="portfolio-value">
+              <span class="value-label">Valeur totale</span>
+              <span class="value-amount">{{ totalPortfolioValue() | number:'1.2-2' }} €</span>
+            </div>
+          </div>
+
+          <!-- Tableau des actifs -->
+          <div class="assets-section">
+            <div class="assets-header">
+              <h3>Actifs</h3>
+              <button class="btn-primary" (click)="showAddAsset.set(!showAddAsset())">+ Ajouter un actif</button>
+            </div>
+
+            @if (showAddAsset()) {
+              <form class="form-add-asset" (ngSubmit)="addAsset()">
+                <div class="form-grid">
+                  <input type="text" placeholder="Ticker (ex: AAPL)" [(ngModel)]="newAsset.ticker" name="ticker" required />
+                  <input type="text" placeholder="Nom (ex: Apple Inc.)" [(ngModel)]="newAsset.name" name="name" required />
+                  <input type="number" placeholder="Quantité" [(ngModel)]="newAsset.quantity" name="quantity" min="0" step="0.000001" required />
+                  <input type="number" placeholder="Prix moyen d'achat (€)" [(ngModel)]="newAsset.avgBuyPrice" name="avgBuyPrice" min="0" step="0.01" required />
+                  <select [(ngModel)]="newAsset.assetType" name="assetType">
+                    @for (type of assetTypes; track type) {
+                      <option [value]="type">{{ type }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">Ajouter</button>
+                  <button type="button" class="btn-ghost" (click)="showAddAsset.set(false)">Annuler</button>
+                </div>
+              </form>
+            }
+
+            @if (assets().length > 0) {
+              <table class="assets-table">
+                <thead>
+                  <tr>
+                    <th>Ticker</th>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th class="text-right">Quantité</th>
+                    <th class="text-right">Prix moyen</th>
+                    <th class="text-right">Valeur totale</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (asset of assets(); track asset.id) {
+                    <tr>
+                      <td><span class="ticker-badge">{{ asset.ticker }}</span></td>
+                      <td>{{ asset.name }}</td>
+                      <td><span class="type-badge type-{{ asset.assetType.toLowerCase() }}">{{ asset.assetType }}</span></td>
+                      <td class="text-right">{{ asset.quantity }}</td>
+                      <td class="text-right">{{ asset.avgBuyPrice | number:'1.2-2' }} €</td>
+                      <td class="text-right">{{ asset.totalValue | number:'1.2-2' }} €</td>
+                      <td>
+                        <button class="btn-danger-icon" (click)="removeAsset(asset)">✕</button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <p class="empty-state">Aucun actif dans ce portefeuille.</p>
+            }
+          </div>
+
+        </div>
+      } @else {
+        <div class="empty-portfolio">
+          <p>Sélectionnez ou créez un portefeuille pour commencer.</p>
+        </div>
+      }
+    </main>
+
+  </div>
+</div>

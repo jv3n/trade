@@ -1,0 +1,48 @@
+<div class="settings-page">
+  <header class="settings-header">
+    <h1>Sources de données</h1>
+    <p class="subtitle">Activez ou désactivez les sources utilisées pour générer les recommandations IA.</p>
+  </header>
+
+  <div class="disclaimer">
+    Les sources désactivées ne seront pas ingérées lors de la prochaine analyse.
+    Les modifications seront persistées dans une prochaine version.
+  </div>
+
+  @for (category of categories; track category) {
+    <section class="source-category">
+      <div class="category-header">
+        <h2>{{ categoryLabels[category] }}</h2>
+        <span class="badge">{{ enabledCount(category) }} / {{ sourcesByCategory(category).length }} actives</span>
+      </div>
+
+      <div class="source-list">
+        @for (source of sourcesByCategory(category); track source.id) {
+          <div class="source-card" [class.disabled]="!source.enabled">
+            <div class="source-info">
+              <div class="source-name">
+                {{ source.name }}
+                @if (source.requiresApiKey) {
+                  <span class="tag tag-key" title="Clé API requise">Clé API</span>
+                }
+                @if (!source.free) {
+                  <span class="tag tag-paid">Payant</span>
+                }
+              </div>
+              <div class="source-description">{{ source.description }}</div>
+              <div class="source-url">{{ source.url }}</div>
+            </div>
+            <button
+              class="toggle"
+              [class.on]="source.enabled"
+              (click)="toggle(source.id)"
+              [attr.aria-label]="source.enabled ? 'Désactiver ' + source.name : 'Activer ' + source.name"
+            >
+              <span class="toggle-thumb"></span>
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

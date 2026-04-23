@@ -1,0 +1,80 @@
+# ========================
+# Secrets & environnement
+# ========================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.jks
+
+# ========================
+# Kotlin / JVM / Gradle
+# ========================
+.gradle/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+*.xml
+!.idea/runConfigurations/
+
+# ========================
+# Spring Boot
+# ========================
+backend/src/main/resources/application-local.properties
+
+# ========================
+# Angular / Node
+# ========================
+node_modules/
+dist/
+.angular/
+frontend/.angular/
+
+# npm / yarn / pnpm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+
+# ========================
+# macOS
+# ========================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ========================
+# Docker
+# ========================
+docker-compose.override.yml
+
+# ========================
+# Tilt
+# ========================
+.tilt_modules/
+tilt_modules/
+
+# ========================
+# Divers IDE
+# ========================
+.vscode/
+*.swp
+*.swo
+*~
