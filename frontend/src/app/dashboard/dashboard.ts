@@ -195,4 +195,16 @@ export class Dashboard implements OnInit, OnDestroy {
   actionClass(action: string): string {
     return { BUY: 'action-buy', SELL: 'action-sell', HOLD: 'action-hold', REDUCE: 'action-reduce' }[action] ?? '';
   }
+
+  actionAmounts(ticker: string, targetWeight: number | null): { targetAmount: number; currentValue: number; currentWeight: number; delta: number } | null {
+    if (targetWeight === null) return null;
+    const total = this.totalPortfolioValue();
+    if (total === 0) return null;
+    const asset = this.assets().find(a => a.ticker === ticker);
+    const currentValue = asset?.totalValue ?? 0;
+    const currentWeight = (currentValue / total) * 100;
+    const targetAmount = (targetWeight / 100) * total;
+    const delta = targetAmount - currentValue;
+    return { targetAmount, currentValue, currentWeight, delta };
+  }
 }

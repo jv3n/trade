@@ -1,5 +1,6 @@
 package com.portfolioai.backend.analysis
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.portfolioai.backend.ingestion.FeedArticle
 import com.portfolioai.backend.ingestion.FeedArticleRepository
@@ -32,7 +33,7 @@ class AnalysisRunner(
             val articles = articleRepository.findTop50ByOrderByPublishedAtDesc()
             if (articles.isEmpty()) log.warn("No articles available for analysis")
 
-            val recommendation = buildAndSave(portfolio, articles.take(2))
+            val recommendation = buildAndSave(portfolio, articles.take(10))
             jobStore.complete(jobId, recommendation.id)
         } catch (e: Exception) {
             log.error("Analysis job {} failed: {}", jobId, e.message)
@@ -43,7 +44,7 @@ class AnalysisRunner(
     private fun buildAndSave(portfolio: Portfolio, articles: List<FeedArticle>): Recommendation {
         val userMessage = buildUserMessage(portfolio, articles)
         log.info("Requesting analysis from LLM for portfolio '{}' with {} articles", portfolio.name, articles.size)
-        val rawResponse = llmClient.complete(SYSTEM_PROMPT, userMessage, maxTokens = 400)
+        val rawResponse = llmClient.complete(SYSTEM_PROMPT, userMessage, maxTokens = 800)
         return parseAndSave(portfolio, rawResponse)
     }
 
@@ -81,18 +82,20 @@ Give CONCRETE buy/sell/hold/reduce decisions for each position. Be decisive.
     }
 
     private fun extractJson(raw: String): String {
-        // Extrait le premier bloc JSON valide même si le modèle ajoute du markdown autour
-        val start = raw.indexOf('{')
-        val end = raw.lastIndexOf('}')
-        if (start != -1 && end > start) return raw.substring(start, end + 1)
-        return raw
+        // Retire les code fences markdown (```json ... ``` ou ``` ... ```)
+        val stripped = raw.replace(Regex("```(?:json)?\\s*"), "").trim()
+        val start = stripped.indexOf('{')
+        val end = stripped.lastIndexOf('}')
+        if (start != -1 && end > start) return stripped.substring(start, end + 1)
+        return stripped
     }
 
     private fun parseAndSave(portfolio: Portfolio, rawResponse: String): Recommendation {
+        log.info("Raw LLM response: {}", rawResponse)
         val parsed = try {
             objectMapper.readValue(extractJson(rawResponse), ClaudeRecommendationResponse::class.java)
         } catch (e: Exception) {
-            log.error("Failed to parse LLM response: {}", rawResponse)
+            log.error("Failed to parse LLM response (extracted: {}): {}", extractJson(rawResponse), e.message)
             throw IllegalStateException("LLM returned an unexpected response format", e)
         }
 
@@ -121,16 +124,18 @@ Give CONCRETE buy/sell/hold/reduce decisions for each position. Be decisive.
     }
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 private data class ClaudeRecommendationResponse(
-    val content: String,
-    val confidence: Int?,
-    val contextSummary: String,
+    val content: String = "",
+    val confidence: Int? = null,
+    val contextSummary: String = "",
     val actions: List<ClaudeAction> = emptyList(),
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 private data class ClaudeAction(
-    val ticker: String,
-    val action: String,
-    val rationale: String?,
-    val targetWeight: Double?,
+    val ticker: String = "",
+    val action: String = "HOLD",
+    val rationale: String? = null,
+    val targetWeight: Double? = null,
 )

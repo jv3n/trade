@@ -193,9 +193,19 @@
                           <span class="action-ticker">{{ action.ticker }}</span>
                           <span class="action-badge {{ actionClass(action.action) }}">{{ action.action }}</span>
                           @if (action.targetWeight !== null) {
-                            <span class="action-weight">{{ action.targetWeight }}%</span>
+                            <span class="action-weight">cible {{ action.targetWeight }}%</span>
                           }
                         </div>
+                        @if (actionAmounts(action.ticker, action.targetWeight); as amt) {
+                          <div class="action-amounts">
+                            <span class="amount-current">actuel {{ amt.currentWeight | number:'1.1-1' }}% · {{ amt.currentValue | currency:'EUR':'symbol':'1.0-0' }}</span>
+                            <span class="amount-arrow">→</span>
+                            <span class="amount-target">{{ amt.targetAmount | currency:'EUR':'symbol':'1.0-0' }}</span>
+                            <span class="amount-delta" [class.positive]="amt.delta > 0" [class.negative]="amt.delta < 0">
+                              {{ amt.delta > 0 ? '+' : '' }}{{ amt.delta | currency:'EUR':'symbol':'1.0-0' }}
+                            </span>
+                          </div>
+                        }
                         @if (action.rationale) {
                           <p class="action-rationale">{{ action.rationale }}</p>
                         }

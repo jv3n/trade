@@ -22,18 +22,23 @@ class OllamaClient(
         .defaultHeader("content-type", "application/json")
         .requestFactory(SimpleClientHttpRequestFactory().apply {
             setConnectTimeout(5_000)
-            setReadTimeout(45_000)
+            setReadTimeout(120_000)
         })
         .build()
 
     override fun complete(systemPrompt: String, userMessage: String, maxTokens: Int): String {
-        log.debug("Calling Ollama model={} url={}", model, baseUrl)
+        log.info("Calling Ollama model={} url={} maxTokens={}", model, baseUrl, maxTokens)
+        // qwen2 1.5b ne gère pas bien le role "system" — on fusionne en un seul message user
+        // "format": "json" force Ollama à produire du JSON valide
+        // "num_predict" limite la longueur de la réponse
+        val combinedMessage = "$systemPrompt\n\n$userMessage"
         val body = mapOf(
             "model" to model,
             "stream" to false,
+            "format" to "json",
+            "options" to mapOf("num_predict" to maxTokens),
             "messages" to listOf(
-                mapOf("role" to "system", "content" to systemPrompt),
-                mapOf("role" to "user", "content" to userMessage),
+                mapOf("role" to "user", "content" to combinedMessage),
             )
         )
         val raw = restClient.post()

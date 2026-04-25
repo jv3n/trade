@@ -7,10 +7,14 @@ import java.util.UUID
 @Table(name = "feed_source")
 class FeedSource(
     @Id val id: UUID = UUID.randomUUID(),
+    val slug: String,
     val name: String,
     val url: String,
     @Enumerated(EnumType.STRING) val category: FeedCategory,
-    val enabled: Boolean = true,
+    var enabled: Boolean = true,
+    val description: String = "",
+    val free: Boolean = true,
+    @Column(name = "requires_api_key") val requiresApiKey: Boolean = false,
 )
 
 enum class FeedCategory { RSS, MARKET, MACRO, CRYPTO }
