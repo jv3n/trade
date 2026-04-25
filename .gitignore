@@ -72,6 +72,11 @@ docker-compose.override.yml
 tilt_modules/
 
 # ========================
+# Données locales (CSV, exports courtiers)
+# ========================
+docs/data-input/
+
+# ========================
 # Divers IDE
 # ========================
 .vscode/

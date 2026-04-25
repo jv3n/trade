@@ -1,29 +1,29 @@
-<div class="settings-page">
-  <header class="settings-header">
-    <h1>Sources de données</h1>
-    <p class="subtitle">Activez ou désactivez les sources utilisées pour générer les recommandations IA.</p>
-  </header>
+<div class="settings-layout">
 
-  @if (error()) {
+  <div class="content-header">
+    <h2>Sources de données</h2>
+    <p>Activez ou désactivez les sources utilisées pour générer les recommandations IA.</p>
+  </div>
+
+  @if (sourcesError()) {
     <div class="error-banner">
       <mat-icon>error_outline</mat-icon>
-      {{ error() }}
+      {{ sourcesError() }}
     </div>
   }
 
-  @if (loading()) {
+  @if (sourcesLoading()) {
     <div class="loading-state">
-      <mat-spinner diameter="32"></mat-spinner>
+      <mat-spinner diameter="28"></mat-spinner>
       <span>Chargement des sources…</span>
     </div>
   } @else {
     @for (category of categories; track category) {
       <section class="source-category">
         <div class="category-header">
-          <h2>{{ categoryLabels[category] }}</h2>
+          <h3>{{ categoryLabels[category] }}</h3>
           <span class="badge">{{ enabledCount(category) }} / {{ sourcesByCategory(category).length }} actives</span>
         </div>
-
         <div class="source-list">
           @for (source of sourcesByCategory(category); track source.id) {
             <div class="source-card" [class.disabled]="!source.enabled">
@@ -31,7 +31,7 @@
                 <div class="source-name">
                   {{ source.name }}
                   @if (source.requiresApiKey) {
-                    <span class="tag tag-key" title="Clé API requise">Clé API</span>
+                    <span class="tag tag-key">Clé API</span>
                   }
                   @if (!source.free) {
                     <span class="tag tag-paid">Payant</span>
@@ -56,4 +56,5 @@
       </section>
     }
   }
+
 </div>

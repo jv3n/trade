@@ -1,0 +1,102 @@
+<!-- Drop zone -->
+@if (step() === 'idle' || step() === 'error') {
+  <div
+    class="drop-zone"
+    [class.dragging]="dragging()"
+    [class.has-error]="step() === 'error'"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <mat-icon>upload_file</mat-icon>
+    <span class="drop-label">Synchroniser depuis un CSV Wealthsimple</span>
+    <span class="drop-or">ou</span>
+    <label class="btn-browse">
+      <input type="file" accept=".csv" (change)="onFileChange($event)" hidden />
+      Choisir un fichier
+    </label>
+    <span class="drop-hint">Export WS : Compte → Positions → ↓ Télécharger</span>
+    @if (step() === 'error') {
+      <span class="drop-error"><mat-icon>error_outline</mat-icon>{{ error() }}</span>
+    }
+  </div>
+}
+
+<!-- Parsing -->
+@if (step() === 'previewing') {
+  <div class="import-loading">
+    <mat-spinner diameter="24"></mat-spinner>
+    <span>Analyse du fichier…</span>
+  </div>
+}
+
+<!-- Preview -->
+@if (step() === 'preview') {
+  @let p = preview()!;
+  <div class="preview-panel">
+    <div class="preview-header">
+      <mat-icon>table_view</mat-icon>
+      <span>{{ p.totalItems }} position(s) — {{ p.accounts.length }} compte(s)</span>
+      @if (p.skippedRows > 0) {
+        <span class="pill-gray">{{ p.skippedRows }} lignes ignorées</span>
+      }
+    </div>
+
+    @for (w of p.warnings; track w) {
+      <div class="warning-row"><mat-icon>warning_amber</mat-icon>{{ w }}</div>
+    }
+
+    @for (account of p.accounts; track account.accountName) {
+      <div class="account-section">
+        <div class="account-label">
+          <mat-icon>folder</mat-icon>
+          {{ account.accountName }}
+          <span class="pill-gray">{{ account.items.length }} position(s)</span>
+        </div>
+        <div class="preview-table">
+          <div class="preview-thead">
+            <span>Ticker</span>
+            <span>Nom</span>
+            <span class="num">Quantité</span>
+            <span class="num">Prix moy.</span>
+            <span class="num">Valeur comptable</span>
+          </div>
+          @for (item of account.items; track item.ticker) {
+            <div class="preview-row">
+              <span class="ticker">{{ item.ticker }}</span>
+              <span class="name">{{ item.name }}</span>
+              <span class="num">{{ item.quantity | number:'1.0-4' }}</span>
+              <span class="num">{{ item.avgBuyPrice | number:'1.2-2' }} {{ item.currency }}</span>
+              <span class="num">{{ item.bookValue | number:'1.0-0' }} {{ item.currency }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="preview-footer">
+      <button class="btn-cancel" (click)="cancel()">Annuler</button>
+      <button class="btn-confirm" (click)="confirm()">
+        <mat-icon>check</mat-icon>
+        Importer {{ p.totalItems }} position(s) dans {{ p.accounts.length }} portfolio(s)
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Importing -->
+@if (step() === 'importing') {
+  <div class="import-loading">
+    <mat-spinner diameter="24"></mat-spinner>
+    <span>Import en cours…</span>
+  </div>
+}
+
+<!-- Done -->
+@if (step() === 'done') {
+  <div class="import-done">
+    <mat-icon>check_circle</mat-icon>
+    <span>Portefeuilles synchronisés avec succès.</span>
+    <button class="btn-again" (click)="reset()">Importer un autre fichier</button>
+  </div>
+}

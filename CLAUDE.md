@@ -12,7 +12,7 @@ Optimiseur de portefeuille boursier intelligent alimenté par l'IA. L'applicatio
 | Backend | Kotlin + Spring Boot |
 | Build | Gradle (Kotlin DSL) |
 | IA | Claude API (Anthropic) |
-| BDD | PostgreSQL |
+| BDD | PostgreSQL + Flyway |
 | Infra locale | Tilt + Docker Compose |
 | CI | GitHub Actions |
 
@@ -25,9 +25,9 @@ trade/
 ├── docs/
 │   ├── metier/        # vision.md, fonctionnalites.md
 │   ├── technique/     # architecture.md, developpement.md
-│   └── projet/        # backlog.md, sources.md, commit-conventions.md
+│   ├── projet/        # backlog.md, sources.md, commit-conventions.md
+│   └── data-input/    # CSVs locaux (gitignore)
 ├── .github/workflows/ # CI : backend, frontend, docs
-├── docs/backlog.md    # Suivi des features (source de vérité)
 ├── README.md
 └── docker-compose.yml
 ```
@@ -36,16 +36,18 @@ trade/
 
 - `ingestion/` — collecte des flux RSS et APIs financières
 - `analysis/` — orchestration des appels LLM (`LlmClient`, `AnalysisRunner`, `AnalysisJobStore`)
-- `portfolio/` — gestion du portefeuille utilisateur
-- `recommendations/` — stockage et scoring des suggestions
+- `portfolio/` — portefeuilles en lecture seule, import CSV Wealthsimple, snapshots historiques
+- `recommendations/` — stockage et scoring des suggestions IA
 - `observability/` — comparaison suggestion vs réalité marché (Phase 2)
 
 ## Modules frontend
 
-- `dashboard/` — portefeuille + analyse IA
-- `history/` — historique des recommandations
-- `settings/` — configuration des sources
-- `core/` — services partagés (`PortfolioService`, `AnalysisService`, `SettingsService`)
+- `dashboard/` — vue portefeuille (positions read-only) + analyse IA
+- `import/` — page drag & drop CSV Wealthsimple
+- `suivi/` — historique des imports (snapshots par date, valeurs marché, P&L)
+- `history/` — historique des recommandations IA
+- `settings/` — configuration des sources de données
+- `core/` — services partagés (`PortfolioService`, `AnalysisService`, `SettingsService`, `SnapshotService`)
 
 ## Développement local
 
@@ -69,8 +71,13 @@ Le backend démarre avec le profil `local` (`application-local.yml`, gitignore).
 - LLM local : Ollama + `qwen2:1.5b`. Mistral 7B / phi3:mini trop lents sur M1
 - Commits en **anglais**, Conventional Commits. Voir `docs/projet/commit-conventions.md`
 - Ne jamais committer de clés API. `application-local.yml` est gitignore
+- `docs/data-input/` est gitignore — contient les CSV locaux Wealthsimple
 
 ## Instructions pour Claude
+
+### Philosophie portefeuille
+
+Le portefeuille est **en lecture seule** dans l'UI — il reflète la réalité du courtier. La seule façon d'alimenter les données est l'import CSV Wealthsimple. Pas de création manuelle de portfolio, d'ajout ou suppression d'actif.
 
 ### Backlog
 

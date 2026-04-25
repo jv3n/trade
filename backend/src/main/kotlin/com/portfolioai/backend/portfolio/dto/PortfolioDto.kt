@@ -13,11 +13,6 @@ data class PortfolioDto(
     val assetCount: Int
 )
 
-data class CreatePortfolioRequest(
-    val name: String,
-    val description: String? = null
-)
-
 fun Portfolio.toDto() = PortfolioDto(
     id = id,
     name = name,

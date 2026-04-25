@@ -25,9 +25,9 @@
 ┌─────────────────────────────────────────┐
 │         Backend  (Kotlin + Spring)       │
 │                                          │
-│  ingestion/   → collecte et déduplication│
-│  analysis/    → orchestration LLM        │
-│  portfolio/   → CRUD portefeuilles       │
+│  ingestion/     → collecte RSS/APIs      │
+│  analysis/      → orchestration LLM      │
+│  portfolio/     → import CSV, snapshots  │
 │  recommendations/ → stockage & scoring  │
 │  observability/   → comparaison (Phase 2)│
 └──────────────────┬──────────────────────┘
@@ -36,9 +36,11 @@
 ┌─────────────────────────────────────────┐
 │         Frontend  (Angular 21)           │
 │                                          │
-│  dashboard/       → portefeuille + analyse│
-│  history/         → historique recommandations│
-│  settings/        → gestion des sources  │
+│  dashboard/  → positions read-only + IA │
+│  import/     → drag & drop CSV          │
+│  suivi/      → timeline snapshots       │
+│  history/    → recommandations IA       │
+│  settings/   → gestion des sources      │
 └─────────────────────────────────────────┘
 ```
 
@@ -59,7 +61,11 @@ Deux implémentations de `LlmClient` :
 
 ### `portfolio/`
 
-CRUD standard des portefeuilles et actifs. Les actifs supportent : STOCK, ETF, CRYPTO, BOND, COMMODITY.
+Le portefeuille est **read-only depuis l'UI** — il reflète l'état réel du courtier Wealthsimple. Pas de CRUD manuel.
+
+**Import CSV** (`CsvImportService`) : parse l'export « Positions » Wealthsimple (21 colonnes, français, délimiteur auto-détecté, BOM UTF-8). Pour chaque `Nom du compte` du CSV, crée ou met à jour un `Portfolio` et upsert les positions (`Asset`). Colonnes utilisées : `Symbole`, `Nom`, `Type`, `Quantité`, `Valeur comptable (CAD)`, `Valeur comptable (Marché)`, `Valeur marchande`, `Rendements non réalisés du marché`.
+
+**Snapshots** : à chaque import, un `PortfolioSnapshot` est créé par compte (avec un `batch_id` commun pour grouper les snapshots d'un même import). Chaque `SnapshotPosition` stocke la valeur comptable en CAD, la valeur de marché en devise native, et le P&L non réalisé. Permet le suivi historique de l'évolution du portefeuille.
 
 ### `recommendations/`
 
@@ -74,6 +80,7 @@ Migrations Flyway dans `backend/src/main/resources/db/migration/` :
 | V1 | Portfolio, Asset, Recommendation, RecommendationAction |
 | V2 | FeedSource, FeedArticle |
 | V3 | Enrichissement FeedSource (slug, description, free, requires_api_key) + seed 22 sources |
+| V4 | PortfolioSnapshot (batch_id, portfolio_id, imported_at), SnapshotPosition (valeurs CAD + marché + P&L) |
 
 ## Décisions techniques notables
 
@@ -84,3 +91,9 @@ Migrations Flyway dans `backend/src/main/resources/db/migration/` :
 **Validation du schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage contre les entités. Toute modification des entités nécessite une migration Flyway.
 
 **Tests d'intégration sur vrai PostgreSQL** — pas de mocks BDD ni H2. Le CI démarre un service PostgreSQL.
+
+**Portefeuille CSV-driven, pas de CRUD manuel** — le portefeuille reflète la réalité du courtier. L'import CSV Wealthsimple est la seule source de vérité des positions. Ce choix simplifie l'UI, élimine les désynchronisations, et rend l'historique automatique (chaque import = snapshot).
+
+**Snapshot avec `batch_id`** — un import CSV peut couvrir plusieurs comptes (CELI, REER, Broker…). Le `batch_id` UUID commun regroupe tous les snapshots d'un même import pour l'affichage en timeline. Pas de table `CsvImportBatch` séparée — le batch_id suffit.
+
+**Normalisation des headers CSV** — les headers Wealthsimple contiennent des accents (`Quantité`, `Marché`…). Normalisation NFD + suppression diacritiques + lowercase pour des lookups robustes indépendants de l'encodage.

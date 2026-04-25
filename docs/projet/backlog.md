@@ -12,18 +12,20 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 | Feature | Notes |
 |---------|-------|
-| Portfolio CRUD (backend) | Entités JPA (`Portfolio`, `Asset`), REST sous `/api/portfolios` |
-| Portfolio CRUD (frontend) | `PortfolioService`, `Dashboard` avec liste + tableau actifs + formulaires inline |
 | Navigation (header) | `mat-toolbar` Material sticky, liens avec icônes, état actif |
 | CI GitHub Actions | `backend.yml` (Gradle + PostgreSQL service), `frontend.yml` (Vitest) — déclenchés sur changements de chemin |
 | Ingestion RSS | Module `ingestion/` — Rome, scheduler 15 min prod / 5 min local, déduplication par `guid`. `GET /api/ingestion/articles`, `POST /api/ingestion/fetch` |
 | Appel LLM (Claude / Ollama) | `LlmClient` interface, `ClaudeClient` (prod), `OllamaClient` (local). `llm.provider: claude\|ollama` |
 | Analyse IA async | `AnalysisService` → `AnalysisRunner` (`@Async` bean séparé). `AnalysisJobStore` (ConcurrentHashMap). API : POST → 202, polling job, GET recommendation |
-| Affichage recommandations (dashboard) | Polling RxJS, spinner + timer, confidence badge, actions colorées. Montants : poids actuel %, valeur €, cible €, delta ±€ |
-| Seed data Tilt | `scripts/seed.sql` — portefeuille démo ~100k€ (VOO, QQQ, BND, AAPL, MSFT, NVDA, GOOGL, AMZN, BTC, ETH) |
+| Affichage recommandations (dashboard) | Polling RxJS, spinner + timer, confidence badge, actions colorées. Montants : poids actuel %, valeur, cible, delta |
 | Robustesse analyse IA | Timeout 120s, `format:json` + `num_predict` Ollama, system+user fusionnés, SYSTEM_PROMPT reécrit, `@JsonIgnoreProperties`, extracteur JSON robuste |
-| Affichage recommandations (page history) | `GET /api/recommendations` global. Composant `history/` : filtres portfolio + statut, cartes expandables |
+| Affichage recommandations (page Recommandations IA) | `GET /api/recommendations` global. Filtres portfolio + statut, cartes expandables |
 | Persistance Settings | Migration V3 (slug, description, free, requires_api_key), 22 sources en base. `PATCH /api/ingestion/sources/{id}`. Frontend API-driven, update optimiste |
+| Import CSV Wealthsimple | Parse export « Positions » WS (21 colonnes, accents NFD, délimiteur auto). Crée/met à jour un `Portfolio` par `Nom du compte`. Upsert assets. `POST /api/portfolios/import/csv` |
+| Portefeuille read-only | Suppression du CRUD manuel (create/delete portfolio, add/remove asset). La vue reflète l'état réel du courtier. Seul le CSV peut mettre à jour. |
+| Snapshots historiques | À chaque import CSV, création d'un `PortfolioSnapshot` + `SnapshotPosition` par compte (valeur comptable CAD, valeur marché, P&L). Tables V6. `GET /api/snapshots` |
+| Page Import (onglet dédié) | Drag & drop CSV standalone sur `/import`. Redirige vers `/suivi` après import. |
+| Page Suivi (historique positions) | `/suivi` — timeline groupée par batch d'import, expand par compte, détail positions avec valeur marché et P&L. |
 
 ### À faire
 
@@ -38,6 +40,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 | Feature | Description |
 |---------|-------------|
+| ⏳ Graphe d'évolution portefeuille | Courbe de valeur comptable (CAD) dans le temps depuis les snapshots. Par compte ou global. |
 | ⏳ Prix réels post-recommandation | Récupérer les cours des actifs N jours après chaque recommandation (Yahoo Finance / Stooq) |
 | ⏳ Score de pertinence | Comparer la direction recommandée vs mouvement réel. Calculer un score par recommandation |
 | ⏳ Statut recommendation | Passer `status` de PENDING à APPLIED / IGNORED depuis l'UI |

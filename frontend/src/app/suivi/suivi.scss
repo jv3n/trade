@@ -1,0 +1,261 @@
+.suivi-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 2.5rem;
+}
+
+.suivi-header {
+  margin-bottom: 2rem;
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem;
+    color: #111827;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+}
+
+// ---- États ----
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  padding: 2rem 0;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #991b1b;
+  mat-icon { font-size: 1rem; height: 1rem; width: 1rem; }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #9ca3af;
+
+  mat-icon { font-size: 2.5rem; height: 2.5rem; width: 2.5rem; }
+  p { margin: 0; font-size: 0.9rem; }
+}
+
+// ---- Batch ----
+
+.batch-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.batch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.25rem;
+  background: #f8fafc;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+
+  &:hover { background: #f1f5f9; }
+
+  mat-icon {
+    font-size: 1.1rem;
+    height: 1.1rem;
+    width: 1.1rem;
+    color: #6b7280;
+  }
+}
+
+.batch-date {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.batch-datetime {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.batch-pill {
+  font-size: 0.72rem;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 10px;
+  padding: 0.1rem 0.55rem;
+  font-weight: 500;
+}
+
+.batch-total {
+  text-align: right;
+
+  .total-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .total-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1d4ed8;
+  }
+}
+
+// ---- Snapshots ----
+
+.snapshots-list {
+  border-top: 1px solid #e5e7eb;
+}
+
+.snapshot-row {
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child { border-bottom: none; }
+}
+
+.snapshot-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1.25rem 0.65rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover { background: #f9fafb; }
+
+  .snap-toggle {
+    font-size: 1rem;
+    height: 1rem;
+    width: 1rem;
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+}
+
+.snap-name {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.snap-count {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.snap-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  min-width: 120px;
+  text-align: right;
+}
+
+// ---- Positions table ----
+
+.positions-table {
+  font-size: 0.8rem;
+  border-top: 1px solid #f3f4f6;
+  background: #fafafa;
+}
+
+.positions-thead {
+  display: grid;
+  grid-template-columns: 70px 1fr 60px 70px 140px 120px 100px;
+  padding: 0.35rem 1.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.positions-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 60px 70px 140px 120px 100px;
+  padding: 0.38rem 1.5rem;
+  align-items: center;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: #f0f9ff; }
+}
+
+.ticker {
+  font-weight: 700;
+  color: #1d4ed8;
+  font-size: 0.8rem;
+}
+
+.pos-name {
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 0.5rem;
+}
+
+.type-tag {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+
+  &.type-etf       { background: #dcfce7; color: #15803d; }
+  &.type-stock     { background: #dbeafe; color: #1d4ed8; }
+  &.type-crypto    { background: #ffedd5; color: #c2410c; }
+  &.type-bond      { background: #fef9c3; color: #a16207; }
+  &.type-commodity { background: #f3e8ff; color: #7e22ce; }
+}
+
+.num {
+  text-align: right;
+  color: #374151;
+  font-variant-numeric: tabular-nums;
+}
+
+.gain {
+  font-weight: 600;
+
+  &.positive { color: #15803d; }
+  &.negative { color: #dc2626; }
+}
+
+.positions-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  color: #6b7280;
+  font-size: 0.8rem;
+}

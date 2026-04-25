@@ -25,17 +25,33 @@ export interface Asset {
   createdAt: string;
 }
 
-export interface CreatePortfolioRequest {
-  name: string;
-  description?: string;
-}
-
-export interface CreateAssetRequest {
+export interface CsvImportPreviewItem {
   ticker: string;
   name: string;
   quantity: number;
   avgBuyPrice: number;
-  assetType: AssetType;
+  assetType: string;
+  bookValue: number;
+  currency: string;
+}
+
+export interface AccountImportPreview {
+  accountName: string;
+  items: CsvImportPreviewItem[];
+}
+
+export interface CsvImportPreview {
+  accounts: AccountImportPreview[];
+  totalItems: number;
+  skippedRows: number;
+  warnings: string[];
+}
+
+export interface CsvImportResult {
+  portfoliosCreated: number;
+  portfoliosUpdated: number;
+  totalImported: number;
+  skipped: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -51,23 +67,19 @@ export class PortfolioService {
     return this.http.get<Portfolio>(`${this.base}/${id}`);
   }
 
-  create(request: CreatePortfolioRequest): Observable<Portfolio> {
-    return this.http.post<Portfolio>(this.base, request);
-  }
-
-  delete(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${id}`);
-  }
-
   getAssets(portfolioId: string): Observable<Asset[]> {
     return this.http.get<Asset[]>(`${this.base}/${portfolioId}/assets`);
   }
 
-  addAsset(portfolioId: string, request: CreateAssetRequest): Observable<Asset> {
-    return this.http.post<Asset>(`${this.base}/${portfolioId}/assets`, request);
+  previewCsvImport(file: File): Observable<CsvImportPreview> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<CsvImportPreview>(`${this.base}/import/csv/preview`, form);
   }
 
-  removeAsset(portfolioId: string, assetId: string): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${portfolioId}/assets/${assetId}`);
+  confirmCsvImport(file: File): Observable<CsvImportResult> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<CsvImportResult>(`${this.base}/import/csv`, form);
   }
 }

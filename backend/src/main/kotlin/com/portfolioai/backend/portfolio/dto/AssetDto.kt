@@ -18,14 +18,6 @@ data class AssetDto(
     val createdAt: Instant
 )
 
-data class CreateAssetRequest(
-    val ticker: String,
-    val name: String,
-    val quantity: BigDecimal,
-    val avgBuyPrice: BigDecimal,
-    val assetType: AssetType
-)
-
 fun Asset.toDto() = AssetDto(
     id = id,
     portfolioId = portfolio.id,

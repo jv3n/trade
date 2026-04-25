@@ -6,7 +6,6 @@
     <p class="disclaimer">⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.</p>
   </header>
 
-  <!-- Erreur -->
   @if (error()) {
     <div class="error-banner">
       {{ error() }}
@@ -16,34 +15,11 @@
 
   <div class="dashboard-body">
 
-    <!-- Colonne gauche : liste des portefeuilles -->
+    <!-- Sidebar : liste des portefeuilles -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>Portefeuilles</h2>
-        <button class="btn-icon" (click)="showCreatePortfolio.set(!showCreatePortfolio())">+</button>
       </div>
-
-      @if (showCreatePortfolio()) {
-        <form class="form-inline" (ngSubmit)="createPortfolio()">
-          <input
-            type="text"
-            placeholder="Nom du portefeuille"
-            [(ngModel)]="newPortfolio.name"
-            name="portfolioName"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Description (optionnel)"
-            [(ngModel)]="newPortfolio.description"
-            name="portfolioDesc"
-          />
-          <div class="form-actions">
-            <button type="submit" class="btn-primary">Créer</button>
-            <button type="button" class="btn-ghost" (click)="showCreatePortfolio.set(false)">Annuler</button>
-          </div>
-        </form>
-      }
 
       @if (loading()) {
         <p class="loading">Chargement...</p>
@@ -55,21 +31,19 @@
               [class.active]="selectedPortfolio()?.id === p.id"
               (click)="selectPortfolio(p)"
             >
-              <div class="portfolio-item-info">
-                <span class="portfolio-name">{{ p.name }}</span>
-                <span class="portfolio-count">{{ p.assetCount }} actif(s)</span>
-              </div>
-              <button class="btn-danger-icon" (click)="$event.stopPropagation(); deletePortfolio(p)">✕</button>
+              <span class="portfolio-name">{{ p.name }}</span>
+              <span class="portfolio-count">{{ p.assetCount }} actif(s)</span>
             </li>
           } @empty {
-            <li class="empty-state">Aucun portefeuille — créez-en un !</li>
+            <li class="empty-state">Importez un CSV pour créer vos portefeuilles.</li>
           }
         </ul>
       }
     </aside>
 
-    <!-- Colonne droite : détail du portefeuille sélectionné -->
+    <!-- Contenu principal -->
     <main class="main-content">
+
       @if (selectedPortfolio(); as portfolio) {
         <div class="portfolio-detail">
 
@@ -89,46 +63,23 @@
           <!-- Tableau des actifs -->
           <div class="assets-section">
             <div class="assets-header">
-              <div class="assets-header-left">
-                <h3>Actifs</h3>
-                <button
-                  class="btn-ai-analyze"
-                  [class.loading]="analyzing()"
-                  [disabled]="analyzing()"
-                  (click)="runAnalysis()"
-                >
-                  @if (analyzing()) {
-                    <span class="btn-ai-spinner"></span>
-                    <span>Analyse en cours… ({{ analyzeElapsed() }}s)</span>
-                  } @else {
-                    <span class="btn-ai-glow"></span>
-                    <mat-icon>auto_awesome</mat-icon>
-                    <span>Analyser avec l'IA</span>
-                  }
-                </button>
-              </div>
-              <button class="btn-primary" (click)="showAddAsset.set(!showAddAsset())">+ Ajouter un actif</button>
+              <h3>Positions</h3>
+              <button
+                class="btn-ai-analyze"
+                [class.loading]="analyzing()"
+                [disabled]="analyzing()"
+                (click)="runAnalysis()"
+              >
+                @if (analyzing()) {
+                  <span class="btn-ai-spinner"></span>
+                  <span>Analyse en cours… ({{ analyzeElapsed() }}s)</span>
+                } @else {
+                  <span class="btn-ai-glow"></span>
+                  <mat-icon>auto_awesome</mat-icon>
+                  <span>Analyser avec l'IA</span>
+                }
+              </button>
             </div>
-
-            @if (showAddAsset()) {
-              <form class="form-add-asset" (ngSubmit)="addAsset()">
-                <div class="form-grid">
-                  <input type="text" placeholder="Ticker (ex: AAPL)" [(ngModel)]="newAsset.ticker" name="ticker" required />
-                  <input type="text" placeholder="Nom (ex: Apple Inc.)" [(ngModel)]="newAsset.name" name="name" required />
-                  <input type="number" placeholder="Quantité" [(ngModel)]="newAsset.quantity" name="quantity" min="0" step="0.000001" required />
-                  <input type="number" placeholder="Prix moyen d'achat (€)" [(ngModel)]="newAsset.avgBuyPrice" name="avgBuyPrice" min="0" step="0.01" required />
-                  <select [(ngModel)]="newAsset.assetType" name="assetType">
-                    @for (type of assetTypes; track type) {
-                      <option [value]="type">{{ type }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn-primary">Ajouter</button>
-                  <button type="button" class="btn-ghost" (click)="showAddAsset.set(false)">Annuler</button>
-                </div>
-              </form>
-            }
 
             @if (assets().length > 0) {
               <table class="assets-table">
@@ -140,7 +91,6 @@
                     <th class="text-right">Quantité</th>
                     <th class="text-right">Prix moyen</th>
                     <th class="text-right">Valeur totale</th>
-                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -152,15 +102,12 @@
                       <td class="text-right">{{ asset.quantity }}</td>
                       <td class="text-right">{{ asset.avgBuyPrice | number:'1.2-2' }} €</td>
                       <td class="text-right">{{ asset.totalValue | number:'1.2-2' }} €</td>
-                      <td>
-                        <button class="btn-danger-icon" (click)="removeAsset(asset)">✕</button>
-                      </td>
                     </tr>
                   }
                 </tbody>
               </table>
             } @else {
-              <p class="empty-state">Aucun actif dans ce portefeuille.</p>
+              <p class="empty-state">Aucune position — importez un CSV pour peupler ce portefeuille.</p>
             }
           </div>
 
@@ -220,7 +167,7 @@
         </div>
       } @else {
         <div class="empty-portfolio">
-          <p>Sélectionnez ou créez un portefeuille pour commencer.</p>
+          <p>Sélectionnez un portefeuille ou importez un CSV pour commencer.</p>
         </div>
       }
     </main>

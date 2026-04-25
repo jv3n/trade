@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,23 +23,21 @@ export class Settings implements OnInit {
   private readonly settingsService = inject(SettingsService);
 
   sources = signal<DataSource[]>([]);
-  loading = signal(true);
-  error = signal<string | null>(null);
+  sourcesLoading = signal(true);
+  sourcesError = signal<string | null>(null);
   savingIds = signal<Set<string>>(new Set());
 
   categories = CATEGORY_ORDER;
   categoryLabels = CATEGORY_LABELS;
 
   ngOnInit() {
+    this.loadSources();
+  }
+
+  loadSources() {
     this.settingsService.getSources().subscribe({
-      next: sources => {
-        this.sources.set(sources);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Impossible de charger les sources.');
-        this.loading.set(false);
-      },
+      next: sources => { this.sources.set(sources); this.sourcesLoading.set(false); },
+      error: () => { this.sourcesError.set('Impossible de charger les sources.'); this.sourcesLoading.set(false); },
     });
   }
 
@@ -57,29 +55,19 @@ export class Settings implements OnInit {
 
   toggle(source: DataSource) {
     if (this.isSaving(source.id)) return;
-
     const newEnabled = !source.enabled;
-
-    // Optimistic update
-    this.sources.update(list =>
-      list.map(s => s.id === source.id ? { ...s, enabled: newEnabled } : s)
-    );
+    this.sources.update(list => list.map(s => s.id === source.id ? { ...s, enabled: newEnabled } : s));
     this.savingIds.update(set => new Set([...set, source.id]));
 
     this.settingsService.updateEnabled(source.id, newEnabled).subscribe({
       next: updated => {
-        this.sources.update(list =>
-          list.map(s => s.id === updated.id ? updated : s)
-        );
+        this.sources.update(list => list.map(s => s.id === updated.id ? updated : s));
         this.savingIds.update(set => { const n = new Set(set); n.delete(source.id); return n; });
       },
       error: () => {
-        // Rollback
-        this.sources.update(list =>
-          list.map(s => s.id === source.id ? { ...s, enabled: source.enabled } : s)
-        );
+        this.sources.update(list => list.map(s => s.id === source.id ? { ...s, enabled: source.enabled } : s));
         this.savingIds.update(set => { const n = new Set(set); n.delete(source.id); return n; });
-        this.error.set(`Impossible de modifier "${source.name}".`);
+        this.sourcesError.set(`Impossible de modifier "${source.name}".`);
       },
     });
   }
