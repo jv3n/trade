@@ -7,11 +7,13 @@ nav:
   - Métier:
       - Vision: metier/vision.md
       - Fonctionnalités: metier/fonctionnalites.md
-      - Sources de données: sources.md
   - Technique:
       - Architecture: technique/architecture.md
       - Guide de développement: technique/developpement.md
-      - Conventions de commit: commit-conventions.md
+  - Projet:
+      - Backlog: projet/backlog.md
+      - Sources de données: projet/sources.md
+      - Conventions de commit: projet/commit-conventions.md
 
 theme:
   name: material

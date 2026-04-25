@@ -32,9 +32,6 @@ tilt up
 
 ## Documentation
 
-- [`docs/metier/vision.md`](docs/metier/vision.md) — vision et boucle d'amélioration
-- [`docs/metier/fonctionnalites.md`](docs/metier/fonctionnalites.md) — fonctionnalités et roadmap
-- [`docs/sources.md`](docs/sources.md) — catalogue des sources de données
-- [`docs/technique/architecture.md`](docs/technique/architecture.md) — stack et choix techniques
-- [`docs/technique/developpement.md`](docs/technique/developpement.md) — setup local et conventions
-- [`CLAUDE.md`](CLAUDE.md) — contexte projet et suivi des features
+[https://julienvenet.github.io/trade/](https://julienvenet.github.io/trade/)
+
+Le backlog est disponible sur [la page dédiée](https://julienvenet.github.io/trade/projet/backlog/).

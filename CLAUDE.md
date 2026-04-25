@@ -16,15 +16,18 @@ Optimiseur de portefeuille boursier intelligent alimenté par l'IA. L'applicatio
 | Infra locale | Tilt + Docker Compose |
 | CI | GitHub Actions |
 
-## Structure cible
+## Structure du projet
 
 ```
 trade/
 ├── frontend/          # Angular 21
 ├── backend/           # Kotlin + Spring Boot
-│   └── build.gradle.kts
-├── docs/              # Documentation projet (vision.md, sources.md, commit-conventions.md)
-├── .github/workflows/ # CI GitHub Actions (backend + frontend)
+├── docs/
+│   ├── metier/        # vision.md, fonctionnalites.md
+│   ├── technique/     # architecture.md, developpement.md
+│   └── projet/        # backlog.md, sources.md, commit-conventions.md
+├── .github/workflows/ # CI : backend, frontend, docs
+├── docs/backlog.md    # Suivi des features (source de vérité)
 ├── README.md
 └── docker-compose.yml
 ```
@@ -32,101 +35,60 @@ trade/
 ## Modules backend
 
 - `ingestion/` — collecte des flux RSS et APIs financières
-- `analysis/` — orchestration des appels Claude API
+- `analysis/` — orchestration des appels LLM (`LlmClient`, `AnalysisRunner`, `AnalysisJobStore`)
 - `portfolio/` — gestion du portefeuille utilisateur
 - `recommendations/` — stockage et scoring des suggestions
-- `observability/` — comparaison suggestion vs réalité marché
+- `observability/` — comparaison suggestion vs réalité marché (Phase 2)
 
 ## Modules frontend
 
-- `dashboard/` — vue principale du portefeuille
-- `recommendations/` — affichage des conseils IA
-- `history/` — historique et observabilité
+- `dashboard/` — portefeuille + analyse IA
+- `history/` — historique des recommandations
 - `settings/` — configuration des sources
-
-## Phases de développement
-
-- **Phase 1 (MVP)** — recommandation IA de bout en bout
-- **Phase 2** — traçabilité et scoring des recommandations
-- **Phase 3** — optimisation continue des prompts
-- **Phase 4** — fine-tuning, paper trading, multi-portefeuilles
-
-## Contraintes importantes
-
-- Disclaimer financier obligatoire dans l'UI (pas un conseiller agréé)
-- Sécurité des données portefeuille dès le départ
-- Qualité des recommandations dépend de la qualité des sources ingérées
+- `core/` — services partagés (`PortfolioService`, `AnalysisService`, `SettingsService`)
 
 ## Développement local
 
-L'environnement local tourne avec **Tilt** (`tilt up`). Pas de `docker compose up` ni de `./gradlew bootRun` à la main.
+Voir `docs/technique/developpement.md` pour le détail complet.
 
-| Commande | Usage |
-|----------|-------|
-| `tilt up` | Lance tout (PostgreSQL, backend, frontend) |
-| `tilt up -- --host=<ip>` | Override l'hôte réseau (ex: accès LAN) |
+```bash
+tilt up   # démarre tout : PostgreSQL, Ollama, backend, frontend
+```
 
-URLs exposées :
-- Frontend : `http://localhost:4200`
-- Backend : `http://localhost:8080`
-- Health : `http://localhost:8080/actuator/health`
-
-Le backend démarre avec le profil `local` (`application-local.yml`).
+Le backend démarre avec le profil `local` (`application-local.yml`, gitignore).
 
 ## Conventions
 
 - Kotlin idiomatique (data classes, sealed classes, extension functions)
 - Spring Boot avec Kotlin DSL Gradle — config en **YAML** (`application.yml` / `application-local.yml`)
 - Angular avec standalone components (Angular 21)
-- Angular Material pour tous les composants UI (thème configuré dans `styles.scss`)
-- Material Icons chargées via npm (`material-icons`) déclaré dans `angular.json` styles
+- Angular Material pour tous les composants UI
 - Tests d'intégration sur vrai PostgreSQL (pas de mocks BDD)
-- Frontend testé avec **Vitest** (pas Karma) — `--browsers=ChromeHeadless` ne s'applique pas
-- `@Async` Spring : ne jamais appeler une méthode `@Async` depuis `this` (auto-invocation bypass le proxy AOP). Toujours mettre le code async dans un bean séparé.
-- LLM local : Ollama + `qwen2:1.5b` dans Docker (`ollama/ollama:latest`, port 11434, volume `ollama_data`). Modèle tiré via `tilt up` (resource `llm:pull-qwen2`). Mistral 7B et phi3:mini trop lents sur M1 pour un usage interactif.
-- `application-local.yml` est gitignore — contient les clés API et config sensible. Ne jamais committer de clés dans le repo.
-- Commits en **anglais** — type, scope, description et corps. Voir `docs/commit-conventions.md`.
+- Frontend testé avec **Vitest** (pas Karma)
+- `@Async` Spring : toujours sur un bean séparé — jamais `this.asyncMethod()` (bypass AOP)
+- LLM local : Ollama + `qwen2:1.5b`. Mistral 7B / phi3:mini trop lents sur M1
+- Commits en **anglais**, Conventional Commits. Voir `docs/projet/commit-conventions.md`
+- Ne jamais committer de clés API. `application-local.yml` est gitignore
 
 ## Instructions pour Claude
 
-- **Mettre à jour ce fichier** au fil de chaque feature implémentée : ajouter la feature dans le suivi ci-dessous, marquer son statut, et noter toute décision technique importante prise en cours de route.
+### Backlog
 
-- **Ce principe de mise à jour continue est le cœur de métier de l'application elle-même.** PortfolioAI est conçu pour mesurer la qualité de ses propres recommandations dans le temps et s'améliorer en conséquence. Ce CLAUDE.md doit refléter exactement cet esprit : chaque écart entre ce qu'on pensait savoir faire et ce qu'on a réellement implémenté doit être tracé ici immédiatement. Ne jamais laisser ce fichier dériver par rapport à la réalité du code.
+Le fichier **`docs/projet/backlog.md`** est la source de vérité pour le suivi des features. À chaque feature implémentée :
+1. Déplacer la ligne de "À faire" vers "Terminé" dans `docs/projet/backlog.md`
+2. Ajouter les notes techniques concises dans la colonne Notes
 
-- **Concrètement** : dès qu'une décision technique est prise (choix d'une lib, abandon d'une approche, correction d'un bug d'architecture), l'inscrire dans le suivi ou dans les conventions. Ce fichier est la mémoire vivante du projet — comme le module `observability/` le sera pour les recommandations IA.
+### Documentation
 
-## Suivi des features
+Les fichiers dans `docs/` décrivent l'état réel du projet. Les tenir à jour quand le code évolue :
 
-### Phase 1 — MVP
+| Fichier | Mettre à jour quand… |
+|---------|----------------------|
+| `docs/metier/fonctionnalites.md` | Une feature MVP change de statut, une phase avance |
+| `docs/technique/architecture.md` | Un nouveau module, une décision technique importante, un pattern ajouté |
+| `docs/technique/developpement.md` | La config locale change, une commande Tilt est ajoutée |
+| `docs/projet/sources.md` | Une source est ajoutée ou retirée |
 
-| Feature | Statut | Notes |
-|---------|--------|-------|
-| Portfolio CRUD (backend) | ✅ Fait | Entités JPA (`Portfolio`, `Asset`), Repositories, `PortfolioService`, `PortfolioController` — REST sous `/api/portfolios` |
-| Portfolio CRUD (frontend) | ✅ Fait | `PortfolioService` (HttpClient), `Dashboard` avec liste portefeuilles + tableau actifs + formulaires inline |
-| Proxy dev Angular | ✅ Fait | `proxy.conf.json` + `angular.json` — redirige `/api` → `http://localhost:8080` |
-| Navigation (header) | ✅ Fait | `mat-toolbar` Material sticky, liens avec icônes, état actif, Settings en icône à droite |
-| Catalogue des sources | ✅ Fait | `docs/sources.md` — référence de 22 sources (RSS, marché, macro, crypto) avec métadonnées |
-| Page Settings — sources | ✅ Fait | Toggles par catégorie, tags Clé API / Payant, compteur actives/total — voir "Persistance Settings" ci-dessous |
-| CI GitHub Actions | ✅ Fait | `.github/workflows/backend.yml` (Gradle + PostgreSQL service) et `frontend.yml` (Vitest, pas Karma) — déclenchés sur changements de chemin uniquement |
-| Ingestion RSS (backend) | ✅ Fait | Module `ingestion/` — `FeedSource`, `FeedArticle`, `RssFetcherService` (Rome), scheduler 15 min prod / 5 min local, déduplication par `guid`, `GET /api/ingestion/articles`, `POST /api/ingestion/fetch` |
-| Reset BDD Tilt | ✅ Fait | Bouton `db:reset` dans Tilt — drop schema + touch `application.yml` pour redémarrage géré par Tilt (Flyway rejoue les migrations) |
-| Config YAML | ✅ Fait | Migration `application.properties` → `application.yml` / `application-local.yml` |
-| README + docs | ✅ Fait | `README.md` sommaire + `docs/commit-conventions.md` (Conventional Commits) |
-| Appel LLM (Claude / Ollama) | ✅ Fait | Module `analysis/` — `LlmClient` interface, `ClaudeClient` (prod, `@ConditionalOnProperty`), `OllamaClient` (local, Mistral 7B dans Docker). `llm.provider: claude\|ollama` dans `application.yml` |
-| Analyse IA async | ✅ Fait | `AnalysisService.startAsync()` → crée un job → `AnalysisRunner.run()` (`@Async @Transactional`). `AnalysisJobStore` (ConcurrentHashMap). API : `POST /api/portfolios/{id}/recommendations` → 202, `GET .../jobs/{jobId}`, `GET .../recommendations/{recId}`. Fix bug self-invocation Spring AOP : `@Async` sur bean séparé (`AnalysisRunner`), pas sur `this`. Dépendance circulaire résolue : toute la logique métier dans `AnalysisRunner`, `AnalysisService` ne fait que créer le job et déléguer. |
-| Affichage recommandations (dashboard) | ✅ Fait | Polling RxJS (`interval + switchMap + takeWhile`), bouton "Analyser avec l'IA" avec spinner CSS + timer elapsed, section recommandation avec confidence badge, actions BUY/SELL/HOLD/REDUCE colorées. Chaque action affiche : poids actuel % + valeur actuelle €, montant cible €, delta ±€ (vert/rouge). `actionAmounts()` calcule tout à partir de `assets` et `totalPortfolioValue`. |
-| Seed data Tilt | ✅ Fait | `scripts/seed.sql` — portefeuille démo ~100k€ (VOO, QQQ, BND, AAPL, MSFT, NVDA, GOOGL, AMZN, BTC, ETH). Bouton `db:seed` dans Tilt. |
-| Robustesse analyse IA | ✅ Fait | Timeout HTTP 120s sur OllamaClient, `format:json` + `num_predict` dans la requête Ollama, system+user fusionnés en message unique (qwen2:1.5b ignore le role system), SYSTEM_PROMPT reécrit pour petits modèles, extracteur JSON robuste (strip markdown fences), `@JsonIgnoreProperties` sur les DTOs LLM, 10 articles envoyés au LLM, 800 max tokens. `@Transactional(readOnly=true)` sur controller pour fix `LazyInitializationException`, `GlobalExceptionHandler` → 404 sur `NoSuchElementException`. |
-| Affichage recommandations (page history) | ✅ Fait | Nouveau endpoint `GET /api/recommendations` (global, `RecommendationHistoryController`). `RecommendationDto` enrichi avec `portfolioName`. Composant `history/` : filtres portfolio + statut (chips), liste de cartes expandables (résumé actions inline, détail sur clic), badges confidence / statut colorés. `AnalysisService.getAllRecommendations()`. |
-| Persistance Settings | ✅ Fait | Migration V3 : ajout `slug`, `description`, `free`, `requires_api_key` à `feed_source` + seed des 22 sources complètes. Endpoint `PATCH /api/ingestion/sources/{id}`. Frontend : `SettingsService` (HttpClient), composant API-driven (plus de `DEFAULT_SOURCES` hardcodé), update optimiste avec rollback sur erreur. |
-| Notifications progression analyse | ⏳ À faire | Suivi pas-à-pas de l'analyse en cours (ex: "Récupération des articles…", "Appel LLM…", "Parsing…") — via SSE ou polling d'un champ `steps` sur le job. Affiché comme fil de notifications dans l'UI. |
-| Analyse non-bloquante (navigation) | ⏳ À faire | Le polling et l'état de l'analyse en cours doivent survivre à la navigation — l'utilisateur peut changer de page sans interrompre l'analyse. À implémenter via un service Angular global (`AnalysisStateService`) qui tient l'état et le polling hors du composant `dashboard`. |
+### Décisions techniques
 
-### Phase 2 — Traçabilité
-_À venir_
-
-### Phase 3 — Optimisation prompts
-_À venir_
-
-### Phase 4 — Vision long terme
-_À venir_
+Dès qu'une décision technique est prise (choix d'une lib, abandon d'une approche, bug d'architecture corrigé), l'inscrire dans `docs/technique/architecture.md` sous "Décisions techniques notables". Ce fichier est la mémoire du *pourquoi*, pas seulement du *quoi*.
