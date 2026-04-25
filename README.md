@@ -24,14 +24,6 @@ L'application ingère des flux économiques (RSS, APIs financières), génère d
 tilt up
 ```
 
-| URL | Description |
-|-----|-------------|
-| http://localhost:4200 | Frontend |
-| http://localhost:8080 | Backend API |
-| http://localhost:8080/actuator/health | Health check |
-
 ## Documentation
 
-[https://julienvenet.github.io/trade/](https://julienvenet.github.io/trade/)
-
-Le backlog est disponible sur [la page dédiée](https://julienvenet.github.io/trade/projet/backlog/).
+[https://jv3n.github.io/trade/metier/vision/](https://jv3n.github.io/trade/metier/vision/)
