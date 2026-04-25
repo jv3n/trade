@@ -41,6 +41,17 @@ class Asset(
     @Column(name = "book_value_cad", nullable = false, precision = 18, scale = 2)
     var bookValueCad: BigDecimal = BigDecimal.ZERO,
 
+    /** Valeur marchande en devise native — source: Valeur marchande */
+    @Column(name = "market_value", nullable = false, precision = 18, scale = 4)
+    var marketValue: BigDecimal = BigDecimal.ZERO,
+
+    /** Rendements non réalisés du marché — source: Rendements non réalisés du marché */
+    @Column(name = "unrealized_gain", precision = 18, scale = 4)
+    var unrealizedGain: BigDecimal? = null,
+
+    @Column(name = "gain_currency", length = 10)
+    var gainCurrency: String? = null,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 

@@ -32,8 +32,14 @@ class PortfolioControllerTest {
         id = UUID.randomUUID(), portfolioId = id,
         ticker = "AAPL", name = "Apple Inc.",
         quantity = java.math.BigDecimal("10"), avgBuyPrice = java.math.BigDecimal("150.00"),
-        assetType = AssetType.STOCK, totalValue = java.math.BigDecimal("1800.00"),
-        createdAt = now, currency = "USD", bookValueCad =java.math.BigDecimal("1800.00"),
+        assetType = AssetType.STOCK,
+        currency = "USD",
+        bookValueCad = java.math.BigDecimal("1800.00"),
+        marketValue = java.math.BigDecimal("1800.00"),
+        marketPrice = java.math.BigDecimal("180.00"),
+        unrealizedGain = java.math.BigDecimal("300.00"),
+        gainCurrency = "USD",
+        createdAt = now
     )
 
     @Test

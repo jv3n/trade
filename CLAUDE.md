@@ -70,10 +70,15 @@ Le backend démarre avec le profil `local` (`application-local.yml`, gitignore).
 - `@Async` Spring : toujours sur un bean séparé — jamais `this.asyncMethod()` (bypass AOP)
 - LLM local : Ollama + `qwen2:1.5b`. Mistral 7B / phi3:mini trop lents sur M1
 - Commits en **anglais**, Conventional Commits. Voir `docs/projet/commit-conventions.md`
+- Les propositions de messages de commit sont toujours en **anglais**
 - Ne jamais committer de clés API. `application-local.yml` est gitignore
 - `docs/data-input/` est gitignore — contient les CSV locaux Wealthsimple
 
 ## Instructions pour Claude
+
+### Builds et tests
+
+Ne pas lancer les builds (`./gradlew`, `npm run build`) ni les tests (`./gradlew test`, `ng test`) sauf demande explicite. La CI s'en charge. Lancer ces commandes consomme inutilement des tokens.
 
 ### Philosophie portefeuille
 

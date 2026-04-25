@@ -88,9 +88,12 @@
                     <th>Ticker</th>
                     <th>Nom</th>
                     <th>Type</th>
-                    <th class="text-right">Quantité</th>
-                    <th class="text-right">Prix moyen</th>
-                    <th class="text-right">Valeur totale</th>
+                    <th class="text-right">Qté</th>
+                    <th class="text-right">Px moyen</th>
+                    <th class="text-right">Px marché</th>
+                    <th class="text-right">Val. comptable</th>
+                    <th class="text-right">Val. marchande</th>
+                    <th class="text-right">P&L non réalisé</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -99,9 +102,20 @@
                       <td><span class="ticker-badge">{{ asset.ticker }}</span></td>
                       <td>{{ asset.name }}</td>
                       <td><span class="type-badge type-{{ asset.assetType.toLowerCase() }}">{{ asset.assetType }}</span></td>
-                      <td class="text-right">{{ asset.quantity }}</td>
-                      <td class="text-right">{{ asset.avgBuyPrice | number:'1.2-2' }} {{ asset.currency }}</td>
-                      <td class="text-right">{{ asset.totalValue | number:'1.2-2' }} {{ asset.currency }}</td>
+                      <td class="text-right num">{{ asset.quantity | number:'1.0-4' }}</td>
+                      <td class="text-right num">{{ asset.avgBuyPrice | number:'1.2-2' }} <span class="currency">{{ asset.currency }}</span></td>
+                      <td class="text-right num">{{ asset.marketPrice | number:'1.2-2' }} <span class="currency">{{ asset.currency }}</span></td>
+                      <td class="text-right num">{{ asset.bookValueCad | number:'1.0-0' }} <span class="currency">CAD</span></td>
+                      <td class="text-right num">{{ asset.marketValue | number:'1.0-0' }} <span class="currency">{{ asset.currency }}</span></td>
+                      <td class="text-right">
+                        @if (asset.unrealizedGain !== null) {
+                          <span class="gain-value" [class.gain-pos]="asset.unrealizedGain! >= 0" [class.gain-neg]="asset.unrealizedGain! < 0">
+                            {{ asset.unrealizedGain! >= 0 ? '+' : '' }}{{ asset.unrealizedGain | number:'1.0-0' }} <span class="currency">{{ asset.gainCurrency }}</span>
+                          </span>
+                        } @else {
+                          <span class="no-data">—</span>
+                        }
+                      </td>
                     </tr>
                   }
                 </tbody>
