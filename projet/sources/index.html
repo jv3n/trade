@@ -1,0 +1,1091 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://julienvenet.github.io/trade/projet/sources/">
+      
+      
+        <link rel="prev" href="../backlog/">
+      
+      
+        <link rel="next" href="../commit-conventions/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Sources de données - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sources-de-donnees-portfolioai" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Sources de données
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#presse-flux-rss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presse &amp; Flux RSS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apis-financieres-donnees-de-marche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        APIs Financières — Données de Marché
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indicateurs-macro-economiques" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicateurs Macro-Économiques
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crypto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Crypto
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priorites-mvp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priorités MVP
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#presse-flux-rss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Presse &amp; Flux RSS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#apis-financieres-donnees-de-marche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        APIs Financières — Données de Marché
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#indicateurs-macro-economiques" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicateurs Macro-Économiques
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#crypto" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Crypto
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priorites-mvp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priorités MVP
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="sources-de-donnees-portfolioai">Sources de données — PortfolioAI</h1>
+<p>Référence de toutes les sources potentielles d'ingestion. Chaque source sera activable/désactivable depuis la page Settings.</p>
+<hr />
+<h2 id="presse-flux-rss">Presse &amp; Flux RSS</h2>
+<table>
+<thead>
+<tr>
+<th>Nom</th>
+<th>URL RSS</th>
+<th>Langue</th>
+<th>Gratuit</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reuters Business</td>
+<td><code>https://feeds.reuters.com/reuters/businessNews</code></td>
+<td>EN</td>
+<td>✅</td>
+<td>Actualité économique mondiale</td>
+</tr>
+<tr>
+<td>Reuters Markets</td>
+<td><code>https://feeds.reuters.com/reuters/marketsNews</code></td>
+<td>EN</td>
+<td>✅</td>
+<td>Marchés financiers</td>
+</tr>
+<tr>
+<td>Financial Times</td>
+<td><code>https://www.ft.com/rss/home</code></td>
+<td>EN</td>
+<td>⚠️</td>
+<td>Payant (certains articles libres)</td>
+</tr>
+<tr>
+<td>Les Echos</td>
+<td><code>https://www.lesechos.fr/rss/rss_finance.xml</code></td>
+<td>FR</td>
+<td>⚠️</td>
+<td>Certains articles payants</td>
+</tr>
+<tr>
+<td>Le Monde Économie</td>
+<td><code>https://www.lemonde.fr/economie/rss_full.xml</code></td>
+<td>FR</td>
+<td>✅</td>
+<td>Bonne couverture macro</td>
+</tr>
+<tr>
+<td>BFM Bourse</td>
+<td><code>https://bfmbusiness.bfmtv.com/rss/info/flux-rss/flux-toutes-les-actualites/</code></td>
+<td>FR</td>
+<td>✅</td>
+<td>Actualité bourse FR</td>
+</tr>
+<tr>
+<td>Investir / Journal des Finances</td>
+<td><code>https://investir.lesechos.fr/rss.xml</code></td>
+<td>FR</td>
+<td>⚠️</td>
+<td>Analyse actions</td>
+</tr>
+<tr>
+<td>Seeking Alpha</td>
+<td><code>https://seekingalpha.com/feed.xml</code></td>
+<td>EN</td>
+<td>⚠️</td>
+<td>Analyse approfondie, payant</td>
+</tr>
+<tr>
+<td>MarketWatch</td>
+<td><code>https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines</code></td>
+<td>EN</td>
+<td>✅</td>
+<td>Temps réel US</td>
+</tr>
+<tr>
+<td>CNBC Markets</td>
+<td><code>https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&amp;id=20910258</code></td>
+<td>EN</td>
+<td>✅</td>
+<td>Actualité marchés US</td>
+</tr>
+<tr>
+<td>Bloomberg (Wealth)</td>
+<td><code>https://feeds.bloomberg.com/wealth/news.rss</code></td>
+<td>EN</td>
+<td>⚠️</td>
+<td>Payant</td>
+</tr>
+<tr>
+<td>The Economist</td>
+<td><code>https://www.economist.com/finance-and-economics/rss.xml</code></td>
+<td>EN</td>
+<td>⚠️</td>
+<td>Payant</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="apis-financieres-donnees-de-marche">APIs Financières — Données de Marché</h2>
+<table>
+<thead>
+<tr>
+<th>Nom</th>
+<th>Type</th>
+<th>Gratuit</th>
+<th>Limites</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://finance.yahoo.com">Yahoo Finance (yfinance)</a></td>
+<td>Cours, historique, fondamentaux</td>
+<td>✅</td>
+<td>Non officiel</td>
+<td>Très complet, pas de clé API</td>
+</tr>
+<tr>
+<td><a href="https://www.alphavantage.co">Alpha Vantage</a></td>
+<td>Cours, indicateurs techniques</td>
+<td>✅ (limité)</td>
+<td>25 req/jour gratuit</td>
+<td>Clé API requise</td>
+</tr>
+<tr>
+<td><a href="https://finnhub.io">Finnhub</a></td>
+<td>Cours temps réel, news, fondamentaux</td>
+<td>✅ (limité)</td>
+<td>60 req/min gratuit</td>
+<td>Clé API requise</td>
+</tr>
+<tr>
+<td><a href="https://polygon.io">Polygon.io</a></td>
+<td>Cours, options, crypto</td>
+<td>✅ (limité)</td>
+<td>Plan gratuit limité</td>
+<td>Très complet, clé API</td>
+</tr>
+<tr>
+<td><a href="https://twelvedata.com">Twelve Data</a></td>
+<td>Cours, ETF, indicateurs</td>
+<td>✅ (limité)</td>
+<td>8 req/min gratuit</td>
+<td>Clé API requise</td>
+</tr>
+<tr>
+<td><a href="https://openexchangerates.org">Open Exchange Rates</a></td>
+<td>Taux de change</td>
+<td>✅ (limité)</td>
+<td>1000 req/mois gratuit</td>
+<td>Pour portefeuilles multi-devises</td>
+</tr>
+<tr>
+<td><a href="https://stooq.com">Stooq</a></td>
+<td>Cours historiques</td>
+<td>✅</td>
+<td>Pas de clé API</td>
+<td>Données EOD, couverture mondiale</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="indicateurs-macro-economiques">Indicateurs Macro-Économiques</h2>
+<table>
+<thead>
+<tr>
+<th>Nom</th>
+<th>Type</th>
+<th>Gratuit</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://fred.stlouisfed.org/docs/api/fred/">FRED (Federal Reserve)</a></td>
+<td>Indicateurs US (PIB, inflation, taux...)</td>
+<td>✅</td>
+<td>Clé API requise (gratuite)</td>
+</tr>
+<tr>
+<td><a href="https://data.ecb.europa.eu/help/api/overview">BCE (Banque Centrale Européenne)</a></td>
+<td>Indicateurs zone euro</td>
+<td>✅</td>
+<td>API REST publique</td>
+</tr>
+<tr>
+<td><a href="https://datahelpdesk.worldbank.org/knowledgebase/articles/889386">Banque Mondiale</a></td>
+<td>Indicateurs mondiaux</td>
+<td>✅</td>
+<td>API REST publique</td>
+</tr>
+<tr>
+<td><a href="https://api.insee.fr/catalogue/">INSEE</a></td>
+<td>Indicateurs France</td>
+<td>✅</td>
+<td>Clé API requise (gratuite)</td>
+</tr>
+<tr>
+<td><a href="https://data.oecd.org/api/">OCDE</a></td>
+<td>Statistiques pays OCDE</td>
+<td>✅</td>
+<td>API REST publique</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="crypto">Crypto</h2>
+<table>
+<thead>
+<tr>
+<th>Nom</th>
+<th>Type</th>
+<th>Gratuit</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://www.coingecko.com/api/documentation">CoinGecko</a></td>
+<td>Cours, market cap, volumes</td>
+<td>✅ (limité)</td>
+<td>30 req/min gratuit, pas de clé</td>
+</tr>
+<tr>
+<td><a href="https://coinmarketcap.com/api/">CoinMarketCap</a></td>
+<td>Cours, market cap</td>
+<td>✅ (limité)</td>
+<td>Clé API requise</td>
+</tr>
+<tr>
+<td><a href="https://binance-docs.github.io/apidocs/">Binance Public API</a></td>
+<td>Cours temps réel</td>
+<td>✅</td>
+<td>Pas de clé pour données publiques</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="priorites-mvp">Priorités MVP</h2>
+<p>Pour la Phase 1, les sources recommandées (gratuites, stables, sans clé ou clé gratuite) :</p>
+<ol>
+<li><strong>RSS</strong> : Reuters Business + Reuters Markets + BFM Bourse + Le Monde Économie</li>
+<li><strong>Marché</strong> : Yahoo Finance (yfinance) + Stooq pour l'historique</li>
+<li><strong>Macro</strong> : FRED + BCE</li>
+<li><strong>Crypto</strong> : CoinGecko</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
