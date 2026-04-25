@@ -18,6 +18,7 @@ data class RecommendationActionDto(
 data class RecommendationDto(
     val id: UUID,
     val portfolioId: UUID,
+    val portfolioName: String,
     val generatedAt: Instant,
     val contextSummary: String,
     val promptVersion: String,
@@ -37,6 +38,7 @@ data class AnalysisJobDto(
 fun Recommendation.toDto() = RecommendationDto(
     id = id,
     portfolioId = portfolio.id,
+    portfolioName = portfolio.name,
     generatedAt = generatedAt,
     contextSummary = contextSummary,
     promptVersion = promptVersion,

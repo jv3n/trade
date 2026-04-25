@@ -67,6 +67,7 @@ test(ingestion): add integration test for RssFetcherService
 
 ## Règles
 
+- **Langue : anglais obligatoire** — type, scope, description et corps du commit en anglais
 - Un commit = une intention claire
 - Ne pas mélanger feat et fix dans le même commit
 - Les migrations Flyway ont leur propre commit avec le scope `db`

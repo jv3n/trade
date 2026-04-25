@@ -6,6 +6,9 @@ import java.util.UUID
 
 interface RecommendationRepository : JpaRepository<Recommendation, UUID> {
 
-    @Query("SELECT r FROM Recommendation r LEFT JOIN FETCH r.actions WHERE r.portfolio.id = :portfolioId ORDER BY r.generatedAt DESC")
+    @Query("SELECT r FROM Recommendation r LEFT JOIN FETCH r.actions JOIN FETCH r.portfolio WHERE r.portfolio.id = :portfolioId ORDER BY r.generatedAt DESC")
     fun findByPortfolioId(portfolioId: UUID): List<Recommendation>
+
+    @Query("SELECT r FROM Recommendation r LEFT JOIN FETCH r.actions JOIN FETCH r.portfolio ORDER BY r.generatedAt DESC")
+    fun findAllOrderByGeneratedAtDesc(): List<Recommendation>
 }

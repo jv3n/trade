@@ -16,6 +16,7 @@ export interface RecommendationActionItem {
 export interface Recommendation {
   id: string;
   portfolioId: string;
+  portfolioName: string;
   generatedAt: string;
   contextSummary: string;
   promptVersion: string;
@@ -59,5 +60,9 @@ export class AnalysisService {
 
   getRecommendations(portfolioId: string): Observable<Recommendation[]> {
     return this.http.get<Recommendation[]>(`/api/portfolios/${portfolioId}/recommendations`);
+  }
+
+  getAllRecommendations(): Observable<Recommendation[]> {
+    return this.http.get<Recommendation[]>('/api/recommendations');
   }
 }

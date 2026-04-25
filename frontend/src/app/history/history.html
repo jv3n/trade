@@ -1,1 +1,136 @@
-<p>history works!</p>
+<div class="history-page">
+  <div class="page-header">
+    <div class="page-title">
+      <mat-icon>history</mat-icon>
+      <h2>Historique des recommandations</h2>
+    </div>
+    @if (!loading() && recommendations().length > 0) {
+      <span class="count-badge">{{ filtered().length }} / {{ recommendations().length }}</span>
+    }
+  </div>
+
+  <!-- Filtres -->
+  @if (recommendations().length > 0) {
+    <div class="filters">
+      @if (portfolios().length > 1) {
+        <div class="filter-group">
+          <label>Portefeuille</label>
+          <div class="chip-list">
+            <button class="chip" [class.active]="filterPortfolio() === 'all'" (click)="filterPortfolio.set('all')">
+              Tous
+            </button>
+            @for (p of portfolios(); track p.id) {
+              <button class="chip" [class.active]="filterPortfolio() === p.id" (click)="filterPortfolio.set(p.id)">
+                {{ p.name }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+      <div class="filter-group">
+        <label>Statut</label>
+        <div class="chip-list">
+          @for (s of statuses; track s.value) {
+            <button class="chip" [class.active]="filterStatus() === s.value" (click)="filterStatus.set(s.value)">
+              {{ s.label }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Contenu -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="36"></mat-spinner>
+      <span>Chargement de l'historique…</span>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+      <button mat-button (click)="load()">Réessayer</button>
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <mat-icon>auto_awesome</mat-icon>
+      @if (recommendations().length === 0) {
+        <p>Aucune recommandation générée pour l'instant.</p>
+        <span>Lancez une analyse depuis le tableau de bord pour commencer.</span>
+      } @else {
+        <p>Aucune recommandation ne correspond aux filtres sélectionnés.</p>
+      }
+    </div>
+  } @else {
+    <div class="rec-list">
+      @for (rec of filtered(); track rec.id) {
+        <div class="rec-card" [class.expanded]="isExpanded(rec.id)">
+          <!-- En-tête cliquable -->
+          <div class="rec-header" (click)="toggleExpand(rec.id)">
+            <div class="rec-meta">
+              <span class="portfolio-tag">{{ rec.portfolioName }}</span>
+              <span class="rec-date">{{ rec.generatedAt | date:'dd MMM yyyy, HH:mm' }}</span>
+            </div>
+            <div class="rec-badges">
+              @if (rec.confidence !== null) {
+                <span class="confidence-badge"
+                  [class.high]="rec.confidence >= 70"
+                  [class.medium]="rec.confidence >= 40 && rec.confidence < 70"
+                  [class.low]="rec.confidence < 40">
+                  {{ rec.confidence }}%
+                </span>
+              }
+              <span class="status-badge status-{{ rec.status | lowercase }}">
+                {{ statusLabel(rec.status) }}
+              </span>
+              <mat-icon class="expand-icon">{{ isExpanded(rec.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </div>
+          </div>
+
+          <!-- Actions en un coup d'œil -->
+          @if (rec.actions.length > 0) {
+            <div class="actions-summary">
+              @for (action of rec.actions; track action.ticker) {
+                <div class="action-pill">
+                  <span class="action-ticker">{{ action.ticker }}</span>
+                  <span class="action-badge {{ actionClass(action.action) }}">{{ action.action }}</span>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Détail expandable -->
+          @if (isExpanded(rec.id)) {
+            <div class="rec-detail">
+              <p class="rec-context">{{ rec.contextSummary }}</p>
+              <p class="rec-content">{{ rec.content }}</p>
+
+              @if (rec.actions.length > 0) {
+                <div class="detail-actions">
+                  <h4>Actions suggérées</h4>
+                  <div class="action-list">
+                    @for (action of rec.actions; track action.ticker) {
+                      <div class="action-card">
+                        <div class="action-top">
+                          <span class="action-ticker">{{ action.ticker }}</span>
+                          <span class="action-badge {{ actionClass(action.action) }}">{{ action.action }}</span>
+                          @if (action.targetWeight !== null) {
+                            <span class="action-weight">{{ action.targetWeight }}%</span>
+                          }
+                        </div>
+                        @if (action.rationale) {
+                          <p class="action-rationale">{{ action.rationale }}</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

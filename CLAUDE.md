@@ -86,6 +86,7 @@ Le backend démarre avec le profil `local` (`application-local.yml`).
 - `@Async` Spring : ne jamais appeler une méthode `@Async` depuis `this` (auto-invocation bypass le proxy AOP). Toujours mettre le code async dans un bean séparé.
 - LLM local : Ollama + `qwen2:1.5b` dans Docker (`ollama/ollama:latest`, port 11434, volume `ollama_data`). Modèle tiré via `tilt up` (resource `llm:pull-qwen2`). Mistral 7B et phi3:mini trop lents sur M1 pour un usage interactif.
 - `application-local.yml` est gitignore — contient les clés API et config sensible. Ne jamais committer de clés dans le repo.
+- Commits en **anglais** — type, scope, description et corps. Voir `docs/commit-conventions.md`.
 
 ## Instructions pour Claude
 
@@ -117,7 +118,7 @@ Le backend démarre avec le profil `local` (`application-local.yml`).
 | Affichage recommandations (dashboard) | ✅ Fait | Polling RxJS (`interval + switchMap + takeWhile`), bouton "Analyser avec l'IA" avec spinner CSS + timer elapsed, section recommandation avec confidence badge, actions BUY/SELL/HOLD/REDUCE colorées |
 | Seed data Tilt | ✅ Fait | `scripts/seed.sql` — portefeuille démo ~100k€ (VOO, QQQ, BND, AAPL, MSFT, NVDA, GOOGL, AMZN, BTC, ETH). Bouton `db:seed` dans Tilt. |
 | Robustesse analyse IA | ✅ Fait | Timeout HTTP 45s sur OllamaClient, lecture réponse en bytes bruts (contourne `application/octet-stream`), extracteur JSON robuste (strip markdown), `@Transactional(readOnly=true)` sur controller pour fix `LazyInitializationException`, `GlobalExceptionHandler` → 404 sur `NoSuchElementException`, gestion 404 dans le polling frontend. |
-| Affichage recommandations (page history) | ⏳ À faire | Component `recommendations/` — historique complet |
+| Affichage recommandations (page history) | ✅ Fait | Nouveau endpoint `GET /api/recommendations` (global, `RecommendationHistoryController`). `RecommendationDto` enrichi avec `portfolioName`. Composant `history/` : filtres portfolio + statut (chips), liste de cartes expandables (résumé actions inline, détail sur clic), badges confidence / statut colorés. `AnalysisService.getAllRecommendations()`. |
 | Persistance Settings | ⏳ À faire | Sauvegarder les toggles sources en base |
 
 ### Phase 2 — Traçabilité
