@@ -69,24 +69,25 @@ describe('Dashboard', () => {
     expect(component.actionAmounts('AAPL', 10)).toBeNull();
   });
 
-  it('actionAmounts computes values correctly', () => {
+  it('actionAmounts computes values in CAD using bookValueCad', () => {
     const assets: Asset[] = [
-      { id: '1', portfolioId: 'p1', ticker: 'AAPL', name: 'Apple', quantity: 10, avgBuyPrice: 100, assetType: 'STOCK', totalValue: 1000, createdAt: '' },
-      { id: '2', portfolioId: 'p1', ticker: 'GOOG', name: 'Google', quantity: 5, avgBuyPrice: 200, assetType: 'STOCK', totalValue: 1000, createdAt: '' },
+      { id: '1', portfolioId: 'p1', ticker: 'AAPL', name: 'Apple', quantity: 10, avgBuyPrice: 100, assetType: 'STOCK', totalValue: 1000, currency: 'USD', bookValueCad: 1400, createdAt: '' },
+      { id: '2', portfolioId: 'p1', ticker: 'XIU', name: 'iShares', quantity: 5, avgBuyPrice: 200, assetType: 'ETF', totalValue: 1000, currency: 'CAD', bookValueCad: 600, createdAt: '' },
     ];
     component.assets.set(assets);
-    // total = 2000, AAPL = 1000 (50%), target = 60%
-    const result = component.actionAmounts('AAPL', 60);
+    // totalCad = 2000, AAPL bookValueCad = 1400 (70%), target = 50%
+    const result = component.actionAmounts('AAPL', 50);
     expect(result).not.toBeNull();
-    expect(result!.currentValue).toBe(1000);
-    expect(result!.currentWeight).toBeCloseTo(50);
-    expect(result!.targetAmount).toBeCloseTo(1200);
-    expect(result!.delta).toBeCloseTo(200);
+    expect(result!.currentValue).toBe(1400);
+    expect(result!.currentWeight).toBeCloseTo(70);
+    expect(result!.targetAmount).toBeCloseTo(1000);
+    expect(result!.delta).toBeCloseTo(-400);
+    expect(result!.currency).toBe('CAD');
   });
 
-  it('actionAmounts uses 0 for asset not found in portfolio', () => {
+  it('actionAmounts uses 0 bookValueCad for asset not in portfolio', () => {
     const assets: Asset[] = [
-      { id: '1', portfolioId: 'p1', ticker: 'GOOG', name: 'Google', quantity: 5, avgBuyPrice: 200, assetType: 'STOCK', totalValue: 1000, createdAt: '' },
+      { id: '1', portfolioId: 'p1', ticker: 'XIU', name: 'iShares', quantity: 5, avgBuyPrice: 200, assetType: 'ETF', totalValue: 1000, currency: 'CAD', bookValueCad: 1000, createdAt: '' },
     ];
     component.assets.set(assets);
     const result = component.actionAmounts('AAPL', 20);

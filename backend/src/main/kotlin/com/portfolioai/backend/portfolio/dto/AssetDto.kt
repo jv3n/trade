@@ -14,7 +14,12 @@ data class AssetDto(
     val quantity: BigDecimal,
     val avgBuyPrice: BigDecimal,
     val assetType: AssetType,
+    /** Valeur marchande = qty × avgBuyPrice, en devise native */
     val totalValue: BigDecimal,
+    /** Devise native de l'actif (USD, CAD…) */
+    val currency: String,
+    /** Valeur comptable en CAD — comparable entre actifs de devises différentes */
+    val bookValueCad: BigDecimal,
     val createdAt: Instant
 )
 
@@ -27,5 +32,7 @@ fun Asset.toDto() = AssetDto(
     avgBuyPrice = avgBuyPrice,
     assetType = assetType,
     totalValue = quantity.multiply(avgBuyPrice),
+    currency = currency,
+    bookValueCad = bookValueCad,
     createdAt = createdAt
 )

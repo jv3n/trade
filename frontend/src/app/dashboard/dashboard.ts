@@ -29,8 +29,9 @@ export class Dashboard implements OnInit, OnDestroy {
   error = signal<string | null>(null);
   lastRecommendation = signal<Recommendation | null>(null);
 
-  totalPortfolioValue = computed(() =>
-    this.assets().reduce((sum, a) => sum + a.totalValue, 0)
+  /** Total en CAD (bookValueCad toujours en CAD, comparable entre USD et CAD) */
+  totalPortfolioValueCad = computed(() =>
+    this.assets().reduce((sum, a) => sum + a.bookValueCad, 0)
   );
 
   ngOnInit() {
@@ -121,15 +122,17 @@ export class Dashboard implements OnInit, OnDestroy {
     return { BUY: 'action-buy', SELL: 'action-sell', HOLD: 'action-hold', REDUCE: 'action-reduce' }[action] ?? '';
   }
 
-  actionAmounts(ticker: string, targetWeight: number | null): { targetAmount: number; currentValue: number; currentWeight: number; delta: number } | null {
+  actionAmounts(ticker: string, targetWeight: number | null): {
+    targetAmount: number; currentValue: number; currentWeight: number; delta: number; currency: string;
+  } | null {
     if (targetWeight === null) return null;
-    const total = this.totalPortfolioValue();
-    if (total === 0) return null;
+    const totalCad = this.totalPortfolioValueCad();
+    if (totalCad === 0) return null;
     const asset = this.assets().find(a => a.ticker === ticker);
-    const currentValue = asset?.totalValue ?? 0;
-    const currentWeight = (currentValue / total) * 100;
-    const targetAmount = (targetWeight / 100) * total;
+    const currentValue = asset?.bookValueCad ?? 0;
+    const currentWeight = (currentValue / totalCad) * 100;
+    const targetAmount = (targetWeight / 100) * totalCad;
     const delta = targetAmount - currentValue;
-    return { targetAmount, currentValue, currentWeight, delta };
+    return { targetAmount, currentValue, currentWeight, delta, currency: 'CAD' };
   }
 }

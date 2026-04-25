@@ -33,6 +33,14 @@ class Asset(
     @Column(name = "asset_type", nullable = false, length = 50)
     var assetType: AssetType,
 
+    /** Devise native de l'actif (USD, CAD…) — source: Devise de la valeur marchande */
+    @Column(nullable = false, length = 10)
+    var currency: String = "CAD",
+
+    /** Valeur comptable en CAD — toujours comparable entre actifs, source: Valeur comptable (CAD) */
+    @Column(name = "book_value_cad", nullable = false, precision = 18, scale = 2)
+    var bookValueCad: BigDecimal = BigDecimal.ZERO,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 

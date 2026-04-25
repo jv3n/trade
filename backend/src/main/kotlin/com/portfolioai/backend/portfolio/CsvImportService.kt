@@ -116,6 +116,8 @@ class CsvImportService(
                     asset.avgBuyPrice = avgPrice
                     asset.name = row.name
                     asset.assetType = assetType
+                    asset.currency = row.marketCurrency
+                    asset.bookValueCad = row.bookValueCad
                     asset.updatedAt = importedAt
                     assetRepository.save(asset)
                 } else {
@@ -125,7 +127,9 @@ class CsvImportService(
                         name = row.name,
                         quantity = row.quantity,
                         avgBuyPrice = avgPrice,
-                        assetType = assetType
+                        assetType = assetType,
+                        currency = row.marketCurrency,
+                        bookValueCad = row.bookValueCad
                     ))
                 }
                 totalImported++

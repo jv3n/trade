@@ -62,15 +62,6 @@ local_resource(
     labels = ["db-tools"],
 )
 
-local_resource(
-    name = "db:seed",
-    cmd = "docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai < scripts/seed.sql",
-    trigger_mode = TRIGGER_MODE_MANUAL,
-    auto_init = False,
-    resource_deps = ["postgres"],
-    labels = ["db-tools"],
-)
-
 # Affichage des liens utiles
 print("Frontend : http://{}:4200".format(host))
 print("Backend  : http://{}:8080".format(host))

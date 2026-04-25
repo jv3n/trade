@@ -33,7 +33,7 @@ class PortfolioControllerTest {
         ticker = "AAPL", name = "Apple Inc.",
         quantity = java.math.BigDecimal("10"), avgBuyPrice = java.math.BigDecimal("150.00"),
         assetType = AssetType.STOCK, totalValue = java.math.BigDecimal("1800.00"),
-        createdAt = now
+        createdAt = now, currency = "USD", bookValueCad =java.math.BigDecimal("1800.00"),
     )
 
     @Test

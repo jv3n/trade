@@ -21,7 +21,12 @@ export interface Asset {
   quantity: number;
   avgBuyPrice: number;
   assetType: AssetType;
+  /** Valeur marchande en devise native */
   totalValue: number;
+  /** Devise native (USD, CAD…) */
+  currency: string;
+  /** Valeur comptable en CAD — comparable entre actifs */
+  bookValueCad: number;
   createdAt: string;
 }
 
