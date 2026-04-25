@@ -23,9 +23,8 @@ trade/
 ├── frontend/          # Angular 21
 ├── backend/           # Kotlin + Spring Boot
 │   └── build.gradle.kts
-├── docs/              # Documentation projet
+├── docs/              # Documentation projet (vision.md, sources.md, commit-conventions.md)
 ├── .github/workflows/ # CI GitHub Actions (backend + frontend)
-├── SOURCES.md         # Référence des sources de données ingérées
 ├── README.md
 └── docker-compose.yml
 ```
@@ -106,7 +105,7 @@ Le backend démarre avec le profil `local` (`application-local.yml`).
 | Portfolio CRUD (frontend) | ✅ Fait | `PortfolioService` (HttpClient), `Dashboard` avec liste portefeuilles + tableau actifs + formulaires inline |
 | Proxy dev Angular | ✅ Fait | `proxy.conf.json` + `angular.json` — redirige `/api` → `http://localhost:8080` |
 | Navigation (header) | ✅ Fait | `mat-toolbar` Material sticky, liens avec icônes, état actif, Settings en icône à droite |
-| Catalogue des sources | ✅ Fait | `SOURCES.md` — référence de 22 sources (RSS, marché, macro, crypto) avec métadonnées |
+| Catalogue des sources | ✅ Fait | `docs/sources.md` — référence de 22 sources (RSS, marché, macro, crypto) avec métadonnées |
 | Page Settings — sources | ✅ Fait | Toggles par catégorie, tags Clé API / Payant, compteur actives/total — voir "Persistance Settings" ci-dessous |
 | CI GitHub Actions | ✅ Fait | `.github/workflows/backend.yml` (Gradle + PostgreSQL service) et `frontend.yml` (Vitest, pas Karma) — déclenchés sur changements de chemin uniquement |
 | Ingestion RSS (backend) | ✅ Fait | Module `ingestion/` — `FeedSource`, `FeedArticle`, `RssFetcherService` (Rome), scheduler 15 min prod / 5 min local, déduplication par `guid`, `GET /api/ingestion/articles`, `POST /api/ingestion/fetch` |

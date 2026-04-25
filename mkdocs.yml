@@ -1,0 +1,30 @@
+site_name: PortfolioAI
+site_description: Optimiseur de portefeuille boursier alimenté par l'IA
+site_url: https://julienvenet.github.io/trade/
+docs_dir: docs
+
+nav:
+  - Métier:
+      - Vision: metier/vision.md
+      - Fonctionnalités: metier/fonctionnalites.md
+      - Sources de données: sources.md
+  - Technique:
+      - Architecture: technique/architecture.md
+      - Guide de développement: technique/developpement.md
+      - Conventions de commit: commit-conventions.md
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+    accent: purple
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.superfences
