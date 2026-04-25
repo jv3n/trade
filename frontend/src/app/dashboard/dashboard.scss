@@ -82,8 +82,13 @@
   cursor: pointer;
   transition: background 0.15s;
 
-  &:hover { background: #1a1f2e; }
-  &.active { background: #1e1b4b; border-left: 2px solid #7c6af7; }
+  &:hover {
+    background: #1a1f2e;
+  }
+  &.active {
+    background: #1e1b4b;
+    border-left: 2px solid #7c6af7;
+  }
 
   .portfolio-name {
     font-size: 0.9rem;
@@ -175,7 +180,9 @@
   overflow: hidden;
   background: linear-gradient(135deg, #6d28d9, #7c6af7, #a78bfa);
   color: #fff;
-  transition: opacity 0.2s, transform 0.15s;
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
   letter-spacing: 0.01em;
 
   mat-icon {
@@ -189,7 +196,9 @@
     opacity: 0.92;
   }
 
-  &:active:not(:disabled) { transform: translateY(0); }
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -216,12 +225,19 @@
 }
 
 @keyframes glow-pulse {
-  0%, 100% { opacity: 0.6; }
-  50%       { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // Tableau des actifs
@@ -248,10 +264,16 @@
     vertical-align: middle;
   }
 
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #1a1f2e; }
+  tr:last-child td {
+    border-bottom: none;
+  }
+  tr:hover td {
+    background: #1a1f2e;
+  }
 
-  .text-right { text-align: right; }
+  .text-right {
+    text-align: right;
+  }
 
   .num {
     font-variant-numeric: tabular-nums;
@@ -271,11 +293,17 @@
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
 
-  &.gain-pos { color: #4ade80; }
-  &.gain-neg { color: #fca5a5; }
+  &.gain-pos {
+    color: #4ade80;
+  }
+  &.gain-neg {
+    color: #fca5a5;
+  }
 }
 
-.no-data { color: #4a5568; }
+.no-data {
+  color: #4a5568;
+}
 
 .ticker-badge {
   font-weight: 700;
@@ -292,11 +320,26 @@
   font-weight: 600;
   text-transform: uppercase;
 
-  &.type-stock     { background: #1e3a5f; color: #60a5fa; }
-  &.type-etf       { background: #1a3a2a; color: #4ade80; }
-  &.type-crypto    { background: #3a1f1a; color: #fb923c; }
-  &.type-bond      { background: #2a2a1a; color: #facc15; }
-  &.type-commodity { background: #2a1a3a; color: #c084fc; }
+  &.type-stock {
+    background: #1e3a5f;
+    color: #60a5fa;
+  }
+  &.type-etf {
+    background: #1a3a2a;
+    color: #4ade80;
+  }
+  &.type-crypto {
+    background: #3a1f1a;
+    color: #fb923c;
+  }
+  &.type-bond {
+    background: #2a2a1a;
+    color: #facc15;
+  }
+  &.type-commodity {
+    background: #2a1a3a;
+    color: #c084fc;
+  }
 }
 
 // Section recommandation
@@ -320,8 +363,14 @@
   align-items: center;
   gap: 0.5rem;
 
-  mat-icon { color: #7c6af7; }
-  h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+  mat-icon {
+    color: #7c6af7;
+  }
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
 }
 
 .confidence-badge {
@@ -330,9 +379,18 @@
   padding: 0.15rem 0.6rem;
   border-radius: 12px;
 
-  &.high   { background: #1a3a2a; color: #4ade80; }
-  &.medium { background: #2a2a1a; color: #facc15; }
-  &.low    { background: #3a1515; color: #fca5a5; }
+  &.high {
+    background: #1a3a2a;
+    color: #4ade80;
+  }
+  &.medium {
+    background: #2a2a1a;
+    color: #facc15;
+  }
+  &.low {
+    background: #3a1515;
+    color: #fca5a5;
+  }
 }
 
 .recommendation-date {
@@ -399,13 +457,28 @@
   border-radius: 4px;
   text-transform: uppercase;
 
-  &.action-buy    { background: #1a3a2a; color: #4ade80; }
-  &.action-sell   { background: #3a1515; color: #fca5a5; }
-  &.action-hold   { background: #1e3a5f; color: #60a5fa; }
-  &.action-reduce { background: #2a2a1a; color: #facc15; }
+  &.action-buy {
+    background: #1a3a2a;
+    color: #4ade80;
+  }
+  &.action-sell {
+    background: #3a1515;
+    color: #fca5a5;
+  }
+  &.action-hold {
+    background: #1e3a5f;
+    color: #60a5fa;
+  }
+  &.action-reduce {
+    background: #2a2a1a;
+    color: #facc15;
+  }
 }
 
-.action-weight { font-size: 0.75rem; color: #64748b; }
+.action-weight {
+  font-size: 0.75rem;
+  color: #64748b;
+}
 
 .action-amounts {
   display: flex;
@@ -416,9 +489,16 @@
   font-size: 0.78rem;
 }
 
-.amount-current { color: #64748b; }
-.amount-arrow   { color: #4a5568; }
-.amount-target  { color: #cbd5e1; font-weight: 600; }
+.amount-current {
+  color: #64748b;
+}
+.amount-arrow {
+  color: #4a5568;
+}
+.amount-target {
+  color: #cbd5e1;
+  font-weight: 600;
+}
 
 .amount-delta {
   font-weight: 700;
@@ -426,8 +506,14 @@
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
 
-  &.positive { background: #1a3a2a; color: #4ade80; }
-  &.negative { background: #3a1515; color: #fca5a5; }
+  &.positive {
+    background: #1a3a2a;
+    color: #4ade80;
+  }
+  &.negative {
+    background: #3a1515;
+    color: #fca5a5;
+  }
 }
 
 .action-rationale {

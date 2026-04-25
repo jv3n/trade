@@ -12,25 +12,23 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/portfolios/import")
 class CsvImportController(private val csvImportService: CsvImportService) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+  private val log = LoggerFactory.getLogger(javaClass)
 
-    @PostMapping("/csv/preview", consumes = ["multipart/form-data"])
-    fun preview(
-        @RequestParam("file") file: MultipartFile
-    ): ResponseEntity<CsvImportPreview> = try {
-        ResponseEntity.ok(csvImportService.preview(file))
+  @PostMapping("/csv/preview", consumes = ["multipart/form-data"])
+  fun preview(@RequestParam("file") file: MultipartFile): ResponseEntity<CsvImportPreview> =
+    try {
+      ResponseEntity.ok(csvImportService.preview(file))
     } catch (e: Exception) {
-        log.error("CSV preview failed", e)
-        ResponseEntity.badRequest().build()
+      log.error("CSV preview failed", e)
+      ResponseEntity.badRequest().build()
     }
 
-    @PostMapping("/csv", consumes = ["multipart/form-data"])
-    fun import(
-        @RequestParam("file") file: MultipartFile
-    ): ResponseEntity<CsvImportResult> = try {
-        ResponseEntity.ok(csvImportService.import(file))
+  @PostMapping("/csv", consumes = ["multipart/form-data"])
+  fun import(@RequestParam("file") file: MultipartFile): ResponseEntity<CsvImportResult> =
+    try {
+      ResponseEntity.ok(csvImportService.import(file))
     } catch (e: Exception) {
-        log.error("CSV import failed", e)
-        ResponseEntity.badRequest().build()
+      log.error("CSV import failed", e)
+      ResponseEntity.badRequest().build()
     }
 }

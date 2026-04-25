@@ -12,11 +12,7 @@ describe('Import', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Import],
-      providers: [
-        provideRouter([]),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Import);

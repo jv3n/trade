@@ -10,33 +10,34 @@ import java.time.Instant
 import java.util.UUID
 
 data class RecommendationActionDto(
-    val ticker: String,
-    val action: RecommendationAction,
-    val rationale: String?,
-    val targetWeight: BigDecimal?,
+  val ticker: String,
+  val action: RecommendationAction,
+  val rationale: String?,
+  val targetWeight: BigDecimal?,
 )
 
 data class RecommendationDto(
-    val id: UUID,
-    val portfolioId: UUID,
-    val portfolioName: String,
-    val generatedAt: Instant,
-    val contextSummary: String,
-    val promptVersion: String,
-    val content: String,
-    val confidence: Short?,
-    val status: RecommendationStatus,
-    val actions: List<RecommendationActionDto>,
+  val id: UUID,
+  val portfolioId: UUID,
+  val portfolioName: String,
+  val generatedAt: Instant,
+  val contextSummary: String,
+  val promptVersion: String,
+  val content: String,
+  val confidence: Short?,
+  val status: RecommendationStatus,
+  val actions: List<RecommendationActionDto>,
 )
 
 data class AnalysisJobDto(
-    val jobId: UUID,
-    val status: JobStatus,
-    val recommendationId: UUID? = null,
-    val error: String? = null,
+  val jobId: UUID,
+  val status: JobStatus,
+  val recommendationId: UUID? = null,
+  val error: String? = null,
 )
 
-fun Recommendation.toDto() = RecommendationDto(
+fun Recommendation.toDto() =
+  RecommendationDto(
     id = id,
     portfolioId = portfolio.id,
     portfolioName = portfolio.name,
@@ -46,12 +47,9 @@ fun Recommendation.toDto() = RecommendationDto(
     content = content,
     confidence = confidence,
     status = status,
-    actions = actions.map { RecommendationActionDto(it.ticker, it.action, it.rationale, it.targetWeight) },
-)
+    actions =
+      actions.map { RecommendationActionDto(it.ticker, it.action, it.rationale, it.targetWeight) },
+  )
 
-fun AnalysisJob.toDto() = AnalysisJobDto(
-    jobId = id,
-    status = status,
-    recommendationId = recommendationId,
-    error = error
-)
+fun AnalysisJob.toDto() =
+  AnalysisJobDto(jobId = id, status = status, recommendationId = recommendationId, error = error)

@@ -8,8 +8,5 @@ import org.springframework.test.context.TestPropertySource
 @TestPropertySource(properties = ["anthropic.api.key=test-key-ci-only"])
 class BackendApplicationTests {
 
-	@Test
-	fun contextLoads() {
-	}
-
+  @Test fun contextLoads() {}
 }

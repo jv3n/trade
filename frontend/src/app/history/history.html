@@ -16,11 +16,19 @@
         <div class="filter-group">
           <label>Portefeuille</label>
           <div class="chip-list">
-            <button class="chip" [class.active]="filterPortfolio() === 'all'" (click)="filterPortfolio.set('all')">
+            <button
+              class="chip"
+              [class.active]="filterPortfolio() === 'all'"
+              (click)="filterPortfolio.set('all')"
+            >
               Tous
             </button>
             @for (p of portfolios(); track p.id) {
-              <button class="chip" [class.active]="filterPortfolio() === p.id" (click)="filterPortfolio.set(p.id)">
+              <button
+                class="chip"
+                [class.active]="filterPortfolio() === p.id"
+                (click)="filterPortfolio.set(p.id)"
+              >
                 {{ p.name }}
               </button>
             }
@@ -31,7 +39,11 @@
         <label>Statut</label>
         <div class="chip-list">
           @for (s of statuses; track s.value) {
-            <button class="chip" [class.active]="filterStatus() === s.value" (click)="filterStatus.set(s.value)">
+            <button
+              class="chip"
+              [class.active]="filterStatus() === s.value"
+              (click)="filterStatus.set(s.value)"
+            >
               {{ s.label }}
             </button>
           }
@@ -70,21 +82,25 @@
           <div class="rec-header" (click)="toggleExpand(rec.id)">
             <div class="rec-meta">
               <span class="portfolio-tag">{{ rec.portfolioName }}</span>
-              <span class="rec-date">{{ rec.generatedAt | date:'dd MMM yyyy, HH:mm' }}</span>
+              <span class="rec-date">{{ rec.generatedAt | date: 'dd MMM yyyy, HH:mm' }}</span>
             </div>
             <div class="rec-badges">
               @if (rec.confidence !== null) {
-                <span class="confidence-badge"
+                <span
+                  class="confidence-badge"
                   [class.high]="rec.confidence >= 70"
                   [class.medium]="rec.confidence >= 40 && rec.confidence < 70"
-                  [class.low]="rec.confidence < 40">
+                  [class.low]="rec.confidence < 40"
+                >
                   {{ rec.confidence }}%
                 </span>
               }
               <span class="status-badge status-{{ rec.status | lowercase }}">
                 {{ statusLabel(rec.status) }}
               </span>
-              <mat-icon class="expand-icon">{{ isExpanded(rec.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+              <mat-icon class="expand-icon">{{
+                isExpanded(rec.id) ? 'expand_less' : 'expand_more'
+              }}</mat-icon>
             </div>
           </div>
 
@@ -94,7 +110,9 @@
               @for (action of rec.actions; track action.ticker) {
                 <div class="action-pill">
                   <span class="action-ticker">{{ action.ticker }}</span>
-                  <span class="action-badge {{ actionClass(action.action) }}">{{ action.action }}</span>
+                  <span class="action-badge {{ actionClass(action.action) }}">{{
+                    action.action
+                  }}</span>
                 </div>
               }
             </div>
@@ -114,7 +132,9 @@
                       <div class="action-card">
                         <div class="action-top">
                           <span class="action-ticker">{{ action.ticker }}</span>
-                          <span class="action-badge {{ actionClass(action.action) }}">{{ action.action }}</span>
+                          <span class="action-badge {{ actionClass(action.action) }}">{{
+                            action.action
+                          }}</span>
                           @if (action.targetWeight !== null) {
                             <span class="action-weight">{{ action.targetWeight }}%</span>
                           }

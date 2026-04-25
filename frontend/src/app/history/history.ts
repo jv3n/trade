@@ -38,16 +38,17 @@ export class History implements OnInit {
 
   portfolios = computed(() => {
     const map = new Map<string, string>();
-    this.recommendations().forEach(r => map.set(r.portfolioId, r.portfolioName));
+    this.recommendations().forEach((r) => map.set(r.portfolioId, r.portfolioName));
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   });
 
   filtered = computed(() =>
-    this.recommendations().filter(r => {
-      const matchPortfolio = this.filterPortfolio() === 'all' || r.portfolioId === this.filterPortfolio();
+    this.recommendations().filter((r) => {
+      const matchPortfolio =
+        this.filterPortfolio() === 'all' || r.portfolioId === this.filterPortfolio();
       const matchStatus = this.filterStatus() === 'all' || r.status === this.filterStatus();
       return matchPortfolio && matchStatus;
-    })
+    }),
   );
 
   ngOnInit() {
@@ -57,7 +58,7 @@ export class History implements OnInit {
   load() {
     this.loading.set(true);
     this.analysisService.getAllRecommendations().subscribe({
-      next: recs => {
+      next: (recs) => {
         this.recommendations.set(recs);
         this.loading.set(false);
       },
@@ -69,7 +70,7 @@ export class History implements OnInit {
   }
 
   toggleExpand(id: string) {
-    this.expandedIds.update(set => {
+    this.expandedIds.update((set) => {
       const next = new Set(set);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -82,7 +83,11 @@ export class History implements OnInit {
   }
 
   actionClass(action: string): string {
-    return { BUY: 'action-buy', SELL: 'action-sell', HOLD: 'action-hold', REDUCE: 'action-reduce' }[action] ?? '';
+    return (
+      { BUY: 'action-buy', SELL: 'action-sell', HOLD: 'action-hold', REDUCE: 'action-reduce' }[
+        action
+      ] ?? ''
+    );
   }
 
   statusLabel(status: RecommendationStatus): string {

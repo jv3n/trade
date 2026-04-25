@@ -2,11 +2,12 @@ package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.domain.AnalysisJob
 import com.portfolioai.portfolio.infrastructure.persistence.PortfolioRepository
+import java.util.UUID
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import java.util.UUID
 
-internal val SYSTEM_PROMPT = """
+internal val SYSTEM_PROMPT =
+  """
 You are a financial portfolio analyst. Analyze the portfolio and news, then respond with a JSON object.
 
 Output ONLY this JSON structure, nothing else:
@@ -25,19 +26,20 @@ CRITICAL RULES:
 - "action" must be exactly one of: BUY, SELL, HOLD, REDUCE
 - "confidence" must be an integer between 0 and 100
 - "targetWeight" is the suggested portfolio percentage for that position
-""".trimIndent()
+"""
+    .trimIndent()
 
 @Service
 class AnalysisService(
-    private val portfolioRepository: PortfolioRepository,
-    private val jobStore: AnalysisJobStore,
-    private val runner: AnalysisRunner,
+  private val portfolioRepository: PortfolioRepository,
+  private val jobStore: AnalysisJobStore,
+  private val runner: AnalysisRunner,
 ) {
-    fun startAsync(portfolioId: UUID): AnalysisJob {
-        portfolioRepository.findByIdOrNull(portfolioId)
-            ?: throw NoSuchElementException("Portfolio $portfolioId not found")
-        val job = jobStore.create()
-        runner.run(portfolioId, job.id)
-        return job
-    }
+  fun startAsync(portfolioId: UUID): AnalysisJob {
+    portfolioRepository.findByIdOrNull(portfolioId)
+      ?: throw NoSuchElementException("Portfolio $portfolioId not found")
+    val job = jobStore.create()
+    runner.run(portfolioId, job.id)
+    return job
+  }
 }

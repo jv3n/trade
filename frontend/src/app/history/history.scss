@@ -17,7 +17,9 @@
   align-items: center;
   gap: 0.5rem;
 
-  mat-icon { color: #7c6af7; }
+  mat-icon {
+    color: #7c6af7;
+  }
 
   h2 {
     margin: 0;
@@ -79,7 +81,10 @@
   cursor: pointer;
   transition: all 0.15s ease;
 
-  &:hover { border-color: #7c6af7; color: #e2e8f0; }
+  &:hover {
+    border-color: #7c6af7;
+    color: #e2e8f0;
+  }
 
   &.active {
     background: #7c6af7;
@@ -102,12 +107,27 @@
   color: #64748b;
   text-align: center;
 
-  mat-icon { font-size: 2rem; height: 2rem; width: 2rem; }
-  p { margin: 0; font-size: 1rem; color: #94a3b8; }
-  span { font-size: 0.85rem; }
+  mat-icon {
+    font-size: 2rem;
+    height: 2rem;
+    width: 2rem;
+  }
+  p {
+    margin: 0;
+    font-size: 1rem;
+    color: #94a3b8;
+  }
+  span {
+    font-size: 0.85rem;
+  }
 }
 
-.error-state { color: #fca5a5; mat-icon { color: #fca5a5; } }
+.error-state {
+  color: #fca5a5;
+  mat-icon {
+    color: #fca5a5;
+  }
+}
 
 // Liste de recommandations
 .rec-list {
@@ -123,8 +143,12 @@
   overflow: hidden;
   transition: border-color 0.15s ease;
 
-  &:hover { border-color: #4a5568; }
-  &.expanded { border-color: #7c6af7; }
+  &:hover {
+    border-color: #4a5568;
+  }
+  &.expanded {
+    border-color: #7c6af7;
+  }
 }
 
 .rec-header {
@@ -135,7 +159,9 @@
   cursor: pointer;
   user-select: none;
 
-  &:hover { background: rgba(255,255,255,0.02); }
+  &:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
 }
 
 .rec-meta {
@@ -171,9 +197,18 @@
   padding: 0.15rem 0.5rem;
   border-radius: 10px;
 
-  &.high   { background: #1a3a2a; color: #4ade80; }
-  &.medium { background: #2a2a1a; color: #facc15; }
-  &.low    { background: #3a1515; color: #fca5a5; }
+  &.high {
+    background: #1a3a2a;
+    color: #4ade80;
+  }
+  &.medium {
+    background: #2a2a1a;
+    color: #facc15;
+  }
+  &.low {
+    background: #3a1515;
+    color: #fca5a5;
+  }
 }
 
 .status-badge {
@@ -182,10 +217,22 @@
   padding: 0.15rem 0.55rem;
   border-radius: 10px;
 
-  &.status-pending   { background: #1e3a5f; color: #60a5fa; }
-  &.status-applied   { background: #1a3a2a; color: #4ade80; }
-  &.status-ignored   { background: #2d3748; color: #94a3b8; }
-  &.status-evaluated { background: #2a1a3a; color: #c084fc; }
+  &.status-pending {
+    background: #1e3a5f;
+    color: #60a5fa;
+  }
+  &.status-applied {
+    background: #1a3a2a;
+    color: #4ade80;
+  }
+  &.status-ignored {
+    background: #2d3748;
+    color: #94a3b8;
+  }
+  &.status-evaluated {
+    background: #2a1a3a;
+    color: #c084fc;
+  }
 }
 
 .expand-icon {
@@ -260,7 +307,9 @@
   gap: 0.5rem;
   margin-bottom: 0.25rem;
 
-  &:last-child { margin-bottom: 0; }
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .action-ticker {
@@ -277,10 +326,22 @@
   border-radius: 4px;
   text-transform: uppercase;
 
-  &.action-buy    { background: #1a3a2a; color: #4ade80; }
-  &.action-sell   { background: #3a1515; color: #fca5a5; }
-  &.action-hold   { background: #1e3a5f; color: #60a5fa; }
-  &.action-reduce { background: #2a2a1a; color: #facc15; }
+  &.action-buy {
+    background: #1a3a2a;
+    color: #4ade80;
+  }
+  &.action-sell {
+    background: #3a1515;
+    color: #fca5a5;
+  }
+  &.action-hold {
+    background: #1e3a5f;
+    color: #60a5fa;
+  }
+  &.action-reduce {
+    background: #2a2a1a;
+    color: #facc15;
+  }
 }
 
 .action-weight {

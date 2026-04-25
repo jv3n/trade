@@ -1,5 +1,4 @@
 <div class="settings-layout">
-
   <div class="content-header">
     <h2>Sources de données</h2>
     <p>Activez ou désactivez les sources utilisées pour générer les recommandations IA.</p>
@@ -22,7 +21,9 @@
       <section class="source-category">
         <div class="category-header">
           <h3>{{ categoryLabels[category] }}</h3>
-          <span class="badge">{{ enabledCount(category) }} / {{ sourcesByCategory(category).length }} actives</span>
+          <span class="badge"
+            >{{ enabledCount(category) }} / {{ sourcesByCategory(category).length }} actives</span
+          >
         </div>
         <div class="source-list">
           @for (source of sourcesByCategory(category); track source.id) {
@@ -46,7 +47,9 @@
                 [class.saving]="isSaving(source.id)"
                 (click)="toggle(source)"
                 [disabled]="isSaving(source.id)"
-                [attr.aria-label]="source.enabled ? 'Désactiver ' + source.name : 'Activer ' + source.name"
+                [attr.aria-label]="
+                  source.enabled ? 'Désactiver ' + source.name : 'Activer ' + source.name
+                "
               >
                 <span class="toggle-thumb"></span>
               </button>
@@ -56,5 +59,4 @@
       </section>
     }
   }
-
 </div>

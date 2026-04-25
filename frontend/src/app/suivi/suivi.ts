@@ -35,12 +35,18 @@ export class Suivi implements OnInit {
   load() {
     this.loading.set(true);
     this.snapshotService.getAll().subscribe({
-      next: summaries => {
+      next: (summaries) => {
         const batchMap = new Map<string, Batch>();
         for (const s of summaries) {
           let batch = batchMap.get(s.batchId);
           if (!batch) {
-            batch = { batchId: s.batchId, importedAt: s.importedAt, snapshots: [], totalBookValueCad: 0, expanded: true };
+            batch = {
+              batchId: s.batchId,
+              importedAt: s.importedAt,
+              snapshots: [],
+              totalBookValueCad: 0,
+              expanded: true,
+            };
             batchMap.set(s.batchId, batch);
           }
           batch.snapshots.push(s);
@@ -58,13 +64,16 @@ export class Suivi implements OnInit {
 
   toggleBatch(batch: Batch) {
     batch.expanded = !batch.expanded;
-    this.batches.update(b => [...b]);
+    this.batches.update((b) => [...b]);
   }
 
   toggleSnapshot(snapshotId: string) {
-    this.expandedSnapshots.update(set => {
+    this.expandedSnapshots.update((set) => {
       const next = new Set(set);
-      if (next.has(snapshotId)) { next.delete(snapshotId); return next; }
+      if (next.has(snapshotId)) {
+        next.delete(snapshotId);
+        return next;
+      }
       next.add(snapshotId);
       if (!this.positions().has(snapshotId)) this.loadPositions(snapshotId);
       return next;
@@ -81,7 +90,7 @@ export class Suivi implements OnInit {
 
   private loadPositions(snapshotId: string) {
     this.snapshotService.getPositions(snapshotId).subscribe({
-      next: pos => this.positions.update(m => new Map(m).set(snapshotId, pos)),
+      next: (pos) => this.positions.update((m) => new Map(m).set(snapshotId, pos)),
     });
   }
 

@@ -5,9 +5,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { SettingsService, DataSource, SourceCategory } from '../core/settings.service';
 
 const CATEGORY_LABELS: Record<SourceCategory, string> = {
-  RSS:    'Presse & Flux RSS',
+  RSS: 'Presse & Flux RSS',
   MARKET: 'Données de marché',
-  MACRO:  'Indicateurs macro-économiques',
+  MACRO: 'Indicateurs macro-économiques',
   CRYPTO: 'Crypto',
 };
 
@@ -36,17 +36,23 @@ export class Settings implements OnInit {
 
   loadSources() {
     this.settingsService.getSources().subscribe({
-      next: sources => { this.sources.set(sources); this.sourcesLoading.set(false); },
-      error: () => { this.sourcesError.set('Impossible de charger les sources.'); this.sourcesLoading.set(false); },
+      next: (sources) => {
+        this.sources.set(sources);
+        this.sourcesLoading.set(false);
+      },
+      error: () => {
+        this.sourcesError.set('Impossible de charger les sources.');
+        this.sourcesLoading.set(false);
+      },
     });
   }
 
   sourcesByCategory(category: SourceCategory): DataSource[] {
-    return this.sources().filter(s => s.category === category);
+    return this.sources().filter((s) => s.category === category);
   }
 
   enabledCount(category: SourceCategory): number {
-    return this.sourcesByCategory(category).filter(s => s.enabled).length;
+    return this.sourcesByCategory(category).filter((s) => s.enabled).length;
   }
 
   isSaving(id: string): boolean {
@@ -56,17 +62,29 @@ export class Settings implements OnInit {
   toggle(source: DataSource) {
     if (this.isSaving(source.id)) return;
     const newEnabled = !source.enabled;
-    this.sources.update(list => list.map(s => s.id === source.id ? { ...s, enabled: newEnabled } : s));
-    this.savingIds.update(set => new Set([...set, source.id]));
+    this.sources.update((list) =>
+      list.map((s) => (s.id === source.id ? { ...s, enabled: newEnabled } : s)),
+    );
+    this.savingIds.update((set) => new Set([...set, source.id]));
 
     this.settingsService.updateEnabled(source.id, newEnabled).subscribe({
-      next: updated => {
-        this.sources.update(list => list.map(s => s.id === updated.id ? updated : s));
-        this.savingIds.update(set => { const n = new Set(set); n.delete(source.id); return n; });
+      next: (updated) => {
+        this.sources.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
+        this.savingIds.update((set) => {
+          const n = new Set(set);
+          n.delete(source.id);
+          return n;
+        });
       },
       error: () => {
-        this.sources.update(list => list.map(s => s.id === source.id ? { ...s, enabled: source.enabled } : s));
-        this.savingIds.update(set => { const n = new Set(set); n.delete(source.id); return n; });
+        this.sources.update((list) =>
+          list.map((s) => (s.id === source.id ? { ...s, enabled: source.enabled } : s)),
+        );
+        this.savingIds.update((set) => {
+          const n = new Set(set);
+          n.delete(source.id);
+          return n;
+        });
         this.sourcesError.set(`Impossible de modifier "${source.name}".`);
       },
     });

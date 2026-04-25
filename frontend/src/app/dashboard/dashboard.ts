@@ -10,7 +10,13 @@ import { AnalysisService, Recommendation } from '../core/analysis.service';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatTooltipModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -31,7 +37,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   /** Total en CAD (bookValueCad toujours en CAD, comparable entre USD et CAD) */
   totalPortfolioValueCad = computed(() =>
-    this.assets().reduce((sum, a) => sum + a.bookValueCad, 0)
+    this.assets().reduce((sum, a) => sum + a.bookValueCad, 0),
   );
 
   ngOnInit() {
@@ -41,7 +47,7 @@ export class Dashboard implements OnInit, OnDestroy {
   loadPortfolios() {
     this.loading.set(true);
     this.portfolioService.getAll().subscribe({
-      next: portfolios => {
+      next: (portfolios) => {
         this.portfolios.set(portfolios);
         if (portfolios.length > 0 && !this.selectedPortfolio()) {
           this.selectPortfolio(portfolios[0]);
@@ -51,7 +57,7 @@ export class Dashboard implements OnInit, OnDestroy {
       error: () => {
         this.error.set('Erreur lors du chargement des portefeuilles');
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -59,8 +65,8 @@ export class Dashboard implements OnInit, OnDestroy {
     this.selectedPortfolio.set(portfolio);
     this.lastRecommendation.set(null);
     this.portfolioService.getAssets(portfolio.id).subscribe({
-      next: assets => this.assets.set(assets),
-      error: () => this.error.set('Erreur lors du chargement des actifs')
+      next: (assets) => this.assets.set(assets),
+      error: () => this.error.set('Erreur lors du chargement des actifs'),
     });
   }
 
@@ -72,35 +78,37 @@ export class Dashboard implements OnInit, OnDestroy {
     this.lastRecommendation.set(null);
 
     this.timerSub = new Subscription();
-    const timerInterval = setInterval(() => this.analyzeElapsed.update(v => v + 1), 1000);
+    const timerInterval = setInterval(() => this.analyzeElapsed.update((v) => v + 1), 1000);
     this.timerSub.add(() => clearInterval(timerInterval));
 
     this.analysisService.startAnalysis(portfolio.id).subscribe({
-      next: job => {
+      next: (job) => {
         this.pollSub = this.analysisService.pollJob(portfolio.id, job.jobId).subscribe({
-          next: updatedJob => {
+          next: (updatedJob) => {
             if (updatedJob.status === 'DONE' && updatedJob.recommendationId) {
-              this.analysisService.getRecommendation(portfolio.id, updatedJob.recommendationId).subscribe({
-                next: rec => {
-                  this.lastRecommendation.set(rec);
-                  this.stopAnalyzing();
-                }
-              });
+              this.analysisService
+                .getRecommendation(portfolio.id, updatedJob.recommendationId)
+                .subscribe({
+                  next: (rec) => {
+                    this.lastRecommendation.set(rec);
+                    this.stopAnalyzing();
+                  },
+                });
             } else if (updatedJob.status === 'ERROR') {
               this.error.set(`Erreur IA : ${updatedJob.error}`);
               this.stopAnalyzing();
             }
           },
           error: () => {
-            this.error.set('Erreur lors du polling du job d\'analyse');
+            this.error.set("Erreur lors du polling du job d'analyse");
             this.stopAnalyzing();
-          }
+          },
         });
       },
       error: () => {
-        this.error.set('Erreur lors du démarrage de l\'analyse IA');
+        this.error.set("Erreur lors du démarrage de l'analyse IA");
         this.stopAnalyzing();
-      }
+      },
     });
   }
 
@@ -119,16 +127,27 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   actionClass(action: string): string {
-    return { BUY: 'action-buy', SELL: 'action-sell', HOLD: 'action-hold', REDUCE: 'action-reduce' }[action] ?? '';
+    return (
+      { BUY: 'action-buy', SELL: 'action-sell', HOLD: 'action-hold', REDUCE: 'action-reduce' }[
+        action
+      ] ?? ''
+    );
   }
 
-  actionAmounts(ticker: string, targetWeight: number | null): {
-    targetAmount: number; currentValue: number; currentWeight: number; delta: number; currency: string;
+  actionAmounts(
+    ticker: string,
+    targetWeight: number | null,
+  ): {
+    targetAmount: number;
+    currentValue: number;
+    currentWeight: number;
+    delta: number;
+    currency: string;
   } | null {
     if (targetWeight === null) return null;
     const totalCad = this.totalPortfolioValueCad();
     if (totalCad === 0) return null;
-    const asset = this.assets().find(a => a.ticker === ticker);
+    const asset = this.assets().find((a) => a.ticker === ticker);
     const currentValue = asset?.bookValueCad ?? 0;
     const currentWeight = (currentValue / totalCad) * 100;
     const targetAmount = (targetWeight / 100) * totalCad;

@@ -17,7 +17,10 @@ const makeSummary = (overrides: Partial<SnapshotSummary> = {}): SnapshotSummary 
 describe('Suivi', () => {
   let component: Suivi;
   let fixture: ComponentFixture<Suivi>;
-  let snapshotService: { getAll: () => Observable<SnapshotSummary[]>, getPositions: () => Observable<SnapshotPosition[]> };
+  let snapshotService: {
+    getAll: () => Observable<SnapshotSummary[]>;
+    getPositions: () => Observable<SnapshotPosition[]>;
+  };
 
   beforeEach(async () => {
     snapshotService = {
@@ -66,11 +69,11 @@ describe('Suivi', () => {
     const batches = component.batches();
     expect(batches.length).toBe(2);
 
-    const batchA = batches.find(b => b.batchId === 'batch-A')!;
+    const batchA = batches.find((b) => b.batchId === 'batch-A')!;
     expect(batchA.snapshots.length).toBe(2);
     expect(batchA.totalBookValueCad).toBe(5000);
 
-    const batchB = batches.find(b => b.batchId === 'batch-B')!;
+    const batchB = batches.find((b) => b.batchId === 'batch-B')!;
     expect(batchB.snapshots.length).toBe(1);
     expect(batchB.totalBookValueCad).toBe(3200);
   });

@@ -1,9 +1,10 @@
 <div class="dashboard">
-
   <!-- En-tête -->
   <header class="dashboard-header">
     <h1>PortfolioAI</h1>
-    <p class="disclaimer">⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.</p>
+    <p class="disclaimer">
+      ⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.
+    </p>
   </header>
 
   @if (error()) {
@@ -14,7 +15,6 @@
   }
 
   <div class="dashboard-body">
-
     <!-- Sidebar : liste des portefeuilles -->
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -43,10 +43,8 @@
 
     <!-- Contenu principal -->
     <main class="main-content">
-
       @if (selectedPortfolio(); as portfolio) {
         <div class="portfolio-detail">
-
           <div class="portfolio-detail-header">
             <div>
               <h2>{{ portfolio.name }}</h2>
@@ -56,7 +54,7 @@
             </div>
             <div class="portfolio-value">
               <span class="value-label">Valeur comptable totale (CAD)</span>
-              <span class="value-amount">{{ totalPortfolioValueCad() | number:'1.0-0' }} CAD</span>
+              <span class="value-amount">{{ totalPortfolioValueCad() | number: '1.0-0' }} CAD</span>
             </div>
           </div>
 
@@ -99,18 +97,41 @@
                 <tbody>
                   @for (asset of assets(); track asset.id) {
                     <tr>
-                      <td><span class="ticker-badge">{{ asset.ticker }}</span></td>
+                      <td>
+                        <span class="ticker-badge">{{ asset.ticker }}</span>
+                      </td>
                       <td>{{ asset.name }}</td>
-                      <td><span class="type-badge type-{{ asset.assetType.toLowerCase() }}">{{ asset.assetType }}</span></td>
-                      <td class="text-right num">{{ asset.quantity | number:'1.0-4' }}</td>
-                      <td class="text-right num">{{ asset.avgBuyPrice | number:'1.2-2' }} <span class="currency">{{ asset.currency }}</span></td>
-                      <td class="text-right num">{{ asset.marketPrice | number:'1.2-2' }} <span class="currency">{{ asset.currency }}</span></td>
-                      <td class="text-right num">{{ asset.bookValueCad | number:'1.0-0' }} <span class="currency">CAD</span></td>
-                      <td class="text-right num">{{ asset.marketValue | number:'1.0-0' }} <span class="currency">{{ asset.currency }}</span></td>
+                      <td>
+                        <span class="type-badge type-{{ asset.assetType.toLowerCase() }}">{{
+                          asset.assetType
+                        }}</span>
+                      </td>
+                      <td class="text-right num">{{ asset.quantity | number: '1.0-4' }}</td>
+                      <td class="text-right num">
+                        {{ asset.avgBuyPrice | number: '1.2-2' }}
+                        <span class="currency">{{ asset.currency }}</span>
+                      </td>
+                      <td class="text-right num">
+                        {{ asset.marketPrice | number: '1.2-2' }}
+                        <span class="currency">{{ asset.currency }}</span>
+                      </td>
+                      <td class="text-right num">
+                        {{ asset.bookValueCad | number: '1.0-0' }} <span class="currency">CAD</span>
+                      </td>
+                      <td class="text-right num">
+                        {{ asset.marketValue | number: '1.0-0' }}
+                        <span class="currency">{{ asset.currency }}</span>
+                      </td>
                       <td class="text-right">
                         @if (asset.unrealizedGain !== null) {
-                          <span class="gain-value" [class.gain-pos]="asset.unrealizedGain! >= 0" [class.gain-neg]="asset.unrealizedGain! < 0">
-                            {{ asset.unrealizedGain! >= 0 ? '+' : '' }}{{ asset.unrealizedGain | number:'1.0-0' }} <span class="currency">{{ asset.gainCurrency }}</span>
+                          <span
+                            class="gain-value"
+                            [class.gain-pos]="asset.unrealizedGain! >= 0"
+                            [class.gain-neg]="asset.unrealizedGain! < 0"
+                          >
+                            {{ asset.unrealizedGain! >= 0 ? '+' : ''
+                            }}{{ asset.unrealizedGain | number: '1.0-0' }}
+                            <span class="currency">{{ asset.gainCurrency }}</span>
                           </span>
                         } @else {
                           <span class="no-data">—</span>
@@ -121,7 +142,9 @@
                 </tbody>
               </table>
             } @else {
-              <p class="empty-state">Aucune position — importez un CSV pour peupler ce portefeuille.</p>
+              <p class="empty-state">
+                Aucune position — importez un CSV pour peupler ce portefeuille.
+              </p>
             }
           </div>
 
@@ -133,12 +156,19 @@
                   <mat-icon>auto_awesome</mat-icon>
                   <h3>Recommandation IA</h3>
                   @if (rec.confidence !== null) {
-                    <span class="confidence-badge" [class.high]="rec.confidence >= 70" [class.medium]="rec.confidence >= 40 && rec.confidence < 70" [class.low]="rec.confidence < 40">
+                    <span
+                      class="confidence-badge"
+                      [class.high]="rec.confidence >= 70"
+                      [class.medium]="rec.confidence >= 40 && rec.confidence < 70"
+                      [class.low]="rec.confidence < 40"
+                    >
                       {{ rec.confidence }}% de confiance
                     </span>
                   }
                 </div>
-                <span class="recommendation-date">{{ rec.generatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                <span class="recommendation-date">{{
+                  rec.generatedAt | date: 'dd/MM/yyyy HH:mm'
+                }}</span>
               </div>
 
               <p class="recommendation-context">{{ rec.contextSummary }}</p>
@@ -152,18 +182,30 @@
                       <div class="action-card">
                         <div class="action-top">
                           <span class="action-ticker">{{ action.ticker }}</span>
-                          <span class="action-badge {{ actionClass(action.action) }}">{{ action.action }}</span>
+                          <span class="action-badge {{ actionClass(action.action) }}">{{
+                            action.action
+                          }}</span>
                           @if (action.targetWeight !== null) {
                             <span class="action-weight">cible {{ action.targetWeight }}%</span>
                           }
                         </div>
                         @if (actionAmounts(action.ticker, action.targetWeight); as amt) {
                           <div class="action-amounts">
-                            <span class="amount-current">actuel {{ amt.currentWeight | number:'1.1-1' }}% · {{ amt.currentValue | number:'1.0-0' }} {{ amt.currency }}</span>
+                            <span class="amount-current"
+                              >actuel {{ amt.currentWeight | number: '1.1-1' }}% ·
+                              {{ amt.currentValue | number: '1.0-0' }} {{ amt.currency }}</span
+                            >
                             <span class="amount-arrow">→</span>
-                            <span class="amount-target">{{ amt.targetAmount | number:'1.0-0' }} {{ amt.currency }}</span>
-                            <span class="amount-delta" [class.positive]="amt.delta > 0" [class.negative]="amt.delta < 0">
-                              {{ amt.delta > 0 ? '+' : '' }}{{ amt.delta | number:'1.0-0' }} {{ amt.currency }}
+                            <span class="amount-target"
+                              >{{ amt.targetAmount | number: '1.0-0' }} {{ amt.currency }}</span
+                            >
+                            <span
+                              class="amount-delta"
+                              [class.positive]="amt.delta > 0"
+                              [class.negative]="amt.delta < 0"
+                            >
+                              {{ amt.delta > 0 ? '+' : '' }}{{ amt.delta | number: '1.0-0' }}
+                              {{ amt.currency }}
                             </span>
                           </div>
                         }
@@ -177,7 +219,6 @@
               }
             </div>
           }
-
         </div>
       } @else {
         <div class="empty-portfolio">
@@ -185,6 +226,5 @@
         </div>
       }
     </main>
-
   </div>
 </div>

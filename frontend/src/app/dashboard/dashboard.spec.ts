@@ -71,8 +71,38 @@ describe('Dashboard', () => {
 
   it('actionAmounts computes values in CAD using bookValueCad', () => {
     const assets: Asset[] = [
-      { id: '1', portfolioId: 'p1', ticker: 'AAPL', name: 'Apple', quantity: 10, avgBuyPrice: 100, assetType: 'STOCK', currency: 'USD', bookValueCad: 1400, marketValue: 1000, marketPrice: 100, unrealizedGain: null, gainCurrency: null, createdAt: '' },
-      { id: '2', portfolioId: 'p1', ticker: 'XIU', name: 'iShares', quantity: 5, avgBuyPrice: 200, assetType: 'ETF', currency: 'CAD', bookValueCad: 600, marketValue: 1000, marketPrice: 200, unrealizedGain: null, gainCurrency: null, createdAt: '' },
+      {
+        id: '1',
+        portfolioId: 'p1',
+        ticker: 'AAPL',
+        name: 'Apple',
+        quantity: 10,
+        avgBuyPrice: 100,
+        assetType: 'STOCK',
+        currency: 'USD',
+        bookValueCad: 1400,
+        marketValue: 1000,
+        marketPrice: 100,
+        unrealizedGain: null,
+        gainCurrency: null,
+        createdAt: '',
+      },
+      {
+        id: '2',
+        portfolioId: 'p1',
+        ticker: 'XIU',
+        name: 'iShares',
+        quantity: 5,
+        avgBuyPrice: 200,
+        assetType: 'ETF',
+        currency: 'CAD',
+        bookValueCad: 600,
+        marketValue: 1000,
+        marketPrice: 200,
+        unrealizedGain: null,
+        gainCurrency: null,
+        createdAt: '',
+      },
     ];
     component.assets.set(assets);
     // totalCad = 2000, AAPL bookValueCad = 1400 (70%), target = 50%
@@ -87,7 +117,22 @@ describe('Dashboard', () => {
 
   it('actionAmounts uses 0 bookValueCad for asset not in portfolio', () => {
     const assets: Asset[] = [
-      { id: '1', portfolioId: 'p1', ticker: 'XIU', name: 'iShares', quantity: 5, avgBuyPrice: 200, assetType: 'ETF', currency: 'CAD', bookValueCad: 1000, marketValue: 1000, marketPrice: 200, unrealizedGain: null, gainCurrency: null, createdAt: '' },
+      {
+        id: '1',
+        portfolioId: 'p1',
+        ticker: 'XIU',
+        name: 'iShares',
+        quantity: 5,
+        avgBuyPrice: 200,
+        assetType: 'ETF',
+        currency: 'CAD',
+        bookValueCad: 1000,
+        marketValue: 1000,
+        marketPrice: 200,
+        unrealizedGain: null,
+        gainCurrency: null,
+        createdAt: '',
+      },
     ];
     component.assets.set(assets);
     const result = component.actionAmounts('AAPL', 20);

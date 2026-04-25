@@ -1,5 +1,4 @@
 <div class="suivi-page">
-
   <div class="suivi-header">
     <h2>Suivi des portefeuilles</h2>
     <p>Historique des imports CSV — chaque import crée un snapshot daté de vos positions.</p>
@@ -20,17 +19,16 @@
   } @else {
     @for (batch of batches(); track batch.batchId) {
       <div class="batch-card">
-
         <!-- En-tête du batch -->
         <div class="batch-header" (click)="toggleBatch(batch)">
           <div class="batch-date">
             <mat-icon>{{ batch.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-            <span class="batch-datetime">{{ batch.importedAt | date:'dd MMM yyyy — HH:mm' }}</span>
+            <span class="batch-datetime">{{ batch.importedAt | date: 'dd MMM yyyy — HH:mm' }}</span>
             <span class="batch-pill">{{ batch.snapshots.length }} compte(s)</span>
           </div>
           <div class="batch-total">
             <span class="total-label">Total valeur comptable</span>
-            <span class="total-value">{{ batch.totalBookValueCad | number:'1.0-0' }} CAD</span>
+            <span class="total-value">{{ batch.totalBookValueCad | number: '1.0-0' }} CAD</span>
           </div>
         </div>
 
@@ -39,13 +37,14 @@
           <div class="snapshots-list">
             @for (snap of batch.snapshots; track snap.id) {
               <div class="snapshot-row">
-
                 <!-- Résumé du snapshot -->
                 <div class="snapshot-summary" (click)="toggleSnapshot(snap.id)">
-                  <mat-icon class="snap-toggle">{{ isSnapshotExpanded(snap.id) ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+                  <mat-icon class="snap-toggle">{{
+                    isSnapshotExpanded(snap.id) ? 'keyboard_arrow_up' : 'keyboard_arrow_down'
+                  }}</mat-icon>
                   <span class="snap-name">{{ snap.portfolioName }}</span>
                   <span class="snap-count">{{ snap.positionCount }} position(s)</span>
-                  <span class="snap-value">{{ snap.totalBookValueCad | number:'1.0-0' }} CAD</span>
+                  <span class="snap-value">{{ snap.totalBookValueCad | number: '1.0-0' }} CAD</span>
                 </div>
 
                 <!-- Détail des positions -->
@@ -64,13 +63,18 @@
                       <div class="positions-row">
                         <span class="ticker">{{ pos.ticker }}</span>
                         <span class="pos-name">{{ pos.name }}</span>
-                        <span class="type-tag type-{{ pos.assetType.toLowerCase() }}">{{ pos.assetType }}</span>
-                        <span class="num">{{ pos.quantity | number:'1.0-4' }}</span>
-                        <span class="num">{{ pos.bookValueCad | number:'1.0-0' }} CAD</span>
-                        <span class="num">{{ pos.marketValue | number:'1.0-0' }} {{ pos.marketCurrency }}</span>
+                        <span class="type-tag type-{{ pos.assetType.toLowerCase() }}">{{
+                          pos.assetType
+                        }}</span>
+                        <span class="num">{{ pos.quantity | number: '1.0-4' }}</span>
+                        <span class="num">{{ pos.bookValueCad | number: '1.0-0' }} CAD</span>
+                        <span class="num"
+                          >{{ pos.marketValue | number: '1.0-0' }} {{ pos.marketCurrency }}</span
+                        >
                         <span class="num gain" [class]="gainClass(pos.unrealizedGain)">
                           @if (pos.unrealizedGain !== null) {
-                            {{ pos.unrealizedGain >= 0 ? '+' : '' }}{{ pos.unrealizedGain | number:'1.0-0' }} {{ pos.gainCurrency }}
+                            {{ pos.unrealizedGain >= 0 ? '+' : ''
+                            }}{{ pos.unrealizedGain | number: '1.0-0' }} {{ pos.gainCurrency }}
                           } @else {
                             —
                           }
@@ -84,14 +88,11 @@
                     }
                   </div>
                 }
-
               </div>
             }
           </div>
         }
-
       </div>
     }
   }
-
 </div>

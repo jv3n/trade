@@ -44,18 +44,29 @@ export class AnalysisService {
   pollJob(portfolioId: string, jobId: string): Observable<AnalysisJob> {
     return interval(2000).pipe(
       switchMap(() =>
-        this.http.get<AnalysisJob>(`/api/portfolios/${portfolioId}/recommendations/jobs/${jobId}`).pipe(
-          catchError(err => throwError(() => new Error(
-            err.status === 404 ? 'Job introuvable (backend redémarré ?)' : `Erreur ${err.status}`
-          )))
-        )
+        this.http
+          .get<AnalysisJob>(`/api/portfolios/${portfolioId}/recommendations/jobs/${jobId}`)
+          .pipe(
+            catchError((err) =>
+              throwError(
+                () =>
+                  new Error(
+                    err.status === 404
+                      ? 'Job introuvable (backend redémarré ?)'
+                      : `Erreur ${err.status}`,
+                  ),
+              ),
+            ),
+          ),
       ),
-      takeWhile(job => job.status === 'PENDING', true),
+      takeWhile((job) => job.status === 'PENDING', true),
     );
   }
 
   getRecommendation(portfolioId: string, recommendationId: string): Observable<Recommendation> {
-    return this.http.get<Recommendation>(`/api/portfolios/${portfolioId}/recommendations/${recommendationId}`);
+    return this.http.get<Recommendation>(
+      `/api/portfolios/${portfolioId}/recommendations/${recommendationId}`,
+    );
   }
 
   getRecommendations(portfolioId: string): Observable<Recommendation[]> {

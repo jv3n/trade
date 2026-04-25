@@ -63,12 +63,14 @@ export class CsvImport {
     this.error.set(null);
 
     this.portfolioService.previewCsvImport(file).subscribe({
-      next: preview => {
+      next: (preview) => {
         this.preview.set(preview);
         this.step.set('preview');
       },
       error: () => {
-        this.error.set('Impossible de lire le fichier. Vérifiez qu\'il s\'agit bien d\'un export Wealthsimple (positions).');
+        this.error.set(
+          "Impossible de lire le fichier. Vérifiez qu'il s'agit bien d'un export Wealthsimple (positions).",
+        );
         this.step.set('error');
       },
     });
@@ -84,7 +86,7 @@ export class CsvImport {
         this.imported.emit();
       },
       error: () => {
-        this.error.set('L\'import a échoué. Réessayez.');
+        this.error.set("L'import a échoué. Réessayez.");
         this.step.set('error');
       },
     });
@@ -97,5 +99,7 @@ export class CsvImport {
     this.error.set(null);
   }
 
-  reset() { this.cancel(); }
+  reset() {
+    this.cancel();
+  }
 }

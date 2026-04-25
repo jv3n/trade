@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/recommendations")
 class RecommendationHistoryController(
-    private val recommendationRepository: RecommendationRepository,
+  private val recommendationRepository: RecommendationRepository
 ) {
-    @GetMapping
-    @Transactional(readOnly = true)
-    fun getAllRecommendations(): List<RecommendationDto> =
-        recommendationRepository.findAllOrderByGeneratedAtDesc().map { it.toDto() }
+  @GetMapping
+  @Transactional(readOnly = true)
+  fun getAllRecommendations(): List<RecommendationDto> =
+    recommendationRepository.findAllOrderByGeneratedAtDesc().map { it.toDto() }
 }
