@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-Guidance for Claude Code when working in the PortfolioAI repository. This file complements the project-level [`CLAUDE.md`](../CLAUDE.md) at the repo root and centralises Claude-specific conventions, skills and hooks.
+Source of truth for project conventions and Claude-specific configuration. Read this first when working on PortfolioAI.
 
 ## Project
 
-AI-powered stock-portfolio optimiser. The app ingests economic feeds (RSS, financial APIs), generates investment recommendations through the Claude API, and tracks the quality of those recommendations over time.
+AI-powered stock-portfolio optimiser. The app ingests economic feeds (RSS, financial APIs), generates investment recommendations through the Claude API (or a local LLM via Ollama), and tracks the quality of those recommendations over time.
 
 ## Stack
 
@@ -25,17 +25,17 @@ trade/
 ├── frontend/                # Angular 21 (single app, standalone components)
 ├── backend/                 # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
-│       ├── analysis/        # LLM orchestration, jobs, recommendations
+│       ├── analysis/        # LLM orchestration, recommendations, jobs
 │       ├── ingestion/       # RSS / financial feeds
 │       ├── portfolio/       # CSV imports, snapshots, read-only portfolios
 │       └── shared/          # cross-cutting utilities
 ├── docs/
 │   ├── metier/              # vision.md, fonctionnalites.md
-│   ├── technique/           # architecture.md, developpement.md
+│   ├── technique/           # architecture.md, developpement.md, ddd.md
 │   ├── projet/              # backlog.md, sources.md, commit-conventions.md
 │   └── data-input/          # local CSVs (gitignored)
 ├── .github/workflows/       # CI: backend.yml, frontend.yml, docs.yml
-├── .claude/                 # Claude Code skills, hooks, instructions
+├── .claude/                 # this folder — Claude Code skills, hooks, instructions
 ├── Tiltfile
 ├── docker-compose.yml
 └── README.md
@@ -44,17 +44,19 @@ trade/
 ## Backend modules
 
 - `ingestion/` — RSS feeds and financial APIs collection
-- `analysis/` — LLM orchestration (`LlmClient`, `AnalysisRunner`, `AnalysisExecutor`, `AnalysisJobStore`)
+- `analysis/` — LLM orchestration (`AnalysisService`, `AnalysisRunner`, `AnalysisExecutor`, `AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator`, `RecommendationPersister`, `AnalysisJobStore`); also owns the `Recommendation` entity and its actions
 - `portfolio/` — read-only portfolios, Wealthsimple CSV import, historical snapshots
-- `recommendations/` — AI suggestion storage and scoring
-- `observability/` — recommendation vs. market reality (Phase 2)
+- `shared/` — cross-cutting utilities (e.g. `GlobalExceptionHandler`)
+
+> Note: there is no separate `recommendations/` package — recommendations live inside `analysis/`. Phase 2's observability work will likely live there too.
 
 ## Frontend modules
 
-- `dashboard/` — portfolio view (read-only positions) + AI analysis
+- `dashboard/` — portfolio view (read-only positions) + AI analysis trigger
 - `import/` — Wealthsimple CSV drag-and-drop page
 - `suivi/` — import history (snapshots by date, market values, P&L)
-- `history/` — AI recommendation history
+- `recommendations/` — filterable list of all recommendations
+- `history/` — chronological recommendation history
 - `settings/` — data-source configuration
 - `core/` — shared services (`PortfolioService`, `AnalysisService`, `SettingsService`, `SnapshotService`)
 
@@ -76,17 +78,10 @@ The backend boots with the `local` profile (`application-local.yml`, gitignored)
 All commands run from `frontend/`. Single Angular app, no monorepo.
 
 ```bash
-# Dev server
-npm run start
-
-# Build
-npm run build
-
-# Tests (Vitest)
-npm run test
-
-# Format (Prettier)
-npm run format
+npm run start    # dev server
+npm run build    # build
+npm run test     # tests (Vitest)
+npm run format   # Prettier
 ```
 
 To run a single test file with Vitest directly:
@@ -115,7 +110,7 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 - Integration tests on real PostgreSQL (no DB mocks)
 - Frontend tested with **Vitest** (not Karma, not Jest)
 - `@Async` Spring: always on a separate bean — never `this.asyncMethod()` (bypasses AOP)
-- Local LLM: Ollama + `qwen2:1.5b`. Mistral 7B / phi3:mini are too slow on M1
+- Local LLM: Ollama + **`mistral`** (7B Instruct). On enriched prompts qwen2:1.5b hallucinated; Mistral is slower (~1-2 min on M1) but coherent. Timeouts (frontend abort, dedup window) are aligned at 300 s to absorb that latency
 - Commits in **English**, Conventional Commits — see `docs/projet/commit-conventions.md`
 - Commit message proposals are always in **English**
 - Never commit API keys. `application-local.yml` is gitignored
@@ -135,7 +130,7 @@ The portfolio is **read-only** in the UI — it mirrors the broker's reality. Th
 
 `docs/projet/backlog.md` is the source of truth for feature tracking. After implementing a feature:
 
-1. Move the line from "À faire" to "Terminé" in `docs/projet/backlog.md`
+1. Move the line from "À faire" to "Terminé"
 2. Add concise technical notes in the Notes column
 
 ### Documentation
