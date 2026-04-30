@@ -54,12 +54,16 @@ Collecte les flux RSS via la librairie Rome. Chaque source est configurée en ba
 
 ### `analysis/`
 
-Orchestration des appels LLM, persistance des recommandations et suivi des jobs asynchrones. Découpage :
+Orchestration des appels LLM, persistance des recommandations et suivi des jobs asynchrones. Découpage en 7 beans, chacun avec une responsabilité claire :
 
 - `AnalysisService` — point d'entrée HTTP : valide le portefeuille, crée (ou réutilise) un job, déclenche l'exécution
 - `AnalysisRunner` — bean `@Async` séparé (jamais `this.method()`, sinon le proxy AOP Spring est bypassé). Délègue à `AnalysisExecutor`
-- `AnalysisExecutor` — `@Transactional` : construit le prompt, appelle le LLM, parse la réponse, persiste la `Recommendation` et ses actions
-- `AnalysisJobStore` — persiste les `AnalysisJob` en base (table `analysis_job`, V7). Permet de reprendre un job pendant après redémarrage et de dédupliquer deux requêtes simultanées sur le même portefeuille (fenêtre 90 s)
+- `AnalysisExecutor` — orchestre une exécution unitaire **sans transaction** : `loader → llm → parser → validator → (retry si invalide) → persister`
+- `AnalysisContextLoader` — `@Transactional(readOnly = true)` : lit le portefeuille, classe les articles via `ArticleRelevanceScorer`, construit le prompt, renvoie un `AnalysisContext` détaché (pas d'entité JPA managée)
+- `LlmResponseParser` — parse le JSON brut du LLM (tolérant aux fences markdown / prose autour) en `ParsedLlmRecommendation`. Pas de validation
+- `RecommendationValidator` — vérifie 8 règles : tickers ⊆ portefeuille, pas de duplicate / extra, action ∈ enum, confidence 0-100, targetWeight 0-100 par item, Σ ∈ [95,105], SELL ⇒ targetWeight ≤ 5. Renvoie un `ValidationResult` sealed (`Valid` | `Invalid(errors)`)
+- `RecommendationPersister` — `@Transactional` : recharge le portefeuille, persiste la `Recommendation` et ses actions à partir d'un `ParsedLlmRecommendation` déjà validé
+- `AnalysisJobStore` — persiste les `AnalysisJob` en base (table `analysis_job`, V7). Permet de reprendre un job pendant après redémarrage et de dédupliquer deux requêtes simultanées sur le même portefeuille
 
 Deux implémentations de `LlmClient` :
 
@@ -104,7 +108,15 @@ Migrations Flyway dans `backend/src/main/resources/db/migration/` :
 
 **Filtrage des articles par pertinence** — `ArticleRelevanceScorer` classe les 200 derniers articles selon un score keyword-based : tickers du portefeuille (poids 10, match avec word-boundary pour éviter qu'un ticker court comme `T` matche tout), mots significatifs des noms d'actifs (5), mots-clés sectoriels dérivés des `AssetType` (2), mots-clés macro fixes — Fed, ECB, taux, CPI… (1). Le LLM voit les 25 plus pertinents, fallback sur la recency si moins de 5 articles ont un score > 0. Embeddings / similarité sémantique → plus tard si nécessaire.
 
-**LLM local avec qwen2:1.5b** — Mistral 7B et phi3:mini sont trop lents sur M1 pour un usage interactif. qwen2:1.5b répond en ~60s avec `format:json`. Le role `system` est ignoré par ce modèle — system et user sont fusionnés en un seul message.
+**Fenêtres de timeout alignées (300 s)** — `POLL_ABORT_SECONDS` côté frontend (`analysis.service.ts`) et `DEDUP_WINDOW_SECONDS` côté backend (`AnalysisJobStore`) valent tous les deux 300 s. **Invariant** : la fenêtre serveur doit être ≥ l'abort frontend, sinon un retry pendant que le LLM mouline crée un nouveau job au lieu de réutiliser l'ancien. La valeur 300 s couvre le pire cas Mistral 7B local : 2 × ~1 min 30 (call initial + retry du validateur). Claude est nettement plus rapide ; 300 s reste large mais évite les fausses alertes "trop long" légitimes en cas de retry.
+
+**LLM call hors transaction** — l'appel `llmClient.complete()` (1-2 min sur Ollama) ne doit pas tenir de connexion Hikari. Le pipeline d'analyse est éclaté en plusieurs beans pour ça (voir module `analysis/` ci-dessus). Spring AOP impose des beans distincts pour que les `@Transactional` s'appliquent (le proxy ne fonctionne pas sur appels intra-bean).
+
+**Validation + auto-repair des réponses LLM** — même Mistral 7B sort régulièrement du JSON invalide (poids ne sommant pas à 100, tickers hallucinés repris des exemples du SYSTEM_PROMPT, actions absentes pour certains tickers). `RecommendationValidator` applique 8 règles strictes ; si la réponse est invalide, `AnalysisExecutor` re-prompte une fois le LLM en injectant les erreurs dans le user message ("YOUR PREVIOUS RESPONSE WAS REJECTED — Errors: …"). Au pire (2 attempts ratées), on persiste avec `withHoldFallback` qui **strip les tickers hallucinés** ET **ajoute des HOLD pour les tickers manquants** — mieux qu'un job en ERROR. Cette boucle évite de stocker du bruit en BDD et rend Phase 2 (mesure de qualité) honnête : on mesure des recos *valides*, pas du n'importe quoi.
+
+Conséquence sur le SYSTEM_PROMPT : les exemples de tickers (`AAPL`, `NVDA`) ont été remplacés par des placeholders (`<one of the portfolio tickers>`) — Mistral avait tendance à recopier les exemples comme si c'étaient de vrais tickers du portefeuille.
+
+**LLM local avec Mistral 7B Instruct** — initialement on était sur `qwen2:1.5b` pour la latence (~60 s), mais le prompt enrichi (25 articles + descriptions + valeurs marché + poids) a révélé que le modèle est trop petit : sorties incohérentes, tickers hallucinés, poids ne sommant pas à 100. Bascule sur `mistral` (7B Instruct, quantization Q4) pour la cohérence ; latence ~1-2 min sur M1, absorbée par les timeouts à 180 s. Le role `system` reste fusionné avec `user` (pratique conservée pour rester compatible avec les modèles qui l'ignorent).
 
 **Validation du schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage contre les entités. Toute modification des entités nécessite une migration Flyway.
 

@@ -34,6 +34,13 @@ export interface AnalysisJob {
   error: string | null;
 }
 
+/**
+ * Hard cap before the frontend gives up polling. Tuned for the local Ollama path
+ * (Mistral 7B on M1) which needs ~1-2 min per LLM call, and the validator may force a retry
+ * — so 2 × 1.5 min ≈ 3 min, with margin → 300 s. Claude is much faster; 300 s covers both.
+ */
+const POLL_ABORT_SECONDS = 300;
+
 @Injectable({ providedIn: 'root' })
 export class AnalysisService {
   private readonly http = inject(HttpClient);
@@ -63,7 +70,8 @@ export class AnalysisService {
       takeWhile((job) => {
         if (job.status !== 'PENDING') return false;
         const ageSeconds = (Date.now() - new Date(job.createdAt).getTime()) / 1000;
-        if (ageSeconds > 90) throw new Error('Analyse trop longue — relance possible');
+        if (ageSeconds > POLL_ABORT_SECONDS)
+          throw new Error('Analyse trop longue — relance possible');
         return true;
       }, true),
     );

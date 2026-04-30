@@ -22,9 +22,12 @@ class OllamaClient(
       .baseUrl(baseUrl)
       .defaultHeader("content-type", "application/json")
       .requestFactory(
+        // Read timeout aligned with frontend POLL_ABORT_SECONDS (180 s). The user gives up
+        // polling at the same moment the backend gives up reading from Ollama — no risk of
+        // a job staying PENDING forever after the user has moved on.
         SimpleClientHttpRequestFactory().apply {
           setConnectTimeout(5_000)
-          setReadTimeout(120_000)
+          setReadTimeout(180_000)
         }
       )
       .build()
