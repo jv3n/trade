@@ -102,6 +102,8 @@ Migrations Flyway dans `backend/src/main/resources/db/migration/` :
 
 **Prompt basé sur la valeur de marché, pas le cost basis** — `AnalysisExecutor` injecte `market_value` (V6) plutôt que `quantity × avgBuyPrice`. Le portefeuille étant multi-devises (USD, CAD…) et l'app n'ayant pas encore de service FX live, on dérive un FX implicite au moment de l'achat (`book_value_cad / (quantity × avg_buy_price)`) pour approximer `market_value_cad`. Imparfait — l'approximation utilise le FX d'achat — mais largement supérieur au cost basis pour le LLM. Un service FX live remplacera cette approximation plus tard.
 
+**Filtrage des articles par pertinence** — `ArticleRelevanceScorer` classe les 200 derniers articles selon un score keyword-based : tickers du portefeuille (poids 10, match avec word-boundary pour éviter qu'un ticker court comme `T` matche tout), mots significatifs des noms d'actifs (5), mots-clés sectoriels dérivés des `AssetType` (2), mots-clés macro fixes — Fed, ECB, taux, CPI… (1). Le LLM voit les 25 plus pertinents, fallback sur la recency si moins de 5 articles ont un score > 0. Embeddings / similarité sémantique → plus tard si nécessaire.
+
 **LLM local avec qwen2:1.5b** — Mistral 7B et phi3:mini sont trop lents sur M1 pour un usage interactif. qwen2:1.5b répond en ~60s avec `format:json`. Le role `system` est ignoré par ce modèle — system et user sont fusionnés en un seul message.
 
 **Validation du schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage contre les entités. Toute modification des entités nécessite une migration Flyway.

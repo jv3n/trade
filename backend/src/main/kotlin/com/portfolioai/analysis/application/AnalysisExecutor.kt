@@ -27,17 +27,24 @@ class AnalysisExecutor(
   private val recommendationRepository: RecommendationRepository,
   private val llmClient: LlmClient,
   private val objectMapper: ObjectMapper,
+  private val articleRelevanceScorer: ArticleRelevanceScorer,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
   @Transactional
   fun execute(portfolioId: UUID): Recommendation {
     val portfolio = portfolioRepository.findByIdOrNull(portfolioId)!!
-    val articles = articleRepository.findTop50ByOrderByPublishedAtDesc()
-    if (articles.isEmpty()) log.warn("No articles available for analysis")
+    val recent = articleRepository.findTop200ByOrderByPublishedAtDesc()
+    if (recent.isEmpty()) log.warn("No articles available for analysis")
 
-    val userMessage = buildUserMessage(portfolio, articles.take(10))
-    log.info("Calling LLM for portfolio '{}' with {} articles", portfolio.name, articles.size)
+    val relevant = articleRelevanceScorer.rank(recent, portfolio)
+    log.info(
+      "Calling LLM for portfolio '{}' with {} relevant articles (out of {} recent)",
+      portfolio.name,
+      relevant.size,
+      recent.size,
+    )
+    val userMessage = buildUserMessage(portfolio, relevant)
     val rawResponse = llmClient.complete(SYSTEM_PROMPT, userMessage, maxTokens = 800)
     log.info("Raw LLM response: {}", rawResponse)
 

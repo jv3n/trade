@@ -8,4 +8,6 @@ interface FeedArticleRepository : JpaRepository<FeedArticle, UUID> {
   fun existsBySourceIdAndGuid(sourceId: UUID, guid: String): Boolean
 
   fun findTop50ByOrderByPublishedAtDesc(): List<FeedArticle>
+
+  fun findTop200ByOrderByPublishedAtDesc(): List<FeedArticle>
 }

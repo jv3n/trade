@@ -27,6 +27,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | Devise et valeur de marché par actif | Migrations V5 (`currency`, `book_value_cad`) et V6 (`market_value`, `unrealized_gain`, `gain_currency`). Affichage P&L par position dans le Dashboard |
 | Persistance des jobs d'analyse | Migration V7 (`analysis_job`). `AnalysisExecutor` séparé de `AnalysisRunner`. Déduplication des jobs concurrents sur 90 s. Timeouts explicites sur le client Claude. Frontend : polling 5 s + abandon après 90 s |
 | Prompt LLM basé sur la valeur de marché | `AnalysisExecutor.buildUserMessage` raisonne sur `market_value` (approx CAD via FX au moment de l'achat = `book_value_cad / cost_native`), affiche par position : valeur marché native + CAD, poids %, P&L non réalisé %. Total : book CAD, market CAD, P&L global. Bonus : description d'article (140 car) en plus du titre. SYSTEM_PROMPT précise que `targetWeight` somme à ~100. Plus de cost basis. |
+| Filtrage des articles par pertinence | Nouveau `ArticleRelevanceScorer`. Fetch des 200 derniers articles, scoring par tickers du portefeuille (poids 10, word-boundary), mots significatifs des noms (5), mots-clés sectoriels par `AssetType` (2), mots-clés macro fixes (1). Top 25 passé au LLM, fallback recency si < 5 articles pertinents. |
 | Page Import (onglet dédié) | Drag & drop CSV standalone sur `/import`. Redirige vers `/suivi` après import. |
 | Page Suivi (historique positions) | `/suivi` — timeline groupée par batch d'import, expand par compte, détail positions avec valeur marché et P&L. |
 
@@ -39,11 +40,10 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 ### Qualité du contexte d'analyse (bloquant Phase 2)
 
-Phase 2 mesure la qualité des recommandations, mais aujourd'hui l'entrée du LLM est trop pauvre pour produire des recos signifiantes : on lui envoie le **prix de revient** (pas la valeur de marché) et **10 titres d'articles** sans filtrage de pertinence. Ces items rendent les mesures de Phase 2 réellement informatives.
+Les deux items 🔴 (valeur de marché + filtrage articles) sont faits. Restent les consolidations 🟡 (thèse, validation serveur, snapshot du prompt) avant Phase 2.
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ⏳ Filtrage des articles par pertinence | Aujourd'hui : `findTop50ByOrderByPublishedAtDesc().take(10)`. Filtrer côté requête : titre OU description mentionne un ticker du portefeuille, un secteur lié, ou des mots-clés macro pertinents. Élargir à 20-30 articles filtrés. | 🔴 Haute |
 | ⏳ Champ "thèse / objectif" sur le Portfolio | Texte libre optionnel sur `Portfolio` (horizon, tolérance au risque, contraintes). Injecté dans le prompt. Aujourd'hui chaque reco est context-free du *pourquoi* l'utilisateur tient ces positions. | 🟡 Moyenne |
 | ⏳ Validation serveur du JSON LLM | Vérifier `Σ targetWeight ≈ 100`, ticker ∈ portefeuille, `action ∈ enum`. Si invalide → relancer le LLM avec le message d'erreur (auto-repair max 1 retry) plutôt que sauvegarder du bruit. | 🟡 Moyenne |
 | ⏳ Snapshot du prompt envoyé | Nouveau champ `prompt_snapshot` (text) sur `Recommendation`. Sinon Phase 2 ne pourra pas corréler qualité de reco ↔ qualité du contexte ; l'analyse post-mortem sera aveugle. | 🟡 Moyenne |
@@ -55,7 +55,7 @@ Phase 2 mesure la qualité des recommandations, mais aujourd'hui l'entrée du LL
 
 ## Phase 2 — Traçabilité
 
-> ⚠️ **Pré-requis** : valider l'item 🔴 restant (filtrage articles) avant de commencer Phase 2. Mesurer la qualité de recos basées sur 10 titres random revient à mesurer du bruit.
+> Les 🔴 bloquants sont faits (valeur de marché + filtrage articles). Les 🟡 restants ne sont pas strictement bloquants, mais le `prompt_snapshot` est très utile pour rendre les mesures de Phase 2 interprétables a posteriori.
 
 | Feature | Description |
 |---------|-------------|
