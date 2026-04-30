@@ -35,14 +35,25 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | Page Import (onglet dédié) | Drag & drop CSV standalone sur `/import`. Redirige vers `/suivi` après import. |
 | Page Suivi (historique positions) | `/suivi` — timeline groupée par batch d'import, expand par compte, détail positions avec valeur marché et P&L. |
 
-### À faire
+### Avant le tag v0.1.0 (cohérence Phase 1)
+
+Petits trucs qui font la différence entre "ça compile" et "tag qui marche". À enchaîner avant de poser le tag.
+
+| Sujet | Description | Priorité |
+|-------|-------------|----------|
+| ⏳ Sources mensongères en `/settings` | (1) 3 RSS morts polluent les logs toutes les 5 min : Reuters Business, Reuters Markets (`feeds.reuters.com` mort depuis ~2020), BFM Bourse (DOCTYPE rejeté par Rome). À retirer du seed V3 ou désactiver en BDD. (2) 16 sources non-RSS toggleables dans l'UI mais jamais fetchées (`fetchAll()` filtre `category == RSS`). À cacher de la page Settings tant qu'aucun fetcher n'existe (composant frontend masque MARKET/MACRO/CRYPTO, le seed reste pour plus tard). ~30 min. | 🔴 Avant tag |
+| ⏳ Cleanup des jobs orphelins au démarrage | À chaque hot-reload Tilt (ou crash backend), un job `PENDING` reste `PENDING` à jamais en BDD ; pire, la dédup à 300 s peut recoller un nouvel utilisateur sur l'orphan invisible. Ajouter un `ApplicationReadyEvent` listener (ou `@PostConstruct` sur `AnalysisJobStore`) qui passe tous les `PENDING` en `ERROR` avec message "backend restarted while processing" au boot. ~15 min. | 🔴 Avant tag |
+| ⏳ Doublon `recommendations/` vs `history/` | Deux features frontend, deux routes (`/recommendations`, `/history`), même domaine — flagué dans l'audit initial, jamais tranché. Soit fusion en une page filtrable + chronologique, soit responsabilités explicites et liens croisés. Décision avant implémentation. ~30 min décision + impl. | 🔴 Avant tag |
+| ⏳ Premier test sur `RecommendationValidator` | La régression la plus probable du commit `feat(analysis): split pipeline…`. Si quelqu'un casse une règle (ou en ajoute une mal), on revient silencieusement à stocker du bruit. Test pur Kotlin, ~30 lignes, sans Spring. Couvre les 8 règles + cas limites (portefeuille vide, weights null, etc.). ~20 min. | 🟢 Souhaitable avant tag |
+
+### À faire (Phase 1.5)
 
 | Feature | Description |
 |---------|-------------|
 | ⏳ Notifications progression analyse | Suivi pas-à-pas en temps réel : "Récupération articles…", "Appel LLM…", "Parsing…". Via SSE ou champ `steps` sur le job, affiché comme fil dans l'UI |
 | ⏳ Analyse non-bloquante (navigation) | L'analyse en cours doit survivre à la navigation. `AnalysisStateService` Angular global — le polling vit hors du composant `dashboard` |
 | ⏳ Test manuel des sources (Settings) | Bouton "Tester" à côté de chaque source dans `/settings`. Appelle un nouvel endpoint `POST /api/ingestion/sources/{id}/test` qui fait un fetch immédiat (RSS ou autre selon la catégorie) et renvoie `{ok, articles, error}`. Permet à l'utilisateur de valider qu'une source répond avant de l'activer pour de bon. Pré-requis : ajouter les champs `last_fetched_at`, `last_success_at`, `last_error`, `last_article_count` sur `feed_source` (migration V8) pour que la page Settings affiche aussi la santé en continu — sinon le bouton "Tester" donne une info ponctuelle qui n'est pas reflétée par le scheduler. |
-| ⏳ Fetchers MARKET / MACRO / CRYPTO | Aujourd'hui le scheduler filtre `category == RSS` — les 16 sources non-RSS de la migration V3 sont visibles dans `/settings` mais ne sont jamais fetchées. Soit cacher ces catégories dans l'UI tant qu'aucun fetcher n'existe, soit implémenter les clients (Yahoo Finance, FRED, BCE, CoinGecko…). Lié au test manuel ci-dessus : sans fetchers, le bouton "Tester" sur ces sources doit dire "non implémenté". |
+| ⏳ Fetchers MARKET / MACRO / CRYPTO | Aujourd'hui le scheduler filtre `category == RSS` — les 16 sources non-RSS de la migration V3 sont visibles dans `/settings` mais ne sont jamais fetchées. Implémenter les clients (Yahoo Finance, FRED, BCE, CoinGecko…). Une fois fait, on pourra les ré-afficher dans Settings (cf. item "Sources mensongères" avant tag). |
 
 ### Qualité du contexte d'analyse (bloquant Phase 2)
 
