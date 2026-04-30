@@ -36,9 +36,26 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | ⏳ Notifications progression analyse | Suivi pas-à-pas en temps réel : "Récupération articles…", "Appel LLM…", "Parsing…". Via SSE ou champ `steps` sur le job, affiché comme fil dans l'UI |
 | ⏳ Analyse non-bloquante (navigation) | L'analyse en cours doit survivre à la navigation. `AnalysisStateService` Angular global — le polling vit hors du composant `dashboard` |
 
+### Qualité du contexte d'analyse (bloquant Phase 2)
+
+Phase 2 mesure la qualité des recommandations, mais aujourd'hui l'entrée du LLM est trop pauvre pour produire des recos signifiantes : on lui envoie le **prix de revient** (pas la valeur de marché) et **10 titres d'articles** sans filtrage de pertinence. Ces items rendent les mesures de Phase 2 réellement informatives.
+
+| Feature | Description | Priorité |
+|---------|-------------|----------|
+| ⏳ Brancher la valeur de marché dans le prompt | `Total value` actuel = Σ `quantity × avgBuyPrice` (cost basis). Utiliser `market_value` (V6) à la place. Calculer le poids actuel = `market_value / total_market_value` et l'injecter par position. Le LLM raisonne aujourd'hui sur un portefeuille à la date d'achat. | 🔴 Haute |
+| ⏳ Filtrage des articles par pertinence | Aujourd'hui : `findTop50ByOrderByPublishedAtDesc().take(10)`. Filtrer côté requête : titre OU description mentionne un ticker du portefeuille, un secteur lié, ou des mots-clés macro pertinents. Élargir à 20-30 articles filtrés. | 🔴 Haute |
+| ⏳ Champ "thèse / objectif" sur le Portfolio | Texte libre optionnel sur `Portfolio` (horizon, tolérance au risque, contraintes). Injecté dans le prompt. Aujourd'hui chaque reco est context-free du *pourquoi* l'utilisateur tient ces positions. | 🟡 Moyenne |
+| ⏳ Validation serveur du JSON LLM | Vérifier `Σ targetWeight ≈ 100`, ticker ∈ portefeuille, `action ∈ enum`. Si invalide → relancer le LLM avec le message d'erreur (auto-repair max 1 retry) plutôt que sauvegarder du bruit. | 🟡 Moyenne |
+| ⏳ Snapshot du prompt envoyé | Nouveau champ `prompt_snapshot` (text) sur `Recommendation`. Sinon Phase 2 ne pourra pas corréler qualité de reco ↔ qualité du contexte ; l'analyse post-mortem sera aveugle. | 🟡 Moyenne |
+| ⏳ Simplifier l'enum d'action | `REDUCE` chevauche `SELL + targetWeight < currentWeight`. Garder uniquement `BUY / SELL / HOLD` + delta de poids. Migration + adaptation prompt + UI. | 🟢 Basse |
+| ⏳ Score de confiance dérivé | Remplacer la `confidence` auto-déclarée du LLM (mal calibrée) par un score serveur : nombre d'articles pertinents, fraîcheur, diversité des sources, présence d'une thèse. La self-rating reste loggée pour comparaison. | 🟢 Basse — après Phase 2 |
+| ⏳ Continuité entre analyses | Injecter dans le prompt la dernière reco générée pour ce portefeuille + delta de prix marché depuis. Détecte les LLM qui changent d'avis sans nouvelle info. | 🟢 Basse |
+
 ---
 
 ## Phase 2 — Traçabilité
+
+> ⚠️ **Pré-requis** : valider les items 🔴 ci-dessus (valeur de marché + filtrage articles) avant de commencer Phase 2. Mesurer la qualité de recos basées sur 10 titres random et le cost basis revient à mesurer du bruit.
 
 | Feature | Description |
 |---------|-------------|
