@@ -9,9 +9,11 @@ import com.portfolioai.analysis.infrastructure.llm.LlmClient
 import com.portfolioai.analysis.infrastructure.persistence.RecommendationRepository
 import com.portfolioai.ingestion.domain.FeedArticle
 import com.portfolioai.ingestion.infrastructure.persistence.FeedArticleRepository
+import com.portfolioai.portfolio.domain.Asset
 import com.portfolioai.portfolio.domain.Portfolio
 import com.portfolioai.portfolio.infrastructure.persistence.PortfolioRepository
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
@@ -43,35 +45,100 @@ class AnalysisExecutor(
   }
 
   private fun buildUserMessage(portfolio: Portfolio, articles: List<FeedArticle>): String {
+    val views = portfolio.assets.map { it.toView() }
+    val totalBookCad = views.sumOf { it.asset.bookValueCad }
+    val totalMarketCad = views.sumOf { it.marketValueCad }
+    val totalGainCad = totalMarketCad - totalBookCad
+    val totalGainPct =
+      if (totalBookCad.signum() > 0)
+        totalGainCad.multiply(BigDecimal(100)).divide(totalBookCad, 1, RoundingMode.HALF_UP)
+      else null
+
     val assetsSection =
-      if (portfolio.assets.isEmpty()) "  (empty portfolio)"
+      if (views.isEmpty()) "  (empty portfolio)"
       else
-        portfolio.assets.joinToString("\n") { a ->
-          "  - ${a.ticker} (${a.assetType}): ${a.quantity} units @ avg ${a.avgBuyPrice} — ${a.name}"
-        }
+        views
+          .sortedByDescending { it.marketValueCad }
+          .joinToString("\n") { v ->
+            val weight =
+              if (totalMarketCad.signum() > 0)
+                v.marketValueCad
+                  .multiply(BigDecimal(100))
+                  .divide(totalMarketCad, 1, RoundingMode.HALF_UP)
+              else BigDecimal.ZERO
+            val unrealized =
+              v.unrealizedPct?.let { ", unrealized ${if (it.signum() >= 0) "+" else ""}$it%" } ?: ""
+            "  - ${v.asset.ticker} (${v.asset.assetType}): ${v.asset.quantity} units, " +
+              "market ${v.asset.marketValue} ${v.asset.currency} (~${v.marketValueCad.setScale(0, RoundingMode.HALF_UP)} CAD), " +
+              "weight $weight%$unrealized — ${v.asset.name}"
+          }
 
     val articlesSection =
       if (articles.isEmpty()) "  (no recent news)"
-      else articles.joinToString("\n") { a -> "  [${a.source.name}] ${a.title}" }
+      else
+        articles.joinToString("\n") { a ->
+          val desc =
+            a.description?.take(140)?.replace("\n", " ")?.trim()?.takeIf { it.isNotBlank() }
+          if (desc == null) "  [${a.source.name}] ${a.title}"
+          else "  [${a.source.name}] ${a.title} — $desc"
+        }
 
     val tickers = portfolio.assets.map { it.ticker }
-    val totalValue = portfolio.assets.sumOf { it.quantity * it.avgBuyPrice }
+    val totalLine = buildString {
+      append("Total book value: ${totalBookCad.setScale(0, RoundingMode.HALF_UP)} CAD")
+      append(
+        " | Total market value (approx): ${totalMarketCad.setScale(0, RoundingMode.HALF_UP)} CAD"
+      )
+      if (totalGainPct != null) {
+        val sign = if (totalGainCad.signum() >= 0) "+" else ""
+        append(
+          " | Unrealized P&L: $sign${totalGainCad.setScale(0, RoundingMode.HALF_UP)} CAD ($sign$totalGainPct%)"
+        )
+      }
+    }
 
     return """
 Portfolio: ${portfolio.name}
-Total value: $totalValue
+$totalLine
 
-Positions:
+Positions (sorted by market value, weights based on approximate CAD market value):
 $assetsSection
 
 Recent news:
 $articlesSection
 
 You MUST output one action for EACH of these tickers: ${tickers.joinToString(", ")}
+targetWeight is the desired share of total market value in percent — all targetWeight values should sum to ~100.
 Output valid JSON only.
     """
       .trimIndent()
   }
+
+  /**
+   * Convert each asset to a view enriched with an approximate CAD market value. We don't store a
+   * live FX rate; we derive it from the FX implicit at purchase (`bookValueCad / costNative`).
+   * That's an approximation — fine until we wire a proper FX feed.
+   */
+  private fun Asset.toView(): AssetView {
+    val costNative = quantity.multiply(avgBuyPrice)
+    val fxAtPurchase =
+      if (costNative.signum() > 0) bookValueCad.divide(costNative, 6, RoundingMode.HALF_UP)
+      else BigDecimal.ONE
+    val marketValueCad = marketValue.multiply(fxAtPurchase)
+    val unrealizedPct =
+      if (costNative.signum() > 0)
+        (marketValue - costNative)
+          .multiply(BigDecimal(100))
+          .divide(costNative, 1, RoundingMode.HALF_UP)
+      else null
+    return AssetView(this, marketValueCad, unrealizedPct)
+  }
+
+  private data class AssetView(
+    val asset: Asset,
+    val marketValueCad: BigDecimal,
+    val unrealizedPct: BigDecimal?,
+  )
 
   private fun extractJson(raw: String): String {
     val stripped = raw.replace(Regex("```(?:json)?\\s*"), "").trim()

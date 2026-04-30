@@ -26,6 +26,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | Snapshots historiques | À chaque import CSV, création d'un `PortfolioSnapshot` + `SnapshotPosition` par compte (valeur comptable CAD, valeur marché, P&L). Migration V4. `GET /api/snapshots` |
 | Devise et valeur de marché par actif | Migrations V5 (`currency`, `book_value_cad`) et V6 (`market_value`, `unrealized_gain`, `gain_currency`). Affichage P&L par position dans le Dashboard |
 | Persistance des jobs d'analyse | Migration V7 (`analysis_job`). `AnalysisExecutor` séparé de `AnalysisRunner`. Déduplication des jobs concurrents sur 90 s. Timeouts explicites sur le client Claude. Frontend : polling 5 s + abandon après 90 s |
+| Prompt LLM basé sur la valeur de marché | `AnalysisExecutor.buildUserMessage` raisonne sur `market_value` (approx CAD via FX au moment de l'achat = `book_value_cad / cost_native`), affiche par position : valeur marché native + CAD, poids %, P&L non réalisé %. Total : book CAD, market CAD, P&L global. Bonus : description d'article (140 car) en plus du titre. SYSTEM_PROMPT précise que `targetWeight` somme à ~100. Plus de cost basis. |
 | Page Import (onglet dédié) | Drag & drop CSV standalone sur `/import`. Redirige vers `/suivi` après import. |
 | Page Suivi (historique positions) | `/suivi` — timeline groupée par batch d'import, expand par compte, détail positions avec valeur marché et P&L. |
 
@@ -42,7 +43,6 @@ Phase 2 mesure la qualité des recommandations, mais aujourd'hui l'entrée du LL
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ⏳ Brancher la valeur de marché dans le prompt | `Total value` actuel = Σ `quantity × avgBuyPrice` (cost basis). Utiliser `market_value` (V6) à la place. Calculer le poids actuel = `market_value / total_market_value` et l'injecter par position. Le LLM raisonne aujourd'hui sur un portefeuille à la date d'achat. | 🔴 Haute |
 | ⏳ Filtrage des articles par pertinence | Aujourd'hui : `findTop50ByOrderByPublishedAtDesc().take(10)`. Filtrer côté requête : titre OU description mentionne un ticker du portefeuille, un secteur lié, ou des mots-clés macro pertinents. Élargir à 20-30 articles filtrés. | 🔴 Haute |
 | ⏳ Champ "thèse / objectif" sur le Portfolio | Texte libre optionnel sur `Portfolio` (horizon, tolérance au risque, contraintes). Injecté dans le prompt. Aujourd'hui chaque reco est context-free du *pourquoi* l'utilisateur tient ces positions. | 🟡 Moyenne |
 | ⏳ Validation serveur du JSON LLM | Vérifier `Σ targetWeight ≈ 100`, ticker ∈ portefeuille, `action ∈ enum`. Si invalide → relancer le LLM avec le message d'erreur (auto-repair max 1 retry) plutôt que sauvegarder du bruit. | 🟡 Moyenne |
@@ -55,7 +55,7 @@ Phase 2 mesure la qualité des recommandations, mais aujourd'hui l'entrée du LL
 
 ## Phase 2 — Traçabilité
 
-> ⚠️ **Pré-requis** : valider les items 🔴 ci-dessus (valeur de marché + filtrage articles) avant de commencer Phase 2. Mesurer la qualité de recos basées sur 10 titres random et le cost basis revient à mesurer du bruit.
+> ⚠️ **Pré-requis** : valider l'item 🔴 restant (filtrage articles) avant de commencer Phase 2. Mesurer la qualité de recos basées sur 10 titres random revient à mesurer du bruit.
 
 | Feature | Description |
 |---------|-------------|

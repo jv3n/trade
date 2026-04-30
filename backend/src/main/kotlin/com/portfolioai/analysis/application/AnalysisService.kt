@@ -21,11 +21,13 @@ Required JSON structure:
   ]
 }
 
+Each position is provided with its current market value (CAD-equivalent), current weight (% of total market value) and unrealized P&L. Reason about the portfolio in terms of market value and weights — not entry prices.
+
 MANDATORY RULES — violating any of these makes the response invalid:
 1. The "actions" array MUST have exactly one entry per ticker listed in the portfolio — never zero, never skip a ticker
 2. "action" must be exactly one of: BUY, SELL, HOLD, REDUCE
 3. "confidence" must be an integer 0-100
-4. "targetWeight" is the suggested portfolio percentage (0.0-100.0)
+4. "targetWeight" is the desired share of total market value in percent (0.0-100.0); the targetWeight values across all actions should sum to roughly 100
 5. Do NOT wrap the JSON in markdown code fences
 """
     .trimIndent()

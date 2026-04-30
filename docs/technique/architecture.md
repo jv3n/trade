@@ -100,6 +100,8 @@ Migrations Flyway dans `backend/src/main/resources/db/migration/` :
 
 **Persistance des jobs d'analyse en base** — l'ancien `ConcurrentHashMap` perdait l'historique au redémarrage. La table `analysis_job` (V7) stocke chaque job avec son `created_at`. `AnalysisService` consulte cette table avant de lancer un nouveau job : si un job pendant existe pour le même portefeuille dans la fenêtre des 90 dernières secondes, il est réutilisé — évite les doubles lancements depuis l'UI.
 
+**Prompt basé sur la valeur de marché, pas le cost basis** — `AnalysisExecutor` injecte `market_value` (V6) plutôt que `quantity × avgBuyPrice`. Le portefeuille étant multi-devises (USD, CAD…) et l'app n'ayant pas encore de service FX live, on dérive un FX implicite au moment de l'achat (`book_value_cad / (quantity × avg_buy_price)`) pour approximer `market_value_cad`. Imparfait — l'approximation utilise le FX d'achat — mais largement supérieur au cost basis pour le LLM. Un service FX live remplacera cette approximation plus tard.
+
 **LLM local avec qwen2:1.5b** — Mistral 7B et phi3:mini sont trop lents sur M1 pour un usage interactif. qwen2:1.5b répond en ~60s avec `format:json`. Le role `system` est ignoré par ce modèle — system et user sont fusionnés en un seul message.
 
 **Validation du schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage contre les entités. Toute modification des entités nécessite une migration Flyway.
