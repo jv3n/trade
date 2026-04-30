@@ -32,6 +32,7 @@ data class RecommendationDto(
 data class AnalysisJobDto(
   val jobId: UUID,
   val status: JobStatus,
+  val createdAt: Instant,
   val recommendationId: UUID? = null,
   val error: String? = null,
 )
@@ -52,4 +53,10 @@ fun Recommendation.toDto() =
   )
 
 fun AnalysisJob.toDto() =
-  AnalysisJobDto(jobId = id, status = status, recommendationId = recommendationId, error = error)
+  AnalysisJobDto(
+    jobId = id,
+    status = status,
+    createdAt = createdAt,
+    recommendationId = recommendationId,
+    error = error,
+  )

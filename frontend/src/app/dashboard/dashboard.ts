@@ -99,8 +99,8 @@ export class Dashboard implements OnInit, OnDestroy {
               this.stopAnalyzing();
             }
           },
-          error: () => {
-            this.error.set("Erreur lors du polling du job d'analyse");
+          error: (err: Error) => {
+            this.error.set(err.message ?? "Erreur lors du polling du job d'analyse");
             this.stopAnalyzing();
           },
         });

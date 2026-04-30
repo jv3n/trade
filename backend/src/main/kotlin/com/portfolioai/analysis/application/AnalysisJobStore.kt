@@ -2,33 +2,44 @@ package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.domain.AnalysisJob
 import com.portfolioai.analysis.domain.JobStatus
+import com.portfolioai.analysis.infrastructure.persistence.AnalysisJobRepository
+import java.time.Instant
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 @Component
-class AnalysisJobStore {
-  private val jobs = ConcurrentHashMap<UUID, AnalysisJob>()
+class AnalysisJobStore(private val repo: AnalysisJobRepository) {
 
-  fun create(): AnalysisJob {
-    val job = AnalysisJob()
-    jobs[job.id] = job
-    return job
-  }
+  @Transactional
+  fun create(portfolioId: UUID): AnalysisJob = repo.save(AnalysisJob(portfolioId = portfolioId))
 
-  fun get(id: UUID): AnalysisJob? = jobs[id]
+  @Transactional(readOnly = true) fun get(id: UUID): AnalysisJob? = repo.findByIdOrNull(id)
 
+  @Transactional(readOnly = true)
+  fun pendingFor(portfolioId: UUID): AnalysisJob? =
+    repo.findFirstByPortfolioIdAndStatusAndCreatedAtAfterOrderByCreatedAtDesc(
+      portfolioId,
+      JobStatus.PENDING,
+      Instant.now().minusSeconds(90),
+    )
+
+  @Transactional
   fun complete(id: UUID, recommendationId: UUID) {
-    jobs[id]?.let {
+    repo.findByIdOrNull(id)?.let {
       it.status = JobStatus.DONE
       it.recommendationId = recommendationId
+      repo.save(it)
     }
   }
 
+  @Transactional
   fun fail(id: UUID, error: String) {
-    jobs[id]?.let {
+    repo.findByIdOrNull(id)?.let {
       it.status = JobStatus.ERROR
       it.error = error
+      repo.save(it)
     }
   }
 }

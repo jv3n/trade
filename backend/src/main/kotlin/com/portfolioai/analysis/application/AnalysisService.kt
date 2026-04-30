@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service
 
 internal val SYSTEM_PROMPT =
   """
-You are a financial portfolio analyst. Analyze the portfolio and news, then respond with a JSON object.
+You are a financial portfolio analyst. Respond with ONLY a valid JSON object, no prose, no markdown.
 
-Output ONLY this JSON structure, nothing else:
+Required JSON structure:
 {
   "content": "2-3 sentence overall analysis",
-  "confidence": 70,
+  "confidence": 75,
   "contextSummary": "1 sentence describing what data was used",
   "actions": [
     {"ticker": "AAPL", "action": "HOLD", "rationale": "one sentence reason", "targetWeight": 12.5},
@@ -21,11 +21,12 @@ Output ONLY this JSON structure, nothing else:
   ]
 }
 
-CRITICAL RULES:
-- The "actions" array MUST contain one entry for EVERY ticker in the portfolio
-- "action" must be exactly one of: BUY, SELL, HOLD, REDUCE
-- "confidence" must be an integer between 0 and 100
-- "targetWeight" is the suggested portfolio percentage for that position
+MANDATORY RULES — violating any of these makes the response invalid:
+1. The "actions" array MUST have exactly one entry per ticker listed in the portfolio — never zero, never skip a ticker
+2. "action" must be exactly one of: BUY, SELL, HOLD, REDUCE
+3. "confidence" must be an integer 0-100
+4. "targetWeight" is the suggested portfolio percentage (0.0-100.0)
+5. Do NOT wrap the JSON in markdown code fences
 """
     .trimIndent()
 
@@ -38,7 +39,10 @@ class AnalysisService(
   fun startAsync(portfolioId: UUID): AnalysisJob {
     portfolioRepository.findByIdOrNull(portfolioId)
       ?: throw NoSuchElementException("Portfolio $portfolioId not found")
-    val job = jobStore.create()
+    jobStore.pendingFor(portfolioId)?.let {
+      return it
+    }
+    val job = jobStore.create(portfolioId)
     runner.run(portfolioId, job.id)
     return job
   }

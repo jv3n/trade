@@ -1,9 +1,9 @@
 package com.portfolioai.analysis.infrastructure.llm
 
-import kotlin.collections.get
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
@@ -21,6 +21,12 @@ class ClaudeClient(
       .defaultHeader("x-api-key", apiKey)
       .defaultHeader("anthropic-version", "2023-06-01")
       .defaultHeader("content-type", "application/json")
+      .requestFactory(
+        SimpleClientHttpRequestFactory().apply {
+          setConnectTimeout(10_000)
+          setReadTimeout(60_000)
+        }
+      )
       .build()
 
   override fun complete(systemPrompt: String, userMessage: String, maxTokens: Int): String {
