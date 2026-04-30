@@ -33,7 +33,7 @@ tilt up -- --host=<ton-ip-locale>
 | Bouton Tilt | Action |
 |-------------|--------|
 | `db:reset` | Drop schema + redémarrage backend (Flyway rejoue toutes les migrations) |
-| `llm:pull-qwen2` | Télécharge le modèle qwen2:1.5b dans Ollama |
+| `llm:pull-mistral` | Télécharge le modèle `mistral` (7B Instruct) dans Ollama (~4 GB) |
 
 Pour alimenter un portefeuille démo, importer un CSV Wealthsimple depuis l'onglet **Import** (le portefeuille est read-only, il n'y a pas de seed SQL).
 
@@ -52,7 +52,7 @@ llm:
 
 ollama:
   base-url: http://ollama:11434
-  model: qwen2:1.5b
+  model: mistral   # Mistral 7B Instruct ; qwen2:1.5b est plus rapide mais hallucine sur prompt enrichi
 ```
 
 Ne jamais committer ce fichier. Ne jamais mettre de clé API dans `application.yml`.

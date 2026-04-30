@@ -8,10 +8,11 @@ host = cfg.get("host", "localhost")
 # PostgreSQL via docker-compose
 docker_compose("docker-compose.yml")
 
-# Ollama — pull du modèle qwen2:1.5b au démarrage
+# Ollama — pull du modèle Mistral 7B Instruct au démarrage
+# (qwen2:1.5b s'est avéré trop petit pour le prompt enrichi — voir docs/technique/architecture.md)
 local_resource(
-    name = "llm:pull-qwen2",
-    cmd = "docker exec portfolioai-ollama ollama pull qwen2:1.5b",
+    name = "llm:pull-mistral",
+    cmd = "docker exec portfolioai-ollama ollama pull mistral",
     resource_deps = ["ollama"],
     labels = ["llm"],
     links = [link("http://{}:11434".format(host), "Ollama API")],
