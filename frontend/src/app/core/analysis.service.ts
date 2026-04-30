@@ -29,6 +29,7 @@ export interface Recommendation {
 export interface AnalysisJob {
   jobId: string;
   status: JobStatus;
+  createdAt: string;
   recommendationId: string | null;
   error: string | null;
 }
@@ -42,7 +43,7 @@ export class AnalysisService {
   }
 
   pollJob(portfolioId: string, jobId: string): Observable<AnalysisJob> {
-    return interval(2000).pipe(
+    return interval(5000).pipe(
       switchMap(() =>
         this.http
           .get<AnalysisJob>(`/api/portfolios/${portfolioId}/recommendations/jobs/${jobId}`)
@@ -59,7 +60,12 @@ export class AnalysisService {
             ),
           ),
       ),
-      takeWhile((job) => job.status === 'PENDING', true),
+      takeWhile((job) => {
+        if (job.status !== 'PENDING') return false;
+        const ageSeconds = (Date.now() - new Date(job.createdAt).getTime()) / 1000;
+        if (ageSeconds > 90) throw new Error('Analyse trop longue — relance possible');
+        return true;
+      }, true),
     );
   }
 
