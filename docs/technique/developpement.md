@@ -33,8 +33,9 @@ tilt up -- --host=<ton-ip-locale>
 | Bouton Tilt | Action |
 |-------------|--------|
 | `db:reset` | Drop schema + redémarrage backend (Flyway rejoue toutes les migrations) |
-| `db:seed` | Insère un portefeuille démo ~100k€ (VOO, QQQ, AAPL, NVDA, BTC...) |
 | `llm:pull-qwen2` | Télécharge le modèle qwen2:1.5b dans Ollama |
+
+Pour alimenter un portefeuille démo, importer un CSV Wealthsimple depuis l'onglet **Import** (le portefeuille est read-only, il n'y a pas de seed SQL).
 
 ## Configuration locale
 
@@ -82,20 +83,24 @@ Voir le détail dans [commit-conventions.md](commit-conventions.md).
 
 ```
 trade/
-├── frontend/                  # Angular 21
+├── frontend/                  # Angular 21 (single app, standalone)
 │   └── src/app/
-│       ├── core/              # Services (PortfolioService, AnalysisService, SettingsService)
-│       ├── dashboard/         # Portefeuille + analyse IA
-│       ├── history/           # Historique des recommandations
-│       └── settings/          # Configuration des sources
+│       ├── core/              # Services (PortfolioService, AnalysisService,
+│       │                      #            SnapshotService, SettingsService)
+│       ├── dashboard/         # Portefeuille + lancement d'analyse IA
+│       ├── import/            # Drag & drop CSV Wealthsimple
+│       ├── suivi/             # Timeline des snapshots / imports
+│       ├── recommendations/   # Liste filtrable des recommandations
+│       ├── history/           # Historique des recommandations IA
+│       └── settings/          # Configuration des sources d'ingestion
 ├── backend/                   # Kotlin + Spring Boot
-│   └── src/main/kotlin/.../
+│   └── src/main/kotlin/com/portfolioai/
 │       ├── ingestion/         # Collecte RSS
-│       ├── analysis/          # Orchestration LLM
-│       ├── portfolio/         # CRUD portefeuilles
-│       └── recommendations/   # Stockage
-├── docs/                      # Documentation
-├── scripts/                   # seed.sql
+│       ├── analysis/          # Orchestration LLM, recommandations, jobs
+│       ├── portfolio/         # Import CSV, snapshots, lecture
+│       └── shared/            # Utilitaires transverses
+├── docs/                      # Documentation (mkdocs-material)
+├── .claude/                   # Skills, hooks et instructions Claude Code
 ├── .github/workflows/         # CI backend + frontend + docs
 ├── Tiltfile
 └── docker-compose.yml

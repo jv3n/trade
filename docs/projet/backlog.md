@@ -23,7 +23,9 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | Persistance Settings | Migration V3 (slug, description, free, requires_api_key), 22 sources en base. `PATCH /api/ingestion/sources/{id}`. Frontend API-driven, update optimiste |
 | Import CSV Wealthsimple | Parse export « Positions » WS (21 colonnes, accents NFD, délimiteur auto). Crée/met à jour un `Portfolio` par `Nom du compte`. Upsert assets. `POST /api/portfolios/import/csv` |
 | Portefeuille read-only | Suppression du CRUD manuel (create/delete portfolio, add/remove asset). La vue reflète l'état réel du courtier. Seul le CSV peut mettre à jour. |
-| Snapshots historiques | À chaque import CSV, création d'un `PortfolioSnapshot` + `SnapshotPosition` par compte (valeur comptable CAD, valeur marché, P&L). Tables V6. `GET /api/snapshots` |
+| Snapshots historiques | À chaque import CSV, création d'un `PortfolioSnapshot` + `SnapshotPosition` par compte (valeur comptable CAD, valeur marché, P&L). Migration V4. `GET /api/snapshots` |
+| Devise et valeur de marché par actif | Migrations V5 (`currency`, `book_value_cad`) et V6 (`market_value`, `unrealized_gain`, `gain_currency`). Affichage P&L par position dans le Dashboard |
+| Persistance des jobs d'analyse | Migration V7 (`analysis_job`). `AnalysisExecutor` séparé de `AnalysisRunner`. Déduplication des jobs concurrents sur 90 s. Timeouts explicites sur le client Claude. Frontend : polling 5 s + abandon après 90 s |
 | Page Import (onglet dédié) | Drag & drop CSV standalone sur `/import`. Redirige vers `/suivi` après import. |
 | Page Suivi (historique positions) | `/suivi` — timeline groupée par batch d'import, expand par compte, détail positions avec valeur marché et P&L. |
 

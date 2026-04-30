@@ -26,22 +26,24 @@
 │         Backend  (Kotlin + Spring)       │
 │                                          │
 │  ingestion/     → collecte RSS/APIs      │
-│  analysis/      → orchestration LLM      │
+│  analysis/      → orchestration LLM,     │
+│                   recommandations, jobs  │
 │  portfolio/     → import CSV, snapshots  │
-│  recommendations/ → stockage & scoring  │
-│  observability/   → comparaison (Phase 2)│
+│  shared/        → utilitaires transverses│
+│  observability/ → comparaison (Phase 2)  │
 └──────────────────┬──────────────────────┘
                    │ REST API
                    ▼
-┌─────────────────────────────────────────┐
+┌──────────────────────────────────────────┐
 │         Frontend  (Angular 21)           │
 │                                          │
-│  dashboard/  → positions read-only + IA │
-│  import/     → drag & drop CSV          │
-│  suivi/      → timeline snapshots       │
-│  history/    → recommandations IA       │
-│  settings/   → gestion des sources      │
-└─────────────────────────────────────────┘
+│  dashboard/        → positions + IA      │
+│  import/           → drag & drop CSV     │
+│  suivi/            → timeline snapshots  │
+│  recommendations/  → liste filtrable     │
+│  history/          → historique IA       │
+│  settings/         → gestion des sources │
+└──────────────────────────────────────────┘
 ```
 
 ## Modules backend
@@ -52,12 +54,17 @@ Collecte les flux RSS via la librairie Rome. Chaque source est configurée en ba
 
 ### `analysis/`
 
-Orchestration des appels LLM. L'analyse est asynchrone (`@Async` sur un bean séparé pour éviter le bypass AOP Spring). Le job d'analyse est suivi via un `AnalysisJobStore` (ConcurrentHashMap) qui expose son statut au frontend via polling.
+Orchestration des appels LLM, persistance des recommandations et suivi des jobs asynchrones. Découpage :
+
+- `AnalysisService` — point d'entrée HTTP : valide le portefeuille, crée (ou réutilise) un job, déclenche l'exécution
+- `AnalysisRunner` — bean `@Async` séparé (jamais `this.method()`, sinon le proxy AOP Spring est bypassé). Délègue à `AnalysisExecutor`
+- `AnalysisExecutor` — `@Transactional` : construit le prompt, appelle le LLM, parse la réponse, persiste la `Recommendation` et ses actions
+- `AnalysisJobStore` — persiste les `AnalysisJob` en base (table `analysis_job`, V7). Permet de reprendre un job pendant après redémarrage et de dédupliquer deux requêtes simultanées sur le même portefeuille (fenêtre 90 s)
 
 Deux implémentations de `LlmClient` :
 
-- `ClaudeClient` — production, activé avec `llm.provider: claude`
-- `OllamaClient` — local, activé avec `llm.provider: ollama`, fusionne system + user en un seul message (qwen2:1.5b ignore le role system), utilise `format: json` et `num_predict` pour contraindre la sortie
+- `ClaudeClient` — production, activé avec `llm.provider: claude`. Timeouts explicites (10 s connect / 60 s read)
+- `OllamaClient` — local, activé avec `llm.provider: ollama`. Fusionne system + user en un seul message (qwen2:1.5b ignore le role `system`), utilise `format: json` et `num_predict` pour contraindre la sortie
 
 ### `portfolio/`
 
@@ -67,9 +74,11 @@ Le portefeuille est **read-only depuis l'UI** — il reflète l'état réel du c
 
 **Snapshots** : à chaque import, un `PortfolioSnapshot` est créé par compte (avec un `batch_id` commun pour grouper les snapshots d'un même import). Chaque `SnapshotPosition` stocke la valeur comptable en CAD, la valeur de marché en devise native, et le P&L non réalisé. Permet le suivi historique de l'évolution du portefeuille.
 
-### `recommendations/`
+### `shared/`
 
-Stockage des recommandations avec leurs actions (ticker, BUY/SELL/HOLD/REDUCE, poids cible, rationale). Statut : PENDING → APPLIED / IGNORED / EVALUATED.
+Utilitaires transverses : pour l'instant `GlobalExceptionHandler` (mapping uniforme des erreurs en JSON).
+
+> **Note** : les recommandations ne sont pas un module séparé — elles vivent dans `analysis/` (entités `Recommendation`, `RecommendationActionItem`, repository et controller d'historique inclus).
 
 ## Schéma de base de données
 
@@ -77,14 +86,19 @@ Migrations Flyway dans `backend/src/main/resources/db/migration/` :
 
 | Migration | Contenu |
 |-----------|---------|
-| V1 | Portfolio, Asset, Recommendation, RecommendationAction |
+| V1 | Portfolio, Asset, Recommendation, RecommendationAction, RecommendationScore |
 | V2 | FeedSource, FeedArticle |
 | V3 | Enrichissement FeedSource (slug, description, free, requires_api_key) + seed 22 sources |
 | V4 | PortfolioSnapshot (batch_id, portfolio_id, imported_at), SnapshotPosition (valeurs CAD + marché + P&L) |
+| V5 | Asset : ajout des colonnes `currency` et `book_value_cad` |
+| V6 | Asset : ajout de `market_value`, `unrealized_gain`, `gain_currency` |
+| V7 | AnalysisJob (id, portfolio_id, status, created_at, recommendation_id, error) — index sur `(portfolio_id, status)` |
 
 ## Décisions techniques notables
 
-**`@Async` sur bean séparé** — Spring AOP ne proxifie pas les appels internes (`this.method()`). Tout le code async est dans `AnalysisRunner`, `AnalysisService` délègue.
+**`@Async` sur bean séparé** — Spring AOP ne proxifie pas les appels internes (`this.method()`). `AnalysisService` (HTTP) délègue à `AnalysisRunner` (`@Async`), qui délègue à son tour à `AnalysisExecutor` (`@Transactional`). Cette chaîne garantit que les proxies async ET transactionnel s'appliquent.
+
+**Persistance des jobs d'analyse en base** — l'ancien `ConcurrentHashMap` perdait l'historique au redémarrage. La table `analysis_job` (V7) stocke chaque job avec son `created_at`. `AnalysisService` consulte cette table avant de lancer un nouveau job : si un job pendant existe pour le même portefeuille dans la fenêtre des 90 dernières secondes, il est réutilisé — évite les doubles lancements depuis l'UI.
 
 **LLM local avec qwen2:1.5b** — Mistral 7B et phi3:mini sont trop lents sur M1 pour un usage interactif. qwen2:1.5b répond en ~60s avec `format:json`. Le role `system` est ignoré par ce modèle — system et user sont fusionnés en un seul message.
 
