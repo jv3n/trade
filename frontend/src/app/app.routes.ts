@@ -27,6 +27,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./settings/test-sources/test-sources').then((m) => m.TestSources),
       },
+      {
+        path: 'prompt-preview',
+        loadComponent: () =>
+          import('./settings/prompt-preview/prompt-preview').then((m) => m.PromptPreviewPage),
+      },
     ],
   },
 ];

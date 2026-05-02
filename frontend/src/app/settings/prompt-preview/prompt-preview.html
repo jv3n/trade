@@ -1,0 +1,68 @@
+<div class="preview-layout">
+  <div class="content-header">
+    <h2>Aperçu du prompt</h2>
+    <p>
+      Sélectionnez un portefeuille pour visualiser le prompt complet (system + user) qui serait
+      envoyé au LLM. Aucun appel n'est effectué.
+    </p>
+  </div>
+
+  <div class="preview-form">
+    <select class="portfolio-select" (change)="selectPortfolio($any($event.target).value)">
+      <option value="">— Portefeuille —</option>
+      @for (p of portfolios(); track p.id) {
+        <option [value]="p.id">{{ p.name }}</option>
+      }
+    </select>
+
+    <button class="run-btn" (click)="load()" [disabled]="!selectedId() || loading()">
+      @if (loading()) {
+        <mat-spinner diameter="14"></mat-spinner>
+        Chargement…
+      } @else {
+        Afficher le prompt
+      }
+    </button>
+  </div>
+
+  @if (error(); as e) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ e }}
+    </div>
+  }
+
+  @if (preview(); as p) {
+    <div class="meta">
+      <span
+        ><strong>{{ p.portfolioName }}</strong></span
+      >
+      <span>{{ p.tickers.length }} tickers</span>
+      <span>system: {{ p.systemPromptChars | number }} chars</span>
+      <span>user: {{ p.userMessageChars | number }} chars</span>
+      <span class="total"
+        >total: {{ p.systemPromptChars + p.userMessageChars | number }} chars</span
+      >
+    </div>
+
+    <section class="prompt-block">
+      <header>
+        <span>System prompt</span>
+        <button class="copy-btn" (click)="copy(p.systemPrompt)" title="Copier">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </header>
+      <pre>{{ p.systemPrompt }}</pre>
+    </section>
+
+    <section class="prompt-block">
+      <header>
+        <span>User message</span>
+        <button class="copy-btn" (click)="copy(p.userMessage)" title="Copier">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </header>
+      <pre>{{ p.userMessage }}</pre>
+    </section>
+  }
+</div>

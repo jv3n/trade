@@ -31,7 +31,7 @@ class AnalysisJobStore(private val repo: AnalysisJobRepository) {
     )
 
   companion object {
-    private const val DEDUP_WINDOW_SECONDS = 300L
+    private const val DEDUP_WINDOW_SECONDS = 400L
   }
 
   @Transactional

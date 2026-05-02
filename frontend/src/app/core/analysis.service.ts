@@ -34,12 +34,22 @@ export interface AnalysisJob {
   error: string | null;
 }
 
+export interface PromptPreview {
+  portfolioId: string;
+  portfolioName: string;
+  tickers: string[];
+  systemPrompt: string;
+  userMessage: string;
+  systemPromptChars: number;
+  userMessageChars: number;
+}
+
 /**
- * Hard cap before the frontend gives up polling. Tuned for the local Ollama path
- * (Mistral 7B on M1) which needs ~1-2 min per LLM call, and the validator may force a retry
- * — so 2 × 1.5 min ≈ 3 min, with margin → 300 s. Claude is much faster; 300 s covers both.
+ * Hard cap before the frontend gives up polling. Must cover the worst case of two Mistral
+ * attempts on M1 (validator retry): 2 × OllamaClient read timeout (180 s) + margin → 400 s.
+ * Claude is much faster; 400 s covers both. Keep aligned with backend DEDUP_WINDOW_SECONDS.
  */
-const POLL_ABORT_SECONDS = 300;
+const POLL_ABORT_SECONDS = 400;
 
 @Injectable({ providedIn: 'root' })
 export class AnalysisService {
@@ -89,5 +99,9 @@ export class AnalysisService {
 
   getAllRecommendations(): Observable<Recommendation[]> {
     return this.http.get<Recommendation[]>('/api/recommendations');
+  }
+
+  getPromptPreview(portfolioId: string): Observable<PromptPreview> {
+    return this.http.get<PromptPreview>(`/api/portfolios/${portfolioId}/recommendations/preview`);
   }
 }

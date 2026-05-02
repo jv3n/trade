@@ -37,6 +37,16 @@ data class AnalysisJobDto(
   val error: String? = null,
 )
 
+data class PromptPreviewDto(
+  val portfolioId: UUID,
+  val portfolioName: String,
+  val tickers: List<String>,
+  val systemPrompt: String,
+  val userMessage: String,
+  val systemPromptChars: Int,
+  val userMessageChars: Int,
+)
+
 fun Recommendation.toDto() =
   RecommendationDto(
     id = id,
