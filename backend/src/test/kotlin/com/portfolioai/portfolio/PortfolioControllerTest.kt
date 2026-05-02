@@ -2,6 +2,7 @@ package com.portfolioai.portfolio
 
 import com.portfolioai.portfolio.application.PortfolioQueryService
 import com.portfolioai.portfolio.application.dto.AssetDto
+import com.portfolioai.portfolio.application.dto.OwnedTickerDto
 import com.portfolioai.portfolio.application.dto.PortfolioDto
 import com.portfolioai.portfolio.domain.AssetType
 import com.portfolioai.portfolio.infrastructure.http.PortfolioController
@@ -137,5 +138,44 @@ class PortfolioControllerTest {
     mvc
       .perform(get("/api/portfolios/$id/assets").accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound)
+  }
+
+  // ---- owned tickers ----
+
+  /*
+   * The dashboard sidebar consumes this endpoint to render a flat clickable list of every ticker
+   * the user holds across all portfolios. Pin the URL, the JSON keys, and the alphabetical order
+   * — a rename or sort change here would silently shuffle the sidebar.
+   */
+
+  @Test
+  fun `GET owned-tickers returns aggregated list with portfolioCount`() {
+    given(portfolioQueryService.findOwnedTickers())
+      .willReturn(
+        listOf(
+          OwnedTickerDto("AAPL", "Apple Inc.", 2),
+          OwnedTickerDto("MSFT", "Microsoft Corporation", 1),
+          OwnedTickerDto("VOO", "Vanguard S&P 500 ETF", 1),
+        )
+      )
+
+    mvc
+      .perform(get("/api/portfolios/owned-tickers").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.length()").value(3))
+      .andExpect(jsonPath("$[0].ticker").value("AAPL"))
+      .andExpect(jsonPath("$[0].name").value("Apple Inc."))
+      .andExpect(jsonPath("$[0].portfolioCount").value(2))
+      .andExpect(jsonPath("$[2].ticker").value("VOO"))
+  }
+
+  @Test
+  fun `GET owned-tickers returns empty list when no assets`() {
+    given(portfolioQueryService.findOwnedTickers()).willReturn(emptyList())
+
+    mvc
+      .perform(get("/api/portfolios/owned-tickers").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.length()").value(0))
   }
 }

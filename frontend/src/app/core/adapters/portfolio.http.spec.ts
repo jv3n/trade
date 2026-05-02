@@ -43,6 +43,15 @@ describe('HttpPortfolioRepository', () => {
     req.flush([]);
   });
 
+  it('getOwnedTickers calls GET /api/portfolios/owned-tickers', () => {
+    // Backed by a JPA aggregation query — back returns an already-sorted, already-deduped list.
+    // The dashboard sidebar consumes this verbatim.
+    repo.getOwnedTickers().subscribe();
+    const req = http.expectOne('/api/portfolios/owned-tickers');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
   it('previewCsvImport calls POST /api/portfolios/import/csv/preview with FormData', () => {
     const file = new File(['content'], 'test.csv', { type: 'text/csv' });
     repo.previewCsvImport(file).subscribe();

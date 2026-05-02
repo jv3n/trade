@@ -54,6 +54,8 @@
     "totalLabel": "Total book value (CAD)",
     "noPortfolios": "Import a CSV to create your portfolios.",
     "noAssets": "No positions — import a CSV to populate this portfolio.",
+    "ownedTickersLabel": "Owned tickers",
+    "ownedTickersTooltip": "Open the {{symbol}} dossier (held in {{count}} portfolio(s))",
     "emptySelection": "Select a portfolio or import a CSV to start.",
     "positions": "Positions",
     "analyze": "Analyze with AI",

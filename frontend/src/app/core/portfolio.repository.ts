@@ -35,6 +35,17 @@ export interface Asset {
   createdAt: string;
 }
 
+/**
+ * Aggregated view of a ticker across all portfolios — used by the dashboard sidebar to provide a
+ * flat clickable shortcut to the dossier (`/ticker/<symbol>`). `portfolioCount` is informational :
+ * a ticker held in both CELI and REER shows `2`.
+ */
+export interface OwnedTicker {
+  ticker: string;
+  name: string;
+  portfolioCount: number;
+}
+
 export interface CsvImportPreviewItem {
   ticker: string;
   name: string;
@@ -72,6 +83,8 @@ export abstract class PortfolioRepository {
   abstract getAll(): Observable<Portfolio[]>;
   abstract getById(id: string): Observable<Portfolio>;
   abstract getAssets(portfolioId: string): Observable<Asset[]>;
+  /** Distinct tickers across all portfolios — single aggregated query, no client-side dedup. */
+  abstract getOwnedTickers(): Observable<OwnedTicker[]>;
   abstract previewCsvImport(file: File): Observable<CsvImportPreview>;
   abstract confirmCsvImport(file: File): Observable<CsvImportResult>;
 }

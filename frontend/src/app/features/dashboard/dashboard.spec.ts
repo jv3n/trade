@@ -16,14 +16,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Dashboard } from './dashboard';
-import { PortfolioRepository, Asset, Portfolio } from '../../core/portfolio.repository';
+import {
+  PortfolioRepository,
+  Asset,
+  Portfolio,
+  OwnedTicker,
+} from '../../core/portfolio.repository';
 import { AnalysisRepository } from '../../core/analysis.repository';
 
-const mockPortfolioRepository = {
+const mockPortfolioRepository: {
+  getAll: () => Observable<Portfolio[]>;
+  getAssets: () => Observable<Asset[]>;
+  getOwnedTickers: () => Observable<OwnedTicker[]>;
+} = {
   getAll: () => of([]),
   getAssets: () => of([]),
+  getOwnedTickers: () => of([]),
 };
 
 const mockAnalysisRepository = {
@@ -194,5 +204,44 @@ describe('Dashboard', () => {
     expect(result!.currentWeight).toBe(0);
     expect(result!.targetAmount).toBeCloseTo(200);
     expect(result!.delta).toBeCloseTo(200);
+  });
+
+  // ---- ownedTickers ----
+
+  /**
+   * The "Tickers détenus" sidebar shortcut consumes the backend's aggregate endpoint as-is. We
+   * pin three things : the signal is hydrated on init, the order from the backend is preserved
+   * (back returns alphabetical), and a load failure leaves the sidebar empty rather than blocking
+   * the dashboard.
+   */
+  describe('ownedTickers', () => {
+    it('hydrates the signal from getOwnedTickers on init and preserves order', async () => {
+      const tickers: OwnedTicker[] = [
+        { ticker: 'AAPL', name: 'Apple Inc.', portfolioCount: 2 },
+        { ticker: 'MSFT', name: 'Microsoft Corporation', portfolioCount: 1 },
+        { ticker: 'VOO', name: 'Vanguard S&P 500 ETF', portfolioCount: 1 },
+      ];
+      mockPortfolioRepository.getOwnedTickers = () => of(tickers);
+
+      // Re-create the component so init runs against the new mock.
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      expect(fixture2.componentInstance.ownedTickers()).toEqual(tickers);
+    });
+
+    it('falls back to empty list silently on backend failure', async () => {
+      const { throwError } = await import('rxjs');
+      mockPortfolioRepository.getOwnedTickers = () => throwError(() => new Error('500'));
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      // No error banner from this — the sidebar shortcut is best-effort, not load-bearing.
+      expect(fixture2.componentInstance.ownedTickers()).toEqual([]);
+      expect(fixture2.componentInstance.error()).toBeNull();
+    });
   });
 });

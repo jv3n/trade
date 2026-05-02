@@ -1,6 +1,7 @@
 package com.portfolioai.portfolio.application
 
 import com.portfolioai.portfolio.application.dto.AssetDto
+import com.portfolioai.portfolio.application.dto.OwnedTickerDto
 import com.portfolioai.portfolio.application.dto.PortfolioDto
 import com.portfolioai.portfolio.application.dto.toDto
 import com.portfolioai.portfolio.infrastructure.persistence.AssetRepository
@@ -28,4 +29,14 @@ class PortfolioQueryService(
       throw NoSuchElementException("Portfolio $portfolioId not found")
     return assetRepository.findByPortfolioId(portfolioId).map { it.toDto() }
   }
+
+  /**
+   * Distinct tickers across all portfolios, alphabetically sorted, with the number of portfolios
+   * holding each. Backs the dashboard sidebar's "Tickers détenus" navigation shortcut to the
+   * dossier pages.
+   */
+  fun findOwnedTickers(): List<OwnedTickerDto> =
+    assetRepository.findOwnedTickerRows().map {
+      OwnedTickerDto(ticker = it.ticker, name = it.name, portfolioCount = it.portfolioCount.toInt())
+    }
 }

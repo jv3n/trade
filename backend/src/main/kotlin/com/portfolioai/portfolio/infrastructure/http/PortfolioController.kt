@@ -2,6 +2,7 @@ package com.portfolioai.portfolio.infrastructure.http
 
 import com.portfolioai.portfolio.application.PortfolioQueryService
 import com.portfolioai.portfolio.application.dto.AssetDto
+import com.portfolioai.portfolio.application.dto.OwnedTickerDto
 import com.portfolioai.portfolio.application.dto.PortfolioDto
 import java.util.UUID
 import org.springframework.web.bind.annotation.*
@@ -11,6 +12,10 @@ import org.springframework.web.bind.annotation.*
 class PortfolioController(private val portfolioQueryService: PortfolioQueryService) {
 
   @GetMapping fun findAll(): List<PortfolioDto> = portfolioQueryService.findAll()
+
+  /** Distinct tickers across all portfolios — backs the dashboard sidebar shortcut. */
+  @GetMapping("/owned-tickers")
+  fun findOwnedTickers(): List<OwnedTickerDto> = portfolioQueryService.findOwnedTickers()
 
   @GetMapping("/{id}")
   fun findById(@PathVariable id: UUID): PortfolioDto = portfolioQueryService.findById(id)

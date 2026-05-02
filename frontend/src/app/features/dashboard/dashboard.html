@@ -47,6 +47,26 @@
             <li class="empty-state">{{ 'dashboard.noPortfolios' | translate }}</li>
           }
         </ul>
+
+        @if (ownedTickers().length > 0) {
+          <div class="owned-tickers">
+            <span class="owned-tickers-label">{{ 'dashboard.ownedTickersLabel' | translate }}</span>
+            <div class="owned-tickers-list">
+              @for (t of ownedTickers(); track t.ticker) {
+                <a
+                  [routerLink]="['/ticker', t.ticker]"
+                  class="ticker-chip"
+                  [matTooltip]="
+                    'dashboard.ownedTickersTooltip'
+                      | translate: { symbol: t.ticker, count: t.portfolioCount }
+                  "
+                >
+                  {{ t.ticker }}
+                </a>
+              }
+            </div>
+          </div>
+        }
       }
     </aside>
 

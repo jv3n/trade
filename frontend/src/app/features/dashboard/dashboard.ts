@@ -7,7 +7,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { PortfolioRepository, Portfolio, Asset } from '../../core/portfolio.repository';
+import {
+  PortfolioRepository,
+  Portfolio,
+  Asset,
+  OwnedTicker,
+} from '../../core/portfolio.repository';
 import { AnalysisRepository, Recommendation } from '../../core/analysis.repository';
 
 @Component({
@@ -34,6 +39,11 @@ export class Dashboard implements OnInit, OnDestroy {
   portfolios = signal<Portfolio[]>([]);
   selectedPortfolio = signal<Portfolio | null>(null);
   assets = signal<Asset[]>([]);
+  /**
+   * Distinct tickers across all portfolios — populated alongside `portfolios` on init via the
+   * dedicated backend aggregate endpoint. Drives the "Tickers détenus" sidebar shortcut.
+   */
+  ownedTickers = signal<OwnedTicker[]>([]);
   loading = signal(false);
   analyzing = signal(false);
   analyzeElapsed = signal(0);
@@ -52,6 +62,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadPortfolios();
+    this.loadOwnedTickers();
   }
 
   loadPortfolios() {
@@ -68,6 +79,19 @@ export class Dashboard implements OnInit, OnDestroy {
         this.error.set(this.translate.instant('dashboard.errors.loadPortfolios'));
         this.loading.set(false);
       },
+    });
+  }
+
+  /**
+   * Loaded once on init and not refreshed on portfolio change — the underlying data
+   * (positions across portfolios) only changes on CSV import, which goes through `/import` and
+   * eventually navigates away from the dashboard. A silent failure here doesn't surface an error
+   * banner ; the sidebar shortcut just stays empty.
+   */
+  private loadOwnedTickers() {
+    this.portfolioRepository.getOwnedTickers().subscribe({
+      next: (tickers) => this.ownedTickers.set(tickers),
+      error: () => this.ownedTickers.set([]),
     });
   }
 

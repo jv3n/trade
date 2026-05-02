@@ -67,7 +67,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | ✅ Indicateurs en chips | 10 chips avec color-coding (RSI > 70 warning, drawdown profond rouge, etc.) | 🔴 Critique |
 | ✅ Narratif LLM | Section dédiée : sentiment chip (BULLISH/NEUTRAL/BEARISH coloré), summary, bullets keyPoints, footer modèle+date. Bouton Générer/Régénérer avec spinner, polling 3 s, abort 300 s. Cache hit DONE direct (snapshot < 30 min) sans polling. 7 tests (init avec snapshot, init vierge, cache hit, kick fresh, error, poll abort, sentiment class) | 🔴 Critique |
 | ✅ Lien Dashboard → Dossier ticker | Ticker cliquable dans la table du dashboard → `/ticker/:symbol` | 🟡 Moyenne |
-| ⏳ Liste des tickers détenus | Sur le dashboard, exposer la liste cliquable des tickers du portefeuille (raccourci d'accès aux dossiers) | 🟡 Moyenne |
+| ✅ Liste des tickers détenus | Section "Tickers détenus" dans la sidebar du dashboard sous la liste des portefeuilles. Endpoint dédié `GET /api/portfolios/owned-tickers` avec agrégation JPQL (distinct ticker + portfolioCount) — pas de N+1. Chips cliquables → `/ticker/:symbol`. Best-effort : échec backend → liste vide sans banner | 🟡 Moyenne |
 
 ### Settings — adaptation Phase 1
 

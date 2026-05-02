@@ -5,6 +5,7 @@ import {
   PortfolioRepository,
   Portfolio,
   Asset,
+  OwnedTicker,
   CsvImportPreview,
   CsvImportResult,
 } from '../portfolio.repository';
@@ -24,6 +25,10 @@ export class HttpPortfolioRepository extends PortfolioRepository {
 
   getAssets(portfolioId: string): Observable<Asset[]> {
     return this.http.get<Asset[]>(`${this.base}/${portfolioId}/assets`);
+  }
+
+  getOwnedTickers(): Observable<OwnedTicker[]> {
+    return this.http.get<OwnedTicker[]>(`${this.base}/owned-tickers`);
   }
 
   previewCsvImport(file: File): Observable<CsvImportPreview> {
