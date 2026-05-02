@@ -4,7 +4,10 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ThemeService } from './core/theme.service';
+import { LanguageService, Language } from './core/language.service';
 
 @Component({
   selector: 'app-root',
@@ -16,10 +19,17 @@ import { ThemeService } from './core/theme.service';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    MatMenuModule,
+    TranslatePipe,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
 export class App {
   readonly theme = inject(ThemeService);
+  readonly language = inject(LanguageService);
+
+  setLanguage(lang: Language): void {
+    this.language.set(lang);
+  }
 }

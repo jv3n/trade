@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   SettingsRepository,
   DataSource,
@@ -9,23 +10,17 @@ import {
   SourceTestResult,
 } from '../../../core/settings.repository';
 
-const CATEGORY_LABELS: Record<SourceCategory, string> = {
-  RSS: 'Presse & Flux RSS',
-  MARKET: 'Données de marché',
-  MACRO: 'Indicateurs macro-économiques',
-  CRYPTO: 'Crypto',
-};
-
 const CATEGORY_ORDER: SourceCategory[] = ['RSS', 'MARKET', 'MACRO', 'CRYPTO'];
 
 @Component({
   selector: 'app-test-sources',
-  imports: [CommonModule, MatProgressSpinnerModule, MatIconModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatIconModule, TranslatePipe],
   templateUrl: './test-sources.html',
   styleUrl: './test-sources.scss',
 })
 export class TestSources implements OnInit {
   private readonly settingsRepository = inject(SettingsRepository);
+  private readonly translate = inject(TranslateService);
 
   allSources = signal<DataSource[]>([]);
   selectedCategory = signal<SourceCategory | null>(null);
@@ -34,7 +29,6 @@ export class TestSources implements OnInit {
   result = signal<SourceTestResult | null>(null);
 
   categories = CATEGORY_ORDER;
-  categoryLabels = CATEGORY_LABELS;
 
   sourcesForCategory = computed(() => {
     const cat = this.selectedCategory();
@@ -77,7 +71,7 @@ export class TestSources implements OnInit {
       error: () => {
         this.result.set({
           ok: false,
-          error: 'Erreur de connexion au backend',
+          error: this.translate.instant('settings.testPage.errorBackend'),
           message: null,
           itemCount: 0,
           items: [],

@@ -1,17 +1,14 @@
 <div class="test-layout">
   <div class="content-header">
-    <h2>Tester une source</h2>
-    <p>
-      Sélectionnez un type puis une source pour vérifier sa connectivité et consulter les données
-      brutes.
-    </p>
+    <h2>{{ 'settings.testSources' | translate }}</h2>
+    <p>{{ 'settings.testPage.intro' | translate }}</p>
   </div>
 
   <div class="test-form">
     <select class="source-select" (change)="selectCategory($any($event.target).value)">
-      <option value="">— Type de source —</option>
+      <option value="">{{ 'settings.testPage.selectCategory' | translate }}</option>
       @for (cat of categories; track cat) {
-        <option [value]="cat">{{ categoryLabels[cat] }}</option>
+        <option [value]="cat">{{ 'categories.' + cat | translate }}</option>
       }
     </select>
 
@@ -20,7 +17,7 @@
       (change)="selectSource($any($event.target).value)"
       [disabled]="!selectedCategory()"
     >
-      <option value="">— Source —</option>
+      <option value="">{{ 'settings.testPage.selectSource' | translate }}</option>
       @for (source of sourcesForCategory(); track source.id) {
         <option [value]="source.id">{{ source.name }}</option>
       }
@@ -29,9 +26,9 @@
     <button class="btn-primary" (click)="test()" [disabled]="!selectedId() || testing()">
       @if (testing()) {
         <mat-spinner diameter="14"></mat-spinner>
-        En cours…
+        {{ 'settings.testPage.running' | translate }}
       } @else {
-        Lancer le test
+        {{ 'settings.testPage.run' | translate }}
       }
     </button>
   </div>
@@ -49,7 +46,7 @@
           @if (r.message) {
             {{ r.message }}
           } @else {
-            {{ r.itemCount }} articles récupérés
+            {{ 'settings.testPage.articlesCount' | translate: { count: r.itemCount } }}
           }
         </div>
         @if (r.items.length > 0) {

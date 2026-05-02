@@ -3,27 +3,22 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   AnalysisRepository,
   Recommendation,
   RecommendationStatus,
 } from '../../core/analysis.repository';
 
-const STATUS_LABELS: Record<RecommendationStatus, string> = {
-  PENDING: 'En attente',
-  APPLIED: 'Appliquée',
-  IGNORED: 'Ignorée',
-  EVALUATED: 'Évaluée',
-};
-
 @Component({
   selector: 'app-history',
-  imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './history.html',
   styleUrl: './history.scss',
 })
 export class History implements OnInit {
   private readonly analysisRepository = inject(AnalysisRepository);
+  private readonly translate = inject(TranslateService);
 
   recommendations = signal<Recommendation[]>([]);
   loading = signal(false);
@@ -32,12 +27,17 @@ export class History implements OnInit {
   filterStatus = signal<string>('all');
   expandedIds = signal<Set<string>>(new Set());
 
-  readonly statuses: Array<{ value: string; label: string }> = [
-    { value: 'all', label: 'Toutes' },
-    { value: 'PENDING', label: 'En attente' },
-    { value: 'APPLIED', label: 'Appliquées' },
-    { value: 'IGNORED', label: 'Ignorées' },
-    { value: 'EVALUATED', label: 'Évaluées' },
+  /**
+   * Filter chips. The `i18nKey` resolves to a `statuses.*_PLURAL` translation in the template
+   * (e.g. "Appliquées" / "Applied"). The single-status `statusLabel` below resolves the unsuffixed
+   * key when displaying a single recommendation badge.
+   */
+  readonly statuses: Array<{ value: string; i18nKey: string }> = [
+    { value: 'all', i18nKey: 'statuses.all' },
+    { value: 'PENDING', i18nKey: 'statuses.PENDING_PLURAL' },
+    { value: 'APPLIED', i18nKey: 'statuses.APPLIED_PLURAL' },
+    { value: 'IGNORED', i18nKey: 'statuses.IGNORED_PLURAL' },
+    { value: 'EVALUATED', i18nKey: 'statuses.EVALUATED_PLURAL' },
   ];
 
   portfolios = computed(() => {
@@ -67,7 +67,7 @@ export class History implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set("Erreur lors du chargement de l'historique");
+        this.error.set(this.translate.instant('history.loading'));
         this.loading.set(false);
       },
     });
@@ -94,7 +94,7 @@ export class History implements OnInit {
     );
   }
 
-  statusLabel(status: RecommendationStatus): string {
-    return STATUS_LABELS[status] ?? status;
+  statusKey(status: RecommendationStatus): string {
+    return `statuses.${status}`;
   }
 }

@@ -1,7 +1,7 @@
 <div class="sources-layout">
   <div class="content-header">
-    <h2>Sources de données</h2>
-    <p>Activez ou désactivez les sources utilisées pour générer les recommandations IA.</p>
+    <h2>{{ 'settings.sources' | translate }}</h2>
+    <p>{{ 'settings.sourcesPage.intro' | translate }}</p>
   </div>
 
   @if (sourcesError()) {
@@ -14,16 +14,18 @@
   @if (sourcesLoading()) {
     <div class="loading-state">
       <mat-spinner diameter="28"></mat-spinner>
-      <span>Chargement des sources…</span>
+      <span>{{ 'settings.sourcesPage.loading' | translate }}</span>
     </div>
   } @else {
     @for (category of categories; track category) {
       <section class="source-category">
         <div class="category-header">
-          <h3>{{ categoryLabels[category] }}</h3>
-          <span class="badge"
-            >{{ enabledCount(category) }} / {{ sourcesByCategory(category).length }} actives</span
-          >
+          <h3>{{ 'categories.' + category | translate }}</h3>
+          <span class="badge">{{
+            'settings.sourcesPage.active'
+              | translate
+                : { enabled: enabledCount(category), total: sourcesByCategory(category).length }
+          }}</span>
         </div>
         <div class="source-list">
           @for (source of sourcesByCategory(category); track source.id) {
@@ -32,10 +34,14 @@
                 <div class="source-name">
                   {{ source.name }}
                   @if (source.requiresApiKey) {
-                    <span class="tag tag-key">Clé API</span>
+                    <span class="tag tag-key">{{
+                      'settings.sourcesPage.tagApiKey' | translate
+                    }}</span>
                   }
                   @if (!source.free) {
-                    <span class="tag tag-paid">Payant</span>
+                    <span class="tag tag-paid">{{
+                      'settings.sourcesPage.tagPaid' | translate
+                    }}</span>
                   }
                 </div>
                 <div class="source-description">{{ source.description }}</div>
@@ -48,7 +54,10 @@
                 (click)="toggle(source)"
                 [disabled]="isSaving(source.id)"
                 [attr.aria-label]="
-                  source.enabled ? 'Désactiver ' + source.name : 'Activer ' + source.name
+                  (source.enabled
+                    ? 'settings.sourcesPage.ariaDisable'
+                    : 'settings.sourcesPage.ariaEnable'
+                  ) | translate: { name: source.name }
                 "
               >
                 <span class="toggle-thumb"></span>

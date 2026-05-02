@@ -1,13 +1,13 @@
 <div class="ticker-page">
   <a routerLink="/dashboard" class="back-link">
     <mat-icon>arrow_back</mat-icon>
-    Retour au portefeuille
+    {{ 'ticker.back' | translate }}
   </a>
 
   @if (loading()) {
     <div class="loading-state">
       <mat-spinner diameter="20"></mat-spinner>
-      Chargement du ticker {{ symbol() }}…
+      {{ 'ticker.loading' | translate: { symbol: symbol() } }}
     </div>
   } @else if (error(); as e) {
     <div class="error-banner">
@@ -46,7 +46,7 @@
       } @else {
         <div class="empty-state">
           <mat-icon>show_chart</mat-icon>
-          <p>Pas assez de données pour tracer la courbe.</p>
+          <p>{{ 'ticker.noChart' | translate }}</p>
         </div>
       }
     </section>
@@ -55,81 +55,81 @@
     @if (snap.indicators; as ind) {
       <section class="indicators-grid">
         <div class="chip" [class]="rsiClass()">
-          <span class="chip-label">RSI(14)</span>
+          <span class="chip-label">{{ 'ticker.indicators.rsi' | translate }}</span>
           <span class="chip-value">
             @if (ind.rsi14 !== null) {
               {{ ind.rsi14 | number: '1.1-1' }}
             } @else {
-              —
+              {{ 'common.noData' | translate }}
             }
           </span>
         </div>
 
         <div class="chip" [class]="drawdownClass()">
-          <span class="chip-label">Drawdown 52w</span>
+          <span class="chip-label">{{ 'ticker.indicators.drawdown52w' | translate }}</span>
           <span class="chip-value">
             @if (ind.drawdownFrom52wHigh !== null) {
               {{ ind.drawdownFrom52wHigh | number: '1.1-1' }}%
             } @else {
-              —
+              {{ 'common.noData' | translate }}
             }
           </span>
         </div>
 
         <div class="chip" [class]="perfClass(ind.perf1m)">
-          <span class="chip-label">Perf 1m</span>
+          <span class="chip-label">{{ 'ticker.indicators.perf1m' | translate }}</span>
           <span class="chip-value">{{ signed(ind.perf1m) }}%</span>
         </div>
 
         <div class="chip" [class]="perfClass(ind.perf3m)">
-          <span class="chip-label">Perf 3m</span>
+          <span class="chip-label">{{ 'ticker.indicators.perf3m' | translate }}</span>
           <span class="chip-value">{{ signed(ind.perf3m) }}%</span>
         </div>
 
         <div class="chip" [class]="perfClass(ind.perf1y)">
-          <span class="chip-label">Perf 1y</span>
+          <span class="chip-label">{{ 'ticker.indicators.perf1y' | translate }}</span>
           <span class="chip-value">{{ signed(ind.perf1y) }}%</span>
         </div>
 
         <div class="chip">
-          <span class="chip-label">MA50</span>
+          <span class="chip-label">{{ 'ticker.indicators.ma50' | translate }}</span>
           <span class="chip-value">
             @if (ind.ma50 !== null) {
               {{ ind.ma50 | number: '1.2-2' }}
             } @else {
-              —
+              {{ 'common.noData' | translate }}
             }
           </span>
         </div>
 
         <div class="chip">
-          <span class="chip-label">MA200</span>
+          <span class="chip-label">{{ 'ticker.indicators.ma200' | translate }}</span>
           <span class="chip-value">
             @if (ind.ma200 !== null) {
               {{ ind.ma200 | number: '1.2-2' }}
             } @else {
-              —
+              {{ 'common.noData' | translate }}
             }
           </span>
         </div>
 
         <div class="chip" [class]="perfClass(ind.distanceToMa50Pct)">
-          <span class="chip-label">vs MA50</span>
+          <span class="chip-label">{{ 'ticker.indicators.vsMa50' | translate }}</span>
           <span class="chip-value">{{ signed(ind.distanceToMa50Pct) }}%</span>
         </div>
 
         <div class="chip" [class]="perfClass(ind.distanceToMa200Pct)">
-          <span class="chip-label">vs MA200</span>
+          <span class="chip-label">{{ 'ticker.indicators.vsMa200' | translate }}</span>
           <span class="chip-value">{{ signed(ind.distanceToMa200Pct) }}%</span>
         </div>
 
         <div class="chip">
-          <span class="chip-label">Vol relatif 30j</span>
+          <span class="chip-label">{{ 'ticker.indicators.volRel30d' | translate }}</span>
           <span class="chip-value">
             @if (ind.volumeRelative30d !== null) {
               {{ ind.volumeRelative30d | number: '1.2-2' }}x
             } @else {
-              —
+              {{ 'common.noData' | translate }}
             }
           </span>
         </div>
@@ -140,7 +140,7 @@
     @if (snap.quote.fiftyTwoWeekLow !== null && snap.quote.fiftyTwoWeekHigh !== null) {
       <section class="range-card">
         <div class="range-header">
-          <span class="range-label">Plage 52 semaines</span>
+          <span class="range-label">{{ 'ticker.rangeLabel' | translate }}</span>
         </div>
         <div class="range-values">
           <span>{{ snap.quote.fiftyTwoWeekLow | number: '1.2-2' }}</span>
@@ -155,9 +155,11 @@
       <div class="narrative-header">
         <div class="narrative-title">
           <mat-icon>auto_awesome</mat-icon>
-          <h3>Narratif IA</h3>
+          <h3>{{ 'ticker.narrative.title' | translate }}</h3>
           @if (narrative(); as n) {
-            <span class="sentiment-chip" [class]="sentimentClass(n)">{{ n.sentiment }}</span>
+            <span class="sentiment-chip" [class]="sentimentClass(n)">
+              {{ 'sentiment.' + n.sentiment | translate }}
+            </span>
           }
         </div>
         <button
@@ -167,10 +169,13 @@
         >
           @if (narrativeLoading()) {
             <mat-spinner diameter="14"></mat-spinner>
-            <span>Génération en cours…</span>
+            <span>{{ 'ticker.narrative.generating' | translate }}</span>
           } @else {
             <mat-icon>{{ narrative() ? 'refresh' : 'auto_awesome' }}</mat-icon>
-            <span>{{ narrative() ? 'Régénérer' : 'Générer le narratif' }}</span>
+            <span>{{
+              (narrative() ? 'ticker.narrative.regenerate' : 'ticker.narrative.generate')
+                | translate
+            }}</span>
           }
         </button>
       </div>
@@ -198,8 +203,7 @@
         </div>
       } @else if (!narrativeLoading() && !narrativeError()) {
         <p class="empty-state narrative-empty">
-          Pas encore de narratif pour ce ticker. Clique sur « Générer le narratif » pour qu'on
-          rédige une lecture des indicateurs ci-dessus.
+          {{ 'ticker.narrative.empty' | translate }}
         </p>
       }
     </section>

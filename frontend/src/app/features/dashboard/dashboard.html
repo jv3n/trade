@@ -1,9 +1,9 @@
 <div class="dashboard">
   <!-- En-tête -->
   <header class="dashboard-header">
-    <h1>PortfolioAI</h1>
+    <h1>{{ 'dashboard.title' | translate }}</h1>
     <p class="disclaimer">
-      ⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.
+      {{ 'dashboard.disclaimer' | translate }}
     </p>
   </header>
 
@@ -18,17 +18,17 @@
     <!-- Sidebar : liste des portefeuilles -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2>Portefeuilles</h2>
+        <h2>{{ 'dashboard.portfolios' | translate }}</h2>
         @if (portfolios().length > 0) {
           <div class="grand-total">
-            <span class="grand-total-label">Total agrégé</span>
+            <span class="grand-total-label">{{ 'dashboard.grandTotalLabel' | translate }}</span>
             <span class="grand-total-amount">{{ grandTotalCad() | number: '1.0-0' }} CAD</span>
           </div>
         }
       </div>
 
       @if (loading()) {
-        <p class="loading">Chargement...</p>
+        <p class="loading">{{ 'common.loadingDots' | translate }}</p>
       } @else {
         <ul class="portfolio-list">
           @for (p of portfolios(); track p.id) {
@@ -38,11 +38,13 @@
               (click)="selectPortfolio(p)"
             >
               <span class="portfolio-name">{{ p.name }}</span>
-              <span class="portfolio-count">{{ p.assetCount }} actif(s)</span>
+              <span class="portfolio-count">{{
+                'dashboard.assetCount' | translate: { count: p.assetCount }
+              }}</span>
               <span class="portfolio-total">{{ p.totalBookValueCad | number: '1.0-0' }} CAD</span>
             </li>
           } @empty {
-            <li class="empty-state">Importez un CSV pour créer vos portefeuilles.</li>
+            <li class="empty-state">{{ 'dashboard.noPortfolios' | translate }}</li>
           }
         </ul>
       }
@@ -60,7 +62,7 @@
               }
             </div>
             <div class="portfolio-value">
-              <span class="value-label">Valeur comptable totale (CAD)</span>
+              <span class="value-label">{{ 'dashboard.totalLabel' | translate }}</span>
               <span class="value-amount">{{ totalPortfolioValueCad() | number: '1.0-0' }} CAD</span>
             </div>
           </div>
@@ -68,7 +70,7 @@
           <!-- Tableau des actifs -->
           <div class="assets-section">
             <div class="assets-header">
-              <h3>Positions</h3>
+              <h3>{{ 'dashboard.positions' | translate }}</h3>
               <button
                 class="btn-ai-analyze"
                 [class.loading]="analyzing()"
@@ -77,11 +79,13 @@
               >
                 @if (analyzing()) {
                   <span class="btn-ai-spinner"></span>
-                  <span>Analyse en cours… ({{ analyzeElapsed() }}s)</span>
+                  <span>{{
+                    'dashboard.analyzing' | translate: { seconds: analyzeElapsed() }
+                  }}</span>
                 } @else {
                   <span class="btn-ai-glow"></span>
                   <mat-icon>auto_awesome</mat-icon>
-                  <span>Analyser avec l'IA</span>
+                  <span>{{ 'dashboard.analyze' | translate }}</span>
                 }
               </button>
             </div>
@@ -90,15 +94,15 @@
               <table class="assets-table">
                 <thead>
                   <tr>
-                    <th>Ticker</th>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th class="text-right">Qté</th>
-                    <th class="text-right">Px moyen</th>
-                    <th class="text-right">Px marché</th>
-                    <th class="text-right">Val. comptable</th>
-                    <th class="text-right">Val. marchande</th>
-                    <th class="text-right">P&L non réalisé</th>
+                    <th>{{ 'dashboard.table.ticker' | translate }}</th>
+                    <th>{{ 'dashboard.table.name' | translate }}</th>
+                    <th>{{ 'dashboard.table.type' | translate }}</th>
+                    <th class="text-right">{{ 'dashboard.table.qty' | translate }}</th>
+                    <th class="text-right">{{ 'dashboard.table.avgPrice' | translate }}</th>
+                    <th class="text-right">{{ 'dashboard.table.marketPrice' | translate }}</th>
+                    <th class="text-right">{{ 'dashboard.table.bookValue' | translate }}</th>
+                    <th class="text-right">{{ 'dashboard.table.marketValue' | translate }}</th>
+                    <th class="text-right">{{ 'dashboard.table.pnl' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -108,7 +112,9 @@
                         <a
                           [routerLink]="['/ticker', asset.ticker]"
                           class="ticker-badge ticker-link"
-                          matTooltip="Voir le dossier {{ asset.ticker }}"
+                          [matTooltip]="
+                            'dashboard.tooltipDossier' | translate: { symbol: asset.ticker }
+                          "
                         >
                           {{ asset.ticker }}
                         </a>
@@ -147,7 +153,7 @@
                             <span class="currency">{{ asset.gainCurrency }}</span>
                           </span>
                         } @else {
-                          <span class="no-data">—</span>
+                          <span class="no-data">{{ 'common.noData' | translate }}</span>
                         }
                       </td>
                     </tr>
@@ -156,7 +162,7 @@
               </table>
             } @else {
               <p class="empty-state">
-                Aucune position — importez un CSV pour peupler ce portefeuille.
+                {{ 'dashboard.noAssets' | translate }}
               </p>
             }
           </div>
@@ -167,7 +173,7 @@
               <div class="recommendation-header">
                 <div class="recommendation-title">
                   <mat-icon>auto_awesome</mat-icon>
-                  <h3>Recommandation IA</h3>
+                  <h3>{{ 'dashboard.recommendation.title' | translate }}</h3>
                   @if (rec.confidence !== null) {
                     <span
                       class="confidence-badge"
@@ -175,7 +181,9 @@
                       [class.medium]="rec.confidence >= 40 && rec.confidence < 70"
                       [class.low]="rec.confidence < 40"
                     >
-                      {{ rec.confidence }}% de confiance
+                      {{
+                        'dashboard.recommendation.confidence' | translate: { value: rec.confidence }
+                      }}
                     </span>
                   }
                 </div>
@@ -189,7 +197,7 @@
 
               @if (rec.actions.length > 0) {
                 <div class="recommendation-actions">
-                  <h4>Actions suggérées</h4>
+                  <h4>{{ 'dashboard.recommendation.actionsTitle' | translate }}</h4>
                   <div class="action-list">
                     @for (action of rec.actions; track action.ticker) {
                       <div class="action-card">
@@ -199,15 +207,23 @@
                             action.action
                           }}</span>
                           @if (action.targetWeight !== null) {
-                            <span class="action-weight">cible {{ action.targetWeight }}%</span>
+                            <span class="action-weight">{{
+                              'dashboard.recommendation.weightTarget'
+                                | translate: { value: action.targetWeight }
+                            }}</span>
                           }
                         </div>
                         @if (actionAmounts(action.ticker, action.targetWeight); as amt) {
                           <div class="action-amounts">
-                            <span class="amount-current"
-                              >actuel {{ amt.currentWeight | number: '1.1-1' }}% ·
-                              {{ amt.currentValue | number: '1.0-0' }} {{ amt.currency }}</span
-                            >
+                            <span class="amount-current">{{
+                              'dashboard.recommendation.amountCurrent'
+                                | translate
+                                  : {
+                                      weight: amt.currentWeight | number: '1.1-1',
+                                      value: amt.currentValue | number: '1.0-0',
+                                      currency: amt.currency,
+                                    }
+                            }}</span>
                             <span class="amount-arrow">→</span>
                             <span class="amount-target"
                               >{{ amt.targetAmount | number: '1.0-0' }} {{ amt.currency }}</span
@@ -235,7 +251,7 @@
         </div>
       } @else {
         <div class="empty-portfolio">
-          <p>Sélectionnez un portefeuille ou importez un CSV pour commencer.</p>
+          <p>{{ 'dashboard.emptySelection' | translate }}</p>
         </div>
       }
     </main>

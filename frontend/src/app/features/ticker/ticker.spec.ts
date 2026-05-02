@@ -13,6 +13,7 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import { TickerPage } from './ticker';
 import {
@@ -71,6 +72,7 @@ describe('TickerPage', () => {
     await TestBed.configureTestingModule({
       imports: [TickerPage],
       providers: [
+        provideTranslateService({ lang: 'en' }),
         { provide: MarketRepository, useValue: market },
         {
           provide: ActivatedRoute,

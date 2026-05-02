@@ -7,19 +7,19 @@
   <nav class="toolbar-nav">
     <a mat-button routerLink="/dashboard" routerLinkActive="nav-active">
       <mat-icon>dashboard</mat-icon>
-      Dashboard
+      {{ 'nav.dashboard' | translate }}
     </a>
     <a mat-button routerLink="/import" routerLinkActive="nav-active">
       <mat-icon>upload_file</mat-icon>
-      Import
+      {{ 'nav.import' | translate }}
     </a>
     <a mat-button routerLink="/suivi" routerLinkActive="nav-active">
       <mat-icon>show_chart</mat-icon>
-      Suivi
+      {{ 'nav.suivi' | translate }}
     </a>
     <a mat-button routerLink="/history" routerLinkActive="nav-active">
       <mat-icon>lightbulb</mat-icon>
-      Recommandations IA
+      {{ 'nav.recommendations' | translate }}
     </a>
   </nav>
 
@@ -28,13 +28,43 @@
   <button
     mat-icon-button
     type="button"
+    [matMenuTriggerFor]="langMenu"
+    [matTooltip]="'header.language' | translate"
+    class="lang-trigger"
+  >
+    <span class="lang-flag" aria-hidden="true">{{ language.flag(language.lang()) }}</span>
+  </button>
+  <mat-menu #langMenu="matMenu">
+    @for (l of language.supported; track l) {
+      <button mat-menu-item (click)="setLanguage(l)" [class.active-lang]="language.lang() === l">
+        <span class="lang-flag" aria-hidden="true">{{ language.flag(l) }}</span>
+        <span>{{ 'language.' + l | translate }}</span>
+        @if (language.lang() === l) {
+          <mat-icon class="lang-check">check</mat-icon>
+        }
+      </button>
+    }
+  </mat-menu>
+
+  <button
+    mat-icon-button
+    type="button"
     (click)="theme.toggle()"
-    [matTooltip]="theme.theme() === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'"
+    [matTooltip]="
+      theme.theme() === 'dark'
+        ? ('header.themeLight' | translate)
+        : ('header.themeDark' | translate)
+    "
   >
     <mat-icon>{{ theme.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
   </button>
 
-  <a mat-icon-button routerLink="/settings" routerLinkActive="nav-active" matTooltip="Paramètres">
+  <a
+    mat-icon-button
+    routerLink="/settings"
+    routerLinkActive="nav-active"
+    [matTooltip]="'header.settings' | translate"
+  >
     <mat-icon>settings</mat-icon>
   </a>
 </mat-toolbar>

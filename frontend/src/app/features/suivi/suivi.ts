@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   SnapshotRepository,
   SnapshotSummary,
@@ -18,12 +19,13 @@ interface Batch {
 
 @Component({
   selector: 'app-suivi',
-  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './suivi.html',
   styleUrl: './suivi.scss',
 })
 export class Suivi implements OnInit {
   private readonly snapshotRepository = inject(SnapshotRepository);
+  private readonly translate = inject(TranslateService);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -60,7 +62,7 @@ export class Suivi implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Impossible de charger le suivi.');
+        this.error.set(this.translate.instant('suivi.loadError'));
         this.loading.set(false);
       },
     });

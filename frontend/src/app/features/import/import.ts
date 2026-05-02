@@ -1,18 +1,16 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CsvImport } from '../dashboard/csv-import/csv-import';
 
 @Component({
   selector: 'app-import',
-  imports: [CsvImport],
+  imports: [CsvImport, TranslatePipe],
   template: `
     <div class="import-page">
       <div class="import-header">
-        <h2>Synchroniser depuis Wealthsimple</h2>
-        <p>
-          Importez votre export de positions CSV. Un portfolio sera créé ou mis à jour pour chaque
-          compte, et un snapshot sera enregistré pour le suivi historique.
-        </p>
+        <h2>{{ 'import.title' | translate }}</h2>
+        <p>{{ 'import.intro' | translate }}</p>
       </div>
       <app-csv-import (imported)="onImported()" />
     </div>

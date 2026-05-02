@@ -15,6 +15,7 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { Dashboard } from './dashboard';
 import { PortfolioRepository, Asset, Portfolio } from '../../core/portfolio.repository';
@@ -38,6 +39,7 @@ describe('Dashboard', () => {
       imports: [Dashboard],
       providers: [
         provideRouter([]),
+        provideTranslateService({ lang: 'en' }),
         { provide: PortfolioRepository, useValue: mockPortfolioRepository },
         { provide: AnalysisRepository, useValue: mockAnalysisRepository },
       ],

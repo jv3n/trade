@@ -2,7 +2,7 @@
   <div class="page-header">
     <div class="page-title">
       <mat-icon>history</mat-icon>
-      <h2>Historique des recommandations</h2>
+      <h2>{{ 'history.title' | translate }}</h2>
     </div>
     @if (!loading() && recommendations().length > 0) {
       <span class="count-badge">{{ filtered().length }} / {{ recommendations().length }}</span>
@@ -14,14 +14,14 @@
     <div class="filters">
       @if (portfolios().length > 1) {
         <div class="filter-group">
-          <label>Portefeuille</label>
+          <label>{{ 'history.filters.portfolio' | translate }}</label>
           <div class="chip-list">
             <button
               class="chip"
               [class.active]="filterPortfolio() === 'all'"
               (click)="filterPortfolio.set('all')"
             >
-              Tous
+              {{ 'history.filters.all' | translate }}
             </button>
             @for (p of portfolios(); track p.id) {
               <button
@@ -36,7 +36,7 @@
         </div>
       }
       <div class="filter-group">
-        <label>Statut</label>
+        <label>{{ 'history.filters.status' | translate }}</label>
         <div class="chip-list">
           @for (s of statuses; track s.value) {
             <button
@@ -44,7 +44,7 @@
               [class.active]="filterStatus() === s.value"
               (click)="filterStatus.set(s.value)"
             >
-              {{ s.label }}
+              {{ s.i18nKey | translate }}
             </button>
           }
         </div>
@@ -56,22 +56,22 @@
   @if (loading()) {
     <div class="loading-state">
       <mat-spinner diameter="36"></mat-spinner>
-      <span>Chargement de l'historique…</span>
+      <span>{{ 'history.loading' | translate }}</span>
     </div>
   } @else if (error()) {
     <div class="error-state">
       <mat-icon>error_outline</mat-icon>
       <span>{{ error() }}</span>
-      <button mat-button (click)="load()">Réessayer</button>
+      <button mat-button (click)="load()">{{ 'common.retry' | translate }}</button>
     </div>
   } @else if (filtered().length === 0) {
     <div class="empty-state">
       <mat-icon>auto_awesome</mat-icon>
       @if (recommendations().length === 0) {
-        <p>Aucune recommandation générée pour l'instant.</p>
-        <span>Lancez une analyse depuis le tableau de bord pour commencer.</span>
+        <p>{{ 'history.emptyAll' | translate }}</p>
+        <span>{{ 'history.emptyAllHint' | translate }}</span>
       } @else {
-        <p>Aucune recommandation ne correspond aux filtres sélectionnés.</p>
+        <p>{{ 'history.emptyFiltered' | translate }}</p>
       }
     </div>
   } @else {
@@ -96,7 +96,7 @@
                 </span>
               }
               <span class="status-badge status-{{ rec.status | lowercase }}">
-                {{ statusLabel(rec.status) }}
+                {{ statusKey(rec.status) | translate }}
               </span>
               <mat-icon class="expand-icon">{{
                 isExpanded(rec.id) ? 'expand_less' : 'expand_more'
@@ -126,7 +126,7 @@
 
               @if (rec.actions.length > 0) {
                 <div class="detail-actions">
-                  <h4>Actions suggérées</h4>
+                  <h4>{{ 'history.actionsTitle' | translate }}</h4>
                   <div class="action-list">
                     @for (action of rec.actions; track action.ticker) {
                       <div class="action-card">

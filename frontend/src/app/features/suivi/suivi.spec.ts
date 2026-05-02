@@ -15,6 +15,7 @@
  * `id` and `batchId`), so the diff between scenarios is glanceable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { Suivi } from './suivi';
 import {
@@ -50,7 +51,10 @@ describe('Suivi', () => {
 
     await TestBed.configureTestingModule({
       imports: [Suivi],
-      providers: [{ provide: SnapshotRepository, useValue: snapshotRepository }],
+      providers: [
+        provideTranslateService({ lang: 'en' }),
+        { provide: SnapshotRepository, useValue: snapshotRepository },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Suivi);
@@ -131,6 +135,8 @@ describe('Suivi', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(component.error()).toContain('Impossible');
+    // No translations loaded in tests → TranslateService.instant returns the key as fallback,
+    // which is still informative ("suivi.loadError"). Check the key path here.
+    expect(component.error()).toBe('suivi.loadError');
   });
 });

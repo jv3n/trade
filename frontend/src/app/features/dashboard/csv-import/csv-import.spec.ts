@@ -16,6 +16,7 @@
  * test would carry six lines of `dataTransfer` casting noise.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { PortfolioRepository } from '../../../core/portfolio.repository';
 import { CsvImport } from './csv-import';
@@ -51,7 +52,10 @@ describe('CsvImport', () => {
 
     await TestBed.configureTestingModule({
       imports: [CsvImport],
-      providers: [{ provide: PortfolioRepository, useValue: service }],
+      providers: [
+        provideTranslateService({ lang: 'en' }),
+        { provide: PortfolioRepository, useValue: service },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CsvImport);
@@ -154,7 +158,10 @@ describe('CsvImport', () => {
       component.onDrop(makeDrop(files));
       component.confirmBatch();
       expect(component.step()).toBe('error');
-      expect(component.error()).toContain('holdings-report-2026-04-25.csv');
+      // Error message is the i18n key path (no translations loaded in tests). The interpolation
+      // params (filename) are not visible in the key itself, so we just verify the right key
+      // fired.
+      expect(component.error()).toBe('csvImport.errors.batchItem');
       expect(service.confirmCsvImport).toHaveBeenCalledTimes(2);
     });
   });

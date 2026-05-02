@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { PortfolioRepository, Portfolio, Asset } from '../../core/portfolio.repository';
 import { AnalysisRepository, Recommendation } from '../../core/analysis.repository';
@@ -18,6 +19,7 @@ import { AnalysisRepository, Recommendation } from '../../core/analysis.reposito
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    TranslatePipe,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -25,6 +27,7 @@ import { AnalysisRepository, Recommendation } from '../../core/analysis.reposito
 export class Dashboard implements OnInit, OnDestroy {
   private readonly portfolioRepository = inject(PortfolioRepository);
   private readonly analysisRepository = inject(AnalysisRepository);
+  private readonly translate = inject(TranslateService);
   private pollSub?: Subscription;
   private timerSub?: Subscription;
 
@@ -62,7 +65,7 @@ export class Dashboard implements OnInit, OnDestroy {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Erreur lors du chargement des portefeuilles');
+        this.error.set(this.translate.instant('dashboard.errors.loadPortfolios'));
         this.loading.set(false);
       },
     });
@@ -73,7 +76,7 @@ export class Dashboard implements OnInit, OnDestroy {
     this.lastRecommendation.set(null);
     this.portfolioRepository.getAssets(portfolio.id).subscribe({
       next: (assets) => this.assets.set(assets),
-      error: () => this.error.set('Erreur lors du chargement des actifs'),
+      error: () => this.error.set(this.translate.instant('dashboard.errors.loadAssets')),
     });
   }
 
@@ -102,18 +105,20 @@ export class Dashboard implements OnInit, OnDestroy {
                   },
                 });
             } else if (updatedJob.status === 'ERROR') {
-              this.error.set(`Erreur IA : ${updatedJob.error}`);
+              this.error.set(
+                this.translate.instant('dashboard.errors.ai', { error: updatedJob.error }),
+              );
               this.stopAnalyzing();
             }
           },
           error: (err: Error) => {
-            this.error.set(err.message ?? "Erreur lors du polling du job d'analyse");
+            this.error.set(err.message ?? this.translate.instant('dashboard.errors.polling'));
             this.stopAnalyzing();
           },
         });
       },
       error: () => {
-        this.error.set("Erreur lors du démarrage de l'analyse IA");
+        this.error.set(this.translate.instant('dashboard.errors.startAnalysis'));
         this.stopAnalyzing();
       },
     });

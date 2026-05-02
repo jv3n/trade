@@ -2,6 +2,7 @@ import { Component, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PortfolioRepository, CsvImportPreview } from '../../../core/portfolio.repository';
 
 type ImportStep =
@@ -16,12 +17,13 @@ type ImportStep =
 
 @Component({
   selector: 'app-csv-import',
-  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './csv-import.html',
   styleUrl: './csv-import.scss',
 })
 export class CsvImport {
   private readonly portfolioRepository = inject(PortfolioRepository);
+  private readonly translate = inject(TranslateService);
 
   imported = output<void>();
 
@@ -81,9 +83,7 @@ export class CsvImport {
         this.step.set('preview');
       },
       error: () => {
-        this.error.set(
-          "Impossible de lire le fichier. Vérifiez qu'il s'agit bien d'un export Wealthsimple (positions).",
-        );
+        this.error.set(this.translate.instant('csvImport.errors.preview'));
         this.step.set('error');
       },
     });
@@ -99,7 +99,7 @@ export class CsvImport {
         this.imported.emit();
       },
       error: () => {
-        this.error.set("L'import a échoué. Réessayez.");
+        this.error.set(this.translate.instant('csvImport.errors.import'));
         this.step.set('error');
       },
     });
@@ -136,7 +136,9 @@ export class CsvImport {
         this.importNext();
       },
       error: () => {
-        this.error.set(`Échec de l'import de « ${files[index].name} ».`);
+        this.error.set(
+          this.translate.instant('csvImport.errors.batchItem', { name: files[index].name }),
+        );
         this.step.set('error');
       },
     });

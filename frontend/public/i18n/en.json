@@ -1,0 +1,238 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "loadingDots": "Loading...",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "noData": "—",
+    "errorIcon": "error_outline"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "import": "Import",
+    "suivi": "Tracking",
+    "recommendations": "AI Recommendations"
+  },
+  "header": {
+    "themeLight": "Switch to light theme",
+    "themeDark": "Switch to dark theme",
+    "language": "Change language",
+    "settings": "Settings"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "sentiment": {
+    "BULLISH": "BULLISH",
+    "NEUTRAL": "NEUTRAL",
+    "BEARISH": "BEARISH"
+  },
+  "categories": {
+    "RSS": "Press & RSS feeds",
+    "MARKET": "Market data",
+    "MACRO": "Macroeconomic indicators",
+    "CRYPTO": "Crypto"
+  },
+  "statuses": {
+    "all": "All",
+    "PENDING": "Pending",
+    "APPLIED": "Applied",
+    "IGNORED": "Ignored",
+    "EVALUATED": "Evaluated",
+    "PENDING_PLURAL": "Pending",
+    "APPLIED_PLURAL": "Applied",
+    "IGNORED_PLURAL": "Ignored",
+    "EVALUATED_PLURAL": "Evaluated"
+  },
+  "dashboard": {
+    "title": "PortfolioAI",
+    "disclaimer": "⚠️ This is not licensed financial advice. Educational use only.",
+    "portfolios": "Portfolios",
+    "grandTotalLabel": "Aggregated total",
+    "assetCount": "{{count}} asset(s)",
+    "totalLabel": "Total book value (CAD)",
+    "noPortfolios": "Import a CSV to create your portfolios.",
+    "noAssets": "No positions — import a CSV to populate this portfolio.",
+    "emptySelection": "Select a portfolio or import a CSV to start.",
+    "positions": "Positions",
+    "analyze": "Analyze with AI",
+    "analyzing": "Analyzing… ({{seconds}}s)",
+    "errors": {
+      "loadPortfolios": "Failed to load portfolios",
+      "loadAssets": "Failed to load assets",
+      "startAnalysis": "Failed to start AI analysis",
+      "ai": "AI error: {{error}}",
+      "polling": "Failed to poll the analysis job"
+    },
+    "table": {
+      "ticker": "Ticker",
+      "name": "Name",
+      "type": "Type",
+      "qty": "Qty",
+      "avgPrice": "Avg price",
+      "marketPrice": "Market price",
+      "bookValue": "Book value",
+      "marketValue": "Market value",
+      "pnl": "Unrealized P&L"
+    },
+    "tooltipDossier": "Open the {{symbol}} dossier",
+    "recommendation": {
+      "title": "AI Recommendation",
+      "confidence": "{{value}}% confidence",
+      "actionsTitle": "Suggested actions",
+      "weightTarget": "target {{value}}%",
+      "amountCurrent": "current {{weight}}% · {{value}} {{currency}}"
+    }
+  },
+  "ticker": {
+    "back": "Back to portfolio",
+    "loading": "Loading ticker {{symbol}}…",
+    "exchange": "{{exchange}}",
+    "noChart": "Not enough data to draw the curve.",
+    "indicators": {
+      "rsi": "RSI(14)",
+      "drawdown52w": "52w drawdown",
+      "perf1m": "Perf 1m",
+      "perf3m": "Perf 3m",
+      "perf1y": "Perf 1y",
+      "ma50": "MA50",
+      "ma200": "MA200",
+      "vsMa50": "vs MA50",
+      "vsMa200": "vs MA200",
+      "volRel30d": "30d rel volume"
+    },
+    "rangeLabel": "52-week range",
+    "errors": {
+      "missingSymbol": "Missing symbol in URL",
+      "notFound": "Ticker not found: {{symbol}}",
+      "rateLimit": "Market data temporarily unavailable (Yahoo rate-limit). Try again in a few minutes.",
+      "generic": "Failed to load the ticker"
+    },
+    "narrative": {
+      "title": "AI Narrative",
+      "generate": "Generate narrative",
+      "regenerate": "Regenerate",
+      "generating": "Generating…",
+      "empty": "No narrative for this ticker yet. Click \"Generate narrative\" to get a reading of the indicators above.",
+      "errorRequest": "Failed to start generation",
+      "errorGeneric": "Failed to generate the narrative",
+      "errorPolling": "Failed to poll the job",
+      "errorReload": "Narrative generated but couldn't be reloaded"
+    }
+  },
+  "import": {
+    "title": "Sync from Wealthsimple",
+    "intro": "Import your CSV positions export. A portfolio will be created or updated for each account, and a snapshot will be saved for historical tracking."
+  },
+  "csvImport": {
+    "dropLabel": "Sync from a Wealthsimple CSV",
+    "or": "or",
+    "browse": "Choose one or more files",
+    "hint": "WS export: Account → Positions → ↓ Download",
+    "parsing": "Parsing file…",
+    "previewSummary": "{{items}} position(s) — {{accounts}} account(s)",
+    "skippedRows": "{{count}} rows skipped",
+    "accountPositions": "{{count}} position(s)",
+    "table": {
+      "ticker": "Ticker",
+      "name": "Name",
+      "qty": "Quantity",
+      "avgPrice": "Avg price",
+      "bookValue": "Book value"
+    },
+    "confirmSingle": "Import {{items}} position(s) into {{accounts}} portfolio(s)",
+    "importing": "Importing…",
+    "batchSummary": "{{count}} files to import",
+    "confirmBatch": "Import {{count}} files",
+    "batchProgress": "File {{current}} / {{total}} — {{name}}",
+    "done": "Portfolios successfully synced.",
+    "again": "Import another file",
+    "errors": {
+      "preview": "Couldn't read the file. Check that it's a Wealthsimple positions export.",
+      "import": "Import failed. Please retry.",
+      "batchItem": "Failed to import \"{{name}}\"."
+    }
+  },
+  "suivi": {
+    "title": "Portfolio tracking",
+    "intro": "History of CSV imports — each import creates a dated snapshot of your positions.",
+    "empty": "No history yet. Import a CSV to start tracking.",
+    "batch": {
+      "accounts": "{{count}} account(s)",
+      "totalLabel": "Total book value"
+    },
+    "snapshot": {
+      "positions": "{{count}} position(s)"
+    },
+    "positions": {
+      "ticker": "Ticker",
+      "name": "Name",
+      "type": "Type",
+      "qty": "Qty",
+      "bookValueCad": "Book value (CAD)",
+      "marketValue": "Market value",
+      "pnl": "P&L"
+    },
+    "loadingPositions": "Loading positions…",
+    "loadError": "Couldn't load the history. Please retry."
+  },
+  "history": {
+    "title": "Recommendations history",
+    "filters": {
+      "portfolio": "Portfolio",
+      "all": "All",
+      "status": "Status"
+    },
+    "loading": "Loading history…",
+    "emptyAll": "No recommendations generated yet.",
+    "emptyAllHint": "Run an analysis from the dashboard to start.",
+    "emptyFiltered": "No recommendation matches the selected filters.",
+    "actionsTitle": "Suggested actions"
+  },
+  "settings": {
+    "navLabel": "Configuration",
+    "sources": "Data sources",
+    "testSources": "Test a source",
+    "promptPreview": "Prompt preview",
+    "sourcesPage": {
+      "intro": "Enable or disable the sources used to generate AI recommendations.",
+      "loading": "Loading sources…",
+      "active": "{{enabled}} / {{total}} active",
+      "tagApiKey": "API key",
+      "tagPaid": "Paid",
+      "ariaEnable": "Enable {{name}}",
+      "ariaDisable": "Disable {{name}}",
+      "errors": {
+        "load": "Couldn't load the sources.",
+        "toggle": "Couldn't update \"{{name}}\"."
+      }
+    },
+    "testPage": {
+      "intro": "Select a type then a source to verify connectivity and inspect the raw data.",
+      "selectCategory": "— Source type —",
+      "selectSource": "— Source —",
+      "running": "Running…",
+      "run": "Run the test",
+      "articlesCount": "{{count}} articles fetched",
+      "errorBackend": "Backend connection error"
+    },
+    "previewPage": {
+      "intro": "Select a portfolio to view the full prompt (system + user) that would be sent to the LLM. No call is made.",
+      "selectPortfolio": "— Portfolio —",
+      "loading": "Loading…",
+      "show": "Show the prompt",
+      "tickersCount": "{{count}} tickers",
+      "systemChars": "system: {{count}} chars",
+      "userChars": "user: {{count}} chars",
+      "totalChars": "total: {{count}} chars",
+      "systemPrompt": "System prompt",
+      "userMessage": "User message",
+      "copy": "Copy",
+      "errors": {
+        "notFound": "Portfolio not found",
+        "backend": "Backend error"
+      }
+    }
+  }
+}

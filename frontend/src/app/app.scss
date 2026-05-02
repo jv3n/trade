@@ -54,3 +54,42 @@
 .app-content {
   min-height: calc(100vh - 64px);
 }
+
+// ---- Language switcher ----
+//
+// Les emojis drapeau héritent de la baseline du texte avec des métriques asymétriques (espace
+// extra sous le glyph), ce qui les fait paraître décalés vers le haut dans un conteneur flex.
+// On force un cadre carré + flex center + un léger translateY pour neutraliser le descender.
+
+.lang-trigger {
+  .lang-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    font-size: 1.25rem;
+    line-height: 1;
+    transform: translateY(-3px); // remonte légèrement (Apple Color Emoji descender)
+  }
+}
+
+.mat-mdc-menu-item .lang-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-right: 0.6rem;
+  transform: translateY(1px);
+}
+
+.mat-mdc-menu-item .lang-check {
+  margin-left: auto;
+  color: var(--color-accent);
+  font-size: 1.05rem;
+  width: 1.05rem;
+  height: 1.05rem;
+}

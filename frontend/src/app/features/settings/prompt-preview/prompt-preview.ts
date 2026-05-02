@@ -2,18 +2,20 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { PortfolioRepository, Portfolio } from '../../../core/portfolio.repository';
 import { AnalysisRepository, PromptPreview } from '../../../core/analysis.repository';
 
 @Component({
   selector: 'app-prompt-preview',
-  imports: [CommonModule, MatProgressSpinnerModule, MatIconModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatIconModule, TranslatePipe],
   templateUrl: './prompt-preview.html',
   styleUrl: './prompt-preview.scss',
 })
 export class PromptPreviewPage implements OnInit {
   private readonly portfolioRepository = inject(PortfolioRepository);
   private readonly analysisRepository = inject(AnalysisRepository);
+  private readonly translate = inject(TranslateService);
 
   portfolios = signal<Portfolio[]>([]);
   selectedId = signal<string | null>(null);
@@ -46,7 +48,11 @@ export class PromptPreviewPage implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err?.status === 404 ? 'Portefeuille introuvable' : 'Erreur backend');
+        const key =
+          err?.status === 404
+            ? 'settings.previewPage.errors.notFound'
+            : 'settings.previewPage.errors.backend';
+        this.error.set(this.translate.instant(key));
         this.loading.set(false);
       },
     });

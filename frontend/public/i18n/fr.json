@@ -1,0 +1,238 @@
+{
+  "common": {
+    "loading": "Chargement…",
+    "loadingDots": "Chargement...",
+    "cancel": "Annuler",
+    "retry": "Réessayer",
+    "noData": "—",
+    "errorIcon": "error_outline"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "import": "Import",
+    "suivi": "Suivi",
+    "recommendations": "Recommandations IA"
+  },
+  "header": {
+    "themeLight": "Passer en thème clair",
+    "themeDark": "Passer en thème sombre",
+    "language": "Changer de langue",
+    "settings": "Paramètres"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "sentiment": {
+    "BULLISH": "BULLISH",
+    "NEUTRAL": "NEUTRAL",
+    "BEARISH": "BEARISH"
+  },
+  "categories": {
+    "RSS": "Presse & Flux RSS",
+    "MARKET": "Données de marché",
+    "MACRO": "Indicateurs macro-économiques",
+    "CRYPTO": "Crypto"
+  },
+  "statuses": {
+    "all": "Toutes",
+    "PENDING": "En attente",
+    "APPLIED": "Appliquée",
+    "IGNORED": "Ignorée",
+    "EVALUATED": "Évaluée",
+    "PENDING_PLURAL": "En attente",
+    "APPLIED_PLURAL": "Appliquées",
+    "IGNORED_PLURAL": "Ignorées",
+    "EVALUATED_PLURAL": "Évaluées"
+  },
+  "dashboard": {
+    "title": "PortfolioAI",
+    "disclaimer": "⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.",
+    "portfolios": "Portefeuilles",
+    "grandTotalLabel": "Total agrégé",
+    "assetCount": "{{count}} actif(s)",
+    "totalLabel": "Valeur comptable totale (CAD)",
+    "noPortfolios": "Importez un CSV pour créer vos portefeuilles.",
+    "noAssets": "Aucune position — importez un CSV pour peupler ce portefeuille.",
+    "emptySelection": "Sélectionnez un portefeuille ou importez un CSV pour commencer.",
+    "positions": "Positions",
+    "analyze": "Analyser avec l'IA",
+    "analyzing": "Analyse en cours… ({{seconds}}s)",
+    "errors": {
+      "loadPortfolios": "Erreur lors du chargement des portefeuilles",
+      "loadAssets": "Erreur lors du chargement des actifs",
+      "startAnalysis": "Erreur lors du démarrage de l'analyse IA",
+      "ai": "Erreur IA : {{error}}",
+      "polling": "Erreur lors du polling du job d'analyse"
+    },
+    "table": {
+      "ticker": "Ticker",
+      "name": "Nom",
+      "type": "Type",
+      "qty": "Qté",
+      "avgPrice": "Px moyen",
+      "marketPrice": "Px marché",
+      "bookValue": "Val. comptable",
+      "marketValue": "Val. marchande",
+      "pnl": "P&L non réalisé"
+    },
+    "tooltipDossier": "Voir le dossier {{symbol}}",
+    "recommendation": {
+      "title": "Recommandation IA",
+      "confidence": "{{value}}% de confiance",
+      "actionsTitle": "Actions suggérées",
+      "weightTarget": "cible {{value}}%",
+      "amountCurrent": "actuel {{weight}}% · {{value}} {{currency}}"
+    }
+  },
+  "ticker": {
+    "back": "Retour au portefeuille",
+    "loading": "Chargement du ticker {{symbol}}…",
+    "exchange": "{{exchange}}",
+    "noChart": "Pas assez de données pour tracer la courbe.",
+    "indicators": {
+      "rsi": "RSI(14)",
+      "drawdown52w": "Drawdown 52w",
+      "perf1m": "Perf 1m",
+      "perf3m": "Perf 3m",
+      "perf1y": "Perf 1y",
+      "ma50": "MA50",
+      "ma200": "MA200",
+      "vsMa50": "vs MA50",
+      "vsMa200": "vs MA200",
+      "volRel30d": "Vol relatif 30j"
+    },
+    "rangeLabel": "Plage 52 semaines",
+    "errors": {
+      "missingSymbol": "Symbole manquant dans l'URL",
+      "notFound": "Ticker introuvable : {{symbol}}",
+      "rateLimit": "Données de marché momentanément indisponibles (rate-limit Yahoo). Réessaie dans quelques minutes.",
+      "generic": "Erreur lors du chargement du ticker"
+    },
+    "narrative": {
+      "title": "Narratif IA",
+      "generate": "Générer le narratif",
+      "regenerate": "Régénérer",
+      "generating": "Génération en cours…",
+      "empty": "Pas encore de narratif pour ce ticker. Clique sur « Générer le narratif » pour qu'on rédige une lecture des indicateurs ci-dessus.",
+      "errorRequest": "Impossible de lancer la génération",
+      "errorGeneric": "Erreur lors de la génération du narratif",
+      "errorPolling": "Erreur lors du polling du job",
+      "errorReload": "Narratif généré mais impossible à recharger"
+    }
+  },
+  "import": {
+    "title": "Synchroniser depuis Wealthsimple",
+    "intro": "Importez votre export de positions CSV. Un portfolio sera créé ou mis à jour pour chaque compte, et un snapshot sera enregistré pour le suivi historique."
+  },
+  "csvImport": {
+    "dropLabel": "Synchroniser depuis un CSV Wealthsimple",
+    "or": "ou",
+    "browse": "Choisir un ou plusieurs fichiers",
+    "hint": "Export WS : Compte → Positions → ↓ Télécharger",
+    "parsing": "Analyse du fichier…",
+    "previewSummary": "{{items}} position(s) — {{accounts}} compte(s)",
+    "skippedRows": "{{count}} lignes ignorées",
+    "accountPositions": "{{count}} position(s)",
+    "table": {
+      "ticker": "Ticker",
+      "name": "Nom",
+      "qty": "Quantité",
+      "avgPrice": "Prix moy.",
+      "bookValue": "Valeur comptable"
+    },
+    "confirmSingle": "Importer {{items}} position(s) dans {{accounts}} portfolio(s)",
+    "importing": "Import en cours…",
+    "batchSummary": "{{count}} fichiers à importer",
+    "confirmBatch": "Importer {{count}} fichiers",
+    "batchProgress": "Fichier {{current}} / {{total}} — {{name}}",
+    "done": "Portefeuilles synchronisés avec succès.",
+    "again": "Importer un autre fichier",
+    "errors": {
+      "preview": "Impossible de lire le fichier. Vérifiez qu'il s'agit bien d'un export Wealthsimple (positions).",
+      "import": "L'import a échoué. Réessayez.",
+      "batchItem": "Échec de l'import de « {{name}} »."
+    }
+  },
+  "suivi": {
+    "title": "Suivi des portefeuilles",
+    "intro": "Historique des imports CSV — chaque import crée un snapshot daté de vos positions.",
+    "empty": "Aucun historique pour l'instant. Importez un CSV pour commencer le suivi.",
+    "batch": {
+      "accounts": "{{count}} compte(s)",
+      "totalLabel": "Total valeur comptable"
+    },
+    "snapshot": {
+      "positions": "{{count}} position(s)"
+    },
+    "positions": {
+      "ticker": "Ticker",
+      "name": "Nom",
+      "type": "Type",
+      "qty": "Qté",
+      "bookValueCad": "Val. comptable (CAD)",
+      "marketValue": "Valeur marché",
+      "pnl": "P&L"
+    },
+    "loadingPositions": "Chargement des positions…",
+    "loadError": "Impossible de charger l'historique. Réessaie."
+  },
+  "history": {
+    "title": "Historique des recommandations",
+    "filters": {
+      "portfolio": "Portefeuille",
+      "all": "Tous",
+      "status": "Statut"
+    },
+    "loading": "Chargement de l'historique…",
+    "emptyAll": "Aucune recommandation générée pour l'instant.",
+    "emptyAllHint": "Lancez une analyse depuis le tableau de bord pour commencer.",
+    "emptyFiltered": "Aucune recommandation ne correspond aux filtres sélectionnés.",
+    "actionsTitle": "Actions suggérées"
+  },
+  "settings": {
+    "navLabel": "Configuration",
+    "sources": "Sources de données",
+    "testSources": "Tester une source",
+    "promptPreview": "Aperçu du prompt",
+    "sourcesPage": {
+      "intro": "Activez ou désactivez les sources utilisées pour générer les recommandations IA.",
+      "loading": "Chargement des sources…",
+      "active": "{{enabled}} / {{total}} actives",
+      "tagApiKey": "Clé API",
+      "tagPaid": "Payant",
+      "ariaEnable": "Activer {{name}}",
+      "ariaDisable": "Désactiver {{name}}",
+      "errors": {
+        "load": "Impossible de charger les sources.",
+        "toggle": "Impossible de modifier « {{name}} »."
+      }
+    },
+    "testPage": {
+      "intro": "Sélectionnez un type puis une source pour vérifier sa connectivité et consulter les données brutes.",
+      "selectCategory": "— Type de source —",
+      "selectSource": "— Source —",
+      "running": "En cours…",
+      "run": "Lancer le test",
+      "articlesCount": "{{count}} articles récupérés",
+      "errorBackend": "Erreur de connexion au backend"
+    },
+    "previewPage": {
+      "intro": "Sélectionnez un portefeuille pour visualiser le prompt complet (system + user) qui serait envoyé au LLM. Aucun appel n'est effectué.",
+      "selectPortfolio": "— Portefeuille —",
+      "loading": "Chargement…",
+      "show": "Afficher le prompt",
+      "tickersCount": "{{count}} tickers",
+      "systemChars": "system: {{count}} chars",
+      "userChars": "user: {{count}} chars",
+      "totalChars": "total: {{count}} chars",
+      "systemPrompt": "System prompt",
+      "userMessage": "User message",
+      "copy": "Copier",
+      "errors": {
+        "notFound": "Portefeuille introuvable",
+        "backend": "Erreur backend"
+      }
+    }
+  }
+}

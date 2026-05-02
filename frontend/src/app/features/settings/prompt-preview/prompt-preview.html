@@ -1,15 +1,12 @@
 <div class="preview-layout">
   <div class="content-header">
-    <h2>Aperçu du prompt</h2>
-    <p>
-      Sélectionnez un portefeuille pour visualiser le prompt complet (system + user) qui serait
-      envoyé au LLM. Aucun appel n'est effectué.
-    </p>
+    <h2>{{ 'settings.promptPreview' | translate }}</h2>
+    <p>{{ 'settings.previewPage.intro' | translate }}</p>
   </div>
 
   <div class="preview-form">
     <select class="portfolio-select" (change)="selectPortfolio($any($event.target).value)">
-      <option value="">— Portefeuille —</option>
+      <option value="">{{ 'settings.previewPage.selectPortfolio' | translate }}</option>
       @for (p of portfolios(); track p.id) {
         <option [value]="p.id">{{ p.name }}</option>
       }
@@ -18,9 +15,9 @@
     <button class="btn-primary" (click)="load()" [disabled]="!selectedId() || loading()">
       @if (loading()) {
         <mat-spinner diameter="14"></mat-spinner>
-        Chargement…
+        {{ 'settings.previewPage.loading' | translate }}
       } @else {
-        Afficher le prompt
+        {{ 'settings.previewPage.show' | translate }}
       }
     </button>
   </div>
@@ -37,18 +34,27 @@
       <span
         ><strong>{{ p.portfolioName }}</strong></span
       >
-      <span>{{ p.tickers.length }} tickers</span>
-      <span>system: {{ p.systemPromptChars | number }} chars</span>
-      <span>user: {{ p.userMessageChars | number }} chars</span>
-      <span class="total"
-        >total: {{ p.systemPromptChars + p.userMessageChars | number }} chars</span
-      >
+      <span>{{
+        'settings.previewPage.tickersCount' | translate: { count: p.tickers.length }
+      }}</span>
+      <span>{{
+        'settings.previewPage.systemChars' | translate: { count: p.systemPromptChars }
+      }}</span>
+      <span>{{ 'settings.previewPage.userChars' | translate: { count: p.userMessageChars } }}</span>
+      <span class="total">{{
+        'settings.previewPage.totalChars'
+          | translate: { count: p.systemPromptChars + p.userMessageChars }
+      }}</span>
     </div>
 
     <section class="prompt-block">
       <header>
-        <span>System prompt</span>
-        <button class="copy-btn" (click)="copy(p.systemPrompt)" title="Copier">
+        <span>{{ 'settings.previewPage.systemPrompt' | translate }}</span>
+        <button
+          class="copy-btn"
+          (click)="copy(p.systemPrompt)"
+          [title]="'settings.previewPage.copy' | translate"
+        >
           <mat-icon>content_copy</mat-icon>
         </button>
       </header>
@@ -57,8 +63,12 @@
 
     <section class="prompt-block">
       <header>
-        <span>User message</span>
-        <button class="copy-btn" (click)="copy(p.userMessage)" title="Copier">
+        <span>{{ 'settings.previewPage.userMessage' | translate }}</span>
+        <button
+          class="copy-btn"
+          (click)="copy(p.userMessage)"
+          [title]="'settings.previewPage.copy' | translate"
+        >
           <mat-icon>content_copy</mat-icon>
         </button>
       </header>

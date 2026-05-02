@@ -1,16 +1,9 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  OnDestroy,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import {
   MarketRepository,
@@ -25,14 +18,14 @@ interface Point {
 
 @Component({
   selector: 'app-ticker',
-  imports: [CommonModule, RouterLink, MatIconModule, MatProgressSpinnerModule],
+  imports: [CommonModule, RouterLink, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './ticker.html',
   styleUrl: './ticker.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TickerPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly marketRepository = inject(MarketRepository);
+  private readonly translate = inject(TranslateService);
 
   symbol = signal<string>('');
   loading = signal(false);
@@ -112,11 +105,11 @@ export class TickerPage implements OnInit, OnDestroy {
   private errorMessage(err: { status?: number } | undefined, symbol: string): string {
     switch (err?.status) {
       case 404:
-        return `Ticker introuvable : ${symbol}`;
+        return this.translate.instant('ticker.errors.notFound', { symbol });
       case 503:
-        return 'Données de marché momentanément indisponibles (rate-limit Yahoo). Réessaie dans quelques minutes.';
+        return this.translate.instant('ticker.errors.rateLimit');
       default:
-        return 'Erreur lors du chargement du ticker';
+        return this.translate.instant('ticker.errors.generic');
     }
   }
 
@@ -125,7 +118,7 @@ export class TickerPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     const s = this.route.snapshot.paramMap.get('symbol');
     if (!s) {
-      this.error.set("Symbole manquant dans l'URL");
+      this.error.set(this.translate.instant('ticker.errors.missingSymbol'));
       return;
     }
     this.symbol.set(s);
@@ -188,7 +181,9 @@ export class TickerPage implements OnInit, OnDestroy {
           return;
         }
         if (job.status === 'ERROR') {
-          this.narrativeError.set(job.error ?? 'Erreur lors de la génération du narratif');
+          this.narrativeError.set(
+            job.error ?? this.translate.instant('ticker.narrative.errorGeneric'),
+          );
           this.narrativeLoading.set(false);
           return;
         }
@@ -197,18 +192,22 @@ export class TickerPage implements OnInit, OnDestroy {
             if (updated.status === 'DONE') {
               this.fetchNarrativeAfterCompletion(sym);
             } else if (updated.status === 'ERROR') {
-              this.narrativeError.set(updated.error ?? 'Erreur lors de la génération du narratif');
+              this.narrativeError.set(
+                updated.error ?? this.translate.instant('ticker.narrative.errorGeneric'),
+              );
               this.narrativeLoading.set(false);
             }
           },
           error: (err: Error) => {
-            this.narrativeError.set(err.message ?? 'Erreur lors du polling du job');
+            this.narrativeError.set(
+              err.message ?? this.translate.instant('ticker.narrative.errorPolling'),
+            );
             this.narrativeLoading.set(false);
           },
         });
       },
       error: () => {
-        this.narrativeError.set('Impossible de lancer la génération');
+        this.narrativeError.set(this.translate.instant('ticker.narrative.errorRequest'));
         this.narrativeLoading.set(false);
       },
     });
@@ -221,7 +220,7 @@ export class TickerPage implements OnInit, OnDestroy {
         this.narrativeLoading.set(false);
       },
       error: () => {
-        this.narrativeError.set('Narratif généré mais impossible à recharger');
+        this.narrativeError.set(this.translate.instant('ticker.narrative.errorReload'));
         this.narrativeLoading.set(false);
       },
     });

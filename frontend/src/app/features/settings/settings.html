@@ -1,17 +1,17 @@
 <div class="settings-shell">
   <nav class="settings-nav">
-    <span class="nav-section-label">Configuration</span>
+    <span class="nav-section-label">{{ 'settings.navLabel' | translate }}</span>
     <a routerLink="/settings/sources" routerLinkActive="active" class="nav-item">
       <mat-icon>dns</mat-icon>
-      Sources de données
+      {{ 'settings.sources' | translate }}
     </a>
     <a routerLink="/settings/test-sources" routerLinkActive="active" class="nav-item">
       <mat-icon>troubleshoot</mat-icon>
-      Tester une source
+      {{ 'settings.testSources' | translate }}
     </a>
     <a routerLink="/settings/prompt-preview" routerLinkActive="active" class="nav-item">
       <mat-icon>description</mat-icon>
-      Aperçu du prompt
+      {{ 'settings.promptPreview' | translate }}
     </a>
   </nav>
   <div class="settings-content">

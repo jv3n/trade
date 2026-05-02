@@ -2,25 +2,20 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SettingsRepository, DataSource, SourceCategory } from '../../../core/settings.repository';
-
-const CATEGORY_LABELS: Record<SourceCategory, string> = {
-  RSS: 'Presse & Flux RSS',
-  MARKET: 'Données de marché',
-  MACRO: 'Indicateurs macro-économiques',
-  CRYPTO: 'Crypto',
-};
 
 const CATEGORY_ORDER: SourceCategory[] = ['RSS', 'MARKET', 'MACRO', 'CRYPTO'];
 
 @Component({
   selector: 'app-sources',
-  imports: [CommonModule, MatProgressSpinnerModule, MatIconModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatIconModule, TranslatePipe],
   templateUrl: './sources.html',
   styleUrl: './sources.scss',
 })
 export class Sources implements OnInit {
   private readonly settingsRepository = inject(SettingsRepository);
+  private readonly translate = inject(TranslateService);
 
   sources = signal<DataSource[]>([]);
   sourcesLoading = signal(true);
@@ -28,7 +23,6 @@ export class Sources implements OnInit {
   savingIds = signal<Set<string>>(new Set());
 
   categories = CATEGORY_ORDER;
-  categoryLabels = CATEGORY_LABELS;
 
   ngOnInit() {
     this.loadSources();
@@ -41,7 +35,7 @@ export class Sources implements OnInit {
         this.sourcesLoading.set(false);
       },
       error: () => {
-        this.sourcesError.set('Impossible de charger les sources.');
+        this.sourcesError.set(this.translate.instant('settings.sourcesPage.errors.load'));
         this.sourcesLoading.set(false);
       },
     });
@@ -85,7 +79,9 @@ export class Sources implements OnInit {
           n.delete(source.id);
           return n;
         });
-        this.sourcesError.set(`Impossible de modifier "${source.name}".`);
+        this.sourcesError.set(
+          this.translate.instant('settings.sourcesPage.errors.toggle', { name: source.name }),
+        );
       },
     });
   }
