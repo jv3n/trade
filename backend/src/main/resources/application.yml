@@ -40,3 +40,6 @@ llm:
 
 yahoo:
   base-url: https://query1.finance.yahoo.com
+  # provider: yahoo (real HTTP, default) | mock (deterministic synthetic data, see
+  # MockMarketChartClient — useful when Yahoo rate-limits the dev IP)
+  provider: yahoo

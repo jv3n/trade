@@ -1,4 +1,4 @@
-# État actuel — 2026-05-01
+# État actuel — 2026-05-02
 
 Snapshot de la session pour reprendre proprement la prochaine fois. Le détail long vit dans `backlog.md` ; ce fichier ne note **que ce qui est en l'air maintenant**.
 
@@ -24,54 +24,34 @@ Backend `market/` :
 
 ## Ce qui est en working tree (uncommitted)
 
-À grouper en 1 ou 2 commits à la reprise.
+Mock provider de marché — à grouper en 1 commit à la reprise.
 
-### Backend (cache + erreur propre 429)
+### Backend
 
-- `build.gradle.kts` : ajout `spring-boot-starter-cache` + `caffeine`
-- `market/MarketConfig.kt` : `@EnableCaching`, Caffeine 15 min / 500 entrées max, cache `yahoo-chart`
-- `market/infrastructure/market/YahooClient.kt` : `@Cacheable` sur `fetchChart` + try/catch HttpClientError → `MarketUnavailableException` (sauf 404 → `NoSuchElementException`)
-- `market/domain/MarketUnavailableException.kt` (nouveau)
-- `shared/GlobalExceptionHandler.kt` : handler `MarketUnavailableException` → HTTP 503
+- `market/infrastructure/market/MarketChartClient.kt` (nouveau) — interface port, méthode `fetchChart`
+- `market/infrastructure/market/YahooClient.kt` — implémente `MarketChartClient`, gardé par `@ConditionalOnProperty(name="yahoo.provider", havingValue="yahoo", matchIfMissing=true)`
+- `market/infrastructure/market/MockMarketChartClient.kt` (nouveau) — génère 260 bars OHLC déterministes par symbole (seed = `symbol.hashCode()`), random walk avec drift + vol propres au symbole. 260 et pas 252 pour donner le headroom aux indicateurs lookback=252 (perf1y) qui exigent strictement `size > lookback`. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les paths d'erreur. Activé par `yahoo.provider: mock`.
+- `market/application/TickerService.kt` — dépend maintenant de l'interface `MarketChartClient`.
+- `application.yml` — ajout `yahoo.provider: yahoo` (défaut prod).
+- `application-local.yml` — ajout `yahoo.provider: mock` (dev local).
+- `MockMarketChartClientTest.kt` (nouveau) — 6 tests : forme du payload, déterminisme, divergence inter-symboles, cohérence meta vs série, paths réservés.
 
-### Backend (fix test)
+### Docs
 
-- `market/application/IndicatorCalculator.kt` : `drawdownFromHigh` requiert `size >= 2` (sinon retournait 0 avec 1 bar, le test "single bar leaves indicators null" échouait)
-- `market/application/IndicatorCalculatorTest.kt` : `kotlin.random.Random` au lieu de `java.util.Random` (la signature de `List.shuffled` n'accepte que la version Kotlin)
-
-### Frontend (page Dossier ticker)
-
-- `core/market.repository.ts` (port abstract class + types TS)
-- `core/adapters/market.http.ts` + `.spec.ts` (HttpMarketRepository + 2 tests)
-- `app.config.ts` : provider `MarketRepository`
-- `app.routes.ts` : route `ticker/:symbol`
-- `features/ticker/ticker.{ts,html,scss}` : page dossier — header, courbe SVG inline (pas de dep ajoutée), 10 chips d'indicateurs avec color-coding, plage 52w, gestion 404/503/autre dans `errorMessage()`
-- `features/ticker/ticker.spec.ts` : 4 tests
-- `features/dashboard/dashboard.{ts,html,scss,spec.ts}` : ticker dans la table devient `routerLink="/ticker/:symbol"`, ajout `provideRouter([])` au TestBed
-
-## Problème ouvert
-
-**Yahoo IP rate-limit (429)** — l'environnement local est actuellement banni par Yahoo. Le cache et le path d'erreur fonctionnent (le 503 remonte propre côté UI), mais la première requête échoue tant que Yahoo n'a pas levé (typiquement 5-15 min, parfois plus).
-
-Le bug se manifeste par `MarketUnavailableException: rate-limited` dans les logs backend.
+- `docs/technique/architecture.md` — décision technique "Provider de marché abstrait + mock local" ajoutée.
+- `docs/projet/etat-actuel.md` — ce fichier.
 
 ## Reprise possible — par ordre d'utilité
 
-### Court terme (déblocage Yahoo)
-
-A. **Headers plus convaincants** (5 min) : `Accept-Language`, `Sec-Fetch-*`, `Referer: https://finance.yahoo.com/`, UA Chrome plus récent. Réduit la fréquence des bans.
-
-B. **Profil mock pour le dev** (15 min) : `application-local.yml` avec `llm.provider: ollama` ET `yahoo.provider: mock` (à introduire), `YahooClient` chargé depuis une fixture JSON quand mock. Permet d'itérer sur l'UI sans dépendre de Yahoo.
-
 ### Phase 1 reste à faire
 
-C. **Pipeline narratif LLM par ticker** : `TickerNarrativeService` + nouveau prompt court (input `{ticker, price, indicators, fundamentals}`, output `{summary, sentiment, keyPoints[]}`), migration Flyway V2 `ticker_narrative_snapshot`, endpoint `POST /api/market/ticker/{symbol}/narrative` async + polling. **C'est le cœur de la valeur Phase 1.**
+A. **Pipeline narratif LLM par ticker** : `TickerNarrativeService` + nouveau prompt court (input `{ticker, price, indicators, fundamentals}`, output `{summary, sentiment, keyPoints[]}`), migration Flyway V2 `ticker_narrative_snapshot`, endpoint `POST /api/market/ticker/{symbol}/narrative` async + polling. **Cœur de valeur Phase 1.** Le mock débloque l'itération sans dépendre de Yahoo.
 
-D. **Plan B Yahoo** : si les 429 persistent, basculer sur Twelve Data ou Finnhub (clé API gratuite, beaucoup plus stable).
+B. **Page dossier — narratif** : afficher la sortie du pipeline (sentiment + bullets + résumé), gérer l'état "en cours de génération" (polling).
+
+C. **Plan B Yahoo (si on relance Yahoo en prod)** : headers plus convaincants (`Accept-Language`, `Sec-Fetch-*`, `Referer`) ou bascule Twelve Data / Finnhub.
 
 ## À faire avant de commit en sortie de session
 
-1. Vérifier que `IndicatorCalculatorTest` passe en local (les fixes de cette session : `Random` import + `drawdownFromHigh` size < 2)
-2. Décider du découpage des commits :
-   - Option simple : 1 commit `feat(market): cache Yahoo responses and surface clean 503 on rate-limit` qui regroupe le cache + l'erreur + le fix tests
-   - Option propre : 3 commits — `fix(indicators): require >= 2 bars for drawdown`, `feat(market): cache Yahoo via Caffeine`, `feat(market): surface 503 on Yahoo rate-limit`, puis `feat(ticker): add dossier page with chart and indicator chips`
+1. Vérifier que `MockMarketChartClientTest` passe en local.
+2. Commit unique proposé : `feat(market): add mock chart provider for local dev` (interface + impls + config + test).

@@ -4,6 +4,7 @@ import com.portfolioai.market.MarketConfig.Companion.YAHOO_CHART_CACHE
 import com.portfolioai.market.domain.MarketUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Component
@@ -27,9 +28,10 @@ import org.springframework.web.client.RestClient
  *   For the Phase 1 dossier we default to 1y daily.
  */
 @Component
+@ConditionalOnProperty(name = ["yahoo.provider"], havingValue = "yahoo", matchIfMissing = true)
 class YahooClient(
   @Value("\${yahoo.base-url:https://query1.finance.yahoo.com}") private val baseUrl: String
-) {
+) : MarketChartClient {
   private val log = LoggerFactory.getLogger(javaClass)
 
   private val restClient =
@@ -46,7 +48,7 @@ class YahooClient(
       .build()
 
   @Cacheable(YAHOO_CHART_CACHE, key = "#symbol + '|' + #range + '|' + #interval")
-  fun fetchChart(symbol: String, range: String = "1y", interval: String = "1d"): YahooChartResult {
+  override fun fetchChart(symbol: String, range: String, interval: String): YahooChartResult {
     log.info("Fetching Yahoo chart symbol={} range={} interval={}", symbol, range, interval)
     val response =
       try {

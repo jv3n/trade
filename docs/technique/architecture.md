@@ -138,6 +138,8 @@ Une seule migration Flyway aujourd'hui : `backend/src/main/resources/db/migratio
 
 **Caching côté serveur** — un dossier ticker peut être consulté plusieurs fois par jour. On cache les fetchs Yahoo (5 min pour la quote, 15 min pour l'historique, 1 h pour les fundamentals) en mémoire. Pas besoin de Redis à cette échelle.
 
+**Provider de marché abstrait + mock local** — `MarketChartClient` est une interface ; deux implémentations cohabitent, sélectionnées par `yahoo.provider` (`yahoo` par défaut, `mock` en local via `application-local.yml`). Le `MockMarketChartClient` génère une série OHLC déterministe par symbole (seed = hash). Yahoo rate-limite régulièrement les IPs résidentielles dev (429 prolongés) ; le mock permet d'itérer sur l'UI dossier et le pipeline LLM sans dépendre de Yahoo. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les chemins d'erreur.
+
 **Claude API par défaut** — la Phase 0 a montré que Mistral 7B sortait des justifications grammaticalement correctes mais financièrement creuses ("vendre pour un profit de 0.4%"). Le saut de qualité Claude est largement supérieur au coût (~quelques cents par dossier). Mistral reste activable pour le dev offline (`llm.provider: ollama`).
 
 **Snapshot du narratif systématique** — chaque consultation d'un ticker persiste `{prix_du_jour, indicateurs, narrative}`. Sans ça, l'observabilité Phase 3 (relire ce que disait l'IA il y a 1 mois) est aveugle.
