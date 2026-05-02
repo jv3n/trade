@@ -103,7 +103,13 @@ Clique sur **AAPL** (ou n'importe quel ticker du portefeuille démo). La page **
 - Une courbe SVG inline du prix sur 1 an
 - 10 chips d'indicateurs avec color-coding (RSI, MA50/MA200, momentum 30j/90j, perfs, drawdown, distance vs MA, volume relatif)
 
-### 4. Générer un narratif LLM
+### 4. Switcher la langue
+
+Dans le header en haut à droite, l'icône drapeau ouvre un menu **FR / EN**. Le choix est persisté dans `localStorage` et appliqué à toute l'UI (l'attribut `<html lang>` est aussi mis à jour pour l'accessibilité). Si ton navigateur est en français, l'app démarre en FR par défaut, sinon en EN.
+
+Les fichiers de traduction sont dans `frontend/public/i18n/<lang>.json`. Toute string utilisateur passe par une clé — rien n'est en dur dans les composants.
+
+### 5. Générer un narratif LLM
 
 Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique sur **Générer / Régénérer** — le frontend POST `/api/market/ticker/AAPL/narrative`, reçoit un job `PENDING`, et poll toutes les 5s jusqu'à `DONE`. Une fois le snapshot prêt, tu vois un résumé en 2-3 phrases, un badge `BULLISH` / `NEUTRAL` / `BEARISH`, et 3 à 5 bullet points factuels.
 

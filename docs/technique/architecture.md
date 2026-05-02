@@ -106,10 +106,11 @@ Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs
 Hexagonal léger sous `frontend/src/app/` :
 
 - **`core/`** — ports + HTTP adapters
-  - `*.repository.ts` (abstract class — port)
+  - `*.repository.ts` (abstract class — port). 5 repositories : Portfolio, Analysis, Settings, Snapshot, Market.
   - `adapters/*.http.ts` (HttpXxxRepository — adapter)
   - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: HttpXxxRepository }`
-  - `theme.service.ts` (signal + persist localStorage)
+  - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header
+- **`public/i18n/`** — fichiers de traduction `<lang>.json` (FR + EN), servis comme assets statiques par le HTTP loader de `ngx-translate`
 - **`features/`** — *primary adapters*
   - `dashboard/` — portefeuille + lien vers les dossiers ticker
   - `ticker/` — dossier par symbole (Phase 1, à venir)
@@ -170,6 +171,10 @@ Deux migrations Flyway aujourd'hui : `V1__init.sql` (schéma Phase 0) et `V2__ti
 **Ports & adapters léger** — `core/<name>.repository.ts` (port = abstract class) + `core/adapters/<name>.http.ts` (adapter HTTP). Composants injectent l'abstraction. Tests : on mock le port, l'adapter a son propre spec HTTP.
 
 **Tokens de thème** — variables CSS sur `:root`, override sur `[data-theme='light']`. Material 3 wired en dual-theme. Default = sombre. Toggle dans le header, persistance localStorage, anti-FOUC via script inline dans `index.html`.
+
+**Zoneless explicite** — `provideZonelessChangeDetection()` dans `app.config.ts`, pas de `zone.js` installé. La state est 100 % signal-based : un template re-rend automatiquement quand un signal qu'il lit change, plus une intercepte sur les events handlers et l'`async` pipe. Pas besoin d'`OnPush` puisque le rebuild est déjà opt-in par construction. La config est rendue lisible plutôt que devinée.
+
+**i18n runtime via `ngx-translate`** — fichiers `public/i18n/<lang>.json` chargés via le HTTP loader (assets statiques). Composants importent `TranslatePipe` (granulaire, pas tout `TranslateModule`). `LanguageService` est le miroir signal-based de `ThemeService` : signal + localStorage + fallback navigateur (`fr-*` → `fr`, sinon `en`). Le switcher header utilise un `mat-menu` avec drapeaux unicode. Aucune string utilisateur en dur dans le code — uniquement des clés. Les erreurs dynamiques côté TS passent par `TranslateService.instant('key', { params })`.
 
 ### Gelé Phase 0 (référence)
 

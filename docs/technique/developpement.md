@@ -85,12 +85,15 @@ Voir le détail dans [`commit-conventions.md`](../projet/commit-conventions.md).
 
 ```
 trade/
-├── frontend/                  # Angular 21 (single app, standalone)
+├── frontend/                  # Angular 21 (single app, standalone, zoneless)
+│   ├── public/
+│   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
 │       ├── core/              # Ports + HTTP adapters
 │       │   ├── *.repository.ts        # ports (abstract class)
 │       │   ├── adapters/*.http.ts     # HTTP impls
-│       │   └── theme.service.ts       # signal + persist localStorage
+│       │   ├── theme.service.ts       # signal + persist localStorage
+│       │   └── language.service.ts    # signal + persist localStorage (i18n)
 │       └── features/          # Pages UI (primary adapters)
 │           ├── dashboard/             # Portefeuille + lien dossiers ticker
 │           ├── ticker/                # 🚧 Phase 1 — dossier par symbole

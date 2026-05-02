@@ -6,51 +6,70 @@ Snapshot de la session pour reprendre proprement la prochaine fois. Le détail l
 
 - Branche : `master`
 - Dernier tag : `v0.1.0` — clôture de la **Phase 0**
-- Derniers commits :
-  - `feat(market): add Yahoo client, indicator calculator and ticker dossier endpoint`
-  - `feat(market): add mock chart provider for local dev`
-  - **À commit (cette session)** : pipeline narratif LLM par ticker — voir plus bas.
+- Plusieurs commits déjà passés cette session : Yahoo client, mock provider, pipeline narratif LLM, tests-as-doc, fix CSV date timezone, onboarding doc, dashboard total agrégé, narratif front complet.
 
 ## Phase en cours
 
 **Phase 1 — Pivot ticker** (cf. `metier/fonctionnalites.md`). LLM = rédacteur, pas décideur.
 
-## Ce qui marche fin de session
+**État Phase 1** : critique livré 100 % côté backend ET frontend. Reste 🟡 `TickerNarrativeServiceTest` d'intégration et 🟡 liste cliquable des tickers, plus 🟢 sur Settings et tests Yahoo HTTP.
 
-### Backend market/ (déjà commit)
-- `IndicatorCalculator` Kotlin pur, 20+ tests
-- `YahooClient` + `YahooMappers` + `MockMarketChartClient` (déterministe par symbole)
-- `MarketChartClient` interface + `@ConditionalOnProperty yahoo.provider`
-- `MarketController` : `GET /api/market/ticker/{symbol}`
+## Ce qui est en working tree (à commit)
 
-### Backend narratif (à commit)
-- Migration Flyway `V2__ticker_narrative.sql` — tables `ticker_narrative_snapshot` (output, JSONB indicateurs + keyPoints) et `ticker_narrative_job` (état async)
-- Domain : enum `Sentiment`, `TickerNarrativeJob`, `TickerNarrativeSnapshot`
-- Application : `TickerNarrativeService` (dedup 5min + cache snapshot 30min) → `TickerNarrativeRunner` (`@Async`) → `TickerNarrativeExecutor` (parse + validate + 1 retry) → `TickerNarrativePersister`
-- `TickerNarrativeParser` (tolère prose/fences/sentiment mixed-case) + `TickerNarrativeValidator` (3-5 keyPoints, ≤15 mots, summary 2-3 phrases)
-- `LlmClient.modelId()` — provenance du modèle persistée sur chaque snapshot (`ollama:mistral`, `claude:claude-opus-4-6`)
-- HTTP : `POST /narrative`, `GET /narrative/jobs/{id}`, `GET /narrative/latest`
-- 17 tests unit (parser / validator / prompt)
+Multiples concerns regroupables en 1 commit chore (ou 2 si on veut séparer infra) :
 
-**Validation end-to-end** (Ollama Mistral 7B, mock Yahoo) : POST → DONE en ~30-60 s, summary + sentiment BULLISH + 3 keyPoints + `modelUsed`. Re-POST < 30 min → cache hit immédiat, log `Reusing fresh snapshot`.
+### Frontend — i18n FR/EN
 
-## Shelvé (pas dans le commit narratif)
+- `@ngx-translate/core` + `@ngx-translate/http-loader` v17 ajoutés
+- `LanguageService` (signal + localStorage + fallback navigateur), miroir de `ThemeService`
+- `provideTranslateService` + `provideTranslateHttpLoader` dans `app.config.ts`
+- `public/i18n/fr.json` + `en.json` (~170 clés organisées : common, nav, header, dashboard, ticker, csvImport, suivi, history, settings/sourcesPage/testPage/previewPage, categories, statuses, sentiment)
+- Header : bouton drapeau (mat-menu) avec FR / EN, drapeau actif + check, persistance localStorage
+- Toutes les pages migrées : strings hard-codées remplacées par `'key' | translate` ou `TranslateService.instant('key')` pour les erreurs dynamiques
+- Composants importent `TranslatePipe` (granulaire) et non `TranslateModule`
+- Tests : `provideTranslateService({ lang: 'en' })` ajouté à 8 TestBed, 2 assertions ajustées pour vérifier la clé i18n au lieu du texte FR
 
-- **Fix headers Yahoo** (`YahooClient.kt`) — Accept `*/*`, Accept-Language, Referer, Origin, Sec-Fetch-*, UA Chrome/134, log du body sur 429. Confirmé par curl que les headers passent (HTTP 200), mais Yahoo a un rate-limit IP **par-dessus** le filtre fingerprint qui se déclenche après quelques requêtes. Le code reste pertinent ; à reprendre quand on rallumera Yahoo en prod.
+### Frontend — zoneless explicite
+
+- `provideZonelessChangeDetection()` ajouté dans `app.config.ts` (la conf est lisible plutôt que devinée)
+- `OnPush` retiré de `TickerPage` (le seul qui l'avait) — en zoneless+signals, Default suffit
+
+### Frontend — bumps deps + budgets
+
+- `npm update` : Angular 21.2.7-9 → 21.2.11, vitest 4.1.4 → 4.1.5
+- `package.json` normalisé : tous les `^` à `^major.0.0`, TypeScript reste en `~5.9.0` (Angular casse entre minors TS)
+- `angular.json` : budgets `initial` 500kB/1MB → 1MB/2MB, `anyComponentStyle` 16/32 → 24/48 kB
+
+### Backend — bumps deps + fixes deprecation
+
+- Spring Boot 3.5.0 → **3.5.14** (cascade postgres/jackson/caffeine via BOM)
+- Kotlin 2.1.20 → **2.1.21** (3 plugins)
+- ktfmt 0.54 → **0.55** (0.62 attendait Kotlin 2.2+)
+- commons-csv 1.12.0 → **1.14.1**
+- Fix deprecation `URL(String)` → `URI(url).toURL()` dans `RssFetcherService`
+- Fix deprecation `CSVFormat.Builder.build()` → `.get()` dans `CsvImportService`
+
+### Docs
+
+- `CLAUDE.md` : conventions zoneless + i18n + 5 repositories + structure tests avec `provideTranslateService`
+- `architecture.md` : décisions techniques "Zoneless explicite" + "i18n runtime via ngx-translate", module `core/` enrichi (5 repos + theme + language services)
+- `developpement.md` : structure frontend mise à jour avec `public/i18n/` + `language.service.ts`
+- `developper.md` : section "Switcher la langue" ajoutée dans le walkthrough
 
 ## Reprise possible — par ordre d'utilité
 
-### Phase 1 reste à faire
-A. **Front : section narratif sur la page ticker** — bouton "Générer/Régénérer", `MarketRepository.requestNarrative()` + `pollNarrative()` + `getLatestNarrative()`, sentiment chip + summary + bullets, état "en cours de génération". Le backend est prêt et validé.
+### Phase 1 reste à faire (cf. `backlog.md`)
 
-B. **`TickerNarrativeServiceTest`** (intégration) — pipeline complet avec `MarketChartClient` + `LlmClient` stubbés : valide cache 30 min, dedup, retry validation. Pas critique mais utile pour les futurs refactors.
+A. **`TickerNarrativeServiceTest`** (intégration) — pipeline complet avec `MarketChartClient` + `LlmClient` stubbés : valide cache 30 min, dedup, retry validation. ~30 min.
 
-C. **Cleanup des jobs orphelins** (dette technique) — listener `ApplicationReadyEvent` qui passe les `PENDING` en `ERROR` au boot. ~15 min.
+B. **Liste cliquable des tickers détenus** sur le dashboard — petite UX win, ~20 min.
 
-D. **Plan B Yahoo** (quand on rallume) — appliquer le shelve, logger les retries 429 avec backoff, ou bascule Twelve Data / Finnhub si l'IP-rate-limit reste un souci.
+C. **Cleanup des jobs orphelins** au boot (dette technique) — listener `ApplicationReadyEvent`. ~15 min.
 
-## À faire avant de commit la session
-1. ✓ `./gradlew test` passe (tests narratif + suite complète).
-2. ✓ Backend end-to-end validé (POST → poll → snapshot, cache hit confirmé).
-3. ✓ Docs alignées (`backlog.md`, `architecture.md`, `CLAUDE.md`, ce fichier).
-4. Commit narratif proposé : `feat(analysis): add async per-ticker LLM narrative pipeline`.
+D. **Settings adaptés Phase 1** — test source Yahoo + prompt-preview par ticker. 🟢 basse priorité.
+
+E. **Plan B Yahoo** — réappliquer le shelve headers + retry/backoff, ou bascule Twelve Data / Finnhub si IP-rate-limit persiste.
+
+## Shelvé
+
+- **Fix headers Yahoo** — non commité, à reprendre quand on rallumera Yahoo en prod (cf. piste E).

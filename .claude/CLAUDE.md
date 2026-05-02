@@ -64,7 +64,7 @@ trade/
 
 Light hexagonal split under `frontend/src/app/` :
 
-- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 4 repositories : Portfolio, Analysis, Settings, Snapshot. Also `theme.service.ts` (signal + persist localStorage).
+- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 5 repositories : Portfolio, Analysis, Settings, Snapshot, Market. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
 - `features/` — UI feature folders (one per top-level route, *primary adapters* en vocabulaire hexagonal) :
   - `dashboard/` — portfolio view (read-only positions) + link to ticker dossiers
   - `ticker/` — 🚧 Phase 1 — per-symbol dossier (price chart, indicators, LLM narrative)
@@ -120,9 +120,11 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 - Idiomatic Kotlin (data classes, sealed classes, extension functions)
 - Spring Boot config in **YAML** (`application.yml` / `application-local.yml`)
 - Angular standalone components (Angular 21)
+- **Zoneless change detection** explicit — `provideZonelessChangeDetection()` in `app.config.ts`, no `zone.js` dependency. State is signal-based ; Default change detection strategy is fine, no need to add `OnPush` everywhere.
+- **i18n via `ngx-translate`** — translation files in `frontend/public/i18n/<lang>.json` (FR + EN). Components import the `TranslatePipe` (not `TranslateModule`) ; templates use `'key' | translate`. Dynamic strings (errors set in TS) go through `TranslateService.instant('key', { params })`. Active locale lives in `LanguageService` (signal). **Never hard-code a user-facing string** — always pass through a translation key.
 - Angular Material for all UI components
 - Integration tests on real PostgreSQL (no DB mocks)
-- Frontend tested with **Vitest** (not Karma, not Jest)
+- Frontend tested with **Vitest** (not Karma, not Jest). Test specs that boot a component with templates using `translate` need `provideTranslateService({ lang: 'en' })` in their TestBed providers — without translations loaded, `instant('foo.bar')` returns the key as fallback (acceptable for assertions).
 - `@Async` Spring: always on a separate bean — never `this.asyncMethod()` (bypasses AOP)
 - LLM provider: **Claude API is the Phase 1 default** (`llm.provider: claude`). Ollama + `mistral` (7B Instruct) is kept as an offline backup but produces noticeably weaker narratives. Legacy Phase 0 timeouts (frontend abort + dedup window) are aligned at **400 s** to absorb Mistral latency on M1; Claude is much faster and may let us shrink that later.
 - Commits in **English**, Conventional Commits — see `docs/projet/commit-conventions.md`
