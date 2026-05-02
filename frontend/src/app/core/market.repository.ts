@@ -71,6 +71,20 @@ export interface TickerNarrativeSnapshot {
 }
 
 /**
+ * Read-only preview of the prompt the narrative pipeline would send to the LLM, **without**
+ * firing an actual call. Used by the `/settings/prompt-preview` page to inspect tokenisation,
+ * compare prompt versions side by side, or just sanity-check what's sent to Claude/Ollama.
+ */
+export interface NarrativePromptPreview {
+  symbol: string;
+  systemPrompt: string;
+  userMessage: string;
+  systemPromptChars: number;
+  userMessageChars: number;
+  promptVersion: string;
+}
+
+/**
  * Port — read-only access to ticker market data, computed indicators and LLM narrative.
  * Backed by Yahoo Finance + Claude/Ollama via the backend `market/` and `analysis/` modules.
  */
@@ -89,4 +103,7 @@ export abstract class MarketRepository {
 
   /** Latest snapshot for a symbol, or `null` when none exists yet (404 → null). */
   abstract getLatestNarrative(symbol: string): Observable<TickerNarrativeSnapshot | null>;
+
+  /** System + user prompt that would be sent to the LLM for [symbol], without firing the call. */
+  abstract getNarrativePromptPreview(symbol: string): Observable<NarrativePromptPreview>;
 }

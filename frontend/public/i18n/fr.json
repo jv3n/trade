@@ -217,14 +217,27 @@
       "running": "En cours…",
       "run": "Lancer le test",
       "articlesCount": "{{count}} articles récupérés",
-      "errorBackend": "Erreur de connexion au backend"
+      "errorBackend": "Erreur de connexion au backend",
+      "ticker": {
+        "title": "Tester un ticker (Yahoo)",
+        "intro": "Vérifie que le provider de marché répond pour ce symbole et que les indicateurs se calculent. Mode `mock` activé en local par défaut.",
+        "placeholder": "Symbole (ex. AAPL, NVDA…)",
+        "suggestionsLabel": "Tickers détenus",
+        "run": "Tester le fetch",
+        "priceLabel": "Prix courant",
+        "barsLabel": "Bars OHLC",
+        "drawdownLabel": "Drawdown 52w",
+        "errorNotFound": "Ticker introuvable",
+        "errorUnavailable": "Données de marché indisponibles (rate-limit ou réseau)"
+      }
     },
     "previewPage": {
-      "intro": "Sélectionnez un portefeuille pour visualiser le prompt complet (system + user) qui serait envoyé au LLM. Aucun appel n'est effectué.",
-      "selectPortfolio": "— Portefeuille —",
+      "intro": "Saisissez un ticker pour visualiser le prompt complet (system + user) du pipeline narratif qui serait envoyé au LLM. Aucun appel n'est effectué.",
+      "symbolPlaceholder": "Ticker (ex. AAPL, MSFT…)",
+      "suggestionsLabel": "Tickers détenus",
       "loading": "Chargement…",
       "show": "Afficher le prompt",
-      "tickersCount": "{{count}} tickers",
+      "promptVersion": "version: {{version}}",
       "systemChars": "system: {{count}} chars",
       "userChars": "user: {{count}} chars",
       "totalChars": "total: {{count}} chars",
@@ -232,7 +245,8 @@
       "userMessage": "User message",
       "copy": "Copier",
       "errors": {
-        "notFound": "Portefeuille introuvable",
+        "notFound": "Ticker introuvable",
+        "unavailable": "Données de marché indisponibles (rate-limit ou réseau)",
         "backend": "Erreur backend"
       }
     }

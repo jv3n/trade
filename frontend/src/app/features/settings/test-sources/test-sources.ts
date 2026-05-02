@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MarketRepository, TickerSnapshot } from '../../../core/market.repository';
+import { OwnedTicker, PortfolioRepository } from '../../../core/portfolio.repository';
 import {
   SettingsRepository,
   DataSource,
@@ -12,6 +14,18 @@ import {
 
 const CATEGORY_ORDER: SourceCategory[] = ['RSS', 'MARKET', 'MACRO', 'CRYPTO'];
 
+/**
+ * Result of a Yahoo ticker fetch test — distinct shape from `SourceTestResult` because the
+ * inputs (price, indicators count, bars count) are completely different from RSS articles.
+ */
+interface TickerFetchResult {
+  ok: boolean;
+  symbol: string;
+  errorKey: string | null;
+  /** Snapshot loaded from the market endpoint when ok = true. */
+  snapshot: TickerSnapshot | null;
+}
+
 @Component({
   selector: 'app-test-sources',
   imports: [CommonModule, MatProgressSpinnerModule, MatIconModule, TranslatePipe],
@@ -20,6 +34,8 @@ const CATEGORY_ORDER: SourceCategory[] = ['RSS', 'MARKET', 'MACRO', 'CRYPTO'];
 })
 export class TestSources implements OnInit {
   private readonly settingsRepository = inject(SettingsRepository);
+  private readonly marketRepository = inject(MarketRepository);
+  private readonly portfolioRepository = inject(PortfolioRepository);
   private readonly translate = inject(TranslateService);
 
   allSources = signal<DataSource[]>([]);
@@ -27,6 +43,13 @@ export class TestSources implements OnInit {
   selectedId = signal<string | null>(null);
   testing = signal(false);
   result = signal<SourceTestResult | null>(null);
+
+  // ---- Ticker fetch test (Phase 1 — Yahoo) ----
+
+  ownedTickers = signal<OwnedTicker[]>([]);
+  tickerInput = signal<string>('');
+  tickerTesting = signal(false);
+  tickerResult = signal<TickerFetchResult | null>(null);
 
   categories = CATEGORY_ORDER;
 
@@ -43,6 +66,10 @@ export class TestSources implements OnInit {
   ngOnInit() {
     this.settingsRepository.getSources().subscribe({
       next: (sources) => this.allSources.set(sources),
+    });
+    this.portfolioRepository.getOwnedTickers().subscribe({
+      next: (list) => this.ownedTickers.set(list),
+      error: () => this.ownedTickers.set([]),
     });
   }
 
@@ -77,6 +104,42 @@ export class TestSources implements OnInit {
           items: [],
         });
         this.testing.set(false);
+      },
+    });
+  }
+
+  // ---- Ticker fetch test ----
+
+  setTicker(s: string) {
+    this.tickerInput.set(s.trim().toUpperCase());
+    this.tickerResult.set(null);
+  }
+
+  /**
+   * Tests the Yahoo (or mock) chart fetch for a symbol. Success = symbol resolves, indicators
+   * computed, bars returned. Useful in dev to confirm a ticker exists in the upstream before
+   * trying to generate a narrative for it.
+   */
+  testTicker() {
+    const symbol = this.tickerInput();
+    if (!symbol || this.tickerTesting()) return;
+    this.tickerTesting.set(true);
+    this.tickerResult.set(null);
+
+    this.marketRepository.getTicker(symbol).subscribe({
+      next: (snapshot) => {
+        this.tickerResult.set({ ok: true, symbol, errorKey: null, snapshot });
+        this.tickerTesting.set(false);
+      },
+      error: (err) => {
+        const errorKey =
+          err?.status === 404
+            ? 'settings.testPage.ticker.errorNotFound'
+            : err?.status === 503
+              ? 'settings.testPage.ticker.errorUnavailable'
+              : 'settings.testPage.errorBackend';
+        this.tickerResult.set({ ok: false, symbol, errorKey, snapshot: null });
+        this.tickerTesting.set(false);
       },
     });
   }

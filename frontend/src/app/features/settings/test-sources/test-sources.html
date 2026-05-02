@@ -74,4 +74,119 @@
       </div>
     }
   }
+
+  <!-- Ticker fetch test (Phase 1 — Yahoo / mock) -->
+  <section class="ticker-test-section">
+    <div class="content-header">
+      <h3>{{ 'settings.testPage.ticker.title' | translate }}</h3>
+      <p>{{ 'settings.testPage.ticker.intro' | translate }}</p>
+    </div>
+
+    <div class="test-form">
+      <input
+        type="text"
+        class="ticker-input"
+        [value]="tickerInput()"
+        (input)="setTicker($any($event.target).value)"
+        [placeholder]="'settings.testPage.ticker.placeholder' | translate"
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+      <button
+        class="btn-primary"
+        (click)="testTicker()"
+        [disabled]="!tickerInput() || tickerTesting()"
+      >
+        @if (tickerTesting()) {
+          <mat-spinner diameter="14"></mat-spinner>
+          {{ 'settings.testPage.running' | translate }}
+        } @else {
+          {{ 'settings.testPage.ticker.run' | translate }}
+        }
+      </button>
+    </div>
+
+    @if (ownedTickers().length > 0) {
+      <div class="suggestions">
+        <span class="suggestions-label">{{
+          'settings.testPage.ticker.suggestionsLabel' | translate
+        }}</span>
+        <div class="suggestions-list">
+          @for (t of ownedTickers(); track t.ticker) {
+            <button
+              type="button"
+              class="suggestion-chip"
+              [class.active]="tickerInput() === t.ticker"
+              (click)="setTicker(t.ticker); testTicker()"
+            >
+              {{ t.ticker }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (tickerResult(); as tr) {
+      @if (!tr.ok) {
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          {{ tr.errorKey! | translate }}
+        </div>
+      } @else if (tr.snapshot; as s) {
+        <div class="result-block">
+          <div class="result-header">
+            <mat-icon>check_circle</mat-icon>
+            <strong>{{ s.quote.symbol }}</strong>
+            @if (s.quote.name) {
+              <span class="muted">— {{ s.quote.name }}</span>
+            }
+          </div>
+          <div class="ticker-result-grid">
+            <div>
+              <span class="metric-label">{{
+                'settings.testPage.ticker.priceLabel' | translate
+              }}</span>
+              <span class="metric-value"
+                >{{ s.quote.price | number: '1.2-2' }} {{ s.quote.currency }}</span
+              >
+            </div>
+            <div>
+              <span class="metric-label">{{
+                'settings.testPage.ticker.barsLabel' | translate
+              }}</span>
+              <span class="metric-value">{{ s.bars.length }}</span>
+            </div>
+            <div>
+              <span class="metric-label">RSI(14)</span>
+              <span class="metric-value">{{
+                s.indicators?.rsi14 !== null && s.indicators?.rsi14 !== undefined
+                  ? (s.indicators!.rsi14 | number: '1.1-1')
+                  : ('common.noData' | translate)
+              }}</span>
+            </div>
+            <div>
+              <span class="metric-label">MA200</span>
+              <span class="metric-value">{{
+                s.indicators?.ma200 !== null && s.indicators?.ma200 !== undefined
+                  ? (s.indicators!.ma200 | number: '1.2-2')
+                  : ('common.noData' | translate)
+              }}</span>
+            </div>
+            <div>
+              <span class="metric-label">{{
+                'settings.testPage.ticker.drawdownLabel' | translate
+              }}</span>
+              <span class="metric-value">{{
+                s.indicators?.drawdownFrom52wHigh !== null &&
+                s.indicators?.drawdownFrom52wHigh !== undefined
+                  ? (s.indicators!.drawdownFrom52wHigh | number: '1.1-1') + '%'
+                  : ('common.noData' | translate)
+              }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </section>
 </div>

@@ -5,14 +5,17 @@
   </div>
 
   <div class="preview-form">
-    <select class="portfolio-select" (change)="selectPortfolio($any($event.target).value)">
-      <option value="">{{ 'settings.previewPage.selectPortfolio' | translate }}</option>
-      @for (p of portfolios(); track p.id) {
-        <option [value]="p.id">{{ p.name }}</option>
-      }
-    </select>
+    <input
+      type="text"
+      class="ticker-input"
+      [value]="symbolInput()"
+      (input)="setSymbol($any($event.target).value)"
+      [placeholder]="'settings.previewPage.symbolPlaceholder' | translate"
+      autocomplete="off"
+      spellcheck="false"
+    />
 
-    <button class="btn-primary" (click)="load()" [disabled]="!selectedId() || loading()">
+    <button class="btn-primary" (click)="load()" [disabled]="!symbolInput() || loading()">
       @if (loading()) {
         <mat-spinner diameter="14"></mat-spinner>
         {{ 'settings.previewPage.loading' | translate }}
@@ -21,6 +24,26 @@
       }
     </button>
   </div>
+
+  @if (ownedTickers().length > 0) {
+    <div class="suggestions">
+      <span class="suggestions-label">{{
+        'settings.previewPage.suggestionsLabel' | translate
+      }}</span>
+      <div class="suggestions-list">
+        @for (t of ownedTickers(); track t.ticker) {
+          <button
+            type="button"
+            class="suggestion-chip"
+            [class.active]="symbolInput() === t.ticker"
+            (click)="setSymbol(t.ticker); load()"
+          >
+            {{ t.ticker }}
+          </button>
+        }
+      </div>
+    </div>
+  }
 
   @if (error(); as e) {
     <div class="error-banner">
@@ -32,10 +55,10 @@
   @if (preview(); as p) {
     <div class="meta">
       <span
-        ><strong>{{ p.portfolioName }}</strong></span
+        ><strong>{{ p.symbol }}</strong></span
       >
       <span>{{
-        'settings.previewPage.tickersCount' | translate: { count: p.tickers.length }
+        'settings.previewPage.promptVersion' | translate: { version: p.promptVersion }
       }}</span>
       <span>{{
         'settings.previewPage.systemChars' | translate: { count: p.systemPromptChars }

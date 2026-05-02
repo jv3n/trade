@@ -217,14 +217,27 @@
       "running": "Running…",
       "run": "Run the test",
       "articlesCount": "{{count}} articles fetched",
-      "errorBackend": "Backend connection error"
+      "errorBackend": "Backend connection error",
+      "ticker": {
+        "title": "Test a ticker (Yahoo)",
+        "intro": "Verify that the market provider responds for this symbol and that indicators compute. `mock` mode is the local default.",
+        "placeholder": "Symbol (e.g. AAPL, NVDA…)",
+        "suggestionsLabel": "Owned tickers",
+        "run": "Test the fetch",
+        "priceLabel": "Current price",
+        "barsLabel": "OHLC bars",
+        "drawdownLabel": "52w drawdown",
+        "errorNotFound": "Ticker not found",
+        "errorUnavailable": "Market data unavailable (rate-limit or network)"
+      }
     },
     "previewPage": {
-      "intro": "Select a portfolio to view the full prompt (system + user) that would be sent to the LLM. No call is made.",
-      "selectPortfolio": "— Portfolio —",
+      "intro": "Enter a ticker to view the full system + user prompt that the narrative pipeline would send to the LLM. No call is made.",
+      "symbolPlaceholder": "Ticker (e.g. AAPL, MSFT…)",
+      "suggestionsLabel": "Owned tickers",
       "loading": "Loading…",
       "show": "Show the prompt",
-      "tickersCount": "{{count}} tickers",
+      "promptVersion": "version: {{version}}",
       "systemChars": "system: {{count}} chars",
       "userChars": "user: {{count}} chars",
       "totalChars": "total: {{count}} chars",
@@ -232,7 +245,8 @@
       "userMessage": "User message",
       "copy": "Copy",
       "errors": {
-        "notFound": "Portfolio not found",
+        "notFound": "Ticker not found",
+        "unavailable": "Market data unavailable (rate-limit or network)",
         "backend": "Backend error"
       }
     }

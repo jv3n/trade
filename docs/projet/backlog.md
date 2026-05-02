@@ -73,8 +73,8 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ⏳ Test source ticker (Yahoo) | Étendre `/settings/test-sources` pour tester un fetch Yahoo par ticker (vérifier que l'API répond, que les indicateurs se calculent) | 🟢 Basse |
-| ⏳ Aperçu du prompt par ticker | Adapter `/settings/prompt-preview` au nouveau prompt (entrée : un ticker au lieu d'un portefeuille) | 🟢 Basse |
+| ✅ Test source ticker (Yahoo) | Section "Tester un ticker" ajoutée à `/settings/test-sources` (séparée par border-top du test RSS). Input ticker libre + suggestions cliquables depuis owned tickers. Réutilise `MarketRepository.getTicker(symbol)` donc respecte le provider mock/yahoo configuré. Result block : prix, bars OHLC, RSI(14), MA200, drawdown 52w. Erreurs 404 / 503 surfacées via i18n | 🟢 Basse |
+| ✅ Aperçu du prompt par ticker | `/settings/prompt-preview` adaptée Phase 1 narratif. Input ticker libre + suggestions cliquables depuis les owned tickers. Endpoint back `GET /api/market/ticker/{symbol}/narrative/preview` réutilise `NARRATIVE_SYSTEM_PROMPT` + `buildNarrativeUserMessage` sans appel LLM. 2 tests slice MVC + 1 test adapter HTTP | 🟢 Basse |
 
 ### Tests prioritaires Phase 1
 
