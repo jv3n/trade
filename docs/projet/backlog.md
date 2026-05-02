@@ -83,7 +83,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | ✅ `IndicatorCalculatorTest` | 20+ tests unitaires Kotlin purs : RSI sur série monotone, MA sur fenêtre, drawdown, volumes, edge cases (1 bar, séries trop courtes) | 🔴 Critique |
 | ✅ `YahooMappersTest` + `MockMarketChartClientTest` | Parsing du payload Yahoo sur fixtures JSON inline (6 tests). Mock provider validé : forme, déterminisme, divergence inter-symbole, paths réservés `UNKNOWN`/`RATELIMIT` (6 tests) | 🟡 Moyenne |
 | ✅ `TickerNarrativeParserTest` + `TickerNarrativeValidatorTest` + `TickerNarrativePromptTest` | 17 tests : JSON valide / fences / prose / sentiment mixed-case / unknown sentiment, validation 3-5 keyPoints + longueur, prompt skip silently nulls | 🟡 Moyenne |
-| ⏳ `TickerNarrativeServiceTest` | Test d'intégration du pipeline complet avec `MarketChartClient` (mock) et `LlmClient` stubbé : cache 30 min, dedup, retry validation | 🟡 Moyenne |
+| ✅ `TickerNarrativeServiceTest` | 8 tests Mockito-Kotlin sur la décision tree : pending dedup → reuse / fresh snapshot ≤ 30 min → cache hit avec job DONE synchrone / stale ou absent → kick runner. Plus normalisation casse symbole et délégation `latestSnapshot`. Le test borderline 30 min est volontairement à 29 min — le cas exact dépend d'un Clock injectable | 🟡 Moyenne |
 | ⏳ `YahooClientTest` (HTTP) | Mock HTTP réel (MockWebServer) pour valider les chemins 429/404/timeout et les headers browser. Important quand on rallumera Yahoo en prod | 🟢 Basse |
 
 ---
