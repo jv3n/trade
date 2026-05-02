@@ -96,7 +96,7 @@ trade/
 │       │   └── language.service.ts    # signal + persist localStorage (i18n)
 │       └── features/          # Pages UI (primary adapters)
 │           ├── dashboard/             # Portefeuille + lien dossiers ticker
-│           ├── ticker/                # 🚧 Phase 1 — dossier par symbole
+│           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA)
 │           ├── import/                # Drag & drop CSV Wealthsimple
 │           ├── suivi/                 # Timeline snapshots
 │           ├── settings/              # Sources / test / prompt-preview
@@ -104,7 +104,7 @@ trade/
 │           └── history/               # 🧊 legacy Phase 0
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
-│       ├── market/            # 🚧 Phase 1 — Yahoo client + indicateurs
+│       ├── market/            # Yahoo client (cookie+crumb) + mock + indicateurs
 │       ├── analysis/          # Phase 1 narratif ticker (legacy reco portfolio gelé)
 │       ├── portfolio/         # Import CSV, snapshots, lecture
 │       ├── ingestion/         # 🧊 legacy Phase 0 — RSS scheduler

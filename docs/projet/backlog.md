@@ -37,7 +37,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 ---
 
-## Phase 1 — Pivot ticker (en cours)
+## Phase 1 — Pivot ticker (terminé, tag `v0.2.0` du 2026-05-02)
 
 ### Backend — module `market/` (nouveau)
 

@@ -51,7 +51,7 @@ Pipeline `AnalysisExecutor` complet : `AnalysisContextLoader`, `LlmResponseParse
 
 ---
 
-## Phase 1 — Pivot ticker (en cours)
+## Phase 1 — Pivot ticker (terminé, tag `v0.2.0`)
 
 ### Données de marché (Yahoo)
 

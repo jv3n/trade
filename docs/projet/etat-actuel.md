@@ -1,75 +1,68 @@
-# État actuel — 2026-05-02
+# État actuel — fin Phase 1 (2026-05-02)
 
-Snapshot de la session pour reprendre proprement la prochaine fois. Le détail long vit dans `backlog.md` ; ce fichier ne note **que ce qui est en l'air maintenant**.
+Snapshot de la session de clôture Phase 1. Pour reprendre proprement à la prochaine session.
 
-## Branche / tag
+## Branches / tags
 
 - Branche : `master`
-- Dernier tag : `v0.1.0` — clôture de la **Phase 0**
-- Plusieurs commits déjà passés cette session : Yahoo client, mock provider, pipeline narratif LLM, tests-as-doc, fix CSV date timezone, onboarding doc, dashboard total agrégé, narratif front complet.
+- Derniers tags :
+  - `v0.1.0` — clôture **Phase 0** (recommandations RSS, gelée)
+  - **`v0.2.0`** — clôture **Phase 1 — Pivot ticker** ✅ (ce tag vient d'être poussé)
+- Working tree : **clean** post-tag.
 
-## Phase en cours
+## Phase 1 — bilan
 
-**Phase 1 — Pivot ticker** (cf. `metier/fonctionnalites.md`). LLM = rédacteur, pas décideur.
+100 % livrée. Tout le critique 🔴, le médium 🟡 et le basse 🟢 listé dans `backlog.md` sont ✅.
 
-**État Phase 1** : critique livré 100 % côté backend ET frontend. Reste 🟡 `TickerNarrativeServiceTest` d'intégration et 🟡 liste cliquable des tickers, plus 🟢 sur Settings et tests Yahoo HTTP.
+### Backend
 
-## Ce qui est en working tree (à commit)
+- Module `market/` : `MarketChartClient` (port) + `YahooClient` (real HTTP, **cookie+crumb auth via `YahooSession`**, JDK 11+ `HttpClient`) + `MockMarketChartClient` (déterministe par symbole). `IndicatorCalculator` Kotlin pur, 20+ tests.
+- Pipeline narratif LLM async : `Service → Runner @Async → Executor (parse + validate + 1 retry) → Persister`. Cache snapshot 30 min, dedup job 5 min. Validateur strict : 3-5 keyPoints, ≤15 mots, summary 2-3 phrases, sentiment ∈ enum.
+- Migration Flyway V2 : `ticker_narrative_snapshot` + `ticker_narrative_job`.
+- Endpoints : `GET /api/market/ticker/{symbol}` (dossier complet), `POST/GET /narrative/...` (kick + poll + latest), `GET /narrative/preview` (preview prompt), `GET /api/portfolios/owned-tickers`.
 
-Multiples concerns regroupables en 1 commit chore (ou 2 si on veut séparer infra) :
+### Frontend
 
-### Frontend — i18n FR/EN
+- Page Dossier ticker : graphe SVG inline, 10 chips d'indicateurs avec color-coding (RSI/MA/perf/drawdown), narratif IA (sentiment chip BULLISH/NEUTRAL/BEARISH coloré, summary, bullets, footer modèle+date), bouton Régénérer avec polling.
+- Dashboard : total agrégé tous portefeuilles dans la sidebar, liste cliquable des tickers détenus (`owned-tickers` agrégé serveur, pas de N+1).
+- Settings adaptés Phase 1 : `prompt-preview` par ticker (input libre + suggestions), `test-sources` étendu avec test ticker Yahoo.
+- **i18n FR/EN** via `ngx-translate` (TranslatePipe) + `LanguageService` signal-based. Drapeaux unicode dans le header.
+- **Zoneless explicite** (`provideZonelessChangeDetection()` dans `app.config.ts`).
 
-- `@ngx-translate/core` + `@ngx-translate/http-loader` v17 ajoutés
-- `LanguageService` (signal + localStorage + fallback navigateur), miroir de `ThemeService`
-- `provideTranslateService` + `provideTranslateHttpLoader` dans `app.config.ts`
-- `public/i18n/fr.json` + `en.json` (~170 clés organisées : common, nav, header, dashboard, ticker, csvImport, suivi, history, settings/sourcesPage/testPage/previewPage, categories, statuses, sentiment)
-- Header : bouton drapeau (mat-menu) avec FR / EN, drapeau actif + check, persistance localStorage
-- Toutes les pages migrées : strings hard-codées remplacées par `'key' | translate` ou `TranslateService.instant('key')` pour les erreurs dynamiques
-- Composants importent `TranslatePipe` (granulaire) et non `TranslateModule`
-- Tests : `provideTranslateService({ lang: 'en' })` ajouté à 8 TestBed, 2 assertions ajustées pour vérifier la clé i18n au lieu du texte FR
+### Tests
 
-### Frontend — zoneless explicite
+- Backend : `IndicatorCalculatorTest` (20+), `YahooMappersTest` (6 fixtures), `MockMarketChartClientTest` (6), `YahooClientTest` (9 — happy + 401 retry + erreurs + headers via MockWebServer), `TickerNarrativeServiceTest` (8 — 3 branches dedup/cache/kick + normalisation), `TickerNarrativePrompt/Parser/Validator` (17), `TickerNarrativePreviewControllerTest` (2), `PortfolioControllerTest` enrichi (owned-tickers).
+- Frontend : 84 tests (14 fichiers). Adapters HTTP, ticker page, dashboard (incl. owned tickers), suivi, csv-import, narrative flow complet.
 
-- `provideZonelessChangeDetection()` ajouté dans `app.config.ts` (la conf est lisible plutôt que devinée)
-- `OnPush` retiré de `TickerPage` (le seul qui l'avait) — en zoneless+signals, Default suffit
+### Decisions techniques notables
 
-### Frontend — bumps deps + budgets
+- `JdkClientHttpRequestFactory` au lieu de `SimpleClientHttpRequestFactory` — le second n'a pas de cookie-handling et strip silencieusement `Origin` + `Sec-Fetch-*`.
+- Cookie+crumb `YahooSession` (modèle `yfinance`) — découvert nécessaire après diag Yahoo.
+- `mockwebserver` (test) pour valider toutes les branches HTTP du `YahooClient`.
+- `mockito-kotlin` ajouté pour des matchers null-safe sur les services.
 
-- `npm update` : Angular 21.2.7-9 → 21.2.11, vitest 4.1.4 → 4.1.5
-- `package.json` normalisé : tous les `^` à `^major.0.0`, TypeScript reste en `~5.9.0` (Angular casse entre minors TS)
-- `angular.json` : budgets `initial` 500kB/1MB → 1MB/2MB, `anyComponentStyle` 16/32 → 24/48 kB
+## Validation live Yahoo — toujours en suspens
 
-### Backend — bumps deps + fixes deprecation
+Le code cookie+crumb est correct (validé par 9 tests + cohérent avec les bibliothèques de référence) **mais aucune IP testée aujourd'hui n'a permis de valider l'API Yahoo en live** :
 
-- Spring Boot 3.5.0 → **3.5.14** (cascade postgres/jackson/caffeine via BOM)
-- Kotlin 2.1.20 → **2.1.21** (3 plugins)
-- ktfmt 0.54 → **0.55** (0.62 attendait Kotlin 2.2+)
-- commons-csv 1.12.0 → **1.14.1**
-- Fix deprecation `URL(String)` → `URI(url).toURL()` dans `RssFetcherService`
-- Fix deprecation `CSVFormat.Builder.build()` → `.get()` dans `CsvImportService`
+- IP résidentielle EBOX → 429
+- NordVPN (datacenter Datacamp) → 429
+- Cellulaire Videotron Mobile → 429
 
-### Docs
+Yahoo bloque l'API gateway `query1.finance.yahoo.com` au niveau IP, indépendamment des cookies. Le HTML `finance.yahoo.com` répond lui en 200, donc ce n'est pas un ban global. À retester quand le score IP retombe (24-48h sans tape).
 
-- `CLAUDE.md` : conventions zoneless + i18n + 5 repositories + structure tests avec `provideTranslateService`
-- `architecture.md` : décisions techniques "Zoneless explicite" + "i18n runtime via ngx-translate", module `core/` enrichi (5 repos + theme + language services)
-- `developpement.md` : structure frontend mise à jour avec `public/i18n/` + `language.service.ts`
-- `developper.md` : section "Switcher la langue" ajoutée dans le walkthrough
+→ Validation à faire à la prochaine session via : tethering 4G d'un autre opérateur, attente, ou bascule **Twelve Data** (ajouté en dette technique).
 
 ## Reprise possible — par ordre d'utilité
 
-### Phase 1 reste à faire (cf. `backlog.md`)
+### Dette technique (cf. `backlog.md`)
 
-A. **`TickerNarrativeServiceTest`** (intégration) — pipeline complet avec `MarketChartClient` + `LlmClient` stubbés : valide cache 30 min, dedup, retry validation. ~30 min.
+A. **Twelve Data ou Finnhub provider** 🟡 — plan B si Yahoo continue à rate-limiter. ~1h, branchable comme un nouveau `MarketChartClient`.
 
-B. **Liste cliquable des tickers détenus** sur le dashboard — petite UX win, ~20 min.
+B. **Cleanup des jobs orphelins au boot** 🟡 — listener `ApplicationReadyEvent` qui passe les `PENDING` en `ERROR`. ~15 min.
 
-C. **Cleanup des jobs orphelins** au boot (dette technique) — listener `ApplicationReadyEvent`. ~15 min.
+C. **Items de l'audit 2026-05-02 non fixés** : contrat preview CSV cassé (front lit `bookValue`, back envoie `bookValueCad`), `@EnableAsync` sans `ThreadPoolTaskExecutor`, N+1 sur la timeline snapshots.
 
-D. **Settings adaptés Phase 1** — test source Yahoo + prompt-preview par ticker. 🟢 basse priorité.
+### Phase 2 — ouverte
 
-E. **Plan B Yahoo** — réappliquer le shelve headers + retry/backoff, ou bascule Twelve Data / Finnhub si IP-rate-limit persiste.
-
-## Shelvé
-
-- **Fix headers Yahoo** — non commité, à reprendre quand on rallumera Yahoo en prod (cf. piste E).
+Quand on attaque (cf. `metier/fonctionnalites.md`) : multi-timeframe sur le graphe, news Yahoo par ticker, comparaison vs benchmark, watchlist persistée, recommandations analystes / earnings.

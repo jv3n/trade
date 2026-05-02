@@ -32,7 +32,7 @@ trade/
 │       └── features/        # UI pages (primary adapters)
 ├── backend/                 # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
-│       ├── market/          # 🚧 Phase 1 — Yahoo client + IndicatorCalculator
+│       ├── market/          # Yahoo client + IndicatorCalculator + cookie+crumb auth
 │       ├── analysis/        # Phase 1 ticker narrative (legacy reco pipeline frozen)
 │       ├── portfolio/       # CSV imports, snapshots, read-only portfolios
 │       ├── ingestion/       # 🧊 legacy Phase 0 — RSS scheduler
@@ -52,7 +52,7 @@ trade/
 
 ## Backend modules
 
-- `market/` — 🚧 Phase 1 — `YahooClient` (quote, OHLC, fundamentals) + `IndicatorCalculator` (RSI, MA50/MA200, momentum, drawdown — Kotlin pur, sans Spring). Source primaire des dossiers ticker.
+- `market/` — `MarketChartClient` port + `YahooClient` (real HTTP, cookie+crumb auth via `YahooSession`, JDK 11+ HttpClient via `YahooHttpConfig`) and `MockMarketChartClient` (deterministic synthetic data) selected by `yahoo.provider` (`yahoo` \| `mock`). `IndicatorCalculator` is Kotlin pur, sans Spring : RSI, MA50/MA200, momentum, drawdown.
 - `analysis/` — Phase 1 ticker narrative pipeline (`TickerNarrativeService`, `TickerNarrativeRunner`, `TickerNarrativeParser`, `TickerNarrativeValidator`). Legacy portfolio-wide pipeline (`AnalysisExecutor`, `RecommendationValidator`, etc.) is **frozen in place** — code remains but no longer in the user flow.
 - `portfolio/` — read-only portfolios, Wealthsimple CSV import, historical snapshots
 - `ingestion/` — 🧊 legacy Phase 0 — RSS scheduler. Conservé en place, plus consommé en Phase 1.
@@ -67,7 +67,7 @@ Light hexagonal split under `frontend/src/app/` :
 - `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 5 repositories : Portfolio, Analysis, Settings, Snapshot, Market. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
 - `features/` — UI feature folders (one per top-level route, *primary adapters* en vocabulaire hexagonal) :
   - `dashboard/` — portfolio view (read-only positions) + link to ticker dossiers
-  - `ticker/` — 🚧 Phase 1 — per-symbol dossier (price chart, indicators, LLM narrative)
+  - `ticker/` — per-symbol dossier (price chart, indicators, LLM narrative)
   - `import/` — Wealthsimple CSV drag-and-drop page
   - `suivi/` — import history (snapshots by date, market values, P&L)
   - `recommendations/` — 🧊 legacy Phase 0 — filterable list of recommendations

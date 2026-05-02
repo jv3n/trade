@@ -10,8 +10,8 @@ Chaque contexte est autonome et possède ses propres couches.
 | Contexte | Responsabilité | Statut |
 |----------|----------------|--------|
 | `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | Actif |
-| `market` | Données ticker (Yahoo Finance) + indicateurs techniques calculés | 🚧 Phase 1 |
-| `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) | 🚧 Phase 1 — réécrit |
+| `market` | Données ticker (Yahoo Finance + mock) + indicateurs techniques calculés | ✅ Phase 1 |
+| `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) | ✅ Phase 1 — réécrit |
 | `ingestion` | Sources RSS, articles, scheduler de collecte | 🧊 Legacy gelé Phase 0 |
 
 > Le contexte `analysis` voit son périmètre changer à la Phase 1 : il passe d'orchestration de recommandations portefeuille (8 règles de validation, targetWeight, action enum) à génération de narratifs par ticker (`{summary, sentiment, keyPoints[]}`). Le code legacy reste en place mais n'est plus exposé.
