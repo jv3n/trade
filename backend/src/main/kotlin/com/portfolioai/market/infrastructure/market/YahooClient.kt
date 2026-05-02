@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
@@ -19,10 +18,22 @@ import org.springframework.web.client.RestClient
  * round-trip.
  *
  * Notes on the endpoint :
- * - Yahoo blocks the default JVM `User-Agent` header. We send a browser-like UA.
- * - The endpoint is aggressively rate-limited (`429 Too Many Requests`). We cache responses for 15
- *   min via Caffeine (see [com.portfolioai.market.MarketConfig]) and translate any HTTP error into
- *   a [MarketUnavailableException] handled by the global exception handler.
+ * - **Authenticated session required.** Modern Yahoo IPs reject naive chart calls with 429s that
+ *   look like rate-limits but are actually missing-auth refusals. We do the cookie + crumb dance
+ *   that `yfinance` and other widely-used clients do — see [YahooSession]. Every chart call carries
+ *   `?crumb=<token>` and the session cookies (auto via the shared `CookieManager` from
+ *   [YahooHttpConfig]).
+ * - **Browser fingerprint headers**. Recent Chrome UA + `Accept` for any media type +
+ *   `Accept-Language` + `Referer` to `finance.yahoo.com` are enough — set as `defaultHeader` on the
+ *   shared `RestClient`. `Origin` / `Sec-Fetch-*` were also tried but stripped silently by the
+ *   legacy `HttpURLConnection` request factory ; we now use the JDK 11+ `HttpClient` via
+ *   [YahooHttpConfig], which avoids that limitation.
+ * - **Caching + cache-name**. We cache responses for 15 min via Caffeine
+ *   ([com.portfolioai.market.MarketConfig]) and translate every HTTP error into a
+ *   [MarketUnavailableException] handled by the global exception handler. The 429 response body is
+ *   logged so a future fingerprint regression is diagnosable from the logs.
+ * - **Crumb refresh on 401.** If Yahoo returns 401 (crumb expired server-side), we invalidate the
+ *   [YahooSession] and retry the chart call once. Beyond that, we surface the error.
  * - `range` and `interval` accept the values listed at https://query1.finance.yahoo.com
  *   (1d/5d/1mo/3mo/6mo/1y/2y/5y/10y/ytd/max for range ; 1m/5m/15m/30m/60m/1d/1wk/1mo for interval).
  *   For the Phase 1 dossier we default to 1y daily.
@@ -30,40 +41,56 @@ import org.springframework.web.client.RestClient
 @Component
 @ConditionalOnProperty(name = ["yahoo.provider"], havingValue = "yahoo", matchIfMissing = true)
 class YahooClient(
-  @Value("\${yahoo.base-url:https://query1.finance.yahoo.com}") private val baseUrl: String
+  private val rest: RestClient,
+  private val session: YahooSession,
+  @Value("\${yahoo.base-url:https://query1.finance.yahoo.com}") private val baseUrl: String,
 ) : MarketChartClient {
   private val log = LoggerFactory.getLogger(javaClass)
 
-  private val restClient =
-    RestClient.builder()
-      .baseUrl(baseUrl)
-      .defaultHeader("User-Agent", USER_AGENT)
-      .defaultHeader("Accept", "application/json")
-      .requestFactory(
-        SimpleClientHttpRequestFactory().apply {
-          setConnectTimeout(5_000)
-          setReadTimeout(15_000)
-        }
-      )
-      .build()
-
   @Cacheable(YAHOO_CHART_CACHE, key = "#symbol + '|' + #range + '|' + #interval")
-  override fun fetchChart(symbol: String, range: String, interval: String): YahooChartResult {
+  override fun fetchChart(symbol: String, range: String, interval: String): YahooChartResult =
+    doFetch(symbol, range, interval, retryAuth = true)
+
+  private fun doFetch(
+    symbol: String,
+    range: String,
+    interval: String,
+    retryAuth: Boolean,
+  ): YahooChartResult {
+    val crumb = session.getCrumb()
     log.info("Fetching Yahoo chart symbol={} range={} interval={}", symbol, range, interval)
     val response =
       try {
-        restClient
+        rest
           .get()
           .uri(
-            "/v8/finance/chart/{symbol}?range={range}&interval={interval}",
+            "$baseUrl/v8/finance/chart/{symbol}?range={range}&interval={interval}&crumb={crumb}",
             symbol,
             range,
             interval,
+            crumb,
           )
           .retrieve()
           .body(YahooChartResponse::class.java)
+      } catch (e: HttpClientErrorException.Unauthorized) {
+        // Crumb expired server-side. Invalidate the session and retry once with a fresh one.
+        // Beyond that, surface as MarketUnavailableException so the front shows 503.
+        if (retryAuth) {
+          log.info("Yahoo returned 401 for symbol={} — refreshing session and retrying", symbol)
+          session.invalidate()
+          return doFetch(symbol, range, interval, retryAuth = false)
+        }
+        log.warn("Yahoo returned 401 even after crumb refresh for symbol={}", symbol)
+        throw MarketUnavailableException("auth-failed", e)
       } catch (e: HttpClientErrorException.TooManyRequests) {
-        log.warn("Yahoo rate-limited fetch for symbol={}", symbol)
+        // Body is short ("Too Many Requests" or a JSON error) — log it so a future fingerprint
+        // regression (or a real IP rate-limit) is diagnosable from the logs without re-running
+        // curl.
+        log.warn(
+          "Yahoo rate-limited fetch for symbol={} body={}",
+          symbol,
+          e.responseBodyAsString.take(500),
+        )
         throw MarketUnavailableException("rate-limited", e)
       } catch (e: HttpClientErrorException.NotFound) {
         // Translate to NoSuchElementException so the global handler returns 404.
@@ -86,13 +113,5 @@ class YahooClient(
     }
     return response.chart.result?.firstOrNull()
       ?: throw NoSuchElementException("No chart result for $symbol")
-  }
-
-  companion object {
-    // The default JVM User-Agent (`Java/21`) is blocked by Yahoo. Any reasonable
-    // browser UA works.
-    private const val USER_AGENT =
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   }
 }

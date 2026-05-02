@@ -44,6 +44,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | Feature | Description | Priorité |
 |---------|-------------|----------|
 | ✅ `YahooClient` + `MarketChartClient` (port) + `MockMarketChartClient` | Fetch par ticker : quote, OHLC 1y, 52w high/low. Sélection `yahoo.provider` (yahoo \| mock). Mock déterministe par symbole pour itérer sans Yahoo. Cache Caffeine 15 min, 503 propre sur 429 | 🔴 Critique |
+| ✅ Auth Yahoo (cookie + crumb) | `YahooHttpConfig` (CookieManager + JDK 11+ HttpClient via `JdkClientHttpRequestFactory`) + `YahooSession` qui fait la danse `fc.yahoo.com` → `getcrumb` → cache 30 min thread-safe. `YahooClient` ajoute `?crumb=<token>` aux requêtes chart et retry une fois sur 401 (crumb expiré server-side). 9 tests incluant happy-path, 401-retry, mapping erreurs. Code prêt mais validation live bloquée tant que l'IP est rate-limitée — à valider via VPN ou prochaine session | 🔴 Critique |
 | ✅ `IndicatorCalculator` | Kotlin pur, sans Spring : RSI(14), MA50, MA200, momentum 30j/90j, perf 1m/3m/1y, drawdown 52w, volume relatif, distance vs MA. 20+ tests unitaires | 🔴 Critique |
 | ✅ Endpoint REST `market/` | `GET /api/market/ticker/{symbol}` retourne quote + indicateurs + bars OHLC (pour le graphe inline). Pas de `/history` séparé — un seul payload sert le dossier | 🔴 Critique |
 | ✅ Migration Flyway V2 | Tables `ticker_narrative_snapshot` (output LLM + indicateurs JSONB + provenance modèle) et `ticker_narrative_job` (état async) | 🔴 Critique |
@@ -84,7 +85,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | ✅ `YahooMappersTest` + `MockMarketChartClientTest` | Parsing du payload Yahoo sur fixtures JSON inline (6 tests). Mock provider validé : forme, déterminisme, divergence inter-symbole, paths réservés `UNKNOWN`/`RATELIMIT` (6 tests) | 🟡 Moyenne |
 | ✅ `TickerNarrativeParserTest` + `TickerNarrativeValidatorTest` + `TickerNarrativePromptTest` | 17 tests : JSON valide / fences / prose / sentiment mixed-case / unknown sentiment, validation 3-5 keyPoints + longueur, prompt skip silently nulls | 🟡 Moyenne |
 | ✅ `TickerNarrativeServiceTest` | 8 tests Mockito-Kotlin sur la décision tree : pending dedup → reuse / fresh snapshot ≤ 30 min → cache hit avec job DONE synchrone / stale ou absent → kick runner. Plus normalisation casse symbole et délégation `latestSnapshot`. Le test borderline 30 min est volontairement à 29 min — le cas exact dépend d'un Clock injectable | 🟡 Moyenne |
-| ⏳ `YahooClientTest` (HTTP) | Mock HTTP réel (MockWebServer) pour valider les chemins 429/404/timeout et les headers browser. Important quand on rallumera Yahoo en prod | 🟢 Basse |
+| ✅ `YahooClientTest` (HTTP) | 8 tests avec `okhttp3.mockwebserver:4.12.0` : happy path 200, 429 → MarketUnavailableException("rate-limited"), 404 → NoSuchElementException, 500 → upstream, 200 avec chart.error, empty result, headers browser envoyés (UA Chrome + Accept */* + Accept-Language + Referer), URL path/query corrects. **Découverte du test** : le JDK `HttpURLConnection` strip silently `Origin` et `Sec-Fetch-*` — code mort retiré du YahooClient | 🟢 Basse |
 
 ---
 
@@ -132,6 +133,7 @@ Sujets identifiés en cours de session, pas bloquants pour la Phase 1 mais à tr
 | Sujet | Description | Priorité |
 |-------|-------------|----------|
 | ⏳ Cleanup des jobs orphelins au démarrage | À chaque hot-reload Tilt (ou crash backend), un job `PENDING` reste `PENDING` à jamais en BDD. `ApplicationReadyEvent` listener qui passe tous les `PENDING` en `ERROR` au boot. ~15 min | 🟡 Moyenne |
+| ⏳ Provider de marché alternatif (Twelve Data / Finnhub) | Plan B si Yahoo continue à rate-limiter agressivement (cf. Phase 1, ban observé sur résidentiel + VPN + cellulaire). Twelve Data : clé gratuite 800 req/jour, IPs propres en prod, interface très similaire — un nouveau `MarketChartClient` à brancher sur `yahoo.provider: twelvedata`. ~1h. À considérer si la validation live Yahoo continue d'échouer | 🟡 Moyenne |
 | ⏳ Doublon `recommendations/` vs `history/` | Avec la Phase 1, ces pages deviennent legacy. Décision : garder en l'état pour le legacy, ou simplifier en une seule page à terme | 🟢 Basse |
 | ⏳ Tests sur le module `analysis/` (legacy) | Aucun test sur le legacy. Si on rallume Phase 4, on en aura besoin. Pas urgent tant que le code dort | 🟢 Basse |
 | ✅ Refacto "tests as documentation" sur les tests existants | Pass d'audit appliqué : docstrings de classe + commentaires motivationnels sur `IndicatorCalculatorTest`, `YahooMappersTest`, `MockMarketChartClientTest`, `CsvImportServiceTest`, `PortfolioControllerTest` côté back, et `ticker.spec`, `dashboard.spec`, `suivi.spec`, `csv-import.spec`, `analysis.http.spec` + 4 HTTP adapter specs côté front. Stub-only specs (`should create` seul) laissés tels quels. Les tests narratif Phase 1 ont servi de modèle | 🟢 Basse |
