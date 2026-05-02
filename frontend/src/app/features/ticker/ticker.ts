@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -10,7 +11,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MarketRepository, TickerSnapshot } from '../../core/market.repository';
+import { Subscription } from 'rxjs';
+import {
+  MarketRepository,
+  TickerNarrativeSnapshot,
+  TickerSnapshot,
+} from '../../core/market.repository';
 
 interface Point {
   x: number;
@@ -24,7 +30,7 @@ interface Point {
   styleUrl: './ticker.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TickerPage implements OnInit {
+export class TickerPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly marketRepository = inject(MarketRepository);
 
@@ -32,6 +38,16 @@ export class TickerPage implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   snapshot = signal<TickerSnapshot | null>(null);
+
+  // ---- Narrative state ----
+
+  /** Latest persisted narrative for the current symbol, or null when none exists yet. */
+  narrative = signal<TickerNarrativeSnapshot | null>(null);
+  /** True while a generation is pending (POST kick + polling). */
+  narrativeLoading = signal(false);
+  /** Surfaces parse / poll / abort errors from the narrative pipeline. */
+  narrativeError = signal<string | null>(null);
+  private narrativePollSub?: Subscription;
 
   // ---- Derived state for the chart ----
 
@@ -114,6 +130,11 @@ export class TickerPage implements OnInit {
     }
     this.symbol.set(s);
     this.load(s);
+    this.loadLatestNarrative(s);
+  }
+
+  ngOnDestroy(): void {
+    this.narrativePollSub?.unsubscribe();
   }
 
   load(symbol: string): void {
@@ -129,5 +150,85 @@ export class TickerPage implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  // ---- Narrative actions ----
+
+  /**
+   * Reads the most recent persisted snapshot, if any. 404 is normal (first visit) — the adapter
+   * maps it to `null` so we don't surface a scary error on the happy "no narrative yet" path.
+   */
+  private loadLatestNarrative(symbol: string): void {
+    this.marketRepository.getLatestNarrative(symbol).subscribe({
+      next: (snap) => this.narrative.set(snap),
+      error: () => {
+        // Non-404 error : keep going silently. The user can still click "Générer" to retry.
+        this.narrative.set(null);
+      },
+    });
+  }
+
+  /**
+   * Kicks a narrative generation. Three branches :
+   * - POST returns DONE immediately → cache hit (snapshot < 30 min) → fetch and display it.
+   * - POST returns PENDING → poll until DONE / ERROR → fetch the snapshot on success.
+   * - POST or polling throws → surface in narrativeError, stop loading.
+   */
+  generateNarrative(): void {
+    const sym = this.symbol();
+    if (!sym || this.narrativeLoading()) return;
+    this.narrativeLoading.set(true);
+    this.narrativeError.set(null);
+    this.narrativePollSub?.unsubscribe();
+
+    this.marketRepository.requestNarrative(sym).subscribe({
+      next: (job) => {
+        if (job.status === 'DONE') {
+          this.fetchNarrativeAfterCompletion(sym);
+          return;
+        }
+        if (job.status === 'ERROR') {
+          this.narrativeError.set(job.error ?? 'Erreur lors de la génération du narratif');
+          this.narrativeLoading.set(false);
+          return;
+        }
+        this.narrativePollSub = this.marketRepository.pollNarrativeJob(sym, job.jobId).subscribe({
+          next: (updated) => {
+            if (updated.status === 'DONE') {
+              this.fetchNarrativeAfterCompletion(sym);
+            } else if (updated.status === 'ERROR') {
+              this.narrativeError.set(updated.error ?? 'Erreur lors de la génération du narratif');
+              this.narrativeLoading.set(false);
+            }
+          },
+          error: (err: Error) => {
+            this.narrativeError.set(err.message ?? 'Erreur lors du polling du job');
+            this.narrativeLoading.set(false);
+          },
+        });
+      },
+      error: () => {
+        this.narrativeError.set('Impossible de lancer la génération');
+        this.narrativeLoading.set(false);
+      },
+    });
+  }
+
+  private fetchNarrativeAfterCompletion(symbol: string): void {
+    this.marketRepository.getLatestNarrative(symbol).subscribe({
+      next: (snap) => {
+        this.narrative.set(snap);
+        this.narrativeLoading.set(false);
+      },
+      error: () => {
+        this.narrativeError.set('Narratif généré mais impossible à recharger');
+        this.narrativeLoading.set(false);
+      },
+    });
+  }
+
+  sentimentClass(s: TickerNarrativeSnapshot | null): string {
+    if (!s) return '';
+    return `sentiment-${s.sentiment.toLowerCase()}`;
   }
 }

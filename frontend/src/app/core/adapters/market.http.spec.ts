@@ -35,4 +35,123 @@ describe('HttpMarketRepository', () => {
     repo.getTicker('BRK.B').subscribe();
     http.expectOne('/api/market/ticker/BRK.B').flush({});
   });
+
+  // ---- Narrative pipeline ----
+
+  describe('narrative endpoints', () => {
+    it('requestNarrative POSTs to /api/market/ticker/:symbol/narrative', () => {
+      repo.requestNarrative('AAPL').subscribe();
+      const req = http.expectOne('/api/market/ticker/AAPL/narrative');
+      expect(req.request.method).toBe('POST');
+      // Body is empty — the symbol is in the URL, the backend doesn't need anything else.
+      expect(req.request.body).toEqual({});
+      req.flush({});
+    });
+
+    it('getLatestNarrative calls GET .../narrative/latest', () => {
+      repo.getLatestNarrative('AAPL').subscribe();
+      const req = http.expectOne('/api/market/ticker/AAPL/narrative/latest');
+      expect(req.request.method).toBe('GET');
+      req.flush({});
+    });
+
+    it('getLatestNarrative maps 404 to null instead of throwing', () => {
+      // First visit on a symbol = no snapshot yet. The page must branch on `null`, not
+      // catch a scary HTTP error.
+      let received: unknown = 'untouched';
+      repo.getLatestNarrative('NEWSYM').subscribe({
+        next: (v) => (received = v),
+        error: () => (received = 'error'),
+      });
+      http
+        .expectOne('/api/market/ticker/NEWSYM/narrative/latest')
+        .flush({}, { status: 404, statusText: 'Not Found' });
+
+      expect(received).toBeNull();
+    });
+
+    it('getLatestNarrative surfaces non-404 errors normally', () => {
+      let receivedError = false;
+      repo.getLatestNarrative('AAPL').subscribe({
+        next: () => {},
+        error: () => (receivedError = true),
+      });
+      http
+        .expectOne('/api/market/ticker/AAPL/narrative/latest')
+        .flush({}, { status: 500, statusText: 'Server Error' });
+
+      expect(receivedError).toBe(true);
+    });
+
+    describe('pollNarrativeJob', () => {
+      beforeEach(() => vi.useFakeTimers());
+      afterEach(() => vi.useRealTimers());
+
+      it('polls every 3s and stops on DONE', () => {
+        const emissions: unknown[] = [];
+        let completed = false;
+        const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
+          next: (j) => emissions.push(j),
+          complete: () => (completed = true),
+        });
+
+        vi.advanceTimersByTime(3000);
+        const req = http.expectOne('/api/market/ticker/AAPL/narrative/jobs/job-1');
+        expect(req.request.method).toBe('GET');
+        req.flush({
+          jobId: 'job-1',
+          symbol: 'AAPL',
+          status: 'DONE',
+          createdAt: new Date().toISOString(),
+          snapshotId: 'snap-1',
+          error: null,
+        });
+
+        expect(emissions).toHaveLength(1);
+        expect(completed).toBe(true);
+        sub.unsubscribe();
+      });
+
+      it('aborts after NARRATIVE_POLL_ABORT_SECONDS even if backend keeps replying PENDING', () => {
+        let receivedError: Error | null = null;
+        // Job created 301 s ago — over the 300 s cap.
+        const createdAt = new Date(Date.now() - 301_000).toISOString();
+        const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
+          next: () => {},
+          error: (err: Error) => (receivedError = err),
+        });
+
+        vi.advanceTimersByTime(3000);
+        http.expectOne('/api/market/ticker/AAPL/narrative/jobs/job-1').flush({
+          jobId: 'job-1',
+          symbol: 'AAPL',
+          status: 'PENDING',
+          createdAt,
+          snapshotId: null,
+          error: null,
+        });
+
+        expect(receivedError).not.toBeNull();
+        expect(receivedError!.message).toContain('trop longue');
+        sub.unsubscribe();
+      });
+
+      it('surfaces 404 with a friendly message (backend restarted ?)', () => {
+        let receivedError: Error | null = null;
+        const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
+          next: () => {},
+          error: (err: Error) => (receivedError = err),
+        });
+
+        vi.advanceTimersByTime(3000);
+        http
+          .expectOne('/api/market/ticker/AAPL/narrative/jobs/job-1')
+          .flush({}, { status: 404, statusText: 'Not Found' });
+
+        expect(receivedError).not.toBeNull();
+        expect(receivedError!.message).toContain('introuvable');
+        sub.unsubscribe();
+      });
+    });
+  });
 });

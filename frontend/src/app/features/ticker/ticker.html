@@ -149,5 +149,59 @@
         </div>
       </section>
     }
+
+    <!-- Narratif LLM -->
+    <section class="narrative-card">
+      <div class="narrative-header">
+        <div class="narrative-title">
+          <mat-icon>auto_awesome</mat-icon>
+          <h3>Narratif IA</h3>
+          @if (narrative(); as n) {
+            <span class="sentiment-chip" [class]="sentimentClass(n)">{{ n.sentiment }}</span>
+          }
+        </div>
+        <button
+          class="btn-primary btn-narrative"
+          [disabled]="narrativeLoading()"
+          (click)="generateNarrative()"
+        >
+          @if (narrativeLoading()) {
+            <mat-spinner diameter="14"></mat-spinner>
+            <span>Génération en cours…</span>
+          } @else {
+            <mat-icon>{{ narrative() ? 'refresh' : 'auto_awesome' }}</mat-icon>
+            <span>{{ narrative() ? 'Régénérer' : 'Générer le narratif' }}</span>
+          }
+        </button>
+      </div>
+
+      @if (narrativeError(); as ne) {
+        <div class="error-banner narrative-error">
+          <mat-icon>error_outline</mat-icon>
+          {{ ne }}
+        </div>
+      }
+
+      @if (narrative(); as n) {
+        <p class="narrative-summary">{{ n.summary }}</p>
+        @if (n.keyPoints.length > 0) {
+          <ul class="narrative-points">
+            @for (kp of n.keyPoints; track $index) {
+              <li>{{ kp }}</li>
+            }
+          </ul>
+        }
+        <div class="narrative-footer">
+          <span>{{ n.modelUsed }}</span>
+          <span>·</span>
+          <span>{{ n.generatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      } @else if (!narrativeLoading() && !narrativeError()) {
+        <p class="empty-state narrative-empty">
+          Pas encore de narratif pour ce ticker. Clique sur « Générer le narratif » pour qu'on
+          rédige une lecture des indicateurs ci-dessus.
+        </p>
+      }
+    </section>
   }
 </div>

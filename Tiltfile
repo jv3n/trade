@@ -9,7 +9,9 @@ host = cfg.get("host", "localhost")
 docker_compose("docker-compose.yml")
 
 # Ollama — pull du modèle Mistral 7B Instruct au démarrage
-# (qwen2:1.5b s'est avéré trop petit pour le prompt enrichi — voir docs/technique/architecture.md)
+# (modèle local par défaut côté `llm.provider: ollama`. Modèles plus petits comme
+# qwen2:1.5b ont été testés et sont trop faibles sur le prompt narratif enrichi —
+# voir docs/technique/architecture.md)
 local_resource(
     name = "llm:pull-mistral",
     cmd = "docker exec portfolioai-ollama ollama pull mistral",

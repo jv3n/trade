@@ -8,8 +8,8 @@ import org.junit.jupiter.api.assertThrows
 
 /**
  * Parser unit tests. Each case represents a real failure mode we've observed (or expect) from one
- * of our LLM providers — Claude is well-behaved, but Mistral 7B and qwen2:1.5b often pad their
- * output with prose ("Sure! Here is the analysis:") or wrap the JSON in markdown fences.
+ * of our LLM providers — Claude is well-behaved, but local models like Mistral 7B Instruct often
+ * pad their output with prose ("Sure! Here is the analysis:") or wrap the JSON in markdown fences.
  *
  * Two design intents the tests pin down :
  * - **Be lenient on shape** : prose padding, code fences and mixed-case sentiment all parse
@@ -47,7 +47,7 @@ class TickerNarrativeParserTest {
 
   @Test
   fun `tolerates prose around the JSON object`() {
-    // Real qwen2:1.5b shape — pads with a friendly opener and a closing wave.
+    // Real local-model shape — pads with a friendly opener and a closing wave.
     val raw =
       """
       Sure! Here is the analysis:

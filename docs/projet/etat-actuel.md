@@ -28,11 +28,11 @@ Snapshot de la session pour reprendre proprement la prochaine fois. Le détail l
 - Domain : enum `Sentiment`, `TickerNarrativeJob`, `TickerNarrativeSnapshot`
 - Application : `TickerNarrativeService` (dedup 5min + cache snapshot 30min) → `TickerNarrativeRunner` (`@Async`) → `TickerNarrativeExecutor` (parse + validate + 1 retry) → `TickerNarrativePersister`
 - `TickerNarrativeParser` (tolère prose/fences/sentiment mixed-case) + `TickerNarrativeValidator` (3-5 keyPoints, ≤15 mots, summary 2-3 phrases)
-- `LlmClient.modelId()` — provenance du modèle persistée sur chaque snapshot (`ollama:qwen2:1.5b`, `claude:claude-opus-4-6`)
+- `LlmClient.modelId()` — provenance du modèle persistée sur chaque snapshot (`ollama:mistral`, `claude:claude-opus-4-6`)
 - HTTP : `POST /narrative`, `GET /narrative/jobs/{id}`, `GET /narrative/latest`
 - 17 tests unit (parser / validator / prompt)
 
-**Validation end-to-end** (Ollama qwen2:1.5b, mock Yahoo) : POST → DONE en ~13s, summary + sentiment BULLISH + 3 keyPoints + `modelUsed`. Re-POST < 30 min → cache hit immédiat, log `Reusing fresh snapshot`.
+**Validation end-to-end** (Ollama Mistral 7B, mock Yahoo) : POST → DONE en ~30-60 s, summary + sentiment BULLISH + 3 keyPoints + `modelUsed`. Re-POST < 30 min → cache hit immédiat, log `Reusing fresh snapshot`.
 
 ## Shelvé (pas dans le commit narratif)
 

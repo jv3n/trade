@@ -71,13 +71,13 @@ llm:
 
 ollama:
   base-url: http://ollama:11434
-  model: mistral       # ou qwen2:1.5b — plus rapide, beaucoup moins bon
+  model: mistral       # 7B Instruct, ~4 GB — défaut local
 
 yahoo:
   provider: mock
 ```
 
-Avec Ollama, pense à télécharger le modèle au premier lancement : clic sur **`llm:pull-mistral`** dans l'UI Tilt (~4 GB). Le modèle `qwen2:1.5b` est déjà présent par défaut dans l'image, plus léger (~1 GB) mais pas terrible sur les narratifs financiers.
+Pense à télécharger le modèle au premier lancement : clic sur **`llm:pull-mistral`** dans l'UI Tilt (~4 GB). Si tu acceptes une latence supérieure (~1-2 min) pour un saut qualitatif, tu peux aussi pull `phi4` (14B, ~9 GB) ou `qwen2.5:14b` et basculer `ollama.model` vers l'un d'eux — bullets plus précis et chiffres mieux référencés.
 
 Tu peux switcher de l'un à l'autre à tout moment en éditant `application-local.yml` — Tilt redémarre le backend au save.
 
@@ -120,7 +120,7 @@ Le projet a deux providers configurables, chacun avec une vraie implémentation 
 | Valeur | Quand l'utiliser |
 |---|---|
 | `claude` | Défaut Phase 1. Qualité narrative nettement supérieure, latence 1-3 s, requiert une clé `ANTHROPIC_API_KEY`. |
-| `ollama` | Dev offline, sans clé. Modèle `mistral` (7B Instruct, ~4 GB) ou `qwen2:1.5b` (~1 GB, plus rapide mais nettement moins bon). Latence 30-60 s sur M1. Lance `llm:pull-mistral` dans Tilt pour télécharger Mistral. |
+| `ollama` | Dev offline, sans clé. Modèle `mistral` (7B Instruct, ~4 GB) — défaut local. Latence 30-60 s sur M1. Lance `llm:pull-mistral` dans Tilt pour télécharger. Pour un saut qualitatif (latence ~1-2 min), tu peux pull `phi4` ou `qwen2.5:14b` et bouger `ollama.model`. |
 
 ### Yahoo Finance — `yahoo.provider`
 
