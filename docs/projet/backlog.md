@@ -2,108 +2,112 @@
 
 Suivi des features par phase. Mis à jour à chaque session de développement.
 
-**Statuts :** ✅ Fait · ⏳ À faire · 🚧 En cours
+**Statuts :** ✅ Fait · ⏳ À faire · 🚧 En cours · 🧊 Gelé
 
 ---
 
-## Phase 1 — MVP
+## Phase 0 — Fondation (terminé)
 
-### Terminé
+### ✅ Conservé et utilisé
 
 | Feature | Notes |
 |---------|-------|
-| Navigation (header) | `mat-toolbar` Material sticky, liens avec icônes, état actif |
-| CI GitHub Actions | `backend.yml` (Gradle + PostgreSQL service), `frontend.yml` (Vitest) — déclenchés sur changements de chemin |
-| Ingestion RSS | Module `ingestion/` — Rome, scheduler 15 min prod / 5 min local, déduplication par `guid`. `GET /api/ingestion/articles`, `POST /api/ingestion/fetch` |
-| Appel LLM (Claude / Ollama) | `LlmClient` interface, `ClaudeClient` (prod), `OllamaClient` (local). `llm.provider: claude\|ollama` |
-| Analyse IA async | `AnalysisService` → `AnalysisRunner` (`@Async` bean séparé). `AnalysisJobStore` (ConcurrentHashMap). API : POST → 202, polling job, GET recommendation |
-| Affichage recommandations (dashboard) | Polling RxJS, spinner + timer, confidence badge, actions colorées. Montants : poids actuel %, valeur, cible, delta |
-| Robustesse analyse IA | Timeout 120s, `format:json` + `num_predict` Ollama, system+user fusionnés, SYSTEM_PROMPT reécrit, `@JsonIgnoreProperties`, extracteur JSON robuste |
-| Affichage recommandations (page Recommandations IA) | `GET /api/recommendations` global. Filtres portfolio + statut, cartes expandables |
-| Persistance Settings | Schéma `feed_source` (slug, description, free, requires_api_key), 25 sources seedées dans V1. `PATCH /api/ingestion/sources/{id}`. Frontend API-driven, update optimiste |
-| Settings back-office (sidenav) | Navigation latérale dans `/settings` : onglet **Sources de données** (activer/désactiver) + onglet **Tester une source** (sélection type → source, test RSS complet avec liste d'articles, info statique pour non-RSS) |
-| Sources RSS opérationnelles | Reuters/BFM/Les Echos désactivés (URLs mortes, bloquées ou payantes). CNBC Markets + MarketWatch + Le Monde Économie activés. Parsing RSS robuste : DOCTYPE, `&` nus, détection HTML. PBOC, BOJ, MAS ajoutés en MACRO (désactivés). |
-| Import CSV Wealthsimple | Parse export « Positions » WS (21 colonnes, accents NFD, délimiteur auto). Crée/met à jour un `Portfolio` par `Nom du compte`. Upsert assets. `POST /api/portfolios/import/csv` |
-| Portefeuille read-only | Suppression du CRUD manuel (create/delete portfolio, add/remove asset). La vue reflète l'état réel du courtier. Seul le CSV peut mettre à jour. |
-| Snapshots historiques | À chaque import CSV, création d'un `PortfolioSnapshot` + `SnapshotPosition` par compte (valeur comptable CAD, valeur marché, P&L). Migration V4. `GET /api/snapshots` |
-| Devise et valeur de marché par actif | Migrations V5 (`currency`, `book_value_cad`) et V6 (`market_value`, `unrealized_gain`, `gain_currency`). Affichage P&L par position dans le Dashboard |
-| Persistance des jobs d'analyse | Migration V7 (`analysis_job`). `AnalysisExecutor` séparé de `AnalysisRunner`. Déduplication des jobs concurrents (fenêtre alignée avec l'abort frontend, voir `DEDUP_WINDOW_SECONDS`). Timeouts explicites sur le client Claude. Frontend : polling 5 s, abort géré côté `AnalysisService` (`POLL_ABORT_SECONDS` = 180 s, élargi pour absorber la latence d'Ollama qwen2:1.5b sur prompt enrichi). |
-| Prompt LLM basé sur la valeur de marché | `AnalysisExecutor.buildUserMessage` raisonne sur `market_value` (approx CAD via FX au moment de l'achat = `book_value_cad / cost_native`), affiche par position : valeur marché native + CAD, poids %, P&L non réalisé %. Total : book CAD, market CAD, P&L global. Bonus : description d'article (140 car) en plus du titre. SYSTEM_PROMPT précise que `targetWeight` somme à ~100. Plus de cost basis. |
-| Filtrage des articles par pertinence | Nouveau `ArticleRelevanceScorer`. Fetch des 200 derniers articles, scoring par tickers du portefeuille (poids 10, word-boundary), mots significatifs des noms (5), mots-clés sectoriels par `AssetType` (2), mots-clés macro fixes (1). Top 25 passé au LLM, fallback recency si < 5 articles pertinents. |
-| LLM hors transaction DB | Pipeline d'analyse éclaté : `AnalysisContextLoader` (`@Transactional readOnly`, lit + bâtit le prompt, renvoie un `AnalysisContext` détaché) → `AnalysisExecutor` (orchestration sans transaction, appelle le LLM) → `RecommendationPersister` (`@Transactional`, persiste). La connexion Hikari n'est plus tenue pendant 1-2 min d'appel LLM. Trois beans distincts pour respecter le proxy AOP Spring. |
-| Bump timeouts à 400 s | `POLL_ABORT_SECONDS` (frontend) et `DEDUP_WINDOW_SECONDS` (backend) à 400 s. La précédente valeur (300 s) ne couvrait pas 2 × `OllamaClient.readTimeout` (180 s) : le frontend lâchait pendant la 2ᵉ tentative de retry du validateur, job restait `PENDING` côté UI. `OllamaClient.readTimeout` reste à 180 s par appel HTTP. Invariant : fenêtre serveur ≥ abort frontend ≥ 2 × read timeout + marge. |
-| Aperçu du prompt (Settings) | Onglet `/settings/prompt-preview` : sélection d'un portefeuille → backend `GET /api/portfolios/{id}/recommendations/preview` qui réutilise `AnalysisContextLoader.load()` + `SYSTEM_PROMPT` sans appeler le LLM. UI affiche la taille (chars) système + user et le contenu brut copiable. Permet de diagnostiquer ce qui gonfle le prompt avant d'optimiser. |
-| Bascule LLM local qwen2:1.5b → Mistral 7B | qwen2:1.5b hallucinait sur le prompt enrichi (tickers absents, poids ne sommant pas à 100, action `SOLD OUT` inventée). Bascule sur `mistral` (7B Instruct Q4) — latence ~1-2 min sur M1 absorbée par les timeouts à 180 s. Tiltfile `llm:pull-mistral`, défaut documenté dans `developpement.md`. |
-| Validation serveur du JSON LLM + auto-repair | Pipeline éclaté en `LlmResponseParser` (parse + extractJson) → `RecommendationValidator` (8 règles : tickers ⊆ portefeuille, pas de duplicate, pas d'extra, action ∈ enum, confidence 0-100, targetWeight 0-100 par item, Σ targetWeight ∈ [95,105], SELL ⇒ targetWeight ≤ 5) → `RecommendationPersister`. Si invalide, `AnalysisExecutor` re-prompte une fois en injectant les erreurs dans le user message. Au pire (2 attempts ratées), `withHoldFallback` strip les tickers hallucinés et ajoute des HOLD pour les manquants. SYSTEM_PROMPT mentionne explicitement le validateur, et les exemples de tickers sont des placeholders (`<one of the portfolio tickers>`) — Mistral recopiait `AAPL`/`NVDA` des exemples sinon. Évite de stocker du bruit comme `Σ = 175 %`, des tickers hallucinés, ou des actions absentes. |
-| Page Import (onglet dédié) | Drag & drop CSV standalone sur `/import`. Redirige vers `/suivi` après import. |
-| Page Suivi (historique positions) | `/suivi` — timeline groupée par batch d'import, expand par compte, détail positions avec valeur marché et P&L. |
+| Navigation (header + sidenav settings) | `mat-toolbar` Material sticky, sidenav latérale dans `/settings`, theme toggle (sun/moon) |
+| Theme dark/light | Tokens CSS sur `:root` + `[data-theme='light']`, Material dual-theme, default dark, toggle persistance localStorage, script anti-FOUC dans `index.html` |
+| Frontend ports & adapters | `core/<name>.repository.ts` (port abstract class) + `core/adapters/<name>.http.ts` (adapter HTTP). 4 repositories : Portfolio, Analysis, Settings, Snapshot |
+| Frontend `features/` | Toutes les pages UI sous `features/` (dashboard, history, import, recommendations, settings, suivi). Routes dans `app.routes.ts` |
+| Import CSV Wealthsimple | Parse 21 colonnes FR (NFD, BOM, délimiteur auto), upsert par compte, multi-fichiers (drag & drop) avec extraction de date depuis le nom |
+| Portefeuille read-only | Lecture seule depuis l'UI ; CSV = seule source de vérité |
+| Snapshots historiques | `PortfolioSnapshot` + `SnapshotPosition` par compte, regroupés via `batch_id`. Page Suivi : timeline + expand par compte |
+| Settings back-office | Sidenav `/settings` : sources (activer/désactiver), test-sources (RSS), prompt-preview (aperçu du prompt sans appel LLM) |
+| Devise & valeur de marché par actif | Migrations V5/V6 (`currency`, `book_value_cad`, `market_value`, `unrealized_gain`, `gain_currency`). Affichage P&L par position |
+| Persistance des jobs d'analyse | Table `analysis_job` (V7), dédup des jobs concurrents (`DEDUP_WINDOW_SECONDS`). Reste utile pour le polling Phase 1 |
+| Infra Tilt + CI | Tilt + Docker Compose (postgres, ollama, backend, frontend). GitHub Actions backend (Gradle + postgres) / frontend (Vitest) / docs |
+| `@Async` sur bean séparé | Pattern `Service → Runner (@Async) → Executor (@Transactional)` — réutilisé en Phase 1 |
+| Adapter specs HTTP | 4 specs `core/adapters/*.http.spec.ts` (portfolio, analysis, settings, snapshot) |
 
-### Avant le tag v0.1.0 (cohérence Phase 1)
+### 🧊 Gelé — code conservé, plus dans le flow
 
-Petits trucs qui font la différence entre "ça compile" et "tag qui marche". À enchaîner avant de poser le tag.
+| Feature | Notes |
+|---------|-------|
+| 🧊 Ingestion RSS | Module `ingestion/` complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus, 25 sources seedées). Conservé en place pour réutilisation potentielle Phase 4 |
+| 🧊 Pipeline analyse portfolio LLM | `AnalysisExecutor`, `AnalysisContextLoader`, `ArticleRelevanceScorer` (top 25 par pertinence), `LlmResponseParser`, `RecommendationValidator` (8 règles), `RecommendationPersister`. Le code reste fonctionnel mais retiré du Dashboard |
+| 🧊 Pages Recommendations / History | `features/recommendations/` et `features/history/` listent les recommandations Phase 0. Pas supprimées mais sans nouvelle reco générée en Phase 1 |
+| 🧊 Bascule Mistral local + timeouts 400 s | `OllamaClient` configuré pour `mistral` (7B Instruct Q4), timeouts alignés sur 400 s. Reste activable via `llm.provider: ollama` mais Claude devient le défaut Phase 1 |
 
-| Sujet | Description | Priorité |
-|-------|-------------|----------|
-| ✅ Sources mensongères en `/settings` | Reuters/BFM/Les Echos désactivés dans le seed. Parsing RSS renforcé (DOCTYPE, `&` nus, détection HTML). Sources non-RSS visibles dans Settings (catégories MARKET/MACRO/CRYPTO) — leur test affiche une info statique + URL cliquable, pas de fetch réseau. | 🔴 Avant tag |
-| ⏳ Cleanup des jobs orphelins au démarrage | À chaque hot-reload Tilt (ou crash backend), un job `PENDING` reste `PENDING` à jamais en BDD ; pire, la dédup à 300 s peut recoller un nouvel utilisateur sur l'orphan invisible. Ajouter un `ApplicationReadyEvent` listener (ou `@PostConstruct` sur `AnalysisJobStore`) qui passe tous les `PENDING` en `ERROR` avec message "backend restarted while processing" au boot. ~15 min. | 🔴 Avant tag |
-| ⏳ Doublon `recommendations/` vs `history/` | Deux features frontend, deux routes (`/recommendations`, `/history`), même domaine — flagué dans l'audit initial, jamais tranché. Soit fusion en une page filtrable + chronologique, soit responsabilités explicites et liens croisés. Décision avant implémentation. ~30 min décision + impl. | 🔴 Avant tag |
-| ⏳ Premier test sur `RecommendationValidator` | La régression la plus probable du commit `feat(analysis): split pipeline…`. Si quelqu'un casse une règle (ou en ajoute une mal), on revient silencieusement à stocker du bruit. Test pur Kotlin, ~30 lignes, sans Spring. Couvre les 8 règles + cas limites (portefeuille vide, weights null, etc.). ~20 min. | 🟢 Souhaitable avant tag |
+---
 
-### À faire (Phase 1.5)
+## Phase 1 — Pivot ticker (en cours)
 
-| Feature | Description |
-|---------|-------------|
-| ⏳ Notifications progression analyse | Suivi pas-à-pas en temps réel : "Récupération articles…", "Appel LLM…", "Parsing…". Via SSE ou champ `steps` sur le job, affiché comme fil dans l'UI |
-| ⏳ Analyse non-bloquante (navigation) | L'analyse en cours doit survivre à la navigation. `AnalysisStateService` Angular global — le polling vit hors du composant `dashboard` |
-| ✅ Test manuel des sources (Settings) | Onglet dédié `/settings/test-sources` : sélection catégorie → source (activées uniquement), `GET /api/ingestion/sources/{id}/test`. Pour RSS : parse complet, liste d'articles bruts (titre, date, lien). Pour non-RSS : message statique + URL cliquable. Erreurs typées (UnknownHost, ConnectException, Timeout, HTML détecté). Les champs `last_fetched_at` etc. restent à faire si on veut la santé en continu dans `/settings/sources`. |
-| ⏳ Fetchers MARKET / MACRO / CRYPTO | Aujourd'hui le scheduler filtre `category == RSS` — les 16 sources non-RSS de la migration V3 sont visibles dans `/settings` mais ne sont jamais fetchées. Implémenter les clients (Yahoo Finance, FRED, BCE, CoinGecko…). Une fois fait, on pourra les ré-afficher dans Settings (cf. item "Sources mensongères" avant tag). |
-
-### Qualité du contexte d'analyse (bloquant Phase 2)
-
-Les items 🔴 (valeur de marché + filtrage articles + validation serveur du JSON) sont faits. Restent les consolidations 🟡 (thèse, snapshot du prompt) avant Phase 2.
+### Backend — module `market/` (nouveau)
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ⏳ Champ "thèse / objectif" sur le Portfolio | Texte libre optionnel sur `Portfolio` (horizon, tolérance au risque, contraintes). Injecté dans le prompt. Aujourd'hui chaque reco est context-free du *pourquoi* l'utilisateur tient ces positions. | 🟡 Moyenne |
-| ⏳ Snapshot du prompt envoyé | Nouveau champ `prompt_snapshot` (text) sur `Recommendation`. Sinon Phase 2 ne pourra pas corréler qualité de reco ↔ qualité du contexte ; l'analyse post-mortem sera aveugle. | 🟡 Moyenne |
-| ⏳ Simplifier l'enum d'action | `REDUCE` chevauche `SELL + targetWeight < currentWeight`. Garder uniquement `BUY / SELL / HOLD` + delta de poids. Migration + adaptation prompt + UI. | 🟢 Basse |
-| ⏳ Score de confiance dérivé | Remplacer la `confidence` auto-déclarée du LLM (mal calibrée) par un score serveur : nombre d'articles pertinents, fraîcheur, diversité des sources, présence d'une thèse. La self-rating reste loggée pour comparaison. | 🟢 Basse — après Phase 2 |
-| ⏳ Continuité entre analyses | Injecter dans le prompt la dernière reco générée pour ce portefeuille + delta de prix marché depuis. Détecte les LLM qui changent d'avis sans nouvelle info. | 🟢 Basse |
+| ⏳ `YahooClient` | Fetch par ticker : quote courante, OHLC 1y, fundamentals basiques (P/E, market cap), 52w high/low, volume. API non officielle Yahoo, sans clé. Cache court 5-15 min selon endpoint | 🔴 Critique |
+| ⏳ `IndicatorCalculator` | Kotlin pur, sans Spring : RSI(14), MA50, MA200, momentum 30j/90j, perf 1m/3m/1y/YTD, drawdown 52w, volume relatif, position vs MA. Tests unitaires en priorité (la valeur du module est dans la justesse des chiffres) | 🔴 Critique |
+| ⏳ Endpoints REST `market/` | `GET /api/market/ticker/{symbol}` (données + indicateurs), `GET /api/market/ticker/{symbol}/history` (OHLC pour le graphe) | 🔴 Critique |
+| ⏳ Migration Flyway V2 | Table `ticker_narrative_snapshot` (id, ticker, snapshot_at, price, indicators_json, narrative, sentiment, prompt_version) | 🔴 Critique |
 
----
+### Backend — pipeline narratif
 
-## Dette technique
+| Feature | Description | Priorité |
+|---------|-------------|----------|
+| ⏳ Nouveau prompt par ticker | Court, structuré : input `{ticker, price, indicators, fundamentals, recentChange}`, output JSON `{summary, sentiment, keyPoints[]}`. Pas de targetWeight, pas de BUY/SELL | 🔴 Critique |
+| ⏳ `TickerNarrativeService` + `Runner` | Pattern `@Async` sur bean séparé. Service HTTP → Runner async → Executor (sans transaction) → persistance du snapshot | 🔴 Critique |
+| ⏳ `LlmNarrativeParser` | Parse `{summary, sentiment, keyPoints[]}`, tolérant aux fences markdown. Validation simple (sentiment ∈ enum, summary non vide) | 🔴 Critique |
+| ⏳ Bascule Claude par défaut | `llm.provider: claude` dans `application.yml` (le défaut). Mistral disponible via `application-local.yml` pour offline | 🔴 Critique |
+| ⏳ Endpoint REST `narrative/` | `POST /api/market/ticker/{symbol}/narrative` (lance le narratif, async), `GET /api/market/ticker/{symbol}/narrative/jobs/{id}` (polling) | 🔴 Critique |
 
-Sujets identifiés en cours de session. Pas bloquants pour Phase 2 stricto sensu, mais valent un passage avant qu'ils ne s'accumulent.
+### Frontend — page Dossier ticker
+
+| Feature | Description | Priorité |
+|---------|-------------|----------|
+| ⏳ Route `features/ticker/:symbol` | Page dossier ticker. En-tête : symbole, nom, prix, variation jour, sentiment badge | 🔴 Critique |
+| ⏳ Graphique des prix | Chart.js ou recharts. Toggle 1m / 3m / 1y. Overlay MA50, MA200. Pas de bibliothèque lourde — un wrapper léger Angular suffit | 🔴 Critique |
+| ⏳ Indicateurs en chips | RSI, drawdown 52w, perf 1y, distance à la MA50 — chips colorés selon zones (RSI > 70 = warning, etc.) | 🔴 Critique |
+| ⏳ Narratif LLM | Summary + bullets keyPoints. Spinner pendant la génération (polling du job) | 🔴 Critique |
+| ⏳ Lien Dashboard → Dossier ticker | Sur chaque position du dashboard, clic → `/ticker/:symbol` | 🟡 Moyenne |
+| ⏳ Liste des tickers détenus | Sur le dashboard, exposer la liste cliquable des tickers du portefeuille (raccourci d'accès aux dossiers) | 🟡 Moyenne |
+
+### Settings — adaptation Phase 1
+
+| Feature | Description | Priorité |
+|---------|-------------|----------|
+| ⏳ Test source ticker (Yahoo) | Étendre `/settings/test-sources` pour tester un fetch Yahoo par ticker (vérifier que l'API répond, que les indicateurs se calculent) | 🟢 Basse |
+| ⏳ Aperçu du prompt par ticker | Adapter `/settings/prompt-preview` au nouveau prompt (entrée : un ticker au lieu d'un portefeuille) | 🟢 Basse |
+
+### Tests prioritaires Phase 1
 
 | Sujet | Description | Priorité |
 |-------|-------------|----------|
-| ⏳ Tests sur le module `analysis/` | Aucun test sur le cœur métier. Avec le nouveau découpage en 6 beans (Loader / Parser / Validator / Executor / Persister / JobStore) c'est très simple à tester unitairement. Manquent `ArticleRelevanceScorerTest` (rank, word-boundary, fallback recency), `AnalysisContextLoaderTest` (contenu du prompt, FX edge cases), `LlmResponseParserTest` (extractJson, markdown fences), `RecommendationValidatorTest` (les 8 règles + cas limites), `AnalysisExecutorTest` (boucle de retry, HOLD fallback final), `AnalysisServiceTest` (dedup), `AnalysisJobStoreTest` (`@DataJpaTest` sur la query temporelle). | 🟡 Moyenne |
+| ⏳ `IndicatorCalculatorTest` | Tests unit Kotlin purs sur cas connus : RSI sur série de prix monotone (RSI = 100 ou 0), MA sur fenêtre fixe, drawdown depuis high. La valeur du module est dans la justesse, sans test on n'a aucune confiance | 🔴 Critique |
+| ⏳ `YahooClientTest` | Mock HTTP de Yahoo (réponses figées en fixture), test du parsing de la quote et de l'historique | 🟡 Moyenne |
+| ⏳ `LlmNarrativeParserTest` | Cas : JSON valide, JSON dans markdown fences, JSON malformé, sentiment hors enum | 🟡 Moyenne |
+| ⏳ `TickerNarrativeServiceTest` | Test du pipeline complet avec Yahoo et LLM mockés | 🟡 Moyenne |
 
 ---
 
-## Phase 2 — Traçabilité
-
-> Les 🔴 bloquants sont faits (valeur de marché + filtrage articles + validation serveur du JSON). Les 🟡 restants ne sont pas strictement bloquants, mais le `prompt_snapshot` est très utile pour rendre les mesures de Phase 2 interprétables a posteriori.
+## Phase 2 — Profondeur ticker
 
 | Feature | Description |
 |---------|-------------|
-| ⏳ Graphe d'évolution portefeuille | Courbe de valeur comptable (CAD) dans le temps depuis les snapshots. Par compte ou global. |
-| ⏳ Prix réels post-recommandation | Récupérer les cours des actifs N jours après chaque recommandation (Yahoo Finance / Stooq) |
-| ⏳ Score de pertinence | Comparer la direction recommandée vs mouvement réel. Calculer un score par recommandation |
-| ⏳ Statut recommendation | Passer `status` de PENDING à APPLIED / IGNORED depuis l'UI |
-| ⏳ Dashboard observabilité | Page dédiée : score moyen, taux de réussite par type d'actif, historique de performance |
+| ⏳ Multi-timeframe | Intraday (1d, 5d granulaire) + long terme (5y, 10y) — toggle sur le graphe |
+| ⏳ News Yahoo par ticker | Headlines Yahoo Finance par ticker — remplace le RSS macro pour le contexte |
+| ⏳ Comparaison vs benchmark | SPY, QQQ ou ETF sectoriel (déduit de l'asset type) overlay sur le graphe |
+| ⏳ Recommandations analystes | Consensus, target prices Yahoo si disponibles |
+| ⏳ Earnings dates et derniers résultats | Encart fundamentals enrichi |
+| ⏳ Watchlist persistée | Table `watchlist_ticker` — ajouter un ticker à surveiller sans qu'il soit en portefeuille |
 
 ---
 
-## Phase 3 — Optimisation prompts
+## Phase 3 — Observabilité narrative
 
 | Feature | Description |
 |---------|-------------|
-| ⏳ Scoring automatisé | Calcul automatique du score une fois les prix disponibles |
-| ⏳ Analyse des biais | Détecter les patterns d'erreur récurrents (ex : toujours BUY sur tech) |
-| ⏳ Ajustement prompts | Modifier le SYSTEM_PROMPT en fonction des patterns identifiés, versionner les prompts |
-| ⏳ Rapport de performance | Vue synthétique hebdomadaire / mensuelle |
+| ⏳ Page observabilité narrative | Sur les snapshots passés, afficher narratif vs ce qu'a fait le prix depuis (1j, 1 sem, 1 mois) |
+| ⏳ Détection de biais | "Le LLM est bullish 80 % du temps", "ne mentionne jamais la volatilité", etc. |
+| ⏳ Score de cohérence | À 2 jours d'écart, le narratif change-t-il de manière injustifiée ? |
+| ⏳ A/B prompts | Versionner les prompts, comparer la qualité narrative entre versions |
 
 ---
 
@@ -111,6 +115,23 @@ Sujets identifiés en cours de session. Pas bloquants pour Phase 2 stricto sensu
 
 | Feature | Description |
 |---------|-------------|
-| ⏳ Fine-tuning | Entraîner un modèle sur les données historiques personnelles |
-| ⏳ Paper trading | Intégration courtiers, simulation d'exécution automatique |
-| ⏳ Multi-portefeuilles avancé | Profils de risque différents, allocation automatique entre portefeuilles |
+| ⏳ Croisement portfolio × insights ticker | Sur le Dashboard, afficher pour chaque position le sentiment + alerte si RSI extrême ou drawdown important |
+| ⏳ Watchlist alertes | Seuils déclencheurs (RSI > 70, MA50 cassée, drawdown > 20 %) |
+| ⏳ Réintégration Phase 0 (legacy) | Recommandations portefeuille reviennent, en agrégeant les insights ticker plutôt qu'en les recalculant |
+| ⏳ Paper trading | Simulation d'exécution |
+| ⏳ Multi-broker | Ne plus dépendre du seul CSV Wealthsimple |
+| ⏳ Fine-tuning | Entraîner un modèle sur les snapshots narratifs personnels |
+
+---
+
+## Dette technique
+
+Sujets identifiés en cours de session, pas bloquants pour la Phase 1 mais à traiter quand l'occasion se présente.
+
+| Sujet | Description | Priorité |
+|-------|-------------|----------|
+| ⏳ Cleanup des jobs orphelins au démarrage | À chaque hot-reload Tilt (ou crash backend), un job `PENDING` reste `PENDING` à jamais en BDD. `ApplicationReadyEvent` listener qui passe tous les `PENDING` en `ERROR` au boot. ~15 min | 🟡 Moyenne |
+| ⏳ Doublon `recommendations/` vs `history/` | Avec la Phase 1, ces pages deviennent legacy. Décision : garder en l'état pour le legacy, ou simplifier en une seule page à terme | 🟢 Basse |
+| ⏳ Tests sur le module `analysis/` (legacy) | Aucun test sur le legacy. Si on rallume Phase 4, on en aura besoin. Pas urgent tant que le code dort | 🟢 Basse |
+| ⏳ `document.documentElement` SSR-safe dans `ThemeService` | Wrap avec `isPlatformBrowser` si on bascule un jour SSR | 🟢 Basse |
+| ⏳ FOUC du toggle thème — résolu | Script inline dans `index.html` lit `localStorage` avant le bootstrap Angular et pose `data-theme`. Voir `developpement.md` | ✅ Fait |

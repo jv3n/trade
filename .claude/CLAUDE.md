@@ -4,7 +4,9 @@ Source of truth for project conventions and Claude-specific configuration. Read 
 
 ## Project
 
-AI-powered stock-portfolio optimiser. The app ingests economic feeds (RSS, financial APIs), generates investment recommendations through the Claude API (or a local LLM via Ollama), and tracks the quality of those recommendations over time.
+Per-ticker market intelligence app. For each ticker (held in the user's portfolio or watched), the backend fetches Yahoo Finance data, computes technical indicators server-side (RSI, MA, momentum, drawdown…), and the LLM produces a short narrative summary. **The LLM is a writer, not a decider** — it does not predict prices and does not output BUY/SELL signals; it digests indicators that the code computed and writes a short readable summary.
+
+> Phase 0 (rebalance recommendations from RSS news + portfolio-wide LLM prompt) is **frozen** — the code remains in place but is no longer in the user flow. See `docs/metier/fonctionnalites.md` for the full phasing.
 
 ## Stack
 
@@ -23,11 +25,17 @@ AI-powered stock-portfolio optimiser. The app ingests economic feeds (RSS, finan
 ```
 trade/
 ├── frontend/                # Angular 21 (single app, standalone components)
+│   └── src/app/
+│       ├── core/            # ports + HTTP adapters (theme service)
+│       │   ├── *.repository.ts        # abstract class = port
+│       │   └── adapters/*.http.ts     # HttpXxxRepository
+│       └── features/        # UI pages (primary adapters)
 ├── backend/                 # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
-│       ├── analysis/        # LLM orchestration, recommendations, jobs
-│       ├── ingestion/       # RSS / financial feeds
+│       ├── market/          # 🚧 Phase 1 — Yahoo client + IndicatorCalculator
+│       ├── analysis/        # Phase 1 ticker narrative (legacy reco pipeline frozen)
 │       ├── portfolio/       # CSV imports, snapshots, read-only portfolios
+│       ├── ingestion/       # 🧊 legacy Phase 0 — RSS scheduler
 │       └── shared/          # cross-cutting utilities
 ├── docs/
 │   ├── metier/              # vision.md, fonctionnalites.md
@@ -43,24 +51,26 @@ trade/
 
 ## Backend modules
 
-- `ingestion/` — RSS feeds and financial APIs collection
-- `analysis/` — LLM orchestration (`AnalysisService`, `AnalysisRunner`, `AnalysisExecutor`, `AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator`, `RecommendationPersister`, `AnalysisJobStore`); also owns the `Recommendation` entity and its actions
+- `market/` — 🚧 Phase 1 — `YahooClient` (quote, OHLC, fundamentals) + `IndicatorCalculator` (RSI, MA50/MA200, momentum, drawdown — Kotlin pur, sans Spring). Source primaire des dossiers ticker.
+- `analysis/` — Phase 1 ticker narrative pipeline (`TickerNarrativeService`, `TickerNarrativeRunner`, `LlmNarrativeParser`). Legacy portfolio-wide pipeline (`AnalysisExecutor`, `RecommendationValidator`, etc.) is **frozen in place** — code remains but no longer in the user flow.
 - `portfolio/` — read-only portfolios, Wealthsimple CSV import, historical snapshots
+- `ingestion/` — 🧊 legacy Phase 0 — RSS scheduler. Conservé en place, plus consommé en Phase 1.
 - `shared/` — cross-cutting utilities (e.g. `GlobalExceptionHandler`)
 
-> Note: there is no separate `recommendations/` package — recommendations live inside `analysis/`. Phase 2's observability work will likely live there too.
+> The LLM never computes indicators — they live in `IndicatorCalculator` (pure Kotlin, unit-tested). The LLM only produces the narrative summary from already-computed values.
 
 ## Frontend modules
 
 Light hexagonal split under `frontend/src/app/` :
 
-- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 4 repositories : Portfolio, Analysis, Settings, Snapshot
+- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 4 repositories : Portfolio, Analysis, Settings, Snapshot. Also `theme.service.ts` (signal + persist localStorage).
 - `features/` — UI feature folders (one per top-level route, *primary adapters* en vocabulaire hexagonal) :
-  - `dashboard/` — portfolio view (read-only positions) + AI analysis trigger
+  - `dashboard/` — portfolio view (read-only positions) + link to ticker dossiers
+  - `ticker/` — 🚧 Phase 1 — per-symbol dossier (price chart, indicators, LLM narrative)
   - `import/` — Wealthsimple CSV drag-and-drop page
   - `suivi/` — import history (snapshots by date, market values, P&L)
-  - `recommendations/` — filterable list of all recommendations
-  - `history/` — chronological recommendation history
+  - `recommendations/` — 🧊 legacy Phase 0 — filterable list of recommendations
+  - `history/` — 🧊 legacy Phase 0 — chronological recommendation history
   - `settings/` — back-office avec sidenav : `sources/` (activer/désactiver), `test-sources/` (tester un flux), `prompt-preview/` (aperçu du prompt LLM)
 
 ## Local Development
@@ -113,7 +123,7 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 - Integration tests on real PostgreSQL (no DB mocks)
 - Frontend tested with **Vitest** (not Karma, not Jest)
 - `@Async` Spring: always on a separate bean — never `this.asyncMethod()` (bypasses AOP)
-- Local LLM: Ollama + **`mistral`** (7B Instruct). On enriched prompts qwen2:1.5b hallucinated; Mistral is slower (~1-2 min on M1) but coherent. Timeouts (frontend abort, dedup window) are aligned at 300 s to absorb that latency
+- LLM provider: **Claude API is the Phase 1 default** (`llm.provider: claude`). Ollama + `mistral` (7B Instruct) is kept as an offline backup but produces noticeably weaker narratives. Legacy Phase 0 timeouts (frontend abort + dedup window) are aligned at **400 s** to absorb Mistral latency on M1; Claude is much faster and may let us shrink that later.
 - Commits in **English**, Conventional Commits — see `docs/projet/commit-conventions.md`
 - Commit message proposals are always in **English**
 - Never commit API keys. `application-local.yml` is gitignored
@@ -142,10 +152,12 @@ Files under `docs/` describe the actual state of the project. Keep them in sync 
 
 | File                              | Update when…                                                              |
 | --------------------------------- | ------------------------------------------------------------------------- |
-| `docs/metier/fonctionnalites.md`  | An MVP feature changes status, or a phase advances                        |
+| `docs/metier/vision.md`           | The product framing or the LLM's role in the app changes                  |
+| `docs/metier/fonctionnalites.md`  | A feature changes status, or a phase advances                             |
 | `docs/technique/architecture.md`  | A new module, an important technical decision, or a new pattern is added |
 | `docs/technique/developpement.md` | Local config changes, a Tilt command is added                             |
 | `docs/projet/sources.md`          | A data source is added or removed                                         |
+| `docs/projet/backlog.md`          | A Phase 1+ feature is implemented, frozen, or its priority changes        |
 
 ### Technical decisions
 

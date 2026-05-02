@@ -38,11 +38,16 @@ These rules apply to the single Angular app under `frontend/`.
 - MUST pass AXE checks
 - MUST meet WCAG AA: focus management, color contrast, ARIA attributes, keyboard navigation
 
-## Services
+## Services & data access
 
-- Single responsibility per service
-- Use `providedIn: 'root'` for singletons
-- HTTP services live under `frontend/src/app/core/`
+- Single responsibility per service / repository
+- Cross-feature data access uses **ports + HTTP adapters** under `frontend/src/app/core/` :
+  - port = `core/<name>.repository.ts` (abstract class, doubles as DI token)
+  - adapter = `core/adapters/<name>.http.ts` (`HttpXxxRepository`, `@Injectable()` without `providedIn`)
+  - wired via `{ provide: XxxRepository, useClass: HttpXxxRepository }` in `app.config.ts`
+- Components inject the **port** (the abstraction), never the HTTP adapter directly
+- Pure use-case services (no HTTP, e.g. `ThemeService`) stay in `core/` with `providedIn: 'root'`
+- See the `folders-structure-frontend` skill for the full folder convention
 
 ## Linting & formatting
 

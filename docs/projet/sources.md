@@ -1,76 +1,80 @@
 # Sources de données — PortfolioAI
 
-Référence des sources d'ingestion. **22 sources sont actuellement seedées en base** (migration V3) et activables/désactivables depuis la page **Settings** de l'application. Ce document garde aussi la liste élargie des sources candidates pour les phases suivantes.
+## Phase 1 — Source primaire : Yahoo Finance
 
----
+À partir de la Phase 1 (pivot ticker), **Yahoo Finance est la source primaire** des dossiers ticker. Toute autre intégration de données passe au second plan.
 
-## Presse & Flux RSS
+### Yahoo Finance (API non officielle)
 
-| Nom | URL RSS | Langue | Gratuit | Notes |
-|-----|---------|--------|---------|-------|
-| Reuters Business | `https://feeds.reuters.com/reuters/businessNews` | EN | ✅ | ⚠️ URL morte — feeds.reuters.com abandonné en 2020 |
-| Reuters Markets | `https://feeds.reuters.com/reuters/marketsNews` | EN | ✅ | ⚠️ URL morte — feeds.reuters.com abandonné en 2020 |
-| Financial Times | `https://www.ft.com/rss/home` | EN | ⚠️ | Payant (certains articles libres) |
-| Les Echos | `https://www.lesechos.fr/rss/rss_finance.xml` | FR | ⚠️ | Certains articles payants |
-| Le Monde Économie | `https://www.lemonde.fr/economie/rss_full.xml` | FR | ✅ | Bonne couverture macro |
-| BFM Bourse | `https://bfmbusiness.bfmtv.com/rss/info/flux-rss/flux-toutes-les-actualites/` | FR | ✅ | Actualité bourse FR |
-| Investir / Journal des Finances | `https://investir.lesechos.fr/rss.xml` | FR | ⚠️ | Analyse actions |
-| Seeking Alpha | `https://seekingalpha.com/feed.xml` | EN | ⚠️ | Analyse approfondie, payant |
-| MarketWatch | `https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines` | EN | ✅ | Temps réel US |
-| CNBC Markets | `https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258` | EN | ✅ | Actualité marchés US |
-| Bloomberg (Wealth) | `https://feeds.bloomberg.com/wealth/news.rss` | EN | ⚠️ | Payant |
-| The Economist | `https://www.economist.com/finance-and-economics/rss.xml` | EN | ⚠️ | Payant |
+| Endpoint | Donnée | Cache |
+|----------|--------|-------|
+| `https://query1.finance.yahoo.com/v8/finance/chart/{symbol}` | OHLC + volumes (intraday à 5y) | 15 min |
+| `https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}` | Quote courante (prix, change, marketCap, P/E…) | 5 min |
+| `https://query2.finance.yahoo.com/v10/finance/quoteSummary/{symbol}` | Fundamentals étendus (earnings, recommandations analystes…) | 1 h |
 
----
+**Avantages** :
+- Gratuit, pas de clé
+- Couverture quasi-mondiale (US, EU, Asie, ETF, crypto, indices)
+- Historique long (5y+ disponible sur la plupart des tickers)
 
-## APIs Financières — Données de Marché
+**Limites à connaître** :
+- API non documentée — peut casser sans préavis
+- Pas de SLA, rate-limits informels (cache côté serveur impératif)
+- Si Yahoo ferme cet accès, il faut un plan B (cf. fallback ci-dessous)
 
-| Nom | Type | Gratuit | Limites | Notes |
-|-----|------|---------|---------|-------|
-| [Yahoo Finance (yfinance)](https://finance.yahoo.com) | Cours, historique, fondamentaux | ✅ | Non officiel | Très complet, pas de clé API |
-| [Alpha Vantage](https://www.alphavantage.co) | Cours, indicateurs techniques | ✅ (limité) | 25 req/jour gratuit | Clé API requise |
-| [Finnhub](https://finnhub.io) | Cours temps réel, news, fondamentaux | ✅ (limité) | 60 req/min gratuit | Clé API requise |
-| [Polygon.io](https://polygon.io) | Cours, options, crypto | ✅ (limité) | Plan gratuit limité | Très complet, clé API |
-| [Twelve Data](https://twelvedata.com) | Cours, ETF, indicateurs | ✅ (limité) | 8 req/min gratuit | Clé API requise |
-| [Open Exchange Rates](https://openexchangerates.org) | Taux de change | ✅ (limité) | 1000 req/mois gratuit | Pour portefeuilles multi-devises |
-| [Stooq](https://stooq.com) | Cours historiques | ✅ | Pas de clé API | Données EOD, couverture mondiale |
+### Fallback / providers payants
 
----
-
-## Indicateurs Macro-Économiques
+Si Yahoo devient indisponible, candidats par ordre de préférence :
 
 | Nom | Type | Gratuit | Notes |
 |-----|------|---------|-------|
-| [FRED (Federal Reserve)](https://fred.stlouisfed.org/docs/api/fred/) | Indicateurs US (PIB, inflation, taux...) | ✅ | Clé API requise (gratuite) |
-| [BCE (Banque Centrale Européenne)](https://data.ecb.europa.eu/help/api/overview) | Indicateurs zone euro | ✅ | API REST publique |
-| [Banque Mondiale](https://datahelpdesk.worldbank.org/knowledgebase/articles/889386) | Indicateurs mondiaux | ✅ | API REST publique |
-| [INSEE](https://api.insee.fr/catalogue/) | Indicateurs France | ✅ | Clé API requise (gratuite) |
-| [OCDE](https://data.oecd.org/api/) | Statistiques pays OCDE | ✅ | API REST publique |
-| [PBOC](https://www.pbc.gov.cn) | Indicateurs Chine (taux, réserves, masse monétaire) | ✅ | API publique |
-| [BOJ](https://www.stat-search.boj.or.jp) | Indicateurs Japon (taux, inflation, balance des paiements) | ✅ | API publique |
-| [MAS](https://eservices.mas.gov.sg/apimg) | Indicateurs Singapour (taux de change, inflation) | ✅ | API publique |
+| [Stooq](https://stooq.com) | EOD historique | ✅ | Pas de quote temps réel, mais historique fiable |
+| [Twelve Data](https://twelvedata.com) | Cours, indicateurs | ✅ (limité) | 8 req/min gratuit, clé API |
+| [Polygon.io](https://polygon.io) | Cours, options, crypto | ⚠️ | Très complet, plan gratuit limité |
+| [Alpha Vantage](https://www.alphavantage.co) | Cours, indicateurs | ✅ (limité) | 25 req/jour gratuit, clé API |
+| [Finnhub](https://finnhub.io) | Cours, news, fundamentals | ✅ (limité) | 60 req/min gratuit, clé API |
 
 ---
 
-## Crypto
+## 🧊 Phase 0 — sources gelées
 
-| Nom | Type | Gratuit | Notes |
-|-----|------|---------|-------|
-| [CoinGecko](https://www.coingecko.com/api/documentation) | Cours, market cap, volumes | ✅ (limité) | 30 req/min gratuit, pas de clé |
-| [CoinMarketCap](https://coinmarketcap.com/api/) | Cours, market cap | ✅ (limité) | Clé API requise |
-| [Binance Public API](https://binance-docs.github.io/apidocs/) | Cours temps réel | ✅ | Pas de clé pour données publiques |
+Les sources ci-dessous étaient utilisées par le pipeline d'ingestion RSS et l'analyse portefeuille de la Phase 0. **Elles restent seedées en base** (table `feed_source`, migration V1) et configurables depuis `/settings`, mais ne sont plus consommées en Phase 1.
 
----
+### Presse & flux RSS (gelé)
 
-## Priorités MVP
+| Nom | Statut Phase 0 | Notes |
+|-----|----------------|-------|
+| Le Monde Économie | ✅ Actif | Bonne couverture macro FR |
+| CNBC Markets | ✅ Actif | Actualité marchés US |
+| MarketWatch | ✅ Actif | Temps réel US |
+| Reuters Business / Markets | ❌ Désactivé | URLs `feeds.reuters.com` mortes depuis 2020 |
+| BFM Bourse | ❌ Désactivé | Accès bloqué |
+| Les Echos / Investir | ❌ Désactivé | Payant |
+| Seeking Alpha | ❌ Désactivé | Payant |
+| Financial Times, Bloomberg, The Economist | ❌ Désactivé | Payant |
 
-Pour la Phase 1, les sources recommandées (gratuites, stables, sans clé ou clé gratuite) :
+### Données de marché (gelé en Phase 0, redémarrent en Phase 1 via Yahoo)
 
-1. **RSS** : CNBC Markets + MarketWatch + Le Monde Économie (Reuters, BFM Bourse et Les Echos désactivés — URLs mortes, bloquées ou payantes)
-2. **Marché** : Yahoo Finance (yfinance) + Stooq pour l'historique
-3. **Macro** : FRED + BCE
-4. **Crypto** : CoinGecko
+Listés ici pour référence ; aucun client backend n'a été codé en Phase 0 — Yahoo couvre le besoin Phase 1.
 
-## État actuel
+- Yahoo Finance (Phase 1 ✅), Stooq, Alpha Vantage, Finnhub, Polygon.io, Twelve Data, Open Exchange Rates
 
-22 sources sont seedées par la migration `V3__feed_source_metadata.sql`. Activation/désactivation depuis `/settings` (endpoint `PATCH /api/ingestion/sources/{id}`). Les sources actives sont collectées toutes les 15 min en prod (5 min en local) par le scheduler du module `ingestion/`.
+### Indicateurs macro (gelé)
+
+Listés en Phase 0 sans client implémenté. Pourraient être réutilisés en Phase 4 si un module macro est rallumé.
+
+| Nom | Type |
+|-----|------|
+| FRED (Federal Reserve) | Indicateurs US |
+| BCE | Indicateurs zone euro |
+| Banque Mondiale, OCDE, INSEE | Indicateurs internationaux |
+| PBOC, BOJ, MAS | Indicateurs Chine, Japon, Singapour |
+
+### Crypto (gelé)
+
+| Nom | Type | Notes |
+|-----|------|-------|
+| CoinGecko | Cours, market cap | 30 req/min gratuit, sans clé |
+| CoinMarketCap, Binance Public | Cours, volumes | Gratuit, clé API selon endpoint |
+
+> Note : Yahoo Finance couvre les principaux cryptos (BTC-USD, ETH-USD…) en Phase 1. CoinGecko n'est utile que pour les altcoins absents de Yahoo.

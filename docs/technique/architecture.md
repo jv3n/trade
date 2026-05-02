@@ -7,128 +7,169 @@
 | Frontend | Angular 21 + Angular Material | Standalone components, signals, framework robuste pour dashboards |
 | Backend | Kotlin + Spring Boot | Typage fort, null-safety, excellent écosystème JVM |
 | Build | Gradle (Kotlin DSL) | Standard Kotlin/Spring, scripts typés |
-| IA (prod) | Claude API — Anthropic | Compréhension du langage naturel financier, JSON structuré fiable |
-| IA (local) | Ollama + qwen2:1.5b | Développement sans clé API, fonctionne sur M1 |
-| Base de données | PostgreSQL | Schéma relationnel, historique des recommandations, Flyway pour les migrations |
+| IA (défaut) | Claude API — Anthropic | Compréhension du langage naturel financier, JSON structuré fiable, raisonnement nettement supérieur à un 7B local |
+| IA (backup local) | Ollama + `mistral` (7B Instruct) | Développement offline / sans clé API. Pas le défaut depuis la Phase 1 |
+| Data marché | Yahoo Finance (API non officielle) | Gratuit, complet, pas de clé. Source primaire des dossiers ticker |
+| Base de données | PostgreSQL | Schéma relationnel, snapshots historiques, Flyway pour les migrations |
 | Infra locale | Tilt + Docker Compose | Hot reload backend/frontend, reset BDD en un clic |
 | CI | GitHub Actions | Workflows backend (Gradle + PostgreSQL) et frontend (Vitest) |
 
-## Vue d'ensemble
+## Vue d'ensemble (Phase 1)
 
 ```
-┌─────────────────────────────────────────┐
-│            Sources de données            │
-│  Presse RSS · APIs marché · Macro · Crypto │
-└──────────────────┬──────────────────────┘
-                   │ ingestion toutes les 15 min
+┌────────────────────────────────────────────┐
+│         Sources de données                  │
+│  Yahoo Finance API (par ticker)             │
+│  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+│  RSS / macro / crypto      [gelé Phase 0]   │
+└──────────────────┬─────────────────────────┘
+                   │
                    ▼
-┌─────────────────────────────────────────┐
-│         Backend  (Kotlin + Spring)       │
-│                                          │
-│  ingestion/     → collecte RSS/APIs      │
-│  analysis/      → orchestration LLM,     │
-│                   recommandations, jobs  │
-│  portfolio/     → import CSV, snapshots  │
-│  shared/        → utilitaires transverses│
-└──────────────────┬──────────────────────┘
+┌────────────────────────────────────────────┐
+│         Backend  (Kotlin + Spring)          │
+│                                             │
+│  market/      → YahooClient + indicators    │
+│  analysis/    → narratif LLM par ticker     │
+│  portfolio/   → import CSV, snapshots       │
+│  shared/      → utilitaires transverses     │
+│  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+│  ingestion/   → RSS scheduler  [gelé]       │
+│  analysis/ (legacy) → reco portfolio [gelé] │
+└──────────────────┬─────────────────────────┘
                    │ REST API
                    ▼
-┌──────────────────────────────────────────┐
-│         Frontend  (Angular 21)           │
-│                                          │
-│  dashboard/        → positions + IA      │
-│  import/           → drag & drop CSV     │
-│  suivi/            → timeline snapshots  │
-│  recommendations/  → liste filtrable     │
-│  history/          → historique IA       │
-│  settings/         → back-office sources  │
-│    sources/        → activer/désactiver  │
-│    test-sources/   → tester un flux      │
-└──────────────────────────────────────────┘
+┌────────────────────────────────────────────┐
+│         Frontend  (Angular 21)              │
+│                                             │
+│  features/                                  │
+│    dashboard/    → portefeuille + lien      │
+│                    vers dossiers ticker     │
+│    ticker/       → dossier par symbole      │
+│    import/       → drag & drop CSV          │
+│    suivi/        → timeline snapshots       │
+│    settings/     → sources, test, prompt    │
+│  core/                                      │
+│    *.repository.ts (ports)                  │
+│    adapters/*.http.ts                       │
+└────────────────────────────────────────────┘
 ```
 
 ## Modules backend
 
-### `ingestion/`
+### `market/` — nouveau, Phase 1
 
-Collecte les flux RSS via la librairie Rome. Chaque source est configurée en base (`feed_source`) avec son URL, sa catégorie et son état activé/désactivé. Les articles sont dédupliqués par `guid`. Scheduler : toutes les 15 min en prod, 5 min en local.
+Source primaire des données ticker.
 
-### `analysis/`
+- **`YahooClient`** — récupère par ticker : quote courante, historique OHLC (1d à 1y), volumes, fundamentals basiques, 52w high/low. Caching court (5-15 min selon endpoint) pour éviter de rate-limiter Yahoo.
+- **`IndicatorCalculator`** — Kotlin pur, sans dépendance Spring. Calcule RSI(14), MA50/MA200, momentum 30j/90j, perf 1m/3m/1y/YTD, drawdown 52w, volume relatif, position vs MA. Testable unit, sans BDD.
+- **Endpoints REST** : `GET /api/market/ticker/{symbol}` (données + indicateurs), `GET /api/market/ticker/{symbol}/history` (OHLC pour le graphe).
 
-Orchestration des appels LLM, persistance des recommandations et suivi des jobs asynchrones. Découpage en 7 beans, chacun avec une responsabilité claire :
+### `analysis/` — Phase 1 réécrite
 
-- `AnalysisService` — point d'entrée HTTP : valide le portefeuille, crée (ou réutilise) un job, déclenche l'exécution
-- `AnalysisRunner` — bean `@Async` séparé (jamais `this.method()`, sinon le proxy AOP Spring est bypassé). Délègue à `AnalysisExecutor`
-- `AnalysisExecutor` — orchestre une exécution unitaire **sans transaction** : `loader → llm → parser → validator → (retry si invalide) → persister`
-- `AnalysisContextLoader` — `@Transactional(readOnly = true)` : lit le portefeuille, classe les articles via `ArticleRelevanceScorer`, construit le prompt, renvoie un `AnalysisContext` détaché (pas d'entité JPA managée)
-- `LlmResponseParser` — parse le JSON brut du LLM (tolérant aux fences markdown / prose autour) en `ParsedLlmRecommendation`. Pas de validation
-- `RecommendationValidator` — vérifie 8 règles : tickers ⊆ portefeuille, pas de duplicate / extra, action ∈ enum, confidence 0-100, targetWeight 0-100 par item, Σ ∈ [95,105], SELL ⇒ targetWeight ≤ 5. Renvoie un `ValidationResult` sealed (`Valid` | `Invalid(errors)`)
-- `RecommendationPersister` — `@Transactional` : recharge le portefeuille, persiste la `Recommendation` et ses actions à partir d'un `ParsedLlmRecommendation` déjà validé
-- `AnalysisJobStore` — persiste les `AnalysisJob` en base (table `analysis_job`). Permet de reprendre un job pendant après redémarrage et de dédupliquer deux requêtes simultanées sur le même portefeuille
+Le pipeline d'analyse en Phase 1 produit un **narratif LLM par ticker**, pas une recommandation portefeuille.
 
-Deux implémentations de `LlmClient` :
+- `TickerNarrativeService` — point d'entrée : prend un symbole, demande au `market/` les données, formate un prompt court, appelle le LLM, persiste le résultat.
+- `TickerNarrativeRunner` (`@Async` séparé pour respecter le proxy Spring) — exécute hors thread HTTP.
+- `LlmNarrativeParser` — parse le JSON `{summary, sentiment, keyPoints}`. Tolérant aux fences markdown.
+- Persistance dans `TickerNarrativeSnapshot` : `{ticker, snapshotAt, prixLeJour, indicateurs, narrative}` — permet la relecture a posteriori (Phase 3 observabilité).
 
-- `ClaudeClient` — production, activé avec `llm.provider: claude`. Timeouts explicites (10 s connect / 60 s read)
-- `OllamaClient` — local, activé avec `llm.provider: ollama`. Fusionne system + user en un seul message (qwen2:1.5b ignore le role `system`), utilise `format: json` et `num_predict` pour contraindre la sortie
+> Le LLM **digère** des indicateurs déjà calculés. Il **ne calcule jamais** RSI, MA, etc. — sinon il hallucine les chiffres.
+
+### `analysis/` (legacy) — gelé Phase 0
+
+Pipeline historique de recommandations portefeuille — `AnalysisExecutor`, `AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator` (8 règles : tickers ⊆ portefeuille, action ∈ enum, Σ targetWeight ∈ [95,105], etc.), `RecommendationPersister`, `AnalysisJobStore`. Le code reste en place et fonctionnel mais n'est plus exposé dans le flow utilisateur. Sera réactivé / repensé en Phase 4.
 
 ### `portfolio/`
 
-Le portefeuille est **read-only depuis l'UI** — il reflète l'état réel du courtier Wealthsimple. Pas de CRUD manuel.
+Inchangé. Le portefeuille est **read-only depuis l'UI** — il reflète l'état réel du courtier Wealthsimple.
 
-**Import CSV** (`CsvImportService`) : parse l'export « Positions » Wealthsimple (21 colonnes, français, délimiteur auto-détecté, BOM UTF-8). Pour chaque `Nom du compte` du CSV, crée ou met à jour un `Portfolio` et upsert les positions (`Asset`). Colonnes utilisées : `Symbole`, `Nom`, `Type`, `Quantité`, `Valeur comptable (CAD)`, `Valeur comptable (Marché)`, `Valeur marchande`, `Rendements non réalisés du marché`.
+- **Import CSV** (`CsvImportService`) : parse l'export Wealthsimple (21 colonnes, FR, NFD, BOM UTF-8), upsert des positions par compte.
+- **Snapshots** : `PortfolioSnapshot` + `SnapshotPosition` créés à chaque import, groupés par `batch_id`.
 
-**Snapshots** : à chaque import, un `PortfolioSnapshot` est créé par compte (avec un `batch_id` commun pour grouper les snapshots d'un même import). Chaque `SnapshotPosition` stocke la valeur comptable en CAD, la valeur de marché en devise native, et le P&L non réalisé. Permet le suivi historique de l'évolution du portefeuille.
+Sa nouvelle utilité Phase 1 : fournir la **liste des tickers détenus** au `market/` pour pré-charger les dossiers ticker pertinents.
+
+### `ingestion/` — gelé Phase 0
+
+Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus / détection HTML, 25 sources seedées). Conservé en place mais retiré du flow principal — Yahoo Finance remplit ce rôle en Phase 1.
+
+Réutilisable plus tard pour de la macro non couverte par Yahoo (Fed, BCE, indicateurs économiques) si besoin.
 
 ### `shared/`
 
-Utilitaires transverses : pour l'instant `GlobalExceptionHandler` (mapping uniforme des erreurs en JSON).
+Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs en JSON).
 
-> **Note** : les recommandations ne sont pas un module séparé — elles vivent dans `analysis/` (entités `Recommendation`, `RecommendationActionItem`, repository et controller d'historique inclus).
+## Modules frontend
+
+Hexagonal léger sous `frontend/src/app/` :
+
+- **`core/`** — ports + HTTP adapters
+  - `*.repository.ts` (abstract class — port)
+  - `adapters/*.http.ts` (HttpXxxRepository — adapter)
+  - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: HttpXxxRepository }`
+  - `theme.service.ts` (signal + persist localStorage)
+- **`features/`** — *primary adapters*
+  - `dashboard/` — portefeuille + lien vers les dossiers ticker
+  - `ticker/` — dossier par symbole (Phase 1, à venir)
+  - `import/` — drag & drop CSV
+  - `suivi/` — timeline snapshots
+  - `settings/` — sources / test / prompt-preview
+  - `recommendations/`, `history/` — *gelé Phase 0* (recommandations portefeuille)
 
 ## Schéma de base de données
 
-Une seule migration Flyway : `backend/src/main/resources/db/migration/V1__init.sql`
+Une seule migration Flyway aujourd'hui : `backend/src/main/resources/db/migration/V1__init.sql`. Phase 1 ajoutera une migration séparée pour les nouvelles tables.
 
-Schéma complet en une passe (jamais déployé en prod avant consolidation) :
-
-| Section | Tables |
-|---------|--------|
-| Portefeuille & actifs | `portfolio`, `asset` (inclut currency, book_value_cad, market_value, unrealized_gain) |
-| Recommandations IA | `recommendation`, `recommendation_action`, `recommendation_score` |
-| Jobs d'analyse | `analysis_job` |
-| Snapshots historiques | `portfolio_snapshot`, `snapshot_position` |
-| Sources d'ingestion | `feed_source` (slug, category, enabled, free, requires_api_key), `feed_article` |
-
-Le seed des 25 sources est inclus directement dans V1 (RSS, MARKET, MACRO, CRYPTO).
+| Section | Tables | Statut |
+|---------|--------|--------|
+| Portefeuille & actifs | `portfolio`, `asset` | Actif |
+| Snapshots historiques | `portfolio_snapshot`, `snapshot_position` | Actif |
+| Recommandations IA (legacy) | `recommendation`, `recommendation_action`, `recommendation_score` | Gelé |
+| Jobs d'analyse (legacy) | `analysis_job` | Gelé (utilisé pour le polling Phase 0) |
+| Sources d'ingestion | `feed_source`, `feed_article` | Gelé en pratique (table conservée pour les Settings UI) |
+| Narratifs ticker | `ticker_narrative_snapshot` | **À créer Phase 1** |
 
 ## Décisions techniques notables
 
-**`@Async` sur bean séparé** — Spring AOP ne proxifie pas les appels internes (`this.method()`). `AnalysisService` (HTTP) délègue à `AnalysisRunner` (`@Async`), qui délègue à son tour à `AnalysisExecutor` (`@Transactional`). Cette chaîne garantit que les proxies async ET transactionnel s'appliquent.
+### Phase 1 — pivot ticker
 
-**Persistance des jobs d'analyse en base** — l'ancien `ConcurrentHashMap` perdait l'historique au redémarrage. La table `analysis_job` (V7) stocke chaque job avec son `created_at`. `AnalysisService` consulte cette table avant de lancer un nouveau job : si un job pendant existe pour le même portefeuille dans la fenêtre des 90 dernières secondes, il est réutilisé — évite les doubles lancements depuis l'UI.
+**LLM = rédacteur, pas décideur** — le LLM digère des indicateurs **déjà calculés** (RSI, MA, momentum) et écrit un narratif. Il ne calcule jamais d'indicateurs (il les hallucine systématiquement) et ne produit pas de signal d'achat/vente. Cette séparation rend l'output testable (le code des indicateurs l'est) et l'IA productive sur ce qu'elle sait faire (écrire).
 
-**Prompt basé sur la valeur de marché, pas le cost basis** — `AnalysisExecutor` injecte `market_value` (V6) plutôt que `quantity × avgBuyPrice`. Le portefeuille étant multi-devises (USD, CAD…) et l'app n'ayant pas encore de service FX live, on dérive un FX implicite au moment de l'achat (`book_value_cad / (quantity × avg_buy_price)`) pour approximer `market_value_cad`. Imparfait — l'approximation utilise le FX d'achat — mais largement supérieur au cost basis pour le LLM. Un service FX live remplacera cette approximation plus tard.
+**Yahoo en source primaire** — gratuit, sans clé, couverture mondiale, fundamentals corrects pour un MVP. La librairie officielle Python `yfinance` ne s'utilise pas côté JVM ; on parle directement à l'API publique en HTTP. Si Yahoo ferme un jour ou rate-limite, on bascule sur Stooq (EOD seulement) ou sur un provider payant (Alpha Vantage, Twelve Data, Polygon).
 
-**Filtrage des articles par pertinence** — `ArticleRelevanceScorer` classe les 200 derniers articles selon un score keyword-based : tickers du portefeuille (poids 10, match avec word-boundary pour éviter qu'un ticker court comme `T` matche tout), mots significatifs des noms d'actifs (5), mots-clés sectoriels dérivés des `AssetType` (2), mots-clés macro fixes — Fed, ECB, taux, CPI… (1). Le LLM voit les 25 plus pertinents, fallback sur la recency si moins de 5 articles ont un score > 0. Embeddings / similarité sémantique → plus tard si nécessaire.
+**Caching côté serveur** — un dossier ticker peut être consulté plusieurs fois par jour. On cache les fetchs Yahoo (5 min pour la quote, 15 min pour l'historique, 1 h pour les fundamentals) en mémoire. Pas besoin de Redis à cette échelle.
 
-**Fenêtres de timeout alignées (400 s)** — `POLL_ABORT_SECONDS` côté frontend (`analysis.service.ts`) et `DEDUP_WINDOW_SECONDS` côté backend (`AnalysisJobStore`) valent tous les deux 400 s. **Invariant** : la fenêtre serveur doit être ≥ l'abort frontend, sinon un retry pendant que le LLM mouline crée un nouveau job au lieu de réutiliser l'ancien. Et l'enveloppe globale doit couvrir 2 × le read timeout HTTP d'`OllamaClient` (180 s par appel) plus une marge — sinon le frontend abandonne pendant que le backend fait sa deuxième tentative de retry du validateur. 400 s ≈ 2 × 180 s + 40 s. Claude est nettement plus rapide ; 400 s reste large mais évite les fausses alertes "trop long" légitimes en cas de retry.
+**Claude API par défaut** — la Phase 0 a montré que Mistral 7B sortait des justifications grammaticalement correctes mais financièrement creuses ("vendre pour un profit de 0.4%"). Le saut de qualité Claude est largement supérieur au coût (~quelques cents par dossier). Mistral reste activable pour le dev offline (`llm.provider: ollama`).
 
-**LLM call hors transaction** — l'appel `llmClient.complete()` (1-2 min sur Ollama) ne doit pas tenir de connexion Hikari. Le pipeline d'analyse est éclaté en plusieurs beans pour ça (voir module `analysis/` ci-dessus). Spring AOP impose des beans distincts pour que les `@Transactional` s'appliquent (le proxy ne fonctionne pas sur appels intra-bean).
+**Snapshot du narratif systématique** — chaque consultation d'un ticker persiste `{prix_du_jour, indicateurs, narrative}`. Sans ça, l'observabilité Phase 3 (relire ce que disait l'IA il y a 1 mois) est aveugle.
 
-**Validation + auto-repair des réponses LLM** — même Mistral 7B sort régulièrement du JSON invalide (poids ne sommant pas à 100, tickers hallucinés repris des exemples du SYSTEM_PROMPT, actions absentes pour certains tickers). `RecommendationValidator` applique 8 règles strictes ; si la réponse est invalide, `AnalysisExecutor` re-prompte une fois le LLM en injectant les erreurs dans le user message ("YOUR PREVIOUS RESPONSE WAS REJECTED — Errors: …"). Au pire (2 attempts ratées), on persiste avec `withHoldFallback` qui **strip les tickers hallucinés** ET **ajoute des HOLD pour les tickers manquants** — mieux qu'un job en ERROR. Cette boucle évite de stocker du bruit en BDD et rend Phase 2 (mesure de qualité) honnête : on mesure des recos *valides*, pas du n'importe quoi.
+### Conservé depuis Phase 0
 
-Conséquence sur le SYSTEM_PROMPT : les exemples de tickers (`AAPL`, `NVDA`) ont été remplacés par des placeholders (`<one of the portfolio tickers>`) — Mistral avait tendance à recopier les exemples comme si c'étaient de vrais tickers du portefeuille.
+**`@Async` sur bean séparé** — Spring AOP ne proxifie pas les appels internes (`this.method()`). Le pattern `Service → Runner (@Async) → Executor (@Transactional)` reste valide et est repris pour `TickerNarrativeService → TickerNarrativeRunner`.
 
-**LLM local avec Mistral 7B Instruct** — initialement on était sur `qwen2:1.5b` pour la latence (~60 s), mais le prompt enrichi (25 articles + descriptions + valeurs marché + poids) a révélé que le modèle est trop petit : sorties incohérentes, tickers hallucinés, poids ne sommant pas à 100. Bascule sur `mistral` (7B Instruct, quantization Q4) pour la cohérence ; latence ~1-2 min sur M1, absorbée par les timeouts à 180 s. Le role `system` reste fusionné avec `user` (pratique conservée pour rester compatible avec les modèles qui l'ignorent).
+**LLM call hors transaction** — l'appel LLM (1-15 s en Claude, plus long en Ollama) ne doit pas tenir de connexion Hikari. Le pipeline est éclaté pour respecter ça.
 
-**Robustesse du parsing RSS** — les flux RSS publics sont souvent mal formés. `RssFetcherService.fetchFeed()` pré-traite le contenu avant de le passer à ROME : (1) User-Agent + Accept header pour éviter les blocages serveur, (2) détection HTML (DOCTYPE / `<html>`) pour signaler explicitement une URL morte ou bloquée, (3) correction des `&` nus non échappés via regex (fréquent sur BFM-style). `isAllowDoctypes = true` sur `SyndFeedInput` pour les flux avec déclaration DOCTYPE. Le scheduler `fetchAll()` et l'endpoint de test passent tous deux par le même helper — la robustesse s'applique aux deux chemins.
+**Validation de schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage. Toute modification d'entité = migration Flyway.
 
-**Validation du schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage contre les entités. Toute modification des entités nécessite une migration Flyway.
+**Tests d'intégration sur vrai PostgreSQL** — pas de mocks BDD, pas de H2. Le CI démarre un service PostgreSQL.
 
-**Tests d'intégration sur vrai PostgreSQL** — pas de mocks BDD ni H2. Le CI démarre un service PostgreSQL.
+**Portefeuille CSV-driven, pas de CRUD manuel** — le portefeuille reflète la réalité du courtier. L'import CSV Wealthsimple reste la seule source de vérité des positions.
 
-**Portefeuille CSV-driven, pas de CRUD manuel** — le portefeuille reflète la réalité du courtier. L'import CSV Wealthsimple est la seule source de vérité des positions. Ce choix simplifie l'UI, élimine les désynchronisations, et rend l'historique automatique (chaque import = snapshot).
+**Snapshot avec `batch_id`** — un import CSV peut couvrir plusieurs comptes. Le `batch_id` UUID commun regroupe tous les snapshots d'un même import pour l'affichage en timeline.
 
-**Snapshot avec `batch_id`** — un import CSV peut couvrir plusieurs comptes (CELI, REER, Broker…). Le `batch_id` UUID commun regroupe tous les snapshots d'un même import pour l'affichage en timeline. Pas de table `CsvImportBatch` séparée — le batch_id suffit.
+### Frontend
 
-**Normalisation des headers CSV** — les headers Wealthsimple contiennent des accents (`Quantité`, `Marché`…). Normalisation NFD + suppression diacritiques + lowercase pour des lookups robustes indépendants de l'encodage.
+**Ports & adapters léger** — `core/<name>.repository.ts` (port = abstract class) + `core/adapters/<name>.http.ts` (adapter HTTP). Composants injectent l'abstraction. Tests : on mock le port, l'adapter a son propre spec HTTP.
+
+**Tokens de thème** — variables CSS sur `:root`, override sur `[data-theme='light']`. Material 3 wired en dual-theme. Default = sombre. Toggle dans le header, persistance localStorage, anti-FOUC via script inline dans `index.html`.
+
+### Gelé Phase 0 (référence)
+
+Les décisions ci-dessous concernent du code **gelé** mais conservé. À relire si on réactive le pipeline portefeuille en Phase 4.
+
+**Validation + auto-repair des réponses LLM (legacy)** — `RecommendationValidator` applique 8 règles strictes ; en cas d'invalide, re-prompt avec les erreurs. Au pire, `withHoldFallback` strip les hallucinations.
+
+**Filtrage des articles par pertinence (legacy)** — `ArticleRelevanceScorer` classe les 200 derniers articles par score keyword (tickers, noms d'actifs, secteurs, mots-clés macro). Top 25 passé au LLM.
+
+**Robustesse du parsing RSS (legacy)** — pré-traitement Rome (User-Agent, détection HTML, correction `&` nus, `isAllowDoctypes = true`).
+
+**Fenêtres de timeout alignées (legacy, 400 s)** — invariant : `POLL_ABORT_SECONDS` (frontend) ≥ `DEDUP_WINDOW_SECONDS` (backend) ≥ 2 × `OllamaClient.readTimeout` + marge. Probablement à revoir en Phase 1 — Claude est nettement plus rapide, on pourra resserrer.
