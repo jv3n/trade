@@ -15,7 +15,7 @@
       }
     </select>
 
-    <button class="run-btn" (click)="load()" [disabled]="!selectedId() || loading()">
+    <button class="btn-primary" (click)="load()" [disabled]="!selectedId() || loading()">
       @if (loading()) {
         <mat-spinner diameter="14"></mat-spinner>
         Chargement…

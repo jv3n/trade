@@ -26,7 +26,7 @@
       }
     </select>
 
-    <button class="run-btn" (click)="test()" [disabled]="!selectedId() || testing()">
+    <button class="btn-primary" (click)="test()" [disabled]="!selectedId() || testing()">
       @if (testing()) {
         <mat-spinner diameter="14"></mat-spinner>
         En cours…
