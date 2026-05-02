@@ -65,7 +65,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | ✅ Route `features/ticker/:symbol` | Page dossier ticker. En-tête : symbole, nom, prix, plage 52w, sentiment via badge ajouté avec le narratif | 🔴 Critique |
 | ✅ Graphique des prix | SVG inline (pas de dep ajoutée), 1y daily. Pas de toggle ni d'overlay MA pour l'instant — suffisant pour le MVP | 🔴 Critique |
 | ✅ Indicateurs en chips | 10 chips avec color-coding (RSI > 70 warning, drawdown profond rouge, etc.) | 🔴 Critique |
-| ⏳ Narratif LLM | Summary + bullets keyPoints. Spinner pendant la génération (polling du job). Bouton "Régénérer" pour forcer un nouveau snapshot | 🔴 Critique |
+| ✅ Narratif LLM | Section dédiée : sentiment chip (BULLISH/NEUTRAL/BEARISH coloré), summary, bullets keyPoints, footer modèle+date. Bouton Générer/Régénérer avec spinner, polling 3 s, abort 300 s. Cache hit DONE direct (snapshot < 30 min) sans polling. 7 tests (init avec snapshot, init vierge, cache hit, kick fresh, error, poll abort, sentiment class) | 🔴 Critique |
 | ✅ Lien Dashboard → Dossier ticker | Ticker cliquable dans la table du dashboard → `/ticker/:symbol` | 🟡 Moyenne |
 | ⏳ Liste des tickers détenus | Sur le dashboard, exposer la liste cliquable des tickers du portefeuille (raccourci d'accès aux dossiers) | 🟡 Moyenne |
 
@@ -134,6 +134,6 @@ Sujets identifiés en cours de session, pas bloquants pour la Phase 1 mais à tr
 | ⏳ Cleanup des jobs orphelins au démarrage | À chaque hot-reload Tilt (ou crash backend), un job `PENDING` reste `PENDING` à jamais en BDD. `ApplicationReadyEvent` listener qui passe tous les `PENDING` en `ERROR` au boot. ~15 min | 🟡 Moyenne |
 | ⏳ Doublon `recommendations/` vs `history/` | Avec la Phase 1, ces pages deviennent legacy. Décision : garder en l'état pour le legacy, ou simplifier en une seule page à terme | 🟢 Basse |
 | ⏳ Tests sur le module `analysis/` (legacy) | Aucun test sur le legacy. Si on rallume Phase 4, on en aura besoin. Pas urgent tant que le code dort | 🟢 Basse |
-| ⏳ Refacto "tests as documentation" sur les tests existants | Aligner `IndicatorCalculatorTest`, `YahooMappersTest`, `MockMarketChartClientTest`, `CsvImportServiceTest`, `PortfolioControllerTest` sur la règle CLAUDE.md `Tests as documentation` (docstring de classe expliquant l'intent, commentaires motivationnels, factories avec defaults, fixtures réalistes). Les tests narratif Phase 1 sont déjà conformes — sert de modèle | 🟢 Basse |
+| ✅ Refacto "tests as documentation" sur les tests existants | Pass d'audit appliqué : docstrings de classe + commentaires motivationnels sur `IndicatorCalculatorTest`, `YahooMappersTest`, `MockMarketChartClientTest`, `CsvImportServiceTest`, `PortfolioControllerTest` côté back, et `ticker.spec`, `dashboard.spec`, `suivi.spec`, `csv-import.spec`, `analysis.http.spec` + 4 HTTP adapter specs côté front. Stub-only specs (`should create` seul) laissés tels quels. Les tests narratif Phase 1 ont servi de modèle | 🟢 Basse |
 | ⏳ `document.documentElement` SSR-safe dans `ThemeService` | Wrap avec `isPlatformBrowser` si on bascule un jour SSR | 🟢 Basse |
 | ⏳ FOUC du toggle thème — résolu | Script inline dans `index.html` lit `localStorage` avant le bootstrap Angular et pose `data-theme`. Voir `developpement.md` | ✅ Fait |
