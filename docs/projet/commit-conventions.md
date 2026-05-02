@@ -27,6 +27,7 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 | `docs` | Documentation uniquement |
 | `test` | Ajout ou correction de tests |
 | `perf` | Amélioration de performance |
+| `audit` | Archive d'une revue de code dans `docs/projet/audits/` (rapport daté, observations brutes, **non actionnable directement** — c'est volontaire) |
 | `revert` | Annulation d'un commit précédent |
 
 ## Scopes courants
@@ -63,6 +64,8 @@ docs: add commit conventions
 refactor(portfolio): extract asset mapper to dedicated class
 
 test(ingestion): add integration test for RssFetcherService
+
+audit: add 2026-05-02 global code review report
 ```
 
 ## Règles

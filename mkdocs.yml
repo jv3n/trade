@@ -15,6 +15,9 @@ nav:
       - Backlog: projet/backlog.md
       - Sources de données: projet/sources.md
       - Conventions de commit: projet/commit-conventions.md
+      - Audits:
+          - Vue d'ensemble: projet/audits/index.md
+          - 2026-05-02 — Revue globale: projet/audits/2026-05-02-revue-globale.md
 
 theme:
   name: material

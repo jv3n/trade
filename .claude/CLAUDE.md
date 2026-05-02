@@ -181,6 +181,7 @@ Files under `docs/` describe the actual state of the project. Keep them in sync 
 | `docs/technique/developper.md`    | Newcomer onboarding flow changes (new prerequisite, install step, common failure mode worth flagging) |
 | `docs/projet/sources.md`          | A data source is added or removed                                         |
 | `docs/projet/backlog.md`          | A Phase 1+ feature is implemented, frozen, or its priority changes        |
+| `docs/projet/audits/`             | A code review is performed — archive the full report as `YYYY-MM-DD-titre-court.md` and append a line to `audits/index.md`. Don't auto-promote findings to the backlog ; the user decides which become actions. |
 
 ### Technical decisions
 
