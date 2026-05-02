@@ -1,5 +1,3 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export type AssetType = 'ETF' | 'STOCK' | 'COMMODITY' | 'CRYPTO' | 'BOND';
@@ -64,32 +62,14 @@ export interface CsvImportResult {
   skipped: number;
 }
 
-@Injectable({ providedIn: 'root' })
-export class PortfolioService {
-  private readonly http = inject(HttpClient);
-  private readonly base = '/api/portfolios';
-
-  getAll(): Observable<Portfolio[]> {
-    return this.http.get<Portfolio[]>(this.base);
-  }
-
-  getById(id: string): Observable<Portfolio> {
-    return this.http.get<Portfolio>(`${this.base}/${id}`);
-  }
-
-  getAssets(portfolioId: string): Observable<Asset[]> {
-    return this.http.get<Asset[]>(`${this.base}/${portfolioId}/assets`);
-  }
-
-  previewCsvImport(file: File): Observable<CsvImportPreview> {
-    const form = new FormData();
-    form.append('file', file);
-    return this.http.post<CsvImportPreview>(`${this.base}/import/csv/preview`, form);
-  }
-
-  confirmCsvImport(file: File): Observable<CsvImportResult> {
-    const form = new FormData();
-    form.append('file', file);
-    return this.http.post<CsvImportResult>(`${this.base}/import/csv`, form);
-  }
+/**
+ * Port — contract the application depends on. Components inject this abstraction;
+ * the concrete HTTP implementation is wired in `app.config.ts`.
+ */
+export abstract class PortfolioRepository {
+  abstract getAll(): Observable<Portfolio[]>;
+  abstract getById(id: string): Observable<Portfolio>;
+  abstract getAssets(portfolioId: string): Observable<Asset[]>;
+  abstract previewCsvImport(file: File): Observable<CsvImportPreview>;
+  abstract confirmCsvImport(file: File): Observable<CsvImportResult>;
 }

@@ -1,48 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, interval, switchMap, takeWhile, catchError, throwError } from 'rxjs';
-
-export type RecommendationAction = 'BUY' | 'SELL' | 'HOLD' | 'REDUCE';
-export type RecommendationStatus = 'PENDING' | 'APPLIED' | 'IGNORED' | 'EVALUATED';
-export type JobStatus = 'PENDING' | 'DONE' | 'ERROR';
-
-export interface RecommendationActionItem {
-  ticker: string;
-  action: RecommendationAction;
-  rationale: string | null;
-  targetWeight: number | null;
-}
-
-export interface Recommendation {
-  id: string;
-  portfolioId: string;
-  portfolioName: string;
-  generatedAt: string;
-  contextSummary: string;
-  promptVersion: string;
-  content: string;
-  confidence: number | null;
-  status: RecommendationStatus;
-  actions: RecommendationActionItem[];
-}
-
-export interface AnalysisJob {
-  jobId: string;
-  status: JobStatus;
-  createdAt: string;
-  recommendationId: string | null;
-  error: string | null;
-}
-
-export interface PromptPreview {
-  portfolioId: string;
-  portfolioName: string;
-  tickers: string[];
-  systemPrompt: string;
-  userMessage: string;
-  systemPromptChars: number;
-  userMessageChars: number;
-}
+import {
+  AnalysisRepository,
+  AnalysisJob,
+  Recommendation,
+  PromptPreview,
+} from '../analysis.repository';
 
 /**
  * Hard cap before the frontend gives up polling. Must cover the worst case of two Mistral
@@ -51,8 +15,8 @@ export interface PromptPreview {
  */
 const POLL_ABORT_SECONDS = 400;
 
-@Injectable({ providedIn: 'root' })
-export class AnalysisService {
+@Injectable()
+export class HttpAnalysisRepository extends AnalysisRepository {
   private readonly http = inject(HttpClient);
 
   startAnalysis(portfolioId: string): Observable<AnalysisJob> {

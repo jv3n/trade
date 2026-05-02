@@ -1,31 +1,31 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { SnapshotService } from './snapshot.service';
+import { HttpSnapshotRepository } from './snapshot.http';
 
-describe('SnapshotService', () => {
-  let service: SnapshotService;
+describe('HttpSnapshotRepository', () => {
+  let repo: HttpSnapshotRepository;
   let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), HttpSnapshotRepository],
     });
-    service = TestBed.inject(SnapshotService);
+    repo = TestBed.inject(HttpSnapshotRepository);
     http = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => http.verify());
 
   it('getAll calls GET /api/snapshots', () => {
-    service.getAll().subscribe();
+    repo.getAll().subscribe();
     const req = http.expectOne('/api/snapshots');
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });
 
   it('getPositions calls GET /api/snapshots/:id/positions', () => {
-    service.getPositions('snap-1').subscribe();
+    repo.getPositions('snap-1').subscribe();
     const req = http.expectOne('/api/snapshots/snap-1/positions');
     expect(req.request.method).toBe('GET');
     req.flush([]);

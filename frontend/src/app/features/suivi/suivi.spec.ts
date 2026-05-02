@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { Suivi } from './suivi';
-import { SnapshotService, SnapshotSummary, SnapshotPosition } from '../core/snapshot.service';
+import {
+  SnapshotRepository,
+  SnapshotSummary,
+  SnapshotPosition,
+} from '../../core/snapshot.repository';
 
 const makeSummary = (overrides: Partial<SnapshotSummary> = {}): SnapshotSummary => ({
   id: 'snap-1',
@@ -17,20 +21,20 @@ const makeSummary = (overrides: Partial<SnapshotSummary> = {}): SnapshotSummary 
 describe('Suivi', () => {
   let component: Suivi;
   let fixture: ComponentFixture<Suivi>;
-  let snapshotService: {
+  let snapshotRepository: {
     getAll: () => Observable<SnapshotSummary[]>;
     getPositions: () => Observable<SnapshotPosition[]>;
   };
 
   beforeEach(async () => {
-    snapshotService = {
+    snapshotRepository = {
       getAll: () => of([]),
       getPositions: () => of([]),
     };
 
     await TestBed.configureTestingModule({
       imports: [Suivi],
-      providers: [{ provide: SnapshotService, useValue: snapshotService }],
+      providers: [{ provide: SnapshotRepository, useValue: snapshotRepository }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Suivi);
@@ -61,7 +65,7 @@ describe('Suivi', () => {
       makeSummary({ id: 's2', batchId: 'batch-A', portfolioName: 'REER', totalBookValueCad: 2000 }),
       makeSummary({ id: 's3', batchId: 'batch-B', portfolioName: 'CELI', totalBookValueCad: 3200 }),
     ];
-    snapshotService.getAll = () => of(summaries);
+    snapshotRepository.getAll = () => of(summaries);
 
     fixture.detectChanges();
     await fixture.whenStable();
@@ -79,7 +83,7 @@ describe('Suivi', () => {
   });
 
   it('toggleBatch flips expanded state', async () => {
-    snapshotService.getAll = () => of([makeSummary()]);
+    snapshotRepository.getAll = () => of([makeSummary()]);
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -107,7 +111,7 @@ describe('Suivi', () => {
 
   it('shows error message on load failure', async () => {
     const { throwError } = await import('rxjs');
-    snapshotService.getAll = () => throwError(() => new Error('network'));
+    snapshotRepository.getAll = () => throwError(() => new Error('network'));
     fixture.detectChanges();
     await fixture.whenStable();
 

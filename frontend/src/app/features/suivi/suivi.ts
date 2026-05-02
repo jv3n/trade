@@ -2,7 +2,11 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { SnapshotService, SnapshotSummary, SnapshotPosition } from '../core/snapshot.service';
+import {
+  SnapshotRepository,
+  SnapshotSummary,
+  SnapshotPosition,
+} from '../../core/snapshot.repository';
 
 interface Batch {
   batchId: string;
@@ -19,7 +23,7 @@ interface Batch {
   styleUrl: './suivi.scss',
 })
 export class Suivi implements OnInit {
-  private readonly snapshotService = inject(SnapshotService);
+  private readonly snapshotRepository = inject(SnapshotRepository);
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -34,7 +38,7 @@ export class Suivi implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.snapshotService.getAll().subscribe({
+    this.snapshotRepository.getAll().subscribe({
       next: (summaries) => {
         const batchMap = new Map<string, Batch>();
         for (const s of summaries) {
@@ -89,7 +93,7 @@ export class Suivi implements OnInit {
   }
 
   private loadPositions(snapshotId: string) {
-    this.snapshotService.getPositions(snapshotId).subscribe({
+    this.snapshotRepository.getPositions(snapshotId).subscribe({
       next: (pos) => this.positions.update((m) => new Map(m).set(snapshotId, pos)),
     });
   }

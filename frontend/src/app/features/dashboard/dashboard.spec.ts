@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { Dashboard } from './dashboard';
-import { PortfolioService, Asset } from '../core/portfolio.service';
-import { AnalysisService } from '../core/analysis.service';
+import { PortfolioRepository, Asset } from '../../core/portfolio.repository';
+import { AnalysisRepository } from '../../core/analysis.repository';
 
-const mockPortfolioService = {
+const mockPortfolioRepository = {
   getAll: () => of([]),
   getAssets: () => of([]),
 };
 
-const mockAnalysisService = {
+const mockAnalysisRepository = {
   startAnalysis: () => of({}),
 };
 
@@ -21,8 +21,8 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
-        { provide: PortfolioService, useValue: mockPortfolioService },
-        { provide: AnalysisService, useValue: mockAnalysisService },
+        { provide: PortfolioRepository, useValue: mockPortfolioRepository },
+        { provide: AnalysisRepository, useValue: mockAnalysisRepository },
       ],
     }).compileComponents();
 

@@ -2,8 +2,8 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { PortfolioService, Portfolio } from '../../core/portfolio.service';
-import { AnalysisService, PromptPreview } from '../../core/analysis.service';
+import { PortfolioRepository, Portfolio } from '../../../core/portfolio.repository';
+import { AnalysisRepository, PromptPreview } from '../../../core/analysis.repository';
 
 @Component({
   selector: 'app-prompt-preview',
@@ -12,8 +12,8 @@ import { AnalysisService, PromptPreview } from '../../core/analysis.service';
   styleUrl: './prompt-preview.scss',
 })
 export class PromptPreviewPage implements OnInit {
-  private readonly portfolioService = inject(PortfolioService);
-  private readonly analysisService = inject(AnalysisService);
+  private readonly portfolioRepository = inject(PortfolioRepository);
+  private readonly analysisRepository = inject(AnalysisRepository);
 
   portfolios = signal<Portfolio[]>([]);
   selectedId = signal<string | null>(null);
@@ -22,7 +22,7 @@ export class PromptPreviewPage implements OnInit {
   preview = signal<PromptPreview | null>(null);
 
   ngOnInit() {
-    this.portfolioService.getAll().subscribe({
+    this.portfolioRepository.getAll().subscribe({
       next: (list) => this.portfolios.set(list),
     });
   }
@@ -40,7 +40,7 @@ export class PromptPreviewPage implements OnInit {
     this.error.set(null);
     this.preview.set(null);
 
-    this.analysisService.getPromptPreview(id).subscribe({
+    this.analysisRepository.getPromptPreview(id).subscribe({
       next: (p) => {
         this.preview.set(p);
         this.loading.set(false);

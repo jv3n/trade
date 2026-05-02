@@ -5,8 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subscription } from 'rxjs';
-import { PortfolioService, Portfolio, Asset } from '../core/portfolio.service';
-import { AnalysisService, Recommendation } from '../core/analysis.service';
+import { PortfolioRepository, Portfolio, Asset } from '../../core/portfolio.repository';
+import { AnalysisRepository, Recommendation } from '../../core/analysis.repository';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,8 +21,8 @@ import { AnalysisService, Recommendation } from '../core/analysis.service';
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit, OnDestroy {
-  private readonly portfolioService = inject(PortfolioService);
-  private readonly analysisService = inject(AnalysisService);
+  private readonly portfolioRepository = inject(PortfolioRepository);
+  private readonly analysisRepository = inject(AnalysisRepository);
   private pollSub?: Subscription;
   private timerSub?: Subscription;
 
@@ -46,7 +46,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   loadPortfolios() {
     this.loading.set(true);
-    this.portfolioService.getAll().subscribe({
+    this.portfolioRepository.getAll().subscribe({
       next: (portfolios) => {
         this.portfolios.set(portfolios);
         if (portfolios.length > 0 && !this.selectedPortfolio()) {
@@ -64,7 +64,7 @@ export class Dashboard implements OnInit, OnDestroy {
   selectPortfolio(portfolio: Portfolio) {
     this.selectedPortfolio.set(portfolio);
     this.lastRecommendation.set(null);
-    this.portfolioService.getAssets(portfolio.id).subscribe({
+    this.portfolioRepository.getAssets(portfolio.id).subscribe({
       next: (assets) => this.assets.set(assets),
       error: () => this.error.set('Erreur lors du chargement des actifs'),
     });
@@ -81,12 +81,12 @@ export class Dashboard implements OnInit, OnDestroy {
     const timerInterval = setInterval(() => this.analyzeElapsed.update((v) => v + 1), 1000);
     this.timerSub.add(() => clearInterval(timerInterval));
 
-    this.analysisService.startAnalysis(portfolio.id).subscribe({
+    this.analysisRepository.startAnalysis(portfolio.id).subscribe({
       next: (job) => {
-        this.pollSub = this.analysisService.pollJob(portfolio.id, job.jobId).subscribe({
+        this.pollSub = this.analysisRepository.pollJob(portfolio.id, job.jobId).subscribe({
           next: (updatedJob) => {
             if (updatedJob.status === 'DONE' && updatedJob.recommendationId) {
-              this.analysisService
+              this.analysisRepository
                 .getRecommendation(portfolio.id, updatedJob.recommendationId)
                 .subscribe({
                   next: (rec) => {

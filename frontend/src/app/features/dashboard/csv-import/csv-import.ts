@@ -2,7 +2,7 @@ import { Component, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { PortfolioService, CsvImportPreview } from '../../core/portfolio.service';
+import { PortfolioRepository, CsvImportPreview } from '../../../core/portfolio.repository';
 
 type ImportStep =
   | 'idle'
@@ -21,7 +21,7 @@ type ImportStep =
   styleUrl: './csv-import.scss',
 })
 export class CsvImport {
-  private readonly portfolioService = inject(PortfolioService);
+  private readonly portfolioRepository = inject(PortfolioRepository);
 
   imported = output<void>();
 
@@ -75,7 +75,7 @@ export class CsvImport {
     this.step.set('previewing');
     this.error.set(null);
 
-    this.portfolioService.previewCsvImport(file).subscribe({
+    this.portfolioRepository.previewCsvImport(file).subscribe({
       next: (preview) => {
         this.preview.set(preview);
         this.step.set('preview');
@@ -93,7 +93,7 @@ export class CsvImport {
     const file = this.pendingFile();
     if (!file) return;
     this.step.set('importing');
-    this.portfolioService.confirmCsvImport(file).subscribe({
+    this.portfolioRepository.confirmCsvImport(file).subscribe({
       next: () => {
         this.step.set('done');
         this.imported.emit();
@@ -130,7 +130,7 @@ export class CsvImport {
       this.imported.emit();
       return;
     }
-    this.portfolioService.confirmCsvImport(files[index]).subscribe({
+    this.portfolioRepository.confirmCsvImport(files[index]).subscribe({
       next: () => {
         this.batchIndex.set(index + 1);
         this.importNext();

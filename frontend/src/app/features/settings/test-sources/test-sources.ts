@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import {
-  SettingsService,
+  SettingsRepository,
   DataSource,
   SourceCategory,
   SourceTestResult,
-} from '../../core/settings.service';
+} from '../../../core/settings.repository';
 
 const CATEGORY_LABELS: Record<SourceCategory, string> = {
   RSS: 'Presse & Flux RSS',
@@ -25,7 +25,7 @@ const CATEGORY_ORDER: SourceCategory[] = ['RSS', 'MARKET', 'MACRO', 'CRYPTO'];
   styleUrl: './test-sources.scss',
 })
 export class TestSources implements OnInit {
-  private readonly settingsService = inject(SettingsService);
+  private readonly settingsRepository = inject(SettingsRepository);
 
   allSources = signal<DataSource[]>([]);
   selectedCategory = signal<SourceCategory | null>(null);
@@ -47,7 +47,7 @@ export class TestSources implements OnInit {
   );
 
   ngOnInit() {
-    this.settingsService.getSources().subscribe({
+    this.settingsRepository.getSources().subscribe({
       next: (sources) => this.allSources.set(sources),
     });
   }
@@ -69,7 +69,7 @@ export class TestSources implements OnInit {
     this.testing.set(true);
     this.result.set(null);
 
-    this.settingsService.testSource(id).subscribe({
+    this.settingsRepository.testSource(id).subscribe({
       next: (r) => {
         this.result.set(r);
         this.testing.set(false);

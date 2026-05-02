@@ -1,37 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { SettingsRepository, DataSource, SourceTestResult } from '../settings.repository';
 
-export type SourceCategory = 'RSS' | 'MARKET' | 'MACRO' | 'CRYPTO';
-
-export interface DataSource {
-  id: string;
-  slug: string;
-  name: string;
-  url: string;
-  category: SourceCategory;
-  enabled: boolean;
-  description: string;
-  free: boolean;
-  requiresApiKey: boolean;
-}
-
-export interface RawArticle {
-  title: string;
-  link: string | null;
-  publishedAt: string | null;
-}
-
-export interface SourceTestResult {
-  ok: boolean;
-  error: string | null;
-  message: string | null;
-  itemCount: number;
-  items: RawArticle[];
-}
-
-@Injectable({ providedIn: 'root' })
-export class SettingsService {
+@Injectable()
+export class HttpSettingsRepository extends SettingsRepository {
   private readonly http = inject(HttpClient);
 
   getSources(): Observable<DataSource[]> {

@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { SettingsService, DataSource, SourceCategory } from '../../core/settings.service';
+import { SettingsRepository, DataSource, SourceCategory } from '../../../core/settings.repository';
 
 const CATEGORY_LABELS: Record<SourceCategory, string> = {
   RSS: 'Presse & Flux RSS',
@@ -20,7 +20,7 @@ const CATEGORY_ORDER: SourceCategory[] = ['RSS', 'MARKET', 'MACRO', 'CRYPTO'];
   styleUrl: './sources.scss',
 })
 export class Sources implements OnInit {
-  private readonly settingsService = inject(SettingsService);
+  private readonly settingsRepository = inject(SettingsRepository);
 
   sources = signal<DataSource[]>([]);
   sourcesLoading = signal(true);
@@ -35,7 +35,7 @@ export class Sources implements OnInit {
   }
 
   loadSources() {
-    this.settingsService.getSources().subscribe({
+    this.settingsRepository.getSources().subscribe({
       next: (sources) => {
         this.sources.set(sources);
         this.sourcesLoading.set(false);
@@ -67,7 +67,7 @@ export class Sources implements OnInit {
     );
     this.savingIds.update((set) => new Set([...set, source.id]));
 
-    this.settingsService.updateEnabled(source.id, newEnabled).subscribe({
+    this.settingsRepository.updateEnabled(source.id, newEnabled).subscribe({
       next: (updated) => {
         this.sources.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
         this.savingIds.update((set) => {

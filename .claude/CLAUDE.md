@@ -52,13 +52,16 @@ trade/
 
 ## Frontend modules
 
-- `dashboard/` — portfolio view (read-only positions) + AI analysis trigger
-- `import/` — Wealthsimple CSV drag-and-drop page
-- `suivi/` — import history (snapshots by date, market values, P&L)
-- `recommendations/` — filterable list of all recommendations
-- `history/` — chronological recommendation history
-- `settings/` — back-office avec sidenav : `sources/` (activer/désactiver), `test-sources/` (tester un flux)
-- `core/` — shared services (`PortfolioService`, `AnalysisService`, `SettingsService`, `SnapshotService`)
+Light hexagonal split under `frontend/src/app/` :
+
+- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 4 repositories : Portfolio, Analysis, Settings, Snapshot
+- `features/` — UI feature folders (one per top-level route, *primary adapters* en vocabulaire hexagonal) :
+  - `dashboard/` — portfolio view (read-only positions) + AI analysis trigger
+  - `import/` — Wealthsimple CSV drag-and-drop page
+  - `suivi/` — import history (snapshots by date, market values, P&L)
+  - `recommendations/` — filterable list of all recommendations
+  - `history/` — chronological recommendation history
+  - `settings/` — back-office avec sidenav : `sources/` (activer/désactiver), `test-sources/` (tester un flux), `prompt-preview/` (aperçu du prompt LLM)
 
 ## Local Development
 

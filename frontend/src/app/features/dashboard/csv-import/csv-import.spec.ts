@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { PortfolioService } from '../../core/portfolio.service';
+import { PortfolioRepository } from '../../../core/portfolio.repository';
 import { CsvImport } from './csv-import';
 
 const EMPTY_PREVIEW = { accounts: [], totalItems: 0, skippedRows: 0, warnings: [] };
@@ -34,7 +34,7 @@ describe('CsvImport', () => {
 
     await TestBed.configureTestingModule({
       imports: [CsvImport],
-      providers: [{ provide: PortfolioService, useValue: service }],
+      providers: [{ provide: PortfolioRepository, useValue: service }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CsvImport);

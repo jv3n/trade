@@ -3,7 +3,11 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { AnalysisService, Recommendation, RecommendationStatus } from '../core/analysis.service';
+import {
+  AnalysisRepository,
+  Recommendation,
+  RecommendationStatus,
+} from '../../core/analysis.repository';
 
 const STATUS_LABELS: Record<RecommendationStatus, string> = {
   PENDING: 'En attente',
@@ -19,7 +23,7 @@ const STATUS_LABELS: Record<RecommendationStatus, string> = {
   styleUrl: './history.scss',
 })
 export class History implements OnInit {
-  private readonly analysisService = inject(AnalysisService);
+  private readonly analysisRepository = inject(AnalysisRepository);
 
   recommendations = signal<Recommendation[]>([]);
   loading = signal(false);
@@ -57,7 +61,7 @@ export class History implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.analysisService.getAllRecommendations().subscribe({
+    this.analysisRepository.getAllRecommendations().subscribe({
       next: (recs) => {
         this.recommendations.set(recs);
         this.loading.set(false);

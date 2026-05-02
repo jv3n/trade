@@ -2,7 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 import { Import } from './import';
+import { PortfolioRepository } from '../../core/portfolio.repository';
+
+const mockPortfolioRepository = {
+  previewCsvImport: () => of({ accounts: [], totalItems: 0, skippedRows: 0, warnings: [] }),
+  confirmCsvImport: () =>
+    of({ portfoliosCreated: 0, portfoliosUpdated: 0, totalImported: 0, skipped: 0 }),
+};
 
 describe('Import', () => {
   let component: Import;
@@ -12,7 +20,12 @@ describe('Import', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Import],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: PortfolioRepository, useValue: mockPortfolioRepository },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Import);
