@@ -8,8 +8,8 @@ Référence des sources d'ingestion. **22 sources sont actuellement seedées en 
 
 | Nom | URL RSS | Langue | Gratuit | Notes |
 |-----|---------|--------|---------|-------|
-| Reuters Business | `https://feeds.reuters.com/reuters/businessNews` | EN | ✅ | Actualité économique mondiale |
-| Reuters Markets | `https://feeds.reuters.com/reuters/marketsNews` | EN | ✅ | Marchés financiers |
+| Reuters Business | `https://feeds.reuters.com/reuters/businessNews` | EN | ✅ | ⚠️ URL morte — feeds.reuters.com abandonné en 2020 |
+| Reuters Markets | `https://feeds.reuters.com/reuters/marketsNews` | EN | ✅ | ⚠️ URL morte — feeds.reuters.com abandonné en 2020 |
 | Financial Times | `https://www.ft.com/rss/home` | EN | ⚠️ | Payant (certains articles libres) |
 | Les Echos | `https://www.lesechos.fr/rss/rss_finance.xml` | FR | ⚠️ | Certains articles payants |
 | Le Monde Économie | `https://www.lemonde.fr/economie/rss_full.xml` | FR | ✅ | Bonne couverture macro |
@@ -46,6 +46,9 @@ Référence des sources d'ingestion. **22 sources sont actuellement seedées en 
 | [Banque Mondiale](https://datahelpdesk.worldbank.org/knowledgebase/articles/889386) | Indicateurs mondiaux | ✅ | API REST publique |
 | [INSEE](https://api.insee.fr/catalogue/) | Indicateurs France | ✅ | Clé API requise (gratuite) |
 | [OCDE](https://data.oecd.org/api/) | Statistiques pays OCDE | ✅ | API REST publique |
+| [PBOC](https://www.pbc.gov.cn) | Indicateurs Chine (taux, réserves, masse monétaire) | ✅ | API publique |
+| [BOJ](https://www.stat-search.boj.or.jp) | Indicateurs Japon (taux, inflation, balance des paiements) | ✅ | API publique |
+| [MAS](https://eservices.mas.gov.sg/apimg) | Indicateurs Singapour (taux de change, inflation) | ✅ | API publique |
 
 ---
 
@@ -63,7 +66,7 @@ Référence des sources d'ingestion. **22 sources sont actuellement seedées en 
 
 Pour la Phase 1, les sources recommandées (gratuites, stables, sans clé ou clé gratuite) :
 
-1. **RSS** : Reuters Business + Reuters Markets + BFM Bourse + Le Monde Économie
+1. **RSS** : CNBC Markets + MarketWatch + Le Monde Économie (Reuters, BFM Bourse et Les Echos désactivés — URLs mortes, bloquées ou payantes)
 2. **Marché** : Yahoo Finance (yfinance) + Stooq pour l'historique
 3. **Macro** : FRED + BCE
 4. **Crypto** : CoinGecko

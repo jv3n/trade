@@ -3,6 +3,7 @@ package com.portfolioai.ingestion.infrastructure.http
 import com.portfolioai.ingestion.application.RssFetcherService
 import com.portfolioai.ingestion.application.dto.FeedArticleDto
 import com.portfolioai.ingestion.application.dto.FeedSourceDto
+import com.portfolioai.ingestion.application.dto.SourceTestResultDto
 import com.portfolioai.ingestion.application.dto.UpdateSourceEnabledRequest
 import com.portfolioai.ingestion.application.dto.toDto
 import com.portfolioai.ingestion.infrastructure.persistence.FeedArticleRepository
@@ -37,6 +38,13 @@ class IngestionController(
       sourceRepository.findByIdOrNull(id) ?: throw NoSuchElementException("Source $id not found")
     source.enabled = body.enabled
     return source.toDto()
+  }
+
+  @GetMapping("/sources/{id}/test")
+  fun testSource(@PathVariable id: UUID): SourceTestResultDto {
+    val source =
+      sourceRepository.findByIdOrNull(id) ?: throw NoSuchElementException("Source $id not found")
+    return rssFetcherService.testFetch(source)
   }
 
   @PostMapping("/fetch")

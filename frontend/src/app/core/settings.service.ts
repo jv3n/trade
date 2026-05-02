@@ -16,6 +16,20 @@ export interface DataSource {
   requiresApiKey: boolean;
 }
 
+export interface RawArticle {
+  title: string;
+  link: string | null;
+  publishedAt: string | null;
+}
+
+export interface SourceTestResult {
+  ok: boolean;
+  error: string | null;
+  message: string | null;
+  itemCount: number;
+  items: RawArticle[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   private readonly http = inject(HttpClient);
@@ -26,5 +40,9 @@ export class SettingsService {
 
   updateEnabled(id: string, enabled: boolean): Observable<DataSource> {
     return this.http.patch<DataSource>(`/api/ingestion/sources/${id}`, { enabled });
+  }
+
+  testSource(id: string): Observable<SourceTestResult> {
+    return this.http.get<SourceTestResult>(`/api/ingestion/sources/${id}/test`);
   }
 }

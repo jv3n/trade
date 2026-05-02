@@ -1,0 +1,80 @@
+<div class="test-layout">
+  <div class="content-header">
+    <h2>Tester une source</h2>
+    <p>
+      Sélectionnez un type puis une source pour vérifier sa connectivité et consulter les données
+      brutes.
+    </p>
+  </div>
+
+  <div class="test-form">
+    <select class="source-select" (change)="selectCategory($any($event.target).value)">
+      <option value="">— Type de source —</option>
+      @for (cat of categories; track cat) {
+        <option [value]="cat">{{ categoryLabels[cat] }}</option>
+      }
+    </select>
+
+    <select
+      class="source-select"
+      (change)="selectSource($any($event.target).value)"
+      [disabled]="!selectedCategory()"
+    >
+      <option value="">— Source —</option>
+      @for (source of sourcesForCategory(); track source.id) {
+        <option [value]="source.id">{{ source.name }}</option>
+      }
+    </select>
+
+    <button class="run-btn" (click)="test()" [disabled]="!selectedId() || testing()">
+      @if (testing()) {
+        <mat-spinner diameter="14"></mat-spinner>
+        En cours…
+      } @else {
+        Lancer le test
+      }
+    </button>
+  </div>
+
+  @if (result(); as r) {
+    @if (!r.ok) {
+      <div class="error-banner">
+        <mat-icon>error_outline</mat-icon>
+        {{ r.error }}
+      </div>
+    } @else {
+      <div class="result-block">
+        <div class="result-header">
+          <mat-icon>check_circle</mat-icon>
+          @if (r.message) {
+            {{ r.message }}
+          } @else {
+            {{ r.itemCount }} articles récupérés
+          }
+        </div>
+        @if (r.items.length > 0) {
+          <div class="articles-list">
+            @for (item of r.items; track item.title) {
+              <div class="article-item">
+                <div class="article-title">{{ item.title }}</div>
+                <div class="article-meta">
+                  @if (item.publishedAt) {
+                    <span>{{ item.publishedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  }
+                  @if (item.link) {
+                    <a [href]="item.link" target="_blank" rel="noopener">{{ item.link }}</a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (selectedSource(); as source) {
+          <div class="result-url">
+            <mat-icon>open_in_new</mat-icon>
+            <a [href]="source.url" target="_blank" rel="noopener">{{ source.url }}</a>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -6,6 +6,16 @@ import com.portfolioai.ingestion.domain.FeedSource
 import java.time.Instant
 import java.util.UUID
 
+data class RawArticleDto(val title: String, val link: String?, val publishedAt: Instant?)
+
+data class SourceTestResultDto(
+  val ok: Boolean,
+  val error: String?,
+  val message: String?,
+  val itemCount: Int,
+  val items: List<RawArticleDto>,
+)
+
 data class FeedSourceDto(
   val id: UUID,
   val slug: String,

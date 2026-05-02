@@ -13,5 +13,20 @@ export const routes: Routes = [
     loadComponent: () => import('./recommendations/recommendations').then((m) => m.Recommendations),
   },
   { path: 'history', loadComponent: () => import('./history/history').then((m) => m.History) },
-  { path: 'settings', loadComponent: () => import('./settings/settings').then((m) => m.Settings) },
+  {
+    path: 'settings',
+    loadComponent: () => import('./settings/settings').then((m) => m.Settings),
+    children: [
+      { path: '', redirectTo: 'sources', pathMatch: 'full' },
+      {
+        path: 'sources',
+        loadComponent: () => import('./settings/sources/sources').then((m) => m.Sources),
+      },
+      {
+        path: 'test-sources',
+        loadComponent: () =>
+          import('./settings/test-sources/test-sources').then((m) => m.TestSources),
+      },
+    ],
+  },
 ];
