@@ -24,6 +24,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/history/history').then((m) => m.History),
   },
   {
+    path: 'ticker/:symbol',
+    loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),
+  },
+  {
     path: 'settings',
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
     children: [

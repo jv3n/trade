@@ -37,3 +37,6 @@ anthropic:
 
 llm:
   provider: claude
+
+yahoo:
+  base-url: https://query1.finance.yahoo.com

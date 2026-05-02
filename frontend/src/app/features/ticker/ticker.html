@@ -1,0 +1,153 @@
+<div class="ticker-page">
+  <a routerLink="/dashboard" class="back-link">
+    <mat-icon>arrow_back</mat-icon>
+    Retour au portefeuille
+  </a>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="20"></mat-spinner>
+      Chargement du ticker {{ symbol() }}…
+    </div>
+  } @else if (error(); as e) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ e }}
+    </div>
+  } @else if (snapshot(); as snap) {
+    <header class="ticker-header">
+      <div class="ticker-id">
+        <span class="ticker-symbol">{{ snap.quote.symbol }}</span>
+        @if (snap.quote.name) {
+          <span class="ticker-name">{{ snap.quote.name }}</span>
+        }
+        @if (snap.quote.exchange) {
+          <span class="ticker-exchange">{{ snap.quote.exchange }}</span>
+        }
+      </div>
+      <div class="ticker-price">
+        <span class="price-value">{{ snap.quote.price | number: '1.2-2' }}</span>
+        @if (snap.quote.currency) {
+          <span class="price-currency">{{ snap.quote.currency }}</span>
+        }
+      </div>
+    </header>
+
+    <!-- Chart -->
+    <section class="chart-card">
+      @if (closes().length > 0) {
+        <svg
+          [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+          preserveAspectRatio="none"
+          class="price-chart"
+        >
+          <path [attr.d]="pricePath()" fill="none" />
+        </svg>
+      } @else {
+        <div class="empty-state">
+          <mat-icon>show_chart</mat-icon>
+          <p>Pas assez de données pour tracer la courbe.</p>
+        </div>
+      }
+    </section>
+
+    <!-- Indicators -->
+    @if (snap.indicators; as ind) {
+      <section class="indicators-grid">
+        <div class="chip" [class]="rsiClass()">
+          <span class="chip-label">RSI(14)</span>
+          <span class="chip-value">
+            @if (ind.rsi14 !== null) {
+              {{ ind.rsi14 | number: '1.1-1' }}
+            } @else {
+              —
+            }
+          </span>
+        </div>
+
+        <div class="chip" [class]="drawdownClass()">
+          <span class="chip-label">Drawdown 52w</span>
+          <span class="chip-value">
+            @if (ind.drawdownFrom52wHigh !== null) {
+              {{ ind.drawdownFrom52wHigh | number: '1.1-1' }}%
+            } @else {
+              —
+            }
+          </span>
+        </div>
+
+        <div class="chip" [class]="perfClass(ind.perf1m)">
+          <span class="chip-label">Perf 1m</span>
+          <span class="chip-value">{{ signed(ind.perf1m) }}%</span>
+        </div>
+
+        <div class="chip" [class]="perfClass(ind.perf3m)">
+          <span class="chip-label">Perf 3m</span>
+          <span class="chip-value">{{ signed(ind.perf3m) }}%</span>
+        </div>
+
+        <div class="chip" [class]="perfClass(ind.perf1y)">
+          <span class="chip-label">Perf 1y</span>
+          <span class="chip-value">{{ signed(ind.perf1y) }}%</span>
+        </div>
+
+        <div class="chip">
+          <span class="chip-label">MA50</span>
+          <span class="chip-value">
+            @if (ind.ma50 !== null) {
+              {{ ind.ma50 | number: '1.2-2' }}
+            } @else {
+              —
+            }
+          </span>
+        </div>
+
+        <div class="chip">
+          <span class="chip-label">MA200</span>
+          <span class="chip-value">
+            @if (ind.ma200 !== null) {
+              {{ ind.ma200 | number: '1.2-2' }}
+            } @else {
+              —
+            }
+          </span>
+        </div>
+
+        <div class="chip" [class]="perfClass(ind.distanceToMa50Pct)">
+          <span class="chip-label">vs MA50</span>
+          <span class="chip-value">{{ signed(ind.distanceToMa50Pct) }}%</span>
+        </div>
+
+        <div class="chip" [class]="perfClass(ind.distanceToMa200Pct)">
+          <span class="chip-label">vs MA200</span>
+          <span class="chip-value">{{ signed(ind.distanceToMa200Pct) }}%</span>
+        </div>
+
+        <div class="chip">
+          <span class="chip-label">Vol relatif 30j</span>
+          <span class="chip-value">
+            @if (ind.volumeRelative30d !== null) {
+              {{ ind.volumeRelative30d | number: '1.2-2' }}x
+            } @else {
+              —
+            }
+          </span>
+        </div>
+      </section>
+    }
+
+    <!-- 52w range -->
+    @if (snap.quote.fiftyTwoWeekLow !== null && snap.quote.fiftyTwoWeekHigh !== null) {
+      <section class="range-card">
+        <div class="range-header">
+          <span class="range-label">Plage 52 semaines</span>
+        </div>
+        <div class="range-values">
+          <span>{{ snap.quote.fiftyTwoWeekLow | number: '1.2-2' }}</span>
+          <span class="range-current">{{ snap.quote.price | number: '1.2-2' }}</span>
+          <span>{{ snap.quote.fiftyTwoWeekHigh | number: '1.2-2' }}</span>
+        </div>
+      </section>
+    }
+  }
+</div>

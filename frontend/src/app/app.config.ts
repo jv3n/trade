@@ -12,6 +12,8 @@ import { SettingsRepository } from './core/settings.repository';
 import { HttpSettingsRepository } from './core/adapters/settings.http';
 import { SnapshotRepository } from './core/snapshot.repository';
 import { HttpSnapshotRepository } from './core/adapters/snapshot.http';
+import { MarketRepository } from './core/market.repository';
+import { HttpMarketRepository } from './core/adapters/market.http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,5 +25,6 @@ export const appConfig: ApplicationConfig = {
     { provide: AnalysisRepository, useClass: HttpAnalysisRepository },
     { provide: SettingsRepository, useClass: HttpSettingsRepository },
     { provide: SnapshotRepository, useClass: HttpSnapshotRepository },
+    { provide: MarketRepository, useClass: HttpMarketRepository },
   ],
 };

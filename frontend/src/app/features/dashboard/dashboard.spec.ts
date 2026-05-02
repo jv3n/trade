@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Dashboard } from './dashboard';
 import { PortfolioRepository, Asset } from '../../core/portfolio.repository';
@@ -21,6 +22,7 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
+        provideRouter([]),
         { provide: PortfolioRepository, useValue: mockPortfolioRepository },
         { provide: AnalysisRepository, useValue: mockAnalysisRepository },
       ],

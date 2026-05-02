@@ -98,7 +98,13 @@
                   @for (asset of assets(); track asset.id) {
                     <tr>
                       <td>
-                        <span class="ticker-badge">{{ asset.ticker }}</span>
+                        <a
+                          [routerLink]="['/ticker', asset.ticker]"
+                          class="ticker-badge ticker-link"
+                          matTooltip="Voir le dossier {{ asset.ticker }}"
+                        >
+                          {{ asset.ticker }}
+                        </a>
                       </td>
                       <td>{{ asset.name }}</td>
                       <td>
