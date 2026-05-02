@@ -9,6 +9,8 @@ export interface Portfolio {
   createdAt: string;
   updatedAt: string;
   assetCount: number;
+  /** Sum of bookValueCad across the portfolio's assets, in CAD. Comparable cross-portfolio. */
+  totalBookValueCad: number;
 }
 
 export interface Asset {

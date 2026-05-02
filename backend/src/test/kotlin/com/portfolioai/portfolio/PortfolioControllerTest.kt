@@ -50,6 +50,7 @@ class PortfolioControllerTest {
       createdAt = now,
       updatedAt = now,
       assetCount = 2,
+      totalBookValueCad = BigDecimal("3500.00"),
     )
 
   private fun assetDto() =
@@ -80,6 +81,9 @@ class PortfolioControllerTest {
       .andExpect(jsonPath("$.length()").value(1))
       .andExpect(jsonPath("$[0].name").value("CELI"))
       .andExpect(jsonPath("$[0].assetCount").value(2))
+      // The dashboard sums these values across portfolios to display the grand total —
+      // pinning the field name so a backend rename surfaces here, not in the UI.
+      .andExpect(jsonPath("$[0].totalBookValueCad").value(3500.0))
   }
 
   @Test

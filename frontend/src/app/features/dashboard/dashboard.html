@@ -19,6 +19,12 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>Portefeuilles</h2>
+        @if (portfolios().length > 0) {
+          <div class="grand-total">
+            <span class="grand-total-label">Total agrégé</span>
+            <span class="grand-total-amount">{{ grandTotalCad() | number: '1.0-0' }} CAD</span>
+          </div>
+        }
       </div>
 
       @if (loading()) {
@@ -33,6 +39,7 @@
             >
               <span class="portfolio-name">{{ p.name }}</span>
               <span class="portfolio-count">{{ p.assetCount }} actif(s)</span>
+              <span class="portfolio-total">{{ p.totalBookValueCad | number: '1.0-0' }} CAD</span>
             </li>
           } @empty {
             <li class="empty-state">Importez un CSV pour créer vos portefeuilles.</li>

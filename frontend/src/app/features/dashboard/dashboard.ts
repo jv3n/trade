@@ -37,9 +37,14 @@ export class Dashboard implements OnInit, OnDestroy {
   error = signal<string | null>(null);
   lastRecommendation = signal<Recommendation | null>(null);
 
-  /** Total en CAD (bookValueCad toujours en CAD, comparable entre USD et CAD) */
+  /** Total en CAD du portefeuille sélectionné (bookValueCad toujours en CAD). */
   totalPortfolioValueCad = computed(() =>
     this.assets().reduce((sum, a) => sum + a.bookValueCad, 0),
+  );
+
+  /** Grand total en CAD agrégé sur tous les portefeuilles — affiché dans la sidebar. */
+  grandTotalCad = computed(() =>
+    this.portfolios().reduce((sum, p) => sum + p.totalBookValueCad, 0),
   );
 
   ngOnInit() {

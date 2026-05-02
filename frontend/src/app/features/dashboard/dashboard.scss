@@ -60,6 +60,30 @@
       color: var(--color-text-dim);
       margin: 0;
     }
+
+    .grand-total {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      margin-top: 0.6rem;
+      padding: 0.6rem 0.75rem;
+      background: var(--color-surface-2);
+      border-radius: var(--radius);
+      border-left: 2px solid var(--color-accent);
+    }
+
+    .grand-total-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-dim);
+    }
+
+    .grand-total-amount {
+      font-size: 1.05rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
   }
 }
 
@@ -97,6 +121,13 @@
   .portfolio-count {
     font-size: 0.75rem;
     color: var(--color-text-dim);
+  }
+
+  .portfolio-total {
+    font-size: 0.78rem;
+    color: var(--color-text-dim);
+    font-variant-numeric: tabular-nums;
+    margin-top: 0.1rem;
   }
 }
 

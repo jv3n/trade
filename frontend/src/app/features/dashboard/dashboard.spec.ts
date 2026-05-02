@@ -17,7 +17,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Dashboard } from './dashboard';
-import { PortfolioRepository, Asset } from '../../core/portfolio.repository';
+import { PortfolioRepository, Asset, Portfolio } from '../../core/portfolio.repository';
 import { AnalysisRepository } from '../../core/analysis.repository';
 
 const mockPortfolioRepository = {
@@ -130,6 +130,40 @@ describe('Dashboard', () => {
     expect(result!.targetAmount).toBeCloseTo(1000);
     expect(result!.delta).toBeCloseTo(-400);
     expect(result!.currency).toBe('CAD');
+  });
+
+  // ---- grandTotalCad ----
+
+  it('grandTotalCad sums totalBookValueCad across all portfolios', () => {
+    // Pins the contract with the backend's `PortfolioDto.totalBookValueCad`. A rename on either
+    // side would zero out the sidebar's "Total agrégé" — surface the regression here.
+    const portfolios: Portfolio[] = [
+      {
+        id: 'p1',
+        name: 'CELI',
+        description: null,
+        createdAt: '',
+        updatedAt: '',
+        assetCount: 3,
+        totalBookValueCad: 5000,
+      },
+      {
+        id: 'p2',
+        name: 'REER',
+        description: null,
+        createdAt: '',
+        updatedAt: '',
+        assetCount: 4,
+        totalBookValueCad: 7500,
+      },
+    ];
+    component.portfolios.set(portfolios);
+    expect(component.grandTotalCad()).toBe(12500);
+  });
+
+  it('grandTotalCad is 0 when there are no portfolios', () => {
+    component.portfolios.set([]);
+    expect(component.grandTotalCad()).toBe(0);
   });
 
   it('actionAmounts uses 0 bookValueCad for asset not in portfolio', () => {
