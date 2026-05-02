@@ -21,7 +21,15 @@ Depuis l'onglet **Import**, l'utilisateur dépose son export CSV Wealthsimple. L
 
 ### Sources de données
 
-22 sources configurables depuis la page Settings : presse financière (Reuters, BFM, CNBC…), données de marché (Yahoo Finance, Stooq…), indicateurs macro (FRED, BCE…) et crypto (CoinGecko…). Chaque source peut être activée ou désactivée. Les sources sont ingérées automatiquement toutes les 15 minutes.
+25 sources configurables depuis la page **Settings** (back-office avec navigation latérale) :
+
+- **RSS actives** : Le Monde Économie, CNBC Markets, MarketWatch
+- **RSS inactives** : Reuters (URLs mortes depuis 2020), BFM Bourse (accès bloqué), Les Echos (payant), Seeking Alpha (payant)
+- **Données de marché** : Yahoo Finance, Stooq (actifs) + Alpha Vantage, Finnhub, Polygon, Twelve Data (inactifs, clé API requise)
+- **Macro** : FRED, BCE (actifs) + Banque Mondiale, INSEE, PBOC, BOJ, MAS (inactifs)
+- **Crypto** : CoinGecko (actif) + Binance, CoinMarketCap (inactifs)
+
+Chaque source RSS peut être testée manuellement depuis l'onglet **Tester une source** : sélection par type puis par source, affichage des articles bruts récupérés ou du message d'erreur. Les sources non-RSS affichent leur URL cliquable (intégration API à venir). Les sources sont ingérées automatiquement toutes les 15 minutes (RSS uniquement pour l'instant).
 
 ### Analyse IA
 

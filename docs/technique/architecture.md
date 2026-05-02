@@ -30,7 +30,6 @@
 │                   recommandations, jobs  │
 │  portfolio/     → import CSV, snapshots  │
 │  shared/        → utilitaires transverses│
-│  observability/ → comparaison (Phase 2)  │
 └──────────────────┬──────────────────────┘
                    │ REST API
                    ▼
@@ -42,7 +41,9 @@
 │  suivi/            → timeline snapshots  │
 │  recommendations/  → liste filtrable     │
 │  history/          → historique IA       │
-│  settings/         → gestion des sources │
+│  settings/         → back-office sources  │
+│    sources/        → activer/désactiver  │
+│    test-sources/   → tester un flux      │
 └──────────────────────────────────────────┘
 ```
 
@@ -63,7 +64,7 @@ Orchestration des appels LLM, persistance des recommandations et suivi des jobs 
 - `LlmResponseParser` — parse le JSON brut du LLM (tolérant aux fences markdown / prose autour) en `ParsedLlmRecommendation`. Pas de validation
 - `RecommendationValidator` — vérifie 8 règles : tickers ⊆ portefeuille, pas de duplicate / extra, action ∈ enum, confidence 0-100, targetWeight 0-100 par item, Σ ∈ [95,105], SELL ⇒ targetWeight ≤ 5. Renvoie un `ValidationResult` sealed (`Valid` | `Invalid(errors)`)
 - `RecommendationPersister` — `@Transactional` : recharge le portefeuille, persiste la `Recommendation` et ses actions à partir d'un `ParsedLlmRecommendation` déjà validé
-- `AnalysisJobStore` — persiste les `AnalysisJob` en base (table `analysis_job`, V7). Permet de reprendre un job pendant après redémarrage et de dédupliquer deux requêtes simultanées sur le même portefeuille
+- `AnalysisJobStore` — persiste les `AnalysisJob` en base (table `analysis_job`). Permet de reprendre un job pendant après redémarrage et de dédupliquer deux requêtes simultanées sur le même portefeuille
 
 Deux implémentations de `LlmClient` :
 
@@ -86,17 +87,19 @@ Utilitaires transverses : pour l'instant `GlobalExceptionHandler` (mapping unifo
 
 ## Schéma de base de données
 
-Migrations Flyway dans `backend/src/main/resources/db/migration/` :
+Une seule migration Flyway : `backend/src/main/resources/db/migration/V1__init.sql`
 
-| Migration | Contenu |
-|-----------|---------|
-| V1 | Portfolio, Asset, Recommendation, RecommendationAction, RecommendationScore |
-| V2 | FeedSource, FeedArticle |
-| V3 | Enrichissement FeedSource (slug, description, free, requires_api_key) + seed 22 sources |
-| V4 | PortfolioSnapshot (batch_id, portfolio_id, imported_at), SnapshotPosition (valeurs CAD + marché + P&L) |
-| V5 | Asset : ajout des colonnes `currency` et `book_value_cad` |
-| V6 | Asset : ajout de `market_value`, `unrealized_gain`, `gain_currency` |
-| V7 | AnalysisJob (id, portfolio_id, status, created_at, recommendation_id, error) — index sur `(portfolio_id, status)` |
+Schéma complet en une passe (jamais déployé en prod avant consolidation) :
+
+| Section | Tables |
+|---------|--------|
+| Portefeuille & actifs | `portfolio`, `asset` (inclut currency, book_value_cad, market_value, unrealized_gain) |
+| Recommandations IA | `recommendation`, `recommendation_action`, `recommendation_score` |
+| Jobs d'analyse | `analysis_job` |
+| Snapshots historiques | `portfolio_snapshot`, `snapshot_position` |
+| Sources d'ingestion | `feed_source` (slug, category, enabled, free, requires_api_key), `feed_article` |
+
+Le seed des 25 sources est inclus directement dans V1 (RSS, MARKET, MACRO, CRYPTO).
 
 ## Décisions techniques notables
 
@@ -117,6 +120,8 @@ Migrations Flyway dans `backend/src/main/resources/db/migration/` :
 Conséquence sur le SYSTEM_PROMPT : les exemples de tickers (`AAPL`, `NVDA`) ont été remplacés par des placeholders (`<one of the portfolio tickers>`) — Mistral avait tendance à recopier les exemples comme si c'étaient de vrais tickers du portefeuille.
 
 **LLM local avec Mistral 7B Instruct** — initialement on était sur `qwen2:1.5b` pour la latence (~60 s), mais le prompt enrichi (25 articles + descriptions + valeurs marché + poids) a révélé que le modèle est trop petit : sorties incohérentes, tickers hallucinés, poids ne sommant pas à 100. Bascule sur `mistral` (7B Instruct, quantization Q4) pour la cohérence ; latence ~1-2 min sur M1, absorbée par les timeouts à 180 s. Le role `system` reste fusionné avec `user` (pratique conservée pour rester compatible avec les modèles qui l'ignorent).
+
+**Robustesse du parsing RSS** — les flux RSS publics sont souvent mal formés. `RssFetcherService.fetchFeed()` pré-traite le contenu avant de le passer à ROME : (1) User-Agent + Accept header pour éviter les blocages serveur, (2) détection HTML (DOCTYPE / `<html>`) pour signaler explicitement une URL morte ou bloquée, (3) correction des `&` nus non échappés via regex (fréquent sur BFM-style). `isAllowDoctypes = true` sur `SyndFeedInput` pour les flux avec déclaration DOCTYPE. Le scheduler `fetchAll()` et l'endpoint de test passent tous deux par le même helper — la robustesse s'applique aux deux chemins.
 
 **Validation du schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage contre les entités. Toute modification des entités nécessite une migration Flyway.
 

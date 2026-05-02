@@ -57,7 +57,7 @@ trade/
 - `suivi/` — import history (snapshots by date, market values, P&L)
 - `recommendations/` — filterable list of all recommendations
 - `history/` — chronological recommendation history
-- `settings/` — data-source configuration
+- `settings/` — back-office avec sidenav : `sources/` (activer/désactiver), `test-sources/` (tester un flux)
 - `core/` — shared services (`PortfolioService`, `AnalysisService`, `SettingsService`, `SnapshotService`)
 
 ## Local Development
