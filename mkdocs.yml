@@ -1,6 +1,6 @@
 site_name: PortfolioAI
 site_description: Optimiseur de portefeuille boursier alimenté par l'IA
-site_url: https://julienvenet.github.io/trade/
+site_url: https://jv3n.github.io/trade/
 docs_dir: docs
 
 nav:
@@ -8,6 +8,7 @@ nav:
       - Vision: metier/vision.md
       - Fonctionnalités: metier/fonctionnalites.md
   - Technique:
+      - Onboarding développeur: technique/developper.md
       - Architecture: technique/architecture.md
       - Guide de développement: technique/developpement.md
   - Projet:

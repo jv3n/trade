@@ -41,7 +41,8 @@ trade/
 │   ├── metier/              # vision.md, fonctionnalites.md
 │   ├── technique/           # architecture.md, developpement.md, ddd.md
 │   ├── projet/              # backlog.md, sources.md, commit-conventions.md
-│   └── data-input/          # local CSVs (gitignored)
+│   ├── data-input/          # fake sample CSVs (versioned)
+│   └── data-input-local/    # real Wealthsimple exports (gitignored)
 ├── .github/workflows/       # CI: backend.yml, frontend.yml, docs.yml
 ├── .claude/                 # this folder — Claude Code skills, hooks, instructions
 ├── Tiltfile
@@ -127,7 +128,7 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 - Commits in **English**, Conventional Commits — see `docs/projet/commit-conventions.md`
 - Commit message proposals are always in **English**
 - Never commit API keys. `application-local.yml` is gitignored
-- `docs/data-input/` is gitignored — contains local Wealthsimple CSVs
+- `docs/data-input/` contains **fake** sample CSVs (versioned, used for smoke tests / demo / CI). Real Wealthsimple exports go in `docs/data-input-local/` which is gitignored — never move real exports into `data-input/`
 
 ## Instructions for Claude
 
@@ -175,6 +176,7 @@ Files under `docs/` describe the actual state of the project. Keep them in sync 
 | `docs/metier/fonctionnalites.md`  | A feature changes status, or a phase advances                             |
 | `docs/technique/architecture.md`  | A new module, an important technical decision, or a new pattern is added |
 | `docs/technique/developpement.md` | Local config changes, a Tilt command is added                             |
+| `docs/technique/developper.md`    | Newcomer onboarding flow changes (new prerequisite, install step, common failure mode worth flagging) |
 | `docs/projet/sources.md`          | A data source is added or removed                                         |
 | `docs/projet/backlog.md`          | A Phase 1+ feature is implemented, frozen, or its priority changes        |
 

@@ -74,7 +74,9 @@ tilt_modules/
 # ========================
 # Données locales (CSV, exports courtiers)
 # ========================
-docs/data-input/
+# data-input/ contient des CSV factices versionnés (smoke test, démo, CI).
+# Les vrais exports Wealthsimple vont dans data-input-local/, jamais commit.
+docs/data-input-local/
 
 # ========================
 # Divers IDE
