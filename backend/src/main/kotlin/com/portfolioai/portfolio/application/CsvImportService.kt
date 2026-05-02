@@ -202,7 +202,9 @@ class CsvImportService(
         .setIgnoreHeaderCase(true)
         .setTrim(true)
         .setIgnoreEmptyLines(true)
-        .build()
+        // commons-csv 1.14 deprecated `Builder.build()` in favour of `Builder.get()`
+        // (alignment with the rest of the commons-* family). Same behaviour.
+        .get()
 
     val parser = CSVParser.parse(rawText.reader(), format)
     log.info("WS CSV headers (normalised): {}", parser.headerNames.map { normalise(it) })

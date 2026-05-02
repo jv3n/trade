@@ -12,7 +12,7 @@ import com.rometools.rome.io.SyndFeedInput
 import java.io.StringReader
 import java.net.ConnectException
 import java.net.SocketTimeoutException
-import java.net.URL
+import java.net.URI
 import java.net.UnknownHostException
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -102,7 +102,9 @@ class RssFetcherService(
     )
 
   private fun fetchFeed(url: String): SyndFeed {
-    val conn = URL(url).openConnection()
+    // `URL(String)` is deprecated in Java 21 (encoding pitfalls) ; the recommended path is via
+    // `URI` which validates and percent-encodes properly before producing the URL.
+    val conn = URI(url).toURL().openConnection()
     conn.setRequestProperty(
       "User-Agent",
       "Mozilla/5.0 (compatible; PortfolioAI/1.0; +https://github.com/portfolioai)",

@@ -1,9 +1,9 @@
 plugins {
-  kotlin("jvm") version "2.1.20"
-  kotlin("plugin.spring") version "2.1.20"
-  id("org.springframework.boot") version "3.5.0"
+  kotlin("jvm") version "2.1.21"
+  kotlin("plugin.spring") version "2.1.21"
+  id("org.springframework.boot") version "3.5.14"
   id("io.spring.dependency-management") version "1.1.7"
-  kotlin("plugin.jpa") version "2.1.20"
+  kotlin("plugin.jpa") version "2.1.21"
   id("com.diffplug.spotless") version "6.25.0"
 }
 
@@ -26,7 +26,7 @@ dependencies {
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("com.rometools:rome:2.1.0")
-  implementation("org.apache.commons:commons-csv:1.12.0")
+  implementation("org.apache.commons:commons-csv:1.14.1")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -46,8 +46,8 @@ tasks.withType<Test> { useJUnitPlatform() }
 
 spotless {
   kotlin {
-    ktfmt("0.54").googleStyle()
+    ktfmt("0.55").googleStyle()
     target("src/**/*.kt")
   }
-  kotlinGradle { ktfmt("0.54").googleStyle() }
+  kotlinGradle { ktfmt("0.55").googleStyle() }
 }
