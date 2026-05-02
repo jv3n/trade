@@ -68,10 +68,13 @@ Source primaire des données ticker.
 
 Le pipeline d'analyse en Phase 1 produit un **narratif LLM par ticker**, pas une recommandation portefeuille.
 
-- `TickerNarrativeService` — point d'entrée : prend un symbole, demande au `market/` les données, formate un prompt court, appelle le LLM, persiste le résultat.
+- `TickerNarrativeService` — point d'entrée : dedup d'un job pending sur le même symbole, réutilisation d'un snapshot frais (< 30 min), sinon kick async.
 - `TickerNarrativeRunner` (`@Async` séparé pour respecter le proxy Spring) — exécute hors thread HTTP.
-- `LlmNarrativeParser` — parse le JSON `{summary, sentiment, keyPoints}`. Tolérant aux fences markdown.
-- Persistance dans `TickerNarrativeSnapshot` : `{ticker, snapshotAt, prixLeJour, indicateurs, narrative}` — permet la relecture a posteriori (Phase 3 observabilité).
+- `TickerNarrativeExecutor` — orchestrate : `MarketChartClient.fetchChart` → `IndicatorCalculator` → `buildNarrativeUserMessage` → `LlmClient.complete` → `TickerNarrativeParser` → `TickerNarrativeValidator` → `TickerNarrativePersister`. Parse + validate + 1 retry avec les erreurs en feedback.
+- `TickerNarrativeParser` — parse `{summary, sentiment, keyPoints[]}` tolérant aux fences markdown, prose alentour, sentiment mixed-case.
+- `TickerNarrativeValidator` — règles strictes : 3-5 keyPoints, ≤15 mots/bullet, summary 2-3 phrases, sentiment ∈ enum.
+- Persistance dans `TickerNarrativeSnapshot` : `{symbol, generatedAt, price, indicatorsJson, summary, sentiment, keyPointsJson, modelUsed, promptVersion}` — append-only, permet la relecture a posteriori (Phase 3 observabilité).
+- Job tracking dans `TickerNarrativeJob` (status PENDING/DONE/ERROR) pour le polling front.
 
 > Le LLM **digère** des indicateurs déjà calculés. Il **ne calcule jamais** RSI, MA, etc. — sinon il hallucine les chiffres.
 
@@ -117,7 +120,7 @@ Hexagonal léger sous `frontend/src/app/` :
 
 ## Schéma de base de données
 
-Une seule migration Flyway aujourd'hui : `backend/src/main/resources/db/migration/V1__init.sql`. Phase 1 ajoutera une migration séparée pour les nouvelles tables.
+Deux migrations Flyway aujourd'hui : `V1__init.sql` (schéma Phase 0) et `V2__ticker_narrative.sql` (Phase 1 narratif).
 
 | Section | Tables | Statut |
 |---------|--------|--------|
@@ -126,7 +129,7 @@ Une seule migration Flyway aujourd'hui : `backend/src/main/resources/db/migratio
 | Recommandations IA (legacy) | `recommendation`, `recommendation_action`, `recommendation_score` | Gelé |
 | Jobs d'analyse (legacy) | `analysis_job` | Gelé (utilisé pour le polling Phase 0) |
 | Sources d'ingestion | `feed_source`, `feed_article` | Gelé en pratique (table conservée pour les Settings UI) |
-| Narratifs ticker | `ticker_narrative_snapshot` | **À créer Phase 1** |
+| Narratifs ticker | `ticker_narrative_snapshot`, `ticker_narrative_job` | Actif Phase 1 |
 
 ## Décisions techniques notables
 
@@ -143,6 +146,10 @@ Une seule migration Flyway aujourd'hui : `backend/src/main/resources/db/migratio
 **Claude API par défaut** — la Phase 0 a montré que Mistral 7B sortait des justifications grammaticalement correctes mais financièrement creuses ("vendre pour un profit de 0.4%"). Le saut de qualité Claude est largement supérieur au coût (~quelques cents par dossier). Mistral reste activable pour le dev offline (`llm.provider: ollama`).
 
 **Snapshot du narratif systématique** — chaque consultation d'un ticker persiste `{prix_du_jour, indicateurs, narrative}`. Sans ça, l'observabilité Phase 3 (relire ce que disait l'IA il y a 1 mois) est aveugle.
+
+**Cache snapshot 30 min + dedup job 5 min** — un re-clic sur un dossier ticker ne doit ni rappeler le LLM (cher en Claude, lent en Ollama) ni créer de jobs concurrents. Le service réutilise le snapshot existant si âge < 30 min, sinon réutilise le job pending si âge < 5 min, sinon kick un nouveau job. Front toujours uniforme : POST puis poll.
+
+**`LlmClient.modelId()` tracé sur chaque snapshot** — le snapshot stocke `ollama:mistral` ou `claude:claude-opus-4-6` au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer "tous les snapshots qwen2 sont moins bons" sans relire le contenu.
 
 ### Conservé depuis Phase 0
 

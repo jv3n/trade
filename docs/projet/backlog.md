@@ -43,30 +43,30 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ⏳ `YahooClient` | Fetch par ticker : quote courante, OHLC 1y, fundamentals basiques (P/E, market cap), 52w high/low, volume. API non officielle Yahoo, sans clé. Cache court 5-15 min selon endpoint | 🔴 Critique |
-| ⏳ `IndicatorCalculator` | Kotlin pur, sans Spring : RSI(14), MA50, MA200, momentum 30j/90j, perf 1m/3m/1y/YTD, drawdown 52w, volume relatif, position vs MA. Tests unitaires en priorité (la valeur du module est dans la justesse des chiffres) | 🔴 Critique |
-| ⏳ Endpoints REST `market/` | `GET /api/market/ticker/{symbol}` (données + indicateurs), `GET /api/market/ticker/{symbol}/history` (OHLC pour le graphe) | 🔴 Critique |
-| ⏳ Migration Flyway V2 | Table `ticker_narrative_snapshot` (id, ticker, snapshot_at, price, indicators_json, narrative, sentiment, prompt_version) | 🔴 Critique |
+| ✅ `YahooClient` + `MarketChartClient` (port) + `MockMarketChartClient` | Fetch par ticker : quote, OHLC 1y, 52w high/low. Sélection `yahoo.provider` (yahoo \| mock). Mock déterministe par symbole pour itérer sans Yahoo. Cache Caffeine 15 min, 503 propre sur 429 | 🔴 Critique |
+| ✅ `IndicatorCalculator` | Kotlin pur, sans Spring : RSI(14), MA50, MA200, momentum 30j/90j, perf 1m/3m/1y, drawdown 52w, volume relatif, distance vs MA. 20+ tests unitaires | 🔴 Critique |
+| ✅ Endpoint REST `market/` | `GET /api/market/ticker/{symbol}` retourne quote + indicateurs + bars OHLC (pour le graphe inline). Pas de `/history` séparé — un seul payload sert le dossier | 🔴 Critique |
+| ✅ Migration Flyway V2 | Tables `ticker_narrative_snapshot` (output LLM + indicateurs JSONB + provenance modèle) et `ticker_narrative_job` (état async) | 🔴 Critique |
 
 ### Backend — pipeline narratif
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ⏳ Nouveau prompt par ticker | Court, structuré : input `{ticker, price, indicators, fundamentals, recentChange}`, output JSON `{summary, sentiment, keyPoints[]}`. Pas de targetWeight, pas de BUY/SELL | 🔴 Critique |
-| ⏳ `TickerNarrativeService` + `Runner` | Pattern `@Async` sur bean séparé. Service HTTP → Runner async → Executor (sans transaction) → persistance du snapshot | 🔴 Critique |
-| ⏳ `LlmNarrativeParser` | Parse `{summary, sentiment, keyPoints[]}`, tolérant aux fences markdown. Validation simple (sentiment ∈ enum, summary non vide) | 🔴 Critique |
-| ⏳ Bascule Claude par défaut | `llm.provider: claude` dans `application.yml` (le défaut). Mistral disponible via `application-local.yml` pour offline | 🔴 Critique |
-| ⏳ Endpoint REST `narrative/` | `POST /api/market/ticker/{symbol}/narrative` (lance le narratif, async), `GET /api/market/ticker/{symbol}/narrative/jobs/{id}` (polling) | 🔴 Critique |
+| ✅ Nouveau prompt par ticker | System prompt strict + user message construit depuis indicateurs (skip silently les nuls). Output `{summary, sentiment: BULLISH\|NEUTRAL\|BEARISH, keyPoints: string[3..5]}`. Pas de targetWeight, pas de BUY/SELL | 🔴 Critique |
+| ✅ `TickerNarrativeService` + `Runner` + `Executor` | `@Async` sur bean séparé. Service → Runner async → Executor (parse + validate + 1 retry) → Persister. Cache snapshot 30 min, dedup job 5 min | 🔴 Critique |
+| ✅ `TickerNarrativeParser` + `TickerNarrativeValidator` | Parse JSON tolérant aux fences markdown / prose alentour / sentiment mixed-case. Valide 3-5 keyPoints, ≤15 mots/bullet, summary 2-3 phrases | 🔴 Critique |
+| ✅ Bascule Claude par défaut | `llm.provider: claude` dans `application.yml`. Mistral activable via `application-local.yml` pour offline. `LlmClient.modelId()` tracé sur chaque snapshot pour comparer plus tard | 🔴 Critique |
+| ✅ Endpoint REST `narrative/` | `POST /api/market/ticker/{symbol}/narrative` (kick async), `GET .../jobs/{id}` (poll), `GET .../latest` (snapshot le plus récent) | 🔴 Critique |
 
 ### Frontend — page Dossier ticker
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ⏳ Route `features/ticker/:symbol` | Page dossier ticker. En-tête : symbole, nom, prix, variation jour, sentiment badge | 🔴 Critique |
-| ⏳ Graphique des prix | Chart.js ou recharts. Toggle 1m / 3m / 1y. Overlay MA50, MA200. Pas de bibliothèque lourde — un wrapper léger Angular suffit | 🔴 Critique |
-| ⏳ Indicateurs en chips | RSI, drawdown 52w, perf 1y, distance à la MA50 — chips colorés selon zones (RSI > 70 = warning, etc.) | 🔴 Critique |
-| ⏳ Narratif LLM | Summary + bullets keyPoints. Spinner pendant la génération (polling du job) | 🔴 Critique |
-| ⏳ Lien Dashboard → Dossier ticker | Sur chaque position du dashboard, clic → `/ticker/:symbol` | 🟡 Moyenne |
+| ✅ Route `features/ticker/:symbol` | Page dossier ticker. En-tête : symbole, nom, prix, plage 52w, sentiment via badge ajouté avec le narratif | 🔴 Critique |
+| ✅ Graphique des prix | SVG inline (pas de dep ajoutée), 1y daily. Pas de toggle ni d'overlay MA pour l'instant — suffisant pour le MVP | 🔴 Critique |
+| ✅ Indicateurs en chips | 10 chips avec color-coding (RSI > 70 warning, drawdown profond rouge, etc.) | 🔴 Critique |
+| ⏳ Narratif LLM | Summary + bullets keyPoints. Spinner pendant la génération (polling du job). Bouton "Régénérer" pour forcer un nouveau snapshot | 🔴 Critique |
+| ✅ Lien Dashboard → Dossier ticker | Ticker cliquable dans la table du dashboard → `/ticker/:symbol` | 🟡 Moyenne |
 | ⏳ Liste des tickers détenus | Sur le dashboard, exposer la liste cliquable des tickers du portefeuille (raccourci d'accès aux dossiers) | 🟡 Moyenne |
 
 ### Settings — adaptation Phase 1
@@ -80,10 +80,11 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 | Sujet | Description | Priorité |
 |-------|-------------|----------|
-| ⏳ `IndicatorCalculatorTest` | Tests unit Kotlin purs sur cas connus : RSI sur série de prix monotone (RSI = 100 ou 0), MA sur fenêtre fixe, drawdown depuis high. La valeur du module est dans la justesse, sans test on n'a aucune confiance | 🔴 Critique |
-| ⏳ `YahooClientTest` | Mock HTTP de Yahoo (réponses figées en fixture), test du parsing de la quote et de l'historique | 🟡 Moyenne |
-| ⏳ `LlmNarrativeParserTest` | Cas : JSON valide, JSON dans markdown fences, JSON malformé, sentiment hors enum | 🟡 Moyenne |
-| ⏳ `TickerNarrativeServiceTest` | Test du pipeline complet avec Yahoo et LLM mockés | 🟡 Moyenne |
+| ✅ `IndicatorCalculatorTest` | 20+ tests unitaires Kotlin purs : RSI sur série monotone, MA sur fenêtre, drawdown, volumes, edge cases (1 bar, séries trop courtes) | 🔴 Critique |
+| ✅ `YahooMappersTest` + `MockMarketChartClientTest` | Parsing du payload Yahoo sur fixtures JSON inline (6 tests). Mock provider validé : forme, déterminisme, divergence inter-symbole, paths réservés `UNKNOWN`/`RATELIMIT` (6 tests) | 🟡 Moyenne |
+| ✅ `TickerNarrativeParserTest` + `TickerNarrativeValidatorTest` + `TickerNarrativePromptTest` | 17 tests : JSON valide / fences / prose / sentiment mixed-case / unknown sentiment, validation 3-5 keyPoints + longueur, prompt skip silently nulls | 🟡 Moyenne |
+| ⏳ `TickerNarrativeServiceTest` | Test d'intégration du pipeline complet avec `MarketChartClient` (mock) et `LlmClient` stubbé : cache 30 min, dedup, retry validation | 🟡 Moyenne |
+| ⏳ `YahooClientTest` (HTTP) | Mock HTTP réel (MockWebServer) pour valider les chemins 429/404/timeout et les headers browser. Important quand on rallumera Yahoo en prod | 🟢 Basse |
 
 ---
 
@@ -133,5 +134,6 @@ Sujets identifiés en cours de session, pas bloquants pour la Phase 1 mais à tr
 | ⏳ Cleanup des jobs orphelins au démarrage | À chaque hot-reload Tilt (ou crash backend), un job `PENDING` reste `PENDING` à jamais en BDD. `ApplicationReadyEvent` listener qui passe tous les `PENDING` en `ERROR` au boot. ~15 min | 🟡 Moyenne |
 | ⏳ Doublon `recommendations/` vs `history/` | Avec la Phase 1, ces pages deviennent legacy. Décision : garder en l'état pour le legacy, ou simplifier en une seule page à terme | 🟢 Basse |
 | ⏳ Tests sur le module `analysis/` (legacy) | Aucun test sur le legacy. Si on rallume Phase 4, on en aura besoin. Pas urgent tant que le code dort | 🟢 Basse |
+| ⏳ Refacto "tests as documentation" sur les tests existants | Aligner `IndicatorCalculatorTest`, `YahooMappersTest`, `MockMarketChartClientTest`, `CsvImportServiceTest`, `PortfolioControllerTest` sur la règle CLAUDE.md `Tests as documentation` (docstring de classe expliquant l'intent, commentaires motivationnels, factories avec defaults, fixtures réalistes). Les tests narratif Phase 1 sont déjà conformes — sert de modèle | 🟢 Basse |
 | ⏳ `document.documentElement` SSR-safe dans `ThemeService` | Wrap avec `isPlatformBrowser` si on bascule un jour SSR | 🟢 Basse |
 | ⏳ FOUC du toggle thème — résolu | Script inline dans `index.html` lit `localStorage` avant le bootstrap Angular et pose `data-theme`. Voir `developpement.md` | ✅ Fait |

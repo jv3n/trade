@@ -52,7 +52,7 @@ trade/
 ## Backend modules
 
 - `market/` — 🚧 Phase 1 — `YahooClient` (quote, OHLC, fundamentals) + `IndicatorCalculator` (RSI, MA50/MA200, momentum, drawdown — Kotlin pur, sans Spring). Source primaire des dossiers ticker.
-- `analysis/` — Phase 1 ticker narrative pipeline (`TickerNarrativeService`, `TickerNarrativeRunner`, `LlmNarrativeParser`). Legacy portfolio-wide pipeline (`AnalysisExecutor`, `RecommendationValidator`, etc.) is **frozen in place** — code remains but no longer in the user flow.
+- `analysis/` — Phase 1 ticker narrative pipeline (`TickerNarrativeService`, `TickerNarrativeRunner`, `TickerNarrativeParser`, `TickerNarrativeValidator`). Legacy portfolio-wide pipeline (`AnalysisExecutor`, `RecommendationValidator`, etc.) is **frozen in place** — code remains but no longer in the user flow.
 - `portfolio/` — read-only portfolios, Wealthsimple CSV import, historical snapshots
 - `ingestion/` — 🧊 legacy Phase 0 — RSS scheduler. Conservé en place, plus consommé en Phase 1.
 - `shared/` — cross-cutting utilities (e.g. `GlobalExceptionHandler`)
@@ -133,7 +133,24 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 
 ### Builds and tests
 
-Do not run builds (`./gradlew`, `npm run build`) or tests (`./gradlew test`, `npm run test`) unless explicitly asked. CI handles it. Running these wastes tokens.
+Builds (`./gradlew`, `npm run build`) and tests (`./gradlew test`, `npm run test`) can be run when it helps tighten a feedback loop — e.g. validating a refactor, debugging a runtime error, confirming a fix. Use Tilt logs (UI on http://localhost:10350/, or `docker compose logs backend`) to inspect the running stack rather than re-running the whole build. CI is still authoritative for the full matrix.
+
+### Git
+
+The user manages git themselves (staging, committing, branching, shelving). When asked for a commit, **propose a Conventional Commits message in English** but do **not** run `git add` or `git commit` — the user picks what to stage and when. The same applies to `git push`, branch creation, PR opening : suggest, don't execute.
+
+### Tests as documentation
+
+The user reads tests as the spec of the code under test. A test file should feel like a narrative — open it, read top to bottom, walk away understanding what the code does and why each scenario matters. Apply this when writing or modifying tests.
+
+Concretely :
+
+- **Class-level docstring** — one short paragraph naming the area under test, the failure modes the tests protect against, and the design intent (e.g. "parser must tolerate prose padding from local models, but reject malformed structure so the executor's retry loop has a precise error to feed back"). Skip only when the class has a single trivial test.
+- **Test names are full sentences** (Kotlin backtick names, Vitest `it('…')` strings). Describe the *behavior*, not the mechanic : `rejects unknown sentiment` ✓, `test parser 5` ✗. Mirror real-world phrasing : `tolerates prose around the JSON object` reads like a spec line.
+- **Inline comments** when the *why* is non-obvious : a real failure we observed, an edge case that surprised us, a regression we don't want to repeat. Comments explain motivation, not mechanics — `// qwen2 sometimes pads with "Sure! Here is..."` beats `// parses string`.
+- **Setup factories with sensible defaults** (`parsed()`, `quote()`, `indicators()`) — each test then overrides only the field that matters, so the diff between scenarios is visible at a glance.
+- **One scenario per test**, but multiple assertions are fine when they all describe the same scenario. `parses a clean JSON object` legitimately asserts `summary`, `sentiment` and `keyPoints` together.
+- **Realistic fixtures over synthetic ones** when the cost is similar. `"Price above MA200, RSI 62"` reads better than `"x"`. The reader should recognize the domain even in a unit test.
 
 ### Portfolio philosophy
 

@@ -53,4 +53,6 @@ class OllamaClient(
       if (it.isBlank()) error("Empty content in Ollama response: $raw")
     }
   }
+
+  override fun modelId(): String = "ollama:$model"
 }

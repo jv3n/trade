@@ -6,52 +6,51 @@ Snapshot de la session pour reprendre proprement la prochaine fois. Le détail l
 
 - Branche : `master`
 - Dernier tag : `v0.1.0` — clôture de la **Phase 0**
-- Dernier commit : `feat(market): add Yahoo client, indicator calculator and ticker dossier endpoint`
+- Derniers commits :
+  - `feat(market): add Yahoo client, indicator calculator and ticker dossier endpoint`
+  - `feat(market): add mock chart provider for local dev`
+  - **À commit (cette session)** : pipeline narratif LLM par ticker — voir plus bas.
 
 ## Phase en cours
 
-**Phase 1 — Pivot ticker** (cf. `metier/fonctionnalites.md`).
+**Phase 1 — Pivot ticker** (cf. `metier/fonctionnalites.md`). LLM = rédacteur, pas décideur.
 
-LLM = rédacteur, pas décideur. Yahoo Finance + indicateurs calculés serveur, narratif LLM par ticker.
+## Ce qui marche fin de session
 
-## Ce qui marche (commit `feat(market)`)
+### Backend market/ (déjà commit)
+- `IndicatorCalculator` Kotlin pur, 20+ tests
+- `YahooClient` + `YahooMappers` + `MockMarketChartClient` (déterministe par symbole)
+- `MarketChartClient` interface + `@ConditionalOnProperty yahoo.provider`
+- `MarketController` : `GET /api/market/ticker/{symbol}`
 
-Backend `market/` :
-- `IndicatorCalculator` (Kotlin pur) — RSI(14), MA50, MA200, momentum 30j/90j, perf 1m/3m/1y, drawdown 52w, volume relatif, distance vs MA. 20+ tests unit.
-- `YahooClient` + `YahooMappers` — fetch chart endpoint, parsing OHLC + quote. 6 tests sur les mappers (fixtures JSON inline).
-- `TickerService` orchestre Yahoo + Calculator → `TickerSnapshot`.
-- `MarketController` expose `GET /api/market/ticker/{symbol}`.
+### Backend narratif (à commit)
+- Migration Flyway `V2__ticker_narrative.sql` — tables `ticker_narrative_snapshot` (output, JSONB indicateurs + keyPoints) et `ticker_narrative_job` (état async)
+- Domain : enum `Sentiment`, `TickerNarrativeJob`, `TickerNarrativeSnapshot`
+- Application : `TickerNarrativeService` (dedup 5min + cache snapshot 30min) → `TickerNarrativeRunner` (`@Async`) → `TickerNarrativeExecutor` (parse + validate + 1 retry) → `TickerNarrativePersister`
+- `TickerNarrativeParser` (tolère prose/fences/sentiment mixed-case) + `TickerNarrativeValidator` (3-5 keyPoints, ≤15 mots, summary 2-3 phrases)
+- `LlmClient.modelId()` — provenance du modèle persistée sur chaque snapshot (`ollama:qwen2:1.5b`, `claude:claude-opus-4-6`)
+- HTTP : `POST /narrative`, `GET /narrative/jobs/{id}`, `GET /narrative/latest`
+- 17 tests unit (parser / validator / prompt)
 
-## Ce qui est en working tree (uncommitted)
+**Validation end-to-end** (Ollama qwen2:1.5b, mock Yahoo) : POST → DONE en ~13s, summary + sentiment BULLISH + 3 keyPoints + `modelUsed`. Re-POST < 30 min → cache hit immédiat, log `Reusing fresh snapshot`.
 
-Mock provider de marché — à grouper en 1 commit à la reprise.
+## Shelvé (pas dans le commit narratif)
 
-### Backend
-
-- `market/infrastructure/market/MarketChartClient.kt` (nouveau) — interface port, méthode `fetchChart`
-- `market/infrastructure/market/YahooClient.kt` — implémente `MarketChartClient`, gardé par `@ConditionalOnProperty(name="yahoo.provider", havingValue="yahoo", matchIfMissing=true)`
-- `market/infrastructure/market/MockMarketChartClient.kt` (nouveau) — génère 260 bars OHLC déterministes par symbole (seed = `symbol.hashCode()`), random walk avec drift + vol propres au symbole. 260 et pas 252 pour donner le headroom aux indicateurs lookback=252 (perf1y) qui exigent strictement `size > lookback`. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les paths d'erreur. Activé par `yahoo.provider: mock`.
-- `market/application/TickerService.kt` — dépend maintenant de l'interface `MarketChartClient`.
-- `application.yml` — ajout `yahoo.provider: yahoo` (défaut prod).
-- `application-local.yml` — ajout `yahoo.provider: mock` (dev local).
-- `MockMarketChartClientTest.kt` (nouveau) — 6 tests : forme du payload, déterminisme, divergence inter-symboles, cohérence meta vs série, paths réservés.
-
-### Docs
-
-- `docs/technique/architecture.md` — décision technique "Provider de marché abstrait + mock local" ajoutée.
-- `docs/projet/etat-actuel.md` — ce fichier.
+- **Fix headers Yahoo** (`YahooClient.kt`) — Accept `*/*`, Accept-Language, Referer, Origin, Sec-Fetch-*, UA Chrome/134, log du body sur 429. Confirmé par curl que les headers passent (HTTP 200), mais Yahoo a un rate-limit IP **par-dessus** le filtre fingerprint qui se déclenche après quelques requêtes. Le code reste pertinent ; à reprendre quand on rallumera Yahoo en prod.
 
 ## Reprise possible — par ordre d'utilité
 
 ### Phase 1 reste à faire
+A. **Front : section narratif sur la page ticker** — bouton "Générer/Régénérer", `MarketRepository.requestNarrative()` + `pollNarrative()` + `getLatestNarrative()`, sentiment chip + summary + bullets, état "en cours de génération". Le backend est prêt et validé.
 
-A. **Pipeline narratif LLM par ticker** : `TickerNarrativeService` + nouveau prompt court (input `{ticker, price, indicators, fundamentals}`, output `{summary, sentiment, keyPoints[]}`), migration Flyway V2 `ticker_narrative_snapshot`, endpoint `POST /api/market/ticker/{symbol}/narrative` async + polling. **Cœur de valeur Phase 1.** Le mock débloque l'itération sans dépendre de Yahoo.
+B. **`TickerNarrativeServiceTest`** (intégration) — pipeline complet avec `MarketChartClient` + `LlmClient` stubbés : valide cache 30 min, dedup, retry validation. Pas critique mais utile pour les futurs refactors.
 
-B. **Page dossier — narratif** : afficher la sortie du pipeline (sentiment + bullets + résumé), gérer l'état "en cours de génération" (polling).
+C. **Cleanup des jobs orphelins** (dette technique) — listener `ApplicationReadyEvent` qui passe les `PENDING` en `ERROR` au boot. ~15 min.
 
-C. **Plan B Yahoo (si on relance Yahoo en prod)** : headers plus convaincants (`Accept-Language`, `Sec-Fetch-*`, `Referer`) ou bascule Twelve Data / Finnhub.
+D. **Plan B Yahoo** (quand on rallume) — appliquer le shelve, logger les retries 429 avec backoff, ou bascule Twelve Data / Finnhub si l'IP-rate-limit reste un souci.
 
-## À faire avant de commit en sortie de session
-
-1. Vérifier que `MockMarketChartClientTest` passe en local.
-2. Commit unique proposé : `feat(market): add mock chart provider for local dev` (interface + impls + config + test).
+## À faire avant de commit la session
+1. ✓ `./gradlew test` passe (tests narratif + suite complète).
+2. ✓ Backend end-to-end validé (POST → poll → snapshot, cache hit confirmé).
+3. ✓ Docs alignées (`backlog.md`, `architecture.md`, `CLAUDE.md`, ce fichier).
+4. Commit narratif proposé : `feat(analysis): add async per-ticker LLM narrative pipeline`.

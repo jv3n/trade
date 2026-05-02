@@ -45,4 +45,6 @@ class ClaudeClient(
     @Suppress("UNCHECKED_CAST") val content = (response["content"] as List<*>).first() as Map<*, *>
     return content["text"] as String
   }
+
+  override fun modelId(): String = "claude:$model"
 }
