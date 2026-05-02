@@ -12,8 +12,8 @@
     <span class="drop-label">Synchroniser depuis un CSV Wealthsimple</span>
     <span class="drop-or">ou</span>
     <label class="btn-browse">
-      <input type="file" accept=".csv" (change)="onFileChange($event)" hidden />
-      Choisir un fichier
+      <input type="file" accept=".csv" multiple (change)="onFileChange($event)" hidden />
+      Choisir un ou plusieurs fichiers
     </label>
     <span class="drop-hint">Export WS : Compte → Positions → ↓ Télécharger</span>
     @if (step() === 'error') {
@@ -30,7 +30,7 @@
   </div>
 }
 
-<!-- Preview -->
+<!-- Preview (single file) -->
 @if (step() === 'preview') {
   @let p = preview()!;
   <div class="preview-panel">
@@ -84,11 +84,50 @@
   </div>
 }
 
-<!-- Importing -->
+<!-- Importing (single file) -->
 @if (step() === 'importing') {
   <div class="import-loading">
     <mat-spinner diameter="24"></mat-spinner>
     <span>Import en cours…</span>
+  </div>
+}
+
+<!-- Batch ready -->
+@if (step() === 'batch-ready') {
+  <div class="preview-panel">
+    <div class="preview-header">
+      <mat-icon>file_copy</mat-icon>
+      <span>{{ pendingFiles().length }} fichiers à importer</span>
+    </div>
+    <div class="batch-list">
+      @for (file of pendingFiles(); track file.name; let i = $index) {
+        <div class="batch-item">
+          <mat-icon>description</mat-icon>
+          <span class="batch-filename">{{ file.name }}</span>
+          @if (extractDate(file.name); as date) {
+            <span class="batch-date">{{ date }}</span>
+          }
+        </div>
+      }
+    </div>
+    <div class="preview-footer">
+      <button class="btn-cancel" (click)="cancel()">Annuler</button>
+      <button class="btn-confirm" (click)="confirmBatch()">
+        <mat-icon>check</mat-icon>
+        Importer {{ pendingFiles().length }} fichiers
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Batch importing -->
+@if (step() === 'batch-importing') {
+  <div class="import-loading">
+    <mat-spinner diameter="24"></mat-spinner>
+    <span>
+      Fichier {{ batchIndex() + 1 }} / {{ pendingFiles().length }} —
+      {{ pendingFiles()[batchIndex()]?.name }}
+    </span>
   </div>
 }
 

@@ -136,6 +136,54 @@
   }
 }
 
+// ---- Batch ----
+
+.batch-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.85rem;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  mat-icon {
+    font-size: 1rem;
+    height: 1rem;
+    width: 1rem;
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+}
+
+.batch-filename {
+  flex: 1;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.batch-date {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 0.1rem 0.45rem;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 // ---- Preview ----
 
 .preview-panel {

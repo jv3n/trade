@@ -4,7 +4,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PortfolioService, CsvImportPreview } from '../../core/portfolio.service';
 
-type ImportStep = 'idle' | 'previewing' | 'preview' | 'importing' | 'done' | 'error';
+type ImportStep =
+  | 'idle'
+  | 'previewing'
+  | 'preview'
+  | 'importing'
+  | 'batch-ready'
+  | 'batch-importing'
+  | 'done'
+  | 'error';
 
 @Component({
   selector: 'app-csv-import',
@@ -21,6 +29,8 @@ export class CsvImport {
   preview = signal<CsvImportPreview | null>(null);
   error = signal<string | null>(null);
   pendingFile = signal<File | null>(null);
+  pendingFiles = signal<File[]>([]);
+  batchIndex = signal(0);
   dragging = signal(false);
 
   // ---- Drag & drop ----
@@ -41,21 +51,24 @@ export class CsvImport {
     event.preventDefault();
     event.stopPropagation();
     this.dragging.set(false);
-    const file = event.dataTransfer?.files?.[0];
-    if (file) this.handleFile(file);
+    const files = Array.from(event.dataTransfer?.files ?? []).filter((f) =>
+      f.name.toLowerCase().endsWith('.csv'),
+    );
+    if (files.length === 0) return;
+    files.length === 1 ? this.handleFile(files[0]) : this.handleBatch(files);
   }
 
   // ---- File input (click) ----
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
+    const files = Array.from(input.files ?? []);
     input.value = '';
-    this.handleFile(file);
+    if (files.length === 0) return;
+    files.length === 1 ? this.handleFile(files[0]) : this.handleBatch(files);
   }
 
-  // ---- Core ----
+  // ---- Single file ----
 
   private handleFile(file: File) {
     this.pendingFile.set(file);
@@ -92,10 +105,54 @@ export class CsvImport {
     });
   }
 
+  // ---- Batch ----
+  // TODO: batch import flow à revoir — besoin pas encore stabilisé
+
+  private handleBatch(files: File[]) {
+    const sorted = [...files].sort((a, b) => a.name.localeCompare(b.name));
+    this.pendingFiles.set(sorted);
+    this.batchIndex.set(0);
+    this.error.set(null);
+    this.step.set('batch-ready');
+  }
+
+  confirmBatch() {
+    this.step.set('batch-importing');
+    this.batchIndex.set(0);
+    this.importNext();
+  }
+
+  private importNext() {
+    const files = this.pendingFiles();
+    const index = this.batchIndex();
+    if (index >= files.length) {
+      this.step.set('done');
+      this.imported.emit();
+      return;
+    }
+    this.portfolioService.confirmCsvImport(files[index]).subscribe({
+      next: () => {
+        this.batchIndex.set(index + 1);
+        this.importNext();
+      },
+      error: () => {
+        this.error.set(`Échec de l'import de « ${files[index].name} ».`);
+        this.step.set('error');
+      },
+    });
+  }
+
+  // ---- Helpers ----
+
+  extractDate(filename: string): string | null {
+    return filename.match(/(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
+  }
+
   cancel() {
     this.step.set('idle');
     this.preview.set(null);
     this.pendingFile.set(null);
+    this.pendingFiles.set([]);
     this.error.set(null);
   }
 

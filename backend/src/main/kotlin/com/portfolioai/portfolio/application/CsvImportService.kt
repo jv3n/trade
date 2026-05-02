@@ -17,6 +17,8 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.Normalizer
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.UUID
 import kotlin.collections.iterator
 import org.apache.commons.csv.CSVFormat
@@ -74,7 +76,7 @@ class CsvImportService(
   fun import(file: MultipartFile): CsvImportResult {
     val (rowsByAccount, skipped, _) = parseCsv(file)
     val batchId = UUID.randomUUID()
-    val importedAt = Instant.now()
+    val importedAt = extractDateFromFilename(file.originalFilename)
     var portfoliosCreated = 0
     var portfoliosUpdated = 0
     var totalImported = 0
@@ -349,6 +351,16 @@ class CsvImportService(
       marketValue = marketValue.abs().setScale(2, RoundingMode.HALF_UP),
       marketCurrency = marketCurrency,
     )
+
+  private fun extractDateFromFilename(filename: String?): Instant {
+    if (filename == null) return Instant.now()
+    val match = Regex("""(\d{4}-\d{2}-\d{2})""").find(filename) ?: return Instant.now()
+    return try {
+      LocalDate.parse(match.groupValues[1]).atStartOfDay(ZoneOffset.UTC).toInstant()
+    } catch (e: Exception) {
+      Instant.now()
+    }
+  }
 
   private fun mapAssetType(wsType: String): AssetType =
     when (wsType.uppercase()) {
