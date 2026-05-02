@@ -1,3 +1,16 @@
+/**
+ * Tests on `HttpAnalysisRepository` — the HTTP adapter behind the `AnalysisRepository` port.
+ * Two responsibilities to pin down :
+ *
+ * 1. **URL/method contract** — every method maps to the exact endpoint the backend exposes. A
+ *    silent rename of the URL on either side is one of the easiest regressions to ship and the
+ *    longest to debug ("why does my POST 404 ?"). One assertion per method is enough.
+ *
+ * 2. **`pollJob` is the load-bearing one** — emits every 5 s, completes on a non-PENDING status,
+ *    aborts after `POLL_ABORT_SECONDS` (legacy 400 s window, set to outlast 2 × Ollama timeouts +
+ *    margin), surfaces 404 with a friendly message. Uses `vi.useFakeTimers` so the test isn't
+ *    actually 5 s slow ; the time-travel reveals what the real user experiences without the wait.
+ */
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';

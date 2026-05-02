@@ -1,3 +1,16 @@
+/**
+ * Tests on the dossier ticker page. Two responsibilities verified :
+ *
+ * 1. **Wires up correctly** — the symbol comes from the route, the page hits
+ *    `MarketRepository.getTicker(symbol)` on init, and the snapshot signal reflects the response.
+ * 2. **Computes UI thresholds correctly** — RSI / drawdown chips use color-coded zones to give
+ *    the user an at-a-glance read on whether to worry. Wrong thresholds = wrong UX cue.
+ *
+ * The thresholds asserted (RSI ≥ 70 or ≤ 30 → `warning`, drawdown ≤ -20% → `danger`) match the
+ * conventions a trader would expect (overbought/oversold zones, deep drawdown). They are
+ * hard-coded in the component ; the tests pin them down so a refactor doesn't accidentally drift
+ * the colors.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
@@ -57,6 +70,8 @@ describe('TickerPage', () => {
   });
 
   it('rsiClass flags overbought and oversold zones', () => {
+    // RSI ≥ 70 = overbought, RSI ≤ 30 = oversold — both warrant a `warning` chip color so the
+    // user notices an extreme level without us editorialising what to do about it.
     component.snapshot.set({
       ...EMPTY_SNAPSHOT,
       indicators: { ...emptyIndicators(), rsi14: 75 },
@@ -69,6 +84,7 @@ describe('TickerPage', () => {
     });
     expect(component.rsiClass()).toBe('warning');
 
+    // Mid-range = neutral chip (no class).
     component.snapshot.set({
       ...EMPTY_SNAPSHOT,
       indicators: { ...emptyIndicators(), rsi14: 50 },
@@ -77,6 +93,8 @@ describe('TickerPage', () => {
   });
 
   it('drawdownClass turns danger below -20% and success above -5%', () => {
+    // Three-tier scale : deep drawdown (≤ -20%) is `danger`, near-the-high (> -5%) is `success`.
+    // The mid range (-20% .. -5%) falls back to neutral and isn't asserted here.
     component.snapshot.set({
       ...EMPTY_SNAPSHOT,
       indicators: { ...emptyIndicators(), drawdownFrom52wHigh: -25 },

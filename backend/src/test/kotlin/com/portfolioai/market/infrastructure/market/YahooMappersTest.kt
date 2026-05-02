@@ -10,6 +10,20 @@ import org.junit.jupiter.api.Test
  * Tests on the pure conversion functions in `YahooMappers.kt`. We deserialize a minimal fixture
  * mirroring Yahoo's `chart` payload, then exercise the mappers to OHLC bars and quote. No HTTP, no
  * Spring.
+ *
+ * Each fixture below is a real failure mode we've observed on Yahoo's undocumented endpoint :
+ * - **`FIXTURE_TWO_BARS`** — happy path. Two bars with full OHLCV + complete meta.
+ * - **`FIXTURE_HALTED_BAR`** — one bar with `null` close and volume. Yahoo emits these on halted
+ *   trading days ; our mapper must skip them rather than feed `null` into the indicator math.
+ * - **`FIXTURE_NO_TIMESTAMP`** — chart endpoint occasionally answers with no timestamp array on
+ *   delisted symbols. We return an empty bars list rather than crash.
+ * - **`FIXTURE_NO_LIVE_QUOTE`** — `regularMarketPrice` is missing on after-hours / delisted
+ *   tickers. We fall back to the last bar close so the dossier can still display *something*.
+ * - **`FIXTURE_SHORT_NAME`** — `longName` missing (common on ETFs and obscure tickers). `shortName`
+ *   is the next-best label.
+ *
+ * Strategy : keep the JSON inline so the fixture and the assertion live next to each other. A
+ * separate fixtures file would force the reader to context-switch on every test.
  */
 class YahooMappersTest {
 

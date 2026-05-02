@@ -8,13 +8,18 @@ import org.junit.jupiter.api.assertThrows
 
 /**
  * Tests on the synthetic data generator. Two things to assert :
- * 1. Output shape is realistic enough that [IndicatorCalculator] computes every indicator (i.e.
- *    enough bars, all OHLCV non-null, prices > 0).
- * 2. Reserved symbols `UNKNOWN` / `RATELIMIT` still throw the documented exceptions, since the
- *    dossier UI relies on them to exercise the 404 / 503 paths.
+ * 1. **Output shape is realistic enough** that [IndicatorCalculator] computes every indicator (i.e.
+ *    enough bars, all OHLCV non-null, prices > 0). The mock exists to unblock dev when Yahoo
+ *    rate-limits us — but only if it produces data the rest of the pipeline can chew on.
+ * 2. **Reserved symbols `UNKNOWN` / `RATELIMIT`** still throw the documented exceptions. The
+ *    dossier UI relies on them to exercise the 404 and 503 error paths during manual QA — if we
+ *    ever silently succeed on `UNKNOWN`, the front team's "broken state" page coverage breaks
+ *    quietly.
  *
- * Determinism (same symbol → same series) is also asserted because the dossier visual stability
- * across reloads depends on it.
+ * Determinism (**same symbol → same series across calls**) is also asserted because the dossier
+ * visual stability across reloads depends on it. A flaky mock that re-rolled data on every fetch
+ * would defeat the purpose — the user would see different chart shapes for the same ticker on each
+ * navigation.
  */
 class MockMarketChartClientTest {
 

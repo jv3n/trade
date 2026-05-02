@@ -1,3 +1,9 @@
+/**
+ * Pins the URL/method contract between `HttpSettingsRepository` (the adapter) and the backend's
+ * `/api/ingestion/sources/...` routes. The `/test` endpoint is exercised by the legacy Phase 0
+ * "test source" page — kept here because the adapter still ships even though the page is rarely
+ * the user's first stop.
+ */
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';

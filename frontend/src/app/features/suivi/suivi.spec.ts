@@ -1,3 +1,19 @@
+/**
+ * Tests on the Suivi page (snapshot timeline). Pins down the **batch grouping** logic — multiple
+ * snapshots from the same CSV import (one per account) share a `batchId` UUID. The page must
+ * group them visually so a single import is shown as one row that expands to its accounts.
+ *
+ * Two sets of behaviours :
+ * - **Pure formatting** — `gainClass(value)` translates a P&L value to a `positive` /
+ *   `negative` / empty CSS class. Zero counts as `positive` (intentional : breaking even is
+ *   visually OK, not bad).
+ * - **Stateful UI** — `batches()`, `toggleBatch()`, `toggleSnapshot()`, `getPositions()`. The
+ *   expanded/collapsed state is held in component signals ; we verify the toggle is symmetric
+ *   and `expandedSnapshots` doesn't leak across reloads.
+ *
+ * `makeSummary({...})` factory keeps every test focused on the *one* field it overrides (typically
+ * `id` and `batchId`), so the diff between scenarios is glanceable.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { Suivi } from './suivi';

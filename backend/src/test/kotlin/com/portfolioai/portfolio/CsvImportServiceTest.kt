@@ -14,6 +14,25 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.mock.web.MockMultipartFile
 
+/**
+ * Tests on [CsvImportService] — the parser for Wealthsimple `holdings-report-*.csv` exports. The
+ * service is the **only way data enters the system** (the portfolio is read-only in the UI per
+ * CLAUDE.md), so a regression here means imports silently misread positions and the rest of the app
+ * draws conclusions on bad data.
+ *
+ * Three areas are pinned down :
+ * - **Preview parsing** — the headers, footer rows, BOM bytes, semicolon delimiter, account
+ *   grouping, asset-type mapping, duplicate-ticker aggregation. Each test mirrors a real shape we
+ *   have seen across exports (FR locale, Excel-saved CSV with semicolons, etc.).
+ * - **Asset type mapping** — Wealthsimple's labels (`EXCHANGE_TRADED_FUND`, `CRYPTOCURRENCY`,
+ *   `BOND`, `FIXED_INCOME`…) translated to our [com.portfolioai.portfolio.domain.AssetType] enum.
+ * - **`extractDateFromFilename`** — date in filename ↔ snapshot's `importedAt`. Anchored at noon
+ *   UTC because midnight UTC regressed the displayed civil date by one day for users west of UTC
+ *   (real bug reported on `holdings-report-2026-05-02.csv` showing as 2026-05-01 in ET).
+ *
+ * Repos are mocked with Mockito because the service does heavy IO ; full integration coverage lives
+ * in CI's PostgreSQL-backed runs of the live import flow.
+ */
 @ExtendWith(MockitoExtension::class)
 class CsvImportServiceTest {
 
@@ -214,5 +233,83 @@ class CsvImportServiceTest {
     assertEquals(1, preview.accounts[0].items.size)
     val item = preview.accounts[0].items[0]
     assertEquals(0, item.quantity.compareTo(java.math.BigDecimal("8")))
+  }
+
+  // ---- date extraction from filename ----
+
+  /*
+   * The snapshot's `importedAt` is taken from the CSV filename when it embeds an ISO date
+   * (Wealthsimple-style `holdings-report-YYYY-MM-DD.csv`). The function intentionally returns an
+   * [Instant] anchored at **noon UTC** of that civil date — anchoring at midnight UTC would
+   * regress the displayed date by one day for every user west of UTC (the user reported this on
+   * a file dated 2026-05-02 showing as 2026-05-01 from ET).
+   */
+
+  @Test
+  fun `extractDateFromFilename pins the date to noon UTC so every reasonable timezone keeps the same civil day`() {
+    val instant = service.extractDateFromFilename("holdings-report-2026-05-02.csv")
+
+    val utc = instant.atZone(java.time.ZoneOffset.UTC)
+    assertEquals(java.time.LocalDate.of(2026, 5, 2), utc.toLocalDate())
+    assertEquals(12, utc.hour)
+
+    // Spot-check across the realistic range — every populated zone (UTC-11 .. UTC+12) keeps the
+    // same civil date when the source instant is noon UTC.
+    listOf(
+        java.time.ZoneOffset.ofHours(-8), // PST
+        java.time.ZoneOffset.ofHours(-4), // ET (the user's zone)
+        java.time.ZoneOffset.ofHours(0), // UTC
+        java.time.ZoneOffset.ofHours(2), // CET
+        java.time.ZoneOffset.ofHours(9), // JST
+      )
+      .forEach { zone ->
+        val zoned = instant.atZone(zone)
+        assertEquals(
+          java.time.LocalDate.of(2026, 5, 2),
+          zoned.toLocalDate(),
+          "civil date drifted in $zone",
+        )
+      }
+  }
+
+  @Test
+  fun `extractDateFromFilename matches the date even when surrounded by extra text`() {
+    // We've seen filenames like `Wealthsimple_holdings-report-2026-05-02_v2.csv` from manual
+    // re-exports — the regex picks the first ISO date it finds.
+    val instant = service.extractDateFromFilename("Wealthsimple_holdings-report-2026-05-02_v2.csv")
+    assertEquals(
+      java.time.LocalDate.of(2026, 5, 2),
+      instant.atZone(java.time.ZoneOffset.UTC).toLocalDate(),
+    )
+  }
+
+  @Test
+  fun `extractDateFromFilename falls back to now when filename is null`() {
+    // Some MultipartFile sources hand us `originalFilename = null` (programmatic uploads, tests).
+    // Falling back to "import is for today" is the least surprising default.
+    val before = java.time.Instant.now()
+    val instant = service.extractDateFromFilename(null)
+    val after = java.time.Instant.now()
+
+    assertTrue(!instant.isBefore(before) && !instant.isAfter(after))
+  }
+
+  @Test
+  fun `extractDateFromFilename falls back to now when no ISO date is present`() {
+    val before = java.time.Instant.now()
+    val instant = service.extractDateFromFilename("export-final.csv")
+    val after = java.time.Instant.now()
+
+    assertTrue(!instant.isBefore(before) && !instant.isAfter(after))
+  }
+
+  @Test
+  fun `extractDateFromFilename falls back to now when the date string is invalid`() {
+    // Regex matches digits-only structure, but `2026-13-40` parses-fail at LocalDate level.
+    val before = java.time.Instant.now()
+    val instant = service.extractDateFromFilename("holdings-report-2026-13-40.csv")
+    val after = java.time.Instant.now()
+
+    assertTrue(!instant.isBefore(before) && !instant.isAfter(after))
   }
 }

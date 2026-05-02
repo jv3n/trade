@@ -1,3 +1,8 @@
+/**
+ * Pins the URL/method contract between `HttpMarketRepository` (the adapter) and the backend's
+ * `/api/market/ticker/...` routes. A silent rename on either side breaks the dossier ticker page ;
+ * these tests catch that on the frontend side.
+ */
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';

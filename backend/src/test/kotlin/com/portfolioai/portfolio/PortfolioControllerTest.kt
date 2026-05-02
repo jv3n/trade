@@ -19,6 +19,20 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
+/**
+ * `@WebMvcTest` slice — boots only the MVC layer (controller + global exception handler) with the
+ * service mocked. Verifies the **HTTP contract** the frontend depends on : URLs, status codes,
+ * shape of the JSON response.
+ *
+ * Why a slice and not a full SpringBootTest : the service layer has its own unit tests
+ * ([com.portfolioai.portfolio.CsvImportServiceTest]) ; what we pin down here is "GET /api/...
+ * returns 200 with this shape" / "GET non-existing returns 404 with `error` field". A regression in
+ * the controller layer is silent in unit tests but breaks the UI immediately.
+ *
+ * Notable assertion : `404` is produced by [GlobalExceptionHandler] catching the service's
+ * `NoSuchElementException`. We include the handler in the `@WebMvcTest` import list so the slice
+ * actually exercises that mapping.
+ */
 @WebMvcTest(PortfolioController::class, GlobalExceptionHandler::class)
 class PortfolioControllerTest {
 

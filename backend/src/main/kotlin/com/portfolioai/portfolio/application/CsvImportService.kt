@@ -352,11 +352,21 @@ class CsvImportService(
       marketCurrency = marketCurrency,
     )
 
-  private fun extractDateFromFilename(filename: String?): Instant {
+  /**
+   * Best-effort extraction of the snapshot date from a Wealthsimple-style filename
+   * (`holdings-report-YYYY-MM-DD.csv`). Returns [Instant.now] when no date is present or the format
+   * is invalid — caller treats that as "import is for today".
+   *
+   * Why **noon UTC** and not midnight : the snapshot represents a *civil date*, not a moment in
+   * time. Midnight UTC of `2026-05-02` becomes `2026-05-01 20:00` for a user in ET (UTC-4) and the
+   * UI displays the wrong day. Anchoring at 12:00 UTC keeps the same civil date for every zone
+   * between UTC-11 and UTC+11, which covers every populated longitude.
+   */
+  internal fun extractDateFromFilename(filename: String?): Instant {
     if (filename == null) return Instant.now()
     val match = Regex("""(\d{4}-\d{2}-\d{2})""").find(filename) ?: return Instant.now()
     return try {
-      LocalDate.parse(match.groupValues[1]).atStartOfDay(ZoneOffset.UTC).toInstant()
+      LocalDate.parse(match.groupValues[1]).atTime(12, 0).toInstant(ZoneOffset.UTC)
     } catch (e: Exception) {
       Instant.now()
     }

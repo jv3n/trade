@@ -1,3 +1,18 @@
+/**
+ * Tests on the dashboard page. Two pieces of logic that *don't* simply mirror data from the API
+ * are pinned down here — those are the ones a refactor could break silently :
+ *
+ * - **`actionClass(action)`** — translates legacy Phase 0 action enums (`BUY` / `SELL` / `HOLD` /
+ *   `REDUCE`) to the corresponding CSS class. Cosmetic but UI-load-bearing : a regression flips
+ *   the badge color and traders read green-on-sell as a buy signal at a glance.
+ * - **`actionAmounts(ticker, targetWeight)`** — computes the rebalance amount in CAD from the
+ *   current portfolio's `bookValueCad`. The math (current weight, target amount, delta) feeds the
+ *   "rebalance to" UI hint. Edge cases tested : null target weight, empty portfolio, asset not in
+ *   portfolio (must default `currentValue = 0`, not throw).
+ *
+ * Repos are mocked with simple stubs because we're verifying *the component's logic*, not the
+ * HTTP layer (covered separately in `core/adapters/*.http.spec.ts`).
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';

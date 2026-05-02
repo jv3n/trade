@@ -1,3 +1,20 @@
+/**
+ * Tests on the CSV import drag-and-drop component. The portfolio is **CSV-driven** (read-only in
+ * the UI per CLAUDE.md), so this component is the single ingress for portfolio data — every state
+ * machine it implements has to be airtight or the user is stuck.
+ *
+ * Three areas, each in its own `describe` block :
+ * - **`extractDate`** — parses `YYYY-MM-DD` out of Wealthsimple-style filenames. Frontend
+ *   counterpart of the backend `extractDateFromFilename` (different concerns : the front uses it
+ *   to display "import du 2026-04-24" before upload, the back uses it as `importedAt`).
+ * - **Single-file flow** — `idle → previewing → preview → done` (or `error` from any state).
+ * - **Multi-file batch flow** — drop several files, sort by date in the filename (so "today's"
+ *   import is applied last and wins for current state), import them sequentially, stop on any
+ *   failure with the offending filename in the error message.
+ *
+ * `makeFile` and `makeDrop` factories build the minimum DOM events needed — without them, every
+ * test would carry six lines of `dataTransfer` casting noise.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { PortfolioRepository } from '../../../core/portfolio.repository';

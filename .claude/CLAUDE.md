@@ -139,6 +139,8 @@ Builds (`./gradlew`, `npm run build`) and tests (`./gradlew test`, `npm run test
 
 The user manages git themselves (staging, committing, branching, shelving). When asked for a commit, **propose a Conventional Commits message in English** but do **not** run `git add` or `git commit` — the user picks what to stage and when. The same applies to `git push`, branch creation, PR opening : suggest, don't execute.
 
+**Commit messages are one line, no body.** When asked for a commit name, output the single subject line in Conventional Commits format and stop. Don't follow up with a body, bullet list, or rationale block — the user pastes the line as-is. Keep the subject under ~72 characters. If the change really needs a body, raise that with the user instead of writing one preemptively.
+
 ### Tests as documentation
 
 The user reads tests as the spec of the code under test. A test file should feel like a narrative — open it, read top to bottom, walk away understanding what the code does and why each scenario matters. Apply this when writing or modifying tests.

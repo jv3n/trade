@@ -1,3 +1,7 @@
+/**
+ * Pins the URL/method contract between `HttpSnapshotRepository` (the adapter) and the backend's
+ * `/api/snapshots/...` routes — the timeline data feeding the Suivi page.
+ */
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';

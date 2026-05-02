@@ -10,8 +10,18 @@ import org.junit.jupiter.api.Test
 
 /**
  * Pure-function tests on [IndicatorCalculator]. The calculator has no Spring or IO, so we
- * instantiate it directly. Internal helpers are exercised one by one with small fixtures; the
+ * instantiate it directly. Internal helpers are exercised one by one with small fixtures ; the
  * public [IndicatorCalculator.compute] is covered separately on a few end-to-end cases.
+ *
+ * Why this class is so heavily tested : it is the **foundation of the dossier**. Every chip on the
+ * UI (RSI, MA, drawdown, momentum) and every line of the LLM narrative quotes a number that comes
+ * out of here. A wrong RSI doesn't just paint a wrong chip — it cascades into a wrong narrative.
+ * Per CLAUDE.md, "the LLM never computes indicators, it digests them". The whole pipeline trusts
+ * this class to be right.
+ *
+ * Strategy : known-output property tests. Monotone-up series → RSI saturates near 100. Flat series
+ * → RSI = 50. Monotone-down → RSI = 0. Each rule is a textbook RSI / MA / drawdown property, so a
+ * regression here means something fundamental broke.
  */
 class IndicatorCalculatorTest {
 
