@@ -1,0 +1,76 @@
+# GitHub Code Scanning — CodeQL static analysis.
+# Findings (vulnérabilités, anti-patterns) apparaissent dans l'onglet "Security → Code scanning"
+# du repo. Gratuit pour les repos publics.
+#
+# Une seule passe couvre les deux faces de l'app :
+#   - `java-kotlin` (backend Kotlin/Spring) — build-mode `manual` : on compile sans tests pour
+#     éviter de devoir exposer Postgres ici (la CI métier `backend.yml` reste l'autorité tests).
+#   - `javascript-typescript` (frontend Angular) — build-mode `none` : CodeQL extrait sans build.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    # Lundi 06:00 UTC — relit le code même sans PR de la semaine, attrape les nouvelles règles
+    # CodeQL et les vulnérabilités de deps qui auraient été publiées entre-temps.
+    - cron: '0 6 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Cache Gradle
+        if: matrix.language == 'java-kotlin'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('backend/**/*.gradle.kts', 'backend/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Compile Kotlin (no tests, no DB)
+        if: matrix.language == 'java-kotlin'
+        working-directory: backend
+        run: ./gradlew compileKotlin compileTestKotlin -x test
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'

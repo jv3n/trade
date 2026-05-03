@@ -1,0 +1,102 @@
+# Dependabot — alerts + auto-PRs sur deps obsolètes ou vulnérables.
+# Doc : https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Stratégie :
+# - Une seule passe hebdomadaire le lundi matin (Europe/Paris). Évite le bruit quotidien tout en
+#   restant réactif aux failles publiées dans la semaine.
+# - Les **groupes** bundle les packages liés (Angular, Spring Boot) — ça évite les PRs qui
+#   fail systématiquement à cause de peer-deps incohérentes (ex : un seul `@angular/*` bumpé
+#   sans les autres). `minor-and-patch` reste en filet par écosystème pour le reste.
+# - Les **`ignore`** bloquent les bumps qu'on sait perdants d'avance (peer dep d'Angular sur TS,
+#   bridge Kotlin chez Detekt). Dependabot rouvre automatiquement quand le contexte change.
+# - `open-pull-requests-limit: 10` — large mais borne le bruit en cas de gros backlog.
+
+version: 2
+
+updates:
+  # ─────────────────────────────────────────────────────────────────────── Backend Gradle
+  - package-ecosystem: gradle
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    groups:
+      # Spring Boot : starter + plugin + dependency-management bougent solidaires.
+      spring-boot:
+        patterns:
+          - 'org.springframework.boot*'
+          - 'io.spring.dependency-management'
+      # Catch-all minor + patch sur tout le reste.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Detekt 1.23.x est compilé contre Kotlin 2.0.x (cf. workaround `resolutionStrategy` dans
+      # backend/build.gradle.kts). Le major 2.0 demandera de retirer le hack et de revoir la config
+      # — décision à prendre manuellement quand on s'y attaque, pas dans une PR Dependabot.
+      - dependency-name: 'io.gitlab.arturbosch.detekt'
+        update-types:
+          - 'version-update:semver-major'
+      # Spotless et son plugin ktfmt : un major bump du formatter peut reformater toute la
+      # codebase sans préavis. À traiter manuellement.
+      - dependency-name: 'com.diffplug.spotless'
+        update-types:
+          - 'version-update:semver-major'
+
+  # ─────────────────────────────────────────────────────────────────────── Frontend npm
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    groups:
+      # Angular : tous les `@angular/*` et `@angular-*/*` doivent bumper en même temps, sinon
+      # peer-deps internes incohérentes (un `@angular/build` qui exige le même major que
+      # `@angular/compiler-cli` etc.). Une seule PR Angular par bump → review en bloc.
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-*/*'
+          - '@ngtools/*'
+      # ngx-translate : core + http-loader bougent ensemble.
+      ngx-translate:
+        patterns:
+          - '@ngx-translate/*'
+      # Catch-all minor + patch sur tout le reste.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # TypeScript est borné par la peer dep d'Angular (`>=5.9 <6.0` pour Angular 21). Tout bump
+      # major TS fail à `npm ci` tant qu'Angular ne l'a pas accepté — Dependabot rouvrira la PR
+      # automatiquement quand on bumpera Angular en major.
+      - dependency-name: 'typescript'
+        update-types:
+          - 'version-update:semver-major'
+      # Zone.js — explicitement retiré du projet (zoneless). Dependabot ne devrait pas le voir,
+      # mais si un transitif le réintroduit on bloque.
+      - dependency-name: 'zone.js'
+
+  # ─────────────────────────────────────────────────────────────────────── GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    groups:
+      # Pas de sous-groupe — les actions GitHub sont peu nombreuses, le `minor-and-patch` suffit.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
