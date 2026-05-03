@@ -86,7 +86,7 @@ class TickerNarrativePreviewControllerTest {
       .perform(get("/api/market/ticker/AAPL/narrative/preview").accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.symbol").value("AAPL"))
-      .andExpect(jsonPath("$.promptVersion").value("v1"))
+      .andExpect(jsonPath("$.promptVersion").value("v2"))
       // System prompt is the static NARRATIVE_SYSTEM_PROMPT — non-empty, mentions "JSON".
       .andExpect(jsonPath("$.systemPrompt").isNotEmpty)
       .andExpect(jsonPath("$.systemPromptChars").isNumber)
