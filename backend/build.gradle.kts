@@ -37,7 +37,7 @@ dependencies {
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   // Kotlin-friendly matchers for Mockito (any(), eq(), times() that respect Kotlin's non-null
   // types — the Java equivalents return `null` for non-nullable parameters and crash).
-  testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:6.3.0")
   // Local HTTP server for testing outbound clients without hitting the real internet — used by
   // YahooClientTest to assert rate-limit / 404 / browser-headers behaviour deterministically.
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
