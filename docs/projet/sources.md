@@ -1,38 +1,39 @@
 # Sources de données — PortfolioAI
 
-## Phase 1 — Source primaire : Yahoo Finance
+## Phase 1 — Source primaire : Twelve Data
 
-À partir de la Phase 1 (pivot ticker), **Yahoo Finance est la source primaire** des dossiers ticker. Toute autre intégration de données passe au second plan.
+À partir de la Phase 1 (pivot ticker), **Twelve Data est la source primaire** des dossiers ticker. Toute autre intégration de données passe au second plan.
 
-### Yahoo Finance (API non officielle)
+### Twelve Data (REST + apikey)
 
 | Endpoint | Donnée | Cache |
 |----------|--------|-------|
-| `https://query1.finance.yahoo.com/v8/finance/chart/{symbol}` | OHLC + volumes (intraday à 5y) | 15 min |
-| `https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}` | Quote courante (prix, change, marketCap, P/E…) | 5 min |
-| `https://query2.finance.yahoo.com/v10/finance/quoteSummary/{symbol}` | Fundamentals étendus (earnings, recommandations analystes…) | 1 h |
+| `https://api.twelvedata.com/time_series?symbol={s}&interval=1day&outputsize=260&order=ASC` | OHLC + volumes (1y daily par défaut, plus si besoin) | 15 min |
+| `https://api.twelvedata.com/quote?symbol={s}` | Quote courante + nom + 52w high/low | 15 min (mêmes clé/cache) |
 
 **Avantages** :
-- Gratuit, pas de clé
-- Couverture quasi-mondiale (US, EU, Asie, ETF, crypto, indices)
-- Historique long (5y+ disponible sur la plupart des tickers)
+- API REST documentée, format JSON stable
+- Couverture US, TSX (XTSE — important pour Wealthsimple), grandes places EU et Asie, ETF, crypto, forex
+- Free tier 800 credits/jour (suffisant avec cache 15 min pour un usage perso)
+- Auth simple : un seul `apikey` en query param
 
 **Limites à connaître** :
-- API non documentée — peut casser sans préavis
-- Pas de SLA, rate-limits informels (cache côté serveur impératif)
-- Si Yahoo ferme cet accès, il faut un plan B (cf. fallback ci-dessous)
+- Quota free tier (800 credits/jour, 8 req/min) à surveiller si on multiplie les tickers
+- Plan payant nécessaire pour intraday haute fréquence
+- Erreurs renvoyées en HTTP 200 avec `status: error` dans le body — le client doit les détecter
 
-### Fallback / providers payants
+### Bascule alternative
 
-Si Yahoo devient indisponible, candidats par ordre de préférence :
+Si Twelve Data devient indisponible ou trop limitant, candidats par ordre de préférence :
 
 | Nom | Type | Gratuit | Notes |
 |-----|------|---------|-------|
 | [Stooq](https://stooq.com) | EOD historique | ✅ | Pas de quote temps réel, mais historique fiable |
-| [Twelve Data](https://twelvedata.com) | Cours, indicateurs | ✅ (limité) | 8 req/min gratuit, clé API |
-| [Polygon.io](https://polygon.io) | Cours, options, crypto | ⚠️ | Très complet, plan gratuit limité |
-| [Alpha Vantage](https://www.alphavantage.co) | Cours, indicateurs | ✅ (limité) | 25 req/jour gratuit, clé API |
-| [Finnhub](https://finnhub.io) | Cours, news, fundamentals | ✅ (limité) | 60 req/min gratuit, clé API |
+| [Polygon.io](https://polygon.io) | Cours, options, crypto | ⚠️ | Très complet, plan gratuit très limité (5 req/min EOD) |
+| [Alpha Vantage](https://www.alphavantage.co) | Cours, indicateurs | ✅ (limité) | 25 req/jour gratuit — trop juste |
+| [Finnhub](https://finnhub.io) | Cours, news, fundamentals | ✅ (limité) | 60 req/min gratuit, US-centric |
+
+> Yahoo Finance avait été tenté en Phase 1 (cookie+crumb dance complet) mais Yahoo bannit les IPs résidentielles trop agressivement pour qu'un projet perso à IP unique en dépende. Voir `docs/technique/architecture.md` (section "Décisions techniques notables") et l'historique git (commit `b993440`) si besoin de rejouer ce code.
 
 ---
 
@@ -53,12 +54,6 @@ Les sources ci-dessous étaient utilisées par le pipeline d'ingestion RSS et l'
 | Seeking Alpha | ❌ Désactivé | Payant |
 | Financial Times, Bloomberg, The Economist | ❌ Désactivé | Payant |
 
-### Données de marché (gelé en Phase 0, redémarrent en Phase 1 via Yahoo)
-
-Listés ici pour référence ; aucun client backend n'a été codé en Phase 0 — Yahoo couvre le besoin Phase 1.
-
-- Yahoo Finance (Phase 1 ✅), Stooq, Alpha Vantage, Finnhub, Polygon.io, Twelve Data, Open Exchange Rates
-
 ### Indicateurs macro (gelé)
 
 Listés en Phase 0 sans client implémenté. Pourraient être réutilisés en Phase 4 si un module macro est rallumé.
@@ -77,4 +72,4 @@ Listés en Phase 0 sans client implémenté. Pourraient être réutilisés en Ph
 | CoinGecko | Cours, market cap | 30 req/min gratuit, sans clé |
 | CoinMarketCap, Binance Public | Cours, volumes | Gratuit, clé API selon endpoint |
 
-> Note : Yahoo Finance couvre les principaux cryptos (BTC-USD, ETH-USD…) en Phase 1. CoinGecko n'est utile que pour les altcoins absents de Yahoo.
+> Note : Twelve Data couvre les principaux cryptos (BTC/USD, ETH/USD…) en Phase 1. CoinGecko n'est utile que pour les altcoins absents.

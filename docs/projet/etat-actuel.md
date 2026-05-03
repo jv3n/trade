@@ -1,22 +1,25 @@
-# État actuel — fin Phase 1 (2026-05-02)
+# État actuel — fin Phase 1 + cleanup provider (2026-05-03)
 
-Snapshot de la session de clôture Phase 1. Pour reprendre proprement à la prochaine session.
+Snapshot post-cleanup Yahoo. Pour reprendre proprement à la prochaine session.
 
 ## Branches / tags
 
 - Branche : `master`
 - Derniers tags :
   - `v0.1.0` — clôture **Phase 0** (recommandations RSS, gelée)
-  - **`v0.2.0`** — clôture **Phase 1 — Pivot ticker** ✅ (ce tag vient d'être poussé)
-- Working tree : **clean** post-tag.
+  - `v0.2.0` — clôture **Phase 1 — Pivot ticker** ✅
+- Working tree : voir `git status` — cleanup Yahoo en cours/terminé selon état.
 
 ## Phase 1 — bilan
 
-100 % livrée. Tout le critique 🔴, le médium 🟡 et le basse 🟢 listé dans `backlog.md` sont ✅.
+100 % livrée. Tout le critique 🔴, le médium 🟡 et le basse 🟢 listé dans `backlog.md` sont ✅. Prérequis Phase 2 (provider de marché alternatif) également ✅.
 
 ### Backend
 
-- Module `market/` : `MarketChartClient` (port) + `YahooClient` (real HTTP, **cookie+crumb auth via `YahooSession`**, JDK 11+ `HttpClient`) + `MockMarketChartClient` (déterministe par symbole). `IndicatorCalculator` Kotlin pur, 20+ tests.
+- Module `market/` : port `MarketChartClient` qui retourne un `MarketChart` (types domaine `TickerQuote` + `List<OhlcBar>`). Deux adapters :
+  - `TwelveDataClient` (REST + apikey, défaut prod) — deux endpoints `/time_series` + `/quote`, cache Caffeine 15 min, parser tolérant aux quirks (numériques en strings, erreurs HTTP 200 avec `status: error`), timeouts connect 5 s + read 10 s.
+  - `MockMarketChartClient` (synthétique déterministe par symbole, défaut sans clé pour CI / onboarding). Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503).
+- `IndicatorCalculator` Kotlin pur, 20+ tests.
 - Pipeline narratif LLM async : `Service → Runner @Async → Executor (parse + validate + 1 retry) → Persister`. Cache snapshot 30 min, dedup job 5 min. Validateur strict : 3-5 keyPoints, ≤15 mots, summary 2-3 phrases, sentiment ∈ enum.
 - Migration Flyway V2 : `ticker_narrative_snapshot` + `ticker_narrative_job`.
 - Endpoints : `GET /api/market/ticker/{symbol}` (dossier complet), `POST/GET /narrative/...` (kick + poll + latest), `GET /narrative/preview` (preview prompt), `GET /api/portfolios/owned-tickers`.
@@ -25,44 +28,30 @@ Snapshot de la session de clôture Phase 1. Pour reprendre proprement à la proc
 
 - Page Dossier ticker : graphe SVG inline, 10 chips d'indicateurs avec color-coding (RSI/MA/perf/drawdown), narratif IA (sentiment chip BULLISH/NEUTRAL/BEARISH coloré, summary, bullets, footer modèle+date), bouton Régénérer avec polling.
 - Dashboard : total agrégé tous portefeuilles dans la sidebar, liste cliquable des tickers détenus (`owned-tickers` agrégé serveur, pas de N+1).
-- Settings adaptés Phase 1 : `prompt-preview` par ticker (input libre + suggestions), `test-sources` étendu avec test ticker Yahoo.
+- Settings adaptés Phase 1 : `prompt-preview` par ticker (input libre + suggestions), `test-sources` étendu avec test ticker.
 - **i18n FR/EN** via `ngx-translate` (TranslatePipe) + `LanguageService` signal-based. Drapeaux unicode dans le header.
 - **Zoneless explicite** (`provideZonelessChangeDetection()` dans `app.config.ts`).
 
 ### Tests
 
-- Backend : `IndicatorCalculatorTest` (20+), `YahooMappersTest` (6 fixtures), `MockMarketChartClientTest` (6), `YahooClientTest` (9 — happy + 401 retry + erreurs + headers via MockWebServer), `TickerNarrativeServiceTest` (8 — 3 branches dedup/cache/kick + normalisation), `TickerNarrativePrompt/Parser/Validator` (17), `TickerNarrativePreviewControllerTest` (2), `PortfolioControllerTest` enrichi (owned-tickers).
+- Backend : `IndicatorCalculatorTest` (20+), `MockMarketChartClientTest` (6), `TwelveDataClientTest` (9 — happy + URL + fallback 52w + mappings d'erreur 200/HTTP + blank API key), `TwelveDataMappersTest` (5 — halted, DESC→ASC, intraday, parseTimestamp), `TickerNarrativeServiceTest` (8 — 3 branches dedup/cache/kick + normalisation), `TickerNarrativePrompt/Parser/Validator` (17), `TickerNarrativePreviewControllerTest` (2), `PortfolioControllerTest` enrichi (owned-tickers).
 - Frontend : 84 tests (14 fichiers). Adapters HTTP, ticker page, dashboard (incl. owned tickers), suivi, csv-import, narrative flow complet.
 
-### Decisions techniques notables
+### Décisions techniques notables (consolidées)
 
-- `JdkClientHttpRequestFactory` au lieu de `SimpleClientHttpRequestFactory` — le second n'a pas de cookie-handling et strip silencieusement `Origin` + `Sec-Fetch-*`.
-- Cookie+crumb `YahooSession` (modèle `yfinance`) — découvert nécessaire après diag Yahoo.
-- `mockwebserver` (test) pour valider toutes les branches HTTP du `YahooClient`.
-- `mockito-kotlin` ajouté pour des matchers null-safe sur les services.
-
-## Validation live Yahoo — toujours en suspens
-
-Le code cookie+crumb est correct (validé par 9 tests + cohérent avec les bibliothèques de référence) **mais aucune IP testée aujourd'hui n'a permis de valider l'API Yahoo en live** :
-
-- IP résidentielle EBOX → 429
-- NordVPN (datacenter Datacamp) → 429
-- Cellulaire Videotron Mobile → 429
-
-Yahoo bloque l'API gateway `query1.finance.yahoo.com` au niveau IP, indépendamment des cookies. Le HTML `finance.yahoo.com` répond lui en 200, donc ce n'est pas un ban global. À retester quand le score IP retombe (24-48h sans tape).
-
-→ Validation à faire à la prochaine session via : tethering 4G d'un autre opérateur, attente, ou bascule **Twelve Data** (ajouté en dette technique).
+- **Provider primaire = Twelve Data**. Yahoo a été tenté (cookie+crumb dance complet) puis supprimé : ban IP résidentielles + VPN + cellulaire, pas viable pour un projet perso à IP unique. Code Yahoo consultable dans l'historique git (commit `b993440`) si besoin de rejouer.
+- **Twelve Data quirks** absorbés par le client : numériques en strings JSON (toBigDecimalOrNull tolère ""/NaN), erreurs en HTTP 200 avec `status: error` (parser inspecte le body), code 404/429/401 mappés respectivement vers `NoSuchElementException` / `MarketUnavailableException("rate-limited")` / `auth-failed`. Clé API absente → exception explicite avant l'appel HTTP.
+- **Port en types domaine** (`MarketChart` au lieu de la forme upstream brute) — un provider supplémentaire = un nouvel adapter, zero churn ailleurs.
+- **HTTP timeouts** sur `TwelveDataHttpConfig` (connect 5 s, read 10 s) via `JdkClientHttpRequestFactory` pour éviter de hanger un thread Tomcat sur DNS / TLS lent.
 
 ## Reprise possible — par ordre d'utilité
 
 ### Dette technique (cf. `backlog.md`)
 
-A. **Twelve Data ou Finnhub provider** 🟡 — plan B si Yahoo continue à rate-limiter. ~1h, branchable comme un nouveau `MarketChartClient`.
+A. **Cleanup des jobs orphelins au boot** 🟡 — listener `ApplicationReadyEvent` qui passe les `PENDING` en `ERROR`. ~15 min.
 
-B. **Cleanup des jobs orphelins au boot** 🟡 — listener `ApplicationReadyEvent` qui passe les `PENDING` en `ERROR`. ~15 min.
-
-C. **Items de l'audit 2026-05-02 non fixés** : contrat preview CSV cassé (front lit `bookValue`, back envoie `bookValueCad`), `@EnableAsync` sans `ThreadPoolTaskExecutor`, N+1 sur la timeline snapshots.
+B. **Items de l'audit 2026-05-02 non fixés** : contrat preview CSV cassé (front lit `bookValue`, back envoie `bookValueCad`), `@EnableAsync` sans `ThreadPoolTaskExecutor`, N+1 sur la timeline snapshots.
 
 ### Phase 2 — ouverte
 
-Quand on attaque (cf. `metier/fonctionnalites.md`) : multi-timeframe sur le graphe, news Yahoo par ticker, comparaison vs benchmark, watchlist persistée, recommandations analystes / earnings.
+Quand on attaque (cf. `metier/fonctionnalites.md`) : multi-timeframe sur le graphe, news par ticker, comparaison vs benchmark, watchlist persistée, recommandations analystes / earnings.

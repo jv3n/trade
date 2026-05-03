@@ -21,8 +21,8 @@ Page **Suivi** : timeline des imports groupés par `batch_id`, expand par compte
 #### Settings (back-office)
 
 Page **Settings** avec sidenav :
-- **Sources de données** : activer/désactiver les flux (RSS / market / macro / crypto). Conservé pour la Phase 1 — Yahoo Finance va devenir la source primaire.
-- **Tester une source** : RSS uniquement (parse + liste articles). Sera étendu pour tester un fetch ticker Yahoo en Phase 1.
+- **Sources de données** : activer/désactiver les flux (RSS / market / macro / crypto). Conservé pour la Phase 1 — Twelve Data sert de source primaire.
+- **Tester une source** : RSS uniquement (parse + liste articles). Étendu en Phase 1 pour tester un fetch ticker via le provider configuré.
 - **Aperçu du prompt** : visualisation du prompt qui serait envoyé au LLM (à adapter pour le prompt par-ticker en Phase 1).
 
 #### Thème clair / sombre
@@ -53,12 +53,13 @@ Pipeline `AnalysisExecutor` complet : `AnalysisContextLoader`, `LlmResponseParse
 
 ## Phase 1 — Pivot ticker (terminé, tag `v0.2.0`)
 
-### Données de marché (Yahoo)
+### Données de marché
 
-Module `market/` côté backend :
+Module `market/` côté backend, port `MarketChartClient` derrière la clé `market.provider` :
 
-- **`YahooClient`** : fetch par ticker — quote actuelle, historique OHLC (1d/5d/1mo/3mo/1y), volumes, fundamentals basiques (P/E, market cap, dividendes), 52w high/low.
-- **Caching court** côté serveur (5-15 min selon endpoint) pour éviter de rate-limiter Yahoo.
+- **Twelve Data (défaut prod)** : REST documenté, free tier 800 credits/jour, TSX natif. Deux endpoints (`/time_series` + `/quote`).
+- **Mock (défaut sans clé)** : série OHLC déterministe par symbole — onboarding sans clé, CI sans réseau.
+- **Caching court** Caffeine 15 min.
 - **Endpoint REST** : `GET /api/market/ticker/{symbol}`.
 
 ### Indicateurs calculés serveur
@@ -101,9 +102,9 @@ Le portefeuille reste la source initiale (les tickers détenus apparaissent auto
 ## Phase 2 — Profondeur ticker
 
 - **Multi-timeframe** : intraday (1d, 5d granulaire) + long terme (5y, 10y)
-- **News Yahoo par ticker** — replace/complete le RSS macro pour l'analyse contextuelle
+- **News par ticker** — replace/complete le RSS macro pour l'analyse contextuelle
 - **Comparaison vs benchmark** : SPY, QQQ, ou ETF sectoriel automatique
-- **Recommandations analystes** Yahoo si disponibles (consensus, target prices)
+- **Recommandations analystes** si disponibles (consensus, target prices)
 - **Fundamentals avancés** : earnings dates, derniers résultats, guidance
 - **Watchlist persistée** en base, pas seulement à partir du portefeuille
 

@@ -74,7 +74,7 @@ Conventional Commits en anglais. Format : `type(scope): description`
 Exemples :
 
 ```
-feat(market): add YahooClient with quote and history endpoints
+feat(market): add TwelveDataClient with quote and time_series endpoints
 fix(indicators): correct RSI computation on flat series
 chore(docs): refresh roadmap for Phase 1 ticker pivot
 ```
@@ -104,7 +104,7 @@ trade/
 │           └── history/               # 🧊 legacy Phase 0
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
-│       ├── market/            # Yahoo client (cookie+crumb) + mock + indicateurs
+│       ├── market/            # TwelveData client + mock + indicateurs
 │       ├── analysis/          # Phase 1 narratif ticker (legacy reco portfolio gelé)
 │       ├── portfolio/         # Import CSV, snapshots, lecture
 │       ├── ingestion/         # 🧊 legacy Phase 0 — RSS scheduler

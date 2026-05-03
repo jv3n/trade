@@ -10,7 +10,7 @@ Chaque contexte est autonome et possède ses propres couches.
 | Contexte | Responsabilité | Statut |
 |----------|----------------|--------|
 | `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | Actif |
-| `market` | Données ticker (Yahoo Finance + mock) + indicateurs techniques calculés | ✅ Phase 1 |
+| `market` | Données ticker (Twelve Data + mock) + indicateurs techniques calculés | ✅ Phase 1 |
 | `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) | ✅ Phase 1 — réécrit |
 | `ingestion` | Sources RSS, articles, scheduler de collecte | 🧊 Legacy gelé Phase 0 |
 
@@ -27,7 +27,7 @@ Chaque contexte est autonome et possède ses propres couches.
     persistence/        # Spring Data repositories
     http/               # Controllers REST
     llm/                # (analysis) Clients API externes (Claude, Ollama)
-    market/             # (market) YahooClient — appel API externe
+    market/             # (market) TwelveDataClient + MockMarketChartClient — adapters pour le port
 
 shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 ```
@@ -65,7 +65,8 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 - Activées via `@ConditionalOnProperty`
 
 ### `infrastructure/market/` *(market uniquement, Phase 1)*
-- `YahooClient` — appel API externe (HTTP) avec cache court
+- `TwelveDataClient` — appel API externe (HTTP + apikey) avec cache court
+- `MockMarketChartClient` — provider synthétique pour dev / CI sans clé
 - Pas de logique d'indicateurs ici (calculs purs en `application/`)
 
 ## Dépendances cross-contextes autorisées
@@ -92,7 +93,7 @@ analysis.domain   → portfolio.domain                      ✓ (relation JPA ge
 | Service query-only | `{Context}QueryService` | `PortfolioQueryService` |
 | Service avec write | `{Action}Service` | `CsvImportService`, `TickerNarrativeService` |
 | Calculator pur | `{Domain}Calculator` | `IndicatorCalculator` |
-| Client externe | `{Provider}Client` | `YahooClient`, `ClaudeClient` |
+| Client externe | `{Provider}Client` | `TwelveDataClient`, `ClaudeClient` |
 | DTO entrée | `{Action}Request` | `UpdateSourceEnabledRequest` |
 | DTO sortie | `{Entity}Dto` | `PortfolioDto`, `TickerSnapshotDto` |
 | Repository | `{Entity}Repository` | `PortfolioRepository`, `TickerNarrativeSnapshotRepository` |

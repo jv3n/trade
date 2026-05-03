@@ -43,8 +43,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ✅ `YahooClient` + `MarketChartClient` (port) + `MockMarketChartClient` | Fetch par ticker : quote, OHLC 1y, 52w high/low. Sélection `yahoo.provider` (yahoo \| mock). Mock déterministe par symbole pour itérer sans Yahoo. Cache Caffeine 15 min, 503 propre sur 429 | 🔴 Critique |
-| ✅ Auth Yahoo (cookie + crumb) | `YahooHttpConfig` (CookieManager + JDK 11+ HttpClient via `JdkClientHttpRequestFactory`) + `YahooSession` qui fait la danse `fc.yahoo.com` → `getcrumb` → cache 30 min thread-safe. `YahooClient` ajoute `?crumb=<token>` aux requêtes chart et retry une fois sur 401 (crumb expiré server-side). 9 tests incluant happy-path, 401-retry, mapping erreurs. Code prêt mais validation live bloquée tant que l'IP est rate-limitée — à valider via VPN ou prochaine session | 🔴 Critique |
+| ✅ `MarketChartClient` (port) + `MockMarketChartClient` | Fetch par ticker : quote, OHLC 1y, 52w high/low. Mock déterministe par symbole pour itérer sans clé / réseau. Cache Caffeine 15 min, 503 propre sur erreurs upstream. Sélection via `market.provider`. Initialement implémenté avec `YahooClient` (cookie+crumb) — supprimé en cleanup post-Phase-1 (Yahoo bannit les IPs résidentielles, validation live impossible). Code Yahoo consultable dans l'historique git (commit `b993440`) | 🔴 Critique |
 | ✅ `IndicatorCalculator` | Kotlin pur, sans Spring : RSI(14), MA50, MA200, momentum 30j/90j, perf 1m/3m/1y, drawdown 52w, volume relatif, distance vs MA. 20+ tests unitaires | 🔴 Critique |
 | ✅ Endpoint REST `market/` | `GET /api/market/ticker/{symbol}` retourne quote + indicateurs + bars OHLC (pour le graphe inline). Pas de `/history` séparé — un seul payload sert le dossier | 🔴 Critique |
 | ✅ Migration Flyway V2 | Tables `ticker_narrative_snapshot` (output LLM + indicateurs JSONB + provenance modèle) et `ticker_narrative_job` (état async) | 🔴 Critique |
@@ -74,7 +73,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 | Feature | Description | Priorité |
 |---------|-------------|----------|
-| ✅ Test source ticker (Yahoo) | Section "Tester un ticker" ajoutée à `/settings/test-sources` (séparée par border-top du test RSS). Input ticker libre + suggestions cliquables depuis owned tickers. Réutilise `MarketRepository.getTicker(symbol)` donc respecte le provider mock/yahoo configuré. Result block : prix, bars OHLC, RSI(14), MA200, drawdown 52w. Erreurs 404 / 503 surfacées via i18n | 🟢 Basse |
+| ✅ Test source ticker | Section "Tester un ticker" ajoutée à `/settings/test-sources` (séparée par border-top du test RSS). Input ticker libre + suggestions cliquables depuis owned tickers. Réutilise `MarketRepository.getTicker(symbol)` donc respecte le `market.provider` configuré. Result block : prix, bars OHLC, RSI(14), MA200, drawdown 52w. Erreurs 404 / 503 surfacées via i18n | 🟢 Basse |
 | ✅ Aperçu du prompt par ticker | `/settings/prompt-preview` adaptée Phase 1 narratif. Input ticker libre + suggestions cliquables depuis les owned tickers. Endpoint back `GET /api/market/ticker/{symbol}/narrative/preview` réutilise `NARRATIVE_SYSTEM_PROMPT` + `buildNarrativeUserMessage` sans appel LLM. 2 tests slice MVC + 1 test adapter HTTP | 🟢 Basse |
 
 ### Tests prioritaires Phase 1
@@ -82,21 +81,29 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | Sujet | Description | Priorité |
 |-------|-------------|----------|
 | ✅ `IndicatorCalculatorTest` | 20+ tests unitaires Kotlin purs : RSI sur série monotone, MA sur fenêtre, drawdown, volumes, edge cases (1 bar, séries trop courtes) | 🔴 Critique |
-| ✅ `YahooMappersTest` + `MockMarketChartClientTest` | Parsing du payload Yahoo sur fixtures JSON inline (6 tests). Mock provider validé : forme, déterminisme, divergence inter-symbole, paths réservés `UNKNOWN`/`RATELIMIT` (6 tests) | 🟡 Moyenne |
+| ✅ `MockMarketChartClientTest` | Mock provider validé : forme, déterminisme, divergence inter-symbole, 52w cohérent avec la série, paths réservés `UNKNOWN`/`RATELIMIT` (6 tests) | 🟡 Moyenne |
 | ✅ `TickerNarrativeParserTest` + `TickerNarrativeValidatorTest` + `TickerNarrativePromptTest` | 17 tests : JSON valide / fences / prose / sentiment mixed-case / unknown sentiment, validation 3-5 keyPoints + longueur, prompt skip silently nulls | 🟡 Moyenne |
 | ✅ `TickerNarrativeServiceTest` | 8 tests Mockito-Kotlin sur la décision tree : pending dedup → reuse / fresh snapshot ≤ 30 min → cache hit avec job DONE synchrone / stale ou absent → kick runner. Plus normalisation casse symbole et délégation `latestSnapshot`. Le test borderline 30 min est volontairement à 29 min — le cas exact dépend d'un Clock injectable | 🟡 Moyenne |
-| ✅ `YahooClientTest` (HTTP) | 8 tests avec `okhttp3.mockwebserver:4.12.0` : happy path 200, 429 → MarketUnavailableException("rate-limited"), 404 → NoSuchElementException, 500 → upstream, 200 avec chart.error, empty result, headers browser envoyés (UA Chrome + Accept */* + Accept-Language + Referer), URL path/query corrects. **Découverte du test** : le JDK `HttpURLConnection` strip silently `Origin` et `Sec-Fetch-*` — code mort retiré du YahooClient | 🟢 Basse |
+| ✅ `TwelveDataClientTest` + `TwelveDataMappersTest` (HTTP) | 14 tests avec `okhttp3.mockwebserver:4.12.0` : happy path `/time_series` + `/quote` mergés, request URL avec apikey/outputsize/order=ASC, fallback bar-derived 52w, mappings d'erreur (200 avec status=error code=404/429/401, HTTP 429/500), blank API key détecté avant l'appel. Mappers : halted bars (empty strings), DESC→ASC re-sort, intraday datetime, parseTimestamp edge cases | 🟢 Basse |
 
 ---
 
 ## Phase 2 — Profondeur ticker
 
+### ✅ Prérequis — provider de marché alternatif
+
+| Feature | Notes | Priorité |
+|---------|-------|----------|
+| ✅ `TwelveDataClient` (nouveau provider primaire) | Yahoo rate-limitait agressivement les IPs résidentielles (ban observé sur résidentiel + VPN + cellulaire) — validation live impossible. Twelve Data prend le relais : REST documenté, free tier 800 credits/jour, TSX natif (XTSE), JSON simple. Deux endpoints (`/time_series` + `/quote`), parser tolérant aux quirks (numériques en strings, erreurs en HTTP 200 avec `status: error`). Refactor du port `MarketChartClient` au passage : retour en types domaine (`MarketChart` = `TickerQuote` + `List<OhlcBar>`). Clé de config `market.provider` (`mock` \| `twelvedata`). Défaut `application.yml` = `mock` (pas de clé requise pour l'onboarding et la CI), `application-local.yml` bascule sur `twelvedata` avec clé via `TWELVEDATA_API_KEY`. Code Yahoo supprimé en suivant (jamais opérationnel pour le user) — historique git si besoin | 🔴 Critique |
+
+### ⏳ À faire
+
 | Feature | Description |
 |---------|-------------|
 | ⏳ Multi-timeframe | Intraday (1d, 5d granulaire) + long terme (5y, 10y) — toggle sur le graphe |
-| ⏳ News Yahoo par ticker | Headlines Yahoo Finance par ticker — remplace le RSS macro pour le contexte |
+| ⏳ News par ticker | Headlines par ticker — remplace le RSS macro pour le contexte |
 | ⏳ Comparaison vs benchmark | SPY, QQQ ou ETF sectoriel (déduit de l'asset type) overlay sur le graphe |
-| ⏳ Recommandations analystes | Consensus, target prices Yahoo si disponibles |
+| ⏳ Recommandations analystes | Consensus, target prices si disponibles |
 | ⏳ Earnings dates et derniers résultats | Encart fundamentals enrichi |
 | ⏳ Watchlist persistée | Table `watchlist_ticker` — ajouter un ticker à surveiller sans qu'il soit en portefeuille |
 
@@ -133,9 +140,9 @@ Sujets identifiés en cours de session, pas bloquants pour la Phase 1 mais à tr
 | Sujet | Description | Priorité |
 |-------|-------------|----------|
 | ⏳ Cleanup des jobs orphelins au démarrage | À chaque hot-reload Tilt (ou crash backend), un job `PENDING` reste `PENDING` à jamais en BDD. `ApplicationReadyEvent` listener qui passe tous les `PENDING` en `ERROR` au boot. ~15 min | 🟡 Moyenne |
-| ⏳ Provider de marché alternatif (Twelve Data / Finnhub) | Plan B si Yahoo continue à rate-limiter agressivement (cf. Phase 1, ban observé sur résidentiel + VPN + cellulaire). Twelve Data : clé gratuite 800 req/jour, IPs propres en prod, interface très similaire — un nouveau `MarketChartClient` à brancher sur `yahoo.provider: twelvedata`. ~1h. À considérer si la validation live Yahoo continue d'échouer | 🟡 Moyenne |
+| ✅ Provider de marché alternatif (Twelve Data) | Implémenté en prérequis Phase 2 — voir section dédiée plus haut. `TwelveDataClient` actif via `market.provider: twelvedata`, clé via `TWELVEDATA_API_KEY` | 🔴 Critique |
 | ⏳ Doublon `recommendations/` vs `history/` | Avec la Phase 1, ces pages deviennent legacy. Décision : garder en l'état pour le legacy, ou simplifier en une seule page à terme | 🟢 Basse |
 | ⏳ Tests sur le module `analysis/` (legacy) | Aucun test sur le legacy. Si on rallume Phase 4, on en aura besoin. Pas urgent tant que le code dort | 🟢 Basse |
-| ✅ Refacto "tests as documentation" sur les tests existants | Pass d'audit appliqué : docstrings de classe + commentaires motivationnels sur `IndicatorCalculatorTest`, `YahooMappersTest`, `MockMarketChartClientTest`, `CsvImportServiceTest`, `PortfolioControllerTest` côté back, et `ticker.spec`, `dashboard.spec`, `suivi.spec`, `csv-import.spec`, `analysis.http.spec` + 4 HTTP adapter specs côté front. Stub-only specs (`should create` seul) laissés tels quels. Les tests narratif Phase 1 ont servi de modèle | 🟢 Basse |
+| ✅ Refacto "tests as documentation" sur les tests existants | Pass d'audit appliqué : docstrings de classe + commentaires motivationnels sur `IndicatorCalculatorTest`, `MockMarketChartClientTest`, `CsvImportServiceTest`, `PortfolioControllerTest` côté back, et `ticker.spec`, `dashboard.spec`, `suivi.spec`, `csv-import.spec`, `analysis.http.spec` + 4 HTTP adapter specs côté front. Stub-only specs (`should create` seul) laissés tels quels. Les tests narratif Phase 1 ont servi de modèle | 🟢 Basse |
 | ⏳ `document.documentElement` SSR-safe dans `ThemeService` | Wrap avec `isPlatformBrowser` si on bascule un jour SSR | 🟢 Basse |
 | ⏳ FOUC du toggle thème — résolu | Script inline dans `index.html` lit `localStorage` avant le bootstrap Angular et pose `data-theme`. Voir `developpement.md` | ✅ Fait |

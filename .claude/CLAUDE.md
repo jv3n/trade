@@ -4,7 +4,7 @@ Source of truth for project conventions and Claude-specific configuration. Read 
 
 ## Project
 
-Per-ticker market intelligence app. For each ticker (held in the user's portfolio or watched), the backend fetches Yahoo Finance data, computes technical indicators server-side (RSI, MA, momentum, drawdown…), and the LLM produces a short narrative summary. **The LLM is a writer, not a decider** — it does not predict prices and does not output BUY/SELL signals; it digests indicators that the code computed and writes a short readable summary.
+Per-ticker market intelligence app. For each ticker (held in the user's portfolio or watched), the backend fetches market data from Twelve Data, computes technical indicators server-side (RSI, MA, momentum, drawdown…), and the LLM produces a short narrative summary. **The LLM is a writer, not a decider** — it does not predict prices and does not output BUY/SELL signals; it digests indicators that the code computed and writes a short readable summary.
 
 > Phase 0 (rebalance recommendations from RSS news + portfolio-wide LLM prompt) is **frozen** — the code remains in place but is no longer in the user flow. See `docs/metier/fonctionnalites.md` for the full phasing.
 
@@ -32,7 +32,7 @@ trade/
 │       └── features/        # UI pages (primary adapters)
 ├── backend/                 # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
-│       ├── market/          # Yahoo client + IndicatorCalculator + cookie+crumb auth
+│       ├── market/          # MarketChartClient port + TwelveData/Mock adapters + IndicatorCalculator
 │       ├── analysis/        # Phase 1 ticker narrative (legacy reco pipeline frozen)
 │       ├── portfolio/       # CSV imports, snapshots, read-only portfolios
 │       ├── ingestion/       # 🧊 legacy Phase 0 — RSS scheduler
@@ -52,7 +52,7 @@ trade/
 
 ## Backend modules
 
-- `market/` — `MarketChartClient` port + `YahooClient` (real HTTP, cookie+crumb auth via `YahooSession`, JDK 11+ HttpClient via `YahooHttpConfig`) and `MockMarketChartClient` (deterministic synthetic data) selected by `yahoo.provider` (`yahoo` \| `mock`). `IndicatorCalculator` is Kotlin pur, sans Spring : RSI, MA50/MA200, momentum, drawdown.
+- `market/` — `MarketChartClient` port (returns domain `MarketChart` = `TickerQuote` + `List<OhlcBar>`) with two adapters selected by `market.provider` : `TwelveDataClient` (REST + apikey, default prod) and `MockMarketChartClient` (deterministic synthetic data, default without key). `IndicatorCalculator` is Kotlin pur, sans Spring : RSI, MA50/MA200, momentum, drawdown.
 - `analysis/` — Phase 1 ticker narrative pipeline (`TickerNarrativeService`, `TickerNarrativeRunner`, `TickerNarrativeParser`, `TickerNarrativeValidator`). Legacy portfolio-wide pipeline (`AnalysisExecutor`, `RecommendationValidator`, etc.) is **frozen in place** — code remains but no longer in the user flow.
 - `portfolio/` — read-only portfolios, Wealthsimple CSV import, historical snapshots
 - `ingestion/` — 🧊 legacy Phase 0 — RSS scheduler. Conservé en place, plus consommé en Phase 1.

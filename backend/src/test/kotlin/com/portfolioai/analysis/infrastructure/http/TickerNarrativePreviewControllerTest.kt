@@ -31,7 +31,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
  *   prompt version). A rename here would silently empty the preview UI on the front.
  * - The user message body actually contains the live indicator values — we don't just return the
  *   template, we return what the runner would send to Claude *right now*.
- * - Errors surface as 503/404 via `GlobalExceptionHandler` (TickerService's exceptions on Yahoo
+ * - Errors surface as 503/404 via `GlobalExceptionHandler` (TickerService's exceptions on provider
  *   rate-limit / unknown ticker).
  */
 @WebMvcTest(TickerNarrativeController::class, GlobalExceptionHandler::class)
@@ -103,7 +103,7 @@ class TickerNarrativePreviewControllerTest {
   @Test
   fun `GET narrative preview returns 404 when the ticker is unknown`() {
     given(tickerService.load("UNKNOWN"))
-      .willThrow(NoSuchElementException("Ticker UNKNOWN not found on Yahoo Finance"))
+      .willThrow(NoSuchElementException("Ticker UNKNOWN not found on Twelve Data"))
 
     mvc
       .perform(

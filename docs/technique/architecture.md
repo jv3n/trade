@@ -9,7 +9,8 @@
 | Build | Gradle (Kotlin DSL) | Standard Kotlin/Spring, scripts typés |
 | IA (défaut) | Claude API — Anthropic | Compréhension du langage naturel financier, JSON structuré fiable, raisonnement nettement supérieur à un 7B local |
 | IA (backup local) | Ollama + `mistral` (7B Instruct) | Développement offline / sans clé API. Pas le défaut depuis la Phase 1 |
-| Data marché | Yahoo Finance (API non officielle) | Gratuit, complet, pas de clé. Source primaire des dossiers ticker |
+| Data marché | Twelve Data (REST + apikey) | Source primaire Phase 1+. Free tier 800 credits/jour, TSX natif, JSON documenté |
+| Data marché (dev / CI) | `MockMarketChartClient` (synthétique) | Défaut sans clé : 260 bars OHLC déterministes par symbole. Onboarding et CI |
 | Base de données | PostgreSQL | Schéma relationnel, snapshots historiques, Flyway pour les migrations |
 | Infra locale | Tilt + Docker Compose | Hot reload backend/frontend, reset BDD en un clic |
 | CI | GitHub Actions | Workflows backend (Gradle + PostgreSQL) et frontend (Vitest) |
@@ -19,7 +20,8 @@
 ```
 ┌────────────────────────────────────────────┐
 │         Sources de données                  │
-│  Yahoo Finance API (par ticker)             │
+│  Twelve Data (REST + apikey, défaut prod)   │
+│  Mock local (synthétique, défaut CI / sans clé) │
 │  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
 │  RSS / macro / crypto      [gelé Phase 0]   │
 └──────────────────┬─────────────────────────┘
@@ -28,7 +30,7 @@
 ┌────────────────────────────────────────────┐
 │         Backend  (Kotlin + Spring)          │
 │                                             │
-│  market/      → YahooClient + indicators    │
+│  market/      → MarketChartClient + indic.  │
 │  analysis/    → narratif LLM par ticker     │
 │  portfolio/   → import CSV, snapshots       │
 │  shared/      → utilitaires transverses     │
@@ -60,9 +62,11 @@
 
 Source primaire des données ticker.
 
-- **`YahooClient`** — récupère par ticker : quote courante, historique OHLC (1d à 1y), volumes, fundamentals basiques, 52w high/low. Caching court (5-15 min selon endpoint) pour éviter de rate-limiter Yahoo.
+- **`MarketChartClient`** (port) — interface qui retourne un `MarketChart` (quote + bars OHLC) en types domaine. Deux adapters cohabitent, sélectionnés par `market.provider` :
+  - `TwelveDataClient` (`twelvedata`) — REST + apikey, défaut prod. Deux appels par dossier (`/time_series` + `/quote`), parsing tolérant aux quirks (numériques en strings, erreurs renvoyées en HTTP 200 avec `status: error`).
+  - `MockMarketChartClient` (`mock`, défaut sans clé) — série OHLC synthétique déterministe par symbole. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour les chemins d'erreur UI.
 - **`IndicatorCalculator`** — Kotlin pur, sans dépendance Spring. Calcule RSI(14), MA50/MA200, momentum 30j/90j, perf 1m/3m/1y/YTD, drawdown 52w, volume relatif, position vs MA. Testable unit, sans BDD.
-- **Endpoints REST** : `GET /api/market/ticker/{symbol}` (données + indicateurs), `GET /api/market/ticker/{symbol}/history` (OHLC pour le graphe).
+- **Endpoints REST** : `GET /api/market/ticker/{symbol}` (données + indicateurs).
 
 ### `analysis/` — Phase 1 réécrite
 
@@ -93,9 +97,9 @@ Sa nouvelle utilité Phase 1 : fournir la **liste des tickers détenus** au `mar
 
 ### `ingestion/` — gelé Phase 0
 
-Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus / détection HTML, 25 sources seedées). Conservé en place mais retiré du flow principal — Yahoo Finance remplit ce rôle en Phase 1.
+Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus / détection HTML, 25 sources seedées). Conservé en place mais retiré du flow principal — Twelve Data remplit le rôle data marché en Phase 1.
 
-Réutilisable plus tard pour de la macro non couverte par Yahoo (Fed, BCE, indicateurs économiques) si besoin.
+Réutilisable plus tard pour de la macro non couverte par Twelve Data (Fed, BCE, indicateurs économiques) si besoin.
 
 ### `shared/`
 
@@ -138,13 +142,15 @@ Deux migrations Flyway aujourd'hui : `V1__init.sql` (schéma Phase 0) et `V2__ti
 
 **LLM = rédacteur, pas décideur** — le LLM digère des indicateurs **déjà calculés** (RSI, MA, momentum) et écrit un narratif. Il ne calcule jamais d'indicateurs (il les hallucine systématiquement) et ne produit pas de signal d'achat/vente. Cette séparation rend l'output testable (le code des indicateurs l'est) et l'IA productive sur ce qu'elle sait faire (écrire).
 
-**Yahoo en source primaire** — gratuit, sans clé, couverture mondiale, fundamentals corrects pour un MVP. La librairie officielle Python `yfinance` ne s'utilise pas côté JVM ; on parle directement à l'API publique en HTTP. Si Yahoo ferme un jour ou rate-limite, on bascule sur Stooq (EOD seulement) ou sur un provider payant (Alpha Vantage, Twelve Data, Polygon).
+**Twelve Data en source primaire** — Yahoo Finance avait été choisi initialement (gratuit, sans clé, couverture mondiale) mais rate-limite agressivement les IPs résidentielles : ban observé sur résidentiel + VPN + cellulaire en validation Phase 1, malgré le cookie+crumb dance complet. Trop instable pour un projet perso à IP unique. Twelve Data prend le relais Phase 1 : REST documenté, free tier 800 credits/jour (largement suffisant avec un cache 15 min), TSX natif (XTSE), interface stable. Le code Yahoo a été supprimé — l'implémentation cookie+crumb reste consultable dans l'historique git (commit `b993440`) si on doit la rejouer pour un autre provider.
 
-**Caching côté serveur** — un dossier ticker peut être consulté plusieurs fois par jour. On cache les fetchs Yahoo (5 min pour la quote, 15 min pour l'historique, 1 h pour les fundamentals) en mémoire. Pas besoin de Redis à cette échelle.
+**Caching côté serveur** — un dossier ticker peut être consulté plusieurs fois par jour. On cache les fetchs market (15 min) en Caffeine en mémoire. Le cache key préfixe par adapter (`twelvedata|`) pour qu'un provider futur puisse cohabiter sans collision. Pas besoin de Redis à cette échelle.
 
-**Provider de marché abstrait + mock local** — `MarketChartClient` est une interface ; deux implémentations cohabitent, sélectionnées par `yahoo.provider` (`yahoo` par défaut, `mock` en local via `application-local.yml`). Le `MockMarketChartClient` génère une série OHLC déterministe par symbole (seed = hash). Yahoo rate-limite régulièrement les IPs résidentielles dev (429 prolongés) ; le mock permet d'itérer sur l'UI dossier et le pipeline LLM sans dépendre de Yahoo. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les chemins d'erreur.
+**Provider de marché abstrait + mock local** — `MarketChartClient` est un port qui retourne un `MarketChart` (types domaine `TickerQuote` + `List<OhlcBar>`). Deux implémentations cohabitent, sélectionnées par `market.provider` :
+- `twelvedata` — défaut prod, requiert `market.twelvedata.api-key` (env `TWELVEDATA_API_KEY`).
+- `mock` — défaut sans clé, génère une série OHLC déterministe par symbole (seed = hash). Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les chemins d'erreur.
 
-**Auth Yahoo cookie + crumb** — Yahoo Finance attend une session authentifiée pour son endpoint `chart`. Sans ça, des 429 qui ressemblent à des rate-limits sont en fait des refus d'auth. `YahooSession` fait la danse classique de `yfinance` : `GET fc.yahoo.com` → cookies posés, `GET v1/test/getcrumb` → token de session. Le crumb est ajouté en query param sur chaque requête chart, les cookies suivent automatiquement via le `CookieManager` partagé (configuré dans `YahooHttpConfig`). Cache 30 min, invalidation explicite + retry une fois sur 401 (crumb expiré server-side). Implémenté avec `JdkClientHttpRequestFactory` (Java 11+ HttpClient) plutôt que `SimpleClientHttpRequestFactory` car ce dernier n'a pas de cookie-handling natif et strip silencieusement plusieurs headers (`Origin`, `Sec-Fetch-*`).
+**Twelve Data — quirks à absorber** — l'API a deux pièges qui justifient un parser tolérant : (1) **les nombres sont des strings JSON** (`"open": "180.00"`) — on désérialise en `String` et convertit avec `toBigDecimalOrNull`/`toLongOrNull` ce qui tolère naturellement `""` et `"NaN"` observés sur tickers illiquides ; (2) **les erreurs reviennent en HTTP 200** avec `{status: "error", code: 404}` dans le body — il faut inspecter le body et pas juste le code HTTP. Mapping : `code 404` → `NoSuchElementException`, `429` → `MarketUnavailableException("rate-limited")`, `401`/`403` → `auth-failed`. Bonus : la clé API absente est détectée *avant* l'appel HTTP et lève `MarketUnavailableException` avec un message actionnable — pas de credit gaspillé sur une mauvaise config.
 
 **Claude API par défaut** — la Phase 0 a montré que Mistral 7B sortait des justifications grammaticalement correctes mais financièrement creuses ("vendre pour un profit de 0.4%"). Le saut de qualité Claude est largement supérieur au coût (~quelques cents par dossier). Mistral reste activable pour le dev offline (`llm.provider: ollama`).
 

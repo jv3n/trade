@@ -8,7 +8,7 @@ Suivre un portefeuille demande du temps : pour chaque titre détenu, lire la pre
 
 PortfolioAI agrège pour chaque ticker (de ton portefeuille ou de ta watchlist) :
 
-1. **Données de marché** issues de Yahoo Finance — prix, historique OHLC, volumes, fundamentals
+1. **Données de marché** issues de Twelve Data — prix, historique OHLC, volumes, fundamentals
 2. **Indicateurs techniques calculés** côté serveur — RSI, MA50 / MA200, momentum, drawdown 52w, volume relatif
 3. **Un narratif synthétique** produit par un LLM à partir des deux ci-dessus
 
@@ -47,7 +47,7 @@ Plutôt que de mesurer "est-ce que la reco IA a eu raison" (impossible à isoler
 Ce feedback alimente l'itération sur le prompt — pas sur "fais-moi gagner de l'argent", mais sur "écris-moi un meilleur résumé".
 
 ```
-Yahoo Finance API
+Twelve Data API
         │
         ▼
   Indicateurs (Kotlin)
@@ -70,4 +70,4 @@ Yahoo Finance API
 
 ## Disclaimer
 
-PortfolioAI est un outil d'aide à la lecture des marchés. Il ne constitue pas un conseil en investissement agréé. Les narratifs sont générés par un modèle IA à partir de données publiques, et ne remplacent pas l'avis d'un professionnel financier. Les indicateurs techniques sont calculés à partir de données fournies par des tiers (Yahoo Finance) sans garantie de complétude ou d'exactitude.
+PortfolioAI est un outil d'aide à la lecture des marchés. Il ne constitue pas un conseil en investissement agréé. Les narratifs sont générés par un modèle IA à partir de données publiques, et ne remplacent pas l'avis d'un professionnel financier. Les indicateurs techniques sont calculés à partir de données fournies par des tiers (Twelve Data) sans garantie de complétude ou d'exactitude.

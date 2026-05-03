@@ -8,7 +8,7 @@ Bienvenue. Ce document est conçu pour qu'un nouvel arrivant soit **productif su
 
 PortfolioAI est un **outil d'intelligence de marché par ticker**. Pour chaque action / ETF / crypto que tu détiens (importé depuis Wealthsimple) ou que tu surveilles, le backend :
 
-1. **Récupère les données de marché** chez Yahoo Finance (quote courante + 1 an d'historique OHLC).
+1. **Récupère les données de marché** chez Twelve Data (quote courante + 1 an d'historique OHLC).
 2. **Calcule les indicateurs techniques** côté serveur, en Kotlin pur, testé unit (RSI, MA50/MA200, momentum, drawdown 52w, etc.).
 3. **Demande au LLM** (Claude par défaut) de **rédiger un court narratif** à partir de ces indicateurs : `{summary, sentiment, keyPoints[3..5]}`. Le LLM est un **rédacteur**, pas un décideur — il décrit ce que les chiffres montrent, il ne prédit pas et ne donne pas d'ordre d'achat / vente.
 4. **Persiste un snapshot** du résultat (prix + indicateurs + narratif + modèle utilisé) pour pouvoir relire dans 6 mois ce que disait l'IA en regardant quoi.
@@ -59,8 +59,8 @@ anthropic:
 llm:
   provider: claude     # défaut Phase 1
 
-yahoo:
-  provider: mock       # voir plus bas — débloque le dev sans dépendre de Yahoo
+market:
+  provider: mock       # voir plus bas — débloque le dev sans clé Twelve Data
 ```
 
 **Option B — Ollama (local, sans clé)** : tourne offline, gratuit, mais latence 30-60 s sur M1 et qualité narrative en retrait. Pratique si tu n'as pas (encore) de clé Claude ou que tu veux dev offline.
@@ -73,7 +73,7 @@ ollama:
   base-url: http://ollama:11434
   model: mistral       # 7B Instruct, ~4 GB — défaut local
 
-yahoo:
+market:
   provider: mock
 ```
 
@@ -128,12 +128,12 @@ Le projet a deux providers configurables, chacun avec une vraie implémentation 
 | `claude` | Défaut Phase 1. Qualité narrative nettement supérieure, latence 1-3 s, requiert une clé `ANTHROPIC_API_KEY`. |
 | `ollama` | Dev offline, sans clé. Modèle `mistral` (7B Instruct, ~4 GB) — défaut local. Latence 30-60 s sur M1. Lance `llm:pull-mistral` dans Tilt pour télécharger. Pour un saut qualitatif (latence ~1-2 min), tu peux pull `phi4` ou `qwen2.5:14b` et bouger `ollama.model`. |
 
-### Yahoo Finance — `yahoo.provider`
+### Données de marché — `market.provider`
 
 | Valeur | Quand l'utiliser |
 |---|---|
-| `yahoo` | Défaut prod. Vrai fetch HTTP avec headers browser (UA Chrome, Sec-Fetch-*, Referer). Yahoo rate-limite agressivement les IPs résidentielles dev — un dossier ticker en plein dev peut déclencher des 429 prolongés. |
-| `mock` | Recommandé en local. `MockMarketChartClient` génère 260 bars OHLC déterministes par symbole (seed = `symbol.hashCode()`). Tous les indicateurs se calculent. Symboles réservés : `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les chemins d'erreur UI. |
+| `mock` | Défaut, sans clé requise. `MockMarketChartClient` génère 260 bars OHLC déterministes par symbole (seed = `symbol.hashCode()`). Tous les indicateurs se calculent. Symboles réservés : `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les chemins d'erreur UI. |
+| `twelvedata` | Vraie data, défaut prod. REST documenté + apikey, free tier 800 credits/jour, TSX natif. Requiert `market.twelvedata.api-key` (env `TWELVEDATA_API_KEY`). **Crée un compte gratuit** sur [twelvedata.com](https://twelvedata.com/) puis récupère ta clé sur [https://twelvedata.com/account/api-keys](https://twelvedata.com/account/api-keys), et colle-la dans `application-local.yml` sous `market.twelvedata.api-key`. |
 
 Surcharger dans `application-local.yml`, redémarrer le backend (Tilt le fait tout seul au save).
 
@@ -143,11 +143,10 @@ Surcharger dans `application-local.yml`, redémarrer le backend (Tilt le fait to
 
 ### "Données de marché momentanément indisponibles" sur un dossier ticker
 
-Yahoo rate-limite ton IP. Trois options :
+Le provider sélectionné refuse la requête. Diagnostic selon `market.provider` :
 
-1. **Bascule sur le mock** : `yahoo.provider: mock`. Tu retrouves immédiatement des dossiers fonctionnels (avec données synthétiques). C'est le défaut recommandé en dev.
-2. **Attendre 5-15 min** : le rate-limit IP retombe généralement vite.
-3. **Vérifier les logs backend** : `tilt logs backend | grep -i yahoo` te donne le statut HTTP et le body de la réponse. Si tu vois `Too Many Requests`, c'est bien un 429 ; si tu vois autre chose, c'est un autre souci.
+1. **`twelvedata`** — clé manquante (`market.twelvedata.api-key` vide → message explicite dans les logs) ou quota 800 credits/jour épuisé. Vérifier avec `tilt logs backend | grep -i "twelve data"`. Si quota explosé, bascule temporairement sur `mock`.
+2. **`mock`** — ne devrait jamais arriver sauf si tu testes les symboles réservés `RATELIMIT` ou `UNKNOWN`.
 
 ### Un job narratif reste bloqué `PENDING`
 
