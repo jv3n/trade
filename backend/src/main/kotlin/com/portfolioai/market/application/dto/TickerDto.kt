@@ -51,6 +51,21 @@ data class TickerSnapshotDto(
   val bars: List<OhlcBarDto>,
 )
 
+/**
+ * Response payload for the multi-timeframe chart endpoint. Returned by `GET .../{symbol}/chart`.
+ *
+ * Echoes back the resolved [timeframe] code plus the upstream [range] / [interval] used — that way
+ * the frontend can verify what it actually asked for and the upstream picked, useful when debugging
+ * cache hits or odd intraday gaps.
+ */
+data class ChartDto(
+  val symbol: String,
+  val timeframe: String,
+  val range: String,
+  val interval: String,
+  val bars: List<OhlcBarDto>,
+)
+
 fun TickerQuote.toDto() =
   TickerQuoteDto(
     symbol = symbol,

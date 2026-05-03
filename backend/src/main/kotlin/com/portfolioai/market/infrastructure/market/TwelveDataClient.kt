@@ -48,8 +48,8 @@ class TwelveDataClient(
   @Cacheable(MARKET_CHART_CACHE, key = "'twelvedata|' + #symbol + '|' + #range + '|' + #interval")
   override fun fetchChart(symbol: String, range: String, interval: String): MarketChart {
     requireApiKey()
-    val outputsize = outputSizeFor(range)
     val tdInterval = mapInterval(interval)
+    val outputsize = outputSizeFor(range, tdInterval)
     val seriesResponse = fetchTimeSeries(symbol, tdInterval, outputsize)
     val bars = seriesResponse.toOhlcBars()
     if (bars.isEmpty())
@@ -147,25 +147,65 @@ class TwelveDataClient(
   }
 
   /**
-   * Map our generic `range` code to a Twelve Data `outputsize`. We default to 260 daily bars (~1
-   * trading year + headroom) which covers every indicator including MA200 and perf1y.
+   * Number of bars to request from Twelve Data, given [range] (time horizon) and [tdInterval]
+   * (Twelve-Data-style bar size). We slightly overshoot to be safe — Twelve Data returns whatever
+   * is actually available for the symbol, padding doesn't happen.
    *
-   * `1y` → 260 ; `2y` → 520 ; `5y` → 1300. Twelve Data's `outputsize` cap on the free plan is 5000
-   * which is comfortably above anything we ask for in Phase 1.
+   * Why both arguments : `range` alone underspecifies the count. `1y` at `1day` is ~260 bars, but
+   * `1y` at `1week` is ~55 — a single-arg mapping would over- or under-fetch on intraday and weekly
+   * views. The cap on the free plan is 5000, comfortably above anything we ask for here.
    */
-  private fun outputSizeFor(range: String): Int =
-    when (range.lowercase()) {
-      "1d",
-      "5d" -> 30
-      "1mo" -> 30
-      "3mo" -> 90
-      "6mo" -> 180
-      "1y" -> 260
-      "2y" -> 520
-      "5y" -> 1300
-      "ytd" -> 260
-      "max" -> 5000
-      else -> 260
+  private fun outputSizeFor(range: String, tdInterval: String): Int =
+    when (tdInterval) {
+      "1day" ->
+        when (range.lowercase()) {
+          // Daily bars on a 1d/5d window aren't visually interesting — we still cap something
+          // small in case the frontend ever requests this combo.
+          "1d",
+          "5d" -> 30
+          "1mo" -> 25
+          "3mo" -> 65
+          "6mo" -> 130
+          "1y",
+          "ytd" -> 260
+          "2y" -> 520
+          "5y" -> 1300
+          "max" -> 5000
+          else -> 260
+        }
+      "1week" ->
+        when (range.lowercase()) {
+          "1y" -> 55
+          "2y" -> 110
+          "5y" -> 270
+          "max" -> 1500
+          else -> 270
+        }
+      "1month" ->
+        when (range.lowercase()) {
+          "5y" -> 65
+          "max" -> 500
+          else -> 125
+        }
+      // Intraday — one trading day ≈ 6.5 hours. We compute bars-per-day from the interval, then
+      // multiply by an approximate trading-day count for the requested range.
+      else -> {
+        val barsPerDay =
+          when (tdInterval) {
+            "1min" -> 390
+            "5min" -> 78
+            "15min" -> 26
+            "30min" -> 13
+            "1h" -> 7
+            else -> 26
+          }
+        when (range.lowercase()) {
+          "1d" -> barsPerDay + 10 // small headroom for pre-market / after-hours
+          "5d" -> barsPerDay * 5 + 20
+          "1mo" -> barsPerDay * 22
+          else -> barsPerDay
+        }
+      }
     }
 
   /** Generic `1d` → Twelve Data-style `1day`, etc. */
