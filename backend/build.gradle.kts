@@ -40,7 +40,7 @@ dependencies {
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
   // Local HTTP server for testing outbound clients without hitting the real internet — used by
   // YahooClientTest to assert rate-limit / 404 / browser-headers behaviour deterministically.
-  testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+  testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
