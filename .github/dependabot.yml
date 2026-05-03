@@ -1,0 +1,55 @@
+# Dependabot — alerts + auto-PRs sur deps obsolètes ou vulnérables.
+# Doc : https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# Stratégie :
+# - Une seule passe hebdomadaire le lundi matin (Europe/Paris). On évite le bruit quotidien tout
+#   en restant réactif aux failles publiées dans la semaine.
+# - Mineures + patches sont **groupées en une seule PR par écosystème** (groupe `minor-and-patch`)
+#   pour pouvoir merger d'un trait après une session de relecture. Les majeures restent en PRs
+#   séparées — leur impact justifie une revue isolée.
+# - `open-pull-requests-limit: 10` — large mais borne le bruit en cas de gros backlog.
+
+version: 2
+
+updates:
+  - package-ecosystem: gradle
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch

@@ -16,6 +16,12 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      # Required so the "Upload Detekt SARIF" step can post findings to the Code Scanning API
+      # (visible in the repo's Security tab). Default GITHUB_TOKEN doesn't grant this.
+      security-events: write
+
     services:
       postgres:
         image: postgres:16
@@ -57,3 +63,21 @@ jobs:
           SPRING_DATASOURCE_USERNAME: portfolioai
           SPRING_DATASOURCE_PASSWORD: portfolioai
           ANTHROPIC_API_KEY: local-placeholder
+
+      # Surface Detekt findings into GitHub Code Scanning (Security tab). `if: always()` so a
+      # failed test doesn't swallow the SARIF — Detekt generates it before tests run anyway.
+      - name: Upload Detekt SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: backend/build/reports/detekt/detekt.sarif
+          category: detekt
+
+      # HTML report as a downloadable artifact for offline review (linked from the Actions run).
+      - name: Upload Detekt HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-report
+          path: backend/build/reports/detekt/detekt.html
+          if-no-files-found: ignore

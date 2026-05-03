@@ -140,7 +140,9 @@ Builds (`./gradlew`, `npm run build`) and tests (`./gradlew test`, `npm run test
 
 ### Git
 
-The user manages git themselves (staging, committing, branching, shelving). When asked for a commit, **propose a Conventional Commits message in English** but do **not** run `git add` or `git commit` — the user picks what to stage and when. The same applies to `git push`, branch creation, PR opening : suggest, don't execute.
+The `master` branch is protected. The user manages git themselves (staging, committing, branching, pushing, opening PRs). **Default behavior : never run `git add`, `git commit`, `git push`, `git branch`, `git tag`, `git rebase`, or `gh pr` / `gh issue` write operations** — suggest, don't execute. When asked for a commit, **propose a Conventional Commits message in English** as a one-liner the user can paste, but do not stage and do not commit.
+
+The narrow exception : the user explicitly asks you in the current turn to actually run the command ("commit ça", "fais le push", "create the PR"…). These cases are rare and stay narrow — do exactly what was asked, nothing extra. **Authorization granted in one turn does not carry forward** to later turns ; treat each new request fresh.
 
 **Commit messages are one line, no body.** When asked for a commit name, output the single subject line in Conventional Commits format and stop. Don't follow up with a body, bullet list, or rationale block — the user pastes the line as-is. Keep the subject under ~72 characters. If the change really needs a body, raise that with the user instead of writing one preemptively.
 

@@ -5,6 +5,10 @@ plugins {
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.1.21"
   id("com.diffplug.spotless") version "6.25.0"
+  // Detekt — Kotlin static analysis (complexité cyclomatique, magic numbers, méthodes longues,
+  // potentiels bugs). Complémentaire de Spotless qui ne fait que la mise en forme. Voir bloc
+  // `detekt { … }` plus bas pour la stratégie de ramp-up.
+  id("io.gitlab.arturbosch.detekt") version "1.23.7"
 }
 
 group = "com.portfolioai"
@@ -56,4 +60,38 @@ spotless {
     target("src/**/*.kt")
   }
   kotlinGradle { ktfmt("0.55").googleStyle() }
+}
+
+// ----------------------------------------------------------------------------- Detekt
+//
+// Stratégie de ramp-up — `ignoreFailures = true` au démarrage : Detekt génère ses rapports
+// (HTML + SARIF), la CI les uploade vers GitHub Code Scanning, mais le `./gradlew build` ne
+// casse pas. Une fois la première vague de findings revue, on bascule vers `false` (et on
+// génère un baseline via `./gradlew detektBaseline` pour ne plus échouer que sur le code
+// nouveau si on accepte la dette existante).
+//
+// `buildUponDefaultConfig = true` part du jeu de règles curé livré par Detekt — c'est le bon
+// défaut pour un projet qui n'a pas encore de config maison. `allRules = false` exclut les
+// règles expérimentales/opt-in pour limiter le bruit initial.
+detekt {
+  buildUponDefaultConfig = true
+  allRules = false
+  ignoreFailures = true
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+  jvmTarget = "21"
+  reports {
+    html.required.set(true)
+    // SARIF est le format que GitHub Code Scanning consomme — voir le step d'upload dans
+    // `.github/workflows/backend.yml`. Les findings apparaissent dans l'onglet Security
+    // alongside des résultats CodeQL.
+    sarif.required.set(true)
+    xml.required.set(false)
+    md.required.set(false)
+  }
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
+  jvmTarget = "21"
 }
