@@ -4,7 +4,7 @@ plugins {
   id("org.springframework.boot") version "3.5.14"
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.1.21"
-  id("com.diffplug.spotless") version "6.25.0"
+  id("com.diffplug.spotless") version "8.4.0"
   // Detekt — Kotlin static analysis (complexité cyclomatique, magic numbers, méthodes longues,
   // potentiels bugs). Complémentaire de Spotless qui ne fait que la mise en forme. Voir bloc
   // `detekt { … }` plus bas pour la stratégie de ramp-up.
