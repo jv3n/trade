@@ -33,7 +33,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 | 🧊 Ingestion RSS | Module `ingestion/` complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus, 25 sources seedées). Conservé en place pour réutilisation potentielle Phase 4 |
 | 🧊 Pipeline analyse portfolio LLM | `AnalysisExecutor`, `AnalysisContextLoader`, `ArticleRelevanceScorer` (top 25 par pertinence), `LlmResponseParser`, `RecommendationValidator` (8 règles), `RecommendationPersister`. Le code reste fonctionnel mais retiré du Dashboard |
 | 🧊 Pages Recommendations / History | `features/recommendations/` et `features/history/` listent les recommandations Phase 0. Pas supprimées mais sans nouvelle reco générée en Phase 1 |
-| 🧊 Bascule Mistral local + timeouts 400 s | `OllamaClient` configuré pour `mistral` (7B Instruct Q4), timeouts alignés sur 400 s. Reste activable via `llm.provider: ollama` mais Claude devient le défaut Phase 1 |
+| 🧊 Bascule Mistral local + timeouts 400 s | `OllamaClient` configuré initialement pour `mistral` (7B Instruct Q4), timeouts alignés sur 400 s. Le défaut local a depuis basculé sur `qwen2.5:3b` (Mistral trop lent sur M1, 30-60 s/narratif → timeouts répétés). Reste activable via `llm.provider: ollama` mais Claude est le défaut Phase 1 |
 
 ---
 

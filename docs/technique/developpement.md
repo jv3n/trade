@@ -33,7 +33,7 @@ tilt up -- --host=<ton-ip-locale>
 | Bouton Tilt | Action |
 |-------------|--------|
 | `db:reset` | Drop schema + redémarrage backend (Flyway rejoue toutes les migrations) |
-| `llm:pull-mistral` | Télécharge le modèle `mistral` (7B Instruct) dans Ollama (~4 GB) — utile uniquement si tu travailles offline avec `llm.provider: ollama` |
+| `llm:pull-qwen` | Télécharge le modèle `qwen2.5:3b` (~2 GB) dans Ollama — utile uniquement si tu travailles offline avec `llm.provider: ollama`. Bon compromis vitesse/qualité sur M1 (~5-10 s par narratif) |
 
 Pour alimenter un portefeuille démo, importer un CSV Wealthsimple depuis l'onglet **Import** (le portefeuille est read-only, il n'y a pas de seed SQL).
 
@@ -52,10 +52,10 @@ llm:
 
 ollama:
   base-url: http://ollama:11434
-  model: mistral      # Mistral 7B Instruct (utile uniquement en provider ollama)
+  model: qwen2.5:3b   # défaut local — rapide (~5-10 s) et fiable sur le JSON structuré
 ```
 
-> **Phase 1** : `llm.provider: claude` est le défaut. Mistral local reste activable pour développer offline ou sans coût API, mais la qualité narrative est nettement inférieure et la latence beaucoup plus haute (1-2 min vs 5-15 s avec Claude).
+> **Phase 1** : `llm.provider: claude` est le défaut. Le mode Ollama reste activable pour développer offline ou sans coût API, avec `qwen2.5:3b` comme modèle par défaut (rapide, ~5-10 s sur M1, qualité narrative en retrait par rapport à Claude mais utilisable). Mistral 7B était l'ancien défaut mais sa latence 30-60 s sur M1 saturait les timeouts — à éviter.
 
 Ne jamais committer ce fichier. Ne jamais mettre de clé API dans `application.yml`.
 

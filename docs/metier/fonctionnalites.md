@@ -80,7 +80,7 @@ Nouveau prompt **par ticker** (pas portfolio-wide) :
 
 - **Input** : `{ticker, currentPrice, indicators, fundamentals, recentChange}`
 - **Output JSON** : `{summary, sentiment: 'bullish'|'bearish'|'neutral', keyPoints: string[]}`
-- **Provider par défaut** : Claude API (Mistral local conservé en backup pour dev offline).
+- **Provider par défaut** : Claude API (Ollama + `qwen2.5:3b` conservé en backup pour dev offline ; Mistral 7B retiré, trop lent sur M1).
 - **Pas de targetWeight, pas de BUY/SELL** — l'IA décrit, elle ne décide pas.
 
 ### Dossier ticker (UI)

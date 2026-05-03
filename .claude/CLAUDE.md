@@ -126,7 +126,7 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 - Integration tests on real PostgreSQL (no DB mocks)
 - Frontend tested with **Vitest** (not Karma, not Jest). Test specs that boot a component with templates using `translate` need `provideTranslateService({ lang: 'en' })` in their TestBed providers — without translations loaded, `instant('foo.bar')` returns the key as fallback (acceptable for assertions).
 - `@Async` Spring: always on a separate bean — never `this.asyncMethod()` (bypasses AOP)
-- LLM provider: **Claude API is the Phase 1 default** (`llm.provider: claude`). Ollama + `mistral` (7B Instruct) is kept as an offline backup but produces noticeably weaker narratives. Legacy Phase 0 timeouts (frontend abort + dedup window) are aligned at **400 s** to absorb Mistral latency on M1; Claude is much faster and may let us shrink that later.
+- LLM provider: **Claude API is the Phase 1 default** (`llm.provider: claude`). Ollama + `qwen2.5:3b` (3B Instruct) is kept as an offline backup — rapid (~5-10 s on M1) and reliable on JSON output, weaker narratives than Claude but usable. Mistral 7B was the original local default but too slow on M1 (30-60 s/narrative → timeouts). Legacy Phase 0 timeouts (frontend abort + dedup window) are aligned at **400 s**, comfortably above qwen2.5:3b's actual latency.
 - Commits in **English**, Conventional Commits — see `docs/projet/commit-conventions.md`
 - Commit message proposals are always in **English**
 - Never commit API keys. `application-local.yml` is gitignored

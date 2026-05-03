@@ -8,13 +8,19 @@ host = cfg.get("host", "localhost")
 # PostgreSQL via docker-compose
 docker_compose("docker-compose.yml")
 
-# Ollama — pull du modèle Mistral 7B Instruct au démarrage
-# (modèle local par défaut côté `llm.provider: ollama`. Modèles plus petits comme
-# qwen2:1.5b ont été testés et sont trop faibles sur le prompt narratif enrichi —
-# voir docs/technique/architecture.md)
+# Ollama — pull du modèle local par défaut.
+#
+# `qwen2.5:3b` est le bon compromis sur M1 : ~2 GB, 5-10 s par narratif, JSON structuré
+# fiable. Mistral 7B (~4 GB) était l'ancien défaut mais sa latence 30-60 s sur M1 saturait
+# le read timeout côté Spring — switch fait après une session de tests qui a coupé sur
+# timeout.
+#
+# Si tu veux pousser la qualité en sacrifiant de la vitesse : pull `qwen2.5:7b`,
+# `phi4-mini` (3.8B) ou `llama3.2:3b` puis bouge `ollama.model` dans
+# `application-local.yml`.
 local_resource(
-    name = "llm:pull-mistral",
-    cmd = "docker exec portfolioai-ollama ollama pull mistral",
+    name = "llm:pull-qwen",
+    cmd = "docker exec portfolioai-ollama ollama pull qwen2.5:3b",
     resource_deps = ["ollama"],
     labels = ["llm"],
     links = [link("http://{}:11434".format(host), "Ollama API")],

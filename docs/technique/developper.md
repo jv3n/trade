@@ -63,7 +63,7 @@ market:
   provider: mock       # voir plus bas — débloque le dev sans clé Twelve Data
 ```
 
-**Option B — Ollama (local, sans clé)** : tourne offline, gratuit, mais latence 30-60 s sur M1 et qualité narrative en retrait. Pratique si tu n'as pas (encore) de clé Claude ou que tu veux dev offline.
+**Option B — Ollama (local, sans clé)** : tourne offline, gratuit. Le défaut `qwen2.5:3b` répond en 5-10 s sur M1 — qualité narrative en retrait par rapport à Claude mais largement OK pour itérer.
 
 ```yaml
 llm:
@@ -71,13 +71,13 @@ llm:
 
 ollama:
   base-url: http://ollama:11434
-  model: mistral       # 7B Instruct, ~4 GB — défaut local
+  model: qwen2.5:3b    # 3B params, ~2 GB — défaut local rapide et fiable sur le JSON
 
 market:
   provider: mock
 ```
 
-Pense à télécharger le modèle au premier lancement : clic sur **`llm:pull-mistral`** dans l'UI Tilt (~4 GB). Si tu acceptes une latence supérieure (~1-2 min) pour un saut qualitatif, tu peux aussi pull `phi4` (14B, ~9 GB) ou `qwen2.5:14b` et basculer `ollama.model` vers l'un d'eux — bullets plus précis et chiffres mieux référencés.
+Pense à télécharger le modèle au premier lancement : clic sur **`llm:pull-qwen`** dans l'UI Tilt (~2 GB). Si tu veux pousser la qualité en sacrifiant de la vitesse, tu peux pull `qwen2.5:7b` (~4 GB, 15-30 s), `llama3.2:3b` ou `phi4-mini` (3.8B) et bouger `ollama.model` en conséquence. Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.
 
 Tu peux switcher de l'un à l'autre à tout moment en éditant `application-local.yml` — Tilt redémarre le backend au save.
 
@@ -126,7 +126,7 @@ Le projet a deux providers configurables, chacun avec une vraie implémentation 
 | Valeur | Quand l'utiliser |
 |---|---|
 | `claude` | Défaut Phase 1. Qualité narrative nettement supérieure, latence 1-3 s, requiert une clé `ANTHROPIC_API_KEY`. |
-| `ollama` | Dev offline, sans clé. Modèle `mistral` (7B Instruct, ~4 GB) — défaut local. Latence 30-60 s sur M1. Lance `llm:pull-mistral` dans Tilt pour télécharger. Pour un saut qualitatif (latence ~1-2 min), tu peux pull `phi4` ou `qwen2.5:14b` et bouger `ollama.model`. |
+| `ollama` | Dev offline, sans clé. Défaut local : `qwen2.5:3b` (3B Instruct, ~2 GB), 5-10 s par narratif sur M1, JSON structuré fiable. Lance `llm:pull-qwen` dans Tilt pour télécharger. Pour pousser la qualité au prix de la vitesse : `qwen2.5:7b`, `llama3.2:3b` ou `phi4-mini`. Mistral 7B (ancien défaut) timeout sur M1 — éviter. |
 
 ### Données de marché — `market.provider`
 

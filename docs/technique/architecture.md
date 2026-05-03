@@ -8,7 +8,7 @@
 | Backend | Kotlin + Spring Boot | Typage fort, null-safety, excellent écosystème JVM |
 | Build | Gradle (Kotlin DSL) | Standard Kotlin/Spring, scripts typés |
 | IA (défaut) | Claude API — Anthropic | Compréhension du langage naturel financier, JSON structuré fiable, raisonnement nettement supérieur à un 7B local |
-| IA (backup local) | Ollama + `mistral` (7B Instruct) | Développement offline / sans clé API. Pas le défaut depuis la Phase 1 |
+| IA (backup local) | Ollama + `qwen2.5:3b` (3B Instruct) | Développement offline / sans clé API. Pas le défaut depuis la Phase 1. Mistral 7B était l'ancien défaut local mais trop lent sur M1 (timeouts) |
 | Data marché | Twelve Data (REST + apikey) | Source primaire Phase 1+. Free tier 800 credits/jour, TSX natif, JSON documenté |
 | Data marché (dev / CI) | `MockMarketChartClient` (synthétique) | Défaut sans clé : 260 bars OHLC déterministes par symbole. Onboarding et CI |
 | Base de données | PostgreSQL | Schéma relationnel, snapshots historiques, Flyway pour les migrations |
@@ -158,7 +158,7 @@ Deux migrations Flyway aujourd'hui : `V1__init.sql` (schéma Phase 0) et `V2__ti
 
 **Cache snapshot 30 min + dedup job 5 min** — un re-clic sur un dossier ticker ne doit ni rappeler le LLM (cher en Claude, lent en Ollama) ni créer de jobs concurrents. Le service réutilise le snapshot existant si âge < 30 min, sinon réutilise le job pending si âge < 5 min, sinon kick un nouveau job. Front toujours uniforme : POST puis poll.
 
-**`LlmClient.modelId()` tracé sur chaque snapshot** — le snapshot stocke `ollama:mistral` ou `claude:claude-opus-4-6` au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer après coup les snapshots produits par un modèle plus faible sans relire le contenu.
+**`LlmClient.modelId()` tracé sur chaque snapshot** — le snapshot stocke `ollama:qwen2.5:3b` ou `claude:claude-opus-4-6` au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer après coup les snapshots produits par un modèle plus faible sans relire le contenu.
 
 ### Conservé depuis Phase 0
 
