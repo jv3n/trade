@@ -14,7 +14,7 @@ class GlobalExceptionHandler {
     ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to (ex.message ?: "Not found")))
 
   /**
-   * Yahoo Finance rate-limited or unreachable. Surfaced as HTTP 503 so the UI can differentiate
+   * Market provider rate-limited or unreachable. Surfaced as HTTP 503 so the UI can differentiate
    * from a generic 500 and show "réessayez dans quelques minutes".
    */
   @ExceptionHandler(MarketUnavailableException::class)

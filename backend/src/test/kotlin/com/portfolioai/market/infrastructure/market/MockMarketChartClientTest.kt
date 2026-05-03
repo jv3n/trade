@@ -9,8 +9,8 @@ import org.junit.jupiter.api.assertThrows
 /**
  * Tests on the synthetic data generator. Two things to assert :
  * 1. **Output shape is realistic enough** that [IndicatorCalculator] computes every indicator (i.e.
- *    enough bars, all OHLCV non-null, prices > 0). The mock exists to unblock dev when Yahoo
- *    rate-limits us — but only if it produces data the rest of the pipeline can chew on.
+ *    enough bars, all OHLCV non-null, prices > 0). The mock exists to unblock dev when the network
+ *    providers rate-limit us — but only if it produces data the rest of the pipeline can chew on.
  * 2. **Reserved symbols `UNKNOWN` / `RATELIMIT`** still throw the documented exceptions. The
  *    dossier UI relies on them to exercise the 404 and 503 error paths during manual QA — if we
  *    ever silently succeed on `UNKNOWN`, the front team's "broken state" page coverage breaks
@@ -28,11 +28,10 @@ class MockMarketChartClientTest {
 
   @Test
   fun `produces a 1y daily series usable by the indicator calculator`() {
-    val result = client.fetchChart("AAPL", "1y", "1d")
+    val chart = client.fetchChart("AAPL", "1y", "1d")
 
-    val bars = result.toOhlcBars()
-    assertEquals(260, bars.size)
-    bars.forEach {
+    assertEquals(260, chart.bars.size)
+    chart.bars.forEach {
       assertTrue(it.open.toDouble() > 0)
       assertTrue(it.close.toDouble() > 0)
       assertTrue(it.high >= maxOf(it.open, it.close))
@@ -41,7 +40,7 @@ class MockMarketChartClientTest {
     }
 
     // Every nullable indicator on IndicatorCalculator should resolve with 260 bars.
-    val indicators = calculator.compute(bars)!!
+    val indicators = calculator.compute(chart.bars)!!
     assertNotNull(indicators.rsi14)
     assertNotNull(indicators.ma50)
     assertNotNull(indicators.ma200)
@@ -56,25 +55,25 @@ class MockMarketChartClientTest {
     val a = client.fetchChart("MSFT", "1y", "1d")
     val b = client.fetchChart("MSFT", "1y", "1d")
 
-    assertEquals(a.timestamp, b.timestamp)
-    assertEquals(a.indicators?.quote?.first()?.close, b.indicators?.quote?.first()?.close)
-    assertEquals(a.meta.regularMarketPrice, b.meta.regularMarketPrice)
+    assertEquals(a.bars.map { it.timestamp }, b.bars.map { it.timestamp })
+    assertEquals(a.bars.map { it.close }, b.bars.map { it.close })
+    assertEquals(a.quote.price, b.quote.price)
   }
 
   @Test
   fun `different symbols yield different series`() {
     val a = client.fetchChart("AAPL", "1y", "1d")
     val b = client.fetchChart("ZZZZ", "1y", "1d")
-    assertNotEquals(a.meta.regularMarketPrice, b.meta.regularMarketPrice)
+    assertNotEquals(a.quote.price, b.quote.price)
   }
 
   @Test
-  fun `meta exposes 52w high low matching the close series`() {
-    val result = client.fetchChart("NVDA", "1y", "1d")
-    val closes = result.indicators!!.quote!!.first().close!!.filterNotNull()
-    assertEquals(closes.max(), result.meta.fiftyTwoWeekHigh)
-    assertEquals(closes.min(), result.meta.fiftyTwoWeekLow)
-    assertEquals(closes.last(), result.meta.regularMarketPrice)
+  fun `quote exposes 52w high low matching the close series`() {
+    val chart = client.fetchChart("NVDA", "1y", "1d")
+    val closes = chart.bars.map { it.close }
+    assertEquals(closes.max(), chart.quote.fiftyTwoWeekHigh)
+    assertEquals(closes.min(), chart.quote.fiftyTwoWeekLow)
+    assertEquals(closes.last(), chart.quote.price)
   }
 
   @Test

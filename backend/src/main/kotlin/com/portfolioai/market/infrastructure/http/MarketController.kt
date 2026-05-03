@@ -14,7 +14,8 @@ class MarketController(private val tickerService: TickerService) {
 
   /**
    * Returns the full ticker dossier for [symbol] : current quote, computed indicators, and the OHLC
-   * series used to compute them. Source : Yahoo Finance.
+   * series used to compute them. Source : the configured `market.provider` (Twelve Data by default
+   * in prod, mock in CI / fresh clones).
    */
   @GetMapping("/{symbol}")
   fun getTicker(@PathVariable symbol: String): TickerSnapshotDto =

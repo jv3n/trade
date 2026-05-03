@@ -38,8 +38,11 @@ anthropic:
 llm:
   provider: claude
 
-yahoo:
-  base-url: https://query1.finance.yahoo.com
-  # provider: yahoo (real HTTP, default) | mock (deterministic synthetic data, see
-  # MockMarketChartClient — useful when Yahoo rate-limits the dev IP)
-  provider: yahoo
+market:
+  # provider:
+  #   mock        — deterministic synthetic data (default, no network needed)
+  #   twelvedata  — real REST API, free tier 800 credits/day (requires market.twelvedata.api-key)
+  provider: mock
+  twelvedata:
+    base-url: https://api.twelvedata.com
+    api-key: ${TWELVEDATA_API_KEY:}

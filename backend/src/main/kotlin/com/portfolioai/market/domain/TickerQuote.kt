@@ -4,8 +4,8 @@ import java.math.BigDecimal
 import java.time.Instant
 
 /**
- * Latest quote for a single ticker — a snapshot of metadata + price at [asOf]. Comes from a market
- * data provider (Yahoo) ; values may be missing (null) when the provider does not return them for
+ * Latest quote for a single ticker — a snapshot of metadata + price at [asOf]. Comes from the
+ * market data provider ; values may be missing (null) when the provider does not return them for
  * this symbol or this asset class.
  */
 data class TickerQuote(

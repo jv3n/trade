@@ -1,6 +1,9 @@
 package com.portfolioai.market.infrastructure.market
 
+import com.portfolioai.market.domain.MarketChart
 import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.market.domain.OhlcBar
+import com.portfolioai.market.domain.TickerQuote
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -14,9 +17,10 @@ import org.springframework.stereotype.Component
 
 /**
  * In-memory market data source for local dev — generates a deterministic synthetic 1y daily series
- * so the dossier UI can be exercised when Yahoo is unreachable (rate-limit) or off the network.
+ * so the dossier UI can be exercised when the network providers are unreachable (rate-limit, quota
+ * exhausted) or off the network entirely.
  *
- * Activation : `yahoo.provider: mock` (see `application-local.yml`).
+ * Activation : `market.provider: mock` (the default in `application.yml`).
  *
  * Properties of the generator:
  * - **Deterministic per symbol** — same symbol always yields the same series (seed = symbol hash),
@@ -28,11 +32,11 @@ import org.springframework.stereotype.Component
  *     - `RATELIMIT` → throws [MarketUnavailableException] (503 path)
  */
 @Component
-@ConditionalOnProperty(name = ["yahoo.provider"], havingValue = "mock")
+@ConditionalOnProperty(name = ["market.provider"], havingValue = "mock", matchIfMissing = true)
 class MockMarketChartClient : MarketChartClient {
   private val log = LoggerFactory.getLogger(javaClass)
 
-  override fun fetchChart(symbol: String, range: String, interval: String): YahooChartResult {
+  override fun fetchChart(symbol: String, range: String, interval: String): MarketChart {
     val upper = symbol.uppercase()
     log.info("Mock chart symbol={} range={} interval={}", upper, range, interval)
 
@@ -47,12 +51,7 @@ class MockMarketChartClient : MarketChartClient {
     val vol = 0.012 + rng.nextDouble() * 0.012 // 1.2%..2.4% daily
 
     val now = Instant.now().truncatedTo(ChronoUnit.DAYS)
-    val timestamps = ArrayList<Long>(BAR_COUNT)
-    val opens = ArrayList<BigDecimal?>(BAR_COUNT)
-    val highs = ArrayList<BigDecimal?>(BAR_COUNT)
-    val lows = ArrayList<BigDecimal?>(BAR_COUNT)
-    val closes = ArrayList<BigDecimal?>(BAR_COUNT)
-    val volumes = ArrayList<Long?>(BAR_COUNT)
+    val bars = ArrayList<OhlcBar>(BAR_COUNT)
 
     var price = basePrice
     for (i in (BAR_COUNT - 1) downTo 0) {
@@ -65,44 +64,31 @@ class MockMarketChartClient : MarketChartClient {
       val low = min(open, close) * (1.0 - rng.nextDouble() * vol * 0.5)
       val volume = 1_000_000L + rng.nextLong(0L, 10_000_000L)
 
-      timestamps.add(bar.epochSecond)
-      opens.add(open.toScaled())
-      highs.add(high.toScaled())
-      lows.add(low.toScaled())
-      closes.add(close.toScaled())
-      volumes.add(volume)
+      bars.add(
+        OhlcBar(
+          timestamp = bar,
+          open = open.toScaled(),
+          high = high.toScaled(),
+          low = low.toScaled(),
+          close = close.toScaled(),
+          volume = volume,
+        )
+      )
     }
 
-    val priceList = closes.filterNotNull()
-    val meta =
-      YahooMeta(
+    val closes = bars.map { it.close }
+    val quote =
+      TickerQuote(
         symbol = upper,
+        name = "$upper (mock)",
         currency = "USD",
-        longName = "$upper (mock)",
-        shortName = upper,
-        fullExchangeName = "Mock Exchange",
-        regularMarketPrice = priceList.last(),
-        fiftyTwoWeekHigh = priceList.max(),
-        fiftyTwoWeekLow = priceList.min(),
-        regularMarketTime = timestamps.last(),
+        exchange = "Mock Exchange",
+        price = closes.last(),
+        fiftyTwoWeekHigh = closes.max(),
+        fiftyTwoWeekLow = closes.min(),
+        asOf = bars.last().timestamp,
       )
-    return YahooChartResult(
-      meta = meta,
-      timestamp = timestamps,
-      indicators =
-        YahooIndicatorsContainer(
-          quote =
-            listOf(
-              YahooQuoteSeries(
-                open = opens,
-                high = highs,
-                low = lows,
-                close = closes,
-                volume = volumes,
-              )
-            )
-        ),
-    )
+    return MarketChart(quote = quote, bars = bars)
   }
 
   private fun Double.toScaled(): BigDecimal =

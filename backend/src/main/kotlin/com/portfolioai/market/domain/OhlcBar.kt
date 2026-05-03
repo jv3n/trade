@@ -4,8 +4,8 @@ import java.math.BigDecimal
 import java.time.Instant
 
 /**
- * Single OHLCV bar at a given timestamp. Returned by data providers (Yahoo, Stooq…) and consumed by
- * the indicator calculator. No JPA — this is a pure value object that crosses module boundaries.
+ * Single OHLCV bar at a given timestamp. Returned by the market data provider and consumed by the
+ * indicator calculator. No JPA — this is a pure value object that crosses module boundaries.
  */
 data class OhlcBar(
   val timestamp: Instant,

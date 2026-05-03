@@ -9,11 +9,13 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /**
- * Caching for the `market/` module. Limits how often we hit Yahoo Finance — their public endpoint
- * is aggressively rate-limited (429s under load), and the data we read changes slowly enough that
- * 15 min of staleness is acceptable for the dossier ticker use case.
+ * Caching for the `market/` module. Limits how often we hit Twelve Data — its free tier is quota-
+ * bound (800 credits / day) and the data we read changes slowly enough that 15 min of staleness is
+ * acceptable for the dossier ticker use case.
  *
- * Cache name `yahoo-chart` is referenced by [@Cacheable] on `YahooClient.fetchChart`.
+ * Cache name `market-chart` is referenced by [@Cacheable] on each adapter's `fetchChart`. The cache
+ * key is prefixed by the adapter name so a future provider can coexist without stepping on the
+ * existing one.
  */
 @Configuration
 @EnableCaching
@@ -21,12 +23,12 @@ class MarketConfig {
 
   @Bean
   fun cacheManager(): CacheManager {
-    val mgr = CaffeineCacheManager(YAHOO_CHART_CACHE)
+    val mgr = CaffeineCacheManager(MARKET_CHART_CACHE)
     mgr.setCaffeine(Caffeine.newBuilder().expireAfterWrite(15, TimeUnit.MINUTES).maximumSize(500))
     return mgr
   }
 
   companion object {
-    const val YAHOO_CHART_CACHE = "yahoo-chart"
+    const val MARKET_CHART_CACHE = "market-chart"
   }
 }

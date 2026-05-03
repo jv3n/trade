@@ -1,15 +1,16 @@
 package com.portfolioai.market.infrastructure.market
 
+import com.portfolioai.market.domain.MarketChart
+
 /**
  * Outbound port for the Phase 1 ticker dossier — abstracts whichever upstream provides the OHLC
- * series and meta. Two implementations live in this package : [YahooClient] (real HTTP, default)
- * and [MockMarketChartClient] (deterministic synthetic data, opt-in via `yahoo.provider: mock`).
+ * series and meta. Two implementations live in this package : [TwelveDataClient] (real HTTP — REST
+ * + apikey) and [MockMarketChartClient] (deterministic synthetic data, default in
+ *   `application.yml`). Selection via `market.provider`.
  *
- * The return type is still [YahooChartResult] because [YahooMappers] already converts from this
- * shape to the domain types — keeping the boundary on Yahoo's payload shape avoids a second mapping
- * layer for what is, in practice, a single upstream. If a non-Yahoo provider is added later (Twelve
- * Data, Finnhub…), a domain-typed port becomes worth the refactor.
+ * The port returns provider-neutral domain types ([MarketChart] = quote + bars). Each adapter is
+ * responsible for whatever raw shape the upstream returns and for the conversion.
  */
 interface MarketChartClient {
-  fun fetchChart(symbol: String, range: String = "1y", interval: String = "1d"): YahooChartResult
+  fun fetchChart(symbol: String, range: String = "1y", interval: String = "1d"): MarketChart
 }
