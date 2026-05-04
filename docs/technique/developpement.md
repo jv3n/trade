@@ -3,7 +3,7 @@
 ## Prérequis
 
 - Docker Desktop
-- Java 21 (Temurin recommandé)
+- Java 21 (Temurin recommandé) — épinglé via `backend/gradle/gradle-daemon-jvm.properties` (`toolchainVersion=21`), donc Gradle prend toujours un JDK 21 même si ton shell pointe sur du Java 25 pour d'autres projets
 - Node 24 + npm
 - [Tilt](https://tilt.dev) (`brew install tilt`)
 
@@ -58,6 +58,8 @@ ollama:
 > **Phase 1** : `llm.provider: claude` est le défaut. Le mode Ollama reste activable pour développer offline ou sans coût API, avec `qwen2.5:3b` comme modèle par défaut (rapide, ~5-10 s sur M1, qualité narrative en retrait par rapport à Claude mais utilisable). Mistral 7B était l'ancien défaut mais sa latence 30-60 s sur M1 saturait les timeouts — à éviter.
 
 Ne jamais committer ce fichier. Ne jamais mettre de clé API dans `application.yml`.
+
+> **Alternative runtime** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct cinq clés sans reboot — clés API Twelve Data et Finnhub, TTL cache Caffeine 5–60 min, et toggles `market.provider` / `news.provider` (mock ↔ live). Pratique pour rotater une clé sans toucher à `application-local.yml` ; les overrides BDD prennent le pas sur les défauts YAML.
 
 ## Conventions de commit
 

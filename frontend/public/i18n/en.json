@@ -310,12 +310,12 @@
       },
       "twelveData": {
         "title": "Twelve Data — API key",
-        "description": "Market data provider (quotes, OHLC, indicators). Free tier 800 credits/day.",
+        "description": "Market data provider (quotes, OHLC, indicators). Free tier 800 credits/day. <a href=\"https://twelvedata.com/account\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
         "inputLabel": "Twelve Data API key"
       },
       "finnhub": {
         "title": "Finnhub — API key",
-        "description": "Provider for the news section on the ticker dossier. Free tier 60 calls/min.",
+        "description": "Provider for the news section on the ticker dossier. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
         "inputLabel": "Finnhub API key"
       },
       "cacheTtl": {

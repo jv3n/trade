@@ -142,7 +142,12 @@ Le projet a trois providers configurables, chacun avec une vraie implémentation
 | `mock` | Défaut, sans clé requise. `MockNewsClient` génère 4-10 headlines synthétiques déterministes par symbole (templates variés, sources rotation Reuters/Bloomberg/CNBC, ~10 % de symboles "quiet" pour exercer l'empty-state UI). Idéal en itération pour ne pas faire chauffer le quota Finnhub. |
 | `finnhub` | Vraie data. REST + apikey, free tier 60 calls/min sans cap quotidien. Requiert `market.finnhub.api-key` (env `FINNHUB_API_KEY`). **Crée un compte gratuit** sur [finnhub.io/register](https://finnhub.io/register) puis récupère ta clé sur [finnhub.io/dashboard](https://finnhub.io/dashboard), et colle-la dans `application-local.yml` sous `market.finnhub.api-key`. |
 
-Surcharger dans `application-local.yml`, redémarrer le backend (Tilt le fait tout seul au save). Pour la liste complète des providers (URLs d'inscription, dashboards, quotas, points d'intégration code) voir [`providers.md`](./providers.md).
+Deux chemins pour modifier ces réglages :
+
+1. **`application-local.yml`** — défaut au boot, recharge au save Tilt. Pertinent pour figer la config d'un environnement.
+2. **Page `/settings/configuration`** (icône `tune` dans le sidenav `/settings`) — édite en direct les clés API Twelve Data et Finnhub (avec bouton "Tester" qui sonde la clé candidate avant la sauve), le TTL cache Caffeine, et bascule `market.provider` / `news.provider` mock ↔ live à la volée. Aucune édition YAML, aucun reboot, le prochain dossier ouvert hit le nouveau adapter. Les overrides vivent en BDD (`app_config`, V4) et prennent le pas sur les défauts YAML.
+
+Pour la liste complète des providers (URLs d'inscription, dashboards, quotas, points d'intégration code) voir [`providers.md`](./providers.md).
 
 ---
 

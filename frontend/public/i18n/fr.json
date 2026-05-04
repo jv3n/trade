@@ -310,12 +310,12 @@
       },
       "twelveData": {
         "title": "Twelve Data — clé API",
-        "description": "Provider de données de marché (cours, OHLC, indicateurs). Free tier 800 crédits/jour.",
+        "description": "Provider de données de marché (cours, OHLC, indicateurs). Free tier 800 crédits/jour. <a href=\"https://twelvedata.com/account\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
         "inputLabel": "Clé API Twelve Data"
       },
       "finnhub": {
         "title": "Finnhub — clé API",
-        "description": "Provider des dépêches du dossier ticker. Free tier 60 calls/min.",
+        "description": "Provider des dépêches du dossier ticker. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
         "inputLabel": "Clé API Finnhub"
       },
       "cacheTtl": {

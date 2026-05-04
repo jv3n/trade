@@ -110,6 +110,7 @@ Deux sources visibles côté UI :
 - **Watchlist persistée** : module backend `watchlist/` + table `watchlist_entry` (V3). Ajouter / retirer un ticker via la sidebar dashboard (input + liste avec poubelle) ou via le bouton **"Suivre / Suivi"** sur le header du Dossier ticker. Add idempotent côté serveur, optimistic UI côté front avec rollback sur erreur.
 - **Sidebar dashboard collapsable** : trois sections indépendamment foldables (Portefeuilles, Tickers détenus, Watchlist) + scrollbar custom 8px globale.
 - **News par ticker** : section dédiée sur le Dossier ticker entre la plage 52w et le narratif IA. Liste 10 headlines (Reuters / Bloomberg / CNBC agrégés via Finnhub), source + date relative, clic ouvre l'article dans un nouvel onglet. Provider Finnhub séparé (clé dédiée) car Twelve Data ne couvre pas les news. Mock synthétique disponible (`news.provider: mock`, défaut sans clé) pour itérer sans consommer le quota.
+- **Settings & config runtime** : nouvelle page `/settings/configuration` (4ᵉ onglet sidenav, icône `tune`) qui édite en direct cinq clés sans reboot — clés API Twelve Data et Finnhub (avec bouton "Tester" qui sonde la clé candidate avant de la sauver), TTL cache Caffeine 5–60 min (slider), et **switch provider** mock ↔ live pour `market.provider` et `news.provider` (toggles qui basculent à chaque clic, le prochain dossier ouvert hit le nouveau adapter). Persistance dans une nouvelle table `app_config` (V4) qui surcharge le défaut YAML ; bouton "Réinitialiser au défaut" par clé. Note sécu : clés API stockées en clair en BDD locale — acceptable projet perso.
 
 ### ⏳ À venir
 
@@ -117,7 +118,6 @@ Deux sources visibles côté UI :
 - **Comparaison vs benchmark** : SPY, QQQ, ou ETF sectoriel automatique
 - **Recommandations analystes** si disponibles (consensus, target prices)
 - **Fundamentals avancés** : earnings dates, derniers résultats, guidance
-- **Settings & config runtime** : éditer clé API Twelve Data + TTL cache depuis l'UI sans reboot
 
 ---
 

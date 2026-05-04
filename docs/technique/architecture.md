@@ -149,7 +149,7 @@ Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs
 Hexagonal léger sous `frontend/src/app/` :
 
 - **`core/`** — ports + HTTP adapters
-  - `*.repository.ts` (abstract class — port). 7 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News.
+  - `*.repository.ts` (abstract class — port). 8 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config.
   - `adapters/*.http.ts` (HttpXxxRepository — adapter)
   - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: HttpXxxRepository }`
   - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header

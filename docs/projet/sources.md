@@ -45,6 +45,8 @@ Twelve Data ne couvre pas les news (testé live → 404 sur `/news`). Finnhub a 
 
 Voir [`technique/providers.md`](../technique/providers.md) pour le détail (URLs d'inscription, dashboard, points d'intégration code).
 
+> **Switch runtime** : depuis la Phase 2, `market.provider` et `news.provider` sont éditables en direct depuis `/settings/configuration` (toggles mock ↔ live). Le bascule s'applique au prochain dossier ouvert sans redémarrer le backend, et la valeur surcharge le défaut YAML jusqu'au prochain "Réinitialiser au défaut" sur la même page.
+
 ### Bascule alternative (market data)
 
 Si Twelve Data devient indisponible ou trop limitant, candidats par ordre de préférence :

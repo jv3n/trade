@@ -69,6 +69,15 @@
     color: var(--color-text-muted);
     font-size: 0.85rem;
     margin: 0 0 0.9rem;
+
+    a {
+      color: var(--color-accent);
+      text-decoration: underline;
+
+      &:hover {
+        opacity: 0.85;
+      }
+    }
   }
 }
 

@@ -140,9 +140,10 @@
             }}</span>
           }
         </div>
-        <p class="description">
-          {{ 'settings.configurationPage.twelveData.description' | translate }}
-        </p>
+        <p
+          class="description"
+          [innerHTML]="'settings.configurationPage.twelveData.description' | translate"
+        ></p>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{
             'settings.configurationPage.twelveData.inputLabel' | translate
@@ -232,9 +233,10 @@
             }}</span>
           }
         </div>
-        <p class="description">
-          {{ 'settings.configurationPage.finnhub.description' | translate }}
-        </p>
+        <p
+          class="description"
+          [innerHTML]="'settings.configurationPage.finnhub.description' | translate"
+        ></p>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ 'settings.configurationPage.finnhub.inputLabel' | translate }}</mat-label>
           <input
