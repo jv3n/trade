@@ -1,6 +1,6 @@
 plugins {
   kotlin("jvm") version "2.1.21"
-  kotlin("plugin.spring") version "2.1.21"
+  kotlin("plugin.spring") version "2.3.21"
   id("org.springframework.boot") version "3.5.14"
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.1.21"
@@ -56,10 +56,10 @@ tasks.withType<Test> { useJUnitPlatform() }
 
 spotless {
   kotlin {
-    ktfmt("0.55").googleStyle()
+    ktfmt("0.62").googleStyle()
     target("src/**/*.kt")
   }
-  kotlinGradle { ktfmt("0.55").googleStyle() }
+  kotlinGradle { ktfmt("0.62").googleStyle() }
 }
 
 // ----------------------------------------------------------------------------- Detekt

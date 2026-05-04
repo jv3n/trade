@@ -24,20 +24,19 @@ import java.time.ZoneOffset
  */
 fun TwelveDataTimeSeriesResponse.toOhlcBars(): List<OhlcBar> {
   val rawValues = values ?: return emptyList()
-  val parsed =
-    rawValues.mapNotNull { v ->
-      val ts = parseTimestamp(v.datetime) ?: return@mapNotNull null
-      val open = v.open?.toBigDecimalOrNull()
-      val high = v.high?.toBigDecimalOrNull()
-      val low = v.low?.toBigDecimalOrNull()
-      val close = v.close?.toBigDecimalOrNull()
-      val volume = v.volume?.toLongOrNull()
-      if (open == null || high == null || low == null || close == null || volume == null) {
-        null
-      } else {
-        OhlcBar(timestamp = ts, open = open, high = high, low = low, close = close, volume = volume)
-      }
+  val parsed = rawValues.mapNotNull { v ->
+    val ts = parseTimestamp(v.datetime) ?: return@mapNotNull null
+    val open = v.open?.toBigDecimalOrNull()
+    val high = v.high?.toBigDecimalOrNull()
+    val low = v.low?.toBigDecimalOrNull()
+    val close = v.close?.toBigDecimalOrNull()
+    val volume = v.volume?.toLongOrNull()
+    if (open == null || high == null || low == null || close == null || volume == null) {
+      null
+    } else {
+      OhlcBar(timestamp = ts, open = open, high = high, low = low, close = close, volume = volume)
     }
+  }
   return parsed.sortedBy { it.timestamp }
 }
 

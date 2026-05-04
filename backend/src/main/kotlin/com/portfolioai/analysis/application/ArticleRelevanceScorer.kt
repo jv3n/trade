@@ -27,11 +27,10 @@ class ArticleRelevanceScorer {
     val sectorKeywords =
       portfolio.assets.map { it.assetType }.toSet().flatMap { sectorKeywordsFor(it) }.distinct()
 
-    val scored =
-      articles.map { article ->
-        val haystack = "${article.title} ${article.description ?: ""}".lowercase()
-        article to scoreText(haystack, tickers, nameWords, sectorKeywords)
-      }
+    val scored = articles.map { article ->
+      val haystack = "${article.title} ${article.description ?: ""}".lowercase()
+      article to scoreText(haystack, tickers, nameWords, sectorKeywords)
+    }
 
     val relevant = scored.filter { it.second > 0 }.sortedByDescending { it.second }
     if (relevant.size >= MIN_RELEVANT) {
