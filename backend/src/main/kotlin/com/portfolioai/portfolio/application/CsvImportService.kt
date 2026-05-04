@@ -66,10 +66,9 @@ class CsvImportService(
 
   fun preview(file: MultipartFile): CsvImportPreview {
     val (rowsByAccount, skipped, warnings) = parseCsv(file)
-    val accounts =
-      rowsByAccount.map { (accountName, rows) ->
-        AccountImportPreview(accountName, rows.map { it.toPreviewItem() })
-      }
+    val accounts = rowsByAccount.map { (accountName, rows) ->
+      AccountImportPreview(accountName, rows.map { it.toPreviewItem() })
+    }
     return CsvImportPreview(accounts, accounts.sumOf { it.items.size }, skipped, warnings)
   }
 

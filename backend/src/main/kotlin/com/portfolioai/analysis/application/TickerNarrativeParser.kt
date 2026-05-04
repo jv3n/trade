@@ -51,13 +51,12 @@ class TickerNarrativeParser(private val mapper: ObjectMapper) {
     val keyPointsNode =
       node["keyPoints"]?.takeIf { it.isArray }
         ?: throw IllegalArgumentException("Missing or non-array 'keyPoints'")
-    val keyPoints =
-      keyPointsNode.map {
-        if (!it.isTextual) {
-          throw IllegalArgumentException("'keyPoints' must be an array of strings")
-        }
-        it.asText().trim()
+    val keyPoints = keyPointsNode.map {
+      if (!it.isTextual) {
+        throw IllegalArgumentException("'keyPoints' must be an array of strings")
       }
+      it.asText().trim()
+    }
 
     return ParsedNarrative(summary, sentiment, keyPoints)
   }
