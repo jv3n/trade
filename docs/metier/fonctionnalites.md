@@ -95,7 +95,9 @@ Nouvelle page `features/ticker/` :
 
 ### Watchlist / liste de tickers
 
-Le portefeuille reste la source initiale (les tickers détenus apparaissent automatiquement). Une **watchlist manuelle** (ajout d'un ticker à surveiller sans qu'il soit en portefeuille) sera nice-to-have.
+Deux sources visibles côté UI :
+- **Tickers détenus** (portfolio CSV Wealthsimple) — automatique, lecture seule, agrégé sur tous les portefeuilles.
+- **Watchlist persistée** — saisie manuelle de tickers à surveiller hors portefeuille (cf. Phase 2 livré).
 
 ---
 
@@ -105,6 +107,8 @@ Le portefeuille reste la source initiale (les tickers détenus apparaissent auto
 
 - **Multi-timeframe sur le graphe** : toggle `1D / 5D / 1M / 3M / 1Y / 5Y` au-dessus du chart. Le dossier (indicateurs + narratif) reste ancré sur `1Y daily` ; seul le graphe se reconfigure au clic. Endpoint dédié `GET /api/market/ticker/{symbol}/chart?timeframe=`.
 - **Chart enrichi** : axes Y (prix) et X (dates), grille pointillée, crosshair au survol avec tooltip date + prix exacts.
+- **Watchlist persistée** : module backend `watchlist/` + table `watchlist_entry` (V3). Ajouter / retirer un ticker via la sidebar dashboard (input + liste avec poubelle) ou via le bouton **"Suivre / Suivi"** sur le header du Dossier ticker. Add idempotent côté serveur, optimistic UI côté front avec rollback sur erreur.
+- **Sidebar dashboard collapsable** : trois sections indépendamment foldables (Portefeuilles, Tickers détenus, Watchlist) + scrollbar custom 8px globale.
 
 ### ⏳ À venir
 
@@ -113,7 +117,6 @@ Le portefeuille reste la source initiale (les tickers détenus apparaissent auto
 - **Comparaison vs benchmark** : SPY, QQQ, ou ETF sectoriel automatique
 - **Recommandations analystes** si disponibles (consensus, target prices)
 - **Fundamentals avancés** : earnings dates, derniers résultats, guidance
-- **Watchlist persistée** en base, pas seulement à partir du portefeuille
 - **Settings & config runtime** : éditer clé API Twelve Data + TTL cache depuis l'UI sans reboot
 
 ---

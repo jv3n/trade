@@ -97,6 +97,14 @@ Inchangé. Le portefeuille est **read-only depuis l'UI** — il reflète l'état
 
 Sa nouvelle utilité Phase 1 : fournir la **liste des tickers détenus** au `market/` pour pré-charger les dossiers ticker pertinents.
 
+### `watchlist/` — nouveau, Phase 2
+
+Liste plate de tickers à surveiller hors portefeuille. Single-table feature, pas de rattachement à un user (l'app reste single-user pour l'instant).
+
+- `WatchlistEntry` (entity) → table `watchlist_entry` (V3) `id UUID / symbol VARCHAR(20) UNIQUE / added_at`.
+- `WatchlistService` : list (oldest first), add (idempotent — POST sur un symbole existant retourne la ligne existante), remove (404 si absent — non-idempotent volontairement pour que l'UI optimiste détecte une dérive d'état). Symbole normalisé en uppercase + trim côté service.
+- 3 endpoints REST : `GET / POST / DELETE /api/watchlist[/symbol]`.
+
 ### `ingestion/` — gelé Phase 0
 
 Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus / détection HTML, 25 sources seedées). Conservé en place mais retiré du flow principal — Twelve Data remplit le rôle data marché en Phase 1.
@@ -112,14 +120,14 @@ Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs
 Hexagonal léger sous `frontend/src/app/` :
 
 - **`core/`** — ports + HTTP adapters
-  - `*.repository.ts` (abstract class — port). 5 repositories : Portfolio, Analysis, Settings, Snapshot, Market.
+  - `*.repository.ts` (abstract class — port). 6 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist.
   - `adapters/*.http.ts` (HttpXxxRepository — adapter)
   - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: HttpXxxRepository }`
   - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header
 - **`public/i18n/`** — fichiers de traduction `<lang>.json` (FR + EN), servis comme assets statiques par le HTTP loader de `ngx-translate`
 - **`features/`** — *primary adapters*
-  - `dashboard/` — portefeuille + lien vers les dossiers ticker
-  - `ticker/` — dossier par symbole (Phase 1, à venir)
+  - `dashboard/` — portefeuille, tickers détenus, watchlist (sidebar 3 sections collapsables)
+  - `ticker/` — dossier par symbole : graphe multi-timeframe + axes + crosshair, indicateurs, narratif IA, bouton watchlist
   - `import/` — drag & drop CSV
   - `suivi/` — timeline snapshots
   - `settings/` — sources / test / prompt-preview
@@ -127,7 +135,7 @@ Hexagonal léger sous `frontend/src/app/` :
 
 ## Schéma de base de données
 
-Deux migrations Flyway aujourd'hui : `V1__init.sql` (schéma Phase 0) et `V2__ticker_narrative.sql` (Phase 1 narratif).
+Trois migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative.sql` (Phase 1 narratif), `V3__watchlist.sql` (Phase 2 watchlist).
 
 | Section | Tables | Statut |
 |---------|--------|--------|
@@ -137,6 +145,7 @@ Deux migrations Flyway aujourd'hui : `V1__init.sql` (schéma Phase 0) et `V2__ti
 | Jobs d'analyse (legacy) | `analysis_job` | Gelé (utilisé pour le polling Phase 0) |
 | Sources d'ingestion | `feed_source`, `feed_article` | Gelé en pratique (table conservée pour les Settings UI) |
 | Narratifs ticker | `ticker_narrative_snapshot`, `ticker_narrative_job` | Actif Phase 1 |
+| Watchlist | `watchlist_entry` | Actif Phase 2 |
 
 ## Décisions techniques notables
 

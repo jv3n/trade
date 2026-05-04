@@ -1,6 +1,6 @@
-# État actuel — Phase 2 entamée, multi-timeframe livré (2026-05-03)
+# État actuel — Phase 2 multi-timeframe + watchlist livrés (2026-05-03)
 
-Snapshot après le premier livrable Phase 2 (multi-timeframe + axes/crosshair). Pour reprendre proprement à la prochaine session.
+Snapshot après les livrables Phase 2 multi-timeframe (chart + axes + crosshair) et watchlist persistée + sidebar dashboard collapsable. Pour reprendre proprement à la prochaine session.
 
 ## Branches / tags
 
@@ -17,6 +17,8 @@ Snapshot après le premier livrable Phase 2 (multi-timeframe + axes/crosshair). 
 ## Phase 2 — démarrée
 
 - ✅ **Multi-timeframe + axes + crosshair** : toggle `1D / 5D / 1M / 3M / 1Y / 5Y` au-dessus du chart. Endpoint dédié `/chart?timeframe=` qui ne ramène que les bars (les indicateurs et le narratif restent sur la 1Y daily de référence). Enum `Timeframe` côté domain (intervals Yahoo-style pour aligner les clés Caffeine entre dossier et chart). Mock `MockMarketChartClient` honore `(range, interval)` avec un seed étendu pour produire une courbe différente par timeframe. Chart enrichi axes Y (prix) et X (dates), grille pointillée, crosshair de hover + tooltip date/prix exacts. 4 nouveaux tests slice MVC (`MarketControllerTest`) + spec adapter HTTP + 4 tests `ticker.spec` + 3 tests mock supplémentaires.
+- ✅ **Watchlist persistée** : nouveau module backend `watchlist/` (entity `WatchlistEntry`, table `watchlist_entry` migration V3, service avec normalisation symbole + add idempotent + remove non-idempotent, controller 3 endpoints REST). Front : port `WatchlistRepository` + adapter HTTP, **input rapide dans la sidebar dashboard** (section dédiée avec icône poubelle pour retirer) + **bouton "Suivre / Suivi"** sur le header du Dossier ticker (icône `bookmark` filled/outlined, optimistic toggle avec rollback). Pas de gestion multi-user (table sans `user_id`). 14 tests : slice MVC controller (7), adapter HTTP (3), `dashboard.spec` watchlist (6), `ticker.spec` toggle (5).
+- ✅ **Sidebar dashboard collapsable + scrollbar custom** : 3 sections indépendamment foldables (Portefeuilles / Tickers détenus / Watchlist) avec bouton header + chevron rotatif. Scrollbar 8px custom appliquée globalement via `styles.scss`, support Webkit + Firefox, adopte les tokens couleur du thème. Pas de persistance localStorage des états ouvert/fermé pour l'instant.
 
 ### Backend
 
@@ -25,21 +27,22 @@ Snapshot après le premier livrable Phase 2 (multi-timeframe + axes/crosshair). 
   - `MockMarketChartClient` (synthétique déterministe par symbole, défaut sans clé pour CI / onboarding). Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503).
 - `IndicatorCalculator` Kotlin pur, 20+ tests.
 - Pipeline narratif LLM async : `Service → Runner @Async → Executor (parse + validate + 1 retry) → Persister`. Cache snapshot 30 min, dedup job 5 min. Validateur strict : 3-5 keyPoints, ≤15 mots, summary 2-3 phrases, sentiment ∈ enum.
-- Migration Flyway V2 : `ticker_narrative_snapshot` + `ticker_narrative_job`.
-- Endpoints : `GET /api/market/ticker/{symbol}` (dossier complet), `POST/GET /narrative/...` (kick + poll + latest), `GET /narrative/preview` (preview prompt), `GET /api/portfolios/owned-tickers`.
+- Module `watchlist/` (Phase 2) : entity `WatchlistEntry`, service avec normalisation + add idempotent + remove 404 si absent, controller 3 endpoints REST.
+- Migrations Flyway : V1 init, V2 ticker_narrative, V3 watchlist_entry.
+- Endpoints : `GET /api/market/ticker/{symbol}` (dossier complet), `GET .../chart?timeframe=` (bars only multi-timeframe), `POST/GET /narrative/...` (kick + poll + latest), `GET /narrative/preview` (preview prompt), `GET /api/portfolios/owned-tickers`, `GET POST DELETE /api/watchlist[/symbol]`.
 
 ### Frontend
 
-- Page Dossier ticker : graphe SVG inline avec **toggle multi-timeframe** (`1D / 5D / 1M / 3M / 1Y / 5Y`), **axes prix + dates** + grille pointillée, **crosshair au survol** + tooltip date/prix, 10 chips d'indicateurs avec color-coding (RSI/MA/perf/drawdown), narratif IA (sentiment chip BULLISH/NEUTRAL/BEARISH coloré, summary, bullets, footer modèle+date), bouton Régénérer avec polling.
-- Dashboard : total agrégé tous portefeuilles dans la sidebar, liste cliquable des tickers détenus (`owned-tickers` agrégé serveur, pas de N+1).
+- Page Dossier ticker : graphe SVG inline avec **toggle multi-timeframe** (`1D / 5D / 1M / 3M / 1Y / 5Y`), **axes prix + dates** + grille pointillée, **crosshair au survol** + tooltip date/prix, 10 chips d'indicateurs avec color-coding (RSI/MA/perf/drawdown), **bouton "Suivre / Suivi"** (watchlist toggle), narratif IA (sentiment chip BULLISH/NEUTRAL/BEARISH coloré, summary, bullets, footer modèle+date), bouton Régénérer avec polling.
+- Dashboard : sidebar **3 sections collapsables** (Portefeuilles / Tickers détenus / Watchlist) avec total agrégé tous portefeuilles, liste cliquable des tickers détenus (`owned-tickers` agrégé serveur, pas de N+1), **input watchlist** + liste cliquable + icône poubelle. Scrollbar custom 8px.
 - Settings adaptés Phase 1 : `prompt-preview` par ticker (input libre + suggestions), `test-sources` étendu avec test ticker.
 - **i18n FR/EN** via `ngx-translate` (TranslatePipe) + `LanguageService` signal-based. Drapeaux unicode dans le header.
 - **Zoneless explicite** (`provideZonelessChangeDetection()` dans `app.config.ts`).
 
 ### Tests
 
-- Backend : `IndicatorCalculatorTest` (20+), `MockMarketChartClientTest` (6), `TwelveDataClientTest` (9 — happy + URL + fallback 52w + mappings d'erreur 200/HTTP + blank API key), `TwelveDataMappersTest` (5 — halted, DESC→ASC, intraday, parseTimestamp), `TickerNarrativeServiceTest` (8 — 3 branches dedup/cache/kick + normalisation), `TickerNarrativePrompt/Parser/Validator` (17), `TickerNarrativePreviewControllerTest` (2), `PortfolioControllerTest` enrichi (owned-tickers).
-- Frontend : 84 tests (14 fichiers). Adapters HTTP, ticker page, dashboard (incl. owned tickers), suivi, csv-import, narrative flow complet.
+- Backend : `IndicatorCalculatorTest` (20+), `MockMarketChartClientTest` (9, ajouts intraday/weekly/seed), `TwelveDataClientTest` (9), `TwelveDataMappersTest` (5), `MarketControllerTest` (5, slice MVC chart endpoint), `TickerNarrativeServiceTest` (8), `TickerNarrativePrompt/Parser/Validator` (17), `TickerNarrativePreviewControllerTest` (2), `PortfolioControllerTest` enrichi (owned-tickers), `WatchlistControllerTest` (7).
+- Frontend : adapters HTTP (incl. `watchlist.http.spec`), ticker page (incl. timeframe toggle + watchlist), dashboard (incl. owned tickers + watchlist add/remove/rollback), suivi, csv-import, narrative flow complet.
 
 ### Décisions techniques notables (consolidées)
 
@@ -54,8 +57,10 @@ Snapshot après le premier livrable Phase 2 (multi-timeframe + axes/crosshair). 
 
 A. **Cleanup des jobs orphelins au boot** 🟡 — listener `ApplicationReadyEvent` qui passe les `PENDING` en `ERROR`. ~15 min.
 
-B. **Items de l'audit 2026-05-02 non fixés** : contrat preview CSV cassé (front lit `bookValue`, back envoie `bookValueCad`), `@EnableAsync` sans `ThreadPoolTaskExecutor`, N+1 sur la timeline snapshots.
+B. **Linter ESLint côté frontend** 🟡 — `ng add @angular-eslint/schematics` + flat config + step CI. Première passe attendra ~30-50 warnings sur le code existant. Décomposer en deux commits (config tolérante puis fix). ~1-2h.
+
+C. **Items de l'audit 2026-05-02 non fixés** : contrat preview CSV cassé (front lit `bookValue`, back envoie `bookValueCad`), `@EnableAsync` sans `ThreadPoolTaskExecutor`, N+1 sur la timeline snapshots.
 
 ### Phase 2 — restant à attaquer
 
-Multi-timeframe livré. Prochains items (cf. `metier/fonctionnalites.md` et `backlog.md`) : **chart : analyse interactive** (zoom drag-select, overlays MA, annotations), **news par ticker**, **comparaison vs benchmark**, **watchlist persistée**, **recommandations analystes / earnings**, **settings & config runtime** (clé API + TTL cache éditables depuis l'UI).
+Multi-timeframe et watchlist livrés. Prochains items (cf. `metier/fonctionnalites.md` et `backlog.md`) : **chart : analyse interactive** (zoom drag-select, overlays MA, annotations), **news par ticker**, **comparaison vs benchmark**, **recommandations analystes / earnings**, **settings & config runtime** (clé API + TTL cache éditables depuis l'UI).

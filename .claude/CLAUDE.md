@@ -35,6 +35,7 @@ trade/
 │       ├── market/          # MarketChartClient port + TwelveData/Mock adapters + IndicatorCalculator
 │       ├── analysis/        # Phase 1 ticker narrative (legacy reco pipeline frozen)
 │       ├── portfolio/       # CSV imports, snapshots, read-only portfolios
+│       ├── watchlist/       # Phase 2 — manual list of tickers tracked outside the portfolio
 │       ├── ingestion/       # 🧊 legacy Phase 0 — RSS scheduler
 │       └── shared/          # cross-cutting utilities
 ├── docs/
@@ -52,9 +53,10 @@ trade/
 
 ## Backend modules
 
-- `market/` — `MarketChartClient` port (returns domain `MarketChart` = `TickerQuote` + `List<OhlcBar>`) with two adapters selected by `market.provider` : `TwelveDataClient` (REST + apikey, default prod) and `MockMarketChartClient` (deterministic synthetic data, default without key). `IndicatorCalculator` is Kotlin pur, sans Spring : RSI, MA50/MA200, momentum, drawdown.
+- `market/` — `MarketChartClient` port (returns domain `MarketChart` = `TickerQuote` + `List<OhlcBar>`) with two adapters selected by `market.provider` : `TwelveDataClient` (REST + apikey, default prod) and `MockMarketChartClient` (deterministic synthetic data, default without key). Two HTTP endpoints : `GET /{symbol}` (full dossier, 1Y daily) and `GET /{symbol}/chart?timeframe=` (bars only, multi-timeframe toggle). `IndicatorCalculator` is Kotlin pur, sans Spring : RSI, MA50/MA200, momentum, drawdown.
 - `analysis/` — Phase 1 ticker narrative pipeline (`TickerNarrativeService`, `TickerNarrativeRunner`, `TickerNarrativeParser`, `TickerNarrativeValidator`). Legacy portfolio-wide pipeline (`AnalysisExecutor`, `RecommendationValidator`, etc.) is **frozen in place** — code remains but no longer in the user flow.
 - `portfolio/` — read-only portfolios, Wealthsimple CSV import, historical snapshots
+- `watchlist/` — Phase 2 manual watchlist (single-table, no user_id). `WatchlistService` with uppercase+trim normalisation, idempotent add (POST returns existing on duplicate), non-idempotent remove (404 if absent so the optimistic UI can detect drift).
 - `ingestion/` — 🧊 legacy Phase 0 — RSS scheduler. Conservé en place, plus consommé en Phase 1.
 - `shared/` — cross-cutting utilities (e.g. `GlobalExceptionHandler`)
 
@@ -64,10 +66,10 @@ trade/
 
 Light hexagonal split under `frontend/src/app/` :
 
-- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 5 repositories : Portfolio, Analysis, Settings, Snapshot, Market. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
+- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 6 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
 - `features/` — UI feature folders (one per top-level route, *primary adapters* en vocabulaire hexagonal) :
-  - `dashboard/` — portfolio view (read-only positions) + link to ticker dossiers
-  - `ticker/` — per-symbol dossier (price chart, indicators, LLM narrative)
+  - `dashboard/` — portfolio view (read-only positions) + sidebar with 3 collapsible sections (Portefeuilles / Tickers détenus / Watchlist) + link to ticker dossiers
+  - `ticker/` — per-symbol dossier : price chart with multi-timeframe toggle + axes + hover crosshair, indicators chips, watchlist toggle button, LLM narrative
   - `import/` — Wealthsimple CSV drag-and-drop page
   - `suivi/` — import history (snapshots by date, market values, P&L)
   - `recommendations/` — 🧊 legacy Phase 0 — filterable list of recommendations
