@@ -8,7 +8,7 @@ plugins {
   // Detekt — Kotlin static analysis (complexité cyclomatique, magic numbers, méthodes longues,
   // potentiels bugs). Complémentaire de Spotless qui ne fait que la mise en forme. Voir bloc
   // `detekt { … }` plus bas pour la stratégie de ramp-up.
-  id("io.gitlab.arturbosch.detekt") version "1.23.7"
+  id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 group = "com.portfolioai"
@@ -99,19 +99,21 @@ tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configure
   jvmTarget = "21"
 }
 
-// Detekt 1.23.x ship un compilateur Kotlin embarqué (2.0.10 dans la 1.23.7). Avec Kotlin 2.1 côté
+// Detekt 1.23.x ship un compilateur Kotlin embarqué (2.0.21 dans la 1.23.8). Avec Kotlin 2.1 côté
 // projet, la classpath runtime arrive avec un stdlib non-compatible et Detekt refuse de charger
-// (« detekt was compiled with Kotlin 2.0.10 but is currently running with 2.1.21 »). On isole
+// (« detekt was compiled with Kotlin 2.0.21 but is currently running with 2.1.21 »). On isole
 // la classpath `detekt` sur la version Kotlin qu'il attend — n'affecte ni `compileKotlin` ni
 // `compileTestKotlin` qui restent en 2.1.21. À retirer le jour où Detekt 2.0 sort en stable avec
-// support natif Kotlin 2.1+.
+// support natif Kotlin 2.1+. Important : la version pinned doit suivre celle attendue par la
+// version de Detekt active — un bump Detekt patch peut shifter la version Kotlin embarquée
+// (1.23.7 → 2.0.10, 1.23.8 → 2.0.21).
 configurations
   .matching { it.name == "detekt" }
   .configureEach {
     resolutionStrategy.eachDependency {
       if (requested.group == "org.jetbrains.kotlin") {
-        useVersion("2.0.10")
-        because("Detekt 1.23.7 was compiled against Kotlin 2.0.10 — pin its classpath to match")
+        useVersion("2.0.21")
+        because("Detekt 1.23.8 was compiled against Kotlin 2.0.21 — pin its classpath to match")
       }
     }
   }
