@@ -43,6 +43,11 @@ market:
   #   mock        — deterministic synthetic data (default, no network needed)
   #   twelvedata  — real REST API, free tier 800 credits/day (requires market.twelvedata.api-key)
   provider: mock
+  # Caffeine TTL for the `market-chart` and `news-by-symbol` caches (shared spec). Editable at
+  # runtime from /settings/configuration — the value here is the boot-time default and the fallback
+  # when no DB override is set.
+  cache:
+    ttl-minutes: 15
   twelvedata:
     base-url: https://api.twelvedata.com
     api-key: ${TWELVEDATA_API_KEY:}

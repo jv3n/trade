@@ -231,6 +231,7 @@
     "sources": "Sources de données",
     "testSources": "Tester une source",
     "promptPreview": "Aperçu du prompt",
+    "configuration": "Configuration runtime",
     "sourcesPage": {
       "intro": "Activez ou désactivez les sources utilisées pour générer les recommandations IA.",
       "loading": "Chargement des sources…",
@@ -282,6 +283,57 @@
         "notFound": "Ticker introuvable",
         "unavailable": "Données de marché indisponibles (rate-limit ou réseau)",
         "backend": "Erreur backend"
+      }
+    },
+    "configurationPage": {
+      "title": "Configuration runtime",
+      "intro": "Édite en direct ce qui vit normalement dans application-local.yml. Les modifications s'appliquent sans redémarrer le backend.",
+      "loading": "Chargement de la configuration…",
+      "statusSet": "Définie",
+      "statusUnset": "Non définie",
+      "statusOverridden": "Surchargée",
+      "statusDefault": "Par défaut",
+      "placeholderEmpty": "Saisis une nouvelle valeur",
+      "placeholderMasked": "•••• déjà définie — saisis une nouvelle valeur pour remplacer",
+      "marketProvider": {
+        "title": "Provider de marché",
+        "description": "Bascule entre le mock local (déterministe, sans réseau) et Twelve Data (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
+      "newsProvider": {
+        "title": "Provider de news",
+        "description": "Bascule entre le mock local (feed synthétique) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
+      "providers": {
+        "mock": "Mock (local)",
+        "twelvedata": "Twelve Data",
+        "finnhub": "Finnhub"
+      },
+      "twelveData": {
+        "title": "Twelve Data — clé API",
+        "description": "Provider de données de marché (cours, OHLC, indicateurs). Free tier 800 crédits/jour.",
+        "inputLabel": "Clé API Twelve Data"
+      },
+      "finnhub": {
+        "title": "Finnhub — clé API",
+        "description": "Provider des dépêches du dossier ticker. Free tier 60 calls/min.",
+        "inputLabel": "Clé API Finnhub"
+      },
+      "cacheTtl": {
+        "title": "Cache marché & news — TTL",
+        "description": "Durée de mise en cache des appels Twelve Data et Finnhub (Caffeine). Plus court = données plus fraîches mais plus d'appels API.",
+        "minutes": "{{value}} min",
+        "defaultHint": "défaut : {{value}} min"
+      },
+      "actions": {
+        "test": "Tester",
+        "save": "Enregistrer",
+        "reset": "Réinitialiser au défaut"
+      },
+      "errors": {
+        "load": "Impossible de charger la configuration.",
+        "save": "Échec de l'enregistrement.",
+        "reset": "Échec de la réinitialisation.",
+        "test": "Erreur lors du test de la clé."
       }
     }
   }

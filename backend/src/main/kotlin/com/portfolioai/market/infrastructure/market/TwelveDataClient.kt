@@ -1,11 +1,13 @@
 package com.portfolioai.market.infrastructure.market
 
+import com.portfolioai.config.application.AppConfigService
+import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.MarketConfig.Companion.MARKET_CHART_CACHE
 import com.portfolioai.market.domain.MarketChart
 import com.portfolioai.market.domain.MarketUnavailableException
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
@@ -32,18 +34,23 @@ import org.springframework.web.client.RestClient
  * Caching : 15 min Caffeine TTL ([com.portfolioai.market.MarketConfig]). The cache key is prefixed
  * with `twelvedata|` so a future provider can coexist without stepping on it.
  *
- * Auth : the API key is read from `market.twelvedata.api-key` (env var `TWELVEDATA_API_KEY`). A
- * blank key is detected at fetch time and surfaced as [MarketUnavailableException] with a clear
- * message so the front-end shows 503 with a meaningful hint.
+ * Auth : the API key is read at every call from [AppConfigService] (DB override layered on top of
+ * the YAML default `market.twelvedata.api-key` / env var `TWELVEDATA_API_KEY`). Reading per-call is
+ * required because the user can rotate the key from `/settings/configuration` without a reboot —
+ * `@Value` injection would freeze the value at bean construction. A blank key is detected at fetch
+ * time and surfaced as [MarketUnavailableException] with a clear message so the front-end shows 503
+ * with a meaningful hint.
  */
 @Component
-@ConditionalOnProperty(name = ["market.provider"], havingValue = "twelvedata")
 class TwelveDataClient(
-  private val rest: RestClient,
+  @Qualifier("twelveDataRestClient") private val rest: RestClient,
+  private val appConfig: AppConfigService,
   @Value("\${market.twelvedata.base-url:https://api.twelvedata.com}") private val baseUrl: String,
-  @Value("\${market.twelvedata.api-key:}") private val apiKey: String,
 ) : MarketChartClient {
   private val log = LoggerFactory.getLogger(javaClass)
+
+  private val apiKey: String
+    get() = appConfig.getString(ConfigKeys.TWELVEDATA_API_KEY)
 
   @Cacheable(MARKET_CHART_CACHE, key = "'twelvedata|' + #symbol + '|' + #range + '|' + #interval")
   override fun fetchChart(symbol: String, range: String, interval: String): MarketChart {

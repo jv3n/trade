@@ -5,7 +5,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 /**
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component
  * switching to `news.provider: finnhub` with a blank api-key.
  */
 @Component
-@ConditionalOnProperty(name = ["news.provider"], havingValue = "mock", matchIfMissing = true)
 class MockNewsClient : NewsClient {
   private val log = LoggerFactory.getLogger(javaClass)
 

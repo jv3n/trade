@@ -48,6 +48,11 @@ export const routes: Routes = [
             (m) => m.PromptPreviewPage,
           ),
       },
+      {
+        path: 'configuration',
+        loadComponent: () =>
+          import('./features/settings/configuration/configuration').then((m) => m.Configuration),
+      },
     ],
   },
 ];

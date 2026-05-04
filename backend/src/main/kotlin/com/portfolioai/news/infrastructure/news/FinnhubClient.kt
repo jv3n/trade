@@ -2,13 +2,15 @@ package com.portfolioai.news.infrastructure.news
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.portfolioai.config.application.AppConfigService
+import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.news.domain.NewsItem
 import java.time.LocalDate
 import java.time.ZoneOffset
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
@@ -24,8 +26,11 @@ import org.springframework.web.client.RestClient
  * rolling 30-day window from "now" — wide enough for active tickers, narrow enough to keep the
  * payload small and the cache key stable within a day.
  *
- * Auth : `token` query parameter (not a header). A blank key is detected before the HTTP call so we
- * don't waste a network round-trip on a misconfigured environment.
+ * Auth : `token` query parameter (not a header), read at every call from [AppConfigService] (DB
+ * override on top of the YAML default `market.finnhub.api-key` / env `FINNHUB_API_KEY`). Per-call
+ * reads let the user rotate the key live from `/settings/configuration` without a reboot. A blank
+ * key is detected before the HTTP call so we don't waste a network round-trip on a misconfigured
+ * environment.
  *
  * Error mapping (mirrors the Twelve Data adapter for consistency on the 503 / 404 path) :
  * - 401 / 403 → `MarketUnavailableException("auth-failed")`
@@ -39,14 +44,16 @@ import org.springframework.web.client.RestClient
  * details (date window).
  */
 @Component
-@ConditionalOnProperty(name = ["news.provider"], havingValue = "finnhub")
 class FinnhubClient(
-  private val rest: RestClient,
+  @Qualifier("finnhubRestClient") private val rest: RestClient,
   private val mapper: ObjectMapper,
+  private val appConfig: AppConfigService,
   @Value("\${market.finnhub.base-url:https://finnhub.io/api/v1}") private val baseUrl: String,
-  @Value("\${market.finnhub.api-key:}") private val apiKey: String,
 ) : NewsClient {
   private val log = LoggerFactory.getLogger(javaClass)
+
+  private val apiKey: String
+    get() = appConfig.getString(ConfigKeys.FINNHUB_API_KEY)
 
   override fun fetchNews(symbol: String, limit: Int): List<NewsItem> {
     requireApiKey()
