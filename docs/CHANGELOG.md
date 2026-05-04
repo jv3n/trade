@@ -13,6 +13,15 @@ Le `.claude/` (CLAUDE.md, skills, agents) y figure aussi quand il est touché �
 
 ---
 
+## 2026-05-04 (suite — fix lifecycle position CSV)
+
+### `projet/`
+- `backlog.md` : Nouvelle entrée Phase 2 livrée — lifecycle de position OPEN/CLOSED dans l'import CSV (V5). Notes d'implémentation détaillées : justification observabilité (vs hard delete), comportement import, queries OPEN-only, UI counters.
+
+> Ce drift n'avait pas été remonté par l'agent doc-maintainer parce que c'était un **bug fonctionnel** (CSV import upsert sans cleanup) plutôt qu'un drift doc → code. Le code fix entraîne ensuite des updates doc en cascade — ils sont consignés ici.
+
+---
+
 ## 2026-05-04
 
 ### `metier/`

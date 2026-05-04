@@ -5,6 +5,7 @@ import com.portfolioai.portfolio.application.dto.CsvImportPreview
 import com.portfolioai.portfolio.application.dto.CsvImportPreviewItem
 import com.portfolioai.portfolio.application.dto.CsvImportResult
 import com.portfolioai.portfolio.domain.Asset
+import com.portfolioai.portfolio.domain.AssetStatus
 import com.portfolioai.portfolio.domain.AssetType
 import com.portfolioai.portfolio.domain.Portfolio
 import com.portfolioai.portfolio.domain.PortfolioSnapshot
@@ -80,6 +81,8 @@ class CsvImportService(
     var portfoliosCreated = 0
     var portfoliosUpdated = 0
     var totalImported = 0
+    var positionsClosed = 0
+    var positionsReopened = 0
 
     for ((accountName, rows) in rowsByAccount) {
       val existingPortfolio = portfolioRepository.findByName(accountName)
@@ -88,12 +91,18 @@ class CsvImportService(
           ?: portfolioRepository.save(Portfolio(name = accountName)).also { portfoliosCreated++ }
       if (existingPortfolio != null) portfoliosUpdated++
 
+      // Charge tous les assets (OPEN + CLOSED) — il faut voir les CLOSED pour pouvoir réouvrir
+      // un ticker qui revient (ex: rachat après vente). Le lifecycle est dans V5 ; les rows
+      // pré-V5 sont toutes OPEN par backfill.
       val existing = assetRepository.findByPortfolioId(portfolio.id).associateBy { it.ticker }
+      val tickersInCsv = rows.map { it.ticker }.toSet()
+
       for (row in rows) {
         val avgPrice = row.avgBuyPrice()
         val assetType = mapAssetType(row.wsType)
         val asset = existing[row.ticker]
         if (asset != null) {
+          val wasReopened = asset.status == AssetStatus.CLOSED
           asset.quantity = row.quantity
           asset.avgBuyPrice = avgPrice
           asset.name = row.name
@@ -104,6 +113,13 @@ class CsvImportService(
           asset.unrealizedGain = row.unrealizedGain
           asset.gainCurrency = row.gainCurrency
           asset.updatedAt = importedAt
+          if (wasReopened) {
+            // Position qui revient : on flip OPEN, on clear closed_at, on garde le opened_at
+            // d'origine (premier import historique du ticker dans ce portfolio).
+            asset.status = AssetStatus.OPEN
+            asset.closedAt = null
+            positionsReopened++
+          }
           assetRepository.save(asset)
         } else {
           assetRepository.save(
@@ -119,10 +135,25 @@ class CsvImportService(
               marketValue = row.marketValue,
               unrealizedGain = row.unrealizedGain,
               gainCurrency = row.gainCurrency,
+              status = AssetStatus.OPEN,
+              openedAt = importedAt,
             )
           )
         }
         totalImported++
+      }
+
+      // Détection des positions soldées : assets OPEN qui ne sont plus dans le CSV de cet
+      // account → flip CLOSED + closed_at. On fige les valeurs telles quelles (dernière snapshot
+      // connue) — la future page "Positions historiques" lira ces rows.
+      val toClose =
+        existing.values.filter { it.status == AssetStatus.OPEN && it.ticker !in tickersInCsv }
+      for (asset in toClose) {
+        asset.status = AssetStatus.CLOSED
+        asset.closedAt = importedAt
+        asset.updatedAt = importedAt
+        assetRepository.save(asset)
+        positionsClosed++
       }
 
       val snapshot =
@@ -151,14 +182,23 @@ class CsvImportService(
     }
 
     log.info(
-      "CSV import batch={}: {} portfolios created, {} updated, {} positions, {} rows skipped",
+      "CSV import batch={}: {} portfolios created, {} updated, {} positions, {} closed, {} reopened, {} rows skipped",
       batchId,
       portfoliosCreated,
       portfoliosUpdated,
       totalImported,
+      positionsClosed,
+      positionsReopened,
       skipped,
     )
-    return CsvImportResult(portfoliosCreated, portfoliosUpdated, totalImported, skipped)
+    return CsvImportResult(
+      portfoliosCreated = portfoliosCreated,
+      portfoliosUpdated = portfoliosUpdated,
+      totalImported = totalImported,
+      skipped = skipped,
+      positionsClosed = positionsClosed,
+      positionsReopened = positionsReopened,
+    )
   }
 
   // ---- parsing ----

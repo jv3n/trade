@@ -164,7 +164,7 @@ Hexagonal léger sous `frontend/src/app/` :
 
 ## Schéma de base de données
 
-Quatre migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative.sql` (Phase 1 narratif), `V3__watchlist.sql` (Phase 2 watchlist), `V4__app_config.sql` (Phase 2 — table key/value des surcharges runtime).
+Cinq migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative.sql` (Phase 1 narratif), `V3__watchlist.sql` (Phase 2 watchlist), `V4__app_config.sql` (Phase 2 — table key/value des surcharges runtime), `V5__asset_lifecycle.sql` (Phase 2 — lifecycle de position OPEN/CLOSED).
 
 | Section | Tables | Statut |
 |---------|--------|--------|

@@ -1,10 +1,17 @@
 package com.portfolioai.portfolio
 
 import com.portfolioai.portfolio.application.CsvImportService
+import com.portfolioai.portfolio.domain.Asset
+import com.portfolioai.portfolio.domain.AssetStatus
+import com.portfolioai.portfolio.domain.AssetType
+import com.portfolioai.portfolio.domain.Portfolio
+import com.portfolioai.portfolio.domain.PortfolioSnapshot
+import com.portfolioai.portfolio.domain.SnapshotPosition
 import com.portfolioai.portfolio.infrastructure.persistence.AssetRepository
 import com.portfolioai.portfolio.infrastructure.persistence.PortfolioRepository
 import com.portfolioai.portfolio.infrastructure.persistence.PortfolioSnapshotRepository
 import com.portfolioai.portfolio.infrastructure.persistence.SnapshotPositionRepository
+import java.math.BigDecimal
 import java.nio.charset.Charset
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -12,6 +19,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argThat
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.springframework.mock.web.MockMultipartFile
 
 /**
@@ -311,5 +323,109 @@ class CsvImportServiceTest {
     val after = java.time.Instant.now()
 
     assertTrue(!instant.isBefore(before) && !instant.isAfter(after))
+  }
+
+  // ---- import: position lifecycle (V5) ----
+
+  /**
+   * Helpers pour tester `import()` avec des repos mockés. Les tests de lifecycle pinnent le
+   * comportement OPEN ↔ CLOSED face à un CSV qui ajoute / enlève / réintroduit un ticker. La source
+   * du bug observé : un ticker (XAU) restait sur le dashboard même après vente parce que l'upsert
+   * ne supprimait pas les rows absentes du nouvel import. V5 introduit le status — ces tests
+   * garantissent que le flip se fait au bon moment et qu'une réouverture remet bien `closed_at` à
+   * null.
+   */
+  private fun openAsset(
+    portfolio: Portfolio,
+    ticker: String,
+    name: String = "$ticker Inc.",
+    status: AssetStatus = AssetStatus.OPEN,
+  ): Asset =
+    Asset(
+      portfolio = portfolio,
+      ticker = ticker,
+      name = name,
+      quantity = BigDecimal("10"),
+      avgBuyPrice = BigDecimal("100.00"),
+      assetType = AssetType.STOCK,
+      currency = "USD",
+      bookValueCad = BigDecimal("1000.00"),
+      marketValue = BigDecimal("1100.00"),
+      status = status,
+    )
+
+  private fun stubImportRepos(portfolio: Portfolio, existingAssets: List<Asset>) {
+    whenever(portfolioRepository.findByName(portfolio.name)).thenReturn(portfolio)
+    whenever(assetRepository.findByPortfolioId(portfolio.id)).thenReturn(existingAssets)
+    whenever(assetRepository.save(any<Asset>())).thenAnswer { it.arguments[0] as Asset }
+    whenever(snapshotRepository.save(any<PortfolioSnapshot>())).thenAnswer {
+      it.arguments[0] as PortfolioSnapshot
+    }
+    whenever(snapshotPositionRepository.save(any<SnapshotPosition>())).thenAnswer {
+      it.arguments[0] as SnapshotPosition
+    }
+    whenever(portfolioRepository.save(any<Portfolio>())).thenAnswer { it.arguments[0] as Portfolio }
+  }
+
+  @Test
+  fun `import flips a ticker absent from the new CSV to CLOSED with closedAt set`() {
+    // Le scénario "j'ai vendu XAU, mon nouvel export Wealthsimple ne le contient plus". Avant V5
+    // la ligne `asset` restait OPEN à jamais et XAU continuait d'apparaître au dashboard.
+    val portfolio = Portfolio(name = "CELI")
+    val xau = openAsset(portfolio, "XAU", "Gold ETF")
+    val aapl = openAsset(portfolio, "AAPL")
+    stubImportRepos(portfolio, listOf(xau, aapl))
+
+    // Nouveau CSV : seulement AAPL, pas XAU.
+    val file = makeCsv(row(account = "CELI", ticker = "AAPL", name = "Apple Inc."))
+    val result = service.import(file)
+
+    assertEquals(1, result.positionsClosed)
+    assertEquals(0, result.positionsReopened)
+    // XAU est passé en CLOSED, closedAt non-null. AAPL reste OPEN.
+    verify(assetRepository)
+      .save(argThat<Asset> { ticker == "XAU" && status == AssetStatus.CLOSED && closedAt != null })
+  }
+
+  @Test
+  fun `import reopens a previously CLOSED ticker that comes back in the new CSV`() {
+    // Le scénario "j'avais vendu NVDA, je rachète maintenant". V5 doit le réouvrir : status
+    // → OPEN, closedAt → null. Le opened_at d'origine est conservé (premier import historique
+    // du ticker dans ce portfolio) — décision de design pour ne pas perdre la date d'entrée
+    // initiale en BDD.
+    val portfolio = Portfolio(name = "REER")
+    val closedNvda =
+      openAsset(portfolio, "NVDA", "NVIDIA Corp.", status = AssetStatus.CLOSED).also {
+        it.closedAt = java.time.Instant.parse("2026-04-01T12:00:00Z")
+      }
+    stubImportRepos(portfolio, listOf(closedNvda))
+
+    val file = makeCsv(row(account = "REER", ticker = "NVDA", name = "NVIDIA Corp."))
+    val result = service.import(file)
+
+    assertEquals(0, result.positionsClosed)
+    assertEquals(1, result.positionsReopened)
+    verify(assetRepository)
+      .save(argThat<Asset> { ticker == "NVDA" && status == AssetStatus.OPEN && closedAt == null })
+  }
+
+  @Test
+  fun `import is a no-op on lifecycle when the CSV matches the current portfolio exactly`() {
+    // Garde-fou : ré-importer un export identique ne doit rien fermer ni réouvrir. Sinon on
+    // pollue la BDD à chaque save Tilt qui re-déclenche l'import démo.
+    val portfolio = Portfolio(name = "CELI")
+    val aapl = openAsset(portfolio, "AAPL", "Apple Inc.")
+    stubImportRepos(portfolio, listOf(aapl))
+
+    val file = makeCsv(row(account = "CELI", ticker = "AAPL", name = "Apple Inc."))
+    val result = service.import(file)
+
+    assertEquals(0, result.positionsClosed)
+    assertEquals(0, result.positionsReopened)
+    // Aucun save ne doit avoir flippé un status — on vérifie qu'on n'a jamais saved un asset
+    // avec closedAt != null (on aurait quand même un save pour update les valeurs du AAPL,
+    // mais avec status=OPEN et closedAt=null inchangés).
+    verify(assetRepository, never())
+      .save(argThat<Asset> { closedAt != null || status == AssetStatus.CLOSED })
   }
 }

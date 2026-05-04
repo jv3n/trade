@@ -4,6 +4,7 @@ import com.portfolioai.portfolio.application.dto.AssetDto
 import com.portfolioai.portfolio.application.dto.OwnedTickerDto
 import com.portfolioai.portfolio.application.dto.PortfolioDto
 import com.portfolioai.portfolio.application.dto.toDto
+import com.portfolioai.portfolio.domain.AssetStatus
 import com.portfolioai.portfolio.infrastructure.persistence.AssetRepository
 import com.portfolioai.portfolio.infrastructure.persistence.PortfolioRepository
 import java.util.UUID
@@ -27,7 +28,11 @@ class PortfolioQueryService(
   fun findAssets(portfolioId: UUID): List<AssetDto> {
     if (!portfolioRepository.existsById(portfolioId))
       throw NoSuchElementException("Portfolio $portfolioId not found")
-    return assetRepository.findByPortfolioId(portfolioId).map { it.toDto() }
+    // OPEN-only — closed positions (CSV import V5 lifecycle) ne sont pas exposées au dashboard ;
+    // elles vivent dans les snapshots historiques et la future page "Positions historiques".
+    return assetRepository.findByPortfolioIdAndStatus(portfolioId, AssetStatus.OPEN).map {
+      it.toDto()
+    }
   }
 
   /**

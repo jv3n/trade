@@ -34,6 +34,16 @@ export class CsvImport {
   pendingFiles = signal<File[]>([]);
   batchIndex = signal(0);
   dragging = signal(false);
+  /**
+   * Aggregated result of the latest import (single or batch). Lets the "done" banner surface
+   * the lifecycle counters — `positionsClosed` / `positionsReopened` from V5 — so the user sees
+   * at a glance whether the import sold/re-bought what they expected.
+   */
+  lastResult = signal<{
+    totalImported: number;
+    positionsClosed: number;
+    positionsReopened: number;
+  } | null>(null);
 
   // ---- Drag & drop ----
 
@@ -96,7 +106,12 @@ export class CsvImport {
     if (!file) return;
     this.step.set('importing');
     this.portfolioRepository.confirmCsvImport(file).subscribe({
-      next: () => {
+      next: (result) => {
+        this.lastResult.set({
+          totalImported: result.totalImported,
+          positionsClosed: result.positionsClosed,
+          positionsReopened: result.positionsReopened,
+        });
         this.step.set('done');
         this.imported.emit();
       },
@@ -121,6 +136,8 @@ export class CsvImport {
   confirmBatch() {
     this.step.set('batch-importing');
     this.batchIndex.set(0);
+    // Reset agrégat avant la première itération du batch.
+    this.lastResult.set({ totalImported: 0, positionsClosed: 0, positionsReopened: 0 });
     this.importNext();
   }
 
@@ -133,7 +150,17 @@ export class CsvImport {
       return;
     }
     this.portfolioRepository.confirmCsvImport(files[index]).subscribe({
-      next: () => {
+      next: (result) => {
+        const acc = this.lastResult() ?? {
+          totalImported: 0,
+          positionsClosed: 0,
+          positionsReopened: 0,
+        };
+        this.lastResult.set({
+          totalImported: acc.totalImported + result.totalImported,
+          positionsClosed: acc.positionsClosed + result.positionsClosed,
+          positionsReopened: acc.positionsReopened + result.positionsReopened,
+        });
         this.batchIndex.set(index + 1);
         this.importNext();
       },
@@ -158,6 +185,7 @@ export class CsvImport {
     this.pendingFile.set(null);
     this.pendingFiles.set([]);
     this.error.set(null);
+    this.lastResult.set(null);
   }
 
   reset() {

@@ -13,6 +13,24 @@ enum class AssetType {
   BOND,
 }
 
+/**
+ * Lifecycle d'une position dans un portefeuille.
+ * - [OPEN] : position détenue à ce jour. C'est l'état des rows présentes dans le dernier import
+ *   CSV.
+ * - [CLOSED] : position soldée — n'apparaît plus dans le dernier import. Les valeurs (`quantity`,
+ *   `marketValue`, …) sont figées à la dernière snapshot connue ; le `closedAt` porte la date de
+ *   l'import qui a détecté la fermeture. Si la position réapparaît plus tard (rachat), elle est
+ *   réouverte (`status = OPEN`, `closedAt = null`).
+ *
+ * Le filtrage des vues "live" (dashboard, owned-tickers) se fait sur `status = OPEN` ; les
+ * snapshots [com.portfolioai.portfolio.domain.PortfolioSnapshot] continuent de capturer
+ * l'historique exact par batch, indépendamment de ce statut.
+ */
+enum class AssetStatus {
+  OPEN,
+  CLOSED,
+}
+
 @Entity
 @Table(name = "asset")
 class Asset(
@@ -44,6 +62,11 @@ class Asset(
   @Column(name = "unrealized_gain", precision = 18, scale = 4)
   var unrealizedGain: BigDecimal? = null,
   @Column(name = "gain_currency", length = 10) var gainCurrency: String? = null,
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 10)
+  var status: AssetStatus = AssetStatus.OPEN,
+  @Column(name = "opened_at", nullable = false) var openedAt: Instant = Instant.now(),
+  @Column(name = "closed_at") var closedAt: Instant? = null,
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
   @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),

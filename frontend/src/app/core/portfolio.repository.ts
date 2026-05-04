@@ -73,6 +73,10 @@ export interface CsvImportResult {
   portfoliosUpdated: number;
   totalImported: number;
   skipped: number;
+  /** Positions present before the import but absent from the new CSV — flipped to CLOSED. */
+  positionsClosed: number;
+  /** Previously CLOSED positions that reappear in the new CSV — flipped back to OPEN. */
+  positionsReopened: number;
 }
 
 /**

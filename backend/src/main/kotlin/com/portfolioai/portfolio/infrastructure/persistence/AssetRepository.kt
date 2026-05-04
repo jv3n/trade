@@ -1,6 +1,7 @@
 package com.portfolioai.portfolio.infrastructure.persistence
 
 import com.portfolioai.portfolio.domain.Asset
+import com.portfolioai.portfolio.domain.AssetStatus
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -12,13 +13,25 @@ import org.springframework.data.jpa.repository.Query
 data class OwnedTickerRow(val ticker: String, val name: String, val portfolioCount: Long)
 
 interface AssetRepository : JpaRepository<Asset, UUID> {
+  /**
+   * Every asset row for a portfolio, OPEN and CLOSED. Used by the CSV import to compute the diff
+   * between the previous state and the new CSV — the importer needs to see CLOSED rows so it can
+   * **reopen** them when a previously-sold ticker comes back.
+   */
   fun findByPortfolioId(portfolioId: UUID): List<Asset>
 
   /**
-   * One row per distinct ticker across every portfolio. `portfolioCount` is the number of
-   * portfolios holding that symbol (= number of distinct `portfolio_id`). Aggregated server-side to
-   * avoid the front loading every asset of every portfolio just to dedupe — keeps the dashboard
-   * sidebar lookup O(distinct tickers) instead of O(positions).
+   * Currently held positions only — what the dashboard and owned-tickers views display. Filters out
+   * rows whose status went `CLOSED` (position soldée, lifecycle introduced in V5).
+   */
+  fun findByPortfolioIdAndStatus(portfolioId: UUID, status: AssetStatus): List<Asset>
+
+  /**
+   * One row per distinct ticker across every portfolio, **OPEN positions only**. `portfolioCount`
+   * is the number of portfolios currently holding that symbol. Aggregated server-side to avoid the
+   * front loading every asset of every portfolio just to dedupe — keeps the dashboard sidebar
+   * lookup O(distinct tickers) instead of O(positions). Closed positions are excluded by design ;
+   * they belong to the future "Positions historiques" view, not the live dashboard.
    */
   @Query(
     """
@@ -26,6 +39,7 @@ interface AssetRepository : JpaRepository<Asset, UUID> {
       a.ticker, MAX(a.name), COUNT(DISTINCT a.portfolio.id)
     )
     FROM Asset a
+    WHERE a.status = com.portfolioai.portfolio.domain.AssetStatus.OPEN
     GROUP BY a.ticker
     ORDER BY a.ticker ASC
   """

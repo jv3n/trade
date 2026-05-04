@@ -183,6 +183,10 @@
     "confirmBatch": "Importer {{count}} fichiers",
     "batchProgress": "Fichier {{current}} / {{total}} — {{name}}",
     "done": "Portefeuilles synchronisés avec succès.",
+    "counters": {
+      "closed": "{{count}} position(s) fermée(s)",
+      "reopened": "{{count}} position(s) réouverte(s)"
+    },
     "again": "Importer un autre fichier",
     "errors": {
       "preview": "Impossible de lire le fichier. Vérifiez qu'il s'agit bien d'un export Wealthsimple (positions).",
