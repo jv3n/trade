@@ -24,6 +24,8 @@ Site complet : **[jv3n.github.io/trade](https://jv3n.github.io/trade/)**
 | [Onboarding développeur](docs/technique/developper.md) | Nouvel arrivant — install, premier test, troubleshooting |
 | [Architecture](docs/technique/architecture.md) | Comprendre les modules, le schéma BDD et les décisions techniques |
 | [Guide de développement](docs/technique/developpement.md) | Référence quotidienne : commandes, structure, configuration locale |
+| [Providers externes](docs/technique/providers.md) | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
+| [Ops (CI / CD / tooling)](docs/technique/ops.md) | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
 | [Vision](docs/metier/vision.md) | Pourquoi le projet existe, ce qu'on essaie de prouver |
 | [Fonctionnalités](docs/metier/fonctionnalites.md) | Découpage par phase, ce qui est livré / gelé / à venir |
 | [Backlog](docs/projet/backlog.md) | Source de vérité du suivi feature par feature |

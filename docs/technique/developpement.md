@@ -107,6 +107,8 @@ trade/
 │       ├── market/            # TwelveData client + mock + indicateurs
 │       ├── analysis/          # Phase 1 narratif ticker (legacy reco portfolio gelé)
 │       ├── portfolio/         # Import CSV, snapshots, lecture
+│       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille
+│       ├── news/              # Phase 2 — Finnhub + mock, news par ticker
 │       ├── ingestion/         # 🧊 legacy Phase 0 — RSS scheduler
 │       └── shared/            # Utilitaires transverses
 ├── docs/                      # Documentation (mkdocs-material)

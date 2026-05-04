@@ -35,6 +35,8 @@
 │  market/      → MarketChartClient + indic.  │
 │  analysis/    → narratif LLM par ticker     │
 │  portfolio/   → import CSV, snapshots       │
+│  watchlist/   → tickers suivis (Phase 2)    │
+│  news/        → Finnhub + mock (Phase 2)    │
 │  shared/      → utilitaires transverses     │
 │  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
 │  ingestion/   → RSS scheduler  [gelé]       │

@@ -22,7 +22,30 @@
 - Plan payant nécessaire pour intraday haute fréquence
 - Erreurs renvoyées en HTTP 200 avec `status: error` dans le body — le client doit les détecter
 
-### Bascule alternative
+## Phase 2 — News par ticker : Finnhub
+
+Twelve Data ne couvre pas les news (testé live → 404 sur `/news`). Finnhub a été ajouté comme **provider news séparé**, sélectionné par `news.provider`.
+
+### Finnhub (REST + apikey)
+
+| Endpoint | Donnée | Cache |
+|----------|--------|-------|
+| `https://finnhub.io/api/v1/company-news?symbol={s}&from={d}&to={d}&token={k}` | Headlines + summary + url + image (fenêtre roulante 30 j) | 15 min (clé `(symbol, limit)`) |
+
+**Avantages** :
+- Free tier 60 req/min sans cap quotidien
+- Agrégation Reuters / Bloomberg / CNBC / MarketWatch / FT (pour les sources US-centric)
+- Auth simple : un seul `token` en query param
+- Mock disponible (`news.provider: mock`, défaut sans clé) : feed synthétique déterministe par symbole, ~10 % de tickers "quiet" et ~25 % d'items sans summary pour exercer les chemins UI
+
+**Limites à connaître** :
+- US-centric — couverture EU et Canada plus pauvre
+- Pas de fundamentals avancés en free tier
+- Erreurs 401/403/429/5xx mappées sur `MarketUnavailableException` partagée avec Twelve Data → 503 unifié sur l'API publique
+
+Voir [`technique/providers.md`](../technique/providers.md) pour le détail (URLs d'inscription, dashboard, points d'intégration code).
+
+### Bascule alternative (market data)
 
 Si Twelve Data devient indisponible ou trop limitant, candidats par ordre de préférence :
 
@@ -31,7 +54,6 @@ Si Twelve Data devient indisponible ou trop limitant, candidats par ordre de pr�
 | [Stooq](https://stooq.com) | EOD historique | ✅ | Pas de quote temps réel, mais historique fiable |
 | [Polygon.io](https://polygon.io) | Cours, options, crypto | ⚠️ | Très complet, plan gratuit très limité (5 req/min EOD) |
 | [Alpha Vantage](https://www.alphavantage.co) | Cours, indicateurs | ✅ (limité) | 25 req/jour gratuit — trop juste |
-| [Finnhub](https://finnhub.io) | Cours, news, fundamentals | ✅ (limité) | 60 req/min gratuit, US-centric |
 
 > Yahoo Finance avait été tenté en Phase 1 (cookie+crumb dance complet) mais Yahoo bannit les IPs résidentielles trop agressivement pour qu'un projet perso à IP unique en dépende. Voir `docs/technique/architecture.md` (section "Décisions techniques notables") et l'historique git (commit `b993440`) si besoin de rejouer ce code.
 

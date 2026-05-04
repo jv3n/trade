@@ -88,7 +88,7 @@ Nouveau prompt **par ticker** (pas portfolio-wide) :
 Nouvelle page `features/ticker/` :
 
 - En-tête : symbole, nom, prix courant, variation jour, sentiment badge
-- **Graphique** des prix (Chart.js ou recharts) — toggle 1m / 3m / 1y, MA50 / MA200 overlay
+- **Graphique** des prix en SVG inline (pas de dépendance ajoutée). Phase 1 : courbe simple 1Y daily. Toggle multi-timeframe (1D / 5D / 1M / 3M / 1Y / 5Y) et chart enrichi (axes + grille + crosshair) livrés en Phase 2. Overlays MA50 / MA200 et zoom drag-select restent en backlog Phase 2.
 - **Indicateurs en chips** : RSI, drawdown, perf 1y, distance à la MA50
 - **Narratif LLM** : summary + keyPoints en bullets
 - **Snapshot persistant** : chaque consultation génère un `TickerNarrativeSnapshot` (prix + indicateurs + texte LLM + horodatage)

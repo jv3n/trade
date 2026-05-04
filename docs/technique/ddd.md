@@ -12,6 +12,8 @@ Chaque contexte est autonome et possède ses propres couches.
 | `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | Actif |
 | `market` | Données ticker (Twelve Data + mock) + indicateurs techniques calculés | ✅ Phase 1 |
 | `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) | ✅ Phase 1 — réécrit |
+| `watchlist` | Liste plate de tickers suivis hors portefeuille (single-table, pas de user_id) | ✅ Phase 2 |
+| `news` | Headlines par ticker (Finnhub + mock), cache court | ✅ Phase 2 |
 | `ingestion` | Sources RSS, articles, scheduler de collecte | 🧊 Legacy gelé Phase 0 |
 
 > Le contexte `analysis` voit son périmètre changer à la Phase 1 : il passe d'orchestration de recommandations portefeuille (8 règles de validation, targetWeight, action enum) à génération de narratifs par ticker (`{summary, sentiment, keyPoints[]}`). Le code legacy reste en place mais n'est plus exposé.
@@ -28,6 +30,7 @@ Chaque contexte est autonome et possède ses propres couches.
     http/               # Controllers REST
     llm/                # (analysis) Clients API externes (Claude, Ollama)
     market/             # (market) TwelveDataClient + MockMarketChartClient — adapters pour le port
+    news/               # (news) FinnhubClient + MockNewsClient — adapters pour le port NewsClient
 
 shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 ```

@@ -36,11 +36,17 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 |-------|-----------|
 | `backend` | Backend Kotlin / Spring Boot (global) |
 | `frontend` | Frontend Angular (global) |
-| `ingestion` | Module d'ingestion des flux |
-| `analysis` | Module d'appel Claude API |
-| `portfolio` | Module portefeuille |
-| `recommendations` | Module recommandations |
-| `observability` | Module scoring / traçabilité |
+| `market` | Module market (Twelve Data + mock + indicateurs) |
+| `analysis` | Module d'appel LLM (Claude / Ollama, narratif ticker) |
+| `portfolio` | Module portefeuille (CSV, snapshots) |
+| `watchlist` | Module watchlist (Phase 2) |
+| `news` | Module news (Finnhub + mock, Phase 2) |
+| `ticker` | Page Dossier ticker (frontend) |
+| `dashboard` | Page Dashboard (frontend, sidebar incluse) |
+| `settings` | Page Settings (back-office, prompt-preview, test-sources) |
+| `ingestion` | Module d'ingestion des flux RSS (legacy gelé) |
+| `recommendations` | Module recommandations (legacy gelé) |
+| `observability` | Module scoring / traçabilité (Phase 3) |
 | `db` | Migrations Flyway |
 | `ci` | GitHub Actions |
 | `tilt` | Tiltfile / environnement local |
