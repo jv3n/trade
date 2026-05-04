@@ -32,7 +32,7 @@ export class History implements OnInit {
    * (e.g. "Appliquées" / "Applied"). The single-status `statusLabel` below resolves the unsuffixed
    * key when displaying a single recommendation badge.
    */
-  readonly statuses: Array<{ value: string; i18nKey: string }> = [
+  readonly statuses: { value: string; i18nKey: string }[] = [
     { value: 'all', i18nKey: 'statuses.all' },
     { value: 'PENDING', i18nKey: 'statuses.PENDING_PLURAL' },
     { value: 'APPLIED', i18nKey: 'statuses.APPLIED_PLURAL' },

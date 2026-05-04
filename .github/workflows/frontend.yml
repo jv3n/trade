@@ -55,6 +55,12 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # Lint avant build : un linter qui pète tôt évite de cramer ~10 s de build pour rien. Cible
+      # `eslint.config.js` (flat config, Angular 21) — voir `frontend/eslint.config.js`.
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
       - name: Build
         working-directory: frontend
         run: npm run build

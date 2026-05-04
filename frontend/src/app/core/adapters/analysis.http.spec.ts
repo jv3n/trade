@@ -103,7 +103,6 @@ describe('HttpAnalysisRepository', () => {
       let receivedError: Error | null = null;
       const createdAt = new Date(Date.now() - 401_000).toISOString();
       const sub = repo.pollJob('p1', 'j1').subscribe({
-        next: () => {},
         error: (err: Error) => (receivedError = err),
       });
 
@@ -125,7 +124,6 @@ describe('HttpAnalysisRepository', () => {
     it('surfaces 404 with a friendly message', () => {
       let receivedError: Error | null = null;
       const sub = repo.pollJob('p1', 'j1').subscribe({
-        next: () => {},
         error: (err: Error) => (receivedError = err),
       });
 

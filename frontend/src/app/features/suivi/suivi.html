@@ -20,7 +20,13 @@
     @for (batch of batches(); track batch.batchId) {
       <div class="batch-card">
         <!-- En-tête du batch -->
-        <div class="batch-header" (click)="toggleBatch(batch)">
+        <div
+          class="batch-header"
+          role="button"
+          tabindex="0"
+          (click)="toggleBatch(batch)"
+          (keydown.enter)="toggleBatch(batch)"
+        >
           <div class="batch-date">
             <mat-icon>{{ batch.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
             <span class="batch-datetime">{{ batch.importedAt | date: 'dd MMM yyyy — HH:mm' }}</span>
@@ -40,7 +46,13 @@
             @for (snap of batch.snapshots; track snap.id) {
               <div class="snapshot-row">
                 <!-- Résumé du snapshot -->
-                <div class="snapshot-summary" (click)="toggleSnapshot(snap.id)">
+                <div
+                  class="snapshot-summary"
+                  role="button"
+                  tabindex="0"
+                  (click)="toggleSnapshot(snap.id)"
+                  (keydown.enter)="toggleSnapshot(snap.id)"
+                >
                   <mat-icon class="snap-toggle">{{
                     isSnapshotExpanded(snap.id) ? 'keyboard_arrow_up' : 'keyboard_arrow_down'
                   }}</mat-icon>

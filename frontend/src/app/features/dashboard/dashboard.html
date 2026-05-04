@@ -44,8 +44,11 @@
               @for (p of portfolios(); track p.id) {
                 <li
                   class="portfolio-item"
+                  role="button"
+                  tabindex="0"
                   [class.active]="selectedPortfolio()?.id === p.id"
                   (click)="selectPortfolio(p)"
+                  (keydown.enter)="selectPortfolio(p)"
                 >
                   <span class="portfolio-name">{{ p.name }}</span>
                   <span class="portfolio-count">{{

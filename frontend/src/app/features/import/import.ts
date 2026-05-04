@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CsvImport } from '../dashboard/csv-import/csv-import';
@@ -18,7 +18,7 @@ import { CsvImport } from '../dashboard/csv-import/csv-import';
   styleUrl: './import.scss',
 })
 export class Import {
-  constructor(private router: Router) {}
+  private readonly router = inject(Router);
 
   onImported() {
     this.router.navigate(['/suivi']);

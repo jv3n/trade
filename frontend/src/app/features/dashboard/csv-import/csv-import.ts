@@ -57,7 +57,8 @@ export class CsvImport {
       f.name.toLowerCase().endsWith('.csv'),
     );
     if (files.length === 0) return;
-    files.length === 1 ? this.handleFile(files[0]) : this.handleBatch(files);
+    if (files.length === 1) this.handleFile(files[0]);
+    else this.handleBatch(files);
   }
 
   // ---- File input (click) ----
@@ -67,7 +68,8 @@ export class CsvImport {
     const files = Array.from(input.files ?? []);
     input.value = '';
     if (files.length === 0) return;
-    files.length === 1 ? this.handleFile(files[0]) : this.handleBatch(files);
+    if (files.length === 1) this.handleFile(files[0]);
+    else this.handleBatch(files);
   }
 
   // ---- Single file ----

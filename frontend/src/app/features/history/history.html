@@ -14,7 +14,7 @@
     <div class="filters">
       @if (portfolios().length > 1) {
         <div class="filter-group">
-          <label>{{ 'history.filters.portfolio' | translate }}</label>
+          <span class="filter-label">{{ 'history.filters.portfolio' | translate }}</span>
           <div class="chip-list">
             <button
               class="chip"
@@ -36,7 +36,7 @@
         </div>
       }
       <div class="filter-group">
-        <label>{{ 'history.filters.status' | translate }}</label>
+        <span class="filter-label">{{ 'history.filters.status' | translate }}</span>
         <div class="chip-list">
           @for (s of statuses; track s.value) {
             <button
@@ -79,7 +79,13 @@
       @for (rec of filtered(); track rec.id) {
         <div class="rec-card" [class.expanded]="isExpanded(rec.id)">
           <!-- En-tête cliquable -->
-          <div class="rec-header" (click)="toggleExpand(rec.id)">
+          <div
+            class="rec-header"
+            role="button"
+            tabindex="0"
+            (click)="toggleExpand(rec.id)"
+            (keydown.enter)="toggleExpand(rec.id)"
+          >
             <div class="rec-meta">
               <span class="portfolio-tag">{{ rec.portfolioName }}</span>
               <span class="rec-date">{{ rec.generatedAt | date: 'dd MMM yyyy, HH:mm' }}</span>

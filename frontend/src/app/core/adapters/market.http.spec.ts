@@ -53,7 +53,7 @@ describe('HttpMarketRepository', () => {
     it('passes the requested timeframe verbatim — no normalisation', () => {
       // Each `TimeframeCode` maps 1:1 to a backend enum entry. Mangling here would silently break
       // the chart (backend returns 400 on unknown codes — visible to the user).
-      const codes: Array<'1d' | '5d' | '1mo' | '3mo' | '1y' | '5y'> = [
+      const codes: ('1d' | '5d' | '1mo' | '3mo' | '1y' | '5y')[] = [
         '1d',
         '5d',
         '1mo',
@@ -117,7 +117,6 @@ describe('HttpMarketRepository', () => {
     it('getLatestNarrative surfaces non-404 errors normally', () => {
       let receivedError = false;
       repo.getLatestNarrative('AAPL').subscribe({
-        next: () => {},
         error: () => (receivedError = true),
       });
       http
@@ -161,7 +160,6 @@ describe('HttpMarketRepository', () => {
         // Job created 301 s ago — over the 300 s cap.
         const createdAt = new Date(Date.now() - 301_000).toISOString();
         const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
-          next: () => {},
           error: (err: Error) => (receivedError = err),
         });
 
@@ -183,7 +181,6 @@ describe('HttpMarketRepository', () => {
       it('surfaces 404 with a friendly message (backend restarted ?)', () => {
         let receivedError: Error | null = null;
         const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
-          next: () => {},
           error: (err: Error) => (receivedError = err),
         });
 
