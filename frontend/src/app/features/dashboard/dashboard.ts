@@ -14,6 +14,7 @@ import {
   OwnedTicker,
 } from '../../core/portfolio.repository';
 import { AnalysisRepository, Recommendation } from '../../core/analysis.repository';
+import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,6 +33,7 @@ import { AnalysisRepository, Recommendation } from '../../core/analysis.reposito
 export class Dashboard implements OnInit, OnDestroy {
   private readonly portfolioRepository = inject(PortfolioRepository);
   private readonly analysisRepository = inject(AnalysisRepository);
+  private readonly watchlistRepository = inject(WatchlistRepository);
   private readonly translate = inject(TranslateService);
   private pollSub?: Subscription;
   private timerSub?: Subscription;
@@ -44,6 +46,23 @@ export class Dashboard implements OnInit, OnDestroy {
    * dedicated backend aggregate endpoint. Drives the "Tickers détenus" sidebar shortcut.
    */
   ownedTickers = signal<OwnedTicker[]>([]);
+  /** Tickers tracked outside the portfolio. Driven by `WatchlistRepository`. */
+  watchlist = signal<WatchlistEntry[]>([]);
+  /** Bound to the sidebar input ; cleared after a successful add. */
+  watchlistInput = signal('');
+  /** True while a POST is in flight ; disables the input + button to prevent double-submit. */
+  watchlistAdding = signal(false);
+  /** Surfaces add / remove errors next to the watchlist input. */
+  watchlistError = signal<string | null>(null);
+
+  // ---- Sidebar accordion state ----
+  // Three independent open/close toggles so the user can keep their preferred sections expanded
+  // — the portfolio list grows long when many CSVs are imported, and folding it uncovers the
+  // ownedTickers / watchlist shortcuts without scrolling.
+  portfoliosOpen = signal(true);
+  ownedTickersOpen = signal(true);
+  watchlistOpen = signal(true);
+
   loading = signal(false);
   analyzing = signal(false);
   analyzeElapsed = signal(0);
@@ -63,6 +82,7 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadPortfolios();
     this.loadOwnedTickers();
+    this.loadWatchlist();
   }
 
   loadPortfolios() {
@@ -92,6 +112,67 @@ export class Dashboard implements OnInit, OnDestroy {
     this.portfolioRepository.getOwnedTickers().subscribe({
       next: (tickers) => this.ownedTickers.set(tickers),
       error: () => this.ownedTickers.set([]),
+    });
+  }
+
+  /**
+   * Loaded once on init. Silent failure : the watchlist section just stays empty rather than
+   * showing a scary error banner — same philosophy as `loadOwnedTickers`. Adds and removes have
+   * their own narrow error surface (`watchlistError`).
+   */
+  private loadWatchlist() {
+    this.watchlistRepository.list().subscribe({
+      next: (entries) => this.watchlist.set(entries),
+      error: () => this.watchlist.set([]),
+    });
+  }
+
+  /**
+   * Adds the symbol currently in the input to the watchlist. The backend is idempotent — POSTing
+   * an existing symbol returns the existing entry — so the UI doesn't need to check existence
+   * first ; it just refreshes the local list from the response.
+   */
+  addToWatchlist() {
+    const raw = this.watchlistInput().trim();
+    if (!raw || this.watchlistAdding()) return;
+    this.watchlistAdding.set(true);
+    this.watchlistError.set(null);
+    this.watchlistRepository.add(raw).subscribe({
+      next: (entry) => {
+        // Replace any previous entry with the same symbol (the backend's idempotent add returns
+        // the existing row when a duplicate is posted), then append. Sorted by addedAt ASC to
+        // match the backend's `findAllByOrderByAddedAtAsc` ordering.
+        const next = this.watchlist().filter((e) => e.symbol !== entry.symbol);
+        next.push(entry);
+        this.watchlist.set(next);
+        this.watchlistInput.set('');
+        this.watchlistAdding.set(false);
+      },
+      error: (err: { status?: number }) => {
+        const key =
+          err.status === 400
+            ? 'dashboard.watchlist.errors.invalid'
+            : 'dashboard.watchlist.errors.add';
+        this.watchlistError.set(this.translate.instant(key));
+        this.watchlistAdding.set(false);
+      },
+    });
+  }
+
+  /**
+   * Optimistic remove : the entry disappears from the list immediately, then we wait for the
+   * server to confirm. On 404 (server out of sync) or any error we restore the entry and show
+   * an error so the user knows their click didn't take.
+   */
+  removeFromWatchlist(symbol: string) {
+    const before = this.watchlist();
+    this.watchlist.set(before.filter((e) => e.symbol !== symbol));
+    this.watchlistError.set(null);
+    this.watchlistRepository.remove(symbol).subscribe({
+      error: () => {
+        this.watchlist.set(before);
+        this.watchlistError.set(this.translate.instant('dashboard.watchlist.errors.remove'));
+      },
     });
   }
 

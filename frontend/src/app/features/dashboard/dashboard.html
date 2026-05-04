@@ -17,40 +17,66 @@
   <div class="dashboard-body">
     <!-- Sidebar : liste des portefeuilles -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>{{ 'dashboard.portfolios' | translate }}</h2>
+      <!-- Portefeuilles -->
+      <section class="sidebar-section" [class.collapsed]="!portfoliosOpen()">
+        <button
+          type="button"
+          class="sidebar-section-toggle"
+          (click)="portfoliosOpen.update((v) => !v)"
+          [attr.aria-expanded]="portfoliosOpen()"
+        >
+          <h2>{{ 'dashboard.portfolios' | translate }}</h2>
+          <mat-icon class="chevron">expand_more</mat-icon>
+        </button>
+
         @if (portfolios().length > 0) {
           <div class="grand-total">
             <span class="grand-total-label">{{ 'dashboard.grandTotalLabel' | translate }}</span>
             <span class="grand-total-amount">{{ grandTotalCad() | number: '1.0-0' }} CAD</span>
           </div>
         }
-      </div>
 
-      @if (loading()) {
-        <p class="loading">{{ 'common.loadingDots' | translate }}</p>
-      } @else {
-        <ul class="portfolio-list">
-          @for (p of portfolios(); track p.id) {
-            <li
-              class="portfolio-item"
-              [class.active]="selectedPortfolio()?.id === p.id"
-              (click)="selectPortfolio(p)"
-            >
-              <span class="portfolio-name">{{ p.name }}</span>
-              <span class="portfolio-count">{{
-                'dashboard.assetCount' | translate: { count: p.assetCount }
-              }}</span>
-              <span class="portfolio-total">{{ p.totalBookValueCad | number: '1.0-0' }} CAD</span>
-            </li>
-          } @empty {
-            <li class="empty-state">{{ 'dashboard.noPortfolios' | translate }}</li>
+        @if (portfoliosOpen()) {
+          @if (loading()) {
+            <p class="loading">{{ 'common.loadingDots' | translate }}</p>
+          } @else {
+            <ul class="portfolio-list">
+              @for (p of portfolios(); track p.id) {
+                <li
+                  class="portfolio-item"
+                  [class.active]="selectedPortfolio()?.id === p.id"
+                  (click)="selectPortfolio(p)"
+                >
+                  <span class="portfolio-name">{{ p.name }}</span>
+                  <span class="portfolio-count">{{
+                    'dashboard.assetCount' | translate: { count: p.assetCount }
+                  }}</span>
+                  <span class="portfolio-total"
+                    >{{ p.totalBookValueCad | number: '1.0-0' }} CAD</span
+                  >
+                </li>
+              } @empty {
+                <li class="empty-state">{{ 'dashboard.noPortfolios' | translate }}</li>
+              }
+            </ul>
           }
-        </ul>
+        }
+      </section>
 
-        @if (ownedTickers().length > 0) {
-          <div class="owned-tickers">
+      <!-- Tickers détenus -->
+      @if (!loading() && ownedTickers().length > 0) {
+        <section class="sidebar-section owned-tickers" [class.collapsed]="!ownedTickersOpen()">
+          <button
+            type="button"
+            class="sidebar-section-toggle"
+            (click)="ownedTickersOpen.update((v) => !v)"
+            [attr.aria-expanded]="ownedTickersOpen()"
+          >
             <span class="owned-tickers-label">{{ 'dashboard.ownedTickersLabel' | translate }}</span>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+
+          @if (ownedTickersOpen()) {
             <div class="owned-tickers-list">
               @for (t of ownedTickers(); track t.ticker) {
                 <a
@@ -65,8 +91,74 @@
                 </a>
               }
             </div>
-          </div>
-        }
+          }
+        </section>
+      }
+
+      <!-- Watchlist : tickers à surveiller hors portefeuille -->
+      @if (!loading()) {
+        <section class="sidebar-section watchlist" [class.collapsed]="!watchlistOpen()">
+          <button
+            type="button"
+            class="sidebar-section-toggle"
+            (click)="watchlistOpen.update((v) => !v)"
+            [attr.aria-expanded]="watchlistOpen()"
+          >
+            <span class="watchlist-label">{{ 'dashboard.watchlist.label' | translate }}</span>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+
+          @if (watchlistOpen()) {
+            <form class="watchlist-add" (submit)="addToWatchlist(); $event.preventDefault()">
+              <input
+                type="text"
+                class="watchlist-input"
+                [value]="watchlistInput()"
+                (input)="watchlistInput.set($any($event.target).value)"
+                [placeholder]="'dashboard.watchlist.placeholder' | translate"
+                [disabled]="watchlistAdding()"
+                maxlength="20"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button
+                type="submit"
+                class="watchlist-add-btn"
+                [disabled]="watchlistAdding() || !watchlistInput().trim()"
+                [matTooltip]="'dashboard.watchlist.addTooltip' | translate"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </form>
+
+            @if (watchlistError(); as we) {
+              <p class="watchlist-error">{{ we }}</p>
+            }
+
+            @if (watchlist().length > 0) {
+              <div class="watchlist-list">
+                @for (entry of watchlist(); track entry.id) {
+                  <div class="watchlist-item">
+                    <a [routerLink]="['/ticker', entry.symbol]" class="ticker-chip">
+                      {{ entry.symbol }}
+                    </a>
+                    <button
+                      class="watchlist-remove-btn"
+                      (click)="removeFromWatchlist(entry.symbol)"
+                      [matTooltip]="
+                        'dashboard.watchlist.removeTooltip' | translate: { symbol: entry.symbol }
+                      "
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else if (!watchlistError()) {
+              <p class="watchlist-empty">{{ 'dashboard.watchlist.empty' | translate }}</p>
+            }
+          }
+        </section>
       }
     </aside>
 

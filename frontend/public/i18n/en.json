@@ -56,6 +56,18 @@
     "noAssets": "No positions — import a CSV to populate this portfolio.",
     "ownedTickersLabel": "Owned tickers",
     "ownedTickersTooltip": "Open the {{symbol}} dossier (held in {{count}} portfolio(s))",
+    "watchlist": {
+      "label": "Watchlist",
+      "placeholder": "Ticker (e.g. NVDA)",
+      "addTooltip": "Add to watchlist",
+      "removeTooltip": "Remove {{symbol}} from watchlist",
+      "empty": "No tickers tracked yet.",
+      "errors": {
+        "add": "Could not add this ticker.",
+        "invalid": "Invalid ticker.",
+        "remove": "Could not remove this ticker."
+      }
+    },
     "emptySelection": "Select a portfolio or import a CSV to start.",
     "positions": "Positions",
     "analyze": "Analyze with AI",
@@ -132,6 +144,12 @@
       "errorGeneric": "Failed to generate the narrative",
       "errorPolling": "Failed to poll the job",
       "errorReload": "Narrative generated but couldn't be reloaded"
+    },
+    "watchlist": {
+      "watch": "Watch",
+      "watching": "Watching",
+      "addAria": "Add this ticker to the watchlist",
+      "removeAria": "Remove this ticker from the watchlist"
     }
   },
   "import": {

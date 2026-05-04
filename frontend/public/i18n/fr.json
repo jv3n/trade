@@ -56,6 +56,18 @@
     "noAssets": "Aucune position — importez un CSV pour peupler ce portefeuille.",
     "ownedTickersLabel": "Tickers détenus",
     "ownedTickersTooltip": "Voir le dossier {{symbol}} (présent dans {{count}} portefeuille(s))",
+    "watchlist": {
+      "label": "Watchlist",
+      "placeholder": "Ticker (ex: NVDA)",
+      "addTooltip": "Ajouter à la watchlist",
+      "removeTooltip": "Retirer {{symbol}} de la watchlist",
+      "empty": "Aucun ticker suivi pour l'instant.",
+      "errors": {
+        "add": "Impossible d'ajouter ce ticker.",
+        "invalid": "Ticker invalide.",
+        "remove": "Impossible de retirer ce ticker."
+      }
+    },
     "emptySelection": "Sélectionnez un portefeuille ou importez un CSV pour commencer.",
     "positions": "Positions",
     "analyze": "Analyser avec l'IA",
@@ -132,6 +144,12 @@
       "errorGeneric": "Erreur lors de la génération du narratif",
       "errorPolling": "Erreur lors du polling du job",
       "errorReload": "Narratif généré mais impossible à recharger"
+    },
+    "watchlist": {
+      "watch": "Suivre",
+      "watching": "Suivi",
+      "addAria": "Ajouter ce ticker à la watchlist",
+      "removeAria": "Retirer ce ticker de la watchlist"
     }
   },
   "import": {

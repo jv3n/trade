@@ -25,11 +25,28 @@
           <span class="ticker-exchange">{{ snap.quote.exchange }}</span>
         }
       </div>
-      <div class="ticker-price">
-        <span class="price-value">{{ snap.quote.price | number: '1.2-2' }}</span>
-        @if (snap.quote.currency) {
-          <span class="price-currency">{{ snap.quote.currency }}</span>
-        }
+      <div class="ticker-actions">
+        <button
+          class="watchlist-toggle"
+          [class.active]="isWatched()"
+          [disabled]="watchlistBusy()"
+          (click)="toggleWatchlist()"
+          [attr.aria-pressed]="isWatched()"
+          [attr.aria-label]="
+            (isWatched() ? 'ticker.watchlist.removeAria' : 'ticker.watchlist.addAria') | translate
+          "
+        >
+          <mat-icon>{{ isWatched() ? 'bookmark' : 'bookmark_border' }}</mat-icon>
+          <span>{{
+            (isWatched() ? 'ticker.watchlist.watching' : 'ticker.watchlist.watch') | translate
+          }}</span>
+        </button>
+        <div class="ticker-price">
+          <span class="price-value">{{ snap.quote.price | number: '1.2-2' }}</span>
+          @if (snap.quote.currency) {
+            <span class="price-currency">{{ snap.quote.currency }}</span>
+          }
+        </div>
       </div>
     </header>
 

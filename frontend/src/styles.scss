@@ -399,3 +399,40 @@ textarea {
     color: var(--color-purple);
   }
 }
+
+// ---- Custom scrollbar ----
+// Mince et discrète, adopte les tokens de couleur du thème. Webkit (Chrome / Safari /
+// Edge / nouveaux navigateurs Chromium) lit `::-webkit-scrollbar*`, Firefox `scrollbar-color` /
+// `scrollbar-width` standard. La règle universelle reste légère car ces propriétés ne
+// déclenchent pas de reflow.
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dim);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

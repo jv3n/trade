@@ -24,6 +24,7 @@ import {
   TickerNarrativeSnapshot,
   TickerSnapshot,
 } from '../../core/market.repository';
+import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {
@@ -62,6 +63,11 @@ describe('TickerPage', () => {
     pollNarrativeJob: ReturnType<typeof vi.fn>;
     getLatestNarrative: ReturnType<typeof vi.fn>;
   };
+  let watchlist: {
+    list: ReturnType<typeof vi.fn>;
+    add: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     market = {
@@ -72,12 +78,19 @@ describe('TickerPage', () => {
       // Default : no narrative yet (first visit). Tests that need one override this.
       getLatestNarrative: vi.fn().mockReturnValue(of(null)),
     };
+    watchlist = {
+      // Default : symbol not on the watchlist (initial state for most tests).
+      list: vi.fn().mockReturnValue(of([])),
+      add: vi.fn(),
+      remove: vi.fn(),
+    };
 
     await TestBed.configureTestingModule({
       imports: [TickerPage],
       providers: [
         provideTranslateService({ lang: 'en' }),
         { provide: MarketRepository, useValue: market },
+        { provide: WatchlistRepository, useValue: watchlist },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ symbol: 'AAPL' }) } },
@@ -217,6 +230,91 @@ describe('TickerPage', () => {
       expect(component.chartLoading()).toBe(false);
       // The dossier (snapshot, indicators) is untouched.
       expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
+  });
+
+  // ---- Watchlist toggle ----
+
+  /**
+   * The "Watch / Watching" button on the dossier header has three behaviours worth pinning :
+   *
+   * - **State derived from `list()`** on init — the button shows "Watching" if the symbol is
+   *   already on the watchlist, "Watch" otherwise.
+   * - **Optimistic toggle** — clicking flips the state immediately, then waits for the server.
+   *   On error we roll back so the user sees their click didn't take rather than a fake success.
+   * - **Disabled while busy** — prevents a rapid second click triggering an add+remove race
+   *   that could end with an inconsistent state.
+   */
+  describe('watchlist toggle', () => {
+    const watched: WatchlistEntry = {
+      id: 'wl-1',
+      symbol: 'AAPL',
+      addedAt: '2026-05-03T10:00:00Z',
+    };
+
+    it('isWatched reflects whether the current symbol is on the list at init', async () => {
+      watchlist.list.mockReturnValue(of([watched]));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(component.isWatched()).toBe(true);
+    });
+
+    it('isWatched defaults to false when the symbol is absent', async () => {
+      // Default mock returns empty list. Pin the consequence : button starts in "Watch" state.
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(component.isWatched()).toBe(false);
+    });
+
+    it('toggleWatchlist calls add when not watched and flips the state optimistically', () => {
+      watchlist.add.mockReturnValue(of(watched));
+      fixture.detectChanges();
+
+      component.toggleWatchlist();
+
+      expect(watchlist.add).toHaveBeenCalledWith('AAPL');
+      expect(component.isWatched()).toBe(true);
+      expect(component.watchlistBusy()).toBe(false);
+    });
+
+    it('toggleWatchlist calls remove when watched and flips the state optimistically', async () => {
+      watchlist.list.mockReturnValue(of([watched]));
+      watchlist.remove.mockReturnValue(of(undefined));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      component.toggleWatchlist();
+
+      expect(watchlist.remove).toHaveBeenCalledWith('AAPL');
+      expect(component.isWatched()).toBe(false);
+    });
+
+    it('toggleWatchlist rolls back the optimistic flip when add fails', () => {
+      watchlist.add.mockReturnValue(throwError(() => ({ status: 500 })));
+      fixture.detectChanges();
+
+      component.toggleWatchlist();
+
+      // Was false (default), flipped to true optimistically, server failed → rolled back to false.
+      expect(component.isWatched()).toBe(false);
+      expect(component.watchlistBusy()).toBe(false);
+    });
+
+    it('toggleWatchlist is a no-op while a previous request is busy', () => {
+      // A Subject lets us hold the request in PENDING and assert the second click is ignored.
+      // `Subject` is already imported at the top of the file alongside `of` / `throwError`.
+      const pending = new Subject<unknown>();
+      watchlist.add.mockReturnValue(pending.asObservable());
+      fixture.detectChanges();
+
+      component.toggleWatchlist();
+      expect(watchlist.add).toHaveBeenCalledTimes(1);
+
+      // Second click while still busy — should not fire another POST.
+      component.toggleWatchlist();
+      expect(watchlist.add).toHaveBeenCalledTimes(1);
     });
   });
 

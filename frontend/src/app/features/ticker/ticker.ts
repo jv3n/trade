@@ -15,6 +15,7 @@ import {
   TIMEFRAME_CODES,
   TimeframeCode,
 } from '../../core/market.repository';
+import { WatchlistRepository } from '../../core/watchlist.repository';
 
 interface ChartPoint {
   x: number;
@@ -79,6 +80,7 @@ interface HoverInfo {
 export class TickerPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly marketRepository = inject(MarketRepository);
+  private readonly watchlistRepository = inject(WatchlistRepository);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
 
@@ -102,6 +104,15 @@ export class TickerPage implements OnInit, OnDestroy {
 
   /** Bar index nearest the cursor when hovering the chart, or null when not hovering. */
   private hoveredIndex = signal<number | null>(null);
+
+  // ---- Watchlist state ----
+
+  /** True when the current symbol is on the user's watchlist. Optimistic — flips before the
+   *  server confirms ; rolls back on error. Tooltip / icon are derived from this signal. */
+  isWatched = signal(false);
+  /** Disables the toggle button while a request is in flight, prevents rapid double-clicks
+   *  triggering races between add and remove. */
+  watchlistBusy = signal(false);
 
   // ---- Narrative state ----
 
@@ -239,6 +250,7 @@ export class TickerPage implements OnInit, OnDestroy {
     this.symbol.set(s);
     this.load(s);
     this.loadLatestNarrative(s);
+    this.loadWatchlistState(s);
   }
 
   ngOnDestroy(): void {
@@ -368,6 +380,49 @@ export class TickerPage implements OnInit, OnDestroy {
 
   private formatPrice(price: number): string {
     return price.toFixed(2);
+  }
+
+  // ---- Watchlist actions ----
+
+  /**
+   * Fetches the current watchlist on init to derive [isWatched] for the active symbol. We don't
+   * have a `/watchlist/contains/:symbol` endpoint — calling `list()` is fine because the list
+   * stays small in practice (dozens of entries max for a personal app). Silent failure : button
+   * just stays in the "not watched" state, the user can click to retry.
+   */
+  private loadWatchlistState(symbol: string): void {
+    const upper = symbol.toUpperCase();
+    this.watchlistRepository.list().subscribe({
+      next: (entries) => this.isWatched.set(entries.some((e) => e.symbol === upper)),
+      error: () => this.isWatched.set(false),
+    });
+  }
+
+  /**
+   * Toggles the watchlist state for the current symbol. Optimistic : the button flips visually
+   * immediately, then we call the server. On error we roll back. The backend's idempotent add
+   * means a quick double-click on a fresh symbol just yields the same row twice — no harm.
+   */
+  toggleWatchlist(): void {
+    const sym = this.symbol();
+    if (!sym || this.watchlistBusy()) return;
+    const wasWatched = this.isWatched();
+    this.watchlistBusy.set(true);
+    this.isWatched.set(!wasWatched);
+
+    // `remove` returns Observable<void> and `add` returns Observable<WatchlistEntry> ; the union
+    // can't be subscribed to directly without a cast. Keep the two calls in separate branches —
+    // explicit and the handlers stay shared via local `onDone` / `onFail`.
+    const onDone = () => this.watchlistBusy.set(false);
+    const onFail = () => {
+      this.isWatched.set(wasWatched);
+      this.watchlistBusy.set(false);
+    };
+    if (wasWatched) {
+      this.watchlistRepository.remove(sym).subscribe({ next: onDone, error: onFail });
+    } else {
+      this.watchlistRepository.add(sym).subscribe({ next: onDone, error: onFail });
+    }
   }
 
   // ---- Narrative actions ----
