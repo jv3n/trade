@@ -176,6 +176,15 @@ Vérifie que le backend est `Ready` dans Tilt (le frontend se contente d'affiche
 
 Tu lances vitest en standalone (`npx vitest run`), ce qui rate la config Angular. Toujours passer par `ng test` (alias `npm run test` ou `npx ng test --watch=false` en CI mode).
 
+### `npm run lint` pète sur des règles a11y / inject / array-type
+
+ESLint flat config (`frontend/eslint.config.js`) est configuré sur Angular ESLint 21 + a11y des templates. Premier réflexe : `npm run lint -- --fix` auto-corrige les violations triviales (formatage, `Array<T>` → `T[]`, etc.). Pour le reste, les patterns à connaître :
+- **`prefer-inject`** : remplace `constructor(private foo: Foo)` par `private readonly foo = inject(Foo)` (le pattern dominant du projet).
+- **`click-events-have-key-events` + `interactive-supports-focus`** : un `<div>` ou `<li>` avec `(click)` doit avoir `role="button" tabindex="0" (keydown.enter)`. Convertir en `<button>` est aussi acceptable mais souvent casse le styling.
+- **`label-has-associated-control`** : un `<label>` doit cibler un input via `for=` ; si c'est juste un titre de section, utiliser `<span class="label">`.
+
+Détails ruleset + commandes dans [`ops.md`](./ops.md) section ESLint.
+
 ---
 
 ## Pour aller plus loin

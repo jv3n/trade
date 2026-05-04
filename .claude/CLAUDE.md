@@ -68,7 +68,7 @@ trade/
 
 Light hexagonal split under `frontend/src/app/` :
 
-- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 7 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
+- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 8 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
 - `features/` — UI feature folders (one per top-level route, *primary adapters* en vocabulaire hexagonal) :
   - `dashboard/` — portfolio view (read-only positions) + sidebar with 3 collapsible sections (Portefeuilles / Tickers détenus / Watchlist) + link to ticker dossiers
   - `ticker/` — per-symbol dossier : price chart with multi-timeframe toggle + axes + hover crosshair, indicators chips, watchlist toggle button, LLM narrative
@@ -99,6 +99,7 @@ All commands run from `frontend/`. Single Angular app, no monorepo.
 npm run start    # dev server
 npm run build    # build
 npm run test     # tests (Vitest)
+npm run lint     # ESLint (flat config, Angular ESLint 21)
 npm run format   # Prettier
 ```
 
@@ -127,6 +128,7 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 - **Zoneless change detection** explicit — `provideZonelessChangeDetection()` in `app.config.ts`, no `zone.js` dependency. State is signal-based ; Default change detection strategy is fine, no need to add `OnPush` everywhere.
 - **i18n via `ngx-translate`** — translation files in `frontend/public/i18n/<lang>.json` (FR + EN). Components import the `TranslatePipe` (not `TranslateModule`) ; templates use `'key' | translate`. Dynamic strings (errors set in TS) go through `TranslateService.instant('key', { params })`. Active locale lives in `LanguageService` (signal). **Never hard-code a user-facing string** — always pass through a translation key.
 - Angular Material for all UI components
+- **ESLint flat config** (`frontend/eslint.config.js`, Angular ESLint 21) is the static analysis ; Prettier remains the only formatter (`eslint-config-prettier` applied last to disable overlapping rules). `npm run lint` runs in CI before the build, blocking on errors. Don't introduce `recommended-type-checked` casually — 5-10× slower, deserves a dedicated session
 - Integration tests on real PostgreSQL (no DB mocks)
 - Frontend tested with **Vitest** (not Karma, not Jest). Test specs that boot a component with templates using `translate` need `provideTranslateService({ lang: 'en' })` in their TestBed providers — without translations loaded, `instant('foo.bar')` returns the key as fallback (acceptable for assertions).
 - `@Async` Spring: always on a separate bean — never `this.asyncMethod()` (bypasses AOP)

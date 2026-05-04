@@ -15,7 +15,7 @@ Quatre workflows, chacun déclenché sur des paths différents pour ne pas relan
 | Workflow | Trigger | Job principal | Durée typique |
 |---|---|---|---|
 | **Backend CI** (`backend.yml`) | `push master` / `pull_request` sur `backend/**` | `./gradlew build` (compile + test + Spotless + Detekt) avec PostgreSQL en service Docker | 1-2 min |
-| **Frontend CI** (`frontend.yml`) | `push master` / `pull_request` sur `frontend/**` | `npm ci` + `npm run build` + `npm test` | 30-60 s |
+| **Frontend CI** (`frontend.yml`) | `push master` / `pull_request` sur `frontend/**` | `npm ci` + `npm run lint` + `npm run build` + `npm test` | 30-60 s |
 | **CodeQL** (`codeql.yml`) | `push master` / `pull_request` / weekly `cron 06:00 UTC lundi` | Matrix `java-kotlin` (build-mode `manual`) + `javascript-typescript` (build-mode `none`) | 2-3 min |
 | **Deploy docs** (`docs.yml`) | `push master` sur `docs/**` ou `mkdocs.yml` | `mkdocs gh-deploy` | <1 min |
 
@@ -102,6 +102,27 @@ open build/reports/detekt/detekt.html
 ```
 
 Le `ignoreFailures = true` actuel signifie que Detekt n'échoue pas le build, juste génère le rapport. Le jour où on flippe à `false`, soit on fix les findings, soit on génère un baseline (`./gradlew detektBaseline`) pour grandfather la dette existante.
+
+## ESLint — analyse statique TypeScript / Angular
+
+Configuration : [`frontend/eslint.config.js`](../../frontend/eslint.config.js) (flat config, Angular ESLint 21).
+
+Extends posés par le schematic `ng add @angular-eslint/schematics` :
+- TS : `eslint:recommended` + `tseslint:recommended` + `tseslint:stylistic` + `angular-eslint:tsRecommended`
+- HTML : `angular-eslint:templateRecommended` + `angular-eslint:templateAccessibility` (a11y)
+- `eslint-config-prettier` appliqué en dernier pour désactiver les règles formatage qui chevauchent Prettier (qui reste seul format)
+
+**Pas** de `recommended-type-checked` côté TS — 5-10× plus lent (résolution complète des types) ; à activer plus tard en session dédiée si on veut serrer.
+
+Step CI dédiée dans `frontend.yml` **avant le build** (un linter qui pète tôt évite de cramer ~10 s de build pour rien). Échec sur erreur → CI rouge, pas de tolérance aux warnings (zéro warning aujourd'hui, on garde la règle binaire).
+
+Lancer en local :
+
+```bash
+cd frontend
+npm run lint        # rapport stdout
+npm run lint -- --fix   # auto-fix ce qui est fixable (formatage, array-type, …)
+```
 
 ## Dependabot — auto-PRs deps obsolètes
 

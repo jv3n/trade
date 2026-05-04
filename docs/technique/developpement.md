@@ -132,3 +132,8 @@ trade/
 - Backend : JUnit 5 + Spring Boot Test. Intégration sur **vrai PostgreSQL** (le CI démarre un service Postgres — détails workflow + cache dans [`ops.md`](./ops.md)). `./gradlew test`
 - Frontend : **Vitest** + TestBed. Tests `*.spec.ts` co-localisés avec la source. `npm run test`
 - Lancer un seul test Vitest : `cd frontend && npx vitest run src/path/to/file.spec.ts`
+
+## Lint et formatage
+
+- Backend : **Spotless ktfmt** (Google style) — `./gradlew spotlessApply` reformate, `./gradlew spotlessCheck` vérifie. **Detekt** pour l'analyse statique Kotlin (`./gradlew detekt`, rapport HTML + SARIF — voir [`ops.md`](./ops.md) section Detekt).
+- Frontend : **ESLint flat config** (`frontend/eslint.config.js`, Angular ESLint 21) pour l'analyse statique TS + a11y des templates. **Prettier** reste seul responsable du formatage (`eslint-config-prettier` désactive les règles formatage qui chevauchent). `npm run lint` en local et en CI (avant le build) ; `npm run lint -- --fix` pour auto-fixer les violations triviales. Détails ruleset dans [`ops.md`](./ops.md) section ESLint.
