@@ -46,18 +46,19 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle
-        uses: actions/cache@v5
+      # Replaces a manual `actions/cache` on `~/.gradle` with the Gradle-maintained action that
+      # caches three layers : (1) dependency cache, (2) build cache (incremental task outputs —
+      # compileKotlin, test, detekt), (3) configuration cache (skips Gradle's config phase, ~5-10 s
+      # per run). Read-only on PRs to avoid concurrent writers thrashing the cache key ; writeable
+      # on master where the cache is the source-of-truth for downstream branches.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('backend/**/*.gradle.kts', 'backend/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
       - name: Build & test
         working-directory: backend
-        run: ./gradlew build
+        run: ./gradlew build --build-cache
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/portfolioai
           SPRING_DATASOURCE_USERNAME: portfolioai

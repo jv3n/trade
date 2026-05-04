@@ -49,26 +49,29 @@ jobs:
           java-version: '21'
           distribution: temurin
 
-      - name: Cache Gradle
+      # Same Gradle cache action as backend.yml — the build cache layer is shared between the
+      # two workflows on master, so a CodeQL run after a backend.yml run benefits from the
+      # already-compiled tasks. Read-only on PRs to avoid mutual cache thrashing.
+      - name: Set up Gradle
         if: matrix.language == 'java-kotlin'
-        uses: actions/cache@v5
+        uses: gradle/actions/setup-gradle@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('backend/**/*.gradle.kts', 'backend/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          # TRAP cache stores the result of CodeQL's extraction step (compiled DB) per language
+          # so subsequent runs on similar code skip re-extraction. Big win on Java/Kotlin where
+          # extraction is the bottleneck (~2 min cold) ; smaller on JS/TS but still helpful.
+          trap-caching: true
 
       - name: Compile Kotlin (no tests, no DB)
         if: matrix.language == 'java-kotlin'
         working-directory: backend
-        run: ./gradlew compileKotlin compileTestKotlin -x test
+        run: ./gradlew compileKotlin compileTestKotlin -x test --build-cache
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
