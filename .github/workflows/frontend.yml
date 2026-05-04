@@ -11,6 +11,12 @@ on:
       - 'frontend/**'
       - '.github/workflows/frontend.yml'
 
+# Minimum permissions — this workflow only reads the repo to build and test. No SARIF upload,
+# no PR comments, no deploy. Declaring an explicit `contents: read` revokes every other implicit
+# scope on `GITHUB_TOKEN`, satisfying the CodeQL "missing-explicit-permissions" hint.
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build & Test
