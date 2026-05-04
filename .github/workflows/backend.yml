@@ -11,6 +11,13 @@ on:
       - 'backend/**'
       - '.github/workflows/backend.yml'
 
+# Workflow-level baseline — every job inherits `contents: read`. Linters (Sonar / CodeQL
+# `actions/missing-workflow-permissions`) require this block at workflow scope, not just job
+# scope, because a job-only declaration leaves any *future* job back on the default permissive
+# token. Jobs that need more (e.g. SARIF upload) override below.
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build & Test

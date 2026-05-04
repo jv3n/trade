@@ -19,6 +19,12 @@ on:
     # CodeQL et les vulnérabilités de deps qui auraient été publiées entre-temps.
     - cron: '0 6 * * 1'
 
+# Workflow-level baseline — Sonar / CodeQL `actions/missing-workflow-permissions` veut le bloc
+# au niveau workflow et pas seulement job. Le job `analyze` élargit ses propres scopes (write
+# sur security-events pour publier les findings, read sur packages + actions).
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
@@ -49,9 +55,12 @@ jobs:
           java-version: '21'
           distribution: temurin
 
-      # Same Gradle cache action as backend.yml — the build cache layer is shared between the
-      # two workflows on master, so a CodeQL run after a backend.yml run benefits from the
-      # already-compiled tasks. Read-only on PRs to avoid mutual cache thrashing.
+      # Same Gradle cache action as backend.yml for the *dependency* cache (JARs téléchargés
+      # depuis Maven Central). On NE PARTAGE PAS le build cache avec backend.yml : CodeQL extrait
+      # l'AST via un agent JVM pendant la compilation, donc un compileKotlin marqué FROM-CACHE ou
+      # UP-TO-DATE ne déclenche pas l'extraction → "no source code seen during build" et l'analyse
+      # crash en `database finalize` (exit 32). La step `Compile Kotlin` plus bas force `--rerun-tasks`
+      # pour garantir qu'une vraie compilation se produit.
       - name: Set up Gradle
         if: matrix.language == 'java-kotlin'
         uses: gradle/actions/setup-gradle@v4
@@ -68,10 +77,14 @@ jobs:
           # extraction is the bottleneck (~2 min cold) ; smaller on JS/TS but still helpful.
           trap-caching: true
 
+      # `--rerun-tasks` force Gradle à exécuter compileKotlin / compileTestKotlin même si l'output
+      # est UP-TO-DATE ou disponible en build cache. C'est OBLIGATOIRE pour CodeQL : son agent JVM
+      # ne s'injecte que sur des tâches qui se sont réellement exécutées. Pas de `--build-cache` ici
+      # par symétrie — on ne veut pas qu'un task soit FROM-CACHE et zappe l'extraction.
       - name: Compile Kotlin (no tests, no DB)
         if: matrix.language == 'java-kotlin'
         working-directory: backend
-        run: ./gradlew compileKotlin compileTestKotlin -x test --build-cache
+        run: ./gradlew compileKotlin compileTestKotlin -x test --rerun-tasks
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

@@ -44,11 +44,13 @@ Deux caches en cascade :
 
 ### CodeQL (`codeql.yml`)
 
-Trois caches :
+Trois caches, **mais le build cache Gradle est explicitement bypassé** sur ce workflow :
 
-1. **Gradle cache** (matrix `java-kotlin` uniquement) — même `gradle/actions/setup-gradle@v4` que `backend.yml`. Le build cache est *partagé* sur master entre les deux workflows : un `compileKotlin` qui a tourné dans `backend.yml` est réutilisé par `codeql.yml`.
-2. **TRAP cache** (`trap-caching: true` sur `github/codeql-action/init@v3`) — cache la BDD CodeQL extraite par langage. Sur Java/Kotlin l'extraction est le bottleneck (~2 min cold) ; le cache la fait tomber sous 30 s sur runs incrémentaux.
+1. **Gradle dependency cache uniquement** (matrix `java-kotlin`) — même `gradle/actions/setup-gradle@v4` que `backend.yml`, mais la step `Compile Kotlin` passe `--rerun-tasks` (et **pas** `--build-cache`). Pourquoi : CodeQL extrait l'AST Java/Kotlin via un agent JVM injecté pendant la compilation. Si `compileKotlin` ressort `FROM-CACHE` ou `UP-TO-DATE`, l'agent ne voit rien → erreur fatale `database finalize` exit 32 (« No source code seen during build »). Le dep cache (JARs Maven) est OK car c'est juste du download. Le build cache (outputs incrémentaux) est interdit ici par construction.
+2. **TRAP cache** (`trap-caching: true` sur `github/codeql-action/init@v3`) — cache la BDD CodeQL extraite par langage. C'est le seul cache de "résultats" qui marche pour CodeQL parce qu'il vit côté outil (pas côté Gradle), donc indépendant des up-to-date checks Gradle. Sur Java/Kotlin l'extraction est le bottleneck (~2 min cold) ; le TRAP cache la fait tomber sous 30 s sur runs incrémentaux.
 3. **CodeQL DB serveur** — auto-géré par GitHub Code Scanning, pas à configurer.
+
+> **Gotcha à connaître** : tout ajout futur de `--build-cache` ou `cache-from-task-outputs` à la step `Compile Kotlin` recasse l'analyse en silence (le job vert pendant des semaines puis rouge dès qu'un PR effleure du Kotlin déjà compilé). Voir [docs GitHub : "No source code seen during build"](https://gh.io/troubleshooting-code-scanning/no-source-code-seen-during-build).
 
 ### Diagnostiquer un cache miss
 
@@ -60,14 +62,16 @@ Trois caches :
 
 ## Permissions GITHUB_TOKEN
 
-Principe : **chaque workflow déclare explicitement les scopes minimaux** dont il a besoin. Le défaut GitHub est trop permissif (read/write sur tout le repo) et la règle CodeQL "missing-explicit-permissions" remonte un warning sans déclaration.
+Principe : **chaque workflow déclare un bloc `permissions:` au niveau workflow** (baseline `contents: read`) et **override au niveau job** quand un job a besoin de plus. Le défaut GitHub est trop permissif (read/write sur tout le repo).
 
-| Workflow | `permissions` | Pourquoi |
-|---|---|---|
-| `backend.yml` | `contents: read` + `security-events: write` | Lecture du repo + upload SARIF Detekt vers Code Scanning |
-| `frontend.yml` | `contents: read` | Build + tests, pas de write nécessaire |
-| `codeql.yml` | `security-events: write` + `packages: read` + `actions: read` + `contents: read` | Standard CodeQL — upload findings vers Code Scanning + lecture deps + lecture workflows |
-| `docs.yml` | `contents: write` | `gh-deploy` push sur la branche `gh-pages` |
+Pourquoi le bloc workflow-level est obligatoire en plus du job-level : la règle CodeQL `actions/missing-workflow-permissions` (et la règle Sonar équivalente) ne reconnaît que la déclaration au scope workflow. Un job-level seul laisse tout futur job ajouté retomber sur le token permissif par défaut — la règle protège contre cette dérive.
+
+| Workflow | Workflow-level | Job-level (override) | Pourquoi |
+|---|---|---|---|
+| `backend.yml` | `contents: read` | `+ security-events: write` | Upload SARIF Detekt vers Code Scanning |
+| `frontend.yml` | `contents: read` | (pas d'override) | Build + tests, pas de write nécessaire |
+| `codeql.yml` | `contents: read` | `+ security-events: write` `+ packages: read` `+ actions: read` | Standard CodeQL — upload findings + lecture deps + lecture workflows |
+| `docs.yml` | `contents: read` | `contents: write` (override) | `gh-deploy` push sur la branche `gh-pages` |
 
 ## Code Scanning (Security tab)
 
@@ -127,6 +131,7 @@ GitHub affiche un résumé en haut de chaque run. Pour les workflows avec setup-
 |---|---|---|
 | `Property 'X' is misspelled` (Detekt) | Règle YAML dans le mauvais ruleset (style vs naming vs exceptions) | Cf. doc Detekt 1.23 — chaque rule a son ruleset |
 | `Run failed with N invalid config properties` (Detekt) | Same | Same |
+| `No source code seen during build` (CodeQL, exit 32 sur `database finalize`) | `compileKotlin` est sorti `FROM-CACHE` ou `UP-TO-DATE` → l'agent JVM CodeQL n'a vu aucune compilation. Symptôme typique après une PR qui touche à peine le Kotlin et où le build cache est restauré tel quel | Vérifier que la step `Compile Kotlin` de `codeql.yml` passe bien `--rerun-tasks` et **pas** `--build-cache`. Voir section "Stratégie de cache > CodeQL" plus haut |
 | `Postgres connection refused` (backend) | Service `postgres` pas encore healthy | Augmenter `--health-retries` dans `backend.yml` ou ajouter un retry au boot Spring |
 | `npm error ERESOLVE` (frontend Dependabot PR) | Conflit peer-dep — souvent une majeure de dep liée (TS / Angular) | Fermer la PR, attendre que la dep amont accepte. Penser à ajouter à l'`ignore` Dependabot si récurrent |
 | `Property 'X' cannot be resolved` (Spring config) | Warning IDE bénin sur les props lues via `@Value` | Ignorer — ça ne casse pas le build |
