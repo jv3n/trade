@@ -38,19 +38,6 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # Angular maintains its own incremental compilation cache in `.angular/cache/` (separate
-      # from npm). Caching it cuts `npm run build` from ~30 s to ~10 s on subsequent runs.
-      # Key on package-lock.json so a dep bump invalidates ; restore-keys allows partial reuse
-      # across small changes.
-      - name: Cache Angular build
-        uses: actions/cache@v5
-        with:
-          path: frontend/.angular/cache
-          key: angular-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/angular.json') }}
-          restore-keys: |
-            angular-${{ hashFiles('frontend/package-lock.json') }}-
-            angular-
-
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
