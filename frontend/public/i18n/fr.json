@@ -92,6 +92,17 @@
     "loading": "Chargement du ticker {{symbol}}…",
     "exchange": "{{exchange}}",
     "noChart": "Pas assez de données pour tracer la courbe.",
+    "chart": {
+      "timeframeLabel": "Plage temporelle",
+      "timeframes": {
+        "1d": "1J",
+        "5d": "5J",
+        "1mo": "1M",
+        "3mo": "3M",
+        "1y": "1A",
+        "5y": "5A"
+      }
+    },
     "indicators": {
       "rsi": "RSI(14)",
       "drawdown52w": "Drawdown 52w",
@@ -108,7 +119,7 @@
     "errors": {
       "missingSymbol": "Symbole manquant dans l'URL",
       "notFound": "Ticker introuvable : {{symbol}}",
-      "rateLimit": "Données de marché momentanément indisponibles (rate-limit Yahoo). Réessaie dans quelques minutes.",
+      "rateLimit": "Données de marché momentanément indisponibles. Réessaie dans quelques minutes.",
       "generic": "Erreur lors du chargement du ticker"
     },
     "narrative": {

@@ -2,11 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, interval, of, switchMap, takeWhile, throwError } from 'rxjs';
 import {
+  ChartResponse,
   MarketRepository,
   NarrativePromptPreview,
   TickerNarrativeJob,
   TickerNarrativeSnapshot,
   TickerSnapshot,
+  TimeframeCode,
 } from '../market.repository';
 
 /**
@@ -25,6 +27,12 @@ export class HttpMarketRepository extends MarketRepository {
 
   getTicker(symbol: string): Observable<TickerSnapshot> {
     return this.http.get<TickerSnapshot>(`/api/market/ticker/${encodeURIComponent(symbol)}`);
+  }
+
+  getChart(symbol: string, timeframe: TimeframeCode): Observable<ChartResponse> {
+    return this.http.get<ChartResponse>(`/api/market/ticker/${encodeURIComponent(symbol)}/chart`, {
+      params: { timeframe },
+    });
   }
 
   requestNarrative(symbol: string): Observable<TickerNarrativeJob> {

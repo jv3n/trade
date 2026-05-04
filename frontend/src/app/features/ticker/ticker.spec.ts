@@ -17,7 +17,9 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import { TickerPage } from './ticker';
 import {
+  ChartResponse,
   MarketRepository,
+  OhlcBar,
   TickerNarrativeJob,
   TickerNarrativeSnapshot,
   TickerSnapshot,
@@ -55,6 +57,7 @@ describe('TickerPage', () => {
   let fixture: ComponentFixture<TickerPage>;
   let market: {
     getTicker: ReturnType<typeof vi.fn>;
+    getChart: ReturnType<typeof vi.fn>;
     requestNarrative: ReturnType<typeof vi.fn>;
     pollNarrativeJob: ReturnType<typeof vi.fn>;
     getLatestNarrative: ReturnType<typeof vi.fn>;
@@ -63,6 +66,7 @@ describe('TickerPage', () => {
   beforeEach(async () => {
     market = {
       getTicker: vi.fn().mockReturnValue(of(EMPTY_SNAPSHOT)),
+      getChart: vi.fn(),
       requestNarrative: vi.fn(),
       pollNarrativeJob: vi.fn(),
       // Default : no narrative yet (first visit). Tests that need one override this.
@@ -134,6 +138,86 @@ describe('TickerPage', () => {
       indicators: { ...emptyIndicators(), drawdownFrom52wHigh: -2 },
     });
     expect(component.drawdownClass()).toBe('success');
+  });
+
+  // ---- Multi-timeframe chart ----
+
+  /**
+   * The chart toggle is decoupled from indicators / narrative on purpose : clicking 1M re-fetches
+   * just the bars, leaves indicators frozen at the dossier's reference 1Y view (so RSI/MA/etc.
+   * keep their semantic). The tests below pin that decoupling and the error path that surfaces
+   * inline next to the chart rather than blowing up the dossier.
+   */
+  describe('chart timeframe', () => {
+    const aBar: OhlcBar = {
+      timestamp: '2026-04-15T00:00:00Z',
+      open: 100,
+      high: 103,
+      low: 99,
+      close: 102,
+      volume: 1_000_000,
+    };
+    const bBar: OhlcBar = { ...aBar, timestamp: '2026-04-16T00:00:00Z', close: 105 };
+
+    it('initial chart bars come from the dossier snapshot — no extra fetch', () => {
+      // The dossier endpoint already returns 1Y bars. Re-fetching them via /chart on first paint
+      // would burn an extra Twelve Data credit per page load — wasteful and unnecessary.
+      const snapshotWithBars: TickerSnapshot = { ...EMPTY_SNAPSHOT, bars: [aBar, bBar] };
+      market.getTicker.mockReturnValue(of(snapshotWithBars));
+      fixture.detectChanges();
+
+      expect(component.chartBars()).toEqual([aBar, bBar]);
+      expect(component.selectedTimeframe()).toBe('1y');
+      expect(market.getChart).not.toHaveBeenCalled();
+    });
+
+    it('selectTimeframe fetches new bars and updates chartBars + selectedTimeframe', () => {
+      const resp: ChartResponse = {
+        symbol: 'AAPL',
+        timeframe: '1mo',
+        range: '1mo',
+        interval: '1d',
+        bars: [aBar],
+      };
+      market.getChart.mockReturnValue(of(resp));
+      fixture.detectChanges();
+
+      component.selectTimeframe('1mo');
+
+      expect(market.getChart).toHaveBeenCalledWith('AAPL', '1mo');
+      expect(component.selectedTimeframe()).toBe('1mo');
+      expect(component.chartBars()).toEqual([aBar]);
+      expect(component.chartLoading()).toBe(false);
+      expect(component.chartError()).toBeNull();
+    });
+
+    it('selectTimeframe is a no-op when re-clicking the already-selected code', () => {
+      // mat-button-toggle emits on every click, including re-clicks. Without this guard each
+      // re-click would burn a fresh /chart call.
+      const snapshotWithBars: TickerSnapshot = { ...EMPTY_SNAPSHOT, bars: [aBar, bBar] };
+      market.getTicker.mockReturnValue(of(snapshotWithBars));
+      fixture.detectChanges();
+
+      component.selectTimeframe('1y'); // already the default + chartBars populated
+
+      expect(market.getChart).not.toHaveBeenCalled();
+    });
+
+    it('selectTimeframe surfaces errors inline without breaking the dossier', () => {
+      // Chart errors must stay scoped to the chart panel — the indicators chips and the narrative
+      // shouldn't disappear because Twelve Data hiccupped on a 5Y fetch. Without translations
+      // loaded in the slice, `instant('ticker.errors.rateLimit')` returns the key itself —
+      // sufficient to assert that *some* error string was set.
+      market.getChart.mockReturnValue(throwError(() => ({ status: 503 })));
+      fixture.detectChanges();
+
+      component.selectTimeframe('5y');
+
+      expect(component.chartError()).toContain('rateLimit');
+      expect(component.chartLoading()).toBe(false);
+      // The dossier (snapshot, indicators) is untouched.
+      expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
   });
 
   function emptyIndicators() {

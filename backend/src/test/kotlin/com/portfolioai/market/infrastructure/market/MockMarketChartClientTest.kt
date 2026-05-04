@@ -85,4 +85,42 @@ class MockMarketChartClientTest {
   fun `reserved RATELIMIT throws MarketUnavailableException`() {
     assertThrows<MarketUnavailableException> { client.fetchChart("RATELIMIT", "1y", "1d") }
   }
+
+  @Test
+  fun `intraday range produces a denser short series than 1y daily`() {
+    // The chart toggle on the dossier asks for 1d/5min when the user clicks "1D" — without this
+    // honoring of the (range, interval) combo the mock would happily return 260 daily bars and
+    // every timeframe would look identical on the chart. Symptom would be silent : the user
+    // clicks 1D, sees the 1Y curve, doesn't realise the toggle is broken.
+    val intraday = client.fetchChart("AAPL", "1d", "5m")
+    val daily = client.fetchChart("AAPL", "1y", "1d")
+
+    assertEquals(80, intraday.bars.size)
+    assertEquals(260, daily.bars.size)
+    // Intraday bars are 5 minutes apart, not 1 day.
+    val gapMinutes =
+      java.time.Duration.between(intraday.bars[0].timestamp, intraday.bars[1].timestamp).toMinutes()
+    assertEquals(5L, gapMinutes)
+  }
+
+  @Test
+  fun `weekly range produces 7-day-spaced bars`() {
+    // The "5Y" toggle uses 1wk bars. We don't want it to fall back to daily silently — if it did,
+    // a 5Y view at daily granularity would mean 1300 bars for a chart that's supposed to be
+    // a coarse weekly overview.
+    val weekly = client.fetchChart("AAPL", "5y", "1wk")
+    val gapDays =
+      java.time.Duration.between(weekly.bars[0].timestamp, weekly.bars[1].timestamp).toDays()
+    assertEquals(7L, gapDays)
+  }
+
+  @Test
+  fun `timeframes for the same symbol produce different series`() {
+    // Seed includes range+interval — without this, switching the toggle would replay the exact
+    // same random walk at a different resolution, which is unnatural for a real provider and
+    // makes the toggle less useful for spotting visual differences during dev.
+    val daily = client.fetchChart("AAPL", "1y", "1d").bars.map { it.close }
+    val weekly = client.fetchChart("AAPL", "5y", "1wk").bars.map { it.close }
+    assertNotEquals(daily.first(), weekly.first())
+  }
 }

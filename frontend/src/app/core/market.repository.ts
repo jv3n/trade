@@ -84,12 +84,42 @@ export interface NarrativePromptPreview {
   promptVersion: string;
 }
 
+// ---- Multi-timeframe chart ----
+
+/**
+ * Frontend-side mirror of the backend `Timeframe` enum. Codes are stable strings — the backend
+ * whitelist returns 400 on unknown values, so adding a new entry here without backend support
+ * would silently break the toggle.
+ */
+export type TimeframeCode = '1d' | '5d' | '1mo' | '3mo' | '1y' | '5y';
+
+export const TIMEFRAME_CODES: TimeframeCode[] = ['1d', '5d', '1mo', '3mo', '1y', '5y'];
+
+/**
+ * Response from the chart endpoint. Echoes back the resolved range / interval used upstream so
+ * the front can verify the cache hit it expected (debugging only — not displayed to the user).
+ */
+export interface ChartResponse {
+  symbol: string;
+  timeframe: TimeframeCode;
+  range: string;
+  interval: string;
+  bars: OhlcBar[];
+}
+
 /**
  * Port — read-only access to ticker market data, computed indicators and LLM narrative.
- * Backed by Yahoo Finance + Claude/Ollama via the backend `market/` and `analysis/` modules.
+ * Backed by Twelve Data + Claude/Ollama via the backend `market/` and `analysis/` modules.
  */
 export abstract class MarketRepository {
   abstract getTicker(symbol: string): Observable<TickerSnapshot>;
+
+  /**
+   * Bars-only fetch for the multi-timeframe chart toggle. Doesn't recompute indicators or
+   * re-prompt the LLM — those stay anchored to the dossier's 1Y reference view (served by
+   * [getTicker]). 400 if the timeframe code is unknown (defensive whitelist server-side).
+   */
+  abstract getChart(symbol: string, timeframe: TimeframeCode): Observable<ChartResponse>;
 
   /**
    * Kick off (or reuse, if cached) a narrative generation for [symbol]. The returned job may

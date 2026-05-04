@@ -92,6 +92,17 @@
     "loading": "Loading ticker {{symbol}}…",
     "exchange": "{{exchange}}",
     "noChart": "Not enough data to draw the curve.",
+    "chart": {
+      "timeframeLabel": "Timeframe",
+      "timeframes": {
+        "1d": "1D",
+        "5d": "5D",
+        "1mo": "1M",
+        "3mo": "3M",
+        "1y": "1Y",
+        "5y": "5Y"
+      }
+    },
     "indicators": {
       "rsi": "RSI(14)",
       "drawdown52w": "52w drawdown",
@@ -108,7 +119,7 @@
     "errors": {
       "missingSymbol": "Missing symbol in URL",
       "notFound": "Ticker not found: {{symbol}}",
-      "rateLimit": "Market data temporarily unavailable (Yahoo rate-limit). Try again in a few minutes.",
+      "rateLimit": "Market data temporarily unavailable. Try again in a few minutes.",
       "generic": "Failed to load the ticker"
     },
     "narrative": {

@@ -58,7 +58,7 @@ class MarketControllerTest {
       .andExpect(jsonPath("$.timeframe").value("1mo"))
       // Echo back what the upstream actually got — useful for the front when debugging cache hits.
       .andExpect(jsonPath("$.range").value("1mo"))
-      .andExpect(jsonPath("$.interval").value("1day"))
+      .andExpect(jsonPath("$.interval").value("1d"))
       .andExpect(jsonPath("$.bars.length()").value(2))
       .andExpect(jsonPath("$.bars[0].close").value(102.5))
   }
@@ -74,7 +74,7 @@ class MarketControllerTest {
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.timeframe").value("1y"))
       .andExpect(jsonPath("$.range").value("1y"))
-      .andExpect(jsonPath("$.interval").value("1day"))
+      .andExpect(jsonPath("$.interval").value("1d"))
   }
 
   @Test

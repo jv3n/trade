@@ -17,12 +17,16 @@ package com.portfolioai.market.domain
  * timeframe would change their semantic meaning every click and burn LLM credits.
  */
 enum class Timeframe(val code: String, val range: String, val interval: String) {
-  ONE_DAY("1d", "1d", "5min"),
-  FIVE_DAYS("5d", "5d", "30min"),
-  ONE_MONTH("1mo", "1mo", "1day"),
-  THREE_MONTHS("3mo", "3mo", "1day"),
-  ONE_YEAR("1y", "1y", "1day"),
-  FIVE_YEARS("5y", "5y", "1week");
+  // Intervals are Yahoo-style (`5m` / `30m` / `1d` / `1wk`). Adapters translate to their own
+  // upstream format (TwelveDataClient.mapInterval). This alignment matters because the Caffeine
+  // cache keys on the *raw* range/interval — using `1day` here would create a sibling cache
+  // entry from the dossier's `1d` for the same upstream call, doubling Twelve Data credits.
+  ONE_DAY("1d", "1d", "5m"),
+  FIVE_DAYS("5d", "5d", "30m"),
+  ONE_MONTH("1mo", "1mo", "1d"),
+  THREE_MONTHS("3mo", "3mo", "1d"),
+  ONE_YEAR("1y", "1y", "1d"),
+  FIVE_YEARS("5y", "5y", "1wk");
 
   companion object {
     /** Resolve a frontend [code] to a [Timeframe]. Throws [IllegalArgumentException] on unknown. */

@@ -35,14 +35,93 @@
 
     <!-- Chart -->
     <section class="chart-card">
-      @if (closes().length > 0) {
-        <svg
-          [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
-          preserveAspectRatio="none"
-          class="price-chart"
+      <div class="chart-toolbar">
+        <mat-button-toggle-group
+          [value]="selectedTimeframe()"
+          (change)="selectTimeframe($event.value)"
+          [disabled]="chartLoading()"
+          aria-label="{{ 'ticker.chart.timeframeLabel' | translate }}"
+          hideSingleSelectionIndicator
         >
-          <path [attr.d]="pricePath()" fill="none" />
-        </svg>
+          @for (tf of timeframes; track tf) {
+            <mat-button-toggle [value]="tf">
+              {{ 'ticker.chart.timeframes.' + tf | translate }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        @if (chartLoading()) {
+          <mat-spinner diameter="16"></mat-spinner>
+        }
+      </div>
+
+      @if (chartError(); as ce) {
+        <div class="error-banner chart-error">
+          <mat-icon>error_outline</mat-icon>
+          {{ ce }}
+        </div>
+      } @else if (chartGeometry(); as geom) {
+        <div
+          class="chart-canvas"
+          (mousemove)="onChartMouseMove($event)"
+          (mouseleave)="onChartMouseLeave()"
+        >
+          <svg
+            [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
+            class="price-chart"
+            [class.loading]="chartLoading()"
+          >
+            <!-- Y axis grid + price labels -->
+            <g class="grid">
+              @for (tick of geom.yTicks; track tick.y) {
+                <line
+                  [attr.x1]="geom.innerLeft"
+                  [attr.x2]="geom.innerRight"
+                  [attr.y1]="tick.y"
+                  [attr.y2]="tick.y"
+                />
+                <text
+                  class="axis-label y-label"
+                  [attr.x]="geom.innerLeft - 6"
+                  [attr.y]="tick.y + 4"
+                >
+                  {{ tick.label }}
+                </text>
+              }
+            </g>
+
+            <!-- X axis date markers -->
+            <g class="x-axis">
+              @for (tick of geom.xTicks; track tick.x) {
+                <text class="axis-label x-label" [attr.x]="tick.x" [attr.y]="chartHeight - 6">
+                  {{ tick.label }}
+                </text>
+              }
+            </g>
+
+            <!-- Price polyline -->
+            <path class="price-line" [attr.d]="geom.pricePath" fill="none" />
+
+            <!-- Crosshair + hovered point marker -->
+            @if (hoverInfo(); as hi) {
+              <line
+                class="crosshair"
+                [attr.x1]="hi.x"
+                [attr.x2]="hi.x"
+                [attr.y1]="geom.innerTop"
+                [attr.y2]="geom.innerBottom"
+              />
+              <circle class="hover-dot" [attr.cx]="hi.x" [attr.cy]="hi.y" r="4" />
+            }
+          </svg>
+
+          <!-- Tooltip overlay (HTML so the styling is easy + non-stretched) -->
+          @if (hoverInfo(); as hi) {
+            <div class="chart-tooltip" [style.left.%]="hi.percentX">
+              <span class="tooltip-time">{{ hi.timeLabel }}</span>
+              <span class="tooltip-price">{{ hi.priceLabel }}</span>
+            </div>
+          }
+        </div>
       } @else {
         <div class="empty-state">
           <mat-icon>show_chart</mat-icon>

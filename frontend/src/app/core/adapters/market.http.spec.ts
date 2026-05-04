@@ -36,6 +36,42 @@ describe('HttpMarketRepository', () => {
     http.expectOne('/api/market/ticker/BRK.B').flush({});
   });
 
+  // ---- Multi-timeframe chart ----
+
+  describe('getChart', () => {
+    it('calls GET .../chart with the timeframe as query param', () => {
+      // Defends the contract : timeframe goes through ?query, not in the path. Backend whitelists
+      // server-side ; the front-end only ever sends one of TIMEFRAME_CODES.
+      repo.getChart('AAPL', '3mo').subscribe();
+      const req = http.expectOne(
+        (r) => r.url === '/api/market/ticker/AAPL/chart' && r.params.get('timeframe') === '3mo',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({});
+    });
+
+    it('passes the requested timeframe verbatim — no normalisation', () => {
+      // Each `TimeframeCode` maps 1:1 to a backend enum entry. Mangling here would silently break
+      // the chart (backend returns 400 on unknown codes — visible to the user).
+      const codes: Array<'1d' | '5d' | '1mo' | '3mo' | '1y' | '5y'> = [
+        '1d',
+        '5d',
+        '1mo',
+        '3mo',
+        '1y',
+        '5y',
+      ];
+      for (const code of codes) {
+        repo.getChart('AAPL', code).subscribe();
+        http
+          .expectOne(
+            (r) => r.url === '/api/market/ticker/AAPL/chart' && r.params.get('timeframe') === code,
+          )
+          .flush({});
+      }
+    });
+  });
+
   // ---- Narrative pipeline ----
 
   describe('narrative endpoints', () => {
