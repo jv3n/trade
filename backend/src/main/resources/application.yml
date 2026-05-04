@@ -46,3 +46,19 @@ market:
   twelvedata:
     base-url: https://api.twelvedata.com
     api-key: ${TWELVEDATA_API_KEY:}
+  # Finnhub powers the news section on the ticker dossier — separate provider from the chart
+  # data because Twelve Data does not surface a news endpoint on its public API. Free tier :
+  # 60 calls / minute, no daily cap. Sign-up : https://finnhub.io/register
+  finnhub:
+    base-url: https://finnhub.io/api/v1
+    api-key: ${FINNHUB_API_KEY:}
+
+# News provider — separate switch from `market.provider` because news (Finnhub) and chart data
+# (Twelve Data) are different vendors. Defaults to `mock` so an onboarding clone or the CI runs
+# without a Finnhub key. The actual `market.finnhub.api-key` lives under `market.*` above
+# because the keys are co-located by vendor (Finnhub may surface other endpoints later).
+news:
+  # provider:
+  #   mock     — deterministic synthetic headlines (default, no network needed)
+  #   finnhub  — real REST API (requires market.finnhub.api-key)
+  provider: mock

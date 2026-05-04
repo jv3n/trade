@@ -119,7 +119,7 @@ Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique
 
 ## Switcher les providers
 
-Le projet a deux providers configurables, chacun avec une vraie implémentation et un mock pour dev offline.
+Le projet a trois providers configurables, chacun avec une vraie implémentation et (sauf Claude) un mock pour dev offline / sans clé.
 
 ### LLM — `llm.provider`
 
@@ -135,7 +135,14 @@ Le projet a deux providers configurables, chacun avec une vraie implémentation 
 | `mock` | Défaut, sans clé requise. `MockMarketChartClient` génère 260 bars OHLC déterministes par symbole (seed = `symbol.hashCode()`). Tous les indicateurs se calculent. Symboles réservés : `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les chemins d'erreur UI. |
 | `twelvedata` | Vraie data, défaut prod. REST documenté + apikey, free tier 800 credits/jour, TSX natif. Requiert `market.twelvedata.api-key` (env `TWELVEDATA_API_KEY`). **Crée un compte gratuit** sur [twelvedata.com](https://twelvedata.com/) puis récupère ta clé sur [https://twelvedata.com/account/api-keys](https://twelvedata.com/account/api-keys), et colle-la dans `application-local.yml` sous `market.twelvedata.api-key`. |
 
-Surcharger dans `application-local.yml`, redémarrer le backend (Tilt le fait tout seul au save).
+### News par ticker — `news.provider`
+
+| Valeur | Quand l'utiliser |
+|---|---|
+| `mock` | Défaut, sans clé requise. `MockNewsClient` génère 4-10 headlines synthétiques déterministes par symbole (templates variés, sources rotation Reuters/Bloomberg/CNBC, ~10 % de symboles "quiet" pour exercer l'empty-state UI). Idéal en itération pour ne pas faire chauffer le quota Finnhub. |
+| `finnhub` | Vraie data. REST + apikey, free tier 60 calls/min sans cap quotidien. Requiert `market.finnhub.api-key` (env `FINNHUB_API_KEY`). **Crée un compte gratuit** sur [finnhub.io/register](https://finnhub.io/register) puis récupère ta clé sur [finnhub.io/dashboard](https://finnhub.io/dashboard), et colle-la dans `application-local.yml` sous `market.finnhub.api-key`. |
+
+Surcharger dans `application-local.yml`, redémarrer le backend (Tilt le fait tout seul au save). Pour la liste complète des providers (URLs d'inscription, dashboards, quotas, points d'intégration code) voir [`providers.md`](./providers.md).
 
 ---
 

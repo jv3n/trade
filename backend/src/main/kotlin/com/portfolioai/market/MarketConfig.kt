@@ -23,12 +23,17 @@ class MarketConfig {
 
   @Bean
   fun cacheManager(): CacheManager {
-    val mgr = CaffeineCacheManager(MARKET_CHART_CACHE)
+    val mgr = CaffeineCacheManager(MARKET_CHART_CACHE, NEWS_CACHE)
     mgr.setCaffeine(Caffeine.newBuilder().expireAfterWrite(15, TimeUnit.MINUTES).maximumSize(500))
     return mgr
   }
 
   companion object {
     const val MARKET_CHART_CACHE = "market-chart"
+    /**
+     * News headlines per ticker — same 15 min TTL as the chart cache, separate name so a flush of
+     * one doesn't drop the other.
+     */
+    const val NEWS_CACHE = "news-by-symbol"
   }
 }

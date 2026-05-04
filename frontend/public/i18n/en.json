@@ -150,6 +150,11 @@
       "watching": "Watching",
       "addAria": "Add this ticker to the watchlist",
       "removeAria": "Remove this ticker from the watchlist"
+    },
+    "news": {
+      "title": "News",
+      "loading": "Loading headlines…",
+      "empty": "No recent news for this ticker."
     }
   },
   "import": {

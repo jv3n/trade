@@ -1,6 +1,6 @@
-# État actuel — Phase 2 multi-timeframe + watchlist livrés (2026-05-03)
+# État actuel — Phase 2 multi-timeframe + watchlist + news livrés (2026-05-04)
 
-Snapshot après les livrables Phase 2 multi-timeframe (chart + axes + crosshair) et watchlist persistée + sidebar dashboard collapsable. Pour reprendre proprement à la prochaine session.
+Snapshot après les livrables Phase 2 multi-timeframe (chart + axes + crosshair), watchlist persistée + sidebar dashboard collapsable, et news par ticker via Finnhub. Pour reprendre proprement à la prochaine session.
 
 ## Branches / tags
 
@@ -19,6 +19,7 @@ Snapshot après les livrables Phase 2 multi-timeframe (chart + axes + crosshair)
 - ✅ **Multi-timeframe + axes + crosshair** : toggle `1D / 5D / 1M / 3M / 1Y / 5Y` au-dessus du chart. Endpoint dédié `/chart?timeframe=` qui ne ramène que les bars (les indicateurs et le narratif restent sur la 1Y daily de référence). Enum `Timeframe` côté domain (intervals Yahoo-style pour aligner les clés Caffeine entre dossier et chart). Mock `MockMarketChartClient` honore `(range, interval)` avec un seed étendu pour produire une courbe différente par timeframe. Chart enrichi axes Y (prix) et X (dates), grille pointillée, crosshair de hover + tooltip date/prix exacts. 4 nouveaux tests slice MVC (`MarketControllerTest`) + spec adapter HTTP + 4 tests `ticker.spec` + 3 tests mock supplémentaires.
 - ✅ **Watchlist persistée** : nouveau module backend `watchlist/` (entity `WatchlistEntry`, table `watchlist_entry` migration V3, service avec normalisation symbole + add idempotent + remove non-idempotent, controller 3 endpoints REST). Front : port `WatchlistRepository` + adapter HTTP, **input rapide dans la sidebar dashboard** (section dédiée avec icône poubelle pour retirer) + **bouton "Suivre / Suivi"** sur le header du Dossier ticker (icône `bookmark` filled/outlined, optimistic toggle avec rollback). Pas de gestion multi-user (table sans `user_id`). 14 tests : slice MVC controller (7), adapter HTTP (3), `dashboard.spec` watchlist (6), `ticker.spec` toggle (5).
 - ✅ **Sidebar dashboard collapsable + scrollbar custom** : 3 sections indépendamment foldables (Portefeuilles / Tickers détenus / Watchlist) avec bouton header + chevron rotatif. Scrollbar 8px custom appliquée globalement via `styles.scss`, support Webkit + Firefox, adopte les tokens couleur du thème. Pas de persistance localStorage des états ouvert/fermé pour l'instant.
+- ✅ **News par ticker** : nouveau module backend `news/` (`NewsClient` port). Deux adapters sélectionnés par `news.provider` : `FinnhubClient` (`finnhub`, /company-news 30j window) et `MockNewsClient` (`mock`, défaut — feed synthétique déterministe par symbole, ~10 % quiet, ~25 % sans summary). Cache `news-by-symbol` 15 min. Endpoint `GET /api/market/ticker/{symbol}/news?limit=10`. Front : port `NewsRepository` + adapter, section dédiée sur le Dossier ticker entre la plage 52w et le narratif IA, dates relatives localisées (`il y a 3 h` / `hier` / `15 avr 2026`), erreurs scopées. Twelve Data ne couvrant pas `/news` (testé live → 404), Finnhub est ajouté comme provider séparé. Mock par défaut en local pour économiser le quota Finnhub en itération. 17 tests.
 
 ### Backend
 
@@ -63,4 +64,4 @@ C. **Items de l'audit 2026-05-02 non fixés** : contrat preview CSV cassé (fron
 
 ### Phase 2 — restant à attaquer
 
-Multi-timeframe et watchlist livrés. Prochains items (cf. `metier/fonctionnalites.md` et `backlog.md`) : **chart : analyse interactive** (zoom drag-select, overlays MA, annotations), **news par ticker**, **comparaison vs benchmark**, **recommandations analystes / earnings**, **settings & config runtime** (clé API + TTL cache éditables depuis l'UI).
+Multi-timeframe, watchlist et news livrés. Prochains items (cf. `metier/fonctionnalites.md` et `backlog.md`) : **chart : analyse interactive** (zoom drag-select, overlays MA, annotations), **comparaison vs benchmark**, **recommandations analystes / earnings**, **watchlist v2** (autocomplete + validation), **settings & config runtime** (clé API + TTL cache éditables depuis l'UI).

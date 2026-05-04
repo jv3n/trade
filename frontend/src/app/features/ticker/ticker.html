@@ -246,6 +246,43 @@
       </section>
     }
 
+    <!-- Actualité -->
+    <section class="news-card">
+      <div class="news-header">
+        <mat-icon>article</mat-icon>
+        <h3>{{ 'ticker.news.title' | translate }}</h3>
+      </div>
+
+      @if (newsLoading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="16"></mat-spinner>
+          {{ 'ticker.news.loading' | translate }}
+        </div>
+      } @else if (newsError(); as ne) {
+        <div class="error-banner news-error">
+          <mat-icon>error_outline</mat-icon>
+          {{ ne }}
+        </div>
+      } @else if (news().length === 0) {
+        <p class="empty-state news-empty">{{ 'ticker.news.empty' | translate }}</p>
+      } @else {
+        <ul class="news-list">
+          @for (item of news(); track item.id) {
+            <li class="news-item">
+              <a [href]="item.url" target="_blank" rel="noopener noreferrer" class="news-headline">
+                {{ item.headline }}
+              </a>
+              <div class="news-meta">
+                <span class="news-source">{{ item.source }}</span>
+                <span class="news-meta-sep">·</span>
+                <span class="news-date">{{ formatNewsDate(item.publishedAt) }}</span>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
     <!-- Narratif LLM -->
     <section class="narrative-card">
       <div class="narrative-header">

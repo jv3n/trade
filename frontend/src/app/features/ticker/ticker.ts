@@ -15,6 +15,7 @@ import {
   TIMEFRAME_CODES,
   TimeframeCode,
 } from '../../core/market.repository';
+import { NewsItem, NewsRepository } from '../../core/news.repository';
 import { WatchlistRepository } from '../../core/watchlist.repository';
 
 interface ChartPoint {
@@ -80,6 +81,7 @@ interface HoverInfo {
 export class TickerPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly marketRepository = inject(MarketRepository);
+  private readonly newsRepository = inject(NewsRepository);
   private readonly watchlistRepository = inject(WatchlistRepository);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
@@ -104,6 +106,14 @@ export class TickerPage implements OnInit, OnDestroy {
 
   /** Bar index nearest the cursor when hovering the chart, or null when not hovering. */
   private hoveredIndex = signal<number | null>(null);
+
+  // ---- News state ----
+
+  /** Headlines for the current ticker. Empty list = "no recent news" rather than "loading". */
+  news = signal<NewsItem[]>([]);
+  newsLoading = signal(false);
+  /** Inline error in the news panel — kept scoped so a Finnhub hiccup doesn't blank the dossier. */
+  newsError = signal<string | null>(null);
 
   // ---- Watchlist state ----
 
@@ -251,6 +261,7 @@ export class TickerPage implements OnInit, OnDestroy {
     this.load(s);
     this.loadLatestNarrative(s);
     this.loadWatchlistState(s);
+    this.loadNews(s);
   }
 
   ngOnDestroy(): void {
@@ -380,6 +391,45 @@ export class TickerPage implements OnInit, OnDestroy {
 
   private formatPrice(price: number): string {
     return price.toFixed(2);
+  }
+
+  // ---- News actions ----
+
+  /**
+   * Fetches up to 10 headlines on init. 503 (Finnhub down / rate-limited) surfaces inline in the
+   * news panel — the rest of the dossier (chart, indicators, narrative) stays interactive. Empty
+   * list is a normal state (slow-news ticker), not an error.
+   */
+  private loadNews(symbol: string): void {
+    this.newsLoading.set(true);
+    this.newsError.set(null);
+    this.newsRepository.getForSymbol(symbol).subscribe({
+      next: (items) => {
+        this.news.set(items);
+        this.newsLoading.set(false);
+      },
+      error: (err: { status?: number }) => {
+        this.newsError.set(this.errorMessage(err, symbol));
+        this.newsLoading.set(false);
+      },
+    });
+  }
+
+  /**
+   * Formats a news date for the inline list. Recent items (< 24 h) show as relative time
+   * ("il y a 3 h"), older ones as a localised date. Reuses [LanguageService.lang] so the format
+   * follows the active UI locale.
+   */
+  formatNewsDate(iso: string): string {
+    const date = new Date(iso);
+    const diffMs = Date.now() - date.getTime();
+    const locale = this.language.lang();
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    if (diffMs < 60_000) return rtf.format(-Math.floor(diffMs / 1000), 'second');
+    if (diffMs < 3_600_000) return rtf.format(-Math.floor(diffMs / 60_000), 'minute');
+    if (diffMs < 86_400_000) return rtf.format(-Math.floor(diffMs / 3_600_000), 'hour');
+    if (diffMs < 7 * 86_400_000) return rtf.format(-Math.floor(diffMs / 86_400_000), 'day');
+    return date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   // ---- Watchlist actions ----

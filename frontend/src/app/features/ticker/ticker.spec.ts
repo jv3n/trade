@@ -25,6 +25,7 @@ import {
   TickerSnapshot,
 } from '../../core/market.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
+import { NewsItem, NewsRepository } from '../../core/news.repository';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {
@@ -68,6 +69,7 @@ describe('TickerPage', () => {
     add: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
   };
+  let news: { getForSymbol: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     market = {
@@ -84,6 +86,11 @@ describe('TickerPage', () => {
       add: vi.fn(),
       remove: vi.fn(),
     };
+    news = {
+      // Default : no headlines (slow-news ticker / cache miss). Tests that exercise the populated
+      // path override this.
+      getForSymbol: vi.fn().mockReturnValue(of([])),
+    };
 
     await TestBed.configureTestingModule({
       imports: [TickerPage],
@@ -91,6 +98,7 @@ describe('TickerPage', () => {
         provideTranslateService({ lang: 'en' }),
         { provide: MarketRepository, useValue: market },
         { provide: WatchlistRepository, useValue: watchlist },
+        { provide: NewsRepository, useValue: news },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ symbol: 'AAPL' }) } },
@@ -315,6 +323,64 @@ describe('TickerPage', () => {
       // Second click while still busy — should not fire another POST.
       component.toggleWatchlist();
       expect(watchlist.add).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ---- News section ----
+
+  /**
+   * The news panel sits alongside the chart and narrative — error isolation matters : a Finnhub
+   * 503 must NOT blank the indicators or hide the price. Tests below pin :
+   *
+   * - **Init load** — `getForSymbol(symbol)` is called on init with the route symbol.
+   * - **Populated state** — items signal hydrates from the response, sorted as the backend sent
+   *   them (the front trusts the backend's ordering).
+   * - **Empty state** — empty list ≠ error ; signal stays empty, no error message.
+   * - **Error scoping** — a 503 sets `newsError` only and leaves the dossier `snapshot()`
+   *   untouched.
+   */
+  describe('news', () => {
+    const sampleItem: NewsItem = {
+      id: '1',
+      symbol: 'AAPL',
+      headline: 'Apple launches X',
+      summary: null,
+      source: 'Reuters',
+      url: 'https://example.com/a',
+      imageUrl: null,
+      publishedAt: '2026-05-03T10:00:00Z',
+      category: 'company news',
+    };
+
+    it('hydrates the news signal from getForSymbol on init', () => {
+      news.getForSymbol.mockReturnValue(of([sampleItem]));
+      fixture.detectChanges();
+
+      expect(news.getForSymbol).toHaveBeenCalledWith('AAPL');
+      expect(component.news()).toEqual([sampleItem]);
+      expect(component.newsLoading()).toBe(false);
+      expect(component.newsError()).toBeNull();
+    });
+
+    it('starts with an empty list when the ticker has no recent news', () => {
+      // Default mock returns of([]). Pin the consequence : signal stays empty, no error message.
+      // The empty state is rendered as "Pas d'actualité récente" — different UX from an error.
+      fixture.detectChanges();
+
+      expect(component.news()).toEqual([]);
+      expect(component.newsError()).toBeNull();
+    });
+
+    it('surfaces a Finnhub error inline without breaking the rest of the dossier', () => {
+      news.getForSymbol.mockReturnValue(throwError(() => ({ status: 503 })));
+      fixture.detectChanges();
+
+      // News panel shows an error string — exact message is the translation key in the slice
+      // (without translations loaded).
+      expect(component.newsError()).toContain('rateLimit');
+      expect(component.newsLoading()).toBe(false);
+      // Dossier core (snapshot, indicators) is untouched — error stays scoped.
+      expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
     });
   });
 

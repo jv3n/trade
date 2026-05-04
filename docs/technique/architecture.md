@@ -11,6 +11,8 @@
 | IA (backup local) | Ollama + `qwen2.5:3b` (3B Instruct) | Développement offline / sans clé API. Pas le défaut depuis la Phase 1. Mistral 7B était l'ancien défaut local mais trop lent sur M1 (timeouts) |
 | Data marché | Twelve Data (REST + apikey) | Source primaire Phase 1+. Free tier 800 credits/jour, TSX natif, JSON documenté |
 | Data marché (dev / CI) | `MockMarketChartClient` (synthétique) | Défaut sans clé : 260 bars OHLC déterministes par symbole. Onboarding et CI |
+| News par ticker | Finnhub (REST + apikey) | Phase 2. Twelve Data ne couvre pas les news. Free tier 60 calls/min, agrégation Reuters / Bloomberg / CNBC. Voir [`providers.md`](./providers.md) |
+| News (dev / CI) | `MockNewsClient` (synthétique) | Défaut sans clé, sélectionné par `news.provider: mock`. Headlines déterministes par symbole, économise le quota Finnhub en itération |
 | Base de données | PostgreSQL | Schéma relationnel, snapshots historiques, Flyway pour les migrations |
 | Infra locale | Tilt + Docker Compose | Hot reload backend/frontend, reset BDD en un clic |
 | CI | GitHub Actions | Workflows backend (Gradle + PostgreSQL) et frontend (Vitest) |
@@ -105,6 +107,20 @@ Liste plate de tickers à surveiller hors portefeuille. Single-table feature, pa
 - `WatchlistService` : list (oldest first), add (idempotent — POST sur un symbole existant retourne la ligne existante), remove (404 si absent — non-idempotent volontairement pour que l'UI optimiste détecte une dérive d'état). Symbole normalisé en uppercase + trim côté service.
 - 3 endpoints REST : `GET / POST / DELETE /api/watchlist[/symbol]`.
 
+### `news/` — nouveau, Phase 2
+
+Section actualité par ticker sur le dossier. Backend wrapper d'un provider externe (Finnhub aujourd'hui, le provider de marché Twelve Data n'expose pas de news endpoint).
+
+- Domain `NewsItem` provider-neutre (`headline`, `summary`, `source`, `url`, `publishedAt`…).
+- Port `NewsClient`. Deux adapters cohabitent, sélectionnés par `news.provider` :
+  - `FinnhubClient` (`finnhub`) — appelle `/company-news?symbol=…&from=…&to=…&token=…` avec une fenêtre roulante de 30 jours. `FinnhubMappers` convertit le JSON Finnhub vers le domaine (Unix seconds → `Instant`, `image: ""` → `null`, etc.).
+  - `MockNewsClient` (`mock`, défaut) — feed synthétique déterministe par symbole (seed = hash). ~10 % de symboles "quiet" qui renvoient une liste vide pour exercer l'empty-state UI, ~25 % d'items sans summary pour exercer la null-handling path. Active sans clé, recommandé en dev pour ne pas chauffer le quota Finnhub.
+- `NewsService` avec `@Cacheable("news-by-symbol", 15 min)` au-dessus du port — clé `#symbol.toUpperCase() + '|' + #limit`, économise le quota sur les re-clics.
+- 1 endpoint REST : `GET /api/market/ticker/{symbol}/news?limit=10`.
+- Erreurs upstream (401/403 → auth-failed, 429 → rate-limited, 5xx → upstream) mappées sur `MarketUnavailableException` partagée — surface en HTTP 503 sur l'API publique, identique à Twelve Data.
+
+> Note SpEL : la clé du cache utilise `toUpperCase()` (méthode Java) plutôt que `uppercase()` (extension Kotlin). SpEL n'a accès qu'aux types JVM, pas aux extensions Kotlin — confondre les deux casse l'évaluation de la clé au runtime.
+
 ### `ingestion/` — gelé Phase 0
 
 Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus / détection HTML, 25 sources seedées). Conservé en place mais retiré du flow principal — Twelve Data remplit le rôle data marché en Phase 1.
@@ -120,7 +136,7 @@ Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs
 Hexagonal léger sous `frontend/src/app/` :
 
 - **`core/`** — ports + HTTP adapters
-  - `*.repository.ts` (abstract class — port). 6 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist.
+  - `*.repository.ts` (abstract class — port). 7 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News.
   - `adapters/*.http.ts` (HttpXxxRepository — adapter)
   - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: HttpXxxRepository }`
   - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header

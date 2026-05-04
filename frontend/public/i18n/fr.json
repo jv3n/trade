@@ -150,6 +150,11 @@
       "watching": "Suivi",
       "addAria": "Ajouter ce ticker à la watchlist",
       "removeAria": "Retirer ce ticker de la watchlist"
+    },
+    "news": {
+      "title": "Actualité",
+      "loading": "Chargement des dépêches…",
+      "empty": "Pas d'actualité récente pour ce ticker."
     }
   },
   "import": {
