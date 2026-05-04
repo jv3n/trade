@@ -91,8 +91,8 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + HTTP adapters
-│       │   ├── *.repository.ts        # ports (abstract class)
+│       ├── core/              # Ports + HTTP adapters (8 repositories)
+│       │   ├── *.repository.ts        # ports (Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config)
 │       │   ├── adapters/*.http.ts     # HTTP impls
 │       │   ├── theme.service.ts       # signal + persist localStorage
 │       │   └── language.service.ts    # signal + persist localStorage (i18n)
@@ -101,7 +101,7 @@ trade/
 │           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA)
 │           ├── import/                # Drag & drop CSV Wealthsimple
 │           ├── suivi/                 # Timeline snapshots
-│           ├── settings/              # Sources / test / prompt-preview
+│           ├── settings/              # Sources / test-sources / prompt-preview / configuration
 │           ├── recommendations/       # 🧊 legacy Phase 0
 │           └── history/               # 🧊 legacy Phase 0
 ├── backend/                   # Kotlin + Spring Boot
@@ -111,6 +111,7 @@ trade/
 │       ├── portfolio/         # Import CSV, snapshots, lecture
 │       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille
 │       ├── news/              # Phase 2 — Finnhub + mock, news par ticker
+│       ├── config/            # Phase 2 — runtime-editable settings (app_config V4)
 │       ├── ingestion/         # 🧊 legacy Phase 0 — RSS scheduler
 │       └── shared/            # Utilitaires transverses
 ├── docs/                      # Documentation (mkdocs-material)

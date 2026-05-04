@@ -51,7 +51,7 @@ Pourquoi Finnhub plutôt que Twelve Data pour les news : Twelve Data n'expose pa
 | **Inscription** | [https://console.anthropic.com](https://console.anthropic.com) |
 | **Dashboard / clé** | [https://console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
 | **Billing** | [https://console.anthropic.com/settings/billing](https://console.anthropic.com/settings/billing) — pay-as-you-go, ~5 € pour ~hundreds de narratifs |
-| **Modèle utilisé** | `claude-opus-4-6` (default), peut basculer sur `claude-sonnet-4-6` (~5× moins cher, qualité narrative très correcte) |
+| **Modèle utilisé** | `claude-opus-4-6` (default), peut basculer sur `claude-sonnet-4-5` (~5× moins cher, qualité narrative très correcte) |
 | **Config** | `anthropic.api.key` (env `ANTHROPIC_API_KEY`), `anthropic.api.model` |
 | **Client** | `ClaudeClient` (sélectionné par `llm.provider: claude`) |
 | **Latence** | 1-3 s par narratif sur Opus, légèrement moins sur Sonnet |

@@ -131,7 +131,7 @@ Réutilisable plus tard pour de la macro non couverte par Twelve Data (Fed, BCE,
 
 ### `config/` — Phase 2
 
-Configuration éditable en runtime, sans redémarrage backend. Couvre Phase 2 v1 trois clés : `market.twelvedata.api-key`, `market.finnhub.api-key`, `market.cache.ttl-minutes`.
+Configuration éditable en runtime, sans redémarrage backend. Couvre Phase 2 cinq clés : `market.twelvedata.api-key`, `market.finnhub.api-key`, `market.cache.ttl-minutes`, `market.provider` (mock ↔ twelvedata) et `news.provider` (mock ↔ finnhub).
 
 - **`AppConfigService`** — service singleton qui lit les défauts YAML via `@Value` et les surcharge avec ce qui est en BDD (`app_config`, V4). Cache mémoire `ConcurrentHashMap` primé au boot via `@PostConstruct` puis maintenu en write-through sur chaque `set` / `reset`. Émet un `ConfigChangedEvent` sur changement effectif.
 - **`ConfigController`** — `GET /api/config` (liste avec masquage des secrets), `PUT /api/config/{key}` (set), `DELETE /api/config/{key}` (reset au défaut), `POST /api/config/test/{provider}` (probe live d'une clé candidate sans la sauver).
@@ -159,7 +159,7 @@ Hexagonal léger sous `frontend/src/app/` :
   - `ticker/` — dossier par symbole : graphe multi-timeframe + axes + crosshair, indicateurs, narratif IA, bouton watchlist
   - `import/` — drag & drop CSV
   - `suivi/` — timeline snapshots
-  - `settings/` — sources / test / prompt-preview
+  - `settings/` — sources / test-sources / prompt-preview / configuration (runtime config Phase 2)
   - `recommendations/`, `history/` — *gelé Phase 0* (recommandations portefeuille)
 
 ## Schéma de base de données

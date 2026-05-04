@@ -21,8 +21,9 @@ import org.springframework.stereotype.Component
  *   doesn't all look the same when navigating between tickers.
  * - **Realistic shape** — datetimes spread over the last 30 days (matching what Finnhub returns on
  *   a real ticker), one or two items missing a summary (the front's null-handling path is
- *   exercised), the occasional empty list (if the symbol hash falls in a "quiet" bucket — but we
- *   cap that at <5% of symbols so it's a real-world edge case rather than the default).
+ *   exercised), the occasional empty list (if the symbol hash falls in a "quiet" bucket — about 10
+ *   % of symbols, enough to make the empty-state path show up regularly in dev without making it
+ *   the default).
  *
  * Reserved symbols : none today, unlike `MockMarketChartClient`. The news panel doesn't have a
  * dedicated 404 path (empty list is the natural empty state), and the 503 error is exercised by

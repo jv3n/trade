@@ -190,6 +190,7 @@ Files under `docs/` describe the actual state of the project. Keep them in sync 
 | `docs/projet/sources.md`          | A data source is added or removed                                         |
 | `docs/projet/backlog.md`          | A Phase 1+ feature is implemented, frozen, or its priority changes        |
 | `docs/projet/audits/`             | A code review is performed — archive the full report as `YYYY-MM-DD-titre-court.md` and append a line to `audits/index.md`. Don't auto-promote findings to the backlog ; the user decides which become actions. |
+| `docs/CHANGELOG.md`               | At the **end of every `/doc-maintainer` patch session**, append/extend a dated entry summarising the doc files modified and why. See `.claude/skills/doc-maintainer/SKILL.md` for the format and the per-area grouping. The doc-maintainer subagent itself stays read-only ; the main thread writes the entry. |
 
 ### Technical decisions
 

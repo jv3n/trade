@@ -4,17 +4,21 @@ site_url: https://jv3n.github.io/trade/
 docs_dir: docs
 
 nav:
+  - Accueil:
+      - Changelog doc: CHANGELOG.md
   - Métier:
       - Vision: metier/vision.md
       - Fonctionnalités: metier/fonctionnalites.md
   - Technique:
       - Onboarding développeur: technique/developper.md
       - Architecture: technique/architecture.md
+      - DDD — Bounded Contexts: technique/ddd.md
       - Guide de développement: technique/developpement.md
       - Providers externes: technique/providers.md
       - Ops (CI / CD / tooling): technique/ops.md
   - Projet:
       - Backlog: projet/backlog.md
+      - État actuel: projet/etat-actuel.md
       - Sources de données: projet/sources.md
       - Conventions de commit: projet/commit-conventions.md
       - Audits:

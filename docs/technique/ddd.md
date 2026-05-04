@@ -14,6 +14,7 @@ Chaque contexte est autonome et possède ses propres couches.
 | `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) | ✅ Phase 1 — réécrit |
 | `watchlist` | Liste plate de tickers suivis hors portefeuille (single-table, pas de user_id) | ✅ Phase 2 |
 | `news` | Headlines par ticker (Finnhub + mock), cache court | ✅ Phase 2 |
+| `config` | Surcharges runtime des défauts YAML (clés API, TTL cache, providers actifs) | ✅ Phase 2 |
 | `ingestion` | Sources RSS, articles, scheduler de collecte | 🧊 Legacy gelé Phase 0 |
 
 > Le contexte `analysis` voit son périmètre changer à la Phase 1 : il passe d'orchestration de recommandations portefeuille (8 règles de validation, targetWeight, action enum) à génération de narratifs par ticker (`{summary, sentiment, keyPoints[]}`). Le code legacy reste en place mais n'est plus exposé.
@@ -29,8 +30,9 @@ Chaque contexte est autonome et possède ses propres couches.
     persistence/        # Spring Data repositories
     http/               # Controllers REST
     llm/                # (analysis) Clients API externes (Claude, Ollama)
-    market/             # (market) TwelveDataClient + MockMarketChartClient — adapters pour le port
-    news/               # (news) FinnhubClient + MockNewsClient — adapters pour le port NewsClient
+    market/             # (market) TwelveDataClient + MockMarketChartClient + RoutingMarketChartClient (@Primary)
+    news/               # (news) FinnhubClient + MockNewsClient + RoutingNewsClient (@Primary)
+    ConfigTestClient.kt # (config) RestClient dédié pour sonder une clé API candidate sans la sauver
 
 shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 ```
@@ -67,10 +69,16 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 - Implémentations des clients LLM (`ClaudeClient`, `OllamaClient`)
 - Activées via `@ConditionalOnProperty`
 
-### `infrastructure/market/` *(market uniquement, Phase 1)*
-- `TwelveDataClient` — appel API externe (HTTP + apikey) avec cache court
+### `infrastructure/market/` *(market uniquement, Phase 1+)*
+- `TwelveDataClient` — appel API externe (HTTP + apikey) avec cache court ; clé API lue per-call via `AppConfigService`
 - `MockMarketChartClient` — provider synthétique pour dev / CI sans clé
+- `RoutingMarketChartClient` (`@Primary`, Phase 2) — délègue à l'adapter sélectionné par `appConfig.getString(market.provider)` à chaque appel ; permet de basculer mock ↔ live runtime sans reboot
 - Pas de logique d'indicateurs ici (calculs purs en `application/`)
+
+### `config/` *(Phase 2)*
+- `AppConfigService` (`application/`) — read layered (YAML default → BDD override via cache mémoire) ; émet `ConfigChangedEvent` sur changement effectif
+- `ConfigController` + `ConfigTestClient` (`infrastructure/`) — `/api/config` CRUD + endpoints `/test/{provider}` qui sondent une clé candidate sans la sauver
+- `CacheTtlListener` (vit dans `market/`) écoute `ConfigChangedEvent` et rebuild le `CaffeineCacheManager` quand `market.cache.ttl-minutes` bouge — pattern event-driven inter-context
 
 ## Dépendances cross-contextes autorisées
 
