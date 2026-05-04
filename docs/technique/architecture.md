@@ -129,6 +129,17 @@ Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing r
 
 Réutilisable plus tard pour de la macro non couverte par Twelve Data (Fed, BCE, indicateurs économiques) si besoin.
 
+### `config/` — Phase 2
+
+Configuration éditable en runtime, sans redémarrage backend. Couvre Phase 2 v1 trois clés : `market.twelvedata.api-key`, `market.finnhub.api-key`, `market.cache.ttl-minutes`.
+
+- **`AppConfigService`** — service singleton qui lit les défauts YAML via `@Value` et les surcharge avec ce qui est en BDD (`app_config`, V4). Cache mémoire `ConcurrentHashMap` primé au boot via `@PostConstruct` puis maintenu en write-through sur chaque `set` / `reset`. Émet un `ConfigChangedEvent` sur changement effectif.
+- **`ConfigController`** — `GET /api/config` (liste avec masquage des secrets), `PUT /api/config/{key}` (set), `DELETE /api/config/{key}` (reset au défaut), `POST /api/config/test/{provider}` (probe live d'une clé candidate sans la sauver).
+- **`ConfigTestClient`** — RestClient dédié qui appelle `/quote?symbol=AAPL` côté Twelve Data ou Finnhub pour valider une clé en cours d'édition. Découplé des adapters de production parce que le test doit fonctionner même quand `market.provider=mock`.
+- **Lecture per-call dans les adapters** — `TwelveDataClient` et `FinnhubClient` ne stockent plus la clé en `@Value` figée à la construction du bean ; ils lisent `appConfig.getString(...)` à chaque appel. Le YAML reste injecté comme défaut au niveau de `AppConfigService`.
+- **TTL cache dynamique** — `MarketConfig.cacheManager` lit le TTL initial via `AppConfigService` au boot. `CacheTtlListener` (composant séparé) écoute `ConfigChangedEvent` et appelle `setCaffeine(...)` sur le `CaffeineCacheManager` quand `market.cache.ttl-minutes` bouge. Trade-off accepté : le rebuild **invalide les entrées en cours** — coût marginal sur un TTL qu'on change rarement.
+- **Switch provider à chaud** — `RoutingMarketChartClient` et `RoutingNewsClient` (`@Primary`) délèguent à l'adapter sélectionné par `market.provider` / `news.provider` au moment de chaque appel. Les anciens `@ConditionalOnProperty` sur les 4 adapters concrets et les 2 HttpConfig sont retirés ; les deux `RestClient` (Twelve Data et Finnhub) cohabitent et sont qualifiés par `@Qualifier("twelveDataRestClient")` / `@Qualifier("finnhubRestClient")` côté clients. Coût : deux RestClients en mémoire au lieu d'un (négligeable). Bénéfice : rotation provider depuis `/settings/configuration` sans reboot, le bascule s'applique au prochain dossier ouvert. Cache key préfixée par adapter (`twelvedata|`, `mock|`) ⇒ pas de collision entre les deux espaces.
+
 ### `shared/`
 
 Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs en JSON).
@@ -153,7 +164,7 @@ Hexagonal léger sous `frontend/src/app/` :
 
 ## Schéma de base de données
 
-Trois migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative.sql` (Phase 1 narratif), `V3__watchlist.sql` (Phase 2 watchlist).
+Quatre migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative.sql` (Phase 1 narratif), `V3__watchlist.sql` (Phase 2 watchlist), `V4__app_config.sql` (Phase 2 — table key/value des surcharges runtime).
 
 | Section | Tables | Statut |
 |---------|--------|--------|
@@ -164,6 +175,7 @@ Trois migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrativ
 | Sources d'ingestion | `feed_source`, `feed_article` | Gelé en pratique (table conservée pour les Settings UI) |
 | Narratifs ticker | `ticker_narrative_snapshot`, `ticker_narrative_job` | Actif Phase 1 |
 | Watchlist | `watchlist_entry` | Actif Phase 2 |
+| Config runtime | `app_config` | Actif Phase 2 |
 
 ## Décisions techniques notables
 
@@ -186,6 +198,8 @@ Trois migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrativ
 **Snapshot du narratif systématique** — chaque consultation d'un ticker persiste `{prix_du_jour, indicateurs, narrative}`. Sans ça, l'observabilité Phase 3 (relire ce que disait l'IA il y a 1 mois) est aveugle.
 
 **Cache snapshot 30 min + dedup job 5 min** — un re-clic sur un dossier ticker ne doit ni rappeler le LLM (cher en Claude, lent en Ollama) ni créer de jobs concurrents. Le service réutilise le snapshot existant si âge < 30 min, sinon réutilise le job pending si âge < 5 min, sinon kick un nouveau job. Front toujours uniforme : POST puis poll.
+
+**Configuration runtime éditable** (Phase 2) — clés API et TTL de cache vivaient en `@Value` injectées à la construction du bean, donc figées jusqu'au prochain reboot. Pour permettre la rotation d'une clé sans redémarrer le backend, on a introduit `AppConfigService` (table `app_config`, surcharge BDD au-dessus du défaut YAML) et bascule les adapters (`TwelveDataClient`, `FinnhubClient`) sur une lecture per-call. Pour le TTL Caffeine, le builder est figé au moment du `setCaffeine` ; on écoute un `ConfigChangedEvent` et on rebuild le spec via `CaffeineCacheManager.setCaffeine(...)` — accepte d'invalider les entrées en cours, négligeable sur un changement rare. Pas de chiffrement BDD v1 (projet local) — à durcir si on déploie un jour.
 
 **`LlmClient.modelId()` tracé sur chaque snapshot** — le snapshot stocke `ollama:qwen2.5:3b` ou `claude:claude-opus-4-6` au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer après coup les snapshots produits par un modèle plus faible sans relire le contenu.
 

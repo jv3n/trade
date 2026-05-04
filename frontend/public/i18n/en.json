@@ -231,6 +231,7 @@
     "sources": "Data sources",
     "testSources": "Test a source",
     "promptPreview": "Prompt preview",
+    "configuration": "Runtime configuration",
     "sourcesPage": {
       "intro": "Enable or disable the sources used to generate AI recommendations.",
       "loading": "Loading sources…",
@@ -282,6 +283,57 @@
         "notFound": "Ticker not found",
         "unavailable": "Market data unavailable (rate-limit or network)",
         "backend": "Backend error"
+      }
+    },
+    "configurationPage": {
+      "title": "Runtime configuration",
+      "intro": "Edit live what normally lives in application-local.yml. Changes apply without restarting the backend.",
+      "loading": "Loading configuration…",
+      "statusSet": "Set",
+      "statusUnset": "Not set",
+      "statusOverridden": "Overridden",
+      "statusDefault": "Default",
+      "placeholderEmpty": "Type a new value",
+      "placeholderMasked": "•••• already set — type a new value to replace it",
+      "marketProvider": {
+        "title": "Market provider",
+        "description": "Switch between the local mock (deterministic, offline) and Twelve Data (live, requires the API key below). Takes effect on the next dossier load."
+      },
+      "newsProvider": {
+        "title": "News provider",
+        "description": "Switch between the local mock (synthetic feed) and Finnhub (live, requires the API key below). Takes effect on the next dossier load."
+      },
+      "providers": {
+        "mock": "Mock (local)",
+        "twelvedata": "Twelve Data",
+        "finnhub": "Finnhub"
+      },
+      "twelveData": {
+        "title": "Twelve Data — API key",
+        "description": "Market data provider (quotes, OHLC, indicators). Free tier 800 credits/day.",
+        "inputLabel": "Twelve Data API key"
+      },
+      "finnhub": {
+        "title": "Finnhub — API key",
+        "description": "Provider for the news section on the ticker dossier. Free tier 60 calls/min.",
+        "inputLabel": "Finnhub API key"
+      },
+      "cacheTtl": {
+        "title": "Market & news cache — TTL",
+        "description": "How long Twelve Data and Finnhub responses are cached (Caffeine). Shorter = fresher data but more API calls.",
+        "minutes": "{{value}} min",
+        "defaultHint": "default: {{value}} min"
+      },
+      "actions": {
+        "test": "Test",
+        "save": "Save",
+        "reset": "Reset to default"
+      },
+      "errors": {
+        "load": "Couldn't load the configuration.",
+        "save": "Save failed.",
+        "reset": "Reset failed.",
+        "test": "Test request failed."
       }
     }
   }

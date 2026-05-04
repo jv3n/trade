@@ -24,6 +24,8 @@ import { WatchlistRepository } from './core/watchlist.repository';
 import { HttpWatchlistRepository } from './core/adapters/watchlist.http';
 import { NewsRepository } from './core/news.repository';
 import { HttpNewsRepository } from './core/adapters/news.http';
+import { ConfigRepository } from './core/config.repository';
+import { HttpConfigRepository } from './core/adapters/config.http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -51,5 +53,6 @@ export const appConfig: ApplicationConfig = {
     { provide: MarketRepository, useClass: HttpMarketRepository },
     { provide: WatchlistRepository, useClass: HttpWatchlistRepository },
     { provide: NewsRepository, useClass: HttpNewsRepository },
+    { provide: ConfigRepository, useClass: HttpConfigRepository },
   ],
 };

@@ -2,7 +2,6 @@ package com.portfolioai.news.infrastructure.news
 
 import java.net.http.HttpClient
 import java.time.Duration
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.JdkClientHttpRequestFactory
@@ -14,11 +13,11 @@ import org.springframework.web.client.RestClient
  * worker thread, JSON-only `Accept` header. No cookie handling needed (auth is the `token` query
  * parameter).
  *
- * Conditional on `news.provider=finnhub` so we don't instantiate the bean when the mock provider is
- * selected (no unused RestClient hanging around in dev).
+ * Always instantiated — the routing layer ([RoutingNewsClient]) decides at call time which adapter
+ * to dispatch to based on the runtime config. Cost is one extra `RestClient` in memory even when
+ * `news.provider=mock` ; negligible.
  */
 @Configuration
-@ConditionalOnProperty(name = ["news.provider"], havingValue = "finnhub")
 class FinnhubHttpConfig {
 
   @Bean

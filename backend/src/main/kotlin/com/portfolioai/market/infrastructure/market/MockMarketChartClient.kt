@@ -12,7 +12,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
 /**
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Component
  *     - `RATELIMIT` → throws [MarketUnavailableException] (503 path)
  */
 @Component
-@ConditionalOnProperty(name = ["market.provider"], havingValue = "mock", matchIfMissing = true)
 class MockMarketChartClient : MarketChartClient {
   private val log = LoggerFactory.getLogger(javaClass)
 

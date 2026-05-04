@@ -1,6 +1,8 @@
 package com.portfolioai.news.infrastructure.news
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.portfolioai.config.application.AppConfigService
+import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.domain.MarketUnavailableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -9,6 +11,8 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import org.springframework.web.client.RestClient
 
 /**
@@ -45,8 +49,8 @@ class FinnhubClientTest {
       FinnhubClient(
         rest = RestClient.builder().build(),
         mapper = jacksonObjectMapper(),
+        appConfig = mockAppConfig(FAKE_KEY),
         baseUrl = server.url("/").toString().trimEnd('/'),
-        apiKey = FAKE_KEY,
       )
   }
 
@@ -152,14 +156,22 @@ class FinnhubClientTest {
       FinnhubClient(
         rest = RestClient.builder().build(),
         mapper = jacksonObjectMapper(),
+        appConfig = mockAppConfig(""),
         baseUrl = server.url("/").toString().trimEnd('/'),
-        apiKey = "",
       )
 
     val ex = assertThrows<MarketUnavailableException> { noKey.fetchNews("AAPL") }
     assertTrue(ex.message?.contains("API key") ?: false)
     // No HTTP call attempted — short-circuited.
     assertEquals(0, server.requestCount)
+  }
+
+  /**
+   * Stub for [AppConfigService] — the only call site under test is the per-fetch read of
+   * `market.finnhub.api-key`, so we hard-code that branch.
+   */
+  private fun mockAppConfig(apiKey: String): AppConfigService = mock {
+    on { getString(ConfigKeys.FINNHUB_API_KEY) } doReturn apiKey
   }
 
   // ---------------------------------------------------------------------- helpers + fixtures

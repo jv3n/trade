@@ -2,7 +2,6 @@ package com.portfolioai.market.infrastructure.market
 
 import java.net.http.HttpClient
 import java.time.Duration
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.JdkClientHttpRequestFactory
@@ -17,11 +16,11 @@ import org.springframework.web.client.RestClient
  * backend thread blocked on a slow DNS lookup or a stalled TLS handshake would tie up a Tomcat
  * worker even after the front-end abort fires.
  *
- * Conditional on `market.provider=twelvedata` so we don't instantiate the bean when another
- * provider is selected.
+ * Always instantiated — the routing layer ([RoutingMarketChartClient]) decides at call time which
+ * adapter to dispatch to based on the runtime config. Cost is one extra `RestClient` in memory even
+ * when `market.provider=mock` ; negligible.
  */
 @Configuration
-@ConditionalOnProperty(name = ["market.provider"], havingValue = "twelvedata")
 class TwelveDataHttpConfig {
 
   @Bean

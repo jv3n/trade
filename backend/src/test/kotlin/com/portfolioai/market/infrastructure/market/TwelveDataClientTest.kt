@@ -1,5 +1,7 @@
 package com.portfolioai.market.infrastructure.market
 
+import com.portfolioai.config.application.AppConfigService
+import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.domain.MarketUnavailableException
 import java.math.BigDecimal
 import okhttp3.mockwebserver.MockResponse
@@ -9,6 +11,8 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import org.springframework.web.client.RestClient
 
 /**
@@ -42,8 +46,8 @@ class TwelveDataClientTest {
     client =
       TwelveDataClient(
         rest = RestClient.builder().build(),
+        appConfig = mockAppConfig(FAKE_API_KEY),
         baseUrl = server.url("/").toString().trimEnd('/'),
-        apiKey = FAKE_API_KEY,
       )
   }
 
@@ -176,13 +180,21 @@ class TwelveDataClientTest {
     val noKeyClient =
       TwelveDataClient(
         rest = RestClient.builder().build(),
+        appConfig = mockAppConfig(""),
         baseUrl = server.url("/").toString().trimEnd('/'),
-        apiKey = "",
       )
 
     val ex = assertThrows<MarketUnavailableException> { noKeyClient.fetchChart("AAPL", "1y", "1d") }
     assertTrue(ex.message?.contains("API key") ?: false)
     assertEquals(0, server.requestCount)
+  }
+
+  /**
+   * Lightweight stub for [AppConfigService] — the only call site under test is the per-fetch read
+   * of `market.twelvedata.api-key`, so we hard-code that branch.
+   */
+  private fun mockAppConfig(apiKey: String): AppConfigService = mock {
+    on { getString(ConfigKeys.TWELVEDATA_API_KEY) } doReturn apiKey
   }
 
   // ---------------------------------------------------------------------- helpers + fixtures
