@@ -8,7 +8,7 @@ plugins {
   // Detekt — Kotlin static analysis (complexité cyclomatique, magic numbers, méthodes longues,
   // potentiels bugs). Complémentaire de Spotless qui ne fait que la mise en forme. Voir bloc
   // `detekt { … }` plus bas pour la stratégie de ramp-up.
-  id("io.gitlab.arturbosch.detekt") version "1.23.7"
+  id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 group = "com.portfolioai"
