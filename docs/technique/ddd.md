@@ -9,7 +9,7 @@ Chaque contexte est autonome et possède ses propres couches.
 
 | Contexte | Responsabilité | Statut |
 |----------|----------------|--------|
-| `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | Actif |
+| `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | ✅ Phase 0+ |
 | `market` | Données ticker (Twelve Data + mock) + indicateurs techniques calculés | ✅ Phase 1 |
 | `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) | ✅ Phase 1 — réécrit |
 | `watchlist` | Liste plate de tickers suivis hors portefeuille (single-table, pas de user_id) | ✅ Phase 2 |
@@ -67,7 +67,7 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 
 ### `infrastructure/llm/` *(analysis uniquement)*
 - Implémentations des clients LLM (`ClaudeClient`, `OllamaClient`)
-- Activées via `@ConditionalOnProperty`
+- Sélection statique via `@ConditionalOnProperty(llm.provider)` au boot — pattern hérité Phase 1, conservé tant que le LLM n'est pas piloté par `AppConfigService`. À aligner sur le pattern Routing per-call (cf. `RoutingMarketChartClient` / `RoutingNewsClient`) le jour où l'item backlog "Config runtime v2 : LLM provider + model éditable" est traité — le `@ConditionalOnProperty` saute alors et un `RoutingLlmClient` (`@Primary`) prend le relais
 
 ### `infrastructure/market/` *(market uniquement, Phase 1+)*
 - `TwelveDataClient` — appel API externe (HTTP + apikey) avec cache court ; clé API lue per-call via `AppConfigService`

@@ -69,9 +69,13 @@ Conventional Commits en anglais. Format : `type(scope): description`
 |------|-------|
 | `feat` | Nouvelle fonctionnalité |
 | `fix` | Correction de bug |
-| `chore` | Tâche technique (config, deps, docs) |
+| `chore` | Tâche technique sans impact fonctionnel (config, deps, CI) |
 | `refactor` | Refactoring sans changement de comportement |
+| `docs` | Documentation uniquement |
 | `test` | Ajout ou modification de tests |
+| `perf` | Amélioration de performance |
+| `audit` | Archive d'une revue de code dans `docs/projet/audits/` |
+| `revert` | Annulation d'un commit précédent |
 
 Exemples :
 

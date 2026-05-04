@@ -37,6 +37,7 @@
 │  portfolio/   → import CSV, snapshots       │
 │  watchlist/   → tickers suivis (Phase 2)    │
 │  news/        → Finnhub + mock (Phase 2)    │
+│  config/      → runtime overrides (Phase 2) │
 │  shared/      → utilitaires transverses     │
 │  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
 │  ingestion/   → RSS scheduler  [gelé]       │
@@ -217,7 +218,7 @@ Cinq migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative
 
 **Snapshot avec `batch_id`** — un import CSV peut couvrir plusieurs comptes. Le `batch_id` UUID commun regroupe tous les snapshots d'un même import pour l'affichage en timeline.
 
-### Frontend
+### Phase 1+ — frontend
 
 **Ports & adapters léger** — `core/<name>.repository.ts` (port = abstract class) + `core/adapters/<name>.http.ts` (adapter HTTP). Composants injectent l'abstraction. Tests : on mock le port, l'adapter a son propre spec HTTP.
 

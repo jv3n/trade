@@ -31,7 +31,7 @@ Toggle dans le header (sombre par défaut). Tokens CSS, persistance localStorage
 
 #### Architecture frontend
 
-Ports & adapters léger sous `core/` (4 repositories : Portfolio, Analysis, Settings, Snapshot) + UI dans `features/`.
+Ports & adapters léger sous `core/` (Phase 0 : 4 repositories — Portfolio, Analysis, Settings, Snapshot) + UI dans `features/`. *Phases 1+ ont enrichi à 8 repositories — voir `docs/technique/architecture.md` pour la liste à jour.*
 
 #### Infra et qualité
 

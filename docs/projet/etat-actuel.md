@@ -35,7 +35,7 @@ Snapshot après les livrables Phase 2 multi-timeframe (chart + axes + crosshair)
 - Module `watchlist/` (Phase 2) : entity `WatchlistEntry`, service avec normalisation + add idempotent + remove 404 si absent, controller 3 endpoints REST.
 - Module `config/` (Phase 2) : `AppConfigService` (read layered YAML/BDD, write-through + `ConfigChangedEvent`), `ConfigController` (CRUD + endpoints `/test/{provider}` qui sondent une clé candidate sans la sauver), `ConfigTestClient` (RestClient dédié), `RoutingMarketChartClient` + `RoutingNewsClient` (`@Primary`) délèguent par appel, `CacheTtlListener` rebuild la spec Caffeine sur event TTL.
 - Listener `OrphanedJobCleanupListener` (au boot, `ApplicationReadyEvent`) : flip tous les `PENDING` en `ERROR` sur `ticker_narrative_job` + `analysis_job`.
-- Migrations Flyway : V1 init, V2 ticker_narrative, V3 watchlist_entry, V4 app_config.
+- Migrations Flyway : V1 init, V2 ticker_narrative, V3 watchlist_entry, V4 app_config, V5 asset_lifecycle.
 - Endpoints : `GET /api/market/ticker/{symbol}` (dossier complet), `GET .../chart?timeframe=` (bars only multi-timeframe), `POST/GET /narrative/...` (kick + poll + latest), `GET /narrative/preview` (preview prompt), `GET /api/portfolios/owned-tickers`, `GET POST DELETE /api/watchlist[/symbol]`.
 
 ### Frontend
