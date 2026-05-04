@@ -1,14 +1,14 @@
 plugins {
-  kotlin("jvm") version "2.1.21"
-  kotlin("plugin.spring") version "2.1.21"
+  kotlin("jvm") version "2.3.21"
+  kotlin("plugin.spring") version "2.3.21"
   id("org.springframework.boot") version "3.5.14"
   id("io.spring.dependency-management") version "1.1.7"
-  kotlin("plugin.jpa") version "2.1.21"
+  kotlin("plugin.jpa") version "2.3.21"
   id("com.diffplug.spotless") version "6.25.0"
   // Detekt — Kotlin static analysis (complexité cyclomatique, magic numbers, méthodes longues,
   // potentiels bugs). Complémentaire de Spotless qui ne fait que la mise en forme. Voir bloc
   // `detekt { … }` plus bas pour la stratégie de ramp-up.
-  id("io.gitlab.arturbosch.detekt") version "1.23.7"
+  id("io.gitlab.arturbosch.detekt") version "1.23.8"
 }
 
 group = "com.portfolioai"
