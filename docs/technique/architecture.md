@@ -66,7 +66,9 @@ Source primaire des données ticker.
   - `TwelveDataClient` (`twelvedata`) — REST + apikey, défaut prod. Deux appels par dossier (`/time_series` + `/quote`), parsing tolérant aux quirks (numériques en strings, erreurs renvoyées en HTTP 200 avec `status: error`).
   - `MockMarketChartClient` (`mock`, défaut sans clé) — série OHLC synthétique déterministe par symbole. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour les chemins d'erreur UI.
 - **`IndicatorCalculator`** — Kotlin pur, sans dépendance Spring. Calcule RSI(14), MA50/MA200, momentum 30j/90j, perf 1m/3m/1y/YTD, drawdown 52w, volume relatif, position vs MA. Testable unit, sans BDD.
-- **Endpoints REST** : `GET /api/market/ticker/{symbol}` (données + indicateurs).
+- **Endpoints REST** :
+  - `GET /api/market/ticker/{symbol}` — dossier complet (quote + indicateurs + bars 1Y daily).
+  - `GET /api/market/ticker/{symbol}/chart?timeframe={1d|5d|1mo|3mo|1y|5y}` — bars seuls pour le toggle multi-timeframe du graphe ; ne recalcule pas les indicateurs ni ne re-prompte le LLM, qui restent ancrés sur la 1Y daily du dossier. Whitelist côté serveur via l'enum `Timeframe` du domain — codes inconnus → 400 (défense de la clé Caffeine contre les valeurs non bornées).
 
 ### `analysis/` — Phase 1 réécrite
 

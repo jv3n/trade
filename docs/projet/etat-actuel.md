@@ -1,6 +1,6 @@
-# État actuel — fin Phase 1 + cleanup provider (2026-05-03)
+# État actuel — Phase 2 entamée, multi-timeframe livré (2026-05-03)
 
-Snapshot post-cleanup Yahoo. Pour reprendre proprement à la prochaine session.
+Snapshot après le premier livrable Phase 2 (multi-timeframe + axes/crosshair). Pour reprendre proprement à la prochaine session.
 
 ## Branches / tags
 
@@ -8,11 +8,15 @@ Snapshot post-cleanup Yahoo. Pour reprendre proprement à la prochaine session.
 - Derniers tags :
   - `v0.1.0` — clôture **Phase 0** (recommandations RSS, gelée)
   - `v0.2.0` — clôture **Phase 1 — Pivot ticker** ✅
-- Working tree : voir `git status` — cleanup Yahoo en cours/terminé selon état.
+- Working tree : voir `git status`.
 
 ## Phase 1 — bilan
 
 100 % livrée. Tout le critique 🔴, le médium 🟡 et le basse 🟢 listé dans `backlog.md` sont ✅. Prérequis Phase 2 (provider de marché alternatif) également ✅.
+
+## Phase 2 — démarrée
+
+- ✅ **Multi-timeframe + axes + crosshair** : toggle `1D / 5D / 1M / 3M / 1Y / 5Y` au-dessus du chart. Endpoint dédié `/chart?timeframe=` qui ne ramène que les bars (les indicateurs et le narratif restent sur la 1Y daily de référence). Enum `Timeframe` côté domain (intervals Yahoo-style pour aligner les clés Caffeine entre dossier et chart). Mock `MockMarketChartClient` honore `(range, interval)` avec un seed étendu pour produire une courbe différente par timeframe. Chart enrichi axes Y (prix) et X (dates), grille pointillée, crosshair de hover + tooltip date/prix exacts. 4 nouveaux tests slice MVC (`MarketControllerTest`) + spec adapter HTTP + 4 tests `ticker.spec` + 3 tests mock supplémentaires.
 
 ### Backend
 
@@ -26,7 +30,7 @@ Snapshot post-cleanup Yahoo. Pour reprendre proprement à la prochaine session.
 
 ### Frontend
 
-- Page Dossier ticker : graphe SVG inline, 10 chips d'indicateurs avec color-coding (RSI/MA/perf/drawdown), narratif IA (sentiment chip BULLISH/NEUTRAL/BEARISH coloré, summary, bullets, footer modèle+date), bouton Régénérer avec polling.
+- Page Dossier ticker : graphe SVG inline avec **toggle multi-timeframe** (`1D / 5D / 1M / 3M / 1Y / 5Y`), **axes prix + dates** + grille pointillée, **crosshair au survol** + tooltip date/prix, 10 chips d'indicateurs avec color-coding (RSI/MA/perf/drawdown), narratif IA (sentiment chip BULLISH/NEUTRAL/BEARISH coloré, summary, bullets, footer modèle+date), bouton Régénérer avec polling.
 - Dashboard : total agrégé tous portefeuilles dans la sidebar, liste cliquable des tickers détenus (`owned-tickers` agrégé serveur, pas de N+1).
 - Settings adaptés Phase 1 : `prompt-preview` par ticker (input libre + suggestions), `test-sources` étendu avec test ticker.
 - **i18n FR/EN** via `ngx-translate` (TranslatePipe) + `LanguageService` signal-based. Drapeaux unicode dans le header.
@@ -52,6 +56,6 @@ A. **Cleanup des jobs orphelins au boot** 🟡 — listener `ApplicationReadyEve
 
 B. **Items de l'audit 2026-05-02 non fixés** : contrat preview CSV cassé (front lit `bookValue`, back envoie `bookValueCad`), `@EnableAsync` sans `ThreadPoolTaskExecutor`, N+1 sur la timeline snapshots.
 
-### Phase 2 — ouverte
+### Phase 2 — restant à attaquer
 
-Quand on attaque (cf. `metier/fonctionnalites.md`) : multi-timeframe sur le graphe, news par ticker, comparaison vs benchmark, watchlist persistée, recommandations analystes / earnings.
+Multi-timeframe livré. Prochains items (cf. `metier/fonctionnalites.md` et `backlog.md`) : **chart : analyse interactive** (zoom drag-select, overlays MA, annotations), **news par ticker**, **comparaison vs benchmark**, **watchlist persistée**, **recommandations analystes / earnings**, **settings & config runtime** (clé API + TTL cache éditables depuis l'UI).

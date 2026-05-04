@@ -101,12 +101,20 @@ Le portefeuille reste la source initiale (les tickers détenus apparaissent auto
 
 ## Phase 2 — Profondeur ticker
 
-- **Multi-timeframe** : intraday (1d, 5d granulaire) + long terme (5y, 10y)
+### ✅ Livré
+
+- **Multi-timeframe sur le graphe** : toggle `1D / 5D / 1M / 3M / 1Y / 5Y` au-dessus du chart. Le dossier (indicateurs + narratif) reste ancré sur `1Y daily` ; seul le graphe se reconfigure au clic. Endpoint dédié `GET /api/market/ticker/{symbol}/chart?timeframe=`.
+- **Chart enrichi** : axes Y (prix) et X (dates), grille pointillée, crosshair au survol avec tooltip date + prix exacts.
+
+### ⏳ À venir
+
+- **Chart : analyse interactive** — zoom drag-select, overlays MA50 / MA200, annotations user
 - **News par ticker** — replace/complete le RSS macro pour l'analyse contextuelle
 - **Comparaison vs benchmark** : SPY, QQQ, ou ETF sectoriel automatique
 - **Recommandations analystes** si disponibles (consensus, target prices)
 - **Fundamentals avancés** : earnings dates, derniers résultats, guidance
 - **Watchlist persistée** en base, pas seulement à partir du portefeuille
+- **Settings & config runtime** : éditer clé API Twelve Data + TTL cache depuis l'UI sans reboot
 
 ---
 
