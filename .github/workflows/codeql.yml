@@ -63,7 +63,7 @@ jobs:
       # pour garantir qu'une vraie compilation se produit.
       - name: Set up Gradle
         if: matrix.language == 'java-kotlin'
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
