@@ -233,7 +233,10 @@ class CsvImportService(
       val cols =
         try {
           record.toMap().entries.associate { (k, v) -> normalise(k) to v }
-        } catch (e: Exception) {
+        } catch (ignored: Exception) {
+          // Mismatched header / row width — skip silently and continue. The user sees the count
+          // of skipped rows in the import preview ; per-row diagnostics would be too noisy on a
+          // CSV that legitimately mixes account types.
           skipped++
           continue
         }
@@ -369,7 +372,10 @@ class CsvImportService(
     val match = Regex("""(\d{4}-\d{2}-\d{2})""").find(filename) ?: return Instant.now()
     return try {
       LocalDate.parse(match.groupValues[1]).atTime(12, 0).toInstant(ZoneOffset.UTC)
-    } catch (e: Exception) {
+    } catch (ignored: Exception) {
+      // Regex matched a `\d{4}-\d{2}-\d{2}` shape but `LocalDate.parse` rejected it (e.g.
+      // 2024-13-45). Falling back to `now()` is the same behaviour as having no match at all —
+      // worst case the snapshot timeline shows the import time instead of the real export date.
       Instant.now()
     }
   }

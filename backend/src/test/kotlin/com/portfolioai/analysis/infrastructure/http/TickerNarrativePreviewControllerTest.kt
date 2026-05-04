@@ -40,9 +40,10 @@ class TickerNarrativePreviewControllerTest {
   @Autowired private lateinit var mvc: MockMvc
 
   // The controller depends on these beans ; preview only uses TickerService, the others must
-  // still be provided for the slice to instantiate.
-  @MockitoBean private lateinit var service: TickerNarrativeService
-  @MockitoBean private lateinit var jobStore: TickerNarrativeJobStore
+  // still be provided for the slice to instantiate. `@Suppress("unused")` because Detekt sees
+  // them as unread props — they are read indirectly by Spring's slice DI graph at construction.
+  @Suppress("unused") @MockitoBean private lateinit var service: TickerNarrativeService
+  @Suppress("unused") @MockitoBean private lateinit var jobStore: TickerNarrativeJobStore
   @MockitoBean private lateinit var tickerService: TickerService
 
   private fun snapshot(symbol: String = "AAPL"): TickerSnapshot {

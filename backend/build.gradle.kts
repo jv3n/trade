@@ -70,13 +70,16 @@ spotless {
 // génère un baseline via `./gradlew detektBaseline` pour ne plus échouer que sur le code
 // nouveau si on accepte la dette existante).
 //
-// `buildUponDefaultConfig = true` part du jeu de règles curé livré par Detekt — c'est le bon
-// défaut pour un projet qui n'a pas encore de config maison. `allRules = false` exclut les
-// règles expérimentales/opt-in pour limiter le bruit initial.
+// `buildUponDefaultConfig = true` part du jeu de règles curé livré par Detekt et **applique en
+// surcouche** le fichier `config/detekt/detekt.yml` — qui assouplit les rules les plus bruyantes
+// pour Kotlin/Spring/JPA (LongParameterList sur `@Entity`, WildcardImport pour
+// `jakarta.persistence.*`, MagicNumber sur HTTP codes / timeouts / percentages…). Voir le fichier
+// pour le détail des choix.
 detekt {
   buildUponDefaultConfig = true
   allRules = false
   ignoreFailures = true
+  config.setFrom("$projectDir/config/detekt/detekt.yml")
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {

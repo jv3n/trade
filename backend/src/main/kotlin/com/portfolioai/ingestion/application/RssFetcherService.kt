@@ -65,7 +65,10 @@ class RssFetcherService(
         itemCount = 0,
         items = emptyList(),
       )
-    } catch (e: ConnectException) {
+    } catch (ignored: ConnectException) {
+      // The error message is built from the source URL itself — the exception's own message adds
+      // no value (always "Connection refused"). Renamed to `ignored` to make intent explicit and
+      // satisfy Detekt's SwallowedException rule.
       SourceTestResultDto(
         ok = false,
         error = "Connexion refusée par ${source.url}",
@@ -73,7 +76,9 @@ class RssFetcherService(
         itemCount = 0,
         items = emptyList(),
       )
-    } catch (e: SocketTimeoutException) {
+    } catch (ignored: SocketTimeoutException) {
+      // Same reasoning as the ConnectException branch — timeout is the diagnostic, not the
+      // exception's message.
       SourceTestResultDto(
         ok = false,
         error = "Timeout — la source ne répond pas",

@@ -1,0 +1,242 @@
+# Detekt configuration — tuned for Kotlin / Spring Boot / JPA / JUnit project
+# ============================================================================
+#
+# We start from `buildUponDefaultConfig = true` (set in build.gradle.kts) and override only the
+# rules whose default settings are calibrated for "library code" but are too strict for an
+# idiomatic Spring application :
+#
+# - JPA entities legitimately have 8-14 `@Column` constructor params.
+# - `jakarta.persistence.*` / `org.springframework.web.bind.annotation.*` / JUnit `Assertions.*`
+#   are universally wildcard-imported in Kotlin Spring projects.
+# - Percent calculations (`× 100`), HTTP status codes (404, 429), and millisecond timeouts are
+#   "magic" but *domain meaningful* — defining a named constant for each is over-engineered.
+# - `@PathVariable` Spring controller params must be declared even when unused in the body
+#   (the framework matches them to URL placeholders).
+#
+# Anything we can't tame here without losing real signal is fixed in code instead. See the
+# backlog entry "Linter ESLint côté frontend" for the symmetric story on the JS side.
+
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+config:
+  validation: true
+
+# -------------------------------------------------------------------- complexity ----------------
+
+complexity:
+  LongMethod:
+    active: true
+    # Default 60 — bumped because LLM prompt builders and CSV parsers legitimately stretch.
+    # The CSV import has 80-90 line methods that are a sequence of column reads ; splitting them
+    # would obscure the column-by-column flow without making testing easier.
+    threshold: 100
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    # JPA entities (`Asset`, `Recommendation`, `TickerNarrativeSnapshot`…) have 8-14 `@Column`
+    # params by design — that's the schema, not a code smell. Annotation-based exclusion below
+    # also catches `@Embeddable` and `@MappedSuperclass`.
+    constructorThreshold: 14
+    ignoreDefaultParameters: true
+    ignoreDataClasses: true
+    ignoreAnnotated:
+      - 'Entity'
+      - 'Embeddable'
+      - 'MappedSuperclass'
+  CyclomaticComplexMethod:
+    active: true
+    # Default 15 — bumped for `when` blocks with many branches that are intrinsically a lookup
+    # table (TwelveDataClient.outputSizeFor, MockMarketChartClient.barCountFor — each branch is
+    # one expression). The metric counts branches, but the cognitive load is low.
+    threshold: 25
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 16
+    thresholdInObjects: 16
+    thresholdInFiles: 18
+  NestedBlockDepth:
+    active: true
+    threshold: 5
+  ComplexCondition:
+    active: true
+    # Default 4 — bumped to 5 for null-check chains in JSON / CSV mappers (`if (open == null
+    # || high == null || low == null || close == null || volume == null)` legitimately reads
+    # that way and is clearer than a helper).
+    threshold: 5
+
+# -------------------------------------------------------------------- style ---------------------
+
+style:
+  MagicNumber:
+    active: true
+    # Tests are riddled with magic numbers (prices, quantities, timestamps) that read naturally as
+    # values rather than constants. Excluding the test source set avoids 100+ pointless findings.
+    # `MockMarketChartClient` is dev-only synthetic generation (volatility, drift, bar counts —
+    # tuning constants that are clearer inline than as named consts). `IndicatorCalculator` uses
+    # well-known financial periods (21=1mo, 63=3mo, 252=1y) that any trader recognises.
+    excludes:
+      - '**/test/**'
+      - '**/*Test.kt'
+      - '**/*Tests.kt'
+      - '**/MockMarketChartClient.kt'
+      - '**/IndicatorCalculator.kt'
+    # Whitelisted small + common values. Includes percent-100, RSI-50, HTTP status codes (4xx),
+    # standard ms timeouts (5_000 / 10_000 etc.), validator thresholds (3-7), and basic counts.
+    ignoreNumbers:
+      - '-2'
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '6'
+      - '7'
+      - '10'
+      - '12'
+      - '14'
+      - '15'
+      - '20'
+      - '24'
+      - '30'
+      - '50'
+      - '60'
+      - '100'
+      - '140'
+      - '200'
+      - '255'
+      - '365'
+      - '401'
+      - '403'
+      - '404'
+      - '429'
+      - '500'
+      - '1000'
+      - '0.5'
+      - '1.0'
+      - '50.0'
+      - '100.0'
+    ignoreHashCodeFunction: true
+    ignoreEnums: true
+    ignoreRanges: true
+    ignoreNamedArgument: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreConstantDeclaration: true
+    ignorePropertyDeclaration: true
+    ignoreAnnotated:
+      - 'Configuration'
+      - 'ConfigurationProperties'
+  WildcardImport:
+    active: true
+    # Legitimate idioms in Kotlin/Spring/JPA/JUnit projects — fully qualified imports for these
+    # would just be visual noise. Anything not on this list still gets flagged.
+    excludeImports:
+      - 'java.util.*'
+      - 'jakarta.persistence.*'
+      - 'org.springframework.web.bind.annotation.*'
+      - 'org.springframework.boot.autoconfigure.condition.*'
+      - 'org.junit.jupiter.api.Assertions.*'
+      - 'org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*'
+      - 'org.springframework.test.web.servlet.result.MockMvcResultMatchers.*'
+  MaxLineLength:
+    active: true
+    # Spotless ktfmt enforces 100 already on most lines ; this is a fallback for legitimate
+    # outliers : JPQL queries (single-line by JPA convention), CSV row template strings in tests,
+    # and inline error messages with interpolations. 160 covers everything we've actually got.
+    maxLineLength: 160
+    excludePackageStatements: true
+    excludeImportStatements: true
+    excludeCommentStatements: true
+  ReturnCount:
+    active: true
+    # Kotlin idioms with early null-returns + `?.let` easily blow the default of 2. The
+    # `IndicatorCalculator` functions have intentional guard returns at the top.
+    max: 5
+  ThrowsCount:
+    active: true
+    # Bumped to 5 — error mapping in HTTP clients (TwelveDataClient.fetchTimeSeries) and
+    # parsers (TickerNarrativeParser) genuinely needs to throw 5 distinct domain errors :
+    # rate-limited / auth-failed / not-found / upstream / unreachable. Each maps to a
+    # different HTTP code on the public API, splitting them would obscure the mapping.
+    max: 5
+  UseCheckOrError:
+    # `throw IllegalStateException(...)` reads more clearly than `error(...)` in some places —
+    # opinion call. We don't enforce.
+    active: false
+  UseRequire:
+    # Same as above for `IllegalArgumentException`.
+    active: false
+  ForbiddenComment:
+    # TODO / FIXME / HACK comments are useful pointers, not noise.
+    active: false
+  LoopWithTooManyJumpStatements:
+    # CSV import iterates through rows with multiple `continue` to skip malformed entries —
+    # idiomatic for this kind of fault-tolerant parsing. No real refactor opportunity.
+    active: false
+  UnusedParameter:
+    active: true
+    # Spring controller methods declare `@PathVariable` params even when the function body
+    # doesn't read them — the framework still needs them to register the URL pattern. The
+    # `_` prefix is the Kotlin convention for "intentionally unused".
+    ignoreAnnotated:
+      - 'PathVariable'
+  UnusedPrivateProperty:
+    active: true
+
+# -------------------------------------------------------------------- exceptions ----------------
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+    # HTTP clients, async runners/executors, parsers and the CSV import controller legitimately
+    # catch broad exceptions to map them to domain types (MarketUnavailableException, parser
+    # fallback) or to surface a generic error to the user (controllers). Scoping the rule here
+    # keeps it useful for the rest of the codebase without flagging deliberate adapter behaviour.
+    excludes:
+      - '**/infrastructure/market/**'
+      - '**/infrastructure/llm/**'
+      - '**/analysis/application/**'
+      - '**/CsvImportController.kt'
+      - '**/CsvImportService.kt'
+      - '**/RssFetcherService.kt'
+  SwallowedException:
+    active: true
+    # Variables named `_`, `ignore*` or `expected*` won't trigger — useful idiom for "I know
+    # I'm dropping this, on purpose".
+    allowedExceptionNameRegex: '_|(ignore|expected).*'
+
+# -------------------------------------------------------------------- naming --------------------
+
+naming:
+  VariableNaming:
+    active: true
+    # Test fixtures use UPPER_SNAKE_CASE for what conceptually are constants (FAKE_API_KEY,
+    # VALID_TIME_SERIES_BODY…). They can't be `const val` because the value is computed
+    # (e.g. `.trimIndent()`). All current findings live in test files — exclude them via the
+    # standard rule-level `excludes` list, same mechanism we use for `MagicNumber`.
+    excludes:
+      - '**/test/**'
+      - '**/*Test.kt'
+      - '**/*Tests.kt'
+
+# -------------------------------------------------------------------- performance ---------------
+
+performance:
+  SpreadOperator:
+    # Spring Boot's main idiom : `runApplication<App>(*args)`. We have no other spread call
+    # sites today, and no real signal from the rule.
+    active: false
+
+# -------------------------------------------------------------------- empty-blocks --------------
+
+empty-blocks:
+  EmptyFunctionBlock:
+    active: true
+    ignoreOverridden: true
+    # Spring Boot test convention : `BackendApplicationTests.contextLoads()` is intentionally
+    # empty — its purpose is just to verify the application context boots.
+    excludes:
+      - '**/BackendApplicationTests.kt'

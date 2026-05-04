@@ -30,7 +30,9 @@ class TickerNarrativeParser(private val mapper: ObjectMapper) {
       try {
         mapper.readTree(json)
       } catch (e: Exception) {
-        throw IllegalArgumentException("Response was not valid JSON: ${e.message}")
+        // Pass `e` as the cause so the original Jackson error stays in the stacktrace — the
+        // outer message is what surfaces to the user, the cause is what helps debugging.
+        throw IllegalArgumentException("Response was not valid JSON: ${e.message}", e)
       }
 
     val summary =
