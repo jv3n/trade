@@ -12,6 +12,15 @@ on:
 permissions:
   contents: read
 
+# Sérialise les déploiements docs : `mkdocs gh-deploy` fait fetch puis force-push sur `gh-pages`,
+# et même avec `--force` le compare-and-swap atomique côté serveur git rejette le push si un autre
+# run a écrit sur la branche entre le fetch et le push. `cancel-in-progress: false` parce que
+# chaque commit docs mérite son déploiement (vs cancel qui pourrait perdre le dernier état si on
+# pousse une rafale de commits).
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
