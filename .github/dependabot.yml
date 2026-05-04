@@ -2,8 +2,8 @@
 # Doc : https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
 # Stratégie :
-# - Une seule passe hebdomadaire le lundi matin (Europe/Paris). Évite le bruit quotidien tout en
-#   restant réactif aux failles publiées dans la semaine.
+# - Passe quotidienne à 06:00 (America/Toronto) sur les 3 écosystèmes. Le risque de bruit est
+#   maîtrisé par le filtre patch-only ci-dessous.
 # - **Patch only**. Le bot n'ouvre que des bumps patch (`update-types: [patch]` partout). Les
 #   minors et majors restent manuels — ils peuvent embarquer des breaking changes silencieux
 #   (ex : Kotlin 2.1 → 2.3 casse le `resolutionStrategy` Detekt qui pin Kotlin 2.0.10), pas
@@ -22,10 +22,9 @@ updates:
   - package-ecosystem: gradle
     directory: /backend
     schedule:
-      interval: weekly
-      day: monday
+      interval: daily
       time: '06:00'
-      timezone: Europe/Paris
+      timezone: America/Toronto
     open-pull-requests-limit: 10
     groups:
       # Spring Boot : starter + plugin + dependency-management bougent solidaires sur leurs patches.
@@ -56,10 +55,9 @@ updates:
   - package-ecosystem: npm
     directory: /frontend
     schedule:
-      interval: weekly
-      day: monday
+      interval: daily
       time: '06:00'
-      timezone: Europe/Paris
+      timezone: America/Toronto
     open-pull-requests-limit: 10
     groups:
       # Angular : tous les `@angular/*` et `@angular-*/*` doivent bumper en même temps, sinon
@@ -97,10 +95,9 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: daily
       time: '06:00'
-      timezone: Europe/Paris
+      timezone: America/Toronto
     open-pull-requests-limit: 5
     groups:
       # Pas de sous-groupe — les actions GitHub sont peu nombreuses, le `patch` suffit.
