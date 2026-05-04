@@ -22,6 +22,12 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
 
+    # Redondant avec le bloc workflow-level plus haut, mais Sonar / CodeQL veulent voir le scope
+    # déclaré au niveau job aussi. Pas de coût (juste lecture du repo) et ça fige l'intention si
+    # un futur job est ajouté sans permissions explicites.
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 

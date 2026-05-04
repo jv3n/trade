@@ -69,7 +69,7 @@ Pourquoi le bloc workflow-level est obligatoire en plus du job-level : la règle
 | Workflow | Workflow-level | Job-level (override) | Pourquoi |
 |---|---|---|---|
 | `backend.yml` | `contents: read` | `+ security-events: write` | Upload SARIF Detekt vers Code Scanning |
-| `frontend.yml` | `contents: read` | (pas d'override) | Build + tests, pas de write nécessaire |
+| `frontend.yml` | `contents: read` | `contents: read` (redondant, exigé par Sonar) | Build + tests, pas de write nécessaire ; la redondance fige l'intention par job |
 | `codeql.yml` | `contents: read` | `+ security-events: write` `+ packages: read` `+ actions: read` | Standard CodeQL — upload findings + lecture deps + lecture workflows |
 | `docs.yml` | `contents: read` | `contents: write` (override) | `gh-deploy` push sur la branche `gh-pages` |
 
