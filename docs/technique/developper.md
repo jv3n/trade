@@ -181,6 +181,8 @@ Tu lances vitest en standalone (`npx vitest run`), ce qui rate la config Angular
 | Le découpage des phases et les features livrées / à venir | [`metier/fonctionnalites.md`](../metier/fonctionnalites.md), [`projet/backlog.md`](../projet/backlog.md) |
 | L'architecture (modules, schéma BDD, décisions techniques) | [`architecture.md`](./architecture.md) |
 | Les conventions de code, commandes Gradle/npm, structure complète | [`developpement.md`](./developpement.md) |
+| Providers externes (Twelve Data, Finnhub, Anthropic, Ollama) — clés, quotas, dashboards | [`providers.md`](./providers.md) |
+| CI / CD, caching, Detekt, Dependabot, Code Scanning | [`ops.md`](./ops.md) |
 | Conventional Commits + exemples | [`projet/commit-conventions.md`](../projet/commit-conventions.md) |
 | L'état exact de la session précédente, ce qui est WIP | [`projet/etat-actuel.md`](../projet/etat-actuel.md) |
 

@@ -111,7 +111,7 @@ trade/
 │       └── shared/            # Utilitaires transverses
 ├── docs/                      # Documentation (mkdocs-material)
 ├── .claude/                   # Skills, hooks et instructions Claude Code
-├── .github/workflows/         # CI backend + frontend + docs
+├── .github/workflows/         # CI backend + frontend + CodeQL + docs (cf. technique/ops.md)
 ├── Tiltfile
 └── docker-compose.yml
 ```
@@ -125,6 +125,6 @@ trade/
 
 ## Tests
 
-- Backend : JUnit 5 + Spring Boot Test. Intégration sur **vrai PostgreSQL** (le CI démarre un service Postgres). `./gradlew test`
+- Backend : JUnit 5 + Spring Boot Test. Intégration sur **vrai PostgreSQL** (le CI démarre un service Postgres — détails workflow + cache dans [`ops.md`](./ops.md)). `./gradlew test`
 - Frontend : **Vitest** + TestBed. Tests `*.spec.ts` co-localisés avec la source. `npm run test`
 - Lancer un seul test Vitest : `cd frontend && npx vitest run src/path/to/file.spec.ts`

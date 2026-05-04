@@ -15,7 +15,7 @@
 | News (dev / CI) | `MockNewsClient` (synthétique) | Défaut sans clé, sélectionné par `news.provider: mock`. Headlines déterministes par symbole, économise le quota Finnhub en itération |
 | Base de données | PostgreSQL | Schéma relationnel, snapshots historiques, Flyway pour les migrations |
 | Infra locale | Tilt + Docker Compose | Hot reload backend/frontend, reset BDD en un clic |
-| CI | GitHub Actions | Workflows backend (Gradle + PostgreSQL) et frontend (Vitest) |
+| CI | GitHub Actions | Workflows backend (Gradle + PostgreSQL), frontend (Vitest), CodeQL, déploiement docs. Détails : [`ops.md`](./ops.md) |
 
 ## Vue d'ensemble (Phase 1)
 
