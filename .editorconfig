@@ -1,0 +1,23 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+
+[*.{kt,kts}]
+indent_size = 2
+# Block IntelliJ from consolidating imports into wildcards on "Optimize Imports".
+# The numbers are Int.MAX_VALUE — i.e. "never". Spotless+ktlint enforces the same rule
+# at build time (see backend/build.gradle.kts), but this file is the prevention layer
+# so wildcards are never introduced in the first place.
+ij_kotlin_name_count_to_use_star_import = 2147483647
+ij_kotlin_name_count_to_use_star_import_for_members = 2147483647
+ij_kotlin_packages_to_use_import_on_demand = unset
+
+[*.{yml,yaml,json,md}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab

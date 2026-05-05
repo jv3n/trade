@@ -3,6 +3,7 @@ package com.portfolioai.market.infrastructure.http
 import com.portfolioai.market.application.SymbolSearchService
 import com.portfolioai.market.application.dto.SymbolMatchDto
 import com.portfolioai.market.application.dto.toDto
+import com.portfolioai.market.infrastructure.http.SymbolSearchController.Companion.MAX_QUERY_LENGTH
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam

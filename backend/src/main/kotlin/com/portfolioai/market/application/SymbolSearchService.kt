@@ -1,6 +1,7 @@
 package com.portfolioai.market.application
 
 import com.portfolioai.market.MarketConfig.Companion.SYMBOL_SEARCH_CACHE
+import com.portfolioai.market.application.SymbolSearchService.Companion.DEFAULT_LIMIT
 import com.portfolioai.market.domain.SymbolMatch
 import com.portfolioai.market.infrastructure.market.SymbolSearchClient
 import org.slf4j.LoggerFactory

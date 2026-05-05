@@ -1,6 +1,7 @@
 package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.market.domain.SectorBenchmark
+import com.portfolioai.market.infrastructure.market.SpdrSectorEtfs.resolve
 
 /**
  * Hardcoded mapping from a GICS sector label to the corresponding SPDR Select Sector ETF. Shared by

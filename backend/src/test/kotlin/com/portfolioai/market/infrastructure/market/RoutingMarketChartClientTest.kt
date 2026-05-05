@@ -6,7 +6,8 @@ import com.portfolioai.market.domain.MarketChart
 import com.portfolioai.market.domain.TickerQuote
 import java.math.BigDecimal
 import java.time.Instant
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn

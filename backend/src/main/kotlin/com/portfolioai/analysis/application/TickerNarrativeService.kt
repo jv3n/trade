@@ -1,5 +1,6 @@
 package com.portfolioai.analysis.application
 
+import com.portfolioai.analysis.application.TickerNarrativeService.Companion.SNAPSHOT_FRESHNESS_WINDOW
 import com.portfolioai.analysis.domain.TickerNarrativeJob
 import com.portfolioai.analysis.domain.TickerNarrativeSnapshot
 import com.portfolioai.analysis.infrastructure.persistence.TickerNarrativeSnapshotRepository

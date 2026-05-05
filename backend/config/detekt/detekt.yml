@@ -129,18 +129,10 @@ style:
     ignoreAnnotated:
       - 'Configuration'
       - 'ConfigurationProperties'
+  # WildcardImport is enforced by Spotless+ktlint in build.gradle.kts (build-breaking) — this
+  # Detekt rule would only duplicate the report into the SARIF without adding value.
   WildcardImport:
-    active: true
-    # Legitimate idioms in Kotlin/Spring/JPA/JUnit projects — fully qualified imports for these
-    # would just be visual noise. Anything not on this list still gets flagged.
-    excludeImports:
-      - 'java.util.*'
-      - 'jakarta.persistence.*'
-      - 'org.springframework.web.bind.annotation.*'
-      - 'org.springframework.boot.autoconfigure.condition.*'
-      - 'org.junit.jupiter.api.Assertions.*'
-      - 'org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*'
-      - 'org.springframework.test.web.servlet.result.MockMvcResultMatchers.*'
+    active: false
   MaxLineLength:
     active: true
     # Spotless ktfmt enforces 100 already on most lines ; this is a fallback for legitimate
