@@ -119,6 +119,18 @@ export interface SymbolMatch {
 }
 
 /**
+ * Resolved sector benchmark for a ticker — returned by `/api/market/ticker/{symbol}/sector-benchmark`.
+ * The frontend then re-uses the regular chart endpoint with [etfSymbol] to fetch the bars and
+ * displays `<sector> (<etfSymbol>)` in the chart legend (e.g. "Technology (XLK)").
+ */
+export interface SectorBenchmark {
+  tickerSymbol: string;
+  sector: string;
+  etfSymbol: string;
+  etfName: string;
+}
+
+/**
  * Port — read-only access to ticker market data, computed indicators and LLM narrative.
  * Backed by Twelve Data + Claude/Ollama via the backend `market/` and `analysis/` modules.
  */
@@ -138,6 +150,13 @@ export abstract class MarketRepository {
    * [getTicker]). 400 if the timeframe code is unknown (defensive whitelist server-side).
    */
   abstract getChart(symbol: string, timeframe: TimeframeCode): Observable<ChartResponse>;
+
+  /**
+   * Resolves [symbol] to its SPDR sector ETF for the chart benchmark overlay. 404 surfaces both
+   * "symbol unknown" and "sector outside the SPDR mapping" — the UI handles both as "no sector
+   * benchmark available". 503 propagates the usual `MarketUnavailableException`.
+   */
+  abstract getSectorBenchmark(symbol: string): Observable<SectorBenchmark>;
 
   /**
    * Kick off (or reuse, if cached) a narrative generation for [symbol]. The returned job may

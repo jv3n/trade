@@ -1,7 +1,9 @@
 package com.portfolioai.market.infrastructure.http
 
+import com.portfolioai.market.application.SectorClassifierService
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.application.dto.ChartDto
+import com.portfolioai.market.application.dto.SectorBenchmarkDto
 import com.portfolioai.market.application.dto.TickerSnapshotDto
 import com.portfolioai.market.application.dto.toDto
 import com.portfolioai.market.domain.Timeframe
@@ -13,7 +15,10 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/market/ticker")
-class MarketController(private val tickerService: TickerService) {
+class MarketController(
+  private val tickerService: TickerService,
+  private val sectorClassifierService: SectorClassifierService,
+) {
 
   /**
    * Returns the full ticker dossier for [symbol] : current quote, computed indicators, and the OHLC
@@ -55,4 +60,18 @@ class MarketController(private val tickerService: TickerService) {
       bars = bars.map { it.toDto() },
     )
   }
+
+  /**
+   * Resolves [symbol] to the SPDR sector ETF that tracks its GICS sector — backs the "Sector"
+   * benchmark overlay on the chart. The frontend then re-uses [getChart] with
+   * [SectorBenchmarkDto.etfSymbol] to fetch the actual bars, so this endpoint is a small lookup,
+   * not a chart-data endpoint.
+   *
+   * 404 surfaces both "symbol unknown to the provider" and "sector outside the SPDR mapping" — from
+   * the user's POV both result in "no benchmark available", and the inline UI message is the same.
+   * 503 (rate-limit / unreachable) propagates from [MarketUnavailableException].
+   */
+  @GetMapping("/{symbol}/sector-benchmark")
+  fun getSectorBenchmark(@PathVariable symbol: String): SectorBenchmarkDto =
+    sectorClassifierService.classify(symbol).toDto(symbol.trim().uppercase())
 }

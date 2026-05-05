@@ -119,13 +119,20 @@
       "compare": "Comparer à",
       "label": "Benchmark",
       "off": "Désactivé",
+      "sector": "Secteur",
       "options": {
         "spy": "S&P 500 (SPY)",
         "qqq": "Nasdaq 100 (QQQ)",
-        "iwm": "Russell 2000 (IWM)"
+        "iwm": "Russell 2000 (IWM)",
+        "sector": "Détecter automatiquement le SPDR sectoriel pour ce ticker"
+      },
+      "custom": {
+        "placeholder": "ou choisir…",
+        "empty": "Aucun ticker correspondant"
       },
       "errors": {
-        "fetch": "Impossible de charger le benchmark."
+        "fetch": "Impossible de charger le benchmark.",
+        "sectorNotMapped": "Pas de benchmark sectoriel disponible pour ce ticker."
       }
     },
     "indicators": {

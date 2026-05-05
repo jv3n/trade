@@ -20,6 +20,8 @@ import {
   ChartResponse,
   MarketRepository,
   OhlcBar,
+  SectorBenchmark,
+  SymbolMatch,
   TickerNarrativeJob,
   TickerNarrativeSnapshot,
   TickerSnapshot,
@@ -61,6 +63,8 @@ describe('TickerPage', () => {
   let market: {
     getTicker: ReturnType<typeof vi.fn>;
     getChart: ReturnType<typeof vi.fn>;
+    getSectorBenchmark: ReturnType<typeof vi.fn>;
+    searchSymbols: ReturnType<typeof vi.fn>;
     requestNarrative: ReturnType<typeof vi.fn>;
     pollNarrativeJob: ReturnType<typeof vi.fn>;
     getLatestNarrative: ReturnType<typeof vi.fn>;
@@ -76,6 +80,9 @@ describe('TickerPage', () => {
     market = {
       getTicker: vi.fn().mockReturnValue(of(EMPTY_SNAPSHOT)),
       getChart: vi.fn(),
+      // Default : no benchmark calls. Tests that exercise the sector / custom paths override.
+      getSectorBenchmark: vi.fn(),
+      searchSymbols: vi.fn().mockReturnValue(of([])),
       requestNarrative: vi.fn(),
       pollNarrativeJob: vi.fn(),
       // Default : no narrative yet (first visit). Tests that need one override this.
@@ -378,6 +385,157 @@ describe('TickerPage', () => {
       const geom = component.chartGeometry();
       expect(geom?.benchmarkPath).toBeUndefined();
       expect(geom?.yTicks[0].label).not.toContain('%');
+    });
+  });
+
+  // ---- Benchmark overlay v2 — Sector + Custom ----
+
+  /**
+   * v2 adds two new picker modes : Sector (auto-detect the SPDR sector ETF for the dossier ticker)
+   * and Custom (let the user pick any ticker via the autocomplete sidecar). Both build on the v1
+   * resolved-benchmark plumbing — the Y-axis flip and the second polyline behave the same once a
+   * benchmark is resolved. The tests below pin :
+   *
+   * - **Sector resolves via `/sector-benchmark` then fetches the ETF chart** — two-step flow, the
+   *   first call returns the resolved ETF symbol, the second fetches its bars. The legend label
+   *   reflects the sector ("Technology (XLK)") so the user knows what they're comparing against.
+   * - **Sector 404 surfaces `sectorNotMapped` inline** — different message from the generic fetch
+   *   error so the user knows to pick a preset instead.
+   * - **Custom autocomplete pick switches mode + fetches the picked symbol** — the toggle group
+   *   deselects (the value `'custom'` doesn't match any button), `resolvedBenchmark` is set, the
+   *   chart fetches the picked ETF / stock.
+   * - **Sync timeframe with sector active refetches the resolved ETF, NOT a re-resolve** — the
+   *   sector resolve is a costly Twelve Data credit ; refetching just the bars is the right
+   *   behaviour. Same for custom.
+   * - **Switching from sector to a preset clears the resolved sector legend** — the legend should
+   *   reflect the active mode, not stale state from the previous one.
+   */
+  describe('benchmark overlay v2 — sector + custom', () => {
+    const tickerBar = (close: number, ts = '2026-04-15T00:00:00Z'): OhlcBar => ({
+      timestamp: ts,
+      open: close,
+      high: close + 1,
+      low: close - 1,
+      close,
+      volume: 1_000_000,
+    });
+    const tickerBars = [tickerBar(100), tickerBar(110, '2026-04-16T00:00:00Z')];
+    const benchBars = [tickerBar(200), tickerBar(210, '2026-04-16T00:00:00Z')];
+
+    const SECTOR_AAPL_XLK: SectorBenchmark = {
+      tickerSymbol: 'AAPL',
+      sector: 'Technology',
+      etfSymbol: 'XLK',
+      etfName: 'Technology Select Sector SPDR Fund',
+    };
+
+    /** Returns a `getChart` impl that yields `benchBars` for any non-AAPL symbol. Simpler than the
+     *  v1 helper because v2 doesn't care whether the bench is a preset, ETF or arbitrary stock —
+     *  the chart endpoint is symbol-agnostic. */
+    function chartImpl(sym: string, tf: TimeframeCode): Observable<ChartResponse> {
+      const isBench = sym !== 'AAPL';
+      return of({
+        symbol: sym,
+        timeframe: tf,
+        range: tf,
+        interval: '1d',
+        bars: isBench ? benchBars : tickerBars,
+      });
+    }
+
+    it('Sector resolves via getSectorBenchmark then fetches the ETF chart', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      market.getSectorBenchmark.mockReturnValue(of(SECTOR_AAPL_XLK));
+      fixture.detectChanges();
+
+      component.selectBenchmark('sector');
+
+      expect(market.getSectorBenchmark).toHaveBeenCalledWith('AAPL');
+      // After the resolve, the legend label combines sector + ETF symbol so the user understands
+      // what the dashed line represents.
+      expect(component.resolvedBenchmark()).toEqual({
+        symbol: 'XLK',
+        label: 'Technology (XLK)',
+      });
+      // The chart endpoint is then hit for the resolved ETF, NOT for the dossier ticker.
+      expect(market.getChart).toHaveBeenCalledWith('XLK', '1y');
+      expect(component.benchmarkBars()).toEqual(benchBars);
+    });
+
+    it('Sector 404 surfaces sectorNotMapped inline and skips the chart fetch', () => {
+      // Symbol unknown to the provider OR sector outside the SPDR mapping — both surface as 404.
+      // The frontend shows a polite "no sector benchmark available" rather than the generic
+      // "couldn't load" so the user knows to pick a preset instead.
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      market.getSectorBenchmark.mockReturnValue(throwError(() => ({ status: 404 })));
+      fixture.detectChanges();
+
+      component.selectBenchmark('sector');
+
+      // i18n key surfaces verbatim in the slice (no translations loaded) — sufficient to pin.
+      expect(component.benchmarkError()).toContain('sectorNotMapped');
+      expect(component.benchmarkLoading()).toBe(false);
+      expect(component.resolvedBenchmark()).toBeNull();
+      // Chart endpoint must NOT be hit for any benchmark symbol — the dossier ticker AAPL was
+      // already loaded by getTicker, so getChart should remain at zero calls.
+      expect(market.getChart).not.toHaveBeenCalled();
+      // The main chart and dossier are untouched.
+      expect(component.chartBars()).toEqual(tickerBars);
+      expect(component.chartError()).toBeNull();
+    });
+
+    it('Custom autocomplete pick switches mode and fetches the picked symbol', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      fixture.detectChanges();
+
+      const msft: SymbolMatch = { symbol: 'MSFT', name: 'Microsoft', exchange: 'NASDAQ' };
+      // The autocomplete picks emit a `MatAutocompleteSelectedEvent` whose `option.value` is the
+      // SymbolMatch. We synthesize the minimal shape the handler reads — no need to mock the full
+      // event class.
+      component.onCustomBenchmarkSelected({
+        option: { value: msft },
+      } as unknown as Parameters<typeof component.onCustomBenchmarkSelected>[0]);
+
+      expect(component.selectedBenchmark()).toBe('custom');
+      expect(component.resolvedBenchmark()).toEqual({ symbol: 'MSFT', label: 'MSFT' });
+      expect(market.getChart).toHaveBeenCalledWith('MSFT', '1y');
+      expect(component.benchmarkBars()).toEqual(benchBars);
+    });
+
+    it('selectTimeframe with Sector active refetches the resolved ETF without re-resolving', () => {
+      // Re-resolving the sector on every timeframe click would burn a Twelve Data credit per
+      // click — confirm the cached resolve sticks and only the chart bars are refetched.
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      market.getSectorBenchmark.mockReturnValue(of(SECTOR_AAPL_XLK));
+      fixture.detectChanges();
+      component.selectBenchmark('sector');
+      market.getChart.mockClear();
+      market.getSectorBenchmark.mockClear();
+
+      component.selectTimeframe('1mo');
+
+      expect(market.getSectorBenchmark).not.toHaveBeenCalled();
+      expect(market.getChart).toHaveBeenCalledWith('AAPL', '1mo');
+      expect(market.getChart).toHaveBeenCalledWith('XLK', '1mo');
+    });
+
+    it('Switching from sector to a preset clears the resolved sector legend', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      market.getSectorBenchmark.mockReturnValue(of(SECTOR_AAPL_XLK));
+      fixture.detectChanges();
+      component.selectBenchmark('sector');
+      expect(component.resolvedBenchmark()?.label).toBe('Technology (XLK)');
+
+      component.selectBenchmark('SPY');
+
+      // Legend reflects the active mode now (just the preset symbol), not the stale sector label.
+      expect(component.resolvedBenchmark()).toEqual({ symbol: 'SPY', label: 'SPY' });
+      expect(component.selectedBenchmark()).toBe('SPY');
     });
   });
 

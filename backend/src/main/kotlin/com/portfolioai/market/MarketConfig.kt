@@ -35,7 +35,8 @@ class MarketConfig {
 
   @Bean
   fun cacheManager(appConfig: AppConfigService): CaffeineCacheManager {
-    val mgr = CaffeineCacheManager(MARKET_CHART_CACHE, NEWS_CACHE, SYMBOL_SEARCH_CACHE)
+    val mgr =
+      CaffeineCacheManager(MARKET_CHART_CACHE, NEWS_CACHE, SYMBOL_SEARCH_CACHE, SECTOR_CACHE)
     mgr.setCaffeine(buildSpec(appConfig.getInt(ConfigKeys.CACHE_TTL_MINUTES)))
     return mgr
   }
@@ -56,6 +57,13 @@ class MarketConfig {
      * want to spare credits ; v1 keeps everything aligned for simplicity.
      */
     const val SYMBOL_SEARCH_CACHE = "symbol-search"
+
+    /**
+     * Sector → SPDR ETF mapping per symbol — keyed on the uppercase ticker. A stock's sector
+     * changes only on a corporate event (rare), so the 15 min shared TTL is generous. Backs the
+     * "Sector" benchmark overlay on the dossier ticker chart.
+     */
+    const val SECTOR_CACHE = "sector-by-symbol"
 
     internal fun buildSpec(ttlMinutes: Int): Caffeine<Any, Any> =
       Caffeine.newBuilder().expireAfterWrite(ttlMinutes.toLong(), TimeUnit.MINUTES).maximumSize(500)

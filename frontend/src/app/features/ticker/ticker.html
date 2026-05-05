@@ -79,13 +79,24 @@
             aria-label="{{ 'ticker.benchmark.label' | translate }}"
             hideSingleSelectionIndicator
           >
-            @for (bm of benchmarkChoices; track bm) {
+            @for (bm of benchmarkToggleChoices; track bm) {
               @if (bm === 'off') {
                 <mat-button-toggle
                   [value]="bm"
                   [attr.aria-label]="'ticker.benchmark.off' | translate"
                 >
                   {{ 'ticker.benchmark.off' | translate }}
+                </mat-button-toggle>
+              } @else if (bm === 'sector') {
+                <!-- "Sector" auto-detects the SPDR sector ETF for the dossier ticker via the
+                     `/sector-benchmark` endpoint, then plots it. Tooltip explains the behaviour. -->
+                <mat-button-toggle
+                  [value]="bm"
+                  [matTooltip]="'ticker.benchmark.options.sector' | translate"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'ticker.benchmark.options.sector' | translate"
+                >
+                  {{ 'ticker.benchmark.sector' | translate }}
                 </mat-button-toggle>
               } @else {
                 <!-- matTooltip + aria-label expand the bare ticker (e.g. "IWM") into the full
@@ -101,6 +112,48 @@
               }
             }
           </mat-button-toggle-group>
+
+          <!-- Custom autocomplete sidecar — picking a suggestion switches the picker mode to
+               'custom' (the toggle group deselects since 'custom' isn't a button), and the chart
+               re-fetches against the picked symbol. -->
+          <mat-form-field
+            appearance="outline"
+            class="benchmark-autocomplete"
+            subscriptSizing="dynamic"
+          >
+            <input
+              type="text"
+              matInput
+              [formControl]="customBenchmarkControl"
+              [matAutocomplete]="customBenchmarkAuto"
+              [placeholder]="'ticker.benchmark.custom.placeholder' | translate"
+              [attr.aria-label]="'ticker.benchmark.custom.placeholder' | translate"
+            />
+            <mat-autocomplete
+              #customBenchmarkAuto="matAutocomplete"
+              class="benchmark-autocomplete-panel"
+              [displayWith]="displayCustomBenchmark"
+              (optionSelected)="onCustomBenchmarkSelected($event)"
+            >
+              @for (s of customBenchmarkSuggestions(); track s.symbol) {
+                <mat-option [value]="s">
+                  <strong>{{ s.symbol }}</strong>
+                  <span class="benchmark-suggestion-name"> — {{ s.name }}</span>
+                  <span class="benchmark-suggestion-exchange">({{ s.exchange }})</span>
+                </mat-option>
+              }
+              @if (
+                customBenchmarkSuggestions().length === 0 &&
+                !customBenchmarkSearching() &&
+                customBenchmarkControl.value
+              ) {
+                <mat-option disabled>
+                  {{ 'ticker.benchmark.custom.empty' | translate }}
+                </mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+
           @if (benchmarkLoading()) {
             <mat-spinner diameter="14"></mat-spinner>
           }
@@ -199,7 +252,7 @@
               @if (hi.benchmarkLabel; as bl) {
                 <div class="tooltip-row">
                   <span class="tooltip-swatch tooltip-swatch-benchmark"></span>
-                  <span class="tooltip-name">{{ selectedBenchmark() }}</span>
+                  <span class="tooltip-name">{{ resolvedBenchmark()?.label }}</span>
                   <span class="tooltip-price">{{ bl }}</span>
                 </div>
               }

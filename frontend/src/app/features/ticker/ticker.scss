@@ -153,19 +153,42 @@
   }
 }
 
-// "Compare to:" label + benchmark toggle group, pushed to the far right of the toolbar so it
-// reads as a secondary control next to the primary timeframe picker.
+// "Compare to:" label + benchmark toggle group + custom autocomplete sidecar, pushed to the far
+// right of the toolbar so they read as secondary controls next to the primary timeframe picker.
 .benchmark-controls {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   margin-left: auto;
+  flex-wrap: wrap;
 }
 
 .benchmark-label {
   font-size: 0.75rem;
   color: var(--color-text-dim);
   font-weight: 500;
+}
+
+// Custom benchmark autocomplete — compact rendering inline next to the toggle group. The default
+// `mat-form-field` is too tall (built for forms, not toolbars), so we trim the wrapper height and
+// font size to match the toggle button vibe. The dropdown panel itself lives in the CDK overlay
+// (sibling of `<app-root>`), so its compact styling lives in `styles.scss` keyed on
+// `.benchmark-autocomplete-panel`.
+.benchmark-autocomplete {
+  width: 11rem;
+  font-size: 0.8rem;
+
+  // Material's outline form-field has a large built-in vertical padding by default ; collapse it
+  // so the input lines up with the toggle group buttons.
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 32px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
 }
 
 .chart-error,

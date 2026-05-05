@@ -5,6 +5,7 @@ import {
   ChartResponse,
   MarketRepository,
   NarrativePromptPreview,
+  SectorBenchmark,
   SymbolMatch,
   TickerNarrativeJob,
   TickerNarrativeSnapshot,
@@ -40,6 +41,12 @@ export class HttpMarketRepository extends MarketRepository {
     return this.http.get<ChartResponse>(`/api/market/ticker/${encodeURIComponent(symbol)}/chart`, {
       params: { timeframe },
     });
+  }
+
+  getSectorBenchmark(symbol: string): Observable<SectorBenchmark> {
+    return this.http.get<SectorBenchmark>(
+      `/api/market/ticker/${encodeURIComponent(symbol)}/sector-benchmark`,
+    );
   }
 
   requestNarrative(symbol: string): Observable<TickerNarrativeJob> {

@@ -467,3 +467,34 @@ textarea {
     margin-left: 0.4rem;
   }
 }
+
+// ----------------------------------------------------------------------
+// `mat-autocomplete` panel — ticker dossier benchmark sidecar
+// ----------------------------------------------------------------------
+// Same root cause as the watchlist panel above (panel rendered in the CDK overlay, out of
+// component reach) — the default Material option size (~0.875 rem, 3 rem height) reads
+// oversized in the chart toolbar. Mirror the compact styling here. Kept as a separate panel
+// class rather than reused so renaming one won't silently break the other.
+.benchmark-autocomplete-panel.mat-mdc-autocomplete-panel {
+  .mat-mdc-option {
+    min-height: 2rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+
+    .mdc-list-item__primary-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  .benchmark-suggestion-name {
+    color: var(--color-text-dim);
+    font-weight: 400;
+    margin-left: 0.15rem;
+  }
+
+  .benchmark-suggestion-exchange {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+    margin-left: 0.4rem;
+  }
+}

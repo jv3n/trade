@@ -1,8 +1,10 @@
 package com.portfolioai.market.infrastructure.http
 
+import com.portfolioai.market.application.SectorClassifierService
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
+import com.portfolioai.market.domain.SectorBenchmark
 import com.portfolioai.market.domain.Timeframe
 import com.portfolioai.shared.GlobalExceptionHandler
 import java.math.BigDecimal
@@ -44,6 +46,8 @@ class MarketControllerTest {
   @Autowired private lateinit var mvc: MockMvc
 
   @MockitoBean private lateinit var tickerService: TickerService
+
+  @MockitoBean private lateinit var sectorClassifierService: SectorClassifierService
 
   // ---------------------------------------------------------------------- happy path
 
@@ -123,6 +127,62 @@ class MarketControllerTest {
 
     mvc
       .perform(get("/api/market/ticker/AAPL/chart"))
+      .andExpect(status().isServiceUnavailable)
+      .andExpect(jsonPath("$.error").exists())
+  }
+
+  // ---------------------------------------------------------------------- sector benchmark
+
+  /**
+   * `GET /sector-benchmark` resolves the ticker to its SPDR sector ETF. Two outcomes that need to
+   * be pinned : a happy path that echoes back the canonical uppercase symbol + the resolved ETF,
+   * and a 404 path that surfaces both "symbol unknown" and "sector outside SPDR mapping" the same
+   * way (the global handler maps `NoSuchElementException` to HTTP 404 ; the controller doesn't
+   * disambiguate because the user-facing UI message is identical).
+   */
+  @Test
+  fun `GET sector-benchmark returns the SPDR ETF for a known ticker`() {
+    given(sectorClassifierService.classify("AAPL"))
+      .willReturn(SectorBenchmark("Technology", "XLK", "Technology Select Sector SPDR Fund"))
+
+    mvc
+      .perform(get("/api/market/ticker/AAPL/sector-benchmark"))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.tickerSymbol").value("AAPL"))
+      .andExpect(jsonPath("$.sector").value("Technology"))
+      .andExpect(jsonPath("$.etfSymbol").value("XLK"))
+      .andExpect(jsonPath("$.etfName").value("Technology Select Sector SPDR Fund"))
+  }
+
+  @Test
+  fun `GET sector-benchmark uppercases the symbol in the response even when URL is lowercase`() {
+    given(sectorClassifierService.classify(any()))
+      .willReturn(SectorBenchmark("Technology", "XLK", "Technology Select Sector SPDR Fund"))
+
+    mvc
+      .perform(get("/api/market/ticker/aapl/sector-benchmark"))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.tickerSymbol").value("AAPL"))
+  }
+
+  @Test
+  fun `GET sector-benchmark returns 404 when no SPDR mapping exists for the symbol`() {
+    given(sectorClassifierService.classify(any()))
+      .willThrow(NoSuchElementException("No SPDR sector ETF mapping for XYZ"))
+
+    mvc
+      .perform(get("/api/market/ticker/XYZ/sector-benchmark").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isNotFound)
+      .andExpect(jsonPath("$.error").exists())
+  }
+
+  @Test
+  fun `GET sector-benchmark returns 503 when the provider is unavailable`() {
+    given(sectorClassifierService.classify(any()))
+      .willThrow(MarketUnavailableException("rate-limited"))
+
+    mvc
+      .perform(get("/api/market/ticker/AAPL/sector-benchmark"))
       .andExpect(status().isServiceUnavailable)
       .andExpect(jsonPath("$.error").exists())
   }

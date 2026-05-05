@@ -1,16 +1,33 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import {
+  Subscription,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  of,
+  switchMap,
+} from 'rxjs';
 import { LanguageService } from '../../core/language.service';
 import {
   MarketRepository,
   OhlcBar,
+  SymbolMatch,
   TickerNarrativeSnapshot,
   TickerSnapshot,
   TIMEFRAME_CODES,
@@ -18,6 +35,12 @@ import {
 } from '../../core/market.repository';
 import { NewsItem, NewsRepository } from '../../core/news.repository';
 import { WatchlistRepository } from '../../core/watchlist.repository';
+
+/**
+ * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
+ * across the app.
+ */
+const BENCHMARK_SEARCH_DEBOUNCE_MS = 300;
 
 interface ChartPoint {
   x: number;
@@ -77,20 +100,39 @@ interface HoverInfo {
 }
 
 /**
- * Benchmark dropdown values. `'off'` is the sentinel for "no overlay" — using a string instead of
- * null keeps `mat-button-toggle-group` happy (it doesn't bind cleanly to nullable values).
+ * Benchmark picker values. `'off'` is the sentinel for "no overlay" ; the four buttons in the
+ * toolbar are `off | SPY | QQQ | IWM | sector`. `'custom'` is set internally when the user picks
+ * a ticker from the autocomplete sidecar — there's no Custom *button* in the toggle group, the
+ * toggle simply deselects when the user picks via the autocomplete.
+ *
+ * Using a string sentinel rather than `null` keeps `mat-button-toggle-group` happy (it doesn't
+ * bind cleanly to nullable values).
  */
-export type BenchmarkChoice = 'off' | 'SPY' | 'QQQ' | 'IWM';
+export type BenchmarkChoice = 'off' | 'SPY' | 'QQQ' | 'IWM' | 'sector' | 'custom';
 
-export const BENCHMARK_CHOICES: BenchmarkChoice[] = ['off', 'SPY', 'QQQ', 'IWM'];
+/** Toggle-group buttons in display order — `'custom'` is excluded (set via the autocomplete only). */
+export const BENCHMARK_TOGGLE_CHOICES: BenchmarkChoice[] = ['off', 'SPY', 'QQQ', 'IWM', 'sector'];
+
+/** What's actually plotted under the ticker line. `null` means no overlay (mode `'off'` or
+ *  `'custom'` waiting for a pick or `'sector'` waiting for the resolve). */
+interface ResolvedBenchmark {
+  /** Symbol passed to `getChart` to fetch the bars (e.g. `SPY`, `XLK`, `MSFT`). */
+  symbol: string;
+  /** Display label for the chart legend / tooltip (e.g. `SPY`, `Technology (XLK)`, `MSFT`). */
+  label: string;
+}
 
 @Component({
   selector: 'app-ticker',
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     RouterLink,
+    MatAutocompleteModule,
     MatButtonToggleModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     TranslatePipe,
@@ -105,6 +147,7 @@ export class TickerPage implements OnInit, OnDestroy {
   private readonly watchlistRepository = inject(WatchlistRepository);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
+  private readonly destroyRef = inject(DestroyRef);
 
   symbol = signal<string>('');
   loading = signal(false);
@@ -129,18 +172,33 @@ export class TickerPage implements OnInit, OnDestroy {
 
   // ---- Benchmark overlay state ----
 
-  /** Available benchmark options (incl. the `'off'` sentinel). Exposed for the template. */
-  readonly benchmarkChoices = BENCHMARK_CHOICES;
-  /** Active benchmark — `'off'` means no overlay (default, no quota burn). When set to a symbol,
-   *  triggers a separate `getChart` call and flips the chart Y-axis from price to % return. */
+  /** Toggle-group buttons (excludes `'custom'`, which is set via the autocomplete sidecar). */
+  readonly benchmarkToggleChoices = BENCHMARK_TOGGLE_CHOICES;
+  /** Active picker mode. Drives the toggle group selection and tells [chartGeometry] whether to
+   *  flip the Y axis to percent. `'custom'` is set when the user picks via the autocomplete. */
   selectedBenchmark = signal<BenchmarkChoice>('off');
-  /** Bars for the active benchmark, aligned by index to [chartBars] (no date matching v1 — relies
+  /** What's actually plotted under the ticker line. `null` while resolving (sector) or waiting
+   *  for the user to pick (custom). The chart geometry uses this to decide whether to draw the
+   *  benchmark polyline ; the legend reads [label] from here. */
+  resolvedBenchmark = signal<ResolvedBenchmark | null>(null);
+  /** Bars for [resolvedBenchmark], aligned by index to [chartBars] (no date matching v1 — relies
    *  on US-listed benchmarks following the same trading calendar as US-listed tickers). */
   benchmarkBars = signal<OhlcBar[]>([]);
   benchmarkLoading = signal(false);
   /** Inline error scoped to the benchmark — a 503 here must NOT clear the main chart. */
   benchmarkError = signal<string | null>(null);
   private benchmarkSub?: Subscription;
+  private sectorResolveSub?: Subscription;
+
+  /**
+   * Custom-benchmark autocomplete control. Mirrors the dashboard watchlist autocomplete shape :
+   * `string | SymbolMatch | null` — flips between the typed string and a picked `SymbolMatch`.
+   */
+  customBenchmarkControl = new FormControl<string | SymbolMatch | null>('');
+  /** Suggestions currently displayed in the autocomplete dropdown. */
+  customBenchmarkSuggestions = signal<SymbolMatch[]>([]);
+  /** True while the search HTTP call is in flight ; drives the dropdown spinner. */
+  customBenchmarkSearching = signal(false);
 
   // ---- News state ----
 
@@ -193,10 +251,10 @@ export class TickerPage implements OnInit, OnDestroy {
 
     // Benchmark mode flips the Y axis from absolute price to % return from the first close.
     // Without this the two series can't share an axis (SPY at $500 next to a small-cap at $15
-    // would crush one curve into a flat line). The flip happens *as soon as the user toggles*
-    // — even before the benchmark bars arrive — so the click feels responsive ; the second
-    // line just appears once the fetch resolves.
-    const benchOn = this.selectedBenchmark() !== 'off';
+    // would crush one curve into a flat line). The flip happens *as soon as a benchmark is
+    // resolved* — for presets that's the click, for sector that's the API resolve, for custom
+    // that's the autocomplete pick. The second line appears once the chart bars fetch resolves.
+    const benchOn = this.resolvedBenchmark() !== null;
     const benchBars = this.benchmarkBars();
     const benchLoaded = benchOn && benchBars.length >= 2;
 
@@ -287,7 +345,7 @@ export class TickerPage implements OnInit, OnDestroy {
     const point = geom.points[idx];
     if (!point) return null;
 
-    const benchOn = this.selectedBenchmark() !== 'off';
+    const benchOn = this.resolvedBenchmark() !== null;
     const tickerBars = this.chartBars();
     const benchBars = this.benchmarkBars();
 
@@ -381,11 +439,13 @@ export class TickerPage implements OnInit, OnDestroy {
     this.loadLatestNarrative(s);
     this.loadWatchlistState(s);
     this.loadNews(s);
+    this.wireCustomBenchmarkSearch();
   }
 
   ngOnDestroy(): void {
     this.chartSub?.unsubscribe();
     this.benchmarkSub?.unsubscribe();
+    this.sectorResolveSub?.unsubscribe();
     this.narrativePollSub?.unsubscribe();
   }
 
@@ -433,42 +493,100 @@ export class TickerPage implements OnInit, OnDestroy {
       },
     });
     // Refetch the benchmark for the new timeframe so the two series stay in sync. Done in
-    // parallel — a slow benchmark fetch must not delay the main chart.
-    const bench = this.selectedBenchmark();
-    if (bench !== 'off') {
-      this.fetchBenchmark(bench, tf);
+    // parallel — a slow benchmark fetch must not delay the main chart. Uses [resolvedBenchmark]
+    // so a sector overlay refetches the resolved ETF (XLK) rather than re-resolving from scratch,
+    // and a custom overlay refetches the picked symbol.
+    const resolved = this.resolvedBenchmark();
+    if (resolved) {
+      this.fetchBenchmarkBars(resolved.symbol, tf);
     }
   }
 
   // ---- Benchmark overlay ----
 
   /**
-   * Switches the active benchmark. `'off'` clears the overlay (and any previous error) without
-   * fetching anything. Re-clicking the active choice is a no-op so the toggle group doesn't burn
-   * an extra `getChart` credit on every click.
+   * Toggle-group click handler. For `off` and the three preset indices, resolution is synchronous
+   * (the symbol IS the picker value). For `sector`, we kick the `/sector-benchmark` resolve and
+   * fetch the bars when it lands. `custom` is never set via the toggle group — the user picks via
+   * the autocomplete sidecar, see [onCustomBenchmarkSelected].
+   *
+   * Re-clicking the active choice is a no-op so the toggle doesn't burn an extra `getChart` credit
+   * on every click.
    */
   selectBenchmark(choice: BenchmarkChoice): void {
     if (choice === this.selectedBenchmark()) return;
     this.selectedBenchmark.set(choice);
+    // Clear the autocomplete sidecar on any toggle change — a click on SPY shouldn't leave a stale
+    // "MSFT" string lingering in the input.
+    this.customBenchmarkControl.setValue('', { emitEvent: false });
+    this.customBenchmarkSuggestions.set([]);
     // Drop hover so a stale tooltip from the previous benchmark doesn't linger over a bar that
     // may not have a matching benchmark point in the new series (different bar counts).
     this.hoveredIndex.set(null);
+
+    this.benchmarkSub?.unsubscribe();
+    this.sectorResolveSub?.unsubscribe();
+    this.benchmarkError.set(null);
+
     if (choice === 'off') {
+      this.resolvedBenchmark.set(null);
       this.benchmarkBars.set([]);
-      this.benchmarkError.set(null);
       this.benchmarkLoading.set(false);
-      this.benchmarkSub?.unsubscribe();
       return;
     }
-    this.fetchBenchmark(choice, this.selectedTimeframe());
+
+    if (choice === 'sector') {
+      this.resolveSectorBenchmark();
+      return;
+    }
+
+    // Preset index : SPY / QQQ / IWM. Resolved symbol = the choice itself.
+    this.resolvedBenchmark.set({ symbol: choice, label: choice });
+    this.benchmarkBars.set([]);
+    this.fetchBenchmarkBars(choice, this.selectedTimeframe());
   }
 
   /**
-   * Fetches benchmark bars at the current timeframe. On error we clear the bars so a stale
-   * curve from the previous benchmark doesn't linger under a fresh error banner. Type-restricted
-   * to non-`'off'` choices so a misuse can't slip past the compiler.
+   * Two-step Sector flow : (1) call `/sector-benchmark` to resolve the dossier ticker to its SPDR
+   * sector ETF, then (2) fetch the chart bars for that ETF and plot. A 404 from the resolve means
+   * the sector isn't in the SPDR mapping (or the ticker isn't in the mock seed) — surface a polite
+   * inline message rather than a generic error so the user understands they can pick a preset
+   * instead.
    */
-  private fetchBenchmark(symbol: Exclude<BenchmarkChoice, 'off'>, tf: TimeframeCode): void {
+  private resolveSectorBenchmark(): void {
+    const sym = this.symbol();
+    if (!sym) return;
+    this.resolvedBenchmark.set(null);
+    this.benchmarkBars.set([]);
+    this.benchmarkLoading.set(true);
+    this.sectorResolveSub?.unsubscribe();
+    this.sectorResolveSub = this.marketRepository.getSectorBenchmark(sym).subscribe({
+      next: (sb) => {
+        this.resolvedBenchmark.set({
+          symbol: sb.etfSymbol,
+          label: `${sb.sector} (${sb.etfSymbol})`,
+        });
+        this.fetchBenchmarkBars(sb.etfSymbol, this.selectedTimeframe());
+      },
+      error: (err: { status?: number }) => {
+        this.benchmarkError.set(
+          this.translate.instant(
+            err?.status === 404
+              ? 'ticker.benchmark.errors.sectorNotMapped'
+              : 'ticker.benchmark.errors.fetch',
+          ),
+        );
+        this.benchmarkLoading.set(false);
+      },
+    });
+  }
+
+  /**
+   * Fetches the chart bars for [symbol] at [tf]. Provider-agnostic — used for presets, sector
+   * (after resolve) and custom benchmarks alike. On error we clear the bars so a stale curve from
+   * the previous benchmark doesn't linger under a fresh error banner.
+   */
+  private fetchBenchmarkBars(symbol: string, tf: TimeframeCode): void {
     this.benchmarkLoading.set(true);
     this.benchmarkError.set(null);
     this.benchmarkSub?.unsubscribe();
@@ -483,6 +601,65 @@ export class TickerPage implements OnInit, OnDestroy {
         this.benchmarkLoading.set(false);
       },
     });
+  }
+
+  // ---- Custom benchmark autocomplete ----
+
+  /**
+   * Mirrors the dashboard watchlist autocomplete wiring : debounce the typed string, search the
+   * configured market provider, drop the dropdown silently on a 503 (search is best-effort, the
+   * inline error is reserved for the actual chart fetch).
+   *
+   * The `filter(string)` upstream of debounce is essential — when the user picks a suggestion, the
+   * control flips to a `SymbolMatch` object and we must NOT trigger another search with the
+   * previously-typed string still buffered.
+   */
+  private wireCustomBenchmarkSearch(): void {
+    this.customBenchmarkControl.valueChanges
+      .pipe(
+        filter((v): v is string => typeof v === 'string'),
+        debounceTime(BENCHMARK_SEARCH_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        switchMap((typed) => {
+          const trimmed = typed.trim();
+          if (trimmed.length === 0) {
+            this.customBenchmarkSuggestions.set([]);
+            return of<SymbolMatch[]>([]);
+          }
+          this.customBenchmarkSearching.set(true);
+          return this.marketRepository
+            .searchSymbols(trimmed)
+            .pipe(catchError(() => of<SymbolMatch[]>([])));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((suggestions) => {
+        this.customBenchmarkSuggestions.set(suggestions);
+        this.customBenchmarkSearching.set(false);
+      });
+  }
+
+  /**
+   * Called when the user picks an option in the custom-benchmark autocomplete. Switches the
+   * picker mode to `'custom'` (which deselects the toggle group visually since `custom` isn't a
+   * button), sets [resolvedBenchmark] to the picked symbol, fetches its bars.
+   */
+  onCustomBenchmarkSelected(event: MatAutocompleteSelectedEvent): void {
+    const match = event.option.value as SymbolMatch;
+    this.selectedBenchmark.set('custom');
+    this.resolvedBenchmark.set({ symbol: match.symbol, label: match.symbol });
+    this.benchmarkBars.set([]);
+    this.benchmarkError.set(null);
+    this.hoveredIndex.set(null);
+    this.sectorResolveSub?.unsubscribe();
+    this.fetchBenchmarkBars(match.symbol, this.selectedTimeframe());
+  }
+
+  /** `mat-autocomplete [displayWith]` formatter — same shape as the dashboard. */
+  displayCustomBenchmark(value: SymbolMatch | string | null): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    return value.symbol;
   }
 
   /**

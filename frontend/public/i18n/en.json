@@ -119,13 +119,20 @@
       "compare": "Compare to",
       "label": "Benchmark",
       "off": "Off",
+      "sector": "Sector",
       "options": {
         "spy": "S&P 500 (SPY)",
         "qqq": "Nasdaq 100 (QQQ)",
-        "iwm": "Russell 2000 (IWM)"
+        "iwm": "Russell 2000 (IWM)",
+        "sector": "Auto-detect the SPDR sector ETF for this ticker"
+      },
+      "custom": {
+        "placeholder": "or pick…",
+        "empty": "No matching ticker"
       },
       "errors": {
-        "fetch": "Couldn't load the benchmark."
+        "fetch": "Couldn't load the benchmark.",
+        "sectorNotMapped": "No sector benchmark available for this ticker."
       }
     },
     "indicators": {

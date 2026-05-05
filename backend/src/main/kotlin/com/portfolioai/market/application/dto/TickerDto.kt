@@ -2,6 +2,7 @@ package com.portfolioai.market.application.dto
 
 import com.portfolioai.market.domain.Indicators
 import com.portfolioai.market.domain.OhlcBar
+import com.portfolioai.market.domain.SectorBenchmark
 import com.portfolioai.market.domain.TickerQuote
 import com.portfolioai.market.domain.TickerSnapshot
 import java.math.BigDecimal
@@ -65,6 +66,29 @@ data class ChartDto(
   val interval: String,
   val bars: List<OhlcBarDto>,
 )
+
+/**
+ * Response payload for the sector benchmark lookup. Returned by `GET .../{symbol}/sector-benchmark`
+ * when a SPDR sector ETF maps to the ticker's GICS sector.
+ *
+ * [tickerSymbol] echoes back the URL path symbol (uppercased) so the frontend can correlate when
+ * multiple lookups are in flight. [etfSymbol] is what the chart fetches next via the regular
+ * `/chart` endpoint to draw the overlay ; [sector] / [etfName] feed the legend label.
+ */
+data class SectorBenchmarkDto(
+  val tickerSymbol: String,
+  val sector: String,
+  val etfSymbol: String,
+  val etfName: String,
+)
+
+fun SectorBenchmark.toDto(tickerSymbol: String) =
+  SectorBenchmarkDto(
+    tickerSymbol = tickerSymbol,
+    sector = sector,
+    etfSymbol = etfSymbol,
+    etfName = etfName,
+  )
 
 fun TickerQuote.toDto() =
   TickerQuoteDto(
