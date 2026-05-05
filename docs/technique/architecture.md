@@ -157,7 +157,7 @@ Hexagonal léger sous `frontend/src/app/` :
 - **`public/i18n/`** — fichiers de traduction `<lang>.json` (FR + EN), servis comme assets statiques par le HTTP loader de `ngx-translate`
 - **`features/`** — *primary adapters*
   - `dashboard/` — portefeuille, tickers détenus, watchlist (sidebar 3 sections collapsables)
-  - `ticker/` — dossier par symbole : graphe multi-timeframe + axes + crosshair, indicateurs, narratif IA, bouton watchlist
+  - `ticker/` — dossier par symbole : graphe multi-timeframe + axes + crosshair + **overlay benchmark opt-in** (SPY/QQQ/IWM, Y-axis bi-mode prix/% return, 2ᵉ polyline dashed, `MatTooltipModule`), indicateurs, narratif IA, bouton watchlist
   - `import/` — drag & drop CSV
   - `suivi/` — timeline snapshots
   - `settings/` — sources / test-sources / prompt-preview / configuration (runtime config Phase 2)

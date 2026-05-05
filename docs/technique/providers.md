@@ -66,7 +66,7 @@ Si le bouton "Buy credits" est grisé : ajouter une carte au compte d'abord, et 
 |---|---|
 | **Site** | [https://ollama.com](https://ollama.com) |
 | **Installation** | Lancée automatiquement par `tilt up` via `docker-compose.yml` |
-| **Modèle par défaut** | `qwen2.5:3b` (~2 Go, ~5-10 s par narratif sur M1) — pull via le bouton Tilt **`llm:pull-qwen`** |
+| **Modèle par défaut** | `qwen2.5:3b` (~2 Go, ~5-10 s par narratif sur M1) — pull via le bouton Tilt **`llm:ensure-model`** (idempotent) |
 | **Modèles testés** | `qwen2.5:3b` ✅ (défaut), `qwen2.5:7b` (15-30 s, qualité +), `mistral` 7B ❌ (30-60 s, timeouts sur M1) |
 | **Config** | `ollama.base-url`, `ollama.model` |
 | **Client** | `OllamaClient` (sélectionné par `llm.provider: ollama`) |
