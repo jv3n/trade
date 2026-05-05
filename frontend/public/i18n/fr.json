@@ -115,6 +115,19 @@
         "5y": "5A"
       }
     },
+    "benchmark": {
+      "compare": "Comparer à",
+      "label": "Benchmark",
+      "off": "Désactivé",
+      "options": {
+        "spy": "S&P 500 (SPY)",
+        "qqq": "Nasdaq 100 (QQQ)",
+        "iwm": "Russell 2000 (IWM)"
+      },
+      "errors": {
+        "fetch": "Impossible de charger le benchmark."
+      }
+    },
     "indicators": {
       "rsi": "RSI(14)",
       "drawdown52w": "Drawdown 52w",

@@ -69,7 +69,50 @@
         @if (chartLoading()) {
           <mat-spinner diameter="16"></mat-spinner>
         }
+
+        <span class="benchmark-controls">
+          <span class="benchmark-label">{{ 'ticker.benchmark.compare' | translate }}</span>
+          <mat-button-toggle-group
+            [value]="selectedBenchmark()"
+            (change)="selectBenchmark($event.value)"
+            [disabled]="benchmarkLoading()"
+            aria-label="{{ 'ticker.benchmark.label' | translate }}"
+            hideSingleSelectionIndicator
+          >
+            @for (bm of benchmarkChoices; track bm) {
+              @if (bm === 'off') {
+                <mat-button-toggle
+                  [value]="bm"
+                  [attr.aria-label]="'ticker.benchmark.off' | translate"
+                >
+                  {{ 'ticker.benchmark.off' | translate }}
+                </mat-button-toggle>
+              } @else {
+                <!-- matTooltip + aria-label expand the bare ticker (e.g. "IWM") into the full
+                     index name ("Russell 2000 (IWM)") for both sighted hover and screen readers. -->
+                <mat-button-toggle
+                  [value]="bm"
+                  [matTooltip]="'ticker.benchmark.options.' + bm.toLowerCase() | translate"
+                  matTooltipPosition="above"
+                  [attr.aria-label]="'ticker.benchmark.options.' + bm.toLowerCase() | translate"
+                >
+                  {{ bm }}
+                </mat-button-toggle>
+              }
+            }
+          </mat-button-toggle-group>
+          @if (benchmarkLoading()) {
+            <mat-spinner diameter="14"></mat-spinner>
+          }
+        </span>
       </div>
+
+      @if (benchmarkError(); as be) {
+        <div class="error-banner benchmark-error">
+          <mat-icon>error_outline</mat-icon>
+          {{ be }}
+        </div>
+      }
 
       @if (chartError(); as ce) {
         <div class="error-banner chart-error">
@@ -115,6 +158,11 @@
               }
             </g>
 
+            <!-- Benchmark polyline (drawn before the ticker so the ticker line stays on top) -->
+            @if (geom.benchmarkPath; as bp) {
+              <path class="benchmark-line" [attr.d]="bp" fill="none" />
+            }
+
             <!-- Price polyline -->
             <path class="price-line" [attr.d]="geom.pricePath" fill="none" />
 
@@ -128,6 +176,14 @@
                 [attr.y2]="geom.innerBottom"
               />
               <circle class="hover-dot" [attr.cx]="hi.x" [attr.cy]="hi.y" r="4" />
+              @if (hi.benchmarkY !== null) {
+                <circle
+                  class="hover-dot benchmark-dot"
+                  [attr.cx]="hi.x"
+                  [attr.cy]="hi.benchmarkY"
+                  r="4"
+                />
+              }
             }
           </svg>
 
@@ -135,7 +191,18 @@
           @if (hoverInfo(); as hi) {
             <div class="chart-tooltip" [style.left.%]="hi.percentX">
               <span class="tooltip-time">{{ hi.timeLabel }}</span>
-              <span class="tooltip-price">{{ hi.priceLabel }}</span>
+              <div class="tooltip-row">
+                <span class="tooltip-swatch tooltip-swatch-ticker"></span>
+                <span class="tooltip-name">{{ symbol() }}</span>
+                <span class="tooltip-price">{{ hi.priceLabel }}</span>
+              </div>
+              @if (hi.benchmarkLabel; as bl) {
+                <div class="tooltip-row">
+                  <span class="tooltip-swatch tooltip-swatch-benchmark"></span>
+                  <span class="tooltip-name">{{ selectedBenchmark() }}</span>
+                  <span class="tooltip-price">{{ bl }}</span>
+                </div>
+              }
             </div>
           }
         </div>
