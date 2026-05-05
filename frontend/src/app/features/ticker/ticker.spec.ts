@@ -14,7 +14,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { of, Subject, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { TickerPage } from './ticker';
 import {
   ChartResponse,
@@ -23,6 +23,7 @@ import {
   TickerNarrativeJob,
   TickerNarrativeSnapshot,
   TickerSnapshot,
+  TimeframeCode,
 } from '../../core/market.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
 import { NewsItem, NewsRepository } from '../../core/news.repository';
@@ -238,6 +239,145 @@ describe('TickerPage', () => {
       expect(component.chartLoading()).toBe(false);
       // The dossier (snapshot, indicators) is untouched.
       expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
+  });
+
+  // ---- Benchmark overlay ----
+
+  /**
+   * The benchmark overlay is opt-in (default off) and lazy : we don't burn a Twelve Data credit
+   * on SPY/QQQ/IWM until the user explicitly toggles it. Tests below pin :
+   *
+   * - **Default off** — no `getChart('SPY', …)` on init, even when the dossier is loaded.
+   * - **Toggle on** — `selectBenchmark('SPY')` fetches SPY at the active timeframe AND flips the
+   *   chart's Y axis to percent return (so SPY at $500 can sit next to a $15 ticker without one
+   *   being crushed flat).
+   * - **Timeframe sync** — switching timeframe with benchmark on refetches both series so they
+   *   stay aligned ; without this the benchmark would lag a timeframe behind.
+   * - **Error scoping** — a Twelve Data hiccup on the benchmark must NOT clear the main chart
+   *   or the dossier snapshot. Same isolation rule as the news panel.
+   * - **Toggle off** — `selectBenchmark('off')` clears the bars / error and reverts to price mode.
+   */
+  describe('benchmark overlay', () => {
+    const tickerBar = (close: number, ts = '2026-04-15T00:00:00Z'): OhlcBar => ({
+      timestamp: ts,
+      open: close,
+      high: close + 1,
+      low: close - 1,
+      close,
+      volume: 1_000_000,
+    });
+
+    const tickerBars = [tickerBar(100), tickerBar(110, '2026-04-16T00:00:00Z')];
+    const benchBars = [tickerBar(200), tickerBar(210, '2026-04-16T00:00:00Z')];
+
+    /**
+     * Returns a `getChart` impl that distinguishes benchmark calls (SPY/QQQ/IWM) from ticker
+     * calls — the benchmark gets [benchBars], anything else gets [tickerBars]. Centralises the
+     * mock so each test only asserts the part it cares about.
+     */
+    function chartImpl(sym: string, tf: TimeframeCode): Observable<ChartResponse> {
+      const isBench = sym === 'SPY' || sym === 'QQQ' || sym === 'IWM';
+      const response: ChartResponse = {
+        symbol: sym,
+        timeframe: tf,
+        range: tf,
+        interval: '1d',
+        bars: isBench ? benchBars : tickerBars,
+      };
+      return of(response);
+    }
+
+    it('starts with benchmark off and skips the fetch on init', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      fixture.detectChanges();
+
+      expect(component.selectedBenchmark()).toBe('off');
+      // /chart was never called : neither for the ticker (snapshot already provides bars) nor
+      // for any benchmark. The default state burns zero Twelve Data credits beyond /ticker.
+      expect(market.getChart).not.toHaveBeenCalled();
+    });
+
+    it('selectBenchmark fetches the chosen index, flips Y axis to percent, draws a 2nd line', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      fixture.detectChanges();
+
+      component.selectBenchmark('SPY');
+
+      expect(market.getChart).toHaveBeenCalledWith('SPY', '1y');
+      expect(component.benchmarkBars()).toEqual(benchBars);
+      expect(component.benchmarkLoading()).toBe(false);
+      const geom = component.chartGeometry();
+      // benchmarkPath set → second polyline rendered. Y-axis labels carry a % suffix → the chart
+      // is comparing returns, not prices.
+      expect(geom?.benchmarkPath).toBeTruthy();
+      expect(geom?.yTicks[0].label).toContain('%');
+    });
+
+    it('reclicking the active benchmark choice is a no-op (no extra getChart call)', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      fixture.detectChanges();
+
+      component.selectBenchmark('SPY');
+      expect(market.getChart).toHaveBeenCalledTimes(1);
+
+      // Same value re-emitted by mat-button-toggle on a re-click — must not refetch.
+      component.selectBenchmark('SPY');
+      expect(market.getChart).toHaveBeenCalledTimes(1);
+    });
+
+    it('selectTimeframe with benchmark on refetches both series so they stay aligned', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      fixture.detectChanges();
+      component.selectBenchmark('SPY'); // benchmark fetched at 1y
+      market.getChart.mockClear();
+
+      component.selectTimeframe('1mo');
+
+      // Both calls must use the new timeframe — order matters less than that both happen.
+      expect(market.getChart).toHaveBeenCalledWith('AAPL', '1mo');
+      expect(market.getChart).toHaveBeenCalledWith('SPY', '1mo');
+    });
+
+    it('a benchmark fetch error stays scoped — the chart and snapshot survive', () => {
+      const snapshotWithBars: TickerSnapshot = { ...EMPTY_SNAPSHOT, bars: tickerBars };
+      market.getTicker.mockReturnValue(of(snapshotWithBars));
+      market.getChart.mockReturnValue(throwError(() => ({ status: 503 })));
+      fixture.detectChanges();
+
+      component.selectBenchmark('SPY');
+
+      // Inline benchmark error set ; main chart untouched (still has the dossier bars), snapshot
+      // unchanged. Without translations loaded the i18n key ticker.benchmark.errors.fetch
+      // surfaces verbatim — sufficient to assert *some* error message.
+      expect(component.benchmarkError()).toContain('fetch');
+      expect(component.benchmarkBars()).toEqual([]);
+      expect(component.benchmarkLoading()).toBe(false);
+      expect(component.chartBars()).toEqual(tickerBars);
+      expect(component.chartError()).toBeNull();
+      expect(component.snapshot()).toEqual(snapshotWithBars);
+    });
+
+    it('selectBenchmark(off) clears bars + error and drops the second line', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      fixture.detectChanges();
+      component.selectBenchmark('SPY');
+      expect(component.chartGeometry()?.benchmarkPath).toBeTruthy();
+
+      component.selectBenchmark('off');
+
+      expect(component.benchmarkBars()).toEqual([]);
+      expect(component.benchmarkError()).toBeNull();
+      expect(component.selectedBenchmark()).toBe('off');
+      // Geometry reverts to single-series price mode : no benchmark path, Y labels back to plain
+      // numbers (no % suffix).
+      const geom = component.chartGeometry();
+      expect(geom?.benchmarkPath).toBeUndefined();
+      expect(geom?.yTicks[0].label).not.toContain('%');
     });
   });
 

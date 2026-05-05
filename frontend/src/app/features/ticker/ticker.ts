@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { LanguageService } from '../../core/language.service';
@@ -37,9 +38,14 @@ interface XTick {
 interface ChartGeometry {
   /** Inner-area projected (x, y) for each bar, plus a reference back to the bar. */
   points: ChartPoint[];
-  /** SVG path `d` attribute for the price polyline. */
+  /** SVG path `d` attribute for the ticker polyline. */
   pricePath: string;
-  /** Horizontal grid + price labels on the left axis. */
+  /** SVG path `d` for the benchmark polyline — only present when benchmark is on AND its bars
+   *  are loaded. Absent during the pre-load window so the chart still draws the ticker line. */
+  benchmarkPath?: string;
+  /** Projected benchmark points (one per aligned bar) — used to draw the benchmark hover dot. */
+  benchmarkPoints?: ChartPoint[];
+  /** Horizontal grid + axis labels (price in single-series mode, % return when benchmark is on). */
   yTicks: YTick[];
   /** Vertical reference points + date labels on the bottom axis. */
   xTicks: XTick[];
@@ -55,15 +61,28 @@ interface HoverInfo {
   index: number;
   /** Inner-area X (used by the SVG crosshair). */
   x: number;
-  /** Inner-area Y of the bar's close (anchors the dot marker). */
+  /** Inner-area Y of the bar's close (anchors the ticker dot marker). */
   y: number;
+  /** Inner-area Y of the benchmark's close at the same index, or null when benchmark is off /
+   *  not loaded / the index falls outside the benchmark series. */
+  benchmarkY: number | null;
   /** Localized date / time label for the tooltip. */
   timeLabel: string;
-  /** Pre-formatted price label (with the dossier currency). */
+  /** Pre-formatted ticker label — price + currency when benchmark is off, signed % otherwise. */
   priceLabel: string;
+  /** Pre-formatted benchmark label (signed %), or null when benchmark is off / not loaded. */
+  benchmarkLabel: string | null;
   /** Tooltip horizontal position as a percentage of the chart canvas — used by CSS. */
   percentX: number;
 }
+
+/**
+ * Benchmark dropdown values. `'off'` is the sentinel for "no overlay" — using a string instead of
+ * null keeps `mat-button-toggle-group` happy (it doesn't bind cleanly to nullable values).
+ */
+export type BenchmarkChoice = 'off' | 'SPY' | 'QQQ' | 'IWM';
+
+export const BENCHMARK_CHOICES: BenchmarkChoice[] = ['off', 'SPY', 'QQQ', 'IWM'];
 
 @Component({
   selector: 'app-ticker',
@@ -73,6 +92,7 @@ interface HoverInfo {
     MatButtonToggleModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './ticker.html',
@@ -106,6 +126,21 @@ export class TickerPage implements OnInit, OnDestroy {
 
   /** Bar index nearest the cursor when hovering the chart, or null when not hovering. */
   private hoveredIndex = signal<number | null>(null);
+
+  // ---- Benchmark overlay state ----
+
+  /** Available benchmark options (incl. the `'off'` sentinel). Exposed for the template. */
+  readonly benchmarkChoices = BENCHMARK_CHOICES;
+  /** Active benchmark — `'off'` means no overlay (default, no quota burn). When set to a symbol,
+   *  triggers a separate `getChart` call and flips the chart Y-axis from price to % return. */
+  selectedBenchmark = signal<BenchmarkChoice>('off');
+  /** Bars for the active benchmark, aligned by index to [chartBars] (no date matching v1 — relies
+   *  on US-listed benchmarks following the same trading calendar as US-listed tickers). */
+  benchmarkBars = signal<OhlcBar[]>([]);
+  benchmarkLoading = signal(false);
+  /** Inline error scoped to the benchmark — a 503 here must NOT clear the main chart. */
+  benchmarkError = signal<string | null>(null);
+  private benchmarkSub?: Subscription;
 
   // ---- News state ----
 
@@ -154,24 +189,70 @@ export class TickerPage implements OnInit, OnDestroy {
     const innerW = innerRight - innerLeft;
     const innerH = innerBottom - innerTop;
 
-    const closes = bars.map((b) => b.close);
-    const min = Math.min(...closes);
-    const max = Math.max(...closes);
+    const xAt = (i: number) => innerLeft + (i / (bars.length - 1)) * innerW;
+
+    // Benchmark mode flips the Y axis from absolute price to % return from the first close.
+    // Without this the two series can't share an axis (SPY at $500 next to a small-cap at $15
+    // would crush one curve into a flat line). The flip happens *as soon as the user toggles*
+    // — even before the benchmark bars arrive — so the click feels responsive ; the second
+    // line just appears once the fetch resolves.
+    const benchOn = this.selectedBenchmark() !== 'off';
+    const benchBars = this.benchmarkBars();
+    const benchLoaded = benchOn && benchBars.length >= 2;
+
+    let yValues: number[];
+    let benchValues: number[] | null = null;
+    let formatYTick: (v: number) => string;
+
+    if (benchOn) {
+      const t0 = bars[0].close;
+      yValues = bars.map((b) => ((b.close - t0) / t0) * 100);
+      formatYTick = (pct) => this.formatPercent(pct);
+      if (benchLoaded) {
+        const b0 = benchBars[0].close;
+        // Align by index — US-listed benchmarks share the trading calendar with US-listed
+        // tickers, so bar counts match for any given (range, interval). For dual-listed or
+        // foreign tickers (e.g. RY.TO) a small mismatch can occur ; we silently truncate to
+        // the common length and accept the minor drift.
+        const common = Math.min(bars.length, benchBars.length);
+        benchValues = benchBars.slice(0, common).map((b) => ((b.close - b0) / b0) * 100);
+      }
+    } else {
+      yValues = bars.map((b) => b.close);
+      formatYTick = (price) => this.formatPrice(price);
+    }
+
+    // Y range covers both series so neither gets clipped.
+    const allValues = benchValues ? [...yValues, ...benchValues] : yValues;
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
     const range = max - min || 1;
 
-    const xAt = (i: number) => innerLeft + (i / (bars.length - 1)) * innerW;
-    const yAt = (price: number) => innerTop + (1 - (price - min) / range) * innerH;
+    const yAt = (v: number) => innerTop + (1 - (v - min) / range) * innerH;
 
-    const points: ChartPoint[] = bars.map((b, i) => ({ x: xAt(i), y: yAt(b.close), bar: b }));
+    const points: ChartPoint[] = bars.map((b, i) => ({ x: xAt(i), y: yAt(yValues[i]), bar: b }));
     const pricePath = points
       .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
       .join(' ');
 
+    let benchmarkPoints: ChartPoint[] | undefined;
+    let benchmarkPath: string | undefined;
+    if (benchValues) {
+      benchmarkPoints = benchValues.map((v, i) => ({
+        x: xAt(i),
+        y: yAt(v),
+        bar: benchBars[i],
+      }));
+      benchmarkPath = benchmarkPoints
+        .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+        .join(' ');
+    }
+
     // 5 evenly-spaced horizontal grid lines (4 intervals). Labels formatted with the same
     // precision as the dossier price so the magnitudes line up visually.
     const yTicks: YTick[] = [0, 0.25, 0.5, 0.75, 1].map((t) => {
-      const price = min + (1 - t) * range; // top tick = max price (visually higher)
-      return { y: innerTop + t * innerH, label: this.formatPrice(price) };
+      const v = min + (1 - t) * range; // top tick = max value (visually higher)
+      return { y: innerTop + t * innerH, label: formatYTick(v) };
     });
 
     // 4 evenly-spaced date markers. Date format depends on the active timeframe — intraday
@@ -182,7 +263,18 @@ export class TickerPage implements OnInit, OnDestroy {
       return { x: xAt(i), label: this.formatTickDate(ts) };
     });
 
-    return { points, pricePath, yTicks, xTicks, innerLeft, innerRight, innerTop, innerBottom };
+    return {
+      points,
+      pricePath,
+      benchmarkPath,
+      benchmarkPoints,
+      yTicks,
+      xTicks,
+      innerLeft,
+      innerRight,
+      innerTop,
+      innerBottom,
+    };
   });
 
   /** Backward-compat accessor — older specs and the empty-state branch read this. */
@@ -194,16 +286,43 @@ export class TickerPage implements OnInit, OnDestroy {
     if (idx === null || !geom) return null;
     const point = geom.points[idx];
     if (!point) return null;
-    const currency = this.snapshot()?.quote.currency ?? '';
-    const priceLabel = currency
-      ? `${this.formatPrice(point.bar.close)} ${currency}`
-      : this.formatPrice(point.bar.close);
+
+    const benchOn = this.selectedBenchmark() !== 'off';
+    const tickerBars = this.chartBars();
+    const benchBars = this.benchmarkBars();
+
+    let priceLabel: string;
+    let benchmarkLabel: string | null = null;
+    let benchmarkY: number | null = null;
+
+    if (benchOn) {
+      // In percent mode we show signed % at hover for both series — apples-to-apples comparison
+      // is the whole point of turning the overlay on.
+      const t0 = tickerBars[0].close;
+      const tickerPct = ((point.bar.close - t0) / t0) * 100;
+      priceLabel = this.formatPercent(tickerPct);
+      const benchPoint = geom.benchmarkPoints?.[idx];
+      if (benchPoint && benchBars.length >= 2) {
+        const b0 = benchBars[0].close;
+        const benchPct = ((benchPoint.bar.close - b0) / b0) * 100;
+        benchmarkLabel = this.formatPercent(benchPct);
+        benchmarkY = benchPoint.y;
+      }
+    } else {
+      const currency = this.snapshot()?.quote.currency ?? '';
+      priceLabel = currency
+        ? `${this.formatPrice(point.bar.close)} ${currency}`
+        : this.formatPrice(point.bar.close);
+    }
+
     return {
       index: idx,
       x: point.x,
       y: point.y,
+      benchmarkY,
       timeLabel: this.formatHoverDate(new Date(point.bar.timestamp)),
       priceLabel,
+      benchmarkLabel,
       percentX: ((point.x - geom.innerLeft) / (geom.innerRight - geom.innerLeft)) * 100,
     };
   });
@@ -266,6 +385,7 @@ export class TickerPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.chartSub?.unsubscribe();
+    this.benchmarkSub?.unsubscribe();
     this.narrativePollSub?.unsubscribe();
   }
 
@@ -310,6 +430,57 @@ export class TickerPage implements OnInit, OnDestroy {
       error: (err: { status?: number }) => {
         this.chartError.set(this.errorMessage(err, sym));
         this.chartLoading.set(false);
+      },
+    });
+    // Refetch the benchmark for the new timeframe so the two series stay in sync. Done in
+    // parallel — a slow benchmark fetch must not delay the main chart.
+    const bench = this.selectedBenchmark();
+    if (bench !== 'off') {
+      this.fetchBenchmark(bench, tf);
+    }
+  }
+
+  // ---- Benchmark overlay ----
+
+  /**
+   * Switches the active benchmark. `'off'` clears the overlay (and any previous error) without
+   * fetching anything. Re-clicking the active choice is a no-op so the toggle group doesn't burn
+   * an extra `getChart` credit on every click.
+   */
+  selectBenchmark(choice: BenchmarkChoice): void {
+    if (choice === this.selectedBenchmark()) return;
+    this.selectedBenchmark.set(choice);
+    // Drop hover so a stale tooltip from the previous benchmark doesn't linger over a bar that
+    // may not have a matching benchmark point in the new series (different bar counts).
+    this.hoveredIndex.set(null);
+    if (choice === 'off') {
+      this.benchmarkBars.set([]);
+      this.benchmarkError.set(null);
+      this.benchmarkLoading.set(false);
+      this.benchmarkSub?.unsubscribe();
+      return;
+    }
+    this.fetchBenchmark(choice, this.selectedTimeframe());
+  }
+
+  /**
+   * Fetches benchmark bars at the current timeframe. On error we clear the bars so a stale
+   * curve from the previous benchmark doesn't linger under a fresh error banner. Type-restricted
+   * to non-`'off'` choices so a misuse can't slip past the compiler.
+   */
+  private fetchBenchmark(symbol: Exclude<BenchmarkChoice, 'off'>, tf: TimeframeCode): void {
+    this.benchmarkLoading.set(true);
+    this.benchmarkError.set(null);
+    this.benchmarkSub?.unsubscribe();
+    this.benchmarkSub = this.marketRepository.getChart(symbol, tf).subscribe({
+      next: (resp) => {
+        this.benchmarkBars.set(resp.bars);
+        this.benchmarkLoading.set(false);
+      },
+      error: () => {
+        this.benchmarkBars.set([]);
+        this.benchmarkError.set(this.translate.instant('ticker.benchmark.errors.fetch'));
+        this.benchmarkLoading.set(false);
       },
     });
   }
@@ -391,6 +562,15 @@ export class TickerPage implements OnInit, OnDestroy {
 
   private formatPrice(price: number): string {
     return price.toFixed(2);
+  }
+
+  /** Signed-percent formatter used by the benchmark overlay (Y axis labels and tooltip).
+   *  Values that round to zero (incl. exactly 0, like the first bar's anchor) drop the sign so
+   *  the tooltip doesn't flip-flop between `0.00%` and `+0.00%` / `-0.00%` on tiny noise. */
+  private formatPercent(value: number): string {
+    if (Math.abs(value) < 0.005) return '0.00%';
+    const sign = value > 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
   }
 
   // ---- News actions ----

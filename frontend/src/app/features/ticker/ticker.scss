@@ -145,6 +145,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 
   mat-button-toggle-group {
     --mat-button-toggle-label-text-size: 0.8rem;
@@ -152,7 +153,23 @@
   }
 }
 
-.chart-error {
+// "Compare to:" label + benchmark toggle group, pushed to the far right of the toolbar so it
+// reads as a secondary control next to the primary timeframe picker.
+.benchmark-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.benchmark-label {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  font-weight: 500;
+}
+
+.chart-error,
+.benchmark-error {
   margin-top: 0.5rem;
 }
 
@@ -201,6 +218,18 @@
     stroke-linecap: round;
   }
 
+  // Benchmark overlay : dashed + dimmer than the ticker line so the eye locks onto the dossier
+  // ticker first. `--color-text-dim` is theme-aware (works in both dark and light themes).
+  .benchmark-line {
+    stroke: var(--color-text-dim);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 4 3;
+    opacity: 0.75;
+  }
+
   .crosshair {
     stroke: var(--color-text-dim);
     stroke-width: 1;
@@ -215,6 +244,10 @@
     stroke-width: 2;
     vector-effect: non-scaling-stroke;
     pointer-events: none;
+
+    &.benchmark-dot {
+      fill: var(--color-text-dim);
+    }
   }
 }
 
@@ -317,7 +350,7 @@
   pointer-events: none;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
   padding: 0.35rem 0.55rem;
   background: var(--color-surface-raised, var(--color-surface));
   border: 1px solid var(--color-border);
@@ -328,12 +361,44 @@
 
   .tooltip-time {
     color: var(--color-text-dim);
+    margin-bottom: 0.1rem;
+  }
+
+  .tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .tooltip-swatch {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .tooltip-swatch-ticker {
+    background: var(--color-accent);
+  }
+
+  .tooltip-swatch-benchmark {
+    // Mirror the dashed benchmark line ; a tiny chunk doesn't render the dash pattern, so a
+    // semi-transparent fill is more legible at this size.
+    background: var(--color-text-dim);
+    opacity: 0.75;
+  }
+
+  .tooltip-name {
+    font-family: var(--font-mono);
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
   }
 
   .tooltip-price {
     font-weight: 600;
     color: var(--color-text);
     font-variant-numeric: tabular-nums;
+    margin-left: auto;
   }
 }
 
