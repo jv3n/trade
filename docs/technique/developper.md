@@ -77,7 +77,7 @@ market:
   provider: mock
 ```
 
-Pense à télécharger le modèle au premier lancement : clic sur **`llm:pull-qwen`** dans l'UI Tilt (~2 GB). Si tu veux pousser la qualité en sacrifiant de la vitesse, tu peux pull `qwen2.5:7b` (~4 GB, 15-30 s), `llama3.2:3b` ou `phi4-mini` (3.8B) et bouger `ollama.model` en conséquence. Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.
+Pense à télécharger le modèle au premier lancement : clic sur **`llm:ensure-model`** dans l'UI Tilt (~2 GB ; idempotent — no-op si déjà pull). Si tu veux pousser la qualité en sacrifiant de la vitesse, tu peux pull `qwen2.5:7b` (~4 GB, 15-30 s), `llama3.2:3b` ou `phi4-mini` (3.8B) et bouger `ollama.model` en conséquence. Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.
 
 Tu peux switcher de l'un à l'autre à tout moment en éditant `application-local.yml` — Tilt redémarre le backend au save.
 

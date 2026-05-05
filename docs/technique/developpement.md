@@ -32,8 +32,8 @@ tilt up -- --host=<ton-ip-locale>
 
 | Bouton Tilt | Action |
 |-------------|--------|
-| `db:reset` | Drop schema + redémarrage backend (Flyway rejoue toutes les migrations) |
-| `llm:pull-qwen` | Télécharge le modèle `qwen2.5:3b` (~2 GB) dans Ollama — utile uniquement si tu travailles offline avec `llm.provider: ollama`. Bon compromis vitesse/qualité sur M1 (~5-10 s par narratif) |
+| **Purge** (sur le panel `postgres`) | Drop schema + redémarrage backend (Flyway rejoue toutes les migrations). Bouton attaché au panel `postgres` via `cmd_button` |
+| `llm:ensure-model` | Télécharge le modèle `qwen2.5:3b` (~2 GB) dans Ollama si absent — idempotent, no-op rapide sinon. Utile uniquement si tu travailles offline avec `llm.provider: ollama`. Bon compromis vitesse/qualité sur M1 (~5-10 s par narratif) |
 
 Pour alimenter un portefeuille démo, importer un CSV Wealthsimple depuis l'onglet **Import** (le portefeuille est read-only, il n'y a pas de seed SQL).
 

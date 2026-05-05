@@ -1,14 +1,44 @@
 # PortfolioAI — Tiltfile
 
+load("ext://uibutton", "cmd_button")
+
 # Hôte réseau (override avec: tilt up -- --host=192.168.18.13)
 config.define_string("host", args=False, usage="Network host (e.g. 192.168.18.13)")
 cfg = config.parse()
 host = cfg.get("host", "localhost")
 
-# PostgreSQL via docker-compose
-docker_compose("docker-compose.yml")
+# ────────────────────────────────────────────────
+# Infra — services Docker (PostgreSQL, Ollama)
+# ────────────────────────────────────────────────
 
-# Ollama — pull du modèle local par défaut.
+docker_compose("docker-compose.yml")
+dc_resource("postgres", labels = ["infra"])
+dc_resource(
+    "ollama",
+    labels = ["infra"],
+    links = [link("http://{}:11434".format(host), "Ollama API")],
+)
+
+# Bouton « Purge » attaché au panel `postgres` — drop schéma + redémarrage backend
+# automatique (via touch d'application.yml).
+cmd_button(
+    name = "db-purge",
+    resource = "postgres",
+    text = "Purge — drop schema + restart backend",
+    icon_name = "delete_sweep",
+    argv = [
+        "sh",
+        "-c",
+        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && touch backend/src/main/resources/application.yml",
+    ],
+)
+
+# ────────────────────────────────────────────────
+# LLM — modèle local Ollama
+# ────────────────────────────────────────────────
+
+# Garantit que l'instance Ollama locale a le modèle attendu par le backend.
+# Idempotent : si déjà pull, c'est un no-op rapide. Sinon, télécharge ~2 GB la première fois.
 #
 # `qwen2.5:3b` est le bon compromis sur M1 : ~2 GB, 5-10 s par narratif, JSON structuré
 # fiable. Mistral 7B (~4 GB) était l'ancien défaut mais sa latence 30-60 s sur M1 saturait
@@ -19,14 +49,16 @@ docker_compose("docker-compose.yml")
 # `phi4-mini` (3.8B) ou `llama3.2:3b` puis bouge `ollama.model` dans
 # `application-local.yml`.
 local_resource(
-    name = "llm:pull-qwen",
+    name = "llm:ensure-model",
     cmd = "docker exec portfolioai-ollama ollama pull qwen2.5:3b",
     resource_deps = ["ollama"],
     labels = ["llm"],
-    links = [link("http://{}:11434".format(host), "Ollama API")],
 )
 
-# Backend Spring Boot — build continu avec Gradle
+# ────────────────────────────────────────────────
+# App — Backend Spring Boot & Frontend Angular
+# ────────────────────────────────────────────────
+
 local_resource(
     name = "backend",
     serve_cmd = "cd backend && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew bootRun --args='--spring.profiles.active=local'",
@@ -41,11 +73,10 @@ local_resource(
         period_secs = 3,
         failure_threshold = 20,
     ),
-    labels = ["backend"],
+    labels = ["app"],
     links = [link("http://{}:8080/actuator/health".format(host), "Health")],
 )
 
-# Frontend Angular — dev server continu
 local_resource(
     name = "frontend",
     serve_cmd = "cd frontend && npm start -- --host 0.0.0.0",
@@ -54,21 +85,8 @@ local_resource(
         "frontend/angular.json",
         "frontend/package.json",
     ],
-    labels = ["frontend"],
+    labels = ["app"],
     links = [link("http://{}:4200".format(host), "App")],
-)
-
-# ────────────────────────────────────────────────
-# Reset BDD — drop schéma + redémarrage backend automatique
-# ────────────────────────────────────────────────
-
-local_resource(
-    name = "db:reset",
-    cmd = "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && touch backend/src/main/resources/application.yml",
-    trigger_mode = TRIGGER_MODE_MANUAL,
-    auto_init = False,
-    resource_deps = ["postgres"],
-    labels = ["db-tools"],
 )
 
 # Affichage des liens utiles

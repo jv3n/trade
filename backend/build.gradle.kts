@@ -39,7 +39,8 @@ dependencies {
   // types — the Java equivalents return `null` for non-nullable parameters and crash).
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
   // Local HTTP server for testing outbound clients without hitting the real internet — used by
-  // YahooClientTest to assert rate-limit / 404 / browser-headers behaviour deterministically.
+  // TwelveDataClientTest and FinnhubClientTest to assert rate-limit / 404 / auth-failure
+  // behaviour deterministically.
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
