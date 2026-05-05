@@ -1,6 +1,7 @@
 package com.portfolioai.analysis.infrastructure
 
 import com.portfolioai.analysis.domain.JobStatus
+import com.portfolioai.analysis.infrastructure.OrphanedJobCleanupListener.Companion.ORPHAN_MESSAGE
 import com.portfolioai.analysis.infrastructure.persistence.AnalysisJobRepository
 import com.portfolioai.analysis.infrastructure.persistence.TickerNarrativeJobRepository
 import org.slf4j.LoggerFactory

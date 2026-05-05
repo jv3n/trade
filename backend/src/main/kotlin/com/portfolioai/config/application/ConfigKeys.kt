@@ -1,5 +1,7 @@
 package com.portfolioai.config.application
 
+import com.portfolioai.config.application.ConfigKeys.KNOWN_KEYS
+
 /**
  * Registry of runtime-editable config keys. Adding a new key happens in three places :
  * 1. Add the constant here (and to [KNOWN_KEYS]) with its type.

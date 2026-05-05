@@ -3,7 +3,9 @@ package com.portfolioai.config.application
 import com.portfolioai.config.domain.AppConfigEntry
 import com.portfolioai.config.infrastructure.persistence.AppConfigRepository
 import java.util.Optional
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any

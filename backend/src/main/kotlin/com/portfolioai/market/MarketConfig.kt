@@ -4,6 +4,8 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigChangedEvent
 import com.portfolioai.config.application.ConfigKeys
+import com.portfolioai.market.MarketConfig.Companion.MARKET_CHART_CACHE
+import com.portfolioai.market.MarketConfig.Companion.NEWS_CACHE
 import java.util.concurrent.TimeUnit
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.EnableCaching

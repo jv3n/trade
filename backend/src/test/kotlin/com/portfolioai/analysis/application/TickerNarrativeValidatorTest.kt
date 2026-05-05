@@ -1,7 +1,8 @@
 package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.domain.Sentiment
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**

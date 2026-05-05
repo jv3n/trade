@@ -2,7 +2,8 @@ package com.portfolioai.market.application
 
 import com.portfolioai.market.domain.SymbolMatch
 import com.portfolioai.market.infrastructure.market.SymbolSearchClient
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn

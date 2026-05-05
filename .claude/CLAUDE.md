@@ -123,6 +123,7 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 ## Conventions
 
 - Idiomatic Kotlin (data classes, sealed classes, extension functions)
+- **No wildcard imports in Kotlin** — always write explicit imports (`import org.junit.jupiter.api.Assertions.assertEquals`, not `import org.junit.jupiter.api.Assertions.*`). IntelliJ's "Optimize Imports" defaults to consolidating into `*` past 5 imports of the same package — that default is wrong for this project. When writing or editing a Kotlin file, list each import on its own line. The whitelist in `backend/config/detekt/detekt.yml` (`WildcardImport.excludeImports`) covers a few historical idioms (`java.util.*`, JUnit `Assertions.*`, MockMvc helpers) but is being phased out — don't add new entries, expand any wildcard you touch into explicit imports.
 - Spring Boot config in **YAML** (`application.yml` / `application-local.yml`)
 - Angular standalone components (Angular 21)
 - **Zoneless change detection** explicit — `provideZonelessChangeDetection()` in `app.config.ts`, no `zone.js` dependency. State is signal-based ; Default change detection strategy is fine, no need to add `OnPush` everywhere.

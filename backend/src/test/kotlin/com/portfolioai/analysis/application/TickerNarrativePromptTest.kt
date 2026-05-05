@@ -4,7 +4,8 @@ import com.portfolioai.market.domain.Indicators
 import com.portfolioai.market.domain.TickerQuote
 import java.math.BigDecimal
 import java.time.Instant
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
