@@ -36,6 +36,52 @@ describe('HttpMarketRepository', () => {
     http.expectOne('/api/market/ticker/BRK.B').flush({});
   });
 
+  // ---- Symbol search (autocomplete) ----
+
+  describe('searchSymbols', () => {
+    it('calls GET /api/market/symbols/search with the query and a default limit of 10', () => {
+      // The autocomplete dropdown only shows a handful of suggestions ; default 10 is enough and
+      // keeps the payload small. A regression that bumps the default would still work but burn
+      // more Twelve Data credits per keystroke.
+      repo.searchSymbols('aapl').subscribe();
+      const req = http.expectOne(
+        (r) =>
+          r.url === '/api/market/symbols/search' &&
+          r.params.get('q') === 'aapl' &&
+          r.params.get('limit') === '10',
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush([]);
+    });
+
+    it('forwards an explicit limit verbatim', () => {
+      // Future-proofing : a settings page that exposes "max suggestions" needs to flow into the
+      // request without being clamped on the frontend (the backend does the clamp).
+      repo.searchSymbols('a', 25).subscribe();
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/api/market/symbols/search' &&
+            r.params.get('q') === 'a' &&
+            r.params.get('limit') === '25',
+        )
+        .flush([]);
+    });
+
+    it('returns the raw SymbolMatch array as-is', () => {
+      // No transformation in the adapter — the backend already returns the shape the front needs.
+      // Pinning so a future "enrich with exchange code" refactor keeps the wire shape stable.
+      const expected = [
+        { symbol: 'AAPL', name: 'Apple Inc', exchange: 'NASDAQ' },
+        { symbol: 'AAP', name: 'Advance Auto Parts Inc', exchange: 'NYSE' },
+      ];
+      let received: unknown = null;
+      repo.searchSymbols('aap').subscribe((r) => (received = r));
+      http.expectOne((r) => r.url === '/api/market/symbols/search').flush(expected);
+      expect(received).toEqual(expected);
+    });
+  });
+
   // ---- Multi-timeframe chart ----
 
   describe('getChart', () => {

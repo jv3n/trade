@@ -108,11 +108,29 @@ export interface ChartResponse {
 }
 
 /**
+ * One result from `/api/market/symbols/search`. Drives the watchlist autocomplete dropdown — the
+ * `symbol` is the canonical ticker (uppercase, with exchange suffix when relevant : `RY.TO`), the
+ * `name` is the issuer label, the `exchange` disambiguates dual-listed tickers in the dropdown.
+ */
+export interface SymbolMatch {
+  symbol: string;
+  name: string;
+  exchange: string;
+}
+
+/**
  * Port — read-only access to ticker market data, computed indicators and LLM narrative.
  * Backed by Twelve Data + Claude/Ollama via the backend `market/` and `analysis/` modules.
  */
 export abstract class MarketRepository {
   abstract getTicker(symbol: string): Observable<TickerSnapshot>;
+
+  /**
+   * Search the configured market provider for symbols matching [query]. Returns up to [limit]
+   * suggestions ordered by upstream relevance. An empty / blank query short-circuits to `[]` server
+   * side, so the typeahead can call this on every keystroke without hammering the upstream.
+   */
+  abstract searchSymbols(query: string, limit?: number): Observable<SymbolMatch[]>;
 
   /**
    * Bars-only fetch for the multi-timeframe chart toggle. Doesn't recompute indicators or

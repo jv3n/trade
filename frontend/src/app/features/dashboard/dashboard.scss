@@ -616,35 +616,46 @@
 .watchlist-add {
   display: flex;
   gap: 0.3rem;
+  align-items: flex-start;
 }
 
-.watchlist-input {
+// `mat-form-field` ships with generous default padding sized for full-page forms — the sidebar
+// is tight, so we trim the wrapping markers and align the field height with the small Add button
+// next to it. The `appearance="outline"` field structure exposes `.mat-mdc-text-field-wrapper`
+// and `.mat-mdc-form-field-subscript-wrapper` (hint/error space) ; we collapse both.
+.watchlist-search-field {
   flex: 1;
   min-width: 0;
-  padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  border-radius: var(--radius);
-  border: 1px solid var(--color-border-soft);
-  background: var(--color-surface);
-  color: var(--color-text);
-  text-transform: uppercase;
 
-  &::placeholder {
-    text-transform: none;
-    color: var(--color-text-dim);
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding: 0;
+    background: var(--color-surface);
   }
 
-  &:focus {
-    outline: none;
-    border-color: var(--color-accent);
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding: 0.3rem 0.5rem;
+    min-height: unset;
   }
 
-  &:disabled {
-    opacity: 0.5;
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  ::ng-deep input.mat-mdc-input-element {
+    font-size: 0.75rem;
+    color: var(--color-text);
+    text-transform: uppercase;
+
+    &::placeholder {
+      text-transform: none;
+      color: var(--color-text-dim);
+    }
   }
 }
+
+// Styling of the suggestion items lives in `styles.scss` (panel is rendered in the CDK overlay,
+// outside this component's view encapsulation — see `.watchlist-autocomplete-panel`).
 
 .watchlist-add-btn,
 .watchlist-remove-btn {

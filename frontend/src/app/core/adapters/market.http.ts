@@ -5,6 +5,7 @@ import {
   ChartResponse,
   MarketRepository,
   NarrativePromptPreview,
+  SymbolMatch,
   TickerNarrativeJob,
   TickerNarrativeSnapshot,
   TickerSnapshot,
@@ -27,6 +28,12 @@ export class HttpMarketRepository extends MarketRepository {
 
   getTicker(symbol: string): Observable<TickerSnapshot> {
     return this.http.get<TickerSnapshot>(`/api/market/ticker/${encodeURIComponent(symbol)}`);
+  }
+
+  searchSymbols(query: string, limit = 10): Observable<SymbolMatch[]> {
+    return this.http.get<SymbolMatch[]>(`/api/market/symbols/search`, {
+      params: { q: query, limit: String(limit) },
+    });
   }
 
   getChart(symbol: string, timeframe: TimeframeCode): Observable<ChartResponse> {

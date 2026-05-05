@@ -58,13 +58,13 @@
     "ownedTickersTooltip": "Voir le dossier {{symbol}} (présent dans {{count}} portefeuille(s))",
     "watchlist": {
       "label": "Watchlist",
-      "placeholder": "Ticker (ex: NVDA)",
+      "placeholder": "Rechercher un ticker (ex : NVDA, Apple…)",
       "addTooltip": "Ajouter à la watchlist",
       "removeTooltip": "Retirer {{symbol}} de la watchlist",
       "empty": "Aucun ticker suivi pour l'instant.",
       "errors": {
         "add": "Impossible d'ajouter ce ticker.",
-        "invalid": "Ticker invalide.",
+        "invalid": "Ticker non reconnu par le fournisseur de marché. Sélectionne une suggestion.",
         "remove": "Impossible de retirer ce ticker."
       }
     },

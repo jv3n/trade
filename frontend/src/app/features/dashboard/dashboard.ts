@@ -1,12 +1,21 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import {
+  MatAutocompleteModule,
+  MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs';
+import { Subscription, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import {
   PortfolioRepository,
   Portfolio,
@@ -14,15 +23,28 @@ import {
   OwnedTicker,
 } from '../../core/portfolio.repository';
 import { AnalysisRepository, Recommendation } from '../../core/analysis.repository';
+import { MarketRepository, SymbolMatch } from '../../core/market.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
+
+/**
+ * Debounce window between a keystroke in the watchlist search and the actual `/symbols/search`
+ * call. 300 ms is the standard "feels instant but doesn't burn calls" sweet spot — short enough
+ * that the dropdown opens before the user stops typing, long enough to skip the in-between
+ * keystrokes when typing fast.
+ */
+const WATCHLIST_SEARCH_DEBOUNCE_MS = 300;
 
 @Component({
   selector: 'app-dashboard',
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     RouterLink,
+    MatAutocompleteModule,
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     TranslatePipe,
@@ -34,7 +56,9 @@ export class Dashboard implements OnInit, OnDestroy {
   private readonly portfolioRepository = inject(PortfolioRepository);
   private readonly analysisRepository = inject(AnalysisRepository);
   private readonly watchlistRepository = inject(WatchlistRepository);
+  private readonly marketRepository = inject(MarketRepository);
   private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
   private pollSub?: Subscription;
   private timerSub?: Subscription;
 
@@ -48,8 +72,25 @@ export class Dashboard implements OnInit, OnDestroy {
   ownedTickers = signal<OwnedTicker[]>([]);
   /** Tickers tracked outside the portfolio. Driven by `WatchlistRepository`. */
   watchlist = signal<WatchlistEntry[]>([]);
-  /** Bound to the sidebar input ; cleared after a successful add. */
-  watchlistInput = signal('');
+  /**
+   * The watchlist autocomplete — the user types into this control, suggestions populate from the
+   * configured market provider, the user picks one, and only then can they hit Add. Two-stage flow
+   * (type → pick → add) gates the watchlist on validated symbols rather than letting the user store
+   * any 10-char string. The `string | SymbolMatch | null` shape is what `mat-autocomplete` uses :
+   * the field holds the raw text while the user types, then flips to the `SymbolMatch` object when
+   * they pick a suggestion.
+   */
+  watchlistSearchControl = new FormControl<string | SymbolMatch | null>('');
+  /** Suggestions currently displayed in the dropdown. Cleared after a successful add. */
+  watchlistSuggestions = signal<SymbolMatch[]>([]);
+  /**
+   * Set when the user picks an option from the dropdown. The Add button stays disabled until this
+   * is non-null — `null` is the signal that the user typed but didn't pick yet, so the symbol isn't
+   * validated.
+   */
+  watchlistSelectedMatch = signal<SymbolMatch | null>(null);
+  /** True while the search HTTP call is in flight ; drives the dropdown's loading hint. */
+  watchlistSearching = signal(false);
   /** True while a POST is in flight ; disables the input + button to prevent double-submit. */
   watchlistAdding = signal(false);
   /** Surfaces add / remove errors next to the watchlist input. */
@@ -83,6 +124,75 @@ export class Dashboard implements OnInit, OnDestroy {
     this.loadPortfolios();
     this.loadOwnedTickers();
     this.loadWatchlist();
+    this.wireWatchlistSearch();
+  }
+
+  /**
+   * Subscribes the autocomplete `valueChanges` to the symbol search endpoint with a debounce so we
+   * don't fire on every keystroke. The pipeline :
+   * 1. `filter` keeps only string emissions — when the user picks an option, the control flips to
+   *    a `SymbolMatch` object and we want that emission to stay out of the search/wipe path
+   *    entirely (otherwise the previous typed string is still in the debounce buffer and would
+   *    fire 300 ms later, wiping the freshly-set selection).
+   * 2. Debounce 300 ms so a rapid typist doesn't pummel `/symbols/search`.
+   * 3. `distinctUntilChanged` so backspace + retype same letters doesn't duplicate calls.
+   * 4. `switchMap` — guard against the lingering-debounce race : if the user picked a suggestion
+   *    while a typed string was in flight, the control's current value is now a `SymbolMatch` ;
+   *    drop the stale string emission rather than wiping the user's selection. Otherwise wipe the
+   *    previous selection and search via the market provider. `catchError` returns an empty list
+   *    so a 503 collapses the dropdown to "no results" rather than blowing up the sidebar.
+   * 5. `takeUntilDestroyed(destroyRef)` for automatic cleanup — Angular 21 idiomatic, no manual
+   *    `Subscription` to track.
+   */
+  private wireWatchlistSearch() {
+    this.watchlistSearchControl.valueChanges
+      .pipe(
+        filter((value): value is string => typeof value === 'string'),
+        debounceTime(WATCHLIST_SEARCH_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        switchMap((typedValue) => {
+          if (typeof this.watchlistSearchControl.value !== 'string') {
+            // The user picked an option while this debounced typed value was in flight. The
+            // control is now holding a `SymbolMatch`, the selection signal is set, the dropdown
+            // can stay as-is — discard the stale emission rather than wiping the pick.
+            return of(this.watchlistSuggestions());
+          }
+          this.watchlistSelectedMatch.set(null);
+          const trimmed = typedValue.trim();
+          if (trimmed.length === 0) {
+            this.watchlistSuggestions.set([]);
+            return of([]);
+          }
+          this.watchlistSearching.set(true);
+          return this.marketRepository
+            .searchSymbols(trimmed)
+            .pipe(catchError(() => of<SymbolMatch[]>([])));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((suggestions) => {
+        this.watchlistSuggestions.set(suggestions);
+        this.watchlistSearching.set(false);
+      });
+  }
+
+  /**
+   * Called by `mat-autocomplete (optionSelected)` when the user picks a suggestion. Records the
+   * pick so the Add button enables ; the control's value is now the `SymbolMatch` object itself.
+   */
+  onWatchlistSymbolSelected(event: MatAutocompleteSelectedEvent) {
+    this.watchlistSelectedMatch.set(event.option.value as SymbolMatch);
+  }
+
+  /**
+   * Display function for `mat-autocomplete` — controls what the input shows when the control's
+   * value is a `SymbolMatch` object (after selection) vs a plain string (while typing). We show the
+   * symbol only ; the dropdown options carry the full `SYMBOL — Name (EXCHANGE)` rendering.
+   */
+  displayWatchlistMatch(value: SymbolMatch | string | null): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    return value.symbol;
   }
 
   loadPortfolios() {
@@ -128,16 +238,18 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   /**
-   * Adds the symbol currently in the input to the watchlist. The backend is idempotent — POSTing
-   * an existing symbol returns the existing entry — so the UI doesn't need to check existence
-   * first ; it just refreshes the local list from the response.
+   * Adds the symbol the user picked in the autocomplete dropdown. Requires a non-null
+   * `watchlistSelectedMatch` — the Add button is disabled until then, so this is mostly defensive.
+   * The backend is idempotent (POSTing a duplicate returns the existing row) and now also validates
+   * the symbol against the configured market provider (Phase 2 v2) — a 400 response surfaces as the
+   * "invalid symbol" message in i18n.
    */
   addToWatchlist() {
-    const raw = this.watchlistInput().trim();
-    if (!raw || this.watchlistAdding()) return;
+    const selected = this.watchlistSelectedMatch();
+    if (!selected || this.watchlistAdding()) return;
     this.watchlistAdding.set(true);
     this.watchlistError.set(null);
-    this.watchlistRepository.add(raw).subscribe({
+    this.watchlistRepository.add(selected.symbol).subscribe({
       next: (entry) => {
         // Replace any previous entry with the same symbol (the backend's idempotent add returns
         // the existing row when a duplicate is posted), then append. Sorted by addedAt ASC to
@@ -145,7 +257,9 @@ export class Dashboard implements OnInit, OnDestroy {
         const next = this.watchlist().filter((e) => e.symbol !== entry.symbol);
         next.push(entry);
         this.watchlist.set(next);
-        this.watchlistInput.set('');
+        this.watchlistSearchControl.setValue('', { emitEvent: false });
+        this.watchlistSelectedMatch.set(null);
+        this.watchlistSuggestions.set([]);
         this.watchlistAdding.set(false);
       },
       error: (err: { status?: number }) => {
