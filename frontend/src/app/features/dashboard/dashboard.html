@@ -113,21 +113,36 @@
 
           @if (watchlistOpen()) {
             <form class="watchlist-add" (submit)="addToWatchlist(); $event.preventDefault()">
-              <input
-                type="text"
-                class="watchlist-input"
-                [value]="watchlistInput()"
-                (input)="watchlistInput.set($any($event.target).value)"
-                [placeholder]="'dashboard.watchlist.placeholder' | translate"
-                [disabled]="watchlistAdding()"
-                maxlength="20"
-                autocomplete="off"
-                spellcheck="false"
-              />
+              <mat-form-field appearance="outline" class="watchlist-search-field">
+                <input
+                  type="text"
+                  matInput
+                  [formControl]="watchlistSearchControl"
+                  [matAutocomplete]="watchlistAuto"
+                  [placeholder]="'dashboard.watchlist.placeholder' | translate"
+                  maxlength="40"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <mat-autocomplete
+                  #watchlistAuto="matAutocomplete"
+                  class="watchlist-autocomplete-panel"
+                  [displayWith]="displayWatchlistMatch"
+                  (optionSelected)="onWatchlistSymbolSelected($event)"
+                >
+                  @for (m of watchlistSuggestions(); track m.symbol) {
+                    <mat-option [value]="m">
+                      <strong>{{ m.symbol }}</strong>
+                      <span class="watchlist-suggestion-name"> — {{ m.name }}</span>
+                      <span class="watchlist-suggestion-exchange">({{ m.exchange }})</span>
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+              </mat-form-field>
               <button
                 type="submit"
                 class="watchlist-add-btn"
-                [disabled]="watchlistAdding() || !watchlistInput().trim()"
+                [disabled]="watchlistAdding() || !watchlistSelectedMatch()"
                 [matTooltip]="'dashboard.watchlist.addTooltip' | translate"
               >
                 <mat-icon>add</mat-icon>

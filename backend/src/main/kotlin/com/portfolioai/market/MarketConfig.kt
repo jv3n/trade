@@ -35,7 +35,7 @@ class MarketConfig {
 
   @Bean
   fun cacheManager(appConfig: AppConfigService): CaffeineCacheManager {
-    val mgr = CaffeineCacheManager(MARKET_CHART_CACHE, NEWS_CACHE)
+    val mgr = CaffeineCacheManager(MARKET_CHART_CACHE, NEWS_CACHE, SYMBOL_SEARCH_CACHE)
     mgr.setCaffeine(buildSpec(appConfig.getInt(ConfigKeys.CACHE_TTL_MINUTES)))
     return mgr
   }
@@ -48,6 +48,14 @@ class MarketConfig {
      * doesn't drop the other.
      */
     const val NEWS_CACHE = "news-by-symbol"
+
+    /**
+     * Symbol search results — keyed on the lowercased query + limit. Same shared TTL as the other
+     * caches today. Search results are stable on the order of hours/days (a new IPO is rare on the
+     * timescale of a watchlist add), so a longer dedicated TTL would be a natural follow-up if we
+     * want to spare credits ; v1 keeps everything aligned for simplicity.
+     */
+    const val SYMBOL_SEARCH_CACHE = "symbol-search"
 
     internal fun buildSpec(ttlMinutes: Int): Caffeine<Any, Any> =
       Caffeine.newBuilder().expireAfterWrite(ttlMinutes.toLong(), TimeUnit.MINUTES).maximumSize(500)

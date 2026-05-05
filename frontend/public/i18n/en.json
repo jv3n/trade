@@ -58,13 +58,13 @@
     "ownedTickersTooltip": "Open the {{symbol}} dossier (held in {{count}} portfolio(s))",
     "watchlist": {
       "label": "Watchlist",
-      "placeholder": "Ticker (e.g. NVDA)",
+      "placeholder": "Search a ticker (e.g. NVDA, Apple…)",
       "addTooltip": "Add to watchlist",
       "removeTooltip": "Remove {{symbol}} from watchlist",
       "empty": "No tickers tracked yet.",
       "errors": {
         "add": "Could not add this ticker.",
-        "invalid": "Invalid ticker.",
+        "invalid": "Ticker not recognised by the market provider. Pick a suggestion.",
         "remove": "Could not remove this ticker."
       }
     },

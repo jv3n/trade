@@ -436,3 +436,34 @@ textarea {
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+// ----------------------------------------------------------------------
+// `mat-autocomplete` panel — watchlist sidebar
+// ----------------------------------------------------------------------
+// The panel is rendered in the CDK overlay (sibling of `<app-root>`), so component-scoped CSS
+// can't reach it. We ship a global rule keyed on the `class="watchlist-autocomplete-panel"` set on
+// the `<mat-autocomplete>` element. Material default option size (~0.875 rem, 3 rem height) reads
+// oversized in the tight sidebar — we match it to the surrounding 0.75 rem typography.
+.watchlist-autocomplete-panel.mat-mdc-autocomplete-panel {
+  .mat-mdc-option {
+    min-height: 2rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+
+    .mdc-list-item__primary-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  .watchlist-suggestion-name {
+    color: var(--color-text-dim);
+    font-weight: 400;
+    margin-left: 0.15rem;
+  }
+
+  .watchlist-suggestion-exchange {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+    margin-left: 0.4rem;
+  }
+}
