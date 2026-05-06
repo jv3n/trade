@@ -202,6 +202,7 @@ class AppConfigServiceTest {
         marketProviderDefault = "mock",
         newsProviderDefault = "mock",
         analystProviderDefault = "mock",
+        earningsProviderDefault = "mock",
       )
       .also { it.primeCache() }
 }

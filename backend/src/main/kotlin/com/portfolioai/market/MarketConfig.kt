@@ -44,6 +44,7 @@ class MarketConfig {
         SYMBOL_SEARCH_CACHE,
         SECTOR_CACHE,
         ANALYST_CACHE,
+        EARNINGS_CACHE,
       )
     mgr.setCaffeine(buildSpec(appConfig.getInt(ConfigKeys.CACHE_TTL_MINUTES)))
     return mgr
@@ -79,6 +80,14 @@ class MarketConfig {
      * quota when the dossier is re-opened. Same shared TTL as the rest of the market caches.
      */
     const val ANALYST_CACHE = "analyst-recommendations"
+
+    /**
+     * Earnings reports + next-date per ticker — keyed on the uppercase symbol. Reports change at
+     * most once per quarter and the next-date moves daily but at slow rhythm — 15 min of staleness
+     * is invisible to the user, but it shaves the free quota when the dossier is re-opened. Same
+     * shared TTL as the rest of the market caches.
+     */
+    const val EARNINGS_CACHE = "earnings"
 
     internal fun buildSpec(ttlMinutes: Int): Caffeine<Any, Any> =
       Caffeine.newBuilder().expireAfterWrite(ttlMinutes.toLong(), TimeUnit.MINUTES).maximumSize(500)

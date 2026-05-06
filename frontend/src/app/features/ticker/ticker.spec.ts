@@ -31,6 +31,7 @@ import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.reposi
 import { NewsItem, NewsRepository } from '../../core/news.repository';
 import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
 import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
+import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {
@@ -83,6 +84,7 @@ describe('TickerPage', () => {
     remove: ReturnType<typeof vi.fn>;
   };
   let analyst: { getForSymbol: ReturnType<typeof vi.fn> };
+  let earnings: { getForSymbol: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     market = {
@@ -119,6 +121,11 @@ describe('TickerPage', () => {
       // state. Tests that exercise the populated / error paths override.
       getForSymbol: vi.fn().mockReturnValue(throwError(() => ({ status: 404 }))),
     };
+    earnings = {
+      // Default : 404 (no data) so tests that don't care about the panel see the empty state.
+      // Tests that exercise the populated / error / null-calendar paths override.
+      getForSymbol: vi.fn().mockReturnValue(throwError(() => ({ status: 404 }))),
+    };
 
     await TestBed.configureTestingModule({
       imports: [TickerPage],
@@ -129,6 +136,7 @@ describe('TickerPage', () => {
         { provide: NewsRepository, useValue: news },
         { provide: AnnotationRepository, useValue: annotationStore },
         { provide: AnalystRepository, useValue: analyst },
+        { provide: EarningsRepository, useValue: earnings },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ symbol: 'AAPL' }) } },
@@ -1364,6 +1372,188 @@ describe('TickerPage', () => {
       fixture.detectChanges();
 
       expect(component.analystTrend()).toBe('flat');
+    });
+  });
+
+  // ---- Fundamentals — earnings ----
+
+  /**
+   * The "Fondamentaux" card now hosts a 2nd sub-block (after analyst recommendations) — earnings.
+   * It surfaces the next expected announcement (with a countdown) and the last 4 quarterly reports
+   * (EPS estimate vs actual + surprise %). Three terminal states are mutually exclusive after init :
+   *
+   * - **populated** → `earnings()` is the snapshot, the next-line + reports table render.
+   * - **no data** (HTTP 404) → `earningsNotCovered()` flips, panel shows an empty-state line.
+   * - **upstream error** (HTTP 503) → `earningsError()` set, panel shows an inline error banner.
+   *
+   * The dossier core (snapshot, chart, narrative, analyst) survives every error path — same
+   * isolation rule as the news and analyst panels.
+   */
+  describe('earnings', () => {
+    const populatedSnapshot: EarningsSnapshot = {
+      symbol: 'AAPL',
+      nextEarningsDate: '2026-05-12',
+      nextEarningsTime: 'AFTER_MARKET',
+      lastReports: [
+        { period: '2025-03-31', epsEstimate: 1.0, epsActual: 1.1, surprisePercent: 10.0 },
+        { period: '2025-06-30', epsEstimate: 1.05, epsActual: 1.12, surprisePercent: 6.67 },
+        { period: '2025-09-30', epsEstimate: 1.1, epsActual: 1.05, surprisePercent: -4.55 },
+        { period: '2025-12-31', epsEstimate: 1.2, epsActual: 1.31, surprisePercent: 9.17 },
+      ],
+    };
+
+    it('hydrates the snapshot on init when the symbol has earnings data', () => {
+      earnings.getForSymbol.mockReturnValue(of(populatedSnapshot));
+      fixture.detectChanges();
+
+      expect(earnings.getForSymbol).toHaveBeenCalledWith('AAPL');
+      expect(component.earnings()).toEqual(populatedSnapshot);
+      expect(component.earningsLoading()).toBe(false);
+      expect(component.earningsError()).toBeNull();
+      expect(component.earningsNotCovered()).toBe(false);
+    });
+
+    it('surfaces the no-data state on a 404', () => {
+      // Default mock returns 404 — assert the empty-state flag flips and no error banner is set.
+      // The dossier core stays untouched.
+      fixture.detectChanges();
+
+      expect(component.earningsNotCovered()).toBe(true);
+      expect(component.earnings()).toBeNull();
+      expect(component.earningsError()).toBeNull();
+      expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
+
+    it('surfaces a Finnhub 503 inline without breaking the rest of the dossier', () => {
+      earnings.getForSymbol.mockReturnValue(throwError(() => ({ status: 503 })));
+      fixture.detectChanges();
+
+      // Inline error string set, dossier core untouched. Same rule as the news / analyst panels.
+      expect(component.earningsError()).toContain('rateLimit');
+      expect(component.earningsNotCovered()).toBe(false);
+      expect(component.earnings()).toBeNull();
+      expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
+
+    it('surfaces the snapshot with no countdown when nextEarningsDate is null', () => {
+      // The Finnhub /calendar/earnings endpoint sometimes 401s — the backend swallows that to a
+      // null next-date. The front renders the report breakdown without the countdown line.
+      const noCalendar: EarningsSnapshot = {
+        ...populatedSnapshot,
+        nextEarningsDate: null,
+        nextEarningsTime: null,
+      };
+      earnings.getForSymbol.mockReturnValue(of(noCalendar));
+      fixture.detectChanges();
+
+      expect(component.earnings()).toEqual(noCalendar);
+      expect(component.earningsCountdownDays()).toBeNull();
+      expect(component.earningsNotCovered()).toBe(false);
+    });
+
+    it('earningsCountdownDays computes days from today to the next-earnings date', () => {
+      // Pin the calculation : a date 5 days in the future returns 5, today returns 0, a past date
+      // returns negative. The template uses these to pick the right i18n key (today / tomorrow /
+      // inDays / daysAgo).
+      const today = new Date();
+      const future = new Date(today);
+      future.setUTCDate(future.getUTCDate() + 5);
+      const futureIso = future.toISOString().slice(0, 10);
+
+      earnings.getForSymbol.mockReturnValue(
+        of({ ...populatedSnapshot, nextEarningsDate: futureIso }),
+      );
+      fixture.detectChanges();
+
+      expect(component.earningsCountdownDays()).toBe(5);
+    });
+
+    it('earningsSurpriseSign returns beat / miss / inline from the surprise %', () => {
+      // Drives the chip colour. Pin the boundary : exactly 0 is `inline`, any positive is `beat`,
+      // any negative is `miss`. A null surprise (e.g. when actual is missing) returns null so the
+      // template hides the chip.
+      expect(component.earningsSurpriseSign({ surprisePercent: 9.17 })).toBe('beat');
+      expect(component.earningsSurpriseSign({ surprisePercent: -2.1 })).toBe('miss');
+      expect(component.earningsSurpriseSign({ surprisePercent: 0 })).toBe('inline');
+      expect(component.earningsSurpriseSign({ surprisePercent: null })).toBeNull();
+    });
+
+    it('earningsCountdownDays is null before the snapshot lands so the template can render unconditionally', () => {
+      // Default mock returns 404 → snapshot stays null. Calling the getter at that moment must
+      // not throw and must yield null — the template binds it under @if (earnings(); as e) so it
+      // never sees a null computed in practice, but the contract is worth pinning.
+      fixture.detectChanges();
+
+      expect(component.earningsCountdownDays()).toBeNull();
+    });
+
+    it('earningsCountdownImminent flips true on dates within 7 days from today, inclusive', () => {
+      // Pin the upper boundary : exactly 7 days out is still imminent (≤ inclusive).
+      const today = new Date();
+      const sevenDaysOut = new Date(today);
+      sevenDaysOut.setUTCDate(sevenDaysOut.getUTCDate() + 7);
+      const sevenDaysIso = sevenDaysOut.toISOString().slice(0, 10);
+
+      earnings.getForSymbol.mockReturnValue(
+        of({ ...populatedSnapshot, nextEarningsDate: sevenDaysIso }),
+      );
+      fixture.detectChanges();
+
+      expect(component.earningsCountdownImminent()).toBe(true);
+    });
+
+    it('earningsCountdownImminent flips false on dates beyond 7 days from today', () => {
+      // Pin the upper boundary : 8 days out is no longer imminent.
+      const today = new Date();
+      const eightDaysOut = new Date(today);
+      eightDaysOut.setUTCDate(eightDaysOut.getUTCDate() + 8);
+      const iso = eightDaysOut.toISOString().slice(0, 10);
+
+      earnings.getForSymbol.mockReturnValue(of({ ...populatedSnapshot, nextEarningsDate: iso }));
+      fixture.detectChanges();
+
+      expect(component.earningsCountdownImminent()).toBe(false);
+    });
+
+    it('earningsCountdownImminent stays false on past dates so the chip does not light up retroactively', () => {
+      // Bug we caught in review : Finnhub occasionally lists the just-reported quarter on the
+      // morning of the print with `epsActual` still null for a few hours, which surfaces as a
+      // -1 day countdown briefly. The pill must NOT light up warning-tinted in that case — a
+      // past date isn't imminent. Pin the lower boundary explicitly.
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 3);
+      const iso = yesterday.toISOString().slice(0, 10);
+
+      earnings.getForSymbol.mockReturnValue(of({ ...populatedSnapshot, nextEarningsDate: iso }));
+      fixture.detectChanges();
+
+      expect(component.earningsCountdownImminent()).toBe(false);
+    });
+
+    it('earningsReportsNewestFirst flips the wire order so the most recent quarter sits on top', () => {
+      // The backend emits oldest-first (matches the analyst trend convention). The earnings
+      // table reads better newest-first because the user looks for "what just happened" first.
+      // We pin the reverse explicitly so a refactor that swaps the wire order doesn't silently
+      // change the table ordering.
+      earnings.getForSymbol.mockReturnValue(of(populatedSnapshot));
+      fixture.detectChanges();
+
+      const reversed = component.earningsReportsNewestFirst();
+      expect(reversed.map((r) => r.period)).toEqual([
+        '2025-12-31',
+        '2025-09-30',
+        '2025-06-30',
+        '2025-03-31',
+      ]);
+    });
+
+    it('earningsReportsNewestFirst returns empty before the snapshot lands', () => {
+      // Default mock = 404 → no snapshot. Helper must not throw and must yield an empty array
+      // so the template can iterate it unconditionally.
+      fixture.detectChanges();
+
+      expect(component.earningsReportsNewestFirst()).toEqual([]);
     });
   });
 

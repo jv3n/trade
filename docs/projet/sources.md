@@ -24,9 +24,9 @@
 - Plan payant nécessaire pour intraday haute fréquence
 - Erreurs renvoyées en HTTP 200 avec `status: error` dans le body — le client doit les détecter
 
-## Phase 2 — News par ticker et recommandations analystes : Finnhub
+## Phase 2 — News par ticker, recommandations analystes et earnings : Finnhub
 
-Twelve Data ne couvre ni les news (testé live → 404 sur `/news`) ni les recommandations analystes en free tier exploitable. Finnhub a été ajouté comme **provider séparé** pour ces deux familles de données, avec deux clés runtime distinctes (`news.provider` et `analyst.provider`) qui partagent la même API key (`market.finnhub.api-key`) — chacune peut être flippée indépendamment (ex. : live news + mock analyst recos pendant l'itération).
+Twelve Data ne couvre ni les news (testé live → 404 sur `/news`), ni les recommandations analystes, ni les earnings en free tier exploitable. Finnhub a été ajouté comme **provider séparé** pour ces trois familles de données, avec trois clés runtime distinctes (`news.provider`, `analyst.provider`, `earnings.provider`) qui partagent la même API key (`market.finnhub.api-key`) — chacune peut être flippée indépendamment (ex. : live news + mock analyst recos + mock earnings pendant l'itération).
 
 ### Finnhub (REST + apikey)
 
@@ -35,6 +35,8 @@ Twelve Data ne couvre ni les news (testé live → 404 sur `/news`) ni les recom
 | `https://finnhub.io/api/v1/company-news?symbol={s}&from={d}&to={d}&token={k}` | Headlines + summary + url + image (fenêtre roulante 30 j) | 15 min (clé `(symbol, limit)`) |
 | `https://finnhub.io/api/v1/stock/recommendation?symbol={s}&token={k}` | Breakdown analystes monthly (strongBuy/buy/hold/sell/strongSell), array newest-first (re-trié défensivement côté code) | 15 min (clé `symbol`) |
 | `https://finnhub.io/api/v1/stock/price-target?symbol={s}&token={k}` | Price target consensus 12 mois (high/low/mean/median + numberOfAnalysts). Fail-soft à `null` côté code sur 401/403/5xx (paid tier sur certains comptes), shell tout-zéro → `null` | 15 min (mêmes clé/cache que recommendations) |
+| `https://finnhub.io/api/v1/stock/earnings?symbol={s}&token={k}` | Historique 4 derniers trimestres : `{period, estimate, actual, surprise, surprisePercent}` (surprise % recalculé côté code, Finnhub round inconsistemment sur small caps) | 15 min (clé `symbol`, cache `earnings`) |
+| `https://finnhub.io/api/v1/calendar/earnings?from={d}&to={d}&symbol={s}&token={k}` | Prochaine annonce attendue (`{date, hour bmo/amc/dmh, epsActual, epsEstimate}`) sur fenêtre 90 j en avant. Fail-soft à `null` côté code sur 401/403/5xx (paid tier sur certains comptes) | 15 min (mêmes clé/cache que earnings) |
 
 **Avantages** :
 - Free tier 60 req/min sans cap quotidien
@@ -51,7 +53,7 @@ Twelve Data ne couvre ni les news (testé live → 404 sur `/news`) ni les recom
 
 Voir [`technique/providers.md`](../technique/providers.md) pour le détail (URLs d'inscription, dashboard, points d'intégration code).
 
-> **Switch runtime** : depuis la Phase 2, `market.provider`, `news.provider` et `analyst.provider` sont éditables en direct depuis `/settings/configuration` (toggles mock ↔ live). Le bascule s'applique au prochain dossier ouvert sans redémarrer le backend, et la valeur surcharge le défaut YAML jusqu'au prochain "Réinitialiser au défaut" sur la même page.
+> **Switch runtime** : depuis la Phase 2, `market.provider`, `news.provider`, `analyst.provider` et `earnings.provider` sont éditables en direct depuis `/settings/configuration` (toggles mock ↔ live). Le bascule s'applique au prochain dossier ouvert sans redémarrer le backend, et la valeur surcharge le défaut YAML jusqu'au prochain "Réinitialiser au défaut" sur la même page.
 
 ### Bascule alternative (market data)
 

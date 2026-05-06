@@ -751,6 +751,136 @@
   margin-top: 0.25rem;
 }
 
+// ---- Earnings sub-block ----
+//
+// Sits as the 2nd block in the same fundamentals-card as the analyst sub-block. Two pieces : the
+// next-earnings line at the top (icon + date + "in N days" pill) and a 4-row table with the last
+// quarters (period / estimate / actual / surprise %). Visual rhythm aligned on the analyst chips
+// — same surface tones, same border radius — so the card reads as one panel.
+
+.earnings-next {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface-2);
+  border-radius: var(--radius);
+
+  > mat-icon {
+    color: var(--color-text-dim);
+    font-size: 1.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+.earnings-next-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.earnings-next-date {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.earnings-next-time {
+  color: var(--color-text-dim);
+  font-size: 0.75rem;
+}
+
+// Countdown pill — neutral by default, takes a warning-tinted background when ≤ 7 days out so the
+// user notices an imminent print without blocking the rest of the dossier.
+.earnings-countdown {
+  font-size: 0.72rem;
+  color: var(--color-text-dim);
+  font-variant-numeric: tabular-nums;
+
+  &.earnings-countdown-imminent {
+    color: var(--color-warning);
+    font-weight: 600;
+  }
+}
+
+.earnings-reports {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.25rem;
+}
+
+.earnings-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+
+  // Subtle alternating tint on the data rows so the eye scans columns easily without a heavy
+  // table border.
+  &:nth-child(odd):not(.earnings-row-head) {
+    background: var(--color-surface-2);
+  }
+}
+
+.earnings-row-head {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-dim);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  margin-bottom: 0.15rem;
+}
+
+.earnings-cell-period {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.earnings-cell-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+// Surprise % chip — green beat, red miss, neutral inline. Same colour token family as the
+// analyst consensus chip so the dossier stays visually coherent.
+.earnings-surprise {
+  font-weight: 600;
+}
+
+.earnings-surprise-beat {
+  color: var(--color-success);
+}
+
+.earnings-surprise-miss {
+  color: var(--color-danger);
+}
+
+.earnings-surprise-inline {
+  color: var(--color-text-dim);
+}
+
+.earnings-surprise-unknown {
+  color: var(--color-text-dim);
+}
+
+.earnings-empty {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 0.85rem;
+}
+
+.earnings-error {
+  margin-top: 0.25rem;
+}
+
 // ---- News ----
 
 .news-card {

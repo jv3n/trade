@@ -30,6 +30,8 @@ import { AnnotationRepository } from './core/annotation.repository';
 import { LocalStorageAnnotationRepository } from './core/adapters/annotation.local';
 import { AnalystRepository } from './core/analyst.repository';
 import { HttpAnalystRepository } from './core/adapters/analyst.http';
+import { EarningsRepository } from './core/earnings.repository';
+import { HttpEarningsRepository } from './core/adapters/earnings.http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -60,5 +62,6 @@ export const appConfig: ApplicationConfig = {
     { provide: ConfigRepository, useClass: HttpConfigRepository },
     { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
     { provide: AnalystRepository, useClass: HttpAnalystRepository },
+    { provide: EarningsRepository, useClass: HttpEarningsRepository },
   ],
 };

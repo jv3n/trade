@@ -247,6 +247,27 @@
           "range": "Fourchette",
           "basedOn": "Sur {{count}} analyste(s)"
         }
+      },
+      "earnings": {
+        "title": "Résultats",
+        "loading": "Chargement des résultats…",
+        "notCovered": "Pas de données de résultats pour ce ticker.",
+        "next": "Prochain résultat :",
+        "today": "aujourd'hui",
+        "tomorrow": "demain",
+        "inDays": "dans {{count}} jours",
+        "daysAgo": "il y a {{count}} jours",
+        "time": {
+          "BEFORE_MARKET": "avant ouverture",
+          "AFTER_MARKET": "après clôture",
+          "UNSPECIFIED": "horaire non précisé"
+        },
+        "col": {
+          "period": "Période",
+          "estimate": "Estimé",
+          "actual": "Réel",
+          "surprise": "Surprise"
+        }
       }
     }
   },

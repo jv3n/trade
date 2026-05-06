@@ -247,6 +247,27 @@
           "range": "Range",
           "basedOn": "Based on {{count}} analyst(s)"
         }
+      },
+      "earnings": {
+        "title": "Earnings",
+        "loading": "Loading earnings…",
+        "notCovered": "No earnings data available for this ticker.",
+        "next": "Next earnings:",
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "inDays": "in {{count}} days",
+        "daysAgo": "{{count}} days ago",
+        "time": {
+          "BEFORE_MARKET": "before market open",
+          "AFTER_MARKET": "after market close",
+          "UNSPECIFIED": "time not specified"
+        },
+        "col": {
+          "period": "Period",
+          "estimate": "Estimate",
+          "actual": "Actual",
+          "surprise": "Surprise"
+        }
       }
     }
   },

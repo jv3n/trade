@@ -46,22 +46,26 @@ class ConfigControllerTest {
   // ---------------------------------------------------------------------- list
 
   @Test
-  fun `GET config returns the six known keys with secrets masked and enums carrying allowedValues`() {
-    // Order is alphabetical on key — `analyst.provider` < `market.cache.ttl-minutes` <
-    // `market.finnhub.api-key` < `market.provider` < `market.twelvedata.api-key` < `news.provider`.
+  fun `GET config returns the seven known keys with secrets masked and enums carrying allowedValues`() {
+    // Order is alphabetical on key — `analyst.provider` < `earnings.provider` <
+    // `market.cache.ttl-minutes` < `market.finnhub.api-key` < `market.provider` <
+    // `market.twelvedata.api-key` < `news.provider`.
     given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("30")
     given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
     given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("twelvedata")
     given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("real-key")
     given(service.defaultFor(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
+    given(service.defaultFor(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
     given(service.defaultFor(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
     given(service.defaultFor(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("env-default")
     given(service.isOverridden(ConfigKeys.ANALYST_PROVIDER)).willReturn(false)
+    given(service.isOverridden(ConfigKeys.EARNINGS_PROVIDER)).willReturn(false)
     given(service.isOverridden(ConfigKeys.CACHE_TTL_MINUTES)).willReturn(true)
     given(service.isOverridden(ConfigKeys.FINNHUB_API_KEY)).willReturn(false)
     given(service.isOverridden(ConfigKeys.NEWS_PROVIDER)).willReturn(false)
@@ -71,43 +75,49 @@ class ConfigControllerTest {
     mvc
       .perform(get("/api/config"))
       .andExpect(status().isOk)
-      .andExpect(jsonPath("$.length()").value(6))
+      .andExpect(jsonPath("$.length()").value(7))
       // Analyst provider : ENUM, allowedValues drives the toggle group. First alphabetically.
       .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
       .andExpect(jsonPath("$[0].type").value("ENUM"))
       .andExpect(jsonPath("$[0].currentValue").value("mock"))
       .andExpect(jsonPath("$[0].allowedValues[0]").value("mock"))
       .andExpect(jsonPath("$[0].allowedValues[1]").value("finnhub"))
+      // Earnings provider : ENUM, second alphabetically.
+      .andExpect(jsonPath("$[1].key").value(ConfigKeys.EARNINGS_PROVIDER))
+      .andExpect(jsonPath("$[1].type").value("ENUM"))
+      .andExpect(jsonPath("$[1].currentValue").value("mock"))
+      .andExpect(jsonPath("$[1].allowedValues[0]").value("mock"))
+      .andExpect(jsonPath("$[1].allowedValues[1]").value("finnhub"))
       // Cache TTL : INT key, value exposed as-is.
-      .andExpect(jsonPath("$[1].key").value(ConfigKeys.CACHE_TTL_MINUTES))
-      .andExpect(jsonPath("$[1].type").value("INT"))
-      .andExpect(jsonPath("$[1].currentValue").value("30"))
-      .andExpect(jsonPath("$[1].defaultValue").value("15"))
+      .andExpect(jsonPath("$[2].key").value(ConfigKeys.CACHE_TTL_MINUTES))
+      .andExpect(jsonPath("$[2].type").value("INT"))
+      .andExpect(jsonPath("$[2].currentValue").value("30"))
+      .andExpect(jsonPath("$[2].defaultValue").value("15"))
       // Finnhub key : SECRET, no value set.
-      .andExpect(jsonPath("$[2].key").value(ConfigKeys.FINNHUB_API_KEY))
-      .andExpect(jsonPath("$[2].type").value("SECRET"))
-      .andExpect(jsonPath("$[2].hasValue").value(false))
+      .andExpect(jsonPath("$[3].key").value(ConfigKeys.FINNHUB_API_KEY))
+      .andExpect(jsonPath("$[3].type").value("SECRET"))
+      .andExpect(jsonPath("$[3].hasValue").value(false))
       // Market provider : ENUM, currently overridden to twelvedata.
-      .andExpect(jsonPath("$[3].key").value(ConfigKeys.MARKET_PROVIDER))
-      .andExpect(jsonPath("$[3].type").value("ENUM"))
-      .andExpect(jsonPath("$[3].currentValue").value("twelvedata"))
-      .andExpect(jsonPath("$[3].defaultValue").value("mock"))
-      .andExpect(jsonPath("$[3].isOverridden").value(true))
-      .andExpect(jsonPath("$[3].allowedValues[0]").value("mock"))
-      .andExpect(jsonPath("$[3].allowedValues[1]").value("twelvedata"))
-      // Twelve Data key : SECRET with a value — masked.
-      .andExpect(jsonPath("$[4].key").value(ConfigKeys.TWELVEDATA_API_KEY))
-      .andExpect(jsonPath("$[4].type").value("SECRET"))
-      .andExpect(jsonPath("$[4].currentValue").doesNotExist())
-      .andExpect(jsonPath("$[4].defaultValue").doesNotExist())
-      .andExpect(jsonPath("$[4].hasValue").value(true))
+      .andExpect(jsonPath("$[4].key").value(ConfigKeys.MARKET_PROVIDER))
+      .andExpect(jsonPath("$[4].type").value("ENUM"))
+      .andExpect(jsonPath("$[4].currentValue").value("twelvedata"))
+      .andExpect(jsonPath("$[4].defaultValue").value("mock"))
       .andExpect(jsonPath("$[4].isOverridden").value(true))
+      .andExpect(jsonPath("$[4].allowedValues[0]").value("mock"))
+      .andExpect(jsonPath("$[4].allowedValues[1]").value("twelvedata"))
+      // Twelve Data key : SECRET with a value — masked.
+      .andExpect(jsonPath("$[5].key").value(ConfigKeys.TWELVEDATA_API_KEY))
+      .andExpect(jsonPath("$[5].type").value("SECRET"))
+      .andExpect(jsonPath("$[5].currentValue").doesNotExist())
+      .andExpect(jsonPath("$[5].defaultValue").doesNotExist())
+      .andExpect(jsonPath("$[5].hasValue").value(true))
+      .andExpect(jsonPath("$[5].isOverridden").value(true))
       // News provider : ENUM, allowedValues drives the toggle group.
-      .andExpect(jsonPath("$[5].key").value(ConfigKeys.NEWS_PROVIDER))
-      .andExpect(jsonPath("$[5].type").value("ENUM"))
-      .andExpect(jsonPath("$[5].currentValue").value("mock"))
-      .andExpect(jsonPath("$[5].allowedValues[0]").value("mock"))
-      .andExpect(jsonPath("$[5].allowedValues[1]").value("finnhub"))
+      .andExpect(jsonPath("$[6].key").value(ConfigKeys.NEWS_PROVIDER))
+      .andExpect(jsonPath("$[6].type").value("ENUM"))
+      .andExpect(jsonPath("$[6].currentValue").value("mock"))
+      .andExpect(jsonPath("$[6].allowedValues[0]").value("mock"))
+      .andExpect(jsonPath("$[6].allowedValues[1]").value("finnhub"))
   }
 
   // ---------------------------------------------------------------------- set

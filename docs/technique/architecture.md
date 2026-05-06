@@ -41,6 +41,8 @@
 │  news/        → Finnhub + mock (Phase 2)    │
 │  analyst/     → recos analystes Finnhub +   │
 │                 mock (Phase 2)              │
+│  earnings/    → résultats trimestriels +    │
+│                 next-date (Phase 2)         │
 │  config/      → runtime overrides (Phase 2) │
 │  shared/      → utilitaires transverses     │
 │  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
@@ -105,7 +107,7 @@ Source primaire des données ticker. Trois ports outbound cohabitent dans le mod
 
 #### Caches Caffeine
 
-`MarketConfig` déclare 5 caches partagés : `market-chart` (chart endpoint), `news-by-symbol` (module `news/`), `symbol-search` (autocomplete watchlist), `sector-by-symbol` (sector classifier) et `analyst-recommendations` (module `analyst/`). Tous partagent le TTL piloté par `market.cache.ttl-minutes` (5–60 min, runtime-éditable depuis `/settings/configuration`).
+`MarketConfig` déclare 6 caches partagés : `market-chart` (chart endpoint), `news-by-symbol` (module `news/`), `symbol-search` (autocomplete watchlist), `sector-by-symbol` (sector classifier), `analyst-recommendations` (module `analyst/`) et `earnings` (module `earnings/`). Tous partagent le TTL piloté par `market.cache.ttl-minutes` (5–60 min, runtime-éditable depuis `/settings/configuration`).
 
 ### `analysis/` — Phase 1 réécrite
 
@@ -168,6 +170,18 @@ Recommandations d'analystes (consensus monthly + price target 12 mois) sur le Do
 - `AnalystRecommendationService` avec `@Cacheable("analyst-recommendations", key = "#symbol.toUpperCase()")` (méthode Java SpEL). Finnhub stamp les snapshots mensuellement → 15 min de staleness sont invisibles au user, mais ça épargne le quota free tier sur les re-clics.
 - 1 endpoint REST : `GET /api/market/ticker/{symbol}/analyst-recommendations`. Erreurs `NoSuchElementException` (404 « no analyst coverage ») et `MarketUnavailableException` (503) partagées avec le reste de la stack market.
 
+### `earnings/` — nouveau, Phase 2
+
+Earnings trimestriels (4 derniers Q estimate / actual / surprise %) + prochaine date d'annonce attendue sur le Dossier ticker, 2ᵉ sous-bloc « Résultats » de la section « Fondamentaux » sous le sous-bloc analyste. Même pattern hexagonal que `news/` et `analyst/` : un port + deux adapters + dispatcher `@Primary` + service applicatif cache-bearing.
+
+- Domain `EarningsSnapshot` provider-neutre (`{symbol, nextEarningsDate?, nextEarningsTime?, lastReports[]}`), `EarningsReport` (`{period, epsEstimate?, epsActual?, surprisePercent?}`), enum `EarningsTime` (BEFORE_MARKET / AFTER_MARKET / UNSPECIFIED), helper pur `computeSurprisePercent` qui gère `null` + zero estimate (évite la div-by-zero) + estimate négatif via `abs()` au dénominateur (un beat sur loss-making garde un sign positif).
+- Port `EarningsClient`. Deux adapters cohabitent, sélectionnés par `earnings.provider` :
+  - `FinnhubEarningsClient` (`finnhub`) — appelle `/stock/earnings?symbol=...&token=...` (requis) **et** `/calendar/earnings?from=...&to=...&symbol=...&token=...` (optionnel — fail-soft à `null` sur 401/403/5xx/network parce que le calendrier sit derrière un paid tier sur certains comptes Finnhub ; le snapshot reste utile sans la prochaine date). Fenêtre 90 j en avant — la prochaine annonce trimestrielle est ~3 mois max, querier plus burnerait du quota sur du stale future-future. Mappers purs (`FinnhubEarningsMappers`) : tri défensif `period` ASC, cap reports à 4 trimestres, recalcul `surprisePercent` côté code (Finnhub round inconsistemment sur small caps), filtre calendar par symbol + `epsActual == null` (cleanest "did it happen yet" signal vs un date >= today qui race avec la matinée du print), pick the earliest, mapping `bmo`/`amc`/`""`/`dmh` → enum (collapse les inconnus à UNSPECIFIED).
+  - `MockEarningsClient` (`mock`, défaut) — feed synthétique déterministe par symbole (seed = hash) avec EPS dans la bande $0.30–$3.50, surprise ±15 % autour de l'estimé pour produire un mix réaliste beat/miss, drift ±8 % d'un trimestre à l'autre pour une time-series stable mais pas plate, next-date 1–60 j en avant pour que le countdown reste lisible. Symboles réservés : `UNKNOWN` (404), `RATELIMIT` (503), `NOCALENDAR` (snapshot avec `nextEarningsDate = null`, pour reproduire la dégradation Finnhub sans flipper de provider).
+- `RoutingEarningsClient` (`@Primary`) — délègue per-call à l'adapter actif lu via `appConfig.getString(earnings.provider)`. Cache-key prefix volontairement absent (la clé dans le service applicatif n'inclut pas le provider) → un switch s'applique au prochain dossier ouvert sans rétention d'entrée stale.
+- `EarningsService` avec `@Cacheable("earnings", key = "#symbol.toUpperCase()")` (méthode Java SpEL). Reports changent au plus une fois par trimestre, calendar move daily mais lentement → 15 min de staleness sont invisibles au user, mais ça épargne le quota free tier sur les re-clics.
+- 1 endpoint REST : `GET /api/market/ticker/{symbol}/earnings`. Erreurs `NoSuchElementException` (404 « no earnings data » quand reports ET calendar sont vides) et `MarketUnavailableException` (503) partagées avec le reste de la stack market.
+
 ### `ingestion/` — gelé Phase 0
 
 Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus / détection HTML, 25 sources seedées). Conservé en place mais retiré du flow principal — Twelve Data remplit le rôle data marché en Phase 1.
@@ -176,14 +190,14 @@ Réutilisable plus tard pour de la macro non couverte par Twelve Data (Fed, BCE,
 
 ### `config/` — Phase 2
 
-Configuration éditable en runtime, sans redémarrage backend. Couvre Phase 2 six clés : `market.twelvedata.api-key`, `market.finnhub.api-key`, `market.cache.ttl-minutes`, `market.provider` (mock ↔ twelvedata), `news.provider` (mock ↔ finnhub) et `analyst.provider` (mock ↔ finnhub).
+Configuration éditable en runtime, sans redémarrage backend. Couvre Phase 2 sept clés : `market.twelvedata.api-key`, `market.finnhub.api-key`, `market.cache.ttl-minutes`, `market.provider` (mock ↔ twelvedata), `news.provider` (mock ↔ finnhub), `analyst.provider` (mock ↔ finnhub) et `earnings.provider` (mock ↔ finnhub).
 
 - **`AppConfigService`** — service singleton qui lit les défauts YAML via `@Value` et les surcharge avec ce qui est en BDD (`app_config`, V4). Cache mémoire `ConcurrentHashMap` primé au boot via `@PostConstruct` puis maintenu en write-through sur chaque `set` / `reset`. Émet un `ConfigChangedEvent` sur changement effectif.
 - **`ConfigController`** — `GET /api/config` (liste avec masquage des secrets), `PUT /api/config/{key}` (set), `DELETE /api/config/{key}` (reset au défaut), `POST /api/config/test/{provider}` (probe live d'une clé candidate sans la sauver).
 - **`ConfigTestClient`** — RestClient dédié qui appelle `/quote?symbol=AAPL` côté Twelve Data ou Finnhub pour valider une clé en cours d'édition. Découplé des adapters de production parce que le test doit fonctionner même quand `market.provider=mock`.
 - **Lecture per-call dans les adapters** — `TwelveDataClient` et `FinnhubClient` ne stockent plus la clé en `@Value` figée à la construction du bean ; ils lisent `appConfig.getString(...)` à chaque appel. Le YAML reste injecté comme défaut au niveau de `AppConfigService`.
 - **TTL cache dynamique** — `MarketConfig.cacheManager` lit le TTL initial via `AppConfigService` au boot. `CacheTtlListener` (composant séparé) écoute `ConfigChangedEvent` et appelle `setCaffeine(...)` sur le `CaffeineCacheManager` quand `market.cache.ttl-minutes` bouge. Trade-off accepté : le rebuild **invalide les entrées en cours** — coût marginal sur un TTL qu'on change rarement.
-- **Switch provider à chaud** — `RoutingMarketChartClient`, `RoutingNewsClient` et `RoutingAnalystClient` (tous `@Primary`) délèguent à l'adapter sélectionné par `market.provider` / `news.provider` / `analyst.provider` au moment de chaque appel. Les anciens `@ConditionalOnProperty` sur les adapters concrets et les HttpConfig sont retirés ; les deux `RestClient` (Twelve Data et Finnhub) cohabitent et sont qualifiés par `@Qualifier("twelveDataRestClient")` / `@Qualifier("finnhubRestClient")` côté clients. Coût : deux RestClients en mémoire au lieu d'un (négligeable). Bénéfice : rotation provider depuis `/settings/configuration` sans reboot, le bascule s'applique au prochain dossier ouvert. Cache key préfixée par adapter (`twelvedata|`, `mock|`) ⇒ pas de collision entre les deux espaces.
+- **Switch provider à chaud** — `RoutingMarketChartClient`, `RoutingNewsClient`, `RoutingAnalystClient` et `RoutingEarningsClient` (tous `@Primary`) délèguent à l'adapter sélectionné par `market.provider` / `news.provider` / `analyst.provider` / `earnings.provider` au moment de chaque appel. Les anciens `@ConditionalOnProperty` sur les adapters concrets et les HttpConfig sont retirés ; les deux `RestClient` (Twelve Data et Finnhub) cohabitent et sont qualifiés par `@Qualifier("twelveDataRestClient")` / `@Qualifier("finnhubRestClient")` côté clients. Coût : deux RestClients en mémoire au lieu d'un (négligeable). Bénéfice : rotation provider depuis `/settings/configuration` sans reboot, le bascule s'applique au prochain dossier ouvert. Cache key préfixée par adapter (`twelvedata|`, `mock|`) ⇒ pas de collision entre les deux espaces.
 
 ### `shared/`
 
@@ -194,7 +208,7 @@ Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs
 Hexagonal léger sous `frontend/src/app/` :
 
 - **`core/`** — ports + adapters (HTTP par défaut, localStorage pour les états client-only)
-  - `*.repository.ts` (abstract class — port). 10 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, **Annotation** (chart user annotations, single-user mono-machine), **Analyst** (recommandations analystes par ticker, Phase 2).
+  - `*.repository.ts` (abstract class — port). 11 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, **Annotation** (chart user annotations, single-user mono-machine), **Analyst** (recommandations analystes par ticker, Phase 2), **Earnings** (résultats trimestriels + next-date par ticker, Phase 2).
   - `adapters/*.http.ts` (HttpXxxRepository — HTTP adapter, défaut) ; `adapters/*.local.ts` pour les adapters client-only (`LocalStorageAnnotationRepository` v3 chart, swap futur vers backend-backed sans rewrite UI).
   - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: <impl> }`
   - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header

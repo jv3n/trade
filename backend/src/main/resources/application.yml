@@ -76,3 +76,11 @@ analyst:
   #   mock     — deterministic synthetic recommendations (default, no network needed)
   #   finnhub  — real REST `/stock/recommendation` + `/stock/price-target` (requires market.finnhub.api-key)
   provider: mock
+
+# Earnings provider — separate switch from `news.provider` and `analyst.provider` so the user can
+# flip them independently. Finnhub-backed today and shares `market.finnhub.api-key`.
+earnings:
+  # provider:
+  #   mock     — deterministic synthetic earnings (default, no network needed)
+  #   finnhub  — real REST `/stock/earnings` + `/calendar/earnings` (requires market.finnhub.api-key)
+  provider: mock

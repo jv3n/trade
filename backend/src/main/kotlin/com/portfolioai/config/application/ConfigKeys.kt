@@ -18,6 +18,7 @@ object ConfigKeys {
   const val MARKET_PROVIDER = "market.provider"
   const val NEWS_PROVIDER = "news.provider"
   const val ANALYST_PROVIDER = "analyst.provider"
+  const val EARNINGS_PROVIDER = "earnings.provider"
 
   const val PROVIDER_MOCK = "mock"
   const val PROVIDER_TWELVEDATA = "twelvedata"
@@ -35,6 +36,7 @@ object ConfigKeys {
       MARKET_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_TWELVEDATA),
       NEWS_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
       ANALYST_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
+      EARNINGS_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
     )
 
   val KNOWN_KEYS: Set<String> =
@@ -45,5 +47,6 @@ object ConfigKeys {
       MARKET_PROVIDER,
       NEWS_PROVIDER,
       ANALYST_PROVIDER,
+      EARNINGS_PROVIDER,
     )
 }

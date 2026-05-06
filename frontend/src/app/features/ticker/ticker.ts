@@ -37,6 +37,7 @@ import { NewsItem, NewsRepository } from '../../core/news.repository';
 import { WatchlistRepository } from '../../core/watchlist.repository';
 import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
 import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
+import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
@@ -254,6 +255,9 @@ const BRUSH_HANDLE_WIDTH_PX = 8;
  *  stable enough to not editorialise. ~5 % matches one analyst moving across the buy/hold line on
  *  a panel of 20. */
 const TREND_EPSILON = 0.05;
+/** Pre-computed milliseconds in a day — used to derive the countdown label on the earnings sub-
+ *  block. */
+const EARNINGS_MS_PER_DAY = 24 * 60 * 60 * 1000;
 /** Minimum width (in bar count) of the brush rectangle — prevents the user from collapsing it
  *  to zero by dragging the handles past each other. */
 const BRUSH_MIN_BARS = 2;
@@ -283,6 +287,7 @@ export class TickerPage implements OnInit, OnDestroy {
   private readonly watchlistRepository = inject(WatchlistRepository);
   private readonly annotationRepository = inject(AnnotationRepository);
   private readonly analystRepository = inject(AnalystRepository);
+  private readonly earningsRepository = inject(EarningsRepository);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -402,6 +407,19 @@ export class TickerPage implements OnInit, OnDestroy {
   analystNotCovered = signal(false);
   /** Inline error scoped to the analyst panel — Finnhub hiccup doesn't blank the dossier. */
   analystError = signal<string | null>(null);
+
+  // ---- Fundamentals — earnings state ----
+
+  /** Earnings snapshot for the current ticker. `null` covers three states distinguished by the
+   *  loading / coverage / error signals below : pending fetch, no data (404), or upstream error
+   *  (503). */
+  earnings = signal<EarningsSnapshot | null>(null);
+  earningsLoading = signal(false);
+  /** True when the backend returned 404 — the symbol has no earnings data. Distinct from an
+   *  error : the panel renders an empty-state line rather than a banner. */
+  earningsNotCovered = signal(false);
+  /** Inline error scoped to the earnings panel — Finnhub hiccup doesn't blank the dossier. */
+  earningsError = signal<string | null>(null);
 
   // ---- Watchlist state ----
 
@@ -857,6 +875,7 @@ export class TickerPage implements OnInit, OnDestroy {
     this.loadWatchlistState(s);
     this.loadNews(s);
     this.loadAnalyst(s);
+    this.loadEarnings(s);
     this.loadAnnotations(s);
     this.wireCustomBenchmarkSearch();
   }
@@ -1710,6 +1729,100 @@ export class TickerPage implements OnInit, OnDestroy {
     if (delta < -TREND_EPSILON) return 'down';
     return 'flat';
   });
+
+  // ---- Fundamentals — earnings ----
+
+  /**
+   * Fetches the earnings snapshot for the dossier. Three terminal states (mutually exclusive
+   * after `earningsLoading` flips to false) :
+   * - **404** → `earningsNotCovered = true`, panel shows "no earnings data" empty state.
+   * - **503** → `earningsError` set, panel shows inline error banner.
+   * - **success** → `earnings` set, panel renders next-date countdown (when present) + last 4
+   *   reports with EPS estimate / actual / surprise %.
+   *
+   * Errors stay scoped to the panel — the rest of the dossier (chart, news, narrative, analyst)
+   * keeps rendering. Same isolation rule as the news and analyst panels.
+   */
+  private loadEarnings(symbol: string): void {
+    this.earningsLoading.set(true);
+    this.earningsNotCovered.set(false);
+    this.earningsError.set(null);
+    this.earnings.set(null);
+    this.earningsRepository.getForSymbol(symbol).subscribe({
+      next: (snap) => {
+        this.earnings.set(snap);
+        this.earningsLoading.set(false);
+      },
+      error: (err: { status?: number }) => {
+        if (err?.status === 404) {
+          this.earningsNotCovered.set(true);
+        } else {
+          this.earningsError.set(this.errorMessage(err, symbol));
+        }
+        this.earningsLoading.set(false);
+      },
+    });
+  }
+
+  /**
+   * Threshold (in days) at which the countdown pill flips to a warning-tinted style. ≤ 7 days
+   * out is "imminent enough that the user should notice" without crowding the dossier with
+   * persistent alarms. Picked by feel — alignable with the watchlist alerts feature later.
+   */
+  private static readonly EARNINGS_IMMINENT_THRESHOLD_DAYS = 7;
+
+  /**
+   * Days between today and the next earnings date — drives the countdown label. Returns `null`
+   * when the date is missing (calendar endpoint failed soft) so the template can hide the
+   * countdown line. Anchored on UTC dates to avoid timezone drift on the boundary day.
+   */
+  earningsCountdownDays = computed<number | null>(() => {
+    const e = this.earnings();
+    if (!e?.nextEarningsDate) return null;
+    const target = new Date(`${e.nextEarningsDate}T00:00:00Z`).getTime();
+    const today = new Date();
+    const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+    return Math.round((target - todayUtc) / EARNINGS_MS_PER_DAY);
+  });
+
+  /**
+   * True when the next earnings date sits within the imminent window (0 to 7 days from today,
+   * inclusive). Drives a warning-tinted countdown pill so the user notices the upcoming print
+   * without the rest of the dossier shouting at them. Negative deltas (past dates that linger
+   * in the calendar feed for a few hours after the print) deliberately fall through — a past
+   * date isn't imminent.
+   */
+  earningsCountdownImminent = computed<boolean>(() => {
+    const days = this.earningsCountdownDays();
+    if (days === null) return false;
+    return days >= 0 && days <= TickerPage.EARNINGS_IMMINENT_THRESHOLD_DAYS;
+  });
+
+  /**
+   * Reports as the front renders them — newest-first. The wire / domain contract is oldest-first
+   * (so the trend reads left-to-right naturally on the timeline view in the analyst sub-block),
+   * but the earnings table reads better with the most recent quarter at the top where the eye
+   * lands. Materialised once per `earnings()` change rather than recomputed on every CD pass via
+   * `slice().reverse()` in the template.
+   */
+  earningsReportsNewestFirst = computed(() => {
+    const e = this.earnings();
+    return e ? [...e.lastReports].reverse() : [];
+  });
+
+  /**
+   * Sign label for a report's surprise %, used to colour the chip. `beat` for >0, `miss` for <0,
+   * `inline` for exactly 0. Returns `null` when the surprise is missing (the front hides the chip).
+   * The threshold for "inline" is exact zero — a -0.1 % miss is still a miss directionally.
+   */
+  earningsSurpriseSign(report: {
+    surprisePercent: number | null;
+  }): 'beat' | 'miss' | 'inline' | null {
+    if (report.surprisePercent === null || report.surprisePercent === undefined) return null;
+    if (report.surprisePercent > 0) return 'beat';
+    if (report.surprisePercent < 0) return 'miss';
+    return 'inline';
+  }
 
   // ---- Watchlist actions ----
 

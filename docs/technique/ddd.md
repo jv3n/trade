@@ -15,6 +15,7 @@ Chaque contexte est autonome et possède ses propres couches.
 | `watchlist` | Liste plate de tickers suivis hors portefeuille (single-table, pas de user_id) | ✅ Phase 2 |
 | `news` | Headlines par ticker (Finnhub + mock), cache court | ✅ Phase 2 |
 | `analyst` | Recommandations d'analystes par ticker (consensus monthly + price target 12 mois, Finnhub + mock), cache court | ✅ Phase 2 |
+| `earnings` | Earnings trimestriels par ticker (4 derniers Q EPS estimate/actual/surprise % + prochaine date d'annonce, Finnhub + mock), cache court | ✅ Phase 2 |
 | `config` | Surcharges runtime des défauts YAML (clés API, TTL cache, providers actifs) | ✅ Phase 2 |
 | `ingestion` | Sources RSS, articles, scheduler de collecte | 🧊 Legacy gelé Phase 0 |
 
@@ -34,6 +35,7 @@ Chaque contexte est autonome et possède ses propres couches.
     market/             # (market) 3 ports outbound — chart / symbol-search / sector — chacun avec adapters Twelve Data + Mock + Routing (@Primary)
     news/               # (news) FinnhubClient + MockNewsClient + RoutingNewsClient (@Primary)
     analyst/            # (analyst) FinnhubAnalystClient + MockAnalystClient + RoutingAnalystClient (@Primary)
+    earnings/           # (earnings) FinnhubEarningsClient + MockEarningsClient + RoutingEarningsClient (@Primary)
     ConfigTestClient.kt # (config) RestClient dédié pour sonder une clé API candidate sans la sauver
 
 shared/                 # Composants transverses (ex : GlobalExceptionHandler)
@@ -88,6 +90,14 @@ Mêmes triplet et mêmes conventions que `news/` : un port `AnalystRecommendatio
 Le cache vit un layer au-dessus dans `application/AnalystRecommendationService` avec `@Cacheable("analyst-recommendations", key = "#symbol.toUpperCase()")` (méthode Java SpEL — l'extension Kotlin `uppercase()` ne serait pas vue par SpEL). Le provider est volontairement absent de la clé pour qu'un switch runtime s'applique au prochain dossier ouvert sans rétention de cache stale.
 
 Les mappers Finnhub (`FinnhubAnalystMappers`) sont colocalisés dans le même package mais pure Kotlin (pas Spring) pour rester testables sur des fixtures JSON sans `MockWebServer`. Ils encodent les invariants du domaine : tri défensif `period` ASC (Finnhub documente newest-first mais on ne trust pas la wire order), cap history à 6 mois, all-zero price target → `null` (Finnhub renvoie un shell zéro pour les symbols sans target — on préfère masquer la ligne plutôt que d'afficher « $0 »).
+
+### `infrastructure/earnings/` *(earnings uniquement, Phase 2)*
+
+Mêmes triplet et mêmes conventions que `news/` et `analyst/` : un port `EarningsClient` outbound, deux adapters concrets (`FinnhubEarningsClient` REST + apikey hitting `/stock/earnings` requis + `/calendar/earnings` optionnel fail-soft, `MockEarningsClient` synthétique déterministe par symbole avec symboles réservés `UNKNOWN`/`RATELIMIT`/`NOCALENDAR`), et `RoutingEarningsClient` (`@Primary`) qui délègue per-call à l'adapter sélectionné par `appConfig.getString(earnings.provider)`. Les deux adapters sont qualifiés par `@Qualifier("mockEarningsClient")` / `@Qualifier("finnhubEarningsClient")` côté router. Le `FinnhubEarningsClient` réutilise le `RestClient` partagé (`@Qualifier("finnhubRestClient")`) pour ne pas dupliquer le bean côté `news/` et `analyst/`.
+
+Le cache vit un layer au-dessus dans `application/EarningsService` avec `@Cacheable("earnings", key = "#symbol.toUpperCase()")` (méthode Java SpEL — l'extension Kotlin `uppercase()` ne serait pas vue par SpEL). Le provider est volontairement absent de la clé pour qu'un switch runtime s'applique au prochain dossier ouvert sans rétention de cache stale.
+
+Les mappers Finnhub (`FinnhubEarningsMappers`) sont colocalisés dans le même package mais pure Kotlin (pas Spring) pour rester testables sur des fixtures JSON sans `MockWebServer`. Ils encodent les invariants du domaine : tri défensif `period` ASC, cap reports à 4 trimestres, recalcul `surprisePercent` côté code (Finnhub round inconsistemment sur les small caps), filtre calendar par symbol + `epsActual == null` (cleanest "did it happen yet" signal), pick the earliest upcoming, mapping `bmo`/`amc`/`""`/`dmh` sur l'enum `EarningsTime` (avec collapse des valeurs inconnues à `UNSPECIFIED`).
 
 ### `config/` *(Phase 2)*
 - `AppConfigService` (`application/`) — read layered (YAML default → BDD override via cache mémoire) ; émet `ConfigChangedEvent` sur changement effectif

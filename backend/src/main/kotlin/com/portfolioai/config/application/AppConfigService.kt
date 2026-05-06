@@ -39,6 +39,7 @@ class AppConfigService(
   @Value("\${market.provider:mock}") private val marketProviderDefault: String,
   @Value("\${news.provider:mock}") private val newsProviderDefault: String,
   @Value("\${analyst.provider:mock}") private val analystProviderDefault: String,
+  @Value("\${earnings.provider:mock}") private val earningsProviderDefault: String,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
   private val overrides = ConcurrentHashMap<String, String>()
@@ -66,6 +67,7 @@ class AppConfigService(
       ConfigKeys.MARKET_PROVIDER -> marketProviderDefault
       ConfigKeys.NEWS_PROVIDER -> newsProviderDefault
       ConfigKeys.ANALYST_PROVIDER -> analystProviderDefault
+      ConfigKeys.EARNINGS_PROVIDER -> earningsProviderDefault
       else -> throw IllegalArgumentException("Unknown config key: $key")
     }
 
