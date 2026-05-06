@@ -33,8 +33,8 @@
 ┌────────────────────────────────────────────┐
 │         Backend  (Kotlin + Spring)          │
 │                                             │
-│  market/      → 3 ports : chart + sector +  │
-│                 symb.search + indicateurs   │
+│  market/      → 3 ports : chart + symb.search│
+│                 + sector + indicateurs       │
 │  analysis/    → narratif LLM par ticker     │
 │  portfolio/   → import CSV, snapshots       │
 │  watchlist/   → tickers suivis (Phase 2)    │
@@ -71,7 +71,7 @@
 
 ### `market/` — Phase 1, étendu Phase 2
 
-Source primaire des données ticker. Trois ports outbound cohabitent dans le module — chacun avec un adapter `TwelveData*` et un adapter `Mock*` sélectionnés par `market.provider`, et un dispatcher `Routing*Client` (`@Primary`) qui délègue per-call.
+Source primaire des données ticker. Trois ports outbound cohabitent dans le module — `MarketChartClient` et `SymbolSearchClient` ont chacun un triplet `TwelveData* + Mock* + Routing*` (`@Primary`) sélectionné par `market.provider` ; le port `SectorClassifier` dévie côté live vers `FinnhubSectorClassifier` (Twelve Data `/profile` est paid-tier only) avec son propre `Routing*` qui route mock vs Finnhub. Détails des trois familles ci-dessous.
 
 #### Ports + adapters
 
@@ -197,7 +197,7 @@ Configuration éditable en runtime, sans redémarrage backend. Couvre Phase 2 se
 - **`ConfigTestClient`** — RestClient dédié qui appelle `/quote?symbol=AAPL` côté Twelve Data ou Finnhub pour valider une clé en cours d'édition. Découplé des adapters de production parce que le test doit fonctionner même quand `market.provider=mock`.
 - **Lecture per-call dans les adapters** — `TwelveDataClient` et `FinnhubClient` ne stockent plus la clé en `@Value` figée à la construction du bean ; ils lisent `appConfig.getString(...)` à chaque appel. Le YAML reste injecté comme défaut au niveau de `AppConfigService`.
 - **TTL cache dynamique** — `MarketConfig.cacheManager` lit le TTL initial via `AppConfigService` au boot. `CacheTtlListener` (composant séparé) écoute `ConfigChangedEvent` et appelle `setCaffeine(...)` sur le `CaffeineCacheManager` quand `market.cache.ttl-minutes` bouge. Trade-off accepté : le rebuild **invalide les entrées en cours** — coût marginal sur un TTL qu'on change rarement.
-- **Switch provider à chaud** — `RoutingMarketChartClient`, `RoutingNewsClient`, `RoutingAnalystClient` et `RoutingEarningsClient` (tous `@Primary`) délèguent à l'adapter sélectionné par `market.provider` / `news.provider` / `analyst.provider` / `earnings.provider` au moment de chaque appel. Les anciens `@ConditionalOnProperty` sur les adapters concrets et les HttpConfig sont retirés ; les deux `RestClient` (Twelve Data et Finnhub) cohabitent et sont qualifiés par `@Qualifier("twelveDataRestClient")` / `@Qualifier("finnhubRestClient")` côté clients. Coût : deux RestClients en mémoire au lieu d'un (négligeable). Bénéfice : rotation provider depuis `/settings/configuration` sans reboot, le bascule s'applique au prochain dossier ouvert. Cache key préfixée par adapter (`twelvedata|`, `mock|`) ⇒ pas de collision entre les deux espaces.
+- **Switch provider à chaud** — six beans `@Primary` au total (`RoutingMarketChartClient`, `RoutingSymbolSearchClient`, `RoutingSectorClassifier` dans `market/`, plus `RoutingNewsClient`, `RoutingAnalystClient`, `RoutingEarningsClient`) délèguent à l'adapter sélectionné par `market.provider` / `news.provider` / `analyst.provider` / `earnings.provider` au moment de chaque appel. (Note : `RoutingSectorClassifier` route le mode live `twelvedata` vers Finnhub plutôt que Twelve Data — détail caché derrière le routing parce que `/profile` Twelve Data est paid-tier only.) Les anciens `@ConditionalOnProperty` sur les adapters concrets et les HttpConfig sont retirés ; les deux `RestClient` (Twelve Data et Finnhub) cohabitent et sont qualifiés par `@Qualifier("twelveDataRestClient")` / `@Qualifier("finnhubRestClient")` côté clients. Coût : deux RestClients en mémoire au lieu d'un (négligeable). Bénéfice : rotation provider depuis `/settings/configuration` sans reboot, le bascule s'applique au prochain dossier ouvert. Cache key préfixée par adapter (`twelvedata|`, `mock|`) ⇒ pas de collision entre les deux espaces.
 
 ### `shared/`
 

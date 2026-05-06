@@ -184,6 +184,14 @@ The portfolio is **read-only** in the UI — it mirrors the broker's reality. Th
 1. Move the line from "À faire" to "Terminé"
 2. Add concise technical notes in the Notes column
 
+**Ordering convention** — whenever you modify `backlog.md`, take the opportunity to reorder the affected list (the section you just touched, not the whole file) so the reading flow goes from "what to attack next" to "what's done":
+
+1. **⏳ À faire — sorted by priority descending** : 🔴 Critique on top, then 🟡 Moyenne, then 🟢 Basse. Within the same priority, ordering is free (recent items can stay near the top).
+2. **🚧 En cours** (rare) : right after the last 🔴 if any.
+3. **✅ Livré / Terminé** : at the bottom, recent first within the section.
+
+This applies per-section (Phase 0, Phase 1, Phase 2, Phase 2.5, Dette technique…). Don't shuffle entries you didn't touch — reorder only the section you're editing in the same pass. Goal : a session that opens the backlog to plan reads the urgent ⏳ first, the historical ✅ last.
+
 ### Documentation
 
 Files under `docs/` describe the actual state of the project. Keep them in sync as the code evolves:
