@@ -1241,6 +1241,68 @@ describe('TickerPage', () => {
       // Dossier core (snapshot, indicators) is untouched — error stays scoped.
       expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
     });
+
+    // ---- Inline accordion (Phase 2 closing item) ----
+
+    /**
+     * Each headline is now an accordion : clicking the row toggles a body that surfaces the
+     * Finnhub `summary` + a "Read full article →" external link. The row click no longer opens
+     * the source in a new tab — that behaviour moved to the explicit link inside the body so the
+     * default action stays on the dossier and preserves context. Tests below pin the contract.
+     */
+    it('news items start collapsed by default', () => {
+      // Empty set on init — the user reads the headlines first, expands what catches their eye.
+      news.getForSymbol.mockReturnValue(of([sampleItem]));
+      fixture.detectChanges();
+
+      expect(component.isNewsExpanded(sampleItem.id)).toBe(false);
+      expect(component.expandedNews().size).toBe(0);
+    });
+
+    it('toggleNews flips the expanded state of a single item', () => {
+      news.getForSymbol.mockReturnValue(of([sampleItem]));
+      fixture.detectChanges();
+
+      component.toggleNews(sampleItem.id);
+      expect(component.isNewsExpanded(sampleItem.id)).toBe(true);
+
+      component.toggleNews(sampleItem.id);
+      expect(component.isNewsExpanded(sampleItem.id)).toBe(false);
+    });
+
+    it('multiple news items can be expanded simultaneously', () => {
+      // The user might want to compare two takes side by side without having to re-click. Pin
+      // the multi-open contract so a future "single open" refactor doesn't silently degrade UX.
+      const second: NewsItem = { ...sampleItem, id: '2', headline: 'Second story' };
+      news.getForSymbol.mockReturnValue(of([sampleItem, second]));
+      fixture.detectChanges();
+
+      component.toggleNews('1');
+      component.toggleNews('2');
+
+      expect(component.isNewsExpanded('1')).toBe(true);
+      expect(component.isNewsExpanded('2')).toBe(true);
+    });
+
+    it('expanded set resets on a new symbol load so stale ids do not bleed across tickers', () => {
+      // News ids are upstream-generated and ticker-scoped — collisions across symbols are
+      // unlikely but the reset on every loadNews() keeps the state honest. Pin it so a refactor
+      // that drops the explicit reset is caught.
+      news.getForSymbol.mockReturnValue(of([sampleItem]));
+      fixture.detectChanges();
+      component.toggleNews(sampleItem.id);
+      expect(component.expandedNews().size).toBe(1);
+
+      // Trigger a new load by re-calling the loader path. We can't easily change the route in
+      // a unit test, but `loadNews` is invoked indirectly via init for any new fetch — here we
+      // verify the contract by simulating a second fetch that our component triggers naturally
+      // when the route param changes. For this test we directly mock another fetch and
+      // re-trigger by emitting fresh data.
+      news.getForSymbol.mockReturnValue(of([{ ...sampleItem, id: '99' }]));
+      // Calling the public surface that would normally re-trigger the load path :
+      component['loadNews']('AAPL');
+      expect(component.expandedNews().size).toBe(0);
+    });
   });
 
   // ---- Fundamentals — analyst recommendations ----

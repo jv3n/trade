@@ -1083,19 +1083,54 @@
           } @else {
             <ul class="news-list">
               @for (item of news(); track item.id) {
-                <li class="news-item">
-                  <a
-                    [href]="item.url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="news-headline"
+                <li class="news-item" [class.expanded]="isNewsExpanded(item.id)">
+                  <!-- Header — click to expand/collapse the body. The headline is part of the
+                       button so the entire row is the click target ; the external link moved to
+                       the expanded body so a click on the row stays on the dossier rather than
+                       opening a new tab. -->
+                  <button
+                    type="button"
+                    class="news-header-row"
+                    (click)="toggleNews(item.id)"
+                    [attr.aria-expanded]="isNewsExpanded(item.id)"
+                    [attr.aria-controls]="'news-body-' + item.id"
                   >
-                    {{ item.headline }}
-                  </a>
-                  <div class="news-meta">
-                    <span class="news-source">{{ item.source }}</span>
-                    <span class="news-meta-sep">·</span>
-                    <span class="news-date">{{ formatNewsDate(item.publishedAt) }}</span>
+                    <div class="news-header-text">
+                      <span class="news-headline">{{ item.headline }}</span>
+                      <div class="news-meta">
+                        <span class="news-source">{{ item.source }}</span>
+                        <span class="news-meta-sep">·</span>
+                        <span class="news-date">{{ formatNewsDate(item.publishedAt) }}</span>
+                      </div>
+                    </div>
+                    <mat-icon class="news-chevron">expand_more</mat-icon>
+                  </button>
+
+                  <!-- Body — full Finnhub `summary` + meta line + external link. v1 minimaliste :
+                       on n'invente pas de contenu (pas de scraping, pas de LLM) — on affiche ce
+                       que Finnhub fournit déjà et on laisse l'utilisateur sortir vers la source
+                       quand il veut le détail intégral. -->
+                  <div
+                    [id]="'news-body-' + item.id"
+                    class="news-body"
+                    [hidden]="!isNewsExpanded(item.id)"
+                  >
+                    @if (item.summary) {
+                      <p class="news-summary">{{ item.summary }}</p>
+                    } @else {
+                      <p class="news-summary news-summary-empty">
+                        {{ 'ticker.news.noSummary' | translate }}
+                      </p>
+                    }
+                    <a
+                      [href]="item.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="news-read-full"
+                    >
+                      {{ 'ticker.news.readFull' | translate }}
+                      <mat-icon>open_in_new</mat-icon>
+                    </a>
                   </div>
                 </li>
               }

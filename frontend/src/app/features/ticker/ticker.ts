@@ -433,6 +433,14 @@ export class TickerPage implements OnInit, OnDestroy {
   /** Inline error in the news panel — kept scoped so a Finnhub hiccup doesn't blank the dossier. */
   newsError = signal<string | null>(null);
 
+  /**
+   * Set of news item ids currently expanded in the accordion. Default empty (all collapsed) so
+   * the user opens what they need. Not persisted — news rotates fast and a stale set would carry
+   * ids that no longer exist in the feed. Cleared implicitly on every `loadNews(symbol)` because
+   * the new headlines have new ids ; explicit reset would be redundant.
+   */
+  expandedNews = signal<Set<string>>(new Set());
+
   // ---- Fundamentals — analyst recommendations state ----
 
   /** Analyst snapshot for the current ticker. `null` covers three states distinguished by the
@@ -1753,6 +1761,10 @@ export class TickerPage implements OnInit, OnDestroy {
   private loadNews(symbol: string): void {
     this.newsLoading.set(true);
     this.newsError.set(null);
+    // Reset the accordion state explicitly — a previous symbol's open ids would never collide
+    // in practice (news ids are upstream-generated and ticker-scoped) but resetting on every
+    // load keeps the state honest.
+    this.expandedNews.set(new Set());
     this.newsRepository.getForSymbol(symbol).subscribe({
       next: (items) => {
         this.news.set(items);
@@ -1763,6 +1775,24 @@ export class TickerPage implements OnInit, OnDestroy {
         this.newsLoading.set(false);
       },
     });
+  }
+
+  /** Reactively reports whether a news item is expanded. The template binds against this helper
+   *  so the signal access is encapsulated in one place. */
+  isNewsExpanded(id: string): boolean {
+    return this.expandedNews().has(id);
+  }
+
+  /**
+   * Flips the expanded state of a news item. Multiple items can be open simultaneously — the
+   * user might want to compare two takes side by side without re-clicking. Not persisted ; news
+   * rotates faster than the user's reading session so a stale set has no value.
+   */
+  toggleNews(id: string): void {
+    const current = new Set(this.expandedNews());
+    if (current.has(id)) current.delete(id);
+    else current.add(id);
+    this.expandedNews.set(current);
   }
 
   /**

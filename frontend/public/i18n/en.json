@@ -224,7 +224,9 @@
     "news": {
       "title": "News",
       "loading": "Loading headlines…",
-      "empty": "No recent news for this ticker."
+      "empty": "No recent news for this ticker.",
+      "noSummary": "No summary available — open the article for the full text.",
+      "readFull": "Read full article"
     },
     "fundamentals": {
       "title": "Fundamentals",

@@ -1230,31 +1230,56 @@ $sidenav-width-collapsed: 48px;
   gap: 0.6rem;
 }
 
+// News item is now an accordion : clickable header (headline + source + date + chevron) + a
+// collapsible body that holds the full Finnhub `summary` and a "Read full article →" external
+// link. The user reads the digest inline without losing the dossier context, and only opens a
+// new tab when they want the integral content.
 .news-item {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding-bottom: 0.55rem;
   border-bottom: 1px solid var(--color-border-soft);
 
   &:last-child {
     border-bottom: none;
-    padding-bottom: 0;
   }
+}
+
+// Header — full-width button styled to read like a row. Clicking anywhere on it toggles the
+// body. We removed the inline external link from the headline (it lived in v0) ; the link now
+// belongs to the expanded body so a row click stays on the dossier rather than opening a new tab.
+.news-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 0.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  transition: color 0.12s;
+
+  &:hover .news-headline {
+    color: var(--color-accent);
+  }
+}
+
+.news-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0; // allow the headline to ellipsis-wrap rather than overflow the row
 }
 
 .news-headline {
   font-size: 0.92rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text);
-  text-decoration: none;
   line-height: 1.35;
   transition: color 0.15s;
-
-  &:hover {
-    color: var(--color-accent);
-    text-decoration: underline;
-  }
 }
 
 .news-meta {
@@ -1271,6 +1296,74 @@ $sidenav-width-collapsed: 48px;
 
 .news-meta-sep {
   opacity: 0.5;
+}
+
+.news-chevron {
+  flex-shrink: 0;
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: var(--color-text-dim);
+  transition: transform 0.18s ease;
+
+  .news-item.expanded & {
+    transform: rotate(180deg);
+  }
+}
+
+// Body sits visually below the headline as a "secondary" block — left border + indent + softer
+// typography so the eye reads the headline first and the summary second. Without this the body
+// font and the next item's headline blend on a long news list.
+.news-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem 0.7rem;
+  margin: 0 0.25rem 0.3rem;
+  border-left: 2px solid var(--color-border);
+  background: var(--color-surface-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.news-summary {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--color-text-dim);
+}
+
+.news-summary-empty {
+  font-style: italic;
+  color: var(--color-text-dim);
+}
+
+// External link to the full article — explicitly rendered with the open-in-new icon so the
+// user understands it leaves the dossier (whereas the row click keeps them in place).
+.news-read-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  align-self: flex-start;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color 0.12s;
+
+  &:hover {
+    color: var(--color-accent-strong);
+    text-decoration: underline;
+  }
+
+  mat-icon {
+    font-size: 14px !important;
+    width: 14px !important;
+    height: 14px !important;
+  }
 }
 
 // Brush mini-chart (v3) — bottom navigator that mirrors the full series and lets the user
