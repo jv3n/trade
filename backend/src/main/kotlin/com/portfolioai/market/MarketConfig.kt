@@ -38,7 +38,13 @@ class MarketConfig {
   @Bean
   fun cacheManager(appConfig: AppConfigService): CaffeineCacheManager {
     val mgr =
-      CaffeineCacheManager(MARKET_CHART_CACHE, NEWS_CACHE, SYMBOL_SEARCH_CACHE, SECTOR_CACHE)
+      CaffeineCacheManager(
+        MARKET_CHART_CACHE,
+        NEWS_CACHE,
+        SYMBOL_SEARCH_CACHE,
+        SECTOR_CACHE,
+        ANALYST_CACHE,
+      )
     mgr.setCaffeine(buildSpec(appConfig.getInt(ConfigKeys.CACHE_TTL_MINUTES)))
     return mgr
   }
@@ -66,6 +72,13 @@ class MarketConfig {
      * "Sector" benchmark overlay on the dossier ticker chart.
      */
     const val SECTOR_CACHE = "sector-by-symbol"
+
+    /**
+     * Analyst recommendations per ticker — keyed on the uppercase symbol. Finnhub stamps these
+     * snapshots monthly so 15 min of staleness is invisible to the user, but it shaves the free
+     * quota when the dossier is re-opened. Same shared TTL as the rest of the market caches.
+     */
+    const val ANALYST_CACHE = "analyst-recommendations"
 
     internal fun buildSpec(ttlMinutes: Int): Caffeine<Any, Any> =
       Caffeine.newBuilder().expireAfterWrite(ttlMinutes.toLong(), TimeUnit.MINUTES).maximumSize(500)

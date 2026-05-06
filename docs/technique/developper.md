@@ -119,7 +119,7 @@ Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique
 
 ## Switcher les providers
 
-Le projet a trois providers configurables, chacun avec une vraie implémentation et (sauf Claude) un mock pour dev offline / sans clé.
+Le projet a quatre providers configurables, chacun avec une vraie implémentation et (sauf Claude) un mock pour dev offline / sans clé.
 
 ### LLM — `llm.provider`
 
@@ -142,10 +142,19 @@ Le projet a trois providers configurables, chacun avec une vraie implémentation
 | `mock` | Défaut, sans clé requise. `MockNewsClient` génère 4-10 headlines synthétiques déterministes par symbole (templates variés, sources rotation Reuters/Bloomberg/CNBC, ~10 % de symboles "quiet" pour exercer l'empty-state UI). Idéal en itération pour ne pas faire chauffer le quota Finnhub. |
 | `finnhub` | Vraie data. REST + apikey, free tier 60 calls/min sans cap quotidien. Requiert `market.finnhub.api-key` (env `FINNHUB_API_KEY`). **Crée un compte gratuit** sur [finnhub.io/register](https://finnhub.io/register) puis récupère ta clé sur [finnhub.io/dashboard](https://finnhub.io/dashboard), et colle-la dans `application-local.yml` sous `market.finnhub.api-key`. |
 
+### Recommandations analystes — `analyst.provider`
+
+Toggle séparé de `news.provider` pour pouvoir flipper indépendamment (live news + mock recos pendant l'itération, par exemple). Partage la même clé Finnhub que `news.provider` quand tu bascules en `finnhub`.
+
+| Valeur | Quand l'utiliser |
+|---|---|
+| `mock` | Défaut, sans clé requise. `MockAnalystClient` génère un breakdown synthétique déterministe par symbole (~50 % bullish / ~30 % mixed / ~20 % bearish, drift mois-sur-mois pour une trend line non plate, history sur 6 mois). Symboles réservés : `UNKNOWN` (404 → empty state), `RATELIMIT` (503 → inline error), `NOTARGET` (snapshot avec `priceTarget = null` pour reproduire la dégradation Finnhub sans flipper de provider). |
+| `finnhub` | Vraie data — `/stock/recommendation` (breakdown monthly, requis) + `/stock/price-target` (consensus 12 mois, optionnel — fail-soft à `null` sur 401/403/5xx parce que sur certains comptes l'endpoint est derrière un paid tier). Partage la même `market.finnhub.api-key` que `news.provider`. |
+
 Deux chemins pour modifier ces réglages :
 
 1. **`application-local.yml`** — défaut au boot, recharge au save Tilt. Pertinent pour figer la config d'un environnement.
-2. **Page `/settings/configuration`** (icône `tune` dans le sidenav `/settings`) — édite en direct les clés API Twelve Data et Finnhub (avec bouton "Tester" qui sonde la clé candidate avant la sauve), le TTL cache Caffeine, et bascule `market.provider` / `news.provider` mock ↔ live à la volée. Aucune édition YAML, aucun reboot, le prochain dossier ouvert hit le nouveau adapter. Les overrides vivent en BDD (`app_config`, V4) et prennent le pas sur les défauts YAML.
+2. **Page `/settings/configuration`** (icône `tune` dans le sidenav `/settings`) — édite en direct les clés API Twelve Data et Finnhub (avec bouton "Tester" qui sonde la clé candidate avant la sauve), le TTL cache Caffeine, et bascule `market.provider` / `news.provider` / `analyst.provider` mock ↔ live à la volée. Aucune édition YAML, aucun reboot, le prochain dossier ouvert hit le nouveau adapter. Les overrides vivent en BDD (`app_config`, V4) et prennent le pas sur les défauts YAML.
 
 Pour la liste complète des providers (URLs d'inscription, dashboards, quotas, points d'intégration code) voir [`providers.md`](./providers.md).
 

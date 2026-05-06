@@ -30,6 +30,7 @@ import {
 import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
 import { NewsItem, NewsRepository } from '../../core/news.repository';
 import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
+import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {
@@ -81,6 +82,7 @@ describe('TickerPage', () => {
     add: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
   };
+  let analyst: { getForSymbol: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     market = {
@@ -112,6 +114,11 @@ describe('TickerPage', () => {
       add: vi.fn(),
       remove: vi.fn().mockReturnValue(of(void 0)),
     };
+    analyst = {
+      // Default : 404 (no coverage) so tests that don't care about the panel see the empty
+      // state. Tests that exercise the populated / error paths override.
+      getForSymbol: vi.fn().mockReturnValue(throwError(() => ({ status: 404 }))),
+    };
 
     await TestBed.configureTestingModule({
       imports: [TickerPage],
@@ -121,6 +128,7 @@ describe('TickerPage', () => {
         { provide: WatchlistRepository, useValue: watchlist },
         { provide: NewsRepository, useValue: news },
         { provide: AnnotationRepository, useValue: annotationStore },
+        { provide: AnalystRepository, useValue: analyst },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ symbol: 'AAPL' }) } },
@@ -1218,6 +1226,144 @@ describe('TickerPage', () => {
       expect(component.newsLoading()).toBe(false);
       // Dossier core (snapshot, indicators) is untouched — error stays scoped.
       expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
+  });
+
+  // ---- Fundamentals — analyst recommendations ----
+
+  /**
+   * The "Fondamentaux" card sits between the chart's chip indicators and the news panel. The first
+   * sub-block is "Recommandations analystes" — a segmented breakdown bar + consensus chip + price
+   * target + history-driven trend arrow. Three terminal states are mutually exclusive after init :
+   *
+   * - **populated** → `analyst()` is the snapshot, the bar/chips/target render.
+   * - **no coverage** (HTTP 404) → `analystNotCovered()` flips, panel shows an empty-state line.
+   * - **upstream error** (HTTP 503) → `analystError()` set, panel shows an inline error banner.
+   *
+   * The dossier core (snapshot, chart, narrative) survives every error path — same isolation rule
+   * as the news panel.
+   */
+  describe('analyst recommendations', () => {
+    const populatedSnapshot: AnalystSnapshot = {
+      symbol: 'AAPL',
+      asOf: '2026-04-01',
+      strongBuy: 7,
+      buy: 5,
+      hold: 3,
+      sell: 1,
+      strongSell: 0,
+      totalAnalysts: 16,
+      consensus: 'BUY',
+      priceTarget: {
+        high: 280,
+        low: 175,
+        mean: 235.5,
+        median: 240,
+        numberOfAnalysts: 41,
+      },
+      history: [
+        { period: '2025-11-01', strongBuy: 4, buy: 5, hold: 5, sell: 1, strongSell: 1 },
+        { period: '2025-12-01', strongBuy: 5, buy: 5, hold: 4, sell: 1, strongSell: 1 },
+        { period: '2026-01-01', strongBuy: 5, buy: 6, hold: 4, sell: 1, strongSell: 0 },
+        { period: '2026-02-01', strongBuy: 6, buy: 6, hold: 3, sell: 1, strongSell: 0 },
+        { period: '2026-03-01', strongBuy: 6, buy: 5, hold: 4, sell: 1, strongSell: 0 },
+        { period: '2026-04-01', strongBuy: 7, buy: 5, hold: 3, sell: 1, strongSell: 0 },
+      ],
+    };
+
+    it('hydrates the snapshot on init when the symbol is covered', () => {
+      analyst.getForSymbol.mockReturnValue(of(populatedSnapshot));
+      fixture.detectChanges();
+
+      expect(analyst.getForSymbol).toHaveBeenCalledWith('AAPL');
+      expect(component.analyst()).toEqual(populatedSnapshot);
+      expect(component.analystLoading()).toBe(false);
+      expect(component.analystError()).toBeNull();
+      expect(component.analystNotCovered()).toBe(false);
+    });
+
+    it('surfaces the no-coverage state on a 404', () => {
+      // Default mock returns 404 — assert the empty-state flag flips and no error banner is set.
+      // The dossier core stays untouched.
+      fixture.detectChanges();
+
+      expect(component.analystNotCovered()).toBe(true);
+      expect(component.analyst()).toBeNull();
+      expect(component.analystError()).toBeNull();
+      expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
+
+    it('surfaces a Finnhub 503 inline without breaking the rest of the dossier', () => {
+      analyst.getForSymbol.mockReturnValue(throwError(() => ({ status: 503 })));
+      fixture.detectChanges();
+
+      // Inline error string set, dossier core untouched. Same rule as the news panel.
+      expect(component.analystError()).toContain('rateLimit');
+      expect(component.analystNotCovered()).toBe(false);
+      expect(component.analyst()).toBeNull();
+      expect(component.snapshot()).toEqual(EMPTY_SNAPSHOT);
+    });
+
+    it('analystBucketPct returns proportions that sum to 100 across the five buckets', () => {
+      // The segmented bar's widths are driven by this method ; without it the bar would collapse
+      // or overflow. We pin the contract : sum across the five buckets is always 100 % when the
+      // snapshot is populated.
+      analyst.getForSymbol.mockReturnValue(of(populatedSnapshot));
+      fixture.detectChanges();
+
+      const sum =
+        component.analystBucketPct('strongBuy') +
+        component.analystBucketPct('buy') +
+        component.analystBucketPct('hold') +
+        component.analystBucketPct('sell') +
+        component.analystBucketPct('strongSell');
+      expect(sum).toBeCloseTo(100, 5);
+    });
+
+    it('analystBucketPct returns 0 before the snapshot lands so the template can render unconditionally', () => {
+      // Default mock returns 404 → snapshot stays null. Calling the helper at that moment must
+      // not throw and must yield 0 — the template binds it on `[style.width.%]` even before the
+      // panel has data (Angular evaluates the binding once per change detection pass).
+      fixture.detectChanges();
+
+      expect(component.analystBucketPct('buy')).toBe(0);
+    });
+
+    it('analystTrend reads "up" when the bullish-minus-bearish fraction climbs over the window', () => {
+      // History above starts at (4+5)−(1+1) = 7 / 16 = 0.44, ends at (7+5)−(1+0) = 11 / 16 = 0.69.
+      // Delta 0.25 ≫ 0.05 epsilon → up.
+      analyst.getForSymbol.mockReturnValue(of(populatedSnapshot));
+      fixture.detectChanges();
+
+      expect(component.analystTrend()).toBe('up');
+    });
+
+    it('analystTrend reads "flat" on a stable history within the epsilon band', () => {
+      // Six identical snapshots → delta 0 → flat. Pins the epsilon path : a 0/0 score is honest,
+      // not "down" by accident.
+      const flat = {
+        ...populatedSnapshot,
+        history: populatedSnapshot.history.map((h) => ({
+          ...h,
+          strongBuy: 5,
+          buy: 5,
+          hold: 5,
+          sell: 1,
+          strongSell: 0,
+        })),
+      };
+      analyst.getForSymbol.mockReturnValue(of(flat));
+      fixture.detectChanges();
+
+      expect(component.analystTrend()).toBe('flat');
+    });
+
+    it('analystTrend reads "flat" when there is no snapshot yet', () => {
+      // Default mock = 404 → analyst() null → trend defaults to flat (no editorialising on
+      // missing data).
+      fixture.detectChanges();
+
+      expect(component.analystTrend()).toBe('flat');
     });
   });
 

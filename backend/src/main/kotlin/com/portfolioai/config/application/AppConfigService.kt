@@ -38,6 +38,7 @@ class AppConfigService(
   @Value("\${market.cache.ttl-minutes:15}") private val cacheTtlDefault: Int,
   @Value("\${market.provider:mock}") private val marketProviderDefault: String,
   @Value("\${news.provider:mock}") private val newsProviderDefault: String,
+  @Value("\${analyst.provider:mock}") private val analystProviderDefault: String,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
   private val overrides = ConcurrentHashMap<String, String>()
@@ -64,6 +65,7 @@ class AppConfigService(
       ConfigKeys.CACHE_TTL_MINUTES -> cacheTtlDefault.toString()
       ConfigKeys.MARKET_PROVIDER -> marketProviderDefault
       ConfigKeys.NEWS_PROVIDER -> newsProviderDefault
+      ConfigKeys.ANALYST_PROVIDER -> analystProviderDefault
       else -> throw IllegalArgumentException("Unknown config key: $key")
     }
 

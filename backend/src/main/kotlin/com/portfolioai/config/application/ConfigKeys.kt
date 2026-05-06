@@ -17,6 +17,7 @@ object ConfigKeys {
   const val CACHE_TTL_MINUTES = "market.cache.ttl-minutes"
   const val MARKET_PROVIDER = "market.provider"
   const val NEWS_PROVIDER = "news.provider"
+  const val ANALYST_PROVIDER = "analyst.provider"
 
   const val PROVIDER_MOCK = "mock"
   const val PROVIDER_TWELVEDATA = "twelvedata"
@@ -33,8 +34,16 @@ object ConfigKeys {
     mapOf(
       MARKET_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_TWELVEDATA),
       NEWS_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
+      ANALYST_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
     )
 
   val KNOWN_KEYS: Set<String> =
-    setOf(TWELVEDATA_API_KEY, FINNHUB_API_KEY, CACHE_TTL_MINUTES, MARKET_PROVIDER, NEWS_PROVIDER)
+    setOf(
+      TWELVEDATA_API_KEY,
+      FINNHUB_API_KEY,
+      CACHE_TTL_MINUTES,
+      MARKET_PROVIDER,
+      NEWS_PROVIDER,
+      ANALYST_PROVIDER,
+    )
 }

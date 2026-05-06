@@ -207,6 +207,47 @@
       "title": "Actualité",
       "loading": "Chargement des dépêches…",
       "empty": "Pas d'actualité récente pour ce ticker."
+    },
+    "fundamentals": {
+      "title": "Fondamentaux",
+      "analyst": {
+        "title": "Recommandations analystes",
+        "loading": "Chargement des recommandations…",
+        "notCovered": "Aucun analyste ne suit ce ticker pour l'instant.",
+        "basedOn": "sur {{count}} analyste(s)",
+        "asOf": "Mise à jour :",
+        "barAria": "Répartition des recommandations analystes",
+        "consensus": {
+          "BUY": "Achat",
+          "HOLD": "Conserver",
+          "SELL": "Vente",
+          "MIXED": "Avis partagés"
+        },
+        "bucket": {
+          "strongBuy": "Achat fort",
+          "buy": "Achat",
+          "hold": "Conserver",
+          "sell": "Vente",
+          "strongSell": "Vente forte"
+        },
+        "tooltip": {
+          "strongBuy": "{{count}} achat fort",
+          "buy": "{{count}} achat",
+          "hold": "{{count}} conserver",
+          "sell": "{{count}} vente",
+          "strongSell": "{{count}} vente forte"
+        },
+        "trend": {
+          "up": "Tendance haussière sur 6 mois",
+          "down": "Tendance baissière sur 6 mois",
+          "flat": "Recommandations stables sur 6 mois"
+        },
+        "target": {
+          "mean": "Objectif de cours moyen",
+          "range": "Fourchette",
+          "basedOn": "Sur {{count}} analyste(s)"
+        }
+      }
     }
   },
   "import": {

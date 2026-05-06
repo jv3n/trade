@@ -207,6 +207,47 @@
       "title": "News",
       "loading": "Loading headlines…",
       "empty": "No recent news for this ticker."
+    },
+    "fundamentals": {
+      "title": "Fundamentals",
+      "analyst": {
+        "title": "Analyst recommendations",
+        "loading": "Loading recommendations…",
+        "notCovered": "No analyst is currently covering this ticker.",
+        "basedOn": "based on {{count}} analyst(s)",
+        "asOf": "As of:",
+        "barAria": "Analyst recommendations breakdown",
+        "consensus": {
+          "BUY": "Buy",
+          "HOLD": "Hold",
+          "SELL": "Sell",
+          "MIXED": "Mixed"
+        },
+        "bucket": {
+          "strongBuy": "Strong buy",
+          "buy": "Buy",
+          "hold": "Hold",
+          "sell": "Sell",
+          "strongSell": "Strong sell"
+        },
+        "tooltip": {
+          "strongBuy": "{{count}} strong buy",
+          "buy": "{{count}} buy",
+          "hold": "{{count}} hold",
+          "sell": "{{count}} sell",
+          "strongSell": "{{count}} strong sell"
+        },
+        "trend": {
+          "up": "Upgraded over the last 6 months",
+          "down": "Downgraded over the last 6 months",
+          "flat": "Stable recommendations over the last 6 months"
+        },
+        "target": {
+          "mean": "Mean price target",
+          "range": "Range",
+          "basedOn": "Based on {{count}} analyst(s)"
+        }
+      }
     }
   },
   "import": {

@@ -41,6 +41,7 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 | `portfolio` | Module portefeuille (CSV, snapshots) |
 | `watchlist` | Module watchlist (Phase 2) |
 | `news` | Module news (Finnhub + mock, Phase 2) |
+| `analyst` | Module analyst (Finnhub + mock, recos analystes Phase 2) |
 | `ticker` | Page Dossier ticker (frontend) |
 | `dashboard` | Page Dashboard (frontend, sidebar incluse) |
 | `settings` | Page Settings (back-office, prompt-preview, test-sources) |

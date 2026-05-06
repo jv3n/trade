@@ -67,3 +67,12 @@ news:
   #   mock     — deterministic synthetic headlines (default, no network needed)
   #   finnhub  — real REST API (requires market.finnhub.api-key)
   provider: mock
+
+# Analyst recommendations provider — separate switch from `news.provider` so the user can flip
+# them independently (e.g. live Finnhub news with mock analyst recs while iterating). Both
+# Finnhub-backed today and share `market.finnhub.api-key`.
+analyst:
+  # provider:
+  #   mock     — deterministic synthetic recommendations (default, no network needed)
+  #   finnhub  — real REST `/stock/recommendation` + `/stock/price-target` (requires market.finnhub.api-key)
+  provider: mock
