@@ -32,7 +32,8 @@
 ┌────────────────────────────────────────────┐
 │         Backend  (Kotlin + Spring)          │
 │                                             │
-│  market/      → MarketChartClient + indic.  │
+│  market/      → 3 ports : chart + sector +  │
+│                 symb.search + indicateurs   │
 │  analysis/    → narratif LLM par ticker     │
 │  portfolio/   → import CSV, snapshots       │
 │  watchlist/   → tickers suivis (Phase 2)    │
@@ -63,17 +64,45 @@
 
 ## Modules backend
 
-### `market/` — nouveau, Phase 1
+### `market/` — Phase 1, étendu Phase 2
 
-Source primaire des données ticker.
+Source primaire des données ticker. Trois ports outbound cohabitent dans le module — chacun avec un adapter `TwelveData*` et un adapter `Mock*` sélectionnés par `market.provider`, et un dispatcher `Routing*Client` (`@Primary`) qui délègue per-call.
 
-- **`MarketChartClient`** (port) — interface qui retourne un `MarketChart` (quote + bars OHLC) en types domaine. Deux adapters cohabitent, sélectionnés par `market.provider` :
+#### Ports + adapters
+
+- **`MarketChartClient`** (port, Phase 1) — interface qui retourne un `MarketChart` (quote + bars OHLC) en types domaine.
   - `TwelveDataClient` (`twelvedata`) — REST + apikey, défaut prod. Deux appels par dossier (`/time_series` + `/quote`), parsing tolérant aux quirks (numériques en strings, erreurs renvoyées en HTTP 200 avec `status: error`).
   - `MockMarketChartClient` (`mock`, défaut sans clé) — série OHLC synthétique déterministe par symbole. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour les chemins d'erreur UI.
+  - `RoutingMarketChartClient` (`@Primary`, Phase 2) — délègue à l'adapter actif lu via `appConfig.getString(market.provider)` à chaque appel.
+- **`SymbolSearchClient`** (port, Phase 2 watchlist v2) — autocomplete des tickers existants pour valider la saisie watchlist.
+  - `TwelveDataSymbolSearchClient` — REST `/symbol_search` (1 credit/call).
+  - `MockSymbolSearchClient` — ~30 symbols US/TSX seedés (prefix match symbol + substring match name), paths réservés `RATELIMIT` et `UNKNOWN`.
+  - `RoutingSymbolSearchClient` (`@Primary`).
+- **`SectorClassifier`** (port, Phase 2 benchmark v2) — résout un ticker à un `SectorBenchmark` (sector GICS canonique + SPDR ETF + nom complet). Backe l'overlay « Sector » du chart dossier ticker.
+  - `TwelveDataSectorClassifier` — REST `/profile` (1 credit/call), parse le champ `sector`, route via `SpdrSectorEtfs` pour la table GICS → SPDR.
+  - `MockSectorClassifier` — table hand-curée ~25 tickers populaires US/TSX (AAPL→Tech, JPM→Financials, RY.TO→Financials, etc.), paths réservés `UNKNOWN` (404) et `RATELIMIT` (503).
+  - `RoutingSectorClassifier` (`@Primary`).
+
+#### Domain helpers
+
 - **`IndicatorCalculator`** — Kotlin pur, sans dépendance Spring. Calcule RSI(14), MA50/MA200, momentum 30j/90j, perf 1m/3m/1y/YTD, drawdown 52w, volume relatif, position vs MA. Testable unit, sans BDD.
-- **Endpoints REST** :
-  - `GET /api/market/ticker/{symbol}` — dossier complet (quote + indicateurs + bars 1Y daily).
-  - `GET /api/market/ticker/{symbol}/chart?timeframe={1d|5d|1mo|3mo|1y|5y}` — bars seuls pour le toggle multi-timeframe du graphe ; ne recalcule pas les indicateurs ni ne re-prompte le LLM, qui restent ancrés sur la 1Y daily du dossier. Whitelist côté serveur via l'enum `Timeframe` du domain — codes inconnus → 400 (défense de la clé Caffeine contre les valeurs non bornées).
+- **`SpdrSectorEtfs`** (`internal object`, Phase 2) — table qui mappe les 11 GICS sectors couverts par SPDR Select Sector (Technology→XLK, Financials→XLF, Healthcare→XLV, Energy→XLE, Consumer Discretionary→XLY, Consumer Staples→XLP, Communication Services→XLC, Industrials→XLI, Materials→XLB, Real Estate→XLRE, Utilities→XLU) + table de synonymes pour les variations provider (« Information Technology » → « Technology », « Health Care » → « Healthcare », « Consumer Cyclical » → « Consumer Discretionary »…). Sector hors mapping → `null` → 404 inline côté front (« no sector benchmark available »).
+
+#### Services applicatifs
+
+- **`SymbolSearchService`** (Phase 2) — wrap `SymbolSearchClient` avec `@Cacheable("symbol-search")` ; expose aussi `validate(symbol)` (match exact case-insensitive) consommé par `WatchlistService.add`.
+- **`SectorClassifierService`** (Phase 2) — wrap `SectorClassifier` avec `@Cacheable("sector-by-symbol")`. SpEL key `#symbol.trim().toUpperCase()` (méthode Java, idem que les autres caches du module — SpEL ne voit pas l'extension Kotlin `uppercase()`).
+
+#### Endpoints REST
+
+- `GET /api/market/ticker/{symbol}` — dossier complet (quote + indicateurs + bars 1Y daily).
+- `GET /api/market/ticker/{symbol}/chart?timeframe={1d|5d|1mo|3mo|1y|5y}` — bars seuls pour le toggle multi-timeframe du graphe ; ne recalcule pas les indicateurs ni ne re-prompte le LLM, qui restent ancrés sur la 1Y daily du dossier. Whitelist côté serveur via l'enum `Timeframe` du domain — codes inconnus → 400 (défense de la clé Caffeine contre les valeurs non bornées).
+- `GET /api/market/ticker/{symbol}/sector-benchmark` — Phase 2 benchmark v2. Résout le SPDR sector ETF du ticker. Réponse `{tickerSymbol, sector, etfSymbol, etfName}`. 404 si symbol unknown OU sector hors SPDR mapping. Le front re-utilise ensuite `GET .../chart?timeframe=` avec l'`etfSymbol` pour fetch les bars de l'overlay.
+- `GET /api/market/symbols/search?q={query}&limit={n}` — Phase 2 watchlist v2. Autocomplete des tickers, réponse `[{symbol, name, exchange}]`.
+
+#### Caches Caffeine
+
+`MarketConfig` déclare 4 caches partagés : `market-chart` (chart endpoint), `news-by-symbol` (module `news/`), `symbol-search` (autocomplete watchlist) et `sector-by-symbol` (sector classifier). Tous partagent le TTL piloté par `market.cache.ttl-minutes` (5–60 min, runtime-éditable depuis `/settings/configuration`).
 
 ### `analysis/` — Phase 1 réécrite
 
@@ -202,7 +231,9 @@ Cinq migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative
 
 **Configuration runtime éditable** (Phase 2) — clés API et TTL de cache vivaient en `@Value` injectées à la construction du bean, donc figées jusqu'au prochain reboot. Pour permettre la rotation d'une clé sans redémarrer le backend, on a introduit `AppConfigService` (table `app_config`, surcharge BDD au-dessus du défaut YAML) et bascule les adapters (`TwelveDataClient`, `FinnhubClient`) sur une lecture per-call. Pour le TTL Caffeine, le builder est figé au moment du `setCaffeine` ; on écoute un `ConfigChangedEvent` et on rebuild le spec via `CaffeineCacheManager.setCaffeine(...)` — accepte d'invalider les entrées en cours, négligeable sur un changement rare. Pas de chiffrement BDD v1 (projet local) — à durcir si on déploie un jour.
 
-**`LlmClient.modelId()` tracé sur chaque snapshot** — le snapshot stocke `ollama:qwen2.5:3b` ou `claude:claude-opus-4-6` au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer après coup les snapshots produits par un modèle plus faible sans relire le contenu.
+**Pas de wildcard imports en Kotlin** (Phase 2.5 outillage) — pour éviter qu'IntelliJ consolide les imports en `*` (défaut "Optimize Imports" au-delà de 5 imports/package), deux couches de défense : (1) `.editorconfig` racine avec `ij_kotlin_name_count_to_use_star_import = MAX` qui bloque la consolidation à la source ; (2) custom step Spotless `no-wildcard-imports` (cf. `backend/build.gradle.kts`) qui scanne et lance `GradleException` sur tout wildcard hors allowlist (14 packages encore tolérés, à shrinker progressivement). Volontairement pas de ktlint — ktlint avec `ij_kotlin_packages_to_use_import_on_demand` listant des packages applique la sémantique IntelliJ et **force** les wildcards sur ces packages, comportement inverse au but recherché (vérifié douloureusement, 152 fichiers reformatés en consolidation `*` avant rollback). Custom step en pure-check pour cette raison. Detekt rule `WildcardImport` désactivée — Spotless casse le build, Detekt ne ferait que rapporter en double.
+
+**Tracking du modèle LLM par snapshot** — chaque snapshot stocke `LlmClient.modelId()` (`ollama:qwen2.5:3b` ou `claude:claude-opus-4-6`) au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer après coup les snapshots produits par un modèle plus faible sans relire le contenu.
 
 ### Conservé depuis Phase 0
 

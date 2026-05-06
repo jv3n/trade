@@ -8,8 +8,10 @@
 
 | Endpoint | Donnée | Cache |
 |----------|--------|-------|
-| `https://api.twelvedata.com/time_series?symbol={s}&interval=1day&outputsize=260&order=ASC` | OHLC + volumes (1y daily par défaut, plus si besoin) | 15 min |
+| `https://api.twelvedata.com/time_series?symbol={s}&interval=1day&outputsize=260&order=ASC` | OHLC + volumes (1y daily par défaut, plus si besoin) | 15 min (`market-chart`) |
 | `https://api.twelvedata.com/quote?symbol={s}` | Quote courante + nom + 52w high/low | 15 min (mêmes clé/cache) |
+| `https://api.twelvedata.com/symbol_search?symbol={q}` | Autocomplete watchlist (Phase 2 v2) — match prefix symbol + substring name | 15 min (`symbol-search`) |
+| `https://api.twelvedata.com/profile?symbol={s}` | Sector GICS + industry + nom (Phase 2 benchmark v2 — mappé vers SPDR ETF via `SpdrSectorEtfs`) | 15 min (`sector-by-symbol`) |
 
 **Avantages** :
 - API REST documentée, format JSON stable

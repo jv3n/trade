@@ -85,10 +85,11 @@ Configuration : [`backend/config/detekt/detekt.yml`](https://github.com/jv3n/tra
 
 Tuning pragmatique pour Kotlin/Spring/JPA :
 - `LongParameterList` exclu sur `@Entity` / `@Embeddable` (les entités JPA ont légitimement 8-14 params constructeur)
-- `WildcardImport` autorise `jakarta.persistence.*`, `org.springframework.web.bind.annotation.*`, `Assertions.*`, `MockMvcResultMatchers.*` (idiomes universels)
 - `MagicNumber` ignore une whitelist large (HTTP codes, percent, timeouts standard) + exclut tests + `MockMarketChartClient` + `IndicatorCalculator`
 - `TooGenericExceptionCaught` exclut adapters HTTP / parsers / runners (catches larges légitimes)
 - `SwallowedException` accepte `_` / `ignored*` / `expected*` comme noms de variables (idiome Kotlin)
+
+`WildcardImport` est désactivée depuis le commit `chore(backend): forbid new wildcard imports via Spotless+ktlint`. L'enforcement vit côté **Spotless** (cf. `backend/build.gradle.kts`) plutôt que Detekt parce qu'on veut que la pipeline **casse** sur l'introduction d'un nouveau wildcard, pas seulement qu'elle rapporte. Le custom step Spotless `no-wildcard-imports` scanne les imports et lance `GradleException` sur tout wildcard hors allowlist de 14 packages (`java.util.*`, `jakarta.persistence.*`, JUnit `Assertions.*`, MockMvc helpers, Mockito-kotlin, Spring web.bind.annotation, plus 7 packages internes `com.portfolioai.*` à shrinker progressivement). Garder la rule Detekt active aurait dupliqué le rapport sans valeur ajoutée.
 
 Lancer en local :
 

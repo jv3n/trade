@@ -140,5 +140,5 @@ trade/
 
 ## Lint et formatage
 
-- Backend : **Spotless ktfmt** (Google style) — `./gradlew spotlessApply` reformate, `./gradlew spotlessCheck` vérifie. **Detekt** pour l'analyse statique Kotlin (`./gradlew detekt`, rapport HTML + SARIF — voir [`ops.md`](./ops.md) section Detekt).
+- Backend : **Spotless ktfmt** (Google style) — `./gradlew spotlessApply` reformate, `./gradlew spotlessCheck` vérifie. Spotless porte aussi un custom step `no-wildcard-imports` qui casse le build sur tout `import …\.\*` hors allowlist (14 packages tolérés temporairement, à shrinker progressivement — cf. dette technique `backlog.md`). Le `.editorconfig` racine bloque IntelliJ d'introduire des wildcards via "Optimize Imports" — défense en profondeur côté éditeur + côté pipeline. **Detekt** pour le reste de l'analyse statique Kotlin (`./gradlew detekt`, rapport HTML + SARIF — voir [`ops.md`](./ops.md) section Detekt).
 - Frontend : **ESLint flat config** (`frontend/eslint.config.js`, Angular ESLint 21) pour l'analyse statique TS + a11y des templates. **Prettier** reste seul responsable du formatage (`eslint-config-prettier` désactive les règles formatage qui chevauchent). `npm run lint` en local et en CI (avant le build) ; `npm run lint -- --fix` pour auto-fixer les violations triviales. Détails ruleset dans [`ops.md`](./ops.md) section ESLint.

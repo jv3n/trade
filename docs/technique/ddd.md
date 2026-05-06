@@ -30,7 +30,7 @@ Chaque contexte est autonome et possède ses propres couches.
     persistence/        # Spring Data repositories
     http/               # Controllers REST
     llm/                # (analysis) Clients API externes (Claude, Ollama)
-    market/             # (market) TwelveDataClient + MockMarketChartClient + RoutingMarketChartClient (@Primary)
+    market/             # (market) 3 ports outbound — chart / symbol-search / sector — chacun avec adapters Twelve Data + Mock + Routing (@Primary)
     news/               # (news) FinnhubClient + MockNewsClient + RoutingNewsClient (@Primary)
     ConfigTestClient.kt # (config) RestClient dédié pour sonder une clé API candidate sans la sauver
 
@@ -70,10 +70,14 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 - Sélection statique via `@ConditionalOnProperty(llm.provider)` au boot — pattern hérité Phase 1, conservé tant que le LLM n'est pas piloté par `AppConfigService`. À aligner sur le pattern Routing per-call (cf. `RoutingMarketChartClient` / `RoutingNewsClient`) le jour où l'item backlog "Config runtime v2 : LLM provider + model éditable" est traité — le `@ConditionalOnProperty` saute alors et un `RoutingLlmClient` (`@Primary`) prend le relais
 
 ### `infrastructure/market/` *(market uniquement, Phase 1+)*
-- `TwelveDataClient` — appel API externe (HTTP + apikey) avec cache court ; clé API lue per-call via `AppConfigService`
-- `MockMarketChartClient` — provider synthétique pour dev / CI sans clé
-- `RoutingMarketChartClient` (`@Primary`, Phase 2) — délègue à l'adapter sélectionné par `appConfig.getString(market.provider)` à chaque appel ; permet de basculer mock ↔ live runtime sans reboot
-- Pas de logique d'indicateurs ici (calculs purs en `application/`)
+
+Trois familles de clients HTTP, une par port outbound. Chaque famille suit le même triplet `TwelveData* + Mock* + Routing*` :
+
+- **Chart** (Phase 1) — `TwelveDataClient` (REST + apikey, deux endpoints `/time_series` + `/quote`, cache 15 min, clé API lue per-call via `AppConfigService`), `MockMarketChartClient` (provider synthétique pour dev / CI sans clé), `RoutingMarketChartClient` (`@Primary`, Phase 2 — délègue à l'adapter sélectionné par `appConfig.getString(market.provider)` à chaque appel ; permet de basculer mock ↔ live runtime sans reboot).
+- **Symbol search** (Phase 2 watchlist v2) — `TwelveDataSymbolSearchClient` (REST `/symbol_search`, 1 credit/call), `MockSymbolSearchClient` (~30 symbols seedés US/TSX), `RoutingSymbolSearchClient` (`@Primary`).
+- **Sector classification** (Phase 2 benchmark v2) — `TwelveDataSectorClassifier` (REST `/profile`, 1 credit/call, route via `SpdrSectorEtfs` pour le mapping GICS → SPDR), `MockSectorClassifier` (~25 tickers hand-curés US/TSX), `RoutingSectorClassifier` (`@Primary`). `SpdrSectorEtfs` (`internal object`) garde la table des 11 SPDR sectors + synonymes provider, vit dans le même package — pure data, pas Spring.
+
+Pas de logique d'indicateurs ici (calculs purs en `application/IndicatorCalculator`).
 
 ### `config/` *(Phase 2)*
 - `AppConfigService` (`application/`) — read layered (YAML default → BDD override via cache mémoire) ; émet `ConfigChangedEvent` sur changement effectif
