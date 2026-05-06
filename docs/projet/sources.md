@@ -24,30 +24,34 @@
 - Plan payant nécessaire pour intraday haute fréquence
 - Erreurs renvoyées en HTTP 200 avec `status: error` dans le body — le client doit les détecter
 
-## Phase 2 — News par ticker : Finnhub
+## Phase 2 — News par ticker et recommandations analystes : Finnhub
 
-Twelve Data ne couvre pas les news (testé live → 404 sur `/news`). Finnhub a été ajouté comme **provider news séparé**, sélectionné par `news.provider`.
+Twelve Data ne couvre ni les news (testé live → 404 sur `/news`) ni les recommandations analystes en free tier exploitable. Finnhub a été ajouté comme **provider séparé** pour ces deux familles de données, avec deux clés runtime distinctes (`news.provider` et `analyst.provider`) qui partagent la même API key (`market.finnhub.api-key`) — chacune peut être flippée indépendamment (ex. : live news + mock analyst recos pendant l'itération).
 
 ### Finnhub (REST + apikey)
 
 | Endpoint | Donnée | Cache |
 |----------|--------|-------|
 | `https://finnhub.io/api/v1/company-news?symbol={s}&from={d}&to={d}&token={k}` | Headlines + summary + url + image (fenêtre roulante 30 j) | 15 min (clé `(symbol, limit)`) |
+| `https://finnhub.io/api/v1/stock/recommendation?symbol={s}&token={k}` | Breakdown analystes monthly (strongBuy/buy/hold/sell/strongSell), array newest-first (re-trié défensivement côté code) | 15 min (clé `symbol`) |
+| `https://finnhub.io/api/v1/stock/price-target?symbol={s}&token={k}` | Price target consensus 12 mois (high/low/mean/median + numberOfAnalysts). Fail-soft à `null` côté code sur 401/403/5xx (paid tier sur certains comptes), shell tout-zéro → `null` | 15 min (mêmes clé/cache que recommendations) |
 
 **Avantages** :
 - Free tier 60 req/min sans cap quotidien
 - Agrégation Reuters / Bloomberg / CNBC / MarketWatch / FT (pour les sources US-centric)
 - Auth simple : un seul `token` en query param
-- Mock disponible (`news.provider: mock`, défaut sans clé) : feed synthétique déterministe par symbole, ~10 % de tickers "quiet" et ~25 % d'items sans summary pour exercer les chemins UI
+- Recommendations (breakdown monthly) en free tier sans paywall — couvre tickers US large/mid cap, plus pauvre sur small caps et TSX
+- Mocks disponibles côté news (`news.provider: mock`, défaut) et analyst (`analyst.provider: mock`, défaut) : feeds synthétiques déterministes par symbole, symboles réservés pour exercer les chemins UI (empty / rate-limit / null target)
 
 **Limites à connaître** :
-- US-centric — couverture EU et Canada plus pauvre
-- Pas de fundamentals avancés en free tier
+- US-centric — couverture EU et Canada plus pauvre (news + recos)
+- `/stock/price-target` peut renvoyer 401/403 sur certains comptes / symboles malgré son statut « free tier » documenté → swallow à `null` côté code, le snapshot reste utile sans target
+- Pas de fundamentals avancés en free tier (earnings dates partiel sur `/stock/earnings`, à creuser pour la Phase 2 backlog earnings)
 - Erreurs 401/403/429/5xx mappées sur `MarketUnavailableException` partagée avec Twelve Data → 503 unifié sur l'API publique
 
 Voir [`technique/providers.md`](../technique/providers.md) pour le détail (URLs d'inscription, dashboard, points d'intégration code).
 
-> **Switch runtime** : depuis la Phase 2, `market.provider` et `news.provider` sont éditables en direct depuis `/settings/configuration` (toggles mock ↔ live). Le bascule s'applique au prochain dossier ouvert sans redémarrer le backend, et la valeur surcharge le défaut YAML jusqu'au prochain "Réinitialiser au défaut" sur la même page.
+> **Switch runtime** : depuis la Phase 2, `market.provider`, `news.provider` et `analyst.provider` sont éditables en direct depuis `/settings/configuration` (toggles mock ↔ live). Le bascule s'applique au prochain dossier ouvert sans redémarrer le backend, et la valeur surcharge le défaut YAML jusqu'au prochain "Réinitialiser au défaut" sur la même page.
 
 ### Bascule alternative (market data)
 

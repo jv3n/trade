@@ -28,6 +28,8 @@ import { ConfigRepository } from './core/config.repository';
 import { HttpConfigRepository } from './core/adapters/config.http';
 import { AnnotationRepository } from './core/annotation.repository';
 import { LocalStorageAnnotationRepository } from './core/adapters/annotation.local';
+import { AnalystRepository } from './core/analyst.repository';
+import { HttpAnalystRepository } from './core/adapters/analyst.http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -57,5 +59,6 @@ export const appConfig: ApplicationConfig = {
     { provide: NewsRepository, useClass: HttpNewsRepository },
     { provide: ConfigRepository, useClass: HttpConfigRepository },
     { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
+    { provide: AnalystRepository, useClass: HttpAnalystRepository },
   ],
 };

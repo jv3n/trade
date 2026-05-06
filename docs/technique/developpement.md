@@ -59,7 +59,7 @@ ollama:
 
 Ne jamais committer ce fichier. Ne jamais mettre de clé API dans `application.yml`.
 
-> **Alternative runtime** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct cinq clés sans reboot — clés API Twelve Data et Finnhub, TTL cache Caffeine 5–60 min, et toggles `market.provider` / `news.provider` (mock ↔ live). Pratique pour rotater une clé sans toucher à `application-local.yml` ; les overrides BDD prennent le pas sur les défauts YAML.
+> **Alternative runtime** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct six clés sans reboot — clés API Twelve Data et Finnhub, TTL cache Caffeine 5–60 min, et toggles `market.provider` / `news.provider` / `analyst.provider` (mock ↔ live). Pratique pour rotater une clé sans toucher à `application-local.yml` ; les overrides BDD prennent le pas sur les défauts YAML.
 
 ## Conventions de commit
 
@@ -95,8 +95,8 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + adapters (9 repositories)
-│       │   ├── *.repository.ts        # ports (Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, Annotation)
+│       ├── core/              # Ports + adapters (10 repositories)
+│       │   ├── *.repository.ts        # ports (Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst)
 │       │   ├── adapters/*.http.ts     # HTTP impls (défaut)
 │       │   ├── adapters/*.local.ts    # localStorage impls (annotation v3)
 │       │   ├── theme.service.ts       # signal + persist localStorage
@@ -116,6 +116,7 @@ trade/
 │       ├── portfolio/         # Import CSV, snapshots, lecture
 │       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille
 │       ├── news/              # Phase 2 — Finnhub + mock, news par ticker
+│       ├── analyst/           # Phase 2 — Finnhub + mock, recommandations analystes
 │       ├── config/            # Phase 2 — runtime-editable settings (app_config V4)
 │       ├── ingestion/         # 🧊 legacy Phase 0 — RSS scheduler
 │       └── shared/            # Utilitaires transverses

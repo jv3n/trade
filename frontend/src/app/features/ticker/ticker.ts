@@ -36,6 +36,7 @@ import {
 import { NewsItem, NewsRepository } from '../../core/news.repository';
 import { WatchlistRepository } from '../../core/watchlist.repository';
 import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
+import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
@@ -247,6 +248,12 @@ interface BrushGeometry {
 
 /** Width (in SVG user units) of the resize-handle hit-zone on each side of the brush rectangle. */
 const BRUSH_HANDLE_WIDTH_PX = 8;
+
+/** Minimum drift (in bullish-minus-bearish fraction) between the oldest and newest analyst history
+ *  snapshots before the trend arrow flips off "flat". Below this we consider the recommendations
+ *  stable enough to not editorialise. ~5 % matches one analyst moving across the buy/hold line on
+ *  a panel of 20. */
+const TREND_EPSILON = 0.05;
 /** Minimum width (in bar count) of the brush rectangle — prevents the user from collapsing it
  *  to zero by dragging the handles past each other. */
 const BRUSH_MIN_BARS = 2;
@@ -275,6 +282,7 @@ export class TickerPage implements OnInit, OnDestroy {
   private readonly newsRepository = inject(NewsRepository);
   private readonly watchlistRepository = inject(WatchlistRepository);
   private readonly annotationRepository = inject(AnnotationRepository);
+  private readonly analystRepository = inject(AnalystRepository);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -381,6 +389,19 @@ export class TickerPage implements OnInit, OnDestroy {
   newsLoading = signal(false);
   /** Inline error in the news panel — kept scoped so a Finnhub hiccup doesn't blank the dossier. */
   newsError = signal<string | null>(null);
+
+  // ---- Fundamentals — analyst recommendations state ----
+
+  /** Analyst snapshot for the current ticker. `null` covers three states distinguished by the
+   *  loading / coverage / error signals below : pending fetch, no coverage (404), or upstream
+   *  error (503). */
+  analyst = signal<AnalystSnapshot | null>(null);
+  analystLoading = signal(false);
+  /** True when the backend returned 404 — the symbol has no analyst coverage. Distinct from an
+   *  error : the panel renders an empty-state line rather than a banner. */
+  analystNotCovered = signal(false);
+  /** Inline error scoped to the analyst panel — Finnhub hiccup doesn't blank the dossier. */
+  analystError = signal<string | null>(null);
 
   // ---- Watchlist state ----
 
@@ -835,6 +856,7 @@ export class TickerPage implements OnInit, OnDestroy {
     this.loadLatestNarrative(s);
     this.loadWatchlistState(s);
     this.loadNews(s);
+    this.loadAnalyst(s);
     this.loadAnnotations(s);
     this.wireCustomBenchmarkSearch();
   }
@@ -1617,6 +1639,77 @@ export class TickerPage implements OnInit, OnDestroy {
     if (diffMs < 7 * 86_400_000) return rtf.format(-Math.floor(diffMs / 86_400_000), 'day');
     return date.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
   }
+
+  // ---- Fundamentals — analyst recommendations ----
+
+  /**
+   * Fetches the analyst snapshot for the dossier. Three terminal states (mutually exclusive
+   * after `analystLoading` flips to false) :
+   * - **404** → `analystNotCovered = true`, panel shows "no coverage" empty state.
+   * - **503** → `analystError` set, panel shows inline error banner.
+   * - **success** → `analyst` set, panel renders breakdown + consensus + price target + history.
+   *
+   * Errors stay scoped to the panel — the rest of the dossier (chart, news, narrative) keeps
+   * rendering. Same isolation rule as the news panel.
+   */
+  private loadAnalyst(symbol: string): void {
+    this.analystLoading.set(true);
+    this.analystNotCovered.set(false);
+    this.analystError.set(null);
+    this.analyst.set(null);
+    this.analystRepository.getForSymbol(symbol).subscribe({
+      next: (snap) => {
+        this.analyst.set(snap);
+        this.analystLoading.set(false);
+      },
+      error: (err: { status?: number }) => {
+        if (err?.status === 404) {
+          this.analystNotCovered.set(true);
+        } else {
+          this.analystError.set(this.errorMessage(err, symbol));
+        }
+        this.analystLoading.set(false);
+      },
+    });
+  }
+
+  /**
+   * Percentage of the segmented bar a given bucket should occupy. Falls back to 0 when there's
+   * no snapshot or no analysts so the template can call this unconditionally without guards.
+   */
+  analystBucketPct(bucket: 'strongBuy' | 'buy' | 'hold' | 'sell' | 'strongSell'): number {
+    const a = this.analyst();
+    if (!a || a.totalAnalysts === 0) return 0;
+    return (a[bucket] / a.totalAnalysts) * 100;
+  }
+
+  /**
+   * Tendency between the oldest and newest history snapshots — drives an arrow in the panel
+   * header (up = upgraded over the window, down = downgraded, flat = stable). Compares the
+   * bullish-minus-bearish *fraction* on each end so a change in the analyst count doesn't bias
+   * the result.
+   */
+  analystTrend = computed<'up' | 'down' | 'flat'>(() => {
+    const a = this.analyst();
+    if (!a || a.history.length < 2) return 'flat';
+    const score = (m: {
+      strongBuy: number;
+      buy: number;
+      sell: number;
+      strongSell: number;
+      hold: number;
+    }) => {
+      const total = m.strongBuy + m.buy + m.hold + m.sell + m.strongSell;
+      if (total === 0) return 0;
+      return (m.strongBuy + m.buy - (m.sell + m.strongSell)) / total;
+    };
+    const first = score(a.history[0]);
+    const last = score(a.history[a.history.length - 1]);
+    const delta = last - first;
+    if (delta > TREND_EPSILON) return 'up';
+    if (delta < -TREND_EPSILON) return 'down';
+    return 'flat';
+  });
 
   // ---- Watchlist actions ----
 

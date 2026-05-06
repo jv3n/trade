@@ -596,6 +596,171 @@
       </section>
     }
 
+    <!-- Fondamentaux : recommandations analystes (premier sous-bloc, earnings v2 ci-dessous) -->
+    <section class="fundamentals-card">
+      <div class="fundamentals-header">
+        <mat-icon>insights</mat-icon>
+        <h3>{{ 'ticker.fundamentals.title' | translate }}</h3>
+      </div>
+
+      <div class="fundamentals-block">
+        <div class="fundamentals-block-header">
+          <h4>{{ 'ticker.fundamentals.analyst.title' | translate }}</h4>
+          @if (analyst(); as a) {
+            <span
+              class="analyst-trend"
+              [class]="'analyst-trend-' + analystTrend()"
+              [matTooltip]="'ticker.fundamentals.analyst.trend.' + analystTrend() | translate"
+              matTooltipPosition="above"
+            >
+              <mat-icon>{{
+                analystTrend() === 'up'
+                  ? 'trending_up'
+                  : analystTrend() === 'down'
+                    ? 'trending_down'
+                    : 'trending_flat'
+              }}</mat-icon>
+            </span>
+          }
+        </div>
+
+        @if (analystLoading()) {
+          <div class="loading-state">
+            <mat-spinner diameter="16"></mat-spinner>
+            {{ 'ticker.fundamentals.analyst.loading' | translate }}
+          </div>
+        } @else if (analystError(); as ae) {
+          <div class="error-banner analyst-error">
+            <mat-icon>error_outline</mat-icon>
+            {{ ae }}
+          </div>
+        } @else if (analystNotCovered()) {
+          <p class="empty-state analyst-empty">
+            {{ 'ticker.fundamentals.analyst.notCovered' | translate }}
+          </p>
+        } @else if (analyst(); as a) {
+          <!-- Consensus + total analysts headline -->
+          <div class="analyst-headline">
+            <span class="analyst-consensus" [class]="'consensus-' + a.consensus.toLowerCase()">
+              {{ 'ticker.fundamentals.analyst.consensus.' + a.consensus | translate }}
+            </span>
+            <span class="analyst-count">
+              {{ 'ticker.fundamentals.analyst.basedOn' | translate: { count: a.totalAnalysts } }}
+            </span>
+          </div>
+
+          <!-- Segmented breakdown bar — proportions across 5 buckets ; small buckets stay visible
+               down to a minimum width via CSS but the data is content-driven. -->
+          <div
+            class="analyst-bar"
+            role="img"
+            [attr.aria-label]="'ticker.fundamentals.analyst.barAria' | translate"
+          >
+            <span
+              class="analyst-bar-segment seg-strong-buy"
+              [style.width.%]="analystBucketPct('strongBuy')"
+              [matTooltip]="
+                'ticker.fundamentals.analyst.tooltip.strongBuy' | translate: { count: a.strongBuy }
+              "
+            ></span>
+            <span
+              class="analyst-bar-segment seg-buy"
+              [style.width.%]="analystBucketPct('buy')"
+              [matTooltip]="'ticker.fundamentals.analyst.tooltip.buy' | translate: { count: a.buy }"
+            ></span>
+            <span
+              class="analyst-bar-segment seg-hold"
+              [style.width.%]="analystBucketPct('hold')"
+              [matTooltip]="
+                'ticker.fundamentals.analyst.tooltip.hold' | translate: { count: a.hold }
+              "
+            ></span>
+            <span
+              class="analyst-bar-segment seg-sell"
+              [style.width.%]="analystBucketPct('sell')"
+              [matTooltip]="
+                'ticker.fundamentals.analyst.tooltip.sell' | translate: { count: a.sell }
+              "
+            ></span>
+            <span
+              class="analyst-bar-segment seg-strong-sell"
+              [style.width.%]="analystBucketPct('strongSell')"
+              [matTooltip]="
+                'ticker.fundamentals.analyst.tooltip.strongSell'
+                  | translate: { count: a.strongSell }
+              "
+            ></span>
+          </div>
+
+          <!-- Legend — five chips with raw counts, mirror the bar segments. -->
+          <div class="analyst-legend">
+            <span class="analyst-chip seg-strong-buy">
+              <span class="chip-label">{{
+                'ticker.fundamentals.analyst.bucket.strongBuy' | translate
+              }}</span>
+              <span class="chip-count">{{ a.strongBuy }}</span>
+            </span>
+            <span class="analyst-chip seg-buy">
+              <span class="chip-label">{{
+                'ticker.fundamentals.analyst.bucket.buy' | translate
+              }}</span>
+              <span class="chip-count">{{ a.buy }}</span>
+            </span>
+            <span class="analyst-chip seg-hold">
+              <span class="chip-label">{{
+                'ticker.fundamentals.analyst.bucket.hold' | translate
+              }}</span>
+              <span class="chip-count">{{ a.hold }}</span>
+            </span>
+            <span class="analyst-chip seg-sell">
+              <span class="chip-label">{{
+                'ticker.fundamentals.analyst.bucket.sell' | translate
+              }}</span>
+              <span class="chip-count">{{ a.sell }}</span>
+            </span>
+            <span class="analyst-chip seg-strong-sell">
+              <span class="chip-label">{{
+                'ticker.fundamentals.analyst.bucket.strongSell' | translate
+              }}</span>
+              <span class="chip-count">{{ a.strongSell }}</span>
+            </span>
+          </div>
+
+          <!-- 12-month price target (optional — Finnhub /price-target may 401 on free tier ;
+               the line is hidden when the backend returned null). -->
+          @if (a.priceTarget; as pt) {
+            <div class="analyst-target">
+              <div class="analyst-target-row">
+                <span class="analyst-target-label">{{
+                  'ticker.fundamentals.analyst.target.mean' | translate
+                }}</span>
+                <span class="analyst-target-value">{{ pt.mean | number: '1.2-2' }}</span>
+              </div>
+              <div class="analyst-target-row">
+                <span class="analyst-target-label">{{
+                  'ticker.fundamentals.analyst.target.range' | translate
+                }}</span>
+                <span class="analyst-target-value">
+                  {{ pt.low | number: '1.2-2' }} — {{ pt.high | number: '1.2-2' }}
+                </span>
+              </div>
+              <span class="analyst-target-meta">
+                {{
+                  'ticker.fundamentals.analyst.target.basedOn'
+                    | translate: { count: pt.numberOfAnalysts }
+                }}
+              </span>
+            </div>
+          }
+
+          <!-- Footer — period of the head snapshot, so the user knows how recent this is. -->
+          <div class="analyst-footer">
+            {{ 'ticker.fundamentals.analyst.asOf' | translate }} {{ a.asOf }}
+          </div>
+        }
+      </div>
+    </section>
+
     <!-- Actualité -->
     <section class="news-card">
       <div class="news-header">
