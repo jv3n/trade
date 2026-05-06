@@ -75,7 +75,7 @@ Source primaire des données ticker. Trois ports outbound cohabitent dans le mod
 
 #### Ports + adapters
 
-- **`MarketChartClient`** (port, Phase 1) — interface qui retourne un `MarketChart` (quote + bars OHLC) en types domaine.
+- **`MarketChartClient`** (port, Phase 1) — interface qui retourne un `MarketChart` (quote + bars OHLC) en types domaine. La `TickerQuote` porte un champ `instrumentType: InstrumentType?` (enum `STOCK | ETF | INDEX | OTHER`, depuis 2026-05-06) consommé par le front pour gater la Sector benchmark : visible uniquement sur les actions, masquée sur ETFs/Index/Other où elle n'a pas de sens. Twelve Data le populate depuis `/quote.type` ; le mock tag les ~17 ETFs courants (SPDR + broad market) et défaut STOCK ailleurs.
   - `TwelveDataClient` (`twelvedata`) — REST + apikey, défaut prod. Deux appels par dossier (`/time_series` + `/quote`), parsing tolérant aux quirks (numériques en strings, erreurs renvoyées en HTTP 200 avec `status: error`).
   - `MockMarketChartClient` (`mock`, défaut sans clé) — série OHLC synthétique déterministe par symbole. Symboles réservés `UNKNOWN` (404) et `RATELIMIT` (503) pour les chemins d'erreur UI.
   - `RoutingMarketChartClient` (`@Primary`, Phase 2) — délègue à l'adapter actif lu via `appConfig.getString(market.provider)` à chaque appel.
@@ -84,9 +84,9 @@ Source primaire des données ticker. Trois ports outbound cohabitent dans le mod
   - `MockSymbolSearchClient` — ~30 symbols US/TSX seedés (prefix match symbol + substring match name), paths réservés `RATELIMIT` et `UNKNOWN`.
   - `RoutingSymbolSearchClient` (`@Primary`).
 - **`SectorClassifier`** (port, Phase 2 benchmark v2) — résout un ticker à un `SectorBenchmark` (sector GICS canonique + SPDR ETF + nom complet). Backe l'overlay « Sector » du chart dossier ticker.
-  - `TwelveDataSectorClassifier` — REST `/profile` (1 credit/call), parse le champ `sector`, route via `SpdrSectorEtfs` pour la table GICS → SPDR.
+  - `FinnhubSectorClassifier` — REST `/stock/profile2` (free tier 60 calls/min), parse le champ `finnhubIndustry`, route via `SpdrSectorEtfs` pour le mapping GICS → SPDR. **Remplace `TwelveDataSectorClassifier`** depuis 2026-05-06 — Twelve Data `/profile` est paid-tier only sur les comptes free, ce qui rendait la feature inutilisable. Finnhub `/stock/profile2` couvre le même besoin sur le free tier et partage la clé déjà câblée pour news / analyst / earnings.
   - `MockSectorClassifier` — table hand-curée ~25 tickers populaires US/TSX (AAPL→Tech, JPM→Financials, RY.TO→Financials, etc.), paths réservés `UNKNOWN` (404) et `RATELIMIT` (503).
-  - `RoutingSectorClassifier` (`@Primary`).
+  - `RoutingSectorClassifier` (`@Primary`) — route `mock` → mock, `twelvedata` (live mode) → Finnhub. Le toggle reste binaire mock/live et `market.provider` continue de driver les autres routes (chart, symbol-search) vers Twelve Data ; seul le sector dévie vers Finnhub côté implémentation. Détail caché derrière le `RoutingSectorClassifier`, pas de nouveau runtime key (pas de `sector.provider`).
 
 #### Domain helpers
 
@@ -215,7 +215,7 @@ Hexagonal léger sous `frontend/src/app/` :
 - **`public/i18n/`** — fichiers de traduction `<lang>.json` (FR + EN), servis comme assets statiques par le HTTP loader de `ngx-translate`
 - **`features/`** — *primary adapters*
   - `dashboard/` — portefeuille, tickers détenus, watchlist (sidebar 3 sections collapsables)
-  - `ticker/` — dossier par symbole : graphe multi-timeframe + axes + crosshair + **overlay benchmark opt-in** (SPY/QQQ/IWM/Sector/Custom, Y-axis bi-mode prix/% return, 2ᵉ polyline dashed, `MatTooltipModule`) + **chart analyse interactive** (zoom drag-select avec brush mini-chart en bas, overlays MA50/MA200/Bollinger/52w hi-lo en multi-select, annotations h-line persistées localStorage par symbole, measure tools delta % + delta time entre deux clics), indicateurs, narratif IA, bouton watchlist
+  - `ticker/` — dossier par symbole en layout 2-col : **sidenav outils chart** à gauche (Amazon-style, foldable via chevron, sticky, état localStorage `ticker-sidenav-open`) qui héberge timeframe / benchmark / overlays / outils (annotation arm, clear anchor, reset zoom) / liste « Annotations posées » avec bouton supprimer par item ; colonne droite avec le graphe multi-timeframe + axes + crosshair + **overlay benchmark opt-in** (SPY/QQQ/IWM/Sector/Custom, Y-axis bi-mode prix/% return, 2ᵉ polyline dashed, `MatTooltipModule`) + **chart analyse interactive** (zoom drag-select avec brush mini-chart en bas, overlays MA50/MA200/Bollinger/52w hi-lo en multi-select, annotations h-line persistées localStorage par symbole, measure tools delta % + delta time entre deux clics), indicateurs, section Fondamentaux (analyst recommandations + earnings), news, narratif IA, bouton watchlist
   - `import/` — drag & drop CSV
   - `suivi/` — timeline snapshots
   - `settings/` — sources / test-sources / prompt-preview / configuration (runtime config Phase 2)

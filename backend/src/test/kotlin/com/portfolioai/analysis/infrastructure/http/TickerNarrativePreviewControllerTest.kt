@@ -59,6 +59,7 @@ class TickerNarrativePreviewControllerTest {
         fiftyTwoWeekHigh = BigDecimal("200.00"),
         fiftyTwoWeekLow = BigDecimal("140.00"),
         asOf = asOf,
+        instrumentType = null,
       )
     val indicators =
       Indicators(

@@ -11,7 +11,6 @@
 | `https://api.twelvedata.com/time_series?symbol={s}&interval=1day&outputsize=260&order=ASC` | OHLC + volumes (1y daily par défaut, plus si besoin) | 15 min (`market-chart`) |
 | `https://api.twelvedata.com/quote?symbol={s}` | Quote courante + nom + 52w high/low | 15 min (mêmes clé/cache) |
 | `https://api.twelvedata.com/symbol_search?symbol={q}` | Autocomplete watchlist (Phase 2 v2) — match prefix symbol + substring name | 15 min (`symbol-search`) |
-| `https://api.twelvedata.com/profile?symbol={s}` | Sector GICS + industry + nom (Phase 2 benchmark v2 — mappé vers SPDR ETF via `SpdrSectorEtfs`) | 15 min (`sector-by-symbol`) |
 
 **Avantages** :
 - API REST documentée, format JSON stable
@@ -37,6 +36,7 @@ Twelve Data ne couvre ni les news (testé live → 404 sur `/news`), ni les reco
 | `https://finnhub.io/api/v1/stock/price-target?symbol={s}&token={k}` | Price target consensus 12 mois (high/low/mean/median + numberOfAnalysts). Fail-soft à `null` côté code sur 401/403/5xx (paid tier sur certains comptes), shell tout-zéro → `null` | 15 min (mêmes clé/cache que recommendations) |
 | `https://finnhub.io/api/v1/stock/earnings?symbol={s}&token={k}` | Historique 4 derniers trimestres : `{period, estimate, actual, surprise, surprisePercent}` (surprise % recalculé côté code, Finnhub round inconsistemment sur small caps) | 15 min (clé `symbol`, cache `earnings`) |
 | `https://finnhub.io/api/v1/calendar/earnings?from={d}&to={d}&symbol={s}&token={k}` | Prochaine annonce attendue (`{date, hour bmo/amc/dmh, epsActual, epsEstimate}`) sur fenêtre 90 j en avant. Fail-soft à `null` côté code sur 401/403/5xx (paid tier sur certains comptes) | 15 min (mêmes clé/cache que earnings) |
+| `https://finnhub.io/api/v1/stock/profile2?symbol={s}&token={k}` | Profil entreprise — on lit uniquement `finnhubIndustry` pour la classification sector (Phase 2 benchmark v2). Remplace `/profile` Twelve Data qui est paid-tier only | 15 min (`sector-by-symbol`) |
 
 **Avantages** :
 - Free tier 60 req/min sans cap quotidien

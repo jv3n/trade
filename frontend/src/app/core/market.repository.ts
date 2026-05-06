@@ -9,6 +9,9 @@ export interface TickerQuote {
   fiftyTwoWeekHigh: number | null;
   fiftyTwoWeekLow: number | null;
   asOf: string;
+  /** `STOCK` / `ETF` / `INDEX` / `OTHER` / `null`. Drives type-conditional UI affordances —
+   *  notably the Sector benchmark toggle which only makes sense for individual stocks. */
+  instrumentType: 'STOCK' | 'ETF' | 'INDEX' | 'OTHER' | null;
 }
 
 export interface Indicators {

@@ -1,5 +1,6 @@
 package com.portfolioai.market.infrastructure.market
 
+import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.market.domain.MarketChart
 import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
@@ -95,6 +96,7 @@ class MockMarketChartClient : MarketChartClient {
         fiftyTwoWeekHigh = closes.max(),
         fiftyTwoWeekLow = closes.min(),
         asOf = bars.last().timestamp,
+        instrumentType = mockInstrumentType(upper),
       )
     return MarketChart(quote = quote, bars = bars)
   }
@@ -157,6 +159,47 @@ class MockMarketChartClient : MarketChartClient {
       "1mo" -> 60
       else -> 260
     }
+
+  /**
+   * Tag the well-known broad-market and SPDR sector ETFs as [InstrumentType.ETF] ; everything else
+   * defaults to [InstrumentType.STOCK]. Limited list (~12 symbols) — covers the tickers the dossier
+   * surfaces frequently (the four broad indices we use as benchmarks + the 11 SPDR sector ETFs that
+   * pop up via `MockSectorClassifier`). Real ETFs the user might browse beyond this list will be
+   * misclassified as STOCK in mock mode — accepted limitation since the truth is on the live
+   * provider side anyway.
+   */
+  private fun mockInstrumentType(upper: String): InstrumentType =
+    if (upper in MOCK_ETF_SYMBOLS) InstrumentType.ETF else InstrumentType.STOCK
+
+  private companion object {
+    /**
+     * Well-known ETF tickers the mock recognises. Broad-market (SPY/QQQ/IWM/VOO/VTI/DIA) + the 11
+     * SPDR Select Sector ETFs that map back via `MockSectorClassifier`. Anything else defaults to
+     * STOCK so the mock dossier behaves like a stock by default.
+     */
+    val MOCK_ETF_SYMBOLS: Set<String> =
+      setOf(
+        // Broad market
+        "SPY",
+        "QQQ",
+        "IWM",
+        "VOO",
+        "VTI",
+        "DIA",
+        // SPDR Select Sector ETFs
+        "XLK",
+        "XLF",
+        "XLV",
+        "XLE",
+        "XLY",
+        "XLP",
+        "XLC",
+        "XLI",
+        "XLB",
+        "XLRE",
+        "XLU",
+      )
+  }
 
   private fun Double.toScaled(): BigDecimal =
     BigDecimal.valueOf(this).setScale(2, RoundingMode.HALF_UP)

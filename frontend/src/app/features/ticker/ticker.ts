@@ -258,6 +258,17 @@ const TREND_EPSILON = 0.05;
 /** Pre-computed milliseconds in a day — used to derive the countdown label on the earnings sub-
  *  block. */
 const EARNINGS_MS_PER_DAY = 24 * 60 * 60 * 1000;
+/** localStorage key for the user's preferred sidenav fold state. Single global key (not per-symbol)
+ *  — the user usually wants the same layout across tickers. */
+const SIDENAV_STORAGE_KEY = 'ticker-sidenav-open';
+/** localStorage key for the sidenav accordion sections that are currently expanded. JSON-encoded
+ *  array of section keys — defaults to an empty list (all collapsed) for a clean discovery flow on
+ *  the first visit. Persists per browser, not per ticker — the user usually wants the same layout. */
+const SIDENAV_SECTIONS_STORAGE_KEY = 'ticker-sidenav-sections';
+
+/** Section keys for the sidenav accordion. Closed type so a typo in the template binding fails
+ *  at compile time. */
+type SidenavSectionKey = 'timeframe' | 'benchmark' | 'overlays' | 'tools' | 'annotations';
 /** Minimum width (in bar count) of the brush rectangle — prevents the user from collapsing it
  *  to zero by dragging the handles past each other. */
 const BRUSH_MIN_BARS = 2;
@@ -315,8 +326,24 @@ export class TickerPage implements OnInit, OnDestroy {
 
   // ---- Benchmark overlay state ----
 
-  /** Toggle-group buttons (excludes `'custom'`, which is set via the autocomplete sidecar). */
+  /** Toggle-group buttons (excludes `'custom'`, which is set via the autocomplete sidecar).
+   *  The `sector` option is filtered out at render time when the dossier ticker isn't an
+   *  individual stock — see [benchmarkChoicesForCurrentTicker]. */
   readonly benchmarkToggleChoices = BENCHMARK_TOGGLE_CHOICES;
+
+  /**
+   * Sector benchmark only applies to individual stocks — an ETF *is* a sector or a broad index,
+   * an Index *is* the market, etc. We hide the option for non-stock instruments rather than
+   * letting the user click and discover via the 404 inline message. `null` (provider didn't
+   * surface the type) defaults to "show it" — degrade open rather than over-hiding.
+   */
+  benchmarkChoicesForCurrentTicker = computed<BenchmarkChoice[]>(() => {
+    const type = this.snapshot()?.quote.instrumentType;
+    if (type === null || type === undefined || type === 'STOCK') {
+      return this.benchmarkToggleChoices;
+    }
+    return this.benchmarkToggleChoices.filter((c) => c !== 'sector');
+  });
   /** Active picker mode. Drives the toggle group selection and tells [chartGeometry] whether to
    *  flip the Y axis to percent. `'custom'` is set when the user picks via the autocomplete. */
   selectedBenchmark = signal<BenchmarkChoice>('off');
@@ -379,6 +406,17 @@ export class TickerPage implements OnInit, OnDestroy {
    *  delta time from the anchor to the hovered bar. Cleared on timeframe change (the timestamp
    *  may not exist in the new bar set) and on `resetZoom` for a tidy reset gesture. */
   measureAnchor = signal<MeasureAnchor | null>(null);
+
+  // ---- Sidenav (chart tools) ----
+
+  /** Open/closed state of the left chart-tools sidenav. Persisted globally in localStorage so the
+   *  user keeps the same layout across tickers. Default open — the controls are the primary way
+   *  to manipulate the chart. */
+  sidenavOpen = signal<boolean>(TickerPage.loadSidenavOpenInitial());
+
+  /** Per-section expansion state for the accordion inside the sidenav. Default empty (all sections
+   *  collapsed) — the user opens what they need. State persisted globally in localStorage. */
+  expandedSections = signal<Set<SidenavSectionKey>>(TickerPage.loadExpandedSectionsInitial());
 
   // ---- Brush mini-chart (v3) ----
 
@@ -1343,6 +1381,91 @@ export class TickerPage implements OnInit, OnDestroy {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     this.removeAnnotation(id);
+  }
+
+  // ---- Sidenav fold ----
+
+  /**
+   * Initial sidenav open state — read once at field-init via this static helper. Static so the
+   * field initialiser can call it (instance methods aren't available yet at that point). Defaults
+   * to open ; falls back to open if localStorage is unavailable (Safari private mode etc.).
+   */
+  private static loadSidenavOpenInitial(): boolean {
+    try {
+      const raw = localStorage.getItem(SIDENAV_STORAGE_KEY);
+      return raw === null ? true : raw === 'true';
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Flips the sidenav open/closed and persists the new state. Toggle button in the sidenav
+   * header — the user expects the layout choice to stick across reloads (Amazon-style filter
+   * panel). Failure to persist (e.g. localStorage disabled) is silent — the in-memory toggle
+   * still works for the session.
+   */
+  toggleSidenav(): void {
+    const next = !this.sidenavOpen();
+    this.sidenavOpen.set(next);
+    try {
+      localStorage.setItem(SIDENAV_STORAGE_KEY, String(next));
+    } catch {
+      /* localStorage unavailable — accept in-memory state */
+    }
+  }
+
+  /**
+   * Initial expanded-sections set — read once at field-init via this static helper. Same pattern
+   * as [loadSidenavOpenInitial]. Defaults to empty set (all sections collapsed) ; falls back to
+   * empty if localStorage is unavailable or the stored JSON is malformed (defensive — a stale
+   * entry from a previous schema shouldn't crash the page).
+   */
+  private static loadExpandedSectionsInitial(): Set<SidenavSectionKey> {
+    try {
+      const raw = localStorage.getItem(SIDENAV_SECTIONS_STORAGE_KEY);
+      if (raw === null) return new Set();
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return new Set();
+      const valid: SidenavSectionKey[] = [
+        'timeframe',
+        'benchmark',
+        'overlays',
+        'tools',
+        'annotations',
+      ];
+      return new Set(
+        parsed.filter((k): k is SidenavSectionKey => valid.includes(k as SidenavSectionKey)),
+      );
+    } catch {
+      return new Set();
+    }
+  }
+
+  /**
+   * Reactively reports whether [key] is in the expanded set. The template binds against this
+   * helper rather than reading `expandedSections().has(...)` directly so the signal access is
+   * encapsulated in one place — easier to extend later (e.g. animations on transition).
+   */
+  isSectionExpanded(key: SidenavSectionKey): boolean {
+    return this.expandedSections().has(key);
+  }
+
+  /**
+   * Flips the section's expanded state and persists the new set. Multiple sections can be open
+   * simultaneously — sidenav accordions don't auto-collapse siblings (Amazon-style filter
+   * panel : the user might want both Period and Overlays open at the same time to compare).
+   */
+  toggleSection(key: SidenavSectionKey): void {
+    const current = new Set(this.expandedSections());
+    if (current.has(key)) current.delete(key);
+    else current.add(key);
+    this.expandedSections.set(current);
+    try {
+      localStorage.setItem(SIDENAV_SECTIONS_STORAGE_KEY, JSON.stringify(Array.from(current)));
+    } catch {
+      /* localStorage unavailable — accept in-memory state */
+    }
   }
 
   // ---- Measure tools (v3) ----

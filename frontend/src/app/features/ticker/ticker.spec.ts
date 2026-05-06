@@ -43,6 +43,7 @@ const EMPTY_SNAPSHOT: TickerSnapshot = {
     fiftyTwoWeekHigh: 120,
     fiftyTwoWeekLow: 80,
     asOf: '2025-01-01T00:00:00Z',
+    instrumentType: 'STOCK',
   },
   indicators: null,
   bars: [],
@@ -87,6 +88,11 @@ describe('TickerPage', () => {
   let earnings: { getForSymbol: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    // Reset persisted sidenav state between tests so each one gets the default behaviour
+    // (sidenav open, all accordion sections collapsed). Tests that exercise the persistence
+    // path seed localStorage explicitly before creating the fixture.
+    localStorage.removeItem('ticker-sidenav-open');
+    localStorage.removeItem('ticker-sidenav-sections');
     market = {
       getTicker: vi.fn().mockReturnValue(of(EMPTY_SNAPSHOT)),
       getChart: vi.fn(),
@@ -1557,6 +1563,152 @@ describe('TickerPage', () => {
     });
   });
 
+  // ---- Sidenav (chart tools) ----
+
+  /**
+   * The chart-tools sidenav replaces the previous in-toolbar controls (timeframe / benchmark /
+   * overlays / tools) with a left-rail Amazon-style filter panel. Foldable via a chevron, state
+   * persisted globally in localStorage so the layout choice sticks across tickers and reloads.
+   * The annotations list section is the canonical delete path — replaces the inline `×` handle
+   * which was fragile in practice.
+   */
+  describe('sidenav (chart tools)', () => {
+    it('opens by default on a fresh visit (no localStorage entry)', () => {
+      // localStorage was cleared in the beforeEach — no persisted preference, default is open.
+      // The user lands on the dossier and sees the controls expanded.
+      fixture.detectChanges();
+
+      expect(component.sidenavOpen()).toBe(true);
+    });
+
+    it('hydrates the open state from localStorage when present', () => {
+      // Seed before TestBed creates the fixture below — the static loader runs at field init,
+      // not in ngOnInit, so this has to happen before `createComponent` would be called fresh.
+      // We rebuild the fixture explicitly to pick up the new state.
+      localStorage.setItem('ticker-sidenav-open', 'false');
+      const fresh = TestBed.createComponent(TickerPage);
+      fresh.detectChanges();
+
+      expect(fresh.componentInstance.sidenavOpen()).toBe(false);
+    });
+
+    it('toggle flips the state and persists to localStorage', () => {
+      fixture.detectChanges();
+      expect(component.sidenavOpen()).toBe(true);
+
+      component.toggleSidenav();
+      expect(component.sidenavOpen()).toBe(false);
+      expect(localStorage.getItem('ticker-sidenav-open')).toBe('false');
+
+      component.toggleSidenav();
+      expect(component.sidenavOpen()).toBe(true);
+      expect(localStorage.getItem('ticker-sidenav-open')).toBe('true');
+    });
+
+    it('annotations signal is empty when no annotations are stored', () => {
+      // Default annotation store mock returns `of([])`. The sidenav renders the empty-state
+      // line ; no list items.
+      fixture.detectChanges();
+
+      expect(component.annotations()).toEqual([]);
+    });
+
+    it('annotations signal hydrates the list from the repository on init', () => {
+      // The sidenav renders one row per annotation. We pin the signal contents because the DOM
+      // assertion would couple this test to the markup ; the contract is that
+      // `annotations()` reflects what the repository returned.
+      const sample: Annotation[] = [
+        { id: 'a1', symbol: 'AAPL', kind: 'hline', value: 175.5, label: null },
+        { id: 'a2', symbol: 'AAPL', kind: 'hline', value: 200.0, label: 'target' },
+      ];
+      annotationStore.list.mockReturnValue(of(sample));
+      fixture.detectChanges();
+
+      expect(component.annotations()).toEqual(sample);
+    });
+
+    it('removeAnnotation drops the item from the signal optimistically', () => {
+      // Replicates the behaviour the sidenav delete button triggers : optimistic remove with
+      // rollback on error. Existing test in the v3 chart suite covered the rollback path ; here
+      // we pin the happy-path optimism explicitly so the sidenav UI stays snappy.
+      const sample: Annotation[] = [
+        { id: 'a1', symbol: 'AAPL', kind: 'hline', value: 175.5, label: null },
+        { id: 'a2', symbol: 'AAPL', kind: 'hline', value: 200.0, label: 'target' },
+      ];
+      annotationStore.list.mockReturnValue(of(sample));
+      annotationStore.remove.mockReturnValue(of(void 0));
+      fixture.detectChanges();
+
+      component.removeAnnotation('a1');
+
+      expect(component.annotations().map((a) => a.id)).toEqual(['a2']);
+      expect(annotationStore.remove).toHaveBeenCalledWith('AAPL', 'a1');
+    });
+
+    // ---- Accordion sections ----
+
+    it('all sidenav sections start collapsed on a fresh visit', () => {
+      // No persisted state in localStorage (cleared in beforeEach) — the sidenav opens with
+      // every accordion section closed so the user scans top-to-bottom on first visit and picks
+      // what to expand.
+      fixture.detectChanges();
+
+      expect(component.isSectionExpanded('timeframe')).toBe(false);
+      expect(component.isSectionExpanded('benchmark')).toBe(false);
+      expect(component.isSectionExpanded('overlays')).toBe(false);
+      expect(component.isSectionExpanded('tools')).toBe(false);
+      expect(component.isSectionExpanded('annotations')).toBe(false);
+    });
+
+    it('toggleSection flips expansion state and persists to localStorage', () => {
+      fixture.detectChanges();
+
+      component.toggleSection('timeframe');
+      expect(component.isSectionExpanded('timeframe')).toBe(true);
+      expect(localStorage.getItem('ticker-sidenav-sections')).toContain('timeframe');
+
+      component.toggleSection('timeframe');
+      expect(component.isSectionExpanded('timeframe')).toBe(false);
+      expect(localStorage.getItem('ticker-sidenav-sections') ?? '').not.toContain('timeframe');
+    });
+
+    it('multiple sections can be expanded simultaneously', () => {
+      // Accordion siblings don't auto-collapse — the user might want Period AND Overlays open
+      // at the same time to compare timeframes. Pin this so a future "single open" refactor
+      // doesn't silently degrade the UX.
+      fixture.detectChanges();
+
+      component.toggleSection('timeframe');
+      component.toggleSection('overlays');
+
+      expect(component.isSectionExpanded('timeframe')).toBe(true);
+      expect(component.isSectionExpanded('overlays')).toBe(true);
+      expect(component.isSectionExpanded('benchmark')).toBe(false);
+    });
+
+    it('hydrates expanded sections from localStorage when present', () => {
+      localStorage.setItem('ticker-sidenav-sections', JSON.stringify(['benchmark', 'tools']));
+      const fresh = TestBed.createComponent(TickerPage);
+      fresh.detectChanges();
+
+      expect(fresh.componentInstance.isSectionExpanded('benchmark')).toBe(true);
+      expect(fresh.componentInstance.isSectionExpanded('tools')).toBe(true);
+      expect(fresh.componentInstance.isSectionExpanded('timeframe')).toBe(false);
+    });
+
+    it('ignores unknown section keys when hydrating from a stale localStorage entry', () => {
+      // Defensive : a previous schema version (or a typo from a manual edit) shouldn't crash
+      // the page or open phantom sections. Unknown keys silently dropped, valid ones still
+      // honoured.
+      localStorage.setItem('ticker-sidenav-sections', JSON.stringify(['benchmark', 'phantom']));
+      const fresh = TestBed.createComponent(TickerPage);
+      fresh.detectChanges();
+
+      expect(fresh.componentInstance.isSectionExpanded('benchmark')).toBe(true);
+      expect(fresh.componentInstance.expandedSections().size).toBe(1);
+    });
+  });
+
   function emptyIndicators() {
     return {
       asOf: '2025-01-01T00:00:00Z',
@@ -1696,6 +1848,55 @@ describe('TickerPage', () => {
         'sentiment-bearish',
       );
       expect(component.sentimentClass(null)).toBe('');
+    });
+  });
+
+  // ---- Benchmark choices conditional on instrument type ----
+
+  /**
+   * The Sector benchmark overlay only makes sense for individual stocks — an ETF *is* a sector
+   * or a broad index, an Index *is* the market. We hide the toggle option for non-stocks rather
+   * than letting the user click and discover via a 404. Pin the filter contract so a refactor
+   * doesn't silently re-introduce the option for ETFs.
+   */
+  describe('benchmark choices conditional on instrument type', () => {
+    it('keeps the Sector option when the dossier ticker is a stock', () => {
+      // Default EMPTY_SNAPSHOT has instrumentType: 'STOCK'.
+      fixture.detectChanges();
+
+      expect(component.benchmarkChoicesForCurrentTicker()).toContain('sector');
+    });
+
+    it('hides the Sector option when the dossier ticker is an ETF', () => {
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: 'ETF' } }),
+      );
+      fixture.detectChanges();
+
+      expect(component.benchmarkChoicesForCurrentTicker()).not.toContain('sector');
+      // The other options stay — the user can still compare an ETF against SPY/QQQ/IWM.
+      expect(component.benchmarkChoicesForCurrentTicker()).toContain('SPY');
+      expect(component.benchmarkChoicesForCurrentTicker()).toContain('off');
+    });
+
+    it('hides the Sector option for INDEX and OTHER instruments', () => {
+      // Same rationale as ETF — comparing the S&P 500 to "S&P 500 sector" makes no sense.
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: 'INDEX' } }),
+      );
+      fixture.detectChanges();
+      expect(component.benchmarkChoicesForCurrentTicker()).not.toContain('sector');
+    });
+
+    it('keeps the Sector option when instrumentType is null (degrade open)', () => {
+      // Provider didn't surface the type — we'd rather show the toggle and let the user
+      // discover via the 404 inline than hide a legitimate stock affordance.
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: null } }),
+      );
+      fixture.detectChanges();
+
+      expect(component.benchmarkChoicesForCurrentTicker()).toContain('sector');
     });
   });
 });

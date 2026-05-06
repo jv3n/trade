@@ -104,6 +104,24 @@
     "loading": "Chargement du ticker {{symbol}}…",
     "exchange": "{{exchange}}",
     "noChart": "Pas assez de données pour tracer la courbe.",
+    "sidenav": {
+      "title": "Outils chart",
+      "aria": "Barre latérale outils chart",
+      "collapse": "Réduire la barre latérale",
+      "expand": "Déplier la barre latérale",
+      "sections": {
+        "timeframe": "Période",
+        "benchmark": "Benchmark",
+        "overlays": "Overlays",
+        "tools": "Outils",
+        "annotations": "Annotations posées"
+      },
+      "annotations": {
+        "empty": "Aucune annotation posée pour l'instant.",
+        "deleteTooltip": "Supprimer l'annotation",
+        "deleteAria": "Supprimer l'annotation"
+      }
+    },
     "chart": {
       "timeframeLabel": "Plage temporelle",
       "timeframes": {
@@ -163,7 +181,7 @@
         "empty": "Aucun ticker correspondant"
       },
       "errors": {
-        "fetch": "Impossible de charger le benchmark.",
+        "fetch": "Données du benchmark indisponibles — essayez-en un autre ou vérifiez votre plan provider.",
         "sectorNotMapped": "Pas de benchmark sectoriel disponible pour ce ticker."
       }
     },

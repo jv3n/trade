@@ -62,6 +62,12 @@ data class TwelveDataQuoteResponse(
   /** Unix epoch seconds at the time of the quote. */
   val timestamp: Long?,
   val close: String?,
+  /**
+   * Free-form classification — observed values include `Common Stock`, `Preferred Stock`, `American
+   * Depositary Receipt`, `ETF`, `Mutual Fund`, `Index`, `Currency`, `Cryptocurrency`. The mapper
+   * collapses these into the project's [com.portfolioai.market.domain.InstrumentType] enum.
+   */
+  val type: String?,
   @JsonProperty("fifty_two_week") val fiftyTwoWeek: TwelveDataFiftyTwoWeek?,
   val status: String?,
   val code: Int?,

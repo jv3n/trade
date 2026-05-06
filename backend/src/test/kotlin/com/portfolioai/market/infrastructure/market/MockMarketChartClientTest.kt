@@ -126,4 +126,43 @@ class MockMarketChartClientTest {
     val weekly = client.fetchChart("AAPL", "5y", "1wk").bars.map { it.close }
     assertNotEquals(daily.first(), weekly.first())
   }
+
+  @Test
+  fun `tags well-known ETF symbols as ETF instrument type`() {
+    // SPDR sector + broad-market ETFs the project surfaces frequently must be tagged so the
+    // front hides type-conditional affordances (Sector benchmark toggle). Pin a sample per
+    // category so a refactor that drops one entry shows up immediately.
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.ETF,
+      client.fetchChart("SPY", "1y", "1d").quote.instrumentType,
+    )
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.ETF,
+      client.fetchChart("VOO", "1y", "1d").quote.instrumentType,
+    )
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.ETF,
+      client.fetchChart("XLK", "1y", "1d").quote.instrumentType,
+    )
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.ETF,
+      client.fetchChart("XLF", "1y", "1d").quote.instrumentType,
+    )
+  }
+
+  @Test
+  fun `defaults unknown symbols to STOCK instrument type`() {
+    // Anything outside the curated ETF set behaves like a stock — the dossier shows the full set
+    // of benchmark toggles including Sector. Real ETFs the user might browse beyond the seed
+    // list will be misclassified as STOCK ; accepted limitation since the truth lives on the
+    // live provider side.
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.STOCK,
+      client.fetchChart("AAPL", "1y", "1d").quote.instrumentType,
+    )
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.STOCK,
+      client.fetchChart("MSFT", "1y", "1d").quote.instrumentType,
+    )
+  }
 }

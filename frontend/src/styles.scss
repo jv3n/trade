@@ -225,6 +225,28 @@ textarea {
   }
 }
 
+// Soft variant of `.error-banner` for "info, not error" cases — opt-in features (e.g. benchmark
+// overlay) that fail to load without breaking the rest of the dossier. Same layout, info-blue
+// colours instead of danger-red.
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-info-soft);
+  border: 1px solid var(--color-info);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  color: var(--color-info);
+  margin-bottom: 1rem;
+
+  mat-icon {
+    font-size: 1rem;
+    height: 1rem;
+    width: 1rem;
+  }
+}
+
 .loading-state {
   display: flex;
   align-items: center;

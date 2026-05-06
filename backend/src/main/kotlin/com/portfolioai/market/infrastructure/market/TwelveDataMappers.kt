@@ -1,5 +1,6 @@
 package com.portfolioai.market.infrastructure.market
 
+import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.TickerQuote
 import java.math.BigDecimal
@@ -65,7 +66,29 @@ fun TwelveDataQuoteResponse.toTickerQuote(symbol: String, bars: List<OhlcBar>): 
     fiftyTwoWeekHigh = high52,
     fiftyTwoWeekLow = low52,
     asOf = asOf,
+    instrumentType = mapInstrumentType(type),
   )
+}
+
+/**
+ * Coarse mapping of the `type` string Twelve Data emits in `/quote`. Anything we don't explicitly
+ * recognise collapses to [InstrumentType.OTHER] — the front treats that conservatively (no Sector
+ * benchmark toggle). `null` input → `null` output so the front can distinguish "we don't know" from
+ * "we know it's Other".
+ */
+internal fun mapInstrumentType(raw: String?): InstrumentType? {
+  if (raw.isNullOrBlank()) return null
+  return when (raw.trim().lowercase()) {
+    "common stock",
+    "preferred stock",
+    "american depositary receipt",
+    "depositary receipt",
+    "stock" -> InstrumentType.STOCK
+    "etf",
+    "exchange-traded fund" -> InstrumentType.ETF
+    "index" -> InstrumentType.INDEX
+    else -> InstrumentType.OTHER
+  }
 }
 
 /**

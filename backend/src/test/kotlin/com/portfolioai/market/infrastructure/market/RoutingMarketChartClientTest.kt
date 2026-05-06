@@ -44,6 +44,7 @@ class RoutingMarketChartClientTest {
           fiftyTwoWeekHigh = BigDecimal("200"),
           fiftyTwoWeekLow = BigDecimal("140"),
           asOf = Instant.parse("2026-05-04T10:00:00Z"),
+          instrumentType = null,
         ),
       bars = emptyList(),
     )

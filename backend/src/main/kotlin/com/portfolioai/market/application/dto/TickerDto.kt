@@ -17,6 +17,8 @@ data class TickerQuoteDto(
   val fiftyTwoWeekHigh: BigDecimal?,
   val fiftyTwoWeekLow: BigDecimal?,
   val asOf: Instant,
+  /** `STOCK` / `ETF` / `INDEX` / `OTHER` / `null` — drives type-conditional UI affordances. */
+  val instrumentType: String?,
 )
 
 data class IndicatorsDto(
@@ -100,6 +102,7 @@ fun TickerQuote.toDto() =
     fiftyTwoWeekHigh = fiftyTwoWeekHigh,
     fiftyTwoWeekLow = fiftyTwoWeekLow,
     asOf = asOf,
+    instrumentType = instrumentType?.name,
   )
 
 fun Indicators.toDto() =

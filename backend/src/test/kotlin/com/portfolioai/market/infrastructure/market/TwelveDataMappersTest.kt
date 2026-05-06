@@ -73,6 +73,57 @@ class TwelveDataMappersTest {
     assertEquals(expected, parseTimestamp("2024-01-15"))
   }
 
+  @Test
+  fun `mapInstrumentType collapses Twelve Data type strings to the four-bucket enum`() {
+    // The /quote `type` field is free-form on the wire — we collapse the categories the project
+    // actually cares about (stock vs ETF vs index vs other) so the front can drive type-specific
+    // affordances without re-doing the mapping. Pin the boundary cases so a refactor doesn't
+    // silently break the Sector toggle gating downstream.
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.STOCK,
+      mapInstrumentType("Common Stock"),
+    )
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.STOCK,
+      mapInstrumentType("Preferred Stock"),
+    )
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.STOCK,
+      mapInstrumentType("American Depositary Receipt"),
+    )
+    assertEquals(com.portfolioai.market.domain.InstrumentType.ETF, mapInstrumentType("ETF"))
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.ETF,
+      mapInstrumentType("Exchange-Traded Fund"),
+    )
+    assertEquals(com.portfolioai.market.domain.InstrumentType.INDEX, mapInstrumentType("Index"))
+    // Unknown collapses to OTHER, not null — null is only for "provider didn't surface a type".
+    assertEquals(com.portfolioai.market.domain.InstrumentType.OTHER, mapInstrumentType("Currency"))
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.OTHER,
+      mapInstrumentType("Cryptocurrency"),
+    )
+  }
+
+  @Test
+  fun `mapInstrumentType returns null on null or blank rather than guessing`() {
+    // Twelve Data omits `type` for some symbols (rare, observed on small-cap TSX). The front
+    // distinguishes "unknown type" (null → degrade open, show all benchmark options) from
+    // "definitely OTHER" (commodity / crypto → hide Sector). Pin the null path explicitly.
+    assertNull(mapInstrumentType(null))
+    assertNull(mapInstrumentType(""))
+    assertNull(mapInstrumentType("   "))
+  }
+
+  @Test
+  fun `mapInstrumentType is case-insensitive on the wire string`() {
+    assertEquals(
+      com.portfolioai.market.domain.InstrumentType.STOCK,
+      mapInstrumentType("common stock"),
+    )
+    assertEquals(com.portfolioai.market.domain.InstrumentType.ETF, mapInstrumentType("etf"))
+  }
+
   // ------------------------------------------------------------------ helpers
 
   private fun parse(json: String) = mapper.readValue(json, TwelveDataTimeSeriesResponse::class.java)

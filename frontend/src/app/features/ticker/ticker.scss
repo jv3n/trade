@@ -1,7 +1,310 @@
 .ticker-page {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 1.5rem 2rem 3rem;
+}
+
+// ---- Tools sidenav (left) + content (right) ----
+//
+// Two-column page layout — left sidenav holds the chart-tools (timeframe / benchmark / overlays /
+// tools / annotations list), right column holds the existing dossier sections (chart, indicators,
+// fundamentals, news, narrative). Sidenav is sticky while the user scrolls down through the
+// dossier so the controls remain accessible without scrolling back up.
+//
+// Foldable : a chevron in the sidenav header collapses it to a thin strip (just the toggle).
+// State persists in localStorage globally — Amazon-style filter panel, the user picks a layout
+// once and keeps it.
+
+$sidenav-width-open: 240px;
+$sidenav-width-collapsed: 48px;
+
+.ticker-layout {
+  display: grid;
+  grid-template-columns: $sidenav-width-open 1fr;
+  gap: 1.5rem;
+  align-items: start; // sidenav can be shorter than content without stretching
+
+  &.sidenav-collapsed {
+    grid-template-columns: $sidenav-width-collapsed 1fr;
+  }
+}
+
+.ticker-tools-sidenav {
+  position: sticky;
+  top: 1rem;
+  align-self: start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  // Tighter base font-size — the sidenav holds compact controls, the rest of the page reads at
+  // 1rem. Cascades into mat-button-toggle labels and section titles.
+  font-size: 0.82rem;
+  // Cap height so a long annotations list doesn't push the page beyond the viewport — internal
+  // scroll inside the sidenav, sticky stays put.
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  transition: padding 0.15s ease;
+
+  // Compact mat-button-toggle in the sidenav. Material's default height is ~48 px which is
+  // generous for a touch target but visually heavy in a narrow filter panel — drop to 30 px.
+  // ::ng-deep is needed because the height lives on internal Material classes.
+  ::ng-deep .mat-button-toggle .mat-button-toggle-button {
+    height: 30px;
+  }
+  ::ng-deep .mat-button-toggle .mat-button-toggle-label-content {
+    line-height: 30px;
+    padding: 0 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  &.collapsed {
+    padding: 0.5rem 0.25rem;
+    overflow: hidden;
+  }
+}
+
+.sidenav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+
+  h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .ticker-tools-sidenav.collapsed & {
+    justify-content: center;
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.sidenav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+
+  &:hover {
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  // Center the chevron inside the round button. Material `mat-icon` ships with `display: inline-block`
+  // + a 24×24 baseline that doesn't quite line up vertically inside a 28 px circular button — we
+  // collapse line-height and re-pin the icon to the visual centre via flex on the icon itself.
+  mat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    margin: 0;
+  }
+}
+
+// Each section is an accordion : header (clickable button with title + chevron) + collapsible
+// body. Sections are independent — multiple can be open simultaneously. Default state is closed
+// for all to encourage scanning the sidenav top-to-bottom on first visit ; user-toggled state
+// persists in localStorage via the [TickerPage.toggleSection] method.
+.sidenav-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  // Vertical mat-button-toggle-group reads better in a narrow sidenav than the horizontal default.
+  mat-button-toggle-group {
+    width: 100%;
+
+    .mat-button-toggle {
+      flex: 1;
+    }
+  }
+}
+
+// Clickable header — full-width button styled to read like a section title with a chevron on the
+// right that rotates 180° when expanded.
+.sidenav-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text-dim);
+  transition: color 0.12s;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.sidenav-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidenav-section-count {
+  font-weight: 500;
+  color: var(--color-text-dim);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.sidenav-section-chevron {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+  line-height: 18px;
+  transition: transform 0.18s ease;
+
+  .sidenav-section.expanded & {
+    transform: rotate(180deg);
+  }
+}
+
+.sidenav-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.25rem 0.25rem 0.6rem;
+
+  // [hidden] is set by Angular when the section is collapsed — `display: none` is the spec
+  // default but we make it explicit here for completeness alongside the transition.
+  &[hidden] {
+    display: none;
+  }
+}
+
+.sidenav-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-dim);
+  font-style: italic;
+}
+
+// Tool buttons in the sidenav inherit the existing .btn-overlay-tool styles below, plus a
+// full-width override for the vertical layout.
+.sidenav-tool {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+// Custom autocomplete sidecar inside the sidenav — full width, tighter padding than the default
+// Material form-field.
+.sidenav-autocomplete {
+  width: 100%;
+}
+
+// Annotations list — one row per annotation, value on the left, mat-icon-button delete on the
+// right. Replaces the inline `×` handle as the discoverable delete path.
+.annotation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.annotation-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.annotation-list-value {
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotation-list-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    color: var(--color-danger);
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// Mobile / narrow viewport — collapse the sidenav to its thin strip ; the user can expand on
+// demand. The grid template flips to one column, sidenav full width but very short height
+// (only the chevron is visible).
+@media (max-width: 720px) {
+  .ticker-layout {
+    grid-template-columns: 1fr;
+
+    &.sidenav-collapsed {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ticker-tools-sidenav {
+    position: static;
+    max-height: none;
+  }
 }
 
 .back-link {

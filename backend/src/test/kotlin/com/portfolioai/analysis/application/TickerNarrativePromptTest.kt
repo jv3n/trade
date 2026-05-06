@@ -38,6 +38,7 @@ class TickerNarrativePromptTest {
       fiftyTwoWeekHigh = BigDecimal("200.00"),
       fiftyTwoWeekLow = BigDecimal("140.00"),
       asOf = Instant.parse("2026-05-02T13:00:00Z"),
+      instrumentType = null,
     )
 
   /** Realistic bullish-leaning indicators (price above MA200, RSI healthy, drawdown moderate). */

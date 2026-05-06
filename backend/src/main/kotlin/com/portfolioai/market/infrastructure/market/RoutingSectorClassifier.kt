@@ -13,14 +13,20 @@ import org.springframework.stereotype.Component
  * [ConfigKeys.MARKET_PROVIDER]. Mirrors [RoutingSymbolSearchClient] / [RoutingMarketChartClient] —
  * same routing convention, same `@Primary` injection point.
  *
- * Both [MockSectorClassifier] and [TwelveDataSectorClassifier] are always wired ; this bean is what
- * Spring injects everywhere [SectorClassifier] is requested.
+ * **Note on the "live" provider** — unlike the chart and symbol-search routes which call Twelve
+ * Data when `market.provider=twelvedata`, the sector route delegates to Finnhub regardless of the
+ * `market.provider` value (when not `mock`). The reason : Twelve Data `/profile` is paid-tier only
+ * (free-tier returns 401 / `auth-failed`), making the sector feature unusable on the plan we
+ * standardised the project on. Finnhub `/stock/profile2` covers the same need on the free tier and
+ * the Finnhub API key is already configured for news / analyst / earnings. We keep the toggle
+ * binary (mock vs live) and document the implementation detail rather than introducing a separate
+ * `sector.provider` runtime key — the user only sees the macro switch.
  */
 @Component
 @Primary
 class RoutingSectorClassifier(
   @Qualifier("mockSectorClassifier") private val mock: SectorClassifier,
-  @Qualifier("twelveDataSectorClassifier") private val twelveData: SectorClassifier,
+  @Qualifier("finnhubSectorClassifier") private val finnhub: SectorClassifier,
   private val appConfig: AppConfigService,
 ) : SectorClassifier {
   private val log = LoggerFactory.getLogger(javaClass)
@@ -30,7 +36,7 @@ class RoutingSectorClassifier(
     log.debug("Routing sector classify symbol='{}' provider={}", symbol, provider)
     return when (provider) {
       ConfigKeys.PROVIDER_MOCK -> mock.classify(symbol)
-      ConfigKeys.PROVIDER_TWELVEDATA -> twelveData.classify(symbol)
+      ConfigKeys.PROVIDER_TWELVEDATA -> finnhub.classify(symbol)
       else -> throw IllegalArgumentException("Unknown market provider: '$provider'")
     }
   }
