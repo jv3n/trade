@@ -26,6 +26,8 @@ import { NewsRepository } from './core/news.repository';
 import { HttpNewsRepository } from './core/adapters/news.http';
 import { ConfigRepository } from './core/config.repository';
 import { HttpConfigRepository } from './core/adapters/config.http';
+import { AnnotationRepository } from './core/annotation.repository';
+import { LocalStorageAnnotationRepository } from './core/adapters/annotation.local';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -54,5 +56,6 @@ export const appConfig: ApplicationConfig = {
     { provide: WatchlistRepository, useClass: HttpWatchlistRepository },
     { provide: NewsRepository, useClass: HttpNewsRepository },
     { provide: ConfigRepository, useClass: HttpConfigRepository },
+    { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
   ],
 };

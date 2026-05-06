@@ -160,6 +160,84 @@
         </span>
       </div>
 
+      <!-- Overlays toolbar — multi-select toggle group for chart overlays (MA50/MA200, Bollinger,
+           52w high/low). Disabled in benchmark % mode because these are price-space artefacts and
+           the Y axis is in % return space then. Reset-zoom button sits to the right of the toggles
+           (visible only when zoomed). -->
+      <div class="chart-overlay-toolbar">
+        <span class="overlay-label">{{ 'ticker.chart.overlays.label' | translate }}</span>
+        <mat-button-toggle-group
+          multiple
+          [value]="overlayActiveArray()"
+          (change)="setOverlays($event.value)"
+          [disabled]="resolvedBenchmark() !== null"
+          aria-label="{{ 'ticker.chart.overlays.label' | translate }}"
+          hideSingleSelectionIndicator
+        >
+          @for (kind of overlayKinds; track kind) {
+            <mat-button-toggle
+              [value]="kind"
+              [matTooltip]="'ticker.chart.overlays.tooltips.' + kind | translate"
+              matTooltipPosition="above"
+              [attr.aria-label]="'ticker.chart.overlays.tooltips.' + kind | translate"
+            >
+              {{ 'ticker.chart.overlays.' + kind | translate }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+
+        <!-- Annotation arming button (v3) — toggles the "next click = horizontal annotation"
+             mode. Disabled in benchmark mode (annotations are price-anchored). -->
+        <button
+          class="btn-overlay-tool"
+          [class.active]="annotationMode()"
+          [disabled]="resolvedBenchmark() !== null"
+          (click)="toggleAnnotationMode()"
+          [matTooltip]="
+            (annotationMode() ? 'ticker.chart.annotation.cancel' : 'ticker.chart.annotation.add')
+              | translate
+          "
+          matTooltipPosition="above"
+          [attr.aria-label]="'ticker.chart.annotation.add' | translate"
+          [attr.aria-pressed]="annotationMode()"
+        >
+          <mat-icon>{{ annotationMode() ? 'close' : 'horizontal_rule' }}</mat-icon>
+          <span>{{
+            (annotationMode() ? 'ticker.chart.annotation.cancel' : 'ticker.chart.annotation.add')
+              | translate
+          }}</span>
+        </button>
+
+        <!-- Clear measure anchor (v3) — visible only when one is set, the chart click also
+             toggles the anchor off when re-clicking the same bar but the explicit button is
+             discoverable for the user who didn't notice the click-to-anchor flow. -->
+        @if (measureAnchor()) {
+          <button
+            class="btn-overlay-tool"
+            (click)="clearMeasureAnchor()"
+            [matTooltip]="'ticker.chart.measure.clearTooltip' | translate"
+            matTooltipPosition="above"
+            [attr.aria-label]="'ticker.chart.measure.clear' | translate"
+          >
+            <mat-icon>straighten</mat-icon>
+            <span>{{ 'ticker.chart.measure.clear' | translate }}</span>
+          </button>
+        }
+
+        @if (zoomRange()) {
+          <button
+            class="btn-reset-zoom"
+            (click)="resetZoom()"
+            [matTooltip]="'ticker.chart.zoom.resetTooltip' | translate"
+            matTooltipPosition="above"
+            [attr.aria-label]="'ticker.chart.zoom.resetTooltip' | translate"
+          >
+            <mat-icon>zoom_out_map</mat-icon>
+            <span>{{ 'ticker.chart.zoom.reset' | translate }}</span>
+          </button>
+        }
+      </div>
+
       @if (benchmarkError(); as be) {
         <div class="error-banner benchmark-error">
           <mat-icon>error_outline</mat-icon>
@@ -175,8 +253,12 @@
       } @else if (chartGeometry(); as geom) {
         <div
           class="chart-canvas"
-          (mousemove)="onChartMouseMove($event)"
+          (pointerdown)="onChartPointerDown($event)"
+          (pointermove)="onChartPointerMove($event)"
+          (pointerup)="onChartPointerUp($event)"
+          (pointercancel)="onChartPointerCancel()"
           (mouseleave)="onChartMouseLeave()"
+          (dblclick)="resetZoom()"
         >
           <svg
             [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight"
@@ -211,6 +293,37 @@
               }
             </g>
 
+            <!-- 52w hi/lo horizontal lines (drawn first, behind everything else) -->
+            @for (hl of geom.overlayHLines; track hl.kind) {
+              <line
+                class="overlay-hline"
+                [class]="'overlay-hline-' + hl.kind"
+                [attr.x1]="geom.innerLeft"
+                [attr.x2]="geom.innerRight"
+                [attr.y1]="hl.y"
+                [attr.y2]="hl.y"
+              />
+              <text
+                class="axis-label overlay-hline-label"
+                [class]="'overlay-hline-label-' + hl.kind"
+                [attr.x]="geom.innerRight - 4"
+                [attr.y]="hl.y - 3"
+              >
+                {{ hl.label }}
+              </text>
+            }
+
+            <!-- Series-based overlays (Bollinger bands first so they sit behind the MA lines, then
+                 MA50/MA200 above them but below the ticker price line). -->
+            @for (op of geom.overlayPaths; track op.kind) {
+              <path
+                class="overlay-line"
+                [class]="'overlay-line-' + op.kind"
+                [attr.d]="op.d"
+                fill="none"
+              />
+            }
+
             <!-- Benchmark polyline (drawn before the ticker so the ticker line stays on top) -->
             @if (geom.benchmarkPath; as bp) {
               <path class="benchmark-line" [attr.d]="bp" fill="none" />
@@ -218,6 +331,70 @@
 
             <!-- Price polyline -->
             <path class="price-line" [attr.d]="geom.pricePath" fill="none" />
+
+            <!-- Annotations (v3) — horizontal price lines persisted in localStorage. Each one
+                 carries its label and a delete handle (×) revealed on hover. The handle's
+                 (click) is the only way out of the chart's pointer event flow — see the closest
+                 check at the top of onChartPointerDown. -->
+            @for (ann of geom.annotations; track ann.id) {
+              <g
+                class="annotation"
+                [class.annotation-clamped-top]="ann.clamped === 'top'"
+                [class.annotation-clamped-bottom]="ann.clamped === 'bottom'"
+              >
+                <line
+                  class="annotation-hline"
+                  [attr.x1]="geom.innerLeft"
+                  [attr.x2]="geom.innerRight"
+                  [attr.y1]="ann.y"
+                  [attr.y2]="ann.y"
+                />
+                <text class="annotation-label" [attr.x]="geom.innerLeft + 4" [attr.y]="ann.y - 4">
+                  {{ ann.label || (ann.value | number: '1.2-2') }}
+                  @if (ann.clamped === 'top') {
+                    ↑
+                  } @else if (ann.clamped === 'bottom') {
+                    ↓
+                  }
+                </text>
+                <g
+                  class="annotation-delete"
+                  (click)="removeAnnotation(ann.id)"
+                  [attr.aria-label]="'ticker.chart.annotation.delete' | translate"
+                  role="button"
+                  tabindex="0"
+                  (keydown)="onAnnotationDeleteKey($event, ann.id)"
+                >
+                  <circle [attr.cx]="geom.innerRight - 8" [attr.cy]="ann.y" r="7" />
+                  <text [attr.x]="geom.innerRight - 8" [attr.y]="ann.y + 4">×</text>
+                </g>
+              </g>
+            }
+
+            <!-- Measure anchor marker (v3) — vertical line + dot at the anchored bar. The
+                 [hoverInfo.deltaPercent] / [deltaTime] then read off the difference to the bar
+                 under the cursor. -->
+            @if (measureAnchorPoint(); as ap) {
+              <line
+                class="measure-anchor-line"
+                [attr.x1]="ap.x"
+                [attr.x2]="ap.x"
+                [attr.y1]="geom.innerTop"
+                [attr.y2]="geom.innerBottom"
+              />
+              <circle class="measure-anchor-dot" [attr.cx]="ap.x" [attr.cy]="ap.y" r="5" />
+            }
+
+            <!-- Live drag-zoom selection rectangle. Suspends the crosshair while present. -->
+            @if (zoomSelectionRect(); as rect) {
+              <rect
+                class="zoom-selection"
+                [attr.x]="rect.x"
+                [attr.y]="rect.top"
+                [attr.width]="rect.width"
+                [attr.height]="rect.bottom - rect.top"
+              />
+            }
 
             <!-- Crosshair + hovered point marker -->
             @if (hoverInfo(); as hi) {
@@ -256,9 +433,62 @@
                   <span class="tooltip-price">{{ bl }}</span>
                 </div>
               }
+              @if (hi.deltaPercent !== null && hi.deltaTime !== null) {
+                <div class="tooltip-row tooltip-delta">
+                  <span class="tooltip-swatch tooltip-swatch-anchor"></span>
+                  <span class="tooltip-name">
+                    {{ 'ticker.chart.measure.delta' | translate }}
+                  </span>
+                  <span class="tooltip-price">{{ hi.deltaPercent }} · {{ hi.deltaTime }}</span>
+                </div>
+              }
             </div>
           }
         </div>
+
+        <!-- Brush mini-chart (v3) — bottom navigator that mirrors the full series and lets the
+             user pan / resize the zoom range by dragging its rectangle. Click outside the
+             rectangle resets the zoom (back to full). Disabled visually when no zoom is
+             possible (single-bar series), kept always-on otherwise so the user can drag-to-zoom
+             from here without using the main chart's gesture. -->
+        @if (brushGeometry(); as bg) {
+          <svg
+            class="brush-chart"
+            [attr.viewBox]="'0 0 ' + brushWidth + ' ' + brushHeight"
+            (pointerdown)="onBrushPointerDown($event)"
+            (pointermove)="onBrushPointerMove($event)"
+            (pointerup)="onBrushPointerUp()"
+            (pointercancel)="onBrushPointerUp()"
+            [attr.aria-label]="'ticker.chart.brush.label' | translate"
+          >
+            <!-- Compressed full-series price line, drawn first as background. -->
+            <path class="brush-line" [attr.d]="bg.pricePath" fill="none" />
+
+            <!-- Selector rectangle showing the current zoom range. Resize handles on each side
+                 are visually hinted by short vertical bars at the edges (8px hit zone in TS). -->
+            <rect
+              class="brush-selector"
+              [attr.x]="bg.rectX"
+              [attr.y]="bg.rectTop"
+              [attr.width]="bg.rectWidth"
+              [attr.height]="bg.rectBottom - bg.rectTop"
+            />
+            <rect
+              class="brush-handle brush-handle-left"
+              [attr.x]="bg.rectX - 1"
+              [attr.y]="bg.rectTop"
+              [attr.width]="2"
+              [attr.height]="bg.rectBottom - bg.rectTop"
+            />
+            <rect
+              class="brush-handle brush-handle-right"
+              [attr.x]="bg.rectX + bg.rectWidth - 1"
+              [attr.y]="bg.rectTop"
+              [attr.width]="2"
+              [attr.height]="bg.rectBottom - bg.rectTop"
+            />
+          </svg>
+        }
       } @else {
         <div class="empty-state">
           <mat-icon>show_chart</mat-icon>

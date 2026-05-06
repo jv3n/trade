@@ -191,6 +191,74 @@
   }
 }
 
+// Second toolbar row for chart overlay toggles (MA50/MA200/Bollinger/52w hi/lo) + the reset-zoom
+// button when zoomed. Visually subtler than the primary toolbar — smaller font, less visual
+// weight — to read as secondary controls.
+.chart-overlay-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+
+  mat-button-toggle-group {
+    --mat-button-toggle-label-text-size: 0.72rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.overlay-label {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  font-weight: 500;
+}
+
+// Reset-zoom button + annotation arming + clear-anchor share the same compact "tool button"
+// shape — small icon+label, faint border, hover background. The reset-zoom variant lives at
+// the far right of the toolbar (margin-left: auto) ; annotation and measure stay inline.
+.btn-reset-zoom,
+.btn-overlay-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.72rem;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-2);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  mat-icon {
+    font-size: 0.95rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    line-height: 1;
+  }
+}
+
+.btn-reset-zoom {
+  margin-left: auto;
+}
+
+// Annotation button gets a primary-tinted background while armed so the user has a clear
+// visual signal that the "next click = annotation" mode is active.
+.btn-overlay-tool.active {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent-strong);
+}
+
 .chart-error,
 .benchmark-error {
   margin-top: 0.5rem;
@@ -199,6 +267,11 @@
 .chart-canvas {
   position: relative;
   width: 100%;
+  // While dragging-to-zoom we want a clear "I'm selecting" feedback. The cursor change is the
+  // simplest indicator that doesn't conflict with the overlay rectangle.
+  &:active {
+    cursor: crosshair;
+  }
 }
 
 .price-chart {
@@ -251,6 +324,163 @@
     stroke-linecap: round;
     stroke-dasharray: 4 3;
     opacity: 0.75;
+  }
+
+  // Series-based chart overlays (MA50/MA200/Bollinger). All thinner than the ticker price line
+  // so they read as secondary information, with distinct theme-aware colors so each is
+  // identifiable at a glance without a legend.
+  .overlay-line {
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    fill: none;
+    pointer-events: none;
+  }
+
+  .overlay-line-ma50 {
+    stroke: var(--color-info);
+    opacity: 0.85;
+  }
+
+  .overlay-line-ma200 {
+    stroke: var(--color-orange);
+    opacity: 0.85;
+  }
+
+  // Bollinger upper / lower bands : same color, dashed for visual unity ; the middle band
+  // (MA20) is solid + slightly stronger to anchor the pair.
+  .overlay-line-boll-upper,
+  .overlay-line-boll-lower {
+    stroke: var(--color-purple);
+    stroke-dasharray: 3 2;
+    opacity: 0.6;
+  }
+
+  .overlay-line-boll-middle {
+    stroke: var(--color-purple);
+    opacity: 0.7;
+  }
+
+  // 52w high / low horizontal lines + their right-aligned price labels. Dashed so the user
+  // recognizes "this is a reference level, not a moving series".
+  .overlay-hline {
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 5 4;
+    pointer-events: none;
+  }
+
+  .overlay-hline-hi52w {
+    stroke: var(--color-success);
+    opacity: 0.7;
+  }
+
+  .overlay-hline-lo52w {
+    stroke: var(--color-danger);
+    opacity: 0.7;
+  }
+
+  .overlay-hline-label {
+    text-anchor: end;
+    font-size: 9px;
+    pointer-events: none;
+  }
+
+  .overlay-hline-label-hi52w {
+    fill: var(--color-success);
+  }
+
+  .overlay-hline-label-lo52w {
+    fill: var(--color-danger);
+  }
+
+  // Live drag-to-zoom selection rectangle. Semi-transparent fill so the underlying chart stays
+  // legible during the drag — the user keeps visual context on which range they're framing.
+  .zoom-selection {
+    fill: var(--color-accent);
+    fill-opacity: 0.12;
+    stroke: var(--color-accent);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 3 2;
+    pointer-events: none;
+  }
+
+  // User-placed price annotations (v3). A horizontal line spans the inner area, a left-aligned
+  // label rides just above it, and a right-aligned circle handle reveals an "×" on hover for
+  // deletion. The handle is the only annotation child that accepts pointer events — the line
+  // and label are pure visual cues, click-through goes to the chart.
+  .annotation-hline {
+    stroke: var(--color-warning);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 4 3;
+    opacity: 0.8;
+    pointer-events: none;
+  }
+
+  .annotation-label {
+    text-anchor: start;
+    font-size: 9px;
+    fill: var(--color-warning);
+    font-family: var(--font-family-mono, monospace);
+    pointer-events: none;
+  }
+
+  .annotation-clamped-top .annotation-hline,
+  .annotation-clamped-bottom .annotation-hline {
+    opacity: 0.4;
+    stroke-dasharray: 2 5;
+  }
+
+  .annotation-delete {
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    pointer-events: auto;
+
+    circle {
+      fill: var(--color-danger-soft);
+      stroke: var(--color-danger);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    text {
+      fill: var(--color-danger);
+      text-anchor: middle;
+      font-size: 11px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+  }
+
+  // Reveal the delete handle when hovering the parent <g>. Hovering the line (which is
+  // pointer-events: none) doesn't trigger ; user must hover the handle area itself, but with
+  // an 8px radius circle that's a comfortable target.
+  .annotation:hover .annotation-delete {
+    opacity: 1;
+  }
+
+  // Measure anchor marker — vertical line + dot at the anchored bar. Distinct color from the
+  // crosshair (which is dim grey) so the user can hold both at once : anchor stays put,
+  // crosshair follows the cursor.
+  .measure-anchor-line {
+    stroke: var(--color-purple);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 5 3;
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .measure-anchor-dot {
+    fill: var(--color-purple);
+    stroke: var(--color-surface);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
   }
 
   .crosshair {
@@ -363,6 +593,43 @@
   opacity: 0.5;
 }
 
+// Brush mini-chart (v3) — bottom navigator that mirrors the full series and lets the user
+// pan / resize the zoom range. Shorter than the main chart and sits flush against its bottom
+// edge ; share the price-color palette with subdued tones since it's a control, not data.
+.brush-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-top: 0.25rem;
+  cursor: pointer;
+  user-select: none;
+
+  .brush-line {
+    stroke: var(--color-text-dim);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    fill: none;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .brush-selector {
+    fill: var(--color-accent);
+    fill-opacity: 0.18;
+    stroke: var(--color-accent);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    cursor: grab;
+  }
+
+  .brush-handle {
+    fill: var(--color-accent);
+    cursor: ew-resize;
+  }
+}
+
 .chart-tooltip {
   position: absolute;
   top: 0;
@@ -409,6 +676,19 @@
     // semi-transparent fill is more legible at this size.
     background: var(--color-text-dim);
     opacity: 0.75;
+  }
+
+  .tooltip-swatch-anchor {
+    background: var(--color-purple);
+    opacity: 0.85;
+  }
+
+  // Delta row gets a subtle top border to visually separate "the values at this bar" from
+  // "the diff vs my anchor" — three rows would otherwise blur together.
+  .tooltip-delta {
+    border-top: 1px solid var(--color-border-soft);
+    margin-top: 0.2rem;
+    padding-top: 0.2rem;
   }
 
   .tooltip-name {

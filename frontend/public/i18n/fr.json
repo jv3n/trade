@@ -113,6 +113,38 @@
         "3mo": "3M",
         "1y": "1A",
         "5y": "5A"
+      },
+      "zoom": {
+        "reset": "Réinitialiser",
+        "resetTooltip": "Restaurer la plage complète (ou double-cliquer le graphique)"
+      },
+      "overlays": {
+        "label": "Overlays",
+        "ma50": "MM50",
+        "ma200": "MM200",
+        "boll": "BB",
+        "hi52w": "Plus haut 52s",
+        "lo52w": "Plus bas 52s",
+        "tooltips": {
+          "ma50": "Moyenne mobile 50 périodes",
+          "ma200": "Moyenne mobile 200 périodes",
+          "boll": "Bandes de Bollinger (MM 20 périodes ± 2σ)",
+          "hi52w": "Plus haut sur 52 semaines",
+          "lo52w": "Plus bas sur 52 semaines"
+        }
+      },
+      "annotation": {
+        "add": "+ Annotation",
+        "cancel": "Annuler",
+        "delete": "Supprimer l'annotation"
+      },
+      "measure": {
+        "delta": "Delta",
+        "clear": "Effacer le repère",
+        "clearTooltip": "Effacer le repère de mesure"
+      },
+      "brush": {
+        "label": "Navigateur de plage temporelle"
       }
     },
     "benchmark": {

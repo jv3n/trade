@@ -29,6 +29,7 @@ import {
 } from '../../core/market.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
 import { NewsItem, NewsRepository } from '../../core/news.repository';
+import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {
@@ -75,6 +76,11 @@ describe('TickerPage', () => {
     remove: ReturnType<typeof vi.fn>;
   };
   let news: { getForSymbol: ReturnType<typeof vi.fn> };
+  let annotationStore: {
+    list: ReturnType<typeof vi.fn>;
+    add: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     market = {
@@ -99,6 +105,13 @@ describe('TickerPage', () => {
       // path override this.
       getForSymbol: vi.fn().mockReturnValue(of([])),
     };
+    annotationStore = {
+      // Default : empty store (fresh ticker, never annotated). Tests that exercise add/remove
+      // override `list` to return preloaded annotations.
+      list: vi.fn().mockReturnValue(of([])),
+      add: vi.fn(),
+      remove: vi.fn().mockReturnValue(of(void 0)),
+    };
 
     await TestBed.configureTestingModule({
       imports: [TickerPage],
@@ -107,6 +120,7 @@ describe('TickerPage', () => {
         { provide: MarketRepository, useValue: market },
         { provide: WatchlistRepository, useValue: watchlist },
         { provide: NewsRepository, useValue: news },
+        { provide: AnnotationRepository, useValue: annotationStore },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ symbol: 'AAPL' }) } },
@@ -536,6 +550,531 @@ describe('TickerPage', () => {
       // Legend reflects the active mode now (just the preset symbol), not the stale sector label.
       expect(component.resolvedBenchmark()).toEqual({ symbol: 'SPY', label: 'SPY' });
       expect(component.selectedBenchmark()).toBe('SPY');
+    });
+  });
+
+  // ---- Chart zoom (v1) + overlays (v2) ----
+
+  /**
+   * v1 adds a drag-select zoom on the chart (mousedown + horizontal drag → zoom to the X range)
+   * with a reset via either the toolbar button or a chart double-click. v2 adds 5 multi-select
+   * overlays (MA50, MA200, Bollinger bands, 52w high/low) computed front-side from the loaded
+   * bars. Both behaviours sit on top of the existing geometry computed — the tests below pin :
+   *
+   * - **Zoom commits via signal-driven slicing** — the geometry slices both ticker and benchmark
+   *   bars by `zoomRange` indices ; the visible `points` array length equals `endIdx - startIdx`.
+   * - **Drag below threshold ignored** — a stationary or barely-moved click must not trigger a
+   *   1-bar zoom (which would crash the geometry's `bars.length < 2` guard).
+   * - **Timeframe change clears the zoom** — bar indices don't translate across `1d → 5y` etc.,
+   *   so we drop the zoom rather than show a confusing slice of the new timeframe's bars.
+   * - **Overlays toggled in benchmark mode are inert** — the Y axis is in % return space then,
+   *   price-level overlays (MA50, 52w hi) don't share that coordinate system.
+   * - **Bollinger pushes 3 paths, MA50/MA200 push 1 each, 52w hi/lo push h-lines** — the
+   *   overlay rendering is content-driven by the `overlayPaths` and `overlayHLines` arrays in
+   *   the geometry.
+   */
+  describe('chart zoom + overlays (v1+v2)', () => {
+    function makeBars(n: number): OhlcBar[] {
+      const out: OhlcBar[] = [];
+      for (let i = 0; i < n; i++) {
+        const close = 100 + i * 0.5;
+        out.push({
+          timestamp: `2026-04-${String((i % 28) + 1).padStart(2, '0')}T00:00:00Z`,
+          open: close,
+          high: close + 1,
+          low: close - 1,
+          close,
+          volume: 1_000_000,
+        });
+      }
+      return out;
+    }
+
+    it('drag-zoom commits a new zoomRange and the geometry slices to the visible window', () => {
+      const bars = makeBars(60);
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars }));
+      fixture.detectChanges();
+
+      // Synthesize a pointerdown → pointerup pair on the chart-canvas. Each event needs a
+      // currentTarget with a child <svg> exposing the same getScreenCTM contract the component
+      // uses to map screen X to SVG user units. We stub the CTM to identity so x in == x out.
+      const fakeSvg = {
+        getScreenCTM: () => ({ inverse: () => ({}) }),
+        createSVGPoint: () => ({
+          x: 0,
+          y: 0,
+          matrixTransform: function () {
+            return { x: this.x, y: this.y };
+          },
+        }),
+      } as unknown as SVGSVGElement;
+      const fakeTarget = {
+        querySelector: () => fakeSvg,
+        setPointerCapture: vi.fn(),
+      } as unknown as HTMLElement;
+      const ev = (clientX: number, button = 0): PointerEvent =>
+        ({
+          button,
+          pointerId: 1,
+          clientX,
+          clientY: 0,
+          currentTarget: fakeTarget,
+        }) as unknown as PointerEvent;
+
+      // Drag from x=200 to x=600 in inner-area coordinates — clearly above the threshold.
+      component.onChartPointerDown(ev(200));
+      component.onChartPointerMove(ev(600));
+      component.onChartPointerUp(ev(600));
+
+      const zoom = component.zoomRange();
+      expect(zoom).not.toBeNull();
+      // The geometry's points array now reflects only the zoomed range.
+      const geom = component.chartGeometry();
+      expect(geom).not.toBeNull();
+      expect(geom!.points.length).toBeLessThan(bars.length);
+      expect(geom!.points.length).toBeGreaterThan(1);
+    });
+
+    it('drag below threshold is ignored — no zoom committed', () => {
+      const bars = makeBars(60);
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars }));
+      fixture.detectChanges();
+
+      const fakeSvg = {
+        getScreenCTM: () => ({ inverse: () => ({}) }),
+        createSVGPoint: () => ({
+          x: 0,
+          y: 0,
+          matrixTransform: function () {
+            return { x: this.x, y: this.y };
+          },
+        }),
+      } as unknown as SVGSVGElement;
+      const fakeTarget = {
+        querySelector: () => fakeSvg,
+        setPointerCapture: vi.fn(),
+      } as unknown as HTMLElement;
+      const ev = (clientX: number): PointerEvent =>
+        ({
+          button: 0,
+          pointerId: 1,
+          clientX,
+          clientY: 0,
+          currentTarget: fakeTarget,
+        }) as unknown as PointerEvent;
+
+      // 5px move — below the 10px threshold. Common when the user mis-clicks slightly.
+      component.onChartPointerDown(ev(300));
+      component.onChartPointerMove(ev(305));
+      component.onChartPointerUp(ev(305));
+
+      expect(component.zoomRange()).toBeNull();
+    });
+
+    it('selectTimeframe clears the active zoom — bar indices do not translate across timeframes', () => {
+      const bars = makeBars(60);
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars }));
+      market.getChart.mockReturnValue(
+        of({ symbol: 'AAPL', timeframe: '1mo', range: '1mo', interval: '1d', bars: makeBars(20) }),
+      );
+      fixture.detectChanges();
+
+      // Manually pin a zoom (simulate post-drag state) so we can verify the reset.
+      component.zoomRange.set({ startIdx: 10, endIdx: 30 });
+      expect(component.zoomRange()).not.toBeNull();
+
+      component.selectTimeframe('1mo');
+
+      expect(component.zoomRange()).toBeNull();
+    });
+
+    it('resetZoom clears zoomRange', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+      component.zoomRange.set({ startIdx: 5, endIdx: 25 });
+
+      component.resetZoom();
+
+      expect(component.zoomRange()).toBeNull();
+    });
+
+    it('toggling MA50 + MA200 + Bollinger renders one overlay path each (3 for Bollinger)', () => {
+      // 60 bars is enough for MA50 to have non-null cells (10 of them) but MA200 stays all-null
+      // — that's fine, the path is still pushed (with empty `d`) and the geometry doesn't crash.
+      // Realistically we'd want 200+ bars for MA200 to draw, but the test asserts the content-
+      // driven rendering, not the warmup math (covered by `rollingMean` correctness).
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(60) }));
+      fixture.detectChanges();
+
+      component.setOverlays(['ma50', 'ma200', 'boll']);
+
+      const geom = component.chartGeometry();
+      expect(geom).not.toBeNull();
+      const kinds = geom!.overlayPaths.map((p) => p.kind);
+      expect(kinds).toContain('ma50');
+      expect(kinds).toContain('ma200');
+      expect(kinds).toContain('boll-upper');
+      expect(kinds).toContain('boll-middle');
+      expect(kinds).toContain('boll-lower');
+      // 5 series-based overlays total (1 MA50 + 1 MA200 + 3 Bollinger bands).
+      expect(geom!.overlayPaths.length).toBe(5);
+    });
+
+    it('52w hi/lo toggles add horizontal lines drawn from the dossier quote', () => {
+      // EMPTY_SNAPSHOT.quote.fiftyTwoWeekHigh = 120, .fiftyTwoWeekLow = 80 — bars at close ~100
+      // sit between, so both lines are visible without clamping.
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      component.setOverlays(['hi52w', 'lo52w']);
+
+      const geom = component.chartGeometry();
+      expect(geom).not.toBeNull();
+      const kinds = geom!.overlayHLines.map((h) => h.kind);
+      expect(kinds).toEqual(['hi52w', 'lo52w']);
+      expect(geom!.overlayHLines[0].label).toContain('120');
+      expect(geom!.overlayHLines[1].label).toContain('80');
+    });
+
+    it('MA50 stays computed on the full series even when zoomed', () => {
+      // Regression : a previous version computed MA50 from the *visible* (sliced) bars, which
+      // turned a 30-bar zoom into 30 nulls and made the MA line vanish under zoom. Pin the fix —
+      // the full-series MA50 must still produce a non-empty path when the user zooms past bar 50.
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(120) }));
+      fixture.detectChanges();
+      component.setOverlays(['ma50']);
+
+      // Zoom on bars 60..89 — only 30 visible, but MA50 has values for all of them since it was
+      // computed on the full 120-bar series.
+      component.zoomRange.set({ startIdx: 60, endIdx: 89 });
+
+      const geom = component.chartGeometry();
+      const ma50 = geom!.overlayPaths.find((p) => p.kind === 'ma50');
+      expect(ma50).toBeDefined();
+      expect(ma50!.d).not.toBe('');
+      // Path covers every visible bar (30 segments → 30 'M'/'L' commands).
+      const moves = ma50!.d.split(/[ML]/).filter((s) => s.trim().length > 0);
+      expect(moves.length).toBe(30);
+    });
+
+    it('overlays are hidden when benchmark mode is active (Y axis is in % return)', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(60) }));
+      market.getChart.mockReturnValue(
+        of({ symbol: 'SPY', timeframe: '1y', range: '1y', interval: '1d', bars: makeBars(60) }),
+      );
+      fixture.detectChanges();
+
+      component.setOverlays(['ma50', 'hi52w']);
+      // Sanity : overlays are present in price mode.
+      expect(component.chartGeometry()!.overlayPaths.length).toBe(1);
+      expect(component.chartGeometry()!.overlayHLines.length).toBe(1);
+
+      component.selectBenchmark('SPY');
+
+      // Once benchmark is on, the geometry skips overlay computation. The signal still holds
+      // the user's choice — a switch back to 'off' restores the overlays without re-toggling.
+      expect(component.chartGeometry()!.overlayPaths.length).toBe(0);
+      expect(component.chartGeometry()!.overlayHLines.length).toBe(0);
+      expect(component.overlayActive().has('ma50')).toBe(true);
+    });
+  });
+
+  // ---- Chart v3 — brush + annotations + measure tools ----
+
+  /**
+   * v3 layers three new interactions on top of the v1+v2 chart :
+   *
+   * - **Brush mini-chart** — bottom navigator that mirrors the full series and lets the user
+   *   pan / resize the zoom range by dragging its rectangle, or reset zoom by clicking outside.
+   * - **Annotations** — persisted horizontal price lines (localStorage), placed by clicking on
+   *   the chart while annotation mode is armed. Survive ticker re-visits.
+   * - **Measure tools** — single click sets a reference anchor at the bar nearest the cursor ;
+   *   the hover tooltip then shows delta % + delta time from that anchor.
+   *
+   * Click-vs-drag distinction is shared with v1's drag-zoom (threshold 10px) — the tests below
+   * pin the integration : clicks land on annotation/measure, drags land on zoom. Benchmark mode
+   * disables annotations + measure (Y axis is in % return space, both features are price-anchored).
+   */
+  describe('chart v3 — brush + annotations + measure', () => {
+    function makeBars(n: number): OhlcBar[] {
+      const out: OhlcBar[] = [];
+      for (let i = 0; i < n; i++) {
+        const close = 100 + i * 0.5;
+        out.push({
+          // Daily bars Apr 1..Apr 1+n-1, padded for short months — the timestamp uniqueness is
+          // what matters for the anchor lookup, not the actual day.
+          timestamp: new Date(2026, 3, 1 + i).toISOString(),
+          open: close,
+          high: close + 1,
+          low: close - 1,
+          close,
+          volume: 1_000_000,
+        });
+      }
+      return out;
+    }
+
+    /** Synthesizes a PointerEvent on the chart-canvas, with a fake currentTarget that exposes
+     *  the same SVG-CTM contract the component reads from. The CTM is identity so clientX
+     *  passes through as the SVG user-units X. */
+    function fakeChartEvent(clientX: number, clientY = 0, button = 0): PointerEvent {
+      const fakeSvg = {
+        getScreenCTM: () => ({ inverse: () => ({}) }),
+        createSVGPoint: () => ({
+          x: 0,
+          y: 0,
+          matrixTransform: function () {
+            return { x: this.x, y: this.y };
+          },
+        }),
+      } as unknown as SVGSVGElement;
+      const fakeTarget = {
+        querySelector: () => fakeSvg,
+        setPointerCapture: vi.fn(),
+      } as unknown as HTMLElement;
+      return {
+        button,
+        pointerId: 1,
+        clientX,
+        clientY,
+        currentTarget: fakeTarget,
+        target: fakeTarget,
+      } as unknown as PointerEvent;
+    }
+
+    it('hydrates annotations from the AnnotationRepository on init', () => {
+      const stored: Annotation[] = [
+        { id: 'a1', symbol: 'AAPL', kind: 'hline', value: 105, label: null },
+      ];
+      annotationStore.list.mockReturnValue(of(stored));
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      expect(annotationStore.list).toHaveBeenCalledWith('AAPL');
+      expect(component.annotations()).toEqual(stored);
+      // The annotation is laid out in the geometry's renderable list.
+      const geom = component.chartGeometry();
+      expect(geom?.annotations.length).toBe(1);
+      expect(geom?.annotations[0].id).toBe('a1');
+    });
+
+    it('toggling annotation mode then sub-threshold click commits an annotation at the clicked price', () => {
+      const created: Annotation = {
+        id: 'a-new',
+        symbol: 'AAPL',
+        kind: 'hline',
+        value: 50,
+        label: null,
+      };
+      annotationStore.add.mockReturnValue(of(created));
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      component.toggleAnnotationMode();
+      expect(component.annotationMode()).toBe(true);
+
+      // Sub-threshold click (5px move = below the 10px zoom threshold). The Y coordinate maps
+      // to a price via inverse-yAt — we don't pin the exact price (depends on geometry's min/max
+      // including the snapshot 52w which the test sets to 80/120) ; we just verify add was
+      // called with a kind: 'hline' payload.
+      component.onChartPointerDown(fakeChartEvent(300, 100));
+      component.onChartPointerMove(fakeChartEvent(303, 100));
+      component.onChartPointerUp(fakeChartEvent(303, 100));
+
+      expect(annotationStore.add).toHaveBeenCalledWith(
+        'AAPL',
+        expect.objectContaining({ kind: 'hline', label: null }),
+      );
+      expect(component.annotations()).toContainEqual(created);
+      // Mode auto-disarms after one placement so the user opts in fresh for each annotation.
+      expect(component.annotationMode()).toBe(false);
+    });
+
+    it('removeAnnotation drops the entry optimistically and calls the store', () => {
+      const stored: Annotation[] = [
+        { id: 'a1', symbol: 'AAPL', kind: 'hline', value: 105, label: null },
+        { id: 'a2', symbol: 'AAPL', kind: 'hline', value: 95, label: null },
+      ];
+      annotationStore.list.mockReturnValue(of(stored));
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      component.removeAnnotation('a1');
+
+      // Optimistic update — the signal drops the entry before the observable resolves.
+      expect(component.annotations().map((a) => a.id)).toEqual(['a2']);
+      expect(annotationStore.remove).toHaveBeenCalledWith('AAPL', 'a1');
+    });
+
+    it('onAnnotationDeleteKey activates remove on Enter and Space, ignores other keys', () => {
+      // ARIA `role="button"` requires both Enter and Space activation. The handler also calls
+      // preventDefault on Space so the page doesn't scroll behind the chart.
+      const stored: Annotation[] = [
+        { id: 'a1', symbol: 'AAPL', kind: 'hline', value: 105, label: null },
+      ];
+      annotationStore.list.mockReturnValue(of(stored));
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      const fakeKey = (key: string): KeyboardEvent =>
+        ({ key, preventDefault: vi.fn() }) as unknown as KeyboardEvent;
+
+      // 'Tab' is a no-op — focus traversal must NOT remove the annotation.
+      component.onAnnotationDeleteKey(fakeKey('Tab'), 'a1');
+      expect(annotationStore.remove).not.toHaveBeenCalled();
+      expect(component.annotations().map((a) => a.id)).toEqual(['a1']);
+
+      // Enter activates.
+      component.onAnnotationDeleteKey(fakeKey('Enter'), 'a1');
+      expect(annotationStore.remove).toHaveBeenCalledWith('AAPL', 'a1');
+      expect(component.annotations()).toEqual([]);
+
+      // Re-seed and assert Space activates too — covers the second activation key.
+      annotationStore.list.mockReturnValue(of(stored));
+      annotationStore.remove.mockClear();
+      component.annotations.set(stored);
+      const spaceEv = fakeKey(' ');
+      component.onAnnotationDeleteKey(spaceEv, 'a1');
+      expect(annotationStore.remove).toHaveBeenCalledWith('AAPL', 'a1');
+      expect(spaceEv.preventDefault).toHaveBeenCalled();
+    });
+
+    it('sub-threshold click without annotation mode sets the measure anchor at the nearest bar', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      component.onChartPointerDown(fakeChartEvent(400));
+      component.onChartPointerMove(fakeChartEvent(402));
+      component.onChartPointerUp(fakeChartEvent(402));
+
+      const anchor = component.measureAnchor();
+      expect(anchor).not.toBeNull();
+      // Anchor's price comes from a real bar's close.
+      const closes = component.chartBars().map((b) => b.close);
+      expect(closes).toContain(anchor!.price);
+    });
+
+    it('re-clicking the anchored bar clears the anchor (toggle behavior)', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      // First click sets the anchor.
+      component.onChartPointerDown(fakeChartEvent(400));
+      component.onChartPointerUp(fakeChartEvent(400));
+      const firstAnchor = component.measureAnchor();
+      expect(firstAnchor).not.toBeNull();
+
+      // Re-click the same X → same bar → toggles off.
+      component.onChartPointerDown(fakeChartEvent(400));
+      component.onChartPointerUp(fakeChartEvent(400));
+      expect(component.measureAnchor()).toBeNull();
+    });
+
+    it('clearMeasureAnchor resets the anchor', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+      component.measureAnchor.set({
+        index: 5,
+        price: 102.5,
+        timestamp: makeBars(40)[5].timestamp,
+      });
+
+      component.clearMeasureAnchor();
+
+      expect(component.measureAnchor()).toBeNull();
+    });
+
+    it('hoverInfo exposes deltaPercent + deltaTime when an anchor is set', () => {
+      const bars = makeBars(40);
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars }));
+      fixture.detectChanges();
+
+      component.measureAnchor.set({
+        index: 5,
+        price: bars[5].close,
+        timestamp: bars[5].timestamp,
+      });
+      // Simulate hover at index 15 by setting hoveredIndex directly — the move handler logic
+      // is covered elsewhere ; here we focus on the delta computation.
+      (component as unknown as { hoveredIndex: { set: (v: number) => void } }).hoveredIndex.set(15);
+
+      const hi = component.hoverInfo();
+      expect(hi).not.toBeNull();
+      expect(hi!.deltaPercent).not.toBeNull();
+      expect(hi!.deltaTime).not.toBeNull();
+      // Bars 5 and 15 are 10 days apart → "+10 j".
+      expect(hi!.deltaTime).toContain('10');
+      expect(hi!.deltaTime).toContain('j');
+    });
+
+    it('annotationMode and measure anchor are disabled in benchmark mode', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      market.getChart.mockReturnValue(
+        of({ symbol: 'SPY', timeframe: '1y', range: '1y', interval: '1d', bars: makeBars(40) }),
+      );
+      fixture.detectChanges();
+      component.selectBenchmark('SPY');
+
+      // toggleAnnotationMode is a no-op while benchmark is active.
+      component.toggleAnnotationMode();
+      expect(component.annotationMode()).toBe(false);
+
+      // Click on chart while in benchmark mode does NOT set the measure anchor.
+      component.onChartPointerDown(fakeChartEvent(400));
+      component.onChartPointerUp(fakeChartEvent(400));
+      expect(component.measureAnchor()).toBeNull();
+
+      // Annotations from the geometry are also empty in benchmark mode.
+      expect(component.chartGeometry()!.annotations).toEqual([]);
+    });
+
+    it('brush geometry mirrors the full series and reflects the current zoom range', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+
+      // No zoom : rectangle covers the full inner width.
+      const fullBrush = component.brushGeometry();
+      expect(fullBrush).not.toBeNull();
+      expect(fullBrush!.rectX).toBeCloseTo(fullBrush!.innerLeft, 0);
+      expect(fullBrush!.rectX + fullBrush!.rectWidth).toBeCloseTo(fullBrush!.innerRight, 0);
+
+      // Zoom in : rectangle width shrinks proportionally.
+      component.zoomRange.set({ startIdx: 10, endIdx: 30 });
+      const zoomedBrush = component.brushGeometry();
+      expect(zoomedBrush!.rectWidth).toBeLessThan(fullBrush!.rectWidth);
+    });
+
+    it('brush click outside the selector rectangle resets the zoom', () => {
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: makeBars(40) }));
+      fixture.detectChanges();
+      component.zoomRange.set({ startIdx: 10, endIdx: 30 });
+
+      // brush rect is between roughly x=247..544 (for 40 bars, padLeft=56, brushWidth=800,
+      // padRight=12). Clicking at x=100 falls outside on the left → reset.
+      const fakeSvg = {
+        getScreenCTM: () => ({ inverse: () => ({}) }),
+        createSVGPoint: () => ({
+          x: 0,
+          y: 0,
+          matrixTransform: function () {
+            return { x: this.x, y: this.y };
+          },
+        }),
+      } as unknown as SVGSVGElement;
+      // Brush listener is on the SVG itself (not a wrapper div), so currentTarget IS the SVG.
+      const brushEvent = (clientX: number): PointerEvent =>
+        ({
+          button: 0,
+          pointerId: 2,
+          clientX,
+          clientY: 30,
+          currentTarget: fakeSvg,
+          target: fakeSvg,
+        }) as unknown as PointerEvent;
+
+      component.onBrushPointerDown(brushEvent(100));
+
+      expect(component.zoomRange()).toBeNull();
     });
   });
 

@@ -113,6 +113,38 @@
         "3mo": "3M",
         "1y": "1Y",
         "5y": "5Y"
+      },
+      "zoom": {
+        "reset": "Reset zoom",
+        "resetTooltip": "Restore the full timeframe (or double-click the chart)"
+      },
+      "overlays": {
+        "label": "Overlays",
+        "ma50": "MA50",
+        "ma200": "MA200",
+        "boll": "BB",
+        "hi52w": "52w hi",
+        "lo52w": "52w lo",
+        "tooltips": {
+          "ma50": "50-period moving average",
+          "ma200": "200-period moving average",
+          "boll": "Bollinger Bands (20-period MA ± 2σ)",
+          "hi52w": "52-week high",
+          "lo52w": "52-week low"
+        }
+      },
+      "annotation": {
+        "add": "+ Annotation",
+        "cancel": "Cancel",
+        "delete": "Delete annotation"
+      },
+      "measure": {
+        "delta": "Delta",
+        "clear": "Clear anchor",
+        "clearTooltip": "Clear the measure anchor"
+      },
+      "brush": {
+        "label": "Time range navigator"
       }
     },
     "benchmark": {
