@@ -174,7 +174,7 @@ Vérifie que le backend est `Ready` dans Tilt (le frontend se contente d'affiche
 
 ### Les tests Vitest ne reconnaissent pas `describe`
 
-Tu lances vitest en standalone (`npx vitest run`), ce qui rate la config Angular. Toujours passer par `ng test` (alias `npm run test` ou `npx ng test --watch=false` en CI mode).
+Le projet utilise **Vitest** (pas Karma — `ng test` invoque le builder Angular et rate la config). Toujours passer par `npm run test` (full suite watch) ou `npx vitest run src/path/to/file.spec.ts` (un seul fichier en CI mode).
 
 ### `npm run lint` pète sur des règles a11y / inject / array-type
 

@@ -95,9 +95,10 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + HTTP adapters (8 repositories)
-│       │   ├── *.repository.ts        # ports (Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config)
-│       │   ├── adapters/*.http.ts     # HTTP impls
+│       ├── core/              # Ports + adapters (9 repositories)
+│       │   ├── *.repository.ts        # ports (Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, Annotation)
+│       │   ├── adapters/*.http.ts     # HTTP impls (défaut)
+│       │   ├── adapters/*.local.ts    # localStorage impls (annotation v3)
 │       │   ├── theme.service.ts       # signal + persist localStorage
 │       │   └── language.service.ts    # signal + persist localStorage (i18n)
 │       └── features/          # Pages UI (primary adapters)
@@ -140,5 +141,5 @@ trade/
 
 ## Lint et formatage
 
-- Backend : **Spotless ktfmt** (Google style) — `./gradlew spotlessApply` reformate, `./gradlew spotlessCheck` vérifie. Spotless porte aussi un custom step `no-wildcard-imports` qui casse le build sur tout `import …\.\*` hors allowlist (14 packages tolérés temporairement, à shrinker progressivement — cf. dette technique `backlog.md`). Le `.editorconfig` racine bloque IntelliJ d'introduire des wildcards via "Optimize Imports" — défense en profondeur côté éditeur + côté pipeline. **Detekt** pour le reste de l'analyse statique Kotlin (`./gradlew detekt`, rapport HTML + SARIF — voir [`ops.md`](./ops.md) section Detekt).
+- Backend : **Spotless ktfmt** (Google style) — `./gradlew spotlessApply` reformate, `./gradlew spotlessCheck` vérifie. Spotless porte aussi un custom step `no-wildcard-imports` qui casse le build sur tout import en `package.*` hors allowlist (14 packages tolérés temporairement, à shrinker progressivement — cf. dette technique `backlog.md`). Le `.editorconfig` racine bloque IntelliJ d'introduire des wildcards via "Optimize Imports" — défense en profondeur côté éditeur + côté pipeline. **Detekt** pour le reste de l'analyse statique Kotlin (`./gradlew detekt`, rapport HTML + SARIF — voir [`ops.md`](./ops.md) section Detekt).
 - Frontend : **ESLint flat config** (`frontend/eslint.config.js`, Angular ESLint 21) pour l'analyse statique TS + a11y des templates. **Prettier** reste seul responsable du formatage (`eslint-config-prettier` désactive les règles formatage qui chevauchent). `npm run lint` en local et en CI (avant le build) ; `npm run lint -- --fix` pour auto-fixer les violations triviales. Détails ruleset dans [`ops.md`](./ops.md) section ESLint.

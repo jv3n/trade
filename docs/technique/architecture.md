@@ -178,15 +178,15 @@ Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs
 
 Hexagonal léger sous `frontend/src/app/` :
 
-- **`core/`** — ports + HTTP adapters
-  - `*.repository.ts` (abstract class — port). 8 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config.
-  - `adapters/*.http.ts` (HttpXxxRepository — adapter)
-  - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: HttpXxxRepository }`
+- **`core/`** — ports + adapters (HTTP par défaut, localStorage pour les états client-only)
+  - `*.repository.ts` (abstract class — port). 9 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, **Annotation** (chart user annotations, single-user mono-machine).
+  - `adapters/*.http.ts` (HttpXxxRepository — HTTP adapter, défaut) ; `adapters/*.local.ts` pour les adapters client-only (`LocalStorageAnnotationRepository` v3 chart, swap futur vers backend-backed sans rewrite UI).
+  - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: <impl> }`
   - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header
 - **`public/i18n/`** — fichiers de traduction `<lang>.json` (FR + EN), servis comme assets statiques par le HTTP loader de `ngx-translate`
 - **`features/`** — *primary adapters*
   - `dashboard/` — portefeuille, tickers détenus, watchlist (sidebar 3 sections collapsables)
-  - `ticker/` — dossier par symbole : graphe multi-timeframe + axes + crosshair + **overlay benchmark opt-in** (SPY/QQQ/IWM, Y-axis bi-mode prix/% return, 2ᵉ polyline dashed, `MatTooltipModule`), indicateurs, narratif IA, bouton watchlist
+  - `ticker/` — dossier par symbole : graphe multi-timeframe + axes + crosshair + **overlay benchmark opt-in** (SPY/QQQ/IWM/Sector/Custom, Y-axis bi-mode prix/% return, 2ᵉ polyline dashed, `MatTooltipModule`) + **chart analyse interactive** (zoom drag-select avec brush mini-chart en bas, overlays MA50/MA200/Bollinger/52w hi-lo en multi-select, annotations h-line persistées localStorage par symbole, measure tools delta % + delta time entre deux clics), indicateurs, narratif IA, bouton watchlist
   - `import/` — drag & drop CSV
   - `suivi/` — timeline snapshots
   - `settings/` — sources / test-sources / prompt-preview / configuration (runtime config Phase 2)

@@ -23,6 +23,7 @@ Site complet : **[jv3n.github.io/trade](https://jv3n.github.io/trade/)**
 |---|---|
 | [Onboarding développeur](docs/technique/developper.md) | Nouvel arrivant — install, premier test, troubleshooting |
 | [Architecture](docs/technique/architecture.md) | Comprendre les modules, le schéma BDD et les décisions techniques |
+| [DDD — bounded contexts](docs/technique/ddd.md) | Cartographie des bounded contexts et de leurs frontières (vocabulaire, ports, anti-corruption layers) |
 | [Guide de développement](docs/technique/developpement.md) | Référence quotidienne : commandes, structure, configuration locale |
 | [Providers externes](docs/technique/providers.md) | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
 | [Ops (CI / CD / tooling)](docs/technique/ops.md) | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |

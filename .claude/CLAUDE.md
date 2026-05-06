@@ -26,9 +26,10 @@ Per-ticker market intelligence app. For each ticker (held in the user's portfoli
 trade/
 ├── frontend/                # Angular 21 (single app, standalone components)
 │   └── src/app/
-│       ├── core/            # ports + HTTP adapters (theme service)
+│       ├── core/            # ports + adapters (HTTP default, localStorage for client-only state)
 │       │   ├── *.repository.ts        # abstract class = port
-│       │   └── adapters/*.http.ts     # HttpXxxRepository
+│       │   ├── adapters/*.http.ts     # HttpXxxRepository (default)
+│       │   └── adapters/*.local.ts    # client-only adapters (e.g. annotation localStorage)
 │       └── features/        # UI pages (primary adapters)
 ├── backend/                 # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
@@ -37,6 +38,7 @@ trade/
 │       ├── portfolio/       # CSV imports, snapshots, read-only portfolios
 │       ├── watchlist/       # Phase 2 — manual list of tickers tracked outside the portfolio
 │       ├── news/            # Phase 2 — Finnhub-backed news headlines per ticker
+│       ├── config/          # Phase 2 — runtime-editable settings (app_config V4) + routing clients
 │       ├── ingestion/       # 🧊 legacy Phase 0 — RSS scheduler
 │       └── shared/          # cross-cutting utilities
 ├── docs/
@@ -59,6 +61,7 @@ trade/
 - `portfolio/` — read-only portfolios, Wealthsimple CSV import, historical snapshots
 - `watchlist/` — Phase 2 manual watchlist (single-table, no user_id). `WatchlistService` with uppercase+trim normalisation, idempotent add (POST returns existing on duplicate), non-idempotent remove (404 if absent so the optimistic UI can detect drift).
 - `news/` — Phase 2 per-ticker headlines. Port `NewsClient` with two adapters selected by `news.provider` : `FinnhubClient` (`finnhub`, REST + apikey via `market.finnhub.api-key`, 30-day rolling window on `/company-news`) and `MockNewsClient` (`mock`, default without key — deterministic synthetic feed per symbol, ~10 % quiet symbols and ~25 % null-summary items to exercise the UI's empty / null-handling paths). Cache 15 min on `(symbol, limit)`. Errors share `MarketUnavailableException` with the market adapter for unified 503 surface.
+- `config/` — Phase 2 runtime-editable settings. `AppConfigService` (layered read YAML + BDD overrides via `app_config` table V4, write-through with `ConfigChangedEvent`), `ConfigController` (CRUD + `/test/{provider}` endpoints), `RoutingMarketChartClient` / `RoutingNewsClient` (`@Primary`) which delegate per-call to the adapter selected by `market.provider` / `news.provider` — provider switch hits at the next dossier opened, no reboot. `CacheTtlListener` rebuilds the Caffeine spec on TTL change events.
 - `ingestion/` — 🧊 legacy Phase 0 — RSS scheduler. Conservé en place, plus consommé en Phase 1.
 - `shared/` — cross-cutting utilities (e.g. `GlobalExceptionHandler`)
 
@@ -68,10 +71,10 @@ trade/
 
 Light hexagonal split under `frontend/src/app/` :
 
-- `core/` — cross-feature data access split into ports + HTTP adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`). Wired in `app.config.ts`. Currently 8 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
+- `core/` — cross-feature data access split into ports + adapters : `<name>.repository.ts` (abstract class) + `adapters/<name>.http.ts` (`HttpXxxRepository`, default) or `adapters/<name>.local.ts` (client-only, e.g. `LocalStorageAnnotationRepository`). Wired in `app.config.ts`. Currently 9 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, Annotation. Also `theme.service.ts` and `language.service.ts` (both signal + persist localStorage, parallel shape).
 - `features/` — UI feature folders (one per top-level route, *primary adapters* en vocabulaire hexagonal) :
   - `dashboard/` — portfolio view (read-only positions) + sidebar with 3 collapsible sections (Portefeuilles / Tickers détenus / Watchlist) + link to ticker dossiers
-  - `ticker/` — per-symbol dossier : price chart with multi-timeframe toggle + axes + hover crosshair, indicators chips, watchlist toggle button, LLM narrative
+  - `ticker/` — per-symbol dossier : price chart with multi-timeframe toggle + axes + hover crosshair, **chart analyse interactive** (zoom drag-select, brush mini-chart navigator, multi-select overlays MA50 / MA200 / Bollinger / 52w hi-lo, h-line annotations persisted to localStorage by symbol, measure tools delta % + delta time), benchmark overlay (SPY/QQQ/IWM/Sector/Custom), indicators chips, watchlist toggle button, LLM narrative
   - `import/` — Wealthsimple CSV drag-and-drop page
   - `suivi/` — import history (snapshots by date, market values, P&L)
   - `recommendations/` — 🧊 legacy Phase 0 — filterable list of recommendations
