@@ -441,6 +441,14 @@
         "title": "News provider",
         "description": "Switch between the local mock (synthetic feed) and Finnhub (live, requires the API key below). Takes effect on the next dossier load."
       },
+      "analystProvider": {
+        "title": "Analyst recommendations provider",
+        "description": "Switch between the local mock (deterministic per symbol) and Finnhub (live, requires the API key below). Takes effect on the next dossier load."
+      },
+      "earningsProvider": {
+        "title": "Earnings provider",
+        "description": "Switch between the local mock (deterministic per symbol) and Finnhub (live, requires the API key below). Takes effect on the next dossier load."
+      },
       "providers": {
         "mock": "Mock (local)",
         "twelvedata": "Twelve Data",
@@ -449,7 +457,8 @@
       "twelveData": {
         "title": "Twelve Data — API key",
         "description": "Market data provider (quotes, OHLC, indicators). Free tier 800 credits/day. <a href=\"https://twelvedata.com/account\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
-        "inputLabel": "Twelve Data API key"
+        "inputLabel": "Twelve Data API key",
+        "sectorHint": "Heads-up: the Sector benchmark on the ticker dossier uses Finnhub even when Twelve Data is the market provider. Set the Finnhub key below as well to keep that toggle working."
       },
       "finnhub": {
         "title": "Finnhub — API key",

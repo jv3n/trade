@@ -121,6 +121,110 @@
       </section>
     }
 
+    <!-- Analyst provider -->
+    @if (analystProvider(); as entry) {
+      <section class="config-card">
+        <div class="card-header">
+          <h3>{{ 'settings.configurationPage.analystProvider.title' | translate }}</h3>
+          @if (entry.isOverridden) {
+            <span class="badge override">{{
+              'settings.configurationPage.statusOverridden' | translate
+            }}</span>
+          } @else {
+            <span class="badge default">{{
+              'settings.configurationPage.statusDefault' | translate
+            }}</span>
+          }
+        </div>
+        <p class="description">
+          {{ 'settings.configurationPage.analystProvider.description' | translate }}
+        </p>
+        <mat-button-toggle-group
+          [value]="entry.currentValue"
+          (change)="selectProvider(entry.key, $event.value)"
+          [disabled]="isSaving(entry.key)"
+        >
+          @for (option of entry.allowedValues; track option) {
+            <mat-button-toggle [value]="option">
+              {{ 'settings.configurationPage.providers.' + option | translate }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+
+        @if (saveErrors()[entry.key]; as err) {
+          <div class="error-banner inline">
+            <mat-icon>error_outline</mat-icon>
+            {{ err }}
+          </div>
+        }
+
+        @if (entry.isOverridden) {
+          <div class="card-actions">
+            <button
+              mat-button
+              type="button"
+              (click)="reset(entry.key)"
+              [disabled]="isSaving(entry.key)"
+            >
+              {{ 'settings.configurationPage.actions.reset' | translate }}
+            </button>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Earnings provider -->
+    @if (earningsProvider(); as entry) {
+      <section class="config-card">
+        <div class="card-header">
+          <h3>{{ 'settings.configurationPage.earningsProvider.title' | translate }}</h3>
+          @if (entry.isOverridden) {
+            <span class="badge override">{{
+              'settings.configurationPage.statusOverridden' | translate
+            }}</span>
+          } @else {
+            <span class="badge default">{{
+              'settings.configurationPage.statusDefault' | translate
+            }}</span>
+          }
+        </div>
+        <p class="description">
+          {{ 'settings.configurationPage.earningsProvider.description' | translate }}
+        </p>
+        <mat-button-toggle-group
+          [value]="entry.currentValue"
+          (change)="selectProvider(entry.key, $event.value)"
+          [disabled]="isSaving(entry.key)"
+        >
+          @for (option of entry.allowedValues; track option) {
+            <mat-button-toggle [value]="option">
+              {{ 'settings.configurationPage.providers.' + option | translate }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+
+        @if (saveErrors()[entry.key]; as err) {
+          <div class="error-banner inline">
+            <mat-icon>error_outline</mat-icon>
+            {{ err }}
+          </div>
+        }
+
+        @if (entry.isOverridden) {
+          <div class="card-actions">
+            <button
+              mat-button
+              type="button"
+              (click)="reset(entry.key)"
+              [disabled]="isSaving(entry.key)"
+            >
+              {{ 'settings.configurationPage.actions.reset' | translate }}
+            </button>
+          </div>
+        }
+      </section>
+    }
+
     <!-- Twelve Data API key -->
     @if (twelveData(); as entry) {
       <section class="config-card">
@@ -144,6 +248,12 @@
           class="description"
           [innerHTML]="'settings.configurationPage.twelveData.description' | translate"
         ></p>
+        @if (finnhub() && !finnhub()!.hasValue) {
+          <p class="dependency-hint" data-testid="twelvedata-sector-hint">
+            <mat-icon>info_outline</mat-icon>
+            <span>{{ 'settings.configurationPage.twelveData.sectorHint' | translate }}</span>
+          </p>
+        }
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{
             'settings.configurationPage.twelveData.inputLabel' | translate

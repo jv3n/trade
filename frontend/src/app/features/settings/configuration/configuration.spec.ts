@@ -14,6 +14,9 @@
  * - **TTL slider dirty check** — Save button is enabled only when the slider value moved from
  *   the saved value. Otherwise re-saving the same TTL would no-op the cache rebuild but still
  *   look like an action took place.
+ * - **Sector dependency hint** — the Twelve Data card surfaces a hint about the Finnhub key
+ *   being required for the Sector benchmark, but only when that key is unset. If the user
+ *   has already set Finnhub the hint disappears so it doesn't become noise.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -72,6 +75,26 @@ const NEWS_PROVIDER: ConfigEntry = {
   allowedValues: ['mock', 'finnhub'],
 };
 
+const ANALYST_PROVIDER: ConfigEntry = {
+  key: 'analyst.provider',
+  type: 'ENUM',
+  currentValue: 'mock',
+  defaultValue: 'mock',
+  hasValue: true,
+  isOverridden: false,
+  allowedValues: ['mock', 'finnhub'],
+};
+
+const EARNINGS_PROVIDER: ConfigEntry = {
+  key: 'earnings.provider',
+  type: 'ENUM',
+  currentValue: 'mock',
+  defaultValue: 'mock',
+  hasValue: true,
+  isOverridden: false,
+  allowedValues: ['mock', 'finnhub'],
+};
+
 describe('Configuration', () => {
   let component: Configuration;
   let fixture: ComponentFixture<Configuration>;
@@ -85,7 +108,19 @@ describe('Configuration', () => {
 
   beforeEach(async () => {
     repo = {
-      list: vi.fn().mockReturnValue(of([TTL, FINN, MARKET_PROVIDER, TWELVE, NEWS_PROVIDER])),
+      list: vi
+        .fn()
+        .mockReturnValue(
+          of([
+            TTL,
+            FINN,
+            MARKET_PROVIDER,
+            TWELVE,
+            NEWS_PROVIDER,
+            ANALYST_PROVIDER,
+            EARNINGS_PROVIDER,
+          ]),
+        ),
       set: vi.fn().mockImplementation((key: string, value: string) =>
         of({
           ...TWELVE,
@@ -117,11 +152,13 @@ describe('Configuration', () => {
 
   it('loads the entries on init', () => {
     expect(repo.list).toHaveBeenCalledTimes(1);
-    expect(component.entries().length).toBe(5);
+    expect(component.entries().length).toBe(7);
     expect(component.twelveData()?.key).toBe('market.twelvedata.api-key');
     expect(component.cacheTtl()?.currentValue).toBe('30');
     expect(component.marketProvider()?.allowedValues).toEqual(['mock', 'twelvedata']);
     expect(component.newsProvider()?.allowedValues).toEqual(['mock', 'finnhub']);
+    expect(component.analystProvider()?.allowedValues).toEqual(['mock', 'finnhub']);
+    expect(component.earningsProvider()?.allowedValues).toEqual(['mock', 'finnhub']);
   });
 
   it('primes the TTL slider from the server value', () => {
@@ -227,5 +264,52 @@ describe('Configuration', () => {
     // would also fire a CacheTtlListener-style event for no reason.
     component.selectProvider('market.provider', 'mock');
     expect(repo.set).not.toHaveBeenCalled();
+  });
+
+  it('selectProvider routes analyst.provider to the right key', () => {
+    // Mirror of the market/news provider tests — the toggle must hand the analyst key through to
+    // the repository so the backend's RoutingAnalystClient picks up the switch on the next call.
+    component.selectProvider('analyst.provider', 'finnhub');
+    expect(repo.set).toHaveBeenCalledWith('analyst.provider', 'finnhub');
+  });
+
+  it('selectProvider routes earnings.provider to the right key', () => {
+    // Same contract for earnings — the routing client reads earnings.provider per call, so a
+    // wrong key here would silently fail to switch the adapter.
+    component.selectProvider('earnings.provider', 'finnhub');
+    expect(repo.set).toHaveBeenCalledWith('earnings.provider', 'finnhub');
+  });
+
+  it('shows the sector dependency hint on Twelve Data card when Finnhub key is unset', () => {
+    // Audit 2026-05-06 finding #4 : the sector benchmark routes to Finnhub even in market
+    // mode `twelvedata`, so a user who set their Twelve Data key but left Finnhub blank gets a
+    // 503 on the Sector toggle without explanation. The hint is shown precisely in that gap —
+    // when Finnhub.hasValue is false. The default fixture has FINN.hasValue = false, so the
+    // hint should be rendered.
+    const hint = fixture.nativeElement.querySelector('[data-testid="twelvedata-sector-hint"]');
+    expect(hint).not.toBeNull();
+  });
+
+  it('hides the sector dependency hint once the Finnhub key is set', async () => {
+    // Mirror of the previous test : when the user has a Finnhub key set, the hint is no longer
+    // actionable and would just be noise. We re-load the entries with FINN.hasValue=true.
+    repo.list.mockReturnValueOnce(
+      of([
+        TTL,
+        { ...FINN, hasValue: true, isOverridden: true },
+        MARKET_PROVIDER,
+        TWELVE,
+        NEWS_PROVIDER,
+        ANALYST_PROVIDER,
+        EARNINGS_PROVIDER,
+      ]),
+    );
+    component.load();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const hint = fixture.nativeElement.querySelector('[data-testid="twelvedata-sector-hint"]');
+    expect(hint).toBeNull();
   });
 });

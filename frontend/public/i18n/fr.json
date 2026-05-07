@@ -441,6 +441,14 @@
         "title": "Provider de news",
         "description": "Bascule entre le mock local (feed synthétique) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
       },
+      "analystProvider": {
+        "title": "Provider des recommandations analystes",
+        "description": "Bascule entre le mock local (déterministe par symbole) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
+      "earningsProvider": {
+        "title": "Provider des earnings",
+        "description": "Bascule entre le mock local (déterministe par symbole) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
       "providers": {
         "mock": "Mock (local)",
         "twelvedata": "Twelve Data",
@@ -449,7 +457,8 @@
       "twelveData": {
         "title": "Twelve Data — clé API",
         "description": "Provider de données de marché (cours, OHLC, indicateurs). Free tier 800 crédits/jour. <a href=\"https://twelvedata.com/account\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
-        "inputLabel": "Clé API Twelve Data"
+        "inputLabel": "Clé API Twelve Data",
+        "sectorHint": "À noter : le Sector benchmark du dossier ticker utilise Finnhub même quand Twelve Data est le provider de marché. Renseigne aussi la clé Finnhub plus bas pour garder ce toggle opérationnel."
       },
       "finnhub": {
         "title": "Finnhub — clé API",

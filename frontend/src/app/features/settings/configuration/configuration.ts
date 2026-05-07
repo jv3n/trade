@@ -16,11 +16,13 @@ const FINNHUB_KEY = 'market.finnhub.api-key';
 const CACHE_TTL_KEY = 'market.cache.ttl-minutes';
 const MARKET_PROVIDER_KEY = 'market.provider';
 const NEWS_PROVIDER_KEY = 'news.provider';
+const ANALYST_PROVIDER_KEY = 'analyst.provider';
+const EARNINGS_PROVIDER_KEY = 'earnings.provider';
 
 /**
- * Settings page for runtime-editable configuration. Lists the three keys exposed by the backend
- * (Twelve Data API key, Finnhub API key, market cache TTL) and lets the user edit each one
- * without rebooting the backend.
+ * Settings page for runtime-editable configuration. Lists the keys exposed by the backend
+ * (two API keys, the cache TTL, and the four provider toggles — market / news / analyst /
+ * earnings) and lets the user edit each one without rebooting the backend.
  *
  * **Per-key state** — `edits` holds the in-progress typed value, `saving` tracks which keys are
  * mid-save, `testing` which keys are mid-test, `testResults` the last result of the "Tester"
@@ -67,6 +69,8 @@ export class Configuration implements OnInit {
   cacheTtl = computed(() => this.entries().find((e) => e.key === CACHE_TTL_KEY));
   marketProvider = computed(() => this.entries().find((e) => e.key === MARKET_PROVIDER_KEY));
   newsProvider = computed(() => this.entries().find((e) => e.key === NEWS_PROVIDER_KEY));
+  analystProvider = computed(() => this.entries().find((e) => e.key === ANALYST_PROVIDER_KEY));
+  earningsProvider = computed(() => this.entries().find((e) => e.key === EARNINGS_PROVIDER_KEY));
 
   /** True when the slider value differs from the saved value — disables the Save button otherwise. */
   ttlDirty = computed(() => {
