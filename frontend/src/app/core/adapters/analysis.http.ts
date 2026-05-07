@@ -9,9 +9,14 @@ import {
 } from '../analysis.repository';
 
 /**
- * Hard cap before the frontend gives up polling. Must cover the worst case of two Mistral
- * attempts on M1 (validator retry): 2 × OllamaClient read timeout (180 s) + margin → 400 s.
- * Claude is much faster; 400 s covers both. Keep aligned with backend DEDUP_WINDOW_SECONDS.
+ * Hard cap before the frontend gives up polling. Aligned at 400 s with the OllamaClient backend
+ * read timeout and the Phase 0 dedup window (single source of truth for « how long can a portfolio
+ * analysis take »). The previous design budgeted 2 × Ollama read (2 × 180 s) within this window
+ * to fit a validator retry ; the OllamaClient timeout was bumped to 400 s on 2026-05-07 so the
+ * retry now fits only when the first attempt failed fast (parse error, not timeout) — acceptable
+ * because Phase 0 is frozen and validator failures are dominated by parse errors which are
+ * near-instant. Claude is much faster ; 400 s covers both providers. Keep aligned with backend
+ * DEDUP_WINDOW_SECONDS.
  */
 const POLL_ABORT_SECONDS = 400;
 

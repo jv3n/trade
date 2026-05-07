@@ -7,9 +7,10 @@
  *    longest to debug ("why does my POST 404 ?"). One assertion per method is enough.
  *
  * 2. **`pollJob` is the load-bearing one** — emits every 5 s, completes on a non-PENDING status,
- *    aborts after `POLL_ABORT_SECONDS` (legacy 400 s window, set to outlast 2 × Ollama timeouts +
- *    margin), surfaces 404 with a friendly message. Uses `vi.useFakeTimers` so the test isn't
- *    actually 5 s slow ; the time-travel reveals what the real user experiences without the wait.
+ *    aborts after `POLL_ABORT_SECONDS` (400 s window, aligned with OllamaClient read timeout and
+ *    Phase 0 dedup window since the 2026-05-07 bump 180 s → 400 s), surfaces 404 with a friendly
+ *    message. Uses `vi.useFakeTimers` so the test isn't actually 5 s slow ; the time-travel
+ *    reveals what the real user experiences without the wait.
  */
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
