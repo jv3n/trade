@@ -62,7 +62,13 @@ class TwelveDataClient(
     if (bars.isEmpty())
       throw NoSuchElementException("Ticker $symbol returned no bars on Twelve Data")
     val quoteResponse = fetchQuote(symbol)
-    return MarketChart(quote = quoteResponse.toTickerQuote(symbol, bars), bars = bars)
+    // `/quote.type` is unreliable on free tier — observed null even for major US stocks (NVDA).
+    // `/time_series.meta.type` carries the same classification and is populated reliably, so we
+    // forward it as a fallback for the instrumentType derivation.
+    return MarketChart(
+      quote = quoteResponse.toTickerQuote(symbol, bars, metaType = seriesResponse.meta?.type),
+      bars = bars,
+    )
   }
 
   private fun fetchTimeSeries(

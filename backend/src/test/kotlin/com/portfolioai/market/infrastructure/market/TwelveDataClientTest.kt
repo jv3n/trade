@@ -102,6 +102,21 @@ class TwelveDataClientTest {
   }
 
   @Test
+  fun `derives instrumentType from time_series meta when quote payload omits type`() {
+    // Reproduces the NVDA-on-free-tier case : `/quote` doesn't surface a `type` field, but
+    // `/time_series.meta.type` carries "Common Stock". The client must wire the meta type
+    // through to the merged quote so the front sees instrumentType=STOCK and shows
+    // Fondamentaux. Without the wiring, every live ticker landed on instrumentType=null and
+    // the dossier hid the analyst + earnings panels even on real stocks.
+    server.enqueue(jsonOk(VALID_TIME_SERIES_BODY))
+    server.enqueue(jsonOk(VALID_QUOTE_BODY))
+
+    val chart = client.fetchChart("AAPL", "1y", "1d")
+
+    assertEquals(com.portfolioai.market.domain.InstrumentType.STOCK, chart.quote.instrumentType)
+  }
+
+  @Test
   fun `falls back to bar-derived 52w range when quote payload omits fifty_two_week`() {
     // Real-world case : pre-IPO and TSX small-caps return the quote without fifty_two_week. The
     // dossier should still display a range — derived from the time-series we just fetched.

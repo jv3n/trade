@@ -48,8 +48,18 @@ fun TwelveDataTimeSeriesResponse.toOhlcBars(): List<OhlcBar> {
  * [bars] is used as a fallback for both the price (last close) and the 52-week range when the quote
  * payload is incomplete — happens on TSX small caps where the live quote is sparse but the time
  * series is fine.
+ *
+ * [metaType] is the `type` field from the `/time_series` `meta` block, passed in as a fallback
+ * because Twelve Data does NOT reliably populate the equivalent field on `/quote` responses on the
+ * free tier — observed case : NVDA returns `type: null` on `/quote` but `type: "Common Stock"` on
+ * `/time_series.meta`. Without this fallback the dossier hides Fondamentaux on every live ticker
+ * (the bug that motivated routing the meta type through here).
  */
-fun TwelveDataQuoteResponse.toTickerQuote(symbol: String, bars: List<OhlcBar>): TickerQuote {
+fun TwelveDataQuoteResponse.toTickerQuote(
+  symbol: String,
+  bars: List<OhlcBar>,
+  metaType: String? = null,
+): TickerQuote {
   val price = close?.toBigDecimalOrNull() ?: bars.lastOrNull()?.close ?: BigDecimal.ZERO
   val asOf =
     timestamp?.let(Instant::ofEpochSecond)
@@ -66,7 +76,9 @@ fun TwelveDataQuoteResponse.toTickerQuote(symbol: String, bars: List<OhlcBar>): 
     fiftyTwoWeekHigh = high52,
     fiftyTwoWeekLow = low52,
     asOf = asOf,
-    instrumentType = mapInstrumentType(type),
+    // Prefer `/quote.type` when present (richer wording — "American Depositary Receipt" etc.),
+    // fall back to `/time_series.meta.type` which is reliably populated on free tier.
+    instrumentType = mapInstrumentType(type?.takeIf { it.isNotBlank() } ?: metaType),
   )
 }
 

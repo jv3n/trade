@@ -107,12 +107,95 @@ class TwelveDataMappersTest {
 
   @Test
   fun `mapInstrumentType returns null on null or blank rather than guessing`() {
-    // Twelve Data omits `type` for some symbols (rare, observed on small-cap TSX). The front
-    // distinguishes "unknown type" (null → degrade open, show all benchmark options) from
-    // "definitely OTHER" (commodity / crypto → hide Sector). Pin the null path explicitly.
+    // Twelve Data omits `type` for some symbols (rare, observed on small-cap TSX, but also on the
+    // /quote endpoint of free tier even for major tickers like NVDA — we work around that by
+    // sourcing the type from the /time_series meta block, see toTickerQuote). The front treats
+    // null as "definitely not a stock" (degrade closed) so this null path is what hides
+    // Fondamentaux when nobody surfaces the type.
     assertNull(mapInstrumentType(null))
     assertNull(mapInstrumentType(""))
     assertNull(mapInstrumentType("   "))
+  }
+
+  @Test
+  fun `toTickerQuote falls back to time_series meta type when slash quote omits it`() {
+    // Reproduces the NVDA bug : Twelve Data's /quote returns no type field on free tier, but
+    // /time_series.meta.type carries "Common Stock". Without this fallback, every live ticker
+    // gets instrumentType=null and the front hides Fondamentaux on every stock dossier.
+    val quoteWithoutType =
+      TwelveDataQuoteResponse(
+        symbol = "NVDA",
+        name = "NVIDIA Corp",
+        exchange = "NASDAQ",
+        currency = "USD",
+        datetime = "2026-05-07",
+        timestamp = 1746576000L,
+        close = "920.50",
+        type = null,
+        fiftyTwoWeek = TwelveDataFiftyTwoWeek(low = "400.00", high = "950.00"),
+        status = null,
+        code = null,
+        message = null,
+      )
+
+    val quote = quoteWithoutType.toTickerQuote("NVDA", emptyList(), metaType = "Common Stock")
+
+    assertEquals(com.portfolioai.market.domain.InstrumentType.STOCK, quote.instrumentType)
+  }
+
+  @Test
+  fun `toTickerQuote prefers slash quote type over the meta fallback when both are present`() {
+    // /quote may carry a more specific label ("American Depositary Receipt") than the meta block
+    // ("Common Stock"). Both collapse to STOCK in our enum, but if the wire labels ever diverged
+    // semantically (e.g. "Mutual Fund" only on /quote) we want the richer source to win.
+    val quoteWithType =
+      TwelveDataQuoteResponse(
+        symbol = "BABA",
+        name = "Alibaba Group",
+        exchange = "NYSE",
+        currency = "USD",
+        datetime = null,
+        timestamp = null,
+        close = "100.00",
+        type = "American Depositary Receipt",
+        fiftyTwoWeek = null,
+        status = null,
+        code = null,
+        message = null,
+      )
+
+    val quote = quoteWithType.toTickerQuote("BABA", emptyList(), metaType = "Common Stock")
+
+    // Both map to STOCK in the enum — the assertion just pins that we read the /quote source
+    // first (the wire string was ADR, which only "Common Stock" wouldn't match if we somehow
+    // narrowed the bucket later).
+    assertEquals(com.portfolioai.market.domain.InstrumentType.STOCK, quote.instrumentType)
+  }
+
+  @Test
+  fun `toTickerQuote treats blank slash quote type as missing and falls through to meta`() {
+    // Twelve Data has been observed to send `"type": ""` rather than omitting the field. The
+    // takeIf-isNotBlank guard in toTickerQuote keeps the meta fallback live in that case rather
+    // than mapping the empty string to null and hiding Fondamentaux on every stock.
+    val quoteWithBlankType =
+      TwelveDataQuoteResponse(
+        symbol = "AAPL",
+        name = "Apple Inc.",
+        exchange = "NASDAQ",
+        currency = "USD",
+        datetime = null,
+        timestamp = null,
+        close = "180.00",
+        type = "   ",
+        fiftyTwoWeek = null,
+        status = null,
+        code = null,
+        message = null,
+      )
+
+    val quote = quoteWithBlankType.toTickerQuote("AAPL", emptyList(), metaType = "Common Stock")
+
+    assertEquals(com.portfolioai.market.domain.InstrumentType.STOCK, quote.instrumentType)
   }
 
   @Test
