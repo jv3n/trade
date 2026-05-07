@@ -31,6 +31,21 @@ Sortie d'audit `/doc-maintainer` traitée intégralement (2 HIGH, 3 MED, 3 LOW).
 
 ---
 
+## 2026-05-07 (suite 2 — bump OllamaClient read timeout 180 s → 400 s)
+
+Hotfix sur l'analyse portefeuille (Phase 0 frozen mais toujours invocable) : un user a hit `Read timed out` sur `POST http://localhost:11434/api/chat` parce que `OllamaClient.readTimeout = 180 s` saturait avant le retour Ollama dans un cold-start. Bumpé à **400 s** pour s'aligner sur `POLL_ABORT_SECONDS` (frontend) et `DEDUP_WINDOW_SECONDS` (backend) — l'invariant historique « 2 × backend ≤ frontend » est cassé par ce changement (avec backend = frontend = 400 s, un retry validateur ne fit plus dans le budget) ; trade-off accepté parce que les échecs validateur sont des parse errors near-instant, pas des timeouts, et Phase 0 est gelée. Côté doc-set, alignement de tous les commentaires qui décrivaient l'invariant 2 × ou la valeur 180 s.
+
+### `technique/`
+- `architecture.md > Choix techniques principaux` : section « Fenêtres de timeout alignées (legacy, 400 s) » réécrite — l'invariant `POLL_ABORT_SECONDS ≥ DEDUP_WINDOW_SECONDS ≥ 2 × OllamaClient.readTimeout + marge` devient `POLL_ABORT_SECONDS = DEDUP_WINDOW_SECONDS = OllamaClient.readTimeout = 400 s`, avec note sur le trade-off retry validateur.
+
+### `projet/`
+- `backlog.md > Phase 2.5 ⏳ « Config runtime v2 LLM »` : entrée étendue avec une **section v1.5 « fenêtres de timeout éditables »** — ajout d'une clé runtime `llm.timeout-seconds` (INT, range 60–900, par défaut 400) consommée par les trois bornes (`OllamaClient`, `POLL_ABORT_SECONDS` front, `DEDUP_WINDOW_SECONDS` back). Motivation : un user qui change de modèle Ollama (e.g. mistral 7B → llama3.2:8b) doit aujourd'hui éditer code + reboot pour ajuster ; un slider settings le rendrait runtime-friendly. Cost ~3-4 h, à grouper avec le v1 (provider + model) puisque les deux changements touchent la même page.
+
+### `.claude/`
+- `CLAUDE.md > Conventions > LLM provider` : la phrase « legacy Phase 0 timeouts (frontend abort + dedup window) are aligned at 400 s » étendue pour inclure `OllamaClient HTTP read` dans le set des bornes alignées, avec mention de la date du bump.
+
+---
+
 ## 2026-05-06 (suite 8 — patch /doc-maintainer + nouvelle convention de tri du backlog)
 
 Sortie d'audit `/doc-maintainer` traitée intégralement (2 HIGH, 3 MED, 4 LOW, 7 findings). Drift concentrée sur la nav MkDocs (rapport audit fin Phase 2 absent), sur la liste des dispatchers `@Primary` (4 → 6 listés) et sur le claim « 5 toggles éditables » qui était devenu faux depuis l'ajout d'analyst+earnings côté backend. En passant : titre `etat-actuel.md` rafraîchi pour la fin Phase 2, mention Phase 5 ajoutée à `fonctionnalites.md`, schéma ASCII `architecture.md` aligné sur l'ordre de présentation des ports.
