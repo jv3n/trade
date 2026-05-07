@@ -12,20 +12,14 @@ import {
   TickerSnapshot,
   TimeframeCode,
 } from '../market.repository';
+import { LlmTimeoutService } from '../llm-timeout.service';
 
-/**
- * Hard cap before the frontend gives up polling a narrative job. Aligned with the backend's
- * `TickerNarrativeJobStore.DEDUP_WINDOW_SECONDS = 300` so a stuck job won't be returned by dedup
- * to a polling frontend that already gave up.
- *
- * Claude resolves in 1-3 s, Ollama (Mistral 7B on M1) in 30-60 s. 300 s covers both with margin.
- */
-const NARRATIVE_POLL_ABORT_SECONDS = 300;
 const NARRATIVE_POLL_INTERVAL_MS = 3000;
 
 @Injectable()
 export class HttpMarketRepository extends MarketRepository {
   private readonly http = inject(HttpClient);
+  private readonly timeout = inject(LlmTimeoutService);
 
   getTicker(symbol: string): Observable<TickerSnapshot> {
     return this.http.get<TickerSnapshot>(`/api/market/ticker/${encodeURIComponent(symbol)}`);
@@ -78,7 +72,9 @@ export class HttpMarketRepository extends MarketRepository {
       takeWhile((job) => {
         if (job.status !== 'PENDING') return false;
         const ageSeconds = (Date.now() - new Date(job.createdAt).getTime()) / 1000;
-        if (ageSeconds > NARRATIVE_POLL_ABORT_SECONDS)
+        // Read the timeout per tick — see analysis.http.ts for the full rationale (slider drag
+        // mid-poll takes effect on the next tick instead of being snapshotted at construction).
+        if (ageSeconds > this.timeout.seconds())
           throw new Error('Génération du narratif trop longue — relance possible');
         return true;
       }, true),

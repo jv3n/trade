@@ -427,6 +427,10 @@
       "title": "Runtime configuration",
       "intro": "Edit live what normally lives in application-local.yml. Changes apply without restarting the backend.",
       "loading": "Loading configuration…",
+      "sections": {
+        "providers": "Data providers",
+        "llm": "LLM"
+      },
       "statusSet": "Set",
       "statusUnset": "Not set",
       "statusOverridden": "Overridden",
@@ -449,10 +453,16 @@
         "title": "Earnings provider",
         "description": "Switch between the local mock (deterministic per symbol) and Finnhub (live, requires the API key below). Takes effect on the next dossier load."
       },
+      "llmProvider": {
+        "title": "LLM provider",
+        "description": "Picks the engine that writes the ticker dossier narrative: Claude (Anthropic cloud, requires anthropic.api.key in application-local.yml) or Ollama (local, requires an Ollama daemon listening). The switch takes effect on the next analysis."
+      },
       "providers": {
         "mock": "Mock (local)",
         "twelvedata": "Twelve Data",
-        "finnhub": "Finnhub"
+        "finnhub": "Finnhub",
+        "claude": "Claude",
+        "ollama": "Ollama"
       },
       "twelveData": {
         "title": "Twelve Data — API key",
@@ -464,6 +474,22 @@
         "title": "Finnhub — API key",
         "description": "Provider for the news section on the ticker dossier. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
         "inputLabel": "Finnhub API key"
+      },
+      "ollamaModel": {
+        "title": "Ollama — model",
+        "description": "Tag of the model used when the LLM provider is Ollama (e.g. qwen2.5:3b, llama3.2:3b). The model must be pulled locally (`ollama pull <tag>`). The Test button sends a short prompt and measures latency.",
+        "inputLabel": "Ollama model"
+      },
+      "claudeModel": {
+        "title": "Claude — model",
+        "description": "Identifier of the model used when the LLM provider is Claude (e.g. claude-opus-4-6, claude-sonnet-4-5). The Test button validates that the model responds with the Anthropic key set in YAML.",
+        "inputLabel": "Claude model"
+      },
+      "llmTimeout": {
+        "title": "LLM timeout",
+        "description": "Maximum duration for an LLM call before giving up — covers the HTTP read timeout backend-side (Ollama), the frontend polling window, and the job dedup window. Push it when testing a heavy Ollama model with a long cold-start ; lower it to fail faster while debugging.",
+        "minutes": "{{value}} min",
+        "defaultHint": "default: {{value}} min"
       },
       "cacheTtl": {
         "title": "Market & news cache — TTL",

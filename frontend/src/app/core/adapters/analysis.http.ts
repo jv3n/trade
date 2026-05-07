@@ -7,22 +7,12 @@ import {
   Recommendation,
   PromptPreview,
 } from '../analysis.repository';
-
-/**
- * Hard cap before the frontend gives up polling. Aligned at 400 s with the OllamaClient backend
- * read timeout and the Phase 0 dedup window (single source of truth for « how long can a portfolio
- * analysis take »). The previous design budgeted 2 × Ollama read (2 × 180 s) within this window
- * to fit a validator retry ; the OllamaClient timeout was bumped to 400 s on 2026-05-07 so the
- * retry now fits only when the first attempt failed fast (parse error, not timeout) — acceptable
- * because Phase 0 is frozen and validator failures are dominated by parse errors which are
- * near-instant. Claude is much faster ; 400 s covers both providers. Keep aligned with backend
- * DEDUP_WINDOW_SECONDS.
- */
-const POLL_ABORT_SECONDS = 400;
+import { LlmTimeoutService } from '../llm-timeout.service';
 
 @Injectable()
 export class HttpAnalysisRepository extends AnalysisRepository {
   private readonly http = inject(HttpClient);
+  private readonly timeout = inject(LlmTimeoutService);
 
   startAnalysis(portfolioId: string): Observable<AnalysisJob> {
     return this.http.post<AnalysisJob>(`/api/portfolios/${portfolioId}/recommendations`, {});
@@ -49,7 +39,10 @@ export class HttpAnalysisRepository extends AnalysisRepository {
       takeWhile((job) => {
         if (job.status !== 'PENDING') return false;
         const ageSeconds = (Date.now() - new Date(job.createdAt).getTime()) / 1000;
-        if (ageSeconds > POLL_ABORT_SECONDS)
+        // Read the timeout per tick rather than at observable construction time : a slider drag
+        // mid-poll then takes effect on the next tick instead of carrying the boot-time value
+        // forward for the full poll lifetime.
+        if (ageSeconds > this.timeout.seconds())
           throw new Error('Analyse trop longue — relance possible');
         return true;
       }, true),

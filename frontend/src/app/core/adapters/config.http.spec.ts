@@ -62,4 +62,14 @@ describe('HttpConfigRepository', () => {
     expect(req.request.body).toEqual({ value: 'candidate' });
     req.flush({ ok: false, message: 'Invalid key' });
   });
+
+  it('testLlm POSTs the candidate provider plus model to /test/llm', () => {
+    // The LLM probe takes a (provider, model) tuple instead of a single value — the user can
+    // validate a candidate model name without first saving it as the active config.
+    repo.testLlm('ollama', 'qwen2.5:7b').subscribe();
+    const req = http.expectOne('/api/config/test/llm');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ provider: 'ollama', model: 'qwen2.5:7b' });
+    req.flush({ ok: true, message: 'OK — Ollama (qwen2.5:7b) replied in 1.4s' });
+  });
 });

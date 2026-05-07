@@ -40,6 +40,10 @@ class AppConfigService(
   @Value("\${news.provider:mock}") private val newsProviderDefault: String,
   @Value("\${analyst.provider:mock}") private val analystProviderDefault: String,
   @Value("\${earnings.provider:mock}") private val earningsProviderDefault: String,
+  @Value("\${llm.provider:claude}") private val llmProviderDefault: String,
+  @Value("\${ollama.model:qwen2.5:3b}") private val ollamaModelDefault: String,
+  @Value("\${anthropic.api.model:claude-opus-4-6}") private val anthropicApiModelDefault: String,
+  @Value("\${llm.timeout-seconds:400}") private val llmTimeoutSecondsDefault: Int,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
   private val overrides = ConcurrentHashMap<String, String>()
@@ -68,6 +72,10 @@ class AppConfigService(
       ConfigKeys.NEWS_PROVIDER -> newsProviderDefault
       ConfigKeys.ANALYST_PROVIDER -> analystProviderDefault
       ConfigKeys.EARNINGS_PROVIDER -> earningsProviderDefault
+      ConfigKeys.LLM_PROVIDER -> llmProviderDefault
+      ConfigKeys.OLLAMA_MODEL -> ollamaModelDefault
+      ConfigKeys.ANTHROPIC_API_MODEL -> anthropicApiModelDefault
+      ConfigKeys.LLM_TIMEOUT_SECONDS -> llmTimeoutSecondsDefault.toString()
       else -> throw IllegalArgumentException("Unknown config key: $key")
     }
 
@@ -103,6 +111,13 @@ class AppConfigService(
         value.toIntOrNull() ?: throw IllegalArgumentException("$key must be an integer")
       if (key == ConfigKeys.CACHE_TTL_MINUTES) {
         require(intValue in 5..60) { "$key must be between 5 and 60 minutes" }
+      }
+      if (key == ConfigKeys.LLM_TIMEOUT_SECONDS) {
+        // Lower bound 60 s : even Claude (1-3 s typical) needs headroom for a network hiccup.
+        // Upper bound 900 s : matches the 15-min step on the slider — beyond that, an analysis
+        // that's still pending isn't a slow LLM, it's a stuck process and the user should
+        // diagnose Tilt logs rather than wait.
+        require(intValue in 60..900) { "$key must be between 60 and 900 seconds" }
       }
     }
     val allowed = ConfigKeys.ENUM_KEYS[key]

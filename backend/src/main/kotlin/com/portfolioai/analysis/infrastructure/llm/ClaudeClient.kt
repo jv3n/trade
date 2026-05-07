@@ -1,17 +1,24 @@
 package com.portfolioai.analysis.infrastructure.llm
 
+import com.portfolioai.config.application.AppConfigService
+import com.portfolioai.config.application.ConfigKeys
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
+/**
+ * Claude provider — always instantiated alongside [OllamaClient]. Selection between the two happens
+ * in [RoutingLlmClient] based on the runtime [ConfigKeys.LLM_PROVIDER] value, so this bean exists
+ * even when the active provider is `ollama`. The model name is read per-call from
+ * [AppConfigService] so a model switch (`claude-opus-4-6` → `claude-sonnet-4-5`) lands without a
+ * reboot ; only the API key is still YAML-bound (rotated rarely, set at boot via env var).
+ */
 @Component
-@ConditionalOnProperty(name = ["llm.provider"], havingValue = "claude", matchIfMissing = true)
 class ClaudeClient(
   @Value("\${anthropic.api.key}") private val apiKey: String,
-  @Value("\${anthropic.api.model}") private val model: String,
+  private val appConfig: AppConfigService,
 ) : LlmClient {
   private val log = LoggerFactory.getLogger(javaClass)
 
@@ -30,6 +37,7 @@ class ClaudeClient(
       .build()
 
   override fun complete(systemPrompt: String, userMessage: String, maxTokens: Int): String {
+    val model = appConfig.getString(ConfigKeys.ANTHROPIC_API_MODEL)
     log.debug("Calling Claude API model={}", model)
     val body =
       mapOf(
@@ -46,5 +54,5 @@ class ClaudeClient(
     return content["text"] as String
   }
 
-  override fun modelId(): String = "claude:$model"
+  override fun modelId(): String = "claude:${appConfig.getString(ConfigKeys.ANTHROPIC_API_MODEL)}"
 }

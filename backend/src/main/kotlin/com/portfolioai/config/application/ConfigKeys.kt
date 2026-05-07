@@ -19,13 +19,19 @@ object ConfigKeys {
   const val NEWS_PROVIDER = "news.provider"
   const val ANALYST_PROVIDER = "analyst.provider"
   const val EARNINGS_PROVIDER = "earnings.provider"
+  const val LLM_PROVIDER = "llm.provider"
+  const val OLLAMA_MODEL = "ollama.model"
+  const val ANTHROPIC_API_MODEL = "anthropic.api.model"
+  const val LLM_TIMEOUT_SECONDS = "llm.timeout-seconds"
 
   const val PROVIDER_MOCK = "mock"
   const val PROVIDER_TWELVEDATA = "twelvedata"
   const val PROVIDER_FINNHUB = "finnhub"
+  const val PROVIDER_CLAUDE = "claude"
+  const val PROVIDER_OLLAMA = "ollama"
 
   val SECRET_KEYS: Set<String> = setOf(TWELVEDATA_API_KEY, FINNHUB_API_KEY)
-  val INT_KEYS: Set<String> = setOf(CACHE_TTL_MINUTES)
+  val INT_KEYS: Set<String> = setOf(CACHE_TTL_MINUTES, LLM_TIMEOUT_SECONDS)
 
   /**
    * Keys whose value is constrained to a fixed list of strings. The UI renders them as a toggle
@@ -37,6 +43,7 @@ object ConfigKeys {
       NEWS_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
       ANALYST_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
       EARNINGS_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
+      LLM_PROVIDER to listOf(PROVIDER_CLAUDE, PROVIDER_OLLAMA),
     )
 
   val KNOWN_KEYS: Set<String> =
@@ -48,5 +55,9 @@ object ConfigKeys {
       NEWS_PROVIDER,
       ANALYST_PROVIDER,
       EARNINGS_PROVIDER,
+      LLM_PROVIDER,
+      OLLAMA_MODEL,
+      ANTHROPIC_API_MODEL,
+      LLM_TIMEOUT_SECONDS,
     )
 }

@@ -3,6 +3,8 @@ package com.portfolioai.analysis.application
 import com.portfolioai.analysis.domain.JobStatus
 import com.portfolioai.analysis.domain.TickerNarrativeJob
 import com.portfolioai.analysis.infrastructure.persistence.TickerNarrativeJobRepository
+import com.portfolioai.config.application.AppConfigService
+import com.portfolioai.config.application.ConfigKeys
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.repository.findByIdOrNull
@@ -14,7 +16,10 @@ import org.springframework.transaction.annotation.Transactional
  * mark failed.
  */
 @Component
-class TickerNarrativeJobStore(private val repo: TickerNarrativeJobRepository) {
+class TickerNarrativeJobStore(
+  private val repo: TickerNarrativeJobRepository,
+  private val appConfig: AppConfigService,
+) {
 
   @Transactional
   fun create(symbol: String): TickerNarrativeJob = repo.save(TickerNarrativeJob(symbol = symbol))
@@ -23,15 +28,16 @@ class TickerNarrativeJobStore(private val repo: TickerNarrativeJobRepository) {
 
   /**
    * Dedup window — a re-clicked "generate" on the same symbol returns the existing pending job
-   * instead of creating a parallel one. 5 min is well above Claude (1-3s) and covers Ollama's worst
-   * case (~60s).
+   * instead of creating a parallel one. Reads the runtime [ConfigKeys.LLM_TIMEOUT_SECONDS] so the
+   * narrative dedup window scales with the slider just like the portfolio analysis dedup window
+   * (kept symmetric on purpose : changing the timeout once propagates everywhere).
    */
   @Transactional(readOnly = true)
   fun pendingFor(symbol: String): TickerNarrativeJob? =
     repo.findFirstBySymbolAndStatusAndCreatedAtAfterOrderByCreatedAtDesc(
       symbol,
       JobStatus.PENDING,
-      Instant.now().minusSeconds(DEDUP_WINDOW_SECONDS),
+      Instant.now().minusSeconds(appConfig.getInt(ConfigKeys.LLM_TIMEOUT_SECONDS).toLong()),
     )
 
   @Transactional
@@ -50,9 +56,5 @@ class TickerNarrativeJobStore(private val repo: TickerNarrativeJobRepository) {
       it.error = error
       repo.save(it)
     }
-  }
-
-  companion object {
-    private const val DEDUP_WINDOW_SECONDS = 300L
   }
 }

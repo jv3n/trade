@@ -4,9 +4,11 @@
  * these tests catch that on the frontend side.
  */
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { HttpMarketRepository } from './market.http';
+import { LlmTimeoutService } from '../llm-timeout.service';
 
 describe('HttpMarketRepository', () => {
   let repo: HttpMarketRepository;
@@ -14,7 +16,22 @@ describe('HttpMarketRepository', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), HttpMarketRepository],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        HttpMarketRepository,
+        // Stub the LlmTimeoutService — 300 s lines up with the existing 301_000 ms fixture in
+        // the abort test below, kept identical to the pre-v1.5 hardcoded value so the test data
+        // (which uses 301-s-old timestamps) still triggers the abort.
+        {
+          provide: LlmTimeoutService,
+          useValue: {
+            seconds: signal(300).asReadonly(),
+            millis: () => 300_000,
+            refresh: vi.fn(),
+          },
+        },
+      ],
     });
     repo = TestBed.inject(HttpMarketRepository);
     http = TestBed.inject(HttpTestingController);
@@ -201,9 +218,9 @@ describe('HttpMarketRepository', () => {
         sub.unsubscribe();
       });
 
-      it('aborts after NARRATIVE_POLL_ABORT_SECONDS even if backend keeps replying PENDING', () => {
+      it('aborts after the LLM timeout window even if backend keeps replying PENDING', () => {
         let receivedError: Error | null = null;
-        // Job created 301 s ago — over the 300 s cap.
+        // Job created 301 s ago — over the 300 s timeout configured on the stub LlmTimeoutService.
         const createdAt = new Date(Date.now() - 301_000).toISOString();
         const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
           error: (err: Error) => (receivedError = err),

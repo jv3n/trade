@@ -28,11 +28,14 @@ export interface TestConfigResult {
 }
 
 /**
- * Port — runtime-editable settings (Twelve Data / Finnhub API keys, market cache TTL).
+ * Port — runtime-editable settings (Twelve Data / Finnhub API keys, market cache TTL, LLM
+ * provider + model).
  *
  * `set` PUTs the new value and returns the refreshed entry. `reset` DELETEs the override and
  * falls back to the YAML default. `test*` exercises a candidate API key against the real provider
- * without saving — the user can validate before committing.
+ * without saving — the user can validate before committing. `testLlm` does the same for an LLM
+ * (provider, model) pair : the candidate isn't persisted, the backend just runs a fixed
+ * "Reply with exactly the word OK." prompt and returns latency + parse correctness.
  */
 export abstract class ConfigRepository {
   abstract list(): Observable<ConfigEntry[]>;
@@ -40,4 +43,5 @@ export abstract class ConfigRepository {
   abstract reset(key: string): Observable<void>;
   abstract testTwelveData(value: string): Observable<TestConfigResult>;
   abstract testFinnhub(value: string): Observable<TestConfigResult>;
+  abstract testLlm(provider: string, model: string): Observable<TestConfigResult>;
 }
