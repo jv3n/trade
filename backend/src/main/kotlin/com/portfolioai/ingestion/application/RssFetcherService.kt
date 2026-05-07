@@ -15,6 +15,7 @@ import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.UnknownHostException
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,11 +25,24 @@ import org.xml.sax.InputSource
 class RssFetcherService(
   private val sourceRepository: FeedSourceRepository,
   private val articleRepository: FeedArticleRepository,
+  @Value("\${ingestion.rss.enabled:true}") private val ingestionEnabled: Boolean,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
+  /**
+   * Recurring RSS fetch. Phase 0 is frozen and the new project default (`application.yml`) sets
+   * `ingestion.rss.enabled: false` so this scheduler no-ops by default — it stops accumulating rows
+   * in `feed_article` that the legacy `AnalysisExecutor` would otherwise drag into its LLM prompt.
+   * The bean stays loaded (the `testFetch` method is still called by the back-office
+   * `/settings/test-sources` page even with ingestion disabled). Flip to `true` only if you
+   * explicitly want to revive the Phase 0 pipeline.
+   */
   @Scheduled(fixedDelayString = "\${ingestion.rss.interval-ms:900000}")
   fun fetchAll() {
+    if (!ingestionEnabled) {
+      log.debug("RSS ingestion disabled (ingestion.rss.enabled=false) — skipping scheduled fetch")
+      return
+    }
     val sources = sourceRepository.findByEnabledTrue().filter { it.category == FeedCategory.RSS }
     log.info("Ingestion RSS — {} source(s) activée(s)", sources.size)
     sources.forEach { fetchSource(it) }
