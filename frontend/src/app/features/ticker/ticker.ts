@@ -333,13 +333,18 @@ export class TickerPage implements OnInit, OnDestroy {
 
   /**
    * Sector benchmark only applies to individual stocks — an ETF *is* a sector or a broad index,
-   * an Index *is* the market, etc. We hide the option for non-stock instruments rather than
-   * letting the user click and discover via the 404 inline message. `null` (provider didn't
-   * surface the type) defaults to "show it" — degrade open rather than over-hiding.
+   * an Index *is* the market, etc. We hide the option unless the snapshot has loaded *and* the
+   * provider explicitly tagged the instrument as `STOCK`. Choosing degrade-closed over the
+   * earlier degrade-open default because (a) a stale toggle on a freshly opened ETF dossier
+   * looked broken to the user, (b) the snapshot's transient `undefined` window before load
+   * was leaking the toggle on ETFs even when their type is correctly resolved seconds later.
+   * Cost : a stock whose provider doesn't surface the type loses the toggle. Acceptable —
+   * Twelve Data and the mock both populate `type` reliably for stocks ; the rare null is the
+   * exception, and clicking through to a 503 was a worse trade than hiding the affordance.
    */
   benchmarkChoicesForCurrentTicker = computed<BenchmarkChoice[]>(() => {
     const type = this.snapshot()?.quote.instrumentType;
-    if (type === null || type === undefined || type === 'STOCK') {
+    if (type === 'STOCK') {
       return this.benchmarkToggleChoices;
     }
     return this.benchmarkToggleChoices.filter((c) => c !== 'sector');
@@ -916,12 +921,13 @@ export class TickerPage implements OnInit, OnDestroy {
       return;
     }
     this.symbol.set(s);
+    // Note : analyst + earnings fetches are kicked off from inside [load] once we know the
+    // instrument type — they only make sense for individual stocks (no quarterly EPS on an ETF,
+    // no analyst coverage on an index). See [load] for the gating.
     this.load(s);
     this.loadLatestNarrative(s);
     this.loadWatchlistState(s);
     this.loadNews(s);
-    this.loadAnalyst(s);
-    this.loadEarnings(s);
     this.loadAnnotations(s);
     this.wireCustomBenchmarkSearch();
   }
@@ -941,6 +947,15 @@ export class TickerPage implements OnInit, OnDestroy {
         this.snapshot.set(snap);
         this.chartBars.set(snap.bars);
         this.loading.set(false);
+        // Gate the fundamentals fetches on the resolved instrument type. For ETFs / indices /
+        // unknown, analyst recommendations and quarterly earnings don't apply — firing them
+        // would burn a Finnhub call per dossier opening just to render a confusing "no
+        // coverage" empty state. The Fondamentaux section in the template is hidden in the
+        // same case (single source of truth via `snap.quote.instrumentType`).
+        if (snap.quote.instrumentType === 'STOCK') {
+          this.loadAnalyst(symbol);
+          this.loadEarnings(symbol);
+        }
       },
       error: (err) => {
         this.error.set(this.errorMessage(err, symbol));
@@ -1815,8 +1830,10 @@ export class TickerPage implements OnInit, OnDestroy {
   // ---- Fundamentals — analyst recommendations ----
 
   /**
-   * Fetches the analyst snapshot for the dossier. Three terminal states (mutually exclusive
-   * after `analystLoading` flips to false) :
+   * Fetches the analyst snapshot for the dossier. Called from [load] only when the resolved
+   * `instrumentType === 'STOCK'` — ETFs / indices / unknown skip this path entirely so we don't
+   * burn a Finnhub call to render a "no coverage" empty state. Three terminal states (mutually
+   * exclusive after `analystLoading` flips to false) :
    * - **404** → `analystNotCovered = true`, panel shows "no coverage" empty state.
    * - **503** → `analystError` set, panel shows inline error banner.
    * - **success** → `analyst` set, panel renders breakdown + consensus + price target + history.
@@ -1886,8 +1903,10 @@ export class TickerPage implements OnInit, OnDestroy {
   // ---- Fundamentals — earnings ----
 
   /**
-   * Fetches the earnings snapshot for the dossier. Three terminal states (mutually exclusive
-   * after `earningsLoading` flips to false) :
+   * Fetches the earnings snapshot for the dossier. Called from [load] only when the resolved
+   * `instrumentType === 'STOCK'` — ETFs don't report quarterly EPS, indices don't either, so
+   * skipping is more honest than rendering a "no earnings data" placeholder. Three terminal
+   * states (mutually exclusive after `earningsLoading` flips to false) :
    * - **404** → `earningsNotCovered = true`, panel shows "no earnings data" empty state.
    * - **503** → `earningsError` set, panel shows inline error banner.
    * - **success** → `earnings` set, panel renders next-date countdown (when present) + last 4

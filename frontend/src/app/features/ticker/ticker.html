@@ -771,295 +771,304 @@
           </section>
         }
 
-        <!-- Fondamentaux : recommandations analystes (premier sous-bloc, earnings v2 ci-dessous) -->
-        <section class="fundamentals-card">
-          <div class="fundamentals-header">
-            <mat-icon>insights</mat-icon>
-            <h3>{{ 'ticker.fundamentals.title' | translate }}</h3>
-          </div>
-
-          <div class="fundamentals-block">
-            <div class="fundamentals-block-header">
-              <h4>{{ 'ticker.fundamentals.analyst.title' | translate }}</h4>
-              @if (analyst(); as a) {
-                <span
-                  class="analyst-trend"
-                  [class]="'analyst-trend-' + analystTrend()"
-                  [matTooltip]="'ticker.fundamentals.analyst.trend.' + analystTrend() | translate"
-                  matTooltipPosition="above"
-                >
-                  <mat-icon>{{
-                    analystTrend() === 'up'
-                      ? 'trending_up'
-                      : analystTrend() === 'down'
-                        ? 'trending_down'
-                        : 'trending_flat'
-                  }}</mat-icon>
-                </span>
-              }
+        <!-- Fondamentaux : recommandations analystes (premier sous-bloc, earnings v2 ci-dessous).
+             Section visible uniquement sur les stocks individuels — un ETF n'a pas de couverture
+             analyste ni d'EPS trimestriel, afficher un empty state ressemblerait à un bug.
+             Le fetch côté TS est gated sur la même condition (cf. [load] dans ticker.ts). -->
+        @if (snap.quote.instrumentType === 'STOCK') {
+          <section class="fundamentals-card" data-testid="fundamentals-card">
+            <div class="fundamentals-header">
+              <mat-icon>insights</mat-icon>
+              <h3>{{ 'ticker.fundamentals.title' | translate }}</h3>
             </div>
 
-            @if (analystLoading()) {
-              <div class="loading-state">
-                <mat-spinner diameter="16"></mat-spinner>
-                {{ 'ticker.fundamentals.analyst.loading' | translate }}
-              </div>
-            } @else if (analystError(); as ae) {
-              <div class="error-banner analyst-error">
-                <mat-icon>error_outline</mat-icon>
-                {{ ae }}
-              </div>
-            } @else if (analystNotCovered()) {
-              <p class="empty-state analyst-empty">
-                {{ 'ticker.fundamentals.analyst.notCovered' | translate }}
-              </p>
-            } @else if (analyst(); as a) {
-              <!-- Consensus + total analysts headline -->
-              <div class="analyst-headline">
-                <span class="analyst-consensus" [class]="'consensus-' + a.consensus.toLowerCase()">
-                  {{ 'ticker.fundamentals.analyst.consensus.' + a.consensus | translate }}
-                </span>
-                <span class="analyst-count">
-                  {{
-                    'ticker.fundamentals.analyst.basedOn' | translate: { count: a.totalAnalysts }
-                  }}
-                </span>
+            <div class="fundamentals-block">
+              <div class="fundamentals-block-header">
+                <h4>{{ 'ticker.fundamentals.analyst.title' | translate }}</h4>
+                @if (analyst(); as a) {
+                  <span
+                    class="analyst-trend"
+                    [class]="'analyst-trend-' + analystTrend()"
+                    [matTooltip]="'ticker.fundamentals.analyst.trend.' + analystTrend() | translate"
+                    matTooltipPosition="above"
+                  >
+                    <mat-icon>{{
+                      analystTrend() === 'up'
+                        ? 'trending_up'
+                        : analystTrend() === 'down'
+                          ? 'trending_down'
+                          : 'trending_flat'
+                    }}</mat-icon>
+                  </span>
+                }
               </div>
 
-              <!-- Segmented breakdown bar — proportions across 5 buckets ; small buckets stay visible
-               down to a minimum width via CSS but the data is content-driven. -->
-              <div
-                class="analyst-bar"
-                role="img"
-                [attr.aria-label]="'ticker.fundamentals.analyst.barAria' | translate"
-              >
-                <span
-                  class="analyst-bar-segment seg-strong-buy"
-                  [style.width.%]="analystBucketPct('strongBuy')"
-                  [matTooltip]="
-                    'ticker.fundamentals.analyst.tooltip.strongBuy'
-                      | translate: { count: a.strongBuy }
-                  "
-                ></span>
-                <span
-                  class="analyst-bar-segment seg-buy"
-                  [style.width.%]="analystBucketPct('buy')"
-                  [matTooltip]="
-                    'ticker.fundamentals.analyst.tooltip.buy' | translate: { count: a.buy }
-                  "
-                ></span>
-                <span
-                  class="analyst-bar-segment seg-hold"
-                  [style.width.%]="analystBucketPct('hold')"
-                  [matTooltip]="
-                    'ticker.fundamentals.analyst.tooltip.hold' | translate: { count: a.hold }
-                  "
-                ></span>
-                <span
-                  class="analyst-bar-segment seg-sell"
-                  [style.width.%]="analystBucketPct('sell')"
-                  [matTooltip]="
-                    'ticker.fundamentals.analyst.tooltip.sell' | translate: { count: a.sell }
-                  "
-                ></span>
-                <span
-                  class="analyst-bar-segment seg-strong-sell"
-                  [style.width.%]="analystBucketPct('strongSell')"
-                  [matTooltip]="
-                    'ticker.fundamentals.analyst.tooltip.strongSell'
-                      | translate: { count: a.strongSell }
-                  "
-                ></span>
-              </div>
-
-              <!-- Legend — five chips with raw counts, mirror the bar segments. -->
-              <div class="analyst-legend">
-                <span class="analyst-chip seg-strong-buy">
-                  <span class="chip-label">{{
-                    'ticker.fundamentals.analyst.bucket.strongBuy' | translate
-                  }}</span>
-                  <span class="chip-count">{{ a.strongBuy }}</span>
-                </span>
-                <span class="analyst-chip seg-buy">
-                  <span class="chip-label">{{
-                    'ticker.fundamentals.analyst.bucket.buy' | translate
-                  }}</span>
-                  <span class="chip-count">{{ a.buy }}</span>
-                </span>
-                <span class="analyst-chip seg-hold">
-                  <span class="chip-label">{{
-                    'ticker.fundamentals.analyst.bucket.hold' | translate
-                  }}</span>
-                  <span class="chip-count">{{ a.hold }}</span>
-                </span>
-                <span class="analyst-chip seg-sell">
-                  <span class="chip-label">{{
-                    'ticker.fundamentals.analyst.bucket.sell' | translate
-                  }}</span>
-                  <span class="chip-count">{{ a.sell }}</span>
-                </span>
-                <span class="analyst-chip seg-strong-sell">
-                  <span class="chip-label">{{
-                    'ticker.fundamentals.analyst.bucket.strongSell' | translate
-                  }}</span>
-                  <span class="chip-count">{{ a.strongSell }}</span>
-                </span>
-              </div>
-
-              <!-- 12-month price target (optional — Finnhub /price-target may 401 on free tier ;
-               the line is hidden when the backend returned null). -->
-              @if (a.priceTarget; as pt) {
-                <div class="analyst-target">
-                  <div class="analyst-target-row">
-                    <span class="analyst-target-label">{{
-                      'ticker.fundamentals.analyst.target.mean' | translate
-                    }}</span>
-                    <span class="analyst-target-value">{{ pt.mean | number: '1.2-2' }}</span>
-                  </div>
-                  <div class="analyst-target-row">
-                    <span class="analyst-target-label">{{
-                      'ticker.fundamentals.analyst.target.range' | translate
-                    }}</span>
-                    <span class="analyst-target-value">
-                      {{ pt.low | number: '1.2-2' }} — {{ pt.high | number: '1.2-2' }}
-                    </span>
-                  </div>
-                  <span class="analyst-target-meta">
+              @if (analystLoading()) {
+                <div class="loading-state">
+                  <mat-spinner diameter="16"></mat-spinner>
+                  {{ 'ticker.fundamentals.analyst.loading' | translate }}
+                </div>
+              } @else if (analystError(); as ae) {
+                <div class="error-banner analyst-error">
+                  <mat-icon>error_outline</mat-icon>
+                  {{ ae }}
+                </div>
+              } @else if (analystNotCovered()) {
+                <p class="empty-state analyst-empty">
+                  {{ 'ticker.fundamentals.analyst.notCovered' | translate }}
+                </p>
+              } @else if (analyst(); as a) {
+                <!-- Consensus + total analysts headline -->
+                <div class="analyst-headline">
+                  <span
+                    class="analyst-consensus"
+                    [class]="'consensus-' + a.consensus.toLowerCase()"
+                  >
+                    {{ 'ticker.fundamentals.analyst.consensus.' + a.consensus | translate }}
+                  </span>
+                  <span class="analyst-count">
                     {{
-                      'ticker.fundamentals.analyst.target.basedOn'
-                        | translate: { count: pt.numberOfAnalysts }
+                      'ticker.fundamentals.analyst.basedOn' | translate: { count: a.totalAnalysts }
                     }}
                   </span>
                 </div>
-              }
 
-              <!-- Footer — period of the head snapshot, so the user knows how recent this is. -->
-              <div class="analyst-footer">
-                {{ 'ticker.fundamentals.analyst.asOf' | translate }} {{ a.asOf }}
-              </div>
-            }
-          </div>
-
-          <!-- 2ᵉ sous-bloc : Earnings (next date + last 4 quarters EPS estimate vs actual). -->
-          <div class="fundamentals-block">
-            <div class="fundamentals-block-header">
-              <h4>{{ 'ticker.fundamentals.earnings.title' | translate }}</h4>
-            </div>
-
-            @if (earningsLoading()) {
-              <div class="loading-state">
-                <mat-spinner diameter="16"></mat-spinner>
-                {{ 'ticker.fundamentals.earnings.loading' | translate }}
-              </div>
-            } @else if (earningsError(); as ee) {
-              <div class="error-banner earnings-error">
-                <mat-icon>error_outline</mat-icon>
-                {{ ee }}
-              </div>
-            } @else if (earningsNotCovered()) {
-              <p class="empty-state earnings-empty">
-                {{ 'ticker.fundamentals.earnings.notCovered' | translate }}
-              </p>
-            } @else if (earnings(); as e) {
-              <!-- Next earnings date with countdown — hidden when the calendar endpoint failed soft
-               or no upcoming announcement is scheduled in the 90-day window. -->
-              @if (e.nextEarningsDate) {
-                <div class="earnings-next">
-                  <mat-icon>event</mat-icon>
-                  <div class="earnings-next-text">
-                    <span class="earnings-next-date">
-                      {{ 'ticker.fundamentals.earnings.next' | translate }} {{ e.nextEarningsDate }}
-                      @if (e.nextEarningsTime && e.nextEarningsTime !== 'UNSPECIFIED') {
-                        <span class="earnings-next-time">
-                          ({{
-                            'ticker.fundamentals.earnings.time.' + e.nextEarningsTime | translate
-                          }})
-                        </span>
-                      }
-                    </span>
-                    @if (earningsCountdownDays() !== null) {
-                      <span
-                        class="earnings-countdown"
-                        [class.earnings-countdown-imminent]="earningsCountdownImminent()"
-                      >
-                        @if (earningsCountdownDays() === 0) {
-                          {{ 'ticker.fundamentals.earnings.today' | translate }}
-                        } @else if (earningsCountdownDays() === 1) {
-                          {{ 'ticker.fundamentals.earnings.tomorrow' | translate }}
-                        } @else if ((earningsCountdownDays() ?? 0) > 0) {
-                          {{
-                            'ticker.fundamentals.earnings.inDays'
-                              | translate: { count: earningsCountdownDays() }
-                          }}
-                        } @else {
-                          {{
-                            'ticker.fundamentals.earnings.daysAgo'
-                              | translate: { count: -1 * (earningsCountdownDays() ?? 0) }
-                          }}
-                        }
-                      </span>
-                    }
-                  </div>
+                <!-- Segmented breakdown bar — proportions across 5 buckets ; small buckets stay visible
+               down to a minimum width via CSS but the data is content-driven. -->
+                <div
+                  class="analyst-bar"
+                  role="img"
+                  [attr.aria-label]="'ticker.fundamentals.analyst.barAria' | translate"
+                >
+                  <span
+                    class="analyst-bar-segment seg-strong-buy"
+                    [style.width.%]="analystBucketPct('strongBuy')"
+                    [matTooltip]="
+                      'ticker.fundamentals.analyst.tooltip.strongBuy'
+                        | translate: { count: a.strongBuy }
+                    "
+                  ></span>
+                  <span
+                    class="analyst-bar-segment seg-buy"
+                    [style.width.%]="analystBucketPct('buy')"
+                    [matTooltip]="
+                      'ticker.fundamentals.analyst.tooltip.buy' | translate: { count: a.buy }
+                    "
+                  ></span>
+                  <span
+                    class="analyst-bar-segment seg-hold"
+                    [style.width.%]="analystBucketPct('hold')"
+                    [matTooltip]="
+                      'ticker.fundamentals.analyst.tooltip.hold' | translate: { count: a.hold }
+                    "
+                  ></span>
+                  <span
+                    class="analyst-bar-segment seg-sell"
+                    [style.width.%]="analystBucketPct('sell')"
+                    [matTooltip]="
+                      'ticker.fundamentals.analyst.tooltip.sell' | translate: { count: a.sell }
+                    "
+                  ></span>
+                  <span
+                    class="analyst-bar-segment seg-strong-sell"
+                    [style.width.%]="analystBucketPct('strongSell')"
+                    [matTooltip]="
+                      'ticker.fundamentals.analyst.tooltip.strongSell'
+                        | translate: { count: a.strongSell }
+                    "
+                  ></span>
                 </div>
-              }
 
-              <!-- Last reports — table-ish layout, period / estimate / actual / surprise %.
-               Reports sorted oldest-first by the backend, the front renders newest-first so the
-               most recent prints sit at the top of the table where the eye lands. -->
-              @if (e.lastReports.length > 0) {
-                <div class="earnings-reports">
-                  <div class="earnings-row earnings-row-head">
-                    <span class="earnings-cell-period">
-                      {{ 'ticker.fundamentals.earnings.col.period' | translate }}
-                    </span>
-                    <span class="earnings-cell-num">
-                      {{ 'ticker.fundamentals.earnings.col.estimate' | translate }}
-                    </span>
-                    <span class="earnings-cell-num">
-                      {{ 'ticker.fundamentals.earnings.col.actual' | translate }}
-                    </span>
-                    <span class="earnings-cell-num">
-                      {{ 'ticker.fundamentals.earnings.col.surprise' | translate }}
-                    </span>
-                  </div>
-                  @for (r of earningsReportsNewestFirst(); track r.period) {
-                    <div class="earnings-row">
-                      <span class="earnings-cell-period">{{ r.period }}</span>
-                      <span class="earnings-cell-num">
-                        @if (r.epsEstimate !== null) {
-                          {{ r.epsEstimate | number: '1.2-2' }}
-                        } @else {
-                          —
-                        }
-                      </span>
-                      <span class="earnings-cell-num">
-                        @if (r.epsActual !== null) {
-                          {{ r.epsActual | number: '1.2-2' }}
-                        } @else {
-                          —
-                        }
-                      </span>
-                      <span
-                        class="earnings-cell-num earnings-surprise"
-                        [class]="'earnings-surprise-' + (earningsSurpriseSign(r) ?? 'unknown')"
-                      >
-                        @if (r.surprisePercent !== null) {
-                          @if (r.surprisePercent > 0) {
-                            +{{ r.surprisePercent | number: '1.2-2' }}%
-                          } @else {
-                            {{ r.surprisePercent | number: '1.2-2' }}%
-                          }
-                        } @else {
-                          —
-                        }
+                <!-- Legend — five chips with raw counts, mirror the bar segments. -->
+                <div class="analyst-legend">
+                  <span class="analyst-chip seg-strong-buy">
+                    <span class="chip-label">{{
+                      'ticker.fundamentals.analyst.bucket.strongBuy' | translate
+                    }}</span>
+                    <span class="chip-count">{{ a.strongBuy }}</span>
+                  </span>
+                  <span class="analyst-chip seg-buy">
+                    <span class="chip-label">{{
+                      'ticker.fundamentals.analyst.bucket.buy' | translate
+                    }}</span>
+                    <span class="chip-count">{{ a.buy }}</span>
+                  </span>
+                  <span class="analyst-chip seg-hold">
+                    <span class="chip-label">{{
+                      'ticker.fundamentals.analyst.bucket.hold' | translate
+                    }}</span>
+                    <span class="chip-count">{{ a.hold }}</span>
+                  </span>
+                  <span class="analyst-chip seg-sell">
+                    <span class="chip-label">{{
+                      'ticker.fundamentals.analyst.bucket.sell' | translate
+                    }}</span>
+                    <span class="chip-count">{{ a.sell }}</span>
+                  </span>
+                  <span class="analyst-chip seg-strong-sell">
+                    <span class="chip-label">{{
+                      'ticker.fundamentals.analyst.bucket.strongSell' | translate
+                    }}</span>
+                    <span class="chip-count">{{ a.strongSell }}</span>
+                  </span>
+                </div>
+
+                <!-- 12-month price target (optional — Finnhub /price-target may 401 on free tier ;
+               the line is hidden when the backend returned null). -->
+                @if (a.priceTarget; as pt) {
+                  <div class="analyst-target">
+                    <div class="analyst-target-row">
+                      <span class="analyst-target-label">{{
+                        'ticker.fundamentals.analyst.target.mean' | translate
+                      }}</span>
+                      <span class="analyst-target-value">{{ pt.mean | number: '1.2-2' }}</span>
+                    </div>
+                    <div class="analyst-target-row">
+                      <span class="analyst-target-label">{{
+                        'ticker.fundamentals.analyst.target.range' | translate
+                      }}</span>
+                      <span class="analyst-target-value">
+                        {{ pt.low | number: '1.2-2' }} — {{ pt.high | number: '1.2-2' }}
                       </span>
                     </div>
-                  }
+                    <span class="analyst-target-meta">
+                      {{
+                        'ticker.fundamentals.analyst.target.basedOn'
+                          | translate: { count: pt.numberOfAnalysts }
+                      }}
+                    </span>
+                  </div>
+                }
+
+                <!-- Footer — period of the head snapshot, so the user knows how recent this is. -->
+                <div class="analyst-footer">
+                  {{ 'ticker.fundamentals.analyst.asOf' | translate }} {{ a.asOf }}
                 </div>
               }
-            }
-          </div>
-        </section>
+            </div>
+
+            <!-- 2ᵉ sous-bloc : Earnings (next date + last 4 quarters EPS estimate vs actual). -->
+            <div class="fundamentals-block">
+              <div class="fundamentals-block-header">
+                <h4>{{ 'ticker.fundamentals.earnings.title' | translate }}</h4>
+              </div>
+
+              @if (earningsLoading()) {
+                <div class="loading-state">
+                  <mat-spinner diameter="16"></mat-spinner>
+                  {{ 'ticker.fundamentals.earnings.loading' | translate }}
+                </div>
+              } @else if (earningsError(); as ee) {
+                <div class="error-banner earnings-error">
+                  <mat-icon>error_outline</mat-icon>
+                  {{ ee }}
+                </div>
+              } @else if (earningsNotCovered()) {
+                <p class="empty-state earnings-empty">
+                  {{ 'ticker.fundamentals.earnings.notCovered' | translate }}
+                </p>
+              } @else if (earnings(); as e) {
+                <!-- Next earnings date with countdown — hidden when the calendar endpoint failed soft
+               or no upcoming announcement is scheduled in the 90-day window. -->
+                @if (e.nextEarningsDate) {
+                  <div class="earnings-next">
+                    <mat-icon>event</mat-icon>
+                    <div class="earnings-next-text">
+                      <span class="earnings-next-date">
+                        {{ 'ticker.fundamentals.earnings.next' | translate }}
+                        {{ e.nextEarningsDate }}
+                        @if (e.nextEarningsTime && e.nextEarningsTime !== 'UNSPECIFIED') {
+                          <span class="earnings-next-time">
+                            ({{
+                              'ticker.fundamentals.earnings.time.' + e.nextEarningsTime | translate
+                            }})
+                          </span>
+                        }
+                      </span>
+                      @if (earningsCountdownDays() !== null) {
+                        <span
+                          class="earnings-countdown"
+                          [class.earnings-countdown-imminent]="earningsCountdownImminent()"
+                        >
+                          @if (earningsCountdownDays() === 0) {
+                            {{ 'ticker.fundamentals.earnings.today' | translate }}
+                          } @else if (earningsCountdownDays() === 1) {
+                            {{ 'ticker.fundamentals.earnings.tomorrow' | translate }}
+                          } @else if ((earningsCountdownDays() ?? 0) > 0) {
+                            {{
+                              'ticker.fundamentals.earnings.inDays'
+                                | translate: { count: earningsCountdownDays() }
+                            }}
+                          } @else {
+                            {{
+                              'ticker.fundamentals.earnings.daysAgo'
+                                | translate: { count: -1 * (earningsCountdownDays() ?? 0) }
+                            }}
+                          }
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Last reports — table-ish layout, period / estimate / actual / surprise %.
+               Reports sorted oldest-first by the backend, the front renders newest-first so the
+               most recent prints sit at the top of the table where the eye lands. -->
+                @if (e.lastReports.length > 0) {
+                  <div class="earnings-reports">
+                    <div class="earnings-row earnings-row-head">
+                      <span class="earnings-cell-period">
+                        {{ 'ticker.fundamentals.earnings.col.period' | translate }}
+                      </span>
+                      <span class="earnings-cell-num">
+                        {{ 'ticker.fundamentals.earnings.col.estimate' | translate }}
+                      </span>
+                      <span class="earnings-cell-num">
+                        {{ 'ticker.fundamentals.earnings.col.actual' | translate }}
+                      </span>
+                      <span class="earnings-cell-num">
+                        {{ 'ticker.fundamentals.earnings.col.surprise' | translate }}
+                      </span>
+                    </div>
+                    @for (r of earningsReportsNewestFirst(); track r.period) {
+                      <div class="earnings-row">
+                        <span class="earnings-cell-period">{{ r.period }}</span>
+                        <span class="earnings-cell-num">
+                          @if (r.epsEstimate !== null) {
+                            {{ r.epsEstimate | number: '1.2-2' }}
+                          } @else {
+                            —
+                          }
+                        </span>
+                        <span class="earnings-cell-num">
+                          @if (r.epsActual !== null) {
+                            {{ r.epsActual | number: '1.2-2' }}
+                          } @else {
+                            —
+                          }
+                        </span>
+                        <span
+                          class="earnings-cell-num earnings-surprise"
+                          [class]="'earnings-surprise-' + (earningsSurpriseSign(r) ?? 'unknown')"
+                        >
+                          @if (r.surprisePercent !== null) {
+                            @if (r.surprisePercent > 0) {
+                              +{{ r.surprisePercent | number: '1.2-2' }}%
+                            } @else {
+                              {{ r.surprisePercent | number: '1.2-2' }}%
+                            }
+                          } @else {
+                            —
+                          }
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </section>
+        }
 
         <!-- Actualité -->
         <section class="news-card">

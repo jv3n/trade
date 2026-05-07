@@ -1950,15 +1950,76 @@ describe('TickerPage', () => {
       expect(component.benchmarkChoicesForCurrentTicker()).not.toContain('sector');
     });
 
-    it('keeps the Sector option when instrumentType is null (degrade open)', () => {
-      // Provider didn't surface the type — we'd rather show the toggle and let the user
-      // discover via the 404 inline than hide a legitimate stock affordance.
+    it('hides the Sector option when instrumentType is null (degrade closed)', () => {
+      // Flipped from degrade-open to degrade-closed : the previous contract leaked the toggle
+      // on ETFs during the transient pre-load window (snapshot undefined → type undefined →
+      // toggle shown), and the user reported seeing Sector on VOO despite the type resolving
+      // to ETF moments later. Hiding when type isn't *explicitly* `STOCK` removes that flicker
+      // and matches the user's stated rule "afficher uniquement sur les stocks".
       market.getTicker.mockReturnValue(
         of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: null } }),
       );
       fixture.detectChanges();
 
-      expect(component.benchmarkChoicesForCurrentTicker()).toContain('sector');
+      expect(component.benchmarkChoicesForCurrentTicker()).not.toContain('sector');
+    });
+  });
+
+  // ---- Fundamentals (analyst + earnings) visibility conditional on instrument type ----
+
+  /**
+   * Fundamentals (analyst recommendations + quarterly earnings) only make sense for individual
+   * stocks. ETFs are baskets — no single analyst issues a "buy ETF" rating, no quarterly EPS.
+   * Indices are the market itself. Pin two contracts so the user doesn't see "no coverage"
+   * placeholders on a VOO dossier (the bug that motivated this gating) :
+   * - the fetches are skipped at source, saving Finnhub quota,
+   * - the section is hidden in the template, so even if a stale signal lingered nothing renders.
+   */
+  describe('fundamentals visibility conditional on instrument type', () => {
+    it('does not fetch analyst or earnings for an ETF dossier', () => {
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: 'ETF' } }),
+      );
+      fixture.detectChanges();
+
+      // Burning a Finnhub credit on every ETF dossier opening is exactly what the gating is
+      // supposed to prevent — pin it so a future refactor doesn't silently re-enable the call.
+      expect(analyst.getForSymbol).not.toHaveBeenCalled();
+      expect(earnings.getForSymbol).not.toHaveBeenCalled();
+    });
+
+    it('does not fetch analyst or earnings when instrument type is unknown', () => {
+      // Same degrade-closed rationale as the Sector toggle : an unknown type is more likely an
+      // ETF/index that the provider didn't tag than a stock with a missing field. Don't burn a
+      // Finnhub call we'd just throw away.
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: null } }),
+      );
+      fixture.detectChanges();
+
+      expect(analyst.getForSymbol).not.toHaveBeenCalled();
+      expect(earnings.getForSymbol).not.toHaveBeenCalled();
+    });
+
+    it('hides the Fondamentaux section in the template when the dossier is an ETF', () => {
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: 'ETF' } }),
+      );
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector('[data-testid="fundamentals-card"]');
+      expect(card).toBeNull();
+    });
+
+    it('still renders the Fondamentaux section for stocks (regression guard)', () => {
+      // Default EMPTY_SNAPSHOT has instrumentType: 'STOCK' — make sure the new gating didn't
+      // accidentally hide the section in the happy path.
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector('[data-testid="fundamentals-card"]');
+      expect(card).not.toBeNull();
+      expect(analyst.getForSymbol).toHaveBeenCalledWith('AAPL');
+      expect(earnings.getForSymbol).toHaveBeenCalledWith('AAPL');
     });
   });
 });
