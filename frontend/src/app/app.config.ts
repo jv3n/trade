@@ -1,5 +1,7 @@
 import {
   ApplicationConfig,
+  inject,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
@@ -32,6 +34,7 @@ import { AnalystRepository } from './core/analyst.repository';
 import { HttpAnalystRepository } from './core/adapters/analyst.http';
 import { EarningsRepository } from './core/earnings.repository';
 import { HttpEarningsRepository } from './core/adapters/earnings.http';
+import { LlmTimeoutService } from './core/llm-timeout.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -63,5 +66,10 @@ export const appConfig: ApplicationConfig = {
     { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
     { provide: AnalystRepository, useClass: HttpAnalystRepository },
     { provide: EarningsRepository, useClass: HttpEarningsRepository },
+    // Prime the LLM timeout from `/api/config` before the first poll fires. Without this, the
+    // first portfolio analysis or narrative request would use the in-memory default (400 s) even
+    // if the user has set a different value via /settings/configuration — the override would only
+    // kick in after the first manual page reload of /settings.
+    provideAppInitializer(() => inject(LlmTimeoutService).refresh()),
   ],
 };

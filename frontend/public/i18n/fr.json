@@ -427,6 +427,10 @@
       "title": "Configuration runtime",
       "intro": "Édite en direct ce qui vit normalement dans application-local.yml. Les modifications s'appliquent sans redémarrer le backend.",
       "loading": "Chargement de la configuration…",
+      "sections": {
+        "providers": "Providers de données",
+        "llm": "LLM"
+      },
       "statusSet": "Définie",
       "statusUnset": "Non définie",
       "statusOverridden": "Surchargée",
@@ -449,10 +453,16 @@
         "title": "Provider des earnings",
         "description": "Bascule entre le mock local (déterministe par symbole) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
       },
+      "llmProvider": {
+        "title": "Provider LLM",
+        "description": "Choisit le moteur qui rédige le narratif du dossier ticker : Claude (cloud Anthropic, requiert anthropic.api.key dans application-local.yml) ou Ollama (local, requiert un daemon Ollama en écoute). La bascule s'applique à la prochaine analyse."
+      },
       "providers": {
         "mock": "Mock (local)",
         "twelvedata": "Twelve Data",
-        "finnhub": "Finnhub"
+        "finnhub": "Finnhub",
+        "claude": "Claude",
+        "ollama": "Ollama"
       },
       "twelveData": {
         "title": "Twelve Data — clé API",
@@ -464,6 +474,22 @@
         "title": "Finnhub — clé API",
         "description": "Provider des dépêches du dossier ticker. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
         "inputLabel": "Clé API Finnhub"
+      },
+      "ollamaModel": {
+        "title": "Ollama — modèle",
+        "description": "Tag du modèle utilisé quand le provider LLM est Ollama (ex. qwen2.5:3b, llama3.2:3b). Le modèle doit être pull localement (`ollama pull <tag>`). Le bouton Tester envoie un prompt court et mesure la latence.",
+        "inputLabel": "Modèle Ollama"
+      },
+      "claudeModel": {
+        "title": "Claude — modèle",
+        "description": "Identifiant du modèle utilisé quand le provider LLM est Claude (ex. claude-opus-4-6, claude-sonnet-4-5). Le bouton Tester valide que le modèle répond avec la clé Anthropic configurée en YAML.",
+        "inputLabel": "Modèle Claude"
+      },
+      "llmTimeout": {
+        "title": "Timeout LLM",
+        "description": "Durée maximale d'un appel LLM avant abandon — couvre à la fois le read timeout HTTP côté backend (Ollama), la fenêtre de polling côté front et la fenêtre de dédup des jobs. À pousser quand tu testes un gros modèle Ollama avec un cold-start long ; à baisser pour échouer plus vite si tu débugs.",
+        "minutes": "{{value}} min",
+        "defaultHint": "défaut : {{value}} min"
       },
       "cacheTtl": {
         "title": "Cache marché & news — TTL",

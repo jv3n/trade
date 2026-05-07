@@ -161,6 +161,48 @@ class AppConfigServiceTest {
   }
 
   @Test
+  fun `set rejects an unknown LLM provider value`() {
+    // Same enum guarantee as the market / news providers — a typo like "claude-api" or "openai"
+    // must fail at write time, not silently route nowhere when the next narrative runs.
+    val service = newService()
+    assertThrows<IllegalArgumentException> { service.set(ConfigKeys.LLM_PROVIDER, "openai") }
+    assertThrows<IllegalArgumentException> { service.set(ConfigKeys.LLM_PROVIDER, "claude-api") }
+  }
+
+  @Test
+  fun `set accepts an ollama model string with no whitelist`() {
+    // The Ollama ecosystem moves fast (qwen2.5:3b, llama3.2:3b, phi4-mini, …) — keeping a strict
+    // enum here would force a code change every time the user pulls a new model. The UI surfaces
+    // a suggestions list but the backend trusts whatever the user typed.
+    val service = newService()
+    whenever(repo.findById(ConfigKeys.OLLAMA_MODEL)).thenReturn(Optional.empty())
+    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { it.arguments[0] as AppConfigEntry }
+
+    service.set(ConfigKeys.OLLAMA_MODEL, "llama3.2:8b-instruct-q4_0")
+
+    assertEquals("llama3.2:8b-instruct-q4_0", service.getString(ConfigKeys.OLLAMA_MODEL))
+  }
+
+  @Test
+  fun `defaults are exposed for the new LLM keys`() {
+    val service = newService()
+    assertEquals("claude", service.getString(ConfigKeys.LLM_PROVIDER))
+    assertEquals("qwen2.5:3b", service.getString(ConfigKeys.OLLAMA_MODEL))
+    assertEquals("claude-opus-4-6", service.getString(ConfigKeys.ANTHROPIC_API_MODEL))
+    assertEquals(400, service.getInt(ConfigKeys.LLM_TIMEOUT_SECONDS))
+  }
+
+  @Test
+  fun `set rejects an LLM timeout outside the 60-900 range`() {
+    // The slider goes from 60 s (one minute, smallest reasonable for any provider) to 900 s
+    // (15 min, beyond which a still-pending analysis is a stuck process not a slow LLM).
+    val service = newService()
+    assertThrows<IllegalArgumentException> { service.set(ConfigKeys.LLM_TIMEOUT_SECONDS, "30") }
+    assertThrows<IllegalArgumentException> { service.set(ConfigKeys.LLM_TIMEOUT_SECONDS, "1200") }
+    assertThrows<IllegalArgumentException> { service.set(ConfigKeys.LLM_TIMEOUT_SECONDS, "abc") }
+  }
+
+  @Test
   fun `reset removes the override and falls back to the default`() {
     whenever(repo.findAll())
       .thenReturn(listOf(AppConfigEntry(ConfigKeys.TWELVEDATA_API_KEY, "from-db")))
@@ -203,6 +245,10 @@ class AppConfigServiceTest {
         newsProviderDefault = "mock",
         analystProviderDefault = "mock",
         earningsProviderDefault = "mock",
+        llmProviderDefault = "claude",
+        ollamaModelDefault = "qwen2.5:3b",
+        anthropicApiModelDefault = "claude-opus-4-6",
+        llmTimeoutSecondsDefault = 400,
       )
       .also { it.primeCache() }
 }

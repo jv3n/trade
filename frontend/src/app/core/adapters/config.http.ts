@@ -27,4 +27,8 @@ export class HttpConfigRepository extends ConfigRepository {
   testFinnhub(value: string): Observable<TestConfigResult> {
     return this.http.post<TestConfigResult>(`${this.base}/test/finnhub`, { value });
   }
+
+  testLlm(provider: string, model: string): Observable<TestConfigResult> {
+    return this.http.post<TestConfigResult>(`${this.base}/test/llm`, { provider, model });
+  }
 }

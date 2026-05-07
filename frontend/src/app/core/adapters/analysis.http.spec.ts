@@ -7,16 +7,18 @@
  *    longest to debug ("why does my POST 404 ?"). One assertion per method is enough.
  *
  * 2. **`pollJob` is the load-bearing one** — emits every 5 s, completes on a non-PENDING status,
- *    aborts after `POLL_ABORT_SECONDS` (400 s window, aligned with OllamaClient read timeout and
- *    Phase 0 dedup window since the 2026-05-07 bump 180 s → 400 s), surfaces 404 with a friendly
- *    message. Uses `vi.useFakeTimers` so the test isn't actually 5 s slow ; the time-travel
- *    reveals what the real user experiences without the wait.
+ *    aborts after the runtime LLM timeout (read per-tick from `LlmTimeoutService` so a slider
+ *    drag mid-poll takes effect on the next tick), surfaces 404 with a friendly message. Uses
+ *    `vi.useFakeTimers` so the test isn't actually 5 s slow ; the time-travel reveals what the
+ *    real user experiences without the wait.
  */
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { HttpAnalysisRepository } from './analysis.http';
 import { AnalysisJob } from '../analysis.repository';
+import { LlmTimeoutService } from '../llm-timeout.service';
 
 describe('HttpAnalysisRepository', () => {
   let repo: HttpAnalysisRepository;
@@ -24,7 +26,22 @@ describe('HttpAnalysisRepository', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), HttpAnalysisRepository],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        HttpAnalysisRepository,
+        // Stub the LlmTimeoutService — the value here drives the abort test below. Setting it to
+        // 400 s lines up with the existing 401_000 ms-old fixture so we don't need to retune the
+        // timestamp arithmetic.
+        {
+          provide: LlmTimeoutService,
+          useValue: {
+            seconds: signal(400).asReadonly(),
+            millis: () => 400_000,
+            refresh: vi.fn(),
+          },
+        },
+      ],
     });
     repo = TestBed.inject(HttpAnalysisRepository);
     http = TestBed.inject(HttpTestingController);
@@ -100,7 +117,7 @@ describe('HttpAnalysisRepository', () => {
       sub.unsubscribe();
     });
 
-    it('aborts after POLL_ABORT_SECONDS even if backend keeps replying PENDING', () => {
+    it('aborts after the LLM timeout window even if backend keeps replying PENDING', () => {
       let receivedError: Error | null = null;
       const createdAt = new Date(Date.now() - 401_000).toISOString();
       const sub = repo.pollJob('p1', 'j1').subscribe({

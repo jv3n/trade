@@ -7,6 +7,7 @@ import com.portfolioai.config.application.dto.ConfigValueType
 import com.portfolioai.config.application.dto.SetConfigRequest
 import com.portfolioai.config.application.dto.TestConfigRequest
 import com.portfolioai.config.application.dto.TestConfigResult
+import com.portfolioai.config.application.dto.TestLlmRequest
 import com.portfolioai.config.infrastructure.ConfigTestClient
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -27,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController
  * - `DELETE /api/config/{key}` — remove the override and fall back to the YAML default.
  * - `POST /api/config/test/{provider}` — exercise a candidate API key against the live provider
  *   without saving it. `provider` is `twelvedata` or `finnhub`.
+ * - `POST /api/config/test/llm` — probe a candidate (provider, model) pair with a fixed prompt and
+ *   report latency + whether the response actually contains "OK".
  *
  * Secret keys (API keys) are never echoed back in the GET response — the UI only learns whether a
  * value is set, not its content. The user is expected to rotate the key when they forget it.
@@ -59,6 +62,10 @@ class ConfigController(
   @PostMapping("/test/finnhub")
   fun testFinnhub(@RequestBody body: TestConfigRequest): TestConfigResult =
     testClient.testFinnhub(body.value.trim())
+
+  @PostMapping("/test/llm")
+  fun testLlm(@RequestBody body: TestLlmRequest): TestConfigResult =
+    testClient.testLlm(body.provider.trim(), body.model.trim())
 
   private fun entryFor(key: String): ConfigEntryDto {
     val isSecret = key in ConfigKeys.SECRET_KEYS

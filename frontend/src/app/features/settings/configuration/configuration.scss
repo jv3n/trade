@@ -1,6 +1,89 @@
 .config-layout {
   padding: 2rem 2.5rem;
+  max-width: 1040px;
+}
+
+// ---- Sub-sidenav ----
+//
+// Second-level nav inside the configuration page (the first-level lives in
+// `settings.scss > .settings-nav`). Splits the page into "Providers de données" / "LLM" without a
+// route change — visible only after the entries finished loading. Visually softer than the
+// settings-nav (no right border, slimmer label) so the eye reads it as a sub-control of the
+// configuration page rather than a peer of the settings navigation on its left.
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.config-subnav {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.subnav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+
+  mat-icon {
+    font-size: 1.05rem;
+    height: 1.05rem;
+    width: 1.05rem;
+    color: var(--color-text-dim);
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--color-surface-2);
+    color: var(--color-text);
+  }
+
+  &.active {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    font-weight: 500;
+
+    mat-icon {
+      color: var(--color-accent);
+    }
+  }
+}
+
+.config-content {
+  min-width: 0;
   max-width: 800px;
+}
+
+@media (max-width: 720px) {
+  // On tight screens stack the sub-sidenav above the content (mirror of the .settings-shell
+  // responsive bail-out — keeps both navigation levels usable on mobile without scroll-locking).
+  .config-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .config-subnav {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
 
 .content-header {
@@ -182,7 +265,17 @@
   gap: 0.6rem;
   margin-top: 0.6rem;
 
-  button mat-spinner {
-    margin-right: 0.4rem;
+  // Material's `.mdc-button__label` wraps the button content as inline children, so the spinner
+  // SVG and the text label end up aligned on the *baseline* — visually the spinner sits a couple
+  // of pixels above the text mid-line. Forcing the label to `inline-flex` re-centers both
+  // children on the cross axis. The `gap` here also replaces the previous `mat-spinner
+  // margin-right` rule so the spacing scales with whatever children we drop in next.
+  // ::ng-deep is needed to pierce the component's emulated encapsulation — `.mdc-button__label`
+  // is rendered by Angular Material internals, so the consumer's `[_ngcontent-…]` attribute
+  // doesn't reach it (mirror of the existing pattern in dashboard.scss / ticker.scss).
+  ::ng-deep button .mdc-button__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
   }
 }

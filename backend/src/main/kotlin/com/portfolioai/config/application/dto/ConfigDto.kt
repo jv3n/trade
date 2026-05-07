@@ -34,5 +34,12 @@ data class SetConfigRequest(val value: String)
 /** Body of `POST /api/config/test/{provider}` — caller passes the candidate value to test. */
 data class TestConfigRequest(val value: String)
 
+/**
+ * Body of `POST /api/config/test/llm`. Carries the candidate provider + model so the user can test
+ * a configuration before saving it (e.g. switch from `qwen2.5:3b` to `qwen2.5:7b` and confirm the
+ * larger model is pulled and answering before swapping the live setting).
+ */
+data class TestLlmRequest(val provider: String, val model: String)
+
 /** Result of a connectivity test : `ok=true` ⇒ provider responded as expected. */
 data class TestConfigResult(val ok: Boolean, val message: String)
