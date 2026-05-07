@@ -12,8 +12,9 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Mirror of [AnalysisJobStore] for narrative jobs : create / get / dedup pending / mark complete /
- * mark failed.
+ * Lifecycle store for narrative jobs : create / get / dedup pending / mark complete / mark failed.
+ * Reads the dedup window from runtime config so a slider drag in `/settings/configuration > LLM`
+ * shifts both the frontend poll abort and the backend dedup at once.
  */
 @Component
 class TickerNarrativeJobStore(

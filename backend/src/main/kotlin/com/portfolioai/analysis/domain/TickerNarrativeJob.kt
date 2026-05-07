@@ -12,7 +12,6 @@ import java.util.UUID
 /**
  * Async job tracking one narrative generation request for a ticker. The frontend polls `GET
  * /narrative/jobs/{id}` until status is `DONE`, then reads the [snapshotId]-referenced snapshot.
- * Mirrors the `analysis_job` pattern — see [AnalysisJob].
  */
 @Entity
 @Table(name = "ticker_narrative_job")

@@ -85,11 +85,3 @@ earnings:
   #   finnhub  — real REST `/stock/earnings` + `/calendar/earnings` (requires market.finnhub.api-key)
   provider: mock
 
-# Phase 0 RSS ingestion — frozen since the project pivoted to per-ticker dossiers (Phase 1+2). The
-# scheduler is gated `false` by default so `feed_article` no longer accumulates rows that the
-# legacy `AnalysisExecutor` would drag into its LLM prompt (cause of >400 s portfolio analyses
-# observed on cold-start Ollama). Flip to `true` only if reviving Phase 0 deliberately. Full
-# decommission (drop tables, remove module) is filed in `docs/projet/backlog.md` (Phase 2.5).
-ingestion:
-  rss:
-    enabled: false

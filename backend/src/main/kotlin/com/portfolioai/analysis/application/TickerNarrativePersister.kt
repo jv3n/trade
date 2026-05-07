@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
  * never update or delete an existing one, so an LLM regression remains debuggable from history.
  *
  * Runs in its own short `@Transactional` so the long-running LLM call upstream does not hold a DB
- * connection (legacy convention, see [RecommendationPersister]).
+ * connection.
  *
  * Reuses the **Spring-autoconfigured** [ObjectMapper] — it has the JavaTime module registered, so
  * `Instant` fields on [Indicators] serialize correctly. A locally-instantiated

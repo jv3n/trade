@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component
  * [TickerService] (loads market data — itself transactional only when needed) and
  * [TickerNarrativePersister].
  *
- * Mirrors [AnalysisExecutor]'s parse / validate / re-prompt loop : one initial call + at most one
- * retry with the validator's errors as feedback. If both attempts fail, throws — there's no
- * meaningful "fallback" for a free-form narrative.
+ * Parse / validate / re-prompt loop : one initial call + at most one retry with the validator's
+ * errors as feedback. If both attempts fail, throws — there's no meaningful "fallback" for a
+ * free-form narrative.
  */
 @Component
 class TickerNarrativeExecutor(
@@ -85,6 +85,6 @@ Fix every error above and respond again with valid JSON only. Do not repeat the 
       .trimIndent()
 
   companion object {
-    private const val MAX_ATTEMPTS = 2 // initial + 1 retry, matches AnalysisExecutor
+    private const val MAX_ATTEMPTS = 2 // initial + 1 retry on validator/parser failure
   }
 }
