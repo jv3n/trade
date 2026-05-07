@@ -6,7 +6,9 @@ Source of truth for project conventions and Claude-specific configuration. Read 
 
 Per-ticker market intelligence app. For each ticker (held in the user's portfolio or watched), the backend fetches market data from Twelve Data, computes technical indicators server-side (RSI, MA, momentum, drawdown…), and the LLM produces a short narrative summary. **The LLM is a writer, not a decider** — it does not predict prices and does not output BUY/SELL signals; it digests indicators that the code computed and writes a short readable summary.
 
-> Phase 0 (rebalance recommendations from RSS news + portfolio-wide LLM prompt) is **frozen** — the code remains in place but is no longer in the user flow. See `docs/metier/fonctionnalites.md` for the full phasing.
+**Architecture cible — pipeline d'analyse composable** : the per-ticker dossier is the **atomic unit** of computation. Portfolio-level analyses (and future watchlist digests, cross-position alerts, etc.) are **compositions** built on top — a DAG of jobs where the leaves are `TickerAnalysis(symbol, day)` (cache-aware via `ticker_narrative_snapshot`) and parents are aggregators (`PortfolioAggregation`, …) that consume already-persisted leaf narratives instead of re-prompting on raw indicators. The cache makes portfolio analyses cheap (~M LLM calls where M = uncached tickers, often 0). Visible to the user as a GitHub-Actions-style pipeline view. Vision details in `docs/metier/vision.md > Le pipeline d'analyse` ; technical model in `docs/technique/architecture.md > Modèle pipeline d'analyse`.
+
+> Phase 0 (rebalance recommendations from RSS news + portfolio-wide LLM prompt) is **frozen** and en cours de décommissionnement (cf. backlog Phase 2.5 « Décommissionner Phase 0 »). The replacement is not the return of the old engine — it's the arrival of `PortfolioAggregation` as a parent job over the existing per-ticker infrastructure (cf. backlog Phase 4 « Réintégration Phase 0 »). See `docs/metier/fonctionnalites.md` for the full phasing.
 
 ## Stack
 

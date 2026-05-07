@@ -299,3 +299,119 @@ Les décisions ci-dessous concernent du code **gelé** mais conservé. À relire
 **Robustesse du parsing RSS (legacy)** — pré-traitement Rome (User-Agent, détection HTML, correction `&` nus, `isAllowDoctypes = true`).
 
 **Fenêtres de timeout alignées (legacy, 400 s)** — depuis 2026-05-07 les trois bornes valent **400 s** : `POLL_ABORT_SECONDS` (frontend) = `DEDUP_WINDOW_SECONDS` (backend) = `OllamaClient.readTimeout`. Précédemment `OllamaClient.readTimeout = 180 s` ce qui laissait le budget pour 2 × retry validateur dans la fenêtre frontend — bumpé à 400 s parce qu'une analyse portefeuille sur Ollama cold-start saturait le 180 s avant le retry. Trade-off accepté : le retry validateur ne fit plus dans la fenêtre frontend si la 1ère tentative consomme tout le budget, mais en pratique les échecs validateur sont des parse errors near-instant, pas des timeouts. Phase 0 étant gelée, l'enveloppe ne sera pas resserrée avant un éventuel reboot du flux — Claude étant ~10× plus rapide que qwen2.5:3b, le 400 s reste sous-utilisé côté provider Claude Phase 1.
+
+---
+
+## Modèle pipeline d'analyse (vision Phase 3 + Phase 4)
+
+> **Statut** : design cible, non encore implémenté. Documenté ici pour cadrer les prochains tickets backlog (« Page Jobs » Phase 3 + « Réintégration Phase 0 » Phase 4 + « Décommissionner Phase 0 » Phase 2.5). Voir `docs/metier/vision.md > Le pipeline d'analyse` pour la framing produit.
+
+### Concept central
+
+L'application est un **DAG de jobs** dont les **feuilles** sont les analyses ticker individuelles et les **parents** sont des compositions au-dessus (analyse portefeuille, vue cross-watchlist, etc.). Chaque nœud est cache-aware : il consulte la persistence avant de firer un calcul lourd. Les feuilles partagent leur cache entre toutes les origines de trigger (ouverture manuelle de dossier, parent de pipeline, cron).
+
+```
+PortfolioAnalysis(today, portfolioId)
+├── TickerAnalysis(VOO, today)      [cache hit  → DONE_CACHED, 0 LLM]
+├── TickerAnalysis(NVDA, today)     [cache miss → RUNNING → DONE]
+├── TickerAnalysis(MSFT, today)     [cache hit  → DONE_CACHED]
+└── PortfolioAggregation(today)     [waits-for-all-leaves → DONE]
+```
+
+### Modèle de données — table `job` unifiée
+
+Migration cible (à arbitrer entre rebuild greenfield ou union des deux tables existantes `ticker_narrative_job` Phase 1 + `analysis_job` legacy Phase 0) :
+
+| Colonne | Type | Rôle |
+|---|---|---|
+| `id` | UUID | PK |
+| `kind` | VARCHAR | `TICKER_ANALYSIS` / `PORTFOLIO_AGGREGATION` / `MARKET_REFRESH` / … (extensible) |
+| `parent_id` | UUID? | FK self pour la relation DAG ; null pour les nœuds racine |
+| `status` | VARCHAR | `PENDING` / `RUNNING` / `DONE` / `DONE_CACHED` / `ERROR` / `CANCELLED` |
+| `origin` | VARCHAR | `dashboard` / `cron` / `api` / `parent` (déclenché par un job parent) |
+| `cache_key` | VARCHAR | clé déterministe (e.g. `TickerAnalysis:NVDA:2026-05-07`) — sert à la dedup et au lookup cache |
+| `target_id` | UUID? | FK vers la ressource produite (`ticker_narrative_snapshot` pour une feuille, future `portfolio_analysis_snapshot` pour un parent) |
+| `payload` | JSONB | input du job (symbol + date pour une feuille, portfolio_id + date pour un parent) |
+| `result_summary` | TEXT? | message court pour l'UI (« cached snapshot from 09:32 » / « LLM call 8.4s, retry 0 ») |
+| `error` | TEXT? | trace résumée si `status = ERROR` |
+| `created_at` / `started_at` / `ended_at` | TIMESTAMP | timing |
+
+### Machine à états
+
+```
+                ┌───────────────┐
+                │   PENDING     │  (créé, en attente de slot)
+                └───────┬───────┘
+                        │ leaf : lookup cache
+                        ▼
+        ┌───────────────────────────────┐
+        │  cache hit ?                  │
+        │  ───────                      │
+        │  oui : DONE_CACHED (terminal) │
+        │  non : RUNNING                │
+        └───────┬───────────────────────┘
+                │
+                ▼
+        ┌───────────────┐       ┌───────────────┐
+        │   RUNNING     │ ────► │     DONE      │  (terminal)
+        └───────┬───────┘       └───────────────┘
+                │       \
+                │        \─►   ┌───────────────┐
+                │              │     ERROR     │  (terminal, retryable)
+                │              └───────────────┘
+                │
+                └─►   ┌───────────────┐
+                      │   CANCELLED   │  (terminal, parent-cancelled)
+                      └───────────────┘
+```
+
+Un parent `PortfolioAggregation` reste en `PENDING` tant que **toutes** ses feuilles ne sont pas dans un état terminal (`DONE` / `DONE_CACHED` / `ERROR` / `CANCELLED`). Le parent peut donc démarrer même si une feuille a `ERROR` — l'agrégation décide d'inclure ou pas la position selon sa propre logique métier (e.g. « si > 50 % des feuilles ratent, le parent passe en ERROR sans agrégation »).
+
+### Cache-aware leaves
+
+Le `TickerAnalysis(symbol, day)` consulte avant tout `ticker_narrative_snapshot` :
+
+```kotlin
+fun executeLeaf(symbol: String, day: LocalDate): Job {
+  val key = cacheKey(symbol, day)
+  val existing = snapshotRepo.findFreshFor(symbol, day)  // <30 min, ou même-jour selon politique
+  if (existing != null) {
+    return job.markCached(existing.id, "snapshot from ${existing.generatedAt}")
+  }
+  job.markRunning()
+  val snapshot = tickerNarrativeService.generate(symbol)
+  return job.markDone(snapshot.id, "LLM call ${snapshot.latencyMs}ms")
+}
+```
+
+La politique de fraîcheur du cache est un point d'arbitrage : 30 min (cohérent avec la dedup actuelle Phase 1) vs même-jour calendaire vs séance de marché (jour de bourse). Le choix oriente l'économie LLM et la prévisibilité de l'UX.
+
+### Origines de trigger
+
+Le **même** primitif `TickerAnalysis(symbol, day)` est invoqué depuis trois entry points distincts, chacun annoté `origin = ?` :
+
+1. **`origin = dashboard`** — l'utilisateur ouvre un dossier ticker (Phase 1) ou clique « Analyser le portefeuille » (parent qui crée des enfants `origin = parent`).
+2. **`origin = cron`** — un scheduler quotidien hors heures de bureau crée des feuilles pour toutes les positions OPEN d'un user (`portfolio.assets.filter { OPEN }.map { TickerAnalysis(it.ticker, today) }`). L'utilisateur arrive le matin sur un dashboard pré-chauffé.
+3. **`origin = api`** — un endpoint REST `POST /api/jobs/ticker-analysis` permet à un script externe (cf. workflow GitHub Releases Phase 5, ou un futur webhook broker) de déclencher des analyses.
+
+La dedup se fait sur `cache_key` : si un job `RUNNING` existe déjà pour la même clé, le nouveau request **rejoint** ce job au lieu d'en créer un second. C'est l'extension du pattern de dedup actuel `TickerNarrativeService.dedupWindow = 5 min` vers une dedup déterministe par clé plutôt que temporelle.
+
+### Implications côté frontend
+
+Le composant « Pipeline » (futur, page Jobs Phase 3) devient une vue arborescente :
+
+- Chaque parent collapse / expand pour révéler ses enfants
+- Indicateur visuel par feuille : `⚡ cache` / `⏱ running` / `✅ done` / `⚠ error` / `⏸ cancelled`
+- Click sur une feuille → ouvre la ressource produite (`ticker_narrative_snapshot` → page dossier ticker à la date du snapshot, lecture-seule pour l'observabilité)
+- Click sur un parent ERROR → bouton « Retry failed leaves only » qui re-PENDING uniquement les enfants en ERROR
+- Stream live via SSE ou polling 2-3 s tant qu'un job du DAG est non-terminal ; arrêt automatique quand tout est terminal
+
+### Pourquoi pas un orchestrateur externe (Temporal, Airflow, etc.)
+
+Tentation de réflexe : « un DAG de jobs, c'est ce que fait Temporal/Airflow nativement ». Volontairement écarté en v1 pour le projet :
+
+- **Single-user, low concurrency** — un user, ~10 positions max, ~1 portfolio analysis par jour. Le surcoût opérationnel d'un orchestrateur externe (cluster, schéma BDD séparé, déploiement, monitoring) dépasse largement le bénéfice.
+- **Pas de retry distribué** — on tourne sur une seule JVM. Spring `@Async` + une `BlockingQueue` ou un `ThreadPoolTaskExecutor` suffisent largement.
+- **Pas de workflows multi-step à compenser** — chaque job est court (~10 s LLM), idempotent au cache-key, et sans side-effect distribué qui demanderait de la compensation transactionnelle.
+
+Si un jour on bascule en multi-user à fort trafic (Phase 5+ : SaaS), Temporal devient pertinent. D'ici là, un schéma BDD `job` + un thread pool Spring + un poll côté frontend = 95 % du bénéfice à 5 % de la complexité.
