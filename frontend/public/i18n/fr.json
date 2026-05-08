@@ -422,6 +422,11 @@
         "description": "Provider des dépêches du dossier ticker. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
         "inputLabel": "Clé API Finnhub"
       },
+      "anthropicKey": {
+        "title": "Anthropic — clé API",
+        "description": "Clé utilisée par le provider LLM Claude pour tous les narratifs ticker. Rotation supportée à chaud — la nouvelle valeur est lue au prochain appel sans reboot. <a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer ou faire tourner une clé</a>.",
+        "inputLabel": "Clé API Anthropic"
+      },
       "ollamaModel": {
         "title": "Ollama — modèle",
         "description": "Tag du modèle utilisé quand le provider LLM est Ollama (ex. qwen2.5:3b, llama3.2:3b). Le modèle doit être pull localement (`ollama pull <tag>`). Le bouton Tester envoie un prompt court et mesure la latence.",
@@ -429,7 +434,7 @@
       },
       "claudeModel": {
         "title": "Claude — modèle",
-        "description": "Identifiant du modèle utilisé quand le provider LLM est Claude (ex. claude-opus-4-6, claude-sonnet-4-5). Le bouton Tester valide que le modèle répond avec la clé Anthropic configurée en YAML.",
+        "description": "Identifiant du modèle utilisé quand le provider LLM est Claude (ex. claude-opus-4-6, claude-sonnet-4-5). Le bouton Tester valide que le modèle répond avec la clé Anthropic actuellement configurée plus haut.",
         "inputLabel": "Modèle Claude"
       },
       "llmTimeout": {

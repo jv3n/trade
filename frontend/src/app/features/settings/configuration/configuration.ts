@@ -15,6 +15,7 @@ import { LlmTimeoutService } from '../../../core/llm-timeout.service';
 
 const TWELVE_DATA_KEY = 'market.twelvedata.api-key';
 const FINNHUB_KEY = 'market.finnhub.api-key';
+const ANTHROPIC_KEY = 'anthropic.api.key';
 const CACHE_TTL_KEY = 'market.cache.ttl-minutes';
 const MARKET_PROVIDER_KEY = 'market.provider';
 const NEWS_PROVIDER_KEY = 'news.provider';
@@ -117,6 +118,7 @@ export class Configuration implements OnInit {
 
   twelveData = computed(() => this.entries().find((e) => e.key === TWELVE_DATA_KEY));
   finnhub = computed(() => this.entries().find((e) => e.key === FINNHUB_KEY));
+  anthropicKey = computed(() => this.entries().find((e) => e.key === ANTHROPIC_KEY));
   cacheTtl = computed(() => this.entries().find((e) => e.key === CACHE_TTL_KEY));
   marketProvider = computed(() => this.entries().find((e) => e.key === MARKET_PROVIDER_KEY));
   newsProvider = computed(() => this.entries().find((e) => e.key === NEWS_PROVIDER_KEY));
@@ -264,7 +266,7 @@ export class Configuration implements OnInit {
         this.markSaving(key, false);
         // For secrets, blank the input back out — the saved value is now masked and we don't
         // want the typed key to linger on screen.
-        if (key === TWELVE_DATA_KEY || key === FINNHUB_KEY) {
+        if (key === TWELVE_DATA_KEY || key === FINNHUB_KEY || key === ANTHROPIC_KEY) {
           this.edits.update((m) => ({ ...m, [key]: '' }));
         }
         // Saving the LLM timeout flips a value that the polling adapters read from
@@ -331,7 +333,11 @@ export class Configuration implements OnInit {
     });
 
     const probe$ =
-      key === TWELVE_DATA_KEY ? this.repo.testTwelveData(value) : this.repo.testFinnhub(value);
+      key === TWELVE_DATA_KEY
+        ? this.repo.testTwelveData(value)
+        : key === ANTHROPIC_KEY
+          ? this.repo.testAnthropic(value)
+          : this.repo.testFinnhub(value);
     probe$.subscribe({
       next: (result) => {
         this.testResults.update((m) => ({ ...m, [key]: result }));

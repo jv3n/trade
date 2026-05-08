@@ -35,6 +35,7 @@ class AppConfigService(
   private val eventPublisher: ApplicationEventPublisher,
   @Value("\${market.twelvedata.api-key:}") private val twelveDataKeyDefault: String,
   @Value("\${market.finnhub.api-key:}") private val finnhubKeyDefault: String,
+  @Value("\${anthropic.api.key:}") private val anthropicApiKeyDefault: String,
   @Value("\${market.cache.ttl-minutes:15}") private val cacheTtlDefault: Int,
   @Value("\${market.provider:mock}") private val marketProviderDefault: String,
   @Value("\${news.provider:mock}") private val newsProviderDefault: String,
@@ -67,6 +68,7 @@ class AppConfigService(
     when (key) {
       ConfigKeys.TWELVEDATA_API_KEY -> twelveDataKeyDefault
       ConfigKeys.FINNHUB_API_KEY -> finnhubKeyDefault
+      ConfigKeys.ANTHROPIC_API_KEY -> anthropicApiKeyDefault
       ConfigKeys.CACHE_TTL_MINUTES -> cacheTtlDefault.toString()
       ConfigKeys.MARKET_PROVIDER -> marketProviderDefault
       ConfigKeys.NEWS_PROVIDER -> newsProviderDefault

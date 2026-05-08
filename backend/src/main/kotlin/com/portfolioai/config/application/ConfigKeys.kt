@@ -14,6 +14,7 @@ import com.portfolioai.config.application.ConfigKeys.KNOWN_KEYS
 object ConfigKeys {
   const val TWELVEDATA_API_KEY = "market.twelvedata.api-key"
   const val FINNHUB_API_KEY = "market.finnhub.api-key"
+  const val ANTHROPIC_API_KEY = "anthropic.api.key"
   const val CACHE_TTL_MINUTES = "market.cache.ttl-minutes"
   const val MARKET_PROVIDER = "market.provider"
   const val NEWS_PROVIDER = "news.provider"
@@ -30,7 +31,7 @@ object ConfigKeys {
   const val PROVIDER_CLAUDE = "claude"
   const val PROVIDER_OLLAMA = "ollama"
 
-  val SECRET_KEYS: Set<String> = setOf(TWELVEDATA_API_KEY, FINNHUB_API_KEY)
+  val SECRET_KEYS: Set<String> = setOf(TWELVEDATA_API_KEY, FINNHUB_API_KEY, ANTHROPIC_API_KEY)
   val INT_KEYS: Set<String> = setOf(CACHE_TTL_MINUTES, LLM_TIMEOUT_SECONDS)
 
   /**
@@ -50,6 +51,7 @@ object ConfigKeys {
     setOf(
       TWELVEDATA_API_KEY,
       FINNHUB_API_KEY,
+      ANTHROPIC_API_KEY,
       CACHE_TTL_MINUTES,
       MARKET_PROVIDER,
       NEWS_PROVIDER,

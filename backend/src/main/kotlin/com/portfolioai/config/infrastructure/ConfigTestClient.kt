@@ -1,5 +1,6 @@
 package com.portfolioai.config.infrastructure
 
+import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.config.application.dto.TestConfigResult
 import java.net.http.HttpClient
@@ -33,11 +34,11 @@ import org.springframework.web.client.RestClient
  */
 @Component
 class ConfigTestClient(
+  private val appConfig: AppConfigService,
   @Value("\${market.twelvedata.base-url:https://api.twelvedata.com}")
   private val twelveDataBaseUrl: String,
   @Value("\${market.finnhub.base-url:https://finnhub.io/api/v1}")
   private val finnhubBaseUrl: String,
-  @Value("\${anthropic.api.key:}") private val anthropicApiKey: String,
   @Value("\${ollama.base-url:http://localhost:11434}") private val ollamaBaseUrl: String,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
@@ -136,15 +137,29 @@ class ConfigTestClient(
   fun testLlm(provider: String, model: String): TestConfigResult {
     if (model.isBlank()) return TestConfigResult(false, "Model name is blank")
     return when (provider) {
-      ConfigKeys.PROVIDER_CLAUDE -> probeClaude(model)
+      ConfigKeys.PROVIDER_CLAUDE ->
+        probeClaude(model, appConfig.getString(ConfigKeys.ANTHROPIC_API_KEY))
       ConfigKeys.PROVIDER_OLLAMA -> probeOllama(model)
       else -> TestConfigResult(false, "Unknown LLM provider: '$provider'")
     }
   }
 
-  private fun probeClaude(model: String): TestConfigResult {
-    if (anthropicApiKey.isBlank()) {
-      return TestConfigResult(false, "Anthropic API key is not set in YAML — cannot probe Claude")
+  /**
+   * Validates a candidate Anthropic key without saving it. Mirrors the [testTwelveData] /
+   * [testFinnhub] UX : the user types a key in the password input, hits Tester, and we round-trip
+   * to Claude with the typed value rather than the saved one. The model used is whatever's
+   * currently configured (`anthropic.api.model`) — a valid key against an unknown model will
+   * surface a 404 from Anthropic, which is still useful diagnostic.
+   */
+  fun testAnthropicKey(candidateKey: String): TestConfigResult {
+    if (candidateKey.isBlank()) return TestConfigResult(false, "API key is blank")
+    val model = appConfig.getString(ConfigKeys.ANTHROPIC_API_MODEL)
+    return probeClaude(model, candidateKey)
+  }
+
+  private fun probeClaude(model: String, apiKey: String): TestConfigResult {
+    if (apiKey.isBlank()) {
+      return TestConfigResult(false, "Anthropic API key is not configured — cannot probe Claude")
     }
     val started = System.currentTimeMillis()
     return try {
@@ -159,7 +174,7 @@ class ConfigTestClient(
         llmRest
           .post()
           .uri("https://api.anthropic.com/v1/messages")
-          .header("x-api-key", anthropicApiKey)
+          .header("x-api-key", apiKey)
           .header("anthropic-version", "2023-06-01")
           .body(body)
           .retrieve()

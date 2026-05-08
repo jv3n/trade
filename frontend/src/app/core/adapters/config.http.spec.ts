@@ -63,6 +63,16 @@ describe('HttpConfigRepository', () => {
     req.flush({ ok: false, message: 'Invalid key' });
   });
 
+  it('testAnthropic POSTs the candidate value to /test/anthropic', () => {
+    // Mirrors the Twelve Data / Finnhub probes — the candidate Anthropic key is round-tripped
+    // unsaved so the user can validate before committing the rotation.
+    repo.testAnthropic('sk-ant-candidate').subscribe();
+    const req = http.expectOne('/api/config/test/anthropic');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ value: 'sk-ant-candidate' });
+    req.flush({ ok: true, message: 'OK — Claude (claude-opus-4-6) replied in 1.4s' });
+  });
+
   it('testLlm POSTs the candidate provider plus model to /test/llm', () => {
     // The LLM probe takes a (provider, model) tuple instead of a single value — the user can
     // validate a candidate model name without first saving it as the active config.

@@ -422,6 +422,11 @@
         "description": "Provider for the news section on the ticker dossier. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
         "inputLabel": "Finnhub API key"
       },
+      "anthropicKey": {
+        "title": "Anthropic — API key",
+        "description": "Key used by the Claude LLM provider for every ticker narrative. Hot-swappable — the new value is read on the next call without a reboot. <a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\" rel=\"noopener noreferrer\">Get or rotate a key</a>.",
+        "inputLabel": "Anthropic API key"
+      },
       "ollamaModel": {
         "title": "Ollama — model",
         "description": "Tag of the model used when the LLM provider is Ollama (e.g. qwen2.5:3b, llama3.2:3b). The model must be pulled locally (`ollama pull <tag>`). The Test button sends a short prompt and measures latency.",
@@ -429,7 +434,7 @@
       },
       "claudeModel": {
         "title": "Claude — model",
-        "description": "Identifier of the model used when the LLM provider is Claude (e.g. claude-opus-4-6, claude-sonnet-4-5). The Test button validates that the model responds with the Anthropic key set in YAML.",
+        "description": "Identifier of the model used when the LLM provider is Claude (e.g. claude-opus-4-6, claude-sonnet-4-5). The Test button validates that the model responds with the Anthropic key currently configured above.",
         "inputLabel": "Claude model"
       },
       "llmTimeout": {

@@ -565,6 +565,99 @@
             </section>
           }
 
+          <!-- Anthropic API key (SECRET, mirrors Twelve Data / Finnhub cards) -->
+          @if (anthropicKey(); as entry) {
+            <section class="config-card">
+              <div class="card-header">
+                <h3>{{ 'settings.configurationPage.anthropicKey.title' | translate }}</h3>
+                <span class="badge" [class.set]="entry.hasValue" [class.unset]="!entry.hasValue">
+                  {{
+                    (entry.hasValue
+                      ? 'settings.configurationPage.statusSet'
+                      : 'settings.configurationPage.statusUnset'
+                    ) | translate
+                  }}
+                </span>
+                @if (entry.isOverridden) {
+                  <span class="badge override">{{
+                    'settings.configurationPage.statusOverridden' | translate
+                  }}</span>
+                }
+              </div>
+              <p
+                class="description"
+                [innerHTML]="'settings.configurationPage.anthropicKey.description' | translate"
+              ></p>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{
+                  'settings.configurationPage.anthropicKey.inputLabel' | translate
+                }}</mat-label>
+                <input
+                  matInput
+                  type="password"
+                  autocomplete="new-password"
+                  [value]="editValue(entry.key)"
+                  (input)="onInput(entry.key, $any($event.target).value)"
+                  [placeholder]="
+                    entry.hasValue
+                      ? ('settings.configurationPage.placeholderMasked' | translate)
+                      : ('settings.configurationPage.placeholderEmpty' | translate)
+                  "
+                />
+              </mat-form-field>
+
+              @if (testResults()[entry.key]; as result) {
+                <div class="test-result" [class.ok]="result.ok" [class.ko]="!result.ok">
+                  <mat-icon>{{ result.ok ? 'check_circle' : 'error_outline' }}</mat-icon>
+                  <span>{{ result.message }}</span>
+                </div>
+              }
+
+              @if (saveErrors()[entry.key]; as err) {
+                <div class="error-banner inline">
+                  <mat-icon>error_outline</mat-icon>
+                  {{ err }}
+                </div>
+              }
+
+              <div class="card-actions">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="test(entry.key)"
+                  [disabled]="!editValue(entry.key) || isTesting(entry.key)"
+                >
+                  @if (isTesting(entry.key)) {
+                    <mat-spinner diameter="16"></mat-spinner>
+                  }
+                  {{ 'settings.configurationPage.actions.test' | translate }}
+                </button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="save(entry.key)"
+                  [disabled]="!editValue(entry.key) || isSaving(entry.key)"
+                >
+                  @if (isSaving(entry.key)) {
+                    <mat-spinner diameter="16"></mat-spinner>
+                  }
+                  {{ 'settings.configurationPage.actions.save' | translate }}
+                </button>
+                @if (entry.isOverridden) {
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="reset(entry.key)"
+                    [disabled]="isSaving(entry.key)"
+                  >
+                    {{ 'settings.configurationPage.actions.reset' | translate }}
+                  </button>
+                }
+              </div>
+            </section>
+          }
+
           <!-- Ollama model -->
           @if (ollamaModel(); as entry) {
             <section class="config-card">

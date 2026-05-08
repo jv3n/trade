@@ -240,6 +240,7 @@ class AppConfigServiceTest {
         eventPublisher = publisher,
         twelveDataKeyDefault = "yaml-twelve",
         finnhubKeyDefault = "yaml-finn",
+        anthropicApiKeyDefault = "yaml-anthropic",
         cacheTtlDefault = 15,
         marketProviderDefault = "mock",
         newsProviderDefault = "mock",

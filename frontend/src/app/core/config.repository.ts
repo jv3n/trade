@@ -43,5 +43,6 @@ export abstract class ConfigRepository {
   abstract reset(key: string): Observable<void>;
   abstract testTwelveData(value: string): Observable<TestConfigResult>;
   abstract testFinnhub(value: string): Observable<TestConfigResult>;
+  abstract testAnthropic(value: string): Observable<TestConfigResult>;
   abstract testLlm(provider: string, model: string): Observable<TestConfigResult>;
 }

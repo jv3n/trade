@@ -46,6 +46,16 @@ const FINN: ConfigEntry = {
   allowedValues: null,
 };
 
+const ANTHROPIC: ConfigEntry = {
+  key: 'anthropic.api.key',
+  type: 'SECRET',
+  currentValue: null,
+  defaultValue: null,
+  hasValue: true,
+  isOverridden: false,
+  allowedValues: null,
+};
+
 const TTL: ConfigEntry = {
   key: 'market.cache.ttl-minutes',
   type: 'INT',
@@ -145,6 +155,7 @@ describe('Configuration', () => {
     reset: ReturnType<typeof vi.fn>;
     testTwelveData: ReturnType<typeof vi.fn>;
     testFinnhub: ReturnType<typeof vi.fn>;
+    testAnthropic: ReturnType<typeof vi.fn>;
     testLlm: ReturnType<typeof vi.fn>;
   };
   let timeoutServiceMock: { refresh: ReturnType<typeof vi.fn> };
@@ -160,6 +171,7 @@ describe('Configuration', () => {
           of([
             TTL,
             FINN,
+            ANTHROPIC,
             MARKET_PROVIDER,
             TWELVE,
             NEWS_PROVIDER,
@@ -183,6 +195,7 @@ describe('Configuration', () => {
       reset: vi.fn().mockReturnValue(of(undefined)),
       testTwelveData: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
       testFinnhub: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
+      testAnthropic: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
       testLlm: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
     };
     timeoutServiceMock = {
@@ -216,8 +229,10 @@ describe('Configuration', () => {
 
   it('loads the entries on init', () => {
     expect(repo.list).toHaveBeenCalledTimes(1);
-    expect(component.entries().length).toBe(11);
+    expect(component.entries().length).toBe(12);
     expect(component.twelveData()?.key).toBe('market.twelvedata.api-key');
+    expect(component.anthropicKey()?.key).toBe('anthropic.api.key');
+    expect(component.anthropicKey()?.type).toBe('SECRET');
     expect(component.cacheTtl()?.currentValue).toBe('30');
     expect(component.marketProvider()?.allowedValues).toEqual(['mock', 'twelvedata']);
     expect(component.newsProvider()?.allowedValues).toEqual(['mock', 'finnhub']);
@@ -269,10 +284,15 @@ describe('Configuration', () => {
     component.test('market.twelvedata.api-key');
     expect(repo.testTwelveData).toHaveBeenCalledWith('tw-candidate');
     expect(repo.testFinnhub).not.toHaveBeenCalled();
+    expect(repo.testAnthropic).not.toHaveBeenCalled();
 
     component.onInput('market.finnhub.api-key', 'fn-candidate');
     component.test('market.finnhub.api-key');
     expect(repo.testFinnhub).toHaveBeenCalledWith('fn-candidate');
+
+    component.onInput('anthropic.api.key', 'sk-ant-candidate');
+    component.test('anthropic.api.key');
+    expect(repo.testAnthropic).toHaveBeenCalledWith('sk-ant-candidate');
   });
 
   it('test result is stored under the key it was triggered for', () => {

@@ -46,20 +46,23 @@ class ConfigControllerTest {
   // ---------------------------------------------------------------------- list
 
   @Test
-  fun `GET config returns the eleven known keys with secrets masked and enums carrying allowedValues`() {
-    // Order is alphabetical on key. With the LLM v2 + v1.5 keys the layout is :
+  fun `GET config returns the twelve known keys with secrets masked and enums carrying allowedValues`() {
+    // Order is alphabetical on key. With the Anthropic key SECRET added in Phase 2.5 the layout is
+    // :
     // [0]  analyst.provider       ENUM
-    // [1]  anthropic.api.model    STRING (Claude model name)
-    // [2]  earnings.provider      ENUM
-    // [3]  llm.provider           ENUM   (claude / ollama)
-    // [4]  llm.timeout-seconds    INT    (v1.5 — slider 60..900)
-    // [5]  market.cache.ttl-min   INT
-    // [6]  market.finnhub.key     SECRET
-    // [7]  market.provider        ENUM
-    // [8]  market.twelvedata.key  SECRET
-    // [9]  news.provider          ENUM
-    // [10] ollama.model           STRING (Ollama model tag)
+    // [1]  anthropic.api.key      SECRET (Anthropic API key, masked)
+    // [2]  anthropic.api.model    STRING (Claude model name)
+    // [3]  earnings.provider      ENUM
+    // [4]  llm.provider           ENUM   (claude / ollama)
+    // [5]  llm.timeout-seconds    INT    (v1.5 — slider 60..900)
+    // [6]  market.cache.ttl-min   INT
+    // [7]  market.finnhub.key     SECRET
+    // [8]  market.provider        ENUM
+    // [9]  market.twelvedata.key  SECRET
+    // [10] news.provider          ENUM
+    // [11] ollama.model           STRING (Ollama model tag)
     given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant-real")
     given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
     given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("ollama")
@@ -71,6 +74,7 @@ class ConfigControllerTest {
     given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
     given(service.defaultFor(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
+    given(service.defaultFor(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("env-anthropic")
     given(service.defaultFor(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
     given(service.defaultFor(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
@@ -82,6 +86,7 @@ class ConfigControllerTest {
     given(service.defaultFor(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
     given(service.isOverridden(ConfigKeys.ANALYST_PROVIDER)).willReturn(false)
+    given(service.isOverridden(ConfigKeys.ANTHROPIC_API_KEY)).willReturn(false)
     given(service.isOverridden(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn(false)
     given(service.isOverridden(ConfigKeys.EARNINGS_PROVIDER)).willReturn(false)
     given(service.isOverridden(ConfigKeys.LLM_PROVIDER)).willReturn(true)
@@ -96,62 +101,69 @@ class ConfigControllerTest {
     mvc
       .perform(get("/api/config"))
       .andExpect(status().isOk)
-      .andExpect(jsonPath("$.length()").value(11))
+      .andExpect(jsonPath("$.length()").value(12))
       // Analyst provider : ENUM, allowedValues drives the toggle group.
       .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
       .andExpect(jsonPath("$[0].type").value("ENUM"))
       .andExpect(jsonPath("$[0].allowedValues[1]").value("finnhub"))
-      // Anthropic model : STRING — free-form (the front renders an autocomplete).
-      .andExpect(jsonPath("$[1].key").value(ConfigKeys.ANTHROPIC_API_MODEL))
-      .andExpect(jsonPath("$[1].type").value("STRING"))
-      .andExpect(jsonPath("$[1].currentValue").value("claude-opus-4-6"))
-      .andExpect(jsonPath("$[1].defaultValue").value("claude-opus-4-6"))
+      // Anthropic key : SECRET — value masked even though the YAML default has one.
+      .andExpect(jsonPath("$[1].key").value(ConfigKeys.ANTHROPIC_API_KEY))
+      .andExpect(jsonPath("$[1].type").value("SECRET"))
+      .andExpect(jsonPath("$[1].currentValue").doesNotExist())
+      .andExpect(jsonPath("$[1].defaultValue").doesNotExist())
+      .andExpect(jsonPath("$[1].hasValue").value(true))
       .andExpect(jsonPath("$[1].isOverridden").value(false))
+      // Anthropic model : STRING — free-form (the front renders an autocomplete).
+      .andExpect(jsonPath("$[2].key").value(ConfigKeys.ANTHROPIC_API_MODEL))
+      .andExpect(jsonPath("$[2].type").value("STRING"))
+      .andExpect(jsonPath("$[2].currentValue").value("claude-opus-4-6"))
+      .andExpect(jsonPath("$[2].defaultValue").value("claude-opus-4-6"))
+      .andExpect(jsonPath("$[2].isOverridden").value(false))
       // Earnings provider : ENUM.
-      .andExpect(jsonPath("$[2].key").value(ConfigKeys.EARNINGS_PROVIDER))
-      .andExpect(jsonPath("$[2].type").value("ENUM"))
-      // LLM provider : ENUM with claude / ollama, currently overridden to ollama.
-      .andExpect(jsonPath("$[3].key").value(ConfigKeys.LLM_PROVIDER))
+      .andExpect(jsonPath("$[3].key").value(ConfigKeys.EARNINGS_PROVIDER))
       .andExpect(jsonPath("$[3].type").value("ENUM"))
-      .andExpect(jsonPath("$[3].currentValue").value("ollama"))
-      .andExpect(jsonPath("$[3].defaultValue").value("claude"))
-      .andExpect(jsonPath("$[3].isOverridden").value(true))
-      .andExpect(jsonPath("$[3].allowedValues[0]").value("claude"))
-      .andExpect(jsonPath("$[3].allowedValues[1]").value("ollama"))
-      // LLM timeout : INT slider, default 400, overridden to 600 here.
-      .andExpect(jsonPath("$[4].key").value(ConfigKeys.LLM_TIMEOUT_SECONDS))
-      .andExpect(jsonPath("$[4].type").value("INT"))
-      .andExpect(jsonPath("$[4].currentValue").value("600"))
-      .andExpect(jsonPath("$[4].defaultValue").value("400"))
+      // LLM provider : ENUM with claude / ollama, currently overridden to ollama.
+      .andExpect(jsonPath("$[4].key").value(ConfigKeys.LLM_PROVIDER))
+      .andExpect(jsonPath("$[4].type").value("ENUM"))
+      .andExpect(jsonPath("$[4].currentValue").value("ollama"))
+      .andExpect(jsonPath("$[4].defaultValue").value("claude"))
       .andExpect(jsonPath("$[4].isOverridden").value(true))
-      // Cache TTL : INT key, value exposed as-is.
-      .andExpect(jsonPath("$[5].key").value(ConfigKeys.CACHE_TTL_MINUTES))
+      .andExpect(jsonPath("$[4].allowedValues[0]").value("claude"))
+      .andExpect(jsonPath("$[4].allowedValues[1]").value("ollama"))
+      // LLM timeout : INT slider, default 400, overridden to 600 here.
+      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_TIMEOUT_SECONDS))
       .andExpect(jsonPath("$[5].type").value("INT"))
-      .andExpect(jsonPath("$[5].currentValue").value("30"))
-      .andExpect(jsonPath("$[5].defaultValue").value("15"))
+      .andExpect(jsonPath("$[5].currentValue").value("600"))
+      .andExpect(jsonPath("$[5].defaultValue").value("400"))
+      .andExpect(jsonPath("$[5].isOverridden").value(true))
+      // Cache TTL : INT key, value exposed as-is.
+      .andExpect(jsonPath("$[6].key").value(ConfigKeys.CACHE_TTL_MINUTES))
+      .andExpect(jsonPath("$[6].type").value("INT"))
+      .andExpect(jsonPath("$[6].currentValue").value("30"))
+      .andExpect(jsonPath("$[6].defaultValue").value("15"))
       // Finnhub key : SECRET, no value set.
-      .andExpect(jsonPath("$[6].key").value(ConfigKeys.FINNHUB_API_KEY))
-      .andExpect(jsonPath("$[6].type").value("SECRET"))
-      .andExpect(jsonPath("$[6].hasValue").value(false))
+      .andExpect(jsonPath("$[7].key").value(ConfigKeys.FINNHUB_API_KEY))
+      .andExpect(jsonPath("$[7].type").value("SECRET"))
+      .andExpect(jsonPath("$[7].hasValue").value(false))
       // Market provider : ENUM, currently overridden to twelvedata.
-      .andExpect(jsonPath("$[7].key").value(ConfigKeys.MARKET_PROVIDER))
-      .andExpect(jsonPath("$[7].type").value("ENUM"))
-      .andExpect(jsonPath("$[7].currentValue").value("twelvedata"))
+      .andExpect(jsonPath("$[8].key").value(ConfigKeys.MARKET_PROVIDER))
+      .andExpect(jsonPath("$[8].type").value("ENUM"))
+      .andExpect(jsonPath("$[8].currentValue").value("twelvedata"))
       // Twelve Data key : SECRET with a value — masked.
-      .andExpect(jsonPath("$[8].key").value(ConfigKeys.TWELVEDATA_API_KEY))
-      .andExpect(jsonPath("$[8].type").value("SECRET"))
-      .andExpect(jsonPath("$[8].currentValue").doesNotExist())
-      .andExpect(jsonPath("$[8].hasValue").value(true))
-      .andExpect(jsonPath("$[8].isOverridden").value(true))
+      .andExpect(jsonPath("$[9].key").value(ConfigKeys.TWELVEDATA_API_KEY))
+      .andExpect(jsonPath("$[9].type").value("SECRET"))
+      .andExpect(jsonPath("$[9].currentValue").doesNotExist())
+      .andExpect(jsonPath("$[9].hasValue").value(true))
+      .andExpect(jsonPath("$[9].isOverridden").value(true))
       // News provider : ENUM.
-      .andExpect(jsonPath("$[9].key").value(ConfigKeys.NEWS_PROVIDER))
-      .andExpect(jsonPath("$[9].type").value("ENUM"))
+      .andExpect(jsonPath("$[10].key").value(ConfigKeys.NEWS_PROVIDER))
+      .andExpect(jsonPath("$[10].type").value("ENUM"))
       // Ollama model : STRING — free-form (the Ollama ecosystem changes too fast to whitelist).
-      .andExpect(jsonPath("$[10].key").value(ConfigKeys.OLLAMA_MODEL))
-      .andExpect(jsonPath("$[10].type").value("STRING"))
-      .andExpect(jsonPath("$[10].currentValue").value("qwen2.5:3b"))
-      .andExpect(jsonPath("$[10].defaultValue").value("qwen2.5:3b"))
-      .andExpect(jsonPath("$[10].allowedValues").doesNotExist())
+      .andExpect(jsonPath("$[11].key").value(ConfigKeys.OLLAMA_MODEL))
+      .andExpect(jsonPath("$[11].type").value("STRING"))
+      .andExpect(jsonPath("$[11].currentValue").value("qwen2.5:3b"))
+      .andExpect(jsonPath("$[11].defaultValue").value("qwen2.5:3b"))
+      .andExpect(jsonPath("$[11].allowedValues").doesNotExist())
   }
 
   // ---------------------------------------------------------------------- set
@@ -249,6 +261,25 @@ class ConfigControllerTest {
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.ok").value(false))
       .andExpect(jsonPath("$.message").value("Invalid Finnhub API key"))
+  }
+
+  @Test
+  fun `POST test anthropic returns the result from the test client`() {
+    // Mirror of `/test/twelvedata` and `/test/finnhub` — the candidate Anthropic key is round-
+    // tripped to Claude with the currently configured model. See
+    // [ConfigTestClient.testAnthropicKey].
+    given(testClient.testAnthropicKey("sk-ant-candidate"))
+      .willReturn(TestConfigResult(true, "OK — Claude (claude-opus-4-6) replied in 1.4s"))
+
+    mvc
+      .perform(
+        post("/api/config/test/anthropic")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(json.writeValueAsString(mapOf("value" to "sk-ant-candidate")))
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.ok").value(true))
+      .andExpect(jsonPath("$.message").value("OK — Claude (claude-opus-4-6) replied in 1.4s"))
   }
 
   @Test
