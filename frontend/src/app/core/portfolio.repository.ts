@@ -85,7 +85,7 @@ export interface CsvImportResult {
 
 /**
  * Port — contract the application depends on. Components inject this abstraction;
- * the concrete HTTP implementation is wired in `app.config.ts`.
+ * the concrete HTTP implementation is wired in `core/providers.ts`.
  */
 export abstract class PortfolioRepository {
   abstract getAll(): Observable<Portfolio[]>;

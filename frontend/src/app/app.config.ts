@@ -7,29 +7,11 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { routes } from './app.routes';
-import { PortfolioRepository } from './core/portfolio.repository';
-import { HttpPortfolioRepository } from './core/adapters/portfolio.http';
-import { SnapshotRepository } from './core/snapshot.repository';
-import { HttpSnapshotRepository } from './core/adapters/snapshot.http';
-import { MarketRepository } from './core/market.repository';
-import { HttpMarketRepository } from './core/adapters/market.http';
-import { WatchlistRepository } from './core/watchlist.repository';
-import { HttpWatchlistRepository } from './core/adapters/watchlist.http';
-import { NewsRepository } from './core/news.repository';
-import { HttpNewsRepository } from './core/adapters/news.http';
-import { ConfigRepository } from './core/config.repository';
-import { HttpConfigRepository } from './core/adapters/config.http';
-import { AnnotationRepository } from './core/annotation.repository';
-import { LocalStorageAnnotationRepository } from './core/adapters/annotation.local';
-import { AnalystRepository } from './core/analyst.repository';
-import { HttpAnalystRepository } from './core/adapters/analyst.http';
-import { EarningsRepository } from './core/earnings.repository';
-import { HttpEarningsRepository } from './core/adapters/earnings.http';
+import { provideRepositories } from './core/providers';
 import { LlmTimeoutService } from './core/llm-timeout.service';
 
 export const appConfig: ApplicationConfig = {
@@ -41,7 +23,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(),
-    provideAnimationsAsync(),
     // i18n — translation files live in `public/i18n/<lang>.json` so they are served as static
     // assets at `/i18n/<lang>.json`. Active language is driven by `LanguageService`
     // (signal + localStorage). Default to French (project's primary audience) ; English fallback
@@ -51,15 +32,7 @@ export const appConfig: ApplicationConfig = {
       fallbackLang: 'en',
     }),
     provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
-    { provide: PortfolioRepository, useClass: HttpPortfolioRepository },
-    { provide: SnapshotRepository, useClass: HttpSnapshotRepository },
-    { provide: MarketRepository, useClass: HttpMarketRepository },
-    { provide: WatchlistRepository, useClass: HttpWatchlistRepository },
-    { provide: NewsRepository, useClass: HttpNewsRepository },
-    { provide: ConfigRepository, useClass: HttpConfigRepository },
-    { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
-    { provide: AnalystRepository, useClass: HttpAnalystRepository },
-    { provide: EarningsRepository, useClass: HttpEarningsRepository },
+    provideRepositories(),
     // Prime the LLM timeout from `/api/config` before the first poll fires. Without this, the
     // first portfolio analysis or narrative request would use the in-memory default (400 s) even
     // if the user has set a different value via /settings/configuration — the override would only

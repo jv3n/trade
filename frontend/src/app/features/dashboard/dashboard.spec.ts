@@ -14,7 +14,6 @@
  */
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
@@ -92,7 +91,6 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
-        provideNoopAnimations(),
         provideRouter([]),
         provideTranslateService({ lang: 'en' }),
         { provide: PortfolioRepository, useValue: mockPortfolioRepository },

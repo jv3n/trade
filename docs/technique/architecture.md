@@ -198,7 +198,7 @@ Hexagonal léger sous `frontend/src/app/` :
 - **`core/`** — ports + adapters (HTTP par défaut, localStorage pour les états client-only)
   - `*.repository.ts` (abstract class — port). 9 repositories : Portfolio, Snapshot, Market, Watchlist, News, Config, **Annotation** (chart user annotations, single-user mono-machine), **Analyst** (recommandations analystes par ticker, Phase 2), **Earnings** (résultats trimestriels + next-date par ticker, Phase 2).
   - `adapters/*.http.ts` (HttpXxxRepository — HTTP adapter, défaut) ; `adapters/*.local.ts` pour les adapters client-only (`LocalStorageAnnotationRepository` v3 chart, swap futur vers backend-backed sans rewrite UI).
-  - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: <impl> }`
+  - Wiring : `core/providers.ts` exporte `provideRepositories(): EnvironmentProviders` (regroupe les 9 bindings `{ provide, useClass }`), appelé depuis `app.config.ts` au même titre que `provideRouter()` / `provideHttpClient()`.
   - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header
 - **`public/i18n/`** — fichiers de traduction `<lang>.json` (FR + EN), servis comme assets statiques par le HTTP loader de `ngx-translate`
 - **`features/`** — *primary adapters*

@@ -25,7 +25,6 @@ import { of, throwError } from 'rxjs';
 import { Configuration } from './configuration';
 import { ConfigEntry, ConfigRepository } from '../../../core/config.repository';
 import { LlmTimeoutService } from '../../../core/llm-timeout.service';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 const TWELVE: ConfigEntry = {
   key: 'market.twelvedata.api-key',
@@ -194,7 +193,6 @@ describe('Configuration', () => {
       imports: [Configuration],
       providers: [
         provideTranslateService({ lang: 'en' }),
-        provideAnimationsAsync(),
         { provide: ConfigRepository, useValue: repo },
         // The component triggers timeoutService.refresh() after save/reset of the LLM timeout
         // key. Real service would re-fetch /api/config — we mock it so the test focuses on the
