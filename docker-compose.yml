@@ -7,7 +7,10 @@ services:
       POSTGRES_USER: portfolioai
       POSTGRES_PASSWORD: portfolioai
     ports:
-      - "5432:5432"
+      # Le port hôte est configurable via `.env` (POSTGRES_HOST_PORT) en cas de conflit
+      # avec un autre service local. Le port interne du container reste 5432 — seul le
+      # mapping host:container change.
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -15,7 +18,7 @@ services:
     image: ollama/ollama:latest
     container_name: portfolioai-ollama
     ports:
-      - "11434:11434"
+      - "${OLLAMA_HOST_PORT:-11434}:11434"
     volumes:
       - ollama_data:/root/.ollama
 

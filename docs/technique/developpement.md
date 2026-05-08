@@ -28,6 +28,25 @@ Pour exposer sur le réseau local (accès depuis un autre appareil) :
 tilt up -- --host=<ton-ip-locale>
 ```
 
+### Conflit de port (`tilt up` échoue sur « port already allocated »)
+
+Les quatre ports hôte sont configurables via un fichier `.env` à la racine du repo. Procédure :
+
+```bash
+cp .env.example .env
+# Édite uniquement le port qui pose problème (p.ex. POSTGRES_HOST_PORT=5433)
+tilt up
+```
+
+| Variable | Défaut | Note |
+|---|---|---|
+| `POSTGRES_HOST_PORT` | `5432` | Conflit le plus courant (Postgres déjà installé localement) |
+| `OLLAMA_HOST_PORT` | `11434` | |
+| `BACKEND_HOST_PORT` | `8080` | Spring Boot natif (pas en container) |
+| `FRONTEND_HOST_PORT` | `4200` | Angular dev server |
+
+Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker-compose.yml`, le `Tiltfile` et `application.yml` retombent sur les défauts si la variable n'est pas définie. Seul le port côté **hôte** change ; les services dans les containers (Postgres, Ollama) gardent leur port natif en interne, et le backend Spring est automatiquement reconfiguré pour s'y connecter via les env vars injectées dans le `serve_cmd` du Tiltfile.
+
 ## Commandes Tilt utiles
 
 | Bouton Tilt | Action |

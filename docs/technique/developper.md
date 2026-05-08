@@ -45,6 +45,18 @@ Tilt ouvre son UI sur [http://localhost:10350/](http://localhost:10350/) et dém
 
 **Le premier démarrage prend 2-3 minutes** : Gradle télécharge les dépendances et `npm install` s'exécute. Les démarrages suivants sont quasi instantanés grâce au hot-reload de Tilt.
 
+#### Conflit de port avec un autre service local
+
+Si `tilt up` échoue avec un message du type « port already allocated » (le plus courant : un Postgres déjà installé localement occupe le `5432`), copie `.env.example` à la racine du repo en `.env` et édite uniquement le port qui pose problème :
+
+```bash
+cp .env.example .env
+# Édite .env et change p.ex. POSTGRES_HOST_PORT=5433
+tilt up
+```
+
+Le `.env` est gitignored ; tes ports locaux ne sortent pas du repo. Quatre ports sont configurables : `POSTGRES_HOST_PORT`, `OLLAMA_HOST_PORT`, `BACKEND_HOST_PORT`, `FRONTEND_HOST_PORT`. Le `docker-compose.yml`, le `Tiltfile` et `application.yml` retombent sur les défauts (5432 / 11434 / 8080 / 4200) si la variable n'est pas définie. Note : seul le port côté **hôte** change ; les services dans les containers Postgres / Ollama écoutent toujours sur leurs ports natifs, et le backend Spring est reconfiguré automatiquement pour s'y connecter.
+
 ### Configurer le LLM
 
 Le backend a besoin d'un LLM pour générer les narratifs. Crée le fichier `backend/src/main/resources/application-local.yml` (gitignoré, jamais commit). Deux options selon ton contexte :

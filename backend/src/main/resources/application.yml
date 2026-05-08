@@ -1,9 +1,17 @@
+server:
+  # Port HTTP du backend natif. Surchargeable via `BACKEND_HOST_PORT` dans `.env` à la racine
+  # du repo en cas de conflit avec un autre service local (cf. `.env.example`).
+  port: ${BACKEND_HOST_PORT:8080}
+
 spring:
   application:
     name: portfolioai-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/portfolioai
+    # Le port Postgres côté hôte est configurable via `POSTGRES_HOST_PORT` dans `.env`
+    # (le container reste en 5432 en interne, seul le mapping host:container change). Cf.
+    # `.env.example` pour la procédure quand 5432 est déjà occupé localement.
+    url: jdbc:postgresql://localhost:${POSTGRES_HOST_PORT:5432}/portfolioai
     username: portfolioai
     password: portfolioai
     driver-class-name: org.postgresql.Driver
