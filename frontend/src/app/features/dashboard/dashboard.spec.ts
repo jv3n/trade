@@ -526,4 +526,226 @@ describe('Dashboard', () => {
       expect(callCount).toBe(firstCallCount);
     });
   });
+
+  /**
+   * Sidebar portfolios are reorderable via Angular CDK drag-drop. The user-chosen order is persisted
+   * to `localStorage` (`portfolio-order` = JSON `string[]` of IDs) so a reload preserves the layout.
+   *
+   * What we pin :
+   * - **localStorage seed is honoured on init** — the stored order wins over the server order. Two
+   *   reasons : (1) the user's preference is the source of truth in the UI ; (2) the API returns
+   *   the natural insertion order which has no semantic meaning to the user.
+   * - **Unknown IDs in storage don't crash** — a stale entry (portfolio renamed-then-deleted, or
+   *   imported on another machine) is just skipped, the rest of the order is honoured.
+   * - **New portfolios land at the end** — if the user imports a fresh CSV, the new portfolios are
+   *   *not* in localStorage yet ; they should appear at the bottom rather than displacing pinned
+   *   ones invisibly.
+   * - **`onPortfolioDrop` persists** — a drop mutates the signal AND writes the new ID sequence,
+   *   so a reload finds the same layout.
+   */
+  describe('portfolio reordering', () => {
+    const buildPortfolio = (id: string, name: string): Portfolio => ({
+      id,
+      name,
+      description: null,
+      createdAt: '',
+      updatedAt: '',
+      assetCount: 1,
+      totalBookValueCad: 1000,
+    });
+
+    beforeEach(() => {
+      localStorage.removeItem('portfolio-order');
+    });
+
+    it('applies the persisted order from localStorage on init', async () => {
+      // Server returns [P1, P2, P3] but the user's saved preference is [P3, P1, P2] — the saved
+      // order wins so the user's last choice survives a reload.
+      localStorage.setItem('portfolio-order', JSON.stringify(['p3', 'p1', 'p2']));
+      mockPortfolioRepository.getAll = () =>
+        of([
+          buildPortfolio('p1', 'CELI'),
+          buildPortfolio('p2', 'REER'),
+          buildPortfolio('p3', 'Crypto'),
+        ]);
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      const ids = fixture2.componentInstance.portfolios().map((p) => p.id);
+      expect(ids).toEqual(['p3', 'p1', 'p2']);
+    });
+
+    it('skips unknown IDs in localStorage and keeps the rest of the order', async () => {
+      // `p-deleted` was on the user's list yesterday but has since been removed from the BDD ;
+      // the dashboard mustn't crash and the surviving portfolios should still be reordered.
+      localStorage.setItem('portfolio-order', JSON.stringify(['p-deleted', 'p2', 'p1']));
+      mockPortfolioRepository.getAll = () =>
+        of([buildPortfolio('p1', 'CELI'), buildPortfolio('p2', 'REER')]);
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      const ids = fixture2.componentInstance.portfolios().map((p) => p.id);
+      expect(ids).toEqual(['p2', 'p1']);
+    });
+
+    it('places newly imported portfolios at the end so they do not displace pinned ones invisibly', async () => {
+      // The user pinned [P2, P1]. Tomorrow they import a CSV adding P3 — it should land at the
+      // bottom of the sidebar, not somewhere in the middle, so the pinned order stays intact.
+      localStorage.setItem('portfolio-order', JSON.stringify(['p2', 'p1']));
+      mockPortfolioRepository.getAll = () =>
+        of([
+          buildPortfolio('p1', 'CELI'),
+          buildPortfolio('p2', 'REER'),
+          buildPortfolio('p3', 'New'),
+        ]);
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      const ids = fixture2.componentInstance.portfolios().map((p) => p.id);
+      expect(ids).toEqual(['p2', 'p1', 'p3']);
+    });
+
+    it('onPortfolioDrop reorders the signal and persists the new ID sequence', () => {
+      component.portfolios.set([
+        buildPortfolio('p1', 'CELI'),
+        buildPortfolio('p2', 'REER'),
+        buildPortfolio('p3', 'Crypto'),
+      ]);
+
+      // Drop p3 to position 0 (mirror what CDK fires when the user drags the third item to the
+      // top of the list).
+      component.onPortfolioDrop({
+        previousIndex: 2,
+        currentIndex: 0,
+      } as unknown as Parameters<typeof component.onPortfolioDrop>[0]);
+
+      const ids = component.portfolios().map((p) => p.id);
+      expect(ids).toEqual(['p3', 'p1', 'p2']);
+      expect(JSON.parse(localStorage.getItem('portfolio-order') ?? '[]')).toEqual([
+        'p3',
+        'p1',
+        'p2',
+      ]);
+    });
+
+    it('onPortfolioDrop is a no-op when the index does not change', () => {
+      // CDK fires a drop event even on a click-and-release — we don't want to write to localStorage
+      // in that case (it's not a user-chosen reorder, just noise from a stray pointer).
+      component.portfolios.set([buildPortfolio('p1', 'CELI'), buildPortfolio('p2', 'REER')]);
+
+      component.onPortfolioDrop({
+        previousIndex: 1,
+        currentIndex: 1,
+      } as unknown as Parameters<typeof component.onPortfolioDrop>[0]);
+
+      expect(localStorage.getItem('portfolio-order')).toBeNull();
+    });
+
+    it('falls back to server order when localStorage holds a corrupt value', async () => {
+      // Defensive — a bad JSON shouldn't break the dashboard. We log nothing and just behave as if
+      // no preference was set ; the next manual reorder overwrites the bad value cleanly.
+      localStorage.setItem('portfolio-order', 'not-json');
+      mockPortfolioRepository.getAll = () =>
+        of([buildPortfolio('p1', 'CELI'), buildPortfolio('p2', 'REER')]);
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      const ids = fixture2.componentInstance.portfolios().map((p) => p.id);
+      expect(ids).toEqual(['p1', 'p2']);
+    });
+  });
+
+  /**
+   * Sidebar accordions (Portfolios / Tickers détenus / Watchlist) keep their open/closed state
+   * across reloads via `localStorage` (key `dashboard-sidebar-open` = JSON object with three
+   * booleans). Default is "all open" — a fresh user sees the full dashboard on first visit.
+   *
+   * What we pin :
+   * - **Saved state hydrates the three signals on init** so the user's last layout survives a
+   *   reload.
+   * - **Per-key fallback** — a partial saved object (e.g. shipped before a new accordion was
+   *   added) only resets the missing keys, the user's choices on the existing ones are preserved.
+   * - **Corrupt JSON falls back to all-open** rather than crashing.
+   * - **A toggle persists** — flipping `portfoliosOpen()` writes the new state synchronously (via
+   *   the effect registered in the component constructor), so a reload finds the same layout.
+   */
+  describe('sidebar accordion persistence', () => {
+    beforeEach(() => {
+      localStorage.removeItem('dashboard-sidebar-open');
+    });
+
+    it('hydrates the open state from localStorage on init', async () => {
+      localStorage.setItem(
+        'dashboard-sidebar-open',
+        JSON.stringify({ portfolios: false, ownedTickers: true, watchlist: false }),
+      );
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      expect(fixture2.componentInstance.portfoliosOpen()).toBe(false);
+      expect(fixture2.componentInstance.ownedTickersOpen()).toBe(true);
+      expect(fixture2.componentInstance.watchlistOpen()).toBe(false);
+    });
+
+    it('keeps the user choices for existing keys when a partial object is stored', async () => {
+      // Defends a forward-compat path : if a future version adds a 4th accordion, an older saved
+      // state with only 3 keys mustn't reset the user's existing choices. Each missing key falls
+      // back to its default *individually*, not the whole object.
+      localStorage.setItem(
+        'dashboard-sidebar-open',
+        JSON.stringify({ portfolios: false }), // ownedTickers + watchlist absent
+      );
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      expect(fixture2.componentInstance.portfoliosOpen()).toBe(false);
+      expect(fixture2.componentInstance.ownedTickersOpen()).toBe(true);
+      expect(fixture2.componentInstance.watchlistOpen()).toBe(true);
+    });
+
+    it('falls back to all-open when localStorage holds a corrupt value', async () => {
+      localStorage.setItem('dashboard-sidebar-open', 'not-json');
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      expect(fixture2.componentInstance.portfoliosOpen()).toBe(true);
+      expect(fixture2.componentInstance.ownedTickersOpen()).toBe(true);
+      expect(fixture2.componentInstance.watchlistOpen()).toBe(true);
+    });
+
+    it('persists the new state to localStorage when a section toggles', async () => {
+      // The effect runs on every signal change. We wait for it via `whenStable` to mirror what
+      // the runtime does — the user's click flips the signal, the next change-detection tick
+      // fires the effect, and localStorage is updated before the next paint. We explicitly set
+      // all three signals (rather than relying on their initial values) so the test stays
+      // deterministic regardless of what a previous test may have left in localStorage before
+      // the outer fixture was constructed.
+      component.portfoliosOpen.set(false);
+      component.ownedTickersOpen.set(true);
+      component.watchlistOpen.set(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const saved = JSON.parse(localStorage.getItem('dashboard-sidebar-open') ?? '{}');
+      expect(saved).toEqual({
+        portfolios: false,
+        ownedTickers: true,
+        watchlist: false,
+      });
+    });
+  });
 });

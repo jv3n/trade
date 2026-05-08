@@ -1,8 +1,9 @@
-import { Component, DestroyRef, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal, computed, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
@@ -33,12 +34,68 @@ import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.reposi
  */
 const WATCHLIST_SEARCH_DEBOUNCE_MS = 300;
 
+/**
+ * Persists the user-chosen portfolio order across reloads. JSON-encoded `string[]` of IDs ; absence
+ * means "no preference, use server order". Single-user single-device by design — if multi-device
+ * matters one day we'd add a `display_order INTEGER` column on `portfolio` and a save endpoint.
+ */
+const PORTFOLIO_ORDER_STORAGE_KEY = 'portfolio-order';
+
+/**
+ * Persists the open/closed state of the three sidebar accordions (portfolios, owned tickers,
+ * watchlist) so the user's last layout survives a reload. Single JSON object so we read/write once
+ * per change rather than three independent keys. Default is "all open" — a fresh user sees the
+ * full dashboard on first visit.
+ */
+const SIDEBAR_OPEN_STORAGE_KEY = 'dashboard-sidebar-open';
+
+interface SidebarOpenState {
+  portfolios: boolean;
+  ownedTickers: boolean;
+  watchlist: boolean;
+}
+
+const SIDEBAR_OPEN_DEFAULT: SidebarOpenState = {
+  portfolios: true,
+  ownedTickers: true,
+  watchlist: true,
+};
+
+/**
+ * Reads the persisted sidebar accordion state from localStorage. Defensive against missing keys
+ * (a sub-object shipped before a new section was added) and corrupt JSON — falls back to
+ * [SIDEBAR_OPEN_DEFAULT] in both cases. Per-key fallback (rather than whole-object) so adding a
+ * new accordion later doesn't reset the user's choices for the existing ones.
+ */
+function readSidebarOpenState(): SidebarOpenState {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_OPEN_STORAGE_KEY);
+    if (!raw) return { ...SIDEBAR_OPEN_DEFAULT };
+    const parsed = JSON.parse(raw) as Partial<SidebarOpenState>;
+    return {
+      portfolios:
+        typeof parsed.portfolios === 'boolean'
+          ? parsed.portfolios
+          : SIDEBAR_OPEN_DEFAULT.portfolios,
+      ownedTickers:
+        typeof parsed.ownedTickers === 'boolean'
+          ? parsed.ownedTickers
+          : SIDEBAR_OPEN_DEFAULT.ownedTickers,
+      watchlist:
+        typeof parsed.watchlist === 'boolean' ? parsed.watchlist : SIDEBAR_OPEN_DEFAULT.watchlist,
+    };
+  } catch {
+    return { ...SIDEBAR_OPEN_DEFAULT };
+  }
+}
+
 @Component({
   selector: 'app-dashboard',
   imports: [
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
+    DragDropModule,
     MatAutocompleteModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -113,10 +170,28 @@ export class Dashboard implements OnInit {
   // ---- Sidebar accordion state ----
   // Three independent open/close toggles so the user can keep their preferred sections expanded
   // — the portfolio list grows long when many CSVs are imported, and folding it uncovers the
-  // ownedTickers / watchlist shortcuts without scrolling.
-  portfoliosOpen = signal(true);
-  ownedTickersOpen = signal(true);
-  watchlistOpen = signal(true);
+  // ownedTickers / watchlist shortcuts without scrolling. State is hydrated from localStorage at
+  // construction time and persisted on every change via the effect registered in the constructor
+  // (mirror of `ThemeService` and `LanguageService` patterns).
+  portfoliosOpen = signal(readSidebarOpenState().portfolios);
+  ownedTickersOpen = signal(readSidebarOpenState().ownedTickers);
+  watchlistOpen = signal(readSidebarOpenState().watchlist);
+
+  constructor() {
+    effect(() => {
+      const state: SidebarOpenState = {
+        portfolios: this.portfoliosOpen(),
+        ownedTickers: this.ownedTickersOpen(),
+        watchlist: this.watchlistOpen(),
+      };
+      try {
+        localStorage.setItem(SIDEBAR_OPEN_STORAGE_KEY, JSON.stringify(state));
+      } catch {
+        // localStorage unavailable (private mode, quota exceeded) — silently ignore. The user's
+        // session keeps the current state in memory ; only the cross-reload persistence is lost.
+      }
+    });
+  }
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -210,9 +285,10 @@ export class Dashboard implements OnInit {
     this.loading.set(true);
     this.portfolioRepository.getAll().subscribe({
       next: (portfolios) => {
-        this.portfolios.set(portfolios);
-        if (portfolios.length > 0 && !this.selectedPortfolio()) {
-          this.selectPortfolio(portfolios[0]);
+        const ordered = this.applyPersistedOrder(portfolios);
+        this.portfolios.set(ordered);
+        if (ordered.length > 0 && !this.selectedPortfolio()) {
+          this.selectPortfolio(ordered[0]);
         }
         this.loading.set(false);
       },
@@ -221,6 +297,61 @@ export class Dashboard implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  /**
+   * Reorders portfolios coming from the API to match the user's saved drag-drop preference. IDs
+   * still on disk are placed first in their saved order ; portfolios *not* in localStorage (newly
+   * imported, freshly visible after a CSV reload) keep their server order and land at the end —
+   * the user discovers them at the bottom rather than them silently displacing pinned ones.
+   */
+  private applyPersistedOrder(portfolios: Portfolio[]): Portfolio[] {
+    const savedOrder = this.readPersistedOrder();
+    if (savedOrder.length === 0) return portfolios;
+    const byId = new Map(portfolios.map((p) => [p.id, p]));
+    const ordered: Portfolio[] = [];
+    for (const id of savedOrder) {
+      const found = byId.get(id);
+      if (found) {
+        ordered.push(found);
+        byId.delete(id);
+      }
+    }
+    return [...ordered, ...byId.values()];
+  }
+
+  private readPersistedOrder(): string[] {
+    try {
+      const raw = localStorage.getItem(PORTFOLIO_ORDER_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === 'string')
+        : [];
+    } catch {
+      // Corrupt JSON shouldn't break the dashboard — drop the bad value and fall back to server
+      // order. The next manual reorder will overwrite it cleanly.
+      return [];
+    }
+  }
+
+  private persistOrder(portfolios: Portfolio[]): void {
+    const ids = portfolios.map((p) => p.id);
+    localStorage.setItem(PORTFOLIO_ORDER_STORAGE_KEY, JSON.stringify(ids));
+  }
+
+  /**
+   * Handler bound to `cdkDropListDropped` on the portfolio sidebar list. Mutates the local order
+   * via [moveItemInArray] (CDK's in-place reorder helper) and persists the new ID sequence to
+   * localStorage so a reload keeps the layout. Single-source-of-truth : the `portfolios` signal
+   * itself.
+   */
+  onPortfolioDrop(event: CdkDragDrop<Portfolio[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    const next = [...this.portfolios()];
+    moveItemInArray(next, event.previousIndex, event.currentIndex);
+    this.portfolios.set(next);
+    this.persistOrder(next);
   }
 
   /**

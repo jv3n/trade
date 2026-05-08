@@ -61,6 +61,7 @@
     "assetCount": "{{count}} actif(s)",
     "totalLabel": "Valeur comptable totale (CAD)",
     "noPortfolios": "Importez un CSV pour créer vos portefeuilles.",
+    "reorderPortfolio": "Glisser pour réordonner",
     "noAssets": "Aucune position — importez un CSV pour peupler ce portefeuille.",
     "ownedTickersLabel": "Tickers détenus",
     "ownedTickersTooltip": "Voir le dossier {{symbol}} (présent dans {{count}} portefeuille(s))",

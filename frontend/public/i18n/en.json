@@ -61,6 +61,7 @@
     "assetCount": "{{count}} asset(s)",
     "totalLabel": "Total book value (CAD)",
     "noPortfolios": "Import a CSV to create your portfolios.",
+    "reorderPortfolio": "Drag to reorder",
     "noAssets": "No positions — import a CSV to populate this portfolio.",
     "ownedTickersLabel": "Owned tickers",
     "ownedTickersTooltip": "Open the {{symbol}} dossier (held in {{count}} portfolio(s))",

@@ -40,23 +40,35 @@
           @if (loading()) {
             <p class="loading">{{ 'common.loadingDots' | translate }}</p>
           } @else {
-            <ul class="portfolio-list">
+            <ul class="portfolio-list" cdkDropList (cdkDropListDropped)="onPortfolioDrop($event)">
               @for (p of portfolios(); track p.id) {
                 <li
                   class="portfolio-item"
+                  cdkDrag
                   role="button"
                   tabindex="0"
                   [class.active]="selectedPortfolio()?.id === p.id"
                   (click)="selectPortfolio(p)"
                   (keydown.enter)="selectPortfolio(p)"
                 >
-                  <span class="portfolio-name">{{ p.name }}</span>
-                  <span class="portfolio-count">{{
-                    'dashboard.assetCount' | translate: { count: p.assetCount }
-                  }}</span>
-                  <span class="portfolio-total"
-                    >{{ p.totalBookValueCad | number: '1.0-0' }} CAD</span
+                  <button
+                    type="button"
+                    class="portfolio-drag-handle"
+                    cdkDragHandle
+                    [attr.aria-label]="'dashboard.reorderPortfolio' | translate"
+                    (click)="$event.stopPropagation()"
                   >
+                    <mat-icon>drag_indicator</mat-icon>
+                  </button>
+                  <div class="portfolio-content">
+                    <span class="portfolio-name">{{ p.name }}</span>
+                    <span class="portfolio-count">{{
+                      'dashboard.assetCount' | translate: { count: p.assetCount }
+                    }}</span>
+                    <span class="portfolio-total"
+                      >{{ p.totalBookValueCad | number: '1.0-0' }} CAD</span
+                    >
+                  </div>
                 </li>
               } @empty {
                 <li class="empty-state">{{ 'dashboard.noPortfolios' | translate }}</li>

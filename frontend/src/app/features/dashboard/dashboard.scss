@@ -148,19 +148,47 @@
 
 .portfolio-item {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.6rem 0.75rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.5rem 0.6rem 0.25rem;
   border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.15s;
+  background: var(--color-surface);
 
   &:hover {
     background: var(--color-surface-2);
+
+    .portfolio-drag-handle {
+      // Reveal the handle once the user is intentionally hovering — keeping it always visible
+      // would clutter the sidebar for users who never reorder.
+      opacity: 1;
+    }
   }
   &.active {
     background: var(--color-accent-soft);
     border-left: 2px solid var(--color-accent);
+    padding-left: calc(0.25rem - 2px); // compensate the border so content doesn't shift
+  }
+
+  // CDK gives the dragged element a `.cdk-drag-preview` clone — keep it readable in flight.
+  &.cdk-drag-preview {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    background: var(--color-surface-2);
+  }
+
+  // Placeholder where the dragged item used to be — collapse it visually so the list "snaps"
+  // without leaving a hole.
+  &.cdk-drag-placeholder {
+    opacity: 0.3;
+  }
+
+  .portfolio-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 0;
   }
 
   .portfolio-name {
@@ -179,6 +207,44 @@
     font-variant-numeric: tabular-nums;
     margin-top: 0.1rem;
   }
+}
+
+.portfolio-drag-handle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-dim);
+  cursor: grab;
+  opacity: 0; // hidden until row hover or CDK drag
+  transition: opacity 0.12s;
+
+  &:active {
+    cursor: grabbing;
+  }
+  &:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Smoothly animate the surrounding items when a drop happens — CDK requires `transition` on the
+// items being shifted (not on the dragged one).
+.portfolio-list.cdk-drop-list-dragging .portfolio-item:not(.cdk-drag-placeholder) {
+  transition: transform 0.18s cubic-bezier(0, 0, 0.2, 1);
 }
 
 // Contenu principal
