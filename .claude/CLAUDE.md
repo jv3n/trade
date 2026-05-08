@@ -47,7 +47,7 @@ trade/
 ├── docs/
 │   ├── metier/              # vision.md, fonctionnalites.md
 │   ├── technique/           # architecture.md, developpement.md, ddd.md
-│   ├── projet/              # backlog.md, sources.md, commit-conventions.md
+│   ├── projet/              # backlog.md (open work), journal-livraisons.md (shipped), sources.md, commit-conventions.md
 │   ├── data-input/          # fake sample CSVs (versioned)
 │   └── data-input-local/    # real Wealthsimple exports (gitignored)
 ├── .github/workflows/       # CI: backend.yml, frontend.yml, docs.yml
@@ -177,18 +177,23 @@ The portfolio is **read-only** in the UI — it mirrors the broker's reality. Th
 
 ### Backlog
 
-`docs/projet/backlog.md` is the source of truth for feature tracking. After implementing a feature:
+Feature tracking is split across two files :
 
-1. Move the line from "À faire" to "Terminé"
-2. Add concise technical notes in the Notes column
+- **`docs/projet/backlog.md`** — only what's still open : `⏳ À faire`, `🚧 En cours`, `🧊 Gelé`, `❌ Décommissionné`, plus the **Dette technique** section. Lookup-friendly: a planning session opens this file and reads only what's left.
+- **`docs/projet/journal-livraisons.md`** — the historical record of shipped features (`✅`), grouped by phase, reverse-chronological within each phase. Detailed implementation notes live here so the backlog stays scannable.
 
-**Ordering convention** — whenever you modify `backlog.md`, take the opportunity to reorder the affected list (the section you just touched, not the whole file) so the reading flow goes from "what to attack next" to "what's done":
+**After implementing a feature** :
+
+1. Add the new entry to `journal-livraisons.md` under the right phase section, at the **top** of that phase (most recent first). Include a `Livré YYYY-MM-DD` lead so the chronology is unambiguous when entries pile up.
+2. Remove the corresponding `⏳` row from `backlog.md` (or, if the ticket only became ✅ partially, narrow its description to what remains).
+3. Don't write the same content in both files — backlog only points to the journal when needed (e.g. closed phase headers).
+
+**Ordering convention** — whenever you modify `backlog.md`, take the opportunity to reorder the affected list (the section you just touched, not the whole file) so the reading flow goes from "what to attack next" to "less urgent" :
 
 1. **⏳ À faire — sorted by priority descending** : 🔴 Critique on top, then 🟡 Moyenne, then 🟢 Basse. Within the same priority, ordering is free (recent items can stay near the top).
 2. **🚧 En cours** (rare) : right after the last 🔴 if any.
-3. **✅ Livré / Terminé** : at the bottom, recent first within the section.
 
-This applies per-section (Phase 0, Phase 1, Phase 2, Phase 2.5, Dette technique…). Don't shuffle entries you didn't touch — reorder only the section you're editing in the same pass. Goal : a session that opens the backlog to plan reads the urgent ⏳ first, the historical ✅ last.
+This applies per-section (Phase 2.5, Phase 3, Phase 4, Phase 5, Dette technique…). Don't shuffle entries you didn't touch — reorder only the section you're editing in the same pass.
 
 ### Documentation
 
@@ -202,7 +207,8 @@ Files under `docs/` describe the actual state of the project. Keep them in sync 
 | `docs/technique/developpement.md` | Local config changes, a Tilt command is added                             |
 | `docs/technique/developper.md`    | Newcomer onboarding flow changes (new prerequisite, install step, common failure mode worth flagging) |
 | `docs/projet/sources.md`          | A data source is added or removed                                         |
-| `docs/projet/backlog.md`          | A Phase 1+ feature is implemented, frozen, or its priority changes        |
+| `docs/projet/backlog.md`          | Holds **only** ⏳/🚧/❌/🧊 + Dette technique. A new ticket is filed, a priority shifts, or a feature is frozen/decommissioned. When a ✅ entry would normally be added, write it in `journal-livraisons.md` instead and leave only a pointer (or nothing) in the backlog. |
+| `docs/projet/journal-livraisons.md` | A feature is **shipped** (the ✅ entry that used to live in `backlog.md`). Reverse-chronological by phase. Detailed implementation notes live here ; the backlog stays scannable. |
 | `docs/projet/audits/`             | A code review is performed — archive the full report as `YYYY-MM-DD-titre-court.md` and append a line to `audits/index.md`. Don't auto-promote findings to the backlog ; the user decides which become actions. |
 | `docs/CHANGELOG.md`               | At the **end of every `/doc-maintainer` patch session**, append/extend a dated entry summarising the doc files modified and why. See `.claude/skills/doc-maintainer/SKILL.md` for the format and the per-area grouping. The doc-maintainer subagent itself stays read-only ; the main thread writes the entry. |
 
