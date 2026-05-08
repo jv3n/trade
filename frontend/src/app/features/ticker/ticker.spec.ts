@@ -1347,6 +1347,21 @@ describe('TickerPage', () => {
       ],
     };
 
+    it('marks the panel as loading while the request is in flight', () => {
+      // Pin the transient state — between subscribe() and the first emission, `analystLoading()`
+      // is true so the template can render a spinner. The terminal states (populated / 404 / 503)
+      // are covered by the next three tests ; this one exists so a refactor that drops the eager
+      // `analystLoading.set(true)` in `loadAnalyst` is caught by the suite.
+      const inFlight = new Subject<AnalystSnapshot>();
+      analyst.getForSymbol.mockReturnValue(inFlight.asObservable());
+      fixture.detectChanges();
+
+      expect(component.analystLoading()).toBe(true);
+      expect(component.analyst()).toBeNull();
+      expect(component.analystError()).toBeNull();
+      expect(component.analystNotCovered()).toBe(false);
+    });
+
     it('hydrates the snapshot on init when the symbol is covered', () => {
       analyst.getForSymbol.mockReturnValue(of(populatedSnapshot));
       fixture.detectChanges();
@@ -1469,6 +1484,21 @@ describe('TickerPage', () => {
         { period: '2025-12-31', epsEstimate: 1.2, epsActual: 1.31, surprisePercent: 9.17 },
       ],
     };
+
+    it('marks the panel as loading while the request is in flight', () => {
+      // Pin the transient state — between subscribe() and the first emission, `earningsLoading()`
+      // is true so the template can render a spinner. The terminal states (populated / 404 / 503)
+      // are covered by the next three tests ; this one exists so a refactor that drops the eager
+      // `earningsLoading.set(true)` in `loadEarnings` is caught by the suite.
+      const inFlight = new Subject<EarningsSnapshot>();
+      earnings.getForSymbol.mockReturnValue(inFlight.asObservable());
+      fixture.detectChanges();
+
+      expect(component.earningsLoading()).toBe(true);
+      expect(component.earnings()).toBeNull();
+      expect(component.earningsError()).toBeNull();
+      expect(component.earningsNotCovered()).toBe(false);
+    });
 
     it('hydrates the snapshot on init when the symbol has earnings data', () => {
       earnings.getForSymbol.mockReturnValue(of(populatedSnapshot));
