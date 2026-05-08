@@ -1,8 +1,8 @@
 # Fonctionnalités
 
-## Phase 0 — Fondation (terminé)
+## Phase 0 — Fondation (terminé, partiellement décommissionnée)
 
-Tout ce qui constitue l'ossature de l'app aujourd'hui. **Une partie est conservée et utilisée**, **une partie est gelée** (le code reste en l'état mais n'est plus dans le flow utilisateur principal — voir plus bas).
+Tout ce qui constitue l'ossature de l'app aujourd'hui. **Une partie est conservée et utilisée**, **une partie a été décommissionnée en Phase 2.5** (le code et les tables associées ont été supprimés — voir plus bas).
 
 ### Conservé
 
@@ -18,36 +18,33 @@ Page **Import** : drag & drop d'un export Wealthsimple (multi-fichiers supporté
 
 Page **Suivi** : timeline des imports groupés par `batch_id`, expand par compte, détail des positions avec valeur de marché et P&L.
 
-#### Settings (back-office)
-
-Page **Settings** avec sidenav :
-- **Sources de données** : activer/désactiver les flux (RSS / market / macro / crypto). Conservé pour la Phase 1 — Twelve Data sert de source primaire.
-- **Tester une source** : RSS uniquement (parse + liste articles). Étendu en Phase 1 pour tester un fetch ticker via le provider configuré.
-- **Aperçu du prompt** : visualisation du prompt qui serait envoyé au LLM (à adapter pour le prompt par-ticker en Phase 1).
-
 #### Thème clair / sombre
 
 Toggle dans le header (sombre par défaut). Tokens CSS, persistance localStorage, transitions fluides.
 
 #### Architecture frontend
 
-Ports & adapters léger sous `core/` (Phase 0 : 4 repositories — Portfolio, Analysis, Settings, Snapshot) + UI dans `features/`. *Phases 1+ ont enrichi à 8 repositories — voir `docs/technique/architecture.md` pour la liste à jour.*
+Ports & adapters léger sous `core/` + UI dans `features/`. *Voir `docs/technique/architecture.md` pour la liste des repositories à jour.*
 
 #### Infra et qualité
 
 Tilt + Docker Compose, CI GitHub Actions (backend Gradle + Postgres / frontend Vitest), Flyway, ports/adapters Spring, `@Async` sur bean séparé, tests d'intégration sur vrai PostgreSQL.
 
-### Gelé (en mode module désactivé)
+### Décommissionné (Phase 2.5)
 
 #### Ingestion RSS
 
-Module `ingestion/` complet — scheduler Rome, déduplication, 25 sources seedées, parsing robuste (DOCTYPE, `&` nus, détection HTML). **Conservé en place** mais n'alimente plus le flow principal en Phase 1.
+Module `ingestion/` (scheduler Rome, déduplication, 25 sources seedées, parsing robuste DOCTYPE / `&` nus / détection HTML) **supprimé**. Tables `feed_source` et `feed_article` droppées (migration V6). La Phase 4 « Réintégration Phase 0 » repartira de sources Phase 1+2 (snapshots ticker + analyst + earnings + news per-ticker), pas d'un nouveau scraping RSS.
 
 #### Analyse portefeuille (LLM rebalancing)
 
-Pipeline `AnalysisExecutor` complet : `AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator` (8 règles), `RecommendationPersister`, `AnalysisJobStore`. **Conservé en place**, plus accessible depuis le Dashboard. Sera réactivé/repensé éventuellement en Phase 4 quand le portefeuille servira à donner du contexte aux dossiers ticker.
+Pipeline `AnalysisExecutor` (`AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator` 8 règles, `RecommendationPersister`, `AnalysisJobStore`) **supprimé**. Tables `recommendation`, `recommendation_action`, `recommendation_score`, `analysis_job` droppées (V6). Pages frontend `/recommendations` et `/history` supprimées. Le replacement Phase 4 sera un job `PortfolioAggregation` qui agrège les snapshots ticker existants — pas un re-prompt LLM portfolio-wide.
 
-> **Pourquoi gelé et pas supprimé** : c'est un module au sens propre — découpé proprement, testable, avec ses propres entités. Le supprimer ne nettoierait pas grand-chose et brûlerait l'investissement. On le rallume plus tard si on en a besoin.
+#### Settings RSS back-office
+
+Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings garde `configuration/` (config runtime Phase 2) et `prompt-preview/` (aperçu prompt narratif Phase 1).
+
+> **Pourquoi décommissionné maintenant** : la Phase 0 était gelée depuis Phase 1, mais le module restait chargé et `AnalysisExecutor` chargeait encore les 200 derniers articles RSS dans le prompt LLM même quand le scheduler était off — cause d'un timeout 400 s observé sur Ollama cold-start le 2026-05-07. Plutôt que de patcher le legacy, on a tranché : drop des tables et modules, le replacement Phase 4 (PortfolioAggregation au-dessus des snapshots ticker) ne réutilisera rien de la plomberie RSS+executor.
 
 ---
 
@@ -135,7 +132,7 @@ Deux sources visibles côté UI :
 
 - **Croisement portefeuille × insights ticker** : sur le Dashboard, afficher pour chaque position le sentiment ticker + alerte si RSI extrême ou drawdown important
 - **Watchlist alertes** : seuils déclencheurs (RSI > 70, MA50 cassée, drawdown > 20%)
-- **Réintégration de la Phase 0 gelée** : les recommandations portefeuille reviennent, mais en agrégeant les insights ticker plutôt qu'en les recalculant
+- **Réintégration de la Phase 0 décommissionnée** : les recommandations portefeuille reviennent, mais en agrégeant les insights ticker plutôt qu'en les recalculant
 - **Paper trading** : simulation d'exécution
 - **Multi-broker** : ne plus dépendre exclusivement du CSV Wealthsimple
 

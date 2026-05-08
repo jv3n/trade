@@ -17,9 +17,8 @@ Chaque contexte est autonome et possède ses propres couches.
 | `analyst` | Recommandations d'analystes par ticker (consensus monthly + price target 12 mois, Finnhub + mock), cache court | ✅ Phase 2 |
 | `earnings` | Earnings trimestriels par ticker (4 derniers Q EPS estimate/actual/surprise % + prochaine date d'annonce, Finnhub + mock), cache court | ✅ Phase 2 |
 | `config` | Surcharges runtime des défauts YAML (clés API, TTL cache, providers actifs) | ✅ Phase 2 |
-| `ingestion` | Sources RSS, articles, scheduler de collecte | 🧊 Legacy gelé Phase 0 |
 
-> Le contexte `analysis` voit son périmètre changer à la Phase 1 : il passe d'orchestration de recommandations portefeuille (8 règles de validation, targetWeight, action enum) à génération de narratifs par ticker (`{summary, sentiment, keyPoints[]}`). Le code legacy reste en place mais n'est plus exposé.
+> Le contexte `analysis` a vu son périmètre changer à la Phase 1 : il a été réorienté d'une orchestration de recommandations portefeuille (Phase 0 — 8 règles de validation, targetWeight, action enum) vers la génération de narratifs par ticker (`{summary, sentiment, keyPoints[]}`). Le code Phase 0 a été supprimé en Phase 2.5 ; le contexte `ingestion` (RSS) a été décommissionné dans la même opération.
 
 ## Structure de chaque contexte
 
@@ -111,14 +110,6 @@ Les services d'`analysis` (Phase 1 narratif) peuvent dépendre du repository et 
 ```
 analysis.application → market.application                   ✓ (Phase 1)
 analysis.application → portfolio.infrastructure.persistence ✓ (récupérer la liste des tickers détenus)
-```
-
-Les dépendances héritées de la Phase 0 restent valides pour le code gelé :
-
-```
-analysis (legacy) → portfolio.infrastructure.persistence  ✓ (gelé)
-analysis (legacy) → ingestion.infrastructure.persistence  ✓ (gelé)
-analysis.domain   → portfolio.domain                      ✓ (relation JPA gelée)
 ```
 
 ## Conventions de nommage

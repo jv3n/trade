@@ -25,8 +25,6 @@
 │  Twelve Data (REST + apikey, défaut prod)   │
 │  Finnhub (news + analyst recos, Phase 2)    │
 │  Mock local (synthétique, défaut CI / sans clé) │
-│  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
-│  RSS / macro / crypto      [gelé Phase 0]   │
 └──────────────────┬─────────────────────────┘
                    │
                    ▼
@@ -45,9 +43,6 @@
 │                 next-date (Phase 2)         │
 │  config/      → runtime overrides (Phase 2) │
 │  shared/      → utilitaires transverses     │
-│  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
-│  ingestion/   → RSS scheduler  [gelé]       │
-│  analysis/ (legacy) → reco portfolio [gelé] │
 └──────────────────┬─────────────────────────┘
                    │ REST API
                    ▼
@@ -60,7 +55,8 @@
 │    ticker/       → dossier par symbole      │
 │    import/       → drag & drop CSV          │
 │    suivi/        → timeline snapshots       │
-│    settings/     → sources, test, prompt    │
+│    settings/     → configuration runtime +  │
+│                    prompt preview           │
 │  core/                                      │
 │    *.repository.ts (ports)                  │
 │    adapters/*.http.ts                       │
@@ -123,10 +119,6 @@ Le pipeline d'analyse en Phase 1 produit un **narratif LLM par ticker**, pas une
 
 > Le LLM **digère** des indicateurs déjà calculés. Il **ne calcule jamais** RSI, MA, etc. — sinon il hallucine les chiffres.
 
-### `analysis/` (legacy) — gelé Phase 0
-
-Pipeline historique de recommandations portefeuille — `AnalysisExecutor`, `AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator` (8 règles : tickers ⊆ portefeuille, action ∈ enum, Σ targetWeight ∈ [95,105], etc.), `RecommendationPersister`, `AnalysisJobStore`. Le code reste en place et fonctionnel mais n'est plus exposé dans le flow utilisateur. Sera réactivé / repensé en Phase 4.
-
 ### `portfolio/`
 
 Inchangé. Le portefeuille est **read-only depuis l'UI** — il reflète l'état réel du courtier Wealthsimple.
@@ -182,12 +174,6 @@ Earnings trimestriels (4 derniers Q estimate / actual / surprise %) + prochaine 
 - `EarningsService` avec `@Cacheable("earnings", key = "#symbol.toUpperCase()")` (méthode Java SpEL). Reports changent au plus une fois par trimestre, calendar move daily mais lentement → 15 min de staleness sont invisibles au user, mais ça épargne le quota free tier sur les re-clics.
 - 1 endpoint REST : `GET /api/market/ticker/{symbol}/earnings`. Erreurs `NoSuchElementException` (404 « no earnings data » quand reports ET calendar sont vides) et `MarketUnavailableException` (503) partagées avec le reste de la stack market.
 
-### `ingestion/` — gelé Phase 0
-
-Module RSS complet (Rome, scheduler 15 min, déduplication par `guid`, parsing robuste DOCTYPE / `&` nus / détection HTML, 25 sources seedées). Conservé en place mais retiré du flow principal — Twelve Data remplit le rôle data marché en Phase 1.
-
-Réutilisable plus tard pour de la macro non couverte par Twelve Data (Fed, BCE, indicateurs économiques) si besoin.
-
 ### `config/` — Phase 2
 
 Configuration éditable en runtime, sans redémarrage backend. Couvre Phase 2 onze clés : `market.twelvedata.api-key`, `market.finnhub.api-key`, `market.cache.ttl-minutes`, `market.provider` (mock ↔ twelvedata), `news.provider` (mock ↔ finnhub), `analyst.provider` (mock ↔ finnhub), `earnings.provider` (mock ↔ finnhub), `llm.provider` (claude ↔ ollama), `ollama.model`, `anthropic.api.model` et `llm.timeout-seconds` (INT 60..900, défaut 400 — slider unique côté UI qui pilote à la fois `OllamaClient.readTimeout`, `AnalysisJobStore.DEDUP_WINDOW_SECONDS`, `TickerNarrativeJobStore.DEDUP_WINDOW_SECONDS` côté backend, et `POLL_ABORT_SECONDS` / `NARRATIVE_POLL_ABORT_SECONDS` côté frontend via `LlmTimeoutService`).
@@ -210,7 +196,7 @@ Utilitaires transverses : `GlobalExceptionHandler` (mapping uniforme des erreurs
 Hexagonal léger sous `frontend/src/app/` :
 
 - **`core/`** — ports + adapters (HTTP par défaut, localStorage pour les états client-only)
-  - `*.repository.ts` (abstract class — port). 11 repositories : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, **Annotation** (chart user annotations, single-user mono-machine), **Analyst** (recommandations analystes par ticker, Phase 2), **Earnings** (résultats trimestriels + next-date par ticker, Phase 2).
+  - `*.repository.ts` (abstract class — port). 9 repositories : Portfolio, Snapshot, Market, Watchlist, News, Config, **Annotation** (chart user annotations, single-user mono-machine), **Analyst** (recommandations analystes par ticker, Phase 2), **Earnings** (résultats trimestriels + next-date par ticker, Phase 2).
   - `adapters/*.http.ts` (HttpXxxRepository — HTTP adapter, défaut) ; `adapters/*.local.ts` pour les adapters client-only (`LocalStorageAnnotationRepository` v3 chart, swap futur vers backend-backed sans rewrite UI).
   - Wiring : `app.config.ts` `{ provide: XxxRepository, useClass: <impl> }`
   - `theme.service.ts` + `language.service.ts` — couples symétriques (signal + persist localStorage), drivés par le toolbar header
@@ -220,20 +206,16 @@ Hexagonal léger sous `frontend/src/app/` :
   - `ticker/` — dossier par symbole en layout 2-col : **sidenav outils chart** à gauche (Amazon-style, foldable via chevron, sticky, état localStorage `ticker-sidenav-open`) qui héberge timeframe / benchmark / overlays / outils (annotation arm, clear anchor, reset zoom) / liste « Annotations posées » avec bouton supprimer par item ; colonne droite avec le graphe multi-timeframe + axes + crosshair + **overlay benchmark opt-in** (SPY/QQQ/IWM/Sector/Custom, Y-axis bi-mode prix/% return, 2ᵉ polyline dashed, `MatTooltipModule`) + **chart analyse interactive** (zoom drag-select avec brush mini-chart en bas, overlays MA50/MA200/Bollinger/52w hi-lo en multi-select, annotations h-line persistées localStorage par symbole, measure tools delta % + delta time entre deux clics), indicateurs, section Fondamentaux (analyst recommandations + earnings), news, narratif IA, bouton watchlist
   - `import/` — drag & drop CSV
   - `suivi/` — timeline snapshots
-  - `settings/` — sources / test-sources / prompt-preview / configuration (runtime config Phase 2)
-  - `recommendations/`, `history/` — *gelé Phase 0* (recommandations portefeuille)
+  - `settings/` — back-office avec sidenav : `configuration/` (runtime config Phase 2 — sub-sidenav interne « Providers de données » / « LLM »), `prompt-preview/` (aperçu du prompt narratif Phase 1)
 
 ## Schéma de base de données
 
-Cinq migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative.sql` (Phase 1 narratif), `V3__watchlist.sql` (Phase 2 watchlist), `V4__app_config.sql` (Phase 2 — table key/value des surcharges runtime), `V5__asset_lifecycle.sql` (Phase 2 — lifecycle de position OPEN/CLOSED).
+Six migrations Flyway : `V1__init.sql` (schéma Phase 0 historique — les tables RSS / recommandations / jobs analysis sont droppées par V6), `V2__ticker_narrative.sql` (Phase 1 narratif), `V3__watchlist.sql` (Phase 2 watchlist), `V4__app_config.sql` (Phase 2 — table key/value des surcharges runtime), `V5__asset_lifecycle.sql` (Phase 2 — lifecycle de position OPEN/CLOSED), `V6__drop_phase0.sql` (Phase 2.5 — drop des 6 tables Phase 0 décommissionnées : `recommendation`, `recommendation_action`, `recommendation_score`, `analysis_job`, `feed_article`, `feed_source`).
 
 | Section | Tables | Statut |
 |---------|--------|--------|
 | Portefeuille & actifs | `portfolio`, `asset` | Actif |
 | Snapshots historiques | `portfolio_snapshot`, `snapshot_position` | Actif |
-| Recommandations IA (legacy) | `recommendation`, `recommendation_action`, `recommendation_score` | Gelé |
-| Jobs d'analyse (legacy) | `analysis_job` | Gelé (utilisé pour le polling Phase 0) |
-| Sources d'ingestion | `feed_source`, `feed_article` | Gelé en pratique (table conservée pour les Settings UI) |
 | Narratifs ticker | `ticker_narrative_snapshot`, `ticker_narrative_job` | Actif Phase 1 |
 | Watchlist | `watchlist_entry` | Actif Phase 2 |
 | Config runtime | `app_config` | Actif Phase 2 |
@@ -254,7 +236,7 @@ Cinq migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative
 
 **Twelve Data — quirks à absorber** — l'API a deux pièges qui justifient un parser tolérant : (1) **les nombres sont des strings JSON** (`"open": "180.00"`) — on désérialise en `String` et convertit avec `toBigDecimalOrNull`/`toLongOrNull` ce qui tolère naturellement `""` et `"NaN"` observés sur tickers illiquides ; (2) **les erreurs reviennent en HTTP 200** avec `{status: "error", code: 404}` dans le body — il faut inspecter le body et pas juste le code HTTP. Mapping : `code 404` → `NoSuchElementException`, `429` → `MarketUnavailableException("rate-limited")`, `401`/`403` → `auth-failed`. Bonus : la clé API absente est détectée *avant* l'appel HTTP et lève `MarketUnavailableException` avec un message actionnable — pas de credit gaspillé sur une mauvaise config.
 
-**Claude API par défaut** — la Phase 0 a montré que Mistral 7B sortait des justifications grammaticalement correctes mais financièrement creuses ("vendre pour un profit de 0.4%"). Le saut de qualité Claude est largement supérieur au coût (~quelques cents par dossier). Mistral reste activable pour le dev offline (`llm.provider: ollama`).
+**Claude API par défaut** — sur les premiers itérations Phase 1, Mistral 7B sortait des narratifs grammaticalement corrects mais financièrement creux. Le saut de qualité Claude est largement supérieur au coût (~quelques cents par dossier). Ollama (`qwen2.5:3b` par défaut, sélectionnable au runtime) reste activable pour le dev offline (`llm.provider: ollama`).
 
 **Snapshot du narratif systématique** — chaque consultation d'un ticker persiste `{prix_du_jour, indicateurs, narrative}`. Sans ça, l'observabilité Phase 3 (relire ce que disait l'IA il y a 1 mois) est aveugle.
 
@@ -266,7 +248,7 @@ Cinq migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative
 
 **Tracking du modèle LLM par snapshot** — chaque snapshot stocke `LlmClient.modelId()` (`ollama:qwen2.5:3b` ou `claude:claude-opus-4-6`) au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer après coup les snapshots produits par un modèle plus faible sans relire le contenu.
 
-### Conservé depuis Phase 0
+### Patterns transverses backend
 
 **`@Async` sur bean séparé** — Spring AOP ne proxifie pas les appels internes (`this.method()`). Le pattern `Service → Runner (@Async) → Executor (@Transactional)` reste valide et est repris pour `TickerNarrativeService → TickerNarrativeRunner`.
 
@@ -290,23 +272,11 @@ Cinq migrations Flyway : `V1__init.sql` (schéma Phase 0), `V2__ticker_narrative
 
 **i18n runtime via `ngx-translate`** — fichiers `public/i18n/<lang>.json` chargés via le HTTP loader (assets statiques). Composants importent `TranslatePipe` (granulaire, pas tout `TranslateModule`). `LanguageService` est le miroir signal-based de `ThemeService` : signal + localStorage + fallback navigateur (`fr-*` → `fr`, sinon `en`). Le switcher header utilise un `mat-menu` avec drapeaux unicode. Aucune string utilisateur en dur dans le code — uniquement des clés. Les erreurs dynamiques côté TS passent par `TranslateService.instant('key', { params })`.
 
-### Gelé Phase 0 (référence)
-
-Les décisions ci-dessous concernent du code **gelé** mais conservé. À relire si on réactive le pipeline portefeuille en Phase 4.
-
-**Validation + auto-repair des réponses LLM (legacy)** — `RecommendationValidator` applique 8 règles strictes ; en cas d'invalide, re-prompt avec les erreurs. Au pire, `withHoldFallback` strip les hallucinations.
-
-**Filtrage des articles par pertinence (legacy)** — `ArticleRelevanceScorer` classe les 200 derniers articles par score keyword (tickers, noms d'actifs, secteurs, mots-clés macro). Top 25 passé au LLM.
-
-**Robustesse du parsing RSS (legacy)** — pré-traitement Rome (User-Agent, détection HTML, correction `&` nus, `isAllowDoctypes = true`).
-
-**Fenêtres de timeout alignées (legacy, 400 s)** — depuis 2026-05-07 les trois bornes valent **400 s** : `POLL_ABORT_SECONDS` (frontend) = `DEDUP_WINDOW_SECONDS` (backend) = `OllamaClient.readTimeout`. Précédemment `OllamaClient.readTimeout = 180 s` ce qui laissait le budget pour 2 × retry validateur dans la fenêtre frontend — bumpé à 400 s parce qu'une analyse portefeuille sur Ollama cold-start saturait le 180 s avant le retry. Trade-off accepté : le retry validateur ne fit plus dans la fenêtre frontend si la 1ère tentative consomme tout le budget, mais en pratique les échecs validateur sont des parse errors near-instant, pas des timeouts. Phase 0 étant gelée, l'enveloppe ne sera pas resserrée avant un éventuel reboot du flux — Claude étant ~10× plus rapide que qwen2.5:3b, le 400 s reste sous-utilisé côté provider Claude Phase 1.
-
 ---
 
 ## Modèle pipeline d'analyse (vision Phase 3 + Phase 4)
 
-> **Statut** : design cible, non encore implémenté. Documenté ici pour cadrer les prochains tickets backlog (« Page Jobs » Phase 3 + « Réintégration Phase 0 » Phase 4 + « Décommissionner Phase 0 » Phase 2.5). Voir `docs/metier/vision.md > Le pipeline d'analyse` pour la framing produit.
+> **Statut** : design cible, non encore implémenté. Documenté ici pour cadrer les prochains tickets backlog (« Page Jobs » Phase 3 + « Réintégration Phase 0 » Phase 4). Voir `docs/metier/vision.md > Le pipeline d'analyse` pour la framing produit.
 
 ### Concept central
 
@@ -322,7 +292,7 @@ PortfolioAnalysis(today, portfolioId)
 
 ### Modèle de données — table `job` unifiée
 
-Migration cible (à arbitrer entre rebuild greenfield ou union des deux tables existantes `ticker_narrative_job` Phase 1 + `analysis_job` legacy Phase 0) :
+Migration cible — rebuild greenfield au-dessus de la table existante `ticker_narrative_job` (Phase 1, seule survivante après le décommissionnement Phase 0 / V6) :
 
 | Colonne | Type | Rôle |
 |---|---|---|

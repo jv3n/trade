@@ -106,20 +106,17 @@ trade/
 │           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA)
 │           ├── import/                # Drag & drop CSV Wealthsimple
 │           ├── suivi/                 # Timeline snapshots
-│           ├── settings/              # Sources / test-sources / prompt-preview / configuration
-│           ├── recommendations/       # 🧊 legacy Phase 0
-│           └── history/               # 🧊 legacy Phase 0
+│           └── settings/              # Configuration runtime + prompt-preview
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
 │       ├── market/            # TwelveData client + mock + indicateurs
-│       ├── analysis/          # Phase 1 narratif ticker (legacy reco portfolio gelé)
+│       ├── analysis/          # Phase 1 narratif ticker + LLM dispatch (Routing/Claude/Ollama)
 │       ├── portfolio/         # Import CSV, snapshots, lecture
 │       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille
 │       ├── news/              # Phase 2 — Finnhub + mock, news par ticker
 │       ├── analyst/           # Phase 2 — Finnhub + mock, recommandations analystes
 │       ├── earnings/          # Phase 2 — Finnhub + mock, earnings trimestriels + next-date
 │       ├── config/            # Phase 2 — runtime-editable settings (app_config V4)
-│       ├── ingestion/         # 🧊 legacy Phase 0 — RSS scheduler
 │       └── shared/            # Utilitaires transverses
 ├── docs/                      # Documentation (mkdocs-material)
 ├── .claude/                   # Skills, hooks et instructions Claude Code
