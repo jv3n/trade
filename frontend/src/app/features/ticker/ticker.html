@@ -21,8 +21,20 @@
         @if (snap.quote.name) {
           <span class="ticker-name">{{ snap.quote.name }}</span>
         }
-        @if (snap.quote.exchange) {
-          <span class="ticker-exchange">{{ snap.quote.exchange }}</span>
+        @if (snap.quote.exchange || snap.quote.instrumentType) {
+          <div class="ticker-meta">
+            @if (snap.quote.exchange) {
+              <span class="ticker-exchange">{{ snap.quote.exchange }}</span>
+            }
+            @if (snap.quote.instrumentType) {
+              <span
+                class="ticker-instrument-type instrument-{{ snap.quote.instrumentType }}"
+                data-testid="ticker-instrument-type"
+              >
+                {{ 'common.instrumentLabel.' + snap.quote.instrumentType | translate }}
+              </span>
+            }
+          </div>
         }
       </div>
       <div class="ticker-actions">

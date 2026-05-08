@@ -92,6 +92,24 @@ export class Dashboard implements OnInit {
   /** Surfaces add / remove errors next to the watchlist input. */
   watchlistError = signal<string | null>(null);
 
+  /**
+   * Lazy lookup map `symbol → instrumentType` for the watchlist chips. Populated by
+   * [enrichWatchlistInstrumentTypes] on watchlist load + add ; never cleared on remove (stale
+   * entries are harmless and a re-add hits the cache hot). The backend has a 15-min Caffeine
+   * cache on `/api/market/ticker/{symbol}`, so the morning's first dashboard burns ~10-20 Twelve
+   * Data credits and subsequent reloads hit zero. **Why not persist on the `watchlist` table** :
+   * keeps the schema lean, no Flyway migration, no backfill of pre-existing entries — and the
+   * cost is bounded (free tier 800 credits/day, watchlist refresh ≈ 2-3 % of that). If the call
+   * fails (404 / 503), the entry is left absent from the map and the chip degrades closed
+   * (mirror of the dossier header, the Sector toggle, and the Fondamentaux gating).
+   *
+   * Map shape : a key absent means "not yet looked up" ; a key with `null` means "looked up,
+   * type was not detected" — both render no chip, but distinguishing them prevents re-fetching.
+   */
+  private watchlistInstrumentTypes = signal<
+    Record<string, 'STOCK' | 'ETF' | 'INDEX' | 'OTHER' | null>
+  >({});
+
   // ---- Sidebar accordion state ----
   // Three independent open/close toggles so the user can keep their preferred sections expanded
   // — the portfolio list grows long when many CSVs are imported, and folding it uncovers the
@@ -225,9 +243,47 @@ export class Dashboard implements OnInit {
    */
   private loadWatchlist() {
     this.watchlistRepository.list().subscribe({
-      next: (entries) => this.watchlist.set(entries),
+      next: (entries) => {
+        this.watchlist.set(entries);
+        this.enrichWatchlistInstrumentTypes(entries.map((e) => e.symbol));
+      },
       error: () => this.watchlist.set([]),
     });
+  }
+
+  /** Returns the chip's instrument type for a watchlist symbol, or undefined while the lookup is
+   * in flight / the entry hasn't been queried. `null` means "looked up but not detected" — the
+   * template treats both undefined and null as "no chip", but we keep the distinction in the map
+   * to avoid refetching the same symbol on a re-add. */
+  watchlistInstrumentTypeFor(
+    symbol: string,
+  ): 'STOCK' | 'ETF' | 'INDEX' | 'OTHER' | null | undefined {
+    return this.watchlistInstrumentTypes()[symbol];
+  }
+
+  /**
+   * Kicks off `getTicker` per symbol that we don't yet have a type for. Each lookup runs in
+   * parallel ; results land in [watchlistInstrumentTypes] as they resolve, so chips appear
+   * progressively rather than waiting on the slowest call. Errors are swallowed silently — the
+   * chip just doesn't render for that symbol (degrade closed). The backend caches each
+   * `getTicker` for 15 min, so subsequent dashboard loads in the same window pay zero.
+   */
+  private enrichWatchlistInstrumentTypes(symbols: string[]) {
+    const known = this.watchlistInstrumentTypes();
+    for (const symbol of symbols) {
+      if (symbol in known) continue;
+      this.marketRepository.getTicker(symbol).subscribe({
+        next: (snap) =>
+          this.watchlistInstrumentTypes.update((m) => ({
+            ...m,
+            [symbol]: snap.quote.instrumentType ?? null,
+          })),
+        error: () => {
+          // Silent — degrade closed. Same posture as the Sector toggle / Fondamentaux gating
+          // when the upstream call fails.
+        },
+      });
+    }
   }
 
   /**
@@ -249,6 +305,7 @@ export class Dashboard implements OnInit {
         // match the backend's `findAllByOrderByAddedAtAsc` ordering.
         const next = this.watchlist().filter((e) => e.symbol !== entry.symbol);
         next.push(entry);
+        this.enrichWatchlistInstrumentTypes([entry.symbol]);
         this.watchlist.set(next);
         this.watchlistSearchControl.setValue('', { emitEvent: false });
         this.watchlistSelectedMatch.set(null);

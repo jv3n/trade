@@ -498,6 +498,42 @@
   }
 }
 
+// Instrument-type chip dans la watchlist sidebar — version compacte du chip qu'on a sur le
+// header dossier ticker (cf. `ticker.scss > .ticker-instrument-type`). Mêmes variants de
+// couleur, taille réduite parce qu'on est dans une sidebar étroite. Si la phase 2 (Tickers
+// détenus) ajoute le même chip, considérer lift à `styles.scss` pour mutualiser.
+.watchlist-instrument-type {
+  font-size: 0.55rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.08rem 0.4rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &.instrument-STOCK {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  &.instrument-ETF {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    border-color: var(--color-success);
+  }
+  &.instrument-INDEX {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+    border-color: var(--color-warning);
+  }
+  &.instrument-OTHER {
+    background: var(--color-surface-2);
+    color: var(--color-text-dim);
+  }
+}
+
 .watchlist-empty,
 .watchlist-error {
   font-size: 0.72rem;

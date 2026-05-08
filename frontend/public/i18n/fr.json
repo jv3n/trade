@@ -5,7 +5,13 @@
     "cancel": "Annuler",
     "retry": "Réessayer",
     "noData": "—",
-    "errorIcon": "error_outline"
+    "errorIcon": "error_outline",
+    "instrumentLabel": {
+      "STOCK": "Action",
+      "ETF": "ETF",
+      "INDEX": "Indice",
+      "OTHER": "Autre"
+    }
   },
   "nav": {
     "dashboard": "Dashboard",

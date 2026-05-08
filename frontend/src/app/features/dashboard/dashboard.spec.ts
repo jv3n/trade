@@ -25,7 +25,7 @@ import {
   Portfolio,
   OwnedTicker,
 } from '../../core/portfolio.repository';
-import { MarketRepository, SymbolMatch } from '../../core/market.repository';
+import { MarketRepository, SymbolMatch, TickerSnapshot } from '../../core/market.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
 
 const mockPortfolioRepository: {
@@ -49,14 +49,39 @@ const mockWatchlistRepository: {
 };
 
 /**
- * MarketRepository mock — only `searchSymbols` is exercised here ; the rest of the port is unused
- * on the dashboard. Returning `of([])` by default keeps the autocomplete inert in tests that don't
- * explicitly drive it.
+ * Builds a minimal `TickerSnapshot` for `getTicker` mocks — only `quote.instrumentType` is read by
+ * the watchlist chip lookup, the rest is filler.
+ */
+const buildSnapshot = (
+  symbol: string,
+  instrumentType: 'STOCK' | 'ETF' | 'INDEX' | 'OTHER' | null = 'STOCK',
+): TickerSnapshot => ({
+  quote: {
+    symbol,
+    name: `${symbol} Inc`,
+    currency: 'USD',
+    exchange: 'NASDAQ',
+    price: 100,
+    fiftyTwoWeekHigh: null,
+    fiftyTwoWeekLow: null,
+    asOf: '2026-05-07T00:00:00Z',
+    instrumentType,
+  },
+  indicators: null,
+  bars: [],
+});
+
+/**
+ * MarketRepository mock — `searchSymbols` powers the autocomplete, `getTicker` powers the lazy
+ * instrument-type lookup for the watchlist chips. Both default to inert returns so tests that
+ * don't drive them aren't surprised.
  */
 const mockMarketRepository: {
   searchSymbols: (q: string, l?: number) => Observable<SymbolMatch[]>;
+  getTicker: (symbol: string) => Observable<TickerSnapshot>;
 } = {
   searchSymbols: () => of([]),
+  getTicker: (symbol: string) => of(buildSnapshot(symbol)),
 };
 
 describe('Dashboard', () => {
@@ -198,6 +223,7 @@ describe('Dashboard', () => {
       mockWatchlistRepository.add = () => of({} as WatchlistEntry);
       mockWatchlistRepository.remove = () => of(undefined);
       mockMarketRepository.searchSymbols = () => of([]);
+      mockMarketRepository.getTicker = (symbol: string) => of(buildSnapshot(symbol));
     });
 
     it('hydrates the watchlist signal from list() on init', async () => {
@@ -410,6 +436,71 @@ describe('Dashboard', () => {
 
       expect(fixture2.componentInstance.watchlist()).toEqual([]);
       expect(fixture2.componentInstance.error()).toBeNull();
+    });
+
+    // ---- Instrument-type chip (lazy lookup via getTicker) ----
+
+    /**
+     * The watchlist chips are populated by [enrichWatchlistInstrumentTypes] which fires a
+     * `getTicker` per symbol after a successful load / add. Three contracts pinned :
+     *  - **populates the lookup map per-symbol** with the type returned by the market provider,
+     *  - **swallows errors silently** — a 503 / 404 leaves the entry absent from the map and the
+     *    chip degrades closed (no chip rendered for that symbol),
+     *  - **doesn't re-fetch a symbol already in the map** — the morning's first dashboard burns
+     *    one credit per symbol, subsequent ones in the day pay zero.
+     */
+    it('populates watchlistInstrumentTypeFor with the market provider response', async () => {
+      const entries = [sample('AAPL'), sample('VOO')];
+      mockWatchlistRepository.list = () => of(entries);
+      mockMarketRepository.getTicker = (symbol: string) =>
+        of(buildSnapshot(symbol, symbol === 'VOO' ? 'ETF' : 'STOCK'));
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      expect(fixture2.componentInstance.watchlistInstrumentTypeFor('AAPL')).toBe('STOCK');
+      expect(fixture2.componentInstance.watchlistInstrumentTypeFor('VOO')).toBe('ETF');
+    });
+
+    it('leaves the lookup absent when getTicker fails (chip degrades closed)', async () => {
+      const { throwError } = await import('rxjs');
+      mockWatchlistRepository.list = () => of([sample('UNKNOWN')]);
+      mockMarketRepository.getTicker = () => throwError(() => ({ status: 503 }));
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      // Undefined (key absent from the map) — the template falsy-checks this and renders
+      // nothing. Critically NOT a stale 'STOCK' default that would leak a wrong chip on a
+      // failed lookup.
+      expect(fixture2.componentInstance.watchlistInstrumentTypeFor('UNKNOWN')).toBeUndefined();
+    });
+
+    it('does not re-fetch a symbol already in the lookup map', () => {
+      // Set the map manually to simulate a previous load. enrichWatchlistInstrumentTypes is
+      // called by addToWatchlist for the new entry's symbol. If the symbol is already known, the
+      // method should skip the call — otherwise the morning's burst-of-credits problem amplifies
+      // every time the user adds a symbol they already had.
+      let callCount = 0;
+      mockMarketRepository.getTicker = (symbol: string) => {
+        callCount++;
+        return of(buildSnapshot(symbol));
+      };
+      mockWatchlistRepository.add = () => of(sample('AAPL'));
+
+      // Pre-seed the lookup map by setting AAPL via a first addToWatchlist call.
+      component.watchlistSelectedMatch.set(match('AAPL'));
+      component.addToWatchlist();
+      const firstCallCount = callCount;
+
+      // Re-add the same symbol — backend's idempotent POST returns the same row, our enrich
+      // method should see AAPL already in the map and skip the call.
+      component.watchlistSelectedMatch.set(match('AAPL'));
+      component.addToWatchlist();
+
+      expect(callCount).toBe(firstCallCount);
     });
   });
 });

@@ -2022,4 +2022,51 @@ describe('TickerPage', () => {
       expect(earnings.getForSymbol).toHaveBeenCalledWith('AAPL');
     });
   });
+
+  // ---- Instrument type chip in the dossier header ----
+
+  /**
+   * The chip is the user-visible counterpart of `quote.instrumentType` — they shouldn't have to
+   * click VOO to find out it's an ETF. Three contracts pinned :
+   * - **chip renders + carries the variant class** for the happy path (STOCK), so the SCSS color
+   *   binding can't drift silently,
+   * - **chip swaps variant class** when the type is ETF, so the colour mapping is exercised,
+   * - **chip is absent** when `instrumentType` is null (degrade closed, same posture as the
+   *   Sector toggle gating tested above).
+   */
+  describe('instrument type chip', () => {
+    it('renders the STOCK variant by default', () => {
+      // Default EMPTY_SNAPSHOT has instrumentType: 'STOCK'.
+      fixture.detectChanges();
+
+      const chip = fixture.nativeElement.querySelector('[data-testid="ticker-instrument-type"]');
+      expect(chip).not.toBeNull();
+      expect(chip!.classList.contains('instrument-STOCK')).toBe(true);
+    });
+
+    it('swaps to the ETF variant when the dossier is an ETF', () => {
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: 'ETF' } }),
+      );
+      fixture.detectChanges();
+
+      const chip = fixture.nativeElement.querySelector('[data-testid="ticker-instrument-type"]');
+      expect(chip).not.toBeNull();
+      expect(chip!.classList.contains('instrument-ETF')).toBe(true);
+      expect(chip!.classList.contains('instrument-STOCK')).toBe(false);
+    });
+
+    it('is absent when instrumentType is null (degrade closed)', () => {
+      // Same posture as the Sector toggle / Fondamentaux gating : a missing type doesn't render
+      // a placeholder chip, the user simply doesn't see one. Avoids a "OTHER" label flickering
+      // during the pre-load window.
+      market.getTicker.mockReturnValue(
+        of({ ...EMPTY_SNAPSHOT, quote: { ...EMPTY_SNAPSHOT.quote, instrumentType: null } }),
+      );
+      fixture.detectChanges();
+
+      const chip = fixture.nativeElement.querySelector('[data-testid="ticker-instrument-type"]');
+      expect(chip).toBeNull();
+    });
+  });
 });

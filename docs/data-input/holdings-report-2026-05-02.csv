@@ -1,8 +1,0 @@
-Nom du compte,Type de compte,Classification du compte,Numéro de compte,Symbole,Bourse,MIC,Nom,Type,Quantité,Direction de position,Prix du marché,Devise du prix,Valeur comptable (CAD),Devise de la valeur comptable (CAD),Valeur comptable (Marché),Devise de la valeur comptable (Marché),Valeur marchande,Devise de la valeur marchande,Rendements non réalisés du marché,Devise des rendements non réalisés du marché
-DEMO-CELI,TFSA,,0000000000,AAPL,NASDAQ,XNAS,Apple Inc.,EQUITY,10,long,180.00,USD,2055.00,CAD,1500.00,USD,1800.00,USD,300.00,USD
-DEMO-CELI,TFSA,,0000000000,VOO,NYSEARCA,ARCX,Vanguard S&P 500 ETF,EXCHANGE_TRADED_FUND,5,long,555.00,USD,3425.00,CAD,2500.00,USD,2775.00,USD,275.00,USD
-DEMO-CELI,TFSA,,0000000000,BTC,CRYPTO,,Bitcoin,CRYPTOCURRENCY,0.05,long,67000.00,USD,3425.00,CAD,2500.00,USD,3350.00,USD,850.00,USD
-DEMO-CELI,TFSA,,0000000000,NVDA,NASDAQ,XNAS,NVIDIA Corporation,EQUITY,3,long,950.00,USD,3699.00,CAD,2700.00,USD,2850.00,USD,150.00,USD
-DEMO-REER,RRSP,,0000000001,MSFT,NASDAQ,XNAS,Microsoft Corporation,EQUITY,8,long,425.00,USD,4164.80,CAD,3040.00,USD,3400.00,USD,360.00,USD
-DEMO-REER,RRSP,,0000000001,XIC,TSX,XTSE,iShares Core S&P/TSX Capped Composite Index ETF,EXCHANGE_TRADED_FUND,50,long,36.00,CAD,1650.00,CAD,1650.00,CAD,1800.00,CAD,150.00,CAD
-DEMO-REER,RRSP,,0000000001,GOOG,NASDAQ,XNAS,Alphabet Inc. Class C,EQUITY,4,long,180.00,USD,876.80,CAD,640.00,USD,720.00,USD,80.00,USD

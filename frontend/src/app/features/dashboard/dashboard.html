@@ -160,6 +160,14 @@
                     <a [routerLink]="['/ticker', entry.symbol]" class="ticker-chip">
                       {{ entry.symbol }}
                     </a>
+                    @if (watchlistInstrumentTypeFor(entry.symbol); as type) {
+                      <span
+                        class="watchlist-instrument-type instrument-{{ type }}"
+                        data-testid="watchlist-instrument-type"
+                      >
+                        {{ 'common.instrumentLabel.' + type | translate }}
+                      </span>
+                    }
                     <button
                       class="watchlist-remove-btn"
                       (click)="removeFromWatchlist(entry.symbol)"

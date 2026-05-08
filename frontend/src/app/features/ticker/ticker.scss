@@ -359,11 +359,54 @@ $sidenav-width-collapsed: 48px;
   color: var(--color-text);
 }
 
+.ticker-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
 .ticker-exchange {
   font-size: 0.72rem;
   color: var(--color-text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+// Instrument-type chip — sits next to the exchange in the dossier header. Coloured pill that
+// helps a user distinguish at a glance an ETF (VOO) from an action (AAPL) without clicking
+// through. Same vocabulary feeds the future watchlist + tickers-détenus chips (Phase 2 + 3 of
+// the « instrument type rollout » backlog ticket) — when those land, the styles can be lifted to
+// `styles.scss` for cross-feature reuse. Kept local v1.
+.ticker-instrument-type {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+
+  &.instrument-STOCK {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  &.instrument-ETF {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    border-color: var(--color-success);
+  }
+  &.instrument-INDEX {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+    border-color: var(--color-warning);
+  }
+  &.instrument-OTHER {
+    background: var(--color-surface-2);
+    color: var(--color-text-dim);
+  }
 }
 
 .ticker-actions {
