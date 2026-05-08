@@ -126,7 +126,7 @@ Le projet a cinq providers configurables, chacun avec une vraie implémentation 
 | Valeur | Quand l'utiliser |
 |---|---|
 | `claude` | Défaut Phase 1. Qualité narrative nettement supérieure, latence 1-3 s, requiert une clé `ANTHROPIC_API_KEY`. |
-| `ollama` | Dev offline, sans clé. Défaut local : `qwen2.5:3b` (3B Instruct, ~2 GB), 5-10 s par narratif sur M1, JSON structuré fiable. Lance `llm:pull-qwen` dans Tilt pour télécharger. Pour pousser la qualité au prix de la vitesse : `qwen2.5:7b`, `llama3.2:3b` ou `phi4-mini`. Mistral 7B (ancien défaut) timeout sur M1 — éviter. |
+| `ollama` | Dev offline, sans clé. Défaut local : `qwen2.5:3b` (3B Instruct, ~2 GB), 5-10 s par narratif sur M1, JSON structuré fiable. Lance `llm:ensure-model` dans Tilt pour télécharger (idempotent — no-op si déjà pull). Pour pousser la qualité au prix de la vitesse : `qwen2.5:7b`, `llama3.2:3b` ou `phi4-mini`. Mistral 7B (ancien défaut) timeout sur M1 — éviter. |
 
 ### Données de marché — `market.provider`
 

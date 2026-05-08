@@ -59,7 +59,7 @@ ollama:
 
 Ne jamais committer ce fichier. Ne jamais mettre de clé API dans `application.yml`.
 
-> **Alternative runtime** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct sept clés sans reboot — clés API Twelve Data et Finnhub, TTL cache Caffeine 5–60 min, et toggles `market.provider` / `news.provider` / `analyst.provider` / `earnings.provider` (mock ↔ live). Pratique pour rotater une clé sans toucher à `application-local.yml` ; les overrides BDD prennent le pas sur les défauts YAML.
+> **Alternative runtime** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct **douze clés** sans reboot, réparties sur deux sub-sections (Providers de données / LLM) : (1) **secrets** — `market.twelvedata.api-key`, `market.finnhub.api-key`, `anthropic.api.key` (masqués + bouton Tester) ; (2) **toggles** — `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` (mock ↔ live), `llm.provider` (claude ↔ ollama) ; (3) **strings** — `ollama.model`, `anthropic.api.model` (autocomplete suggestions, valeurs libres) ; (4) **slider INT** — `market.cache.ttl-minutes` (5–60 min) et `llm.timeout-seconds` (60–900 s). Les overrides BDD prennent le pas sur les défauts YAML — pratique pour rotater une clé ou switcher de provider sans toucher à `application-local.yml`.
 
 ## Conventions de commit
 
@@ -95,12 +95,13 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + adapters (11 repositories)
-│       │   ├── *.repository.ts        # ports (Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings)
+│       ├── core/              # Ports + adapters (9 repositories)
+│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings)
 │       │   ├── adapters/*.http.ts     # HTTP impls (défaut)
 │       │   ├── adapters/*.local.ts    # localStorage impls (annotation v3)
-│       │   ├── theme.service.ts       # signal + persist localStorage
-│       │   └── language.service.ts    # signal + persist localStorage (i18n)
+│       │   ├── providers.ts           # `provideRepositories()` — wires les 9 ports → adapters
+│       │   ├── theme.service.ts       # signal + persist localStorage (SSR-safe via isPlatformBrowser)
+│       │   └── language.service.ts    # signal + persist localStorage (i18n, SSR-safe)
 │       └── features/          # Pages UI (primary adapters)
 │           ├── dashboard/             # Portefeuille + lien dossiers ticker
 │           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA)

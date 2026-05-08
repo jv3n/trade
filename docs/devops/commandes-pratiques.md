@@ -1,4 +1,4 @@
-# Commandes pratiques (devops local)
+# Commandes pratiques
 
 Cheatsheet des commandes qu'on lance régulièrement pendant le dev — état BDD, gestion des jobs LLM bloqués, restart des conteneurs, inspection Ollama.
 
@@ -6,16 +6,9 @@ Toutes les commandes assument que la stack tourne via `tilt up` et que les conte
 
 ## Postgres — état des jobs LLM
 
+Depuis le décommissionnement Phase 0 (V6), la seule table async est `ticker_narrative_job`. L'ancienne `analysis_job` (pipeline portfolio Phase 0) a été droppée — toute commande qui s'y référait est obsolète.
+
 ### Lister les jobs récents
-
-```bash
-docker compose exec postgres psql -U portfolioai -d portfolioai -c "
-SELECT j.id, j.status, EXTRACT(EPOCH FROM (now() - j.created_at))::int AS age_sec, p.name, j.error
-FROM analysis_job j JOIN portfolio p ON p.id = j.portfolio_id
-ORDER BY j.created_at DESC LIMIT 10;"
-```
-
-Variante côté narrative ticker (Phase 1) :
 
 ```bash
 docker compose exec postgres psql -U portfolioai -d portfolioai -c "
@@ -30,27 +23,10 @@ Un Tilt restart laisse un job PENDING en BDD alors que le thread LLM est mort. T
 
 ```bash
 docker compose exec postgres psql -U portfolioai -d portfolioai -c "
-UPDATE analysis_job SET status='ERROR', error='manual cleanup' WHERE status='PENDING';"
-```
-
-Idem côté narrative ticker :
-
-```bash
-docker compose exec postgres psql -U portfolioai -d portfolioai -c "
 UPDATE ticker_narrative_job SET status='ERROR', error='manual cleanup' WHERE status='PENDING';"
 ```
 
 > Le backend a aussi un `OrphanedJobCleanupListener` qui tag automatiquement les PENDING au boot avec « Job orphaned at backend boot ». Mais il ne s'occupe que des jobs *antérieurs* au boot — un PENDING créé après reste à toi de le nettoyer.
-
-### Vider la table RSS legacy (Phase 0 gelée)
-
-`AnalysisExecutor` legacy charge encore les 200 articles les plus récents de `feed_article` dans le prompt LLM. Si la table contient un historique RSS, le prompt sature le contexte d'Ollama et l'analyse rame ou timeout. Le fix complet est dans le ticket « Décommissionner Phase 0 » du backlog ; en attendant :
-
-```bash
-docker compose exec postgres psql -U portfolioai -d portfolioai -c "TRUNCATE feed_article;"
-```
-
-> Sans danger : `ingestion.rss.enabled: false` empêche le scheduler de re-remplir la table.
 
 ## Ollama
 
@@ -86,7 +62,7 @@ Symptômes : `/api/ps` montre un `expires_at` non-bumpé alors qu'on vient d'env
 docker compose restart ollama
 ```
 
-Les inférences en cours sont killed, les threads JVM backend reçoivent une connection-reset → `AnalysisRunner.run` catche l'exception et marque le job en ERROR. Pas besoin de cleanup BDD manuel après un restart Ollama (contrairement à un Tilt restart).
+Les inférences en cours sont killed, les threads JVM backend reçoivent une connection-reset → `TickerNarrativeRunner.run` catche l'exception et marque le job en ERROR. Pas besoin de cleanup BDD manuel après un restart Ollama (contrairement à un Tilt restart).
 
 ### Pull un nouveau modèle
 
@@ -130,7 +106,7 @@ PID=$(ps aux | grep BackendApplicationKt | grep -v grep | awk '{print $2}')
 jstack $PID | grep -A 20 "\"task-"
 ```
 
-> Les threads nommés `task-N` sont les workers du pool `@Async` (par défaut un `SimpleAsyncTaskExecutor` qui crée un thread par job). Chercher `AnalysisExecutor.execute` ou `TickerNarrativeExecutor.execute` pour confirmer qu'un appel LLM est en flight, et `NioSocketImpl.timedRead` qui dit qu'on attend la réponse Ollama / Claude.
+> Les threads nommés `task-N` sont les workers du pool `@Async` (par défaut un `SimpleAsyncTaskExecutor` qui crée un thread par job). Chercher `TickerNarrativeExecutor.execute` pour confirmer qu'un appel LLM est en flight, et `NioSocketImpl.timedRead` qui dit qu'on attend la réponse Ollama / Claude.
 
 ## Stack complète
 
@@ -160,6 +136,6 @@ Le backend natif n'apparaît pas — utiliser `ps aux | grep BackendApplicationK
 
 ## Tilt UI
 
-http://localhost:10350 — vue d'ensemble (status backend / frontend / postgres / ollama, logs en live, boutons custom comme `llm:pull-qwen`).
+http://localhost:10350 — vue d'ensemble (status backend / frontend / postgres / ollama, logs en live, boutons custom de pull modèle).
 
 > Préférer `docker compose logs <service>` quand on filtre / pipe / grep ; Tilt UI est meilleur pour le scan visuel rapide.

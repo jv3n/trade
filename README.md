@@ -27,6 +27,8 @@ Site complet : **[jv3n.github.io/trade](https://jv3n.github.io/trade/)**
 | [Guide de développement](docs/technique/developpement.md) | Référence quotidienne : commandes, structure, configuration locale |
 | [Providers externes](docs/technique/providers.md) | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
 | [Ops (CI / CD / tooling)](docs/technique/ops.md) | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
+| [Commandes pratiques (devops)](docs/devops/commandes-pratiques.md) | Cheatsheet psql / Tilt / Ollama / cleanup jobs LLM bloqués |
+| [Décision : déploiement Ollama](docs/devops/decision-ollama-deploiement.md) | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
 | [Vision](docs/metier/vision.md) | Pourquoi le projet existe, ce qu'on essaie de prouver |
 | [Fonctionnalités](docs/metier/fonctionnalites.md) | Découpage par phase, ce qui est livré / gelé / à venir |
 | [Backlog](docs/projet/backlog.md) | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |

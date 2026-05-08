@@ -69,8 +69,9 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 - **Pas d'accès direct** aux repositories
 
 ### `infrastructure/llm/` *(analysis uniquement)*
-- Implémentations des clients LLM (`ClaudeClient`, `OllamaClient`)
-- Sélection statique via `@ConditionalOnProperty(llm.provider)` au boot — pattern hérité Phase 1, conservé tant que le LLM n'est pas piloté par `AppConfigService`. À aligner sur le pattern Routing per-call (cf. `RoutingMarketChartClient` / `RoutingNewsClient`) le jour où l'item backlog "Config runtime v2 : LLM provider + model éditable" est traité — le `@ConditionalOnProperty` saute alors et un `RoutingLlmClient` (`@Primary`) prend le relais
+- Implémentations des clients LLM (`ClaudeClient`, `OllamaClient`) — toutes deux toujours instanciées (les `@ConditionalOnProperty` Phase 1 ont été retirés en Phase 2.5 v1)
+- `RoutingLlmClient` (`@Primary`) délègue per-call à l'adapter sélectionné par `appConfig.getString(LLM_PROVIDER)` — switch claude ↔ ollama prend effet au prochain narratif sans reboot. Pattern miroir de `RoutingMarketChartClient` / `RoutingNewsClient` / `RoutingAnalystClient` / `RoutingEarningsClient`
+- `ClaudeClient` lit la clé Anthropic per-call via `appConfig.getString(ANTHROPIC_API_KEY)` (Phase 2.5 v2, 2026-05-08) — header `x-api-key` posé par requête plutôt que via `defaultHeader()` builder-side, rotation immédiate sans reboot
 
 ### `infrastructure/market/` *(market uniquement, Phase 1+)*
 

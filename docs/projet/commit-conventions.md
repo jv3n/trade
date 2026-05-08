@@ -45,9 +45,7 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 | `earnings` | Module earnings (Finnhub + mock, EPS trimestriels + next-date Phase 2) |
 | `ticker` | Page Dossier ticker (frontend) |
 | `dashboard` | Page Dashboard (frontend, sidebar incluse) |
-| `settings` | Page Settings (back-office, prompt-preview, test-sources) |
-| `ingestion` | Module d'ingestion des flux RSS (legacy gelé) |
-| `recommendations` | Module recommandations (legacy gelé) |
+| `settings` | Page Settings (back-office, prompt-preview, configuration runtime) |
 | `observability` | Module scoring / traçabilité (Phase 3) |
 | `db` | Migrations Flyway |
 | `ci` | GitHub Actions |
@@ -57,7 +55,7 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 ## Exemples
 
 ```
-feat(ingestion): add RSS fetcher with Rome and deduplication by guid
+feat(market): add TwelveDataClient with quote and time_series endpoints
 
 fix(frontend): add provideRouter to app.spec to resolve NG0201
 

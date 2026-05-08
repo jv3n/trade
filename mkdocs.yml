@@ -16,6 +16,9 @@ nav:
       - Guide de développement: technique/developpement.md
       - Providers externes: technique/providers.md
       - Ops (CI / CD / tooling): technique/ops.md
+  - Devops:
+      - Commandes pratiques: devops/commandes-pratiques.md
+      - "Décision : déploiement Ollama": devops/decision-ollama-deploiement.md
   - Projet:
       - Backlog: projet/backlog.md
       - Journal des livraisons: projet/journal-livraisons.md
