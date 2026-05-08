@@ -10,8 +10,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "import": "Import",
-    "suivi": "Tracking",
-    "recommendations": "AI Recommendations"
+    "suivi": "Tracking"
   },
   "header": {
     "themeLight": "Switch to light theme",
@@ -70,14 +69,9 @@
     },
     "emptySelection": "Select a portfolio or import a CSV to start.",
     "positions": "Positions",
-    "analyze": "Analyze with AI",
-    "analyzing": "Analyzing… ({{seconds}}s)",
     "errors": {
       "loadPortfolios": "Failed to load portfolios",
-      "loadAssets": "Failed to load assets",
-      "startAnalysis": "Failed to start AI analysis",
-      "ai": "AI error: {{error}}",
-      "polling": "Failed to poll the analysis job"
+      "loadAssets": "Failed to load assets"
     },
     "table": {
       "ticker": "Ticker",
@@ -90,14 +84,7 @@
       "marketValue": "Market value",
       "pnl": "Unrealized P&L"
     },
-    "tooltipDossier": "Open the {{symbol}} dossier",
-    "recommendation": {
-      "title": "AI Recommendation",
-      "confidence": "{{value}}% confidence",
-      "actionsTitle": "Suggested actions",
-      "weightTarget": "target {{value}}%",
-      "amountCurrent": "current {{weight}}% · {{value}} {{currency}}"
-    }
+    "tooltipDossier": "Open the {{symbol}} dossier"
   },
   "ticker": {
     "back": "Back to portfolio",
@@ -351,59 +338,10 @@
     "loadingPositions": "Loading positions…",
     "loadError": "Couldn't load the history. Please retry."
   },
-  "history": {
-    "title": "Recommendations history",
-    "filters": {
-      "portfolio": "Portfolio",
-      "all": "All",
-      "status": "Status"
-    },
-    "loading": "Loading history…",
-    "emptyAll": "No recommendations generated yet.",
-    "emptyAllHint": "Run an analysis from the dashboard to start.",
-    "emptyFiltered": "No recommendation matches the selected filters.",
-    "actionsTitle": "Suggested actions"
-  },
   "settings": {
     "navLabel": "Configuration",
-    "sources": "Data sources",
-    "testSources": "Test a source",
     "promptPreview": "Prompt preview",
     "configuration": "Runtime configuration",
-    "sourcesPage": {
-      "intro": "Enable or disable the sources used to generate AI recommendations.",
-      "loading": "Loading sources…",
-      "active": "{{enabled}} / {{total}} active",
-      "tagApiKey": "API key",
-      "tagPaid": "Paid",
-      "ariaEnable": "Enable {{name}}",
-      "ariaDisable": "Disable {{name}}",
-      "errors": {
-        "load": "Couldn't load the sources.",
-        "toggle": "Couldn't update \"{{name}}\"."
-      }
-    },
-    "testPage": {
-      "intro": "Select a type then a source to verify connectivity and inspect the raw data.",
-      "selectCategory": "— Source type —",
-      "selectSource": "— Source —",
-      "running": "Running…",
-      "run": "Run the test",
-      "articlesCount": "{{count}} articles fetched",
-      "errorBackend": "Backend connection error",
-      "ticker": {
-        "title": "Test a ticker (Yahoo)",
-        "intro": "Verify that the market provider responds for this symbol and that indicators compute. `mock` mode is the local default.",
-        "placeholder": "Symbol (e.g. AAPL, NVDA…)",
-        "suggestionsLabel": "Owned tickers",
-        "run": "Test the fetch",
-        "priceLabel": "Current price",
-        "barsLabel": "OHLC bars",
-        "drawdownLabel": "52w drawdown",
-        "errorNotFound": "Ticker not found",
-        "errorUnavailable": "Market data unavailable (rate-limit or network)"
-      }
-    },
     "previewPage": {
       "intro": "Enter a ticker to view the full system + user prompt that the narrative pipeline would send to the LLM. No call is made.",
       "symbolPlaceholder": "Ticker (e.g. AAPL, MSFT…)",

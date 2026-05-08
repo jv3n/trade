@@ -10,8 +10,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "import": "Import",
-    "suivi": "Suivi",
-    "recommendations": "Recommandations IA"
+    "suivi": "Suivi"
   },
   "header": {
     "themeLight": "Passer en thème clair",
@@ -70,14 +69,9 @@
     },
     "emptySelection": "Sélectionnez un portefeuille ou importez un CSV pour commencer.",
     "positions": "Positions",
-    "analyze": "Analyser avec l'IA",
-    "analyzing": "Analyse en cours… ({{seconds}}s)",
     "errors": {
       "loadPortfolios": "Erreur lors du chargement des portefeuilles",
-      "loadAssets": "Erreur lors du chargement des actifs",
-      "startAnalysis": "Erreur lors du démarrage de l'analyse IA",
-      "ai": "Erreur IA : {{error}}",
-      "polling": "Erreur lors du polling du job d'analyse"
+      "loadAssets": "Erreur lors du chargement des actifs"
     },
     "table": {
       "ticker": "Ticker",
@@ -90,14 +84,7 @@
       "marketValue": "Val. marchande",
       "pnl": "P&L non réalisé"
     },
-    "tooltipDossier": "Voir le dossier {{symbol}}",
-    "recommendation": {
-      "title": "Recommandation IA",
-      "confidence": "{{value}}% de confiance",
-      "actionsTitle": "Actions suggérées",
-      "weightTarget": "cible {{value}}%",
-      "amountCurrent": "actuel {{weight}}% · {{value}} {{currency}}"
-    }
+    "tooltipDossier": "Voir le dossier {{symbol}}"
   },
   "ticker": {
     "back": "Retour au portefeuille",
@@ -351,59 +338,10 @@
     "loadingPositions": "Chargement des positions…",
     "loadError": "Impossible de charger l'historique. Réessaie."
   },
-  "history": {
-    "title": "Historique des recommandations",
-    "filters": {
-      "portfolio": "Portefeuille",
-      "all": "Tous",
-      "status": "Statut"
-    },
-    "loading": "Chargement de l'historique…",
-    "emptyAll": "Aucune recommandation générée pour l'instant.",
-    "emptyAllHint": "Lancez une analyse depuis le tableau de bord pour commencer.",
-    "emptyFiltered": "Aucune recommandation ne correspond aux filtres sélectionnés.",
-    "actionsTitle": "Actions suggérées"
-  },
   "settings": {
     "navLabel": "Configuration",
-    "sources": "Sources de données",
-    "testSources": "Tester une source",
     "promptPreview": "Aperçu du prompt",
     "configuration": "Configuration runtime",
-    "sourcesPage": {
-      "intro": "Activez ou désactivez les sources utilisées pour générer les recommandations IA.",
-      "loading": "Chargement des sources…",
-      "active": "{{enabled}} / {{total}} actives",
-      "tagApiKey": "Clé API",
-      "tagPaid": "Payant",
-      "ariaEnable": "Activer {{name}}",
-      "ariaDisable": "Désactiver {{name}}",
-      "errors": {
-        "load": "Impossible de charger les sources.",
-        "toggle": "Impossible de modifier « {{name}} »."
-      }
-    },
-    "testPage": {
-      "intro": "Sélectionnez un type puis une source pour vérifier sa connectivité et consulter les données brutes.",
-      "selectCategory": "— Type de source —",
-      "selectSource": "— Source —",
-      "running": "En cours…",
-      "run": "Lancer le test",
-      "articlesCount": "{{count}} articles récupérés",
-      "errorBackend": "Erreur de connexion au backend",
-      "ticker": {
-        "title": "Tester un ticker (Yahoo)",
-        "intro": "Vérifie que le provider de marché répond pour ce symbole et que les indicateurs se calculent. Mode `mock` activé en local par défaut.",
-        "placeholder": "Symbole (ex. AAPL, NVDA…)",
-        "suggestionsLabel": "Tickers détenus",
-        "run": "Tester le fetch",
-        "priceLabel": "Prix courant",
-        "barsLabel": "Bars OHLC",
-        "drawdownLabel": "Drawdown 52w",
-        "errorNotFound": "Ticker introuvable",
-        "errorUnavailable": "Données de marché indisponibles (rate-limit ou réseau)"
-      }
-    },
     "previewPage": {
       "intro": "Saisissez un ticker pour visualiser le prompt complet (system + user) du pipeline narratif qui serait envoyé au LLM. Aucun appel n'est effectué.",
       "symbolPlaceholder": "Ticker (ex. AAPL, MSFT…)",

@@ -15,15 +15,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/suivi/suivi').then((m) => m.Suivi),
   },
   {
-    path: 'recommendations',
-    loadComponent: () =>
-      import('./features/recommendations/recommendations').then((m) => m.Recommendations),
-  },
-  {
-    path: 'history',
-    loadComponent: () => import('./features/history/history').then((m) => m.History),
-  },
-  {
     path: 'ticker/:symbol',
     loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),
   },
@@ -31,16 +22,7 @@ export const routes: Routes = [
     path: 'settings',
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
     children: [
-      { path: '', redirectTo: 'sources', pathMatch: 'full' },
-      {
-        path: 'sources',
-        loadComponent: () => import('./features/settings/sources/sources').then((m) => m.Sources),
-      },
-      {
-        path: 'test-sources',
-        loadComponent: () =>
-          import('./features/settings/test-sources/test-sources').then((m) => m.TestSources),
-      },
+      { path: '', redirectTo: 'configuration', pathMatch: 'full' },
       {
         path: 'prompt-preview',
         loadComponent: () =>

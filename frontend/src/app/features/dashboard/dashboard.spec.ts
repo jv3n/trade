@@ -1,14 +1,13 @@
 /**
- * Tests on the dashboard page. Two pieces of logic that *don't* simply mirror data from the API
- * are pinned down here — those are the ones a refactor could break silently :
+ * Tests on the dashboard page. Pin the non-trivial UI logic — the parts a refactor could break
+ * silently — rather than every signal-to-template pass-through.
  *
- * - **`actionClass(action)`** — translates legacy Phase 0 action enums (`BUY` / `SELL` / `HOLD` /
- *   `REDUCE`) to the corresponding CSS class. Cosmetic but UI-load-bearing : a regression flips
- *   the badge color and traders read green-on-sell as a buy signal at a glance.
- * - **`actionAmounts(ticker, targetWeight)`** — computes the rebalance amount in CAD from the
- *   current portfolio's `bookValueCad`. The math (current weight, target amount, delta) feeds the
- *   "rebalance to" UI hint. Edge cases tested : null target weight, empty portfolio, asset not in
- *   portfolio (must default `currentValue = 0`, not throw).
+ * - **`grandTotalCad`** computed — sums `totalBookValueCad` across portfolios for the sidebar
+ *   "Total agrégé". A rename on either side would zero out the value silently.
+ * - **`ownedTickers` hydration** — best-effort sidebar shortcut that must NOT block the dashboard
+ *   on backend failure (silent fallback to empty list, no error banner).
+ * - **Watchlist add/remove flow** — idempotent add, optimistic remove with rollback on server
+ *   failure, validation error message on 400, autocomplete debounce + race-condition guard.
  *
  * Repos are mocked with simple stubs because we're verifying *the component's logic*, not the
  * HTTP layer (covered separately in `core/adapters/*.http.spec.ts`).
@@ -26,7 +25,6 @@ import {
   Portfolio,
   OwnedTicker,
 } from '../../core/portfolio.repository';
-import { AnalysisRepository } from '../../core/analysis.repository';
 import { MarketRepository, SymbolMatch } from '../../core/market.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
 
@@ -38,10 +36,6 @@ const mockPortfolioRepository: {
   getAll: () => of([]),
   getAssets: () => of([]),
   getOwnedTickers: () => of([]),
-};
-
-const mockAnalysisRepository = {
-  startAnalysis: () => of({}),
 };
 
 const mockWatchlistRepository: {
@@ -77,7 +71,6 @@ describe('Dashboard', () => {
         provideRouter([]),
         provideTranslateService({ lang: 'en' }),
         { provide: PortfolioRepository, useValue: mockPortfolioRepository },
-        { provide: AnalysisRepository, useValue: mockAnalysisRepository },
         { provide: WatchlistRepository, useValue: mockWatchlistRepository },
         { provide: MarketRepository, useValue: mockMarketRepository },
       ],
@@ -91,85 +84,6 @@ describe('Dashboard', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-  });
-
-  // ---- actionClass ----
-
-  it('actionClass returns action-buy for BUY', () => {
-    expect(component.actionClass('BUY')).toBe('action-buy');
-  });
-
-  it('actionClass returns action-sell for SELL', () => {
-    expect(component.actionClass('SELL')).toBe('action-sell');
-  });
-
-  it('actionClass returns action-hold for HOLD', () => {
-    expect(component.actionClass('HOLD')).toBe('action-hold');
-  });
-
-  it('actionClass returns action-reduce for REDUCE', () => {
-    expect(component.actionClass('REDUCE')).toBe('action-reduce');
-  });
-
-  it('actionClass returns empty string for unknown', () => {
-    expect(component.actionClass('UNKNOWN')).toBe('');
-  });
-
-  // ---- actionAmounts ----
-
-  it('actionAmounts returns null when targetWeight is null', () => {
-    expect(component.actionAmounts('AAPL', null)).toBeNull();
-  });
-
-  it('actionAmounts returns null when portfolio is empty (total = 0)', () => {
-    component.assets.set([]);
-    expect(component.actionAmounts('AAPL', 10)).toBeNull();
-  });
-
-  it('actionAmounts computes values in CAD using bookValueCad', () => {
-    const assets: Asset[] = [
-      {
-        id: '1',
-        portfolioId: 'p1',
-        ticker: 'AAPL',
-        name: 'Apple',
-        quantity: 10,
-        avgBuyPrice: 100,
-        assetType: 'STOCK',
-        currency: 'USD',
-        bookValueCad: 1400,
-        marketValue: 1000,
-        marketPrice: 100,
-        unrealizedGain: null,
-        gainCurrency: null,
-        createdAt: '',
-      },
-      {
-        id: '2',
-        portfolioId: 'p1',
-        ticker: 'XIU',
-        name: 'iShares',
-        quantity: 5,
-        avgBuyPrice: 200,
-        assetType: 'ETF',
-        currency: 'CAD',
-        bookValueCad: 600,
-        marketValue: 1000,
-        marketPrice: 200,
-        unrealizedGain: null,
-        gainCurrency: null,
-        createdAt: '',
-      },
-    ];
-    component.assets.set(assets);
-    // totalCad = 2000, AAPL bookValueCad = 1400 (70%), target = 50%
-    const result = component.actionAmounts('AAPL', 50);
-    expect(result).not.toBeNull();
-    expect(result!.currentValue).toBe(1400);
-    expect(result!.currentWeight).toBeCloseTo(70);
-    expect(result!.targetAmount).toBeCloseTo(1000);
-    expect(result!.delta).toBeCloseTo(-400);
-    expect(result!.currency).toBe('CAD');
   });
 
   // ---- grandTotalCad ----
@@ -204,34 +118,6 @@ describe('Dashboard', () => {
   it('grandTotalCad is 0 when there are no portfolios', () => {
     component.portfolios.set([]);
     expect(component.grandTotalCad()).toBe(0);
-  });
-
-  it('actionAmounts uses 0 bookValueCad for asset not in portfolio', () => {
-    const assets: Asset[] = [
-      {
-        id: '1',
-        portfolioId: 'p1',
-        ticker: 'XIU',
-        name: 'iShares',
-        quantity: 5,
-        avgBuyPrice: 200,
-        assetType: 'ETF',
-        currency: 'CAD',
-        bookValueCad: 1000,
-        marketValue: 1000,
-        marketPrice: 200,
-        unrealizedGain: null,
-        gainCurrency: null,
-        createdAt: '',
-      },
-    ];
-    component.assets.set(assets);
-    const result = component.actionAmounts('AAPL', 20);
-    expect(result).not.toBeNull();
-    expect(result!.currentValue).toBe(0);
-    expect(result!.currentWeight).toBe(0);
-    expect(result!.targetAmount).toBeCloseTo(200);
-    expect(result!.delta).toBeCloseTo(200);
   });
 
   // ---- ownedTickers ----

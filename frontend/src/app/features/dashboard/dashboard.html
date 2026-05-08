@@ -201,23 +201,6 @@
           <div class="assets-section">
             <div class="assets-header">
               <h3>{{ 'dashboard.positions' | translate }}</h3>
-              <button
-                class="btn-ai-analyze"
-                [class.loading]="analyzing()"
-                [disabled]="analyzing()"
-                (click)="runAnalysis()"
-              >
-                @if (analyzing()) {
-                  <span class="btn-ai-spinner"></span>
-                  <span>{{
-                    'dashboard.analyzing' | translate: { seconds: analyzeElapsed() }
-                  }}</span>
-                } @else {
-                  <span class="btn-ai-glow"></span>
-                  <mat-icon>auto_awesome</mat-icon>
-                  <span>{{ 'dashboard.analyze' | translate }}</span>
-                }
-              </button>
             </div>
 
             @if (assets().length > 0) {
@@ -296,88 +279,6 @@
               </p>
             }
           </div>
-
-          <!-- Recommandation IA -->
-          @if (lastRecommendation(); as rec) {
-            <div class="recommendation-section">
-              <div class="recommendation-header">
-                <div class="recommendation-title">
-                  <mat-icon>auto_awesome</mat-icon>
-                  <h3>{{ 'dashboard.recommendation.title' | translate }}</h3>
-                  @if (rec.confidence !== null) {
-                    <span
-                      class="confidence-badge"
-                      [class.high]="rec.confidence >= 70"
-                      [class.medium]="rec.confidence >= 40 && rec.confidence < 70"
-                      [class.low]="rec.confidence < 40"
-                    >
-                      {{
-                        'dashboard.recommendation.confidence' | translate: { value: rec.confidence }
-                      }}
-                    </span>
-                  }
-                </div>
-                <span class="recommendation-date">{{
-                  rec.generatedAt | date: 'dd/MM/yyyy HH:mm'
-                }}</span>
-              </div>
-
-              <p class="recommendation-context">{{ rec.contextSummary }}</p>
-              <p class="recommendation-content">{{ rec.content }}</p>
-
-              @if (rec.actions.length > 0) {
-                <div class="recommendation-actions">
-                  <h4>{{ 'dashboard.recommendation.actionsTitle' | translate }}</h4>
-                  <div class="action-list">
-                    @for (action of rec.actions; track action.ticker) {
-                      <div class="action-card">
-                        <div class="action-top">
-                          <span class="action-ticker">{{ action.ticker }}</span>
-                          <span class="action-badge {{ actionClass(action.action) }}">{{
-                            action.action
-                          }}</span>
-                          @if (action.targetWeight !== null) {
-                            <span class="action-weight">{{
-                              'dashboard.recommendation.weightTarget'
-                                | translate: { value: action.targetWeight }
-                            }}</span>
-                          }
-                        </div>
-                        @if (actionAmounts(action.ticker, action.targetWeight); as amt) {
-                          <div class="action-amounts">
-                            <span class="amount-current">{{
-                              'dashboard.recommendation.amountCurrent'
-                                | translate
-                                  : {
-                                      weight: amt.currentWeight | number: '1.1-1',
-                                      value: amt.currentValue | number: '1.0-0',
-                                      currency: amt.currency,
-                                    }
-                            }}</span>
-                            <span class="amount-arrow">→</span>
-                            <span class="amount-target"
-                              >{{ amt.targetAmount | number: '1.0-0' }} {{ amt.currency }}</span
-                            >
-                            <span
-                              class="amount-delta"
-                              [class.positive]="amt.delta > 0"
-                              [class.negative]="amt.delta < 0"
-                            >
-                              {{ amt.delta > 0 ? '+' : '' }}{{ amt.delta | number: '1.0-0' }}
-                              {{ amt.currency }}
-                            </span>
-                          </div>
-                        }
-                        @if (action.rationale) {
-                          <p class="action-rationale">{{ action.rationale }}</p>
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          }
         </div>
       } @else {
         <div class="empty-portfolio">

@@ -14,10 +14,6 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { routes } from './app.routes';
 import { PortfolioRepository } from './core/portfolio.repository';
 import { HttpPortfolioRepository } from './core/adapters/portfolio.http';
-import { AnalysisRepository } from './core/analysis.repository';
-import { HttpAnalysisRepository } from './core/adapters/analysis.http';
-import { SettingsRepository } from './core/settings.repository';
-import { HttpSettingsRepository } from './core/adapters/settings.http';
 import { SnapshotRepository } from './core/snapshot.repository';
 import { HttpSnapshotRepository } from './core/adapters/snapshot.http';
 import { MarketRepository } from './core/market.repository';
@@ -56,8 +52,6 @@ export const appConfig: ApplicationConfig = {
     }),
     provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
     { provide: PortfolioRepository, useClass: HttpPortfolioRepository },
-    { provide: AnalysisRepository, useClass: HttpAnalysisRepository },
-    { provide: SettingsRepository, useClass: HttpSettingsRepository },
     { provide: SnapshotRepository, useClass: HttpSnapshotRepository },
     { provide: MarketRepository, useClass: HttpMarketRepository },
     { provide: WatchlistRepository, useClass: HttpWatchlistRepository },
