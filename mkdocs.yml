@@ -19,7 +19,6 @@ nav:
   - Projet:
       - Backlog: projet/backlog.md
       - Journal des livraisons: projet/journal-livraisons.md
-      - État actuel: projet/etat-actuel.md
       - Sources de données: projet/sources.md
       - Conventions de commit: projet/commit-conventions.md
       - Audits:

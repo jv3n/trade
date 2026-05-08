@@ -29,7 +29,7 @@ Use the **`Agent` tool** with :
 
 ```
 Audit le doc set PortfolioAI complet. Fichiers sous responsabilité (voir le tableau dans ton system prompt) :
-docs/metier/*, docs/technique/*, docs/projet/* (sauf data-input/ et data-input-local/).
+docs/metier/*, docs/technique/*, docs/devops/*, docs/projet/* (sauf data-input/ et data-input-local/), plus le `docs/CHANGELOG.md`.
 
 Trois capacités à appliquer :
 1. Cross-check factuel — confronte les claims des docs à la réalité du repo (modules backend, repositories frontend, providers, workflows CI, migrations Flyway, commandes, statut des phases).
@@ -59,7 +59,7 @@ Relay the agent's punch-list to the user as-is (or with very light formatting). 
 
 Append a new dated section to `docs/CHANGELOG.md` (or extend today's section if it already exists). Format :
 - One section per date `## YYYY-MM-DD` (reverse-chronological — today's section goes at the **top**, just under the introduction header).
-- Bullets grouped by area : `### metier/`, `### technique/`, `### projet/`, `### .claude/`, `### Racine` (only the areas actually touched today).
+- Bullets grouped by area : `### metier/`, `### technique/`, `### devops/`, `### projet/`, `### .claude/`, `### Racine` (only the areas actually touched today).
 - One bullet per file modified, narrative one-liner that explains **what changed and why** — not just the file path. Example : `` `architecture.md` : "trois clés" → "cinq clés" suite à l'extension Phase 2 du scope config (ajout des toggles `market.provider` / `news.provider`). ``
 
 Why : the CHANGELOG is the only trace of *how* the doc set evolved (order, motivation, drift that was fixed). When a future audit flags something weird, the CHANGELOG is where you check whether it's a known recent change vs a real regression.

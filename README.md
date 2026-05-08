@@ -29,7 +29,7 @@ Site complet : **[jv3n.github.io/trade](https://jv3n.github.io/trade/)**
 | [Ops (CI / CD / tooling)](docs/technique/ops.md) | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
 | [Vision](docs/metier/vision.md) | Pourquoi le projet existe, ce qu'on essaie de prouver |
 | [Fonctionnalités](docs/metier/fonctionnalites.md) | Découpage par phase, ce qui est livré / gelé / à venir |
-| [Backlog](docs/projet/backlog.md) | Source de vérité du suivi feature par feature |
-| [État actuel](docs/projet/etat-actuel.md) | Snapshot de la phase en cours pour reprendre à la prochaine session |
+| [Backlog](docs/projet/backlog.md) | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
+| [Journal des livraisons](docs/projet/journal-livraisons.md) | Historique reverse-chronologique des features livrées par phase |
 | [Conventions de commit](docs/projet/commit-conventions.md) | Conventional Commits en anglais, exemples |
 | [Changelog doc](docs/CHANGELOG.md) | Trace reverse-chronologique des modifications du doc set (post `/doc-maintainer`) |

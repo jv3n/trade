@@ -217,7 +217,6 @@ Détails ruleset + commandes dans [`ops.md`](./ops.md) section ESLint.
 | Providers externes (Twelve Data, Finnhub, Anthropic, Ollama) — clés, quotas, dashboards | [`providers.md`](./providers.md) |
 | CI / CD, caching, Detekt, Dependabot, Code Scanning | [`ops.md`](./ops.md) |
 | Conventional Commits + exemples | [`projet/commit-conventions.md`](../projet/commit-conventions.md) |
-| L'état exact de la session précédente, ce qui est WIP | [`projet/etat-actuel.md`](../projet/etat-actuel.md) |
 
 ---
 

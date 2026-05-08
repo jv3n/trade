@@ -21,8 +21,10 @@ You audit the PortfolioAI documentation set for **accuracy**, **tone**, and **cr
 | `docs/technique/ddd.md` | DDD vocabulary (if present) |
 | `docs/technique/ops.md` | CI / cache / Detekt / ESLint / Dependabot |
 | `docs/technique/providers.md` | External providers (Twelve Data, Finnhub, Anthropic, Ollama) |
+| `docs/devops/commandes-pratiques.md` | Cheatsheet devops local — psql, Tilt, Ollama, jobs LLM bloqués |
 | `docs/projet/sources.md` | Data sources |
-| `docs/projet/backlog.md` | Feature tracking by phase |
+| `docs/projet/backlog.md` | Open work only — `⏳`/`🚧`/`🧊`/`❌` + Dette technique. Shipped features live in `journal-livraisons.md`. |
+| `docs/projet/journal-livraisons.md` | Reverse-chronological log of shipped features by phase. Detailed implementation notes archived here when an `⏳` row in `backlog.md` becomes ✅. |
 | `docs/projet/commit-conventions.md` | Conventional Commits convention |
 | `docs/projet/audits/` | Historic code reviews (one file per audit + `index.md`) |
 | `docs/CHANGELOG.md` | Reverse-chronological log of doc changes — single source of "comment on en est arrivé là". Maintained post-patch by the main thread, **not** by you (you stay read-only). Read it during cross-link checks and to understand recent drift. |
@@ -37,21 +39,24 @@ Compare what the docs claim against the actual repository state. Common drift so
 
 | Doc claim | Verify against |
 | --------- | -------------- |
-| Backend modules listed (e.g. `market/`, `analysis/`, `config/`, …) | `backend/src/main/kotlin/com/portfolioai/` (use `Glob` then `Read`) |
-| Frontend repositories ("8 repositories : Portfolio, Analysis, …") | `frontend/src/app/core/*.repository.ts` (count + list) |
-| Providers ("Twelve Data, Finnhub, Mock, …") | `backend/src/main/resources/application.yml` + adapter classes |
+| Backend modules listed | `backend/src/main/kotlin/com/portfolioai/` (use `Glob` then `Read`) |
+| Frontend repositories count + listing | `frontend/src/app/core/*.repository.ts` (count + list) |
+| Providers listed (market / news / analyst / earnings / LLM) | `backend/src/main/resources/application.yml` + adapter classes |
 | CI workflows listed | `.github/workflows/*.yml` |
 | Flyway migrations count / numbering | `backend/src/main/resources/db/migration/V*.sql` |
 | Commands (`./gradlew test`, `npm run lint`, …) | `frontend/package.json` scripts + `backend/build.gradle.kts` tasks |
-| Phase status (Phase 1 ✅ terminé, Phase 2 ⏳ en cours, …) | `docs/projet/backlog.md` rows + recent code changes |
+| Phase status (`✅` clôturée / `🚧` en cours / `⏳` non démarrée) | `docs/projet/backlog.md` (open) + `docs/projet/journal-livraisons.md` (shipped) + recent code changes |
 | Settings page tabs / runtime keys | `frontend/src/app/features/settings/` route children + `backend/.../config/application/ConfigKeys.kt` |
 
+> Don't trust hardcoded counts in this prompt — the project evolves. Re-derive from disk on each run. The verification column tells you *where* the truth lives, not what it currently says.
+
 **Examples of drift you must catch** :
-- "Currently 7 repositories" when there are 8 on disk
-- "3 migrations Flyway" when V4 exists
+- A repository count claim that doesn't match the actual `*.repository.ts` files on disk
+- A migration count that doesn't match `V*.sql` on disk
 - A module listed in `architecture.md` that has been deleted
 - A workflow described in `ops.md` that no longer exists in `.github/workflows/`
 - A `ConditionalOnProperty` switch documented as "boot-only" when the code now reads it runtime via `AppConfigService`
+- A reference in `backlog.md` to a `⏳` ticket that has actually been delivered (its `✅` entry already lives in `journal-livraisons.md`) — and vice versa, a journal entry whose corresponding `⏳` line still hangs around in `backlog.md`
 
 ### 2. Tone preservation
 
@@ -78,7 +83,7 @@ Tu retournes un **punch-list** structuré, jamais un patch ni un diff. Format :
 ## Audit doc — <date>
 
 ### Cross-check (factual drift)
-- [HIGH] `architecture.md` ligne 141 dit "7 repositories", il y en a 8 sur disque (Config ajouté en Phase 2). Liste : Portfolio, Analysis, Settings, Snapshot, Market, Watchlist, News, Config.
+- [HIGH] `architecture.md` ligne <N> dit "<count> repositories", il y en a <actual> sur disque. Liste à jour (re-grep `frontend/src/app/core/*.repository.ts`) : <noms>.
 - [MED] `developper.md` "Switcher les providers" décrit l'édition `application-local.yml` comme seule méthode ; depuis Phase 2 la page `/settings/configuration` couvre le runtime.
 - ...
 
