@@ -12,7 +12,8 @@ import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.caffeine.CaffeineCacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.event.EventListener
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 /**
  * Caching for the `market/` module. Limits how often we hit Twelve Data — its free tier is quota-
@@ -26,10 +27,10 @@ import org.springframework.context.event.EventListener
  *
  * **Dynamic TTL** — the TTL is read at boot from [AppConfigService] (default 15 min, override
  * editable from `/settings/configuration`). When the value changes at runtime, the
- * [@EventListener][EventListener] below rebuilds the Caffeine spec via `setCaffeine(...)` ; the
- * trade-off is that the rebuild **invalidates existing entries** (Spring's `CaffeineCacheManager`
- * recreates its internal caches when reconfigured). Acceptable cost — TTL changes are rare and we'd
- * lose at most 15 min of warm cache.
+ * [TransactionalEventListener] below rebuilds the Caffeine spec via `setCaffeine(...)` *after the
+ * `AppConfigService.set` transaction commits* ; the trade-off is that the rebuild **invalidates
+ * existing entries** (Spring's `CaffeineCacheManager` recreates its internal caches when
+ * reconfigured). Acceptable cost — TTL changes are rare and we'd lose at most 15 min of warm cache.
  */
 @Configuration
 @EnableCaching
@@ -98,6 +99,13 @@ class MarketConfig {
  * Listens for [ConfigChangedEvent] and rebuilds the Caffeine spec when the cache TTL setting
  * changes. Lives outside [MarketConfig] so the configuration class stays a simple bean factory and
  * the listener has its own clean lifecycle (plain `@Component`, easy to mock in tests).
+ *
+ * **Why `@TransactionalEventListener(AFTER_COMMIT)`** : `AppConfigService.set` is `@Transactional`
+ * and publishes the event inside the transaction (last line, before commit). A plain
+ * `@EventListener` would fire synchronously and rebuild the cache spec **before** the transaction
+ * commits — if the transaction then rolls back (lock conflict, BDD anomaly), the cache would have
+ * been flushed for a config change that never happened. Phase `AFTER_COMMIT` defers the rebuild
+ * until the transaction is durable. Audit 2026-05-06 fin Phase 2 finding #5.
  */
 @org.springframework.stereotype.Component
 class CacheTtlListener(
@@ -106,7 +114,7 @@ class CacheTtlListener(
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
-  @EventListener
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   fun onConfigChanged(event: ConfigChangedEvent) {
     if (event.key != ConfigKeys.CACHE_TTL_MINUTES) return
     val ttl = appConfig.getInt(ConfigKeys.CACHE_TTL_MINUTES)
