@@ -57,21 +57,22 @@ class FinnhubSectorClassifier(
     get() = appConfig.getString(ConfigKeys.FINNHUB_API_KEY)
 
   override fun classify(symbol: String): SectorBenchmark {
-    val trimmed = symbol.trim()
-    if (trimmed.isEmpty()) throw NoSuchElementException("Symbol is blank")
+    // Caller contract (per [SectorClassifierService]) is "trimmed + uppercase". We rely on it
+    // rather than re-normalising — see audit 2026-05-06 finding "coutures benchmark v2". The
+    // blank check stays as a defensive safety net for direct programmatic callers.
+    if (symbol.isBlank()) throw NoSuchElementException("Symbol is blank")
     requireApiKey()
-    val upper = trimmed.uppercase()
-    log.info("Finnhub /stock/profile2 symbol={}", upper)
+    log.info("Finnhub /stock/profile2 symbol={}", symbol)
 
     val response =
       try {
         rest
           .get()
-          .uri("$baseUrl/stock/profile2?symbol={symbol}&token={token}", upper, apiKey)
+          .uri("$baseUrl/stock/profile2?symbol={symbol}&token={token}", symbol, apiKey)
           .retrieve()
           .body(FinnhubCompanyProfile::class.java)
       } catch (e: HttpClientErrorException.TooManyRequests) {
-        log.warn("Finnhub rate-limited on /stock/profile2 symbol={}", upper)
+        log.warn("Finnhub rate-limited on /stock/profile2 symbol={}", symbol)
         throw MarketUnavailableException("rate-limited", e)
       } catch (e: HttpClientErrorException.Unauthorized) {
         log.warn("Finnhub returned 401 on /stock/profile2 — check market.finnhub.api-key")
@@ -80,13 +81,13 @@ class FinnhubSectorClassifier(
         log.warn("Finnhub returned 403 on /stock/profile2 — endpoint behind a paid plan?")
         throw MarketUnavailableException("auth-failed", e)
       } catch (e: HttpClientErrorException) {
-        log.warn("Finnhub client error {} on /stock/profile2 symbol={}", e.statusCode, upper)
+        log.warn("Finnhub client error {} on /stock/profile2 symbol={}", e.statusCode, symbol)
         throw MarketUnavailableException("client error ${e.statusCode}", e)
       } catch (e: HttpServerErrorException) {
-        log.warn("Finnhub server error {} on /stock/profile2 symbol={}", e.statusCode, upper)
+        log.warn("Finnhub server error {} on /stock/profile2 symbol={}", e.statusCode, symbol)
         throw MarketUnavailableException("upstream ${e.statusCode}", e)
       } catch (e: ResourceAccessException) {
-        log.warn("Finnhub unreachable on /stock/profile2 symbol={}: {}", upper, e.message)
+        log.warn("Finnhub unreachable on /stock/profile2 symbol={}: {}", symbol, e.message)
         throw MarketUnavailableException("unreachable", e)
       } ?: throw MarketUnavailableException("Finnhub returned empty body for /stock/profile2")
 
@@ -94,12 +95,12 @@ class FinnhubSectorClassifier(
     // / blank and `finnhubIndustry` is null. Distinct from a plotting failure (5xx, rate-limit,
     // auth) — the front maps this to 404 → "no sector mapping" empty state.
     if (response.ticker.isNullOrBlank()) {
-      throw NoSuchElementException("Symbol not found on Finnhub: $upper")
+      throw NoSuchElementException("Symbol not found on Finnhub: $symbol")
     }
 
     return SpdrSectorEtfs.resolve(response.finnhubIndustry)
       ?: throw NoSuchElementException(
-        "No SPDR sector ETF mapping for $upper (industry='${response.finnhubIndustry ?: "?"}')"
+        "No SPDR sector ETF mapping for $symbol (industry='${response.finnhubIndustry ?: "?"}')"
       )
   }
 

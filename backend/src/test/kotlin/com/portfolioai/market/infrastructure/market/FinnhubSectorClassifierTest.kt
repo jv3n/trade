@@ -23,8 +23,9 @@ import org.springframework.web.client.RestClient
  * What we pin :
  * - **Happy path** — `finnhubIndustry` lookup resolves to the correct SPDR sector ETF via
  *   [SpdrSectorEtfs] (uppercase symbol echoed back, sector name + ETF symbol + ETF full name).
- * - **Symbol normalisation** — lowercase input round-trips as uppercase in the URL (matches the
- *   convention used by every other ticker endpoint).
+ * - **Symbol passthrough** — the adapter forwards the symbol it received verbatim into the URL.
+ *   Normalisation lives one layer up at the service / controller boundary (audit 2026-05-06 finding
+ *   "coutures benchmark v2") ; this adapter trusts its input is already trimmed + uppercase.
  * - **Empty profile body** — Finnhub's "we don't cover this symbol" signal is `{}` (HTTP 200 with
  *   no fields). The adapter raises [NoSuchElementException] which the global handler maps to HTTP
  *   404 (distinct from the 503 path used for upstream failures).
@@ -85,12 +86,13 @@ class FinnhubSectorClassifierTest {
   }
 
   @Test
-  fun `lowercase input is uppercased in the URL`() {
-    // The dossier convention is uppercase symbols ; the front passes whatever's in the URL, we
-    // normalise on the client boundary.
+  fun `forwards the pre-normalised symbol verbatim into the URL`() {
+    // Caller contract is "trimmed + uppercase" — the service/controller normalises once at the
+    // boundary, the adapter passes through. We pin the passthrough here so a future regression
+    // (someone re-adds a `.uppercase()` and accidentally double-encodes) is caught.
     server.enqueue(jsonOk(AAPL_TECH_PROFILE))
 
-    client.classify("aapl")
+    client.classify("AAPL")
 
     val recorded = server.takeRequest()
     assertTrue(recorded.path?.contains("symbol=AAPL") ?: false)

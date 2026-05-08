@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service
  *
  * **Cache key uses the uppercase symbol** so AAPL / aapl share the same entry. SpEL
  * `.toUpperCase()` — the Java method, not Kotlin's `.uppercase()`. Same gotcha as the news / search
- * caches.
+ * caches. The current callers (controller, programmatic invocations from inside the bean graph)
+ * already pass the upper form ; the SpEL is kept defensive at the cache boundary so direct calls
+ * from a future caller don't accidentally split the cache between cases.
  *
  * **No provider prefix on the key** — a switch from `mock` to `twelvedata` (or back) at runtime may
  * serve a few stale entries until the TTL expires (15 min by default, 5–60 min configurable via

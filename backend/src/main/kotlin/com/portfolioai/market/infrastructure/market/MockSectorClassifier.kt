@@ -25,13 +25,14 @@ class MockSectorClassifier : SectorClassifier {
   private val log = LoggerFactory.getLogger(javaClass)
 
   override fun classify(symbol: String): SectorBenchmark {
-    val upper = symbol.trim().uppercase()
-    if (upper == "RATELIMIT") throw MarketUnavailableException("rate-limited (mock)")
-    if (upper == "UNKNOWN") throw NoSuchElementException("Symbol not found: $upper")
+    // Caller contract (per [SectorClassifierService]) is "trimmed + uppercase". We lean on it
+    // rather than re-normalising — see audit 2026-05-06 finding "coutures benchmark v2".
+    if (symbol == "RATELIMIT") throw MarketUnavailableException("rate-limited (mock)")
+    if (symbol == "UNKNOWN") throw NoSuchElementException("Symbol not found: $symbol")
 
     val sector =
-      SECTOR_BY_SYMBOL[upper] ?: throw NoSuchElementException("No sector mapping for $upper")
-    log.debug("Mock sector classify {} → {}", upper, sector)
+      SECTOR_BY_SYMBOL[symbol] ?: throw NoSuchElementException("No sector mapping for $symbol")
+    log.debug("Mock sector classify {} → {}", symbol, sector)
     return SpdrSectorEtfs.resolve(sector)
       ?: throw NoSuchElementException("No SPDR ETF for sector '$sector'")
   }

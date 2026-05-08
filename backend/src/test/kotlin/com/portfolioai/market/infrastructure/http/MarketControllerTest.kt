@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
@@ -164,6 +165,11 @@ class MarketControllerTest {
       .perform(get("/api/market/ticker/aapl/sector-benchmark"))
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.tickerSymbol").value("AAPL"))
+
+    // Pin the contract introduced by audit 2026-05-06 finding "coutures benchmark v2" — the
+    // controller normalises once at the boundary and passes the uppercase form down to the
+    // service. Adapters trust the normalised input downstream.
+    verify(sectorClassifierService).classify("AAPL")
   }
 
   @Test

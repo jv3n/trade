@@ -1025,6 +1025,12 @@ export class TickerPage implements OnInit, OnDestroy {
     // "MSFT" string lingering in the input.
     this.customBenchmarkControl.setValue('', { emitEvent: false });
     this.customBenchmarkSuggestions.set([]);
+    // Reset the search-in-flight flag explicitly — without it, a click on a preset toggle while a
+    // custom-benchmark search is in flight leaves the spinner stuck `true` until the (now-hidden)
+    // subscription returns. Self-corrects in practice but lets the spinner clignoter under a
+    // closed dropdown for a frame or two ; explicit reset keeps the state observable from the UI
+    // (audit 2026-05-06 finding "coutures benchmark v2").
+    this.customBenchmarkSearching.set(false);
     // Drop hover so a stale tooltip from the previous benchmark doesn't linger over a bar that
     // may not have a matching benchmark point in the new series (different bar counts).
     this.hoveredIndex.set(null);
@@ -1160,12 +1166,18 @@ export class TickerPage implements OnInit, OnDestroy {
     this.fetchBenchmarkBars(match.symbol, this.selectedTimeframe());
   }
 
-  /** `mat-autocomplete [displayWith]` formatter — same shape as the dashboard. */
-  displayCustomBenchmark(value: SymbolMatch | string | null): string {
+  /**
+   * `mat-autocomplete [displayWith]` formatter — same shape as the dashboard. Bound as an arrow
+   * property so `this` is captured at field-init time : Material calls the function without
+   * binding (`displayWith($value)`), so a hypothetical future reference to `this` from inside the
+   * body would otherwise be `undefined` at call time. The arrow form blinds the foot-gun for free
+   * even if no caller exists today (audit 2026-05-06 finding "coutures benchmark v2").
+   */
+  displayCustomBenchmark = (value: SymbolMatch | string | null): string => {
     if (value === null || value === undefined) return '';
     if (typeof value === 'string') return value;
     return value.symbol;
-  }
+  };
 
   /**
    * Updates [hoveredIndex] to point at the bar nearest the cursor. We map the screen-space mouse

@@ -404,6 +404,21 @@ describe('TickerPage', () => {
       expect(component.snapshot()).toEqual(snapshotWithBars);
     });
 
+    it('selectBenchmark resets customBenchmarkSearching so a stale spinner does not linger', () => {
+      // Pin the audit 2026-05-06 fix : if a custom-benchmark search is in flight when the user
+      // clicks a preset toggle (SPY / Off), the spinner used to stay `true` until the
+      // (now-hidden) subscription returned. The explicit reset in `selectBenchmark` keeps the
+      // flag observable from the UI even if the dropdown is closed.
+      market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
+      market.getChart.mockImplementation(chartImpl);
+      fixture.detectChanges();
+      component.customBenchmarkSearching.set(true); // simulate an in-flight search
+
+      component.selectBenchmark('SPY');
+
+      expect(component.customBenchmarkSearching()).toBe(false);
+    });
+
     it('selectBenchmark(off) clears bars + error and drops the second line', () => {
       market.getTicker.mockReturnValue(of({ ...EMPTY_SNAPSHOT, bars: tickerBars }));
       market.getChart.mockImplementation(chartImpl);

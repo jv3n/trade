@@ -11,6 +11,11 @@ import com.portfolioai.market.domain.SectorBenchmark
  * only — see [RoutingSectorClassifier] for the routing rationale.
  *
  * Contract :
+ * - **Input is trimmed + uppercase**. Callers (currently
+ *   [com.portfolioai.market.application.SectorClassifierService] via
+ *   [com.portfolioai.market.infrastructure.http.MarketController]) normalise once at the boundary ;
+ *   adapters trust this and don't re-normalise. Cf. audit 2026-05-06 finding "coutures benchmark
+ *   v2".
  * - **Symbol resolves to a GICS sector covered by SPDR** → returns [SectorBenchmark].
  * - **Symbol unknown or sector outside the SPDR mapping** → throws [NoSuchElementException],
  *   surfaced as HTTP 404 by the global handler. The caller (frontend) shows an inline "no sector

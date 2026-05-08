@@ -67,19 +67,11 @@ class MockSectorClassifierTest {
     assertEquals("XLF", result.etfSymbol)
   }
 
-  @Test
-  fun `case-insensitive lookup — lowercase input finds the same mapping`() {
-    val lower = client.classify("aapl")
-    val upper = client.classify("AAPL")
-
-    assertEquals(upper, lower)
-  }
-
-  @Test
-  fun `whitespace around the symbol is trimmed`() {
-    val padded = client.classify("  AAPL  ")
-    assertEquals("XLK", padded.etfSymbol)
-  }
+  // Normalisation contract (lowercase + padded input → uppercase trimmed) used to live in this
+  // adapter and was tested directly here. After audit 2026-05-06 finding "coutures benchmark v2",
+  // normalisation moved to the service / controller boundary — the adapter trusts its input is
+  // already trimmed + uppercase. The end-to-end normalisation path is now covered indirectly by
+  // any caller that hits `MarketController.getSectorBenchmark` with mixed-case input.
 
   @Test
   fun `unknown symbol raises NoSuchElementException`() {

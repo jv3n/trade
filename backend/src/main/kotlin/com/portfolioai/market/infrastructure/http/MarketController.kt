@@ -72,6 +72,11 @@ class MarketController(
    * 503 (rate-limit / unreachable) propagates from [MarketUnavailableException].
    */
   @GetMapping("/{symbol}/sector-benchmark")
-  fun getSectorBenchmark(@PathVariable symbol: String): SectorBenchmarkDto =
-    sectorClassifierService.classify(symbol).toDto(symbol.trim().uppercase())
+  fun getSectorBenchmark(@PathVariable symbol: String): SectorBenchmarkDto {
+    // Normalise once at the boundary, then propagate the same uppercase form to the service (cache
+    // key + adapter call) and the DTO. Avoids the three-way duplication that used to live across
+    // the controller / SpEL key / adapter (audit 2026-05-06 finding "coutures benchmark v2").
+    val upper = symbol.trim().uppercase()
+    return sectorClassifierService.classify(upper).toDto(upper)
+  }
 }
