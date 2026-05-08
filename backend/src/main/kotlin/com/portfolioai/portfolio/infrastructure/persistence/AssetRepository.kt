@@ -2,15 +2,25 @@ package com.portfolioai.portfolio.infrastructure.persistence
 
 import com.portfolioai.portfolio.domain.Asset
 import com.portfolioai.portfolio.domain.AssetStatus
+import com.portfolioai.portfolio.domain.AssetType
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
 /**
  * Aggregate row used by [AssetRepository.findOwnedTickerRows]. Mapped via JPQL `new` constructor so
- * we don't fetch full entities just to count rows — pure SQL aggregation pushed to the DB.
+ * we don't fetch full entities just to count rows — pure SQL aggregation pushed to the DB. The
+ * [assetType] field is included in the GROUP BY because for any given ticker the type is constant
+ * across all rows (Wealthsimple is consistent on this) ; if a CSV import ever produced inconsistent
+ * types for the same symbol, the user would simply see one row per (ticker, type) pair — surfaces
+ * the discrepancy rather than silently picking one.
  */
-data class OwnedTickerRow(val ticker: String, val name: String, val portfolioCount: Long)
+data class OwnedTickerRow(
+  val ticker: String,
+  val name: String,
+  val assetType: AssetType,
+  val portfolioCount: Long,
+)
 
 interface AssetRepository : JpaRepository<Asset, UUID> {
   /**
@@ -36,11 +46,11 @@ interface AssetRepository : JpaRepository<Asset, UUID> {
   @Query(
     """
     SELECT new com.portfolioai.portfolio.infrastructure.persistence.OwnedTickerRow(
-      a.ticker, MAX(a.name), COUNT(DISTINCT a.portfolio.id)
+      a.ticker, MAX(a.name), a.assetType, COUNT(DISTINCT a.portfolio.id)
     )
     FROM Asset a
     WHERE a.status = com.portfolioai.portfolio.domain.AssetStatus.OPEN
-    GROUP BY a.ticker
+    GROUP BY a.ticker, a.assetType
     ORDER BY a.ticker ASC
   """
   )

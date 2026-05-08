@@ -156,9 +156,9 @@ describe('Dashboard', () => {
   describe('ownedTickers', () => {
     it('hydrates the signal from getOwnedTickers on init and preserves order', async () => {
       const tickers: OwnedTicker[] = [
-        { ticker: 'AAPL', name: 'Apple Inc.', portfolioCount: 2 },
-        { ticker: 'MSFT', name: 'Microsoft Corporation', portfolioCount: 1 },
-        { ticker: 'VOO', name: 'Vanguard S&P 500 ETF', portfolioCount: 1 },
+        { ticker: 'AAPL', name: 'Apple Inc.', assetType: 'STOCK', portfolioCount: 2 },
+        { ticker: 'MSFT', name: 'Microsoft Corporation', assetType: 'STOCK', portfolioCount: 1 },
+        { ticker: 'VOO', name: 'Vanguard S&P 500 ETF', assetType: 'ETF', portfolioCount: 1 },
       ];
       mockPortfolioRepository.getOwnedTickers = () => of(tickers);
 
@@ -168,6 +168,31 @@ describe('Dashboard', () => {
       await fixture2.whenStable();
 
       expect(fixture2.componentInstance.ownedTickers()).toEqual(tickers);
+    });
+
+    it('renders the instrument-type chip with the correct variant for each asset type', async () => {
+      // Pin the chip rollout for the "Tickers détenus" sidebar : a stock gets `instrument-STOCK`,
+      // an ETF gets `instrument-ETF`, a crypto gets `instrument-CRYPTO`. The class binding feeds
+      // the SCSS variant colors — a regression in the binding would silently flip a CRYPTO chip
+      // to look like a STOCK without changing the JSON output.
+      const tickers: OwnedTicker[] = [
+        { ticker: 'AAPL', name: 'Apple Inc.', assetType: 'STOCK', portfolioCount: 1 },
+        { ticker: 'VOO', name: 'Vanguard S&P 500 ETF', assetType: 'ETF', portfolioCount: 1 },
+        { ticker: 'BTC', name: 'Bitcoin', assetType: 'CRYPTO', portfolioCount: 1 },
+      ];
+      mockPortfolioRepository.getOwnedTickers = () => of(tickers);
+
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
+
+      const chips = fixture2.nativeElement.querySelectorAll(
+        '[data-testid="owned-ticker-instrument-type"]',
+      );
+      expect(chips.length).toBe(3);
+      expect(chips[0].classList.contains('instrument-STOCK')).toBe(true);
+      expect(chips[1].classList.contains('instrument-ETF')).toBe(true);
+      expect(chips[2].classList.contains('instrument-CRYPTO')).toBe(true);
     });
 
     it('falls back to empty list silently on backend failure', async () => {

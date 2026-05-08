@@ -43,6 +43,10 @@ export interface Asset {
 export interface OwnedTicker {
   ticker: string;
   name: string;
+  /** Bucket from `AssetType` (portfolio side) — `STOCK / ETF / CRYPTO / BOND / COMMODITY`.
+   *  Drives the coloured chip rendered next to the symbol in the dashboard sidebar's "Tickers
+   *  détenus" list. */
+  assetType: AssetType;
   portfolioCount: number;
 }
 

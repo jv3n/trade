@@ -150,13 +150,13 @@ class PortfolioControllerTest {
    */
 
   @Test
-  fun `GET owned-tickers returns aggregated list with portfolioCount`() {
+  fun `GET owned-tickers returns aggregated list with portfolioCount and assetType`() {
     given(portfolioQueryService.findOwnedTickers())
       .willReturn(
         listOf(
-          OwnedTickerDto("AAPL", "Apple Inc.", 2),
-          OwnedTickerDto("MSFT", "Microsoft Corporation", 1),
-          OwnedTickerDto("VOO", "Vanguard S&P 500 ETF", 1),
+          OwnedTickerDto("AAPL", "Apple Inc.", AssetType.STOCK, 2),
+          OwnedTickerDto("BTC", "Bitcoin", AssetType.CRYPTO, 1),
+          OwnedTickerDto("VOO", "Vanguard S&P 500 ETF", AssetType.ETF, 1),
         )
       )
 
@@ -166,8 +166,14 @@ class PortfolioControllerTest {
       .andExpect(jsonPath("$.length()").value(3))
       .andExpect(jsonPath("$[0].ticker").value("AAPL"))
       .andExpect(jsonPath("$[0].name").value("Apple Inc."))
+      .andExpect(jsonPath("$[0].assetType").value("STOCK"))
       .andExpect(jsonPath("$[0].portfolioCount").value(2))
+      // Pin a non-STOCK type as well — the chip rendering depends on the field round-tripping
+      // through the JSON serialiser without conversion (e.g. enum.ordinal slipping through).
+      .andExpect(jsonPath("$[1].ticker").value("BTC"))
+      .andExpect(jsonPath("$[1].assetType").value("CRYPTO"))
       .andExpect(jsonPath("$[2].ticker").value("VOO"))
+      .andExpect(jsonPath("$[2].assetType").value("ETF"))
   }
 
   @Test

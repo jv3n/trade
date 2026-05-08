@@ -42,6 +42,11 @@ class PortfolioQueryService(
    */
   fun findOwnedTickers(): List<OwnedTickerDto> =
     assetRepository.findOwnedTickerRows().map {
-      OwnedTickerDto(ticker = it.ticker, name = it.name, portfolioCount = it.portfolioCount.toInt())
+      OwnedTickerDto(
+        ticker = it.ticker,
+        name = it.name,
+        assetType = it.assetType,
+        portfolioCount = it.portfolioCount.toInt(),
+      )
     }
 }

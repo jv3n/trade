@@ -10,7 +10,10 @@
       "STOCK": "Action",
       "ETF": "ETF",
       "INDEX": "Indice",
-      "OTHER": "Autre"
+      "OTHER": "Autre",
+      "CRYPTO": "Crypto",
+      "BOND": "Obligation",
+      "COMMODITY": "Matière première"
     }
   },
   "nav": {

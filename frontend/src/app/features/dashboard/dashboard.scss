@@ -374,6 +374,14 @@
   gap: 0.3rem;
 }
 
+// Chaque "tickers détenus" entry = link vers le dossier + chip d'instrument type. Inline-flex
+// pour que la paire chip-symbol + chip-type soit insécable dans le wrap du parent.
+.owned-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .ticker-chip {
   font-size: 0.72rem;
   font-weight: 600;
@@ -498,11 +506,15 @@
   }
 }
 
-// Instrument-type chip dans la watchlist sidebar — version compacte du chip qu'on a sur le
-// header dossier ticker (cf. `ticker.scss > .ticker-instrument-type`). Mêmes variants de
-// couleur, taille réduite parce qu'on est dans une sidebar étroite. Si la phase 2 (Tickers
-// détenus) ajoute le même chip, considérer lift à `styles.scss` pour mutualiser.
-.watchlist-instrument-type {
+// Instrument-type chip dans la sidebar dashboard — version compacte du chip qu'on a sur le
+// header dossier ticker (cf. `ticker.scss > .ticker-instrument-type`). Mêmes variants de couleur,
+// taille réduite parce qu'on est dans une sidebar étroite. Partagé entre les deux listes sidebar :
+// `.watchlist-list` (chip dérivé de `InstrumentType` via lazy `getTicker` lookup) et
+// `.owned-tickers-list` (chip dérivé de `AssetType` via le DTO portfolio backend). Les deux taxonomies
+// ne se chevauchent pas exactement — d'où les 7 variants couvrant l'union (STOCK / ETF / INDEX /
+// OTHER côté market + CRYPTO / BOND / COMMODITY côté portfolio). Si une 4ᵉ surface ajoute le même
+// chip un jour, considérer lift à `styles.scss` global.
+.sidebar-instrument-type {
   font-size: 0.55rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -531,6 +543,25 @@
   &.instrument-OTHER {
     background: var(--color-surface-2);
     color: var(--color-text-dim);
+  }
+  // Buckets propres au `AssetType` portfolio (pas dans `InstrumentType` market) :
+  &.instrument-CRYPTO {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+  }
+  &.instrument-BOND {
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    border-color: var(--color-border-soft);
+  }
+  &.instrument-COMMODITY {
+    // Volontairement la même teinte que INDEX — ces deux buckets ne cohabitent pas sur la même
+    // surface (INDEX ne sort que de `InstrumentType` market = watchlist, COMMODITY ne sort que
+    // de `AssetType` portfolio = owned-tickers), donc pas de risque de confusion visuelle.
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+    border-color: var(--color-warning);
   }
 }
 

@@ -10,7 +10,10 @@
       "STOCK": "Stock",
       "ETF": "ETF",
       "INDEX": "Index",
-      "OTHER": "Other"
+      "OTHER": "Other",
+      "CRYPTO": "Crypto",
+      "BOND": "Bond",
+      "COMMODITY": "Commodity"
     }
   },
   "nav": {
