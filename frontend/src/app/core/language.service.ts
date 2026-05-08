@@ -1,4 +1,5 @@
-import { Injectable, effect, inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, effect, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 
 export type Language = 'fr' | 'en';
@@ -24,9 +25,15 @@ const STORAGE_KEY = 'portfolioai.language';
  *
  * The active language drives `TranslateService.use(...)` which loads `/i18n/<lang>.json` via the
  * HTTP loader configured in `app.config.ts`.
+ *
+ * **SSR safety** — `document`, `localStorage`, and `navigator` are browser-only. Each access is
+ * gated on [isPlatformBrowser] so the server can instantiate the service without throwing ;
+ * mirror of the same pattern in [ThemeService].
  */
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly translate = inject(TranslateService);
   private readonly _lang = signal<Language>(this.loadInitial());
   readonly lang = this._lang.asReadonly();
@@ -37,11 +44,12 @@ export class LanguageService {
     effect(() => {
       const l = this._lang();
       this.translate.use(l);
+      if (!this.isBrowser) return;
       try {
         document.documentElement.setAttribute('lang', l);
         localStorage.setItem(STORAGE_KEY, l);
       } catch {
-        // ignore (private mode, SSR…)
+        // localStorage unavailable (private mode, quota exceeded); silently ignore
       }
     });
   }
@@ -61,6 +69,7 @@ export class LanguageService {
   }
 
   private loadInitial(): Language {
+    if (!this.isBrowser) return 'fr';
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === 'fr' || saved === 'en') return saved;
@@ -68,10 +77,7 @@ export class LanguageService {
       // ignore
     }
     // Browser locale fallback : `fr-CA` / `fr-FR` → `fr`. Anything else → `en`.
-    const browser =
-      typeof navigator !== 'undefined' && navigator.language
-        ? navigator.language.toLowerCase()
-        : 'en';
+    const browser = navigator.language ? navigator.language.toLowerCase() : 'en';
     return browser.startsWith('fr') ? 'fr' : 'en';
   }
 }
