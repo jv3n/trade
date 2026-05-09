@@ -1,0 +1,200 @@
+/**
+ * Tests on [OllamaStatusService] — the signal-based wrapper around the polling daemon probe. The
+ * panel on `/settings/configuration > LLM` consumes the signal directly, so the contract that
+ * matters here is :
+ *
+ * - **Initial state** : `null` until the first refresh completes (the panel renders a spinner
+ *   on the `null` branch).
+ * - **Refresh success** : the signal lands on the freshly fetched payload.
+ * - **Refresh failure** : the signal keeps its previous value (transient hiccup must NOT blank
+ *   the panel — a flicker between green chip and "loading" every 10 s would be worse than just
+ *   keeping the slightly stale value).
+ * - **Polling** : `startPolling()` triggers an immediate refresh and queues a recurring tick ;
+ *   `stopPolling()` clears the timer ; both are idempotent (defensive against double-mount).
+ */
+import { TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
+import { OllamaStatus, OllamaStatusRepository } from './ollama-status.repository';
+import { OllamaStatusService } from './ollama-status.service';
+
+class StubRepository extends OllamaStatusRepository {
+  // Each `get()` call returns the next factory in the `getQueue` ; same shape for `unload` on its
+  // own queue. Lets tests pin an exact sequence (success, then failure, then success) without
+  // juggling spies. Shared call counters are exposed for assertions.
+  getQueue: (() => Observable<OllamaStatus>)[] = [];
+  unloadQueue: ((model: string) => Observable<OllamaStatus>)[] = [];
+  callCount = 0;
+  unloadCalls: string[] = [];
+
+  get(): Observable<OllamaStatus> {
+    this.callCount += 1;
+    const next = this.getQueue.shift();
+    if (!next) {
+      throw new Error('StubRepository: get queue is empty — test forgot to enqueue a response');
+    }
+    return next();
+  }
+
+  unload(model: string): Observable<OllamaStatus> {
+    this.unloadCalls.push(model);
+    const next = this.unloadQueue.shift();
+    if (!next) {
+      throw new Error('StubRepository: unload queue is empty — test forgot to enqueue a response');
+    }
+    return next(model);
+  }
+}
+
+const reachable: OllamaStatus = {
+  daemonReachable: true,
+  baseUrl: 'http://localhost:11434',
+  latencyMs: 12,
+  loadedModels: [{ name: 'qwen2.5:3b', expiresAt: null, sizeVramBytes: 2_008_000_000 }],
+  availableModels: ['qwen2.5:3b'],
+  errorMessage: null,
+};
+
+const unreachable: OllamaStatus = {
+  daemonReachable: false,
+  baseUrl: 'http://localhost:11434',
+  latencyMs: null,
+  loadedModels: [],
+  availableModels: [],
+  errorMessage: 'Connection refused',
+};
+
+describe('OllamaStatusService', () => {
+  let service: OllamaStatusService;
+  let stub: StubRepository;
+
+  beforeEach(() => {
+    stub = new StubRepository();
+    TestBed.configureTestingModule({
+      providers: [{ provide: OllamaStatusRepository, useValue: stub }, OllamaStatusService],
+    });
+    service = TestBed.inject(OllamaStatusService);
+  });
+
+  it('starts with a null status until the first refresh resolves', () => {
+    expect(service.status()).toBeNull();
+  });
+
+  it('refresh sets the signal to the fetched snapshot', async () => {
+    stub.getQueue.push(() => of(reachable));
+    await service.refresh();
+    expect(service.status()).toEqual(reachable);
+  });
+
+  it('refresh keeps the previous signal value when the HTTP call fails', async () => {
+    stub.getQueue.push(() => of(reachable));
+    await service.refresh();
+
+    stub.getQueue.push(() => throwError(() => new Error('network is down')));
+    await service.refresh();
+
+    // Critical : the panel must not flicker back to `null` (the spinner state) on a transient
+    // backend hiccup. Stale-but-rendered beats a spinner that comes back every poll tick.
+    expect(service.status()).toEqual(reachable);
+  });
+
+  it('startPolling triggers an immediate refresh', () => {
+    vi.useFakeTimers();
+    try {
+      stub.getQueue.push(() => of(reachable));
+      service.startPolling(5_000);
+      // The immediate refresh fires synchronously (microtask is flushed by the await chain inside
+      // refresh — but the get() call itself is synchronous here because we return `of(...)`).
+      expect(stub.callCount).toBe(1);
+    } finally {
+      service.stopPolling();
+      vi.useRealTimers();
+    }
+  });
+
+  it('startPolling refreshes again on every interval tick', () => {
+    vi.useFakeTimers();
+    try {
+      stub.getQueue.push(() => of(reachable));
+      stub.getQueue.push(() => of(unreachable));
+      stub.getQueue.push(() => of(reachable));
+
+      service.startPolling(10_000);
+      expect(stub.callCount).toBe(1);
+
+      vi.advanceTimersByTime(10_000);
+      expect(stub.callCount).toBe(2);
+
+      vi.advanceTimersByTime(10_000);
+      expect(stub.callCount).toBe(3);
+    } finally {
+      service.stopPolling();
+      vi.useRealTimers();
+    }
+  });
+
+  it('startPolling is idempotent — calling twice does not double the tick frequency', () => {
+    vi.useFakeTimers();
+    try {
+      stub.getQueue.push(() => of(reachable));
+      stub.getQueue.push(() => of(reachable));
+
+      service.startPolling(5_000);
+      service.startPolling(5_000); // second call should be a no-op
+      // Only one immediate refresh from the first call.
+      expect(stub.callCount).toBe(1);
+
+      vi.advanceTimersByTime(5_000);
+      // One tick fired, not two.
+      expect(stub.callCount).toBe(2);
+    } finally {
+      service.stopPolling();
+      vi.useRealTimers();
+    }
+  });
+
+  it('stopPolling clears the timer and is safe to call when no polling is active', () => {
+    vi.useFakeTimers();
+    try {
+      stub.getQueue.push(() => of(reachable));
+      service.startPolling(5_000);
+      service.stopPolling();
+
+      vi.advanceTimersByTime(20_000);
+      // Only the immediate refresh fired ; the interval was cleared before any tick.
+      expect(stub.callCount).toBe(1);
+
+      // Idempotency : calling stop twice (defensive against double-destroy) should not throw.
+      expect(() => service.stopPolling()).not.toThrow();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // -------------------------------------------------------------------- unload
+
+  it('unload forwards the model name and updates the signal with the post-action snapshot', async () => {
+    const postUnload: OllamaStatus = {
+      ...reachable,
+      loadedModels: [], // VRAM emptied
+    };
+    stub.unloadQueue.push(() => of(postUnload));
+
+    await service.unload('qwen2.5:3b');
+
+    expect(stub.unloadCalls).toEqual(['qwen2.5:3b']);
+    expect(service.status()).toEqual(postUnload);
+  });
+
+  it('unload preserves the previous signal value when the HTTP call fails', async () => {
+    // Land a known good snapshot first, then fail the unload.
+    stub.getQueue.push(() => of(reachable));
+    await service.refresh();
+
+    stub.unloadQueue.push(() => throwError(() => new Error('backend down')));
+    await service.unload('qwen2.5:3b');
+
+    // Same contract as refresh failure — the panel keeps showing what it had instead of
+    // flipping back to spinner / null.
+    expect(service.status()).toEqual(reachable);
+  });
+});

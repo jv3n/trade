@@ -276,6 +276,49 @@ textarea {
   }
 }
 
+// Generic settings-style card (background + border + radius + padding + bottom margin).
+// Defined globally because it is consumed both by the `Configuration` page directly and by
+// child components rendered inside it (e.g. `OllamaStatusPanel`). Angular's emulated view
+// encapsulation prevents a child component from picking up a class defined in its parent's
+// SCSS, so this used to break silently when a child element opted into `.config-card`.
+.config-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1rem;
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+
+    h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--color-text);
+      flex: 1;
+    }
+  }
+
+  .description {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin: 0 0 0.9rem;
+
+    a {
+      color: var(--color-accent);
+      text-decoration: underline;
+
+      &:hover {
+        opacity: 0.85;
+      }
+    }
+  }
+}
+
 .btn-primary {
   height: 36px;
   padding: 0 1rem;

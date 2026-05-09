@@ -71,6 +71,25 @@
   max-width: 800px;
 }
 
+.claude-not-applicable {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+
+  mat-icon {
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--color-accent);
+  }
+}
+
 @media (max-width: 720px) {
   // On tight screens stack the sub-sidenav above the content (mirror of the .settings-shell
   // responsive bail-out — keeps both navigation levels usable on mobile without scroll-locking).
@@ -126,43 +145,10 @@
   padding: 1rem 0;
 }
 
-.config-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 1.2rem 1.4rem;
-  margin-bottom: 1rem;
-
-  .card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.4rem;
-
-    h3 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin: 0;
-      color: var(--color-text);
-      flex: 1;
-    }
-  }
-
-  .description {
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
-    margin: 0 0 0.9rem;
-
-    a {
-      color: var(--color-accent);
-      text-decoration: underline;
-
-      &:hover {
-        opacity: 0.85;
-      }
-    }
-  }
-}
+// `.config-card` (background / border / radius / padding / margin-bottom + .card-header /
+// .description sub-styles) lives in the global `styles.scss` so child components rendered inside
+// this page (e.g. `OllamaStatusPanel`) inherit the same look without fighting Angular's emulated
+// view encapsulation.
 
 .badge {
   font-size: 0.7rem;

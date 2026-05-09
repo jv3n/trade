@@ -1,11 +1,15 @@
 package com.portfolioai.config.infrastructure.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.portfolioai.analysis.application.dto.LoadedModelDto
+import com.portfolioai.analysis.application.dto.OllamaStatusDto
+import com.portfolioai.analysis.infrastructure.llm.OllamaStatusService
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.config.application.dto.TestConfigResult
 import com.portfolioai.config.infrastructure.ConfigTestClient
 import com.portfolioai.shared.GlobalExceptionHandler
+import java.time.Instant
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.mockito.kotlin.verify
@@ -42,6 +46,7 @@ class ConfigControllerTest {
   @Autowired private lateinit var json: ObjectMapper
   @MockitoBean private lateinit var service: AppConfigService
   @MockitoBean private lateinit var testClient: ConfigTestClient
+  @MockitoBean private lateinit var ollamaStatusService: OllamaStatusService
 
   // ---------------------------------------------------------------------- list
 
@@ -303,5 +308,96 @@ class ConfigControllerTest {
       .andExpect(jsonPath("$.message").value("OK — Ollama (qwen2.5:3b) replied in 1.2s"))
 
     verify(testClient).testLlm("ollama", "qwen2.5:3b")
+  }
+
+  // ---------------------------------------------------------------------- llm status
+
+  @Test
+  fun `GET llm status forwards the daemon snapshot to the front`() {
+    // The endpoint is a thin proxy over OllamaStatusService.probe — verify the JSON shape (panel
+    // contract) and that fail-soft snapshots round-trip with the right HTTP code (200, never 503,
+    // because the panel polls and a 503 would put the whole settings page in error state).
+    given(ollamaStatusService.probe())
+      .willReturn(
+        OllamaStatusDto(
+          daemonReachable = true,
+          baseUrl = "http://localhost:11434",
+          latencyMs = 12,
+          loadedModels =
+            listOf(
+              LoadedModelDto(
+                name = "qwen2.5:3b",
+                expiresAt = Instant.parse("2026-05-08T15:30:00Z"),
+                sizeVramBytes = 2_008_000_000L,
+              )
+            ),
+          availableModels = listOf("llama3.2:3b", "qwen2.5:3b"),
+          errorMessage = null,
+        )
+      )
+
+    mvc
+      .perform(get("/api/config/llm/status"))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.daemonReachable").value(true))
+      .andExpect(jsonPath("$.baseUrl").value("http://localhost:11434"))
+      .andExpect(jsonPath("$.latencyMs").value(12))
+      .andExpect(jsonPath("$.availableModels.length()").value(2))
+      .andExpect(jsonPath("$.availableModels[0]").value("llama3.2:3b"))
+      .andExpect(jsonPath("$.loadedModels.length()").value(1))
+      .andExpect(jsonPath("$.loadedModels[0].name").value("qwen2.5:3b"))
+      .andExpect(jsonPath("$.loadedModels[0].sizeVramBytes").value(2_008_000_000L))
+  }
+
+  @Test
+  fun `GET llm status surfaces fail-soft snapshots with HTTP 200 and daemonReachable=false`() {
+    given(ollamaStatusService.probe())
+      .willReturn(
+        OllamaStatusDto(
+          daemonReachable = false,
+          baseUrl = "http://localhost:11434",
+          latencyMs = null,
+          loadedModels = emptyList(),
+          availableModels = emptyList(),
+          errorMessage = "Unreachable : Connection refused",
+        )
+      )
+
+    mvc
+      .perform(get("/api/config/llm/status"))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.daemonReachable").value(false))
+      .andExpect(jsonPath("$.errorMessage").value("Unreachable : Connection refused"))
+  }
+
+  @Test
+  fun `POST llm unload-model trims and forwards the model and surfaces the fresh snapshot`() {
+    // The endpoint is a thin wrapper over OllamaStatusService.unloadModel — verify the trim,
+    // the forward, and the wire shape (the panel re-renders directly from the response, so the
+    // round-trip must carry the post-unload daemon state).
+    given(ollamaStatusService.unloadModel("qwen2.5:3b"))
+      .willReturn(
+        OllamaStatusDto(
+          daemonReachable = true,
+          baseUrl = "http://localhost:11434",
+          latencyMs = 9,
+          loadedModels = emptyList(), // VRAM now empty after the unload took effect
+          availableModels = listOf("qwen2.5:3b"),
+          errorMessage = null,
+        )
+      )
+
+    mvc
+      .perform(
+        post("/api/config/llm/unload-model")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(json.writeValueAsString(mapOf("model" to "  qwen2.5:3b  ")))
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.daemonReachable").value(true))
+      .andExpect(jsonPath("$.loadedModels.length()").value(0))
+      .andExpect(jsonPath("$.availableModels[0]").value("qwen2.5:3b"))
+
+    verify(ollamaStatusService).unloadModel("qwen2.5:3b")
   }
 }

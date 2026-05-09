@@ -43,3 +43,9 @@ data class TestLlmRequest(val provider: String, val model: String)
 
 /** Result of a connectivity test : `ok=true` ⇒ provider responded as expected. */
 data class TestConfigResult(val ok: Boolean, val message: String)
+
+/**
+ * Body of `POST /api/config/llm/unload-model`. Forces Ollama to drop the named model from VRAM
+ * (handy when switching models or to force a cold-start for latency comparison).
+ */
+data class UnloadModelRequest(val model: String)

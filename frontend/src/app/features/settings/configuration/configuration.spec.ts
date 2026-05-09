@@ -25,6 +25,8 @@ import { of, throwError } from 'rxjs';
 import { Configuration } from './configuration';
 import { ConfigEntry, ConfigRepository } from '../../../core/config.repository';
 import { LlmTimeoutService } from '../../../core/llm-timeout.service';
+import { OllamaStatusService } from '../../../core/ollama-status.service';
+import { OllamaStatus } from '../../../core/ollama-status.repository';
 
 const TWELVE: ConfigEntry = {
   key: 'market.twelvedata.api-key',
@@ -216,6 +218,20 @@ describe('Configuration', () => {
             ...timeoutServiceMock,
             seconds: signal(400).asReadonly(),
             millis: () => 400_000,
+          },
+        },
+        // OllamaStatusPanel is mounted inside the LLM section conditionally. Once a test flips
+        // `activeSection` to 'llm' with llm.provider=ollama, the panel boots and tries to inject
+        // OllamaStatusService. We provide a mock that exposes a static snapshot signal — the real
+        // polling behaviour is exercised in ollama-status.service.spec.ts.
+        {
+          provide: OllamaStatusService,
+          useValue: {
+            status: signal<OllamaStatus | null>(null).asReadonly(),
+            startPolling: vi.fn(),
+            stopPolling: vi.fn(),
+            refresh: vi.fn().mockResolvedValue(undefined),
+            unload: vi.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -533,5 +549,45 @@ describe('Configuration', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="twelvedata-sector-hint"]'),
     ).toBeNull();
+  });
+
+  describe('Ollama status panel visibility', () => {
+    it('renders the panel on the LLM section when llm.provider is ollama', () => {
+      // The fixture seed has LLM_PROVIDER.currentValue = 'ollama' — switching to the LLM section
+      // is enough to mount the panel. We don't read the panel's internals here ; that's the job
+      // of ollama-status-panel.spec.ts.
+      expect(component.isOllamaActive()).toBe(true);
+
+      component.setSection('llm');
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="ollama-status-panel"]'),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="claude-not-applicable"]'),
+      ).toBeNull();
+    });
+
+    it('renders the not-applicable note instead of the panel when llm.provider is claude', () => {
+      // Flip via selectProvider but pin the wire response to a properly-typed ENUM entry — the
+      // generic `repo.set` mock copies from a SECRET fixture, which would land an ill-typed
+      // entry in the signal and break the LLM provider card's render alongside this assertion.
+      repo.set.mockImplementationOnce((_key: string, value: string) =>
+        of({ ...LLM_PROVIDER, currentValue: value, isOverridden: value !== 'claude' }),
+      );
+      component.selectProvider('llm.provider', 'claude');
+      fixture.detectChanges();
+
+      expect(component.isOllamaActive()).toBe(false);
+
+      component.setSection('llm');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="ollama-status-panel"]')).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="claude-not-applicable"]'),
+      ).not.toBeNull();
+    });
   });
 });

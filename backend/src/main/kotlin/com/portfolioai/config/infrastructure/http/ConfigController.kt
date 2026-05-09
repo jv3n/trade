@@ -1,5 +1,7 @@
 package com.portfolioai.config.infrastructure.http
 
+import com.portfolioai.analysis.application.dto.OllamaStatusDto
+import com.portfolioai.analysis.infrastructure.llm.OllamaStatusService
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.config.application.dto.ConfigEntryDto
@@ -8,6 +10,7 @@ import com.portfolioai.config.application.dto.SetConfigRequest
 import com.portfolioai.config.application.dto.TestConfigRequest
 import com.portfolioai.config.application.dto.TestConfigResult
 import com.portfolioai.config.application.dto.TestLlmRequest
+import com.portfolioai.config.application.dto.UnloadModelRequest
 import com.portfolioai.config.infrastructure.ConfigTestClient
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
@@ -45,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController
 class ConfigController(
   private val service: AppConfigService,
   private val testClient: ConfigTestClient,
+  private val ollamaStatusService: OllamaStatusService,
 ) {
 
   @GetMapping
@@ -76,6 +80,25 @@ class ConfigController(
   @PostMapping("/test/llm")
   fun testLlm(@RequestBody body: TestLlmRequest): TestConfigResult =
     testClient.testLlm(body.provider.trim(), body.model.trim())
+
+  /**
+   * Lightweight probe of the local Ollama daemon — daemon up/down + latency, models pulled locally,
+   * models currently in VRAM with their idle-timeout countdown. Polled by the LLM section of
+   * `/settings/configuration` every ~10 s while the user is on that page.
+   *
+   * Always returns 200 with [OllamaStatusDto.daemonReachable] = `false` on failure rather than a
+   * 503 — the panel renders a red chip in-band, the rest of the settings page stays usable.
+   */
+  @GetMapping("/llm/status") fun llmStatus(): OllamaStatusDto = ollamaStatusService.probe()
+
+  /**
+   * Forces Ollama to drop the named model from VRAM. Returns the freshly re-probed snapshot so the
+   * panel can update in one round-trip — no need to follow up with a separate `GET /llm/status`
+   * request.
+   */
+  @PostMapping("/llm/unload-model")
+  fun unloadOllamaModel(@RequestBody body: UnloadModelRequest): OllamaStatusDto =
+    ollamaStatusService.unloadModel(body.model.trim())
 
   private fun entryFor(key: String): ConfigEntryDto {
     val isSecret = key in ConfigKeys.SECRET_KEYS

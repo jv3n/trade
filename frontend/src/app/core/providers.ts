@@ -18,6 +18,8 @@ import { AnalystRepository } from './analyst.repository';
 import { HttpAnalystRepository } from './adapters/analyst.http';
 import { EarningsRepository } from './earnings.repository';
 import { HttpEarningsRepository } from './adapters/earnings.http';
+import { OllamaStatusRepository } from './ollama-status.repository';
+import { HttpOllamaStatusRepository } from './adapters/ollama-status.http';
 
 /**
  * Wires every port (`*.repository.ts`) to its default adapter. Aligned on the
@@ -35,5 +37,6 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
     { provide: AnalystRepository, useClass: HttpAnalystRepository },
     { provide: EarningsRepository, useClass: HttpEarningsRepository },
+    { provide: OllamaStatusRepository, useClass: HttpOllamaStatusRepository },
   ]);
 }

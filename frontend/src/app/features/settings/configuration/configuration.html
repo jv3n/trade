@@ -513,6 +513,17 @@
             </section>
           }
         } @else {
+          <!-- Ollama daemon status (only when ollama is the active provider — Claude is a remote
+               API with no daemon to surface) -->
+          @if (isOllamaActive()) {
+            <app-ollama-status-panel></app-ollama-status-panel>
+          } @else {
+            <p class="claude-not-applicable" data-testid="claude-not-applicable">
+              <mat-icon>info_outline</mat-icon>
+              {{ 'settings.configurationPage.ollamaStatus.notApplicableForClaude' | translate }}
+            </p>
+          }
+
           <!-- LLM provider -->
           @if (llmProvider(); as entry) {
             <section class="config-card">

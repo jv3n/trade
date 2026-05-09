@@ -1,0 +1,179 @@
+.ollama-status-panel {
+  // The `.config-card` class on the host `<section>` provides the box (background / border /
+  // radius / padding / margin-bottom) — defined globally in `styles.scss` so it survives
+  // Angular's emulated view encapsulation across the parent/child boundary. Local styles below
+  // tune the daemon-status chip, the loaded/available model lists, and the countdown — concerns
+  // that don't belong on the generic card.
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+
+    mat-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+      line-height: 1rem;
+    }
+
+    .latency {
+      color: inherit;
+      opacity: 0.85;
+      font-variant-numeric: tabular-nums;
+    }
+
+    &.reachable {
+      background: var(--color-success-soft);
+      color: var(--color-success);
+      border-color: var(--color-success);
+    }
+
+    &.unreachable {
+      background: var(--color-danger-soft);
+      color: var(--color-danger);
+      border-color: var(--color-danger);
+    }
+  }
+
+  .loading-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    padding: 0.4rem 0;
+  }
+
+  .base-url {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin: 0.2rem 0 1rem;
+
+    code {
+      background: var(--color-surface-2);
+      padding: 0.1rem 0.4rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+    }
+  }
+
+  .error-message {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+    margin: 0 0 1rem;
+  }
+
+  .status-section {
+    margin-bottom: 1rem;
+
+    h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+      margin: 0 0 0.4rem;
+    }
+  }
+
+  .empty-state {
+    color: var(--color-text-faint);
+    font-size: 0.8rem;
+    font-style: italic;
+    margin: 0;
+  }
+
+  .loaded-models {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .loaded-model {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--color-surface-2);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+
+    .model-name {
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    .model-size {
+      color: var(--color-text-muted);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .countdown {
+      margin-left: auto;
+      color: var(--color-accent);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .unload-button {
+      // Smaller than the default 40 px Material icon-button — keeps the row visually balanced
+      // with the surrounding pill-style chips. The countdown's `margin-left: auto` already
+      // pushes everything trailing to the right ; the eject button sits flush after it.
+      //
+      // Material 21 (`mat-mdc-icon-button`) relies on `--mdc-icon-button-state-layer-size` to
+      // size its internal hit-area / hover-ripple, which also controls where the icon centres
+      // inside the button. Just shrinking `width` / `height` without overriding that token
+      // leaves the icon offset (the layer is still 40 px and pushes the icon off-centre).
+      --mdc-icon-button-state-layer-size: 28px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      color: var(--color-text-muted);
+
+      mat-icon {
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+        line-height: 1rem;
+      }
+
+      &:hover {
+        color: var(--color-danger);
+      }
+    }
+  }
+
+  .available-models {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .model-chip {
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-border);
+  }
+
+  .card-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.4rem;
+  }
+}

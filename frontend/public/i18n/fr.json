@@ -405,6 +405,22 @@
         "title": "Provider LLM",
         "description": "Choisit le moteur qui rédige le narratif du dossier ticker : Claude (cloud Anthropic, requiert anthropic.api.key dans application-local.yml) ou Ollama (local, requiert un daemon Ollama en écoute). La bascule s'applique à la prochaine analyse."
       },
+      "ollamaStatus": {
+        "title": "État Ollama",
+        "loading": "Interrogation du daemon…",
+        "daemonReachable": "Daemon en ligne",
+        "daemonUnreachable": "Daemon injoignable",
+        "baseUrlLabel": "URL :",
+        "loadedModelsLabel": "Modèles chargés en mémoire",
+        "noLoadedModels": "Aucun modèle chargé en VRAM. Le premier appel pull le modèle puis le garde le temps de l'idle timeout (5 min par défaut côté Ollama).",
+        "availableModelsLabel": "Modèles pull localement",
+        "noAvailableModels": "Aucun modèle pull localement. Lance `ollama pull <tag>` (ou le bouton Tilt) avant de cibler un modèle ici.",
+        "expiresIn": "expire dans {{value}}",
+        "expired": "expiré",
+        "refresh": "Rafraîchir",
+        "unloadAriaLabel": "Décharger {{model}} de la VRAM",
+        "notApplicableForClaude": "État Ollama non applicable pour le provider Claude — utilise le bouton Tester de la card « Modèle Claude » plus bas pour valider la connectivité Anthropic."
+      },
       "providers": {
         "mock": "Mock (local)",
         "twelvedata": "Twelve Data",

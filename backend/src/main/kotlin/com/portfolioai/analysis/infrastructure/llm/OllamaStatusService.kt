@@ -1,0 +1,173 @@
+package com.portfolioai.analysis.infrastructure.llm
+
+import com.portfolioai.analysis.application.dto.LoadedModelDto
+import com.portfolioai.analysis.application.dto.OllamaStatusDto
+import java.net.http.HttpClient
+import java.time.Duration
+import java.time.Instant
+import java.time.format.DateTimeParseException
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.client.JdkClientHttpRequestFactory
+import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpStatusCodeException
+import org.springframework.web.client.ResourceAccessException
+import org.springframework.web.client.RestClient
+
+/**
+ * Probes the local Ollama daemon for the `/settings/configuration > LLM` panel : daemon up/down,
+ * latency, models pulled locally, models currently loaded into VRAM with their idle-timeout expiry.
+ *
+ * **Fail-soft is the contract** : an unreachable daemon returns a `OllamaStatusDto` with
+ * `daemonReachable: false` rather than throwing. The panel polls this endpoint every ~10 s while
+ * the user is on the LLM section — propagating exceptions to the UI would put the whole settings
+ * page in an error state on every transient hiccup, which defeats the purpose (the panel exists
+ * precisely to surface daemon trouble in-band).
+ *
+ * Two upstream calls per probe :
+ * - `GET /api/tags` — full list of models pulled locally. Cheap, served from disk.
+ * - `GET /api/ps` — models currently held in VRAM, with `expires_at` for the countdown.
+ *
+ * Both calls share a short read timeout — the user expects the panel to render fast or fail fast.
+ * The cold-start tolerance for actual narrative generation lives in [OllamaClient] (`llm.timeout-
+ * seconds`, default 400 s) ; that is unrelated to this lightweight probe.
+ */
+@Service
+class OllamaStatusService(
+  @Value("\${ollama.base-url:http://localhost:11434}") private val baseUrl: String
+) {
+  private val log = LoggerFactory.getLogger(javaClass)
+
+  private val rest: RestClient =
+    RestClient.builder()
+      .baseUrl(baseUrl)
+      .requestFactory(
+        JdkClientHttpRequestFactory(
+            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build()
+          )
+          .apply { setReadTimeout(Duration.ofSeconds(PROBE_READ_TIMEOUT_SECONDS)) }
+      )
+      .defaultHeader("Accept", "application/json")
+      .build()
+
+  fun probe(): OllamaStatusDto {
+    val started = System.nanoTime()
+    return try {
+      val available = fetchAvailableModels()
+      val loaded = fetchLoadedModels()
+      val elapsedMs = (System.nanoTime() - started) / NANOS_PER_MILLI
+      OllamaStatusDto(
+        daemonReachable = true,
+        baseUrl = baseUrl,
+        latencyMs = elapsedMs,
+        loadedModels = loaded,
+        availableModels = available,
+        errorMessage = null,
+      )
+    } catch (e: ResourceAccessException) {
+      log.debug("Ollama probe unreachable : {}", e.message)
+      unreachable("Unreachable : ${e.message?.take(MAX_ERROR_LENGTH)}")
+    } catch (e: HttpStatusCodeException) {
+      log.debug("Ollama probe HTTP {} : {}", e.statusCode, e.message)
+      unreachable("HTTP ${e.statusCode.value()} from Ollama")
+    }
+  }
+
+  /**
+   * Forces Ollama to drop [model] from VRAM. Implemented as a `/api/chat` call with `keep_alive: 0`
+   * — Ollama doesn't expose a dedicated "unload" endpoint, but this is the documented pattern to
+   * evict a model immediately rather than waiting for the idle timeout.
+   *
+   * Use cases : (a) the user wants to switch to a heavier model and free VRAM right away, (b) the
+   * user wants to force a cold-start to compare latency. The call returns ~10 ms after Ollama drops
+   * the weights — the panel's next probe (or the immediate re-probe we trigger here) will show 0
+   * loaded models for that name.
+   *
+   * Fail-soft contract identical to [probe] : a daemon hiccup never bubbles a 503 ; instead the
+   * snapshot returned to the UI carries `daemonReachable: false`. The panel renders the chip
+   * accordingly without putting the page in error state.
+   */
+  fun unloadModel(model: String): OllamaStatusDto {
+    if (model.isBlank()) return probe()
+    return try {
+      rest
+        .post()
+        .uri("/api/chat")
+        .header("Content-Type", "application/json")
+        .body(
+          mapOf(
+            "model" to model,
+            "messages" to emptyList<Any>(),
+            "keep_alive" to 0,
+            "stream" to false,
+          )
+        )
+        .retrieve()
+        .body(Map::class.java)
+      probe()
+    } catch (e: ResourceAccessException) {
+      log.debug("Ollama unload unreachable for model={} : {}", model, e.message)
+      unreachable("Unreachable : ${e.message?.take(MAX_ERROR_LENGTH)}")
+    } catch (e: HttpStatusCodeException) {
+      // 404 from Ollama means "this model isn't pulled locally" — surface that instead of the
+      // generic message so the panel can show a useful hint rather than a cryptic code.
+      log.debug("Ollama unload HTTP {} for model={} : {}", e.statusCode, model, e.message)
+      val message =
+        if (e.statusCode.value() == HTTP_NOT_FOUND) "Model not pulled locally : $model"
+        else "HTTP ${e.statusCode.value()} from Ollama"
+      unreachable(message)
+    }
+  }
+
+  private fun fetchAvailableModels(): List<String> {
+    @Suppress("UNCHECKED_CAST")
+    val body =
+      rest.get().uri("/api/tags").retrieve().body(Map::class.java) as? Map<*, *>
+        ?: return emptyList()
+    val models = body["models"] as? List<*> ?: return emptyList()
+    return models.mapNotNull { (it as? Map<*, *>)?.get("name") as? String }.sorted()
+  }
+
+  private fun fetchLoadedModels(): List<LoadedModelDto> {
+    @Suppress("UNCHECKED_CAST")
+    val body =
+      rest.get().uri("/api/ps").retrieve().body(Map::class.java) as? Map<*, *> ?: return emptyList()
+    val models = body["models"] as? List<*> ?: return emptyList()
+    return models.mapNotNull { entry ->
+      val map = entry as? Map<*, *> ?: return@mapNotNull null
+      val name = map["name"] as? String ?: return@mapNotNull null
+      LoadedModelDto(
+        name = name,
+        expiresAt = parseInstantOrNull(map["expires_at"] as? String),
+        sizeVramBytes = (map["size_vram"] as? Number)?.toLong(),
+      )
+    }
+  }
+
+  private fun parseInstantOrNull(raw: String?): Instant? {
+    if (raw.isNullOrBlank()) return null
+    return try {
+      Instant.parse(raw)
+    } catch (e: DateTimeParseException) {
+      log.debug("Could not parse Ollama expires_at='{}' : {}", raw, e.message)
+      null
+    }
+  }
+
+  private fun unreachable(message: String): OllamaStatusDto =
+    OllamaStatusDto(
+      daemonReachable = false,
+      baseUrl = baseUrl,
+      latencyMs = null,
+      loadedModels = emptyList(),
+      availableModels = emptyList(),
+      errorMessage = message,
+    )
+
+  companion object {
+    private const val PROBE_READ_TIMEOUT_SECONDS = 3L
+    private const val NANOS_PER_MILLI = 1_000_000L
+    private const val MAX_ERROR_LENGTH = 120
+    private const val HTTP_NOT_FOUND = 404
+  }
+}

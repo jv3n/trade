@@ -12,6 +12,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfigEntry, ConfigRepository, TestConfigResult } from '../../../core/config.repository';
 import { LlmTimeoutService } from '../../../core/llm-timeout.service';
+import { OllamaStatusPanel } from './ollama-status-panel';
 
 const TWELVE_DATA_KEY = 'market.twelvedata.api-key';
 const FINNHUB_KEY = 'market.finnhub.api-key';
@@ -89,6 +90,7 @@ const CLAUDE_MODEL_SUGGESTIONS = [
     MatSliderModule,
     MatButtonToggleModule,
     TranslatePipe,
+    OllamaStatusPanel,
   ],
   templateUrl: './configuration.html',
   styleUrl: './configuration.scss',
@@ -128,6 +130,13 @@ export class Configuration implements OnInit {
   ollamaModel = computed(() => this.entries().find((e) => e.key === OLLAMA_MODEL_KEY));
   anthropicModel = computed(() => this.entries().find((e) => e.key === ANTHROPIC_MODEL_KEY));
   llmTimeout = computed(() => this.entries().find((e) => e.key === LLM_TIMEOUT_KEY));
+
+  /**
+   * Drives the Ollama status panel visibility — only renders when `llm.provider` is set to
+   * `ollama`. The Claude provider has no daemon to surface (Anthropic API is remote) ; the
+   * existing "Tester" button on the Claude model card is the right tool there.
+   */
+  isOllamaActive = computed(() => this.llmProvider()?.currentValue === 'ollama');
 
   readonly ollamaSuggestions = OLLAMA_MODEL_SUGGESTIONS;
   readonly claudeSuggestions = CLAUDE_MODEL_SUGGESTIONS;

@@ -1,0 +1,101 @@
+<section class="config-card ollama-status-panel" data-testid="ollama-status-panel">
+  <div class="card-header">
+    <h3>{{ 'settings.configurationPage.ollamaStatus.title' | translate }}</h3>
+    @if (status(); as snap) {
+      @if (snap.daemonReachable) {
+        <span class="status-chip reachable" data-testid="status-chip-reachable">
+          <mat-icon>check_circle</mat-icon>
+          {{ 'settings.configurationPage.ollamaStatus.daemonReachable' | translate }}
+          @if (snap.latencyMs !== null) {
+            <span class="latency">·&nbsp;{{ snap.latencyMs }}&nbsp;ms</span>
+          }
+        </span>
+      } @else {
+        <span class="status-chip unreachable" data-testid="status-chip-unreachable">
+          <mat-icon>cancel</mat-icon>
+          {{ 'settings.configurationPage.ollamaStatus.daemonUnreachable' | translate }}
+        </span>
+      }
+    }
+  </div>
+
+  @if (isFirstLoad()) {
+    <div class="loading-row">
+      <mat-spinner diameter="20"></mat-spinner>
+      <span>{{ 'settings.configurationPage.ollamaStatus.loading' | translate }}</span>
+    </div>
+  } @else if (status(); as snap) {
+    <p class="base-url">
+      {{ 'settings.configurationPage.ollamaStatus.baseUrlLabel' | translate }}
+      <code>{{ snap.baseUrl }}</code>
+    </p>
+
+    @if (!snap.daemonReachable && snap.errorMessage) {
+      <p class="error-message" data-testid="error-message">{{ snap.errorMessage }}</p>
+    }
+
+    @if (snap.daemonReachable) {
+      <div class="status-section">
+        <h4>{{ 'settings.configurationPage.ollamaStatus.loadedModelsLabel' | translate }}</h4>
+        @if (loadedModelViews().length === 0) {
+          <p class="empty-state">
+            {{ 'settings.configurationPage.ollamaStatus.noLoadedModels' | translate }}
+          </p>
+        } @else {
+          <ul class="loaded-models" data-testid="loaded-models">
+            @for (model of loadedModelViews(); track model.name) {
+              <li class="loaded-model">
+                <span class="model-name">{{ model.name }}</span>
+                @if (model.sizeHuman) {
+                  <span class="model-size">{{ model.sizeHuman }}</span>
+                }
+                @if (model.countdown) {
+                  <span class="countdown" data-testid="countdown">{{ model.countdown }}</span>
+                }
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="unload-button"
+                  [attr.aria-label]="
+                    'settings.configurationPage.ollamaStatus.unloadAriaLabel'
+                      | translate: { model: model.name }
+                  "
+                  [matTooltip]="
+                    'settings.configurationPage.ollamaStatus.unloadAriaLabel'
+                      | translate: { model: model.name }
+                  "
+                  (click)="unload(model.name)"
+                  data-testid="unload-button"
+                >
+                  <mat-icon>eject</mat-icon>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="status-section">
+        <h4>{{ 'settings.configurationPage.ollamaStatus.availableModelsLabel' | translate }}</h4>
+        @if (snap.availableModels.length === 0) {
+          <p class="empty-state">
+            {{ 'settings.configurationPage.ollamaStatus.noAvailableModels' | translate }}
+          </p>
+        } @else {
+          <div class="available-models" data-testid="available-models">
+            @for (name of snap.availableModels; track name) {
+              <span class="model-chip">{{ name }}</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="card-actions">
+      <button mat-button type="button" (click)="refresh()" data-testid="refresh-button">
+        <mat-icon>refresh</mat-icon>
+        {{ 'settings.configurationPage.ollamaStatus.refresh' | translate }}
+      </button>
+    </div>
+  }
+</section>
