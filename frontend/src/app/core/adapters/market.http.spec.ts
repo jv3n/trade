@@ -172,6 +172,28 @@ describe('HttpMarketRepository', () => {
       expect(receivedError).toBe(true);
     });
 
+    it('getPendingNarrativeJob calls GET .../narrative/jobs/pending', () => {
+      repo.getPendingNarrativeJob('AAPL').subscribe();
+      const req = http.expectOne('/api/market/ticker/AAPL/narrative/jobs/pending');
+      expect(req.request.method).toBe('GET');
+      req.flush({});
+    });
+
+    it('getPendingNarrativeJob maps 404 to null so the dossier just stays in its initial state', () => {
+      // Most dossier visits land on this 404 — no job currently running. The page must branch on
+      // `null`, not surface an error toast for a mundane "nothing to reattach to" signal.
+      let received: unknown = 'untouched';
+      repo.getPendingNarrativeJob('AAPL').subscribe({
+        next: (v) => (received = v),
+        error: () => (received = 'error'),
+      });
+      http
+        .expectOne('/api/market/ticker/AAPL/narrative/jobs/pending')
+        .flush({}, { status: 404, statusText: 'Not Found' });
+
+      expect(received).toBeNull();
+    });
+
     // Live narrative job updates moved to Server-Sent Events — see `JobStreamService` and its
     // spec for the new transport's lifecycle pin (terminal completion, premature close, teardown).
     // The legacy `pollNarrativeJob` was dropped from `MarketRepository` in PR2 of the SSE swap.

@@ -71,6 +71,7 @@ describe('TickerPage', () => {
     getSectorBenchmark: ReturnType<typeof vi.fn>;
     searchSymbols: ReturnType<typeof vi.fn>;
     requestNarrative: ReturnType<typeof vi.fn>;
+    getPendingNarrativeJob: ReturnType<typeof vi.fn>;
     getLatestNarrative: ReturnType<typeof vi.fn>;
   };
   let jobStream: { streamNarrativeJob: ReturnType<typeof vi.fn> };
@@ -101,6 +102,9 @@ describe('TickerPage', () => {
       getSectorBenchmark: vi.fn(),
       searchSymbols: vi.fn().mockReturnValue(of([])),
       requestNarrative: vi.fn(),
+      // Default : no pending job for this symbol — fresh visit. Tests that exercise the
+      // reattach-on-revisit path override this.
+      getPendingNarrativeJob: vi.fn().mockReturnValue(of(null)),
       // Default : no narrative yet (first visit). Tests that need one override this.
       getLatestNarrative: vi.fn().mockReturnValue(of(null)),
     };
@@ -2015,6 +2019,68 @@ describe('TickerPage', () => {
         'sentiment-bearish',
       );
       expect(component.sentimentClass(null)).toBe('');
+    });
+
+    /**
+     * The reattach-on-revisit path is what makes "navigate away during a slow Ollama narrative,
+     * come back" feel correct : the dossier picks up the running job's SSE stream instead of
+     * showing an empty state and forcing a re-kick.
+     */
+    describe('reattach to a pending job on init', () => {
+      it('reattaches to the pending job stream when the backend reports one for this symbol', () => {
+        const pendingJob: TickerNarrativeJob = {
+          jobId: 'j-running',
+          symbol: 'AAPL',
+          status: 'PENDING',
+          createdAt: '2026-05-09T12:34:56Z',
+          snapshotId: null,
+          error: null,
+        };
+        const phaseSubject = new Subject<JobEvent>();
+        market.getPendingNarrativeJob.mockReturnValue(of(pendingJob));
+        jobStream.streamNarrativeJob.mockReturnValue(phaseSubject.asObservable());
+        market.getLatestNarrative.mockReturnValue(of(SAMPLE_NARRATIVE));
+
+        fixture.detectChanges();
+
+        expect(market.getPendingNarrativeJob).toHaveBeenCalledWith('AAPL');
+        expect(jobStream.streamNarrativeJob).toHaveBeenCalledWith('AAPL', 'j-running');
+        // Loading flips on so the spinner is visible immediately on revisit.
+        expect(component.narrativeLoading()).toBe(true);
+
+        phaseSubject.next({
+          phase: 'DONE',
+          attempt: 1,
+          elapsedMs: 8200,
+          error: null,
+          payload: null,
+        });
+
+        expect(component.narrativeLoading()).toBe(false);
+      });
+
+      it('stays in initial state when no pending job exists for this symbol', () => {
+        market.getPendingNarrativeJob.mockReturnValue(of(null));
+
+        fixture.detectChanges();
+
+        expect(market.getPendingNarrativeJob).toHaveBeenCalledWith('AAPL');
+        expect(jobStream.streamNarrativeJob).not.toHaveBeenCalled();
+        expect(component.narrativeLoading()).toBe(false);
+      });
+
+      it('swallows a 5xx on the pending check rather than breaking the dossier', () => {
+        // The endpoint is a UX nicety, not a load-bearing call. A backend hiccup must not toast
+        // an error the user didn't ask for — they'd just see the empty narrative state and can
+        // click Régénérer manually if needed.
+        market.getPendingNarrativeJob.mockReturnValue(throwError(() => ({ status: 500 })));
+
+        fixture.detectChanges();
+
+        expect(jobStream.streamNarrativeJob).not.toHaveBeenCalled();
+        expect(component.narrativeLoading()).toBe(false);
+        expect(component.narrativeError()).toBeNull();
+      });
     });
   });
 
