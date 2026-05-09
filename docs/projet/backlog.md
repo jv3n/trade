@@ -2,7 +2,7 @@
 
 Suivi des features par phase. Mis à jour à chaque session de développement.
 
-**Statuts :** ✅ Fait · ⏳ À faire · 🚧 En cours · 🧊 Gelé · ❌ Décommissionné
+**Statuts :** ⏳ À faire · 🚧 En cours · 🧊 Gelé · ❌ Décommissionné — les `✅ Fait` vivent dans [`journal-livraisons.md`](./journal-livraisons.md), pas ici.
 
 > Ce fichier ne liste que **ce qui reste à faire** et l'**état courant** des modules gelés / décommissionnés. Pour le journal des features livrées (Phase 0 → Phase 2.5 et dette technique close), voir [`journal-livraisons.md`](./journal-livraisons.md) — format reverse-chronological, lecture comme un changelog Keep-a-Changelog.
 
@@ -39,7 +39,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 ## Phase 2.5 — Stabilisation et outils
 
-> Phase intermédiaire entre la profondeur ticker (Phase 2) et l'observabilité narrative (Phase 3) — accumule l'outillage runtime et les améliorations UX dashboard qui n'ont pas leur place dans une roadmap « ticker-only » ni « narrative-only ». Pas de scope produit nouveau ; on stabilise et on outille. Les features livrées (config runtime v1+v1.5, décommissionnement Phase 0, `CacheTtlListener` AFTER_COMMIT, type d'instrument chip 3/3, sidenav outils chart, exposition `analyst.provider` / `earnings.provider`, hint Sector benchmark, lifecycle position OPEN/CLOSED) sont dans [`journal-livraisons.md > Phase 2.5`](./journal-livraisons.md#phase-25--stabilisation-et-outils).
+> Phase intermédiaire entre la profondeur ticker (Phase 2) et l'observabilité narrative (Phase 3) — accumule l'outillage runtime et les améliorations UX dashboard qui n'ont pas leur place dans une roadmap « ticker-only » ni « narrative-only ». Pas de scope produit nouveau ; on stabilise et on outille. La phase est dense : config runtime v1+v1.5, décommissionnement Phase 0, `CacheTtlListener` AFTER_COMMIT, type d'instrument chip 3/3, sidenav outils chart, exposition `analyst.provider` / `earnings.provider`, hint Sector benchmark, lifecycle position OPEN/CLOSED, `.env` ports configurables stack locale, Swagger UI en profile `local`, panneau État Ollama + bouton éject VRAM, clé Anthropic en SECRET runtime, drag-drop portfolios sidebar, décision Ollama option 3 statu quo, Server-Sent Events per-phase pour le narratif (4 PR : backend SSE / frontend bascule / reattach pending / UX phase visible). Toutes les notes d'implémentation détaillées sont dans [`journal-livraisons.md > Phase 2.5`](./journal-livraisons.md#phase-25--stabilisation-et-outils).
 
 ### ⏳ À faire
 

@@ -91,7 +91,7 @@ market:
 
 Pense à télécharger le modèle au premier lancement : clic sur **`llm:ensure-model`** dans l'UI Tilt (~2 GB ; idempotent — no-op si déjà pull). Si tu veux pousser la qualité en sacrifiant de la vitesse, tu peux pull `qwen2.5:7b` (~4 GB, 15-30 s), `llama3.2:3b` ou `phi4-mini` (3.8B) et bouger `ollama.model` en conséquence. Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.
 
-Tu peux switcher de l'un à l'autre à tout moment en éditant `application-local.yml` — Tilt redémarre le backend au save.
+Tu peux switcher de l'un à l'autre à tout moment soit en éditant `application-local.yml` (Tilt redémarre le backend au save), soit — plus pratique — depuis `/settings/configuration > LLM` qui édite la même clé en BDD sans reboot.
 
 ---
 
@@ -123,7 +123,7 @@ Les fichiers de traduction sont dans `frontend/public/i18n/<lang>.json`. Toute s
 
 ### 5. Générer un narratif LLM
 
-Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique sur **Générer / Régénérer** — le frontend POST `/api/market/ticker/AAPL/narrative`, reçoit un job `PENDING`, et poll toutes les 5s jusqu'à `DONE`. Une fois le snapshot prêt, tu vois un résumé en 2-3 phrases, un badge `BULLISH` / `NEUTRAL` / `BEARISH`, et 3 à 5 bullet points factuels.
+Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique sur **Générer / Régénérer** — le frontend POST `/api/market/ticker/AAPL/narrative`, reçoit un job `PENDING`, et ouvre un `EventSource` sur `/api/market/ticker/AAPL/narrative/jobs/{id}/stream`. Le backend pousse une transition de phase à chaque étape du pipeline (`LOADING_CONTEXT` → `CALLING_LLM` → `RECEIVED_RAW` → `PARSING` → `VALIDATING` → `PERSISTING` → `DONE`) ; le bandeau de progression sous le titre affiche la phase courante avec un compteur de secondes. Une fois `DONE` reçu, le frontend recharge le snapshot — résumé en 2-3 phrases, badge `BULLISH` / `NEUTRAL` / `BEARISH`, et 3 à 5 bullet points factuels.
 
 > Si tu cliques deux fois en moins de 30 minutes sur le même ticker, le 2e clic réutilise le snapshot existant (cache 30 min côté service). Pas de re-prompt LLM, pas de coût supplémentaire.
 

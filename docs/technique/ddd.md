@@ -121,7 +121,7 @@ analysis.application → portfolio.infrastructure.persistence ✓ (récupérer l
 | Service avec write | `{Action}Service` | `CsvImportService`, `TickerNarrativeService` |
 | Calculator pur | `{Domain}Calculator` | `IndicatorCalculator` |
 | Client externe | `{Provider}Client` | `TwelveDataClient`, `ClaudeClient` |
-| DTO entrée | `{Action}Request` | `UpdateSourceEnabledRequest` |
+| DTO entrée | `{Action}Request` | `UnloadModelRequest`, `UpdateConfigRequest` |
 | DTO sortie | `{Entity}Dto` | `PortfolioDto`, `TickerSnapshotDto` |
 | Repository | `{Entity}Repository` | `PortfolioRepository`, `TickerNarrativeSnapshotRepository` |
 | Controller | `{Context}Controller` | `MarketController`, `PortfolioController` |

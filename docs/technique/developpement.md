@@ -126,11 +126,12 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + adapters (9 repositories)
-│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings)
+│       ├── core/              # Ports + adapters (10 repositories)
+│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings, OllamaStatus)
 │       │   ├── adapters/*.http.ts     # HTTP impls (défaut)
 │       │   ├── adapters/*.local.ts    # localStorage impls (annotation v3)
-│       │   ├── providers.ts           # `provideRepositories()` — wires les 9 ports → adapters
+│       │   ├── providers.ts           # `provideRepositories()` — wires les 10 ports → adapters
+│       │   ├── job-stream.service.ts  # SSE EventSource → Observable<JobEvent> (Phase 2.5)
 │       │   ├── theme.service.ts       # signal + persist localStorage (SSR-safe via isPlatformBrowser)
 │       │   └── language.service.ts    # signal + persist localStorage (i18n, SSR-safe)
 │       └── features/          # Pages UI (primary adapters)
