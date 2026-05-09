@@ -1189,6 +1189,22 @@
             </button>
           </div>
 
+          @if (narrativeLoading()) {
+            <div class="narrative-progress">
+              <mat-spinner diameter="14"></mat-spinner>
+              <span class="narrative-progress-phase">
+                @if (narrativePhase(); as phase) {
+                  {{ 'ticker.narrative.phase.' + phase | translate }}
+                } @else {
+                  {{ 'ticker.narrative.generating' | translate }}
+                }
+              </span>
+              @if (narrativePhase()) {
+                <span class="narrative-progress-elapsed">{{ narrativeElapsedSeconds() }}s</span>
+              }
+            </div>
+          }
+
           @if (narrativeError(); as ne) {
             <div class="error-banner narrative-error">
               <mat-icon>error_outline</mat-icon>

@@ -1684,6 +1684,29 @@ $sidenav-width-collapsed: 48px;
   margin-bottom: 0.75rem;
 }
 
+.narrative-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+
+  .narrative-progress-phase {
+    flex: 1;
+  }
+
+  .narrative-progress-elapsed {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-dim);
+    font-size: 0.78rem;
+  }
+}
+
 .narrative-summary {
   font-size: 0.95rem;
   line-height: 1.5;

@@ -210,7 +210,18 @@
       "errorRequest": "Failed to start generation",
       "errorGeneric": "Failed to generate the narrative",
       "errorPolling": "Failed to poll the job",
-      "errorReload": "Narrative generated but couldn't be reloaded"
+      "errorReload": "Narrative generated but couldn't be reloaded",
+      "phase": {
+        "LOADING_CONTEXT": "Loading context",
+        "CALLING_LLM": "Calling LLM",
+        "RECEIVED_RAW": "Response received",
+        "PARSING": "Parsing response",
+        "VALIDATING": "Validating",
+        "RETRY_PROMPT": "Retrying",
+        "PERSISTING": "Saving",
+        "DONE": "Done",
+        "ERROR": "Error"
+      }
     },
     "watchlist": {
       "watch": "Watch",
