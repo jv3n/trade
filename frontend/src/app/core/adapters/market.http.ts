@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, interval, of, switchMap, takeWhile, throwError } from 'rxjs';
+import { Observable, catchError, of, throwError } from 'rxjs';
 import {
   ChartResponse,
   MarketRepository,
@@ -12,14 +12,10 @@ import {
   TickerSnapshot,
   TimeframeCode,
 } from '../market.repository';
-import { LlmTimeoutService } from '../llm-timeout.service';
-
-const NARRATIVE_POLL_INTERVAL_MS = 3000;
 
 @Injectable()
 export class HttpMarketRepository extends MarketRepository {
   private readonly http = inject(HttpClient);
-  private readonly timeout = inject(LlmTimeoutService);
 
   getTicker(symbol: string): Observable<TickerSnapshot> {
     return this.http.get<TickerSnapshot>(`/api/market/ticker/${encodeURIComponent(symbol)}`);
@@ -47,37 +43,6 @@ export class HttpMarketRepository extends MarketRepository {
     return this.http.post<TickerNarrativeJob>(
       `/api/market/ticker/${encodeURIComponent(symbol)}/narrative`,
       {},
-    );
-  }
-
-  pollNarrativeJob(symbol: string, jobId: string): Observable<TickerNarrativeJob> {
-    const url = `/api/market/ticker/${encodeURIComponent(symbol)}/narrative/jobs/${encodeURIComponent(jobId)}`;
-    return interval(NARRATIVE_POLL_INTERVAL_MS).pipe(
-      switchMap(() =>
-        this.http
-          .get<TickerNarrativeJob>(url)
-          .pipe(
-            catchError((err) =>
-              throwError(
-                () =>
-                  new Error(
-                    err.status === 404
-                      ? 'Job introuvable (backend redémarré ?)'
-                      : `Erreur ${err.status}`,
-                  ),
-              ),
-            ),
-          ),
-      ),
-      takeWhile((job) => {
-        if (job.status !== 'PENDING') return false;
-        const ageSeconds = (Date.now() - new Date(job.createdAt).getTime()) / 1000;
-        // Read the timeout per tick — see analysis.http.ts for the full rationale (slider drag
-        // mid-poll takes effect on the next tick instead of being snapshotted at construction).
-        if (ageSeconds > this.timeout.seconds())
-          throw new Error('Génération du narratif trop longue — relance possible');
-        return true;
-      }, true),
     );
   }
 

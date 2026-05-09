@@ -38,6 +38,7 @@ import { WatchlistRepository } from '../../core/watchlist.repository';
 import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
 import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
 import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
+import { JobStreamService } from '../../core/job-stream.service';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
@@ -299,6 +300,7 @@ export class TickerPage implements OnInit, OnDestroy {
   private readonly annotationRepository = inject(AnnotationRepository);
   private readonly analystRepository = inject(AnalystRepository);
   private readonly earningsRepository = inject(EarningsRepository);
+  private readonly jobStreamService = inject(JobStreamService);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -486,7 +488,7 @@ export class TickerPage implements OnInit, OnDestroy {
   narrative = signal<TickerNarrativeSnapshot | null>(null);
   narrativeLoading = signal(false);
   narrativeError = signal<string | null>(null);
-  private narrativePollSub?: Subscription;
+  private narrativeStreamSub?: Subscription;
 
   // ---- Chart geometry ----
 
@@ -936,7 +938,7 @@ export class TickerPage implements OnInit, OnDestroy {
     this.chartSub?.unsubscribe();
     this.benchmarkSub?.unsubscribe();
     this.sectorResolveSub?.unsubscribe();
-    this.narrativePollSub?.unsubscribe();
+    this.narrativeStreamSub?.unsubscribe();
   }
 
   load(symbol: string): void {
@@ -2067,7 +2069,7 @@ export class TickerPage implements OnInit, OnDestroy {
     if (!sym || this.narrativeLoading()) return;
     this.narrativeLoading.set(true);
     this.narrativeError.set(null);
-    this.narrativePollSub?.unsubscribe();
+    this.narrativeStreamSub?.unsubscribe();
 
     this.marketRepository.requestNarrative(sym).subscribe({
       next: (job) => {
@@ -2082,24 +2084,30 @@ export class TickerPage implements OnInit, OnDestroy {
           this.narrativeLoading.set(false);
           return;
         }
-        this.narrativePollSub = this.marketRepository.pollNarrativeJob(sym, job.jobId).subscribe({
-          next: (updated) => {
-            if (updated.status === 'DONE') {
-              this.fetchNarrativeAfterCompletion(sym);
-            } else if (updated.status === 'ERROR') {
+        // PR2 reacts only to terminal phases (`DONE` / `ERROR`) — same UI surface as the legacy
+        // poll. The intermediate phases (`LOADING_CONTEXT`, `CALLING_LLM`, …) flow through the
+        // observable but are ignored for now ; PR3 will surface them in the spinner label so the
+        // user knows where the pipeline is when Ollama mouille for 60-180 s on Mac CPU.
+        this.narrativeStreamSub = this.jobStreamService
+          .streamNarrativeJob(sym, job.jobId)
+          .subscribe({
+            next: (event) => {
+              if (event.phase === 'DONE') {
+                this.fetchNarrativeAfterCompletion(sym);
+              } else if (event.phase === 'ERROR') {
+                this.narrativeError.set(
+                  event.error ?? this.translate.instant('ticker.narrative.errorGeneric'),
+                );
+                this.narrativeLoading.set(false);
+              }
+            },
+            error: (err: Error) => {
               this.narrativeError.set(
-                updated.error ?? this.translate.instant('ticker.narrative.errorGeneric'),
+                err.message ?? this.translate.instant('ticker.narrative.errorPolling'),
               );
               this.narrativeLoading.set(false);
-            }
-          },
-          error: (err: Error) => {
-            this.narrativeError.set(
-              err.message ?? this.translate.instant('ticker.narrative.errorPolling'),
-            );
-            this.narrativeLoading.set(false);
-          },
-        });
+            },
+          });
       },
       error: () => {
         this.narrativeError.set(this.translate.instant('ticker.narrative.errorRequest'));

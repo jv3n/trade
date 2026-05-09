@@ -32,6 +32,7 @@ import { NewsItem, NewsRepository } from '../../core/news.repository';
 import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
 import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
 import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
+import { JobEvent, JobStreamService } from '../../core/job-stream.service';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {
@@ -70,9 +71,9 @@ describe('TickerPage', () => {
     getSectorBenchmark: ReturnType<typeof vi.fn>;
     searchSymbols: ReturnType<typeof vi.fn>;
     requestNarrative: ReturnType<typeof vi.fn>;
-    pollNarrativeJob: ReturnType<typeof vi.fn>;
     getLatestNarrative: ReturnType<typeof vi.fn>;
   };
+  let jobStream: { streamNarrativeJob: ReturnType<typeof vi.fn> };
   let watchlist: {
     list: ReturnType<typeof vi.fn>;
     add: ReturnType<typeof vi.fn>;
@@ -100,9 +101,13 @@ describe('TickerPage', () => {
       getSectorBenchmark: vi.fn(),
       searchSymbols: vi.fn().mockReturnValue(of([])),
       requestNarrative: vi.fn(),
-      pollNarrativeJob: vi.fn(),
       // Default : no narrative yet (first visit). Tests that need one override this.
       getLatestNarrative: vi.fn().mockReturnValue(of(null)),
+    };
+    jobStream = {
+      // Tests that exercise the live-tail path override with a Subject ; tests that exercise the
+      // pre-resolved DONE/ERROR path on `requestNarrative` never trigger this mock.
+      streamNarrativeJob: vi.fn(),
     };
     watchlist = {
       // Default : symbol not on the watchlist (initial state for most tests).
@@ -143,6 +148,7 @@ describe('TickerPage', () => {
         { provide: AnnotationRepository, useValue: annotationStore },
         { provide: AnalystRepository, useValue: analyst },
         { provide: EarningsRepository, useValue: earnings },
+        { provide: JobStreamService, useValue: jobStream },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ symbol: 'AAPL' }) } },
@@ -1879,13 +1885,14 @@ describe('TickerPage', () => {
       component.generateNarrative();
 
       expect(market.requestNarrative).toHaveBeenCalledWith('AAPL');
-      // Polling NOT triggered — cache hit means the runner never fired.
-      expect(market.pollNarrativeJob).not.toHaveBeenCalled();
+      // SSE NOT triggered — cache hit means the runner never fired and there are no phases to
+      // stream. Streaming would just sit idle forever and waste a connection.
+      expect(jobStream.streamNarrativeJob).not.toHaveBeenCalled();
       expect(component.narrative()).toEqual(SAMPLE_NARRATIVE);
       expect(component.narrativeLoading()).toBe(false);
     });
 
-    it('generateNarrative — fresh kick (POST returns PENDING) polls then loads on DONE', () => {
+    it('generateNarrative — fresh kick (POST returns PENDING) streams phases and loads on DONE', () => {
       const pendingJob: TickerNarrativeJob = {
         jobId: 'j1',
         symbol: 'AAPL',
@@ -1894,18 +1901,43 @@ describe('TickerPage', () => {
         snapshotId: null,
         error: null,
       };
-      const pollSubject = new Subject<TickerNarrativeJob>();
+      const phaseSubject = new Subject<JobEvent>();
       market.requestNarrative.mockReturnValue(of(pendingJob));
-      market.pollNarrativeJob.mockReturnValue(pollSubject.asObservable());
-      market.getLatestNarrative.mockReturnValue(of(SAMPLE_NARRATIVE));
+      jobStream.streamNarrativeJob.mockReturnValue(phaseSubject.asObservable());
+      // First call (`loadLatestNarrative` on init) : no snapshot yet — fresh visit on a symbol
+      // that doesn't have any cached narrative. Second call (`fetchNarrativeAfterCompletion`
+      // after `DONE`) : the runner has just persisted a fresh snapshot. Distinguishing the two
+      // calls makes the timeline of the test honest — the SAMPLE_NARRATIVE only appears after
+      // the terminal phase, not before.
+      market.getLatestNarrative
+        .mockReturnValueOnce(of(null))
+        .mockReturnValueOnce(of(SAMPLE_NARRATIVE));
       fixture.detectChanges();
 
       component.generateNarrative();
-      // Loading flips on between POST and the first non-PENDING poll emission.
+      // Loading flips on between POST and the terminal phase. Intermediate phases tick through
+      // without flipping loading off — only `DONE` / `ERROR` close the spinner.
       expect(component.narrativeLoading()).toBe(true);
 
-      pollSubject.next({ ...pendingJob, status: 'DONE', snapshotId: 'snap-1' });
+      phaseSubject.next({
+        phase: 'CALLING_LLM',
+        attempt: 1,
+        elapsedMs: 50,
+        error: null,
+        payload: null,
+      });
+      expect(component.narrativeLoading()).toBe(true);
+      expect(component.narrative()).toBeNull();
 
+      phaseSubject.next({
+        phase: 'DONE',
+        attempt: 1,
+        elapsedMs: 8200,
+        error: null,
+        payload: null,
+      });
+
+      expect(jobStream.streamNarrativeJob).toHaveBeenCalledWith('AAPL', 'j1');
       expect(component.narrative()).toEqual(SAMPLE_NARRATIVE);
       expect(component.narrativeLoading()).toBe(false);
     });
@@ -1928,7 +1960,35 @@ describe('TickerPage', () => {
       expect(component.narrativeLoading()).toBe(false);
     });
 
-    it('generateNarrative — surfaces poll abort error', () => {
+    it('generateNarrative — surfaces an ERROR phase carried by the stream', () => {
+      const pendingJob: TickerNarrativeJob = {
+        jobId: 'j1',
+        symbol: 'AAPL',
+        status: 'PENDING',
+        createdAt: '2026-05-02T12:00:00Z',
+        snapshotId: null,
+        error: null,
+      };
+      const phaseSubject = new Subject<JobEvent>();
+      market.requestNarrative.mockReturnValue(of(pendingJob));
+      jobStream.streamNarrativeJob.mockReturnValue(phaseSubject.asObservable());
+      fixture.detectChanges();
+
+      component.generateNarrative();
+
+      phaseSubject.next({
+        phase: 'ERROR',
+        attempt: 2,
+        elapsedMs: 12000,
+        error: 'Validator rejected after retry',
+        payload: null,
+      });
+
+      expect(component.narrativeError()).toBe('Validator rejected after retry');
+      expect(component.narrativeLoading()).toBe(false);
+    });
+
+    it('generateNarrative — surfaces a connection error from the SSE stream', () => {
       const pendingJob: TickerNarrativeJob = {
         jobId: 'j1',
         symbol: 'AAPL',
@@ -1938,14 +1998,14 @@ describe('TickerPage', () => {
         error: null,
       };
       market.requestNarrative.mockReturnValue(of(pendingJob));
-      market.pollNarrativeJob.mockReturnValue(
-        throwError(() => new Error('Génération trop longue')),
+      jobStream.streamNarrativeJob.mockReturnValue(
+        throwError(() => new Error('SSE connection closed unexpectedly')),
       );
       fixture.detectChanges();
 
       component.generateNarrative();
 
-      expect(component.narrativeError()).toContain('trop longue');
+      expect(component.narrativeError()).toContain('closed unexpectedly');
       expect(component.narrativeLoading()).toBe(false);
     });
 
