@@ -1,5 +1,6 @@
 package com.portfolioai.analysis.infrastructure.http
 
+import com.portfolioai.analysis.application.JobEventPublisher
 import com.portfolioai.analysis.application.TickerNarrativeJobStore
 import com.portfolioai.analysis.application.TickerNarrativeService
 import com.portfolioai.market.application.TickerService
@@ -45,6 +46,7 @@ class TickerNarrativePreviewControllerTest {
   // them as unread props — they are read indirectly by Spring's slice DI graph at construction.
   @Suppress("unused") @MockitoBean private lateinit var service: TickerNarrativeService
   @Suppress("unused") @MockitoBean private lateinit var jobStore: TickerNarrativeJobStore
+  @Suppress("unused") @MockitoBean private lateinit var jobEventPublisher: JobEventPublisher
   @MockitoBean private lateinit var tickerService: TickerService
 
   private fun snapshot(symbol: String = "AAPL"): TickerSnapshot {
