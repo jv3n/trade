@@ -38,7 +38,7 @@ import { WatchlistRepository } from '../../core/watchlist.repository';
 import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
 import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
 import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
-import { JobStreamService } from '../../core/job-stream.service';
+import { JobEvent, JobPhase, JobStreamService } from '../../core/job-stream.service';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
@@ -488,6 +488,27 @@ export class TickerPage implements OnInit, OnDestroy {
   narrative = signal<TickerNarrativeSnapshot | null>(null);
   narrativeLoading = signal(false);
   narrativeError = signal<string | null>(null);
+  /**
+   * Current pipeline phase received from the SSE stream — drives the "Calling LLM (38s)…"
+   * label in the progress banner. `null` between runs (idle, no job currently streaming).
+   */
+  narrativePhase = signal<JobPhase | null>(null);
+  /**
+   * Wall-clock anchor + elapsedMs offset of the last received [JobEvent]. Combined with the
+   * [narrativeNow] ticker, gives a live counter that keeps incrementing during slow phases
+   * (`CALLING_LLM` on Ollama can hold for 60-180 s on Mac CPU — without a live tick the
+   * counter would freeze on the last event's elapsedMs and feel like the spinner is stuck).
+   */
+  private narrativePhaseAnchorMs = 0;
+  private narrativePhaseAnchorAt = 0;
+  private narrativeNow = signal(0);
+  private narrativeTickHandle: ReturnType<typeof setInterval> | null = null;
+  /** Total seconds elapsed since the job started, derived from the last event + a 1 s ticker. */
+  narrativeElapsedSeconds = computed(() => {
+    if (this.narrativePhase() === null) return 0;
+    const sinceAnchor = this.narrativeNow() - this.narrativePhaseAnchorAt;
+    return Math.floor((this.narrativePhaseAnchorMs + sinceAnchor) / 1000);
+  });
   private narrativeStreamSub?: Subscription;
 
   // ---- Chart geometry ----
@@ -939,6 +960,7 @@ export class TickerPage implements OnInit, OnDestroy {
     this.benchmarkSub?.unsubscribe();
     this.sectorResolveSub?.unsubscribe();
     this.narrativeStreamSub?.unsubscribe();
+    this.stopNarrativeTicker();
   }
 
   load(symbol: string): void {
@@ -2078,6 +2100,7 @@ export class TickerPage implements OnInit, OnDestroy {
         if (!job || this.narrativeLoading()) return;
         this.narrativeLoading.set(true);
         this.narrativeError.set(null);
+        this.narrativePhase.set(null);
         this.subscribeToNarrativeStream(symbol, job.jobId);
       },
       // Mundane errors (5xx on a check that exists purely as a UX nicety) are swallowed silently
@@ -2092,6 +2115,10 @@ export class TickerPage implements OnInit, OnDestroy {
     if (!sym || this.narrativeLoading()) return;
     this.narrativeLoading.set(true);
     this.narrativeError.set(null);
+    // Reset the phase before any branching — a previous run may have left `phase = DONE` and a
+    // cache-hit path (POST returns DONE without opening an SSE) would never overwrite it,
+    // showing a stale "Done" label for the duration of `fetchNarrativeAfterCompletion`.
+    this.narrativePhase.set(null);
     this.narrativeStreamSub?.unsubscribe();
 
     this.marketRepository.requestNarrative(sym).subscribe({
@@ -2117,23 +2144,28 @@ export class TickerPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Opens the SSE stream for [jobId] and wires the terminal phases (`DONE` / `ERROR`) into the
-   * page's narrative state. Shared between the fresh-kick path ([generateNarrative]) and the
-   * reattach-on-revisit path ([reattachPendingNarrative]) so the lifecycle handling stays in one
-   * place. Intermediate phases (`LOADING_CONTEXT`, `CALLING_LLM`, …) flow through but are
-   * ignored for now ; PR3 will surface them in the spinner label.
+   * Opens the SSE stream for [jobId] and wires the per-phase events into the page state.
+   * Shared between the fresh-kick path ([generateNarrative]) and the reattach-on-revisit path
+   * ([reattachPendingNarrative]) so the lifecycle handling stays in one place. Intermediate
+   * phases (`LOADING_CONTEXT`, `CALLING_LLM`, …) drive the progress banner ; terminal phases
+   * (`DONE` / `ERROR`) close the loading state and stop the live ticker.
    */
   private subscribeToNarrativeStream(symbol: string, jobId: string): void {
     this.narrativeStreamSub?.unsubscribe();
+    this.startNarrativeTicker();
     this.narrativeStreamSub = this.jobStreamService.streamNarrativeJob(symbol, jobId).subscribe({
       next: (event) => {
+        this.recordNarrativeEvent(event);
         if (event.phase === 'DONE') {
+          this.stopNarrativeTicker();
           this.fetchNarrativeAfterCompletion(symbol);
         } else if (event.phase === 'ERROR') {
           this.narrativeError.set(
             event.error ?? this.translate.instant('ticker.narrative.errorGeneric'),
           );
           this.narrativeLoading.set(false);
+          this.stopNarrativeTicker();
+          this.narrativePhase.set(null);
         }
       },
       error: (err: Error) => {
@@ -2141,8 +2173,31 @@ export class TickerPage implements OnInit, OnDestroy {
           err.message ?? this.translate.instant('ticker.narrative.errorPolling'),
         );
         this.narrativeLoading.set(false);
+        this.stopNarrativeTicker();
+        this.narrativePhase.set(null);
       },
     });
+  }
+
+  private recordNarrativeEvent(event: JobEvent): void {
+    this.narrativePhase.set(event.phase);
+    this.narrativePhaseAnchorMs = event.elapsedMs;
+    this.narrativePhaseAnchorAt = Date.now();
+  }
+
+  private startNarrativeTicker(): void {
+    this.stopNarrativeTicker();
+    this.narrativeNow.set(Date.now());
+    // 1 s tick — cheap, the user-visible counter advances by full seconds anyway. A faster tick
+    // would just burn CPU and make the rendered text flicker mid-second.
+    this.narrativeTickHandle = setInterval(() => this.narrativeNow.set(Date.now()), 1000);
+  }
+
+  private stopNarrativeTicker(): void {
+    if (this.narrativeTickHandle !== null) {
+      clearInterval(this.narrativeTickHandle);
+      this.narrativeTickHandle = null;
+    }
   }
 
   private fetchNarrativeAfterCompletion(symbol: string): void {

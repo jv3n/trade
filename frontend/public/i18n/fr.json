@@ -210,7 +210,18 @@
       "errorRequest": "Impossible de lancer la génération",
       "errorGeneric": "Erreur lors de la génération du narratif",
       "errorPolling": "Erreur lors du polling du job",
-      "errorReload": "Narratif généré mais impossible à recharger"
+      "errorReload": "Narratif généré mais impossible à recharger",
+      "phase": {
+        "LOADING_CONTEXT": "Chargement du contexte",
+        "CALLING_LLM": "Appel au LLM",
+        "RECEIVED_RAW": "Réponse reçue",
+        "PARSING": "Analyse de la réponse",
+        "VALIDATING": "Validation",
+        "RETRY_PROMPT": "Nouvelle tentative",
+        "PERSISTING": "Sauvegarde",
+        "DONE": "Terminé",
+        "ERROR": "Erreur"
+      }
     },
     "watchlist": {
       "watch": "Suivre",

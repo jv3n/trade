@@ -2082,6 +2082,106 @@ describe('TickerPage', () => {
         expect(component.narrativeError()).toBeNull();
       });
     });
+
+    /**
+     * The phase signal + live elapsed counter back the progress banner ("Calling LLM (38s)…")
+     * — the real point of moving off polling. Without these signals being driven correctly, the
+     * spinner stays anonymous and the user can't tell whether Ollama is mouilling or stuck.
+     */
+    describe('phase signal and live elapsed counter', () => {
+      const pendingJob: TickerNarrativeJob = {
+        jobId: 'j-stream',
+        symbol: 'AAPL',
+        status: 'PENDING',
+        createdAt: '2026-05-09T12:00:00Z',
+        snapshotId: null,
+        error: null,
+      };
+
+      it('updates the phase signal as events arrive on the stream', () => {
+        const phaseSubject = new Subject<JobEvent>();
+        market.requestNarrative.mockReturnValue(of(pendingJob));
+        jobStream.streamNarrativeJob.mockReturnValue(phaseSubject.asObservable());
+        market.getLatestNarrative
+          .mockReturnValueOnce(of(null))
+          .mockReturnValueOnce(of(SAMPLE_NARRATIVE));
+        fixture.detectChanges();
+
+        component.generateNarrative();
+
+        expect(component.narrativePhase()).toBeNull();
+
+        phaseSubject.next({
+          phase: 'LOADING_CONTEXT',
+          attempt: 1,
+          elapsedMs: 5,
+          error: null,
+          payload: null,
+        });
+        expect(component.narrativePhase()).toBe('LOADING_CONTEXT');
+
+        phaseSubject.next({
+          phase: 'CALLING_LLM',
+          attempt: 1,
+          elapsedMs: 50,
+          error: null,
+          payload: null,
+        });
+        expect(component.narrativePhase()).toBe('CALLING_LLM');
+
+        phaseSubject.next({
+          phase: 'DONE',
+          attempt: 1,
+          elapsedMs: 8200,
+          error: null,
+          payload: null,
+        });
+        // narrativePhase stays at the last received phase even after DONE — `narrativeLoading`
+        // is what hides the banner. Letting the phase live for the brief
+        // `fetchNarrativeAfterCompletion` window lets the user see "Done (8s)" before the
+        // narrative card replaces the spinner.
+        expect(component.narrativePhase()).toBe('DONE');
+      });
+
+      it('derives elapsedSeconds from the latest event plus a wall-clock tick between events', () => {
+        // Real timers + a vi.spyOn(Date.now) lets us advance the wall clock without coupling to
+        // setInterval scheduling. We just check the computed value is right at two distinct
+        // points in time, with the same anchor event.
+        const phaseSubject = new Subject<JobEvent>();
+        market.requestNarrative.mockReturnValue(of(pendingJob));
+        jobStream.streamNarrativeJob.mockReturnValue(phaseSubject.asObservable());
+        market.getLatestNarrative.mockReturnValue(of(null));
+        fixture.detectChanges();
+
+        const startWallClock = 1_700_000_000_000;
+        const dateSpy = vi.spyOn(Date, 'now').mockReturnValue(startWallClock);
+
+        component.generateNarrative();
+
+        // Anchor event : `elapsedMs = 50` at wall-clock startWallClock.
+        phaseSubject.next({
+          phase: 'CALLING_LLM',
+          attempt: 1,
+          elapsedMs: 50,
+          error: null,
+          payload: null,
+        });
+        // Right after the anchor : sinceAnchor ~= 0, total ~= 50ms → 0 seconds floor.
+        expect(component.narrativeElapsedSeconds()).toBe(0);
+
+        // Advance the wall clock by 7 seconds without firing a new event. The ticker also reads
+        // `Date.now()`, so we feed the same advanced value through it.
+        dateSpy.mockReturnValue(startWallClock + 7_000);
+        // Force the ticker signal forward (it normally ticks on its 1 s interval — direct set
+        // is fine in tests, the production ticker still calls it via setInterval).
+        component['narrativeNow'].set(startWallClock + 7_000);
+
+        // 50 ms (anchor) + 7000 ms (wall clock since anchor) = 7050 ms → 7 seconds floor.
+        expect(component.narrativeElapsedSeconds()).toBe(7);
+
+        dateSpy.mockRestore();
+      });
+    });
   });
 
   // ---- Benchmark choices conditional on instrument type ----
