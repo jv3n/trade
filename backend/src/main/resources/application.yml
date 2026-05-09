@@ -93,3 +93,13 @@ earnings:
   #   finnhub  — real REST `/stock/earnings` + `/calendar/earnings` (requires market.finnhub.api-key)
   provider: mock
 
+# springdoc-openapi — Swagger UI / OpenAPI schema. **Disabled by default** so any environment that
+# does not explicitly opt-in (CI, eventual prod) never exposes the REST surface. The `local` profile
+# overrides both flags to `true` (cf. `application-local.yml`) — Swagger UI is then reachable at
+# `http://localhost:${BACKEND_HOST_PORT}/swagger-ui.html` and surfaced as a link in the Tilt panel.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+

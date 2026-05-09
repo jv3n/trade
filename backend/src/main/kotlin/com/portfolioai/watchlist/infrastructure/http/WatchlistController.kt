@@ -4,6 +4,7 @@ import com.portfolioai.watchlist.application.WatchlistService
 import com.portfolioai.watchlist.application.dto.AddWatchlistRequest
 import com.portfolioai.watchlist.application.dto.WatchlistEntryDto
 import com.portfolioai.watchlist.application.dto.toDto
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -29,6 +30,11 @@ import org.springframework.web.bind.annotation.RestController
  * or ` AAPL ` and they round-trip as `AAPL`. Empty / over-length symbols → 400 via the
  * `IllegalArgumentException` handler.
  */
+@Tag(
+  name = "Watchlist",
+  description =
+    "Manual list of tickers tracked outside the portfolio (POST idempotent, DELETE non-idempotent)",
+)
 @RestController
 @RequestMapping("/api/watchlist")
 class WatchlistController(private val service: WatchlistService) {

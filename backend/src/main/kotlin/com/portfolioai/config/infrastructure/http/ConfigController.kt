@@ -9,6 +9,7 @@ import com.portfolioai.config.application.dto.TestConfigRequest
 import com.portfolioai.config.application.dto.TestConfigResult
 import com.portfolioai.config.application.dto.TestLlmRequest
 import com.portfolioai.config.infrastructure.ConfigTestClient
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -34,6 +35,11 @@ import org.springframework.web.bind.annotation.RestController
  * Secret keys (API keys) are never echoed back in the GET response — the UI only learns whether a
  * value is set, not its content. The user is expected to rotate the key when they forget it.
  */
+@Tag(
+  name = "Config",
+  description =
+    "Runtime-editable settings (providers, cache TTL, LLM model, API keys) + connectivity probes",
+)
 @RestController
 @RequestMapping("/api/config")
 class ConfigController(

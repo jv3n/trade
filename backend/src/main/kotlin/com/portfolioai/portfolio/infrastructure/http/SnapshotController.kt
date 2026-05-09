@@ -5,12 +5,17 @@ import com.portfolioai.portfolio.application.dto.SnapshotSummaryDto
 import com.portfolioai.portfolio.application.dto.toDto
 import com.portfolioai.portfolio.infrastructure.persistence.PortfolioSnapshotRepository
 import com.portfolioai.portfolio.infrastructure.persistence.SnapshotPositionRepository
+import io.swagger.v3.oas.annotations.tags.Tag
 import java.util.UUID
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+@Tag(
+  name = "Snapshot",
+  description = "Historical portfolio snapshots (one per CSV import) — backs the suivi page",
+)
 @RestController
 @RequestMapping("/api/snapshots")
 class SnapshotController(

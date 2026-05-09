@@ -26,6 +26,12 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-web")
   implementation("com.github.ben-manes.caffeine:caffeine")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+  // springdoc-openapi — auto-generates an OpenAPI 3.0 schema from Spring controllers + Jackson DTOs
+  // and serves Swagger UI at /swagger-ui.html. Activated only in the `local` profile (see
+  // application-local.yml) ; the root application.yml keeps both `springdoc.api-docs.enabled` and
+  // `springdoc.swagger-ui.enabled` to false so no env reachable from the outside ever exposes the
+  // schema. Surfaced in Tilt as a link on the `backend` resource for one-click access during dev.
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
   implementation("org.flywaydb:flyway-core")
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlin:kotlin-reflect")

@@ -3,6 +3,7 @@ package com.portfolioai.portfolio.infrastructure.http
 import com.portfolioai.portfolio.application.CsvImportService
 import com.portfolioai.portfolio.application.dto.CsvImportPreview
 import com.portfolioai.portfolio.application.dto.CsvImportResult
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -11,6 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 
+@Tag(
+  name = "CSV Import",
+  description =
+    "Wealthsimple CSV preview + import (multipart upload, creates a portfolio + a snapshot)",
+)
 @RestController
 @RequestMapping("/api/portfolios/import")
 class CsvImportController(private val csvImportService: CsvImportService) {

@@ -7,12 +7,17 @@ import com.portfolioai.market.application.dto.SectorBenchmarkDto
 import com.portfolioai.market.application.dto.TickerSnapshotDto
 import com.portfolioai.market.application.dto.toDto
 import com.portfolioai.market.domain.Timeframe
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
+@Tag(
+  name = "Market",
+  description = "Per-ticker dossier : quote, computed indicators, OHLC bars, sector benchmark",
+)
 @RestController
 @RequestMapping("/api/market/ticker")
 class MarketController(

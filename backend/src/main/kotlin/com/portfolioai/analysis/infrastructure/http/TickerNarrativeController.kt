@@ -10,6 +10,7 @@ import com.portfolioai.analysis.application.dto.TickerNarrativeJobDto
 import com.portfolioai.analysis.application.dto.TickerNarrativeSnapshotDto
 import com.portfolioai.analysis.application.dto.toDto
 import com.portfolioai.market.application.TickerService
+import io.swagger.v3.oas.annotations.tags.Tag
 import java.util.UUID
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -29,6 +30,11 @@ import org.springframework.web.bind.annotation.RestController
  * - User clicks "Régénérer" → `POST /narrative` → poll `GET /narrative/jobs/{id}` until DONE →
  *   re-fetch latest. The service dedups concurrent kicks and reuses snapshots < 30 min old.
  */
+@Tag(
+  name = "Ticker Narrative",
+  description =
+    "Phase 1 LLM-generated narrative per ticker (kick a job, poll its status, read the latest snapshot)",
+)
 @RestController
 @RequestMapping("/api/market/ticker/{symbol}/narrative")
 class TickerNarrativeController(

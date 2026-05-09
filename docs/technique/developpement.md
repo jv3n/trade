@@ -56,6 +56,12 @@ Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker
 
 Pour alimenter un portefeuille démo, importer un CSV Wealthsimple depuis l'onglet **Import** (le portefeuille est read-only, il n'y a pas de seed SQL).
 
+### Swagger UI — explorer la surface REST
+
+Le panel `backend` dans Tilt expose un lien **Swagger UI** vers `http://localhost:8080/swagger-ui.html` (ou le port défini par `BACKEND_HOST_PORT`). L'UI est auto-générée par `springdoc-openapi` à partir des controllers Spring + DTO Jackson, regroupée par tag (`Market`, `News`, `Analyst`, `Earnings`, `Watchlist`, `Portfolio`, `Snapshot`, `CSV Import`, `Ticker Narrative`, `Symbol Search`, `Config`). Le bouton **Try it out** envoie de vrais appels au backend local — pratique pour tester un endpoint sans `curl`.
+
+L'UI et le schéma JSON (`/v3/api-docs`) sont **désactivés par défaut** dans `application.yml` et activés uniquement via le profil `local` (`application-local.yml`). Aucun environnement qui n'opte pas in explicitement n'expose la surface.
+
 ## Configuration locale
 
 Le fichier `application-local.yml` est gitignore. Il contient les secrets et surcharges locales. Créer à la main :

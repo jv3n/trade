@@ -121,7 +121,10 @@ local_resource(
         failure_threshold = 20,
     ),
     labels = ["app"],
-    links = [link("http://{}:{}/actuator/health".format(host, backend_port), "Health")],
+    links = [
+        link("http://{}:{}/actuator/health".format(host, backend_port), "Health"),
+        link("http://{}:{}/swagger-ui.html".format(host, backend_port), "Swagger UI"),
+    ],
 )
 
 local_resource(

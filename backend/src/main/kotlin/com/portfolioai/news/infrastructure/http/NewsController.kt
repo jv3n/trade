@@ -3,6 +3,7 @@ package com.portfolioai.news.infrastructure.http
 import com.portfolioai.news.application.NewsService
 import com.portfolioai.news.application.dto.NewsItemDto
 import com.portfolioai.news.application.dto.toDto
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController
  * exception handler — same UX as Twelve Data : the dossier shows an inline error in the news panel
  * without breaking the rest of the page.
  */
+@Tag(name = "News", description = "Per-ticker headlines (Finnhub-backed, 30-day rolling window)")
 @RestController
 @RequestMapping("/api/market/ticker")
 class NewsController(private val service: NewsService) {

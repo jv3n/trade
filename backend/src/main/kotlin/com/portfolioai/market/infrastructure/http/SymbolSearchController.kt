@@ -4,6 +4,7 @@ import com.portfolioai.market.application.SymbolSearchService
 import com.portfolioai.market.application.dto.SymbolMatchDto
 import com.portfolioai.market.application.dto.toDto
 import com.portfolioai.market.infrastructure.http.SymbolSearchController.Companion.MAX_QUERY_LENGTH
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -24,6 +25,10 @@ import org.springframework.web.bind.annotation.RestController
  * - Errors surface through [com.portfolioai.shared.GlobalExceptionHandler] : provider unreachable /
  *   rate-limited → 503.
  */
+@Tag(
+  name = "Symbol Search",
+  description = "Typeahead symbol lookup backing the watchlist autocomplete",
+)
 @RestController
 @RequestMapping("/api/market/symbols")
 class SymbolSearchController(private val service: SymbolSearchService) {
