@@ -4,6 +4,13 @@ export interface WatchlistEntry {
   id: string;
   symbol: string;
   addedAt: string;
+  /**
+   * Snapshotted at POST-add time by the backend (V7, 2026-05-09). `null` when the lookup failed
+   * (rate-limit, transient unreachable) or for entries pre-existing the migration. The dashboard
+   * renders no chip on null (degrade closed) — replaces the previous lazy-lookup design that
+   * burst-banned Twelve Data on a watchlist of 5+ entries with a cold cache.
+   */
+  instrumentType: 'STOCK' | 'ETF' | 'INDEX' | 'OTHER' | null;
 }
 
 /**

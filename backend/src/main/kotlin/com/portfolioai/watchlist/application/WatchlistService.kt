@@ -1,6 +1,8 @@
 package com.portfolioai.watchlist.application
 
 import com.portfolioai.market.application.SymbolSearchService
+import com.portfolioai.market.application.TickerService
+import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.watchlist.domain.WatchlistEntry
 import com.portfolioai.watchlist.infrastructure.persistence.WatchlistEntryRepository
@@ -35,11 +37,21 @@ import org.springframework.transaction.annotation.Transactional
  * one unverified row that the autocomplete has already confirmed at type time anyway. The
  * autocomplete dropdown collapses to `[]` on the same exception, so the user can only reach this
  * code path via a UI that just showed them the symbol existed.
+ *
+ * **`instrumentType` snapshot (V7, 2026-05-09)** — [add] also calls [TickerService.load] to grab
+ * the market-domain `InstrumentType` for the chip the dashboard renders next to each watchlist row.
+ * Same fail-open posture as the symbol validation : if the lookup fails (rate-limit, 404, provider
+ * unreachable), the entry is still created with `instrumentType = null`. Replaces the previous
+ * lazy-lookup design (`Dashboard.enrichWatchlistInstrumentTypes`) that fired a `getTicker(symbol)`
+ * parallel per entry on every dashboard mount — burst-banned the Twelve Data free tier (8
+ * calls/min) on a watchlist of 5+ entries with a cold cache. See `journal-livraisons.md > Phase
+ * 2.5` for the full friction trail.
  */
 @Service
 class WatchlistService(
   private val repository: WatchlistEntryRepository,
   private val symbolSearch: SymbolSearchService,
+  private val tickerService: TickerService,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
@@ -56,7 +68,9 @@ class WatchlistService(
     require(isKnownSymbol(normalised)) {
       "Symbol '$normalised' is not recognised by the configured market provider"
     }
-    return repository.save(WatchlistEntry(symbol = normalised))
+    return repository.save(
+      WatchlistEntry(symbol = normalised, instrumentType = lookupInstrumentType(normalised))
+    )
   }
 
   /**
@@ -73,6 +87,26 @@ class WatchlistService(
         e.message,
       )
       true
+    }
+
+  /**
+   * Snapshot the [InstrumentType] for the chip the dashboard renders. Fail-open : any error from
+   * upstream (`MarketUnavailableException` rate-limit / unreachable, [NoSuchElementException] on a
+   * symbol the chart provider doesn't recognise even though autocomplete validated it, etc.) yields
+   * `null`. The row is still saved — better an entry without a chip than a 503 because of a
+   * transient provider blip on a symbol the user just saw in the autocomplete.
+   */
+  private fun lookupInstrumentType(symbol: String): InstrumentType? =
+    try {
+      tickerService.load(symbol).quote.instrumentType
+    } catch (e: Exception) {
+      log.warn(
+        "Skipping watchlist instrumentType lookup for '{}' — {}: {}",
+        symbol,
+        e.javaClass.simpleName,
+        e.message,
+      )
+      null
     }
 
   @Transactional

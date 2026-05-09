@@ -180,7 +180,7 @@
                     <a [routerLink]="['/ticker', entry.symbol]" class="ticker-chip">
                       {{ entry.symbol }}
                     </a>
-                    @if (watchlistInstrumentTypeFor(entry.symbol); as type) {
+                    @if (entry.instrumentType; as type) {
                       <span
                         class="sidebar-instrument-type instrument-{{ type }}"
                         data-testid="watchlist-instrument-type"

@@ -1142,6 +1142,7 @@ describe('TickerPage', () => {
       id: 'wl-1',
       symbol: 'AAPL',
       addedAt: '2026-05-03T10:00:00Z',
+      instrumentType: 'STOCK',
     };
 
     it('isWatched reflects whether the current symbol is on the list at init', async () => {

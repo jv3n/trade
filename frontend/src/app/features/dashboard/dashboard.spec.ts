@@ -223,10 +223,14 @@ describe('Dashboard', () => {
    *   section empty, never an error banner. The watchlist is best-effort, not load-bearing.
    */
   describe('watchlist', () => {
-    const sample = (symbol: string): WatchlistEntry => ({
+    const sample = (
+      symbol: string,
+      instrumentType: WatchlistEntry['instrumentType'] = null,
+    ): WatchlistEntry => ({
       id: `id-${symbol}`,
       symbol,
       addedAt: '2026-05-03T10:00:00Z',
+      instrumentType,
     });
 
     const match = (symbol: string, name = `${symbol} Inc`, exchange = 'NASDAQ'): SymbolMatch => ({
@@ -461,69 +465,68 @@ describe('Dashboard', () => {
       expect(fixture2.componentInstance.error()).toBeNull();
     });
 
-    // ---- Instrument-type chip (lazy lookup via getTicker) ----
+    // ---- Instrument-type chip (V7 2026-05-09 — read straight from the DTO) ----
 
     /**
-     * The watchlist chips are populated by [enrichWatchlistInstrumentTypes] which fires a
-     * `getTicker` per symbol after a successful load / add. Three contracts pinned :
-     *  - **populates the lookup map per-symbol** with the type returned by the market provider,
-     *  - **swallows errors silently** — a 503 / 404 leaves the entry absent from the map and the
-     *    chip degrades closed (no chip rendered for that symbol),
-     *  - **doesn't re-fetch a symbol already in the map** — the morning's first dashboard burns
-     *    one credit per symbol, subsequent ones in the day pay zero.
+     * The watchlist chips are now driven by the `instrumentType` field on the DTO, snapshotted
+     * server-side at POST-add time (V7 migration). Replaces the previous lazy-lookup design
+     * (`enrichWatchlistInstrumentTypes` firing a `getTicker` per entry on dashboard mount) that
+     * burst-banned Twelve Data on cold cache. Three contracts pinned :
+     *  - **chip renders from `entry.instrumentType`** — no client-side fetch needed,
+     *  - **null entry → no chip** (degrade closed for pre-V7 rows or rows where the server-side
+     *    lookup failed at add time),
+     *  - **dashboard mount fires zero `getTicker`** for watchlist enrichment — that was the
+     *    expensive burst we eliminated.
      */
-    it('populates watchlistInstrumentTypeFor with the market provider response', async () => {
-      const entries = [sample('AAPL'), sample('VOO')];
+    it('renders the chip directly from entry.instrumentType', async () => {
+      const entries = [sample('AAPL', 'STOCK'), sample('VOO', 'ETF')];
       mockWatchlistRepository.list = () => of(entries);
-      mockMarketRepository.getTicker = (symbol: string) =>
-        of(buildSnapshot(symbol, symbol === 'VOO' ? 'ETF' : 'STOCK'));
 
       const fixture2 = TestBed.createComponent(Dashboard);
       fixture2.detectChanges();
       await fixture2.whenStable();
 
-      expect(fixture2.componentInstance.watchlistInstrumentTypeFor('AAPL')).toBe('STOCK');
-      expect(fixture2.componentInstance.watchlistInstrumentTypeFor('VOO')).toBe('ETF');
+      const chips = fixture2.nativeElement.querySelectorAll(
+        '[data-testid="watchlist-instrument-type"]',
+      );
+      // Two entries, both with non-null instrumentType → two chips. The class encodes the type.
+      expect(chips.length).toBe(2);
+      expect((chips[0] as HTMLElement).className).toContain('instrument-STOCK');
+      expect((chips[1] as HTMLElement).className).toContain('instrument-ETF');
     });
 
-    it('leaves the lookup absent when getTicker fails (chip degrades closed)', async () => {
-      const { throwError } = await import('rxjs');
-      mockWatchlistRepository.list = () => of([sample('UNKNOWN')]);
-      mockMarketRepository.getTicker = () => throwError(() => ({ status: 503 }));
+    it('renders no chip for an entry with null instrumentType (pre-V7 row or failed lookup)', async () => {
+      mockWatchlistRepository.list = () => of([sample('OBSCURE', null)]);
 
       const fixture2 = TestBed.createComponent(Dashboard);
       fixture2.detectChanges();
       await fixture2.whenStable();
 
-      // Undefined (key absent from the map) — the template falsy-checks this and renders
-      // nothing. Critically NOT a stale 'STOCK' default that would leak a wrong chip on a
-      // failed lookup.
-      expect(fixture2.componentInstance.watchlistInstrumentTypeFor('UNKNOWN')).toBeUndefined();
+      const chips = fixture2.nativeElement.querySelectorAll(
+        '[data-testid="watchlist-instrument-type"]',
+      );
+      // Critically NOT a default 'STOCK' chip — null is honored as "no signal" rather than a
+      // guess. The user is left with the bare ticker chip until they re-add the symbol.
+      expect(chips.length).toBe(0);
     });
 
-    it('does not re-fetch a symbol already in the lookup map', () => {
-      // Set the map manually to simulate a previous load. enrichWatchlistInstrumentTypes is
-      // called by addToWatchlist for the new entry's symbol. If the symbol is already known, the
-      // method should skip the call — otherwise the morning's burst-of-credits problem amplifies
-      // every time the user adds a symbol they already had.
-      let callCount = 0;
+    it('does not fire getTicker for watchlist enrichment on dashboard mount', async () => {
+      // The expensive burst this fix eliminates : with 5+ watchlist entries + cold Twelve Data
+      // cache, the previous design fired 5+ parallel `getTicker(symbol)` calls = 10+ credits
+      // = ban on free tier (8/min). The V7 design moves the lookup server-side at POST-add
+      // time so the dashboard mount has nothing market-related to do.
+      let getTickerCalls = 0;
       mockMarketRepository.getTicker = (symbol: string) => {
-        callCount++;
+        getTickerCalls++;
         return of(buildSnapshot(symbol));
       };
-      mockWatchlistRepository.add = () => of(sample('AAPL'));
+      mockWatchlistRepository.list = () => of([sample('AAPL', 'STOCK'), sample('VOO', 'ETF')]);
 
-      // Pre-seed the lookup map by setting AAPL via a first addToWatchlist call.
-      component.watchlistSelectedMatch.set(match('AAPL'));
-      component.addToWatchlist();
-      const firstCallCount = callCount;
+      const fixture2 = TestBed.createComponent(Dashboard);
+      fixture2.detectChanges();
+      await fixture2.whenStable();
 
-      // Re-add the same symbol — backend's idempotent POST returns the same row, our enrich
-      // method should see AAPL already in the map and skip the call.
-      component.watchlistSelectedMatch.set(match('AAPL'));
-      component.addToWatchlist();
-
-      expect(callCount).toBe(firstCallCount);
+      expect(getTickerCalls).toBe(0);
     });
   });
 
