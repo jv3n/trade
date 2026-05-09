@@ -1,5 +1,6 @@
 package com.portfolioai.analysis.infrastructure.http
 
+import com.portfolioai.analysis.application.JobEventPublisher
 import com.portfolioai.analysis.application.NARRATIVE_PROMPT_VERSION
 import com.portfolioai.analysis.application.NARRATIVE_SYSTEM_PROMPT
 import com.portfolioai.analysis.application.TickerNarrativeJobStore
@@ -13,12 +14,14 @@ import com.portfolioai.market.application.TickerService
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.util.UUID
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
 /**
  * HTTP surface for the Phase 1 narrative pipeline. Co-located URL-wise with the dossier
@@ -41,6 +44,7 @@ class TickerNarrativeController(
   private val service: TickerNarrativeService,
   private val jobStore: TickerNarrativeJobStore,
   private val tickerService: TickerService,
+  private val jobEventPublisher: JobEventPublisher,
 ) {
   @PostMapping
   @ResponseStatus(HttpStatus.ACCEPTED)
@@ -50,6 +54,18 @@ class TickerNarrativeController(
   @GetMapping("/jobs/{jobId}")
   fun getJob(@PathVariable symbol: String, @PathVariable jobId: UUID): TickerNarrativeJobDto =
     jobStore.get(jobId)?.toDto() ?: throw NoSuchElementException("Job $jobId not found")
+
+  /**
+   * Server-Sent Events stream of [com.portfolioai.analysis.domain.JobEvent]s for a running (or
+   * recently terminal) job. Replaces the 3-second poll on `GET /jobs/{id}` for the narrative
+   * generation flow : the frontend opens an `EventSource` after kicking the job and receives a
+   * `phase` event per pipeline transition (`LOADING_CONTEXT` → `CALLING_LLM` → … → `DONE` /
+   * `ERROR`). Replay-on-reconnect is handled by [JobEventPublisher] — late connectors get the full
+   * history before live tail starts.
+   */
+  @GetMapping("/jobs/{jobId}/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+  fun streamJob(@PathVariable symbol: String, @PathVariable jobId: UUID): SseEmitter =
+    jobEventPublisher.register(jobId)
 
   @GetMapping("/latest")
   fun getLatest(@PathVariable symbol: String): TickerNarrativeSnapshotDto =
