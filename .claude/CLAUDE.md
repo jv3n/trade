@@ -146,6 +146,10 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 
 ## Instructions for Claude
 
+### Fichiers que l'utilisateur veut te montrer
+
+Le dossier **`docs/tmp-files/`** (gitignored) est l'endroit où l'utilisateur dépose les fichiers qu'il veut te montrer dans une conversation : captures d'écran d'un bug ou d'une UI, sortie de console tronquée, brouillon collé, image de référence, etc. Quand l'utilisateur dit « regarde le screenshot » / « j'ai mis le fichier dans tmp-files », c'est là qu'il faut chercher (`Read` direct ou `ls docs/tmp-files/`). Le contenu est éphémère et jetable — ne le commit jamais, ne le lis pas spontanément si l'utilisateur ne l'évoque pas, et n'écris jamais dedans.
+
 ### Builds and tests
 
 Builds (`./gradlew`, `npm run build`) and tests (`./gradlew test`, `npm run test`) can be run when it helps tighten a feedback loop — e.g. validating a refactor, debugging a runtime error, confirming a fix. Use Tilt logs (UI on http://localhost:10350/, or `docker compose logs backend`) to inspect the running stack rather than re-running the whole build. CI is still authoritative for the full matrix.

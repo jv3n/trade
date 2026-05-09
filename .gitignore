@@ -79,6 +79,14 @@ tilt_modules/
 docs/data-input-local/
 
 # ========================
+# Échanges éphémères avec Claude (screenshots, snippets, drafts)
+# ========================
+# Dossier où l'utilisateur dépose les fichiers qu'il veut montrer à Claude
+# (captures d'écran d'un bug, sortie tronquée, brouillon collé, etc.). Tout
+# ce qui y traîne est jetable et ne doit jamais arriver dans le repo.
+docs/tmp-files/
+
+# ========================
 # Divers IDE
 # ========================
 .vscode/
