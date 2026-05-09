@@ -2057,10 +2057,33 @@ export class TickerPage implements OnInit, OnDestroy {
 
   private loadLatestNarrative(symbol: string): void {
     this.marketRepository.getLatestNarrative(symbol).subscribe({
-      next: (snap) => this.narrative.set(snap),
+      next: (snap) => {
+        this.narrative.set(snap);
+        // After surfacing whatever snapshot exists, check whether a job is currently running
+        // for this symbol. If so, reattach to its SSE stream so the dossier picks up where it
+        // left off — covers the navigate-away → return-to-page case during a slow narrative
+        // (typical 60-180 s window with Ollama on Mac CPU).
+        this.reattachPendingNarrative(symbol);
+      },
       error: () => {
         this.narrative.set(null);
+        this.reattachPendingNarrative(symbol);
       },
+    });
+  }
+
+  private reattachPendingNarrative(symbol: string): void {
+    this.marketRepository.getPendingNarrativeJob(symbol).subscribe({
+      next: (job) => {
+        if (!job || this.narrativeLoading()) return;
+        this.narrativeLoading.set(true);
+        this.narrativeError.set(null);
+        this.subscribeToNarrativeStream(symbol, job.jobId);
+      },
+      // Mundane errors (5xx on a check that exists purely as a UX nicety) are swallowed silently
+      // — we'd rather show the dossier in its initial state than a toast about a feature the
+      // user didn't even ask for. The 404 "no pending job" path is mapped to `null` upstream.
+      error: () => undefined,
     });
   }
 
@@ -2084,33 +2107,39 @@ export class TickerPage implements OnInit, OnDestroy {
           this.narrativeLoading.set(false);
           return;
         }
-        // PR2 reacts only to terminal phases (`DONE` / `ERROR`) — same UI surface as the legacy
-        // poll. The intermediate phases (`LOADING_CONTEXT`, `CALLING_LLM`, …) flow through the
-        // observable but are ignored for now ; PR3 will surface them in the spinner label so the
-        // user knows where the pipeline is when Ollama mouille for 60-180 s on Mac CPU.
-        this.narrativeStreamSub = this.jobStreamService
-          .streamNarrativeJob(sym, job.jobId)
-          .subscribe({
-            next: (event) => {
-              if (event.phase === 'DONE') {
-                this.fetchNarrativeAfterCompletion(sym);
-              } else if (event.phase === 'ERROR') {
-                this.narrativeError.set(
-                  event.error ?? this.translate.instant('ticker.narrative.errorGeneric'),
-                );
-                this.narrativeLoading.set(false);
-              }
-            },
-            error: (err: Error) => {
-              this.narrativeError.set(
-                err.message ?? this.translate.instant('ticker.narrative.errorPolling'),
-              );
-              this.narrativeLoading.set(false);
-            },
-          });
+        this.subscribeToNarrativeStream(sym, job.jobId);
       },
       error: () => {
         this.narrativeError.set(this.translate.instant('ticker.narrative.errorRequest'));
+        this.narrativeLoading.set(false);
+      },
+    });
+  }
+
+  /**
+   * Opens the SSE stream for [jobId] and wires the terminal phases (`DONE` / `ERROR`) into the
+   * page's narrative state. Shared between the fresh-kick path ([generateNarrative]) and the
+   * reattach-on-revisit path ([reattachPendingNarrative]) so the lifecycle handling stays in one
+   * place. Intermediate phases (`LOADING_CONTEXT`, `CALLING_LLM`, …) flow through but are
+   * ignored for now ; PR3 will surface them in the spinner label.
+   */
+  private subscribeToNarrativeStream(symbol: string, jobId: string): void {
+    this.narrativeStreamSub?.unsubscribe();
+    this.narrativeStreamSub = this.jobStreamService.streamNarrativeJob(symbol, jobId).subscribe({
+      next: (event) => {
+        if (event.phase === 'DONE') {
+          this.fetchNarrativeAfterCompletion(symbol);
+        } else if (event.phase === 'ERROR') {
+          this.narrativeError.set(
+            event.error ?? this.translate.instant('ticker.narrative.errorGeneric'),
+          );
+          this.narrativeLoading.set(false);
+        }
+      },
+      error: (err: Error) => {
+        this.narrativeError.set(
+          err.message ?? this.translate.instant('ticker.narrative.errorPolling'),
+        );
         this.narrativeLoading.set(false);
       },
     });

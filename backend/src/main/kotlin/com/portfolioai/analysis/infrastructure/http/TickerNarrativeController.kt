@@ -56,6 +56,19 @@ class TickerNarrativeController(
     jobStore.get(jobId)?.toDto() ?: throw NoSuchElementException("Job $jobId not found")
 
   /**
+   * Most recent `PENDING` job for [symbol] within the dedup window, or 404 if none. Used by the
+   * dossier on init : if a job is currently running (typical when the user navigated away during a
+   * slow Ollama call and just came back), the frontend reattaches to its SSE stream instead of
+   * showing an empty state and forcing a re-kick. Spring routes `/jobs/pending` here in preference
+   * over `/jobs/{jobId}` because the literal path segment is more specific than the `UUID`
+   * variable.
+   */
+  @GetMapping("/jobs/pending")
+  fun getPendingJob(@PathVariable symbol: String): TickerNarrativeJobDto =
+    service.pendingFor(symbol)?.toDto()
+      ?: throw NoSuchElementException("No pending narrative job for $symbol")
+
+  /**
    * Server-Sent Events stream of [com.portfolioai.analysis.domain.JobEvent]s for a running (or
    * recently terminal) job. Replaces the 3-second poll on `GET /jobs/{id}` for the narrative
    * generation flow : the frontend opens an `EventSource` after kicking the job and receives a

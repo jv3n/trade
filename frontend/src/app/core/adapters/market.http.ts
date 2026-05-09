@@ -46,6 +46,17 @@ export class HttpMarketRepository extends MarketRepository {
     );
   }
 
+  getPendingNarrativeJob(symbol: string): Observable<TickerNarrativeJob | null> {
+    // 404 = "no narrative job currently pending for this symbol" — a normal, expected state on
+    // most dossier visits. Map to `null` so the page can simply branch on the value rather than
+    // handle errors (mirror of `getLatestNarrative` below).
+    return this.http
+      .get<TickerNarrativeJob>(
+        `/api/market/ticker/${encodeURIComponent(symbol)}/narrative/jobs/pending`,
+      )
+      .pipe(catchError((err) => (err.status === 404 ? of(null) : throwError(() => err))));
+  }
+
   getLatestNarrative(symbol: string): Observable<TickerNarrativeSnapshot | null> {
     // 404 = "no snapshot yet for this symbol" — a normal, expected state on first visit.
     // Map it to `null` so the page can simply branch on the value rather than handle errors.

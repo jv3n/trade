@@ -171,6 +171,14 @@ export abstract class MarketRepository {
    */
   abstract requestNarrative(symbol: string): Observable<TickerNarrativeJob>;
 
+  /**
+   * Currently pending job for [symbol] within the dedup window, or `null` if none. Used by the
+   * dossier on init to reattach to a running SSE stream after a navigate-away → return-to-page
+   * round trip. 404 from the backend (no pending job) maps to `null` rather than an error so the
+   * caller can simply branch on the value.
+   */
+  abstract getPendingNarrativeJob(symbol: string): Observable<TickerNarrativeJob | null>;
+
   /** Latest snapshot for a symbol, or `null` when none exists yet (404 → null). */
   abstract getLatestNarrative(symbol: string): Observable<TickerNarrativeSnapshot | null>;
 

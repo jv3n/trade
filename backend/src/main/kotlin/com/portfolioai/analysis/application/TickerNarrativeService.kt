@@ -59,6 +59,15 @@ class TickerNarrativeService(
   fun latestSnapshot(symbol: String): TickerNarrativeSnapshot? =
     snapshotRepo.findFirstBySymbolOrderByGeneratedAtDesc(symbol.uppercase())
 
+  /**
+   * Returns the most recent `PENDING` job for [symbol] within the dedup window, or `null` if none.
+   * Lets the dossier reattach to a running SSE stream after a navigate-away → return-to-page round
+   * trip — the `@Async` runner survives the client disconnect, but the in-page loading state
+   * doesn't, and we need a way to re-pick it up. Uses the same uppercased lookup as [startAsync] so
+   * both code paths agree on the dedup key.
+   */
+  fun pendingFor(symbol: String): TickerNarrativeJob? = jobStore.pendingFor(symbol.uppercase())
+
   private fun freshSnapshotFor(symbol: String): TickerNarrativeSnapshot? {
     val latest = snapshotRepo.findFirstBySymbolOrderByGeneratedAtDesc(symbol) ?: return null
     val age = Duration.between(latest.generatedAt, Instant.now())
