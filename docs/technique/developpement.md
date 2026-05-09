@@ -45,7 +45,11 @@ tilt up
 | `BACKEND_HOST_PORT` | `8080` | Spring Boot natif (pas en container) |
 | `FRONTEND_HOST_PORT` | `4200` | Angular dev server |
 
-Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker-compose.yml`, le `Tiltfile` et `application.yml` retombent sur les défauts si la variable n'est pas définie. Seul le port côté **hôte** change ; les services dans les containers (Postgres, Ollama) gardent leur port natif en interne, et le backend Spring est automatiquement reconfiguré pour s'y connecter via les env vars injectées dans le `serve_cmd` du Tiltfile.
+Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker-compose.yml`, le `Tiltfile`, `application.yml`, `backend/build.gradle.kts` et `frontend/proxy.conf.js` retombent sur les défauts si la variable n'est pas définie. Seul le port côté **hôte** change ; les services dans les containers (Postgres, Ollama) gardent leur port natif en interne, et le backend Spring est automatiquement reconfiguré pour s'y connecter via les env vars injectées dans le `serve_cmd` du Tiltfile.
+
+> **`./gradlew test` lit aussi `.env`** — `backend/build.gradle.kts` mirroir le `load_env_file()` du `Tiltfile` et injecte chaque clé dans l'environnement du `tasks.withType<Test>`. Conséquence : si tu as `POSTGRES_HOST_PORT=5444` dans ton `.env`, les tests d'intégration `@SpringBootTest` (Flyway, JDBC) tapent automatiquement sur le bon port — pas besoin de préfixer chaque appel. Si `.env` n'existe pas (CI, fresh clone), les tests retombent sur les défauts d'`application.yml` exactement comme avant.
+
+> **Le proxy frontend (`/api` → backend) lit aussi `.env`** — `frontend/proxy.conf.js` (en remplacement du `.json` historique) mirroir le même parser et résout `BACKEND_HOST_PORT` dans cet ordre : `process.env` (Tilt-injecté) > fichier `.env` > défaut `8080`. Si tu changes `BACKEND_HOST_PORT=8081` dans `.env`, l'Angular dev server proxy `/api/**` vers `localhost:8081` automatiquement, sans toucher à `angular.json`.
 
 ## Commandes Tilt utiles
 

@@ -59,7 +59,31 @@ allOpen {
   annotation("jakarta.persistence.Embeddable")
 }
 
-tasks.withType<Test> { useJUnitPlatform() }
+// Read `.env` from the repo root (gitignored) and inject every key into the test task's
+// environment so that `@SpringBootTest` integration tests pick up the same custom ports as
+// `tilt up` — without forcing the dev to remember `POSTGRES_HOST_PORT=5444 ./gradlew test`.
+// Mirrors the Starlark `load_env_file()` helper in `Tiltfile` ; duplicate parser intentional :
+// Gradle has no native .env support and pulling a third-party plugin would be heavyweight for a
+// dead-simple format (`KEY=value`, optional surrounding quotes, `#` comments, no escapes).
+// When `.env` is absent (CI, fresh clone), the map is empty and the test task falls back to the
+// defaults baked into `application.yml` — same behaviour as before this hook existed.
+val dotenv: Map<String, String> =
+  file("../.env").let { f ->
+    if (!f.exists()) emptyMap()
+    else
+      f.readLines()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") && "=" in it }
+        .associate { line ->
+          val (k, v) = line.split("=", limit = 2)
+          k.trim() to v.trim().trim('"').trim('\'')
+        }
+  }
+
+tasks.withType<Test> {
+  useJUnitPlatform()
+  dotenv.forEach { (k, v) -> environment(k, v) }
+}
 
 spotless {
   kotlin {
