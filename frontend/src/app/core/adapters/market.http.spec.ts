@@ -4,11 +4,9 @@
  * these tests catch that on the frontend side.
  */
 import { TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { HttpMarketRepository } from './market.http';
-import { LlmTimeoutService } from '../llm-timeout.service';
 
 describe('HttpMarketRepository', () => {
   let repo: HttpMarketRepository;
@@ -16,22 +14,7 @@ describe('HttpMarketRepository', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        HttpMarketRepository,
-        // Stub the LlmTimeoutService — 300 s lines up with the existing 301_000 ms fixture in
-        // the abort test below, kept identical to the pre-v1.5 hardcoded value so the test data
-        // (which uses 301-s-old timestamps) still triggers the abort.
-        {
-          provide: LlmTimeoutService,
-          useValue: {
-            seconds: signal(300).asReadonly(),
-            millis: () => 300_000,
-            refresh: vi.fn(),
-          },
-        },
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), HttpMarketRepository],
     });
     repo = TestBed.inject(HttpMarketRepository);
     http = TestBed.inject(HttpTestingController);
@@ -189,73 +172,8 @@ describe('HttpMarketRepository', () => {
       expect(receivedError).toBe(true);
     });
 
-    describe('pollNarrativeJob', () => {
-      beforeEach(() => vi.useFakeTimers());
-      afterEach(() => vi.useRealTimers());
-
-      it('polls every 3s and stops on DONE', () => {
-        const emissions: unknown[] = [];
-        let completed = false;
-        const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
-          next: (j) => emissions.push(j),
-          complete: () => (completed = true),
-        });
-
-        vi.advanceTimersByTime(3000);
-        const req = http.expectOne('/api/market/ticker/AAPL/narrative/jobs/job-1');
-        expect(req.request.method).toBe('GET');
-        req.flush({
-          jobId: 'job-1',
-          symbol: 'AAPL',
-          status: 'DONE',
-          createdAt: new Date().toISOString(),
-          snapshotId: 'snap-1',
-          error: null,
-        });
-
-        expect(emissions).toHaveLength(1);
-        expect(completed).toBe(true);
-        sub.unsubscribe();
-      });
-
-      it('aborts after the LLM timeout window even if backend keeps replying PENDING', () => {
-        let receivedError: Error | null = null;
-        // Job created 301 s ago — over the 300 s timeout configured on the stub LlmTimeoutService.
-        const createdAt = new Date(Date.now() - 301_000).toISOString();
-        const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
-          error: (err: Error) => (receivedError = err),
-        });
-
-        vi.advanceTimersByTime(3000);
-        http.expectOne('/api/market/ticker/AAPL/narrative/jobs/job-1').flush({
-          jobId: 'job-1',
-          symbol: 'AAPL',
-          status: 'PENDING',
-          createdAt,
-          snapshotId: null,
-          error: null,
-        });
-
-        expect(receivedError).not.toBeNull();
-        expect(receivedError!.message).toContain('trop longue');
-        sub.unsubscribe();
-      });
-
-      it('surfaces 404 with a friendly message (backend restarted ?)', () => {
-        let receivedError: Error | null = null;
-        const sub = repo.pollNarrativeJob('AAPL', 'job-1').subscribe({
-          error: (err: Error) => (receivedError = err),
-        });
-
-        vi.advanceTimersByTime(3000);
-        http
-          .expectOne('/api/market/ticker/AAPL/narrative/jobs/job-1')
-          .flush({}, { status: 404, statusText: 'Not Found' });
-
-        expect(receivedError).not.toBeNull();
-        expect(receivedError!.message).toContain('introuvable');
-        sub.unsubscribe();
-      });
-    });
+    // Live narrative job updates moved to Server-Sent Events — see `JobStreamService` and its
+    // spec for the new transport's lifecycle pin (terminal completion, premature close, teardown).
+    // The legacy `pollNarrativeJob` was dropped from `MarketRepository` in PR2 of the SSE swap.
   });
 });

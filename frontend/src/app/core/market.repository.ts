@@ -164,12 +164,12 @@ export abstract class MarketRepository {
   /**
    * Kick off (or reuse, if cached) a narrative generation for [symbol]. The returned job may
    * already be `DONE` if a fresh snapshot existed (≤ 30 min old) or if a sibling job was pending
-   * (≤ 5 min). The frontend must check `status` before deciding whether to poll.
+   * (≤ 5 min). The frontend must check `status` before deciding whether to open a stream.
+   *
+   * For pending jobs, subscribe to per-phase updates via [JobStreamService.streamNarrativeJob]
+   * — replaces the legacy 3-second poll on `GET /jobs/{id}`.
    */
   abstract requestNarrative(symbol: string): Observable<TickerNarrativeJob>;
-
-  /** Poll a narrative job every few seconds until it leaves the `PENDING` state. */
-  abstract pollNarrativeJob(symbol: string, jobId: string): Observable<TickerNarrativeJob>;
 
   /** Latest snapshot for a symbol, or `null` when none exists yet (404 → null). */
   abstract getLatestNarrative(symbol: string): Observable<TickerNarrativeSnapshot | null>;
