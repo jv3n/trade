@@ -232,6 +232,8 @@ describe('Configuration', () => {
             stopPolling: vi.fn(),
             refresh: vi.fn().mockResolvedValue(undefined),
             unload: vi.fn().mockResolvedValue(undefined),
+            pull: vi.fn(),
+            delete: vi.fn().mockResolvedValue(undefined),
           },
         },
       ],

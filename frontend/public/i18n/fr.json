@@ -429,8 +429,19 @@
         "expiresIn": "expire dans {{value}}",
         "expired": "expiré",
         "refresh": "Rafraîchir",
+        "pullCta": "Pull…",
         "unloadAriaLabel": "Décharger {{model}} de la VRAM",
-        "notApplicableForClaude": "État Ollama non applicable pour le provider Claude — utilise le bouton Tester de la card « Modèle Claude » plus bas pour valider la connectivité Anthropic."
+        "notApplicableForClaude": "État Ollama non applicable pour le provider Claude — utilise le bouton Tester de la card « Modèle Claude » plus bas pour valider la connectivité Anthropic.",
+        "pullDialog": {
+          "title": "Pull un modèle Ollama",
+          "hint": "Tape le tag du modèle à télécharger (ex. mistral:7b) ou choisis une suggestion. Le download bloque 1 à 3 minutes selon la taille — laisse le dialog ouvert.",
+          "inputLabel": "Tag du modèle",
+          "pulling": "Téléchargement de {{model}}…",
+          "confirm": "Pull",
+          "cancel": "Annuler",
+          "alsoPulled": "Déjà pull localement",
+          "deleteAriaLabel": "Supprimer {{model}} du disque"
+        }
       },
       "providers": {
         "mock": "Mock (local)",

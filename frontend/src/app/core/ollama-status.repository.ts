@@ -31,9 +31,14 @@ export interface OllamaStatus {
  *
  * `get` is consumed by [OllamaStatusService] which polls every ~10 s while the LLM section of
  * `/settings/configuration` is mounted. `unload` evicts a named model from VRAM and returns the
- * post-action snapshot in the same response — saves a follow-up `get` round-trip.
+ * post-action snapshot in the same response — saves a follow-up `get` round-trip. `pull`
+ * downloads a model from the registry (blocking 1-3 min) and similarly returns the freshly
+ * re-probed snapshot. `delete` removes a model from the local cache (frees disk space) — fast,
+ * mirror lifecycle of `unload`.
  */
 export abstract class OllamaStatusRepository {
   abstract get(): Observable<OllamaStatus>;
   abstract unload(model: string): Observable<OllamaStatus>;
+  abstract pull(model: string): Observable<OllamaStatus>;
+  abstract delete(model: string): Observable<OllamaStatus>;
 }

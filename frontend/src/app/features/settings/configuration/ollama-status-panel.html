@@ -96,6 +96,12 @@
         <mat-icon>refresh</mat-icon>
         {{ 'settings.configurationPage.ollamaStatus.refresh' | translate }}
       </button>
+      @if (status()?.daemonReachable) {
+        <button mat-button type="button" (click)="openPullDialog()" data-testid="pull-button">
+          <mat-icon>cloud_download</mat-icon>
+          {{ 'settings.configurationPage.ollamaStatus.pullCta' | translate }}
+        </button>
+      }
     </div>
   }
 </section>

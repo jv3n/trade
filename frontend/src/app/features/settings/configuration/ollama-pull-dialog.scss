@@ -1,0 +1,137 @@
+.ollama-pull-dialog-content {
+  min-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .hint {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+
+  .model-field {
+    width: 100%;
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+
+    .suggestion-row {
+      // Anchor for the absolute-positioned trash overlay — gives the chip + trash a single
+      // visual identity (one bordered pill) rather than two siblings floating side by side.
+      position: relative;
+      display: inline-block;
+    }
+
+    .suggestion {
+      font-family: var(--font-mono, monospace);
+      font-size: 0.78rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      &.pulled {
+        // Green border re-added — the check icon alone wasn't enough signal at a distance,
+        // the bordered chip stands out as "you have this" vs the plain chips that need pulling.
+        border-color: var(--color-success, var(--color-text-muted));
+        // Reserve room on the right for the absolute-positioned trash so its hover state
+        // doesn't overlap the model name. Material's stroked button exposes
+        // `--mdc-outlined-button-horizontal-padding`, but it overrides BOTH sides — we want
+        // asymmetric, so we set both explicitly. Default left padding (~16 px) preserved on
+        // the left, right side widened to leave a 26 px slot for the icon.
+        --mdc-outlined-button-horizontal-padding: 0.75rem;
+        padding-right: 1.85rem;
+      }
+
+      .check-icon {
+        font-size: 0.95rem;
+        width: 0.95rem;
+        height: 0.95rem;
+        color: var(--color-success, var(--color-text-muted));
+      }
+    }
+
+    .delete-button {
+      // Sits inside the chip's right edge (inside the green border), so the chip + trash read
+      // as a single Material chip with a remove icon. Plain `<button>` rather than
+      // `mat-icon-button` to avoid the Material 3 40-px state-layer that would explode out of
+      // the chip on hover.
+      position: absolute;
+      right: 0.3rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--color-text-muted);
+      transition:
+        color 120ms ease,
+        background 120ms ease;
+
+      &:hover:not(:disabled) {
+        color: var(--color-danger, var(--color-text));
+        background: rgba(255, 0, 0, 0.08);
+      }
+
+      &:disabled {
+        cursor: default;
+        opacity: 0.4;
+      }
+
+      mat-icon {
+        font-size: 0.95rem;
+        width: 0.95rem;
+        height: 0.95rem;
+      }
+    }
+  }
+
+  .other-pulled-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    .other-pulled-label {
+      font-size: 0.75rem;
+      color: var(--color-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  .pull-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--color-surface-2);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .pull-error {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    color: var(--color-danger);
+    font-size: 0.85rem;
+
+    mat-icon {
+      font-size: 1.1rem;
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+  }
+}

@@ -1,0 +1,144 @@
+<h2 mat-dialog-title>
+  {{ 'settings.configurationPage.ollamaStatus.pullDialog.title' | translate }}
+</h2>
+
+<mat-dialog-content class="ollama-pull-dialog-content">
+  <p class="hint">
+    {{ 'settings.configurationPage.ollamaStatus.pullDialog.hint' | translate }}
+  </p>
+
+  <mat-form-field appearance="outline" class="model-field">
+    <mat-label>
+      {{ 'settings.configurationPage.ollamaStatus.pullDialog.inputLabel' | translate }}
+    </mat-label>
+    <input
+      matInput
+      [formControl]="modelControl"
+      [readonly]="busy()"
+      data-testid="model-input"
+      autocomplete="off"
+    />
+  </mat-form-field>
+
+  <div class="suggestions" data-testid="suggestions">
+    @for (name of suggestions; track name) {
+      <span class="suggestion-row">
+        <button
+          mat-stroked-button
+          type="button"
+          class="suggestion"
+          [class.pulled]="isPulled(name)"
+          [disabled]="busy()"
+          (click)="selectSuggestion(name)"
+        >
+          @if (isPulled(name)) {
+            <mat-icon class="check-icon">check_circle</mat-icon>
+          }
+          {{ name }}
+        </button>
+        @if (isPulled(name)) {
+          <button
+            type="button"
+            class="delete-button"
+            [disabled]="busy()"
+            [attr.aria-label]="
+              'settings.configurationPage.ollamaStatus.pullDialog.deleteAriaLabel'
+                | translate: { model: name }
+            "
+            [matTooltip]="
+              'settings.configurationPage.ollamaStatus.pullDialog.deleteAriaLabel'
+                | translate: { model: name }
+            "
+            (click)="delete(name)"
+            data-testid="delete-button"
+          >
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        }
+      </span>
+    }
+  </div>
+
+  @if (otherPulled().length > 0) {
+    <div class="other-pulled-section" data-testid="other-pulled">
+      <span class="other-pulled-label">
+        {{ 'settings.configurationPage.ollamaStatus.pullDialog.alsoPulled' | translate }}
+      </span>
+      <div class="suggestions">
+        @for (name of otherPulled(); track name) {
+          <span class="suggestion-row">
+            <button
+              mat-stroked-button
+              type="button"
+              class="suggestion pulled"
+              [disabled]="busy()"
+              (click)="selectSuggestion(name)"
+            >
+              <mat-icon class="check-icon">check_circle</mat-icon>
+              {{ name }}
+            </button>
+            <button
+              type="button"
+              class="delete-button"
+              [disabled]="busy()"
+              [attr.aria-label]="
+                'settings.configurationPage.ollamaStatus.pullDialog.deleteAriaLabel'
+                  | translate: { model: name }
+              "
+              [matTooltip]="
+                'settings.configurationPage.ollamaStatus.pullDialog.deleteAriaLabel'
+                  | translate: { model: name }
+              "
+              (click)="delete(name)"
+              data-testid="delete-button"
+            >
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (busy()) {
+    <div class="pull-progress" data-testid="pull-progress">
+      <mat-spinner diameter="18"></mat-spinner>
+      <span>
+        {{
+          'settings.configurationPage.ollamaStatus.pullDialog.pulling'
+            | translate: { model: modelControl.value }
+        }}
+      </span>
+    </div>
+  }
+
+  @if (error(); as msg) {
+    <p class="pull-error" data-testid="pull-error">
+      <mat-icon>error_outline</mat-icon>
+      {{ msg }}
+    </p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    type="button"
+    [disabled]="busy()"
+    (click)="cancel()"
+    data-testid="cancel-button"
+  >
+    {{ 'settings.configurationPage.ollamaStatus.pullDialog.cancel' | translate }}
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    type="button"
+    [disabled]="busy() || modelControl.invalid"
+    (click)="pull()"
+    data-testid="confirm-pull-button"
+  >
+    <mat-icon>cloud_download</mat-icon>
+    {{ 'settings.configurationPage.ollamaStatus.pullDialog.confirm' | translate }}
+  </button>
+</mat-dialog-actions>

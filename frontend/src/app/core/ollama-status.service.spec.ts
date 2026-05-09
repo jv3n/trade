@@ -18,13 +18,18 @@ import { OllamaStatus, OllamaStatusRepository } from './ollama-status.repository
 import { OllamaStatusService } from './ollama-status.service';
 
 class StubRepository extends OllamaStatusRepository {
-  // Each `get()` call returns the next factory in the `getQueue` ; same shape for `unload` on its
-  // own queue. Lets tests pin an exact sequence (success, then failure, then success) without
-  // juggling spies. Shared call counters are exposed for assertions.
+  // Each `get()` call returns the next factory in the `getQueue` ; same shape for `unload`,
+  // `pull`, and `delete` on their own queues. Lets tests pin an exact sequence (success, then
+  // failure, then success) without juggling spies. Shared call counters are exposed for
+  // assertions.
   getQueue: (() => Observable<OllamaStatus>)[] = [];
   unloadQueue: ((model: string) => Observable<OllamaStatus>)[] = [];
+  pullQueue: ((model: string) => Observable<OllamaStatus>)[] = [];
+  deleteQueue: ((model: string) => Observable<OllamaStatus>)[] = [];
   callCount = 0;
   unloadCalls: string[] = [];
+  pullCalls: string[] = [];
+  deleteCalls: string[] = [];
 
   get(): Observable<OllamaStatus> {
     this.callCount += 1;
@@ -40,6 +45,24 @@ class StubRepository extends OllamaStatusRepository {
     const next = this.unloadQueue.shift();
     if (!next) {
       throw new Error('StubRepository: unload queue is empty — test forgot to enqueue a response');
+    }
+    return next(model);
+  }
+
+  pull(model: string): Observable<OllamaStatus> {
+    this.pullCalls.push(model);
+    const next = this.pullQueue.shift();
+    if (!next) {
+      throw new Error('StubRepository: pull queue is empty — test forgot to enqueue a response');
+    }
+    return next(model);
+  }
+
+  delete(model: string): Observable<OllamaStatus> {
+    this.deleteCalls.push(model);
+    const next = this.deleteQueue.shift();
+    if (!next) {
+      throw new Error('StubRepository: delete queue is empty — test forgot to enqueue a response');
     }
     return next(model);
   }
@@ -195,6 +218,62 @@ describe('OllamaStatusService', () => {
 
     // Same contract as refresh failure — the panel keeps showing what it had instead of
     // flipping back to spinner / null.
+    expect(service.status()).toEqual(reachable);
+  });
+
+  // -------------------------------------------------------------------- pull
+
+  it('pull forwards the model name and updates the signal with the post-action snapshot', async () => {
+    const postPull: OllamaStatus = {
+      ...reachable,
+      availableModels: ['mistral:7b', 'qwen2.5:3b'],
+    };
+    stub.pullQueue.push(() => of(postPull));
+
+    const result = await service.pull('mistral:7b');
+
+    expect(stub.pullCalls).toEqual(['mistral:7b']);
+    expect(result).toEqual(postPull);
+    // The shared signal updates so the parent panel re-renders the new model in `availableModels`
+    // without waiting for the next 10 s polling tick.
+    expect(service.status()).toEqual(postPull);
+  });
+
+  it('pull rethrows transport errors so the dialog can render an inline error message', async () => {
+    // Distinct from the [unload] / [refresh] contract : pull is invoked by an explicit user
+    // click and the dialog needs to surface a failure rather than silently leave the user
+    // staring at a spinner. The service swallows nothing on this path.
+    stub.pullQueue.push(() => throwError(() => new Error('Pull failed: registry unreachable')));
+
+    await expect(service.pull('mistral:7b')).rejects.toThrow('registry unreachable');
+  });
+
+  // -------------------------------------------------------------------- delete
+
+  it('delete forwards the model name and updates the signal with the post-action snapshot', async () => {
+    // Pre-state : two models pulled. Post-state : one removed by the delete.
+    stub.deleteQueue.push(() =>
+      of({
+        ...reachable,
+        availableModels: ['qwen2.5:3b'],
+      }),
+    );
+
+    await service.delete('mistral:7b');
+
+    expect(stub.deleteCalls).toEqual(['mistral:7b']);
+    expect(service.status()?.availableModels).toEqual(['qwen2.5:3b']);
+  });
+
+  it('delete preserves the previous signal value when the HTTP call fails', async () => {
+    // Mirror of the unload contract — delete is best-effort UX (the panel's next polling tick
+    // will resync). A transient failure must not blank the panel.
+    stub.getQueue.push(() => of(reachable));
+    await service.refresh();
+
+    stub.deleteQueue.push(() => throwError(() => new Error('backend down')));
+    await service.delete('mistral:7b');
+
     expect(service.status()).toEqual(reachable);
   });
 });

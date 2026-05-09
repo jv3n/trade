@@ -400,4 +400,65 @@ class ConfigControllerTest {
 
     verify(ollamaStatusService).unloadModel("qwen2.5:3b")
   }
+
+  @Test
+  fun `POST llm pull-model trims and forwards the model name and surfaces the fresh snapshot`() {
+    // Mirror of unload-model — pull blocks the request thread for 1-3 min in real usage with
+    // `stream: false`, but the controller is a pure forward so we just assert the wiring and
+    // the response shape. The new model landing in `availableModels` is what the dialog uses
+    // to render success.
+    given(ollamaStatusService.pullModel("mistral:7b"))
+      .willReturn(
+        OllamaStatusDto(
+          daemonReachable = true,
+          baseUrl = "http://localhost:11434",
+          latencyMs = 14,
+          loadedModels = emptyList(),
+          availableModels = listOf("mistral:7b", "qwen2.5:3b"),
+          errorMessage = null,
+        )
+      )
+
+    mvc
+      .perform(
+        post("/api/config/llm/pull-model")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(json.writeValueAsString(mapOf("model" to "  mistral:7b  ")))
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.daemonReachable").value(true))
+      .andExpect(jsonPath("$.availableModels.length()").value(2))
+      .andExpect(jsonPath("$.availableModels[0]").value("mistral:7b"))
+
+    verify(ollamaStatusService).pullModel("mistral:7b")
+  }
+
+  @Test
+  fun `POST llm delete-model trims and forwards the model name and surfaces the fresh snapshot`() {
+    given(ollamaStatusService.deleteModel("mistral:7b"))
+      .willReturn(
+        OllamaStatusDto(
+          daemonReachable = true,
+          baseUrl = "http://localhost:11434",
+          latencyMs = 11,
+          loadedModels = emptyList(),
+          // The deleted model is gone from available — the dialog re-renders without its chip.
+          availableModels = listOf("qwen2.5:3b"),
+          errorMessage = null,
+        )
+      )
+
+    mvc
+      .perform(
+        post("/api/config/llm/delete-model")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(json.writeValueAsString(mapOf("model" to "  mistral:7b  ")))
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.daemonReachable").value(true))
+      .andExpect(jsonPath("$.availableModels.length()").value(1))
+      .andExpect(jsonPath("$.availableModels[0]").value("qwen2.5:3b"))
+
+    verify(ollamaStatusService).deleteModel("mistral:7b")
+  }
 }

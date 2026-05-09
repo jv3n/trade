@@ -70,28 +70,6 @@ cmd_button(
 )
 
 # ────────────────────────────────────────────────
-# LLM — modèle local Ollama
-# ────────────────────────────────────────────────
-
-# Garantit que l'instance Ollama locale a le modèle attendu par le backend.
-# Idempotent : si déjà pull, c'est un no-op rapide. Sinon, télécharge ~2 GB la première fois.
-#
-# `qwen2.5:3b` est le bon compromis sur M1 : ~2 GB, 5-10 s par narratif, JSON structuré
-# fiable. Mistral 7B (~4 GB) était l'ancien défaut mais sa latence 30-60 s sur M1 saturait
-# le read timeout côté Spring — switch fait après une session de tests qui a coupé sur
-# timeout.
-#
-# Si tu veux pousser la qualité en sacrifiant de la vitesse : pull `qwen2.5:7b`,
-# `phi4-mini` (3.8B) ou `llama3.2:3b` puis bouge `ollama.model` dans
-# `application-local.yml`.
-local_resource(
-    name = "llm:ensure-model",
-    cmd = "docker exec portfolioai-ollama ollama pull qwen2.5:3b",
-    resource_deps = ["ollama"],
-    labels = ["llm"],
-)
-
-# ────────────────────────────────────────────────
 # App — Backend Spring Boot & Frontend Angular
 # ────────────────────────────────────────────────
 

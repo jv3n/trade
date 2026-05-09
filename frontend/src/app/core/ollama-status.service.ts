@@ -76,6 +76,36 @@ export class OllamaStatusService {
       // Backend itself unreachable. The next polling tick will update the signal.
     }
   }
+
+  /**
+   * Tells the daemon to pull [model] from the registry. Blocks 1-3 min in real usage (the
+   * backend uses `stream: false` and the request only returns once the download completes).
+   * Returns the post-pull snapshot — `model` lands in `availableModels`. Failures bubble as
+   * a thrown error so the calling dialog can render an inline message ; we deliberately do
+   * not swallow here (unlike [unload]) because the user just clicked "Pull" and a silent
+   * no-op would leave them staring at a stuck spinner.
+   */
+  async pull(model: string): Promise<OllamaStatus> {
+    const next = await firstValueFrom(this.repo.pull(model));
+    this._status.set(next);
+    return next;
+  }
+
+  /**
+   * Removes [model] from the daemon's local cache (frees disk space, drops the entry from
+   * `availableModels`). Fast (~10-50 ms) — mirror of [unload] in lifecycle terms : updates the
+   * shared signal with the post-action snapshot, swallows transport errors silently (the
+   * panel's next polling tick will resync if the call dropped on the wire). The dialog reads
+   * the same signal so its "already pulled" chip disappears in the same render pass.
+   */
+  async delete(model: string): Promise<void> {
+    try {
+      const next = await firstValueFrom(this.repo.delete(model));
+      this._status.set(next);
+    } catch {
+      // Backend itself unreachable. The next polling tick will update the signal.
+    }
+  }
 }
 
 const DEFAULT_POLL_INTERVAL_MS = 10_000;

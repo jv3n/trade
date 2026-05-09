@@ -31,6 +31,16 @@ import org.junit.jupiter.api.Test
  *   `size_vram` parses fine with those fields nulled out (Ollama versions do not always emit them).
  * - **Sorted available models** — the UI lists chips alphabetically ; the service does the sort so
  *   the front doesn't have to.
+ * - **`unloadModel`** — POSTs `/api/chat` with `keep_alive: 0` then re-probes ; 404 yields a "not
+ *   pulled locally" hint ; blank input short-circuits to a plain probe ; daemon down stays
+ *   fail-soft.
+ * - **`pullModel`** — POSTs `/api/pull` with `stream: false` then re-probes ; the new model lands
+ *   in `availableModels` in the same round-trip ; 5xx (Ollama's response for unknown names) yields
+ *   a fail-soft snapshot with the upstream code ; blank input short-circuits ; daemon down stays
+ *   fail-soft.
+ * - **`deleteModel`** — DELETEs `/api/delete` with the name in the body then re-probes ; 404 (model
+ *   already absent) yields a not-pulled-locally hint ; blank input short-circuits ; daemon down
+ *   stays fail-soft.
  */
 class OllamaStatusServiceTest {
 
@@ -228,6 +238,141 @@ class OllamaStatusServiceTest {
     server.shutdown()
 
     val out = service.unloadModel("qwen2.5:3b")
+
+    assertFalse(out.daemonReachable)
+    assertNotNull(out.errorMessage)
+  }
+
+  // ---------------------------------------------------------------------- pullModel
+
+  @Test
+  fun `pullModel posts to api pull then re-probes and returns the fresh snapshot with the new model`() {
+    // Three calls expected : (1) the pull itself (long timeout, returns when download is done
+    // because we send `stream: false`), (2) /api/tags re-probe, (3) /api/ps re-probe. The
+    // re-probe is what makes the new model show up in the panel without a follow-up request.
+    server.enqueue(jsonOk("""{"status": "success"}"""))
+    server.enqueue(jsonOk(TWO_TAGS_BODY))
+    server.enqueue(jsonOk("""{"models": []}"""))
+
+    val out = service.pullModel("mistral:7b")
+
+    assertTrue(out.daemonReachable)
+    // Re-probe surfaced the available models the same way it does for unload — the test
+    // fixture is the same body, what matters is that the method returns the freshly probed
+    // snapshot rather than a stale or made-up one.
+    assertEquals(2, out.availableModels.size)
+
+    // Verify the pull payload — `stream: false` is the contract that lets us treat the call
+    // as blocking + synchronous, and the registry accepts the field name `name` rather than
+    // `model`.
+    val pullRequest = server.takeRequest()
+    assertEquals("/api/pull", pullRequest.path)
+    assertEquals("POST", pullRequest.method)
+    val pullBody = pullRequest.body.readUtf8()
+    assertTrue(pullBody.contains("\"stream\":false"), "pull body must carry stream: false")
+    assertTrue(pullBody.contains("\"name\":\"mistral:7b\""), "pull body must carry the model name")
+  }
+
+  @Test
+  fun `pullModel with blank name short-circuits to a plain probe`() {
+    // Same defensive guard as unloadModel — an empty form binding should not POST to /api/pull
+    // (which would block the request thread waiting for Ollama to reject empty input).
+    server.enqueue(jsonOk(TWO_TAGS_BODY))
+    server.enqueue(jsonOk("""{"models": []}"""))
+
+    val out = service.pullModel("")
+
+    assertTrue(out.daemonReachable)
+    // First request on the wire is the probe's /api/tags — no /api/pull preceded it.
+    assertEquals("/api/tags", server.takeRequest().path)
+  }
+
+  @Test
+  fun `pullModel surfaces 5xx from Ollama as fail-soft with the upstream code in the message`() {
+    // Ollama returns 500 with `{"error": "model 'foo' not found"}` for unknown names. We don't
+    // try to disambiguate ; mirroring unloadModel, the upstream code lands in errorMessage and
+    // the panel renders the daemon-unreachable chip with the cause.
+    server.enqueue(
+      MockResponse().setResponseCode(500).setBody("""{"error": "manifest not found"}""")
+    )
+
+    val out = service.pullModel("definitely-not-a-real-model")
+
+    assertFalse(out.daemonReachable)
+    assertNotNull(out.errorMessage)
+    assertTrue(
+      out.errorMessage!!.contains("500"),
+      "expected upstream code in error message, got '${out.errorMessage}'",
+    )
+  }
+
+  @Test
+  fun `pullModel surfaces unreachable daemon as fail-soft`() {
+    server.shutdown()
+
+    val out = service.pullModel("mistral:7b")
+
+    assertFalse(out.daemonReachable)
+    assertNotNull(out.errorMessage)
+  }
+
+  // ---------------------------------------------------------------------- deleteModel
+
+  @Test
+  fun `deleteModel sends DELETE with the name in the body then re-probes and returns the fresh snapshot`() {
+    // Three calls expected on the wire : (1) the delete itself, (2) /api/tags re-probe,
+    // (3) /api/ps re-probe. The re-probe drops the deleted model from `availableModels`.
+    server.enqueue(MockResponse().setResponseCode(200))
+    server.enqueue(jsonOk("""{"models": [{"name": "qwen2.5:3b", "size": 1932000000}]}"""))
+    server.enqueue(jsonOk("""{"models": []}"""))
+
+    val out = service.deleteModel("mistral:7b")
+
+    assertTrue(out.daemonReachable)
+    // The re-probe surfaces the post-delete state — only qwen2.5:3b remains in available.
+    assertEquals(listOf("qwen2.5:3b"), out.availableModels)
+
+    val deleteRequest = server.takeRequest()
+    assertEquals("/api/delete", deleteRequest.path)
+    assertEquals("DELETE", deleteRequest.method)
+    val deleteBody = deleteRequest.body.readUtf8()
+    assertTrue(deleteBody.contains("\"name\":\"mistral:7b\""), "delete body must carry the name")
+  }
+
+  @Test
+  fun `deleteModel surfaces 404 from Ollama as a not-pulled-locally hint`() {
+    // Ollama returns 404 when the user tries to delete a model they never pulled. Surface a
+    // useful hint rather than the generic "HTTP 404" string, mirroring `unloadModel`.
+    server.enqueue(MockResponse().setResponseCode(404).setBody("""{"error": "model not found"}"""))
+
+    val out = service.deleteModel("never-pulled:7b")
+
+    assertFalse(out.daemonReachable)
+    assertNotNull(out.errorMessage)
+    assertTrue(
+      out.errorMessage!!.contains("not pulled locally"),
+      "expected hint about not-pulled, got '${out.errorMessage}'",
+    )
+    assertTrue(out.errorMessage!!.contains("never-pulled:7b"))
+  }
+
+  @Test
+  fun `deleteModel with blank name short-circuits to a plain probe`() {
+    server.enqueue(jsonOk(TWO_TAGS_BODY))
+    server.enqueue(jsonOk("""{"models": []}"""))
+
+    val out = service.deleteModel("")
+
+    assertTrue(out.daemonReachable)
+    // No /api/delete request hit the wire — the first request is the /api/tags probe.
+    assertEquals("/api/tags", server.takeRequest().path)
+  }
+
+  @Test
+  fun `deleteModel surfaces unreachable daemon as fail-soft`() {
+    server.shutdown()
+
+    val out = service.deleteModel("mistral:7b")
 
     assertFalse(out.daemonReachable)
     assertNotNull(out.errorMessage)

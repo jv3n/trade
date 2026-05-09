@@ -49,3 +49,20 @@ data class TestConfigResult(val ok: Boolean, val message: String)
  * (handy when switching models or to force a cold-start for latency comparison).
  */
 data class UnloadModelRequest(val model: String)
+
+/**
+ * Body of `POST /api/config/llm/pull-model`. Tells Ollama to download a model from its registry
+ * (e.g. `mistral:7b`) — replaces the manual `ollama pull <name>` terminal step that the
+ * `/settings/configuration > LLM` panel previously required when a user wanted to test a new model.
+ * Field name is `model` for consistency with [UnloadModelRequest] even though Ollama's own
+ * `/api/pull` payload uses `name` ; the service translates between the two.
+ */
+data class PullModelRequest(val model: String)
+
+/**
+ * Body of `POST /api/config/llm/delete-model`. Removes the named model from the Ollama daemon's
+ * local cache (frees disk + drops the entry from `availableModels`). Translates to Ollama's `DELETE
+ * /api/delete` upstream — we keep the front API as POST for symmetry with the other `unload-model`
+ * and `pull-model` endpoints.
+ */
+data class DeleteModelRequest(val model: String)

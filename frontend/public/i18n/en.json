@@ -429,8 +429,19 @@
         "expiresIn": "expires in {{value}}",
         "expired": "expired",
         "refresh": "Refresh",
+        "pullCta": "Pull…",
         "unloadAriaLabel": "Unload {{model}} from VRAM",
-        "notApplicableForClaude": "Ollama status not applicable to the Claude provider — use the “Tester” button on the “Claude model” card below to validate Anthropic connectivity."
+        "notApplicableForClaude": "Ollama status not applicable to the Claude provider — use the “Tester” button on the “Claude model” card below to validate Anthropic connectivity.",
+        "pullDialog": {
+          "title": "Pull an Ollama model",
+          "hint": "Type the tag of the model to download (e.g. mistral:7b) or pick a suggestion. The download blocks 1–3 minutes depending on size — keep the dialog open.",
+          "inputLabel": "Model tag",
+          "pulling": "Downloading {{model}}…",
+          "confirm": "Pull",
+          "cancel": "Cancel",
+          "alsoPulled": "Also pulled locally",
+          "deleteAriaLabel": "Delete {{model}} from disk"
+        }
       },
       "providers": {
         "mock": "Mock (local)",

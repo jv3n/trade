@@ -89,7 +89,7 @@ market:
   provider: mock
 ```
 
-Pense à télécharger le modèle au premier lancement : clic sur **`llm:ensure-model`** dans l'UI Tilt (~2 GB ; idempotent — no-op si déjà pull). Si tu veux pousser la qualité en sacrifiant de la vitesse, tu peux pull `qwen2.5:7b` (~4 GB, 15-30 s), `llama3.2:3b` ou `phi4-mini` (3.8B) et bouger `ollama.model` en conséquence. Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.
+Pense à télécharger un modèle au premier lancement : ouvre `/settings/configuration > LLM`, le panneau **État Ollama** affiche les modèles déjà pull localement et un bouton **Pull…** ouvre un dialog avec suggestions (`qwen2.5:3b` ~2 GB est le bon compromis sur M1, ou `qwen2.5:7b` / `llama3.2:3b` / `phi4-mini` si tu veux pousser la qualité). Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.
 
 Tu peux switcher de l'un à l'autre à tout moment soit en éditant `application-local.yml` (Tilt redémarre le backend au save), soit — plus pratique — depuis `/settings/configuration > LLM` qui édite la même clé en BDD sans reboot.
 
@@ -138,7 +138,7 @@ Le projet a cinq providers configurables, chacun avec une vraie implémentation 
 | Valeur | Quand l'utiliser |
 |---|---|
 | `claude` | Défaut Phase 1. Qualité narrative nettement supérieure, latence 1-3 s, requiert une clé `ANTHROPIC_API_KEY`. |
-| `ollama` | Dev offline, sans clé. Défaut local : `qwen2.5:3b` (3B Instruct, ~2 GB), 5-10 s par narratif sur M1, JSON structuré fiable. Lance `llm:ensure-model` dans Tilt pour télécharger (idempotent — no-op si déjà pull). Pour pousser la qualité au prix de la vitesse : `qwen2.5:7b`, `llama3.2:3b` ou `phi4-mini`. Mistral 7B (ancien défaut) timeout sur M1 — éviter. |
+| `ollama` | Dev offline, sans clé. Défaut local : `qwen2.5:3b` (3B Instruct, ~2 GB), 5-10 s par narratif sur M1, JSON structuré fiable. Pull depuis `/settings/configuration > LLM > Pull…` au premier lancement. Pour pousser la qualité au prix de la vitesse : `qwen2.5:7b`, `llama3.2:3b` ou `phi4-mini`. Mistral 7B (ancien défaut) timeout sur M1 — éviter. |
 
 ### Données de marché — `market.provider`
 

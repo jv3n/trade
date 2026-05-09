@@ -14,4 +14,12 @@ export class HttpOllamaStatusRepository extends OllamaStatusRepository {
   unload(model: string): Observable<OllamaStatus> {
     return this.http.post<OllamaStatus>('/api/config/llm/unload-model', { model });
   }
+
+  pull(model: string): Observable<OllamaStatus> {
+    return this.http.post<OllamaStatus>('/api/config/llm/pull-model', { model });
+  }
+
+  delete(model: string): Observable<OllamaStatus> {
+    return this.http.post<OllamaStatus>('/api/config/llm/delete-model', { model });
+  }
 }

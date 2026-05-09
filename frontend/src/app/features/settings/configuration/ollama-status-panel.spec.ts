@@ -19,6 +19,7 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { provideTranslateService } from '@ngx-translate/core';
 import { OllamaStatus } from '../../../core/ollama-status.repository';
 import { OllamaStatusService } from '../../../core/ollama-status.service';
@@ -31,6 +32,7 @@ describe('OllamaStatusPanel', () => {
   const stopPolling = vi.fn();
   const refresh = vi.fn().mockResolvedValue(undefined);
   const unload = vi.fn().mockResolvedValue(undefined);
+  const dialogOpen = vi.fn();
 
   beforeEach(async () => {
     statusSignal.set(null);
@@ -38,6 +40,7 @@ describe('OllamaStatusPanel', () => {
     stopPolling.mockReset();
     refresh.mockReset().mockResolvedValue(undefined);
     unload.mockReset().mockResolvedValue(undefined);
+    dialogOpen.mockReset();
 
     await TestBed.configureTestingModule({
       imports: [OllamaStatusPanel],
@@ -53,6 +56,11 @@ describe('OllamaStatusPanel', () => {
             unload,
           },
         },
+        // The panel injects MatDialog to open the pull dialog. We stub the `open` call so the
+        // test stays focused on the panel's responsibility (clicking the button delegates to
+        // the dialog) without spinning up the CDK overlay machinery — the dialog itself is
+        // covered by `ollama-pull-dialog.spec.ts`.
+        { provide: MatDialog, useValue: { open: dialogOpen } },
       ],
     }).compileComponents();
 
@@ -196,5 +204,45 @@ describe('OllamaStatusPanel', () => {
 
     expect(unload).toHaveBeenCalledTimes(1);
     expect(unload).toHaveBeenCalledWith('llama3.2:3b');
+  });
+
+  it('renders the Pull button only when the daemon is reachable', () => {
+    // The button has no purpose against a dead daemon — pull would fail at the backend's first
+    // network attempt. Hiding it on the unreachable branch keeps the action surface honest.
+    statusSignal.set({
+      daemonReachable: false,
+      baseUrl: 'http://localhost:11434',
+      latencyMs: null,
+      loadedModels: [],
+      availableModels: [],
+      errorMessage: 'Connection refused',
+    });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="pull-button"]')).toBeFalsy();
+  });
+
+  it('Pull button opens the pull dialog when the daemon is reachable', () => {
+    statusSignal.set({
+      daemonReachable: true,
+      baseUrl: 'http://localhost:11434',
+      latencyMs: 11,
+      loadedModels: [],
+      availableModels: ['qwen2.5:3b'],
+      errorMessage: null,
+    });
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector(
+      '[data-testid="pull-button"]',
+    ) as HTMLButtonElement;
+    expect(button).toBeTruthy();
+
+    button.click();
+
+    expect(dialogOpen).toHaveBeenCalledTimes(1);
+    // First arg is the component class — we don't pin it tightly (the dialog import would couple
+    // the spec to the component identity), we just assert the call shape.
+    expect(dialogOpen).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({}));
   });
 });

@@ -71,4 +71,52 @@ describe('HttpOllamaStatusRepository', () => {
 
     expect(received).toEqual(wire);
   });
+
+  it('delete POSTs the model name in a wrapped body and surfaces the post-action snapshot', () => {
+    // Same wire shape as unload / pull. The deleted model has dropped from `availableModels` —
+    // proof the backend re-probed after deleting from disk.
+    let received: unknown;
+    repo.delete('mistral:7b').subscribe((value) => (received = value));
+
+    const req = http.expectOne('/api/config/llm/delete-model');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ model: 'mistral:7b' });
+
+    const wire = {
+      daemonReachable: true,
+      baseUrl: 'http://localhost:11434',
+      latencyMs: 11,
+      loadedModels: [],
+      availableModels: ['qwen2.5:3b'],
+      errorMessage: null,
+    };
+    req.flush(wire);
+
+    expect(received).toEqual(wire);
+  });
+
+  it('pull POSTs the model name in a wrapped body and surfaces the post-action snapshot', () => {
+    // Same wire shape as unload — the dialog re-renders the panel directly from the response so
+    // the new model lands in `availableModels` without a follow-up GET.
+    let received: unknown;
+    repo.pull('mistral:7b').subscribe((value) => (received = value));
+
+    const req = http.expectOne('/api/config/llm/pull-model');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ model: 'mistral:7b' });
+
+    const wire = {
+      daemonReachable: true,
+      baseUrl: 'http://localhost:11434',
+      latencyMs: 14,
+      loadedModels: [],
+      // The new model lands in the available list — proof the backend re-probed after the pull
+      // completed.
+      availableModels: ['mistral:7b', 'qwen2.5:3b'],
+      errorMessage: null,
+    };
+    req.flush(wire);
+
+    expect(received).toEqual(wire);
+  });
 });

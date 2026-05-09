@@ -1,10 +1,12 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OllamaStatusService } from '../../../core/ollama-status.service';
+import { OllamaPullDialog } from './ollama-pull-dialog';
 
 /**
  * Panel rendered at the top of the LLM section of `/settings/configuration` when
@@ -41,6 +43,7 @@ import { OllamaStatusService } from '../../../core/ollama-status.service';
 export class OllamaStatusPanel implements OnInit, OnDestroy {
   private readonly statusService = inject(OllamaStatusService);
   private readonly translate = inject(TranslateService);
+  private readonly dialog = inject(MatDialog);
 
   readonly status = this.statusService.status;
 
@@ -84,6 +87,10 @@ export class OllamaStatusPanel implements OnInit, OnDestroy {
 
   unload(model: string): void {
     void this.statusService.unload(model);
+  }
+
+  openPullDialog(): void {
+    this.dialog.open(OllamaPullDialog, { width: '420px', autoFocus: 'first-tabbable' });
   }
 }
 

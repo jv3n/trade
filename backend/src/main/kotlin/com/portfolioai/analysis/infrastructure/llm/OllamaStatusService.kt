@@ -8,6 +8,7 @@ import java.time.Instant
 import java.time.format.DateTimeParseException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpMethod
 import org.springframework.http.client.JdkClientHttpRequestFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
@@ -46,6 +47,23 @@ class OllamaStatusService(
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build()
           )
           .apply { setReadTimeout(Duration.ofSeconds(PROBE_READ_TIMEOUT_SECONDS)) }
+      )
+      .defaultHeader("Accept", "application/json")
+      .build()
+
+  /**
+   * Dedicated RestClient for [pullModel] with a far longer read timeout — pulling a multi-GB model
+   * takes 1-3 min on an honest network and would blow through the 3 s timeout used for the
+   * lightweight probe / unload paths. Built once at construction (no per-call overhead).
+   */
+  private val pullRest: RestClient =
+    RestClient.builder()
+      .baseUrl(baseUrl)
+      .requestFactory(
+        JdkClientHttpRequestFactory(
+            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build()
+          )
+          .apply { setReadTimeout(Duration.ofSeconds(PULL_READ_TIMEOUT_SECONDS)) }
       )
       .defaultHeader("Accept", "application/json")
       .build()
@@ -119,6 +137,80 @@ class OllamaStatusService(
     }
   }
 
+  /**
+   * Pulls [name] from the Ollama registry (via `POST /api/pull` with `stream: false` so the
+   * response only lands once the download completed). Returns the freshly re-probed snapshot so the
+   * panel sees the new model in `availableModels` in a single round-trip — no follow-up `GET
+   * /llm/status` needed.
+   *
+   * **Blocking** : with `stream: false` the request thread sits idle for the duration of the
+   * download (1-3 min for a typical ~4 GB model). Acceptable single-user (one concurrent pull at
+   * most), to revisit if Phase 5 turns this into a multi-user surface.
+   *
+   * Fail-soft contract identical to [probe] / [unloadModel] : a daemon hiccup never bubbles a 503 ;
+   * instead the snapshot returned to the UI carries `daemonReachable: false` with the cause in
+   * `errorMessage`. The panel renders the chip accordingly without putting the page in error state.
+   * Blank input short-circuits to a plain probe — no point posting an empty `name` and waiting for
+   * Ollama to reject it.
+   */
+  fun pullModel(name: String): OllamaStatusDto {
+    if (name.isBlank()) return probe()
+    return try {
+      pullRest
+        .post()
+        .uri("/api/pull")
+        .header("Content-Type", "application/json")
+        .body(mapOf("name" to name, "stream" to false))
+        .retrieve()
+        .body(Map::class.java)
+      probe()
+    } catch (e: ResourceAccessException) {
+      log.debug("Ollama pull unreachable for name={} : {}", name, e.message)
+      unreachable("Unreachable : ${e.message?.take(MAX_ERROR_LENGTH)}")
+    } catch (e: HttpStatusCodeException) {
+      log.debug("Ollama pull HTTP {} for name={} : {}", e.statusCode, name, e.message)
+      // Ollama returns 500 with `{"error": "model 'foo' not found"}` for unknown names rather
+      // than 404. We don't try to disambiguate here — surface the upstream code, the dialog can
+      // show it inline. Mirrors [unloadModel] for consistency.
+      unreachable("HTTP ${e.statusCode.value()} from Ollama")
+    }
+  }
+
+  /**
+   * Deletes [name] from the Ollama daemon's local cache (`DELETE /api/delete`). Frees disk space
+   * and removes the entry from `availableModels`. Re-probe + return the fresh snapshot so the
+   * panel + dialog re-render in one round-trip.
+   *
+   * **Fast** : Ollama's delete is essentially a filesystem unlink, ~10-50 ms in practice. No
+   * long-timeout RestClient needed — the standard probe `rest` is fine.
+   *
+   * Fail-soft contract identical to [unloadModel] / [pullModel]. 404 from upstream means the model
+   * wasn't pulled in the first place — surfaced as a not-pulled-locally hint rather than a generic
+   * HTTP code, mirroring `unloadModel`.
+   */
+  fun deleteModel(name: String): OllamaStatusDto {
+    if (name.isBlank()) return probe()
+    return try {
+      rest
+        .method(HttpMethod.DELETE)
+        .uri("/api/delete")
+        .header("Content-Type", "application/json")
+        .body(mapOf("name" to name))
+        .retrieve()
+        .toBodilessEntity()
+      probe()
+    } catch (e: ResourceAccessException) {
+      log.debug("Ollama delete unreachable for name={} : {}", name, e.message)
+      unreachable("Unreachable : ${e.message?.take(MAX_ERROR_LENGTH)}")
+    } catch (e: HttpStatusCodeException) {
+      log.debug("Ollama delete HTTP {} for name={} : {}", e.statusCode, name, e.message)
+      val message =
+        if (e.statusCode.value() == HTTP_NOT_FOUND) "Model not pulled locally : $name"
+        else "HTTP ${e.statusCode.value()} from Ollama"
+      unreachable(message)
+    }
+  }
+
   private fun fetchAvailableModels(): List<String> {
     @Suppress("UNCHECKED_CAST")
     val body =
@@ -166,6 +258,12 @@ class OllamaStatusService(
 
   companion object {
     private const val PROBE_READ_TIMEOUT_SECONDS = 3L
+    /**
+     * 5 min — sized for ~4 GB models on an honest network. Pulling Mistral 7B (~4 GB) takes 1-3 min
+     * in practice ; the ceiling adds a buffer for slower links without locking the request thread
+     * indefinitely if Ollama hangs upstream.
+     */
+    private const val PULL_READ_TIMEOUT_SECONDS = 5L * 60
     private const val NANOS_PER_MILLI = 1_000_000L
     private const val MAX_ERROR_LENGTH = 120
     private const val HTTP_NOT_FOUND = 404

@@ -6,6 +6,8 @@ import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.config.application.dto.ConfigEntryDto
 import com.portfolioai.config.application.dto.ConfigValueType
+import com.portfolioai.config.application.dto.DeleteModelRequest
+import com.portfolioai.config.application.dto.PullModelRequest
 import com.portfolioai.config.application.dto.SetConfigRequest
 import com.portfolioai.config.application.dto.TestConfigRequest
 import com.portfolioai.config.application.dto.TestConfigResult
@@ -99,6 +101,25 @@ class ConfigController(
   @PostMapping("/llm/unload-model")
   fun unloadOllamaModel(@RequestBody body: UnloadModelRequest): OllamaStatusDto =
     ollamaStatusService.unloadModel(body.model.trim())
+
+  /**
+   * Tells Ollama to pull (download) the named model from its registry. Blocks the request thread
+   * 1-3 min on a typical ~4 GB model — acceptable single-user, replaces the manual `ollama pull
+   * <name>` terminal step the panel previously required. Returns the freshly re-probed snapshot so
+   * the panel sees the new model land in `availableModels` in one round-trip.
+   */
+  @PostMapping("/llm/pull-model")
+  fun pullOllamaModel(@RequestBody body: PullModelRequest): OllamaStatusDto =
+    ollamaStatusService.pullModel(body.model.trim())
+
+  /**
+   * Removes the named model from the Ollama daemon's local cache (frees disk space). Returns the
+   * freshly re-probed snapshot so the panel + pull dialog drop the chip in one round-trip. Fast
+   * (~10-50 ms) — translates to Ollama's `DELETE /api/delete` upstream.
+   */
+  @PostMapping("/llm/delete-model")
+  fun deleteOllamaModel(@RequestBody body: DeleteModelRequest): OllamaStatusDto =
+    ollamaStatusService.deleteModel(body.model.trim())
 
   private fun entryFor(key: String): ConfigEntryDto {
     val isSecret = key in ConfigKeys.SECRET_KEYS
