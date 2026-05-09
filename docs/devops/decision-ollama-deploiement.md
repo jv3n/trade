@@ -1,6 +1,28 @@
 # Décision — déploiement Ollama (dev local Mac vs cible serveur)
 
-> **Statut** : 🟡 Brouillon, en attente d'arbitrage. Cette page expose 3 options et recommande l'une d'elles. Une fois la décision tranchée, ce document devient la trace du *pourquoi* et les changes (Compose / Tilt / docs) sont implémentés dans une session séparée (~1 h estimé).
+> **Statut** : ✅ Tranchée le **2026-05-09** — **Option 3 retenue (statu quo Claude-first, Ollama containerisé en CPU dégradé sur Mac)**. La trace ci-dessous garde l'analyse des 3 options pour qu'un futur arbitrage (machine dédiée, contributeurs externes, multi-user) puisse réévaluer sans repartir de zéro.
+
+## Décision retenue — option 3
+
+**Rationale** : la prochaine étape est l'achat d'une clé Anthropic, ce qui va naturellement tirer 95 %+ de l'usage vers Claude (latence 2-5 s vs 60-180 s, qualité narrative supérieure, coût négligeable à l'échelle perso). Ollama redevient un outil de dev — utile pour exercer le pipeline (parsing, validation, retry, futur SSE) sans cramer des appels Claude à chaque itération, et pour tester le runtime config switch `llm.provider: claude → ollama`. Pour ces deux cas, la lenteur CPU sur Mac est acceptable (2-3 narratifs par session de dev, pas une rafale).
+
+**Pourquoi pas option 1 (sortie de Compose + install natif)** : aurait débloqué Metal et rendu Ollama « vraiment utilisable », mais aurait cassé le « clone + `tilt up` = tout marche » qu'on vient de polir avec le panneau État Ollama et l'eject from VRAM. Le coût onboarding ne se justifie pas tant qu'Ollama n'est pas le chemin principal. Philosophie utilisateur : pas envie de sortir des services hors Docker tant qu'on n'y est pas obligé.
+
+**Pourquoi pas option 2 (override Compose)** : over-engineering pour une cible Linux GPU hypothétique — le ticket Phase 5 « Analyse hébergement » 🔴 candidate sur OVH / Hetzner / Scaleway / Lightsail dans la fourchette 5-15 €/mois, aucun GPU à ce prix. Maintenir deux setups parallèles paie une dette qui n'arrivera peut-être jamais.
+
+**Re-trigger pour réévaluer** :
+- Achat d'une **machine dédiée** (Linux + GPU, ou Mac Studio destiné à servir l'app à plusieurs) → option 1 ou 2 redeviennent intéressantes.
+- Usage Ollama qui dépasse **20 % des sessions** sur 2-3 semaines consécutives → option 1 vaut ses 30 min d'implémentation.
+- Distribution du repo à des **contributeurs externes** (Linux + Windows + Mac mélangés) → option 2 redevient pertinente pour rester inclusif.
+
+**Implémentation collatérale** (faite dans la même session, ~20 min) :
+- `docs/technique/developpement.md` — paragraphe « Performance Ollama sur Mac » qui documente la limite Metal-via-Docker et redirige vers Claude pour le quotidien.
+- `docs/devops/commandes-pratiques.md` — diagnostic enrichi (`docker stats portfolioai-ollama`) pour reconnaître la saturation CPU et la traiter comme un trait connu.
+- `docs/technique/architecture.md > Décisions techniques notables` — entrée courte qui formalise le statu quo.
+
+---
+
+## Trace historique — analyse des 3 options
 
 ## Contexte
 

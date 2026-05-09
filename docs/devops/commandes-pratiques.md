@@ -44,7 +44,25 @@ Charge CPU / mémoire :
 docker stats --no-stream portfolioai-ollama
 ```
 
-> CPU > 500 % = inférence active. < 5 % = idle. Sur Docker Desktop pour Mac, Ollama tourne en CPU pur (pas d'accès Metal/GPU dans le VM virtualisé) → c'est lent, c'est attendu.
+> CPU > 500 % = inférence active. < 5 % = idle.
+
+### Diagnostic « narratif lent / fan qui hurle »
+
+Sur Docker Desktop pour Mac, Ollama tourne en **CPU pur** — Metal n'est pas exposé dans la VM Linux virtualisée. Conséquence : un narratif `qwen2.5:3b` peut saturer 9 cores ~918 % pendant 60–180 s. **C'est un trait connu, pas un bug** (cf. [`docs/devops/decision-ollama-deploiement.md`](decision-ollama-deploiement.md), décision option 3 tranchée 2026-05-09). Pour confirmer le diagnostic :
+
+```bash
+# Pendant que le narratif tourne :
+docker stats --no-stream portfolioai-ollama
+# CPU 900 %+ = inférence en CPU pur, comportement attendu
+
+curl -s http://localhost:11434/api/ps | jq '.models[] | {name, expires_at}'
+# expires_at qui se rapproche de "now" + 5 min = appel reçu, en cours
+
+docker compose logs --since 1m ollama | grep "/api/chat"
+# Vide = la requête est encore in-flight (le log GIN s'écrit à la complétion)
+```
+
+Si les 3 confirment, deux options : (a) attendre la fin (le job parser puis valider) ou (b) basculer sur Claude depuis `/settings/configuration > LLM > Provider = claude` pour les prochaines requêtes. Voir aussi le panneau État Ollama dans `/settings/configuration` qui surface la même info en UI.
 
 ### Logs filtrés sur les appels chat
 
