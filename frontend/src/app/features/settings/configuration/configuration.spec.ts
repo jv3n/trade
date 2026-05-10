@@ -518,9 +518,9 @@ describe('Configuration', () => {
   });
 
   it('saving the LLM timeout calls LlmTimeoutService.refresh', () => {
-    // The polling adapters read the timeout from LlmTimeoutService at every tick — a save that
-    // didn't refresh the service would leave the next portfolio analysis or narrative job using
-    // the stale boot-time value, which is exactly what the slider is meant to fix.
+    // The "estimation max" label on the LLM card reads its value from LlmTimeoutService — a save
+    // that didn't refresh the service would leave the label showing the stale boot-time value
+    // until the user reloaded the page, which is exactly what the inline refresh prevents.
     component.onLlmTimeoutChange(720);
     component.save('llm.timeout-seconds');
 

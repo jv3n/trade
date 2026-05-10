@@ -3,16 +3,21 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigRepository } from './config.repository';
 
 /**
- * Source of truth for the runtime LLM timeout (poll abort + dedup window) on the frontend side.
- * Backend mirror : `OllamaClient.readTimeout` and the two `JobStore.DEDUP_WINDOW_SECONDS` (both
- * `AnalysisJobStore` for portfolio analysis and `TickerNarrativeJobStore` for ticker narratives).
+ * Source of truth for the runtime LLM timeout exposed to the configuration page.
  *
- * **Why a service instead of inline `inject(ConfigRepository).list()` calls** : the two HTTP
- * polling adapters (`analysis.http.ts` and `market.http.ts`) need the timeout at the moment a poll
- * tick fires. Doing a fresh `/api/config` round-trip per tick would be wasteful (the value moves
- * only on a deliberate slider drag in `/settings/configuration`). We prime the signal once at app
- * boot via `provideAppInitializer` and refresh it explicitly when the user saves a new value —
- * subsequent poll ticks read the current signal value with zero network cost.
+ * **Today's only consumer** — the `/settings/configuration > LLM` card uses [seconds] to render
+ * the "estimation max" label next to the slider so the user sees what the value translates to
+ * (e.g. "≈ 6 min 40 s") without reloading. The signal is primed at boot via
+ * `provideAppInitializer` so the label is correct on first paint, and refreshed on save so the
+ * label updates immediately after a slider drag.
+ *
+ * **Why a service rather than reading `entries()` inline** — a few historical consumers polled the
+ * timeout to abort long-running narrative generation requests (Phase 0 portfolio-analysis poll,
+ * Phase 1 narrative job poll). Both have been removed : Phase 0 was decommissioned in V6, and the
+ * narrative flow migrated to SSE in Phase 2.5. The service stays as a thin signal because the
+ * configuration page already depends on it via `provideAppInitializer`, and a future consumer
+ * (e.g. a Phase 4 cron orchestrator that wants to honour the same user-facing timeout) can plug in
+ * without re-walking `/api/config`.
  *
  * **Default 400** mirrors the YAML default in `application.yml` so a stack that boots without
  * overrides behaves identically to the pre-v1.5 hardcoded constants. The `refresh()` failure
@@ -25,11 +30,6 @@ export class LlmTimeoutService {
 
   private readonly _seconds = signal(DEFAULT_TIMEOUT_SECONDS);
   readonly seconds = this._seconds.asReadonly();
-
-  /** Convenience accessor for the polling code that thinks in milliseconds. */
-  millis(): number {
-    return this._seconds() * MILLIS_PER_SECOND;
-  }
 
   /** Re-fetches the config list and updates the signal from the `llm.timeout-seconds` entry. */
   async refresh(): Promise<void> {
@@ -49,4 +49,3 @@ export class LlmTimeoutService {
 
 const TIMEOUT_KEY = 'llm.timeout-seconds';
 const DEFAULT_TIMEOUT_SECONDS = 400;
-const MILLIS_PER_SECOND = 1000;

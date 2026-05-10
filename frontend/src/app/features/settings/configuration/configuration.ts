@@ -278,9 +278,9 @@ export class Configuration implements OnInit {
         if (key === TWELVE_DATA_KEY || key === FINNHUB_KEY || key === ANTHROPIC_KEY) {
           this.edits.update((m) => ({ ...m, [key]: '' }));
         }
-        // Saving the LLM timeout flips a value that the polling adapters read from
-        // [LlmTimeoutService] — refresh it so the next poll tick (portfolio analysis or
-        // narrative job) picks up the new abort window without a page reload.
+        // Saving the LLM timeout updates the value [LlmTimeoutService] surfaces to the
+        // "estimation max" label on this same LLM card — refresh it so the label reflects the
+        // new slider position immediately, without a page reload.
         if (key === LLM_TIMEOUT_KEY) this.timeoutService.refresh();
       },
       error: (err) => {
@@ -315,7 +315,7 @@ export class Configuration implements OnInit {
               return next;
             });
             // Mirror the save() branch — a reset on the LLM timeout flips the value the
-            // polling adapters depend on.
+            // "estimation max" label reads from [LlmTimeoutService].
             if (key === LLM_TIMEOUT_KEY) this.timeoutService.refresh();
           },
           error: () => this.markSaving(key, false),
