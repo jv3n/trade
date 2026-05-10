@@ -62,11 +62,13 @@ class TickerNarrativeStreamControllerTest {
     val jobId = UUID.fromString("11111111-2222-3333-4444-555555555555")
     given(jobStore.get(jobId)).willReturn(null)
 
+    // No `Accept: text/event-stream` on the rejection paths — MockMvc's default `*/*` lets the
+    // `GlobalExceptionHandler` write its JSON error body (the handler doesn't know how to produce
+    // `text/event-stream`, so a strict SSE Accept would 406 the response and mask the 404 we
+    // want to assert). In production the browser's `EventSource` does send `text/event-stream`
+    // and the body shape is irrelevant on a non-2xx — only the status drives the `error` event.
     mvc
-      .perform(
-        get("/api/market/ticker/AAPL/narrative/jobs/$jobId/stream")
-          .accept(MediaType.TEXT_EVENT_STREAM)
-      )
+      .perform(get("/api/market/ticker/AAPL/narrative/jobs/$jobId/stream"))
       .andExpect(status().isNotFound)
 
     // The publisher must NOT be hit on the rejection path — otherwise we'd leak an emitter
@@ -89,10 +91,7 @@ class TickerNarrativeStreamControllerTest {
       )
 
     mvc
-      .perform(
-        get("/api/market/ticker/AAPL/narrative/jobs/$jobId/stream")
-          .accept(MediaType.TEXT_EVENT_STREAM)
-      )
+      .perform(get("/api/market/ticker/AAPL/narrative/jobs/$jobId/stream"))
       .andExpect(status().isNotFound)
 
     verify(jobEventPublisher, never()).register(jobId)
