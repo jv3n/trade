@@ -9,6 +9,11 @@ plugins {
   // potentiels bugs). Complémentaire de Spotless qui ne fait que la mise en forme. Voir bloc
   // `detekt { … }` plus bas pour la stratégie de ramp-up.
   id("io.gitlab.arturbosch.detekt") version "1.23.8"
+  // Kover — couverture de tests Kotlin (replaces JaCoCo pour les projets Kotlin DSL purs).
+  // S'instrumente automatiquement sur le `test` task ; les rapports sont générés à la demande
+  // via `koverHtmlReport` / `koverXmlReport`. Voir bloc `kover { … }` plus bas pour la
+  // configuration des excludes (entry point, DTOs, etc. qui ne portent pas de logique testable).
+  id("org.jetbrains.kotlinx.kover") version "0.9.1"
 }
 
 group = "com.portfolioai"
@@ -169,6 +174,41 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
 
 tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
   jvmTarget = "21"
+}
+
+// ----------------------------------------------------------------------------- Kover
+//
+// Couverture mesurée sur le `test` task standard ; pas de seuil bloquant pour l'instant — on
+// publie le rapport (HTML pour browsing, XML pour le step summary GitHub Actions) et on tune si
+// la couverture descend de manière inattendue. Excludes ciblés sur le code qui ne porte pas de
+// logique testable (entry point Spring, classes-conteneur de modèles vendor, DTOs Jackson) — un
+// fichier qui n'a que des annotations + accesseurs gonfle artificiellement le dénominateur.
+//
+// Pour browser localement après `./gradlew test koverHtmlReport` : ouvrir
+// `backend/build/reports/kover/html/index.html`.
+kover {
+  reports {
+    filters {
+      excludes {
+        // Spring Boot application entry point — `runApplication<App>(*args)` n'a pas de surface
+        // testable utile, l'instrumentation au démarrage du contexte le couvre indirectement.
+        classes("com.portfolioai.BackendApplication", "com.portfolioai.BackendApplicationKt")
+        // Vendor wire-format models : data classes Jackson dont la valeur testable est dans les
+        // mappers voisins (testés via `MockWebServer`). Inclure les data classes elles-mêmes
+        // double-compte la couverture déjà acquise via les mappers.
+        classes(
+          "com.portfolioai.market.infrastructure.market.TwelveData*",
+          "com.portfolioai.market.infrastructure.market.Finnhub*Models*",
+          "com.portfolioai.news.infrastructure.news.Finnhub*Models*",
+          "com.portfolioai.analyst.infrastructure.analyst.Finnhub*Response*",
+          "com.portfolioai.earnings.infrastructure.earnings.Finnhub*Response*",
+        )
+        // DTOs applicatifs (REST surface) — les controllers les exercent end-to-end via les tests
+        // `@WebMvcTest`. Couverture indirecte mais suffisante.
+        packages("com.portfolioai.*.application.dto")
+      }
+    }
+  }
 }
 
 // Detekt 1.23.x ship un compilateur Kotlin embarqué (2.0.21 dans la 1.23.8). Avec Kotlin 2.1 côté

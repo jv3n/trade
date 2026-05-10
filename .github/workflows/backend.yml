@@ -72,6 +72,15 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: portfolioai
           ANTHROPIC_API_KEY: local-placeholder
 
+      # Coverage reports — Kover is wired in `build.gradle.kts`. Runs after `build` (which executes
+      # `test` and produces the binary `.bin` Kover instruments) so this step just renders. `if:
+      # always()` so the report is generated even if a downstream task (e.g. Detekt) failed —
+      # diagnosing a flake is easier with the coverage view at hand.
+      - name: Generate coverage reports
+        if: always()
+        working-directory: backend
+        run: ./gradlew koverHtmlReport koverXmlReport --build-cache
+
       # Surface Detekt findings into GitHub Code Scanning (Security tab). `if: always()` so a
       # failed test doesn't swallow the SARIF — Detekt generates it before tests run anyway.
       # The `hashFiles` guard skips this step when Detekt itself crashed and didn't produce a
@@ -92,3 +101,43 @@ jobs:
           name: detekt-report
           path: backend/build/reports/detekt/detekt.html
           if-no-files-found: ignore
+
+      # Kover HTML browseable locally — download the artifact, unzip, open `index.html` to
+      # navigate by package / class / line. The XML companion lives in the same dir for any
+      # external tooling that wants the structured form.
+      - name: Upload Kover coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: backend/build/reports/kover/
+          if-no-files-found: ignore
+
+      # At-a-glance summary on the run page — parses the Kover XML report (JaCoCo-compatible
+      # schema) and writes a Markdown table of root-level counters to `$GITHUB_STEP_SUMMARY`.
+      # No external action ; pure Python (pre-installed on `ubuntu-latest`). The trailing
+      # `<counter>` elements at the root scope hold the cumulative project totals.
+      - name: Coverage summary
+        if: always() && hashFiles('backend/build/reports/kover/report.xml') != ''
+        run: |
+          python3 <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('backend/build/reports/kover/report.xml')
+          root = tree.getroot()
+          # Root-level <counter> elements (direct children of <report>) hold the totals.
+          counters = [c for c in root if c.tag == 'counter']
+          print('## Backend coverage')
+          print()
+          if not counters:
+              print('_No coverage data — Kover did not produce any counter._')
+          else:
+              print('| Metric | Covered | Total | % |')
+              print('|---|---|---|---|')
+              for c in counters:
+                  t = c.get('type', '?')
+                  missed = int(c.get('missed', '0'))
+                  covered = int(c.get('covered', '0'))
+                  total = missed + covered
+                  pct = (100 * covered / total) if total else 0.0
+                  print(f'| {t} | {covered} | {total} | {pct:.1f}% |')
+          PY
