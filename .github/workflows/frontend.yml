@@ -52,6 +52,46 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Test
+      # Tests + couverture en un seul appel (la `coverage` configuration de `angular.json`
+      # ajoute juste les reporters HTML / LCOV / text-summary / json-summary par-dessus le run
+      # standard). Pas de seuil bloquant pour l'instant — on publie le rapport en artefact et
+      # on lit le step summary, on tune si la couverture descend de manière inattendue.
+      - name: Test (with coverage)
         working-directory: frontend
-        run: npm test -- --watch=false
+        run: npm run test:coverage -- --watch=false
+
+      # HTML browseable localement — download l'artefact, dézippe, ouvre `index.html` pour
+      # naviguer fichier par fichier. LCOV (`lcov.info`) inclus pour outillage externe.
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage/
+          if-no-files-found: ignore
+
+      # At-a-glance summary on the run page — parse le `coverage-summary.json` produit par le
+      # reporter `json-summary` et émet une table Markdown des totaux projet. Le builder
+      # `@angular/build:unit-test` écrit les rapports sous `coverage/<projectName>/` (ici
+      # `coverage/frontend/`), pas directement à la racine `coverage/`. Pure Node (déjà
+      # installé via setup-node ci-dessus), pas d'action externe.
+      - name: Coverage summary
+        if: always() && hashFiles('frontend/coverage/frontend/coverage-summary.json') != ''
+        run: |
+          node <<'JS' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('fs');
+          const data = JSON.parse(
+            fs.readFileSync('frontend/coverage/frontend/coverage-summary.json', 'utf8'),
+          );
+          const total = data.total || {};
+          console.log('## Frontend coverage');
+          console.log('');
+          console.log('| Metric | Covered | Total | % |');
+          console.log('|---|---|---|---|');
+          for (const key of ['lines', 'statements', 'functions', 'branches']) {
+            const m = total[key];
+            if (!m) continue;
+            const label = key[0].toUpperCase() + key.slice(1);
+            console.log(`| ${label} | ${m.covered} | ${m.total} | ${m.pct.toFixed(1)}% |`);
+          }
+          JS
