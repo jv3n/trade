@@ -40,7 +40,11 @@ management:
 
 anthropic:
   api:
-    key: ${ANTHROPIC_API_KEY}
+    # Empty default mirrors the convention used for `market.twelvedata.api-key` and
+    # `market.finnhub.api-key` below : a fresh clone must boot without the env var so the user can
+    # open `/settings/configuration` and rent the key in the SECRET runtime slot. `ClaudeClient`
+    # already raises a clear error at the first call if the key is empty.
+    key: ${ANTHROPIC_API_KEY:}
     model: claude-opus-4-6
 
 llm:
