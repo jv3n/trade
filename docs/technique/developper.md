@@ -192,7 +192,7 @@ Le provider sélectionné refuse la requête. Diagnostic selon `market.provider`
 
 ### Un job narratif reste bloqué `PENDING`
 
-Le backend a probablement crash ou été hot-reloaded en plein appel LLM. Solution simple : régénère un nouveau job (clic "Régénérer"). Le job mort sera ignoré, un nouveau job DONE écrasera l'affichage. Cleanup automatique au boot prévu en dette technique (cf. `backlog.md`).
+Le backend a probablement crash ou été hot-reloaded en plein appel LLM. Solution simple : régénère un nouveau job (clic "Régénérer"). Le job mort sera ignoré, un nouveau job DONE écrasera l'affichage. Le backend corrige aussi automatiquement au boot via `OrphanedJobCleanupListener` (`@EventListener(ApplicationReadyEvent)`) — tout `ticker_narrative_job` resté en `PENDING` au démarrage est flippé en `ERROR` avec un marqueur explicite, donc un redémarrage suffit à débloquer l'UI sans intervention manuelle.
 
 ### Migration Flyway échoue au boot
 

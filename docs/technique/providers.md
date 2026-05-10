@@ -51,7 +51,7 @@ Pourquoi Finnhub plutôt que Twelve Data pour les news : Twelve Data n'expose pa
 | **Inscription** | [https://console.anthropic.com](https://console.anthropic.com) |
 | **Dashboard / clé** | [https://console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
 | **Billing** | [https://console.anthropic.com/settings/billing](https://console.anthropic.com/settings/billing) — pay-as-you-go, ~5 € pour ~hundreds de narratifs |
-| **Modèle utilisé** | `claude-opus-4-6` (default YAML), peut basculer sur `claude-sonnet-4-5` (~5× moins cher, qualité narrative très correcte) |
+| **Modèle utilisé** | `claude-opus-4-6` (default YAML), peut basculer sur `claude-sonnet-4-6` (~5× moins cher, qualité narrative très correcte) |
 | **Config** | `anthropic.api.key` (env `ANTHROPIC_API_KEY`), `anthropic.api.model` — **les deux éditables au runtime** depuis `/settings/configuration > LLM` (clé masquée + bouton Tester depuis 2026-05-08, modèle en autocomplete libre) |
 | **Client** | `ClaudeClient` (sélectionné par `llm.provider: claude`) — clé et modèle lus per-call via `AppConfigService`, rotation immédiate sans reboot |
 | **Probe** | `POST /api/config/test/anthropic` accepte une clé candidate non sauvée, round-trip Claude avec le modèle courant et le prompt fixe « Reply with exactly the word OK. » — utilisé par le bouton « Tester » de la card Settings |

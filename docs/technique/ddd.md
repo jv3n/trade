@@ -44,7 +44,7 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 
 ### `domain/`
 - Entités JPA et leurs relations
-- Enums métier (`AssetType`, `RecommendationStatus`, `Sentiment`…)
+- Enums métier (`AssetType`, `InstrumentType`, `EarningsTime`, `Sentiment`…)
 - Value objects (les `Indicator` calculés peuvent vivre ici en data class pure)
 - **Pas d'import** depuis `application/` ou `infrastructure/`
 - **Pas de logique Spring** (pas de `@Service`, `@Repository`, etc.)
