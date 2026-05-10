@@ -75,10 +75,23 @@ class TickerNarrativeController(
    * `phase` event per pipeline transition (`LOADING_CONTEXT` → `CALLING_LLM` → … → `DONE` /
    * `ERROR`). Replay-on-reconnect is handled by [JobEventPublisher] — late connectors get the full
    * history before live tail starts.
+   *
+   * **Path consistency check (audit 2026-05-10 finding #4)** — the [jobId] path variable must
+   * belong to a job whose `symbol` matches the [symbol] path variable, otherwise we 404. Without
+   * the check, `/api/market/ticker/AAPL/narrative/jobs/{jobIdDeNVDA}/stream` would silently stream
+   * NVDA's events on the AAPL URL — harmless in single-user no-auth, but a cross-tenant leak the
+   * day Phase 5 OAuth2 lands. Treating "missing job" and "wrong symbol" as the same 404 also
+   * removes the existence oracle on jobIds. Mirror of the same discipline already in place on
+   * `/jobs/pending` (filtered by symbol via [TickerNarrativeService.pendingFor]).
    */
   @GetMapping("/jobs/{jobId}/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
-  fun streamJob(@PathVariable symbol: String, @PathVariable jobId: UUID): SseEmitter =
-    jobEventPublisher.register(jobId)
+  fun streamJob(@PathVariable symbol: String, @PathVariable jobId: UUID): SseEmitter {
+    val job = jobStore.get(jobId)
+    if (job == null || job.symbol != symbol.uppercase()) {
+      throw NoSuchElementException("Job $jobId not found for $symbol")
+    }
+    return jobEventPublisher.register(jobId)
+  }
 
   @GetMapping("/latest")
   fun getLatest(@PathVariable symbol: String): TickerNarrativeSnapshotDto =
