@@ -29,16 +29,24 @@ complexity:
   LongMethod:
     active: true
     # Default 60 — bumped because LLM prompt builders and CSV parsers legitimately stretch.
-    # The CSV import has 80-90 line methods that are a sequence of column reads ; splitting them
-    # would obscure the column-by-column flow without making testing easier.
-    threshold: 100
+    # `CsvImportService.import` (~135 lines) and `.parseCsv` (~120 lines) are sequences of column
+    # reads + lifecycle bookkeeping that read better as a single linear flow than as a chain of
+    # private helpers ; the alternative would scatter the per-row decision (open / closed /
+    # reopened, batch counters, warnings) across 4-5 functions and force the reader to jump.
+    # Splitting them wouldn't make them more testable either — the unit test asserts on the
+    # final `CsvImportResult` shape, not on intermediate steps.
+    threshold: 150
   LongParameterList:
     active: true
     functionThreshold: 8
     # JPA entities (`Asset`, `Recommendation`, `TickerNarrativeSnapshot`…) have 8-14 `@Column`
     # params by design — that's the schema, not a code smell. Annotation-based exclusion below
-    # also catches `@Embeddable` and `@MappedSuperclass`.
-    constructorThreshold: 14
+    # also catches `@Embeddable` and `@MappedSuperclass`. `AppConfigService` has 14 `@Value`
+    # injected defaults today (2 deps + 12 runtime config keys) and grows by ~2 per phase as new
+    # runtime knobs land — bump to 16 to absorb the Phase 3 prompt-template + Phase 5 OAuth2
+    # configs without re-tweaking the rule. Beyond 16 we should genuinely re-think the shape
+    # (split into multiple config beans grouped by concern).
+    constructorThreshold: 16
     ignoreDefaultParameters: true
     ignoreDataClasses: true
     ignoreAnnotated:
@@ -73,15 +81,21 @@ style:
     active: true
     # Tests are riddled with magic numbers (prices, quantities, timestamps) that read naturally as
     # values rather than constants. Excluding the test source set avoids 100+ pointless findings.
-    # `MockMarketChartClient` is dev-only synthetic generation (volatility, drift, bar counts —
-    # tuning constants that are clearer inline than as named consts). `IndicatorCalculator` uses
-    # well-known financial periods (21=1mo, 63=3mo, 252=1y) that any trader recognises.
+    # `Mock*Client.kt` are dev-only synthetic generators (volatility, drift, bar counts, EPS bands,
+    # bias thresholds — tuning constants that are clearer inline than as named consts).
+    # `IndicatorCalculator` uses well-known financial periods (21=1mo, 63=3mo, 252=1y) that any
+    # trader recognises. `TwelveDataClient` carries the bar-count lookup table for the chart
+    # endpoint (each `range × interval` cell is a single integer ; named constants would obscure
+    # the table). `ConfigTestClient` carries HTTP probe timeouts and message-preview lengths
+    # (`.take(120)`) that are formatting / I/O knobs, not algorithmic constants.
     excludes:
       - '**/test/**'
       - '**/*Test.kt'
       - '**/*Tests.kt'
-      - '**/MockMarketChartClient.kt'
+      - '**/Mock*Client.kt'
       - '**/IndicatorCalculator.kt'
+      - '**/TwelveDataClient.kt'
+      - '**/ConfigTestClient.kt'
     # Whitelisted small + common values. Includes percent-100, RSI-50, HTTP status codes (4xx),
     # standard ms timeouts (5_000 / 10_000 etc.), validator thresholds (3-7), and basic counts.
     ignoreNumbers:
@@ -149,11 +163,13 @@ style:
     max: 5
   ThrowsCount:
     active: true
-    # Bumped to 5 — error mapping in HTTP clients (TwelveDataClient.fetchTimeSeries) and
-    # parsers (TickerNarrativeParser) genuinely needs to throw 5 distinct domain errors :
-    # rate-limited / auth-failed / not-found / upstream / unreachable. Each maps to a
-    # different HTTP code on the public API, splitting them would obscure the mapping.
-    max: 5
+    # Bumped to 6 — error mapping in HTTP clients (TwelveDataClient.fetchTimeSeries,
+    # FinnhubAnalystClient.fetchRecommendations, FinnhubEarningsClient.fetchEarnings) and the
+    # narrative parser (TickerNarrativeParser.parse) genuinely needs to throw 6 distinct domain
+    # errors. Finnhub specifically splits 401 (Unauthorized → bad key) from 403 (Forbidden →
+    # paid-tier endpoint) into two `auth-failed` reasons because the operator action differs ;
+    # collapsing them would lose the diagnostic that lives in the catch handler.
+    max: 6
   UseCheckOrError:
     # `throw IllegalStateException(...)` reads more clearly than `error(...)` in some places —
     # opinion call. We don't enforce.
@@ -213,6 +229,15 @@ naming:
       - '**/test/**'
       - '**/*Test.kt'
       - '**/*Tests.kt'
+  MatchingDeclarationName:
+    active: true
+    # `*Models.kt` files are intentional vendor bundles : one file packs the 4-7 wire-format data
+    # classes for a vendor (FinnhubModels, FinnhubProfileModels, TwelveDataProfileModels…). The
+    # top-level type name doesn't match the file name on purpose, so the bundle reads as the unit
+    # of cohesion (one file = one upstream API surface, mapped together). Splitting them into
+    # one-class-per-file would scatter the wire format across N files for zero gain.
+    excludes:
+      - '**/*Models.kt'
 
 # -------------------------------------------------------------------- performance ---------------
 
