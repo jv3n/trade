@@ -168,6 +168,11 @@ class TwelveDataClient(
    * `1y` at `1week` is ~55 — a single-arg mapping would over- or under-fetch on intraday and weekly
    * views. The cap on the free plan is 5000, comfortably above anything we ask for here.
    */
+  // The nested `when` is a 30-cell lookup table (5 intervals × 6 ranges) where each cell is a
+  // single integer. Detekt counts each branch toward cyclomatic complexity (~29), but the
+  // cognitive load is identical to reading a Markdown table top-to-bottom. A `Map<Pair<...>, Int>`
+  // would force a level of indirection without making the values more testable or maintainable.
+  @Suppress("CyclomaticComplexMethod")
   private fun outputSizeFor(range: String, tdInterval: String): Int =
     when (tdInterval) {
       "1day" ->

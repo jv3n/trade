@@ -267,6 +267,11 @@ class JobEventPublisherTest {
 
     override fun send(builder: SseEventBuilder) {
       sendAttempts.incrementAndGet()
+      // Generic `RuntimeException` is the point — the test simulates "any client-side fault"
+      // and the publisher's contract is to handle it uniformly via complete-with-error. A more
+      // specific type (e.g. `IOException`) would over-constrain the test fixture without making
+      // the assertion sharper.
+      @Suppress("TooGenericExceptionThrown")
       if (throwOnSend) throw RuntimeException("client disconnected")
       sendCount.incrementAndGet()
     }

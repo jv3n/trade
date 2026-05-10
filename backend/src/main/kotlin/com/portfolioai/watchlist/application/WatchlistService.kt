@@ -121,6 +121,10 @@ class WatchlistService(
    * `null`. The row is still saved — better an entry without a chip than a 503 because of a
    * transient provider blip on a symbol the user just saw in the autocomplete.
    */
+  // The broad catch is the contract — any failure from the chart provider degrades the chip
+  // rather than blocking the add. See the class-level note. Suppressing the lint here rather
+  // than in `detekt.yml` so the intent stays at the call site.
+  @Suppress("TooGenericExceptionCaught")
   private fun lookupInstrumentType(symbol: String): InstrumentType? =
     try {
       tickerService.load(symbol).quote.instrumentType
