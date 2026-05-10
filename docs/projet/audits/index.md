@@ -6,5 +6,6 @@ Revues de code globales archivées. Chaque audit est daté et figé — il repr�
 
 ## Historique
 
+- [2026-05-10 — Revue globale fin Phase 2.5 avant tag `v0.4.0` (config runtime, SSE narratif, Phase 0 décommission, Ollama panel, Anthropic SECRET)](./2026-05-10-fin-phase-2.5.md)
 - [2026-05-06 — Revue globale fin Phase 2 (post analyst / earnings / sidenav outils chart / sector swap Finnhub)](./2026-05-06-fin-phase-2.md)
 - [2026-05-02 — Revue globale post-i18n / zoneless / bumps deps](./2026-05-02-revue-globale.md)
