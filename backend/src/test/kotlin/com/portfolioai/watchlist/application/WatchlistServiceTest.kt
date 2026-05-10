@@ -13,12 +13,14 @@ import java.math.BigDecimal
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.BDDMockito.given
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.inOrder
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -47,6 +49,16 @@ import org.mockito.kotlin.verify
  * - **`instrumentType` fail-open** — any exception from the chart provider (rate-limit, 404,
  *   unreachable) yields `instrumentType = null` rather than blocking the add. Better an entry
  *   without a chip than a 503 on a symbol the autocomplete just confirmed.
+ * - **Network calls happen before the persistence call** — audit 2026-05-10 finding #2. The service
+ *   is no longer `@Transactional` on `add` ; the contract is that `symbolSearch.validate` and
+ *   `tickerService.load` resolve before any `repository.save`, so a slow Twelve Data round-trip
+ *   never holds the Hikari connection that the save eventually opens. We pin the order with Mockito
+ *   `inOrder` rather than transaction-state instrumentation — coarse but sufficient as a regression
+ *   guard against someone re-introducing `@Transactional` over the whole method.
+ * - **TOCTOU re-check at write time** — moving the network calls outside the transaction opens a
+ *   small window where a concurrent caller could insert the same symbol. We re-look-up
+ *   `findBySymbol` inside the persistence helper so the duplicate path returns the existing row
+ *   rather than letting the DB UNIQUE constraint surface as an integrity violation to the caller.
  */
 class WatchlistServiceTest {
 
@@ -70,9 +82,15 @@ class WatchlistServiceTest {
 
     assertEquals("AAPL", saved.symbol)
     assertEquals(InstrumentType.STOCK, saved.instrumentType)
-    verify(symbolSearch).validate("AAPL")
-    verify(tickerService).load("AAPL")
-    verify(repository).save(any())
+    // Pin the call order : both network round-trips must resolve before the save happens. This is
+    // the regression guard for audit 2026-05-10 finding #2 — if someone wraps `add` back in
+    // `@Transactional`, the order itself doesn't break, but the intent does. The class-level
+    // docstring on `WatchlistService` is the contract this assertion is pinning.
+    inOrder(symbolSearch, tickerService, repository).also {
+      it.verify(symbolSearch).validate("AAPL")
+      it.verify(tickerService).load("AAPL")
+      it.verify(repository).save(any())
+    }
   }
 
   // ---------------------------------------------------------------------- validation gate
@@ -178,6 +196,36 @@ class WatchlistServiceTest {
     val saved = service.add("OBSCURE")
 
     assertNull(saved.instrumentType)
+  }
+
+  // ---------------------------------------------------------------------- TOCTOU re-check
+
+  @Test
+  fun `add returns the existing entry when a concurrent insert lands during the network calls`() {
+    // Simulates the race window opened by moving the network calls outside the transaction
+    // (audit 2026-05-10 finding #2). The first `findBySymbol` returns null (nothing on the list
+    // yet), the network calls run, and by the time we re-check inside the persistence helper a
+    // concurrent caller has already inserted the same symbol. We must return that existing row
+    // rather than `save` again — both because the DB UNIQUE constraint would 500 the request, and
+    // because the user's intent ("watch AAPL") is satisfied either way.
+    val concurrent =
+      WatchlistEntry(
+        symbol = "AAPL",
+        addedAt = Instant.parse("2026-05-10T11:59:59Z"),
+        instrumentType = InstrumentType.STOCK,
+      )
+    given(symbolSearch.validate(eq("AAPL"))).willReturn(true)
+    // First call (pre-network) returns null ; second call (post-network re-check) returns the row
+    // a concurrent caller just inserted. Mockito-kotlin's varargs `willReturn` walks the sequence.
+    given(repository.findBySymbol(eq("AAPL"))).willReturn(null, concurrent)
+    given(tickerService.load(eq("AAPL"))).willReturn(snapshot("AAPL", InstrumentType.STOCK))
+
+    val returned = service.add("AAPL")
+
+    assertSame(concurrent, returned)
+    // Critical : the duplicate path must NOT issue a `save` — that's the whole point of the
+    // re-check. The DB UNIQUE constraint is the safety net, not the primary guard.
+    verify(repository, never()).save(any())
   }
 
   // ---------------------------------------------------------------------- input guards

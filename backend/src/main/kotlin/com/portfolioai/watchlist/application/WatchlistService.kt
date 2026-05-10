@@ -46,6 +46,18 @@ import org.springframework.transaction.annotation.Transactional
  * parallel per entry on every dashboard mount — burst-banned the Twelve Data free tier (8
  * calls/min) on a watchlist of 5+ entries with a cold cache. See `journal-livraisons.md > Phase
  * 2.5` for the full friction trail.
+ *
+ * **Network calls outside the transaction (audit 2026-05-10 finding #2)** — [add] is deliberately
+ * NOT `@Transactional`. The two upstream calls ([SymbolSearchService.validate] and
+ * [TickerService.load]) can each take 1-3 s on a Twelve Data cache miss (more on a timeout) ;
+ * holding a Hikari connection for that whole window violates the project invariant documented in
+ * `architecture.md` ("LLM/network call hors transaction"). Spring Data's `save()` opens its own
+ * short transaction so the actual write is still atomic. There is a TOCTOU window between the
+ * pre-flight `findBySymbol` and the post-network `findBySymbol` re-check inside [persistNew] — the
+ * DB UNIQUE constraint on `symbol` is the safety net, and we re-look one last time inside the write
+ * so the duplicate path returns the existing row rather than surfacing an integrity violation to
+ * the caller. Single-user low-concurrency makes the window vanishingly small ; the structure stays
+ * correct under Phase 5 multi-user.
  */
 @Service
 class WatchlistService(
@@ -57,7 +69,6 @@ class WatchlistService(
 
   fun list(): List<WatchlistEntry> = repository.findAllByOrderByAddedAtAsc()
 
-  @Transactional
   fun add(symbol: String): WatchlistEntry {
     val normalised = normalise(symbol)
     require(normalised.isNotEmpty()) { "Watchlist symbol cannot be blank" }
@@ -65,12 +76,26 @@ class WatchlistService(
     repository.findBySymbol(normalised)?.let {
       return it
     }
+    // Network calls happen here — outside any transaction the service opens. See class-level note.
     require(isKnownSymbol(normalised)) {
       "Symbol '$normalised' is not recognised by the configured market provider"
     }
-    return repository.save(
-      WatchlistEntry(symbol = normalised, instrumentType = lookupInstrumentType(normalised))
-    )
+    val instrumentType = lookupInstrumentType(normalised)
+    return persistNew(normalised, instrumentType)
+  }
+
+  /**
+   * Persistence-only step of [add]. Spring Data's `save()` is implicitly `@Transactional`, so this
+   * helper opens a short transaction just for the write. The post-network re-check on
+   * `findBySymbol` covers the TOCTOU window opened by moving the upstream calls outside the
+   * transaction — if a concurrent caller inserted the same symbol while we were on the wire, we
+   * return the existing row.
+   */
+  private fun persistNew(symbol: String, instrumentType: InstrumentType?): WatchlistEntry {
+    repository.findBySymbol(symbol)?.let {
+      return it
+    }
+    return repository.save(WatchlistEntry(symbol = symbol, instrumentType = instrumentType))
   }
 
   /**
