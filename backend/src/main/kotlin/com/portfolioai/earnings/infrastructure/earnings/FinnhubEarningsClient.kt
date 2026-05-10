@@ -121,10 +121,15 @@ class FinnhubEarningsClient(
         .retrieve()
         .body(FinnhubEarningsCalendarResponse::class.java)
     } catch (e: HttpClientErrorException) {
+      // SLF4J treats a trailing Throwable as the cause and prints its stack trace. Mirror of the
+      // FinnhubAnalystClient fail-soft logging — the calendar endpoint sits behind a paid tier on
+      // some Finnhub accounts, so the upstream message is the only signal that distinguishes a
+      // gate from a token issue.
       log.warn(
         "Finnhub calendar/earnings {} symbol={} — surfacing snapshot without next-date",
         e.statusCode,
         upper,
+        e,
       )
       null
     } catch (e: HttpServerErrorException) {
@@ -132,12 +137,14 @@ class FinnhubEarningsClient(
         "Finnhub calendar/earnings upstream {} symbol={} — surfacing snapshot without next-date",
         e.statusCode,
         upper,
+        e,
       )
       null
     } catch (e: ResourceAccessException) {
       log.warn(
         "Finnhub calendar/earnings unreachable symbol={} — surfacing snapshot without next-date",
         upper,
+        e,
       )
       null
     }

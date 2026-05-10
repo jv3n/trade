@@ -108,10 +108,14 @@ class FinnhubAnalystClient(
         .retrieve()
         .body(FinnhubPriceTarget::class.java)
     } catch (e: HttpClientErrorException) {
+      // SLF4J treats a trailing Throwable as the cause and prints its stack trace. Swallowing
+      // only the status leaves an opaque "401" in the logs ; passing the exception preserves the
+      // upstream message that often clarifies whether it's a paid-tier gate or a misformed token.
       log.warn(
         "Finnhub price-target {} symbol={} — surfacing snapshot without target",
         e.statusCode,
         upper,
+        e,
       )
       null
     } catch (e: HttpServerErrorException) {
@@ -119,12 +123,14 @@ class FinnhubAnalystClient(
         "Finnhub price-target upstream {} symbol={} — surfacing snapshot without target",
         e.statusCode,
         upper,
+        e,
       )
       null
     } catch (e: ResourceAccessException) {
       log.warn(
         "Finnhub price-target unreachable symbol={} — surfacing snapshot without target",
         upper,
+        e,
       )
       null
     }
