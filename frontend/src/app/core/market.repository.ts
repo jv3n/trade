@@ -71,6 +71,12 @@ export interface TickerNarrativeSnapshot {
   keyPoints: string[];
   modelUsed: string;
   promptVersion: string;
+  /**
+   * FK to the active `prompt_template` row that generated this snapshot. `null` means the
+   * fallback prompt path was taken (no `prompt_score` row exists) — the dossier ticker uses
+   * this to hide the 👍/👎 buttons rather than letting the user click into a 404 (Phase 3 PR5).
+   */
+  promptTemplateId: string | null;
 }
 
 /**

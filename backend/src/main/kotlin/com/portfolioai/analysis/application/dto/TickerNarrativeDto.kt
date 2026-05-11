@@ -28,6 +28,11 @@ data class TickerNarrativeSnapshotDto(
   val keyPoints: List<String>,
   val modelUsed: String,
   val promptVersion: String,
+  // Exposed since Phase 3 PR5 so the dossier ticker can decide whether to render the 👍/👎
+  // feedback buttons. `null` means this snapshot was generated under the fallback prompt path
+  // (no `prompt_score` row exists for it, the PATCH would 404) ; the frontend hides the buttons
+  // rather than letting the user click into a dead end.
+  val promptTemplateId: UUID? = null,
 )
 
 private val mapper = jacksonObjectMapper()
@@ -54,5 +59,6 @@ fun TickerNarrativeSnapshot.toDto(): TickerNarrativeSnapshotDto {
     keyPoints = keyPoints,
     modelUsed = modelUsed,
     promptVersion = promptVersion,
+    promptTemplateId = promptTemplateId,
   )
 }

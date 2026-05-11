@@ -33,6 +33,7 @@ import { Annotation, AnnotationRepository } from '../../core/annotation.reposito
 import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
 import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
 import { JobEvent, JobStreamService } from '../../core/job-stream.service';
+import { NarrativeFeedbackRepository, PromptScore } from '../../core/narrative-feedback.repository';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {
@@ -60,7 +61,30 @@ const SAMPLE_NARRATIVE: TickerNarrativeSnapshot = {
   keyPoints: ['Above MA200', 'RSI 62', '30d +5%'],
   modelUsed: 'claude:claude-opus-4-6',
   promptVersion: 'v1',
+  // Non-null since Phase 3 PR5 — the narrative is bound to a real `prompt_template` row, so the
+  // 👍/👎 buttons are eligible to render. Tests that exercise the fallback path override this.
+  promptTemplateId: '00000000-0000-0000-0000-00000000aaaa',
 };
+
+/**
+ * Synthetic `PromptScore` for the thumbs PATCH reply (Phase 3 PR5). The page only consumes
+ * `userThumbs` from this payload — the other fields exist on the wire for forward-compat with
+ * PR6 (stats endpoint) and are filled with sane placeholders.
+ */
+function promptScoreReply(userThumbs: -1 | 0 | 1): PromptScore {
+  return {
+    id: 'score-1',
+    snapshotId: 'snap-1',
+    promptTemplateId: '00000000-0000-0000-0000-00000000aaaa',
+    latencyMs: 4_000,
+    retryCount: 0,
+    parseFailed: false,
+    validatorFailed: false,
+    userThumbs,
+    llmJudgeScore: null,
+    createdAt: '2026-05-02T12:00:00Z',
+  };
+}
 
 describe('TickerPage', () => {
   let component: TickerPage;
@@ -88,6 +112,7 @@ describe('TickerPage', () => {
   };
   let analyst: { getForSymbol: ReturnType<typeof vi.fn> };
   let earnings: { getForSymbol: ReturnType<typeof vi.fn> };
+  let narrativeFeedback: { setThumbs: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     // Reset persisted sidenav state between tests so each one gets the default behaviour
@@ -141,6 +166,12 @@ describe('TickerPage', () => {
       // Tests that exercise the populated / error / null-calendar paths override.
       getForSymbol: vi.fn().mockReturnValue(throwError(() => ({ status: 404 }))),
     };
+    narrativeFeedback = {
+      // Default : tests that exercise thumbs override with a specific PromptScore reply ; the
+      // default returns a benign PromptScore so any accidental click doesn't crash on an unset
+      // mock. Most tests don't click thumbs and never trigger this stub.
+      setThumbs: vi.fn().mockReturnValue(of(promptScoreReply(0))),
+    };
 
     await TestBed.configureTestingModule({
       imports: [TickerPage],
@@ -153,6 +184,7 @@ describe('TickerPage', () => {
         { provide: AnalystRepository, useValue: analyst },
         { provide: EarningsRepository, useValue: earnings },
         { provide: JobStreamService, useValue: jobStream },
+        { provide: NarrativeFeedbackRepository, useValue: narrativeFeedback },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ symbol: 'AAPL' }) } },
@@ -2339,6 +2371,128 @@ describe('TickerPage', () => {
 
       const chip = fixture.nativeElement.querySelector('[data-testid="ticker-instrument-type"]');
       expect(chip).toBeNull();
+    });
+  });
+
+  /**
+   * Thumbs feedback on the narrative (Phase 3 PR5). The buttons are layered on top of the
+   * existing narrative footer and exercise a separate repository (`NarrativeFeedbackRepository`)
+   * — what we pin here is the *contract* between the click, the optimistic local flip, the
+   * PATCH, and the reset-on-snapshot-change behavior.
+   *
+   * What we pin :
+   *
+   * - **Initial state** : a freshly-loaded narrative starts at `0` (neutral). The previous
+   *   snapshot's vote does not bleed into the new one.
+   * - **Click flips optimistically + PATCHes** : the local signal updates immediately, the
+   *   server confirms, the chip stays at the new value.
+   * - **Re-click toggles back to neutral** : clicking the same button again resets to `0` —
+   *   lets the user undo without a separate « clear » control.
+   * - **Server failure rolls back** : the local signal reverts to the previous value and an
+   *   error banner appears next to the buttons.
+   * - **Concurrent click is a no-op while saving** : the spinner-gated button can't double-fire.
+   * - **Fallback-prompt snapshot hides the buttons** : when `promptTemplateId` is null no PATCH
+   *   would land anyway (no `prompt_score` row exists), so we don't even let the user click.
+   * - **New snapshot resets thumbs** : `loadLatestNarrative` and `fetchNarrativeAfterCompletion`
+   *   both flow through `setNarrativeAndResetFeedback`, which wipes the thumbs state.
+   */
+  describe('narrative thumbs (PR5)', () => {
+    it('starts at 0 (neutral) on a fresh narrative load', () => {
+      market.getLatestNarrative.mockReturnValue(of(SAMPLE_NARRATIVE));
+      fixture.detectChanges();
+
+      expect(component.narrativeThumbs()).toBe(0);
+      expect(component.narrativeThumbsError()).toBeNull();
+    });
+
+    it('clicking 👍 flips local state optimistically then PATCHes the server', () => {
+      market.getLatestNarrative.mockReturnValue(of(SAMPLE_NARRATIVE));
+      narrativeFeedback.setThumbs.mockReturnValue(of(promptScoreReply(1)));
+      fixture.detectChanges();
+
+      component.setNarrativeThumbs(1);
+
+      expect(narrativeFeedback.setThumbs).toHaveBeenCalledWith(SAMPLE_NARRATIVE.id, 1);
+      expect(component.narrativeThumbs()).toBe(1);
+      expect(component.narrativeThumbsSaving()).toBe(false);
+      expect(component.narrativeThumbsError()).toBeNull();
+    });
+
+    it('clicking the same button again toggles back to 0 (undo without a clear button)', () => {
+      market.getLatestNarrative.mockReturnValue(of(SAMPLE_NARRATIVE));
+      narrativeFeedback.setThumbs
+        .mockReturnValueOnce(of(promptScoreReply(1)))
+        .mockReturnValueOnce(of(promptScoreReply(0)));
+      fixture.detectChanges();
+
+      component.setNarrativeThumbs(1);
+      component.setNarrativeThumbs(1);
+
+      expect(narrativeFeedback.setThumbs).toHaveBeenNthCalledWith(2, SAMPLE_NARRATIVE.id, 0);
+      expect(component.narrativeThumbs()).toBe(0);
+    });
+
+    it('server failure rolls back local state and shows the error banner', () => {
+      market.getLatestNarrative.mockReturnValue(of(SAMPLE_NARRATIVE));
+      narrativeFeedback.setThumbs.mockReturnValue(throwError(() => new Error('boom')));
+      fixture.detectChanges();
+
+      component.setNarrativeThumbs(1);
+
+      expect(component.narrativeThumbs()).toBe(0);
+      expect(component.narrativeThumbsSaving()).toBe(false);
+      expect(component.narrativeThumbsError()).not.toBeNull();
+    });
+
+    it('a concurrent click while saving is a no-op', () => {
+      market.getLatestNarrative.mockReturnValue(of(SAMPLE_NARRATIVE));
+      // First click stays in-flight ; second click bounces off the saving guard.
+      const pending = new Subject<PromptScore>();
+      narrativeFeedback.setThumbs.mockReturnValueOnce(pending.asObservable());
+      fixture.detectChanges();
+
+      component.setNarrativeThumbs(1);
+      component.setNarrativeThumbs(-1);
+
+      expect(narrativeFeedback.setThumbs).toHaveBeenCalledTimes(1);
+      expect(component.narrativeThumbsSaving()).toBe(true);
+    });
+
+    it('does not PATCH when the snapshot has no promptTemplateId (fallback path)', () => {
+      const fallbackSnap: TickerNarrativeSnapshot = {
+        ...SAMPLE_NARRATIVE,
+        promptTemplateId: null,
+      };
+      market.getLatestNarrative.mockReturnValue(of(fallbackSnap));
+      fixture.detectChanges();
+
+      component.setNarrativeThumbs(1);
+
+      expect(narrativeFeedback.setThumbs).not.toHaveBeenCalled();
+      // The button isn't even in the DOM — defensive check.
+      const upBtn = fixture.nativeElement.querySelector('.narrative-thumbs');
+      expect(upBtn).toBeNull();
+    });
+
+    it('regenerating the narrative resets the thumbs state', () => {
+      // First load surfaces a snapshot the user thumbs up.
+      market.getLatestNarrative.mockReturnValueOnce(of(SAMPLE_NARRATIVE));
+      narrativeFeedback.setThumbs.mockReturnValue(of(promptScoreReply(1)));
+      fixture.detectChanges();
+      component.setNarrativeThumbs(1);
+      expect(component.narrativeThumbs()).toBe(1);
+
+      // Regenerate completes with a different snapshot id → thumbs must reset to 0.
+      const freshSnap: TickerNarrativeSnapshot = { ...SAMPLE_NARRATIVE, id: 'snap-2' };
+      market.getLatestNarrative.mockReturnValueOnce(of(freshSnap));
+      // Direct call to the private-ish reset hook via the public regenerate flow :
+      // `fetchNarrativeAfterCompletion` mirrors the wire shape we'd see post-SSE-DONE.
+      (
+        component as unknown as { fetchNarrativeAfterCompletion(s: string): void }
+      ).fetchNarrativeAfterCompletion('AAPL');
+
+      expect(component.narrative()?.id).toBe('snap-2');
+      expect(component.narrativeThumbs()).toBe(0);
     });
   });
 });

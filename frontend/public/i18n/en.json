@@ -221,7 +221,14 @@
         "PERSISTING": "Saving",
         "DONE": "Done",
         "ERROR": "Error"
-      }
+      },
+      "thumbs": {
+        "label": "Helpful?",
+        "up": "Helpful narrative",
+        "down": "Unhelpful narrative",
+        "errorSave": "Vote not saved, try again"
+      },
+      "promptVersion": "prompt {{version}}"
     },
     "watchlist": {
       "watch": "Watch",
