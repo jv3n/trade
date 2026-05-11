@@ -13,7 +13,7 @@ plugins {
   // S'instrumente automatiquement sur le `test` task ; les rapports sont générés à la demande
   // via `koverHtmlReport` / `koverXmlReport`. Voir bloc `kover { … }` plus bas pour la
   // configuration des excludes (entry point, DTOs, etc. qui ne portent pas de logique testable).
-  id("org.jetbrains.kotlinx.kover") version "0.9.1"
+  id("org.jetbrains.kotlinx.kover") version "0.9.8"
 }
 
 group = "com.portfolioai"
