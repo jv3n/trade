@@ -22,6 +22,12 @@ import org.springframework.stereotype.Component
  * Emits per-phase [com.portfolioai.analysis.domain.JobEvent]s via [JobEventPublisher] so the UI can
  * show "Calling LLM (38s)…" instead of a muted spinner. The runner wraps this method with the
  * terminal [JobPhase.DONE] / [JobPhase.ERROR] events.
+ *
+ * **Score collection (Phase 3 PR2)** — at the end of every run, success or failure, a
+ * [com.portfolioai.analysis.domain.PromptScore] row is persisted via [PromptScoreRecorder]. The
+ * write lives in a `finally` so the failure case (both attempts KO → throw) still surfaces the
+ * `parse_failed` / `validator_failed` flags that motivate prompt tuning. Latency, retry count and
+ * the active `prompt_template_id` are tracked as the loop progresses.
  */
 @Component
 class TickerNarrativeExecutor(
@@ -32,6 +38,7 @@ class TickerNarrativeExecutor(
   private val persister: TickerNarrativePersister,
   private val publisher: JobEventPublisher,
   private val promptService: TickerNarrativePromptService,
+  private val scoreRecorder: PromptScoreRecorder,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
@@ -48,57 +55,88 @@ class TickerNarrativeExecutor(
     val prompt = promptService.activePrompt()
     val userMessage = buildNarrativeUserMessage(market.quote, indicators)
 
-    var lastErrors: List<String>? = null
-    repeat(MAX_ATTEMPTS) { attempt ->
-      val attemptIndex = attempt + 1
-      val message =
-        if (lastErrors == null) userMessage else userMessage + retryFeedback(lastErrors!!)
-      log.info(
-        "Calling LLM for narrative symbol={} promptVersion={} (attempt {}/{})",
-        symbol,
-        prompt.version,
-        attemptIndex,
-        MAX_ATTEMPTS,
-      )
-      publisher.publish(jobId, JobPhase.CALLING_LLM, attempt = attemptIndex)
-      val raw = llmClient.complete(prompt.systemPrompt, message, maxTokens = 600)
-      publisher.publish(jobId, JobPhase.RECEIVED_RAW, attempt = attemptIndex)
-      log.debug("Raw narrative response (attempt {}): {}", attemptIndex, raw)
+    // Score tracking — populated as the loop progresses, written in `finally` so both success
+    // and terminal failure surface a `prompt_score` row. `savedSnapshotId` stays null when we
+    // throw ; the recorder handles that with a nullable FK.
+    val startedAtMs = System.currentTimeMillis()
+    var retryCount = 0
+    var parseFailed = false
+    var validatorFailed = false
+    var savedSnapshotId: UUID? = null
 
-      publisher.publish(jobId, JobPhase.PARSING, attempt = attemptIndex)
-      val parsed =
-        try {
-          parser.parse(raw)
-        } catch (e: Exception) {
-          log.warn("Narrative attempt {} failed parsing: {}", attemptIndex, e.message)
-          lastErrors = listOf("Your previous response was not valid JSON: ${e.message}")
-          if (attemptIndex < MAX_ATTEMPTS) {
-            publisher.publish(jobId, JobPhase.RETRY_PROMPT, attempt = attemptIndex)
+    try {
+      var lastErrors: List<String>? = null
+      repeat(MAX_ATTEMPTS) { attempt ->
+        val attemptIndex = attempt + 1
+        val message =
+          if (lastErrors == null) userMessage else userMessage + retryFeedback(lastErrors!!)
+        log.info(
+          "Calling LLM for narrative symbol={} promptVersion={} (attempt {}/{})",
+          symbol,
+          prompt.version,
+          attemptIndex,
+          MAX_ATTEMPTS,
+        )
+        publisher.publish(jobId, JobPhase.CALLING_LLM, attempt = attemptIndex)
+        val raw = llmClient.complete(prompt.systemPrompt, message, maxTokens = 600)
+        publisher.publish(jobId, JobPhase.RECEIVED_RAW, attempt = attemptIndex)
+        log.debug("Raw narrative response (attempt {}): {}", attemptIndex, raw)
+
+        publisher.publish(jobId, JobPhase.PARSING, attempt = attemptIndex)
+        val parsed =
+          try {
+            parser.parse(raw)
+          } catch (e: Exception) {
+            log.warn("Narrative attempt {} failed parsing: {}", attemptIndex, e.message)
+            parseFailed = true
+            lastErrors = listOf("Your previous response was not valid JSON: ${e.message}")
+            if (attemptIndex < MAX_ATTEMPTS) {
+              publisher.publish(jobId, JobPhase.RETRY_PROMPT, attempt = attemptIndex)
+              retryCount++
+            }
+            return@repeat
           }
-          return@repeat
-        }
 
-      publisher.publish(jobId, JobPhase.VALIDATING, attempt = attemptIndex)
-      when (val result = validator.validate(parsed)) {
-        NarrativeValidationResult.Valid -> {
-          log.info("Narrative valid on attempt {} symbol={}", attemptIndex, symbol)
-          publisher.publish(jobId, JobPhase.PERSISTING, attempt = attemptIndex)
-          return persister.persist(symbol, indicators, parsed, llmClient.modelId(), prompt)
-        }
-        is NarrativeValidationResult.Invalid -> {
-          log.warn("Narrative attempt {} failed validation: {}", attemptIndex, result.errors)
-          lastErrors = result.errors
-          if (attemptIndex < MAX_ATTEMPTS) {
-            publisher.publish(jobId, JobPhase.RETRY_PROMPT, attempt = attemptIndex)
+        publisher.publish(jobId, JobPhase.VALIDATING, attempt = attemptIndex)
+        when (val result = validator.validate(parsed)) {
+          NarrativeValidationResult.Valid -> {
+            log.info("Narrative valid on attempt {} symbol={}", attemptIndex, symbol)
+            publisher.publish(jobId, JobPhase.PERSISTING, attempt = attemptIndex)
+            val snapshot =
+              persister.persist(symbol, indicators, parsed, llmClient.modelId(), prompt)
+            savedSnapshotId = snapshot.id
+            return snapshot
+          }
+          is NarrativeValidationResult.Invalid -> {
+            log.warn("Narrative attempt {} failed validation: {}", attemptIndex, result.errors)
+            validatorFailed = true
+            lastErrors = result.errors
+            if (attemptIndex < MAX_ATTEMPTS) {
+              publisher.publish(jobId, JobPhase.RETRY_PROMPT, attempt = attemptIndex)
+              retryCount++
+            }
           }
         }
       }
-    }
 
-    throw IllegalStateException(
-      "Narrative LLM did not produce a valid response after $MAX_ATTEMPTS attempts. " +
-        "Last errors: ${lastErrors?.joinToString("; ")}"
-    )
+      throw IllegalStateException(
+        "Narrative LLM did not produce a valid response after $MAX_ATTEMPTS attempts. " +
+          "Last errors: ${lastErrors?.joinToString("; ")}"
+      )
+    } finally {
+      // `finally` so the failure path still emits a score row — that's the case where the flags
+      // matter most. `toInt()` is safe : Int.MAX_VALUE / 1000 ≈ 24 days, well beyond any
+      // realistic narrative run.
+      val latencyMs = (System.currentTimeMillis() - startedAtMs).toInt()
+      scoreRecorder.record(
+        promptTemplate = prompt,
+        snapshotId = savedSnapshotId,
+        latencyMs = latencyMs,
+        retryCount = retryCount,
+        parseFailed = parseFailed,
+        validatorFailed = validatorFailed,
+      )
+    }
   }
 
   private fun retryFeedback(errors: List<String>): String =
