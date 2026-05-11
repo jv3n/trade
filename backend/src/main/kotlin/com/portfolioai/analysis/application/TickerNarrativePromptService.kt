@@ -4,8 +4,11 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.analysis.infrastructure.persistence.PromptTemplateRepository
 import java.time.Duration
+import java.time.Instant
+import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * Source of truth for the active narrative prompt at runtime. Replaces the direct read of the
@@ -66,6 +69,73 @@ class TickerNarrativePromptService(private val repository: PromptTemplateReposit
    * (the sentinel UUID is never persisted to `prompt_template`).
    */
   fun isFallback(template: PromptTemplate): Boolean = template.id == FALLBACK_TEMPLATE_ID
+
+  // -------------------------------------------------------------------- management API (PR3+)
+
+  /**
+   * Lists every persisted version of [name] (default `narrative-default`) ordered most recent
+   * first. Backs the `/settings/prompts` page list (PR3). Empty list when nothing exists yet — the
+   * page renders an empty state pointing to the seed migration.
+   */
+  fun listAll(name: String = NARRATIVE_FAMILY): List<PromptTemplate> =
+    repository.findAllByNameOrderByCreatedAtDesc(name)
+
+  /** Lookup by id — returns null when the row doesn't exist. */
+  fun findById(id: UUID): PromptTemplate? = repository.findById(id).orElse(null)
+
+  /**
+   * Activates [id] — flips the currently active row of the same family to `is_active = false` (with
+   * `deprecated_at = now()`), then sets the target row to `is_active = true` (with `activated_at =
+   * now()`). Idempotent : activating an already-active row is a no-op.
+   *
+   * **Two-step write with explicit flush** : the partial unique index
+   * `idx_prompt_template_active_per_name` guarantees at most one active row per family. Without the
+   * `saveAndFlush` between deactivation and activation, Hibernate's batch flush could try to insert
+   * the new active row before the old one is deactivated, tripping the constraint. The flush forces
+   * the deactivation to hit the DB first ; both writes still live in the same `@Transactional` so
+   * an activation failure rolls back cleanly.
+   *
+   * **Cache invalidated immediately** so the next `activePrompt()` call (e.g. the next narrative
+   * run a few seconds later) picks up the new active row without waiting for the 1-min TTL.
+   */
+  @Transactional
+  fun activate(id: UUID): PromptTemplate {
+    val target =
+      repository.findById(id).orElseThrow {
+        NoSuchElementException("Prompt template $id not found")
+      }
+    if (target.isActive) {
+      log.debug("Activate no-op : prompt_template {} already active", id)
+      return target
+    }
+
+    val now = Instant.now()
+    repository.findFirstByNameAndIsActiveTrue(target.name)?.let { current ->
+      if (current.id != target.id) {
+        current.isActive = false
+        current.deprecatedAt = now
+        repository.saveAndFlush(current)
+        log.info(
+          "Deactivated prompt_template {} version={} on family={}",
+          current.id,
+          current.version,
+          current.name,
+        )
+      }
+    }
+
+    target.isActive = true
+    target.activatedAt = now
+    val saved = repository.save(target)
+    invalidate(target.name)
+    log.info(
+      "Activated prompt_template {} version={} on family={}",
+      saved.id,
+      saved.version,
+      saved.name,
+    )
+    return saved
+  }
 
   private fun lookupOrFallback(name: String): PromptTemplate {
     return cache.get(name) {

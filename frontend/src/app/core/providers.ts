@@ -20,6 +20,8 @@ import { EarningsRepository } from './earnings.repository';
 import { HttpEarningsRepository } from './adapters/earnings.http';
 import { OllamaStatusRepository } from './ollama-status.repository';
 import { HttpOllamaStatusRepository } from './adapters/ollama-status.http';
+import { PromptRepository } from './prompt.repository';
+import { HttpPromptRepository } from './adapters/prompt.http';
 
 /**
  * Wires every port (`*.repository.ts`) to its default adapter. Aligned on the
@@ -38,5 +40,6 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: AnalystRepository, useClass: HttpAnalystRepository },
     { provide: EarningsRepository, useClass: HttpEarningsRepository },
     { provide: OllamaStatusRepository, useClass: HttpOllamaStatusRepository },
+    { provide: PromptRepository, useClass: HttpPromptRepository },
   ]);
 }

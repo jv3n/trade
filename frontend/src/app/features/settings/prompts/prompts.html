@@ -1,0 +1,109 @@
+<div class="prompts-layout">
+  <div class="content-header">
+    <h2>{{ 'settings.prompts' | translate }}</h2>
+    <p>{{ 'settings.promptsPage.intro' | translate }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'settings.promptsPage.loading' | translate }}</span>
+    </div>
+  } @else if (loadError(); as e) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ e }}
+    </div>
+  } @else if (prompts().length === 0) {
+    <div class="empty-state">
+      <mat-icon>info_outline</mat-icon>
+      {{ 'settings.promptsPage.empty' | translate }}
+    </div>
+  } @else {
+    @if (activateError(); as e) {
+      <div class="error-banner">
+        <mat-icon>error_outline</mat-icon>
+        {{ e }}
+      </div>
+    }
+
+    <ul class="prompt-list">
+      @for (p of prompts(); track p.id) {
+        <li class="prompt-card" [ngClass]="{ active: p.isActive, expanded: isExpanded(p.id) }">
+          <button
+            type="button"
+            class="card-header"
+            (click)="toggle(p.id)"
+            [attr.aria-expanded]="isExpanded(p.id)"
+            [attr.aria-controls]="'prompt-body-' + p.id"
+          >
+            <div class="header-left">
+              <span class="version">{{ p.version }}</span>
+              @if (p.isActive) {
+                <span class="chip chip-active">{{
+                  'settings.promptsPage.activeChip' | translate
+                }}</span>
+              } @else {
+                <span class="chip chip-inactive">{{
+                  'settings.promptsPage.inactiveChip' | translate
+                }}</span>
+              }
+            </div>
+            <div class="header-meta">
+              <span class="meta-row">
+                <span class="meta-label">{{ 'settings.promptsPage.created' | translate }}</span>
+                <span>{{ p.createdAt | date: 'mediumDate' }}</span>
+              </span>
+              @if (p.activatedAt) {
+                <span class="meta-row">
+                  <span class="meta-label">{{ 'settings.promptsPage.activated' | translate }}</span>
+                  <span>{{ p.activatedAt | date: 'mediumDate' }}</span>
+                </span>
+              }
+              @if (p.deprecatedAt) {
+                <span class="meta-row">
+                  <span class="meta-label">{{
+                    'settings.promptsPage.deprecated' | translate
+                  }}</span>
+                  <span>{{ p.deprecatedAt | date: 'mediumDate' }}</span>
+                </span>
+              }
+            </div>
+            <mat-icon class="expand-icon">{{
+              isExpanded(p.id) ? 'expand_less' : 'expand_more'
+            }}</mat-icon>
+          </button>
+
+          @if (isExpanded(p.id)) {
+            <div class="card-body" [attr.id]="'prompt-body-' + p.id">
+              <section class="prompt-block">
+                <header>
+                  <span>{{ 'settings.promptsPage.systemPrompt' | translate }}</span>
+                </header>
+                <pre>{{ p.systemPrompt }}</pre>
+              </section>
+
+              @if (!p.isActive) {
+                <div class="card-actions">
+                  <button
+                    type="button"
+                    class="btn-primary"
+                    (click)="activate(p)"
+                    [disabled]="isActivating(p.id)"
+                  >
+                    @if (isActivating(p.id)) {
+                      <mat-spinner diameter="14"></mat-spinner>
+                      {{ 'settings.promptsPage.activating' | translate }}
+                    } @else {
+                      {{ 'settings.promptsPage.activate' | translate }}
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

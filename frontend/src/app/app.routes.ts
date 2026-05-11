@@ -35,6 +35,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/settings/configuration/configuration').then((m) => m.Configuration),
       },
+      {
+        path: 'prompts',
+        loadComponent: () =>
+          import('./features/settings/prompts/prompts').then((m) => m.PromptsPage),
+      },
     ],
   },
 ];
