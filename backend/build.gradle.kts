@@ -36,7 +36,7 @@ dependencies {
   // application-local.yml) ; the root application.yml keeps both `springdoc.api-docs.enabled` and
   // `springdoc.swagger-ui.enabled` to false so no env reachable from the outside ever exposes the
   // schema. Surfaced in Tilt as a link on the `backend` resource for one-click access during dev.
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
   implementation("org.flywaydb:flyway-core")
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
