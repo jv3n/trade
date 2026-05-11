@@ -376,9 +376,24 @@
       "systemPrompt": "System prompt",
       "activate": "Activate this version",
       "activating": "Activating…",
+      "editor": {
+        "openButton": "Edit as new version",
+        "basedOn": "Editing based on version {{version}}",
+        "versionLabel": "New version tag",
+        "versionPlaceholder": "e.g. v3-bullish-fix",
+        "notesLabel": "Notes (optional)",
+        "notesPlaceholder": "Why this version? What does this change address?",
+        "systemPromptLabel": "System prompt",
+        "diffLabel": "Diff vs source",
+        "diffEmpty": "no changes",
+        "cancel": "Cancel",
+        "save": "Save as new version",
+        "saving": "Saving…"
+      },
       "errors": {
         "loadList": "Failed to load the prompts list.",
-        "activate": "Failed to activate version {{version}}. Try again."
+        "activate": "Failed to activate version {{version}}. Try again.",
+        "create": "Failed to save the new version."
       }
     },
     "previewPage": {

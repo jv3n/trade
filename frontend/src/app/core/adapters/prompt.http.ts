@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PromptRepository, PromptTemplate } from '../prompt.repository';
+import { CreatePromptInput, PromptRepository, PromptTemplate } from '../prompt.repository';
 
 @Injectable()
 export class HttpPromptRepository extends PromptRepository {
@@ -19,5 +19,9 @@ export class HttpPromptRepository extends PromptRepository {
 
   activate(id: string): Observable<PromptTemplate> {
     return this.http.post<PromptTemplate>(`${this.base}/${encodeURIComponent(id)}/activate`, null);
+  }
+
+  create(input: CreatePromptInput): Observable<PromptTemplate> {
+    return this.http.post<PromptTemplate>(this.base, input);
   }
 }

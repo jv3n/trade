@@ -376,9 +376,24 @@
       "systemPrompt": "Prompt système",
       "activate": "Activer cette version",
       "activating": "Activation…",
+      "editor": {
+        "openButton": "Modifier comme nouvelle version",
+        "basedOn": "Édition basée sur la version {{version}}",
+        "versionLabel": "Nouvelle étiquette de version",
+        "versionPlaceholder": "ex. v3-bullish-fix",
+        "notesLabel": "Notes (optionnel)",
+        "notesPlaceholder": "Pourquoi cette version ? À quoi répond ce changement ?",
+        "systemPromptLabel": "Prompt système",
+        "diffLabel": "Diff vs source",
+        "diffEmpty": "aucun changement",
+        "cancel": "Annuler",
+        "save": "Sauvegarder comme nouvelle version",
+        "saving": "Sauvegarde…"
+      },
       "errors": {
         "loadList": "Impossible de charger la liste des prompts.",
-        "activate": "Impossible d'activer la version {{version}}. Réessayez."
+        "activate": "Impossible d'activer la version {{version}}. Réessayez.",
+        "create": "Impossible de sauvegarder la nouvelle version."
       }
     },
     "previewPage": {
