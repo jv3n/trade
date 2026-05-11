@@ -9,9 +9,10 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * Per-run scoring row persisted in `prompt_score` (Flyway V8). One line is written by
- * `TickerNarrativeRunner` at the end of every narrative generation (Phase 3 PR2 wires the write —
- * PR1 only ships the schema + entity so the table exists once `mvn flyway:migrate` resolves).
+ * Per-run scoring row persisted in `prompt_score` (Flyway V8). Written by [PromptScoreRecorder]
+ * from the `finally` of [TickerNarrativeExecutor.execute] (Phase 3 PR2 wires the call) so both the
+ * success path and the terminal failure path (parser/validator KO on both attempts) surface a row —
+ * losing the failure rows would hide exactly the cases that motivate prompt tuning work.
  *
  * **Why we keep [snapshotId] nullable** — a run can fail on both attempts (parser KO twice or
  * validator KO twice) and end without a snapshot. We still want to keep the score row : it's the
