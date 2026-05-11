@@ -2,6 +2,7 @@ package com.portfolioai.analysis.infrastructure.http
 
 import com.portfolioai.analysis.application.JobEventPublisher
 import com.portfolioai.analysis.application.TickerNarrativeJobStore
+import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.TickerNarrativeService
 import com.portfolioai.analysis.domain.TickerNarrativeJob
 import com.portfolioai.market.application.TickerService
@@ -56,6 +57,7 @@ class TickerNarrativeStreamControllerTest {
 
   @Suppress("unused") @MockitoBean private lateinit var service: TickerNarrativeService
   @Suppress("unused") @MockitoBean private lateinit var tickerService: TickerService
+  @Suppress("unused") @MockitoBean private lateinit var promptService: TickerNarrativePromptService
 
   @Test
   fun `stream returns 404 when the jobId is unknown to the store`() {

@@ -2,7 +2,9 @@ package com.portfolioai.analysis.infrastructure.http
 
 import com.portfolioai.analysis.application.JobEventPublisher
 import com.portfolioai.analysis.application.TickerNarrativeJobStore
+import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.TickerNarrativeService
+import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.Indicators
 import com.portfolioai.market.domain.OhlcBar
@@ -41,13 +43,27 @@ class TickerNarrativePreviewControllerTest {
 
   @Autowired private lateinit var mvc: MockMvc
 
-  // The controller depends on these beans ; preview only uses TickerService, the others must
-  // still be provided for the slice to instantiate. `@Suppress("unused")` because Detekt sees
-  // them as unread props — they are read indirectly by Spring's slice DI graph at construction.
+  // The controller depends on these beans ; preview uses TickerService +
+  // TickerNarrativePromptService,
+  // the others must still be provided for the slice to instantiate. `@Suppress("unused")` because
+  // Detekt sees them as unread props — they are read indirectly by Spring's slice DI graph at
+  // construction.
   @Suppress("unused") @MockitoBean private lateinit var service: TickerNarrativeService
   @Suppress("unused") @MockitoBean private lateinit var jobStore: TickerNarrativeJobStore
   @Suppress("unused") @MockitoBean private lateinit var jobEventPublisher: JobEventPublisher
   @MockitoBean private lateinit var tickerService: TickerService
+  @MockitoBean private lateinit var promptService: TickerNarrativePromptService
+
+  // Synthetic prompt the service returns under test — pinning `version = "v2"` keeps the
+  // jsonPath assertion below stable, and a non-empty `systemPrompt` mirrors the contract that
+  // the live prompt is non-empty even on the fallback path.
+  private fun activePromptStub(version: String = "v2"): PromptTemplate =
+    PromptTemplate(
+      name = "narrative-default",
+      version = version,
+      systemPrompt = "System prompt body — replies must be JSON only.",
+      isActive = true,
+    )
 
   private fun snapshot(symbol: String = "AAPL"): TickerSnapshot {
     val asOf = Instant.parse("2026-05-02T13:00:00Z")
@@ -86,14 +102,17 @@ class TickerNarrativePreviewControllerTest {
   @Test
   fun `GET narrative preview returns system + user prompt with char counts`() {
     given(tickerService.load("AAPL")).willReturn(snapshot())
+    // The preview now reads the active prompt from the service (Phase 3 PR1). The test stubs a
+    // realistic shape so the assertions stay focused on the controller's wiring (assemble DTO,
+    // count chars, echo version) rather than on the hardcoded constants.
+    given(promptService.activePrompt()).willReturn(activePromptStub())
 
     mvc
       .perform(get("/api/market/ticker/AAPL/narrative/preview").accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.symbol").value("AAPL"))
       .andExpect(jsonPath("$.promptVersion").value("v2"))
-      // System prompt is the static NARRATIVE_SYSTEM_PROMPT — non-empty, mentions "JSON".
-      .andExpect(jsonPath("$.systemPrompt").isNotEmpty)
+      .andExpect(jsonPath("$.systemPrompt").value(org.hamcrest.Matchers.containsString("JSON")))
       .andExpect(jsonPath("$.systemPromptChars").isNumber)
       // User message must echo live indicator values, not just a template.
       .andExpect(

@@ -2,6 +2,7 @@ package com.portfolioai.analysis.infrastructure.http
 
 import com.portfolioai.analysis.application.JobEventPublisher
 import com.portfolioai.analysis.application.TickerNarrativeJobStore
+import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.TickerNarrativeService
 import com.portfolioai.analysis.domain.JobStatus
 import com.portfolioai.analysis.domain.TickerNarrativeJob
@@ -58,6 +59,7 @@ class TickerNarrativePendingJobControllerTest {
   @Suppress("unused") @MockitoBean private lateinit var jobStore: TickerNarrativeJobStore
   @Suppress("unused") @MockitoBean private lateinit var jobEventPublisher: JobEventPublisher
   @Suppress("unused") @MockitoBean private lateinit var tickerService: TickerService
+  @Suppress("unused") @MockitoBean private lateinit var promptService: TickerNarrativePromptService
 
   @Test
   fun `GET pending job returns 200 with the dto when a pending job exists for the symbol`() {

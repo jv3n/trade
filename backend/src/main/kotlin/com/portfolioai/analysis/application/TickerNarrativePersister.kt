@@ -1,6 +1,7 @@
 package com.portfolioai.analysis.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.analysis.domain.TickerNarrativeSnapshot
 import com.portfolioai.analysis.infrastructure.persistence.TickerNarrativeSnapshotRepository
 import com.portfolioai.market.domain.Indicators
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 class TickerNarrativePersister(
   private val repository: TickerNarrativeSnapshotRepository,
   private val jsonMapper: ObjectMapper,
+  private val promptService: TickerNarrativePromptService,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
@@ -32,7 +34,13 @@ class TickerNarrativePersister(
     indicators: Indicators,
     parsed: ParsedNarrative,
     modelUsed: String,
+    promptTemplate: PromptTemplate,
   ): TickerNarrativeSnapshot {
+    // The fallback `PromptTemplate` returned by [TickerNarrativePromptService] when the DB has no
+    // active row carries a sentinel UUID that does NOT exist in `prompt_template`. Persisting it
+    // would 23503 the FK ; we store null instead to keep the row consistent. Service exposes the
+    // detection so we don't have to compare UUIDs in two places.
+    val templateId = if (promptService.isFallback(promptTemplate)) null else promptTemplate.id
     val snapshot =
       TickerNarrativeSnapshot(
         symbol = symbol,
@@ -42,15 +50,20 @@ class TickerNarrativePersister(
         sentiment = parsed.sentiment,
         keyPointsJson = jsonMapper.writeValueAsString(parsed.keyPoints),
         modelUsed = modelUsed,
-        promptVersion = NARRATIVE_PROMPT_VERSION,
+        // Mirror the version *string* from the template so the legacy `prompt_version` column
+        // stays informative (filters on string still work even if the FK is null on the
+        // fallback path).
+        promptVersion = promptTemplate.version,
+        promptTemplateId = templateId,
       )
     val saved = repository.save(snapshot)
     log.info(
-      "Narrative snapshot saved id={} symbol={} sentiment={} model={}",
+      "Narrative snapshot saved id={} symbol={} sentiment={} model={} promptVersion={}",
       saved.id,
       saved.symbol,
       saved.sentiment,
       saved.modelUsed,
+      saved.promptVersion,
     )
     return saved
   }
