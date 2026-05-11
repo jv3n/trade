@@ -11,7 +11,7 @@ Chaque contexte est autonome et possède ses propres couches.
 |----------|----------------|--------|
 | `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | ✅ Phase 0+ |
 | `market` | Données ticker (Twelve Data + mock) + indicateurs techniques calculés | ✅ Phase 1 |
-| `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) | ✅ Phase 1 — réécrit |
+| `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) + gestion des prompts narratifs en BDD avec scoring continu (latence / retry / parse-validator failed / thumbs user, Phase 3) | ✅ Phase 1 — étendu Phase 3 |
 | `watchlist` | Liste plate de tickers suivis hors portefeuille (single-table, pas de user_id) | ✅ Phase 2 |
 | `news` | Headlines par ticker (Finnhub + mock), cache court | ✅ Phase 2 |
 | `analyst` | Recommandations d'analystes par ticker (consensus monthly + price target 12 mois, Finnhub + mock), cache court | ✅ Phase 2 |
@@ -72,6 +72,15 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 - Implémentations des clients LLM (`ClaudeClient`, `OllamaClient`) — toutes deux toujours instanciées (les `@ConditionalOnProperty` Phase 1 ont été retirés en Phase 2.5 v1)
 - `RoutingLlmClient` (`@Primary`) délègue per-call à l'adapter sélectionné par `appConfig.getString(LLM_PROVIDER)` — switch claude ↔ ollama prend effet au prochain narratif sans reboot. Pattern miroir de `RoutingMarketChartClient` / `RoutingNewsClient` / `RoutingAnalystClient` / `RoutingEarningsClient`
 - `ClaudeClient` lit la clé Anthropic per-call via `appConfig.getString(ANTHROPIC_API_KEY)` (Phase 2.5 v2, 2026-05-08) — header `x-api-key` posé par requête plutôt que via `defaultHeader()` builder-side, rotation immédiate sans reboot
+
+### Prompt management & scoring *(analysis uniquement, Phase 3)*
+
+Le contexte `analysis` héberge aussi la gestion des prompts narratifs et leur scoring continu, livrée le 2026-05-10 en 6 sous-PRs. Pas de bounded context séparé : les prompts sont **un détail d'implémentation du narratif**, et la table `prompt_score` est jointe à `ticker_narrative_snapshot` via `snapshot_id` — la cohabitation dans `analysis/` évite un cross-context call sur le chemin chaud du pipeline.
+
+- `application/TickerNarrativePromptService` — lookup du prompt actif depuis `prompt_template` (V8) avec `@Cacheable` 1 min + fallback hardcodé `NARRATIVE_SYSTEM_PROMPT` si BDD vide (bootstrap zéro-downtime). `activateVersion(id)` flippe l'ancien actif à FALSE + nouveau à TRUE dans la même transaction (atomique via l'index unique partiel `WHERE is_active = TRUE`). `createNewVersion(input)` pose `is_active = FALSE` par défaut — l'activation explicite reste un acte utilisateur séparé.
+- `application/PromptScoreRecorder` — branché dans `TickerNarrativeExecutor` aux 2 issues du run (succès + échec définitif). Persiste `prompt_score` avec `snapshot_id` nullable pour les runs entièrement KO (snapshot inexistant) sans casser le `FK`.
+- `infrastructure/persistence/PromptScoreStatsQuery` — query SQL native (`@Query(nativeQuery=true)`) pour les agrégats Phase 3 PR6 (`percentile_cont`, `date_trunc('day')`, fenêtre `INTERVAL`) — JPQL ne couvre pas les percentiles.
+- `infrastructure/http/PromptController` + `NarrativeThumbsController` — endpoints `GET/POST /api/prompts`, `POST /{id}/activate`, `GET /{id}/stats?window=30d`, `PATCH /api/narrative/snapshots/{id}/thumbs`.
 
 ### `infrastructure/market/` *(market uniquement, Phase 1+)*
 

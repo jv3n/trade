@@ -1,20 +1,19 @@
 ---
 name: angular-component
-description: Create modern Angular standalone components following v21+ best practices for the PortfolioAI frontend. Use for building UI components with signal-based inputs/outputs, OnPush change detection, host bindings, content projection, and lifecycle hooks. Triggers on component creation, refactoring class-based inputs to signals, adding host bindings, or implementing accessible interactive components.
+description: Create modern Angular standalone components following v21+ best practices for the PortfolioAI frontend. Use for building UI components with signal-based inputs/outputs, host bindings, content projection, and lifecycle hooks. Triggers on component creation, refactoring class-based inputs to signals, adding host bindings, or implementing accessible interactive components.
 ---
 
 # Angular Component
 
-Create standalone components for Angular v21+ (the version used in `frontend/`). Components are standalone by default — do NOT set `standalone: true`. Always use `ChangeDetectionStrategy.OnPush`.
+Create standalone components for Angular v21+ (the version used in `frontend/`). Components are standalone by default — do NOT set `standalone: true`. **Change detection** : PortfolioAI runs in `provideZonelessChangeDetection()` mode (cf. `CLAUDE.md > Conventions`), so `ChangeDetectionStrategy.OnPush` is **not required** — there is no Zone tracking to suppress, signals drive change detection manually. Adding `OnPush` is a no-op functionally and adds bookkeeping noise. Leave the default change detection strategy on new components.
 
 ## Component Structure
 
 ```typescript
-import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
+import { Component, input, output, computed } from '@angular/core';
 
 @Component({
   selector: 'app-user-card',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     'class': 'user-card',
     '[class.active]': 'isActive()',

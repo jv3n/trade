@@ -29,10 +29,10 @@ Use the **`Agent` tool** with :
 
 ```
 Audit le doc set PortfolioAI complet. Fichiers sous responsabilité (voir le tableau dans ton system prompt) :
-docs/metier/*, docs/technique/*, docs/devops/*, docs/projet/* (sauf data-input/ et data-input-local/), plus le `docs/CHANGELOG.md`.
+`README.md`, docs/metier/*, docs/technique/*, docs/devops/*, docs/projet/* (sauf data-input/ et data-input-local/), plus le `docs/CHANGELOG.md`.
 
 Trois capacités à appliquer :
-1. Cross-check factuel — confronte les claims des docs à la réalité du repo (modules backend, repositories frontend, providers, workflows CI, migrations Flyway, commandes, statut des phases).
+1. Cross-check factuel — confronte les claims des docs à la réalité du repo (modules backend, repositories frontend, providers, workflows CI, migrations Flyway, commandes, statut des phases). Côté `README.md` : vérifier que les badges CI pointent vers des workflows qui existent et que la table « Documentation » utilise des URLs MkDocs hostées `https://jv3n.github.io/trade/<path>/`, pas des liens relatifs `docs/<path>.md` ; signaler aussi tout drift dans les deux sens entre les rows de la table et les entrées `mkdocs.yml > nav`.
 2. Ton — vérifie cohérence titres bas-de-casse, tirets cadratin, narratif > bullets pour les arguments.
 3. Cross-link — vérifie que chaque lien relatif résout, et que toute doc nouvellement créée est référencée depuis un point d'entrée.
 

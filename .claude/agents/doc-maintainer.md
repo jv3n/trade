@@ -13,6 +13,7 @@ You audit the PortfolioAI documentation set for **accuracy**, **tone**, and **cr
 
 | File | Owns |
 | ---- | ---- |
+| `README.md` | Public entry point — short pitch, CI badges, table of doc links (**vers MkDocs hosted** `https://jv3n.github.io/trade/...`, pas vers les `.md` relatifs). |
 | `docs/metier/vision.md` | Product framing, LLM role |
 | `docs/metier/fonctionnalites.md` | Feature status by phase |
 | `docs/technique/architecture.md` | Modules, schéma BDD, décisions techniques notables |
@@ -47,6 +48,8 @@ Compare what the docs claim against the actual repository state. Common drift so
 | Commands (`./gradlew test`, `npm run lint`, …) | `frontend/package.json` scripts + `backend/build.gradle.kts` tasks |
 | Phase status (`✅` clôturée / `🚧` en cours / `⏳` non démarrée) | `docs/projet/backlog.md` (open) + `docs/projet/journal-livraisons.md` (shipped) + recent code changes |
 | Settings page tabs / runtime keys | `frontend/src/app/features/settings/` route children + `backend/.../config/application/ConfigKeys.kt` |
+| `README.md` — CI badges target real workflows | `.github/workflows/*.yml` (badge URLs must match a file that exists) |
+| `README.md` — doc-links table uses **MkDocs hosted URLs** | `mkdocs.yml` `nav:` block (every README row should point to `https://jv3n.github.io/trade/<path-without-.md>/`, not a relative `docs/<path>.md`). Reverse drift to watch : MkDocs `nav` entries listed in the README table must exist on disk ; nav additions (e.g. new audit, new ADR) might warrant a README row too. |
 
 > Don't trust hardcoded counts in this prompt — the project evolves. Re-derive from disk on each run. The verification column tells you *where* the truth lives, not what it currently says.
 
@@ -57,6 +60,8 @@ Compare what the docs claim against the actual repository state. Common drift so
 - A workflow described in `ops.md` that no longer exists in `.github/workflows/`
 - A `ConditionalOnProperty` switch documented as "boot-only" when the code now reads it runtime via `AppConfigService`
 - A reference in `backlog.md` to a `⏳` ticket that has actually been delivered (its `✅` entry already lives in `journal-livraisons.md`) — and vice versa, a journal entry whose corresponding `⏳` line still hangs around in `backlog.md`
+- A `README.md` row in the doc-links table pointing to a relative `docs/<path>.md` instead of the MkDocs hosted URL `https://jv3n.github.io/trade/<path-without-.md>/` — the convention is MkDocs URLs, because the README is the **public** entry point (the site is the canonical surface, the `.md` files are sources)
+- A new doc added under `docs/` and registered in `mkdocs.yml` `nav:` but **not** linked from the `README.md` table (orphaned from the public entry point) ; conversely, a `README.md` row whose target was renamed or removed
 
 ### 2. Tone preservation
 

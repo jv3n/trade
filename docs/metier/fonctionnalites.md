@@ -42,7 +42,7 @@ Pipeline `AnalysisExecutor` (`AnalysisContextLoader`, `LlmResponseParser`, `Reco
 
 #### Settings RSS back-office
 
-Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings garde `configuration/` (config runtime Phase 2) et `prompt-preview/` (aperçu prompt narratif Phase 1).
+Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings vit aujourd'hui avec `configuration/` (config runtime Phase 2), `prompt-preview/` (aperçu prompt narratif Phase 1) et `prompts/` + `prompts/:id/stats` (gestion + scoring des prompts narratifs, Phase 3).
 
 > **Pourquoi décommissionné maintenant** : la Phase 0 était gelée depuis Phase 1, mais le module restait chargé et `AnalysisExecutor` chargeait encore les 200 derniers articles RSS dans le prompt LLM même quand le scheduler était off — cause d'un timeout 400 s observé sur Ollama cold-start le 2026-05-07. Plutôt que de patcher le legacy, on a tranché : drop des tables et modules, le replacement Phase 4 (PortfolioAggregation au-dessus des snapshots ticker) ne réutilisera rien de la plomberie RSS+executor.
 
@@ -121,10 +121,18 @@ Deux sources visibles côté UI :
 
 ## Phase 3 — Observabilité narrative
 
-- **Dashboard d'observabilité** : sur N consultations passées d'un ticker, afficher le narratif vs ce qu'a fait le prix depuis
-- **Détection de biais récurrents** : "le LLM est bullish 80% du temps", "ne mentionne jamais la volatilité"
-- **Score de cohérence narrative** : le LLM dit-il la même chose à 2 jours d'écart si rien n'a bougé ?
-- **A/B prompts** : deux versions du prompt en parallèle, comparer la qualité narrative
+> Phase ouverte 2026-05-10 sur la **foundation** prompt management + scoring (6 sous-PRs livrés en une journée). Reste à enchaîner la surface d'observabilité visuelle puis les analyses statistiques au-dessus du corpus.
+
+### ✅ Livré
+
+- **Prompt management + scoring** (foundation Phase 3, livré 2026-05-10) : persistance des prompts narratifs en BDD (`prompt_template`, V8), édition + activation live depuis `/settings/prompts` (éditeur textarea + diff side-by-side), `prompt_score` enregistré à chaque run (latency, retry, parse/validator failed), feedback 👍/👎 sur la card narrative du dossier ticker (`PATCH /api/narrative/snapshots/{id}/thumbs`), page de stats agrégées par prompt avec sparkline + tableau quotidien (`/settings/prompts/{id}/stats`). Permet le cycle « propose v3 → active → laisse tourner → compare vs v2 » sans toucher au code. Détail dans `docs/projet/journal-livraisons.md > Phase 3`.
+
+### ⏳ À faire
+
+- **Page d'observabilité narrative** : sur N consultations passées d'un ticker, afficher le narratif vs ce qu'a fait le prix depuis (1 j, 1 sem, 1 mois). Bénéficie du FK `prompt_template_id` posé en V8 pour filtrer « narratifs générés par le prompt v3 vs v4 ».
+- **Score de cohérence narrative** : le LLM dit-il la même chose à 2 jours d'écart si rien n'a bougé ? Greffé sur la time-series par ticker exposée par la page d'observabilité.
+- **Détection de biais récurrents** : « le LLM est bullish 80 % du temps », « ne mentionne jamais la volatilité ». Analyse statistique au-dessus du corpus + des thumbs collectés.
+- **Page Jobs (DAG)** : bloqué Phase 4 — attend le ticket fondateur « Pipeline d'analyse — modèle DAG unifié ».
 
 ---
 

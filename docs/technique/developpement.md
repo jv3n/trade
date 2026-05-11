@@ -125,20 +125,20 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + adapters (10 repositories)
-│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings, OllamaStatus)
+│       ├── core/              # Ports + adapters (12 repositories)
+│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings, OllamaStatus, Prompt, NarrativeFeedback)
 │       │   ├── adapters/*.http.ts     # HTTP impls (défaut)
 │       │   ├── adapters/*.local.ts    # localStorage impls (annotation v3)
-│       │   ├── providers.ts           # `provideRepositories()` — wires les 10 ports → adapters
+│       │   ├── providers.ts           # `provideRepositories()` — wires les 12 ports → adapters
 │       │   ├── job-stream.service.ts  # SSE EventSource → Observable<JobEvent> (Phase 2.5)
 │       │   ├── theme.service.ts       # signal + persist localStorage (SSR-safe via isPlatformBrowser)
 │       │   └── language.service.ts    # signal + persist localStorage (i18n, SSR-safe)
 │       └── features/          # Pages UI (primary adapters)
 │           ├── dashboard/             # Portefeuille + lien dossiers ticker
-│           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA)
+│           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA + thumbs)
 │           ├── import/                # Drag & drop CSV Wealthsimple
 │           ├── suivi/                 # Timeline snapshots
-│           └── settings/              # Configuration runtime + prompt-preview
+│           └── settings/              # Sidenav : configuration runtime / prompt-preview / prompts (liste + éditeur) / prompts/:id/stats (Phase 3)
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
 │       ├── market/            # TwelveData client + mock + indicateurs

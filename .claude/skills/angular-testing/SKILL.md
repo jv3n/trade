@@ -1,6 +1,6 @@
 ---
 name: angular-testing
-description: Write unit and integration tests for Angular v21+ in the PortfolioAI frontend using Vitest with TestBed and modern testing patterns. Use for testing components with signals, OnPush change detection, services with inject(), and HTTP interactions. Triggers on test creation, testing signal-based components, mocking dependencies, or setting up test infrastructure.
+description: Write unit and integration tests for Angular v21+ in the PortfolioAI frontend using Vitest with TestBed and modern testing patterns. Use for testing components with signals, services with inject(), and HTTP interactions. Triggers on test creation, testing signal-based components, mocking dependencies, or setting up test infrastructure.
 ---
 
 # Angular Testing
@@ -392,6 +392,8 @@ describe('TodoList', () => {
 ```
 
 ## Testing OnPush Components
+
+> **Note** : PortfolioAI runs zoneless and **does not mandate** `OnPush` (cf. `.claude/CLAUDE.md > Conventions`). This section stays as reference for the rare case where a component opts into `OnPush` explicitly. New PortfolioAI components leave the default change detection strategy.
 
 OnPush components require explicit change detection. Use `componentRef.setInput()` for signal inputs.
 

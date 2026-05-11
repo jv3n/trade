@@ -13,6 +13,7 @@ PortfolioAI's frontend is a **single Angular app** (no monorepo). It follows a l
 ```
 frontend/
 ├── public/
+│   └── i18n/                     # ngx-translate JSONs (fr.json + en.json)
 ├── proxy.conf.json
 ├── angular.json
 └── src/
@@ -23,29 +24,38 @@ frontend/
         ├── app.config.ts             # standalone bootstrap (providers wire ports → adapters)
         ├── app.routes.ts             # top-level routes (loadComponent → ./features/...)
         ├── app.spec.ts
-        ├── core/
-        │   ├── portfolio.repository.ts   # PORT: abstract class + types
-        │   ├── analysis.repository.ts
-        │   ├── settings.repository.ts
+        ├── core/                     # 12 ports + adapters, plus 2 stateful services (Theme, Language) and 2 cross-feature helpers (JobStream SSE, LlmTimeout)
+        │   ├── portfolio.repository.ts        # PORT: abstract class + types
         │   ├── snapshot.repository.ts
+        │   ├── market.repository.ts
+        │   ├── watchlist.repository.ts
+        │   ├── news.repository.ts
+        │   ├── config.repository.ts
+        │   ├── annotation.repository.ts       # client-only (localStorage)
+        │   ├── analyst.repository.ts
+        │   ├── earnings.repository.ts
+        │   ├── ollama-status.repository.ts
+        │   ├── prompt.repository.ts           # Phase 3 — prompt management
+        │   ├── narrative-feedback.repository.ts # Phase 3 — thumbs PATCH
+        │   ├── job-stream.service.ts          # SSE EventSource wrapper (Phase 2.5)
+        │   ├── theme.service.ts
+        │   ├── language.service.ts
+        │   ├── providers.ts                   # provideRepositories() — wires all 12 ports
         │   └── adapters/
         │       ├── portfolio.http.ts          # ADAPTER: HTTP impl + spec
         │       ├── portfolio.http.spec.ts
-        │       ├── analysis.http.ts
-        │       ├── settings.http.ts
-        │       ├── snapshot.http.ts
-        │       └── snapshot.http.spec.ts
-        └── features/
-            ├── dashboard/            # one folder per feature
+        │       ├── annotation.local.ts        # client-only adapter (localStorage)
+        │       └── ... (one .http.ts per port, plus *.local.ts for client-only)
+        └── features/                          # primary adapters — one folder per top-level route
+            ├── dashboard/            # portfolio view + sidebar (portfolios / held tickers / watchlist)
             │   ├── dashboard.ts
             │   ├── dashboard.html
             │   ├── dashboard.scss
             │   └── dashboard.spec.ts
-            ├── history/
-            ├── import/
-            ├── recommendations/
-            ├── settings/
-            └── suivi/
+            ├── ticker/                        # dossier ticker — chart, indicators, narratif, thumbs, fondamentaux (Phase 1, étendu Phase 2 + 3)
+            ├── import/                        # drag & drop CSV Wealthsimple
+            ├── suivi/                         # timeline snapshots
+            └── settings/                      # back-office : configuration / prompt-preview / prompts / prompts/:id/stats (Phase 3)
 ```
 
 ## Conventions

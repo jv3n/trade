@@ -17,21 +17,21 @@ Outil d'intelligence de marché par ticker, alimenté par l'IA. Pour chaque acti
 
 ## Documentation
 
-Site complet : **[jv3n.github.io/trade](https://jv3n.github.io/trade/)**
+Site complet : **[portfolioAI](https://jv3n.github.io/trade/CHANGELOG/)**
 
 | Rubrique | Pour qui / quand |
 |---|---|
-| [Onboarding développeur](docs/technique/developper.md) | Nouvel arrivant — install, premier test, troubleshooting |
-| [Architecture](docs/technique/architecture.md) | Comprendre les modules, le schéma BDD et les décisions techniques |
-| [DDD — bounded contexts](docs/technique/ddd.md) | Cartographie des bounded contexts et de leurs frontières (vocabulaire, ports, anti-corruption layers) |
-| [Guide de développement](docs/technique/developpement.md) | Référence quotidienne : commandes, structure, configuration locale |
-| [Providers externes](docs/technique/providers.md) | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
-| [Ops (CI / CD / tooling)](docs/technique/ops.md) | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
-| [Commandes pratiques (devops)](docs/devops/commandes-pratiques.md) | Cheatsheet psql / Tilt / Ollama / cleanup jobs LLM bloqués |
-| [Décision : déploiement Ollama](docs/devops/decision-ollama-deploiement.md) | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
-| [Vision](docs/metier/vision.md) | Pourquoi le projet existe, ce qu'on essaie de prouver |
-| [Fonctionnalités](docs/metier/fonctionnalites.md) | Découpage par phase, ce qui est livré / gelé / à venir |
-| [Backlog](docs/projet/backlog.md) | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
-| [Journal des livraisons](docs/projet/journal-livraisons.md) | Historique reverse-chronologique des features livrées par phase |
-| [Conventions de commit](docs/projet/commit-conventions.md) | Conventional Commits en anglais, exemples |
-| [Changelog doc](docs/CHANGELOG.md) | Trace reverse-chronologique des modifications du doc set (post `/doc-maintainer`) |
+| [Onboarding développeur](https://jv3n.github.io/trade/technique/developper/) | Nouvel arrivant — install, premier test, troubleshooting |
+| [Architecture](https://jv3n.github.io/trade/technique/architecture/) | Comprendre les modules, le schéma BDD et les décisions techniques |
+| [DDD — bounded contexts](https://jv3n.github.io/trade/technique/ddd/) | Cartographie des bounded contexts et de leurs frontières (vocabulaire, ports, anti-corruption layers) |
+| [Guide de développement](https://jv3n.github.io/trade/technique/developpement/) | Référence quotidienne : commandes, structure, configuration locale |
+| [Providers externes](https://jv3n.github.io/trade/technique/providers/) | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
+| [Ops (CI / CD / tooling)](https://jv3n.github.io/trade/technique/ops/) | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
+| [Commandes pratiques (devops)](https://jv3n.github.io/trade/devops/commandes-pratiques/) | Cheatsheet psql / Tilt / Ollama / cleanup jobs LLM bloqués |
+| [Décision : déploiement Ollama](https://jv3n.github.io/trade/devops/decision-ollama-deploiement/) | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
+| [Vision](https://jv3n.github.io/trade/metier/vision/) | Pourquoi le projet existe, ce qu'on essaie de prouver |
+| [Fonctionnalités](https://jv3n.github.io/trade/metier/fonctionnalites/) | Découpage par phase, ce qui est livré / gelé / à venir |
+| [Backlog](https://jv3n.github.io/trade/projet/backlog/) | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
+| [Journal des livraisons](https://jv3n.github.io/trade/projet/journal-livraisons/) | Historique reverse-chronologique des features livrées par phase |
+| [Conventions de commit](https://jv3n.github.io/trade/projet/commit-conventions/) | Conventional Commits en anglais, exemples |
+| [Changelog doc](https://jv3n.github.io/trade/CHANGELOG/) | Trace reverse-chronologique des modifications du doc set (post `/doc-maintainer`) |

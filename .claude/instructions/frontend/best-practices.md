@@ -19,7 +19,7 @@ These rules apply to the single Angular app under `frontend/`.
 - Use native control flow (`@if`, `@for`, `@switch`) — never `*ngIf`, `*ngFor`, `*ngSwitch`
 - Use direct class/style bindings (`[class.x]`, `[style.color]`) — never `ngClass` / `ngStyle`
 - Use `inject()` instead of constructor injection
-- Use `ChangeDetectionStrategy.OnPush` on every component
+- **Change detection** : the app runs in zoneless mode (`provideZonelessChangeDetection()` in `app.config.ts`), so `ChangeDetectionStrategy.OnPush` is not required — signals drive change detection manually, OnPush would be a no-op. Leave the default strategy on new components.
 
 ## State management
 
