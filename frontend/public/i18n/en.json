@@ -383,6 +383,41 @@
       "systemPrompt": "System prompt",
       "activate": "Activate this version",
       "activating": "Activating…",
+      "viewStats": "View stats",
+      "stats": {
+        "title": "Prompt stats",
+        "intro": "Aggregated metrics across every persisted narrative run for this version.",
+        "loading": "Loading stats…",
+        "empty": "No run for this version yet. Generate a narrative on a ticker dossier to start collecting metrics.",
+        "back": "Back to the list",
+        "kpi": {
+          "totalRuns": "Total runs",
+          "latencyP50": "Latency p50",
+          "latencyP95": "Latency p95",
+          "retryRate": "Retry rate",
+          "parseFailedRate": "Parse failures",
+          "validatorFailedRate": "Validator failures",
+          "thumbsBalance": "Thumbs balance"
+        },
+        "thumbs": {
+          "title": "Vote distribution",
+          "neutral": "Neutral"
+        },
+        "latency": {
+          "title": "Latency p50 over 90 days",
+          "notEnough": "Not enough points to draw a line (at least 2 days with runs needed)."
+        },
+        "daily": {
+          "title": "Per day",
+          "day": "Day",
+          "runs": "Runs",
+          "latencyP50": "Latency p50"
+        },
+        "errors": {
+          "load": "Failed to load stats. Try again.",
+          "missingId": "Missing prompt id in the URL."
+        }
+      },
       "editor": {
         "openButton": "Edit as new version",
         "basedOn": "Editing based on version {{version}}",

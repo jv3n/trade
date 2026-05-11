@@ -46,12 +46,16 @@ describe('PromptsPage', () => {
           provide: PromptRepository,
           useValue: {
             list,
-            // `get(id)` isn't exercised by the page in PR3 (the list endpoint already returns
-            // the body), but the abstract contract demands it — wire a stub that surfaces a
-            // clear failure if a future change starts calling it.
+            // `get(id)` and `getStats(id)` aren't exercised by the list page (the list endpoint
+            // already returns every body, and stats live on `/settings/prompts/:id/stats`) —
+            // wire stubs that surface a clear failure if a future change accidentally pulls
+            // them in from this page.
             get: vi.fn(() => throwError(() => new Error('PromptsPage should not call get()'))),
             activate,
             create,
+            getStats: vi.fn(() =>
+              throwError(() => new Error('PromptsPage should not call getStats()')),
+            ),
           },
         },
       ],

@@ -189,6 +189,10 @@
                 </section>
 
                 <div class="card-actions">
+                  <a [routerLink]="['/settings/prompts', p.id, 'stats']" class="btn-secondary">
+                    <mat-icon>analytics</mat-icon>
+                    {{ 'settings.promptsPage.viewStats' | translate }}
+                  </a>
                   <button type="button" class="btn-secondary" (click)="openEditor(p)">
                     <mat-icon>edit</mat-icon>
                     {{ 'settings.promptsPage.editor.openButton' | translate }}

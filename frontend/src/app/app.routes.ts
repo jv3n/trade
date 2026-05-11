@@ -40,6 +40,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/settings/prompts/prompts').then((m) => m.PromptsPage),
       },
+      {
+        path: 'prompts/:id/stats',
+        loadComponent: () =>
+          import('./features/settings/prompts/prompt-stats/prompt-stats').then(
+            (m) => m.PromptStatsPage,
+          ),
+      },
     ],
   },
 ];

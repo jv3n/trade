@@ -1,11 +1,16 @@
 package com.portfolioai.analysis.application
 
+import com.portfolioai.analysis.application.dto.DailyBucket
+import com.portfolioai.analysis.application.dto.PromptStatsDto
+import com.portfolioai.analysis.application.dto.ThumbsDistribution
 import com.portfolioai.analysis.domain.PromptScore
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.domain.TickerNarrativeSnapshot
 import com.portfolioai.analysis.infrastructure.persistence.PromptScoreRepository
+import com.portfolioai.analysis.infrastructure.persistence.PromptScoreStatsQuery
 import com.portfolioai.analysis.infrastructure.persistence.TickerNarrativeSnapshotRepository
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -22,7 +27,7 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 
 /**
- * Tests on [PromptScoreService] — Phase 3 PR5 thumbs update. What we pin :
+ * Tests on [PromptScoreService] — Phase 3 PR5 thumbs update + future PR6 stats reads. What we pin :
  *
  * - **Happy path persists the new thumbs value** verbatim. The score row's other fields (the
  *   measured metrics from PR2) are left untouched — thumbs is a side-channel signal layered on top
@@ -44,8 +49,9 @@ import org.mockito.kotlin.verify
 class PromptScoreServiceTest {
 
   private val repository: PromptScoreRepository = mock()
+  private val statsQuery: PromptScoreStatsQuery = mock()
   private val snapshotRepository: TickerNarrativeSnapshotRepository = mock()
-  private val service = PromptScoreService(repository, snapshotRepository)
+  private val service = PromptScoreService(repository, statsQuery, snapshotRepository)
 
   // ---------------------------------------------------------------------- happy path
 
@@ -171,6 +177,36 @@ class PromptScoreServiceTest {
     service.setThumbs(snapshotId, 1)
 
     verify(repository).save(any<PromptScore>())
+  }
+
+  // ---------------------------------------------------------------------- getStats (PR6)
+
+  @Test
+  fun `getStats delegates to the stats query and returns its DTO verbatim`() {
+    val templateId = UUID.randomUUID()
+    val expected =
+      PromptStatsDto(
+        promptTemplateId = templateId,
+        totalRuns = 12,
+        latencyP50Ms = 4_000,
+        latencyP95Ms = 11_500,
+        retryRate = 0.083,
+        parseFailedRate = 0.0,
+        validatorFailedRate = 0.16,
+        thumbs = ThumbsDistribution(up = 5, down = 1, neutral = 6),
+        daily =
+          listOf(
+            DailyBucket(LocalDate.parse("2026-05-10"), 4, 3_800, 2, 0),
+            DailyBucket(LocalDate.parse("2026-05-09"), 8, 4_200, 3, 1),
+          ),
+      )
+    given(statsQuery.aggregate(eq(templateId))).willReturn(expected)
+
+    val result = service.getStats(templateId)
+
+    // No transformation in the service — pin the pass-through so a future tweak that adds
+    // mapping logic shows up in CI rather than silently distorting the rates.
+    assertSame(expected, result)
   }
 
   // ---------------------------------------------------------------------- helpers

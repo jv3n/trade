@@ -1,0 +1,174 @@
+<div class="stats-layout">
+  <a routerLink="/settings/prompts" class="back-link">
+    <mat-icon>arrow_back</mat-icon>
+    {{ 'settings.promptsPage.stats.back' | translate }}
+  </a>
+
+  <div class="content-header">
+    <h2>
+      {{ 'settings.promptsPage.stats.title' | translate }}
+      @if (template(); as t) {
+        <span class="header-version">{{ t.version }}</span>
+        @if (t.isActive) {
+          <span class="chip chip-active">{{ 'settings.promptsPage.activeChip' | translate }}</span>
+        } @else {
+          <span class="chip chip-inactive">{{
+            'settings.promptsPage.inactiveChip' | translate
+          }}</span>
+        }
+      }
+    </h2>
+    <p>{{ 'settings.promptsPage.stats.intro' | translate }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'settings.promptsPage.stats.loading' | translate }}</span>
+    </div>
+  } @else if (loadError(); as e) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ e }}
+    </div>
+  } @else if (stats(); as s) {
+    @if (isEmpty()) {
+      <div class="empty-state">
+        <mat-icon>info_outline</mat-icon>
+        {{ 'settings.promptsPage.stats.empty' | translate }}
+      </div>
+    } @else {
+      <!-- KPI cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">{{
+            'settings.promptsPage.stats.kpi.totalRuns' | translate
+          }}</span>
+          <span class="kpi-value">{{ s.totalRuns | number }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">{{
+            'settings.promptsPage.stats.kpi.latencyP50' | translate
+          }}</span>
+          <span class="kpi-value">{{ s.latencyP50Ms | number }} ms</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">{{
+            'settings.promptsPage.stats.kpi.latencyP95' | translate
+          }}</span>
+          <span class="kpi-value">{{ s.latencyP95Ms | number }} ms</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">{{
+            'settings.promptsPage.stats.kpi.retryRate' | translate
+          }}</span>
+          <span class="kpi-value">{{ s.retryRate | percent: '1.0-1' }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">{{
+            'settings.promptsPage.stats.kpi.parseFailedRate' | translate
+          }}</span>
+          <span class="kpi-value" [ngClass]="{ 'kpi-warn': s.parseFailedRate >= 0.1 }">{{
+            s.parseFailedRate | percent: '1.0-1'
+          }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">{{
+            'settings.promptsPage.stats.kpi.validatorFailedRate' | translate
+          }}</span>
+          <span class="kpi-value" [ngClass]="{ 'kpi-warn': s.validatorFailedRate >= 0.1 }">{{
+            s.validatorFailedRate | percent: '1.0-1'
+          }}</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">{{
+            'settings.promptsPage.stats.kpi.thumbsBalance' | translate
+          }}</span>
+          <span
+            class="kpi-value"
+            [ngClass]="{
+              'kpi-good': thumbsBalance() > 0,
+              'kpi-bad': thumbsBalance() < 0,
+            }"
+          >
+            {{ thumbsBalance() > 0 ? '+' : '' }}{{ thumbsBalance() }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Thumbs distribution bar -->
+      <section class="panel">
+        <header>{{ 'settings.promptsPage.stats.thumbs.title' | translate }}</header>
+        <div
+          class="thumbs-bar"
+          role="img"
+          [attr.aria-label]="'settings.promptsPage.stats.thumbs.title' | translate"
+        >
+          <span
+            class="thumbs-seg thumbs-seg-up"
+            [style.width.%]="thumbsSegmentPct('up')"
+            [hidden]="thumbsSegmentPct('up') === 0"
+          ></span>
+          <span
+            class="thumbs-seg thumbs-seg-neutral"
+            [style.width.%]="thumbsSegmentPct('neutral')"
+            [hidden]="thumbsSegmentPct('neutral') === 0"
+          ></span>
+          <span
+            class="thumbs-seg thumbs-seg-down"
+            [style.width.%]="thumbsSegmentPct('down')"
+            [hidden]="thumbsSegmentPct('down') === 0"
+          ></span>
+        </div>
+        <div class="thumbs-legend">
+          <span><mat-icon class="thumbs-icon-up">thumb_up</mat-icon> {{ s.thumbs.up }}</span>
+          <span class="thumbs-neutral-label">
+            {{ 'settings.promptsPage.stats.thumbs.neutral' | translate }} {{ s.thumbs.neutral }}
+          </span>
+          <span><mat-icon class="thumbs-icon-down">thumb_down</mat-icon> {{ s.thumbs.down }}</span>
+        </div>
+      </section>
+
+      <!-- Latency sparkline -->
+      <section class="panel">
+        <header>{{ 'settings.promptsPage.stats.latency.title' | translate }}</header>
+        @if (latencyPolyline(); as poly) {
+          <svg class="sparkline" viewBox="0 0 600 120" preserveAspectRatio="none">
+            <polyline [attr.points]="poly" />
+          </svg>
+        } @else {
+          <p class="empty-state inline">
+            {{ 'settings.promptsPage.stats.latency.notEnough' | translate }}
+          </p>
+        }
+      </section>
+
+      <!-- Daily table -->
+      <section class="panel">
+        <header>{{ 'settings.promptsPage.stats.daily.title' | translate }}</header>
+        <table class="daily-table">
+          <thead>
+            <tr>
+              <th>{{ 'settings.promptsPage.stats.daily.day' | translate }}</th>
+              <th>{{ 'settings.promptsPage.stats.daily.runs' | translate }}</th>
+              <th>{{ 'settings.promptsPage.stats.daily.latencyP50' | translate }}</th>
+              <th><mat-icon class="thumbs-icon-up">thumb_up</mat-icon></th>
+              <th><mat-icon class="thumbs-icon-down">thumb_down</mat-icon></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of s.daily; track d.day) {
+              <tr>
+                <td>{{ d.day }}</td>
+                <td>{{ d.runs }}</td>
+                <td>{{ d.latencyP50Ms !== null ? (d.latencyP50Ms | number) + ' ms' : '—' }}</td>
+                <td>{{ d.thumbsUp }}</td>
+                <td>{{ d.thumbsDown }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+  }
+</div>
