@@ -1,9 +1,8 @@
 package com.portfolioai.analysis.infrastructure.http
 
 import com.portfolioai.analysis.application.JobEventPublisher
-import com.portfolioai.analysis.application.NARRATIVE_PROMPT_VERSION
-import com.portfolioai.analysis.application.NARRATIVE_SYSTEM_PROMPT
 import com.portfolioai.analysis.application.TickerNarrativeJobStore
+import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.TickerNarrativeService
 import com.portfolioai.analysis.application.buildNarrativeUserMessage
 import com.portfolioai.analysis.application.dto.NarrativePromptPreviewDto
@@ -45,6 +44,7 @@ class TickerNarrativeController(
   private val jobStore: TickerNarrativeJobStore,
   private val tickerService: TickerService,
   private val jobEventPublisher: JobEventPublisher,
+  private val promptService: TickerNarrativePromptService,
 ) {
   @PostMapping
   @ResponseStatus(HttpStatus.ACCEPTED)
@@ -101,7 +101,9 @@ class TickerNarrativeController(
   /**
    * Read-only preview of the system + user prompt for [symbol] — no LLM call. Backs the
    * `/settings/prompt-preview` page so the user can inspect exactly what the runner would send to
-   * Claude/Ollama on a given ticker.
+   * Claude/Ollama on a given ticker. Reads the currently active prompt from
+   * [TickerNarrativePromptService] so the preview reflects what's *live* in the DB (Phase 3 PR1+),
+   * not the hardcoded fallback.
    */
   @GetMapping("/preview")
   fun preview(@PathVariable symbol: String): NarrativePromptPreviewDto {
@@ -112,13 +114,14 @@ class TickerNarrativeController(
           "No indicators computed for $symbol — series too short to preview"
         )
     val userMessage = buildNarrativeUserMessage(snapshot.quote, indicators)
+    val activePrompt = promptService.activePrompt()
     return NarrativePromptPreviewDto(
       symbol = snapshot.quote.symbol,
-      systemPrompt = NARRATIVE_SYSTEM_PROMPT,
+      systemPrompt = activePrompt.systemPrompt,
       userMessage = userMessage,
-      systemPromptChars = NARRATIVE_SYSTEM_PROMPT.length,
+      systemPromptChars = activePrompt.systemPrompt.length,
       userMessageChars = userMessage.length,
-      promptVersion = NARRATIVE_PROMPT_VERSION,
+      promptVersion = activePrompt.version,
     )
   }
 }

@@ -9,8 +9,16 @@ import java.math.BigDecimal
  * digests the indicators that the code computed and produces a short, factual summary. It must not
  * predict prices, recommend buys/sells, or reference data not in the prompt.
  *
- * Versioned : bump [NARRATIVE_PROMPT_VERSION] when this prompt or its expected output format
- * changes, so persisted snapshots can be filtered by prompt version when comparing model outputs.
+ * **Source of truth — Phase 3 PR1 onwards** : the runner reads the prompt from the
+ * `prompt_template` table via [TickerNarrativePromptService] ; the constants below are kept as a
+ * safety-net fallback used only when the DB has no active row (bootstrap before Flyway V8 runs, or
+ * seed wiped manually). To change the prompt in production, edit the active row from
+ * `/settings/prompts` (Phase 3 PR3+) — the cache invalidates and the next narrative run picks the
+ * new text up. Editing this file directly only affects fresh clones with no DB seed.
+ *
+ * Versioned : bump [NARRATIVE_PROMPT_VERSION] when this fallback prompt or its expected output
+ * format changes — the version string is what gets persisted on snapshots when the fallback path
+ * fires, so filters on `prompt_version` still partition the data correctly.
  */
 internal const val NARRATIVE_PROMPT_VERSION = "v2"
 

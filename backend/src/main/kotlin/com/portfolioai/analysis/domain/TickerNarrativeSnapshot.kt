@@ -38,4 +38,10 @@ class TickerNarrativeSnapshot(
   val keyPointsJson: String,
   @Column(name = "model_used", nullable = false, length = 100) val modelUsed: String,
   @Column(name = "prompt_version", nullable = false, length = 50) val promptVersion: String = "v1",
+  // FK ajouté en V8 (Phase 3 PR1) — relie chaque snapshot à la `PromptTemplate` qui l'a généré
+  // pour pouvoir reconstituer l'output en regardant *quel* prompt a tourné. Nullable parce que
+  // les snapshots pré-V8 n'ont pas de row template à référencer (le backfill V8 ne couvre que
+  // les `prompt_version = 'v2'`), et parce que le service peut tomber sur le fallback hardcodé
+  // (sentinelle UUID jamais persistée — cf. `TickerNarrativePromptService.isFallback`).
+  @Column(name = "prompt_template_id") val promptTemplateId: UUID? = null,
 )

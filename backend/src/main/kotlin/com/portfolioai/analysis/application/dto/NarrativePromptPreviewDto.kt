@@ -6,9 +6,11 @@ package com.portfolioai.analysis.application.dto
  * what bloats the user message on a real symbol, debug tokenisation, or compare prompt versions
  * side by side.
  *
- * The system prompt is the static `NARRATIVE_SYSTEM_PROMPT` (versioned by
- * `NARRATIVE_PROMPT_VERSION`). The user message is built by `buildNarrativeUserMessage(quote,
- * indicators)` from a live `TickerSnapshot`, so it reflects exactly what would be sent right now.
+ * The system prompt and version come from the currently active row in `prompt_template` (resolved
+ * at request time via `TickerNarrativePromptService` since Phase 3 PR1) — so the preview reflects
+ * what the runner would *actually* send right now, including any live edit the user has just
+ * activated. The user message is built by `buildNarrativeUserMessage(quote, indicators)` from a
+ * live `TickerSnapshot`, mirroring the runner's own logic.
  */
 data class NarrativePromptPreviewDto(
   val symbol: String,

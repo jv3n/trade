@@ -31,6 +31,7 @@ class TickerNarrativeExecutor(
   private val validator: TickerNarrativeValidator,
   private val persister: TickerNarrativePersister,
   private val publisher: JobEventPublisher,
+  private val promptService: TickerNarrativePromptService,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
@@ -41,6 +42,10 @@ class TickerNarrativeExecutor(
       market.indicators
         ?: throw IllegalStateException("No indicators computed for $symbol — series too short")
 
+    // Active prompt resolved once per run — within one run, the prompt does not change even if a
+    // user activates a new version mid-LLM-call. Cache TTL 1 min on the service side absorbs the
+    // burst when `n` requests fire at once.
+    val prompt = promptService.activePrompt()
     val userMessage = buildNarrativeUserMessage(market.quote, indicators)
 
     var lastErrors: List<String>? = null
@@ -49,13 +54,14 @@ class TickerNarrativeExecutor(
       val message =
         if (lastErrors == null) userMessage else userMessage + retryFeedback(lastErrors!!)
       log.info(
-        "Calling LLM for narrative symbol={} (attempt {}/{})",
+        "Calling LLM for narrative symbol={} promptVersion={} (attempt {}/{})",
         symbol,
+        prompt.version,
         attemptIndex,
         MAX_ATTEMPTS,
       )
       publisher.publish(jobId, JobPhase.CALLING_LLM, attempt = attemptIndex)
-      val raw = llmClient.complete(NARRATIVE_SYSTEM_PROMPT, message, maxTokens = 600)
+      val raw = llmClient.complete(prompt.systemPrompt, message, maxTokens = 600)
       publisher.publish(jobId, JobPhase.RECEIVED_RAW, attempt = attemptIndex)
       log.debug("Raw narrative response (attempt {}): {}", attemptIndex, raw)
 
@@ -77,7 +83,7 @@ class TickerNarrativeExecutor(
         NarrativeValidationResult.Valid -> {
           log.info("Narrative valid on attempt {} symbol={}", attemptIndex, symbol)
           publisher.publish(jobId, JobPhase.PERSISTING, attempt = attemptIndex)
-          return persister.persist(symbol, indicators, parsed, llmClient.modelId())
+          return persister.persist(symbol, indicators, parsed, llmClient.modelId(), prompt)
         }
         is NarrativeValidationResult.Invalid -> {
           log.warn("Narrative attempt {} failed validation: {}", attemptIndex, result.errors)
