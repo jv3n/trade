@@ -1,5 +1,6 @@
 package com.portfolioai.analysis.application
 
+import com.portfolioai.analysis.application.dto.CreatePromptInput
 import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.analysis.infrastructure.persistence.PromptTemplateRepository
 import java.time.Instant
@@ -240,6 +241,84 @@ class TickerNarrativePromptServiceTest {
 
     verify(repository, never()).saveAndFlush(any<PromptTemplate>())
     verify(repository).save(any<PromptTemplate>())
+  }
+
+  // ---------------------------------------------------------------------- create (PR4)
+
+  @Test
+  fun `create persists a new row with isActive=false and trimmed name + version`() {
+    given(repository.save(any<PromptTemplate>())).willAnswer { it.arguments[0] as PromptTemplate }
+    val captor = argumentCaptor<PromptTemplate>()
+
+    val saved =
+      service.create(
+        CreatePromptInput(
+          name = "  narrative-default  ",
+          version = "  v3-bullish-fix  ",
+          systemPrompt = "Body of the new prompt",
+          notes = "Fixes the BUY/SELL leak observed on 2026-05-10",
+        )
+      )
+
+    verify(repository).save(captor.capture())
+    val written = captor.firstValue
+    assertEquals("narrative-default", written.name, "leading/trailing whitespace must be stripped")
+    assertEquals("v3-bullish-fix", written.version)
+    assertEquals("Body of the new prompt", written.systemPrompt)
+    assertFalse(
+      written.isActive,
+      "create must always land inactive — activation is a separate step",
+    )
+    assertEquals("Fixes the BUY/SELL leak observed on 2026-05-10", written.notes)
+    assertSame(written, saved)
+  }
+
+  @Test
+  fun `create coerces blank optional fields to null at the boundary`() {
+    // The frontend's <input> binding emits empty strings when the user leaves a field untouched.
+    // Persisting `""` would mean « set, but empty » downstream — fool the UI null-check and
+    // surface a stale empty `notes` panel. Coerce at the service boundary.
+    given(repository.save(any<PromptTemplate>())).willAnswer { it.arguments[0] as PromptTemplate }
+    val captor = argumentCaptor<PromptTemplate>()
+
+    service.create(
+      CreatePromptInput(
+        name = "narrative-default",
+        version = "v3",
+        systemPrompt = "Body",
+        userTemplate = "",
+        targetModel = "   ",
+        notes = "",
+      )
+    )
+
+    verify(repository).save(captor.capture())
+    val written = captor.firstValue
+    assertNull(written.userTemplate)
+    assertNull(written.targetModel)
+    assertNull(written.notes)
+  }
+
+  @Test
+  fun `create rejects blank name version or system prompt with IllegalArgumentException`() {
+    val happy = CreatePromptInput(name = "narrative-default", version = "v3", systemPrompt = "Body")
+
+    assertThrows<IllegalArgumentException> { service.create(happy.copy(name = "   ")) }
+    assertThrows<IllegalArgumentException> { service.create(happy.copy(version = "")) }
+    assertThrows<IllegalArgumentException> { service.create(happy.copy(systemPrompt = "  \n  ")) }
+    verify(repository, never()).save(any<PromptTemplate>())
+  }
+
+  @Test
+  fun `create rejects over-length name version or system prompt`() {
+    val happy = CreatePromptInput(name = "narrative-default", version = "v3", systemPrompt = "Body")
+
+    assertThrows<IllegalArgumentException> { service.create(happy.copy(name = "n".repeat(101))) }
+    assertThrows<IllegalArgumentException> { service.create(happy.copy(version = "v".repeat(51))) }
+    assertThrows<IllegalArgumentException> {
+      service.create(happy.copy(systemPrompt = "p".repeat(10_001)))
+    }
+    verify(repository, never()).save(any<PromptTemplate>())
   }
 
   // ---------------------------------------------------------------------- isolation guard

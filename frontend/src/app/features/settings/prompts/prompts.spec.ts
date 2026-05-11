@@ -24,17 +24,19 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { provideTranslateService } from '@ngx-translate/core';
 import { PromptRepository, PromptTemplate } from '../../../core/prompt.repository';
-import { PromptsPage } from './prompts';
+import { PromptsPage, lineDiff } from './prompts';
 
 describe('PromptsPage', () => {
   let fixture: ComponentFixture<PromptsPage>;
   let component: PromptsPage;
   const list = vi.fn();
   const activate = vi.fn();
+  const create = vi.fn();
 
   beforeEach(async () => {
     list.mockReset();
     activate.mockReset();
+    create.mockReset();
 
     await TestBed.configureTestingModule({
       imports: [PromptsPage],
@@ -49,6 +51,7 @@ describe('PromptsPage', () => {
             // clear failure if a future change starts calling it.
             get: vi.fn(() => throwError(() => new Error('PromptsPage should not call get()'))),
             activate,
+            create,
           },
         },
       ],
@@ -178,6 +181,159 @@ describe('PromptsPage', () => {
     // Only one API call fired — the second click bounced off the in-flight guard.
     expect(activate).toHaveBeenCalledTimes(1);
     expect(component.isActivating(v2Deprecated().id)).toBe(true);
+  });
+
+  // ---------------------------------------------------------------------- editor (PR4)
+
+  it('openEditor prefills the buffer with a derived version tag and the source prompt body', () => {
+    list.mockReturnValue(of([v3Active(), v2Deprecated()]));
+    fixture.detectChanges();
+
+    component.openEditor(v3Active());
+
+    expect(component.editorSourceId()).toBe(v3Active().id);
+    // Suggested tag is `${source.version}-edit` so the user has a non-empty starting point.
+    expect(component.editorVersion()).toBe('v3-edit');
+    expect(component.editorSystemPrompt()).toBe(v3Active().systemPrompt);
+    expect(component.editorNotes()).toBe('');
+    expect(component.saveError()).toBeNull();
+    // The computed `editorSource` resolves to the row whose id matches.
+    expect(component.editorSource()?.version).toBe('v3');
+  });
+
+  it('canSave requires both a non-blank version tag and a non-blank system prompt', () => {
+    list.mockReturnValue(of([v3Active()]));
+    fixture.detectChanges();
+    component.openEditor(v3Active());
+
+    // Default prefilled state is valid (tag = "v3-edit", body = source prompt).
+    expect(component.canSave()).toBe(true);
+
+    component.editorVersion.set('   ');
+    expect(component.canSave()).toBe(false);
+    component.editorVersion.set('v3-fix');
+    component.editorSystemPrompt.set('');
+    expect(component.canSave()).toBe(false);
+    component.editorSystemPrompt.set('Body');
+    expect(component.canSave()).toBe(true);
+  });
+
+  it('hasEditorChanges only fires once the textarea differs from the source', () => {
+    list.mockReturnValue(of([v3Active()]));
+    fixture.detectChanges();
+    component.openEditor(v3Active());
+
+    expect(component.hasEditorChanges()).toBe(false);
+    component.editorSystemPrompt.set(v3Active().systemPrompt + '\nextra line');
+    expect(component.hasEditorChanges()).toBe(true);
+  });
+
+  it('saveDraft POSTs the trimmed buffer, refreshes the list, expands the new row, closes editor', () => {
+    const initial = [v3Active(), v2Deprecated()];
+    const createdRow: PromptTemplate = {
+      ...v3Active(),
+      id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      version: 'v4',
+      isActive: false,
+    };
+    const after = [createdRow, ...initial];
+    list.mockReturnValueOnce(of(initial)).mockReturnValueOnce(of(after));
+    create.mockReturnValue(of(createdRow));
+    fixture.detectChanges();
+    component.openEditor(v3Active());
+    component.editorVersion.set('  v4  ');
+    component.editorSystemPrompt.set('New body');
+    component.editorNotes.set('  Why  ');
+
+    component.saveDraft();
+
+    expect(create).toHaveBeenCalledWith({
+      name: 'narrative-default',
+      version: 'v4',
+      systemPrompt: 'New body',
+      notes: 'Why',
+    });
+    expect(component.saving()).toBe(false);
+    expect(component.editorSourceId()).toBeNull();
+    expect(component.expandedId()).toBe(createdRow.id);
+    expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it('saveDraft on failure shows an error banner and keeps the editor open', () => {
+    list.mockReturnValue(of([v3Active()]));
+    create.mockReturnValue(throwError(() => ({ error: { error: 'system prompt is required' } })));
+    fixture.detectChanges();
+    component.openEditor(v3Active());
+
+    component.saveDraft();
+
+    expect(component.saving()).toBe(false);
+    expect(component.editorSourceId()).toBe(v3Active().id);
+    expect(component.saveError()).toBe('system prompt is required');
+  });
+
+  it('saveDraft is a no-op when canSave is false (blank fields)', () => {
+    list.mockReturnValue(of([v3Active()]));
+    fixture.detectChanges();
+    component.openEditor(v3Active());
+    component.editorVersion.set('');
+
+    component.saveDraft();
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('closeEditor wipes the buffer and the save error', () => {
+    list.mockReturnValue(of([v3Active()]));
+    fixture.detectChanges();
+    component.openEditor(v3Active());
+    component.editorVersion.set('v4');
+    component.editorNotes.set('note');
+
+    component.closeEditor();
+
+    expect(component.editorSourceId()).toBeNull();
+    expect(component.editorVersion()).toBe('');
+    expect(component.editorNotes()).toBe('');
+    expect(component.saveError()).toBeNull();
+  });
+
+  it('toggle on the editor card closes the editor too (UX consistency)', () => {
+    list.mockReturnValue(of([v3Active()]));
+    fixture.detectChanges();
+    component.toggle(v3Active().id); // expand
+    component.openEditor(v3Active());
+
+    component.toggle(v3Active().id); // collapse
+
+    expect(component.isExpanded(v3Active().id)).toBe(false);
+    expect(component.editorSourceId()).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------- lineDiff helper
+
+  it('lineDiff tags identical strings as fully unchanged', () => {
+    const result = lineDiff('line A\nline B\nline C', 'line A\nline B\nline C');
+    expect(result.every((l) => l.kind === 'unchanged')).toBe(true);
+    expect(result.length).toBe(3);
+  });
+
+  it('lineDiff detects pure additions and removals', () => {
+    const added = lineDiff('A\nB', 'A\nB\nC');
+    expect(added[2]).toEqual({ kind: 'added', line: 'C' });
+
+    const removed = lineDiff('A\nB\nC', 'A\nB');
+    expect(removed[2]).toEqual({ kind: 'removed', line: 'C' });
+  });
+
+  it('lineDiff handles a mixed change (one line replaced) as one remove plus one add', () => {
+    const result = lineDiff('A\nB\nC', 'A\nX\nC');
+    expect(result[0]).toEqual({ kind: 'unchanged', line: 'A' });
+    expect(result[result.length - 1]).toEqual({ kind: 'unchanged', line: 'C' });
+    // The two middle entries are one removed and one added in some order — both must be present.
+    const middle = result.slice(1, -1);
+    expect(middle.some((l) => l.kind === 'removed' && l.line === 'B')).toBe(true);
+    expect(middle.some((l) => l.kind === 'added' && l.line === 'X')).toBe(true);
   });
 
   // ---------------------------------------------------------------------- helpers

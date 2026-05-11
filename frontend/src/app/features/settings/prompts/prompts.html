@@ -76,28 +76,138 @@
 
           @if (isExpanded(p.id)) {
             <div class="card-body" [attr.id]="'prompt-body-' + p.id">
-              <section class="prompt-block">
-                <header>
-                  <span>{{ 'settings.promptsPage.systemPrompt' | translate }}</span>
-                </header>
-                <pre>{{ p.systemPrompt }}</pre>
-              </section>
+              <!-- Editor inline pour cette source, masque le readonly tant qu'il est ouvert -->
+              @if (editorSourceId() === p.id) {
+                <div class="editor">
+                  <div class="editor-meta">
+                    <span class="editor-hint">{{
+                      'settings.promptsPage.editor.basedOn' | translate: { version: p.version }
+                    }}</span>
+                  </div>
 
-              @if (!p.isActive) {
+                  <label class="editor-field">
+                    <span class="field-label">{{
+                      'settings.promptsPage.editor.versionLabel' | translate
+                    }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      [ngModel]="editorVersion()"
+                      (ngModelChange)="editorVersion.set($event)"
+                      [placeholder]="'settings.promptsPage.editor.versionPlaceholder' | translate"
+                      [disabled]="saving()"
+                      autocomplete="off"
+                      spellcheck="false"
+                    />
+                  </label>
+
+                  <label class="editor-field">
+                    <span class="field-label">{{
+                      'settings.promptsPage.editor.notesLabel' | translate
+                    }}</span>
+                    <input
+                      type="text"
+                      class="field-input"
+                      [ngModel]="editorNotes()"
+                      (ngModelChange)="editorNotes.set($event)"
+                      [placeholder]="'settings.promptsPage.editor.notesPlaceholder' | translate"
+                      [disabled]="saving()"
+                    />
+                  </label>
+
+                  <label class="editor-field">
+                    <span class="field-label">{{
+                      'settings.promptsPage.editor.systemPromptLabel' | translate
+                    }}</span>
+                    <textarea
+                      class="field-textarea"
+                      [ngModel]="editorSystemPrompt()"
+                      (ngModelChange)="editorSystemPrompt.set($event)"
+                      [disabled]="saving()"
+                      rows="14"
+                      spellcheck="false"
+                    ></textarea>
+                  </label>
+
+                  <section class="prompt-block diff-block">
+                    <header>
+                      <span>{{ 'settings.promptsPage.editor.diffLabel' | translate }}</span>
+                      @if (!hasEditorChanges()) {
+                        <span class="diff-hint">{{
+                          'settings.promptsPage.editor.diffEmpty' | translate
+                        }}</span>
+                      }
+                    </header>
+                    <pre class="diff-body">@for (l of diff(); track $index) {<span
+                      class="diff-line"
+                      [ngClass]="{
+                        'diff-added': l.kind === 'added',
+                        'diff-removed': l.kind === 'removed',
+                        'diff-unchanged': l.kind === 'unchanged'
+                      }"
+                    >{{ l.kind === 'added' ? '+ ' : l.kind === 'removed' ? '- ' : '  ' }}{{ l.line }}
+</span>}</pre>
+                  </section>
+
+                  @if (saveError(); as e) {
+                    <div class="error-banner inline">
+                      <mat-icon>error_outline</mat-icon>
+                      {{ e }}
+                    </div>
+                  }
+
+                  <div class="card-actions">
+                    <button
+                      type="button"
+                      class="btn-secondary"
+                      (click)="closeEditor()"
+                      [disabled]="saving()"
+                    >
+                      {{ 'settings.promptsPage.editor.cancel' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-primary"
+                      (click)="saveDraft()"
+                      [disabled]="!canSave()"
+                    >
+                      @if (saving()) {
+                        <mat-spinner diameter="14"></mat-spinner>
+                        {{ 'settings.promptsPage.editor.saving' | translate }}
+                      } @else {
+                        {{ 'settings.promptsPage.editor.save' | translate }}
+                      }
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <section class="prompt-block">
+                  <header>
+                    <span>{{ 'settings.promptsPage.systemPrompt' | translate }}</span>
+                  </header>
+                  <pre>{{ p.systemPrompt }}</pre>
+                </section>
+
                 <div class="card-actions">
-                  <button
-                    type="button"
-                    class="btn-primary"
-                    (click)="activate(p)"
-                    [disabled]="isActivating(p.id)"
-                  >
-                    @if (isActivating(p.id)) {
-                      <mat-spinner diameter="14"></mat-spinner>
-                      {{ 'settings.promptsPage.activating' | translate }}
-                    } @else {
-                      {{ 'settings.promptsPage.activate' | translate }}
-                    }
+                  <button type="button" class="btn-secondary" (click)="openEditor(p)">
+                    <mat-icon>edit</mat-icon>
+                    {{ 'settings.promptsPage.editor.openButton' | translate }}
                   </button>
+                  @if (!p.isActive) {
+                    <button
+                      type="button"
+                      class="btn-primary"
+                      (click)="activate(p)"
+                      [disabled]="isActivating(p.id)"
+                    >
+                      @if (isActivating(p.id)) {
+                        <mat-spinner diameter="14"></mat-spinner>
+                        {{ 'settings.promptsPage.activating' | translate }}
+                      } @else {
+                        {{ 'settings.promptsPage.activate' | translate }}
+                      }
+                    </button>
+                  }
                 </div>
               }
             </div>

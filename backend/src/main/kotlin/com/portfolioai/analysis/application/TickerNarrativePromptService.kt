@@ -1,6 +1,7 @@
 package com.portfolioai.analysis.application
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.portfolioai.analysis.application.dto.CreatePromptInput
 import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.analysis.infrastructure.persistence.PromptTemplateRepository
 import java.time.Duration
@@ -84,6 +85,52 @@ class TickerNarrativePromptService(private val repository: PromptTemplateReposit
   fun findById(id: UUID): PromptTemplate? = repository.findById(id).orElse(null)
 
   /**
+   * Creates a new prompt version (Phase 3 PR4). Always lands with `is_active = false` — the caller
+   * activates separately via [activate] so the create + activate split lets the user save a draft
+   * against a stable baseline without going live. Optional fields are coerced from blank strings to
+   * null at the boundary so the DB never carries `""` (which would mean « set but empty » and fool
+   * the UI's null-check on optional fields).
+   *
+   * Validation lives here rather than in `@RequestBody @Valid` annotations because the rules are
+   * trivial and project convention favours `require()` failures mapped to 400 by
+   * [com.portfolioai.shared.GlobalExceptionHandler].
+   */
+  @Transactional
+  fun create(input: CreatePromptInput): PromptTemplate {
+    val name = input.name.trim()
+    val version = input.version.trim()
+    val systemPrompt = input.systemPrompt
+    require(name.isNotBlank()) { "name is required" }
+    require(name.length <= MAX_NAME_LENGTH) { "name exceeds $MAX_NAME_LENGTH characters" }
+    require(version.isNotBlank()) { "version is required" }
+    require(version.length <= MAX_VERSION_LENGTH) {
+      "version exceeds $MAX_VERSION_LENGTH characters"
+    }
+    require(systemPrompt.isNotBlank()) { "system prompt is required" }
+    require(systemPrompt.length <= MAX_SYSTEM_PROMPT_LENGTH) {
+      "system prompt exceeds $MAX_SYSTEM_PROMPT_LENGTH characters"
+    }
+    val row =
+      PromptTemplate(
+        name = name,
+        version = version,
+        systemPrompt = systemPrompt,
+        userTemplate = input.userTemplate?.takeIf { it.isNotBlank() },
+        targetModel = input.targetModel?.takeIf { it.isNotBlank() },
+        isActive = false,
+        notes = input.notes?.takeIf { it.isNotBlank() },
+      )
+    val saved = repository.save(row)
+    log.info(
+      "Created prompt_template {} name={} version={} (inactive, awaiting explicit activate)",
+      saved.id,
+      saved.name,
+      saved.version,
+    )
+    return saved
+  }
+
+  /**
    * Activates [id] — flips the currently active row of the same family to `is_active = false` (with
    * `deprecated_at = now()`), then sets the target row to `is_active = true` (with `activated_at =
    * now()`). Idempotent : activating an already-active row is a no-op.
@@ -155,6 +202,16 @@ class TickerNarrativePromptService(private val repository: PromptTemplateReposit
 
   companion object {
     const val NARRATIVE_FAMILY = "narrative-default"
+
+    // Defensive validation bounds. The DB schema (Flyway V8) caps `name` at VARCHAR(100) and
+    // `version` at VARCHAR(50) so a longer input would fail at the JPA layer anyway — surfacing a
+    // clean 400 from the service is friendlier than letting the constraint violation bubble. The
+    // system prompt is TEXT (unbounded SQL-side), but 10_000 chars is well beyond what a sane
+    // narrative prompt ever needs (today's seed is ~1200 chars) ; anything bigger is almost
+    // certainly a paste accident from the user, reject early.
+    const val MAX_NAME_LENGTH = 100
+    const val MAX_VERSION_LENGTH = 50
+    const val MAX_SYSTEM_PROMPT_LENGTH = 10_000
 
     // Fixed sentinel UUID for the fallback row — never persisted, lets the persister detect it
     // and store null on the snapshot's `prompt_template_id` rather than inserting a row that

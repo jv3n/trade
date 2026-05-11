@@ -31,8 +31,23 @@ export interface PromptTemplate {
  * the row unchanged). A non-existent id surfaces as a 404 — the optimistic UI rolls back the
  * local state in that case.
  */
+/**
+ * Body of `POST /api/prompts`. Mirror of the backend `CreatePromptInput` DTO. The created row
+ * always lands `isActive = false` server-side ; chaining create + activate is a UX choice on the
+ * frontend, not an API coupling.
+ */
+export interface CreatePromptInput {
+  name: string;
+  version: string;
+  systemPrompt: string;
+  userTemplate?: string | null;
+  targetModel?: string | null;
+  notes?: string | null;
+}
+
 export abstract class PromptRepository {
   abstract list(name?: string): Observable<PromptTemplate[]>;
   abstract get(id: string): Observable<PromptTemplate>;
   abstract activate(id: string): Observable<PromptTemplate>;
+  abstract create(input: CreatePromptInput): Observable<PromptTemplate>;
 }

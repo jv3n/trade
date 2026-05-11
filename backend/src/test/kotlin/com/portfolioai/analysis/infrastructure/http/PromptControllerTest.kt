@@ -1,13 +1,17 @@
 package com.portfolioai.analysis.infrastructure.http
 
 import com.portfolioai.analysis.application.TickerNarrativePromptService
+import com.portfolioai.analysis.application.dto.CreatePromptInput
 import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.shared.GlobalExceptionHandler
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
@@ -128,6 +132,81 @@ class PromptControllerTest {
       .perform(post("/api/prompts/$unknown/activate").accept(MediaType.APPLICATION_JSON))
       .andExpect(status().isNotFound)
       .andExpect(jsonPath("$.error").exists())
+  }
+
+  // ---------------------------------------------------------------------- POST /api/prompts (PR4)
+
+  @Test
+  fun `POST creates a new version and returns 201 with the inactive DTO`() {
+    val createdId = UUID.fromString("33333333-4444-5555-6666-777777777777")
+    val captor = argumentCaptor<CreatePromptInput>()
+    given(service.create(any())).willReturn(row(id = createdId, version = "v3", isActive = false))
+
+    mvc
+      .perform(
+        post("/api/prompts")
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .content(
+            """
+            {
+              "name": "narrative-default",
+              "version": "v3-bullish-fix",
+              "systemPrompt": "Body of the new version",
+              "notes": "Fixes the BUY/SELL leak"
+            }
+            """
+              .trimIndent()
+          )
+      )
+      .andExpect(status().isCreated)
+      .andExpect(jsonPath("$.id").value(createdId.toString()))
+      .andExpect(jsonPath("$.version").value("v3"))
+      // Pin that the response carries `isActive = false` — the page renders the « Activate »
+      // button based on this, and an accidental flip to true here would mislead the user.
+      .andExpect(jsonPath("$.isActive").value(false))
+
+    verify(service).create(captor.capture())
+    val forwarded = captor.firstValue
+    assertEqualsInput(
+      "narrative-default",
+      "v3-bullish-fix",
+      "Body of the new version",
+      "Fixes the BUY/SELL leak",
+      forwarded,
+    )
+  }
+
+  @Test
+  fun `POST returns 400 when the service rejects the input`() {
+    given(service.create(any())).willThrow(IllegalArgumentException("system prompt is required"))
+
+    mvc
+      .perform(
+        post("/api/prompts")
+          .contentType(MediaType.APPLICATION_JSON)
+          .accept(MediaType.APPLICATION_JSON)
+          .content("""{"name":"narrative-default","version":"v3","systemPrompt":"   "}""")
+      )
+      .andExpect(status().isBadRequest)
+      .andExpect(jsonPath("$.error").exists())
+  }
+
+  private fun assertEqualsInput(
+    name: String,
+    version: String,
+    systemPrompt: String,
+    notes: String?,
+    actual: CreatePromptInput,
+  ) {
+    assert(actual.name == name) { "name mismatch — expected $name, got ${actual.name}" }
+    assert(actual.version == version) {
+      "version mismatch — expected $version, got ${actual.version}"
+    }
+    assert(actual.systemPrompt == systemPrompt) {
+      "systemPrompt mismatch — expected $systemPrompt, got ${actual.systemPrompt}"
+    }
+    assert(actual.notes == notes) { "notes mismatch — expected $notes, got ${actual.notes}" }
   }
 
   // ---------------------------------------------------------------------- helpers
