@@ -1,7 +1,9 @@
 package com.portfolioai.analysis.infrastructure.http
 
+import com.portfolioai.analysis.application.PromptScoreService
 import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.dto.CreatePromptInput
+import com.portfolioai.analysis.application.dto.PromptStatsDto
 import com.portfolioai.analysis.application.dto.PromptTemplateDto
 import com.portfolioai.analysis.application.dto.toDto
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -45,7 +47,10 @@ import org.springframework.web.bind.annotation.RestController
 )
 @RestController
 @RequestMapping("/api/prompts")
-class PromptController(private val service: TickerNarrativePromptService) {
+class PromptController(
+  private val service: TickerNarrativePromptService,
+  private val scoreService: PromptScoreService,
+) {
 
   @GetMapping
   fun list(
@@ -63,4 +68,12 @@ class PromptController(private val service: TickerNarrativePromptService) {
   @ResponseStatus(HttpStatus.CREATED)
   fun create(@RequestBody input: CreatePromptInput): PromptTemplateDto =
     service.create(input).toDto()
+
+  /**
+   * Aggregated scoring stats for the prompt — Phase 3 PR6. Returns an empty-shape DTO (zeros +
+   * empty `daily`) when no `prompt_score` row exists yet rather than 404, so the page can render an
+   * empty state inline without juggling a separate error path.
+   */
+  @GetMapping("/{id}/stats")
+  fun stats(@PathVariable id: UUID): PromptStatsDto = scoreService.getStats(id)
 }

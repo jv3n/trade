@@ -1,10 +1,15 @@
 package com.portfolioai.analysis.infrastructure.http
 
+import com.portfolioai.analysis.application.PromptScoreService
 import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.dto.CreatePromptInput
+import com.portfolioai.analysis.application.dto.DailyBucket
+import com.portfolioai.analysis.application.dto.PromptStatsDto
+import com.portfolioai.analysis.application.dto.ThumbsDistribution
 import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.shared.GlobalExceptionHandler
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
@@ -47,6 +52,7 @@ class PromptControllerTest {
   @Autowired private lateinit var mvc: MockMvc
 
   @MockitoBean private lateinit var service: TickerNarrativePromptService
+  @MockitoBean private lateinit var scoreService: PromptScoreService
 
   // ---------------------------------------------------------------------- GET /api/prompts
 
@@ -207,6 +213,75 @@ class PromptControllerTest {
       "systemPrompt mismatch — expected $systemPrompt, got ${actual.systemPrompt}"
     }
     assert(actual.notes == notes) { "notes mismatch — expected $notes, got ${actual.notes}" }
+  }
+
+  // ------------------------------------------------------------ GET /api/prompts/{id}/stats (PR6)
+
+  @Test
+  fun `GET stats returns the aggregated DTO with totals, percentiles, rates and thumbs`() {
+    val id = UUID.fromString("44444444-4444-4444-4444-444444444444")
+    given(scoreService.getStats(eq(id)))
+      .willReturn(
+        PromptStatsDto(
+          promptTemplateId = id,
+          totalRuns = 17,
+          latencyP50Ms = 4_200,
+          latencyP95Ms = 12_300,
+          retryRate = 0.12,
+          parseFailedRate = 0.06,
+          validatorFailedRate = 0.18,
+          thumbs = ThumbsDistribution(up = 8, down = 2, neutral = 7),
+          daily =
+            listOf(
+              DailyBucket(LocalDate.parse("2026-05-10"), 5, 3_900, 3, 0),
+              DailyBucket(LocalDate.parse("2026-05-09"), 12, 4_300, 5, 2),
+            ),
+        )
+      )
+
+    mvc
+      .perform(get("/api/prompts/$id/stats").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.promptTemplateId").value(id.toString()))
+      .andExpect(jsonPath("$.totalRuns").value(17))
+      .andExpect(jsonPath("$.latencyP50Ms").value(4_200))
+      .andExpect(jsonPath("$.latencyP95Ms").value(12_300))
+      .andExpect(jsonPath("$.retryRate").value(0.12))
+      .andExpect(jsonPath("$.thumbs.up").value(8))
+      .andExpect(jsonPath("$.thumbs.down").value(2))
+      .andExpect(jsonPath("$.thumbs.neutral").value(7))
+      .andExpect(jsonPath("$.daily.length()").value(2))
+      .andExpect(jsonPath("$.daily[0].day").value("2026-05-10"))
+      .andExpect(jsonPath("$.daily[0].runs").value(5))
+  }
+
+  @Test
+  fun `GET stats returns 200 with zero-shape DTO when the prompt has no runs yet`() {
+    // No 404 on missing data : the page renders an empty state inline rather than juggling a
+    // separate error path. Pin the contract here so a refactor that decides to 404 instead
+    // breaks CI.
+    val id = UUID.fromString("55555555-5555-5555-5555-555555555555")
+    given(scoreService.getStats(eq(id)))
+      .willReturn(
+        PromptStatsDto(
+          promptTemplateId = id,
+          totalRuns = 0,
+          latencyP50Ms = null,
+          latencyP95Ms = null,
+          retryRate = 0.0,
+          parseFailedRate = 0.0,
+          validatorFailedRate = 0.0,
+          thumbs = ThumbsDistribution(up = 0, down = 0, neutral = 0),
+          daily = emptyList(),
+        )
+      )
+
+    mvc
+      .perform(get("/api/prompts/$id/stats").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.totalRuns").value(0))
+      .andExpect(jsonPath("$.latencyP50Ms").isEmpty)
+      .andExpect(jsonPath("$.daily.length()").value(0))
   }
 
   // ---------------------------------------------------------------------- helpers

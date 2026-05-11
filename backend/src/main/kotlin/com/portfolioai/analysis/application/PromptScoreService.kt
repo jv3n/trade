@@ -1,7 +1,9 @@
 package com.portfolioai.analysis.application
 
+import com.portfolioai.analysis.application.dto.PromptStatsDto
 import com.portfolioai.analysis.domain.PromptScore
 import com.portfolioai.analysis.infrastructure.persistence.PromptScoreRepository
+import com.portfolioai.analysis.infrastructure.persistence.PromptScoreStatsQuery
 import com.portfolioai.analysis.infrastructure.persistence.TickerNarrativeSnapshotRepository
 import java.util.UUID
 import org.slf4j.LoggerFactory
@@ -21,9 +23,17 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class PromptScoreService(
   private val repository: PromptScoreRepository,
+  private val statsQuery: PromptScoreStatsQuery,
   private val snapshotRepository: TickerNarrativeSnapshotRepository,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
+
+  /**
+   * Returns aggregated scoring stats for [promptTemplateId] (Phase 3 PR6). Empty when no
+   * `prompt_score` row exists yet — the page renders an empty state pointing the user at the «
+   * waiting for next narrative run » hint.
+   */
+  fun getStats(promptTemplateId: UUID): PromptStatsDto = statsQuery.aggregate(promptTemplateId)
 
   /**
    * Sets the `user_thumbs` value for the score row tied to [snapshotId]. The DB CHECK constraint

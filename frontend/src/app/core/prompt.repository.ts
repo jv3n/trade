@@ -32,6 +32,32 @@ export interface PromptTemplate {
  * local state in that case.
  */
 /**
+ * Aggregated scoring stats for one prompt — Phase 3 PR6 backing the `/settings/prompts/{id}/stats`
+ * page. Empty contract : `totalRuns: 0` + null percentiles + empty `daily` means no `prompt_score`
+ * row exists yet (the page renders an empty state pointing at the next narrative run).
+ */
+export interface PromptStats {
+  promptTemplateId: string;
+  totalRuns: number;
+  latencyP50Ms: number | null;
+  latencyP95Ms: number | null;
+  retryRate: number;
+  parseFailedRate: number;
+  validatorFailedRate: number;
+  thumbs: { up: number; down: number; neutral: number };
+  daily: DailyBucket[];
+}
+
+/** One day of aggregates — used by the page to render the sparklines. */
+export interface DailyBucket {
+  day: string; // `YYYY-MM-DD`
+  runs: number;
+  latencyP50Ms: number | null;
+  thumbsUp: number;
+  thumbsDown: number;
+}
+
+/**
  * Body of `POST /api/prompts`. Mirror of the backend `CreatePromptInput` DTO. The created row
  * always lands `isActive = false` server-side ; chaining create + activate is a UX choice on the
  * frontend, not an API coupling.
@@ -50,4 +76,5 @@ export abstract class PromptRepository {
   abstract get(id: string): Observable<PromptTemplate>;
   abstract activate(id: string): Observable<PromptTemplate>;
   abstract create(input: CreatePromptInput): Observable<PromptTemplate>;
+  abstract getStats(id: string): Observable<PromptStats>;
 }

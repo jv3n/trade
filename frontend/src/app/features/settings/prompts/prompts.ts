@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -28,7 +29,15 @@ import { PromptRepository, PromptTemplate } from '../../../core/prompt.repositor
  */
 @Component({
   selector: 'app-prompts',
-  imports: [DatePipe, NgClass, FormsModule, MatProgressSpinnerModule, MatIconModule, TranslatePipe],
+  imports: [
+    DatePipe,
+    NgClass,
+    FormsModule,
+    RouterLink,
+    MatProgressSpinnerModule,
+    MatIconModule,
+    TranslatePipe,
+  ],
   templateUrl: './prompts.html',
   styleUrl: './prompts.scss',
 })

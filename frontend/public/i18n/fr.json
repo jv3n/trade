@@ -383,6 +383,41 @@
       "systemPrompt": "Prompt système",
       "activate": "Activer cette version",
       "activating": "Activation…",
+      "viewStats": "Voir les stats",
+      "stats": {
+        "title": "Stats du prompt",
+        "intro": "Métriques agrégées sur tous les runs narratifs persistés pour cette version.",
+        "loading": "Chargement des stats…",
+        "empty": "Aucun run pour cette version pour l'instant. Lance un narratif sur un dossier ticker pour commencer à collecter des métriques.",
+        "back": "Retour à la liste",
+        "kpi": {
+          "totalRuns": "Total runs",
+          "latencyP50": "Latence p50",
+          "latencyP95": "Latence p95",
+          "retryRate": "Taux de retry",
+          "parseFailedRate": "Échecs parseur",
+          "validatorFailedRate": "Échecs validateur",
+          "thumbsBalance": "Balance 👍/👎"
+        },
+        "thumbs": {
+          "title": "Distribution des votes",
+          "neutral": "Neutres"
+        },
+        "latency": {
+          "title": "Latence p50 sur 90 jours",
+          "notEnough": "Pas assez de points pour tracer une courbe (au moins 2 jours avec runs nécessaires)."
+        },
+        "daily": {
+          "title": "Par jour",
+          "day": "Jour",
+          "runs": "Runs",
+          "latencyP50": "Latence p50"
+        },
+        "errors": {
+          "load": "Impossible de charger les stats. Réessaye.",
+          "missingId": "Identifiant de prompt manquant dans l'URL."
+        }
+      },
       "editor": {
         "openButton": "Modifier comme nouvelle version",
         "basedOn": "Édition basée sur la version {{version}}",
