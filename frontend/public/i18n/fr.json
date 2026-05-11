@@ -363,6 +363,24 @@
     "navLabel": "Configuration",
     "promptPreview": "Aperçu du prompt",
     "configuration": "Configuration runtime",
+    "prompts": "Prompts narratifs",
+    "promptsPage": {
+      "intro": "Gestion des versions du prompt système qui pilote le pipeline narratif. La version active est utilisée par chaque génération ; activer une autre version remplace la précédente sans redémarrage.",
+      "loading": "Chargement des prompts…",
+      "empty": "Aucun prompt en base. Vérifiez que la migration Flyway V8 a bien tourné (seed du prompt v2).",
+      "activeChip": "Actif",
+      "inactiveChip": "Inactif",
+      "created": "Créé",
+      "activated": "Activé",
+      "deprecated": "Déprécié",
+      "systemPrompt": "Prompt système",
+      "activate": "Activer cette version",
+      "activating": "Activation…",
+      "errors": {
+        "loadList": "Impossible de charger la liste des prompts.",
+        "activate": "Impossible d'activer la version {{version}}. Réessayez."
+      }
+    },
     "previewPage": {
       "intro": "Saisissez un ticker pour visualiser le prompt complet (system + user) du pipeline narratif qui serait envoyé au LLM. Aucun appel n'est effectué.",
       "symbolPlaceholder": "Ticker (ex. AAPL, MSFT…)",

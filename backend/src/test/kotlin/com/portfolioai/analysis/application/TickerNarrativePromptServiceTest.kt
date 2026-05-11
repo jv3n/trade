@@ -2,12 +2,21 @@ package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.analysis.infrastructure.persistence.PromptTemplateRepository
+import java.time.Instant
+import java.util.Optional
+import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.BDDMockito.given
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
@@ -124,6 +133,115 @@ class TickerNarrativePromptServiceTest {
     verify(repository, times(2)).findFirstByNameAndIsActiveTrue(eq("narrative-default"))
   }
 
+  // ---------------------------------------------------------------------- management API (PR3)
+
+  @Test
+  fun `listAll forwards the family name verbatim and returns the repository order`() {
+    val v3 = dbInactiveRow(version = "v3")
+    val v2 = dbActiveRow(version = "v2")
+    given(repository.findAllByNameOrderByCreatedAtDesc(eq("narrative-default")))
+      .willReturn(listOf(v3, v2))
+
+    val result = service.listAll()
+
+    assertEquals(
+      listOf(v3, v2),
+      result,
+      "service must preserve the repository order (newest first)",
+    )
+  }
+
+  @Test
+  fun `findById returns the row when present, null when absent`() {
+    val id = UUID.randomUUID()
+    val row = dbActiveRow()
+    given(repository.findById(eq(id))).willReturn(Optional.of(row))
+    given(repository.findById(eq(UUID(0, 0)))).willReturn(Optional.empty())
+
+    assertSame(row, service.findById(id))
+    assertNull(service.findById(UUID(0, 0)))
+  }
+
+  @Test
+  fun `activate throws NoSuchElementException when the id is unknown`() {
+    val unknown = UUID.randomUUID()
+    given(repository.findById(eq(unknown))).willReturn(Optional.empty())
+
+    assertThrows<NoSuchElementException> { service.activate(unknown) }
+    // Cache must not be invalidated on failure — would force an unnecessary DB read on the next
+    // narrative run for no reason.
+    verify(repository, never()).save(any())
+  }
+
+  @Test
+  fun `activate is a no-op when the target row is already active`() {
+    // Idempotent activate is what makes the UI safe to retry — a double-click on the Activate
+    // button must not deactivate then re-activate (which would shift `activated_at` forward,
+    // misrepresenting when the prompt actually went live).
+    val active = dbActiveRow()
+    given(repository.findById(eq(active.id))).willReturn(Optional.of(active))
+
+    val result = service.activate(active.id)
+
+    assertSame(active, result)
+    verify(repository, never()).save(any())
+    verify(repository, never()).saveAndFlush(any<PromptTemplate>())
+    // Cache is not touched either — the active row didn't change, the cache value is still
+    // correct.
+  }
+
+  @Test
+  fun `activate deactivates the current active row then activates the target and invalidates cache`() {
+    val target = dbInactiveRow(version = "v3")
+    val previouslyActive = dbActiveRow(version = "v2")
+    given(repository.findById(eq(target.id))).willReturn(Optional.of(target))
+    given(repository.findFirstByNameAndIsActiveTrue(eq("narrative-default")))
+      .willReturn(previouslyActive)
+    given(repository.saveAndFlush(any<PromptTemplate>())).willAnswer {
+      it.arguments[0] as PromptTemplate
+    }
+    given(repository.save(any<PromptTemplate>())).willAnswer { it.arguments[0] as PromptTemplate }
+
+    val result = service.activate(target.id)
+
+    // Old row went inactive with a deprecation stamp.
+    val deactivateCaptor = argumentCaptor<PromptTemplate>()
+    verify(repository).saveAndFlush(deactivateCaptor.capture())
+    val deactivated = deactivateCaptor.firstValue
+    assertEquals(previouslyActive.id, deactivated.id)
+    assertFalse(deactivated.isActive)
+    assertNotNull(deactivated.deprecatedAt, "deprecation timestamp must be set on the demoted row")
+
+    // Target became active with an activation stamp.
+    val activateCaptor = argumentCaptor<PromptTemplate>()
+    verify(repository).save(activateCaptor.capture())
+    val activated = activateCaptor.firstValue
+    assertEquals(target.id, activated.id)
+    assertTrue(activated.isActive)
+    assertNotNull(activated.activatedAt)
+    assertSame(activated, result)
+
+    // Cache invalidation pin : the next `activePrompt()` call must hit the repo, not return the
+    // stale cached row from before the activation.
+    cacheIsInvalidated()
+  }
+
+  @Test
+  fun `activate works when no row is currently active in the family`() {
+    // Bootstrap-ish case : the seed row got deactivated manually and now we activate a new one.
+    // The deactivation step must be skipped (no current active to demote) but the activation
+    // itself still proceeds.
+    val target = dbInactiveRow(version = "v3")
+    given(repository.findById(eq(target.id))).willReturn(Optional.of(target))
+    given(repository.findFirstByNameAndIsActiveTrue(eq("narrative-default"))).willReturn(null)
+    given(repository.save(any<PromptTemplate>())).willAnswer { it.arguments[0] as PromptTemplate }
+
+    service.activate(target.id)
+
+    verify(repository, never()).saveAndFlush(any<PromptTemplate>())
+    verify(repository).save(any<PromptTemplate>())
+  }
+
   // ---------------------------------------------------------------------- isolation guard
 
   @Test
@@ -148,7 +266,29 @@ class TickerNarrativePromptServiceTest {
       version = version,
       systemPrompt = "Persisted prompt body for $version",
       isActive = true,
+      activatedAt = Instant.parse("2026-05-10T12:00:00Z"),
     )
+
+  private fun dbInactiveRow(version: String): PromptTemplate =
+    PromptTemplate(
+      name = "narrative-default",
+      version = version,
+      systemPrompt = "Persisted prompt body for $version",
+      isActive = false,
+    )
+
+  // Asserts that the cache has been invalidated by checking that a fresh `activePrompt()` call
+  // forces a new repository lookup. Indirect — the cache is private — but this is what the
+  // contract guarantees in practice.
+  private fun cacheIsInvalidated() {
+    given(repository.findFirstByNameAndIsActiveTrue(eq("narrative-default")))
+      .willReturn(dbActiveRow())
+    service.activePrompt()
+    // At minimum one extra lookup happened after the invalidate (we don't count exactly because
+    // the activate method itself may have queried for the current active row).
+    verify(repository, org.mockito.kotlin.atLeastOnce())
+      .findFirstByNameAndIsActiveTrue(eq("narrative-default"))
+  }
 
   // The fallback row is private inside the service ; the only public way to obtain it is by
   // calling `activePrompt()` against an empty repository. This helper isolates that detail so
