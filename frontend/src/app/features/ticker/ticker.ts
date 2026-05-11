@@ -39,6 +39,7 @@ import { Annotation, AnnotationRepository } from '../../core/annotation.reposito
 import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
 import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
 import { JobEvent, JobPhase, JobStreamService } from '../../core/job-stream.service';
+import { NarrativeFeedbackRepository } from '../../core/narrative-feedback.repository';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
@@ -301,6 +302,7 @@ export class TickerPage implements OnInit, OnDestroy {
   private readonly analystRepository = inject(AnalystRepository);
   private readonly earningsRepository = inject(EarningsRepository);
   private readonly jobStreamService = inject(JobStreamService);
+  private readonly narrativeFeedbackRepository = inject(NarrativeFeedbackRepository);
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   private readonly destroyRef = inject(DestroyRef);
@@ -510,6 +512,25 @@ export class TickerPage implements OnInit, OnDestroy {
     return Math.floor((this.narrativePhaseAnchorMs + sinceAnchor) / 1000);
   });
   private narrativeStreamSub?: Subscription;
+
+  /**
+   * User 👍/👎 feedback on the current narrative (Phase 3 PR5). Local state — read from the
+   * server isn't exposed yet (would need a join on `prompt_score` from `getLatestNarrative`),
+   * so the chip starts neutral on every page load and reflects what the user clicked **this
+   * session**. The server persists every flip, the dossier just doesn't display it back after
+   * a navigation away.
+   *
+   * Reset to 0 whenever the snapshot id changes (regenerate, new ticker) so we never inherit
+   * the previous narrative's thumbs.
+   */
+  narrativeThumbs = signal<-1 | 0 | 1>(0);
+  /** Non-null while the PATCH is in flight — disables further clicks to avoid a double-write. */
+  narrativeThumbsSaving = signal(false);
+  /**
+   * Set when the last PATCH failed (network, 404 on fallback path race). Displayed inline next
+   * to the buttons ; the optimistic flip rolls back when this fires.
+   */
+  narrativeThumbsError = signal<string | null>(null);
 
   // ---- Chart geometry ----
 
@@ -2077,10 +2098,45 @@ export class TickerPage implements OnInit, OnDestroy {
 
   // ---- Narrative actions ----
 
+  /**
+   * Sets the user 👍/👎 feedback on the current narrative (Phase 3 PR5). Optimistic flip + PATCH
+   * + rollback on error. No-op when the narrative has no `promptTemplateId` (fallback prompt
+   * path — no `prompt_score` row exists so the PATCH would 404). The button visibility in the
+   * template uses the same guard, so this code path defends against a stale DOM reference more
+   * than a normal click sequence.
+   *
+   * The « toggle » semantics : clicking the same value flips back to neutral (0). Lets the user
+   * undo a misclick without a separate « clear » button. Pinned by the spec.
+   */
+  setNarrativeThumbs(target: -1 | 1): void {
+    const snap = this.narrative();
+    if (!snap || !snap.promptTemplateId || this.narrativeThumbsSaving()) return;
+    const previous = this.narrativeThumbs();
+    const next: -1 | 0 | 1 = previous === target ? 0 : target;
+
+    this.narrativeThumbsSaving.set(true);
+    this.narrativeThumbsError.set(null);
+    this.narrativeThumbs.set(next);
+
+    this.narrativeFeedbackRepository.setThumbs(snap.id, next).subscribe({
+      next: (score) => {
+        // Server confirms the persisted value — should match `next` ; if not (rare race), trust
+        // the server's answer rather than the optimistic local flip.
+        this.narrativeThumbs.set(score.userThumbs as -1 | 0 | 1);
+        this.narrativeThumbsSaving.set(false);
+      },
+      error: () => {
+        this.narrativeThumbs.set(previous);
+        this.narrativeThumbsSaving.set(false);
+        this.narrativeThumbsError.set(this.translate.instant('ticker.narrative.thumbs.errorSave'));
+      },
+    });
+  }
+
   private loadLatestNarrative(symbol: string): void {
     this.marketRepository.getLatestNarrative(symbol).subscribe({
       next: (snap) => {
-        this.narrative.set(snap);
+        this.setNarrativeAndResetFeedback(snap);
         // After surfacing whatever snapshot exists, check whether a job is currently running
         // for this symbol. If so, reattach to its SSE stream so the dossier picks up where it
         // left off — covers the navigate-away → return-to-page case during a slow narrative
@@ -2088,10 +2144,25 @@ export class TickerPage implements OnInit, OnDestroy {
         this.reattachPendingNarrative(symbol);
       },
       error: () => {
-        this.narrative.set(null);
+        this.setNarrativeAndResetFeedback(null);
         this.reattachPendingNarrative(symbol);
       },
     });
+  }
+
+  /**
+   * Single write site for [narrative] that also resets the thumbs state (Phase 3 PR5). Local
+   * `narrativeThumbs` lives on the component (not on the server-side DTO) so when the snapshot
+   * changes — initial load, regenerate done, ticker switch — we must clear the previous
+   * snapshot's vote, otherwise the chip would show e.g. 👍 inherited from the previous AAPL run
+   * onto a fresh NVDA narrative. Centralising the call here keeps the reset honest across every
+   * code path that mutates [narrative].
+   */
+  private setNarrativeAndResetFeedback(snap: TickerNarrativeSnapshot | null): void {
+    this.narrative.set(snap);
+    this.narrativeThumbs.set(0);
+    this.narrativeThumbsSaving.set(false);
+    this.narrativeThumbsError.set(null);
   }
 
   private reattachPendingNarrative(symbol: string): void {
@@ -2203,7 +2274,7 @@ export class TickerPage implements OnInit, OnDestroy {
   private fetchNarrativeAfterCompletion(symbol: string): void {
     this.marketRepository.getLatestNarrative(symbol).subscribe({
       next: (snap) => {
-        this.narrative.set(snap);
+        this.setNarrativeAndResetFeedback(snap);
         this.narrativeLoading.set(false);
       },
       error: () => {

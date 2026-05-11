@@ -5,9 +5,17 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 
 /**
- * Persistence port for `prompt_score`. PR1 ships only the table + entity ; PR2 wires the write
- * inside `TickerNarrativeRunner`, PR5 will add the thumbs update via a custom `@Modifying` query
- * keyed by `snapshot_id`, and PR6 the aggregations grouped by `prompt_template_id` for the stats
- * page. Empty interface today on purpose — the surface lands when each PR consumes it.
+ * Persistence port for `prompt_score`. PR1 ships the table + entity ; PR2 the write at the end of
+ * every narrative run via [com.portfolioai.analysis.application.PromptScoreRecorder] ; PR5 adds the
+ * thumbs lookup keyed by `snapshot_id`. PR6 will layer aggregation queries grouped by
+ * `prompt_template_id` for the stats page.
  */
-interface PromptScoreRepository : JpaRepository<PromptScore, UUID>
+interface PromptScoreRepository : JpaRepository<PromptScore, UUID> {
+  /**
+   * Returns the score row for the given narrative snapshot, or null when none exists. There is at
+   * most one row per snapshot in the normal flow ([PromptScoreRecorder] writes exactly one per
+   * run). The fallback prompt path skips the write, so a snapshot generated under it has no row —
+   * the PR5 thumbs endpoint surfaces that as a 404.
+   */
+  fun findFirstBySnapshotId(snapshotId: UUID): PromptScore?
+}

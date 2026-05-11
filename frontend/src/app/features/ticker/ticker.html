@@ -1225,6 +1225,42 @@
               <span>{{ n.modelUsed }}</span>
               <span>·</span>
               <span>{{ n.generatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+              <span>·</span>
+              <span class="narrative-prompt-version">{{
+                'ticker.narrative.promptVersion' | translate: { version: n.promptVersion }
+              }}</span>
+              @if (n.promptTemplateId) {
+                <span class="narrative-thumbs">
+                  <span class="thumbs-label">{{
+                    'ticker.narrative.thumbs.label' | translate
+                  }}</span>
+                  <button
+                    type="button"
+                    class="thumbs-btn"
+                    [class.active]="narrativeThumbs() === 1"
+                    [disabled]="narrativeThumbsSaving()"
+                    (click)="setNarrativeThumbs(1)"
+                    [attr.aria-label]="'ticker.narrative.thumbs.up' | translate"
+                    [title]="'ticker.narrative.thumbs.up' | translate"
+                  >
+                    <mat-icon>thumb_up</mat-icon>
+                  </button>
+                  <button
+                    type="button"
+                    class="thumbs-btn"
+                    [class.active]="narrativeThumbs() === -1"
+                    [disabled]="narrativeThumbsSaving()"
+                    (click)="setNarrativeThumbs(-1)"
+                    [attr.aria-label]="'ticker.narrative.thumbs.down' | translate"
+                    [title]="'ticker.narrative.thumbs.down' | translate"
+                  >
+                    <mat-icon>thumb_down</mat-icon>
+                  </button>
+                  @if (narrativeThumbsError(); as te) {
+                    <span class="thumbs-error">{{ te }}</span>
+                  }
+                </span>
+              }
             </div>
           } @else if (!narrativeLoading() && !narrativeError()) {
             <p class="empty-state narrative-empty">
