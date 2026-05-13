@@ -448,9 +448,13 @@
                 class="price-chart"
                 [class.loading]="chartLoading()"
               >
-                <!-- Y axis grid + price labels -->
+                <!-- Y axis grid + price labels. Tracked by `$index` (and not by `tick.y`) because
+                     the y pixel can collide on tiny / degenerate ranges where multiple ticks
+                     round to the same row — most visibly in unit tests where the chart geometry
+                     is collapsed. The 5 ticks are always positional (0..4), so the ordinal is
+                     the stable identity. -->
                 <g class="grid">
-                  @for (tick of geom.yTicks; track tick.y) {
+                  @for (tick of geom.yTicks; track $index) {
                     <line
                       [attr.x1]="geom.innerLeft"
                       [attr.x2]="geom.innerRight"
@@ -467,9 +471,11 @@
                   }
                 </g>
 
-                <!-- X axis date markers -->
+                <!-- X axis date markers. Tracked by `$index` for the same reason as y ticks :
+                     `Math.round((t/3) * (bars.length-1))` collapses to duplicate indices when
+                     `bars.length` is small (test fixtures), giving identical x pixels. -->
                 <g class="x-axis">
-                  @for (tick of geom.xTicks; track tick.x) {
+                  @for (tick of geom.xTicks; track $index) {
                     <text class="axis-label x-label" [attr.x]="tick.x" [attr.y]="chartHeight - 6">
                       {{ tick.label }}
                     </text>

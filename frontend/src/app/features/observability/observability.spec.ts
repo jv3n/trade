@@ -371,9 +371,14 @@ describe('ObservabilityPage', () => {
 
 // ---------------------------------------------------------------------- factories
 
+// Monotonic counter so each `observation()` call gets a unique default `snapshotId` — Angular's
+// `@for ... track obs.snapshotId` on the timeline would otherwise emit NG0955 when a test passes
+// ≥ 2 observations without explicit IDs.
+let _snapshotCounter = 0;
+
 function observation(overrides: Partial<NarrativeObservation> = {}): NarrativeObservation {
   return {
-    snapshotId: 'snap-default',
+    snapshotId: `snap-${++_snapshotCounter}`,
     symbol: 'NVDA',
     generatedAt: '2026-04-01T15:00:00Z',
     price: 100,
