@@ -55,7 +55,22 @@ dependencies {
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-kotlin { compilerOptions { freeCompilerArgs.addAll("-Xjsr305=strict") } }
+kotlin {
+  compilerOptions {
+    freeCompilerArgs.addAll(
+      "-Xjsr305=strict",
+      // Opt-in to the future Kotlin default for annotations on constructor parameters
+      // (KT-73255). Today they apply to the value parameter only ; the future default applies
+      // them to both the parameter and the generated backing property/field. Every Spring
+      // annotation we put on a constructor param (`@Qualifier`, `@Value`, `@Inject`, …) works
+      // fine on both targets, so adopting the future behavior now silences the deprecation
+      // warning fleet across the 18 affected files (`Routing*Client`, `*Service` ctor params,
+      // `@Value` injected configs) without breaking a single bean wiring. When the Kotlin
+      // version flips the default, this flag becomes a no-op and can be dropped.
+      "-Xannotation-default-target=param-property",
+    )
+  }
+}
 
 allOpen {
   annotation("jakarta.persistence.Entity")

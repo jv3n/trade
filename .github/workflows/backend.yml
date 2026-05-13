@@ -152,12 +152,20 @@ jobs:
       # than spamming — the frontend equivalent (vitest-coverage-report-action in `frontend.yml`)
       # uses its own `name` discriminator, so the two coexist without colliding. No-op on push
       # master because there's no PR to comment on.
+      #
+      # **Pinned to `@v1.7.2`** (and not the floating `@v1` major) because that tag is sticky to
+      # an older commit (`be8ba5e9`) whose `action.yml` only declares 4 inputs (`path` singular,
+      # `token`, `min-coverage-overall`, `min-coverage-changed-files`) — the modern inputs
+      # `paths` (plural), `title`, `update-comment` were added in v1.7.0 and the maintainer
+      # never moved the `v1` major tag forward. Without the explicit pin, the action errors with
+      # « ENOENT: no such file or directory, open '' » because our `paths:` value is silently
+      # dropped as an unknown input and the action falls back to an empty default.
       - name: Comment coverage on PR
         if: |
           always()
           && github.event_name == 'pull_request'
           && hashFiles('backend/build/reports/kover/report.xml') != ''
-        uses: madrapps/jacoco-report@v1
+        uses: madrapps/jacoco-report@v1.7.2
         with:
           paths: backend/build/reports/kover/report.xml
           token: ${{ secrets.GITHUB_TOKEN }}
