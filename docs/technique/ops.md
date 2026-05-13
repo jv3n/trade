@@ -14,10 +14,32 @@ Quatre workflows, chacun déclenché sur des paths différents pour ne pas relan
 
 | Workflow | Trigger | Job principal | Durée typique |
 |---|---|---|---|
-| **Backend CI** (`backend.yml`) | `push master` / `pull_request` sur `backend/**` | `./gradlew build` (compile + test + Spotless + Detekt) avec PostgreSQL en service Docker | 1-2 min |
-| **Frontend CI** (`frontend.yml`) | `push master` / `pull_request` sur `frontend/**` | `npm ci` + `npm run lint` + `npm run build` + `npm test` | 30-60 s |
+| **Backend CI** (`backend.yml`) | `push master` / `pull_request` sur `backend/**` | `./gradlew build` (compile + test + Spotless + Detekt) avec PostgreSQL en service Docker, puis Kover (couverture) + sticky PR comment | 1-2 min |
+| **Frontend CI** (`frontend.yml`) | `push master` / `pull_request` sur `frontend/**` | `npm ci` + `npm run lint` + `npm run build` + `npm run test:coverage` + sticky PR comment | 30-60 s |
 | **CodeQL** (`codeql.yml`) | `push master` / `pull_request` / weekly `cron 06:00 UTC lundi` | Matrix `java-kotlin` (build-mode `manual`) + `javascript-typescript` (build-mode `none`) | 2-3 min |
 | **Deploy docs** (`docs.yml`) | `push master` sur `docs/**` ou `mkdocs.yml` | `mkdocs gh-deploy` | <1 min |
+
+## Couverture de code
+
+Deux générateurs distincts, deux **commentaires PR « sticky »** distincts dans la conversation de la PR (édités sur chaque push, pas spammés). Aucun service externe — tout reste dans GitHub Actions.
+
+| Côté | Générateur | Format consommé | Action commentaire | Préfixe du sticky comment |
+|---|---|---|---|---|
+| Backend | `kover` (Gradle plugin, `./gradlew koverHtmlReport koverXmlReport`) | XML JaCoCo-compatible (`backend/build/reports/kover/report.xml`) | [`madrapps/jacoco-report@v1`](https://github.com/madrapps/jacoco-report) | `Backend coverage` (via `title`) |
+| Frontend | Vitest reporters `json-summary` + `json` (configurés dans `angular.json > test > configurations > coverage`) | `coverage-summary.json` + `coverage-final.json` sous `frontend/coverage/frontend/` | [`davelosert/vitest-coverage-report-action@v2`](https://github.com/davelosert/vitest-coverage-report-action) | `Frontend` (via `name`) |
+
+**Pourquoi 2 commentaires séparés et pas 1 unifié** : (a) les actions de chaque side lisent leur propre format natif (XML JaCoCo pour Kover, JSON Istanbul pour Vitest) — pas de format pivot intermédiaire à maintenir, (b) chaque workflow ne s'exécute que sur les changes pertinents (`paths:` filter), donc une PR purement docs ne kicke aucun workflow et n'a aucun comment couverture (vs un service unifié type Codecov qui devrait soit fail soft, soit reposter le même comment à chaque trigger). Trade-off accepté : 2 entrées au lieu d'une dans la timeline PR.
+
+**Permissions** : `pull-requests: write` au scope **job** (le baseline workflow-level reste `contents: read`). Les deux actions utilisent automatiquement le `GITHUB_TOKEN` déjà fourni par Actions — pas de secret à provisionner.
+
+**Conditions de déclenchement** : `if: always() && github.event_name == 'pull_request' && hashFiles(<rapport>) != ''`. Composantes :
+- `always()` — le step tourne même si un step antérieur a failed (un test rouge laisse quand même le rapport partiel utile).
+- `github.event_name == 'pull_request'` — no-op sur les pushes vers master ; il n'y a pas de PR à commenter.
+- `hashFiles(...)` — garde contre un crash dans la génération du rapport en amont (Kover/Vitest plante avant d'écrire le fichier). Sans ce guard, le step échouerait sur fichier manquant et empilerait une fausse erreur CI au-dessus de la vraie cause.
+
+**Step Summary conservé en parallèle** : chaque workflow continue d'écrire la table de totaux dans `$GITHUB_STEP_SUMMARY` (pure Node côté front, pure Python côté back). C'est ce qui s'affiche sur la page du run lui-même — utile quand on est dans Actions plutôt que dans la PR. Les deux surfaces sont indépendantes : un sticky comment qui n'est pas posté (push master, ou rapport absent) n'affecte pas le step summary.
+
+**Pas de seuil bloquant** — les deux actions sont configurées avec `min-coverage-overall: 0` côté back et aucun threshold côté front. On veut **observer la couverture évoluer dans la PR**, pas faire échouer le merge sur un drop temporaire. Si on veut un guard plus tard, c'est un changement de YAML d'une ligne par côté.
 
 ## Stratégie de cache
 

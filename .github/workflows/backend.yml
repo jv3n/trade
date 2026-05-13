@@ -28,6 +28,10 @@ jobs:
       # Required so the "Upload Detekt SARIF" step can post findings to the Code Scanning API
       # (visible in the repo's Security tab). Default GITHUB_TOKEN doesn't grant this.
       security-events: write
+      # Required so the "Comment coverage on PR" step (Kover XML → sticky PR comment via
+      # madrapps/jacoco-report) can write the coverage table to the PR conversation. No-op on
+      # push events — the action only fires when `github.event_name == 'pull_request'`.
+      pull-requests: write
 
     services:
       postgres:
@@ -141,3 +145,23 @@ jobs:
                   pct = (100 * covered / total) if total else 0.0
                   print(f'| {t} | {covered} | {total} | {pct:.1f}% |')
           PY
+
+      # Sticky PR comment with the backend coverage breakdown (overall + changed files vs base).
+      # Kover XML is JaCoCo-compatible, so `madrapps/jacoco-report` reads it natively. The action
+      # tags its comment by `title` so it edits the same comment on every push to the PR rather
+      # than spamming — the frontend equivalent (vitest-coverage-report-action in `frontend.yml`)
+      # uses its own `name` discriminator, so the two coexist without colliding. No-op on push
+      # master because there's no PR to comment on.
+      - name: Comment coverage on PR
+        if: |
+          always()
+          && github.event_name == 'pull_request'
+          && hashFiles('backend/build/reports/kover/report.xml') != ''
+        uses: madrapps/jacoco-report@v1
+        with:
+          paths: backend/build/reports/kover/report.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: Backend coverage
+          update-comment: true
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0

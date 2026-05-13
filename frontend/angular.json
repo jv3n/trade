@@ -76,7 +76,7 @@
           "configurations": {
             "coverage": {
               "coverage": true,
-              "coverageReporters": ["html", "lcov", "text-summary", "json-summary"],
+              "coverageReporters": ["html", "lcov", "text-summary", "json-summary", "json"],
               "coverageExclude": [
                 "**/*.spec.ts",
                 "**/test-helpers/**",

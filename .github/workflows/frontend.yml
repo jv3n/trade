@@ -11,9 +11,10 @@ on:
       - 'frontend/**'
       - '.github/workflows/frontend.yml'
 
-# Minimum permissions — this workflow only reads the repo to build and test. No SARIF upload,
-# no PR comments, no deploy. Declaring an explicit `contents: read` revokes every other implicit
-# scope on `GITHUB_TOKEN`, satisfying the CodeQL "missing-explicit-permissions" hint.
+# Workflow-level baseline — every job inherits `contents: read`. Jobs that need to write
+# elsewhere (PR coverage comment below) override at job scope. Declaring this explicit baseline
+# revokes every other implicit scope on `GITHUB_TOKEN`, satisfying the CodeQL
+# "missing-explicit-permissions" hint.
 permissions:
   contents: read
 
@@ -24,9 +25,11 @@ jobs:
 
     # Redondant avec le bloc workflow-level plus haut, mais Sonar / CodeQL veulent voir le scope
     # déclaré au niveau job aussi. Pas de coût (juste lecture du repo) et ça fige l'intention si
-    # un futur job est ajouté sans permissions explicites.
+    # un futur job est ajouté sans permissions explicites. `pull-requests: write` autorise le
+    # sticky comment de couverture posté sur les PRs (no-op sur push master).
     permissions:
       contents: read
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -95,3 +98,20 @@ jobs:
             console.log(`| ${label} | ${m.covered} | ${m.total} | ${m.pct.toFixed(1)}% |`);
           }
           JS
+
+      # Sticky PR comment with the frontend coverage table + per-file diff vs base. The action
+      # reads the `coverage-summary.json` we already generate (json-summary reporter wired in
+      # `angular.json > test > configurations > coverage`) and edits a single comment on every
+      # push to the PR rather than spamming. `name: Frontend` disambiguates from the sibling
+      # backend comment posted by the Kover action in `backend.yml`. No-op on `push master`
+      # because there's no PR to comment on — guarded by the `pull_request` event check.
+      - name: Comment coverage on PR
+        if: |
+          always()
+          && github.event_name == 'pull_request'
+          && hashFiles('frontend/coverage/frontend/coverage-summary.json') != ''
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          name: Frontend
+          json-summary-path: frontend/coverage/frontend/coverage-summary.json
+          json-final-path: frontend/coverage/frontend/coverage-final.json
