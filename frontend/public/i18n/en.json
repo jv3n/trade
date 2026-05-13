@@ -575,5 +575,34 @@
         "test": "Test request failed."
       }
     }
+  },
+  "observabilityPage": {
+    "title": "Narrative observability",
+    "intro": "Past narratives on this ticker, paired with what the price did since. Scroll to inspect; click a card to expand the full summary.",
+    "back": "Back to {{symbol}} dossier",
+    "loading": "Loading the timeline…",
+    "empty": "No narrative has been generated for {{symbol}} yet. Open the dossier and run an analysis to populate the history.",
+    "pricesUnavailable": "Price action is currently unavailable (the chart upstream failed). Narratives are shown without delta columns.",
+    "deltas": {
+      "1d": "1d",
+      "1w": "1w",
+      "1m": "1m"
+    },
+    "thumbs": {
+      "up": "Thumbs up",
+      "down": "Thumbs down"
+    },
+    "meta": {
+      "priceAtGeneration": "Price at generation",
+      "priceAt1d": "Price at +1 day",
+      "priceAt1w": "Price at +1 week",
+      "priceAt1m": "Price at +1 month",
+      "model": "Model",
+      "prompt": "Prompt"
+    },
+    "errors": {
+      "missingSymbol": "Missing symbol in the URL.",
+      "load": "Failed to load the timeline. Try again."
+    }
   }
 }

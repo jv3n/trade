@@ -1,0 +1,181 @@
+<div class="observability-layout">
+  <a [routerLink]="['/ticker', symbol()]" class="back-link">
+    <mat-icon>arrow_back</mat-icon>
+    {{ 'observabilityPage.back' | translate: { symbol: symbol() } }}
+  </a>
+
+  <div class="content-header">
+    <h2>
+      {{ 'observabilityPage.title' | translate }}
+      <span class="header-symbol">{{ symbol() }}</span>
+    </h2>
+    <p>{{ 'observabilityPage.intro' | translate }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'observabilityPage.loading' | translate }}</span>
+    </div>
+  } @else if (loadError(); as e) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ e }}
+    </div>
+  } @else if (isEmpty()) {
+    <div class="empty-state">
+      <mat-icon>info_outline</mat-icon>
+      {{ 'observabilityPage.empty' | translate: { symbol: symbol() } }}
+    </div>
+  } @else {
+    @if (pricesAllUnavailable()) {
+      <div class="warning-banner">
+        <mat-icon>cloud_off</mat-icon>
+        {{ 'observabilityPage.pricesUnavailable' | translate }}
+      </div>
+    }
+
+    <ol class="timeline">
+      @for (obs of observations(); track obs.snapshotId) {
+        <li class="timeline-card" [class.expanded]="isExpanded(obs.snapshotId)">
+          <button
+            type="button"
+            class="card-header"
+            (click)="toggle(obs.snapshotId)"
+            [attr.aria-expanded]="isExpanded(obs.snapshotId)"
+          >
+            <div class="card-header-left">
+              <span class="generated-at">{{ obs.generatedAt | date: 'medium' }}</span>
+              <span
+                class="chip chip-sentiment"
+                [ngClass]="'chip-sentiment-' + obs.sentiment.toLowerCase()"
+              >
+                {{ 'sentiment.' + obs.sentiment | translate }}
+              </span>
+              @if (obs.promptTemplateVersion; as v) {
+                <span class="chip chip-prompt" [title]="obs.promptName">{{ v }}</span>
+              }
+              @if (obs.thumbsValue !== null) {
+                @if (obs.thumbsValue === 1) {
+                  <mat-icon
+                    class="thumbs-icon thumbs-icon-up"
+                    [attr.aria-label]="'observabilityPage.thumbs.up' | translate"
+                    >thumb_up</mat-icon
+                  >
+                } @else if (obs.thumbsValue === -1) {
+                  <mat-icon
+                    class="thumbs-icon thumbs-icon-down"
+                    [attr.aria-label]="'observabilityPage.thumbs.down' | translate"
+                    >thumb_down</mat-icon
+                  >
+                }
+              }
+            </div>
+
+            <div class="card-header-deltas">
+              <span class="delta-cell" [ngClass]="deltaClass(obs.delta1d)">
+                <span class="delta-label">{{ 'observabilityPage.deltas.1d' | translate }}</span>
+                <span class="delta-value">
+                  @if (obs.delta1d !== null) {
+                    {{ obs.delta1d | percent: '1.2-2' }}
+                  } @else {
+                    {{ 'common.noData' | translate }}
+                  }
+                </span>
+              </span>
+              <span class="delta-cell" [ngClass]="deltaClass(obs.delta1w)">
+                <span class="delta-label">{{ 'observabilityPage.deltas.1w' | translate }}</span>
+                <span class="delta-value">
+                  @if (obs.delta1w !== null) {
+                    {{ obs.delta1w | percent: '1.2-2' }}
+                  } @else {
+                    {{ 'common.noData' | translate }}
+                  }
+                </span>
+              </span>
+              <span class="delta-cell" [ngClass]="deltaClass(obs.delta1m)">
+                <span class="delta-label">{{ 'observabilityPage.deltas.1m' | translate }}</span>
+                <span class="delta-value">
+                  @if (obs.delta1m !== null) {
+                    {{ obs.delta1m | percent: '1.2-2' }}
+                  } @else {
+                    {{ 'common.noData' | translate }}
+                  }
+                </span>
+              </span>
+              <mat-icon class="expand-icon">
+                {{ isExpanded(obs.snapshotId) ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </div>
+          </button>
+
+          @if (isExpanded(obs.snapshotId)) {
+            <div class="card-body">
+              <p class="summary">{{ obs.summary }}</p>
+
+              @if (obs.keyPoints.length > 0) {
+                <ul class="key-points">
+                  @for (kp of obs.keyPoints; track $index) {
+                    <li>{{ kp }}</li>
+                  }
+                </ul>
+              }
+
+              <dl class="meta-grid">
+                <div>
+                  <dt>{{ 'observabilityPage.meta.priceAtGeneration' | translate }}</dt>
+                  <dd>{{ obs.price | number: '1.2-4' }}</dd>
+                </div>
+                <div>
+                  <dt>{{ 'observabilityPage.meta.priceAt1d' | translate }}</dt>
+                  <dd>
+                    @if (obs.priceAt1d !== null) {
+                      {{ obs.priceAt1d | number: '1.2-4' }}
+                    } @else {
+                      {{ 'common.noData' | translate }}
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>{{ 'observabilityPage.meta.priceAt1w' | translate }}</dt>
+                  <dd>
+                    @if (obs.priceAt1w !== null) {
+                      {{ obs.priceAt1w | number: '1.2-4' }}
+                    } @else {
+                      {{ 'common.noData' | translate }}
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>{{ 'observabilityPage.meta.priceAt1m' | translate }}</dt>
+                  <dd>
+                    @if (obs.priceAt1m !== null) {
+                      {{ obs.priceAt1m | number: '1.2-4' }}
+                    } @else {
+                      {{ 'common.noData' | translate }}
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>{{ 'observabilityPage.meta.model' | translate }}</dt>
+                  <dd class="mono">{{ obs.modelUsed }}</dd>
+                </div>
+                @if (obs.promptName !== null) {
+                  <div>
+                    <dt>{{ 'observabilityPage.meta.prompt' | translate }}</dt>
+                    <dd class="mono">
+                      {{ obs.promptName }}
+                      @if (obs.promptTemplateVersion) {
+                        <span class="prompt-version">@{{ obs.promptTemplateVersion }}</span>
+                      }
+                    </dd>
+                  </div>
+                }
+              </dl>
+            </div>
+          }
+        </li>
+      }
+    </ol>
+  }
+</div>
