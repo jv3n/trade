@@ -108,6 +108,40 @@ class NarrativeObservabilityQuery(@PersistenceContext private val em: EntityMana
     )
   }
 
+  /**
+   * Phase 3 #1 PR3 — index endpoint. Returns one row per symbol that has at least one narrative
+   * snapshot, with the snapshot count and the latest generation timestamp. The page
+   * `/observability` (no symbol) consumes this to list « tickers I've already inspected » as entry
+   * points into each per-symbol timeline.
+   *
+   * Ordered by [TickerObservationCount.lastGeneratedAt] DESC so the most recently-active symbols
+   * land on top. Capped at [MAX_TICKERS] to keep the response bounded ; with a single-user workload
+   * and < 100 distinct symbols in practice, we'll never approach it.
+   */
+  fun findTickers(): List<TickerObservationCount> {
+    val sql =
+      """
+      SELECT
+        symbol,
+        COUNT(*) AS snapshot_count,
+        MAX(generated_at) AS last_generated_at
+      FROM ticker_narrative_snapshot
+      GROUP BY symbol
+      ORDER BY MAX(generated_at) DESC
+      LIMIT $MAX_TICKERS
+      """
+        .trimIndent()
+
+    @Suppress("UNCHECKED_CAST") val rows = em.createNativeQuery(sql).resultList as List<Array<*>>
+    return rows.map { row ->
+      TickerObservationCount(
+        symbol = row[0] as String,
+        snapshotCount = (row[1] as Number).toInt(),
+        lastGeneratedAt = normalizeInstant(row[2]),
+      )
+    }
+  }
+
   // Hibernate maps `TIMESTAMPTZ` to either `java.sql.Timestamp` or `java.time.Instant` depending on
   // driver version. Normalize so the row type carries a stable `Instant` regardless. Same trick as
   // [PromptScoreStatsQuery] does for `DATE_TRUNC` outputs.
@@ -121,6 +155,7 @@ class NarrativeObservabilityQuery(@PersistenceContext private val em: EntityMana
 
   companion object {
     private const val MAX_ROWS = 500
+    private const val MAX_TICKERS = 200
   }
 }
 
@@ -143,4 +178,14 @@ data class NarrativeObservationRow(
   val promptName: String?,
   val promptTemplateVersion: String?,
   val thumbsValue: Short?,
+)
+
+/**
+ * Aggregate row for the `/observability` index page — one ticker that has at least one narrative
+ * snapshot. The page renders this list as the entry point into each per-symbol timeline.
+ */
+data class TickerObservationCount(
+  val symbol: String,
+  val snapshotCount: Int,
+  val lastGeneratedAt: Instant,
 )

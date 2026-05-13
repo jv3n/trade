@@ -1229,6 +1229,11 @@
               <span class="narrative-prompt-version">{{
                 'ticker.narrative.promptVersion' | translate: { version: n.promptVersion }
               }}</span>
+              <span>·</span>
+              <a [routerLink]="['/observability', symbol()]" class="narrative-history-link">
+                <mat-icon>history</mat-icon>
+                {{ 'ticker.narrative.viewHistory' | translate }}
+              </a>
               @if (n.promptTemplateId) {
                 <span class="narrative-thumbs">
                   <span class="thumbs-label">{{

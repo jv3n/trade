@@ -99,4 +99,17 @@ describe('HttpNarrativeObservabilityRepository', () => {
         observations: [],
       });
   });
+
+  // ---------------------------------------------------------------------- /tickers (PR3)
+
+  it('findTickers calls GET /api/narrative/observability/tickers with no query params', () => {
+    // Pin the literal path. A future routing reshuffle (e.g. `/tickers-index` for clarity)
+    // would need to update both sides of the contract — this catches the frontend half.
+    repo.findTickers().subscribe();
+    const req = http.expectOne(
+      (r) => r.url === '/api/narrative/observability/tickers' && r.params.keys().length === 0,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
 });

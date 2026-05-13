@@ -12,6 +12,95 @@
     <p>{{ 'observabilityPage.intro' | translate }}</p>
   </div>
 
+  <!-- Filter bar (PR3) -->
+  <div
+    class="filter-bar"
+    role="group"
+    [attr.aria-label]="'observabilityPage.filters.title' | translate"
+  >
+    <label class="filter-field">
+      <span class="filter-label">{{ 'observabilityPage.filters.from' | translate }}</span>
+      <input
+        type="date"
+        [value]="fromDate()"
+        (change)="fromDate.set($any($event.target).value); applyFilters()"
+      />
+    </label>
+    <label class="filter-field">
+      <span class="filter-label">{{ 'observabilityPage.filters.to' | translate }}</span>
+      <input
+        type="date"
+        [value]="toDate()"
+        (change)="toDate.set($any($event.target).value); applyFilters()"
+      />
+    </label>
+    <label class="filter-field filter-field-prompt">
+      <span class="filter-label">{{ 'observabilityPage.filters.prompt' | translate }}</span>
+      <select
+        [value]="promptId()"
+        (change)="promptId.set($any($event.target).value); applyFilters()"
+      >
+        <option value="">{{ 'observabilityPage.filters.promptAll' | translate }}</option>
+        @for (p of prompts(); track p.id) {
+          <option [value]="p.id">{{ p.version }}{{ p.isActive ? ' (active)' : '' }}</option>
+        }
+      </select>
+    </label>
+    <div class="filter-field filter-field-thumbs">
+      <span class="filter-label">{{ 'observabilityPage.filters.thumbs' | translate }}</span>
+      <div class="thumbs-chip-row" role="radiogroup">
+        <button
+          type="button"
+          class="thumbs-chip"
+          [class.thumbs-chip-active]="thumbs() === 'all'"
+          (click)="setThumbsFilter('all')"
+          role="radio"
+          [attr.aria-checked]="thumbs() === 'all'"
+        >
+          {{ 'observabilityPage.filters.thumbsAll' | translate }}
+        </button>
+        <button
+          type="button"
+          class="thumbs-chip thumbs-chip-up"
+          [class.thumbs-chip-active]="thumbs() === 1"
+          (click)="setThumbsFilter(1)"
+          role="radio"
+          [attr.aria-checked]="thumbs() === 1"
+          [attr.aria-label]="'observabilityPage.thumbs.up' | translate"
+        >
+          <mat-icon>thumb_up</mat-icon>
+        </button>
+        <button
+          type="button"
+          class="thumbs-chip thumbs-chip-neutral"
+          [class.thumbs-chip-active]="thumbs() === 0"
+          (click)="setThumbsFilter(0)"
+          role="radio"
+          [attr.aria-checked]="thumbs() === 0"
+        >
+          {{ 'observabilityPage.filters.thumbsNeutral' | translate }}
+        </button>
+        <button
+          type="button"
+          class="thumbs-chip thumbs-chip-down"
+          [class.thumbs-chip-active]="thumbs() === -1"
+          (click)="setThumbsFilter(-1)"
+          role="radio"
+          [attr.aria-checked]="thumbs() === -1"
+          [attr.aria-label]="'observabilityPage.thumbs.down' | translate"
+        >
+          <mat-icon>thumb_down</mat-icon>
+        </button>
+      </div>
+    </div>
+    @if (hasActiveFilter()) {
+      <button type="button" class="filter-reset" (click)="resetFilters()">
+        <mat-icon>close</mat-icon>
+        {{ 'observabilityPage.filters.reset' | translate }}
+      </button>
+    }
+  </div>
+
   @if (loading()) {
     <div class="loading-state">
       <mat-spinner diameter="24"></mat-spinner>
@@ -27,6 +116,14 @@
       <mat-icon>info_outline</mat-icon>
       {{ 'observabilityPage.empty' | translate: { symbol: symbol() } }}
     </div>
+  } @else if (isFilteredEmpty()) {
+    <div class="empty-state">
+      <mat-icon>filter_alt_off</mat-icon>
+      {{ 'observabilityPage.filteredEmpty' | translate }}
+      <button type="button" class="filter-reset inline" (click)="resetFilters()">
+        {{ 'observabilityPage.filters.reset' | translate }}
+      </button>
+    </div>
   } @else {
     @if (pricesAllUnavailable()) {
       <div class="warning-banner">
@@ -36,7 +133,7 @@
     }
 
     <ol class="timeline">
-      @for (obs of observations(); track obs.snapshotId) {
+      @for (obs of filteredObservations(); track obs.snapshotId) {
         <li class="timeline-card" [class.expanded]="isExpanded(obs.snapshotId)">
           <button
             type="button"

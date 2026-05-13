@@ -228,7 +228,8 @@
         "down": "Unhelpful narrative",
         "errorSave": "Vote not saved, try again"
       },
-      "promptVersion": "prompt {{version}}"
+      "promptVersion": "prompt {{version}}",
+      "viewHistory": "View past narratives"
     },
     "watchlist": {
       "watch": "Watch",
@@ -582,7 +583,19 @@
     "back": "Back to {{symbol}} dossier",
     "loading": "Loading the timeline…",
     "empty": "No narrative has been generated for {{symbol}} yet. Open the dossier and run an analysis to populate the history.",
+    "filteredEmpty": "No narrative matches the current filters.",
     "pricesUnavailable": "Price action is currently unavailable (the chart upstream failed). Narratives are shown without delta columns.",
+    "filters": {
+      "title": "Filters",
+      "from": "From",
+      "to": "To",
+      "prompt": "Prompt",
+      "promptAll": "Any prompt",
+      "thumbs": "Feedback",
+      "thumbsAll": "All",
+      "thumbsNeutral": "—",
+      "reset": "Reset"
+    },
     "deltas": {
       "1d": "1d",
       "1w": "1w",
@@ -603,6 +616,17 @@
     "errors": {
       "missingSymbol": "Missing symbol in the URL.",
       "load": "Failed to load the timeline. Try again."
+    }
+  },
+  "observabilityIndexPage": {
+    "title": "Narrative observability — index",
+    "intro": "Tickers with at least one persisted narrative. Pick one to open its timeline of past narratives paired with subsequent price action.",
+    "loading": "Loading tickers…",
+    "empty": "No narrative has been generated yet. Open a dossier and run an analysis to populate the history.",
+    "snapshotCount": "{{count}} narratives",
+    "lastGenerated": "Last:",
+    "errors": {
+      "load": "Failed to load the ticker index. Try again."
     }
   }
 }

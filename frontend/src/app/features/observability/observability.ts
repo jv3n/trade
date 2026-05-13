@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass, PercentPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,7 +8,18 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   NarrativeObservabilityRepository,
   NarrativeObservation,
+  NarrativeObservationsFilter,
 } from '../../core/narrative-observability.repository';
+import { PromptRepository, PromptTemplate } from '../../core/prompt.repository';
+
+/**
+ * Thumbs filter state on the page — `'all'` shows every observation, the three numeric values
+ * filter to a specific vote. The filter is **client-side** : the backend already returned every
+ * observation in the timeframe, we just hide a subset on the frontend. Server-side filtering
+ * would force a re-fetch on every chip click without a meaningful traffic reduction (the
+ * timeline is ≤ 500 rows by design).
+ */
+export type ThumbsFilter = 'all' | 1 | 0 | -1;
 
 /**
  * `/observability/:symbol` — Phase 3 #1 « narrative vs price » timeline. Renders a reverse-
@@ -33,6 +45,7 @@ import {
   imports: [
     DatePipe,
     DecimalPipe,
+    FormsModule,
     NgClass,
     PercentPipe,
     RouterLink,
@@ -46,6 +59,7 @@ import {
 export class ObservabilityPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly repo = inject(NarrativeObservabilityRepository);
+  private readonly promptRepo = inject(PromptRepository);
   private readonly translate = inject(TranslateService);
 
   symbol = signal<string>('');
@@ -54,9 +68,56 @@ export class ObservabilityPage implements OnInit {
   loadError = signal<string | null>(null);
   expandedId = signal<string | null>(null);
 
+  // -------------------------------------------------------------------- filters (PR3)
+
+  /** All persisted prompt versions for the family — populates the dropdown. Loaded once on init. */
+  prompts = signal<PromptTemplate[]>([]);
+
+  /** Backend filters — change triggers a re-fetch (`fromDate` / `toDate` / `promptId`). */
+  fromDate = signal<string>(''); // YYYY-MM-DD bound to <input type="date">
+  toDate = signal<string>('');
+  promptId = signal<string>(''); // '' = no filter ; otherwise a UUID
+
+  /** Thumbs filter is local-only — pure client-side slice of the already-loaded list. */
+  thumbs = signal<ThumbsFilter>('all');
+
+  /**
+   * Observations after the client-side thumbs filter is applied. `'all'` is a pass-through,
+   * the numeric values match `thumbsValue`. Snapshots without a `prompt_score` row
+   * (`thumbsValue === null`) only show up when the filter is `'all'` — filtering to a specific
+   * vote naturally excludes them.
+   */
+  filteredObservations = computed<NarrativeObservation[]>(() => {
+    const t = this.thumbs();
+    if (t === 'all') return this.observations();
+    return this.observations().filter((o) => o.thumbsValue === t);
+  });
+
   /** True when the timeline is empty and we know it for sure (loaded, not failed). */
   isEmpty = computed(
     () => !this.loading() && this.loadError() === null && this.observations().length === 0,
+  );
+
+  /**
+   * True when the timeline returned rows but the active **thumbs** filter hid every single one.
+   * Distinct from [isEmpty] (« nothing in the DB ») — here the data exists but is filtered out,
+   * so the template renders a « no result for the current filter » hint with a reset action.
+   */
+  isFilteredEmpty = computed(
+    () =>
+      !this.loading() &&
+      this.loadError() === null &&
+      this.observations().length > 0 &&
+      this.filteredObservations().length === 0,
+  );
+
+  /** Convenience for the « reset » button visibility — at least one filter is non-default. */
+  hasActiveFilter = computed(
+    () =>
+      this.fromDate() !== '' ||
+      this.toDate() !== '' ||
+      this.promptId() !== '' ||
+      this.thumbs() !== 'all',
   );
 
   /**
@@ -87,14 +148,27 @@ export class ObservabilityPage implements OnInit {
       this.loading.set(false);
       return;
     }
+    this.loadPrompts();
     this.loadTimeline(symbol);
+  }
+
+  /** Load the prompt versions for the dropdown. Failure is silent — the dropdown stays empty. */
+  loadPrompts() {
+    this.promptRepo.list('narrative-default').subscribe({
+      next: (rows) => this.prompts.set(rows),
+      error: () => {
+        // Empty list ; dropdown won't render the prompt options. Not worth a banner — the
+        // observability timeline itself is the load that matters.
+        this.prompts.set([]);
+      },
+    });
   }
 
   /** Re-fetch the timeline — public so the « Refresh » button + the `Retry` action can call it. */
   loadTimeline(symbol: string) {
     this.loading.set(true);
     this.loadError.set(null);
-    this.repo.findFor(symbol).subscribe({
+    this.repo.findFor(symbol, this.buildFilter()).subscribe({
       next: (response) => {
         this.observations.set(response.observations);
         this.loading.set(false);
@@ -104,6 +178,55 @@ export class ObservabilityPage implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  /**
+   * Translates the page's filter signals into the wire-shape consumed by the adapter. Date
+   * pickers emit `YYYY-MM-DD` ; we expand to the boundary of the day in UTC (`00:00:00Z` for
+   * `from`, `00:00:00Z` of the next day for `to` so the interval stays half-open). `promptId =
+   * ''` collapses to undefined — the adapter omits empty strings anyway, but the explicit
+   * collapse keeps the contract obvious at the call site.
+   */
+  private buildFilter(): NarrativeObservationsFilter | undefined {
+    const from = this.fromDate() ? `${this.fromDate()}T00:00:00Z` : undefined;
+    const to = this.toDate() ? `${this.nextDayIso(this.toDate())}T00:00:00Z` : undefined;
+    const promptId = this.promptId() || undefined;
+    if (!from && !to && !promptId) return undefined;
+    return { from, to, promptId };
+  }
+
+  /**
+   * `YYYY-MM-DD` → `YYYY-MM-DD` of the next calendar day. Lets the `to` filter behave as «
+   * include this day ». No DST gymnastics needed — we're working in UTC plain dates.
+   */
+  private nextDayIso(date: string): string {
+    const d = new Date(`${date}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /**
+   * Re-runs the backend fetch with the current filter values. Bound to the « apply » button
+   * and to immediate handlers when a filter changes (date input blur, dropdown change).
+   */
+  applyFilters() {
+    if (this.symbol()) this.loadTimeline(this.symbol());
+  }
+
+  /**
+   * Resets all filters to the default and re-fetches. Wires to the « Reset » action visible
+   * when [hasActiveFilter] is true.
+   */
+  resetFilters() {
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.promptId.set('');
+    this.thumbs.set('all');
+    this.applyFilters();
+  }
+
+  setThumbsFilter(value: ThumbsFilter) {
+    this.thumbs.set(value);
   }
 
   toggle(id: string) {

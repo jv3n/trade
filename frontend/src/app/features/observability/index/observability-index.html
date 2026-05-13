@@ -1,0 +1,44 @@
+<div class="index-layout">
+  <div class="content-header">
+    <h2>{{ 'observabilityIndexPage.title' | translate }}</h2>
+    <p>{{ 'observabilityIndexPage.intro' | translate }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'observabilityIndexPage.loading' | translate }}</span>
+    </div>
+  } @else if (loadError(); as e) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ e }}
+    </div>
+  } @else if (isEmpty()) {
+    <div class="empty-state">
+      <mat-icon>info_outline</mat-icon>
+      {{ 'observabilityIndexPage.empty' | translate }}
+    </div>
+  } @else {
+    <ul class="ticker-list">
+      @for (t of tickers(); track t.symbol) {
+        <li class="ticker-row">
+          <a [routerLink]="['/observability', t.symbol]" class="ticker-link">
+            <span class="ticker-symbol">{{ t.symbol }}</span>
+            <span class="ticker-count">
+              {{
+                'observabilityIndexPage.snapshotCount'
+                  | translate: { count: (t.snapshotCount | number) }
+              }}
+            </span>
+            <span class="ticker-last-seen">
+              {{ 'observabilityIndexPage.lastGenerated' | translate }}
+              {{ t.lastGeneratedAt | date: 'medium' }}
+            </span>
+            <mat-icon class="chevron">chevron_right</mat-icon>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</div>

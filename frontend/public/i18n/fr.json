@@ -228,7 +228,8 @@
         "down": "Narratif décevant",
         "errorSave": "Vote non enregistré, réessaie"
       },
-      "promptVersion": "prompt {{version}}"
+      "promptVersion": "prompt {{version}}",
+      "viewHistory": "Voir l'historique des narratifs"
     },
     "watchlist": {
       "watch": "Suivre",
@@ -582,7 +583,19 @@
     "back": "Retour au dossier {{symbol}}",
     "loading": "Chargement de la timeline…",
     "empty": "Aucun narratif n'a encore été généré pour {{symbol}}. Ouvrez le dossier et lancez une analyse pour peupler l'historique.",
+    "filteredEmpty": "Aucun narratif ne correspond aux filtres actifs.",
     "pricesUnavailable": "Le cours est temporairement indisponible (échec de la source de données chart). Les narratifs s'affichent sans les colonnes de delta.",
+    "filters": {
+      "title": "Filtres",
+      "from": "Depuis",
+      "to": "Jusqu'à",
+      "prompt": "Prompt",
+      "promptAll": "Tous les prompts",
+      "thumbs": "Vote",
+      "thumbsAll": "Tous",
+      "thumbsNeutral": "—",
+      "reset": "Réinitialiser"
+    },
     "deltas": {
       "1d": "1j",
       "1w": "1 sem.",
@@ -603,6 +616,17 @@
     "errors": {
       "missingSymbol": "Symbole manquant dans l'URL.",
       "load": "Échec du chargement de la timeline. Réessayez."
+    }
+  },
+  "observabilityIndexPage": {
+    "title": "Observabilité narrative — index",
+    "intro": "Tickers ayant au moins un narratif persisté. Sélectionnez-en un pour ouvrir la timeline des narratifs passés et du prix qui a suivi.",
+    "loading": "Chargement des tickers…",
+    "empty": "Aucun narratif n'a encore été généré. Ouvrez un dossier et lancez une analyse pour peupler l'historique.",
+    "snapshotCount": "{{count}} narratifs",
+    "lastGenerated": "Dernier :",
+    "errors": {
+      "load": "Échec du chargement de l'index. Réessayez."
     }
   }
 }
