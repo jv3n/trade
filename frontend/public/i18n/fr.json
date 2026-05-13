@@ -575,5 +575,34 @@
         "test": "Erreur lors du test de la clé."
       }
     }
+  },
+  "observabilityPage": {
+    "title": "Observabilité narrative",
+    "intro": "Narratifs passés sur ce ticker, mis en regard de ce que le prix a fait depuis. Faites défiler pour inspecter ; cliquez sur une carte pour ouvrir le résumé complet.",
+    "back": "Retour au dossier {{symbol}}",
+    "loading": "Chargement de la timeline…",
+    "empty": "Aucun narratif n'a encore été généré pour {{symbol}}. Ouvrez le dossier et lancez une analyse pour peupler l'historique.",
+    "pricesUnavailable": "Le cours est temporairement indisponible (échec de la source de données chart). Les narratifs s'affichent sans les colonnes de delta.",
+    "deltas": {
+      "1d": "1j",
+      "1w": "1 sem.",
+      "1m": "1 mois"
+    },
+    "thumbs": {
+      "up": "Pouce vers le haut",
+      "down": "Pouce vers le bas"
+    },
+    "meta": {
+      "priceAtGeneration": "Prix à la génération",
+      "priceAt1d": "Prix à +1 jour",
+      "priceAt1w": "Prix à +1 semaine",
+      "priceAt1m": "Prix à +1 mois",
+      "model": "Modèle",
+      "prompt": "Prompt"
+    },
+    "errors": {
+      "missingSymbol": "Symbole manquant dans l'URL.",
+      "load": "Échec du chargement de la timeline. Réessayez."
+    }
   }
 }

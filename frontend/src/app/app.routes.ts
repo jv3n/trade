@@ -19,6 +19,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),
   },
   {
+    path: 'observability/:symbol',
+    loadComponent: () =>
+      import('./features/observability/observability').then((m) => m.ObservabilityPage),
+  },
+  {
     path: 'settings',
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
     children: [
