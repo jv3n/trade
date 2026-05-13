@@ -67,14 +67,32 @@ export interface NarrativeObservationsFilter {
 }
 
 /**
- * Port — read-only access to the observability timeline. v1 exposes a single endpoint per
- * symbol ; the filters are forwarded as query params. PR3 will add the « tickers index » endpoint
- * to list the symbols with at least one snapshot, but for now the page is reachable only via a
- * direct URL or a link from the dossier ticker (the latter wired in PR3 too).
+ * One entry on the `/observability` index page (Phase 3 #1 PR3) — a ticker that has at least
+ * one persisted narrative. Mirror of the backend `TickerObservationIndexDto`.
+ *
+ * - `snapshotCount` surfaces « how much history exists ? » so the user can prioritise tickers
+ *   with a richer corpus.
+ * - `lastGeneratedAt` drives the sort (most-recent first) and lets the page render a relative
+ *   timestamp (« 2 days ago ») without re-fetching the timeline itself.
+ */
+export interface TickerObservationIndex {
+  symbol: string;
+  snapshotCount: number;
+  lastGeneratedAt: string; // ISO instant
+}
+
+/**
+ * Port — read access to the observability surfaces. Two methods :
+ *
+ * - [findFor] — per-symbol timeline (PR2), filtered by optional date range + prompt id.
+ * - [findTickers] — index of symbols that have at least one snapshot (PR3). Backs the
+ *   `/observability` landing page so the user can discover which tickers have history to
+ *   inspect without typing a symbol blindly.
  */
 export abstract class NarrativeObservabilityRepository {
   abstract findFor(
     symbol: string,
     filter?: NarrativeObservationsFilter,
   ): Observable<NarrativeObservations>;
+  abstract findTickers(): Observable<TickerObservationIndex[]>;
 }

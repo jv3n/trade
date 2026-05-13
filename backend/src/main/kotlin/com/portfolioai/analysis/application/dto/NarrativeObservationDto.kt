@@ -61,3 +61,18 @@ data class NarrativeObservationsResponse(
   val symbol: String,
   val observations: List<NarrativeObservationDto>,
 )
+
+/**
+ * One row on the `/observability` index page — a ticker with at least one persisted narrative. The
+ * page renders these as cards / list items linking to the per-symbol timeline.
+ *
+ * - [snapshotCount] surfaces « how much history exists ? » so the user can prioritise tickers with
+ *   a richer corpus.
+ * - [lastGeneratedAt] drives the sort (most-recent first) and lets the page show a relative
+ *   timestamp (« 2 days ago ») without re-fetching the timeline itself.
+ */
+data class TickerObservationIndexDto(
+  val symbol: String,
+  val snapshotCount: Int,
+  val lastGeneratedAt: java.time.Instant,
+)

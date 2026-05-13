@@ -2,6 +2,7 @@ package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilityQuery
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservationRow
+import com.portfolioai.analysis.infrastructure.persistence.TickerObservationCount
 import com.portfolioai.market.domain.MarketChart
 import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
@@ -249,6 +250,47 @@ class NarrativeObservabilityServiceTest {
     assertEquals("narrative-default", obs.promptName)
     assertEquals("v3-bullish-fix", obs.promptTemplateVersion)
     assertEquals(1.toShort(), obs.thumbsValue)
+  }
+
+  // ---------------------------------------------------------------------- index endpoint (PR3)
+
+  @Test
+  fun `listTickers maps query rows to the DTO shape verbatim`() {
+    // Pin the field-by-field copy : a future regression that flipped `snapshotCount` and
+    // `symbol` order, or dropped the `lastGeneratedAt` field, would surface here.
+    val latestNvda = Instant.parse("2026-05-13T10:00:00Z")
+    val latestAapl = Instant.parse("2026-05-12T16:00:00Z")
+    given(query.findTickers())
+      .willReturn(
+        listOf(
+          TickerObservationCount("NVDA", snapshotCount = 12, lastGeneratedAt = latestNvda),
+          TickerObservationCount("AAPL", snapshotCount = 3, lastGeneratedAt = latestAapl),
+        )
+      )
+
+    val out = service.listTickers()
+
+    assertEquals(2, out.size)
+    assertEquals("NVDA", out[0].symbol)
+    assertEquals(12, out[0].snapshotCount)
+    assertEquals(latestNvda, out[0].lastGeneratedAt)
+    assertEquals("AAPL", out[1].symbol)
+    assertEquals(3, out[1].snapshotCount)
+    assertEquals(latestAapl, out[1].lastGeneratedAt)
+    // The service must preserve the query's ordering (most-recent first by lastGeneratedAt) —
+    // re-sorting in the service would be redundant work + a contract drift waiting to happen.
+    verify(chartClient, never()).fetchChart(any(), any(), any())
+  }
+
+  @Test
+  fun `listTickers returns an empty list when no narrative has been generated yet`() {
+    // Cost = 0 market fetches : the index page on a fresh database doesn't touch any upstream.
+    given(query.findTickers()).willReturn(emptyList())
+
+    val out = service.listTickers()
+
+    assertTrue(out.isEmpty())
+    verify(chartClient, never()).fetchChart(any(), any(), any())
   }
 
   // ---------------------------------------------------------------------- fixtures

@@ -3,6 +3,7 @@ package com.portfolioai.analysis.application
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.portfolioai.analysis.application.dto.NarrativeObservationDto
 import com.portfolioai.analysis.application.dto.NarrativeObservationsResponse
+import com.portfolioai.analysis.application.dto.TickerObservationIndexDto
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilityQuery
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservationRow
@@ -72,6 +73,20 @@ class NarrativeObservabilityService(
     val observations = rows.map { row -> mapToDto(normalised, row, bars) }
     return NarrativeObservationsResponse(symbol = normalised, observations = observations)
   }
+
+  /**
+   * Phase 3 #1 PR3 — index of tickers that have at least one persisted narrative. Backs `GET
+   * /api/narrative/observability/tickers` for the `/observability` landing page. No enrichment, no
+   * market fetch — pure DB read.
+   */
+  fun listTickers(): List<TickerObservationIndexDto> =
+    query.findTickers().map { row ->
+      TickerObservationIndexDto(
+        symbol = row.symbol,
+        snapshotCount = row.snapshotCount,
+        lastGeneratedAt = row.lastGeneratedAt,
+      )
+    }
 
   private fun mapToDto(
     symbol: String,

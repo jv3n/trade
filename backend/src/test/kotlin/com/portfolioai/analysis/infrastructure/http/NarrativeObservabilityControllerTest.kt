@@ -3,6 +3,7 @@ package com.portfolioai.analysis.infrastructure.http
 import com.portfolioai.analysis.application.NarrativeObservabilityService
 import com.portfolioai.analysis.application.dto.NarrativeObservationDto
 import com.portfolioai.analysis.application.dto.NarrativeObservationsResponse
+import com.portfolioai.analysis.application.dto.TickerObservationIndexDto
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.shared.GlobalExceptionHandler
 import java.math.BigDecimal
@@ -171,5 +172,54 @@ class NarrativeObservabilityControllerTest {
       .andExpect(jsonPath("$.observations[0].delta1d").exists())
       .andExpect(jsonPath("$.observations[0].delta1w").exists())
       .andExpect(jsonPath("$.observations[0].delta1m").exists())
+  }
+
+  // ---------------------------------------------------------------------- /tickers index (PR3)
+
+  @Test
+  fun `GET tickers returns the index list with symbol count and lastGeneratedAt`() {
+    // Pin (a) the route literal `/tickers` resolves to `listTickers()` and NOT to the
+    // `{symbol}` path with `symbol = "tickers"` — Spring matches the literal segment first
+    // because the controller declares `/tickers` *before* `/{symbol}`. A regression that
+    // re-ordered the methods would silently return an empty timeline for « tickers ».
+    // (b) the JSON shape is what the page consumes verbatim.
+    given(service.listTickers())
+      .willReturn(
+        listOf(
+          TickerObservationIndexDto(
+            symbol = "NVDA",
+            snapshotCount = 12,
+            lastGeneratedAt = Instant.parse("2026-05-13T10:00:00Z"),
+          ),
+          TickerObservationIndexDto(
+            symbol = "AAPL",
+            snapshotCount = 3,
+            lastGeneratedAt = Instant.parse("2026-05-12T16:00:00Z"),
+          ),
+        )
+      )
+
+    mvc
+      .perform(get("/api/narrative/observability/tickers").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.length()").value(2))
+      .andExpect(jsonPath("$[0].symbol").value("NVDA"))
+      .andExpect(jsonPath("$[0].snapshotCount").value(12))
+      .andExpect(jsonPath("$[0].lastGeneratedAt").exists())
+      .andExpect(jsonPath("$[1].symbol").value("AAPL"))
+      .andExpect(jsonPath("$[1].snapshotCount").value(3))
+  }
+
+  @Test
+  fun `GET tickers returns an empty array when no narrative exists yet`() {
+    // Pin the empty-shape `[]` rather than 404 — the page reads `.length === 0` to render the
+    // empty hint, and a 404 would force an unnecessary error-banner branch.
+    given(service.listTickers()).willReturn(emptyList())
+
+    mvc
+      .perform(get("/api/narrative/observability/tickers").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$").isArray)
+      .andExpect(jsonPath("$.length()").value(0))
   }
 }

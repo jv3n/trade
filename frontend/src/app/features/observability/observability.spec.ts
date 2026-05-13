@@ -31,16 +31,22 @@ import {
   NarrativeObservation,
   NarrativeObservations,
 } from '../../core/narrative-observability.repository';
+import { PromptRepository } from '../../core/prompt.repository';
 import { ObservabilityPage } from './observability';
 
 describe('ObservabilityPage', () => {
   let fixture: ComponentFixture<ObservabilityPage>;
   let component: ObservabilityPage;
   const findFor = vi.fn();
+  const findTickers = vi.fn();
+  const listPrompts = vi.fn();
   let paramSymbol = 'NVDA';
 
   async function setup() {
     findFor.mockReset();
+    findTickers.mockReset();
+    listPrompts.mockReset();
+    listPrompts.mockReturnValue(of([])); // most tests don't care about the dropdown content
     await TestBed.configureTestingModule({
       imports: [ObservabilityPage],
       providers: [
@@ -48,7 +54,17 @@ describe('ObservabilityPage', () => {
         provideTranslateService({ lang: 'en' }),
         {
           provide: NarrativeObservabilityRepository,
-          useValue: { findFor },
+          useValue: { findFor, findTickers },
+        },
+        {
+          provide: PromptRepository,
+          useValue: {
+            list: listPrompts,
+            get: vi.fn(),
+            activate: vi.fn(),
+            create: vi.fn(),
+            getStats: vi.fn(),
+          },
         },
         {
           provide: ActivatedRoute,
@@ -69,7 +85,9 @@ describe('ObservabilityPage', () => {
 
     fixture.detectChanges();
 
-    expect(findFor).toHaveBeenCalledWith('NVDA');
+    // Init fires with no filter — the page only forwards a non-undefined filter object once
+    // the user has set at least one filter via the bar.
+    expect(findFor).toHaveBeenCalledWith('NVDA', undefined);
     expect(component.symbol()).toBe('NVDA');
     expect(component.observations().length).toBe(1);
     expect(component.loading()).toBe(false);
@@ -228,6 +246,126 @@ describe('ObservabilityPage', () => {
     fixture.detectChanges();
 
     expect(component.pricesAllUnavailable()).toBe(false);
+  });
+
+  // ---------------------------------------------------------------------- filters (PR3)
+
+  it('loads the prompt versions for the dropdown on init', async () => {
+    // The dropdown is populated from PromptRepository, not from the observability list itself.
+    // Pin that the page fires `list('narrative-default')` (the conventional family name) on
+    // init — a rename here would silently empty the dropdown.
+    await setup();
+    findFor.mockReturnValue(of(response([])));
+    listPrompts.mockReturnValue(of([{ id: 't1', version: 'v2', isActive: true } as never]));
+
+    fixture.detectChanges();
+
+    expect(listPrompts).toHaveBeenCalledWith('narrative-default');
+    expect(component.prompts().length).toBe(1);
+  });
+
+  it('thumbs chip filter narrows filteredObservations to matching votes', async () => {
+    // Pin the client-side thumbs filter — 'all' is a pass-through, the numeric values match
+    // `thumbsValue`. Snapshots with null thumbs are excluded by non-`all` filters (intentional :
+    // « show me the 👎 votes » should not include the no-vote rows).
+    await setup();
+    findFor.mockReturnValue(
+      of(
+        response([
+          observation({ snapshotId: 'up', thumbsValue: 1 }),
+          observation({ snapshotId: 'down', thumbsValue: -1 }),
+          observation({ snapshotId: 'neutral', thumbsValue: 0 }),
+          observation({ snapshotId: 'novote', thumbsValue: null }),
+        ]),
+      ),
+    );
+
+    fixture.detectChanges();
+
+    expect(component.filteredObservations().length).toBe(4);
+
+    component.setThumbsFilter(1);
+    expect(component.filteredObservations().map((o) => o.snapshotId)).toEqual(['up']);
+
+    component.setThumbsFilter(-1);
+    expect(component.filteredObservations().map((o) => o.snapshotId)).toEqual(['down']);
+
+    component.setThumbsFilter(0);
+    expect(component.filteredObservations().map((o) => o.snapshotId)).toEqual(['neutral']);
+
+    component.setThumbsFilter('all');
+    expect(component.filteredObservations().length).toBe(4);
+  });
+
+  it('isFilteredEmpty flips true when the thumbs filter hides every observation', async () => {
+    // Distinct from `isEmpty` (« nothing in the DB ») — here the data exists but is filtered
+    // out. The template renders a different message + a reset action.
+    await setup();
+    findFor.mockReturnValue(
+      of(response([observation({ thumbsValue: 0 }), observation({ thumbsValue: 0 })])),
+    );
+
+    fixture.detectChanges();
+    expect(component.isFilteredEmpty()).toBe(false);
+
+    component.setThumbsFilter(1);
+    expect(component.isFilteredEmpty()).toBe(true);
+    expect(component.isEmpty()).toBe(false);
+  });
+
+  it('applyFilters re-fetches with from / to / promptId in the wire shape the backend expects', async () => {
+    // Pin (a) the date-range translates to ISO instants at UTC midnight, (b) `to` is the *next*
+    // day's midnight so the picked-day is inclusive (half-open interval matches the backend
+    // contract `from inclusive, to exclusive`), (c) `promptId` flows through verbatim.
+    await setup();
+    findFor.mockReturnValue(of(response([])));
+    fixture.detectChanges();
+
+    component.fromDate.set('2026-04-01');
+    component.toDate.set('2026-04-30');
+    component.promptId.set('uuid-1');
+    component.applyFilters();
+
+    // The second call (the first was on init).
+    const call = findFor.mock.calls[findFor.mock.calls.length - 1];
+    expect(call[0]).toBe('NVDA');
+    expect(call[1]).toEqual({
+      from: '2026-04-01T00:00:00Z',
+      to: '2026-05-01T00:00:00Z', // next day so April 30th is included
+      promptId: 'uuid-1',
+    });
+  });
+
+  it('applyFilters omits the filter object entirely when every filter is empty', async () => {
+    // Pin that we don't send a `{ from: undefined, to: undefined, ... }` object — the adapter
+    // would treat each `undefined` as « omit », but constructing the object signals intent.
+    // The collapse-to-undefined keeps the call sites honest.
+    await setup();
+    findFor.mockReturnValue(of(response([])));
+    fixture.detectChanges();
+
+    findFor.mockClear();
+    component.applyFilters();
+
+    const call = findFor.mock.calls[0];
+    expect(call[1]).toBeUndefined();
+  });
+
+  it('hasActiveFilter flips true as soon as one filter is set, false after reset', async () => {
+    await setup();
+    findFor.mockReturnValue(of(response([])));
+    fixture.detectChanges();
+
+    expect(component.hasActiveFilter()).toBe(false);
+    component.fromDate.set('2026-04-01');
+    expect(component.hasActiveFilter()).toBe(true);
+
+    component.resetFilters();
+    expect(component.hasActiveFilter()).toBe(false);
+    expect(component.fromDate()).toBe('');
+    expect(component.toDate()).toBe('');
+    expect(component.promptId()).toBe('');
+    expect(component.thumbs()).toBe('all');
   });
 });
 

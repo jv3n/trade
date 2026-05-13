@@ -1740,6 +1740,25 @@ $sidenav-width-collapsed: 48px;
   opacity: 0.85;
 }
 
+.narrative-history-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}
+
 .narrative-thumbs {
   display: inline-flex;
   align-items: center;

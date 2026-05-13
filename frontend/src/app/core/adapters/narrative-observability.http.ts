@@ -5,12 +5,17 @@ import {
   NarrativeObservabilityRepository,
   NarrativeObservations,
   NarrativeObservationsFilter,
+  TickerObservationIndex,
 } from '../narrative-observability.repository';
 
 @Injectable()
 export class HttpNarrativeObservabilityRepository extends NarrativeObservabilityRepository {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/narrative/observability';
+
+  findTickers(): Observable<TickerObservationIndex[]> {
+    return this.http.get<TickerObservationIndex[]>(`${this.base}/tickers`);
+  }
 
   findFor(symbol: string, filter?: NarrativeObservationsFilter): Observable<NarrativeObservations> {
     let params = new HttpParams();
