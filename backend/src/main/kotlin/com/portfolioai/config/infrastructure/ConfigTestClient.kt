@@ -219,10 +219,11 @@ class ConfigTestClient(
       val payload = e.responseBodyAsString.take(200)
       log.warn("Ollama probe failed status={} body={}", e.statusCode, payload)
       // 404 with "model not found" is the canonical error when the user types a model they
-      // haven't pulled — call that out specifically since the fix is a `tilt llm:pull-...`.
+      // haven't pulled — point at the in-app Pull dialog rather than at a CLI command, so the
+      // user can fix it without leaving Settings.
       val hint =
         if (e.statusCode.value() == 404) {
-          " — try `ollama pull $model` (or the matching Tilt button)"
+          " — open /settings/configuration > LLM > Pull… to download it"
         } else ""
       TestConfigResult(false, "Ollama HTTP ${e.statusCode.value()} : $payload$hint")
     } catch (e: ResourceAccessException) {
