@@ -36,8 +36,9 @@ import org.junit.jupiter.api.Test
  *   fail-soft.
  * - **`pullModel`** — POSTs `/api/pull` with `stream: false` then re-probes ; the new model lands
  *   in `availableModels` in the same round-trip ; 5xx (Ollama's response for unknown names) yields
- *   a fail-soft snapshot with the upstream code ; blank input short-circuits ; daemon down stays
- *   fail-soft.
+ *   a fail-soft snapshot with the upstream code ; a 200 response carrying `{status: "error"}` in
+ *   the body is treated as HTTP-success and the re-probe carries the truth ; blank input
+ *   short-circuits ; daemon down stays fail-soft.
  * - **`deleteModel`** — DELETEs `/api/delete` with the name in the body then re-probes ; 404 (model
  *   already absent) yields a not-pulled-locally hint ; blank input short-circuits ; daemon down
  *   stays fail-soft.
@@ -314,6 +315,27 @@ class OllamaStatusServiceTest {
 
     assertFalse(out.daemonReachable)
     assertNotNull(out.errorMessage)
+  }
+
+  @Test
+  fun `pullModel trusts the re-probe when Ollama returns 200 with status error in the body`() {
+    // Ollama can soft-fail with HTTP 200 + `{"status": "error", ...}` (rare but documented —
+    // the daemon used this shape historically for some manifest-permission failures). The
+    // service does NOT inspect the body and treats HTTP-success as success ; what matters is
+    // that the re-probe immediately afterwards delivers an honest snapshot. This test pins
+    // that fail-soft path so a future change that starts validating the body doesn't break
+    // callers depending on the re-probe carrying the truth.
+    server.enqueue(jsonOk("""{"status": "error", "error": "manifest unauthorized"}"""))
+    server.enqueue(jsonOk(TWO_TAGS_BODY))
+    server.enqueue(jsonOk("""{"models": []}"""))
+
+    val out = service.pullModel("mistral:7b")
+
+    // Re-probe succeeded → daemonReachable is true even though the pull body claimed error.
+    // The re-probe's availableModels carries the actual state of the daemon.
+    assertTrue(out.daemonReachable)
+    assertEquals(2, out.availableModels.size)
+    assertNull(out.errorMessage)
   }
 
   // ---------------------------------------------------------------------- deleteModel

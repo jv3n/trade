@@ -1,6 +1,11 @@
 package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.domain.JobPhase
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -37,6 +42,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
  *   subsequent broadcast.
  * - **Multi-emitter fan-out** — two clients on the same job both receive every event (relevant for
  *   the future page Jobs DAG view that may open a separate stream per node).
+ * - **TTL eviction** — once a job has been terminal for longer than [TERMINAL_RETENTION] (60 s),
+ *   the next [JobEventPublisher.pruneStale] call (triggered by any subsequent publish or register)
+ *   drops the bucket. A late client that reconnects after eviction gets a fresh idle emitter rather
+ *   than the replay of a vanished history. Test uses an injectable [Clock] to avoid sleeping 60 s.
  */
 class JobEventPublisherTest {
 
@@ -226,6 +235,38 @@ class JobEventPublisherTest {
     assertNotNull(emitter)
   }
 
+  @Test
+  fun `pruneStale evicts terminal buckets past retention so a late register replays nothing`() {
+    // We need to advance time past TERMINAL_RETENTION (60 s) without sleeping the suite. The
+    // injected MutableClock lets us teleport the publisher's wall-clock past the cutoff in a
+    // single line. Without this seam the test would either be flaky (real sleep) or impossible.
+    val t0 = Instant.parse("2026-05-14T12:00:00Z")
+    val clock = MutableClock(t0)
+    val publisher = ClockedTestablePublisher(clock)
+    val jobId = UUID.randomUUID()
+
+    publisher.publish(jobId, JobPhase.LOADING_CONTEXT)
+    publisher.publish(jobId, JobPhase.DONE)
+
+    // Past the 60 s ceiling. Any subsequent publish or register triggers pruneStale, which
+    // drops the bucket because terminalAt is now before the cutoff.
+    clock.advance(Duration.ofSeconds(61))
+    publisher.register(
+      UUID.randomUUID()
+    ) // unrelated jobId — its only role is to trigger pruneStale
+
+    // Re-register on the original (now-evicted) jobId : a fresh bucket is materialised, so the
+    // emitter starts idle. This pins the contract for the "user reloads the dossier ~5 min
+    // after DONE" case — they get a clean stream that simply never emits, not a stale replay.
+    val lateEmitter = publisher.register(jobId)
+    val recordingEmitter = publisher.recorded.last { it === lateEmitter }
+    assertEquals(0, recordingEmitter.sendCount.get(), "Pruned bucket : no replay on late register")
+    assertFalse(
+      recordingEmitter.completed,
+      "Pruned bucket : emitter sits idle, not auto-completed from a stale terminalAt",
+    )
+  }
+
   private class TestablePublisher : JobEventPublisher() {
     val recorded = mutableListOf<RecordingEmitter>()
 
@@ -237,6 +278,33 @@ class JobEventPublisherTest {
    * simulate a client that disconnects mid-flight (broken pipe, browser tab closed). Subsequent
    * emitters behave normally so we can assert the publisher pruned only the broken one.
    */
+  /**
+   * Like [TestablePublisher] but threads a [Clock] through so the eviction test can teleport time
+   * past [JobEventPublisher.TERMINAL_RETENTION] without sleeping the suite.
+   */
+  private class ClockedTestablePublisher(clock: Clock) : JobEventPublisher(clock) {
+    val recorded = mutableListOf<RecordingEmitter>()
+
+    override fun createEmitter(): SseEmitter = RecordingEmitter().also { recorded.add(it) }
+  }
+
+  /**
+   * Trivial [Clock] whose `instant()` returns whatever [advance] last set. UTC zone hardcoded — the
+   * publisher only cares about ordering, not zone. Lives here rather than in a shared util because
+   * nothing else needs it (yet).
+   */
+  private class MutableClock(private var current: Instant) : Clock() {
+    override fun getZone(): ZoneId = ZoneOffset.UTC
+
+    override fun withZone(zone: ZoneId?): Clock = this
+
+    override fun instant(): Instant = current
+
+    fun advance(duration: Duration) {
+      current = current.plus(duration)
+    }
+  }
+
   private class ThrowingFirstEmitterPublisher : JobEventPublisher() {
     val recorded = mutableListOf<RecordingEmitter>()
     private var firstBuilt = false

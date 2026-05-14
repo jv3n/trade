@@ -2,6 +2,7 @@ package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.domain.JobEvent
 import com.portfolioai.analysis.domain.JobPhase
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -32,7 +33,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
  * same.
  */
 @Component
-class JobEventPublisher {
+open class JobEventPublisher(private val clock: Clock = Clock.systemUTC()) {
 
   private val log = LoggerFactory.getLogger(javaClass)
 
@@ -51,17 +52,17 @@ class JobEventPublisher {
     payload: String? = null,
   ): JobEvent {
     pruneStale()
-    val bucket = buckets.computeIfAbsent(jobId) { JobBucket() }
+    val bucket = buckets.computeIfAbsent(jobId) { JobBucket(startedAt = clock.instant()) }
     val event =
       JobEvent(
         phase = phase,
         attempt = attempt,
-        elapsedMs = Duration.between(bucket.startedAt, Instant.now()).toMillis(),
+        elapsedMs = Duration.between(bucket.startedAt, clock.instant()).toMillis(),
         error = error,
         payload = payload,
       )
     bucket.events.add(event)
-    if (phase.terminal) bucket.terminalAt = Instant.now()
+    if (phase.terminal) bucket.terminalAt = clock.instant()
 
     broadcast(jobId, bucket, event)
     return event
@@ -78,7 +79,7 @@ class JobEventPublisher {
   fun register(jobId: UUID): SseEmitter {
     pruneStale()
     val emitter = createEmitter()
-    val bucket = buckets.computeIfAbsent(jobId) { JobBucket() }
+    val bucket = buckets.computeIfAbsent(jobId) { JobBucket(startedAt = clock.instant()) }
 
     // Replay first. If a replayed send fails (client already gone, race on connect), bail out —
     // the emitter is already broken and there's nothing to broadcast on it later.
@@ -132,7 +133,7 @@ class JobEventPublisher {
   }
 
   private fun pruneStale() {
-    val cutoff = Instant.now().minus(TERMINAL_RETENTION)
+    val cutoff = clock.instant().minus(TERMINAL_RETENTION)
     val iterator = buckets.entries.iterator()
     while (iterator.hasNext()) {
       val terminalAt = iterator.next().value.terminalAt
@@ -141,7 +142,7 @@ class JobEventPublisher {
   }
 
   private class JobBucket(
-    val startedAt: Instant = Instant.now(),
+    val startedAt: Instant,
     val events: CopyOnWriteArrayList<JobEvent> = CopyOnWriteArrayList(),
     val emitters: CopyOnWriteArrayList<SseEmitter> = CopyOnWriteArrayList(),
     @Volatile var terminalAt: Instant? = null,
