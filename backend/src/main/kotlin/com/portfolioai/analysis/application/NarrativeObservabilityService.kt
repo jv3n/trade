@@ -193,8 +193,18 @@ class NarrativeObservabilityService(
    * [com.portfolioai.market.infrastructure.market.MockMarketChartClient] and
    * [com.portfolioai.market.infrastructure.market.TwelveDataClient] (the indicator calculator
    * downstream depends on the same invariant).
+   *
+   * **Lower-bound guard** — if [target] falls *before* the first bar in the series, return `null`
+   * rather than the first bar's close. Without this guard, a snapshot generated a year ago paired
+   * with a 1Y chart would report the chart's earliest bar as « +1d » — i.e. a ~12-month price
+   * difference advertised as a one-day delta. Symmetric with the implicit upper-bound `null`
+   * returned when the series doesn't reach forward far enough (e.g. a snapshot from yesterday's
+   * `+1m`).
    */
   private fun priceAtOrAfter(bars: List<OhlcBar>, target: LocalDate): BigDecimal? {
+    if (bars.isEmpty()) return null
+    val firstDate = bars.first().timestamp.atOffset(ZoneOffset.UTC).toLocalDate()
+    if (target.isBefore(firstDate)) return null
     val bar = bars.firstOrNull { it.timestamp.atOffset(ZoneOffset.UTC).toLocalDate() >= target }
     return bar?.close
   }

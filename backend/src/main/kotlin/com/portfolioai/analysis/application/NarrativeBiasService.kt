@@ -241,9 +241,14 @@ class NarrativeBiasService(
 
   /**
    * Mirror of [NarrativeObservabilityService.priceAtOrAfter] — kept duplicated to keep services
-   * independent.
+   * independent. The lower-bound guard applies here too : a snapshot dated before the chart's
+   * earliest bar is excluded from the calibration averages rather than skewed by a ~12-month
+   * difference reported as « delta1d ».
    */
   private fun priceAtOrAfter(bars: List<OhlcBar>, target: LocalDate): BigDecimal? {
+    if (bars.isEmpty()) return null
+    val firstDate = bars.first().timestamp.atOffset(ZoneOffset.UTC).toLocalDate()
+    if (target.isBefore(firstDate)) return null
     val bar = bars.firstOrNull { it.timestamp.atOffset(ZoneOffset.UTC).toLocalDate() >= target }
     return bar?.close
   }

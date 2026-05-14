@@ -40,6 +40,9 @@ import org.mockito.kotlin.verify
  *   honest with the user's mental model.
  * - **Bar lookup is « at or after »** : a snapshot from Friday's `+1d` bar is Monday's close, not
  *   null. Weekends + holidays are tolerated this way without a calendar lookup.
+ * - **Lower-bound guard** : when the snapshot pre-dates the chart's earliest bar (a year-old
+ *   narrative viewed against a 1Y chart), every delta is null. Without this guard the service would
+ *   advertise a ~12-month price gap as « delta1d », which is the friction that triggered the patch.
  * - **Graceful degradation** on upstream errors : a [MarketUnavailableException] from the chart
  *   client must NOT crash the page — the observations come back with the price-since fields all
  *   null, and the user still reads their narrative history. Pinned explicitly because a future
@@ -138,6 +141,37 @@ class NarrativeObservabilityServiceTest {
     assertNull(obs.priceAt1w, "1w bar missing → priceAt1w must be null")
     assertNull(obs.delta1w)
     assertNull(obs.priceAt1m)
+    assertNull(obs.delta1m)
+  }
+
+  @Test
+  fun `snapshot dated before the chart's earliest bar yields three null deltas`() {
+    // Realistic case once the corpus is older than the chart window : a narrative from May 2025
+    // visited again in May 2026 against a 1Y chart that starts at 2026-05-13. Without the
+    // lower-bound guard `priceAtOrAfter` would return the first bar (2026-05-13) as « +1d after
+    // 2025-05-10 », inflating the displayed delta1d to ~12 months of price action. Pin the guard
+    // so a regression that drops the `target < first bar` check immediately surfaces here.
+    val stale = Instant.parse("2025-05-10T15:00:00Z")
+    val rows = listOf(observationRow(price = bd("100.0000"), generatedAt = stale))
+    given(query.find(any(), anyOrNull(), anyOrNull(), anyOrNull())).willReturn(rows)
+    given(chartClient.fetchChart(any(), any(), any()))
+      .willReturn(
+        chart(
+          // Chart starts ~12 months *after* the snapshot. Every (snapshot + horizon) target lands
+          // before the first bar.
+          bar("2026-05-13", close = "200.0000"),
+          bar("2026-05-14", close = "210.0000"),
+          bar("2026-05-20", close = "220.0000"),
+        )
+      )
+
+    val obs = service.findFor("STALE").observations.single()
+
+    assertNull(obs.priceAt1d, "snapshot pre-dating the chart → priceAt1d must be null")
+    assertNull(obs.priceAt1w)
+    assertNull(obs.priceAt1m)
+    assertNull(obs.delta1d)
+    assertNull(obs.delta1w)
     assertNull(obs.delta1m)
   }
 

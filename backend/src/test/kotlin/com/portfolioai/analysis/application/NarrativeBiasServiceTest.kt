@@ -47,6 +47,10 @@ import org.mockito.kotlin.verify
  * - **Graceful degradation** on chart failures : a `MarketUnavailableException` for one symbol
  *   nulls its calibration contributions but does NOT crash the request — the other three sections
  *   still render.
+ * - **Lower-bound guard on the bar lookup** : a snapshot dated before the chart's earliest bar is
+ *   excluded from the calibration averages rather than skewing them by a ~12-month price gap
+ *   reported as « delta1d ». Symmetric with the same guard pinned in
+ *   `NarrativeObservabilityServiceTest`.
  * - **Topic coverage** counts « N snapshots mentioned this token at least once », not raw word
  *   frequency — a verbose narrative repeating « rsi » 5 times still counts as one. Stopwords +
  *   short tokens are filtered out, case is normalised.
@@ -253,6 +257,47 @@ class NarrativeBiasServiceTest {
     assertNotNull(out.sentimentDistribution)
     assertNotNull(out.topicCoverage)
     assertNotNull(out.thumbsDistribution)
+  }
+
+  @Test
+  fun `snapshot dated before the chart's earliest bar is excluded from the calibration averages`() {
+    // Same friction as in the observability service : a year-old snapshot paired with a 1Y chart
+    // that starts after the snapshot would otherwise see `priceAtOrAfter` return the chart's
+    // earliest bar — turning a ~12-month price move into « delta1d » and skewing the calibration
+    // average. Pin the guard : the stale snapshot contributes null deltas, only the recent one
+    // counts toward the average.
+    val stale = Instant.parse("2025-05-10T15:00:00Z")
+    val recent = Instant.parse("2026-04-29T15:00:00Z")
+    given(query.sentimentCounts(anyOrNull(), anyOrNull(), anyOrNull()))
+      .willReturn(listOf(SentimentCountRow("BULLISH", 2L)))
+    given(query.thumbsBySentiment(anyOrNull(), anyOrNull(), anyOrNull())).willReturn(emptyList())
+    given(query.rawSnapshots(anyOrNull(), anyOrNull(), anyOrNull()))
+      .willReturn(
+        listOf(
+          biasRow(symbol = "AAPL", price = bd("100"), generatedAt = stale, sentiment = "BULLISH"),
+          biasRow(symbol = "AAPL", price = bd("100"), generatedAt = recent, sentiment = "BULLISH"),
+        )
+      )
+    // Chart starts well after the stale snapshot ; covers +1d for the recent one.
+    given(chartClient.fetchChart(any(), any(), any()))
+      .willReturn(
+        chart(
+          bar("2026-04-29", close = "100"),
+          bar("2026-04-30", close = "103"), // +1d for the recent snapshot → +3 %
+        )
+      )
+
+    val out = service.computeBias()
+
+    val bullish = out.calibration.first { it.sentiment == Sentiment.BULLISH }
+    assertEquals(2, bullish.snapshotsTotal)
+    assertEquals(
+      1,
+      bullish.snapshotsWithDelta1d,
+      "stale snapshot pre-dating the chart must be excluded",
+    )
+    // Average over the one contributing row only — the stale snapshot does not pull it toward 0.
+    assertEquals(0, bullish.avgDelta1d!!.compareTo(BigDecimal("0.0300")))
   }
 
   // ---------------------------------------------------------------------- topic coverage
