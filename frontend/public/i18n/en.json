@@ -19,7 +19,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "import": "Import",
-    "suivi": "Tracking"
+    "suivi": "Tracking",
+    "observability": "Observability"
   },
   "header": {
     "themeLight": "Switch to light theme",
@@ -580,7 +581,7 @@
   "observabilityPage": {
     "title": "Narrative observability",
     "intro": "Past narratives on this ticker, paired with what the price did since. Scroll to inspect; click a card to expand the full summary.",
-    "back": "Back to {{symbol}} dossier",
+    "back": "Back to observability index",
     "loading": "Loading the timeline…",
     "empty": "No narrative has been generated for {{symbol}} yet. Open the dossier and run an analysis to populate the history.",
     "filteredEmpty": "No narrative matches the current filters.",
@@ -642,12 +643,59 @@
   "observabilityIndexPage": {
     "title": "Narrative observability — index",
     "intro": "Tickers with at least one persisted narrative. Pick one to open its timeline of past narratives paired with subsequent price action.",
+    "biasLink": "Bias dashboard (whole corpus)",
     "loading": "Loading tickers…",
     "empty": "No narrative has been generated yet. Open a dossier and run an analysis to populate the history.",
     "snapshotCount": "{{count}} narratives",
     "lastGenerated": "Last:",
     "errors": {
       "load": "Failed to load the ticker index. Try again."
+    }
+  },
+  "biasPage": {
+    "title": "Bias dashboard",
+    "intro": "Aggregate view of the narrative corpus: sentiment distribution, sentiment-vs-price calibration, topic coverage, user votes. Filter by prompt version to compare one prompt against another.",
+    "back": "Back to observability index",
+    "loading": "Loading aggregates…",
+    "empty": "No narrative in the corpus for the active filter. Widen the window, or wait until ~50 snapshots have accumulated before aggregates become meaningful.",
+    "snapshotsConsidered": "{{count}} narratives analysed",
+    "filters": {
+      "title": "Filters",
+      "from": "From",
+      "to": "To",
+      "prompt": "Prompt",
+      "promptAll": "Any prompt",
+      "reset": "Reset"
+    },
+    "sentiment": {
+      "title": "Sentiment distribution",
+      "biasFlag": {
+        "label": "Bias suspected: {{sentiment}} {{percent}} (threshold {{threshold}})",
+        "aria": "Bias warning"
+      }
+    },
+    "calibration": {
+      "title": "Sentiment vs price calibration",
+      "hint": "Average delta after the narrative. BULLISH should trend positive, BEARISH negative.",
+      "sentimentColumn": "Sentiment",
+      "snapshotsColumn": "Snapshots"
+    },
+    "topics": {
+      "title": "Topic coverage (top 15)",
+      "hint": "Most-mentioned tokens in the key_points. Absence of an expected topic (e.g. volatility) is itself a signal.",
+      "empty": "No significant tokens extracted from the corpus."
+    },
+    "thumbs": {
+      "title": "User votes by sentiment",
+      "hint": "If you systematically thumb-up BULLISH and thumb-down BEARISH, that's a bias too — on the human side.",
+      "up": "Thumbs up",
+      "neutral": "Neutral",
+      "down": "Thumbs down",
+      "noVote": "No vote",
+      "aria": "{{sentiment}}: {{up}} thumbs up, {{neutral}} neutral, {{down}} thumbs down, {{novote}} with no vote"
+    },
+    "errors": {
+      "load": "Failed to load the aggregates. Try again."
     }
   }
 }

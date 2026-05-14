@@ -1,0 +1,264 @@
+<div class="bias-layout">
+  <a routerLink="/observability" class="back-link">
+    <mat-icon>arrow_back</mat-icon>
+    {{ 'biasPage.back' | translate }}
+  </a>
+
+  <div class="content-header">
+    <h2>{{ 'biasPage.title' | translate }}</h2>
+    <p>{{ 'biasPage.intro' | translate }}</p>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar" role="group" [attr.aria-label]="'biasPage.filters.title' | translate">
+    <label class="filter-field">
+      <span class="filter-label">{{ 'biasPage.filters.from' | translate }}</span>
+      <input
+        type="date"
+        [value]="fromDate()"
+        (change)="fromDate.set($any($event.target).value); applyFilters()"
+      />
+    </label>
+    <label class="filter-field">
+      <span class="filter-label">{{ 'biasPage.filters.to' | translate }}</span>
+      <input
+        type="date"
+        [value]="toDate()"
+        (change)="toDate.set($any($event.target).value); applyFilters()"
+      />
+    </label>
+    <label class="filter-field filter-field-prompt">
+      <span class="filter-label">{{ 'biasPage.filters.prompt' | translate }}</span>
+      <select
+        [value]="promptId()"
+        (change)="promptId.set($any($event.target).value); applyFilters()"
+      >
+        <option value="">{{ 'biasPage.filters.promptAll' | translate }}</option>
+        @for (p of prompts(); track p.id) {
+          <option [value]="p.id">{{ p.version }}{{ p.isActive ? ' (active)' : '' }}</option>
+        }
+      </select>
+    </label>
+    @if (hasActiveFilter()) {
+      <button type="button" class="filter-reset" (click)="resetFilters()">
+        <mat-icon>close</mat-icon>
+        {{ 'biasPage.filters.reset' | translate }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'biasPage.loading' | translate }}</span>
+    </div>
+  } @else if (loadError(); as e) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      {{ e }}
+    </div>
+  } @else if (isEmpty()) {
+    <div class="empty-state">
+      <mat-icon>info_outline</mat-icon>
+      {{ 'biasPage.empty' | translate }}
+      @if (hasActiveFilter()) {
+        <button type="button" class="filter-reset inline" (click)="resetFilters()">
+          {{ 'biasPage.filters.reset' | translate }}
+        </button>
+      }
+    </div>
+  } @else if (bias(); as b) {
+    <p class="snapshot-count">
+      {{ 'biasPage.snapshotsConsidered' | translate: { count: (b.snapshotsConsidered | number) } }}
+    </p>
+
+    <!-- Section 1: sentiment distribution -->
+    <section class="bias-card">
+      <header class="bias-card-header">
+        <h3>{{ 'biasPage.sentiment.title' | translate }}</h3>
+        @if (b.sentimentDistribution.biasFlag; as flag) {
+          <span
+            class="bias-flag"
+            [attr.aria-label]="'biasPage.sentiment.biasFlag.aria' | translate"
+          >
+            <mat-icon>warning_amber</mat-icon>
+            {{
+              'biasPage.sentiment.biasFlag.label'
+                | translate
+                  : {
+                      sentiment: ('sentiment.' + flag.sentiment | translate),
+                      percent: (flag.percent | percent: '1.0-1'),
+                      threshold: (flag.threshold | percent: '1.0-0'),
+                    }
+            }}
+          </span>
+        }
+      </header>
+      <ul class="sentiment-bars">
+        @for (bucket of b.sentimentDistribution.buckets; track bucket.sentiment) {
+          <li class="sentiment-bar-row">
+            <span
+              class="sentiment-bar-label chip-sentiment"
+              [ngClass]="'chip-sentiment-' + bucket.sentiment.toLowerCase()"
+            >
+              {{ 'sentiment.' + bucket.sentiment | translate }}
+            </span>
+            <div class="sentiment-bar-track">
+              <div
+                class="sentiment-bar-fill"
+                [ngClass]="'sentiment-bar-fill-' + bucket.sentiment.toLowerCase()"
+                [style.width.%]="bucket.percent * 100"
+              ></div>
+            </div>
+            <span class="sentiment-bar-value">
+              <strong>{{ bucket.percent | percent: '1.0-1' }}</strong>
+              <span class="sentiment-bar-count">({{ bucket.count | number }})</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <!-- Section 2: calibration -->
+    <section class="bias-card">
+      <header class="bias-card-header">
+        <h3>{{ 'biasPage.calibration.title' | translate }}</h3>
+        <span class="bias-card-hint">{{ 'biasPage.calibration.hint' | translate }}</span>
+      </header>
+      <table class="calibration-table">
+        <thead>
+          <tr>
+            <th>{{ 'biasPage.calibration.sentimentColumn' | translate }}</th>
+            <th>{{ 'biasPage.calibration.snapshotsColumn' | translate }}</th>
+            <th>{{ 'observabilityPage.deltas.1d' | translate }}</th>
+            <th>{{ 'observabilityPage.deltas.1w' | translate }}</th>
+            <th>{{ 'observabilityPage.deltas.1m' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (bucket of b.calibration; track bucket.sentiment) {
+            <tr>
+              <td>
+                <span
+                  class="chip-sentiment"
+                  [ngClass]="'chip-sentiment-' + bucket.sentiment.toLowerCase()"
+                >
+                  {{ 'sentiment.' + bucket.sentiment | translate }}
+                </span>
+              </td>
+              <td class="cell-num">{{ bucket.snapshotsTotal | number }}</td>
+              <td class="cell-num" [ngClass]="deltaClass(bucket.avgDelta1d)">
+                @if (bucket.avgDelta1d !== null) {
+                  {{ bucket.avgDelta1d | percent: '1.2-2' }}
+                  <span class="cell-count">/ {{ bucket.snapshotsWithDelta1d | number }}</span>
+                } @else {
+                  {{ 'common.noData' | translate }}
+                }
+              </td>
+              <td class="cell-num" [ngClass]="deltaClass(bucket.avgDelta1w)">
+                @if (bucket.avgDelta1w !== null) {
+                  {{ bucket.avgDelta1w | percent: '1.2-2' }}
+                  <span class="cell-count">/ {{ bucket.snapshotsWithDelta1w | number }}</span>
+                } @else {
+                  {{ 'common.noData' | translate }}
+                }
+              </td>
+              <td class="cell-num" [ngClass]="deltaClass(bucket.avgDelta1m)">
+                @if (bucket.avgDelta1m !== null) {
+                  {{ bucket.avgDelta1m | percent: '1.2-2' }}
+                  <span class="cell-count">/ {{ bucket.snapshotsWithDelta1m | number }}</span>
+                } @else {
+                  {{ 'common.noData' | translate }}
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Section 3: topic coverage -->
+    <section class="bias-card">
+      <header class="bias-card-header">
+        <h3>{{ 'biasPage.topics.title' | translate }}</h3>
+        <span class="bias-card-hint">{{ 'biasPage.topics.hint' | translate }}</span>
+      </header>
+      @if (b.topicCoverage.topics.length === 0) {
+        <p class="empty-hint">{{ 'biasPage.topics.empty' | translate }}</p>
+      } @else {
+        <ul class="topic-pills">
+          @for (t of b.topicCoverage.topics; track t.topic) {
+            <li class="topic-pill">
+              <span class="topic-name">{{ t.topic }}</span>
+              <span class="topic-count">{{ t.count | number }}</span>
+              <span class="topic-percent">{{ t.percent | percent: '1.0-1' }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- Section 4: thumbs distribution -->
+    <section class="bias-card">
+      <header class="bias-card-header">
+        <h3>{{ 'biasPage.thumbs.title' | translate }}</h3>
+        <span class="bias-card-hint">{{ 'biasPage.thumbs.hint' | translate }}</span>
+      </header>
+      <ul class="thumbs-bars">
+        @for (bucket of b.thumbsDistribution; track bucket.sentiment) {
+          <li class="thumbs-bar-row">
+            <span
+              class="thumbs-bar-label chip-sentiment"
+              [ngClass]="'chip-sentiment-' + bucket.sentiment.toLowerCase()"
+            >
+              {{ 'sentiment.' + bucket.sentiment | translate }}
+            </span>
+            <div
+              class="thumbs-bar-stack"
+              [attr.aria-label]="
+                'biasPage.thumbs.aria'
+                  | translate
+                    : {
+                        sentiment: ('sentiment.' + bucket.sentiment | translate),
+                        up: bucket.thumbsUp,
+                        neutral: bucket.thumbsNeutral,
+                        down: bucket.thumbsDown,
+                        novote: bucket.noVote,
+                      }
+              "
+            >
+              <span
+                class="thumbs-segment thumbs-segment-up"
+                [style.width.%]="thumbsBarWidth(bucket.thumbsUp)"
+                [title]="('biasPage.thumbs.up' | translate) + ' : ' + (bucket.thumbsUp | number)"
+              ></span>
+              <span
+                class="thumbs-segment thumbs-segment-neutral"
+                [style.width.%]="thumbsBarWidth(bucket.thumbsNeutral)"
+                [title]="
+                  ('biasPage.thumbs.neutral' | translate) + ' : ' + (bucket.thumbsNeutral | number)
+                "
+              ></span>
+              <span
+                class="thumbs-segment thumbs-segment-down"
+                [style.width.%]="thumbsBarWidth(bucket.thumbsDown)"
+                [title]="
+                  ('biasPage.thumbs.down' | translate) + ' : ' + (bucket.thumbsDown | number)
+                "
+              ></span>
+              <span
+                class="thumbs-segment thumbs-segment-novote"
+                [style.width.%]="thumbsBarWidth(bucket.noVote)"
+                [title]="('biasPage.thumbs.noVote' | translate) + ' : ' + (bucket.noVote | number)"
+              ></span>
+            </div>
+            <span class="thumbs-bar-counts">
+              <span class="thumbs-count thumbs-count-up">+{{ bucket.thumbsUp | number }}</span>
+              <span class="thumbs-count thumbs-count-down">−{{ bucket.thumbsDown | number }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

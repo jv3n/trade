@@ -19,7 +19,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "import": "Import",
-    "suivi": "Suivi"
+    "suivi": "Suivi",
+    "observability": "Observabilité"
   },
   "header": {
     "themeLight": "Passer en thème clair",
@@ -580,7 +581,7 @@
   "observabilityPage": {
     "title": "Observabilité narrative",
     "intro": "Narratifs passés sur ce ticker, mis en regard de ce que le prix a fait depuis. Faites défiler pour inspecter ; cliquez sur une carte pour ouvrir le résumé complet.",
-    "back": "Retour au dossier {{symbol}}",
+    "back": "Retour à l'index observabilité",
     "loading": "Chargement de la timeline…",
     "empty": "Aucun narratif n'a encore été généré pour {{symbol}}. Ouvrez le dossier et lancez une analyse pour peupler l'historique.",
     "filteredEmpty": "Aucun narratif ne correspond aux filtres actifs.",
@@ -642,12 +643,59 @@
   "observabilityIndexPage": {
     "title": "Observabilité narrative — index",
     "intro": "Tickers ayant au moins un narratif persisté. Sélectionnez-en un pour ouvrir la timeline des narratifs passés et du prix qui a suivi.",
+    "biasLink": "Détection de biais (corpus complet)",
     "loading": "Chargement des tickers…",
     "empty": "Aucun narratif n'a encore été généré. Ouvrez un dossier et lancez une analyse pour peupler l'historique.",
     "snapshotCount": "{{count}} narratifs",
     "lastGenerated": "Dernier :",
     "errors": {
       "load": "Échec du chargement de l'index. Réessayez."
+    }
+  },
+  "biasPage": {
+    "title": "Détection de biais",
+    "intro": "Vue agrégée du corpus narratif : distribution des sentiments, calibration sentiment/prix, couverture thématique, votes utilisateur. Filtrer par version de prompt permet de comparer un prompt vs un autre.",
+    "back": "Retour à l'index observabilité",
+    "loading": "Chargement des agrégats…",
+    "empty": "Pas de narratif dans le corpus pour le filtre actif. Élargissez la fenêtre, ou attendez ~50 snapshots avant que les agrégats deviennent significatifs.",
+    "snapshotsConsidered": "{{count}} narratifs analysés",
+    "filters": {
+      "title": "Filtres",
+      "from": "Depuis",
+      "to": "Jusqu'à",
+      "prompt": "Prompt",
+      "promptAll": "Tous les prompts",
+      "reset": "Réinitialiser"
+    },
+    "sentiment": {
+      "title": "Distribution des sentiments",
+      "biasFlag": {
+        "label": "Biais suspecté : {{sentiment}} {{percent}} (seuil {{threshold}})",
+        "aria": "Avertissement biais"
+      }
+    },
+    "calibration": {
+      "title": "Calibration sentiment vs prix",
+      "hint": "Delta moyen après le narratif. BULLISH attendu positif, BEARISH attendu négatif.",
+      "sentimentColumn": "Sentiment",
+      "snapshotsColumn": "Snapshots"
+    },
+    "topics": {
+      "title": "Couverture thématique (top 15)",
+      "hint": "Tokens les plus mentionnés dans les key_points. L'absence d'un thème attendu (ex. volatility) est elle-même un signal.",
+      "empty": "Aucun token significatif extrait du corpus."
+    },
+    "thumbs": {
+      "title": "Votes utilisateur par sentiment",
+      "hint": "Si vous validez systématiquement les BULLISH et rejetez les BEARISH, c'est aussi un biais — côté humain cette fois.",
+      "up": "Pouce haut",
+      "neutral": "Neutre",
+      "down": "Pouce bas",
+      "noVote": "Sans vote",
+      "aria": "{{sentiment}} : {{up}} pouces hauts, {{neutral}} neutres, {{down}} pouces bas, {{novote}} sans vote"
+    },
+    "errors": {
+      "load": "Échec du chargement des agrégats. Réessayez."
     }
   }
 }

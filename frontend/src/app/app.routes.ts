@@ -25,6 +25,13 @@ export const routes: Routes = [
         (m) => m.ObservabilityIndexPage,
       ),
   },
+  // Literal `/observability/bias` declared **before** `/observability/:symbol` so the router
+  // matches the literal segment first (otherwise `bias` would bind as a `symbol` and load the
+  // per-ticker timeline with an empty corpus).
+  {
+    path: 'observability/bias',
+    loadComponent: () => import('./features/observability/bias/bias').then((m) => m.BiasPage),
+  },
   {
     path: 'observability/:symbol',
     loadComponent: () =>

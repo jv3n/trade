@@ -1,0 +1,464 @@
+.bias-layout {
+  padding: 2rem 2.5rem;
+  max-width: 1100px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  margin-bottom: 1rem;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.content-header {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.4rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+  }
+}
+
+.snapshot-count {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+// -------------------------------------------------------------------- filter bar (réutilise les
+// styles de observability.scss en local pour rester self-contained)
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+
+  &.filter-field-prompt select,
+  &.filter-field input {
+    height: 32px;
+    padding: 0 0.55rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    min-width: 8rem;
+  }
+
+  &.filter-field-prompt select {
+    min-width: 12rem;
+  }
+}
+
+.filter-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.filter-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 32px;
+  padding: 0 0.7rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    color: var(--color-text);
+    border-color: var(--color-text-muted);
+  }
+
+  &.inline {
+    margin-left: auto;
+  }
+}
+
+// -------------------------------------------------------------------- common states
+
+.loading-state,
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--color-error-soft);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius);
+  color: var(--color-error);
+  font-size: 0.875rem;
+}
+
+// -------------------------------------------------------------------- bias card (used by all 4
+// sections)
+
+.bias-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.bias-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+}
+
+.bias-card-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+// -------------------------------------------------------------------- chip-sentiment shared
+
+.chip-sentiment {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  display: inline-block;
+}
+
+.chip-sentiment-bullish {
+  background: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.chip-sentiment-bearish {
+  background: var(--color-error-soft);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.chip-sentiment-neutral {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+// -------------------------------------------------------------------- bias flag chip
+
+.bias-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 171, 0, 0.12);
+  border: 1px solid rgba(255, 171, 0, 0.45);
+  color: #b46300;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// -------------------------------------------------------------------- section 1 — sentiment bars
+
+.sentiment-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sentiment-bar-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 110px;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.sentiment-bar-label {
+  text-align: center;
+}
+
+.sentiment-bar-track {
+  height: 14px;
+  background: var(--color-surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.sentiment-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 200ms ease;
+}
+
+.sentiment-bar-fill-bullish {
+  background: var(--color-accent);
+}
+
+.sentiment-bar-fill-bearish {
+  background: var(--color-error);
+}
+
+.sentiment-bar-fill-neutral {
+  background: var(--color-text-muted);
+}
+
+.sentiment-bar-value {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+
+  strong {
+    font-weight: 600;
+  }
+
+  .sentiment-bar-count {
+    color: var(--color-text-muted);
+    margin-left: 0.4rem;
+    font-size: 0.75rem;
+  }
+}
+
+// -------------------------------------------------------------------- section 2 — calibration table
+
+.calibration-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th,
+  td {
+    padding: 0.55rem 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+
+  th {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .cell-num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .cell-count {
+    margin-left: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .delta-up {
+    color: var(--color-accent);
+  }
+
+  .delta-down {
+    color: var(--color-error);
+  }
+
+  .delta-zero {
+    color: var(--color-text);
+  }
+
+  .delta-muted {
+    color: var(--color-text-muted);
+  }
+}
+
+// -------------------------------------------------------------------- section 3 — topic pills
+
+.topic-pills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.topic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  font-size: 0.8rem;
+
+  .topic-name {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+  }
+
+  .topic-count {
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .topic-percent {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.empty-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+// -------------------------------------------------------------------- section 4 — thumbs bars
+
+.thumbs-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.thumbs-bar-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 130px;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.thumbs-bar-label {
+  text-align: center;
+}
+
+.thumbs-bar-stack {
+  display: flex;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-surface-2);
+}
+
+.thumbs-segment {
+  display: block;
+  height: 100%;
+  transition: width 200ms ease;
+}
+
+.thumbs-segment-up {
+  background: var(--color-accent);
+}
+
+.thumbs-segment-neutral {
+  background: var(--color-text-muted);
+  opacity: 0.6;
+}
+
+.thumbs-segment-down {
+  background: var(--color-error);
+}
+
+.thumbs-segment-novote {
+  background: transparent;
+  border-right: 1px dashed var(--color-border);
+  border-left: 1px dashed var(--color-border);
+}
+
+.thumbs-bar-counts {
+  display: inline-flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.thumbs-count-up {
+  color: var(--color-accent);
+}
+
+.thumbs-count-down {
+  color: var(--color-error);
+}

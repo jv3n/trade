@@ -26,6 +26,8 @@ import { NarrativeFeedbackRepository } from './narrative-feedback.repository';
 import { HttpNarrativeFeedbackRepository } from './adapters/narrative-feedback.http';
 import { NarrativeObservabilityRepository } from './narrative-observability.repository';
 import { HttpNarrativeObservabilityRepository } from './adapters/narrative-observability.http';
+import { NarrativeBiasRepository } from './narrative-bias.repository';
+import { HttpNarrativeBiasRepository } from './adapters/narrative-bias.http';
 
 /**
  * Wires every port (`*.repository.ts`) to its default adapter. Aligned on the
@@ -50,5 +52,6 @@ export function provideRepositories(): EnvironmentProviders {
       provide: NarrativeObservabilityRepository,
       useClass: HttpNarrativeObservabilityRepository,
     },
+    { provide: NarrativeBiasRepository, useClass: HttpNarrativeBiasRepository },
   ]);
 }

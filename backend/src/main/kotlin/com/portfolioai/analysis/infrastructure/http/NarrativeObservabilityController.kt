@@ -1,6 +1,8 @@
 package com.portfolioai.analysis.infrastructure.http
 
+import com.portfolioai.analysis.application.NarrativeBiasService
 import com.portfolioai.analysis.application.NarrativeObservabilityService
+import com.portfolioai.analysis.application.dto.NarrativeBiasResponse
 import com.portfolioai.analysis.application.dto.NarrativeObservationsResponse
 import com.portfolioai.analysis.application.dto.TickerObservationIndexDto
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -45,7 +47,10 @@ import org.springframework.web.bind.annotation.RestController
 )
 @RestController
 @RequestMapping("/api/narrative/observability")
-class NarrativeObservabilityController(private val service: NarrativeObservabilityService) {
+class NarrativeObservabilityController(
+  private val service: NarrativeObservabilityService,
+  private val biasService: NarrativeBiasService,
+) {
 
   /**
    * Phase 3 #1 PR3 — index of tickers that have at least one persisted narrative. Backs the
@@ -56,6 +61,24 @@ class NarrativeObservabilityController(private val service: NarrativeObservabili
    * `symbol` path variable and return an empty timeline.
    */
   @GetMapping("/tickers") fun listTickers(): List<TickerObservationIndexDto> = service.listTickers()
+
+  /**
+   * Phase 3 #3 — narrative bias dashboard endpoint. Aggregates the corpus across symbols and
+   * returns four sections : sentiment distribution (with bias flag at 60 %), calibration of
+   * sentiment vs subsequent price action, top-N key_points topics, and thumbs distribution by
+   * sentiment. Filters mirror the timeline endpoint (`from / to / promptId`) so the page can reuse
+   * the same filter UI.
+   *
+   * Declared **before** `/{symbol}` for the same reason as `/tickers` — keeps Spring routing
+   * unambiguous on the literal path segment.
+   */
+  @GetMapping("/bias")
+  fun bias(
+    @RequestParam(required = false) from: Instant?,
+    @RequestParam(required = false) to: Instant?,
+    @RequestParam(name = "promptId", required = false) promptTemplateId: UUID?,
+  ): NarrativeBiasResponse =
+    biasService.computeBias(from = from, to = to, promptTemplateId = promptTemplateId)
 
   // `Instant` query params bind via Spring's default `InstantFormatter` (uses `Instant.parse`),
   // so the wire format is ISO 8601 with a trailing `Z` or offset (e.g. `2026-04-01T00:00:00Z`).

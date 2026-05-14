@@ -1,7 +1,7 @@
 <div class="observability-layout">
-  <a [routerLink]="['/ticker', symbol()]" class="back-link">
+  <a routerLink="/observability" class="back-link">
     <mat-icon>arrow_back</mat-icon>
-    {{ 'observabilityPage.back' | translate: { symbol: symbol() } }}
+    {{ 'observabilityPage.back' | translate }}
   </a>
 
   <div class="content-header">

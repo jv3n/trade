@@ -1,9 +1,18 @@
 package com.portfolioai.analysis.infrastructure.http
 
+import com.portfolioai.analysis.application.NarrativeBiasService
 import com.portfolioai.analysis.application.NarrativeObservabilityService
+import com.portfolioai.analysis.application.dto.BiasFlagDto
+import com.portfolioai.analysis.application.dto.CalibrationBucketDto
+import com.portfolioai.analysis.application.dto.NarrativeBiasResponse
 import com.portfolioai.analysis.application.dto.NarrativeObservationDto
 import com.portfolioai.analysis.application.dto.NarrativeObservationsResponse
+import com.portfolioai.analysis.application.dto.SentimentBucketDto
+import com.portfolioai.analysis.application.dto.SentimentDistributionDto
+import com.portfolioai.analysis.application.dto.ThumbsBucketDto
 import com.portfolioai.analysis.application.dto.TickerObservationIndexDto
+import com.portfolioai.analysis.application.dto.TopicCoverageDto
+import com.portfolioai.analysis.application.dto.TopicDto
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.shared.GlobalExceptionHandler
 import java.math.BigDecimal
@@ -55,6 +64,8 @@ class NarrativeObservabilityControllerTest {
   @Autowired private lateinit var mvc: MockMvc
 
   @MockitoBean private lateinit var service: NarrativeObservabilityService
+
+  @MockitoBean private lateinit var biasService: NarrativeBiasService
 
   // ---------------------------------------------------------------------- default request
 
@@ -222,4 +233,139 @@ class NarrativeObservabilityControllerTest {
       .andExpect(jsonPath("$").isArray)
       .andExpect(jsonPath("$.length()").value(0))
   }
+
+  // ---------------------------------------------------------------------- /bias dashboard (Phase
+  // 3 #3)
+
+  @Test
+  fun `GET bias resolves to the bias dashboard, not to a symbol named bias`() {
+    // Pin the route literal `/bias` resolves to `bias()` and NOT to the `{symbol}` path with
+    // `symbol = "bias"`. Same routing-precedence guard as the `/tickers` test ; without the
+    // explicit declaration order in the controller, Spring would silently bind « bias » as a
+    // symbol path variable.
+    given(biasService.computeBias(isNull(), isNull(), isNull())).willReturn(emptyBias())
+
+    mvc
+      .perform(get("/api/narrative/observability/bias").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.snapshotsConsidered").exists())
+      .andExpect(jsonPath("$.sentimentDistribution").exists())
+      .andExpect(jsonPath("$.calibration").isArray)
+      .andExpect(jsonPath("$.topicCoverage").exists())
+      .andExpect(jsonPath("$.thumbsDistribution").isArray)
+
+    verify(biasService).computeBias(isNull(), isNull(), isNull())
+  }
+
+  @Test
+  fun `GET bias forwards the from to and promptId filters to the service`() {
+    val promptId = UUID.fromString("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+    val fromCaptor = argumentCaptor<Instant>()
+    val toCaptor = argumentCaptor<Instant>()
+    given(biasService.computeBias(anyOrNull(), anyOrNull(), anyOrNull())).willReturn(emptyBias())
+
+    mvc
+      .perform(
+        get("/api/narrative/observability/bias")
+          .param("from", "2026-04-01T00:00:00Z")
+          .param("to", "2026-05-01T00:00:00Z")
+          .param("promptId", promptId.toString())
+      )
+      .andExpect(status().isOk)
+
+    verify(biasService).computeBias(fromCaptor.capture(), toCaptor.capture(), eq(promptId))
+    assertEquals(Instant.parse("2026-04-01T00:00:00Z"), fromCaptor.firstValue)
+    assertEquals(Instant.parse("2026-05-01T00:00:00Z"), toCaptor.firstValue)
+  }
+
+  @Test
+  fun `bias JSON shape carries every field the page binds to`() {
+    val flag =
+      BiasFlagDto(
+        sentiment = Sentiment.BULLISH,
+        percent = BigDecimal("0.6800"),
+        threshold = BigDecimal("0.6000"),
+      )
+    val body =
+      NarrativeBiasResponse(
+        snapshotsConsidered = 47,
+        sentimentDistribution =
+          SentimentDistributionDto(
+            total = 47,
+            buckets =
+              listOf(
+                SentimentBucketDto(Sentiment.BULLISH, 32, BigDecimal("0.6800")),
+                SentimentBucketDto(Sentiment.NEUTRAL, 10, BigDecimal("0.2128")),
+                SentimentBucketDto(Sentiment.BEARISH, 5, BigDecimal("0.1064")),
+              ),
+            biasFlag = flag,
+          ),
+        calibration =
+          listOf(
+            CalibrationBucketDto(
+              sentiment = Sentiment.BULLISH,
+              snapshotsTotal = 32,
+              snapshotsWithDelta1d = 28,
+              snapshotsWithDelta1w = 25,
+              snapshotsWithDelta1m = 18,
+              avgDelta1d = BigDecimal("0.0123"),
+              avgDelta1w = BigDecimal("0.0245"),
+              avgDelta1m = BigDecimal("0.0410"),
+            )
+          ),
+        topicCoverage =
+          TopicCoverageDto(
+            snapshotsTotal = 47,
+            topics = listOf(TopicDto(topic = "rsi", count = 38, percent = BigDecimal("0.8085"))),
+          ),
+        thumbsDistribution =
+          listOf(
+            ThumbsBucketDto(
+              sentiment = Sentiment.BULLISH,
+              thumbsUp = 12,
+              thumbsNeutral = 18,
+              thumbsDown = 2,
+              noVote = 0,
+            )
+          ),
+      )
+    given(biasService.computeBias(anyOrNull(), anyOrNull(), anyOrNull())).willReturn(body)
+
+    mvc
+      .perform(get("/api/narrative/observability/bias").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.snapshotsConsidered").value(47))
+      .andExpect(jsonPath("$.sentimentDistribution.total").value(47))
+      .andExpect(jsonPath("$.sentimentDistribution.buckets.length()").value(3))
+      .andExpect(jsonPath("$.sentimentDistribution.buckets[0].sentiment").value("BULLISH"))
+      .andExpect(jsonPath("$.sentimentDistribution.buckets[0].count").value(32))
+      .andExpect(jsonPath("$.sentimentDistribution.biasFlag.sentiment").value("BULLISH"))
+      .andExpect(jsonPath("$.calibration.length()").value(1))
+      .andExpect(jsonPath("$.calibration[0].sentiment").value("BULLISH"))
+      .andExpect(jsonPath("$.calibration[0].snapshotsWithDelta1d").value(28))
+      .andExpect(jsonPath("$.topicCoverage.snapshotsTotal").value(47))
+      .andExpect(jsonPath("$.topicCoverage.topics[0].topic").value("rsi"))
+      .andExpect(jsonPath("$.topicCoverage.topics[0].count").value(38))
+      .andExpect(jsonPath("$.thumbsDistribution[0].sentiment").value("BULLISH"))
+      .andExpect(jsonPath("$.thumbsDistribution[0].thumbsUp").value(12))
+  }
+
+  private fun emptyBias() =
+    NarrativeBiasResponse(
+      snapshotsConsidered = 0,
+      sentimentDistribution =
+        SentimentDistributionDto(
+          total = 0,
+          buckets =
+            listOf(
+              SentimentBucketDto(Sentiment.BULLISH, 0, BigDecimal.ZERO),
+              SentimentBucketDto(Sentiment.NEUTRAL, 0, BigDecimal.ZERO),
+              SentimentBucketDto(Sentiment.BEARISH, 0, BigDecimal.ZERO),
+            ),
+          biasFlag = null,
+        ),
+      calibration = emptyList(),
+      topicCoverage = TopicCoverageDto(snapshotsTotal = 0, topics = emptyList()),
+      thumbsDistribution = emptyList(),
+    )
 }

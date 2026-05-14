@@ -2,6 +2,10 @@
   <div class="content-header">
     <h2>{{ 'observabilityIndexPage.title' | translate }}</h2>
     <p>{{ 'observabilityIndexPage.intro' | translate }}</p>
+    <a routerLink="/observability/bias" class="bias-link">
+      <mat-icon>insights</mat-icon>
+      {{ 'observabilityIndexPage.biasLink' | translate }}
+    </a>
   </div>
 
   @if (loading()) {
