@@ -42,7 +42,7 @@ Pipeline `AnalysisExecutor` (`AnalysisContextLoader`, `LlmResponseParser`, `Reco
 
 #### Settings RSS back-office
 
-Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings vit aujourd'hui avec `configuration/` (config runtime Phase 2), `prompt-preview/` (aperçu prompt narratif Phase 1) et `prompts/` + `prompts/:id/stats` (gestion + scoring des prompts narratifs, Phase 3).
+Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings vit aujourd'hui avec `configuration/` (config runtime Phase 2) et `prompts/` + `prompts/:id/stats` (gestion + scoring des prompts narratifs, Phase 3). La page `prompt-preview/` (aperçu interpolé du prompt narratif Phase 1) a été retirée le 2026-05-14, l'éditeur de prompts Phase 3 couvrant l'usage.
 
 > **Pourquoi décommissionné maintenant** : la Phase 0 était gelée depuis Phase 1, mais le module restait chargé et `AnalysisExecutor` chargeait encore les 200 derniers articles RSS dans le prompt LLM même quand le scheduler était off — cause d'un timeout 400 s observé sur Ollama cold-start le 2026-05-07. Plutôt que de patcher le legacy, on a tranché : drop des tables et modules, le replacement Phase 4 (PortfolioAggregation au-dessus des snapshots ticker) ne réutilisera rien de la plomberie RSS+executor.
 

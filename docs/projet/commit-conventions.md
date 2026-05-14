@@ -45,7 +45,7 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 | `earnings` | Module earnings (Finnhub + mock, EPS trimestriels + next-date Phase 2) |
 | `ticker` | Page Dossier ticker (frontend) |
 | `dashboard` | Page Dashboard (frontend, sidebar incluse) |
-| `settings` | Page Settings (back-office, prompt-preview, configuration runtime) |
+| `settings` | Page Settings (back-office, configuration runtime, gestion des prompts) |
 | `observability` | Module scoring / traçabilité (Phase 3) |
 | `db` | Migrations Flyway |
 | `ci` | GitHub Actions |

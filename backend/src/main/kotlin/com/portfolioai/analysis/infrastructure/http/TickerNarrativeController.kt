@@ -2,14 +2,10 @@ package com.portfolioai.analysis.infrastructure.http
 
 import com.portfolioai.analysis.application.JobEventPublisher
 import com.portfolioai.analysis.application.TickerNarrativeJobStore
-import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.TickerNarrativeService
-import com.portfolioai.analysis.application.buildNarrativeUserMessage
-import com.portfolioai.analysis.application.dto.NarrativePromptPreviewDto
 import com.portfolioai.analysis.application.dto.TickerNarrativeJobDto
 import com.portfolioai.analysis.application.dto.TickerNarrativeSnapshotDto
 import com.portfolioai.analysis.application.dto.toDto
-import com.portfolioai.market.application.TickerService
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.util.UUID
 import org.springframework.http.HttpStatus
@@ -42,9 +38,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 class TickerNarrativeController(
   private val service: TickerNarrativeService,
   private val jobStore: TickerNarrativeJobStore,
-  private val tickerService: TickerService,
   private val jobEventPublisher: JobEventPublisher,
-  private val promptService: TickerNarrativePromptService,
 ) {
   @PostMapping
   @ResponseStatus(HttpStatus.ACCEPTED)
@@ -97,31 +91,4 @@ class TickerNarrativeController(
   fun getLatest(@PathVariable symbol: String): TickerNarrativeSnapshotDto =
     service.latestSnapshot(symbol)?.toDto()
       ?: throw NoSuchElementException("No narrative snapshot for $symbol")
-
-  /**
-   * Read-only preview of the system + user prompt for [symbol] — no LLM call. Backs the
-   * `/settings/prompt-preview` page so the user can inspect exactly what the runner would send to
-   * Claude/Ollama on a given ticker. Reads the currently active prompt from
-   * [TickerNarrativePromptService] so the preview reflects what's *live* in the DB (Phase 3 PR1+),
-   * not the hardcoded fallback.
-   */
-  @GetMapping("/preview")
-  fun preview(@PathVariable symbol: String): NarrativePromptPreviewDto {
-    val snapshot = tickerService.load(symbol)
-    val indicators =
-      snapshot.indicators
-        ?: throw IllegalStateException(
-          "No indicators computed for $symbol — series too short to preview"
-        )
-    val userMessage = buildNarrativeUserMessage(snapshot.quote, indicators)
-    val activePrompt = promptService.activePrompt()
-    return NarrativePromptPreviewDto(
-      symbol = snapshot.quote.symbol,
-      systemPrompt = activePrompt.systemPrompt,
-      userMessage = userMessage,
-      systemPromptChars = activePrompt.systemPrompt.length,
-      userMessageChars = userMessage.length,
-      promptVersion = activePrompt.version,
-    )
-  }
 }

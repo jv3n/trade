@@ -370,7 +370,6 @@
   },
   "settings": {
     "navLabel": "Configuration",
-    "promptPreview": "Prompt preview",
     "configuration": "Runtime configuration",
     "prompts": "Narrative prompts",
     "promptsPage": {
@@ -438,25 +437,6 @@
         "loadList": "Failed to load the prompts list.",
         "activate": "Failed to activate version {{version}}. Try again.",
         "create": "Failed to save the new version."
-      }
-    },
-    "previewPage": {
-      "intro": "Enter a ticker to view the full system + user prompt that the narrative pipeline would send to the LLM. No call is made.",
-      "symbolPlaceholder": "Ticker (e.g. AAPL, MSFT…)",
-      "suggestionsLabel": "Owned tickers",
-      "loading": "Loading…",
-      "show": "Show the prompt",
-      "promptVersion": "version: {{version}}",
-      "systemChars": "system: {{count}} chars",
-      "userChars": "user: {{count}} chars",
-      "totalChars": "total: {{count}} chars",
-      "systemPrompt": "System prompt",
-      "userMessage": "User message",
-      "copy": "Copy",
-      "errors": {
-        "notFound": "Ticker not found",
-        "unavailable": "Market data unavailable (rate-limit or network)",
-        "backend": "Backend error"
       }
     },
     "configurationPage": {

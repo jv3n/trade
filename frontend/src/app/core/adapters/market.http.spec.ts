@@ -137,14 +137,6 @@ describe('HttpMarketRepository', () => {
       req.flush({});
     });
 
-    it('getNarrativePromptPreview calls GET .../narrative/preview', () => {
-      // Read-only preview, no LLM call. Backs the /settings/prompt-preview page.
-      repo.getNarrativePromptPreview('AAPL').subscribe();
-      const req = http.expectOne('/api/market/ticker/AAPL/narrative/preview');
-      expect(req.request.method).toBe('GET');
-      req.flush({});
-    });
-
     it('getLatestNarrative maps 404 to null instead of throwing', () => {
       // First visit on a symbol = no snapshot yet. The page must branch on `null`, not
       // catch a scary HTTP error.

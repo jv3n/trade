@@ -4,7 +4,6 @@ import { Observable, catchError, of, throwError } from 'rxjs';
 import {
   ChartResponse,
   MarketRepository,
-  NarrativePromptPreview,
   SectorBenchmark,
   SymbolMatch,
   TickerNarrativeJob,
@@ -65,11 +64,5 @@ export class HttpMarketRepository extends MarketRepository {
         `/api/market/ticker/${encodeURIComponent(symbol)}/narrative/latest`,
       )
       .pipe(catchError((err) => (err.status === 404 ? of(null) : throwError(() => err))));
-  }
-
-  getNarrativePromptPreview(symbol: string): Observable<NarrativePromptPreview> {
-    return this.http.get<NarrativePromptPreview>(
-      `/api/market/ticker/${encodeURIComponent(symbol)}/narrative/preview`,
-    );
   }
 }

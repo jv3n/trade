@@ -55,7 +55,7 @@ frontend/
             ├── ticker/                        # dossier ticker — chart, indicators, narratif, thumbs, fondamentaux (Phase 1, étendu Phase 2 + 3)
             ├── import/                        # drag & drop CSV Wealthsimple
             ├── suivi/                         # timeline snapshots
-            └── settings/                      # back-office : configuration / prompt-preview / prompts / prompts/:id/stats (Phase 3)
+            └── settings/                      # back-office : configuration / prompts / prompts/:id/stats (Phase 3)
 ```
 
 ## Conventions

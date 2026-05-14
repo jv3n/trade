@@ -43,13 +43,6 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'configuration', pathMatch: 'full' },
       {
-        path: 'prompt-preview',
-        loadComponent: () =>
-          import('./features/settings/prompt-preview/prompt-preview').then(
-            (m) => m.PromptPreviewPage,
-          ),
-      },
-      {
         path: 'configuration',
         loadComponent: () =>
           import('./features/settings/configuration/configuration').then((m) => m.Configuration),

@@ -8,6 +8,19 @@ Historique des features livrées par phase, format **reverse-chronological** (Ph
 
 ---
 
+### ✅ Page `/settings/prompt-preview` supprimée
+
+Livré 2026-05-14. **Friction** : la page Phase 1 affichait le system + user prompt interpolé pour un ticker donné, sans appel LLM. Utile au moment de la livraison narrative pour valider la tokenisation et inspecter la sortie sur un cas réel ; depuis la Phase 3 l'éditeur `/settings/prompts` couvre la lecture / l'édition du template, et l'observability page couvre l'inspection de ce que le LLM a réellement produit. La preview interpolée n'a plus d'usage observé. **Code supprimé** :
+
+- **Frontend** : dossier `features/settings/prompt-preview/` (composant `.ts`/`.html`/`.scss`), route enfant `prompt-preview` dans `app.routes.ts`, lien sidenav dans `settings/settings.html`, interface `NarrativePromptPreview` + méthode `getNarrativePromptPreview` du port `MarketRepository` + implémentation `HttpMarketRepository`, test associé dans `market.http.spec.ts`.
+- **Backend** : endpoint `GET /api/market/ticker/{symbol}/narrative/preview` + méthode `preview` dans `TickerNarrativeController`, DTO `NarrativePromptPreviewDto`, test slice `TickerNarrativePreviewControllerTest`. Le contrôleur perd 3 dépendances injectées (`TickerService`, `TickerNarrativePromptService` + import `buildNarrativeUserMessage`) qui ne servaient qu'à cet endpoint — `buildNarrativeUserMessage` reste exporté car `TickerNarrativeExecutor` l'utilise.
+- **i18n** : `settings.promptPreview` + tout le bloc `settings.previewPage.*` retirés de `fr.json` et `en.json` (~20 clés).
+- **Docs** : références dans `CLAUDE.md`, `architecture.md` (overview Frontend ASCII + endpoints `/narrative` + module `settings/`), `developpement.md` (arborescence repo), `fonctionnalites.md` (sidenav settings — note historique conservée pour mémoire), `commit-conventions.md` (scope `settings`), et `folders-structure-frontend/SKILL.md` (arborescence). Le journal-livraisons et CHANGELOG conservent les mentions historiques.
+
+**Hors scope** : la fonction `buildNarrativeUserMessage` et le bean `TickerNarrativePromptService` restent en place — ils alimentent le pipeline narratif lui-même. Si un futur besoin de preview ressurgit (ex. valider une nouvelle version de prompt sur un ticker avant activation), il pourra se brancher sur l'éditeur Phase 3 en réutilisant ces composants — pas besoin de ressusciter cette page.
+
+---
+
 ## Phase 3 — Observabilité narrative
 
 > Phase ouverte 2026-05-10 sur la **foundation observabilité** (prompt management + scoring), étendue 2026-05-13 par la **page observabilité narrative** qui consomme le corpus, 2026-05-14 par le **score de cohérence** (#2), puis le même jour par la **détection de biais** (#3) qui élève le corpus en signal agrégé. Reste à attaquer : la page Jobs (#4) qui dépend du DAG unifié Phase 4.
