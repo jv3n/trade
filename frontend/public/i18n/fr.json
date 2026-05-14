@@ -616,6 +616,27 @@
     "errors": {
       "missingSymbol": "Symbole manquant dans l'URL.",
       "load": "Échec du chargement de la timeline. Réessayez."
+    },
+    "coherence": {
+      "label": "Cohérence vs précédent",
+      "verdict": {
+        "OK": "Cohérent",
+        "WARN": "À surveiller",
+        "HIGH": "Divergence injustifiée"
+      },
+      "tooltip": {
+        "title": "Cohérence vs narratif du {{date}}",
+        "sentiment": "Sentiment : {{change}}",
+        "keyPoints": "Mots-clés communs : {{percent}}",
+        "length": "Longueur du résumé : ×{{ratio}}",
+        "priceMove": "Prix entre les deux : {{percent}}",
+        "priceMoveUnknown": "Mouvement de prix : indisponible"
+      },
+      "sentimentChange": {
+        "SAME": "identique",
+        "PARTIAL": "1 cran",
+        "FLIPPED": "inversé"
+      }
     }
   },
   "observabilityIndexPage": {

@@ -1,6 +1,8 @@
 package com.portfolioai.analysis.application.dto
 
 import com.portfolioai.analysis.domain.Sentiment
+import com.portfolioai.analysis.domain.SentimentChange
+import com.portfolioai.analysis.domain.Verdict
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -50,6 +52,32 @@ data class NarrativeObservationDto(
   val delta1d: BigDecimal?,
   val delta1w: BigDecimal?,
   val delta1m: BigDecimal?,
+  /**
+   * Phase 3 #2 — coherence score against the chronologically-previous snapshot of the same ticker.
+   * `null` for the oldest snapshot in the timeline (no previous to compare against). The page
+   * renders a colored chip on each card from the verdict, with the sub-measures in the tooltip.
+   */
+  val coherence: CoherenceScoreDto? = null,
+)
+
+/**
+ * Phase 3 #2 — wire shape of the coherence score for one snapshot vs the previous one. Mirrors
+ * [com.portfolioai.analysis.domain.CoherenceScore] but encoded for JSON :
+ *
+ * - [verdict] / [sentimentChange] are serialised as their `enum.name()` (BULLISH-style strings),
+ * - [keyPointsJaccard] is in `[0..1]` (1 = identical key_points sets),
+ * - [summaryLengthRatio] is `current.summary.length / previous.summary.length` (1 = same length),
+ * - [priceMoveBetween] is fractional (`0.0234` = +2.34 % move between the two runs), nullable when
+ *   the previous snapshot's price was non-positive (defensive).
+ */
+data class CoherenceScoreDto(
+  val verdict: Verdict,
+  val sentimentChange: SentimentChange,
+  val keyPointsJaccard: BigDecimal,
+  val summaryLengthRatio: BigDecimal,
+  val priceMoveBetween: BigDecimal?,
+  val previousSnapshotId: UUID,
+  val previousGeneratedAt: Instant,
 )
 
 /**
@@ -74,5 +102,5 @@ data class NarrativeObservationsResponse(
 data class TickerObservationIndexDto(
   val symbol: String,
   val snapshotCount: Int,
-  val lastGeneratedAt: java.time.Instant,
+  val lastGeneratedAt: Instant,
 )

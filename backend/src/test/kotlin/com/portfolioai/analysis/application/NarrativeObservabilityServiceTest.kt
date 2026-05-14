@@ -1,5 +1,7 @@
 package com.portfolioai.analysis.application
 
+import com.portfolioai.analysis.domain.SentimentChange
+import com.portfolioai.analysis.domain.Verdict
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilityQuery
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservationRow
 import com.portfolioai.analysis.infrastructure.persistence.TickerObservationCount
@@ -51,7 +53,8 @@ class NarrativeObservabilityServiceTest {
 
   private val query: NarrativeObservabilityQuery = mock()
   private val chartClient: MarketChartClient = mock()
-  private val service = NarrativeObservabilityService(query, chartClient)
+  private val coherenceScorer = CoherenceScorer()
+  private val service = NarrativeObservabilityService(query, chartClient, coherenceScorer)
 
   // ---------------------------------------------------------------------- happy path
 
@@ -229,6 +232,86 @@ class NarrativeObservabilityServiceTest {
     verify(query).find(eq("NVDA"), anyOrNull(), anyOrNull(), anyOrNull())
   }
 
+  // ---------------------------------------------------------------------- coherence wiring (Phase
+  // 3 #2)
+
+  @Test
+  fun `oldest snapshot in the timeline has a null coherence (no previous to compare against)`() {
+    // Rows arrive most-recent first ; the last one in the list is the chronologically oldest and
+    // has no anchor. The page hides the chip in that case rather than rendering "OK" against
+    // nothing.
+    val rows =
+      listOf(
+        observationRow(generatedAt = Instant.parse("2026-05-10T12:00:00Z")),
+        observationRow(generatedAt = Instant.parse("2026-05-08T12:00:00Z")),
+      )
+    given(query.find(any(), anyOrNull(), anyOrNull(), anyOrNull())).willReturn(rows)
+    given(chartClient.fetchChart(any(), any(), any())).willReturn(chart())
+
+    val out = service.findFor("AAPL").observations
+
+    assertEquals(2, out.size)
+    assertNotNull(out[0].coherence, "newest row gets a score against the next row in chronology")
+    assertNull(out[1].coherence, "oldest row has no previous → coherence stays null")
+  }
+
+  @Test
+  fun `coherence pairs each row with the chronologically previous one (i e index i+1)`() {
+    // Concrete regression : a future refactor that flipped the index direction would silently
+    // compare each row against the *next* (newer) one — the verdict would still come out, but
+    // the previousSnapshotId on the DTO would point the wrong way and the tooltip "vs narrative
+    // from {{date}}" would lie.
+    val newest = UUID.randomUUID()
+    val middle = UUID.randomUUID()
+    val oldest = UUID.randomUUID()
+    val rows =
+      listOf(
+        observationRow(snapshotId = newest, generatedAt = Instant.parse("2026-05-10T12:00:00Z")),
+        observationRow(snapshotId = middle, generatedAt = Instant.parse("2026-05-08T12:00:00Z")),
+        observationRow(snapshotId = oldest, generatedAt = Instant.parse("2026-05-01T12:00:00Z")),
+      )
+    given(query.find(any(), anyOrNull(), anyOrNull(), anyOrNull())).willReturn(rows)
+    given(chartClient.fetchChart(any(), any(), any())).willReturn(chart())
+
+    val out = service.findFor("AAPL").observations
+
+    assertEquals(middle, out[0].coherence?.previousSnapshotId)
+    assertEquals(oldest, out[1].coherence?.previousSnapshotId)
+    assertNull(out[2].coherence)
+  }
+
+  @Test
+  fun `coherence flags HIGH when sentiment flips on a flat tape and OK when prices match the flip`() {
+    // End-to-end pin : the headline scenario from CoherenceScorerTest, observed through the
+    // service so a future refacto that forgot to call the scorer (or fed it the wrong baseline
+    // price) would surface here.
+    val rows =
+      listOf(
+        observationRow(
+          generatedAt = Instant.parse("2026-05-10T12:00:00Z"),
+          sentiment = "BEARISH",
+          price = bd("100.0000"),
+        ),
+        observationRow(
+          generatedAt = Instant.parse("2026-05-08T12:00:00Z"),
+          sentiment = "BULLISH",
+          price = bd("100.0000"),
+        ),
+      )
+    given(query.find(any(), anyOrNull(), anyOrNull(), anyOrNull())).willReturn(rows)
+    given(chartClient.fetchChart(any(), any(), any())).willReturn(chart())
+
+    val coherence =
+      service.findFor("AAPL").observations[0].coherence
+        ?: error("expected a coherence score on the newest row, got null")
+    assertEquals(
+      Verdict.HIGH,
+      coherence.verdict,
+      "BULLISH→BEARISH on a flat tape is the chip's reason for existing",
+    )
+    assertEquals(SentimentChange.FLIPPED, coherence.sentimentChange)
+  }
+
   @Test
   fun `prompt provenance and thumbs round-trip from the query row to the DTO`() {
     val templateId = UUID.randomUUID()
@@ -303,13 +386,14 @@ class NarrativeObservabilityServiceTest {
     promptName: String? = "narrative-default",
     promptTemplateVersion: String? = "v2",
     thumbsValue: Short? = 0,
+    sentiment: String = "BULLISH",
   ) =
     NarrativeObservationRow(
       snapshotId = snapshotId,
       generatedAt = generatedAt,
       price = price,
       summary = "Price above MA200, RSI 62 — bullish posture.",
-      sentiment = "BULLISH",
+      sentiment = sentiment,
       keyPointsJson = """["price above MA200","RSI 62 mid-bullish","positive 21-day momentum"]""",
       modelUsed = "claude-haiku-4-5",
       promptVersion = "v2",

@@ -314,6 +314,27 @@
   background: var(--color-surface-2);
 }
 
+.chip-coherence {
+  cursor: help;
+}
+
+.chip-coherence-ok {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.chip-coherence-warn {
+  background: rgba(255, 171, 0, 0.12);
+  border-color: rgba(255, 171, 0, 0.45);
+  color: #b46300;
+}
+
+.chip-coherence-high {
+  background: var(--color-error-soft);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
 .thumbs-icon {
   font-size: 16px;
   width: 16px;

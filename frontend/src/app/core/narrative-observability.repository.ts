@@ -40,6 +40,34 @@ export interface NarrativeObservation {
   delta1d: number | null;
   delta1w: number | null;
   delta1m: number | null;
+  /**
+   * Phase 3 #2 — coherence score against the chronologically-previous snapshot of the same
+   * ticker. `null` for the oldest snapshot in the timeline (no previous to compare against), and
+   * for snapshots returned by a backend version that predates Phase 3 #2 (defensive — the page
+   * just hides the chip in that case).
+   */
+  coherence: CoherenceScore | null;
+}
+
+/**
+ * Phase 3 #2 — wire shape of the coherence score, mirror of the backend `CoherenceScoreDto`.
+ *
+ * - [verdict] drives the chip color : `OK` muted/green, `WARN` amber, `HIGH` red.
+ * - [sentimentChange] / [keyPointsJaccard] / [summaryLengthRatio] / [priceMoveBetween] are surfaced
+ *   in the chip's tooltip so the user can read the why behind the verdict at a glance.
+ * - [keyPointsJaccard] is in `[0..1]` (1 = identical key_points sets).
+ * - [summaryLengthRatio] is `current.length / previous.length` (1 = same length).
+ * - [priceMoveBetween] is fractional (`0.0234` = +2.34 % move between the two runs), `null` only
+ *   when the previous snapshot's price was non-positive (defensive).
+ */
+export interface CoherenceScore {
+  verdict: 'OK' | 'WARN' | 'HIGH';
+  sentimentChange: 'SAME' | 'PARTIAL' | 'FLIPPED';
+  keyPointsJaccard: number;
+  summaryLengthRatio: number;
+  priceMoveBetween: number | null;
+  previousSnapshotId: string;
+  previousGeneratedAt: string; // ISO instant
 }
 
 /**

@@ -1,9 +1,11 @@
 package com.portfolioai.analysis.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.portfolioai.analysis.application.dto.CoherenceScoreDto
 import com.portfolioai.analysis.application.dto.NarrativeObservationDto
 import com.portfolioai.analysis.application.dto.NarrativeObservationsResponse
 import com.portfolioai.analysis.application.dto.TickerObservationIndexDto
+import com.portfolioai.analysis.domain.CoherenceScore
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilityQuery
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservationRow
@@ -35,11 +37,17 @@ import org.springframework.stereotype.Service
  * to read history ; we don't 503 them just because the upstream blinked. The page is responsible
  * for rendering an « price action unavailable » hint when all deltas are null on a long-enough
  * series (the heuristic « should we have data for this row » is UI-side, not service-side).
+ *
+ * **Phase 3 #2 — coherence score** : each row is also scored against the chronologically-previous
+ * one via [CoherenceScorer], producing a verdict chip (`OK / WARN / HIGH`) the page surfaces. Pure
+ * function on data already in hand — no extra DB or LLM call ; the oldest row in the timeline has
+ * `coherence = null` (no previous to compare).
  */
 @Service
 class NarrativeObservabilityService(
   private val query: NarrativeObservabilityQuery,
   private val chartClient: MarketChartClient,
+  private val coherenceScorer: CoherenceScorer,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
   private val mapper = jacksonObjectMapper()
@@ -70,7 +78,12 @@ class NarrativeObservabilityService(
         emptyList()
       }
 
-    val observations = rows.map { row -> mapToDto(normalised, row, bars) }
+    // Rows arrive most-recent first ; the chronologically previous snapshot for index `i` is
+    // therefore at index `i + 1`. The oldest snapshot has no previous → its `coherence` is null.
+    val observations = rows.mapIndexed { index, row ->
+      val previous = rows.getOrNull(index + 1)
+      mapToDto(normalised, row, bars, previous)
+    }
     return NarrativeObservationsResponse(symbol = normalised, observations = observations)
   }
 
@@ -92,6 +105,7 @@ class NarrativeObservabilityService(
     symbol: String,
     row: NarrativeObservationRow,
     bars: List<OhlcBar>,
+    previous: NarrativeObservationRow?,
   ): NarrativeObservationDto {
     val keyPoints: List<String> =
       mapper.readValue(row.keyPointsJson, Array<String>::class.java).toList()
@@ -100,6 +114,7 @@ class NarrativeObservabilityService(
     val priceAt1d = priceAtOrAfter(bars, generatedDate.plusDays(1))
     val priceAt1w = priceAtOrAfter(bars, generatedDate.plusDays(7))
     val priceAt1m = priceAtOrAfter(bars, generatedDate.plusDays(30))
+    val coherence = previous?.let { computeCoherence(row, sentiment, keyPoints, it) }
     return NarrativeObservationDto(
       snapshotId = row.snapshotId,
       symbol = symbol,
@@ -120,6 +135,52 @@ class NarrativeObservabilityService(
       delta1d = delta(row.price, priceAt1d),
       delta1w = delta(row.price, priceAt1w),
       delta1m = delta(row.price, priceAt1m),
+      coherence = coherence,
+    )
+  }
+
+  /**
+   * Maps the previous SQL row into a [SnapshotProjection], runs the scorer, and packages the result
+   * as a wire DTO. We re-parse the previous row's `keyPointsJson` here rather than caching across
+   * rows because the timeline is capped at 500 ; even the worst case is < 1 ms total.
+   */
+  private fun computeCoherence(
+    current: NarrativeObservationRow,
+    currentSentiment: Sentiment,
+    currentKeyPoints: List<String>,
+    previous: NarrativeObservationRow,
+  ): CoherenceScoreDto {
+    val previousKeyPoints: List<String> =
+      mapper.readValue(previous.keyPointsJson, Array<String>::class.java).toList()
+    val score: CoherenceScore =
+      coherenceScorer.score(
+        current =
+          SnapshotProjection(
+            snapshotId = current.snapshotId,
+            generatedAt = current.generatedAt,
+            sentiment = currentSentiment,
+            summary = current.summary,
+            keyPoints = currentKeyPoints,
+          ),
+        previous =
+          SnapshotProjection(
+            snapshotId = previous.snapshotId,
+            generatedAt = previous.generatedAt,
+            sentiment = Sentiment.valueOf(previous.sentiment),
+            summary = previous.summary,
+            keyPoints = previousKeyPoints,
+          ),
+        currentPrice = current.price,
+        previousPrice = previous.price,
+      )
+    return CoherenceScoreDto(
+      verdict = score.verdict,
+      sentimentChange = score.sentimentChange,
+      keyPointsJaccard = score.keyPointsJaccard,
+      summaryLengthRatio = score.summaryLengthRatio,
+      priceMoveBetween = score.priceMoveBetween,
+      previousSnapshotId = score.previousSnapshotId,
+      previousGeneratedAt = score.previousGeneratedAt,
     )
   }
 

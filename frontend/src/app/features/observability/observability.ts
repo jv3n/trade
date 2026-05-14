@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, LOCALE_ID, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
+  CoherenceScore,
   NarrativeObservabilityRepository,
   NarrativeObservation,
   NarrativeObservationsFilter,
@@ -61,6 +62,7 @@ export class ObservabilityPage implements OnInit {
   private readonly repo = inject(NarrativeObservabilityRepository);
   private readonly promptRepo = inject(PromptRepository);
   private readonly translate = inject(TranslateService);
+  private readonly datePipe = new DatePipe(inject(LOCALE_ID));
 
   symbol = signal<string>('');
   observations = signal<NarrativeObservation[]>([]);
@@ -247,5 +249,45 @@ export class ObservabilityPage implements OnInit {
     if (value > 0) return 'delta-up';
     if (value < 0) return 'delta-down';
     return 'delta-zero';
+  }
+
+  /**
+   * Builds the multi-line tooltip shown when the user hovers the coherence chip. The tooltip
+   * surfaces the three sub-measures (sentiment / shared key points / length) plus the price move
+   * that "excused" any divergence — so the verdict is auditable without reading code.
+   *
+   * Joined with `\n` because `[title]` honours newlines on hover in every modern browser ; we
+   * deliberately don't go through `MatTooltip` here to keep the chip lightweight (no overlay,
+   * no extra DI).
+   */
+  coherenceTooltip(score: CoherenceScore): string {
+    const date = this.datePipe.transform(score.previousGeneratedAt, 'mediumDate') ?? '';
+    const change = this.translate.instant(
+      `observabilityPage.coherence.sentimentChange.${score.sentimentChange}`,
+    );
+    const sharedPercent = `${Math.round(score.keyPointsJaccard * 100)}%`;
+    const ratio = score.summaryLengthRatio.toFixed(2);
+    const priceLine =
+      score.priceMoveBetween === null
+        ? this.translate.instant('observabilityPage.coherence.tooltip.priceMoveUnknown')
+        : this.translate.instant('observabilityPage.coherence.tooltip.priceMove', {
+            percent: this.formatSignedPercent(score.priceMoveBetween),
+          });
+    return [
+      this.translate.instant('observabilityPage.coherence.tooltip.title', { date }),
+      this.translate.instant('observabilityPage.coherence.tooltip.sentiment', { change }),
+      this.translate.instant('observabilityPage.coherence.tooltip.keyPoints', {
+        percent: sharedPercent,
+      }),
+      this.translate.instant('observabilityPage.coherence.tooltip.length', { ratio }),
+      priceLine,
+    ].join('\n');
+  }
+
+  /** `0.0234` → `+2.34%`. Used in the coherence tooltip — `PercentPipe` lacks the explicit `+` sign. */
+  private formatSignedPercent(value: number): string {
+    const pct = value * 100;
+    const sign = pct > 0 ? '+' : '';
+    return `${sign}${pct.toFixed(2)}%`;
   }
 }

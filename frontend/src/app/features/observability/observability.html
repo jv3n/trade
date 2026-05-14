@@ -152,6 +152,20 @@
               @if (obs.promptTemplateVersion; as v) {
                 <span class="chip chip-prompt" [title]="obs.promptName">{{ v }}</span>
               }
+              @if (obs.coherence; as c) {
+                <span
+                  class="chip chip-coherence"
+                  [ngClass]="'chip-coherence-' + c.verdict.toLowerCase()"
+                  [title]="coherenceTooltip(c)"
+                  [attr.aria-label]="
+                    ('observabilityPage.coherence.label' | translate) +
+                    ' — ' +
+                    ('observabilityPage.coherence.verdict.' + c.verdict | translate)
+                  "
+                >
+                  {{ 'observabilityPage.coherence.verdict.' + c.verdict | translate }}
+                </span>
+              }
               @if (obs.thumbsValue !== null) {
                 @if (obs.thumbsValue === 1) {
                   <mat-icon

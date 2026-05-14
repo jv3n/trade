@@ -25,7 +25,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import {
   NarrativeObservabilityRepository,
   NarrativeObservation,
@@ -351,6 +351,113 @@ describe('ObservabilityPage', () => {
     expect(call[1]).toBeUndefined();
   });
 
+  // ---------------------------------------------------------------------- coherence chip (Phase
+  // 3 #2)
+
+  it('renders the coherence chip with the verdict-specific class for HIGH', async () => {
+    // Pin the colour wiring : `chip-coherence-high` is what the SCSS targets to paint the chip
+    // red. A renamed verdict or a missed `.toLowerCase()` would silently fall back to the muted
+    // `chip` defaults.
+    await setup();
+    findFor.mockReturnValue(
+      of(
+        response([
+          observation({
+            snapshotId: 'newest',
+            coherence: {
+              verdict: 'HIGH',
+              sentimentChange: 'FLIPPED',
+              keyPointsJaccard: 0.5,
+              summaryLengthRatio: 1,
+              priceMoveBetween: 0.001,
+              previousSnapshotId: 'older',
+              previousGeneratedAt: '2026-04-30T12:00:00Z',
+            },
+          }),
+          observation({ snapshotId: 'older' }),
+        ]),
+      ),
+    );
+
+    fixture.detectChanges();
+
+    const chips = fixture.nativeElement.querySelectorAll('.chip-coherence');
+    // Only the newest card carries a coherence (the oldest has no previous to compare).
+    expect(chips.length).toBe(1);
+    expect(chips[0].classList.contains('chip-coherence-high')).toBe(true);
+  });
+
+  it('does not render a coherence chip on cards whose coherence is null', async () => {
+    // The oldest snapshot in the timeline has no chronologically-previous reference. The page
+    // hides the chip there rather than rendering a placeholder — pinned because a regression
+    // that tested truthiness on `obs.coherence?.verdict` (always truthy on the enum string) would
+    // accidentally render an empty chip.
+    await setup();
+    findFor.mockReturnValue(
+      of(response([observation({ coherence: null }), observation({ coherence: null })])),
+    );
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.chip-coherence').length).toBe(0);
+  });
+
+  it('coherenceTooltip surfaces the three sub-measures plus the price move', async () => {
+    // The user reads this tooltip to audit *why* the chip says HIGH. All three dimensions
+    // (sentiment / shared keypoints / length) and the price excuse must be present — otherwise
+    // a divergent narrative looks unjustified for no visible reason.
+    //
+    // We spy on `TranslateService.instant` rather than asserting on the rendered tooltip string :
+    // ngx-translate without a loaded dictionary returns the bare key and *drops* params, so the
+    // tooltip content only exposes the keys. The spy gives us exact visibility on what was
+    // forwarded — pinned values (`25%`, `1.50`, `-3.40%`) catch a regression in the formatting
+    // helpers without depending on locale loading inside Vitest.
+    await setup();
+    const ts = TestBed.inject(TranslateService);
+    const spy = vi.spyOn(ts, 'instant');
+
+    const tooltip = component.coherenceTooltip({
+      verdict: 'WARN',
+      sentimentChange: 'PARTIAL',
+      keyPointsJaccard: 0.25,
+      summaryLengthRatio: 1.5,
+      priceMoveBetween: -0.034,
+      previousSnapshotId: 'older',
+      previousGeneratedAt: '2026-05-01T10:00:00Z',
+    });
+
+    expect(spy).toHaveBeenCalledWith('observabilityPage.coherence.tooltip.keyPoints', {
+      percent: '25%',
+    });
+    expect(spy).toHaveBeenCalledWith('observabilityPage.coherence.tooltip.length', {
+      ratio: '1.50',
+    });
+    expect(spy).toHaveBeenCalledWith('observabilityPage.coherence.tooltip.priceMove', {
+      percent: '-3.40%',
+    });
+    expect(tooltip.split('\n').length).toBe(5); // title + sentiment + keypoints + length + price
+  });
+
+  it('coherenceTooltip falls back to "price unknown" when priceMoveBetween is null', async () => {
+    // Defensive — `priceMoveBetween` is null only when the previous snapshot's price was zero or
+    // negative (corruption guard). The tooltip must say so explicitly rather than rendering
+    // `+NaN%` or an empty line.
+    await setup();
+
+    const tooltip = component.coherenceTooltip({
+      verdict: 'OK',
+      sentimentChange: 'SAME',
+      keyPointsJaccard: 1,
+      summaryLengthRatio: 1,
+      priceMoveBetween: null,
+      previousSnapshotId: 'older',
+      previousGeneratedAt: '2026-05-01T10:00:00Z',
+    });
+
+    expect(tooltip).not.toContain('NaN');
+    expect(tooltip).toContain('priceMoveUnknown');
+  });
+
   it('hasActiveFilter flips true as soon as one filter is set, false after reset', async () => {
     await setup();
     findFor.mockReturnValue(of(response([])));
@@ -397,6 +504,7 @@ function observation(overrides: Partial<NarrativeObservation> = {}): NarrativeOb
     delta1d: 0.02,
     delta1w: 0.05,
     delta1m: 0.1,
+    coherence: null,
     ...overrides,
   };
 }

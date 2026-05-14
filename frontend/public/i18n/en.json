@@ -616,6 +616,27 @@
     "errors": {
       "missingSymbol": "Missing symbol in the URL.",
       "load": "Failed to load the timeline. Try again."
+    },
+    "coherence": {
+      "label": "Coherence vs previous",
+      "verdict": {
+        "OK": "Consistent",
+        "WARN": "Worth a glance",
+        "HIGH": "Unjustified divergence"
+      },
+      "tooltip": {
+        "title": "Coherence vs narrative from {{date}}",
+        "sentiment": "Sentiment: {{change}}",
+        "keyPoints": "Shared key points: {{percent}}",
+        "length": "Summary length: ×{{ratio}}",
+        "priceMove": "Price move between runs: {{percent}}",
+        "priceMoveUnknown": "Price move: unavailable"
+      },
+      "sentimentChange": {
+        "SAME": "same",
+        "PARTIAL": "one step",
+        "FLIPPED": "flipped"
+      }
     }
   },
   "observabilityIndexPage": {
