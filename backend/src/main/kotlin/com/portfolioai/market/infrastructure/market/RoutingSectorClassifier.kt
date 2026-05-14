@@ -21,6 +21,13 @@ import org.springframework.stereotype.Component
  * the Finnhub API key is already configured for news / analyst / earnings. We keep the toggle
  * binary (mock vs live) and document the implementation detail rather than introducing a separate
  * `sector.provider` runtime key — the user only sees the macro switch.
+ *
+ * Cache lives one layer up on [com.portfolioai.market.application.SectorClassifierService] under
+ * `@Cacheable("sector-by-symbol", key = "#symbol.toUpperCase()")` — the provider is deliberately
+ * **not** in the key. Same choice as the news / analyst / earnings routings : a toggle `mock →
+ * live` lands the new feed on the next call after the 15-min TTL elapses ; the chart cache's
+ * `'twelvedata|'` key prefix is the deliberate outlier (see `docs/technique/architecture.md >
+ * Décisions techniques notables > Caching côté serveur`).
  */
 @Component
 @Primary
