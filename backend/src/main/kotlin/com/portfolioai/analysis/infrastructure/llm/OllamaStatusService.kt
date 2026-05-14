@@ -160,7 +160,10 @@ class OllamaStatusService(
         .post()
         .uri("/api/pull")
         .header("Content-Type", "application/json")
-        .body(mapOf("name" to name, "stream" to false))
+        // `model` is the canonical field on /api/pull and /api/delete ; `name` is documented as
+        // deprecated. Aligns with [unloadModel] which already speaks `model`. See
+        // https://github.com/ollama/ollama/blob/main/docs/api.md#pull-a-model
+        .body(mapOf("model" to name, "stream" to false))
         .retrieve()
         .body(Map::class.java)
       probe()
@@ -195,7 +198,8 @@ class OllamaStatusService(
         .method(HttpMethod.DELETE)
         .uri("/api/delete")
         .header("Content-Type", "application/json")
-        .body(mapOf("name" to name))
+        // `model` is the canonical field — see [pullModel] for the same rationale.
+        .body(mapOf("model" to name))
         .retrieve()
         .toBodilessEntity()
       probe()

@@ -263,14 +263,14 @@ class OllamaStatusServiceTest {
     assertEquals(2, out.availableModels.size)
 
     // Verify the pull payload — `stream: false` is the contract that lets us treat the call
-    // as blocking + synchronous, and the registry accepts the field name `name` rather than
-    // `model`.
+    // as blocking + synchronous. The wire field is `model` (canonical per the Ollama docs ;
+    // `name` is documented as deprecated) and aligns with [unloadModel] / [deleteModel].
     val pullRequest = server.takeRequest()
     assertEquals("/api/pull", pullRequest.path)
     assertEquals("POST", pullRequest.method)
     val pullBody = pullRequest.body.readUtf8()
     assertTrue(pullBody.contains("\"stream\":false"), "pull body must carry stream: false")
-    assertTrue(pullBody.contains("\"name\":\"mistral:7b\""), "pull body must carry the model name")
+    assertTrue(pullBody.contains("\"model\":\"mistral:7b\""), "pull body must carry the model tag")
   }
 
   @Test
@@ -336,7 +336,11 @@ class OllamaStatusServiceTest {
     assertEquals("/api/delete", deleteRequest.path)
     assertEquals("DELETE", deleteRequest.method)
     val deleteBody = deleteRequest.body.readUtf8()
-    assertTrue(deleteBody.contains("\"name\":\"mistral:7b\""), "delete body must carry the name")
+    // Wire field is `model` — see the pull test for the same rationale.
+    assertTrue(
+      deleteBody.contains("\"model\":\"mistral:7b\""),
+      "delete body must carry the model tag",
+    )
   }
 
   @Test
