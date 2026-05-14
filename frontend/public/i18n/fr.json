@@ -517,7 +517,11 @@
           "confirm": "Pull",
           "cancel": "Annuler",
           "alsoPulled": "Déjà pull localement",
-          "deleteAriaLabel": "Supprimer {{model}} du disque"
+          "deleteAriaLabel": "Supprimer {{model}} du disque",
+          "errors": {
+            "pullFailed": "Échec du pull",
+            "deleteFailed": "Échec de la suppression"
+          }
         }
       },
       "providers": {

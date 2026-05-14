@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OllamaStatusService } from '../../../core/ollama-status.service';
 
 /**
@@ -61,6 +61,7 @@ const OLLAMA_MODEL_SUGGESTIONS = [
 export class OllamaPullDialog {
   private readonly statusService = inject(OllamaStatusService);
   private readonly dialogRef = inject(MatDialogRef<OllamaPullDialog>);
+  private readonly translate = inject(TranslateService);
 
   readonly suggestions = OLLAMA_MODEL_SUGGESTIONS;
 
@@ -116,14 +117,25 @@ export class OllamaPullDialog {
       // The backend returns a snapshot with `daemonReachable: false` on a failed pull (mirror
       // of the unload contract). Treat that as a user-visible error rather than a success.
       if (!snap.daemonReachable) {
-        this.error.set(snap.errorMessage ?? 'pull failed');
+        this.error.set(
+          snap.errorMessage ??
+            this.translate.instant(
+              'settings.configurationPage.ollamaStatus.pullDialog.errors.pullFailed',
+            ),
+        );
         this.busy.set(false);
         return;
       }
       this.busy.set(false);
       this.dialogRef.close(raw);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'pull failed');
+      this.error.set(
+        err instanceof Error
+          ? err.message
+          : this.translate.instant(
+              'settings.configurationPage.ollamaStatus.pullDialog.errors.pullFailed',
+            ),
+      );
       this.busy.set(false);
     }
   }
@@ -144,7 +156,13 @@ export class OllamaPullDialog {
     try {
       await this.statusService.delete(name);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'delete failed');
+      this.error.set(
+        err instanceof Error
+          ? err.message
+          : this.translate.instant(
+              'settings.configurationPage.ollamaStatus.pullDialog.errors.deleteFailed',
+            ),
+      );
     }
   }
 }

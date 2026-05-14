@@ -517,7 +517,11 @@
           "confirm": "Pull",
           "cancel": "Cancel",
           "alsoPulled": "Also pulled locally",
-          "deleteAriaLabel": "Delete {{model}} from disk"
+          "deleteAriaLabel": "Delete {{model}} from disk",
+          "errors": {
+            "pullFailed": "Pull failed",
+            "deleteFailed": "Delete failed"
+          }
         }
       },
       "providers": {
