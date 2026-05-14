@@ -1,11 +1,6 @@
 # Guide de développement
 
-## Prérequis
-
-- Docker Desktop
-- Java 21 (Temurin recommandé) — épinglé via `backend/gradle/gradle-daemon-jvm.properties` (`toolchainVersion=21`), donc Gradle prend toujours un JDK 21 même si ton shell pointe sur du Java 25 pour d'autres projets
-- Node 24 + npm
-- [Tilt](https://tilt.dev) (`brew install tilt`)
+> Référence quotidienne pour qui développe sur PortfolioAI au jour le jour. Si tu débarques sur le repo et veux faire tourner l'app pour la première fois, lis plutôt [`developper.md`](./developper.md) — onboarding narratif qui couvre les prérequis, la première configuration `application-local.yml` (Claude vs Ollama), le premier test guidé, et le « quand ça merde ». Ce fichier-ci suppose que tu as déjà installé Docker / Java 21 / Node 24 / Tilt et que ton `application-local.yml` existe.
 
 ## Démarrage
 
@@ -67,29 +62,13 @@ L'UI et le schéma JSON (`/v3/api-docs`) sont **désactivés par défaut** dans 
 
 ## Configuration locale
 
-Le fichier `application-local.yml` est gitignore. Il contient les secrets et surcharges locales. Créer à la main :
-
-```yaml
-# backend/src/main/resources/application-local.yml
-anthropic:
-  api:
-    key: sk-ant-...   # clé Claude API (le défaut Phase 1)
-
-llm:
-  provider: claude    # défaut Phase 1. Bascule sur "ollama" pour offline
-
-ollama:
-  base-url: http://ollama:11434
-  model: qwen2.5:3b   # défaut local — rapide (~5-10 s) et fiable sur le JSON structuré
-```
-
-> **Phase 1** : `llm.provider: claude` est le défaut. Le mode Ollama reste activable pour développer offline ou sans coût API, avec `qwen2.5:3b` comme modèle par défaut (rapide, ~5-10 s sur M1, qualité narrative en retrait par rapport à Claude mais utilisable). Mistral 7B était l'ancien défaut mais sa latence 30-60 s sur M1 saturait les timeouts — à éviter.
+Le fichier `application-local.yml` (gitignored) contient les secrets et surcharges. Le **setup initial** (création du fichier, choix Claude vs Ollama, exemples YAML) est documenté dans [`developper.md > Configurer le LLM`](./developper.md#configurer-le-llm) — single-source pour éviter le drift. Cette section couvre uniquement les usages courants après ce setup.
 
 > **Performance Ollama sur Mac** — Ollama tourne **dans un container Docker Desktop**, qui est lui-même une VM Linux virtualisée par macOS. Apple n'expose pas Metal dans cette VM, donc l'inférence est en **CPU pur** : un narratif `qwen2.5:3b` peut saturer 9 cores ~918 % `docker stats` pendant 60–180 s, là où le même modèle sur Ollama natif (Metal activé) répond en 5-10 s. **Décision projet** (cf. [`docs/devops/decision-ollama-deploiement.md`](../devops/decision-ollama-deploiement.md), tranchée 2026-05-09) : statu quo Claude-first, Ollama containerisé reste utilisable comme outil de dev/backup mais n'est pas le chemin quotidien. Si tu vois ton fan hurler, c'est attendu — bascule sur Claude (`/settings/configuration > LLM > Provider = claude`) ou laisse mouliner. Re-trigger : machine dédiée, usage Ollama > 20 % des sessions, ou distribution du repo.
 
-Ne jamais committer ce fichier. Ne jamais mettre de clé API dans `application.yml`.
+Ne jamais committer `application-local.yml`. Ne jamais mettre de clé API dans `application.yml`.
 
-> **Alternative runtime** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct **douze clés** sans reboot, réparties sur deux sub-sections (Providers de données / LLM) : (1) **secrets** — `market.twelvedata.api-key`, `market.finnhub.api-key`, `anthropic.api.key` (masqués + bouton Tester) ; (2) **toggles** — `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` (mock ↔ live), `llm.provider` (claude ↔ ollama) ; (3) **strings** — `ollama.model`, `anthropic.api.model` (autocomplete suggestions, valeurs libres) ; (4) **slider INT** — `market.cache.ttl-minutes` (5–60 min) et `llm.timeout-seconds` (60–900 s). Les overrides BDD prennent le pas sur les défauts YAML — pratique pour rotater une clé ou switcher de provider sans toucher à `application-local.yml`.
+> **Alternative runtime — édition sans reboot** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct **douze clés** sans reboot, réparties sur deux sub-sections (Providers de données / LLM) : (1) **secrets** — `market.twelvedata.api-key`, `market.finnhub.api-key`, `anthropic.api.key` (masqués + bouton Tester) ; (2) **toggles** — `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` (mock ↔ live), `llm.provider` (claude ↔ ollama) ; (3) **strings** — `ollama.model`, `anthropic.api.model` (autocomplete suggestions, valeurs libres) ; (4) **slider INT** — `market.cache.ttl-minutes` (5–60 min) et `llm.timeout-seconds` (60–900 s). Les overrides BDD prennent le pas sur les défauts YAML — pratique pour rotater une clé ou switcher de provider sans toucher à `application-local.yml`.
 
 ## Conventions de commit
 
@@ -125,11 +104,11 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + adapters (12 repositories)
-│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings, OllamaStatus, Prompt, NarrativeFeedback)
+│       ├── core/              # Ports + adapters (14 repositories)
+│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings, OllamaStatus, Prompt, NarrativeFeedback, NarrativeObservability, NarrativeBias)
 │       │   ├── adapters/*.http.ts     # HTTP impls (défaut)
 │       │   ├── adapters/*.local.ts    # localStorage impls (annotation v3)
-│       │   ├── providers.ts           # `provideRepositories()` — wires les 12 ports → adapters
+│       │   ├── providers.ts           # `provideRepositories()` — wires les 14 ports → adapters
 │       │   ├── job-stream.service.ts  # SSE EventSource → Observable<JobEvent> (Phase 2.5)
 │       │   ├── theme.service.ts       # signal + persist localStorage (SSR-safe via isPlatformBrowser)
 │       │   └── language.service.ts    # signal + persist localStorage (i18n, SSR-safe)
@@ -138,6 +117,7 @@ trade/
 │           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA + thumbs)
 │           ├── import/                # Drag & drop CSV Wealthsimple
 │           ├── suivi/                 # Timeline snapshots
+│           ├── observability/         # Phase 3 — index symbols, timeline narratif vs prix par ticker (#1) + chip cohérence (#2), bias dashboard (#3)
 │           └── settings/              # Sidenav : configuration runtime / prompt-preview / prompts (liste + éditeur) / prompts/:id/stats (Phase 3)
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/

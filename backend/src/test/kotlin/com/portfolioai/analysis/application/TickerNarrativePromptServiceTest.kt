@@ -103,6 +103,28 @@ class TickerNarrativePromptServiceTest {
   }
 
   @Test
+  fun `fallback is never cached so a transient empty-DB state self-heals on the next request`() {
+    // Regression pin from the Phase 3 code review (2026-05-14). If the synthetic fallback were
+    // cached for the TTL, a boot during Flyway V8 application would freeze the runner on the
+    // hardcoded prompt for 60 s — every narrative would (a) ignore the DB seed when it lands and
+    // (b) trip `isFallback` → PromptScoreRecorder skips its write → snapshot ends up with a
+    // `prompt_template_id = null`. The fix : only cache real rows. This test pins the contract.
+    given(repository.findFirstByNameAndIsActiveTrue(eq("narrative-default")))
+      .willReturn(null) // first call : DB still empty (Flyway mid-run)
+      .willReturn(dbActiveRow()) // second call : V8 just landed
+    val first = service.activePrompt()
+    assertTrue(service.isFallback(first), "first call surfaces the fallback")
+
+    val second = service.activePrompt()
+    assertFalse(
+      service.isFallback(second),
+      "second call must NOT serve a cached fallback — it must re-hit the DB",
+    )
+    // Two DB hits : one per call, because the fallback short-circuits caching.
+    verify(repository, times(2)).findFirstByNameAndIsActiveTrue(eq("narrative-default"))
+  }
+
+  @Test
   fun `isFallback returns false on a DB-backed row even with the same version tag`() {
     // Defensive : two prompts can carry version "v2" — the seed and a future re-imported row.
     // The fallback discriminator must NOT be a version match, only the sentinel UUID.

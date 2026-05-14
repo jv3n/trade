@@ -185,19 +185,25 @@ class TickerNarrativePromptService(private val repository: PromptTemplateReposit
   }
 
   private fun lookupOrFallback(name: String): PromptTemplate {
-    return cache.get(name) {
-      val row = repository.findFirstByNameAndIsActiveTrue(name)
-      if (row != null) {
-        row
-      } else {
-        log.warn(
-          "No active prompt_template for name={} — falling back to hardcoded NARRATIVE_SYSTEM_PROMPT. " +
-            "Run Flyway migrations or seed the table to silence this.",
-          name,
-        )
-        FALLBACK_TEMPLATE
-      }
-    }!!
+    // Only cache *real* DB rows — never the synthetic FALLBACK_TEMPLATE. Otherwise a boot during
+    // Flyway V8 application (or an empty seed) would pin the fallback for the full TTL, and for
+    // that window every narrative would (a) ignore the DB-seeded prompt, (b) trip `isFallback` →
+    // PromptScoreRecorder skips its write → snapshot lands with `prompt_template_id = null`. Found
+    // in the Phase 3 code review (2026-05-14).
+    cache.getIfPresent(name)?.let {
+      return it
+    }
+    val row = repository.findFirstByNameAndIsActiveTrue(name)
+    if (row != null) {
+      cache.put(name, row)
+      return row
+    }
+    log.warn(
+      "No active prompt_template for name={} — falling back to hardcoded NARRATIVE_SYSTEM_PROMPT. " +
+        "Run Flyway migrations or seed the table to silence this.",
+      name,
+    )
+    return FALLBACK_TEMPLATE
   }
 
   companion object {
