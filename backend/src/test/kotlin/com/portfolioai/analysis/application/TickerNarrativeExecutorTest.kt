@@ -1,9 +1,9 @@
 package com.portfolioai.analysis.application
 
+import com.portfolioai.analysis.domain.LlmClient
 import com.portfolioai.analysis.domain.PromptTemplate
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.domain.TickerNarrativeSnapshot
-import com.portfolioai.analysis.infrastructure.llm.LlmClient
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.Indicators
 import com.portfolioai.market.domain.OhlcBar

@@ -24,21 +24,23 @@ Chaque contexte est autonome et possède ses propres couches.
 
 ```
 {context}/
-  domain/               # Entités JPA, enums, value objects — pas de dépendance Spring
-  application/          # Services applicatifs, cas d'usage, orchestration
+  domain/               # Entités JPA, enums, value objects + ports outbound (interfaces) — pas de dépendance Spring
+  application/          # Services applicatifs, cas d'usage, orchestration ; consomment les ports depuis domain/
     dto/                # Objets de transfert (commandes, réponses)
   infrastructure/
     persistence/        # Spring Data repositories
     http/               # Controllers REST
-    llm/                # (analysis) Clients API externes (Claude, Ollama)
-    market/             # (market) 3 ports outbound — chart / symbol-search / sector — chacun avec adapters Twelve Data + Mock + Routing (@Primary)
-    news/               # (news) FinnhubClient + MockNewsClient + RoutingNewsClient (@Primary)
-    analyst/            # (analyst) FinnhubAnalystClient + MockAnalystClient + RoutingAnalystClient (@Primary)
-    earnings/           # (earnings) FinnhubEarningsClient + MockEarningsClient + RoutingEarningsClient (@Primary)
+    llm/                # (analysis) Adapters LLM : ClaudeClient, OllamaClient, MockLlmClient + RoutingLlmClient (@Primary) — implémentent LlmClient depuis analysis/domain/
+    market/             # (market) Adapters des 3 ports outbound (chart / symbol-search / sector) — chaque port a Twelve Data + Mock + Routing (@Primary), ports eux-mêmes dans market/domain/
+    news/               # (news) FinnhubClient + MockNewsClient + RoutingNewsClient (@Primary) — implémentent NewsClient depuis news/domain/
+    analyst/            # (analyst) FinnhubAnalystClient + MockAnalystClient + RoutingAnalystClient (@Primary) — implémentent AnalystRecommendationClient depuis analyst/domain/
+    earnings/           # (earnings) FinnhubEarningsClient + MockEarningsClient + RoutingEarningsClient (@Primary) — implémentent EarningsClient depuis earnings/domain/
     ConfigTestClient.kt # (config) RestClient dédié pour sonder une clé API candidate sans la sauver
 
-shared/                 # Composants transverses (ex : GlobalExceptionHandler)
+shared/                 # Composants transverses (ex : GlobalExceptionHandler, UpstreamUnavailableException)
 ```
+
+> **Note (B1, 2026-05-15)** — les interfaces de port (`*Client.kt`) ont été déplacées d'`infrastructure/<capability>/` vers `<context>/domain/` pour s'aligner sur l'hexagonal strict : le domaine déclare ce dont il a besoin de l'extérieur, l'infrastructure le réalise. Les adapters concrets (`Mock*`, `Finnhub*`, `Twelve*`, `Claude*`, `Ollama*`, `Routing*`) restent en `infrastructure/<capability>/`. Les `JpaRepository` Spring Data ne sont **pas** dans le même bucket — ils sont framework-tied par construction et restent en `infrastructure/persistence/`.
 
 ## Règles par couche
 
@@ -46,8 +48,9 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 - Entités JPA et leurs relations
 - Enums métier (`AssetType`, `InstrumentType`, `EarningsTime`, `Sentiment`…)
 - Value objects (les `Indicator` calculés peuvent vivre ici en data class pure)
+- **Ports outbound** (`*Client.kt`, `*Classifier.kt` — interfaces que la couche application appelle pour parler à l'extérieur). Le domaine possède le contrat dont il dépend ; les adapters en `infrastructure/<capability>/` le réalisent.
 - **Pas d'import** depuis `application/` ou `infrastructure/`
-- **Pas de logique Spring** (pas de `@Service`, `@Repository`, etc.)
+- **Pas de logique Spring** (pas de `@Service`, `@Repository`, etc.) — y compris pour les ports : aucun `@Component`, aucune annotation framework sur les interfaces
 
 ### `application/`
 - Services orchestrant le domaine (`@Service`)
@@ -69,7 +72,7 @@ shared/                 # Composants transverses (ex : GlobalExceptionHandler)
 - **Pas d'accès direct** aux repositories
 
 ### `infrastructure/llm/` *(analysis uniquement)*
-- Implémentations des clients LLM (`ClaudeClient`, `OllamaClient`) — toutes deux toujours instanciées (les `@ConditionalOnProperty` Phase 1 ont été retirés en Phase 2.5 v1)
+- Implémentations du port `LlmClient` (déclaré dans `analysis/domain/`) — `ClaudeClient`, `OllamaClient`, `MockLlmClient` toutes toujours instanciées (les `@ConditionalOnProperty` Phase 1 ont été retirés en Phase 2.5 v1)
 - `RoutingLlmClient` (`@Primary`) délègue per-call à l'adapter sélectionné par `appConfig.getString(LLM_PROVIDER)` — switch claude ↔ ollama prend effet au prochain narratif sans reboot. Pattern miroir de `RoutingMarketChartClient` / `RoutingNewsClient` / `RoutingAnalystClient` / `RoutingEarningsClient`
 - `ClaudeClient` lit la clé Anthropic per-call via `appConfig.getString(ANTHROPIC_API_KEY)` (Phase 2.5 v2, 2026-05-08) — header `x-api-key` posé par requête plutôt que via `defaultHeader()` builder-side, rotation immédiate sans reboot
 
@@ -84,7 +87,7 @@ Le contexte `analysis` héberge aussi la gestion des prompts narratifs et leur s
 
 ### `infrastructure/market/` *(market uniquement, Phase 1+)*
 
-Trois familles de clients HTTP, une par port outbound. Chaque famille suit le même triplet `TwelveData* + Mock* + Routing*` :
+Trois familles d'adapters HTTP, une par port outbound (les ports `MarketChartClient`, `SymbolSearchClient`, `SectorClassifier` vivent dans `market/domain/`). Chaque famille suit le même triplet `TwelveData* + Mock* + Routing*` :
 
 - **Chart** (Phase 1) — `TwelveDataClient` (REST + apikey, deux endpoints `/time_series` + `/quote`, cache 15 min, clé API lue per-call via `AppConfigService`), `MockMarketChartClient` (provider synthétique pour dev / CI sans clé), `RoutingMarketChartClient` (`@Primary`, Phase 2 — délègue à l'adapter sélectionné par `appConfig.getString(market.provider)` à chaque appel ; permet de basculer mock ↔ live runtime sans reboot).
 - **Symbol search** (Phase 2 watchlist v2) — `TwelveDataSymbolSearchClient` (REST `/symbol_search`, 1 credit/call), `MockSymbolSearchClient` (~30 symbols seedés US/TSX), `RoutingSymbolSearchClient` (`@Primary`).
@@ -94,7 +97,7 @@ Pas de logique d'indicateurs ici (calculs purs en `application/IndicatorCalculat
 
 ### `infrastructure/analyst/` *(analyst uniquement, Phase 2)*
 
-Mêmes triplet et mêmes conventions que `news/` : un port `AnalystRecommendationClient` outbound, deux adapters concrets (`FinnhubAnalystClient` REST + apikey, `MockAnalystClient` synthétique déterministe par symbole avec symboles réservés `UNKNOWN`/`RATELIMIT`/`NOTARGET`), et `RoutingAnalystClient` (`@Primary`) qui délègue per-call à l'adapter sélectionné par `appConfig.getString(analyst.provider)`. Les deux adapters sont qualifiés par `@Qualifier("mockAnalystClient")` / `@Qualifier("finnhubAnalystClient")` côté router. Le `FinnhubAnalystClient` réutilise le `RestClient` partagé (`@Qualifier("finnhubRestClient")`) pour ne pas dupliquer le bean côté `news/`.
+Mêmes triplet et mêmes conventions que `news/` : le port `AnalystRecommendationClient` vit dans `analyst/domain/`, deux adapters concrets ici (`FinnhubAnalystClient` REST + apikey, `MockAnalystClient` synthétique déterministe par symbole avec symboles réservés `UNKNOWN`/`RATELIMIT`/`NOTARGET`), et `RoutingAnalystClient` (`@Primary`) qui délègue per-call à l'adapter sélectionné par `appConfig.getString(analyst.provider)`. Les deux adapters sont qualifiés par `@Qualifier("mockAnalystClient")` / `@Qualifier("finnhubAnalystClient")` côté router. Le `FinnhubAnalystClient` réutilise le `RestClient` partagé (`@Qualifier("finnhubRestClient")`) pour ne pas dupliquer le bean côté `news/`.
 
 Le cache vit un layer au-dessus dans `application/AnalystRecommendationService` avec `@Cacheable("analyst-recommendations", key = "#symbol.toUpperCase()")` (méthode Java SpEL — l'extension Kotlin `uppercase()` ne serait pas vue par SpEL). Le provider est volontairement absent de la clé pour qu'un switch runtime s'applique au prochain dossier ouvert sans rétention de cache stale.
 
@@ -102,7 +105,7 @@ Les mappers Finnhub (`FinnhubAnalystMappers`) sont colocalisés dans le même pa
 
 ### `infrastructure/earnings/` *(earnings uniquement, Phase 2)*
 
-Mêmes triplet et mêmes conventions que `news/` et `analyst/` : un port `EarningsClient` outbound, deux adapters concrets (`FinnhubEarningsClient` REST + apikey hitting `/stock/earnings` requis + `/calendar/earnings` optionnel fail-soft, `MockEarningsClient` synthétique déterministe par symbole avec symboles réservés `UNKNOWN`/`RATELIMIT`/`NOCALENDAR`), et `RoutingEarningsClient` (`@Primary`) qui délègue per-call à l'adapter sélectionné par `appConfig.getString(earnings.provider)`. Les deux adapters sont qualifiés par `@Qualifier("mockEarningsClient")` / `@Qualifier("finnhubEarningsClient")` côté router. Le `FinnhubEarningsClient` réutilise le `RestClient` partagé (`@Qualifier("finnhubRestClient")`) pour ne pas dupliquer le bean côté `news/` et `analyst/`.
+Mêmes triplet et mêmes conventions que `news/` et `analyst/` : le port `EarningsClient` vit dans `earnings/domain/`, deux adapters concrets ici (`FinnhubEarningsClient` REST + apikey hitting `/stock/earnings` requis + `/calendar/earnings` optionnel fail-soft, `MockEarningsClient` synthétique déterministe par symbole avec symboles réservés `UNKNOWN`/`RATELIMIT`/`NOCALENDAR`), et `RoutingEarningsClient` (`@Primary`) qui délègue per-call à l'adapter sélectionné par `appConfig.getString(earnings.provider)`. Les deux adapters sont qualifiés par `@Qualifier("mockEarningsClient")` / `@Qualifier("finnhubEarningsClient")` côté router. Le `FinnhubEarningsClient` réutilise le `RestClient` partagé (`@Qualifier("finnhubRestClient")`) pour ne pas dupliquer le bean côté `news/` et `analyst/`.
 
 Le cache vit un layer au-dessus dans `application/EarningsService` avec `@Cacheable("earnings", key = "#symbol.toUpperCase()")` (méthode Java SpEL — l'extension Kotlin `uppercase()` ne serait pas vue par SpEL). Le provider est volontairement absent de la clé pour qu'un switch runtime s'applique au prochain dossier ouvert sans rétention de cache stale.
 

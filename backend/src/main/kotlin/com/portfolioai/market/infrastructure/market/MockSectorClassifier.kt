@@ -1,6 +1,7 @@
 package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.market.domain.SectorBenchmark
+import com.portfolioai.market.domain.SectorClassifier
 import com.portfolioai.shared.UpstreamUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component

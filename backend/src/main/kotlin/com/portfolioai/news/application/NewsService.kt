@@ -1,8 +1,8 @@
 package com.portfolioai.news.application
 
 import com.portfolioai.market.MarketConfig.Companion.NEWS_CACHE
+import com.portfolioai.news.domain.NewsClient
 import com.portfolioai.news.domain.NewsItem
-import com.portfolioai.news.infrastructure.news.NewsClient
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 

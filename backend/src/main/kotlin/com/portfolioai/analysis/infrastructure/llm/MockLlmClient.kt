@@ -1,5 +1,6 @@
 package com.portfolioai.analysis.infrastructure.llm
 
+import com.portfolioai.analysis.domain.LlmClient
 import com.portfolioai.shared.UpstreamUnavailableException
 import kotlin.random.Random
 import org.slf4j.LoggerFactory

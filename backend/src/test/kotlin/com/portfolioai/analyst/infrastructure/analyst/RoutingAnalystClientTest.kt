@@ -1,6 +1,7 @@
 package com.portfolioai.analyst.infrastructure.analyst
 
 import com.portfolioai.analyst.domain.AnalystConsensus
+import com.portfolioai.analyst.domain.AnalystRecommendationClient
 import com.portfolioai.analyst.domain.AnalystSnapshot
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys

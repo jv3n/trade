@@ -2,6 +2,7 @@ package com.portfolioai.news.infrastructure.news
 
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
+import com.portfolioai.news.domain.NewsClient
 import com.portfolioai.news.domain.NewsItem
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals

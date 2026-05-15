@@ -1,12 +1,10 @@
-package com.portfolioai.market.infrastructure.market
-
-import com.portfolioai.market.domain.SymbolMatch
+package com.portfolioai.market.domain
 
 /**
  * Outbound port for ticker symbol search — backs the watchlist autocomplete and the future "is this
- * a real symbol ?" validation gate. Two implementations live in this package :
- * [MockSymbolSearchClient] (default in `application.yml`, ~30 seeded symbols + reserved test paths)
- * and [TwelveDataSymbolSearchClient] (live REST). Selection via `market.provider`.
+ * a real symbol ?" validation gate. Two implementations live in `infrastructure/market/` :
+ * `MockSymbolSearchClient` (default in `application.yml`, ~30 seeded symbols + reserved test paths)
+ * and `TwelveDataSymbolSearchClient` (live REST). Selection via `market.provider`.
  *
  * Returns provider-neutral [SymbolMatch] domain objects. The contract is :
  * - **Empty query → empty list** (don't blast the upstream with `q=""`).

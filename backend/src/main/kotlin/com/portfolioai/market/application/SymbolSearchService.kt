@@ -3,7 +3,7 @@ package com.portfolioai.market.application
 import com.portfolioai.market.MarketConfig.Companion.SYMBOL_SEARCH_CACHE
 import com.portfolioai.market.application.SymbolSearchService.Companion.DEFAULT_LIMIT
 import com.portfolioai.market.domain.SymbolMatch
-import com.portfolioai.market.infrastructure.market.SymbolSearchClient
+import com.portfolioai.market.domain.SymbolSearchClient
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service

@@ -1,5 +1,6 @@
 package com.portfolioai.news.infrastructure.news
 
+import com.portfolioai.news.domain.NewsClient
 import com.portfolioai.news.domain.NewsItem
 import java.time.Instant
 import java.time.temporal.ChronoUnit

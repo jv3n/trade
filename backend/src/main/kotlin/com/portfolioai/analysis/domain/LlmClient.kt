@@ -1,4 +1,4 @@
-package com.portfolioai.analysis.infrastructure.llm
+package com.portfolioai.analysis.domain
 
 interface LlmClient {
   fun complete(systemPrompt: String, userMessage: String, maxTokens: Int = 2048): String

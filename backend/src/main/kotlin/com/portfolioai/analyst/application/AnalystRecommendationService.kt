@@ -1,7 +1,7 @@
 package com.portfolioai.analyst.application
 
+import com.portfolioai.analyst.domain.AnalystRecommendationClient
 import com.portfolioai.analyst.domain.AnalystSnapshot
-import com.portfolioai.analyst.infrastructure.analyst.AnalystRecommendationClient
 import com.portfolioai.market.MarketConfig.Companion.ANALYST_CACHE
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service

@@ -2,7 +2,7 @@ package com.portfolioai.market.application
 
 import com.portfolioai.market.MarketConfig.Companion.SECTOR_CACHE
 import com.portfolioai.market.domain.SectorBenchmark
-import com.portfolioai.market.infrastructure.market.SectorClassifier
+import com.portfolioai.market.domain.SectorClassifier
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service

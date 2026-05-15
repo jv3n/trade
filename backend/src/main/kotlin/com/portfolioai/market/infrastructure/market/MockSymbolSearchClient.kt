@@ -1,6 +1,7 @@
 package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.market.domain.SymbolMatch
+import com.portfolioai.market.domain.SymbolSearchClient
 import com.portfolioai.shared.UpstreamUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component

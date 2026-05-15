@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
+import com.portfolioai.earnings.domain.EarningsClient
 import com.portfolioai.earnings.domain.EarningsSnapshot
 import com.portfolioai.shared.UpstreamUnavailableException
 import java.time.LocalDate

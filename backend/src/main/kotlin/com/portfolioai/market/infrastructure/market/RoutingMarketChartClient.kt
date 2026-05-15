@@ -3,6 +3,7 @@ package com.portfolioai.market.infrastructure.market
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.domain.MarketChart
+import com.portfolioai.market.domain.MarketChartClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Primary

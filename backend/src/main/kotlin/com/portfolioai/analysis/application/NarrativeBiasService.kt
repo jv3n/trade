@@ -12,8 +12,8 @@ import com.portfolioai.analysis.application.dto.TopicDto
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.infrastructure.persistence.BiasSnapshotRow
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeBiasQuery
+import com.portfolioai.market.domain.MarketChartClient
 import com.portfolioai.market.domain.OhlcBar
-import com.portfolioai.market.infrastructure.market.MarketChartClient
 import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode

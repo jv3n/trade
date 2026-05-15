@@ -1,6 +1,6 @@
 package com.portfolioai.market.application
 
-import com.portfolioai.market.infrastructure.market.SymbolSearchClient
+import com.portfolioai.market.domain.SymbolSearchClient
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn

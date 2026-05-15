@@ -16,30 +16,38 @@ Use these terms exactly. Drift into "service", "provider", "client" interchangea
 - **Bounded context** — a top-level package under `com.portfolioai/` (`market/`, `news/`, `analyst/`, …). One product capability, owned end-to-end.
 - **Domain** — pure Kotlin types under `<context>/domain/`. No Spring, no Jackson, no JPA. Compilable without a Spring context. Includes aggregates, value objects, and enums. Domain exceptions live next to the aggregate that raises them ; cross-context exceptions like `UpstreamUnavailableException` live in `shared/`.
 - **Application service** — `@Service` bean under `<context>/application/` orchestrating one use case. Depends on ports + other application services. Where caching and `@Async` live.
-- **Port** — `interface` declaring what a capability needs from the outside. In this project, all current ports are *outbound* (the application calls them) and live in `<context>/infrastructure/<capability>/` — see "Why ports live in infrastructure" below.
-- **Adapter** — concrete `@Component` implementing a port. Three flavors in this project : **real** (`FinnhubClient`, `TwelveDataClient`), **mock** (`MockNewsClient`, deterministic synthetic data, default when no API key), **routing** (`RoutingNewsClient`, `@Primary`, delegates per-call).
+- **Port** — `interface` declaring what a capability needs from the outside. In this project, all current ports are *outbound* (the application calls them) and live in `<context>/domain/` — the domain owns the contract it depends on. See "Why ports live in domain" below.
+- **Adapter** — concrete `@Component` implementing a port, under `<context>/infrastructure/<capability>/`. Three flavors in this project : **real** (`FinnhubClient`, `TwelveDataClient`), **mock** (`MockNewsClient`, deterministic synthetic data, default when no API key), **routing** (`RoutingNewsClient`, `@Primary`, delegates per-call).
 - **Wire model** — Jackson-bound DTOs that mirror an external provider's JSON exactly. Lives in `<Provider>Models.kt` alongside its adapter. **Never** crosses into `domain/` — `<Provider>Mappers.kt` translates wire → domain.
 - **Routing** — the `@Primary` adapter that selects which real/mock adapter to delegate to *at every call*, based on the runtime config key (`market.provider`, `news.provider`, `llm.provider`, …).
 - **Fail-soft** — degrading a non-critical external dependency to `null` instead of failing the whole request. Distinct from **fail-hard** : the dependency is required, errors propagate via `UpstreamUnavailableException` → HTTP 503.
 
 ## The canonical port + adapter group
 
-A bounded context that calls one external provider ships five files under `<context>/infrastructure/<capability>/` :
+A bounded context that calls one external provider ships **the port in `domain/`** and **the adapters + wire models in `infrastructure/<capability>/`** :
 
 ```
-news/infrastructure/news/
-├── NewsClient.kt            # PORT — interface, ~10 lines, KDoc what callers expect
-├── MockNewsClient.kt        # ADAPTER — deterministic, default when no key
-├── FinnhubClient.kt         # ADAPTER — real provider
-├── FinnhubModels.kt         # wire DTOs (Jackson-bound)
-├── FinnhubMappers.kt        # wire → domain (Foo.toDomain())
-└── RoutingNewsClient.kt     # @Primary, dispatches per call
+news/
+├── domain/
+│   ├── NewsItem.kt          # domain value object
+│   └── NewsClient.kt        # PORT — interface, ~10 lines, KDoc what callers expect
+├── application/
+│   └── NewsService.kt       # imports NewsClient from domain
+└── infrastructure/
+    └── news/
+        ├── MockNewsClient.kt        # ADAPTER — deterministic, default when no key
+        ├── FinnhubClient.kt         # ADAPTER — real provider
+        ├── FinnhubModels.kt         # wire DTOs (Jackson-bound)
+        ├── FinnhubMappers.kt        # wire → domain (Foo.toDomain())
+        └── RoutingNewsClient.kt     # @Primary, dispatches per call
 ```
 
-The application service consuming this group is **one layer up** and depends on the port :
+The application service consuming this group depends on the port :
 
 ```kotlin
 // news/application/NewsService.kt
+import com.portfolioai.news.domain.NewsClient
+
 @Service
 class NewsService(private val client: NewsClient) {   // gets RoutingNewsClient injected (@Primary)
   @Cacheable(NEWS_CACHE, key = "#symbol.toUpperCase() + '|' + #limit")
@@ -49,13 +57,18 @@ class NewsService(private val client: NewsClient) {   // gets RoutingNewsClient 
 
 Naming is **verbatim across contexts** — don't rename `Client` to `Provider` or `Service` because "it reads better" in one place. The grep-ability of `Routing*Client` is the point.
 
-### Why ports live in `infrastructure/`, not `domain/`
+### Why ports live in `domain/`, not `infrastructure/` or `application/`
 
-Classical hexagonal puts ports in `domain/` or `application/`. This project keeps them in `infrastructure/<capability>/` for one reason : **the concept "client to an external provider" is itself an infrastructure concern**. The domain doesn't know providers exist — it knows `NewsItem`, not `NewsClient`. The application service is the seam where the abstraction matters, and it imports the port from `infrastructure/`.
+Classical hexagonal — the strict reading. **The domain owns the contracts it depends on ; infrastructure realises them.** A bounded context says "I need someone to fetch news headlines" via `NewsClient` in `domain/`, and any number of adapters in `infrastructure/` plug in to satisfy that need. The application layer orchestrates, but does not own the abstraction.
 
-The trade-off : a future "swap Spring for ktor" would touch every port file. Acceptable — that swap is not on the roadmap, and the win in colocation (port + adapters + wire models in one folder) is real every time you read the code.
+Three concrete properties this layout buys :
+1. **Domain stays the inversion point.** Dependencies point inward : `infrastructure/news/` *imports* `domain/NewsClient`, not the other way around. The "outside" knows about the "inside", never the reverse.
+2. **Adapters are pluggable without touching domain or application.** Adding a new provider (say `BloombergClient : NewsClient`) is a pure infrastructure change.
+3. **The port's KDoc lives next to the types it returns** — `NewsClient` and `NewsItem` are in the same file tree, so the contract is readable end-to-end without crossing layers.
 
-If a port emerges that is *not* about an external provider — a true domain abstraction the application depends on but doesn't want to know the implementation of — that one would belong in `application/` or `domain/`. None exist today.
+Keep the port file pure : no Spring, no Jackson, no annotations. The same purity rule as the rest of `domain/`. If a "port" needs `@Component` or framework imports, it's an adapter, not a port.
+
+> **Historical note (B1 refactor)** — until early 2026, ports lived in `<context>/infrastructure/<capability>/` alongside their adapters under a "colocation" argument. The B1 dette pass moved them to `domain/` to align with the strict hexagonal reading the project follows everywhere else. JPA repository interfaces (`*Repository extends JpaRepository`) are **not** the same kind of port and stay in `infrastructure/persistence/` — they're framework-tied by design.
 
 ## The routing pattern
 

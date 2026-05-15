@@ -1,5 +1,6 @@
 package com.portfolioai.analyst.infrastructure.analyst
 
+import com.portfolioai.analyst.domain.AnalystRecommendationClient
 import com.portfolioai.analyst.domain.AnalystSnapshot
 import com.portfolioai.analyst.domain.MonthlyRecommendation
 import com.portfolioai.analyst.domain.PriceTarget

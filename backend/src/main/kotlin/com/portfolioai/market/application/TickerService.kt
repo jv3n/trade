@@ -1,9 +1,9 @@
 package com.portfolioai.market.application
 
+import com.portfolioai.market.domain.MarketChartClient
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.TickerSnapshot
 import com.portfolioai.market.domain.Timeframe
-import com.portfolioai.market.infrastructure.market.MarketChartClient
 import org.springframework.stereotype.Service
 
 /**

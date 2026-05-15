@@ -10,9 +10,9 @@ import java.time.LocalDate
  * comes from (today : Finnhub `/stock/recommendation` + `/stock/price-target`).
  *
  * **Empty coverage** is signalled by the port throwing `NoSuchElementException` — same convention
- * as [com.portfolioai.market.infrastructure.market.MarketChartClient] for an unknown symbol. The
- * front branches on the resulting 404 to render an "no analyst coverage" empty state, which is
- * distinct from a 503 (provider down) error state.
+ * as [com.portfolioai.market.domain.MarketChartClient] for an unknown symbol. The front branches on
+ * the resulting 404 to render an "no analyst coverage" empty state, which is distinct from a 503
+ * (provider down) error state.
  *
  * **Optional [priceTarget]** — sourced from a separate Finnhub endpoint that may sit behind a paid
  * tier on certain accounts (we observed 401/403 in practice for some symbols). When the call fails

@@ -11,11 +11,11 @@ import java.time.LocalDate
  * `/calendar/earnings` for the upcoming date).
  *
  * **No coverage** is signalled by the port throwing `NoSuchElementException` — same convention as
- * [com.portfolioai.market.infrastructure.market.MarketChartClient] and the analyst port. The front
- * branches on the resulting 404 to render a "no earnings data" empty state, distinct from a 503
- * (provider down) error state. We treat empty `lastReports` AND null [nextEarningsDate] as no
- * coverage — there's nothing to show. A snapshot with reports and no upcoming date is fine (most
- * realistic case between announcements).
+ * [com.portfolioai.market.domain.MarketChartClient] and the analyst port. The front branches on the
+ * resulting 404 to render a "no earnings data" empty state, distinct from a 503 (provider down)
+ * error state. We treat empty `lastReports` AND null [nextEarningsDate] as no coverage — there's
+ * nothing to show. A snapshot with reports and no upcoming date is fine (most realistic case
+ * between announcements).
  *
  * **Optional [nextEarningsDate]** — sourced from Finnhub `/calendar/earnings`, a separate endpoint.
  * Fail-soft to `null` on auth / network / 5xx so the report breakdown is still surfaced — same

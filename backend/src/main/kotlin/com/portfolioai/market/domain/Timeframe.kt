@@ -3,7 +3,7 @@ package com.portfolioai.market.domain
 /**
  * Allowed timeframes for the multi-timeframe chart toggle on the dossier ticker. Each entry maps a
  * stable frontend [code] to a provider-neutral pair [range] + [interval] that
- * [com.portfolioai.market.infrastructure.market.MarketChartClient] can consume.
+ * [com.portfolioai.market.domain.MarketChartClient] can consume.
  *
  * Why an enum rather than free-form strings :
  * - **Whitelist by construction** — the controller can only accept a known [code], no risk of

@@ -1,5 +1,6 @@
 package com.portfolioai.earnings.infrastructure.earnings
 
+import com.portfolioai.earnings.domain.EarningsClient
 import com.portfolioai.earnings.domain.EarningsReport
 import com.portfolioai.earnings.domain.EarningsSnapshot
 import com.portfolioai.earnings.domain.EarningsTime

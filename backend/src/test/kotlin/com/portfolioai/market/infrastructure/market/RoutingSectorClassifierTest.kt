@@ -3,6 +3,7 @@ package com.portfolioai.market.infrastructure.market
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.domain.SectorBenchmark
+import com.portfolioai.market.domain.SectorClassifier
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

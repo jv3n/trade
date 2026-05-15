@@ -1,6 +1,7 @@
 package com.portfolioai.analysis.infrastructure.llm
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.portfolioai.analysis.domain.LlmClient
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import org.slf4j.LoggerFactory

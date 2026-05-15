@@ -3,6 +3,7 @@ package com.portfolioai.market.infrastructure.market
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.domain.MarketChart
+import com.portfolioai.market.domain.MarketChartClient
 import com.portfolioai.market.domain.TickerQuote
 import java.math.BigDecimal
 import java.time.Instant

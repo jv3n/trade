@@ -9,8 +9,8 @@ import com.portfolioai.analysis.domain.CoherenceScore
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilityQuery
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservationRow
+import com.portfolioai.market.domain.MarketChartClient
 import com.portfolioai.market.domain.OhlcBar
-import com.portfolioai.market.infrastructure.market.MarketChartClient
 import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode

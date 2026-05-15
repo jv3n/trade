@@ -1,7 +1,7 @@
 package com.portfolioai.earnings.application
 
+import com.portfolioai.earnings.domain.EarningsClient
 import com.portfolioai.earnings.domain.EarningsSnapshot
-import com.portfolioai.earnings.infrastructure.earnings.EarningsClient
 import com.portfolioai.market.MarketConfig.Companion.EARNINGS_CACHE
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service

@@ -2,6 +2,7 @@ package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.market.domain.MarketChart
+import com.portfolioai.market.domain.MarketChartClient
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.TickerQuote
 import com.portfolioai.shared.UpstreamUnavailableException

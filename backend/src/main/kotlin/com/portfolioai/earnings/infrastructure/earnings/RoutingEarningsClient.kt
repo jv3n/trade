@@ -2,6 +2,7 @@ package com.portfolioai.earnings.infrastructure.earnings
 
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
+import com.portfolioai.earnings.domain.EarningsClient
 import com.portfolioai.earnings.domain.EarningsSnapshot
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier

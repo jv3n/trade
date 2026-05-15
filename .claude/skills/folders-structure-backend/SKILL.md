@@ -24,9 +24,10 @@ backend/
 │           ├── domain/                        # pure Kotlin — no Spring, no Jackson, no JPA annotations
 │           │   ├── <Aggregate>.kt             # data/sealed classes, value objects
 │           │   ├── <ValueObject>.kt
+│           │   ├── <Capability>Client.kt      # PORT — interface (outbound port for the application)
 │           │   └── <DomainException>.kt       # context-specific only — cross-context exceptions live in shared/
 │           ├── application/                   # Spring services orchestrating the domain
-│           │   ├── <UseCase>Service.kt        # @Service, constructor injection only
+│           │   ├── <UseCase>Service.kt        # @Service, constructor injection only — imports the port from domain/
 │           │   ├── <Helper>.kt                # supporting beans (Parser, Validator, Recorder…)
 │           │   └── dto/                       # HTTP-facing DTOs (request + response)
 │           │       └── <Name>Dto.kt
@@ -36,9 +37,8 @@ backend/
 │               ├── persistence/               # Spring Data JPA repositories + native queries
 │               │   ├── <Aggregate>Repository.kt
 │               │   └── <Name>Query.kt         # for native SQL (when @Query gets unwieldy)
-│               └── <capability>/              # subfolder when a port has ≥3 adapters
-│                   ├── <Capability>Client.kt  # PORT — interface
-│                   ├── Finnhub<X>Client.kt    # ADAPTER — real provider
+│               └── <capability>/              # subfolder when a port has ≥2 adapters (mock + real)
+│                   ├── Finnhub<X>Client.kt    # ADAPTER — real provider, implements domain port
 │                   ├── Mock<X>Client.kt       # ADAPTER — deterministic fallback
 │                   ├── Routing<X>Client.kt    # @Primary — delegates per call to selected adapter
 │                   ├── Finnhub<X>Models.kt    # wire DTOs (Jackson-bound, separate from domain)
@@ -67,6 +67,7 @@ When in doubt about where to place a new file: **what product capability does it
 
 - Pure Kotlin only. **No Spring**, no Jackson, no `@Entity`, no `@Component`.
 - Aggregates, value objects, enums (`Sentiment`, `JobPhase`, `Timeframe`). Context-specific domain exceptions live here too ; cross-context exceptions like `UpstreamUnavailableException` go in `shared/` (the 503 contract is identical across providers — no reason for `news/` to import from `market/domain/`).
+- **Outbound ports** (`*Client.kt`, `*Classifier.kt` — interfaces the application calls) also live here. The domain owns the contract it depends on ; adapters in `infrastructure/<capability>/` realise it. Keep the port file pure : same no-Spring, no-Jackson rule as the rest of `domain/`.
 - Compilable in isolation — a domain test should not need Spring context.
 - Cross-context references are allowed but rare; if a context's domain depends on another, prefer passing the resolved value through the application layer.
 
@@ -89,10 +90,10 @@ When in doubt about where to place a new file: **what product capability does it
 
 A bounded context that calls an external provider follows this naming pattern verbatim :
 
-- **Port** — `<Capability>Client.kt` : `interface NewsClient`, `interface MarketChartClient`. Lives in `infrastructure/<capability>/` (the port is an infrastructure concern in this project — domain layer never sees provider abstractions).
-- **Real adapter** — `<Provider><Capability>Client.kt` : `FinnhubClient`, `TwelveDataClient`, `FinnhubAnalystClient`. One file per provider.
-- **Mock adapter** — `Mock<Capability>Client.kt` : `MockNewsClient`, `MockMarketChartClient`. Deterministic synthetic data, used as default when no API key is configured.
-- **Routing** — `Routing<Capability>Client.kt` : `RoutingNewsClient`, annotated `@Primary`. Delegates each call to the adapter selected by `<context>.provider` in `AppConfigService`. **All adapters are always instantiated** (no `@ConditionalOnProperty`) so a runtime switch lands at the next call.
+- **Port** — `<Capability>Client.kt` : `interface NewsClient`, `interface MarketChartClient`. Lives in `<context>/domain/` (strict hexagonal — the domain owns the contracts it depends on). Pure Kotlin, no Spring annotations.
+- **Real adapter** — `<Provider><Capability>Client.kt` : `FinnhubClient`, `TwelveDataClient`, `FinnhubAnalystClient`. One file per provider, in `infrastructure/<capability>/`. Imports the port from `domain/`.
+- **Mock adapter** — `Mock<Capability>Client.kt` : `MockNewsClient`, `MockMarketChartClient`. Deterministic synthetic data, used as default when no API key is configured. Same `infrastructure/<capability>/` folder as the real adapter.
+- **Routing** — `Routing<Capability>Client.kt` : `RoutingNewsClient`, annotated `@Primary`. Delegates each call to the adapter selected by `<context>.provider` in `AppConfigService`. **All adapters are always instantiated** (no `@ConditionalOnProperty`) so a runtime switch lands at the next call. Lives alongside the other adapters in `infrastructure/<capability>/`.
 - **Wire models / mappers** — `<Provider>Models.kt` (Jackson-bound DTOs that mirror the provider's JSON exactly) + `<Provider>Mappers.kt` (`fun Foo.toDomain(): DomainFoo`). Keep them separate so a provider quirk doesn't leak into domain types.
 
 ### Tests

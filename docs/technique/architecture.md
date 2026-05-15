@@ -273,6 +273,8 @@ Huit migrations Flyway : `V1__init.sql` (schéma Phase 0 historique — les tabl
 
 ### Patterns transverses backend
 
+**Ports outbound dans `domain/`** (B1, 2026-05-15) — les 7 interfaces de port (`MarketChartClient`, `SymbolSearchClient`, `SectorClassifier`, `NewsClient`, `AnalystRecommendationClient`, `EarningsClient`, `LlmClient`) vivent dans `<context>/domain/` aux côtés des types qu'elles retournent (`MarketChart`, `NewsItem`, etc.). Lecture hexagonale stricte : le domaine déclare ce dont il a besoin de l'extérieur, l'infrastructure le réalise. Les adapters (`Mock*`, `Finnhub*`, `Twelve*`, `Claude*`, `Ollama*`, `Routing*` `@Primary`) restent en `<context>/infrastructure/<capability>/`. Trade-off accepté : on perd la co-localisation port+adapters d'avant (un argument du compromis « pragmatique » historique) ; on gagne l'inversion de dépendance honnête (`application/` importe depuis `domain/`, pas depuis `infrastructure/`) et la possibilité de tester un service applicatif sans toucher `infrastructure/`. Les `JpaRepository` Spring Data restent en `infrastructure/persistence/` parce qu'ils sont framework-tied par construction — pas le même type de port.
+
 **`@Async` sur bean séparé** — Spring AOP ne proxifie pas les appels internes (`this.method()`). Le pattern `Service → Runner (@Async) → Executor (@Transactional)` reste valide et est repris pour `TickerNarrativeService → TickerNarrativeRunner`.
 
 **LLM call hors transaction** — l'appel LLM (1-15 s en Claude, plus long en Ollama) ne doit pas tenir de connexion Hikari. Le pipeline est éclaté pour respecter ça.

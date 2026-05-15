@@ -1,8 +1,8 @@
 package com.portfolioai.analysis.application
 
 import com.portfolioai.analysis.domain.JobPhase
+import com.portfolioai.analysis.domain.LlmClient
 import com.portfolioai.analysis.domain.TickerNarrativeSnapshot
-import com.portfolioai.analysis.infrastructure.llm.LlmClient
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.TickerSnapshot
 import java.util.UUID
