@@ -41,12 +41,13 @@ complexity:
     functionThreshold: 8
     # JPA entities (`Asset`, `Recommendation`, `TickerNarrativeSnapshot`…) have 8-14 `@Column`
     # params by design — that's the schema, not a code smell. Annotation-based exclusion below
-    # also catches `@Embeddable` and `@MappedSuperclass`. `AppConfigService` has 14 `@Value`
-    # injected defaults today (2 deps + 12 runtime config keys) and grows by ~2 per phase as new
-    # runtime knobs land — bump to 16 to absorb the Phase 3 prompt-template + Phase 5 OAuth2
-    # configs without re-tweaking the rule. Beyond 16 we should genuinely re-think the shape
-    # (split into multiple config beans grouped by concern).
-    constructorThreshold: 16
+    # also catches `@Embeddable` and `@MappedSuperclass`. `AppConfigService` used to carry 14
+    # `@Value` injected defaults and bumped this threshold to 16 ; the v3 refactor (ticket #B6,
+    # livré 2026-05-15) split those into `SecretsDefaults` / `DataProvidersDefaults` /
+    # `LlmDefaults` `@Component` data classes, dropping the service constructor back to 6 params.
+    # Threshold restored to the default 8 — if a new bean grows past it, prefer the same
+    # grouped-`@Value` pattern over re-bumping.
+    constructorThreshold: 8
     ignoreDefaultParameters: true
     ignoreDataClasses: true
     ignoreAnnotated:

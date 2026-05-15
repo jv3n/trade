@@ -113,9 +113,37 @@ class OllamaClient(
 
 Always provide a default after the `:` — a missing key without a default fails the application context at startup, which is a footgun for newcomers cloning the repo. Empty string is a valid default for required secrets : `@Value("\${anthropic.api.key:}")` boots cleanly and `ClaudeClient` raises a clear "missing key" error on the first actual call.
 
+### Grouped `@Value` via `@Component` data class — for ≥3 related keys
+
+When a bean grows past 3 `@Value` parameters that conceptually belong together, group them into a dedicated `@Component` data class and inject that. Keeps the consumer's constructor short and the grouping explicit. The pattern in `config/application/` :
+
+```kotlin
+@Component
+data class SecretsDefaults(
+  @Value("\${market.twelvedata.api-key:}") val twelveDataApiKey: String,
+  @Value("\${market.finnhub.api-key:}") val finnhubApiKey: String,
+  @Value("\${anthropic.api.key:}") val anthropicApiKey: String,
+)
+
+@Service
+class AppConfigService(
+  private val repository: AppConfigRepository,
+  private val secrets: SecretsDefaults,
+  private val dataProviders: DataProvidersDefaults,
+  private val llm: LlmDefaults,
+  /* … */
+)
+```
+
+The codebase has three such groups today (`SecretsDefaults`, `DataProvidersDefaults`, `LlmDefaults`), all in `config/application/`, all reduced `AppConfigService`'s constructor from 14 params to 6 (ticket #B6, livré 2026-05-15).
+
+**Why not `@ConfigurationProperties`** — that's the canonical Spring Boot answer when keys share a prefix (e.g. `market.foo`, `market.bar` under `prefix = "market"`). This project's runtime config keys are spread across four roots (`market.*`, `anthropic.*`, `llm.*`, `news.*`, etc.) that grew organically and back env-var bindings already documented in the README. A single `@ConfigurationProperties` can't span them cleanly, and renaming the YAML keys would break the env-var contract. The grouped `@Component` pattern reads identically at the consumer and preserves the keys.
+
+Use `@ConfigurationProperties` when the YAML *does* share a prefix (a new isolated subtree). Use grouped `@Value` data classes when consolidating existing scattered keys.
+
 ### `AppConfigService.getString/getInt(...)` — for runtime-editable config
 
-Anything the user can flip from `/settings/configuration` reads through `AppConfigService` *per call*, not at construction. This includes : `<x>.provider`, `<x>.api-key`, cache TTL, LLM timeout. The pattern : YAML default injected via `@Value` into `AppConfigService` (for first-boot bootstrap), then DB overrides take precedence, then runtime reads hit the layered value.
+Anything the user can flip from `/settings/configuration` reads through `AppConfigService` *per call*, not at construction. This includes : `<x>.provider`, `<x>.api-key`, cache TTL, LLM timeout. The pattern : YAML defaults injected via the `*Defaults` `@Component` groups above (for first-boot bootstrap), then DB overrides take precedence, then runtime reads hit the layered value.
 
 Rule of thumb : *can the user toggle this without restarting the backend?* If yes, route through `AppConfigService`. If no, plain `@Value` is fine.
 

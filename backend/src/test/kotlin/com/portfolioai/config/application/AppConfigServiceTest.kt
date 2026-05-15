@@ -232,24 +232,36 @@ class AppConfigServiceTest {
 
   /**
    * Builds the service with a fixed YAML default set. Tests that need DB overrides stub
-   * `repo.findAll()` _before_ calling this — `primeCache()` reads it on construction.
+   * `repo.findAll()` _before_ calling this — `primeCache()` reads it on construction. The three
+   * `*Defaults` data classes are instantiated inline here rather than mocked because they're dumb
+   * value carriers (constructor-bound `@Value`s, no logic) — mocking would just re-state the field
+   * set.
    */
   private fun newService(): AppConfigService =
     AppConfigService(
         repository = repo,
         eventPublisher = publisher,
-        twelveDataKeyDefault = "yaml-twelve",
-        finnhubKeyDefault = "yaml-finn",
-        anthropicApiKeyDefault = "yaml-anthropic",
+        secrets =
+          SecretsDefaults(
+            twelveDataApiKey = "yaml-twelve",
+            finnhubApiKey = "yaml-finn",
+            anthropicApiKey = "yaml-anthropic",
+          ),
+        dataProviders =
+          DataProvidersDefaults(
+            marketProvider = "mock",
+            newsProvider = "mock",
+            analystProvider = "mock",
+            earningsProvider = "mock",
+          ),
+        llm =
+          LlmDefaults(
+            llmProvider = "claude",
+            ollamaModel = "qwen2.5:3b",
+            anthropicApiModel = "claude-opus-4-6",
+            llmTimeoutSeconds = 400,
+          ),
         cacheTtlDefault = 15,
-        marketProviderDefault = "mock",
-        newsProviderDefault = "mock",
-        analystProviderDefault = "mock",
-        earningsProviderDefault = "mock",
-        llmProviderDefault = "claude",
-        ollamaModelDefault = "qwen2.5:3b",
-        anthropicApiModelDefault = "claude-opus-4-6",
-        llmTimeoutSecondsDefault = 400,
       )
       .also { it.primeCache() }
 }

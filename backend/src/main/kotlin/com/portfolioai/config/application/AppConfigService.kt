@@ -17,8 +17,11 @@ import org.springframework.transaction.annotation.Transactional
  * (cache TTL rebuild) can listen.
  *
  * **Read path** — [getString] / [getInt] hit a [ConcurrentHashMap] cache primed at boot from the DB
- * (`@PostConstruct`). YAML defaults are injected via `@Value` constructor params and used as
- * fallback when no override exists.
+ * (`@PostConstruct`). YAML defaults are injected via three grouped `@Component` data classes
+ * ([SecretsDefaults], [DataProvidersDefaults], [LlmDefaults]) — see the `spring-boot` skill for the
+ * rationale on this pattern vs `@ConfigurationProperties`. The cache TTL is the only standalone
+ * `@Value` because it doesn't bundle naturally with any of the three groups. Defaults are used as
+ * fallback when no DB override exists.
  *
  * **Write path** — [set] / [reset] write through to the DB then update the in-memory cache, so
  * subsequent reads on the same process see the new value immediately. No clustering concern : the
@@ -33,18 +36,10 @@ import org.springframework.transaction.annotation.Transactional
 class AppConfigService(
   private val repository: AppConfigRepository,
   private val eventPublisher: ApplicationEventPublisher,
-  @Value("\${market.twelvedata.api-key:}") private val twelveDataKeyDefault: String,
-  @Value("\${market.finnhub.api-key:}") private val finnhubKeyDefault: String,
-  @Value("\${anthropic.api.key:}") private val anthropicApiKeyDefault: String,
+  private val secrets: SecretsDefaults,
+  private val dataProviders: DataProvidersDefaults,
+  private val llm: LlmDefaults,
   @Value("\${market.cache.ttl-minutes:15}") private val cacheTtlDefault: Int,
-  @Value("\${market.provider:mock}") private val marketProviderDefault: String,
-  @Value("\${news.provider:mock}") private val newsProviderDefault: String,
-  @Value("\${analyst.provider:mock}") private val analystProviderDefault: String,
-  @Value("\${earnings.provider:mock}") private val earningsProviderDefault: String,
-  @Value("\${llm.provider:claude}") private val llmProviderDefault: String,
-  @Value("\${ollama.model:qwen2.5:3b}") private val ollamaModelDefault: String,
-  @Value("\${anthropic.api.model:claude-opus-4-6}") private val anthropicApiModelDefault: String,
-  @Value("\${llm.timeout-seconds:400}") private val llmTimeoutSecondsDefault: Int,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
   private val overrides = ConcurrentHashMap<String, String>()
@@ -66,18 +61,18 @@ class AppConfigService(
   /** Returns the YAML default for the key — used by the UI to show "default vs current". */
   fun defaultFor(key: String): String =
     when (key) {
-      ConfigKeys.TWELVEDATA_API_KEY -> twelveDataKeyDefault
-      ConfigKeys.FINNHUB_API_KEY -> finnhubKeyDefault
-      ConfigKeys.ANTHROPIC_API_KEY -> anthropicApiKeyDefault
+      ConfigKeys.TWELVEDATA_API_KEY -> secrets.twelveDataApiKey
+      ConfigKeys.FINNHUB_API_KEY -> secrets.finnhubApiKey
+      ConfigKeys.ANTHROPIC_API_KEY -> secrets.anthropicApiKey
       ConfigKeys.CACHE_TTL_MINUTES -> cacheTtlDefault.toString()
-      ConfigKeys.MARKET_PROVIDER -> marketProviderDefault
-      ConfigKeys.NEWS_PROVIDER -> newsProviderDefault
-      ConfigKeys.ANALYST_PROVIDER -> analystProviderDefault
-      ConfigKeys.EARNINGS_PROVIDER -> earningsProviderDefault
-      ConfigKeys.LLM_PROVIDER -> llmProviderDefault
-      ConfigKeys.OLLAMA_MODEL -> ollamaModelDefault
-      ConfigKeys.ANTHROPIC_API_MODEL -> anthropicApiModelDefault
-      ConfigKeys.LLM_TIMEOUT_SECONDS -> llmTimeoutSecondsDefault.toString()
+      ConfigKeys.MARKET_PROVIDER -> dataProviders.marketProvider
+      ConfigKeys.NEWS_PROVIDER -> dataProviders.newsProvider
+      ConfigKeys.ANALYST_PROVIDER -> dataProviders.analystProvider
+      ConfigKeys.EARNINGS_PROVIDER -> dataProviders.earningsProvider
+      ConfigKeys.LLM_PROVIDER -> llm.llmProvider
+      ConfigKeys.OLLAMA_MODEL -> llm.ollamaModel
+      ConfigKeys.ANTHROPIC_API_MODEL -> llm.anthropicApiModel
+      ConfigKeys.LLM_TIMEOUT_SECONDS -> llm.llmTimeoutSeconds.toString()
       else -> throw IllegalArgumentException("Unknown config key: $key")
     }
 
