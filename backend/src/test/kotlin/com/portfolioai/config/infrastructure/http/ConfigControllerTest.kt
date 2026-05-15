@@ -127,14 +127,20 @@ class ConfigControllerTest {
       // Earnings provider : ENUM.
       .andExpect(jsonPath("$[3].key").value(ConfigKeys.EARNINGS_PROVIDER))
       .andExpect(jsonPath("$[3].type").value("ENUM"))
-      // LLM provider : ENUM with claude / ollama, currently overridden to ollama.
+      // LLM provider : ENUM with mock / claude / ollama, currently overridden to ollama. The
+      // `mock` value was added 2026-05-15 with MockLlmClient so the app runs without API key —
+      // ordering pinned here matches `ConfigKeys.ENUM_KEYS[LLM_PROVIDER]` (mock first because the
+      // front renders the toggle group in that order and "no-key onboarding" is the leftmost
+      // affordance).
       .andExpect(jsonPath("$[4].key").value(ConfigKeys.LLM_PROVIDER))
       .andExpect(jsonPath("$[4].type").value("ENUM"))
       .andExpect(jsonPath("$[4].currentValue").value("ollama"))
       .andExpect(jsonPath("$[4].defaultValue").value("claude"))
       .andExpect(jsonPath("$[4].isOverridden").value(true))
-      .andExpect(jsonPath("$[4].allowedValues[0]").value("claude"))
-      .andExpect(jsonPath("$[4].allowedValues[1]").value("ollama"))
+      .andExpect(jsonPath("$[4].allowedValues.length()").value(3))
+      .andExpect(jsonPath("$[4].allowedValues[0]").value("mock"))
+      .andExpect(jsonPath("$[4].allowedValues[1]").value("claude"))
+      .andExpect(jsonPath("$[4].allowedValues[2]").value("ollama"))
       // LLM timeout : INT slider, default 400, overridden to 600 here.
       .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_TIMEOUT_SECONDS))
       .andExpect(jsonPath("$[5].type").value("INT"))

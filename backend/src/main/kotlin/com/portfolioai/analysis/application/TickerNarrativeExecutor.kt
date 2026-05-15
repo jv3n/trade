@@ -28,8 +28,19 @@ import org.springframework.stereotype.Component
  * write lives in a `finally` so the failure case (both attempts KO → throw) still surfaces the
  * `parse_failed` / `validator_failed` flags that motivate prompt tuning. Latency, retry count and
  * the active `prompt_template_id` are tracked as the loop progresses.
+ *
+ * **8 constructor deps, on purpose** — this bean is the *orchestrator* of the narrative pipeline ;
+ * its 8 collaborators each do a distinct piece of work at a distinct phase (load market → resolve
+ * prompt → call LLM → parse → validate → persist → publish SSE events → record score). Grouping
+ * pairs into a façade (parser+validator, persister+scoreRecorder, …) was considered and rejected
+ * because each pair has different transactional / failure / SSE-granularity contracts ; collapsing
+ * them obscures the orchestration rather than simplifying it. Detekt `LongParameterList` suppressed
+ * locally rather than via a global threshold bump : the project's general ceiling stays at 8 (see
+ * `spring-boot/SKILL.md > Configuration injection > Grouped @Value`) ; orchestrators are a known
+ * exception, made visible by the explicit `@Suppress`.
  */
 @Component
+@Suppress("LongParameterList")
 class TickerNarrativeExecutor(
   private val tickerService: TickerService,
   private val llmClient: LlmClient,

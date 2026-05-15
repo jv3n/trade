@@ -45,8 +45,21 @@ complexity:
     # `@Value` injected defaults and bumped this threshold to 16 ; the v3 refactor (ticket #B6,
     # livré 2026-05-15) split those into `SecretsDefaults` / `DataProvidersDefaults` /
     # `LlmDefaults` `@Component` data classes, dropping the service constructor back to 6 params.
-    # Threshold restored to the default 8 — if a new bean grows past it, prefer the same
-    # grouped-`@Value` pattern over re-bumping.
+    # Threshold kept at 8 (the function threshold, for symmetry) — two distinct patterns govern
+    # what to do when a bean approaches it :
+    #
+    # 1. **Config-defaults bean** (lots of `@Value` constructor params bundling YAML keys with
+    #    no behaviour) — group into a `@Component data class` per concern, like
+    #    `AppConfigService` did. See `spring-boot/SKILL.md > Grouped @Value via @Component data
+    #    class`. **Don't `@Suppress`** here — the grouping is a real readability win.
+    #
+    # 2. **Orchestrator with collaborators** (a `@Service` coordinating N distinct beans, each
+    #    doing a distinct piece of the pipeline at a distinct phase) — these legitimately hit
+    #    8-10 deps. Façade-grouping pairs (parser+validator, persister+scoreRecorder, …) usually
+    #    hurts more than it helps because each collaborator has different transactional /
+    #    failure / event-granularity contracts. **Suppress at the class** with
+    #    `@Suppress("LongParameterList")` + a comment justifying the exception. See
+    #    `TickerNarrativeExecutor` (8 deps, 2026-05-15) for the canonical instance.
     constructorThreshold: 8
     ignoreDefaultParameters: true
     ignoreDataClasses: true

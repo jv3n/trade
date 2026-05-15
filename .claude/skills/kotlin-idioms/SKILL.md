@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.*
 ```
 
-Why : Spotless has a custom `no-wildcard-imports` check ; new wildcards break the build. IntelliJ's "Optimize Imports" *consolidates* into `*` past 5 imports of the same package — that default is wrong for this project. When editing, list each import on its own line. The Spotless allowlist in `backend/build.gradle.kts` covers historical idioms (`java.util.*`, JPA, MockMvc helpers, JUnit `Assertions.*`) but is being phased out (dette technique ticket "Shrink l'allowlist `no-wildcard-imports`"). **Don't add to it.**
+Why : Spotless has a custom `no-wildcard-imports` check that throws on **any** wildcard — no allowlist (dropped 2026-05-15 once the codebase was confirmed clean, ticket #10). The repo-root `.editorconfig` pins `ij_kotlin_name_count_to_use_star_import = Int.MAX_VALUE` so IntelliJ's "Optimize Imports" can't reintroduce wildcards spontaneously even past 5 imports of the same package. If a wildcard sneaks back in (non-conformant IDE settings, copy-paste from a sample), Spotless blocks the build — open the file in IntelliJ and `⌘+⌥+O` Optimize Imports will expand it correctly.
 
 ## Constructor injection only
 
@@ -162,6 +162,6 @@ If a future feature pulls coroutines in (`spring-boot-starter-webflux`, `kotlinx
 
 ## When NOT to follow these patterns
 
-- **Test fixtures and helpers** — looser rules. `lateinit var` for `@BeforeEach`-initialised state is fine. Wildcard imports of `Assertions.*` and `MockMvcRequestBuilders.*` are in the allowlist. Magic numbers in fixtures (`price = 123.45`) need no constant.
+- **Test fixtures and helpers** — looser rules. `lateinit var` for `@BeforeEach`-initialised state is fine. Magic numbers in fixtures (`price = 123.45`) need no constant. Wildcard imports are **not** an exception — JUnit `Assertions.*` and MockMvc helpers used to be allowlisted, that allowlist was retired in #10 ; explicit `import org.junit.jupiter.api.Assertions.assertEquals` etc. is the convention everywhere.
 - **Generated code** (Flyway migrations don't apply ; this skill is for `.kt` files only).
 - **External-API wire models** — Jackson-bound DTOs that mirror an upstream schema. Field names follow the upstream JSON (`snake_case` allowed), `data class` is mandatory (Jackson uses the canonical constructor), and the file may grow to 200 lines of fields without being a smell.

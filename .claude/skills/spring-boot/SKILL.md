@@ -141,6 +141,19 @@ The codebase has three such groups today (`SecretsDefaults`, `DataProvidersDefau
 
 Use `@ConfigurationProperties` when the YAML *does* share a prefix (a new isolated subtree). Use grouped `@Value` data classes when consolidating existing scattered keys.
 
+### Constructor with 8+ deps : grouping vs `@Suppress` — pick by pattern
+
+Detekt's `LongParameterList` fires at 8 constructor params. Two distinct patterns govern what to do :
+
+| Pattern | Example | Fix |
+|---------|---------|-----|
+| **Config-defaults bean** — `@Value` constructor params bundling YAML keys with no behaviour | Old `AppConfigService` (14 `@Value`) | **Group** into `@Component data class` per concern (see above). Don't suppress — the grouping is a real readability win. |
+| **Orchestrator with collaborators** — `@Service` coordinating N distinct beans, each doing a distinct piece of a pipeline at a distinct phase | `TickerNarrativeExecutor` (8 deps : market load → prompt resolve → LLM call → parse → validate → persist → SSE publish → score record) | **`@Suppress("LongParameterList")` at the class** with a comment explaining why. Façade-grouping (parser+validator together, persister+scoreRecorder together) usually hurts here because each collaborator has different transactional / failure / event-granularity contracts. |
+
+The distinction is **value carriers vs collaborators**. Value carriers compress into a data class with no semantic loss. Collaborators don't — they each have a distinct method signature, a distinct failure mode, a distinct point in the flow where they fire.
+
+When in doubt, ask : *if I bundle these into one façade, does the consumer's code read more clearly or less ?* If "less", suppress.
+
 ### `AppConfigService.getString/getInt(...)` — for runtime-editable config
 
 Anything the user can flip from `/settings/configuration` reads through `AppConfigService` *per call*, not at construction. This includes : `<x>.provider`, `<x>.api-key`, cache TTL, LLM timeout. The pattern : YAML defaults injected via the `*Defaults` `@Component` groups above (for first-boot bootstrap), then DB overrides take precedence, then runtime reads hit the layered value.
@@ -199,23 +212,74 @@ Environment variable injection uses `${ENV_VAR:default}` syntax — see `server.
 - One numbered file per logical schema change. Don't batch unrelated changes into one V*.
 - `spring.flyway.repair-on-migrate: true` lives **only** in `application-local.yml` — it papers over local mismatches during development. Never enable it in `application.yml` ; in prod, a checksum mismatch should be a hard failure.
 
-## Integration tests — real PostgreSQL, no DB mocks
+## Tests — slice by default, full context only when needed
 
-Controller tests use **`@SpringBootTest`** (full context) — not `@WebMvcTest` slice tests — because the project deliberately exercises the wire from controller → service → JPA → PostgreSQL. The test stack assumes a running database on `localhost:5432`, started by `tilt up` or `docker compose up postgres` in CI.
+The project picks the **narrowest** test slice that exercises the contract. Three flavours in use today :
+
+### `@WebMvcTest(<Controller>::class, GlobalExceptionHandler::class)` — for controllers
+
+Used by **all 13 controller tests**. Boots Spring's Web MVC layer only — Jackson, exception handlers, request mappings — and **mocks all `@Service` beans** the controller depends on via `@MockitoBean`. Cold start ~0.5 s vs 3-5 s for `@SpringBootTest`.
 
 ```kotlin
-@SpringBootTest
-@AutoConfigureMockMvc
-class NewsControllerTest(@Autowired val mvc: MockMvc, /* … */) {
-  /* … */
+@WebMvcTest(NewsController::class, GlobalExceptionHandler::class)
+class NewsControllerTest {
+  @Autowired private lateinit var mvc: MockMvc
+  @MockitoBean private lateinit var service: NewsService
+
+  @Test
+  fun `GET news returns 503 when the upstream is unavailable`() {
+    given(service.forSymbol(any(), any())).willThrow(UpstreamUnavailableException("rate-limited"))
+    mvc.perform(get("/api/market/ticker/AAPL/news")).andExpect(status().isServiceUnavailable)
+  }
 }
 ```
 
-External HTTP boundaries are mocked at the wire layer with **`okhttp3.mockwebserver.MockWebServer`**, not by stubbing the port. Reasoning : testing the adapter exercises the wire mapping too (`FinnhubMappers.toDomain` is a real source of bugs). Stubbing the port skips the part of the code most likely to drift.
+The `GlobalExceptionHandler::class` in the slice declaration is the project's standard — without it, the exception → status mapping (`UpstreamUnavailableException` → 503, `NoSuchElementException` → 404, etc.) isn't wired, and 503-path tests would see a generic 500.
 
-JUnit 5, `mockito-kotlin` for the rare cases where stubbing is the right tool (controller tests with a fake `*Service` to isolate routing).
+### `@SpringBootTest` — only for genuinely integration cases
+
+Reserved for tests that need the **real** Spring context for things slice tests can't fake : `@TransactionalEventListener(AFTER_COMMIT)` wiring (needs a real `PlatformTransactionManager`), full bean-graph smoke tests, JPA-against-PostgreSQL behaviour. Two usages in the codebase today : `BackendApplicationTests` (context-boots smoke) and `CacheTtlListenerIntegrationTest` (transactional event flow).
+
+```kotlin
+@SpringBootTest
+class CacheTtlListenerIntegrationTest {
+  // Tests @TransactionalEventListener(AFTER_COMMIT) — can't be exercised in a slice.
+}
+```
+
+**Don't reach for `@SpringBootTest` on a controller** — if you find yourself wanting it, it usually means a `@MockitoBean` would do the same job at ~10× the speed. The integration path is genuinely useful for behaviour the slice can't fake, not for "I want to be sure everything is wired".
+
+### Plain JUnit (no Spring) — for domain logic
+
+Pure-Kotlin tests of domain logic (`IndicatorCalculator`, `CoherenceScorer`, parsers, mappers) — no Spring annotations at all. Direct unit tests with JUnit 5 + `mockito-kotlin` where stubbing is needed.
+
+### External HTTP boundaries — `MockWebServer`, not port stubs
+
+For adapter tests that exercise the wire mapping (`FinnhubMappers.toDomain`, Twelve Data quirks parsing), mock at the wire layer with **`okhttp3.mockwebserver.MockWebServer`**. Stubbing the port skips the wire mapping — which is exactly the bit most likely to drift when an upstream changes shape.
 
 Pair with [`folders-structure-backend > Tests`](../folders-structure-backend/SKILL.md) for where test files live.
+
+### Test performance — the leverage points, ranked
+
+The slice-by-default strategy above is the big win (×6-10 on cold start vs `@SpringBootTest` for controller tests). If you reach for a perf optimisation past that, do them in this order :
+
+1. **Measure first**. `./gradlew test --info` (or `--scan`) prints time per class. Find the top 5 slowest and ask : are they genuinely integration paths or are they `@SpringBootTest` where `@WebMvcTest` would do ? Premature parallelisation on a test suite where one class burns 80 % of the wall time wins nothing.
+
+2. **Share configuration across `@SpringBootTest` classes.** Spring caches the application context across classes when their configuration is *identical* — same properties, same `@MockitoBean` set, same profiles. With N integration tests sharing a config, you pay the boot once. To preserve the cache : avoid per-class `@TestPropertySource` with diverging values, avoid `@DirtiesContext` (forces a reload), and keep `@MockitoBean` mocks consistent. Today the project has 2 `@SpringBootTest` ; if Phase 4 introduces more on `aggregation/`, this is the discipline that keeps them cheap.
+
+3. **Parallel execution at the class level.** Drop a `src/test/resources/junit-platform.properties` :
+   ```properties
+   junit.jupiter.execution.parallel.enabled = true
+   junit.jupiter.execution.parallel.mode.default = same_thread
+   junit.jupiter.execution.parallel.mode.classes.default = concurrent
+   ```
+   Runs classes concurrently on a thread per core ; methods inside a class stay sequential. Gain is proportional to core count (~×4 on an 8-core M1). **Risk** : tests that touch shared state (a static singleton, the cache, a global mock) will flake. Audit before enabling — the project's `@WebMvcTest` slices are reasonably independent today, but `@SpringBootTest` classes sharing the cached context need to be confirmed safe under concurrent execution.
+
+4. **Gradle build cache.** `./gradlew test --build-cache` reuses task outputs when inputs haven't changed. On a local re-run with no source changes, the test task is a no-op. Free in dev, neutral in CI fresh clones.
+
+**Not worth the ROI here** : migrating to kotest, replacing Postgres with Testcontainers (you already have a real Postgres via Tilt), splitting beans to shrink context scope (over-engineering).
+
+**Trigger** : start mesuring + intervening when the suite passes 1 min in CI on the test step alone. Under that, the discipline above keeps it fast enough.
 
 ## Logging — SLF4J via `LoggerFactory.getLogger(javaClass)`
 

@@ -108,43 +108,31 @@ spotless {
   kotlin {
     ktfmt("0.62").googleStyle()
     target("src/**/*.kt")
-    // Forbid new wildcard imports outside the allowlist below. Implemented as a custom check
-    // (read-only — throws on detection, never auto-fixes) rather than a ktlint step on purpose :
-    // ktlint reads `ij_kotlin_packages_to_use_import_on_demand` as IntelliJ does and would *force*
-    // wildcards on listed packages on `spotlessApply`, doing the exact opposite of what we want.
-    // A throwing custom step plays no formatter role — it just reports — so it's safe.
+    // Forbid every wildcard import — no allowlist. Implemented as a custom check (read-only —
+    // throws on detection, never auto-fixes) rather than a ktlint step on purpose : ktlint reads
+    // `ij_kotlin_packages_to_use_import_on_demand` as IntelliJ does and would *force* wildcards on
+    // listed packages on `spotlessApply`, doing the exact opposite of what we want. A throwing
+    // custom step plays no formatter role — it just reports — so it's safe.
     //
-    // Allowlist mirrors the wildcards already present in the codebase (run
-    // `grep -rh '^import .*\.\*$' src/ | sort -u` to re-enumerate). Goal is to *shrink* this list
-    // over time, not to grow it ; see the dette entry "Shrink l'allowlist `no-wildcard-imports`".
+    // The previous allowlist (14 entries spanning `java.util.*`, JPA, JUnit, mockito-kotlin,
+    // Spring web, MockMvc helpers, plus 7 project-internal packages) was kept as a safety net
+    // back when wildcard imports were sprinkled across the codebase. Dette ticket #10 (livré
+    // 2026-05-15) verified that **zero** wildcard imports remain in any `.kt` file (grep -rEn
+    // "^import [^ ]+\\.\\*( |$)" backend/src — returns empty) and that the `.editorconfig` at the
+    // repo root pins `ij_kotlin_name_count_to_use_star_import = Int.MAX_VALUE` so IntelliJ can't
+    // reintroduce them spontaneously on Optimize Imports. The allowlist was therefore vestigial
+    // and got dropped — if a wildcard ever sneaks back in (developer with non-conformant IDE
+    // settings, copy-paste from a sample), Spotless catches it here.
     custom("no-wildcard-imports") { content ->
-      val allowed =
-        setOf(
-          "java.util.*",
-          "jakarta.persistence.*",
-          "org.junit.jupiter.api.Assertions.*",
-          "org.mockito.kotlin.*",
-          "org.springframework.boot.autoconfigure.condition.*",
-          "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*",
-          "org.springframework.test.web.servlet.result.MockMvcResultMatchers.*",
-          "org.springframework.web.bind.annotation.*",
-          "com.portfolioai.analysis.application.*",
-          "com.portfolioai.analysis.domain.*",
-          "com.portfolioai.config.application.dto.*",
-          "com.portfolioai.ingestion.application.dto.*",
-          "com.portfolioai.market.domain.*",
-          "com.portfolioai.portfolio.domain.*",
-        )
       val regex = Regex("""^import (\S+\.\*)$""")
       val offenders =
         content
           .lineSequence()
           .mapNotNull { regex.matchEntire(it.trim())?.groupValues?.get(1) }
-          .filterNot { it in allowed }
           .toList()
       if (offenders.isNotEmpty()) {
         throw GradleException(
-          "Forbidden wildcard imports (extend each one explicitly via IntelliJ Optimize Imports):" +
+          "Forbidden wildcard imports (expand each one explicitly via IntelliJ Optimize Imports):" +
             offenders.joinToString(separator = "\n  ", prefix = "\n  ")
         )
       }

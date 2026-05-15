@@ -16,13 +16,16 @@ import org.mockito.kotlin.whenever
 
 /**
  * Tests on [RoutingLlmClient]. Mirror of
- * [com.portfolioai.news.infrastructure.news.RoutingNewsClientTest] for the LLM side — both clients
- * are always wired and the router picks one per call based on the runtime value of
- * [ConfigKeys.LLM_PROVIDER].
+ * [com.portfolioai.news.infrastructure.news.RoutingNewsClientTest] for the LLM side — all three
+ * clients ([MockLlmClient], [ClaudeClient], [OllamaClient]) are always wired and the router picks
+ * one per call based on the runtime value of [ConfigKeys.LLM_PROVIDER].
  *
  * What we pin :
  * - **complete dispatches** to the matching adapter — flipping `llm.provider` at runtime must land
  *   on the next call without a reboot.
+ * - **mock branch is reachable** — the third provider added in #4 partial (livré 2026-05-15) for
+ *   keyless / Ollama-less onboarding. Without this case, the router could silently fall through to
+ *   the `else` branch on `provider = "mock"`.
  * - **modelId dispatches too** — the snapshot writer reads it after every narrative call ; a router
  *   that returned a static "router" string would lose the per-call truth ("which model actually
  *   answered ?") that we rely on for historical comparisons.
@@ -31,21 +34,37 @@ import org.mockito.kotlin.whenever
  */
 class RoutingLlmClientTest {
 
+  private val mock: LlmClient = mock()
   private val claude: LlmClient = mock()
   private val ollama: LlmClient = mock()
   private val appConfig: AppConfigService = mock()
+
+  @Test
+  fun `dispatches complete to mock when provider is mock`() {
+    whenever(appConfig.getString(ConfigKeys.LLM_PROVIDER)).doReturn(ConfigKeys.PROVIDER_MOCK)
+    whenever(mock.complete(any(), any(), any())).doReturn("from-mock")
+
+    val router = RoutingLlmClient(mock, claude, ollama, appConfig)
+    val result = router.complete("system", "user", 100)
+
+    assertEquals("from-mock", result)
+    verify(mock).complete("system", "user", 100)
+    verify(claude, never()).complete(any(), any(), any())
+    verify(ollama, never()).complete(any(), any(), any())
+  }
 
   @Test
   fun `dispatches complete to claude when provider is claude`() {
     whenever(appConfig.getString(ConfigKeys.LLM_PROVIDER)).doReturn(ConfigKeys.PROVIDER_CLAUDE)
     whenever(claude.complete(any(), any(), any())).doReturn("from-claude")
 
-    val router = RoutingLlmClient(claude, ollama, appConfig)
+    val router = RoutingLlmClient(mock, claude, ollama, appConfig)
     val result = router.complete("system", "user", 100)
 
     assertEquals("from-claude", result)
     verify(claude).complete("system", "user", 100)
     verify(ollama, never()).complete(any(), any(), any())
+    verify(mock, never()).complete(any(), any(), any())
   }
 
   @Test
@@ -53,12 +72,13 @@ class RoutingLlmClientTest {
     whenever(appConfig.getString(ConfigKeys.LLM_PROVIDER)).doReturn(ConfigKeys.PROVIDER_OLLAMA)
     whenever(ollama.complete(any(), any(), any())).doReturn("from-ollama")
 
-    val router = RoutingLlmClient(claude, ollama, appConfig)
+    val router = RoutingLlmClient(mock, claude, ollama, appConfig)
     val result = router.complete("system", "user", 100)
 
     assertEquals("from-ollama", result)
     verify(ollama).complete("system", "user", 100)
     verify(claude, never()).complete(any(), any(), any())
+    verify(mock, never()).complete(any(), any(), any())
   }
 
   @Test
@@ -69,17 +89,18 @@ class RoutingLlmClientTest {
     whenever(appConfig.getString(ConfigKeys.LLM_PROVIDER)).doReturn(ConfigKeys.PROVIDER_OLLAMA)
     whenever(ollama.modelId()).doReturn("ollama:qwen2.5:3b")
 
-    val router = RoutingLlmClient(claude, ollama, appConfig)
+    val router = RoutingLlmClient(mock, claude, ollama, appConfig)
 
     assertEquals("ollama:qwen2.5:3b", router.modelId())
     verify(claude, never()).modelId()
+    verify(mock, never()).modelId()
   }
 
   @Test
   fun `raises IllegalArgumentException on an unknown provider`() {
     whenever(appConfig.getString(eq(ConfigKeys.LLM_PROVIDER))).doReturn("openai")
 
-    val router = RoutingLlmClient(claude, ollama, appConfig)
+    val router = RoutingLlmClient(mock, claude, ollama, appConfig)
 
     val ex = assertThrows<IllegalArgumentException> { router.complete("s", "u", 50) }
     assertTrue(ex.message?.contains("openai") ?: false)
