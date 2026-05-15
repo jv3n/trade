@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, signal, computed, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -153,26 +153,41 @@ export class Dashboard implements OnInit {
   // Three independent open/close toggles so the user can keep their preferred sections expanded
   // — the portfolio list grows long when many CSVs are imported, and folding it uncovers the
   // ownedTickers / watchlist shortcuts without scrolling. State is hydrated from localStorage at
-  // construction time and persisted on every change via the effect registered in the constructor
-  // (mirror of `ThemeService` and `LanguageService` patterns).
+  // construction time ; mutations flow through [toggleSidebar] which persists at the call site
+  // (same pattern as `ThemeService` and `LanguageService`).
   portfoliosOpen = signal(readSidebarOpenState().portfolios);
   ownedTickersOpen = signal(readSidebarOpenState().ownedTickers);
   watchlistOpen = signal(readSidebarOpenState().watchlist);
 
-  constructor() {
-    effect(() => {
-      const state: SidebarOpenState = {
-        portfolios: this.portfoliosOpen(),
-        ownedTickers: this.ownedTickersOpen(),
-        watchlist: this.watchlistOpen(),
-      };
-      try {
-        localStorage.setItem(SIDEBAR_OPEN_STORAGE_KEY, JSON.stringify(state));
-      } catch {
-        // localStorage unavailable (private mode, quota exceeded) — silently ignore. The user's
-        // session keeps the current state in memory ; only the cross-reload persistence is lost.
-      }
-    });
+  toggleSidebar(section: keyof SidebarOpenState): void {
+    const target = this.sidebarSignal(section);
+    target.update((v) => !v);
+    this.persistSidebarState();
+  }
+
+  private sidebarSignal(section: keyof SidebarOpenState) {
+    switch (section) {
+      case 'portfolios':
+        return this.portfoliosOpen;
+      case 'ownedTickers':
+        return this.ownedTickersOpen;
+      case 'watchlist':
+        return this.watchlistOpen;
+    }
+  }
+
+  private persistSidebarState(): void {
+    const state: SidebarOpenState = {
+      portfolios: this.portfoliosOpen(),
+      ownedTickers: this.ownedTickersOpen(),
+      watchlist: this.watchlistOpen(),
+    };
+    try {
+      localStorage.setItem(SIDEBAR_OPEN_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // localStorage unavailable (private mode, quota exceeded) — silently ignore. The user's
+      // session keeps the current state in memory ; only the cross-reload persistence is lost.
+    }
   }
 
   loading = signal(false);

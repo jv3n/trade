@@ -230,8 +230,12 @@ Whenever a technical decision is made (lib choice, dropped approach, architectur
 | `skills/angular-signals/`                    | `signal`, `computed`, `linkedSignal`, RxJS interop |
 | `skills/angular-testing/`                    | Vitest + TestBed patterns                          |
 | `skills/code-review-excellence/`             | PR review process and checklists                   |
+| `skills/folders-structure-backend/`          | Backend folder conventions (Kotlin + Spring)       |
 | `skills/folders-structure-frontend/`         | Frontend folder conventions for this app           |
 | `skills/git-commit/`                         | Conventional Commits workflow                      |
 | `skills/github-create-pull-request/`         | `gh pr create` workflow                            |
+| `skills/hexagonal-ddd/`                      | Port/adapter, routing, fail-soft, cache placement  |
+| `skills/kotlin-idioms/`                      | Project-opinionated Kotlin conventions             |
+| `skills/spring-boot/`                        | Spring Boot conventions (AOP proxies, cache, tx)   |
 | `instructions/frontend/best-practices.md`    | TypeScript / Angular best practices                |
 | `hooks/post-tool-call.py`                    | Provenance hook for file modifications             |

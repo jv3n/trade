@@ -730,18 +730,14 @@ describe('Dashboard', () => {
       expect(fixture2.componentInstance.watchlistOpen()).toBe(true);
     });
 
-    it('persists the new state to localStorage when a section toggles', async () => {
-      // The effect runs on every signal change. We wait for it via `whenStable` to mirror what
-      // the runtime does — the user's click flips the signal, the next change-detection tick
-      // fires the effect, and localStorage is updated before the next paint. We explicitly set
-      // all three signals (rather than relying on their initial values) so the test stays
-      // deterministic regardless of what a previous test may have left in localStorage before
-      // the outer fixture was constructed.
-      component.portfoliosOpen.set(false);
-      component.ownedTickersOpen.set(true);
-      component.watchlistOpen.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
+    it('persists the new state to localStorage when a section toggles', () => {
+      // The outer `beforeEach` clears `dashboard-sidebar-open`, so the component starts from the
+      // default all-open state. `toggleSidebar()` is the public mutation API : it flips the
+      // signal AND persists synchronously at the call site (no effect, no need to wait for a
+      // change-detection tick). Two toggles take us from {true, true, true} to
+      // {false, true, false} ; ownedTickers stays untouched at true.
+      component.toggleSidebar('portfolios');
+      component.toggleSidebar('watchlist');
 
       const saved = JSON.parse(localStorage.getItem('dashboard-sidebar-open') ?? '{}');
       expect(saved).toEqual({

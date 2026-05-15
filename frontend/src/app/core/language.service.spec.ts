@@ -10,7 +10,7 @@
  * - **Browser platform** — `loadInitial` honours a saved `'fr'` / `'en'` value first ; falls back
  *   to the browser locale via `navigator.language` if absent ; defaults to `'en'` for non-`fr-*`
  *   locales.
- * - **Effect side-effects** — both `<html lang>` and `localStorage` are written when the language
+ * - **Set-site side-effects** — both `<html lang>` and `localStorage` are written when the language
  *   changes.
  */
 import { PLATFORM_ID } from '@angular/core';
@@ -99,8 +99,6 @@ describe('LanguageService', () => {
       const service = TestBed.inject(LanguageService);
 
       service.set('fr');
-      // The effect runs synchronously here in test mode (signal-driven, no zone).
-      TestBed.tick();
 
       expect(document.documentElement.getAttribute('lang')).toBe('fr');
       expect(localStorage.getItem(STORAGE_KEY)).toBe('fr');

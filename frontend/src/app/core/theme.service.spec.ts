@@ -7,8 +7,8 @@
  * - **Server platform** — instantiation does not throw despite `document` / `localStorage` being
  *   undefined in Node. Default is `'dark'` so SSR renders a deterministic page. No side-effect
  *   reaches a browser global.
- * - **Browser platform** — `loadInitial` honours a saved `'light'` / `'dark'` value ; the effect
- *   writes both `<html data-theme>` and `localStorage` on each change.
+ * - **Browser platform** — `loadInitial` honours a saved `'light'` / `'dark'` value ; `set()` and
+ *   `toggle()` write both `<html data-theme>` and `localStorage` on each call.
  * - **Corrupt localStorage** — an unrelated string in `portfolioai.theme` falls back to `'dark'`
  *   rather than crashing.
  */
@@ -78,8 +78,6 @@ describe('ThemeService', () => {
       const service = TestBed.inject(ThemeService);
 
       service.set('light');
-      // The effect runs synchronously here in test mode (signal-driven, no zone).
-      TestBed.tick();
 
       expect(document.documentElement.getAttribute('data-theme')).toBe('light');
       expect(localStorage.getItem(STORAGE_KEY)).toBe('light');

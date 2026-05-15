@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, effect, inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -26,6 +26,13 @@ const STORAGE_KEY = 'portfolioai.language';
  * The active language drives `TranslateService.use(...)` which loads `/i18n/<lang>.json` via the
  * HTTP loader configured in `app.config.ts`.
  *
+ * **Side effects at the mutation site** — `translate.use(...)`, the `<html lang>` write and the
+ * `localStorage` persist all live inside [set] (and via [toggle], which delegates to it) rather
+ * than in an `effect()` watching the signal. Same rationale as `ThemeService` : the writes
+ * happen exactly once per user action, there's no redundant initial echo of the freshly-loaded
+ * value, the flow is testable without microtask awaiting, and `translate.use` runs on every
+ * platform (it isn't a browser-only API) while `document` and `localStorage` are gated.
+ *
  * **SSR safety** — `document`, `localStorage`, and `navigator` are browser-only. Each access is
  * gated on [isPlatformBrowser] so the server can instantiate the service without throwing ;
  * mirror of the same pattern in [ThemeService].
@@ -41,26 +48,30 @@ export class LanguageService {
 
   constructor() {
     this.translate.addLangs([...SUPPORTED_LANGUAGES]);
-    effect(() => {
-      const l = this._lang();
-      this.translate.use(l);
-      if (!this.isBrowser) return;
-      try {
-        document.documentElement.setAttribute('lang', l);
-        localStorage.setItem(STORAGE_KEY, l);
-      } catch {
-        // localStorage unavailable (private mode, quota exceeded); silently ignore
-      }
-    });
+    // Initial framework sync — `translate.use(...)` must reflect the loaded language at boot
+    // before any user action. No localStorage write : the value already came from there.
+    this.apply(this._lang(), /* persist */ false);
   }
 
   set(lang: Language): void {
     this._lang.set(lang);
+    this.apply(lang, /* persist */ true);
   }
 
   /** Quick toggle — useful for a 2-language app where a single button cycles through. */
   toggle(): void {
-    this._lang.update((l) => (l === 'fr' ? 'en' : 'fr'));
+    this.set(this._lang() === 'fr' ? 'en' : 'fr');
+  }
+
+  private apply(lang: Language, persist: boolean): void {
+    this.translate.use(lang);
+    if (!this.isBrowser) return;
+    try {
+      document.documentElement.setAttribute('lang', lang);
+      if (persist) localStorage.setItem(STORAGE_KEY, lang);
+    } catch {
+      // localStorage unavailable (private mode, quota exceeded); silently ignore
+    }
   }
 
   /** Flag emoji for a language, suitable for inline display next to the name. */

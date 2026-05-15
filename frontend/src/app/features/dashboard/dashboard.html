@@ -22,7 +22,7 @@
         <button
           type="button"
           class="sidebar-section-toggle"
-          (click)="portfoliosOpen.update((v) => !v)"
+          (click)="toggleSidebar('portfolios')"
           [attr.aria-expanded]="portfoliosOpen()"
         >
           <h2>{{ 'dashboard.portfolios' | translate }}</h2>
@@ -84,7 +84,7 @@
           <button
             type="button"
             class="sidebar-section-toggle"
-            (click)="ownedTickersOpen.update((v) => !v)"
+            (click)="toggleSidebar('ownedTickers')"
             [attr.aria-expanded]="ownedTickersOpen()"
           >
             <span class="owned-tickers-label">{{ 'dashboard.ownedTickersLabel' | translate }}</span>
@@ -124,7 +124,7 @@
           <button
             type="button"
             class="sidebar-section-toggle"
-            (click)="watchlistOpen.update((v) => !v)"
+            (click)="toggleSidebar('watchlist')"
             [attr.aria-expanded]="watchlistOpen()"
           >
             <span class="watchlist-label">{{ 'dashboard.watchlist.label' | translate }}</span>
