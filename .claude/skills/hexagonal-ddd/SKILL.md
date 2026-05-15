@@ -14,13 +14,13 @@ Pair this skill with [`folders-structure-backend`](../folders-structure-backend/
 Use these terms exactly. Drift into "service", "provider", "client" interchangeably and the architecture loses its shape.
 
 - **Bounded context** — a top-level package under `com.portfolioai/` (`market/`, `news/`, `analyst/`, …). One product capability, owned end-to-end.
-- **Domain** — pure Kotlin types under `<context>/domain/`. No Spring, no Jackson, no JPA. Compilable without a Spring context. Includes aggregates, value objects, enums, and **domain exceptions** like `MarketUnavailableException`.
+- **Domain** — pure Kotlin types under `<context>/domain/`. No Spring, no Jackson, no JPA. Compilable without a Spring context. Includes aggregates, value objects, and enums. Domain exceptions live next to the aggregate that raises them ; cross-context exceptions like `UpstreamUnavailableException` live in `shared/`.
 - **Application service** — `@Service` bean under `<context>/application/` orchestrating one use case. Depends on ports + other application services. Where caching and `@Async` live.
 - **Port** — `interface` declaring what a capability needs from the outside. In this project, all current ports are *outbound* (the application calls them) and live in `<context>/infrastructure/<capability>/` — see "Why ports live in infrastructure" below.
 - **Adapter** — concrete `@Component` implementing a port. Three flavors in this project : **real** (`FinnhubClient`, `TwelveDataClient`), **mock** (`MockNewsClient`, deterministic synthetic data, default when no API key), **routing** (`RoutingNewsClient`, `@Primary`, delegates per-call).
 - **Wire model** — Jackson-bound DTOs that mirror an external provider's JSON exactly. Lives in `<Provider>Models.kt` alongside its adapter. **Never** crosses into `domain/` — `<Provider>Mappers.kt` translates wire → domain.
 - **Routing** — the `@Primary` adapter that selects which real/mock adapter to delegate to *at every call*, based on the runtime config key (`market.provider`, `news.provider`, `llm.provider`, …).
-- **Fail-soft** — degrading a non-critical external dependency to `null` instead of failing the whole request. Distinct from **fail-hard** : the dependency is required, errors propagate via `MarketUnavailableException` → HTTP 503.
+- **Fail-soft** — degrading a non-critical external dependency to `null` instead of failing the whole request. Distinct from **fail-hard** : the dependency is required, errors propagate via `UpstreamUnavailableException` → HTTP 503.
 
 ## The canonical port + adapter group
 
@@ -103,21 +103,21 @@ External calls fail one of two ways. Pick once per call site and document the ch
 
 ### Fail-hard — the call is required
 
-The endpoint can't return a sensible answer without this data. Wrap the upstream error in `MarketUnavailableException` (the project's *shared kernel* — lives in `market/domain/` but is imported by `analyst/`, `news/`, `earnings/` adapters that need the same uniform 503 mapping). Let it propagate.
+The endpoint can't return a sensible answer without this data. Wrap the upstream error in `UpstreamUnavailableException` (defined in `shared/` because the same 503 contract applies to every external integration — Finnhub for news/analyst/earnings, Twelve Data for market, Claude/Ollama for the LLM pipeline). Let it propagate.
 
 ```kotlin
 try {
   rest.get().uri("/stock/recommendation?symbol=$symbol&token=$token").retrieve().body(...)
 } catch (e: HttpClientErrorException.Unauthorized, e: HttpClientErrorException.Forbidden) {
-  throw MarketUnavailableException("auth-failed", e)
+  throw UpstreamUnavailableException("auth-failed", e)
 } catch (e: HttpClientErrorException.TooManyRequests) {
-  throw MarketUnavailableException("rate-limited", e)
+  throw UpstreamUnavailableException("rate-limited", e)
 } catch (e: ResourceAccessException) {
-  throw MarketUnavailableException("unreachable", e)
+  throw UpstreamUnavailableException("unreachable", e)
 }
 ```
 
-`GlobalExceptionHandler` maps `MarketUnavailableException` → HTTP 503 with a `"Données momentanément indisponibles"` body. The frontend distinguishes 503 from 500 in its error banner.
+`GlobalExceptionHandler` maps `UpstreamUnavailableException` → HTTP 503 with a `"Données momentanément indisponibles"` body. The frontend distinguishes 503 from 500 in its error banner.
 
 `NoSuchElementException` is the other domain exception worth knowing — used when a symbol simply isn't covered by the provider. Maps to HTTP 404.
 
@@ -170,13 +170,13 @@ Specifically for this project, "two adapters" almost always means mock + real, b
 
 ## Cross-context dependencies
 
-Bounded contexts call each other through **application services** (or, sparingly, by reusing a domain exception like `MarketUnavailableException`). Never reach into another context's `domain/` from an adapter, and never inject another context's adapter directly.
+Bounded contexts call each other through **application services** (or, sparingly, by reusing a domain exception like `UpstreamUnavailableException`). Never reach into another context's `domain/` from an adapter, and never inject another context's adapter directly.
 
 Concrete rules :
 
 - `analysis/` consumes `market/`, `news/`, `analyst/`, `earnings/` via their `*Service` beans. It does *not* import their `*Client` ports.
 - `portfolio/` reads market quotes via `market.application.TickerService`.
-- `MarketUnavailableException` is the one accepted shared symbol — it crosses contexts intentionally because the 503 mapping must stay uniform regardless of who threw it. Treat it as a **shared kernel** : own it in `market/domain/`, import it elsewhere.
+- `UpstreamUnavailableException` is the one accepted shared symbol — it crosses contexts intentionally because the 503 mapping must stay uniform regardless of who threw it. It lives in `shared/` (not in any single context's `domain/`) precisely so importing it from `news/`, `analyst/`, `earnings/`, `market/`, `analysis/` doesn't create an implicit cross-context dependency.
 
 If a new cross-context dep would force you to import an adapter or a wire model, that's a smell. Promote what you actually need into the consumer's application service, or move the shared concept to `shared/`.
 
@@ -189,6 +189,6 @@ If a new cross-context dep would force you to import an adapter or a wire model,
 
 ## When NOT to fail-soft
 
-- **The primary user-visible feature breaks without this data.** Fail-hard, throw `MarketUnavailableException`, let the UI surface 503.
+- **The primary user-visible feature breaks without this data.** Fail-hard, throw `UpstreamUnavailableException`, let the UI surface 503.
 - **The error you're swallowing is a programming bug** (NPE, `IllegalStateException` from your own code, `JsonProcessingException` on a wire model you control). Catch the specific HTTP / network exceptions and let the rest propagate.
 - **You can't write a one-line `log.warn` that explains *why* the degradation is safe.** If you can't justify the silent fallback, it isn't safe.

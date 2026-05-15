@@ -5,8 +5,8 @@ import com.portfolioai.analyst.domain.AnalystConsensus
 import com.portfolioai.analyst.domain.AnalystSnapshot
 import com.portfolioai.analyst.domain.MonthlyRecommendation
 import com.portfolioai.analyst.domain.PriceTarget
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.shared.GlobalExceptionHandler
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.time.LocalDate
 import org.hamcrest.Matchers.nullValue
@@ -76,8 +76,8 @@ class AnalystControllerTest {
 
   @Test
   fun `GET analyst-recommendations returns 503 when the upstream is unavailable`() {
-    // Finnhub rate-limit / 5xx / unreachable — bubble up as MarketUnavailableException.
-    given(service.forSymbol(any())).willThrow(MarketUnavailableException("rate-limited"))
+    // Finnhub rate-limit / 5xx / unreachable — bubble up as UpstreamUnavailableException.
+    given(service.forSymbol(any())).willThrow(UpstreamUnavailableException("rate-limited"))
 
     mvc
       .perform(get("/api/market/ticker/AAPL/analyst-recommendations"))

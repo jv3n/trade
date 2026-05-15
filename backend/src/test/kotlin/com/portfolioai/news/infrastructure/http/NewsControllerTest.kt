@@ -1,9 +1,9 @@
 package com.portfolioai.news.infrastructure.http
 
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.news.application.NewsService
 import com.portfolioai.news.domain.NewsItem
 import com.portfolioai.shared.GlobalExceptionHandler
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.time.Instant
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  *   the service caps before calling upstream.
  * - **JSON shape** — list of `{id, symbol, headline, summary, source, url, imageUrl, publishedAt,
  *   category}`. The front depends on this exact field set.
- * - **Provider errors surface as 503** via [GlobalExceptionHandler] (`MarketUnavailableException`
+ * - **Provider errors surface as 503** via [GlobalExceptionHandler] (`UpstreamUnavailableException`
  *   is the shared exception between Twelve Data and Finnhub adapters — both map to 503).
  */
 @WebMvcTest(NewsController::class, GlobalExceptionHandler::class)
@@ -72,10 +72,10 @@ class NewsControllerTest {
 
   @Test
   fun `GET news returns 503 when the upstream is unavailable`() {
-    // Finnhub rate-limit / 5xx / unreachable — all bubble up as MarketUnavailableException.
+    // Finnhub rate-limit / 5xx / unreachable — all bubble up as UpstreamUnavailableException.
     // The dossier renders an inline error in the news panel without breaking the rest of the
     // page (chart, indicators, narrative stay visible).
-    given(service.forSymbol(any(), any())).willThrow(MarketUnavailableException("rate-limited"))
+    given(service.forSymbol(any(), any())).willThrow(UpstreamUnavailableException("rate-limited"))
 
     mvc
       .perform(get("/api/market/ticker/AAPL/news"))

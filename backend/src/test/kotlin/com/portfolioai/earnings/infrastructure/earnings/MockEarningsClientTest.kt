@@ -1,6 +1,6 @@
 package com.portfolioai.earnings.infrastructure.earnings
 
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.time.LocalDate
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -53,8 +53,8 @@ class MockEarningsClientTest {
   }
 
   @Test
-  fun `RATELIMIT throws MarketUnavailableException for the inline-error UI`() {
-    val ex = assertThrows<MarketUnavailableException> { client.fetch("RATELIMIT") }
+  fun `RATELIMIT throws UpstreamUnavailableException for the inline-error UI`() {
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetch("RATELIMIT") }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 

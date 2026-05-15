@@ -7,10 +7,10 @@ import com.portfolioai.analysis.infrastructure.persistence.SentimentCountRow
 import com.portfolioai.analysis.infrastructure.persistence.ThumbsBySentimentRow
 import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.market.domain.MarketChart
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.TickerQuote
 import com.portfolioai.market.infrastructure.market.MarketChartClient
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -44,7 +44,7 @@ import org.mockito.kotlin.verify
  * - **One chart fetch per unique symbol** regardless of how many snapshots come from that symbol.
  *   Critical because the corpus can carry 50+ snapshots across ~10 symbols ; refetching per
  *   snapshot would multiply the chart cost by N.
- * - **Graceful degradation** on chart failures : a `MarketUnavailableException` for one symbol
+ * - **Graceful degradation** on chart failures : a `UpstreamUnavailableException` for one symbol
  *   nulls its calibration contributions but does NOT crash the request — the other three sections
  *   still render.
  * - **Lower-bound guard on the bar lookup** : a snapshot dated before the chart's earliest bar is
@@ -204,7 +204,7 @@ class NarrativeBiasServiceTest {
   }
 
   @Test
-  fun `MarketUnavailableException for one symbol nulls its calibration but the rest survives`() {
+  fun `UpstreamUnavailableException for one symbol nulls its calibration but the rest survives`() {
     // AAPL chart fails ; NVDA still computes. The page reads two BULLISH rows from AAPL with
     // null deltas, two BULLISH rows from NVDA with valid deltas → average reflects only the
     // valid contributions.
@@ -242,7 +242,7 @@ class NarrativeBiasServiceTest {
         )
       )
     given(chartClient.fetchChart(eq("AAPL"), any(), any()))
-      .willThrow(MarketUnavailableException("rate-limited"))
+      .willThrow(UpstreamUnavailableException("rate-limited"))
     given(chartClient.fetchChart(eq("NVDA"), any(), any()))
       .willReturn(chart(bar("2026-04-01", close = "100"), bar("2026-04-02", close = "105")))
 

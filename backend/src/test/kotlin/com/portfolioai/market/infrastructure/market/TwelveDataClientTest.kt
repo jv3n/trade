@@ -2,7 +2,7 @@ package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -28,9 +28,9 @@ import org.springframework.web.client.RestClient
  * - **Happy path** : two endpoints (`/time_series` + `/quote`) merged into a single [MarketChart],
  *   bars in chronological order regardless of upstream order.
  * - **Error mapping** : HTTP 200 with `status: error, code: 404` → [NoSuchElementException] ;
- *   `code: 429` → [MarketUnavailableException] with `"rate-limited"` ; HTTP 5xx → upstream error.
+ *   `code: 429` → [UpstreamUnavailableException] with `"rate-limited"` ; HTTP 5xx → upstream error.
  * - **Auth check** : a blank `api-key` is detected before the HTTP call and raises a clear
- *   [MarketUnavailableException] — saves a wasted credit and gives the operator a useful message.
+ *   [UpstreamUnavailableException] — saves a wasted credit and gives the operator a useful message.
  * - **Quote fallback** : when the quote payload omits `fifty_two_week`, the mapper falls back to
  *   the min/max of the bar closes so the dossier still displays the range.
  * - **Request URL** : `apikey`, `outputsize`, `interval` and `order=ASC` all present.
@@ -143,10 +143,10 @@ class TwelveDataClientTest {
   }
 
   @Test
-  fun `maps 200 with status=error code=429 to MarketUnavailableException with rate-limited`() {
+  fun `maps 200 with status=error code=429 to UpstreamUnavailableException with rate-limited`() {
     server.enqueue(jsonOk(ERROR_429_BODY))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
     assertTrue(
       ex.message?.contains("rate-limited") ?: false,
       "Expected the message to mark this as a rate-limit, got '${ex.message}'",
@@ -154,28 +154,28 @@ class TwelveDataClientTest {
   }
 
   @Test
-  fun `maps 200 with status=error code=401 to MarketUnavailableException with auth-failed`() {
+  fun `maps 200 with status=error code=401 to UpstreamUnavailableException with auth-failed`() {
     server.enqueue(jsonOk(ERROR_401_BODY))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps HTTP 429 to MarketUnavailableException with rate-limited`() {
+  fun `maps HTTP 429 to UpstreamUnavailableException with rate-limited`() {
     // Twelve Data also enforces hard rate-limits at the HTTP layer (per-second cap on free tier).
     // Both code paths must yield the same observable error so the front behaves consistently.
     server.enqueue(MockResponse().setResponseCode(429).setBody(""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 
   @Test
-  fun `maps HTTP 500 to MarketUnavailableException with upstream`() {
+  fun `maps HTTP 500 to UpstreamUnavailableException with upstream`() {
     server.enqueue(MockResponse().setResponseCode(500).setBody("internal error"))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchChart("AAPL", "1y", "1d") }
     assertTrue(ex.message?.contains("upstream") ?: false)
   }
 
@@ -200,7 +200,8 @@ class TwelveDataClientTest {
         baseUrl = server.url("/").toString().trimEnd('/'),
       )
 
-    val ex = assertThrows<MarketUnavailableException> { noKeyClient.fetchChart("AAPL", "1y", "1d") }
+    val ex =
+      assertThrows<UpstreamUnavailableException> { noKeyClient.fetchChart("AAPL", "1y", "1d") }
     assertTrue(ex.message?.contains("API key") ?: false)
     assertEquals(0, server.requestCount)
   }

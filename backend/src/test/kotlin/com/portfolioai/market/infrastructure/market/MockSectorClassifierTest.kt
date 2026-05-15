@@ -1,6 +1,6 @@
 package com.portfolioai.market.infrastructure.market
 
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -18,9 +18,9 @@ import org.junit.jupiter.api.assertThrows
  *   doesn't silently break the mapping for popular tickers.
  * - **Symbol absent from the seed → 404** via [NoSuchElementException]. Same surface as a real
  *   provider that returned no profile.
- * - **Reserved test paths** — `RATELIMIT` raises [MarketUnavailableException] (503 path), `UNKNOWN`
- *   raises [NoSuchElementException] (404 path). Mirrors the chart and search mocks so the same UI
- *   states are exercised across all three.
+ * - **Reserved test paths** — `RATELIMIT` raises [UpstreamUnavailableException] (503 path),
+ *   `UNKNOWN` raises [NoSuchElementException] (404 path). Mirrors the chart and search mocks so the
+ *   same UI states are exercised across all three.
  * - **Case-insensitive lookup** — `aapl` works the same as `AAPL`.
  * - **TSX symbols with `.TO` suffix** — covered (RY.TO → XLF) so the typical Wealthsimple CA user
  *   gets a useful overlay.
@@ -82,8 +82,8 @@ class MockSectorClassifierTest {
   }
 
   @Test
-  fun `RATELIMIT reserved symbol raises MarketUnavailableException`() {
-    val ex = assertThrows<MarketUnavailableException> { client.classify("RATELIMIT") }
+  fun `RATELIMIT reserved symbol raises UpstreamUnavailableException`() {
+    val ex = assertThrows<UpstreamUnavailableException> { client.classify("RATELIMIT") }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 

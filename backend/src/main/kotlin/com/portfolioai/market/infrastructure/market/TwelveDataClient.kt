@@ -4,7 +4,7 @@ import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.market.MarketConfig.Companion.MARKET_CHART_CACHE
 import com.portfolioai.market.domain.MarketChart
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -28,7 +28,7 @@ import org.springframework.web.client.RestClient
  * - **Errors are HTTP 200 with `status: "error"`** in the body. The HTTP layer alone is not enough
  *   to detect failure ; we look at the status field after deserializing.
  * - **`code: 404`** maps to [NoSuchElementException] (ticker introuvable), `code: 429` and HTTP 429
- *   map to [MarketUnavailableException] with `"rate-limited"`, `code: 401` to `"auth-failed"`.
+ *   map to [UpstreamUnavailableException] with `"rate-limited"`, `code: 401` to `"auth-failed"`.
  * - **Numeric fields are JSON strings** — see [TwelveDataMappers] for the conversion.
  *
  * Caching : 15 min Caffeine TTL ([com.portfolioai.market.MarketConfig]). The cache key is prefixed
@@ -38,8 +38,8 @@ import org.springframework.web.client.RestClient
  * the YAML default `market.twelvedata.api-key` / env var `TWELVEDATA_API_KEY`). Reading per-call is
  * required because the user can rotate the key from `/settings/configuration` without a reboot —
  * `@Value` injection would freeze the value at bean construction. A blank key is detected at fetch
- * time and surfaced as [MarketUnavailableException] with a clear message so the front-end shows 503
- * with a meaningful hint.
+ * time and surfaced as [UpstreamUnavailableException] with a clear message so the front-end shows
+ * 503 with a meaningful hint.
  */
 @Component
 class TwelveDataClient(
@@ -97,17 +97,17 @@ class TwelveDataClient(
           .body(TwelveDataTimeSeriesResponse::class.java)
       } catch (e: HttpClientErrorException.TooManyRequests) {
         log.warn("Twelve Data rate-limited on time_series symbol={}", symbol)
-        throw MarketUnavailableException("rate-limited", e)
+        throw UpstreamUnavailableException("rate-limited", e)
       } catch (e: HttpClientErrorException) {
         log.warn("Twelve Data client error {} on time_series symbol={}", e.statusCode, symbol)
-        throw MarketUnavailableException("client error ${e.statusCode}", e)
+        throw UpstreamUnavailableException("client error ${e.statusCode}", e)
       } catch (e: HttpServerErrorException) {
         log.warn("Twelve Data server error {} on time_series symbol={}", e.statusCode, symbol)
-        throw MarketUnavailableException("upstream ${e.statusCode}", e)
+        throw UpstreamUnavailableException("upstream ${e.statusCode}", e)
       } catch (e: ResourceAccessException) {
         log.warn("Twelve Data unreachable on time_series symbol={}: {}", symbol, e.message)
-        throw MarketUnavailableException("unreachable", e)
-      } ?: throw MarketUnavailableException("Twelve Data returned empty body for $symbol")
+        throw UpstreamUnavailableException("unreachable", e)
+      } ?: throw UpstreamUnavailableException("Twelve Data returned empty body for $symbol")
 
     if (response.status == "error") throwForApiError(symbol, response.code, response.message)
     return response
@@ -124,17 +124,17 @@ class TwelveDataClient(
           .body(TwelveDataQuoteResponse::class.java)
       } catch (e: HttpClientErrorException.TooManyRequests) {
         log.warn("Twelve Data rate-limited on quote symbol={}", symbol)
-        throw MarketUnavailableException("rate-limited", e)
+        throw UpstreamUnavailableException("rate-limited", e)
       } catch (e: HttpClientErrorException) {
         log.warn("Twelve Data client error {} on quote symbol={}", e.statusCode, symbol)
-        throw MarketUnavailableException("client error ${e.statusCode}", e)
+        throw UpstreamUnavailableException("client error ${e.statusCode}", e)
       } catch (e: HttpServerErrorException) {
         log.warn("Twelve Data server error {} on quote symbol={}", e.statusCode, symbol)
-        throw MarketUnavailableException("upstream ${e.statusCode}", e)
+        throw UpstreamUnavailableException("upstream ${e.statusCode}", e)
       } catch (e: ResourceAccessException) {
         log.warn("Twelve Data unreachable on quote symbol={}: {}", symbol, e.message)
-        throw MarketUnavailableException("unreachable", e)
-      } ?: throw MarketUnavailableException("Twelve Data returned empty quote body for $symbol")
+        throw UpstreamUnavailableException("unreachable", e)
+      } ?: throw UpstreamUnavailableException("Twelve Data returned empty quote body for $symbol")
 
     if (response.status == "error") throwForApiError(symbol, response.code, response.message)
     return response
@@ -142,7 +142,7 @@ class TwelveDataClient(
 
   private fun requireApiKey() {
     if (apiKey.isBlank()) {
-      throw MarketUnavailableException(
+      throw UpstreamUnavailableException(
         "Twelve Data API key is missing — set market.twelvedata.api-key (env TWELVEDATA_API_KEY)"
       )
     }
@@ -152,10 +152,10 @@ class TwelveDataClient(
     val msg = message?.take(200) ?: "unknown"
     when (code) {
       404 -> throw NoSuchElementException("Ticker $symbol not found on Twelve Data ($msg)")
-      429 -> throw MarketUnavailableException("rate-limited: $msg")
+      429 -> throw UpstreamUnavailableException("rate-limited: $msg")
       401,
-      403 -> throw MarketUnavailableException("auth-failed: $msg")
-      else -> throw MarketUnavailableException("Twelve Data error ${code ?: "?"}: $msg")
+      403 -> throw UpstreamUnavailableException("auth-failed: $msg")
+      else -> throw UpstreamUnavailableException("Twelve Data error ${code ?: "?"}: $msg")
     }
   }
 

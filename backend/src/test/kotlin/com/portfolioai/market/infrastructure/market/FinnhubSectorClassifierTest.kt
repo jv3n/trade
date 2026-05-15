@@ -2,7 +2,7 @@ package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
@@ -33,7 +33,7 @@ import org.springframework.web.client.RestClient
  *   (Conglomerates, Crypto, …), [NoSuchElementException] is raised so the front shows "no sector
  *   benchmark" inline.
  * - **Error mapping** — 401/403 → `auth-failed`, 429 → `rate-limited`, 5xx → `upstream`, network →
- *   `unreachable`. All surface as [MarketUnavailableException] (HTTP 503).
+ *   `unreachable`. All surface as [UpstreamUnavailableException] (HTTP 503).
  * - **Blank API key** — short-circuits before any HTTP call so a misconfigured environment doesn't
  *   waste a network round-trip.
  */
@@ -132,34 +132,34 @@ class FinnhubSectorClassifierTest {
   // ---------------------------------------------------------------------- error mapping
 
   @Test
-  fun `maps 401 to MarketUnavailableException with auth-failed`() {
+  fun `maps 401 to UpstreamUnavailableException with auth-failed`() {
     server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"Invalid API key"}"""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.classify("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.classify("AAPL") }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps 403 to MarketUnavailableException with auth-failed`() {
+  fun `maps 403 to UpstreamUnavailableException with auth-failed`() {
     server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"Forbidden"}"""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.classify("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.classify("AAPL") }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps 429 to MarketUnavailableException with rate-limited`() {
+  fun `maps 429 to UpstreamUnavailableException with rate-limited`() {
     server.enqueue(MockResponse().setResponseCode(429).setBody(""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.classify("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.classify("AAPL") }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 
   @Test
-  fun `maps 500 to MarketUnavailableException with upstream`() {
+  fun `maps 500 to UpstreamUnavailableException with upstream`() {
     server.enqueue(MockResponse().setResponseCode(500).setBody("internal error"))
 
-    val ex = assertThrows<MarketUnavailableException> { client.classify("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.classify("AAPL") }
     assertTrue(ex.message?.contains("upstream") ?: false)
   }
 
@@ -174,7 +174,7 @@ class FinnhubSectorClassifierTest {
         baseUrl = server.url("/").toString().trimEnd('/'),
       )
 
-    val ex = assertThrows<MarketUnavailableException> { noKey.classify("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { noKey.classify("AAPL") }
     assertTrue(ex.message?.contains("API key") ?: false)
     assertEquals(0, server.requestCount)
   }

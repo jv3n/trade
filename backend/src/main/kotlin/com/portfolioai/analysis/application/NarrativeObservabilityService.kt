@@ -9,9 +9,9 @@ import com.portfolioai.analysis.domain.CoherenceScore
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilityQuery
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservationRow
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.infrastructure.market.MarketChartClient
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -32,11 +32,12 @@ import org.springframework.stereotype.Service
  * right after browsing the symbol's dossier is free. We never re-fetch per-snapshot — bars are
  * loaded once and reused for all rows in the timeline.
  *
- * **Graceful degradation** : if the market provider is unreachable ([MarketUnavailableException]),
- * the response still carries the narratives — only the price-since fields are null. The user came
- * to read history ; we don't 503 them just because the upstream blinked. The page is responsible
- * for rendering an « price action unavailable » hint when all deltas are null on a long-enough
- * series (the heuristic « should we have data for this row » is UI-side, not service-side).
+ * **Graceful degradation** : if the market provider is unreachable
+ * ([UpstreamUnavailableException]), the response still carries the narratives — only the
+ * price-since fields are null. The user came to read history ; we don't 503 them just because the
+ * upstream blinked. The page is responsible for rendering an « price action unavailable » hint when
+ * all deltas are null on a long-enough series (the heuristic « should we have data for this row »
+ * is UI-side, not service-side).
  *
  * **Phase 3 #2 — coherence score** : each row is also scored against the chronologically-previous
  * one via [CoherenceScorer], producing a verdict chip (`OK / WARN / HIGH`) the page surfaces. Pure
@@ -68,7 +69,7 @@ class NarrativeObservabilityService(
     val bars: List<OhlcBar> =
       try {
         chartClient.fetchChart(normalised, range = "1y", interval = "1d").bars
-      } catch (e: MarketUnavailableException) {
+      } catch (e: UpstreamUnavailableException) {
         log.warn(
           "Market upstream unavailable while enriching observability for symbol={} — returning {} observations with null deltas",
           normalised,

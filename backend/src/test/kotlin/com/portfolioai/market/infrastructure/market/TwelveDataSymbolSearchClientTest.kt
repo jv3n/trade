@@ -2,7 +2,7 @@ package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
@@ -24,7 +24,7 @@ import org.springframework.web.client.RestClient
  * - **Happy path** — `data` array of entries deserialised into [SymbolMatch] in the same order,
  *   `instrument_name` mapped to `name`.
  * - **Error mapping** — `status: error code: 401/403/429` and HTTP 429/500 all surface as
- *   [MarketUnavailableException] with the message tag the front uses to differentiate
+ *   [UpstreamUnavailableException] with the message tag the front uses to differentiate
  *   ("rate-limited" / "auth-failed" / "upstream"). Same surface as the chart adapter so the UI's
  *   503 panel doesn't have to know which endpoint failed.
  * - **Defensive parsing** — entries with a blank `symbol` are dropped (Twelve Data occasionally
@@ -109,26 +109,26 @@ class TwelveDataSymbolSearchClientTest {
   // ---------------------------------------------------------------------- error mapping
 
   @Test
-  fun `maps status=error code=429 to MarketUnavailableException with rate-limited`() {
+  fun `maps status=error code=429 to UpstreamUnavailableException with rate-limited`() {
     server.enqueue(jsonOk(ERROR_429_BODY))
 
-    val ex = assertThrows<MarketUnavailableException> { client.search("AA", 10) }
+    val ex = assertThrows<UpstreamUnavailableException> { client.search("AA", 10) }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 
   @Test
-  fun `maps status=error code=401 to MarketUnavailableException with auth-failed`() {
+  fun `maps status=error code=401 to UpstreamUnavailableException with auth-failed`() {
     server.enqueue(jsonOk(ERROR_401_BODY))
 
-    val ex = assertThrows<MarketUnavailableException> { client.search("AA", 10) }
+    val ex = assertThrows<UpstreamUnavailableException> { client.search("AA", 10) }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps HTTP 429 to MarketUnavailableException with rate-limited`() {
+  fun `maps HTTP 429 to UpstreamUnavailableException with rate-limited`() {
     server.enqueue(MockResponse().setResponseCode(429).setBody(""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.search("AA", 10) }
+    val ex = assertThrows<UpstreamUnavailableException> { client.search("AA", 10) }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 
@@ -148,7 +148,7 @@ class TwelveDataSymbolSearchClientTest {
         baseUrl = server.url("/").toString().trimEnd('/'),
       )
 
-    val ex = assertThrows<MarketUnavailableException> { noKey.search("AA", 10) }
+    val ex = assertThrows<UpstreamUnavailableException> { noKey.search("AA", 10) }
     assertTrue(ex.message?.contains("API key") ?: false)
     assertEquals(0, server.requestCount)
   }

@@ -1,7 +1,7 @@
 package com.portfolioai.market.infrastructure.market
 
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.SymbolMatch
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
  * - [limit] capped at 50 to mirror what the live endpoint enforces.
  *
  * Reserved test paths (mirrors [MockMarketChartClient]) :
- * - Query exactly `RATELIMIT` → throws [MarketUnavailableException] so the 503 path is reachable
+ * - Query exactly `RATELIMIT` → throws [UpstreamUnavailableException] so the 503 path is reachable
  *   without the network. Kept on the mock so a developer can exercise the empty/error UI without
  *   provisioning a real Twelve Data key.
  * - Query exactly `UNKNOWN` → returns an empty list (a "no results" path is the natural mock for
@@ -34,7 +34,7 @@ class MockSymbolSearchClient : SymbolSearchClient {
     if (trimmed.isEmpty()) return emptyList()
 
     val upper = trimmed.uppercase()
-    if (upper == "RATELIMIT") throw MarketUnavailableException("rate-limited (mock)")
+    if (upper == "RATELIMIT") throw UpstreamUnavailableException("rate-limited (mock)")
     if (upper == "UNKNOWN") return emptyList()
 
     // The caller is trusted to pass a sane [limit] — `SymbolSearchService.search` clamps to

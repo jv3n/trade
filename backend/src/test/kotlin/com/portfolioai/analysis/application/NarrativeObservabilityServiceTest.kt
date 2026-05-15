@@ -6,10 +6,10 @@ import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilit
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservationRow
 import com.portfolioai.analysis.infrastructure.persistence.TickerObservationCount
 import com.portfolioai.market.domain.MarketChart
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.TickerQuote
 import com.portfolioai.market.infrastructure.market.MarketChartClient
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -43,7 +43,7 @@ import org.mockito.kotlin.verify
  * - **Lower-bound guard** : when the snapshot pre-dates the chart's earliest bar (a year-old
  *   narrative viewed against a 1Y chart), every delta is null. Without this guard the service would
  *   advertise a ~12-month price gap as « delta1d », which is the friction that triggered the patch.
- * - **Graceful degradation** on upstream errors : a [MarketUnavailableException] from the chart
+ * - **Graceful degradation** on upstream errors : a [UpstreamUnavailableException] from the chart
  *   client must NOT crash the page — the observations come back with the price-since fields all
  *   null, and the user still reads their narrative history. Pinned explicitly because a future
  *   refacto could be tempted to let it propagate.
@@ -216,13 +216,13 @@ class NarrativeObservabilityServiceTest {
   // ---------------------------------------------------------------------- graceful degradation
 
   @Test
-  fun `MarketUnavailableException leaves the narratives intact with null price-since fields`() {
+  fun `UpstreamUnavailableException leaves the narratives intact with null price-since fields`() {
     // The user came to read history. We don't 503 them just because Twelve Data blinked — the
     // observations themselves are still useful without deltas.
     val rows = listOf(observationRow(price = bd("100.0000")))
     given(query.find(any(), anyOrNull(), anyOrNull(), anyOrNull())).willReturn(rows)
     given(chartClient.fetchChart(any(), any(), any()))
-      .willThrow(MarketUnavailableException("rate-limited"))
+      .willThrow(UpstreamUnavailableException("rate-limited"))
 
     val obs = service.findFor("AAPL").observations.single()
 

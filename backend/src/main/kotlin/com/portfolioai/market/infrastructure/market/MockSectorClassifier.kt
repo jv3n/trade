@@ -1,7 +1,7 @@
 package com.portfolioai.market.infrastructure.market
 
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.SectorBenchmark
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
  * Activation : `market.provider: mock` (the default in `application.yml`).
  *
  * Reserved test paths (mirrors [MockSymbolSearchClient] / [MockMarketChartClient]) :
- * - Symbol exactly `RATELIMIT` → throws [MarketUnavailableException] so the 503 path is reachable
+ * - Symbol exactly `RATELIMIT` → throws [UpstreamUnavailableException] so the 503 path is reachable
  *   without a real Twelve Data key.
  * - Symbol exactly `UNKNOWN` → throws [NoSuchElementException] for the 404 path (sector lookup
  *   failed).
@@ -27,7 +27,7 @@ class MockSectorClassifier : SectorClassifier {
   override fun classify(symbol: String): SectorBenchmark {
     // Caller contract (per [SectorClassifierService]) is "trimmed + uppercase". We lean on it
     // rather than re-normalising — see audit 2026-05-06 finding "coutures benchmark v2".
-    if (symbol == "RATELIMIT") throw MarketUnavailableException("rate-limited (mock)")
+    if (symbol == "RATELIMIT") throw UpstreamUnavailableException("rate-limited (mock)")
     if (symbol == "UNKNOWN") throw NoSuchElementException("Symbol not found: $symbol")
 
     val sector =

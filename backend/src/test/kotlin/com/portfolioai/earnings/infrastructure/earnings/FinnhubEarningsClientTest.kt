@@ -3,7 +3,7 @@ package com.portfolioai.earnings.infrastructure.earnings
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
@@ -34,7 +34,7 @@ import org.springframework.web.client.RestClient
  *   symbols. The adapter swallows that into a `null` next-date rather than failing the whole fetch
  *   ; the report breakdown is still useful on its own.
  * - **Error mapping on `/stock/earnings`** — 401/403 → `auth-failed`, 429 → `rate-limited`, 5xx →
- *   `upstream`, network unreachable → `unreachable`. All surface as [MarketUnavailableException]
+ *   `upstream`, network unreachable → `unreachable`. All surface as [UpstreamUnavailableException]
  *   shared with the rest of the Finnhub stack so the front shows a unified 503.
  * - **Date window on the calendar URL** — a forward-looking window is sent (`from`/`to`), present
  *   and non-empty. We don't assert exact values to avoid flakiness around midnight UTC.
@@ -150,39 +150,39 @@ class FinnhubEarningsClientTest {
   // ---------------------------------------------------------------------- error mapping (reports)
 
   @Test
-  fun `maps 401 on reports to MarketUnavailableException with auth-failed`() {
+  fun `maps 401 on reports to UpstreamUnavailableException with auth-failed`() {
     // Auth failure on the *required* reports endpoint cannot be absorbed — the snapshot would
     // be empty. Surface as 503 unified with the rest of the Finnhub stack so the front shows a
     // single "service indisponible" rather than three distinct error UIs.
     server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"Invalid API key"}"""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetch("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetch("AAPL") }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps 403 on reports to MarketUnavailableException with auth-failed`() {
+  fun `maps 403 on reports to UpstreamUnavailableException with auth-failed`() {
     // 403 is what Finnhub returns when the endpoint exists but is gated behind a paid plan.
     // Treated identically to 401 here ; the diagnostic distinction is only useful in the logs.
     server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"Forbidden"}"""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetch("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetch("AAPL") }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps 429 on reports to MarketUnavailableException with rate-limited`() {
+  fun `maps 429 on reports to UpstreamUnavailableException with rate-limited`() {
     server.enqueue(MockResponse().setResponseCode(429).setBody(""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetch("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetch("AAPL") }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 
   @Test
-  fun `maps 500 on reports to MarketUnavailableException with upstream`() {
+  fun `maps 500 on reports to UpstreamUnavailableException with upstream`() {
     server.enqueue(MockResponse().setResponseCode(500).setBody("internal error"))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetch("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetch("AAPL") }
     assertTrue(ex.message?.contains("upstream") ?: false)
   }
 
@@ -200,7 +200,7 @@ class FinnhubEarningsClientTest {
         baseUrl = server.url("/").toString().trimEnd('/'),
       )
 
-    val ex = assertThrows<MarketUnavailableException> { noKey.fetch("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { noKey.fetch("AAPL") }
     assertTrue(ex.message?.contains("API key") ?: false)
     assertEquals(0, server.requestCount)
   }

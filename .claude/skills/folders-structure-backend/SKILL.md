@@ -19,12 +19,12 @@ backend/
 │   │   └── db/migration/V*.sql                # Flyway scripts, append-only
 │   └── kotlin/com/portfolioai/
 │       ├── BackendApplication.kt              # @SpringBootApplication entry point
-│       ├── shared/                            # cross-cutting (today: GlobalExceptionHandler)
+│       ├── shared/                            # cross-cutting beans + exceptions (today: GlobalExceptionHandler, UpstreamUnavailableException)
 │       └── <bounded-context>/                 # one folder per context — 9 today
 │           ├── domain/                        # pure Kotlin — no Spring, no Jackson, no JPA annotations
 │           │   ├── <Aggregate>.kt             # data/sealed classes, value objects
 │           │   ├── <ValueObject>.kt
-│           │   └── <DomainException>.kt       # e.g. MarketUnavailableException
+│           │   └── <DomainException>.kt       # context-specific only — cross-context exceptions live in shared/
 │           ├── application/                   # Spring services orchestrating the domain
 │           │   ├── <UseCase>Service.kt        # @Service, constructor injection only
 │           │   ├── <Helper>.kt                # supporting beans (Parser, Validator, Recorder…)
@@ -66,7 +66,7 @@ When in doubt about where to place a new file: **what product capability does it
 ### `domain/`
 
 - Pure Kotlin only. **No Spring**, no Jackson, no `@Entity`, no `@Component`.
-- Aggregates, value objects, enums (`Sentiment`, `JobPhase`, `Timeframe`), domain exceptions (`MarketUnavailableException`).
+- Aggregates, value objects, enums (`Sentiment`, `JobPhase`, `Timeframe`). Context-specific domain exceptions live here too ; cross-context exceptions like `UpstreamUnavailableException` go in `shared/` (the 503 contract is identical across providers — no reason for `news/` to import from `market/domain/`).
 - Compilable in isolation — a domain test should not need Spring context.
 - Cross-context references are allowed but rare; if a context's domain depends on another, prefer passing the resolved value through the application layer.
 

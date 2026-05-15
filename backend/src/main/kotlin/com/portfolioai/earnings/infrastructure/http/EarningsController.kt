@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController
  * Errors flow through the global exception handler :
  * - 404 (`NoSuchElementException`) when the symbol has no earnings data — front renders an empty
  *   state.
- * - 503 (`MarketUnavailableException`) on Finnhub auth/rate-limit/network — front renders an inline
- *   error banner scoped to the panel without breaking the rest of the dossier.
+ * - 503 (`UpstreamUnavailableException`) on Finnhub auth/rate-limit/network — front renders an
+ *   inline error banner scoped to the panel without breaking the rest of the dossier.
  */
 @Tag(
   name = "Earnings",

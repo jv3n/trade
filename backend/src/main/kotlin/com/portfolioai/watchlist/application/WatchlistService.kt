@@ -3,7 +3,7 @@ package com.portfolioai.watchlist.application
 import com.portfolioai.market.application.SymbolSearchService
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.InstrumentType
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import com.portfolioai.watchlist.domain.WatchlistEntry
 import com.portfolioai.watchlist.infrastructure.persistence.WatchlistEntryRepository
 import org.slf4j.LoggerFactory
@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional
  * they were valid at insertion time.
  *
  * **Fail-open on provider hiccup** — if the validation call itself fails
- * (`MarketUnavailableException` from a rate-limited or unreachable upstream), we accept the add
+ * (`UpstreamUnavailableException` from a rate-limited or unreachable upstream), we accept the add
  * rather than block the user with a 503 from an unrelated outage. Reasoning : the symbol may be
  * perfectly valid, the user just had the bad luck of clicking Add during a transient blip, and
  * forcing them to retry minutes later against a flaky upstream is a worse experience than storing
@@ -105,7 +105,7 @@ class WatchlistService(
   private fun isKnownSymbol(symbol: String): Boolean =
     try {
       symbolSearch.validate(symbol)
-    } catch (e: MarketUnavailableException) {
+    } catch (e: UpstreamUnavailableException) {
       log.warn(
         "Skipping watchlist symbol validation for '{}' — provider unavailable: {}",
         symbol,
@@ -116,9 +116,9 @@ class WatchlistService(
 
   /**
    * Snapshot the [InstrumentType] for the chip the dashboard renders. Fail-open : any error from
-   * upstream (`MarketUnavailableException` rate-limit / unreachable, [NoSuchElementException] on a
-   * symbol the chart provider doesn't recognise even though autocomplete validated it, etc.) yields
-   * `null`. The row is still saved — better an entry without a chip than a 503 because of a
+   * upstream (`UpstreamUnavailableException` rate-limit / unreachable, [NoSuchElementException] on
+   * a symbol the chart provider doesn't recognise even though autocomplete validated it, etc.)
+   * yields `null`. The row is still saved — better an entry without a chip than a 503 because of a
    * transient provider blip on a symbol the user just saw in the autocomplete.
    */
   // The broad catch is the contract — any failure from the chart provider degrades the chip

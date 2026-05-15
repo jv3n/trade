@@ -1,7 +1,7 @@
 package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.market.application.IndicatorCalculator
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -85,8 +85,8 @@ class MockMarketChartClientTest {
   }
 
   @Test
-  fun `reserved RATELIMIT throws MarketUnavailableException`() {
-    assertThrows<MarketUnavailableException> { client.fetchChart("RATELIMIT", "1y", "1d") }
+  fun `reserved RATELIMIT throws UpstreamUnavailableException`() {
+    assertThrows<UpstreamUnavailableException> { client.fetchChart("RATELIMIT", "1y", "1d") }
   }
 
   @Test

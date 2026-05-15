@@ -149,7 +149,7 @@ export abstract class MarketRepository {
   /**
    * Resolves [symbol] to its SPDR sector ETF for the chart benchmark overlay. 404 surfaces both
    * "symbol unknown" and "sector outside the SPDR mapping" — the UI handles both as "no sector
-   * benchmark available". 503 propagates the usual `MarketUnavailableException`.
+   * benchmark available". 503 propagates the usual `UpstreamUnavailableException`.
    */
   abstract getSectorBenchmark(symbol: string): Observable<SectorBenchmark>;
 

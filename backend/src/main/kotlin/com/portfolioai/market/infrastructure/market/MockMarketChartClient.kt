@@ -2,9 +2,9 @@ package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.market.domain.MarketChart
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.TickerQuote
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component
  *   daily curve every time.
  * - **Reserved symbols** for testing edge paths :
  *     - `UNKNOWN` → throws [NoSuchElementException] (404 path)
- *     - `RATELIMIT` → throws [MarketUnavailableException] (503 path)
+ *     - `RATELIMIT` → throws [UpstreamUnavailableException] (503 path)
  */
 @Component
 class MockMarketChartClient : MarketChartClient {
@@ -46,7 +46,7 @@ class MockMarketChartClient : MarketChartClient {
 
     when (upper) {
       "UNKNOWN" -> throw NoSuchElementException("Ticker $upper not found (mock)")
-      "RATELIMIT" -> throw MarketUnavailableException("rate-limited (mock)")
+      "RATELIMIT" -> throw UpstreamUnavailableException("rate-limited (mock)")
     }
 
     // Seed includes range+interval so each timeframe gets a *deterministic but distinct* walk for

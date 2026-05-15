@@ -49,7 +49,7 @@ Twelve Data ne couvre ni les news (testé live → 404 sur `/news`), ni les reco
 - US-centric — couverture EU et Canada plus pauvre (news + recos)
 - `/stock/price-target` peut renvoyer 401/403 sur certains comptes / symboles malgré son statut « free tier » documenté → swallow à `null` côté code, le snapshot reste utile sans target
 - Pas de fundamentals avancés en free tier (earnings dates partiel sur `/stock/earnings`, à creuser pour la Phase 2 backlog earnings)
-- Erreurs 401/403/429/5xx mappées sur `MarketUnavailableException` partagée avec Twelve Data → 503 unifié sur l'API publique
+- Erreurs 401/403/429/5xx mappées sur `UpstreamUnavailableException` partagée avec Twelve Data → 503 unifié sur l'API publique
 
 Voir [`technique/providers.md`](../technique/providers.md) pour le détail (URLs d'inscription, dashboard, points d'intégration code).
 

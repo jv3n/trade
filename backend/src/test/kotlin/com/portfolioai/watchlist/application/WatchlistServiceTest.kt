@@ -3,10 +3,10 @@ package com.portfolioai.watchlist.application
 import com.portfolioai.market.application.SymbolSearchService
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.InstrumentType
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.TickerQuote
 import com.portfolioai.market.domain.TickerSnapshot
+import com.portfolioai.shared.UpstreamUnavailableException
 import com.portfolioai.watchlist.domain.WatchlistEntry
 import com.portfolioai.watchlist.infrastructure.persistence.WatchlistEntryRepository
 import java.math.BigDecimal
@@ -120,7 +120,7 @@ class WatchlistServiceTest {
     // than surface a misleading 503 from `POST /api/watchlist`. See class-level note in
     // [WatchlistService].
     given(symbolSearch.validate(eq("AAPL"))).willAnswer {
-      throw MarketUnavailableException("rate-limited")
+      throw UpstreamUnavailableException("rate-limited")
     }
     given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
     given(tickerService.load(eq("AAPL"))).willReturn(snapshot("AAPL", InstrumentType.STOCK))
@@ -168,7 +168,7 @@ class WatchlistServiceTest {
     given(symbolSearch.validate(eq("AAPL"))).willReturn(true)
     given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
     given(tickerService.load(eq("AAPL"))).willAnswer {
-      throw MarketUnavailableException("rate-limited")
+      throw UpstreamUnavailableException("rate-limited")
     }
     given(repository.save(any<WatchlistEntry>())).willAnswer { invocation ->
       invocation.arguments[0] as WatchlistEntry

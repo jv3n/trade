@@ -74,7 +74,7 @@ class MarketController(
    *
    * 404 surfaces both "symbol unknown to the provider" and "sector outside the SPDR mapping" — from
    * the user's POV both result in "no benchmark available", and the inline UI message is the same.
-   * 503 (rate-limit / unreachable) propagates from [MarketUnavailableException].
+   * 503 (rate-limit / unreachable) propagates from [UpstreamUnavailableException].
    */
   @GetMapping("/{symbol}/sector-benchmark")
   fun getSectorBenchmark(@PathVariable symbol: String): SectorBenchmarkDto {

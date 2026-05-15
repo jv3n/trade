@@ -2,8 +2,8 @@ package com.portfolioai.market.infrastructure.market
 
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.SectorBenchmark
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -27,11 +27,11 @@ import org.springframework.web.client.RestClient
  * — one set of timeouts and headers across every Finnhub-backed adapter.
  *
  * Error mapping is identical to the rest of the Finnhub stack so the global error UX is uniform :
- * - 401 / 403 → `MarketUnavailableException("auth-failed")` → HTTP 503
- * - 429 → `MarketUnavailableException("rate-limited")`
- * - other 4xx → `MarketUnavailableException("client error N")`
- * - 5xx → `MarketUnavailableException("upstream N")`
- * - network → `MarketUnavailableException("unreachable")`
+ * - 401 / 403 → `UpstreamUnavailableException("auth-failed")` → HTTP 503
+ * - 429 → `UpstreamUnavailableException("rate-limited")`
+ * - other 4xx → `UpstreamUnavailableException("client error N")`
+ * - 5xx → `UpstreamUnavailableException("upstream N")`
+ * - network → `UpstreamUnavailableException("unreachable")`
  *
  * Sector resolution flow : the upstream `finnhubIndustry` string is normalised through
  * [SpdrSectorEtfs] (which knows the 11 GICS sectors covered by SPDR + a handful of provider-side
@@ -73,23 +73,23 @@ class FinnhubSectorClassifier(
           .body(FinnhubCompanyProfile::class.java)
       } catch (e: HttpClientErrorException.TooManyRequests) {
         log.warn("Finnhub rate-limited on /stock/profile2 symbol={}", symbol)
-        throw MarketUnavailableException("rate-limited", e)
+        throw UpstreamUnavailableException("rate-limited", e)
       } catch (e: HttpClientErrorException.Unauthorized) {
         log.warn("Finnhub returned 401 on /stock/profile2 — check market.finnhub.api-key")
-        throw MarketUnavailableException("auth-failed", e)
+        throw UpstreamUnavailableException("auth-failed", e)
       } catch (e: HttpClientErrorException.Forbidden) {
         log.warn("Finnhub returned 403 on /stock/profile2 — endpoint behind a paid plan?")
-        throw MarketUnavailableException("auth-failed", e)
+        throw UpstreamUnavailableException("auth-failed", e)
       } catch (e: HttpClientErrorException) {
         log.warn("Finnhub client error {} on /stock/profile2 symbol={}", e.statusCode, symbol)
-        throw MarketUnavailableException("client error ${e.statusCode}", e)
+        throw UpstreamUnavailableException("client error ${e.statusCode}", e)
       } catch (e: HttpServerErrorException) {
         log.warn("Finnhub server error {} on /stock/profile2 symbol={}", e.statusCode, symbol)
-        throw MarketUnavailableException("upstream ${e.statusCode}", e)
+        throw UpstreamUnavailableException("upstream ${e.statusCode}", e)
       } catch (e: ResourceAccessException) {
         log.warn("Finnhub unreachable on /stock/profile2 symbol={}: {}", symbol, e.message)
-        throw MarketUnavailableException("unreachable", e)
-      } ?: throw MarketUnavailableException("Finnhub returned empty body for /stock/profile2")
+        throw UpstreamUnavailableException("unreachable", e)
+      } ?: throw UpstreamUnavailableException("Finnhub returned empty body for /stock/profile2")
 
     // Finnhub's "we don't cover this symbol" signal is an empty profile object — `ticker` is null
     // / blank and `finnhubIndustry` is null. Distinct from a plotting failure (5xx, rate-limit,
@@ -106,7 +106,7 @@ class FinnhubSectorClassifier(
 
   private fun requireApiKey() {
     if (apiKey.isBlank()) {
-      throw MarketUnavailableException(
+      throw UpstreamUnavailableException(
         "Finnhub API key is missing — set market.finnhub.api-key (env FINNHUB_API_KEY)"
       )
     }

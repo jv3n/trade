@@ -12,9 +12,9 @@ import com.portfolioai.analysis.application.dto.TopicDto
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.infrastructure.persistence.BiasSnapshotRow
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeBiasQuery
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.infrastructure.market.MarketChartClient
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -34,9 +34,9 @@ import org.springframework.stereotype.Service
  * query layer ; with a single-user workload + ~10 distinct symbols × ~50 snapshots each, we're well
  * below the cap.
  *
- * **Graceful degradation** on chart failures : a [MarketUnavailableException] for one symbol skips
- * its rows from the calibration averages (their delta contributions become null) but does NOT crash
- * the request — the other three sections still render. The page is responsible for the «
+ * **Graceful degradation** on chart failures : a [UpstreamUnavailableException] for one symbol
+ * skips its rows from the calibration averages (their delta contributions become null) but does NOT
+ * crash the request — the other three sections still render. The page is responsible for the «
  * calibration partielle, prix indisponible pour N symbols » hint when the average count drops below
  * the bucket count.
  *
@@ -117,7 +117,7 @@ class NarrativeBiasService(
         .associateWith { symbol ->
           try {
             chartClient.fetchChart(symbol, range = "1y", interval = "1d").bars
-          } catch (e: MarketUnavailableException) {
+          } catch (e: UpstreamUnavailableException) {
             log.warn("Skipping calibration deltas for symbol={} — upstream unavailable", symbol, e)
             emptyList()
           }

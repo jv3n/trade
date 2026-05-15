@@ -200,7 +200,7 @@ exceptions:
   TooGenericExceptionCaught:
     active: true
     # HTTP clients, async runners/executors, parsers and the CSV import controller legitimately
-    # catch broad exceptions to map them to domain types (MarketUnavailableException, parser
+    # catch broad exceptions to map them to domain types (UpstreamUnavailableException, parser
     # fallback) or to surface a generic error to the user (controllers). Scoping the rule here
     # keeps it useful for the rest of the codebase without flagging deliberate adapter behaviour.
     excludes:

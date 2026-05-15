@@ -1,9 +1,9 @@
 package com.portfolioai.market.infrastructure.http
 
 import com.portfolioai.market.application.SymbolSearchService
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.SymbolMatch
 import com.portfolioai.shared.GlobalExceptionHandler
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.mockito.kotlin.any
@@ -82,7 +82,7 @@ class SymbolSearchControllerTest {
 
   @Test
   fun `GET search returns 503 when the provider is unreachable`() {
-    given(service.search(any(), any())).willThrow(MarketUnavailableException("rate-limited"))
+    given(service.search(any(), any())).willThrow(UpstreamUnavailableException("rate-limited"))
 
     mvc
       .perform(get("/api/market/symbols/search").param("q", "AA"))

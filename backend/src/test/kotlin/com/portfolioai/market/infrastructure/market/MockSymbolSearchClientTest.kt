@@ -1,6 +1,6 @@
 package com.portfolioai.market.infrastructure.market
 
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -20,8 +20,9 @@ import org.junit.jupiter.api.assertThrows
  *   contract is "trust the caller", because
  *   [com.portfolioai.market.application.SymbolSearchService] clamps `[1, MAX_LIMIT]` before
  *   reaching the adapter.
- * - **Reserved test paths** — `RATELIMIT` raises [MarketUnavailableException] (503 path), `UNKNOWN`
- *   returns an empty list. Mirrors the chart mock so the same UI states are exercised in both.
+ * - **Reserved test paths** — `RATELIMIT` raises [UpstreamUnavailableException] (503 path),
+ *   `UNKNOWN` returns an empty list. Mirrors the chart mock so the same UI states are exercised in
+ *   both.
  * - **Stable ordering** — same query always returns the same order. Mock determinism matters
  *   because the dashboard sidebar autocomplete is asserted against in `dashboard.spec` ; a flaky
  *   order would break that test on every reload.
@@ -66,9 +67,9 @@ class MockSymbolSearchClientTest {
   }
 
   @Test
-  fun `RATELIMIT reserved query raises MarketUnavailableException`() {
+  fun `RATELIMIT reserved query raises UpstreamUnavailableException`() {
     // Lets a dev exercise the 503 error UI without provisioning a real Twelve Data key.
-    val ex = assertThrows<MarketUnavailableException> { client.search("RATELIMIT", 10) }
+    val ex = assertThrows<UpstreamUnavailableException> { client.search("RATELIMIT", 10) }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 

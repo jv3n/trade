@@ -4,7 +4,7 @@ import com.portfolioai.analyst.domain.AnalystSnapshot
 import com.portfolioai.analyst.domain.MonthlyRecommendation
 import com.portfolioai.analyst.domain.PriceTarget
 import com.portfolioai.analyst.domain.deriveConsensus
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component
  *
  * Reserved symbols :
  * - `UNKNOWN` → throws `NoSuchElementException` (404 path on the controller).
- * - `RATELIMIT` → throws [MarketUnavailableException] (503 path) so the front can exercise the
+ * - `RATELIMIT` → throws [UpstreamUnavailableException] (503 path) so the front can exercise the
  *   inline error state.
  * - `NOTARGET` → returns a snapshot with `priceTarget = null` so the front's degraded layout
  *   (recommendations only, no target line) is reproducible without flipping providers.
@@ -46,7 +46,7 @@ class MockAnalystClient : AnalystRecommendationClient {
 
     when (upper) {
       "UNKNOWN" -> throw NoSuchElementException("No analyst coverage for $upper (mock)")
-      "RATELIMIT" -> throw MarketUnavailableException("rate-limited (mock)")
+      "RATELIMIT" -> throw UpstreamUnavailableException("rate-limited (mock)")
     }
 
     val rng = Random(upper.hashCode().toLong())

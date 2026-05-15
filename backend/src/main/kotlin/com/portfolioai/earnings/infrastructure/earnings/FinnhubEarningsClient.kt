@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.earnings.domain.EarningsSnapshot
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.time.LocalDate
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -30,12 +30,12 @@ import org.springframework.web.client.RestClient
  * — one set of timeouts and headers across all Finnhub-backed adapters.
  *
  * Error mapping is identical to the analyst and news adapters so the global error UX is uniform :
- * - 401 / 403 on `/stock/earnings` → `MarketUnavailableException("auth-failed")`. (On the calendar
- *   call this fails soft to `null` — see above.)
- * - 429 → `MarketUnavailableException("rate-limited")`
- * - other 4xx → `MarketUnavailableException("client error N")`
- * - 5xx → `MarketUnavailableException("upstream N")`
- * - network → `MarketUnavailableException("unreachable")`
+ * - 401 / 403 on `/stock/earnings` → `UpstreamUnavailableException("auth-failed")`. (On the
+ *   calendar call this fails soft to `null` — see above.)
+ * - 429 → `UpstreamUnavailableException("rate-limited")`
+ * - other 4xx → `UpstreamUnavailableException("client error N")`
+ * - 5xx → `UpstreamUnavailableException("upstream N")`
+ * - network → `UpstreamUnavailableException("unreachable")`
  *
  * Empty `/stock/earnings` array AND empty calendar → `NoSuchElementException` (mapped to 404 by the
  * global handler) — no data at all to surface.
@@ -75,22 +75,22 @@ class FinnhubEarningsClient(
           .body(String::class.java)
       } catch (e: HttpClientErrorException.TooManyRequests) {
         log.warn("Finnhub rate-limited symbol={}", upper)
-        throw MarketUnavailableException("rate-limited", e)
+        throw UpstreamUnavailableException("rate-limited", e)
       } catch (e: HttpClientErrorException.Unauthorized) {
         log.warn("Finnhub returned 401 — check market.finnhub.api-key")
-        throw MarketUnavailableException("auth-failed", e)
+        throw UpstreamUnavailableException("auth-failed", e)
       } catch (e: HttpClientErrorException.Forbidden) {
         log.warn("Finnhub returned 403 — endpoint likely behind a paid plan")
-        throw MarketUnavailableException("auth-failed", e)
+        throw UpstreamUnavailableException("auth-failed", e)
       } catch (e: HttpClientErrorException) {
         log.warn("Finnhub client error {} symbol={}", e.statusCode, upper)
-        throw MarketUnavailableException("client error ${e.statusCode}", e)
+        throw UpstreamUnavailableException("client error ${e.statusCode}", e)
       } catch (e: HttpServerErrorException) {
         log.warn("Finnhub server error {} symbol={}", e.statusCode, upper)
-        throw MarketUnavailableException("upstream ${e.statusCode}", e)
+        throw UpstreamUnavailableException("upstream ${e.statusCode}", e)
       } catch (e: ResourceAccessException) {
         log.warn("Finnhub unreachable symbol={}: {}", upper, e.message)
-        throw MarketUnavailableException("unreachable", e)
+        throw UpstreamUnavailableException("unreachable", e)
       } ?: return emptyList()
 
     return mapper.readValue(body, object : TypeReference<List<FinnhubEarningsItem>>() {})
@@ -152,7 +152,7 @@ class FinnhubEarningsClient(
 
   private fun requireApiKey() {
     if (apiKey.isBlank()) {
-      throw MarketUnavailableException(
+      throw UpstreamUnavailableException(
         "Finnhub API key is missing — set market.finnhub.api-key (env FINNHUB_API_KEY)"
       )
     }

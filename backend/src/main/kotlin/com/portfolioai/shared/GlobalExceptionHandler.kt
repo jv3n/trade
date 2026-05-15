@@ -1,6 +1,5 @@
 package com.portfolioai.shared
 
-import com.portfolioai.market.domain.MarketUnavailableException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -24,11 +23,16 @@ class GlobalExceptionHandler {
       .body(mapOf("error" to (ex.message ?: "Bad request")))
 
   /**
-   * Market provider rate-limited or unreachable. Surfaced as HTTP 503 so the UI can differentiate
-   * from a generic 500 and show "réessayez dans quelques minutes".
+   * Any external upstream provider (Finnhub news/analyst/earnings, Twelve Data, Claude, Ollama)
+   * rate-limited, unreachable, 5xx or auth-failed. Surfaced as HTTP 503 so the UI can differentiate
+   * from a generic 500 and show "réessayez dans quelques minutes". The user-facing message stays
+   * intentionally generic — the distinction "market vs LLM vs news" lives in the `detail` field
+   * passed in from the throwing adapter.
    */
-  @ExceptionHandler(MarketUnavailableException::class)
-  fun handleMarketUnavailable(ex: MarketUnavailableException): ResponseEntity<Map<String, String>> =
+  @ExceptionHandler(UpstreamUnavailableException::class)
+  fun handleUpstreamUnavailable(
+    ex: UpstreamUnavailableException
+  ): ResponseEntity<Map<String, String>> =
     ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
       .body(
         mapOf(

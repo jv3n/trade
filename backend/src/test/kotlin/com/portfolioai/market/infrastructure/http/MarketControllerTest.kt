@@ -2,11 +2,11 @@ package com.portfolioai.market.infrastructure.http
 
 import com.portfolioai.market.application.SectorClassifierService
 import com.portfolioai.market.application.TickerService
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.market.domain.OhlcBar
 import com.portfolioai.market.domain.SectorBenchmark
 import com.portfolioai.market.domain.Timeframe
 import com.portfolioai.shared.GlobalExceptionHandler
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.time.Instant
 import org.junit.jupiter.api.Test
@@ -37,7 +37,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  *   `TickerService.load` does on the dossier path so cache lookups stay consistent.
  * - **Provider exceptions surface as 404 / 503** via the [GlobalExceptionHandler] : the chart
  *   endpoint must propagate `NoSuchElementException` (unknown ticker) and
- *   `MarketUnavailableException` (rate-limit / upstream) the same way the dossier does, otherwise
+ *   `UpstreamUnavailableException` (rate-limit / upstream) the same way the dossier does, otherwise
  *   the chart toggle would mask real failures behind a generic 500.
  * - **Default `?timeframe=1y`** equals the dossier's reference view, so an URL without any query
  *   param yields the same series the dossier already shows on initial load.
@@ -125,7 +125,7 @@ class MarketControllerTest {
     // Rate-limit, upstream 5xx, network unreachable… all surface as 503 to differentiate from a
     // genuine 500 (our bug) and tell the front "retry in a few minutes".
     given(tickerService.loadBars(any(), any()))
-      .willThrow(MarketUnavailableException("rate-limited"))
+      .willThrow(UpstreamUnavailableException("rate-limited"))
 
     mvc
       .perform(get("/api/market/ticker/AAPL/chart"))
@@ -186,7 +186,7 @@ class MarketControllerTest {
   @Test
   fun `GET sector-benchmark returns 503 when the provider is unavailable`() {
     given(sectorClassifierService.classify(any()))
-      .willThrow(MarketUnavailableException("rate-limited"))
+      .willThrow(UpstreamUnavailableException("rate-limited"))
 
     mvc
       .perform(get("/api/market/ticker/AAPL/sector-benchmark"))

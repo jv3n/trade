@@ -3,7 +3,7 @@ package com.portfolioai.news.infrastructure.news
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
@@ -30,7 +30,7 @@ import org.springframework.web.client.RestClient
  *   (asserted as date strings present, exact values would make the test flaky on day-of-test
  *   boundaries).
  * - **Error mapping** — 401/403 → `auth-failed`, 429 → `rate-limited`, 5xx → `upstream`, network
- *   unreachable → `unreachable` ; all surface as [MarketUnavailableException] (shared exception
+ *   unreachable → `unreachable` ; all surface as [UpstreamUnavailableException] (shared exception
  *   with the Twelve Data adapter — both map to HTTP 503 on the public API).
  * - **Limit cap** — when the upstream returns 50 items and we ask for 5, we keep the 5 most recent,
  *   not the first 5 in the wire payload.
@@ -114,40 +114,40 @@ class FinnhubClientTest {
   // ---------------------------------------------------------------------- error mapping
 
   @Test
-  fun `maps 401 to MarketUnavailableException with auth-failed`() {
+  fun `maps 401 to UpstreamUnavailableException with auth-failed`() {
     // Finnhub returns 401 when the api key is invalid (or the endpoint isn't on the user's
     // plan). Surfaced as 503 on the public API — same path as Twelve Data's auth errors so the
     // front can show a unified "service indisponible" rather than two distinct error UIs.
     server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"Invalid API key"}"""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchNews("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchNews("AAPL") }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps 403 to MarketUnavailableException with auth-failed`() {
+  fun `maps 403 to UpstreamUnavailableException with auth-failed`() {
     // 403 is what Finnhub returns when the endpoint exists but is gated behind a paid plan.
     // Treated identically to 401 here ; the diagnostic distinction is only useful in the logs
     // (and we log it, see FinnhubClient).
     server.enqueue(MockResponse().setResponseCode(403).setBody("""{"error":"Forbidden"}"""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchNews("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchNews("AAPL") }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
 
   @Test
-  fun `maps 429 to MarketUnavailableException with rate-limited`() {
+  fun `maps 429 to UpstreamUnavailableException with rate-limited`() {
     server.enqueue(MockResponse().setResponseCode(429).setBody(""))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchNews("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchNews("AAPL") }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
 
   @Test
-  fun `maps 500 to MarketUnavailableException with upstream`() {
+  fun `maps 500 to UpstreamUnavailableException with upstream`() {
     server.enqueue(MockResponse().setResponseCode(500).setBody("internal error"))
 
-    val ex = assertThrows<MarketUnavailableException> { client.fetchNews("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { client.fetchNews("AAPL") }
     assertTrue(ex.message?.contains("upstream") ?: false)
   }
 
@@ -161,7 +161,7 @@ class FinnhubClientTest {
         baseUrl = server.url("/").toString().trimEnd('/'),
       )
 
-    val ex = assertThrows<MarketUnavailableException> { noKey.fetchNews("AAPL") }
+    val ex = assertThrows<UpstreamUnavailableException> { noKey.fetchNews("AAPL") }
     assertTrue(ex.message?.contains("API key") ?: false)
     // No HTTP call attempted — short-circuited.
     assertEquals(0, server.requestCount)

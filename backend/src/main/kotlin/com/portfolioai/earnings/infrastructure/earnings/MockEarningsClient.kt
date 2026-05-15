@@ -4,7 +4,7 @@ import com.portfolioai.earnings.domain.EarningsReport
 import com.portfolioai.earnings.domain.EarningsSnapshot
 import com.portfolioai.earnings.domain.EarningsTime
 import com.portfolioai.earnings.domain.computeSurprisePercent
-import com.portfolioai.market.domain.MarketUnavailableException
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component
  *
  * Reserved symbols :
  * - `UNKNOWN` → throws `NoSuchElementException` (404 path on the controller).
- * - `RATELIMIT` → throws [MarketUnavailableException] (503 path) so the front can exercise the
+ * - `RATELIMIT` → throws [UpstreamUnavailableException] (503 path) so the front can exercise the
  *   inline error state.
  * - `NOCALENDAR` → returns a snapshot with `nextEarningsDate = null` so the front's degraded layout
  *   (reports only, no countdown line) is reproducible without flipping providers.
@@ -45,7 +45,7 @@ class MockEarningsClient : EarningsClient {
 
     when (upper) {
       "UNKNOWN" -> throw NoSuchElementException("No earnings data for $upper (mock)")
-      "RATELIMIT" -> throw MarketUnavailableException("rate-limited (mock)")
+      "RATELIMIT" -> throw UpstreamUnavailableException("rate-limited (mock)")
     }
 
     val rng = Random(upper.hashCode().toLong())

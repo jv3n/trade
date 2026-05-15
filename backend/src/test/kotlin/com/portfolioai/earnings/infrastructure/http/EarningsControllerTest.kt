@@ -4,8 +4,8 @@ import com.portfolioai.earnings.application.EarningsService
 import com.portfolioai.earnings.domain.EarningsReport
 import com.portfolioai.earnings.domain.EarningsSnapshot
 import com.portfolioai.earnings.domain.EarningsTime
-import com.portfolioai.market.domain.MarketUnavailableException
 import com.portfolioai.shared.GlobalExceptionHandler
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
 import java.time.LocalDate
 import org.hamcrest.Matchers.nullValue
@@ -74,8 +74,8 @@ class EarningsControllerTest {
 
   @Test
   fun `GET earnings returns 503 when the upstream is unavailable`() {
-    // Finnhub rate-limit / 5xx / unreachable — bubble up as MarketUnavailableException.
-    given(service.forSymbol(any())).willThrow(MarketUnavailableException("rate-limited"))
+    // Finnhub rate-limit / 5xx / unreachable — bubble up as UpstreamUnavailableException.
+    given(service.forSymbol(any())).willThrow(UpstreamUnavailableException("rate-limited"))
 
     mvc
       .perform(get("/api/market/ticker/AAPL/earnings"))
