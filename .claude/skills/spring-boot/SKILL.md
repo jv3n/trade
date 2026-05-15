@@ -50,28 +50,31 @@ class TickerNarrativeService(/* … */) {
 
 The runner is a thin wrapper around the executor for one reason : to be a *different bean* so the `@Async` proxy applies. Same shape for any future async work — never `@Async` and the caller in the same class.
 
-### `@Cacheable` — `@Lazy` self-inject if you must
+### `@Cacheable` — split into two beans, never self-inject
 
-If a method needs to call its own `@Cacheable` peer, the proxy bypass applies the same way. The pattern in `SymbolSearchService` :
+If a method needs to call its own `@Cacheable` peer, the proxy bypass applies the same way. The fix is **always to split into two beans** — `@Cacheable` lives on the cache-holding bean, the consumer that needs the cached value is a separate `@Component` that depends on it. The pattern in `SymbolValidator` :
 
 ```kotlin
 @Service
-class SymbolSearchService(
-  private val client: SymbolSearchClient,
-  @Lazy private val self: SymbolSearchService,    // proxy reference to *this same bean*
-) {
+class SymbolSearchService(private val client: SymbolSearchClient) {
   @Cacheable(SYMBOL_SEARCH_CACHE, key = "#query.lowercase() + '|' + #limit")
   fun search(query: String, limit: Int): List<SymbolMatch> = client.fetch(query, limit)
+}
 
-  fun searchWithFallback(query: String): List<SymbolMatch> = self.search(query, 10)  // ✅ proxy
+@Component
+class SymbolValidator(private val search: SymbolSearchService) {
+  fun exists(symbol: String): Boolean =
+    search.search(symbol, 10).any { it.symbol.equals(symbol, ignoreCase = true) }  // ✅ proxy
 }
 ```
 
-The `@Lazy` is required to break the constructor-injection cycle (Spring resolves the dependency on first access instead of at startup). Use this pattern only when extracting a separate bean would be heavier than the self-injection.
+Spring injects the cached service via the proxy by construction — no `@Lazy self` hack, no nullable backing field for tests, no "watch out for the self-call" rule for future readers. The split makes the dependency explicit and the cache boundary visible.
+
+The earlier `@Lazy self` pattern (inject the bean back into itself with `@Autowired @Lazy private var self: ...?` and route via `self ?: this`) is **no longer used in the codebase** — replaced by the two-bean split during ticket #B3. If you're tempted to reach for it, that's the signal that a split is what you actually want.
 
 ### `@Transactional` — same rule
 
-Self-calls bypass the transaction boundary. If you find yourself reaching for `this.transactionalMethod()`, either move the method to a different bean (most common) or use the `@Lazy self` pattern above.
+Self-calls bypass the transaction boundary. The same split-into-two-beans fix applies : extract the `@Transactional` method into a dedicated bean, inject it where you need the wrapped behaviour, never call `this.transactionalMethod()` from inside the same class.
 
 ## When NOT to wrap a method in `@Transactional`
 

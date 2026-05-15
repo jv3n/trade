@@ -1,6 +1,6 @@
 package com.portfolioai.watchlist.application
 
-import com.portfolioai.market.application.SymbolSearchService
+import com.portfolioai.market.application.SymbolValidator
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.shared.UpstreamUnavailableException
@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional
  * rather than throwing. Callers (front, integration scripts) don't have to check first ; the API
  * stays simple.
  *
- * **Validation gate (Phase 2 v2)** — before saving, [add] asks [SymbolSearchService.validate] that
- * the configured market provider actually knows the symbol. A symbol the provider doesn't recognise
+ * **Validation gate (Phase 2 v2)** — before saving, [add] asks [SymbolValidator.exists] that the
+ * configured market provider actually knows the symbol. A symbol the provider doesn't recognise
  * would never produce an exploitable dossier (chart fetch would 404, narrative would never run), so
  * we'd rather reject early at the watchlist boundary with a clear 400 than let the user accumulate
  * dead entries. Existing rows on the list (idempotent path) are returned without re-validation —
@@ -48,21 +48,21 @@ import org.springframework.transaction.annotation.Transactional
  * 2.5` for the full friction trail.
  *
  * **Network calls outside the transaction (audit 2026-05-10 finding #2)** — [add] is deliberately
- * NOT `@Transactional`. The two upstream calls ([SymbolSearchService.validate] and
- * [TickerService.load]) can each take 1-3 s on a Twelve Data cache miss (more on a timeout) ;
- * holding a Hikari connection for that whole window violates the project invariant documented in
- * `architecture.md` ("LLM/network call hors transaction"). Spring Data's `save()` opens its own
- * short transaction so the actual write is still atomic. There is a TOCTOU window between the
- * pre-flight `findBySymbol` and the post-network `findBySymbol` re-check inside [persistNew] — the
- * DB UNIQUE constraint on `symbol` is the safety net, and we re-look one last time inside the write
- * so the duplicate path returns the existing row rather than surfacing an integrity violation to
- * the caller. Single-user low-concurrency makes the window vanishingly small ; the structure stays
- * correct under Phase 5 multi-user.
+ * NOT `@Transactional`. The two upstream calls ([SymbolValidator.exists] and [TickerService.load])
+ * can each take 1-3 s on a Twelve Data cache miss (more on a timeout) ; holding a Hikari connection
+ * for that whole window violates the project invariant documented in `architecture.md`
+ * ("LLM/network call hors transaction"). Spring Data's `save()` opens its own short transaction so
+ * the actual write is still atomic. There is a TOCTOU window between the pre-flight `findBySymbol`
+ * and the post-network `findBySymbol` re-check inside [persistNew] — the DB UNIQUE constraint on
+ * `symbol` is the safety net, and we re-look one last time inside the write so the duplicate path
+ * returns the existing row rather than surfacing an integrity violation to the caller. Single-user
+ * low-concurrency makes the window vanishingly small ; the structure stays correct under Phase 5
+ * multi-user.
  */
 @Service
 class WatchlistService(
   private val repository: WatchlistEntryRepository,
-  private val symbolSearch: SymbolSearchService,
+  private val symbolValidator: SymbolValidator,
   private val tickerService: TickerService,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
@@ -99,12 +99,12 @@ class WatchlistService(
   }
 
   /**
-   * Wraps [SymbolSearchService.validate] with a fail-open guard against transient provider outages
-   * — see the class-level note for the rationale.
+   * Wraps [SymbolValidator.exists] with a fail-open guard against transient provider outages — see
+   * the class-level note for the rationale.
    */
   private fun isKnownSymbol(symbol: String): Boolean =
     try {
-      symbolSearch.validate(symbol)
+      symbolValidator.exists(symbol)
     } catch (e: UpstreamUnavailableException) {
       log.warn(
         "Skipping watchlist symbol validation for '{}' — provider unavailable: {}",

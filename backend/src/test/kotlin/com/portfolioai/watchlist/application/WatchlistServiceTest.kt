@@ -1,6 +1,6 @@
 package com.portfolioai.watchlist.application
 
-import com.portfolioai.market.application.SymbolSearchService
+import com.portfolioai.market.application.SymbolValidator
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.InstrumentType
 import com.portfolioai.market.domain.OhlcBar
@@ -50,7 +50,7 @@ import org.mockito.kotlin.verify
  *   unreachable) yields `instrumentType = null` rather than blocking the add. Better an entry
  *   without a chip than a 503 on a symbol the autocomplete just confirmed.
  * - **Network calls happen before the persistence call** — audit 2026-05-10 finding #2. The service
- *   is no longer `@Transactional` on `add` ; the contract is that `symbolSearch.validate` and
+ *   is no longer `@Transactional` on `add` ; the contract is that `symbolValidator.exists` and
  *   `tickerService.load` resolve before any `repository.save`, so a slow Twelve Data round-trip
  *   never holds the Hikari connection that the save eventually opens. We pin the order with Mockito
  *   `inOrder` rather than transaction-state instrumentation — coarse but sufficient as a regression
@@ -63,15 +63,15 @@ import org.mockito.kotlin.verify
 class WatchlistServiceTest {
 
   private val repository: WatchlistEntryRepository = mock()
-  private val symbolSearch: SymbolSearchService = mock()
+  private val symbolValidator: SymbolValidator = mock()
   private val tickerService: TickerService = mock()
-  private val service = WatchlistService(repository, symbolSearch, tickerService)
+  private val service = WatchlistService(repository, symbolValidator, tickerService)
 
   // ---------------------------------------------------------------------- happy path
 
   @Test
   fun `add normalises uppercase trim, validates, snapshots instrumentType, then persists`() {
-    given(symbolSearch.validate(eq("AAPL"))).willReturn(true)
+    given(symbolValidator.exists(eq("AAPL"))).willReturn(true)
     given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
     given(tickerService.load(eq("AAPL"))).willReturn(snapshot("AAPL", InstrumentType.STOCK))
     given(repository.save(any<WatchlistEntry>())).willAnswer { invocation ->
@@ -86,8 +86,8 @@ class WatchlistServiceTest {
     // the regression guard for audit 2026-05-10 finding #2 — if someone wraps `add` back in
     // `@Transactional`, the order itself doesn't break, but the intent does. The class-level
     // docstring on `WatchlistService` is the contract this assertion is pinning.
-    inOrder(symbolSearch, tickerService, repository).also {
-      it.verify(symbolSearch).validate("AAPL")
+    inOrder(symbolValidator, tickerService, repository).also {
+      it.verify(symbolValidator).exists("AAPL")
       it.verify(tickerService).load("AAPL")
       it.verify(repository).save(any())
     }
@@ -100,7 +100,7 @@ class WatchlistServiceTest {
     // The user typed something the configured market provider doesn't know — `XXXXX`, a typo,
     // a paid-tier-only ticker. Reject at the boundary so we never accumulate dead entries that
     // would 404 every time the user opens the dossier.
-    given(symbolSearch.validate(eq("XXXXX"))).willReturn(false)
+    given(symbolValidator.exists(eq("XXXXX"))).willReturn(false)
     given(repository.findBySymbol(eq("XXXXX"))).willReturn(null)
 
     val ex = assertThrows<IllegalArgumentException> { service.add("XXXXX") }
@@ -119,7 +119,7 @@ class WatchlistServiceTest {
     // symbol in it — re-validating now is best-effort, not a hard gate. We log and accept rather
     // than surface a misleading 503 from `POST /api/watchlist`. See class-level note in
     // [WatchlistService].
-    given(symbolSearch.validate(eq("AAPL"))).willAnswer {
+    given(symbolValidator.exists(eq("AAPL"))).willAnswer {
       throw UpstreamUnavailableException("rate-limited")
     }
     given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
@@ -137,7 +137,7 @@ class WatchlistServiceTest {
   @Test
   fun `add returning the existing entry skips validation and instrumentType lookup`() {
     // Idempotent path — the symbol is already on the list. We trust the insertion-time validation
-    // and don't burn another Twelve Data credit. Important : neither `validate` nor
+    // and don't burn another Twelve Data credit. Important : neither `exists` nor
     // `tickerService.load` should be called.
     val existing =
       WatchlistEntry(
@@ -150,7 +150,7 @@ class WatchlistServiceTest {
     val returned = service.add("NVDA")
 
     assertEquals(existing, returned)
-    verify(symbolSearch, never()).validate(any())
+    verify(symbolValidator, never()).exists(any())
     verify(tickerService, never()).load(any())
     verify(repository, never()).save(any())
   }
@@ -165,7 +165,7 @@ class WatchlistServiceTest {
     // fail-open. We persist with null so the row exists and the dashboard skips the chip
     // (degrade closed). Subsequent dossier opens will populate the cache and a future re-add
     // could backfill the type if we ever care.
-    given(symbolSearch.validate(eq("AAPL"))).willReturn(true)
+    given(symbolValidator.exists(eq("AAPL"))).willReturn(true)
     given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
     given(tickerService.load(eq("AAPL"))).willAnswer {
       throw UpstreamUnavailableException("rate-limited")
@@ -186,7 +186,7 @@ class WatchlistServiceTest {
     // Twelve Data has been observed returning an empty quote on free tier for some thinly-traded
     // tickers — the symbol is real (validates), but `instrumentType` is null on the snapshot.
     // No exception, just a null. The row is saved with that null and the chip absent.
-    given(symbolSearch.validate(eq("OBSCURE"))).willReturn(true)
+    given(symbolValidator.exists(eq("OBSCURE"))).willReturn(true)
     given(repository.findBySymbol(eq("OBSCURE"))).willReturn(null)
     given(tickerService.load(eq("OBSCURE"))).willReturn(snapshot("OBSCURE", instrumentType = null))
     given(repository.save(any<WatchlistEntry>())).willAnswer { invocation ->
@@ -214,7 +214,7 @@ class WatchlistServiceTest {
         addedAt = Instant.parse("2026-05-10T11:59:59Z"),
         instrumentType = InstrumentType.STOCK,
       )
-    given(symbolSearch.validate(eq("AAPL"))).willReturn(true)
+    given(symbolValidator.exists(eq("AAPL"))).willReturn(true)
     // First call (pre-network) returns null ; second call (post-network re-check) returns the row
     // a concurrent caller just inserted. Mockito-kotlin's varargs `willReturn` walks the sequence.
     given(repository.findBySymbol(eq("AAPL"))).willReturn(null, concurrent)
@@ -235,7 +235,7 @@ class WatchlistServiceTest {
     val ex = assertThrows<IllegalArgumentException> { service.add("   ") }
 
     assertTrue(ex.message?.contains("blank") ?: false)
-    verify(symbolSearch, never()).validate(any())
+    verify(symbolValidator, never()).exists(any())
     verify(tickerService, never()).load(any())
     verify(repository, never()).save(any())
   }
@@ -245,7 +245,7 @@ class WatchlistServiceTest {
     val ex = assertThrows<IllegalArgumentException> { service.add("A".repeat(21)) }
 
     assertTrue(ex.message?.contains("20 characters") ?: false)
-    verify(symbolSearch, never()).validate(any())
+    verify(symbolValidator, never()).exists(any())
     verify(tickerService, never()).load(any())
     verify(repository, never()).save(any())
   }
