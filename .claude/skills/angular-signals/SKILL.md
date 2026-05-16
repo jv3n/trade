@@ -33,6 +33,85 @@ Verbatim shape in `ThemeService`, `LanguageService`, `LlmTimeoutService`. Follow
 
 **Don't** expose `WritableSignal<T>` to component templates. The compiler can't tell `set()` from `update()` in a `(click)` handler, and the convention is what keeps mutation paths greppable.
 
+## Resource builders live on the port itself
+
+For HTTP-backed `core/api/<bucket>/` ports, **don't expose `Observable<T>` raw to components**. The component would then have to wire `rxResource` + a trigger signal + an accumulator effect by hand — boilerplate that's the same across every consumer and easy to get wrong (a `.pipe(...)` without `.subscribe()` is silent — the bug we hit in `Suivi` before the 2026-05-16 fix).
+
+**Convention** — the abstract class port carries **two flavours of concrete builders**, inherited by every adapter :
+
+```typescript
+export abstract class SnapshotRepository {
+  abstract getAll(): Observable<SnapshotSummary[]>;
+  abstract getPositions(snapshotId: string): Observable<SnapshotPosition[]>;
+
+  // Flavour 1 — eager fetch on subscribe, consumer reads the rxResource directly.
+  allResource() {
+    return rxResource({ stream: () => this.getAll() });
+  }
+
+  // Flavour 2 — per-id cache. Returns a Signal<Map<id, T[]>> that grows as the trigger fires ;
+  // the accumulator effect lives in the method body so the consumer just reads the map.
+  positionsCache(trigger: Signal<string | undefined>) {
+    const cache = signal(new Map<string, SnapshotPosition[]>());
+    const resource = rxResource({
+      params: () => trigger(),
+      stream: ({ params }) =>
+        this.getPositions(params).pipe(map((positions) => ({ id: params, positions }))),
+    });
+    effect(() => {
+      const emit = resource.value();
+      if (!emit) return;
+      cache.update((m) => new Map(m).set(emit.id, emit.positions));
+    });
+    return cache.asReadonly();
+  }
+}
+```
+
+Component side stays minimal — no `.subscribe()`, no `ngOnInit`, no manual loading/error signals :
+
+```typescript
+export class Suivi {
+  private readonly repository = inject(SnapshotRepository);
+  private readonly snapshots = this.repository.allResource();
+  private readonly expandFor = signal<string | undefined>(undefined);
+  private readonly positions = this.repository.positionsCache(this.expandFor);
+
+  readonly loading = this.snapshots.isLoading;
+  readonly batches = computed(() => groupIntoBatches(this.snapshots.value() ?? []));
+
+  toggleSnapshot(id: string): void {
+    // ... flip an expanded Set, then trigger the fetch if not already cached
+    this.expandFor.set(id);
+  }
+
+  getPositions(id: string): SnapshotPosition[] {
+    return this.positions().get(id) ?? [];
+  }
+}
+```
+
+**Mock convention** — because the builders are concrete methods on the abstract class, test doubles MUST extend the class via `useClass`, not provide a plain object via `useValue` (a `useValue` mock loses the inherited builders) :
+
+```typescript
+class MockSnapshotRepository extends SnapshotRepository {
+  allSource: () => Observable<SnapshotSummary[]> = () => of([]);
+  positionsSource: (id: string) => Observable<SnapshotPosition[]> = () => of([]);
+  getAll() { return this.allSource(); }
+  getPositions(id: string) { return this.positionsSource(id); }
+}
+
+TestBed.configureTestingModule({
+  providers: [{ provide: SnapshotRepository, useClass: MockSnapshotRepository }],
+});
+```
+
+The mock only implements the abstract HTTP methods ; tests swap `allSource` / `positionsSource` on the instance to drive scenarios. The inherited `allResource()` / `positionsCache()` then close over the mocked methods naturally.
+
+**Why not `.subscribe()` in the component, or `rxMethod` from NgRx Signals ?** Source and sink are both signals here (`resource.value` → `Signal<Map<id, T[]>>`), so the natural primitive is `effect()` — auto-cleanup with the injection context, no RxJS round-trip, no manual `.subscribe()` to forget. `rxMethod` (`@ngrx/signals/rxjs-interop`) is the right tool when the source IS an observable and you want to expose a method that orchestrates a pipeline — not when both ends are signals and we own the lifecycle.
+
+**Adoption status** — pilot livré on `SnapshotRepository` (2026-05-16). The 13 other repositories are tracked in `docs/projet/backlog.md > Dette technique` (🟡 Moyenne) ; migrate one repo + its consumer + its specs at a time.
+
 ## `computed()` — derived state, free updates
 
 ```typescript

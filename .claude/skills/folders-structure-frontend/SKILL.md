@@ -12,6 +12,7 @@ PortfolioAI's frontend is a **single Angular app** (no monorepo). It follows a l
   - `core/local/` — bounded contexts persisted **in the browser** (localStorage). Same port/adapter shape ; the only inhabitant today is `annotation/`.
   - `core/app-state/` — cross-cutting **UI signal services** (theme, language). No port/adapter split — these are just services with localStorage persistence baked in.
   - `core/providers.ts` lives at the root (wires every bucket).
+- `shared/` — **pure cross-cutting helpers**, no state, no DI (e.g. `shared/toggle-set/toggle-set.ts`). Sibling of `core/` and `features/`. The rule is *"things you `inject()`" go in `core/`, "things you `import` as functions" go in `shared/`*. **One folder per concept** (mirrors `features/`) — kebab-case folder name + same-name file + sibling spec ; group related helpers under the same folder rather than dumping everything in a single `utils.ts`.
 - `features/` — UI feature folders (one per top-level route). These are the *primary adapters* in hexagonal terms.
 
 ```
@@ -70,6 +71,10 @@ frontend/
         │   │   ├── theme.service.ts (+ spec)
         │   │   └── language.service.ts (+ spec)
         │   └── providers.ts                        # provideRepositories() — wires every bucket
+        ├── shared/                                 # pure cross-cutting helpers, no state, no DI ; one folder per concept
+        │   └── toggle-set/
+        │       ├── toggle-set.ts                   # immutable Set toggle used by signal-driven UI
+        │       └── toggle-set.spec.ts
         └── features/                               # primary adapters — one folder per top-level route
             ├── dashboard/                          # portfolio view + sidebar (portfolios / held tickers / watchlist)
             │   ├── dashboard.ts
@@ -142,6 +147,6 @@ No UI components in `core/`.
 
 ## When NOT to use this layout
 
-- For utility code with no feature home, prefer `core/` over inventing a `shared/` folder
+- For pure helper code (no state, no DI, just functions), use `shared/<concept>/<concept>.ts` at the app root — not `core/` (which is reserved for things you `inject()`). One folder per concept, mirroring `features/`. Avoid the name `utils/` for this drawer — it reads as "infra plumbing" whereas the inhabitants are domain-flavoured helpers (e.g. `toggle-set`, `filter-window`).
 - Do not create `domain/`, `usecases/` or `views/` folders. Use-cases (when justified) live as services in `core/`, not in a dedicated folder
 - Do not put HTTP details in components or in feature folders — go through a port from `core/`
