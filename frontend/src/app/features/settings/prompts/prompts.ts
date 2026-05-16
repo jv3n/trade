@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { PromptRepository, PromptTemplate } from '../../../core/prompt.repository';
+import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/prompt.repository';
 
 /**
  * Settings → Prompts (Phase 3 PR3 list + view + activate, PR4 inline editor + diff + create

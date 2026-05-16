@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { OllamaStatusService } from '../../../core/ollama-status.service';
+import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
 import { OllamaPullDialog } from './ollama-pull-dialog';
 
 /**

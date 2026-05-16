@@ -12,7 +12,7 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { routes } from './app.routes';
 import { provideRepositories } from './core/providers';
-import { LlmTimeoutService } from './core/llm-timeout.service';
+import { LlmTimeoutService } from './core/api/analysis/llm-timeout.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [

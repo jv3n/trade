@@ -228,7 +228,7 @@ Détails ruleset + commandes dans [`ops.md`](./ops.md) section ESLint.
 
 C'est volontaire — le but est de faire tourner l'app, pas de devenir expert. Les points suivants viendront naturellement quand tu attaqueras une feature :
 
-- Les **conventions hexagonales** côté front (`core/<name>.repository.ts` = port, `core/adapters/<name>.http.ts` = adapter HTTP). Cf. [`architecture.md`](./architecture.md).
+- Les **conventions hexagonales** côté front, groupées en 3 axes sous `core/` : `core/api/<bucket>/<name>.repository.ts` = port HTTP (un bucket par module backend), `core/api/<bucket>/adapters/<name>.http.ts` = adapter HTTP ; `core/local/<bucket>/` = port persisté navigateur ; `core/app-state/` = services UI signal sans port. Cf. [`architecture.md`](./architecture.md).
 - Le **pipeline async** narratif (`Service` → `Runner @Async` → `Executor`). Cf. [`architecture.md`](./architecture.md) section *analysis/*.
 - La **règle "tests as documentation"** : un fichier de test doit se lire comme une histoire. Cf. `.claude/CLAUDE.md`.
 - Le **flow de commit** : un seul auteur (toi), Conventional Commits en anglais, message d'une ligne sans body. Cf. [`projet/commit-conventions.md`](../projet/commit-conventions.md).

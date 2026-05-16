@@ -7,7 +7,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   NarrativeObservabilityRepository,
   TickerObservationIndex,
-} from '../../../core/narrative-observability.repository';
+} from '../../../core/api/analysis/narrative-observability.repository';
 
 /**
  * `/observability` — Phase 3 #1 PR3. Landing page that lists every ticker with at least one

@@ -22,7 +22,7 @@ import {
   SnapshotRepository,
   SnapshotSummary,
   SnapshotPosition,
-} from '../../core/snapshot.repository';
+} from '../../core/api/portfolio/snapshot.repository';
 
 const makeSummary = (overrides: Partial<SnapshotSummary> = {}): SnapshotSummary => ({
   id: 'snap-1',

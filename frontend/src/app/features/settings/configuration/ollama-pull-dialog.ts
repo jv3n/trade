@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { OllamaStatusService } from '../../../core/ollama-status.service';
+import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
 
 /**
  * Suggestions re-used from the LLM provider card on `/settings/configuration` so the dialog

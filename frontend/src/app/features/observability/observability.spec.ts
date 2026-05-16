@@ -30,8 +30,8 @@ import {
   NarrativeObservabilityRepository,
   NarrativeObservation,
   NarrativeObservations,
-} from '../../core/narrative-observability.repository';
-import { PromptRepository } from '../../core/prompt.repository';
+} from '../../core/api/analysis/narrative-observability.repository';
+import { PromptRepository } from '../../core/api/analysis/prompt.repository';
 import { ObservabilityPage } from './observability';
 
 describe('ObservabilityPage', () => {

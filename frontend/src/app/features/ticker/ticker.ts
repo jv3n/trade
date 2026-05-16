@@ -23,7 +23,7 @@ import {
   of,
   switchMap,
 } from 'rxjs';
-import { LanguageService } from '../../core/language.service';
+import { LanguageService } from '../../core/app-state/language.service';
 import {
   MarketRepository,
   OhlcBar,
@@ -32,14 +32,17 @@ import {
   TickerSnapshot,
   TIMEFRAME_CODES,
   TimeframeCode,
-} from '../../core/market.repository';
-import { NewsItem, NewsRepository } from '../../core/news.repository';
-import { WatchlistRepository } from '../../core/watchlist.repository';
-import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
-import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
-import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
-import { JobEvent, JobPhase, JobStreamService } from '../../core/job-stream.service';
-import { NarrativeFeedbackRepository } from '../../core/narrative-feedback.repository';
+} from '../../core/api/market/market.repository';
+import { NewsItem, NewsRepository } from '../../core/api/news/news.repository';
+import { WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
+import {
+  Annotation,
+  AnnotationRepository,
+} from '../../core/local/annotation/annotation.repository';
+import { AnalystRepository, AnalystSnapshot } from '../../core/api/analyst/analyst.repository';
+import { EarningsRepository, EarningsSnapshot } from '../../core/api/earnings/earnings.repository';
+import { JobEvent, JobPhase, JobStreamService } from '../../core/api/analysis/job-stream.service';
+import { NarrativeFeedbackRepository } from '../../core/api/analysis/narrative-feedback.repository';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform

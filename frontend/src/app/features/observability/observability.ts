@@ -10,8 +10,8 @@ import {
   NarrativeObservabilityRepository,
   NarrativeObservation,
   NarrativeObservationsFilter,
-} from '../../core/narrative-observability.repository';
-import { PromptRepository, PromptTemplate } from '../../core/prompt.repository';
+} from '../../core/api/analysis/narrative-observability.repository';
+import { PromptRepository, PromptTemplate } from '../../core/api/analysis/prompt.repository';
 
 /**
  * Thumbs filter state on the page — `'all'` shows every observation, the three numeric values

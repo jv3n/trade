@@ -23,10 +23,10 @@ import { signal } from '@angular/core';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { Configuration } from './configuration';
-import { ConfigEntry, ConfigRepository } from '../../../core/config.repository';
-import { LlmTimeoutService } from '../../../core/llm-timeout.service';
-import { OllamaStatusService } from '../../../core/ollama-status.service';
-import { OllamaStatus } from '../../../core/ollama-status.repository';
+import { ConfigEntry, ConfigRepository } from '../../../core/api/config/config.repository';
+import { LlmTimeoutService } from '../../../core/api/analysis/llm-timeout.service';
+import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
+import { OllamaStatus } from '../../../core/api/analysis/ollama-status.repository';
 
 const TWELVE: ConfigEntry = {
   key: 'market.twelvedata.api-key',

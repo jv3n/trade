@@ -7,7 +7,7 @@ import {
   SnapshotRepository,
   SnapshotSummary,
   SnapshotPosition,
-} from '../../core/snapshot.repository';
+} from '../../core/api/portfolio/snapshot.repository';
 
 interface Batch {
   batchId: string;

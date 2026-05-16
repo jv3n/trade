@@ -18,7 +18,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
-import { PortfolioRepository } from '../../../core/portfolio.repository';
+import { PortfolioRepository } from '../../../core/api/portfolio/portfolio.repository';
 import { CsvImport } from './csv-import';
 
 const EMPTY_PREVIEW = { accounts: [], totalItems: 0, skippedRows: 0, warnings: [] };

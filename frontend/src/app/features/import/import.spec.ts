@@ -5,7 +5,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { Import } from './import';
-import { PortfolioRepository } from '../../core/portfolio.repository';
+import { PortfolioRepository } from '../../core/api/portfolio/portfolio.repository';
 
 const mockPortfolioRepository = {
   previewCsvImport: () => of({ accounts: [], totalItems: 0, skippedRows: 0, warnings: [] }),

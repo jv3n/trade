@@ -104,14 +104,14 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # Ports + adapters (14 repositories)
-│       │   ├── *.repository.ts        # ports (Portfolio, Snapshot, Market, Watchlist, News, Config, Annotation, Analyst, Earnings, OllamaStatus, Prompt, NarrativeFeedback, NarrativeObservability, NarrativeBias)
-│       │   ├── adapters/*.http.ts     # HTTP impls (défaut)
-│       │   ├── adapters/*.local.ts    # localStorage impls (annotation v3)
-│       │   ├── providers.ts           # `provideRepositories()` — wires les 14 ports → adapters
-│       │   ├── job-stream.service.ts  # SSE EventSource → Observable<JobEvent> (Phase 2.5)
-│       │   ├── theme.service.ts       # signal + persist localStorage (SSR-safe via isPlatformBrowser)
-│       │   └── language.service.ts    # signal + persist localStorage (i18n, SSR-safe)
+│       ├── core/              # split sur 3 axes — api/ (HTTP), local/ (browser), app-state/ (UI services)
+│       │   ├── api/<bucket>/          # 8 bounded contexts miroirs du backend : market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/
+│       │   │   ├── *.repository.ts            # ports (abstract class) à la racine du bucket
+│       │   │   ├── *.service.ts               # services bucket-locaux (ex. analysis/ollama-status.service.ts, analysis/job-stream.service.ts SSE, analysis/llm-timeout.service.ts)
+│       │   │   └── adapters/*.http.ts         # HttpXxxRepository (défaut)
+│       │   ├── local/<bucket>/        # ports persistés navigateur (annotation/ seul aujourd'hui) + adapters/*.local.ts
+│       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts), sans port/adapter
+│       │   └── providers.ts           # `provideRepositories()` — wires les 14 ports (api/ + local/) → adapters
 │       └── features/          # Pages UI (primary adapters)
 │           ├── dashboard/             # Portefeuille + lien dossiers ticker
 │           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA + thumbs)
@@ -140,7 +140,7 @@ trade/
 ## Thème et UI
 
 - Tokens CSS dans `frontend/src/styles.scss` (`:root` = sombre, `[data-theme='light']` = override clair)
-- `ThemeService` (`frontend/src/app/core/theme.service.ts`) — signal, persist localStorage, applique `data-theme` sur `documentElement`
+- `ThemeService` (`frontend/src/app/core/app-state/theme.service.ts`) — signal, persist localStorage, applique `data-theme` sur `documentElement`
 - Anti-FOUC : script inline dans `frontend/src/index.html` qui lit `localStorage` et pose `data-theme` avant le bootstrap Angular
 - Composants : `class="btn-primary"`, `.error-banner`, `.content-header`, `.empty-state`, `.confidence-badge`, `.action-badge`, etc. — patterns globaux dans `styles.scss`, à utiliser plutôt que de redéfinir localement
 

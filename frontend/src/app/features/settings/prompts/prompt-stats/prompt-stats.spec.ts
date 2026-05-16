@@ -24,7 +24,11 @@ import { of, throwError } from 'rxjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { PromptRepository, PromptStats, PromptTemplate } from '../../../../core/prompt.repository';
+import {
+  PromptRepository,
+  PromptStats,
+  PromptTemplate,
+} from '../../../../core/api/analysis/prompt.repository';
 import { PromptStatsPage } from './prompt-stats';
 
 describe('PromptStatsPage', () => {

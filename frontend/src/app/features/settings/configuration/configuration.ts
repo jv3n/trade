@@ -10,8 +10,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ConfigEntry, ConfigRepository, TestConfigResult } from '../../../core/config.repository';
-import { LlmTimeoutService } from '../../../core/llm-timeout.service';
+import {
+  ConfigEntry,
+  ConfigRepository,
+  TestConfigResult,
+} from '../../../core/api/config/config.repository';
+import { LlmTimeoutService } from '../../../core/api/analysis/llm-timeout.service';
 import { OllamaStatusPanel } from './ollama-status-panel';
 
 const TWELVE_DATA_KEY = 'market.twelvedata.api-key';

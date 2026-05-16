@@ -26,14 +26,20 @@ import {
   TickerNarrativeSnapshot,
   TickerSnapshot,
   TimeframeCode,
-} from '../../core/market.repository';
-import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
-import { NewsItem, NewsRepository } from '../../core/news.repository';
-import { Annotation, AnnotationRepository } from '../../core/annotation.repository';
-import { AnalystRepository, AnalystSnapshot } from '../../core/analyst.repository';
-import { EarningsRepository, EarningsSnapshot } from '../../core/earnings.repository';
-import { JobEvent, JobStreamService } from '../../core/job-stream.service';
-import { NarrativeFeedbackRepository, PromptScore } from '../../core/narrative-feedback.repository';
+} from '../../core/api/market/market.repository';
+import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
+import { NewsItem, NewsRepository } from '../../core/api/news/news.repository';
+import {
+  Annotation,
+  AnnotationRepository,
+} from '../../core/local/annotation/annotation.repository';
+import { AnalystRepository, AnalystSnapshot } from '../../core/api/analyst/analyst.repository';
+import { EarningsRepository, EarningsSnapshot } from '../../core/api/earnings/earnings.repository';
+import { JobEvent, JobStreamService } from '../../core/api/analysis/job-stream.service';
+import {
+  NarrativeFeedbackRepository,
+  PromptScore,
+} from '../../core/api/analysis/narrative-feedback.repository';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {

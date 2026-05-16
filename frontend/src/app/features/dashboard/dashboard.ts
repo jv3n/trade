@@ -22,9 +22,9 @@ import {
   Portfolio,
   Asset,
   OwnedTicker,
-} from '../../core/portfolio.repository';
-import { MarketRepository, SymbolMatch } from '../../core/market.repository';
-import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
+} from '../../core/api/portfolio/portfolio.repository';
+import { MarketRepository, SymbolMatch } from '../../core/api/market/market.repository';
+import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
 
 /**
  * Debounce window between a keystroke in the watchlist search and the actual `/symbols/search`

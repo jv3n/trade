@@ -22,8 +22,8 @@ import { signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { OllamaStatus } from '../../../core/ollama-status.repository';
-import { OllamaStatusService } from '../../../core/ollama-status.service';
+import { OllamaStatus } from '../../../core/api/analysis/ollama-status.repository';
+import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
 import { OllamaStatusPanel } from './ollama-status-panel';
 
 describe('OllamaStatusPanel', () => {

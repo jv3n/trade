@@ -17,7 +17,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import {
   NarrativeObservabilityRepository,
   TickerObservationIndex,
-} from '../../../core/narrative-observability.repository';
+} from '../../../core/api/analysis/narrative-observability.repository';
 import { ObservabilityIndexPage } from './observability-index';
 
 describe('ObservabilityIndexPage', () => {

@@ -23,7 +23,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { provideTranslateService } from '@ngx-translate/core';
-import { PromptRepository, PromptTemplate } from '../../../core/prompt.repository';
+import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/prompt.repository';
 import { PromptsPage, lineDiff } from './prompts';
 
 describe('PromptsPage', () => {

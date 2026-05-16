@@ -23,9 +23,13 @@ import {
   Asset,
   Portfolio,
   OwnedTicker,
-} from '../../core/portfolio.repository';
-import { MarketRepository, SymbolMatch, TickerSnapshot } from '../../core/market.repository';
-import { WatchlistEntry, WatchlistRepository } from '../../core/watchlist.repository';
+} from '../../core/api/portfolio/portfolio.repository';
+import {
+  MarketRepository,
+  SymbolMatch,
+  TickerSnapshot,
+} from '../../core/api/market/market.repository';
+import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
 
 const mockPortfolioRepository: {
   getAll: () => Observable<Portfolio[]>;

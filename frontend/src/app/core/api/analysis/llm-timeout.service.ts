@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of, tap } from 'rxjs';
-import { ConfigRepository } from './config.repository';
+import { ConfigRepository } from '../config/config.repository';
 
 /**
  * Source of truth for the runtime LLM timeout exposed to the configuration page.

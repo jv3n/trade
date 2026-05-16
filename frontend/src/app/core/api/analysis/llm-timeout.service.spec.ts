@@ -24,7 +24,7 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
-import { ConfigEntry, ConfigRepository, TestConfigResult } from './config.repository';
+import { ConfigEntry, ConfigRepository, TestConfigResult } from '../config/config.repository';
 import { LlmTimeoutService } from './llm-timeout.service';
 
 class StubRepository extends ConfigRepository {

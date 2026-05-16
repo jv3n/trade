@@ -6,8 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ThemeService } from './core/theme.service';
-import { LanguageService, Language } from './core/language.service';
+import { ThemeService } from './core/app-state/theme.service';
+import { LanguageService, Language } from './core/app-state/language.service';
 
 @Component({
   selector: 'app-root',

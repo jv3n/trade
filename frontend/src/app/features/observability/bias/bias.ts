@@ -9,8 +9,8 @@ import {
   NarrativeBias,
   NarrativeBiasFilter,
   NarrativeBiasRepository,
-} from '../../../core/narrative-bias.repository';
-import { PromptRepository, PromptTemplate } from '../../../core/prompt.repository';
+} from '../../../core/api/analysis/narrative-bias.repository';
+import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/prompt.repository';
 
 /**
  * `/observability/bias` — Phase 3 #3 « narrative bias dashboard ». Aggregates the entire corpus

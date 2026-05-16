@@ -22,8 +22,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { NarrativeBias, NarrativeBiasRepository } from '../../../core/narrative-bias.repository';
-import { PromptRepository } from '../../../core/prompt.repository';
+import {
+  NarrativeBias,
+  NarrativeBiasRepository,
+} from '../../../core/api/analysis/narrative-bias.repository';
+import { PromptRepository } from '../../../core/api/analysis/prompt.repository';
 import { BiasPage } from './bias';
 
 describe('BiasPage', () => {
