@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { ConfigRepository } from './config.repository';
 
 /**
@@ -23,6 +23,11 @@ import { ConfigRepository } from './config.repository';
  * overrides behaves identically to the pre-v1.5 hardcoded constants. The `refresh()` failure
  * branch keeps the current value rather than reverting — a transient network blip during boot
  * shouldn't hand the user a worse default than the one we already had.
+ *
+ * **RxJS-only contract** — `refresh()` returns `Observable<void>` rather than `Promise<void>` so
+ * the frontend keeps a single async primitive (see [`angular-signals`](../../../.claude/skills/angular-signals/SKILL.md)
+ * — "no Promise from repository calls" rule). `provideAppInitializer` natively accepts an
+ * Observable return value ; the framework subscribes and awaits completion before bootstrap.
  */
 @Injectable({ providedIn: 'root' })
 export class LlmTimeoutService {
@@ -32,18 +37,20 @@ export class LlmTimeoutService {
   readonly seconds = this._seconds.asReadonly();
 
   /** Re-fetches the config list and updates the signal from the `llm.timeout-seconds` entry. */
-  async refresh(): Promise<void> {
-    try {
-      const entries = await firstValueFrom(this.repo.list());
-      const entry = entries.find((e) => e.key === TIMEOUT_KEY);
-      const parsed = entry?.currentValue ? Number(entry.currentValue) : NaN;
-      if (Number.isFinite(parsed) && parsed > 0) {
-        this._seconds.set(parsed);
-      }
-    } catch {
+  refresh(): Observable<void> {
+    return this.repo.list().pipe(
+      tap((entries) => {
+        const entry = entries.find((e) => e.key === TIMEOUT_KEY);
+        const parsed = entry?.currentValue ? Number(entry.currentValue) : NaN;
+        if (Number.isFinite(parsed) && parsed > 0) {
+          this._seconds.set(parsed);
+        }
+      }),
       // Boot-time network blip — keep whatever value the signal already holds (defaults to
       // DEFAULT_TIMEOUT_SECONDS on the first call). The page re-tries on next save.
-    }
+      catchError(() => of(undefined)),
+      map(() => undefined),
+    );
   }
 }
 

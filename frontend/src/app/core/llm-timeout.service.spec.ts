@@ -94,16 +94,16 @@ describe('LlmTimeoutService', () => {
     expect(service.seconds()).toBe(400);
   });
 
-  it('updates the signal when refresh() returns a positive numeric currentValue', async () => {
+  it('updates the signal when refresh() returns a positive numeric currentValue', () => {
     const { service, repo } = setup();
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', '600')]));
 
-    await service.refresh();
+    service.refresh().subscribe();
 
     expect(service.seconds()).toBe(600);
   });
 
-  it('keeps the previous value when refresh() is called and the backend throws', async () => {
+  it('keeps the previous value when refresh() is called and the backend throws', () => {
     const { service, repo } = setup();
     // First refresh primes a known value, second refresh fails — the signal must hold the primed
     // value rather than revert. This is the user-visible contract : a flaky `/api/config` blip
@@ -111,35 +111,35 @@ describe('LlmTimeoutService', () => {
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', '600')]));
     repo.listQueue.push(() => throwError(() => new Error('502 Bad Gateway')));
 
-    await service.refresh();
-    await service.refresh();
+    service.refresh().subscribe();
+    service.refresh().subscribe();
 
     expect(service.seconds()).toBe(600);
   });
 
-  it('keeps the previous value when refresh() returns no llm.timeout-seconds entry', async () => {
+  it('keeps the previous value when refresh() returns no llm.timeout-seconds entry', () => {
     const { service, repo } = setup();
     // Backend rename or missing key — the service degrades closed (keep the prior value) rather
     // than zeroing out the signal. The previous behaviour would have surfaced as a misleading
     // "≈ 0 s" label.
     repo.listQueue.push(() => of([entry('market.cache.ttl-minutes', '15')]));
 
-    await service.refresh();
+    service.refresh().subscribe();
 
     expect(service.seconds()).toBe(400);
   });
 
-  it('keeps the previous value when currentValue is null, blank, or non-numeric', async () => {
+  it('keeps the previous value when currentValue is null, blank, or non-numeric', () => {
     const { service, repo } = setup();
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', '600')]));
-    await service.refresh();
+    service.refresh().subscribe();
 
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', null)]));
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', '')]));
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', 'abc')]));
-    await service.refresh();
-    await service.refresh();
-    await service.refresh();
+    service.refresh().subscribe();
+    service.refresh().subscribe();
+    service.refresh().subscribe();
 
     // Each garbage shape must leave the prior 600 value untouched. We assert at the end rather
     // than between calls so the test reads as "no matter what bad value lands, the signal is
@@ -147,17 +147,17 @@ describe('LlmTimeoutService', () => {
     expect(service.seconds()).toBe(600);
   });
 
-  it('keeps the previous value when currentValue is zero or negative', async () => {
+  it('keeps the previous value when currentValue is zero or negative', () => {
     const { service, repo } = setup();
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', '600')]));
-    await service.refresh();
+    service.refresh().subscribe();
 
     // A 0 or negative timeout would translate to "abort immediately" on any future consumer that
     // ever reintroduces the abort path — defensive even though no consumer reads it today.
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', '0')]));
     repo.listQueue.push(() => of([entry('llm.timeout-seconds', '-30')]));
-    await service.refresh();
-    await service.refresh();
+    service.refresh().subscribe();
+    service.refresh().subscribe();
 
     expect(service.seconds()).toBe(600);
   });

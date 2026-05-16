@@ -105,39 +105,41 @@ export class OllamaPullDialog {
     this.modelControl.setValue(name);
   }
 
-  async pull(): Promise<void> {
+  pull(): void {
     if (this.busy()) return;
     const raw = this.modelControl.value.trim();
     if (raw === '') return;
 
     this.busy.set(true);
     this.error.set(null);
-    try {
-      const snap = await this.statusService.pull(raw);
-      // The backend returns a snapshot with `daemonReachable: false` on a failed pull (mirror
-      // of the unload contract). Treat that as a user-visible error rather than a success.
-      if (!snap.daemonReachable) {
+    this.statusService.pull(raw).subscribe({
+      next: (snap) => {
+        // The backend returns a snapshot with `daemonReachable: false` on a failed pull (mirror
+        // of the unload contract). Treat that as a user-visible error rather than a success.
+        if (!snap.daemonReachable) {
+          this.error.set(
+            snap.errorMessage ??
+              this.translate.instant(
+                'settings.configurationPage.ollamaStatus.pullDialog.errors.pullFailed',
+              ),
+          );
+          this.busy.set(false);
+          return;
+        }
+        this.busy.set(false);
+        this.dialogRef.close(raw);
+      },
+      error: (err: unknown) => {
         this.error.set(
-          snap.errorMessage ??
-            this.translate.instant(
-              'settings.configurationPage.ollamaStatus.pullDialog.errors.pullFailed',
-            ),
+          err instanceof Error
+            ? err.message
+            : this.translate.instant(
+                'settings.configurationPage.ollamaStatus.pullDialog.errors.pullFailed',
+              ),
         );
         this.busy.set(false);
-        return;
-      }
-      this.busy.set(false);
-      this.dialogRef.close(raw);
-    } catch (err) {
-      this.error.set(
-        err instanceof Error
-          ? err.message
-          : this.translate.instant(
-              'settings.configurationPage.ollamaStatus.pullDialog.errors.pullFailed',
-            ),
-      );
-      this.busy.set(false);
-    }
+      },
+    });
   }
 
   cancel(): void {
@@ -150,19 +152,19 @@ export class OllamaPullDialog {
    * the next signal update (driven by the service re-probe). Disabled while a pull is in
    * flight to avoid concurrent mutations on the same model.
    */
-  async delete(name: string): Promise<void> {
+  delete(name: string): void {
     if (this.busy()) return;
     this.error.set(null);
-    try {
-      await this.statusService.delete(name);
-    } catch (err) {
-      this.error.set(
-        err instanceof Error
-          ? err.message
-          : this.translate.instant(
-              'settings.configurationPage.ollamaStatus.pullDialog.errors.deleteFailed',
-            ),
-      );
-    }
+    this.statusService.delete(name).subscribe({
+      error: (err: unknown) => {
+        this.error.set(
+          err instanceof Error
+            ? err.message
+            : this.translate.instant(
+                'settings.configurationPage.ollamaStatus.pullDialog.errors.deleteFailed',
+              ),
+        );
+      },
+    });
   }
 }

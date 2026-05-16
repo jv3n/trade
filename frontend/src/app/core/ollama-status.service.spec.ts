@@ -102,18 +102,18 @@ describe('OllamaStatusService', () => {
     expect(service.status()).toBeNull();
   });
 
-  it('refresh sets the signal to the fetched snapshot', async () => {
+  it('refresh sets the signal to the fetched snapshot', () => {
     stub.getQueue.push(() => of(reachable));
-    await service.refresh();
+    service.refresh().subscribe();
     expect(service.status()).toEqual(reachable);
   });
 
-  it('refresh keeps the previous signal value when the HTTP call fails', async () => {
+  it('refresh keeps the previous signal value when the HTTP call fails', () => {
     stub.getQueue.push(() => of(reachable));
-    await service.refresh();
+    service.refresh().subscribe();
 
     stub.getQueue.push(() => throwError(() => new Error('network is down')));
-    await service.refresh();
+    service.refresh().subscribe();
 
     // Critical : the panel must not flicker back to `null` (the spinner state) on a transient
     // backend hiccup. Stale-but-rendered beats a spinner that comes back every poll tick.
@@ -125,8 +125,8 @@ describe('OllamaStatusService', () => {
     try {
       stub.getQueue.push(() => of(reachable));
       service.startPolling(5_000);
-      // The immediate refresh fires synchronously (microtask is flushed by the await chain inside
-      // refresh — but the get() call itself is synchronous here because we return `of(...)`).
+      // The immediate refresh fires synchronously because `of(...)` emits in the same microtask
+      // as the `.subscribe()` call inside `startPolling`.
       expect(stub.callCount).toBe(1);
     } finally {
       service.stopPolling();
@@ -195,26 +195,26 @@ describe('OllamaStatusService', () => {
 
   // -------------------------------------------------------------------- unload
 
-  it('unload forwards the model name and updates the signal with the post-action snapshot', async () => {
+  it('unload forwards the model name and updates the signal with the post-action snapshot', () => {
     const postUnload: OllamaStatus = {
       ...reachable,
       loadedModels: [], // VRAM emptied
     };
     stub.unloadQueue.push(() => of(postUnload));
 
-    await service.unload('qwen2.5:3b');
+    service.unload('qwen2.5:3b').subscribe();
 
     expect(stub.unloadCalls).toEqual(['qwen2.5:3b']);
     expect(service.status()).toEqual(postUnload);
   });
 
-  it('unload preserves the previous signal value when the HTTP call fails', async () => {
+  it('unload preserves the previous signal value when the HTTP call fails', () => {
     // Land a known good snapshot first, then fail the unload.
     stub.getQueue.push(() => of(reachable));
-    await service.refresh();
+    service.refresh().subscribe();
 
     stub.unloadQueue.push(() => throwError(() => new Error('backend down')));
-    await service.unload('qwen2.5:3b');
+    service.unload('qwen2.5:3b').subscribe();
 
     // Same contract as refresh failure — the panel keeps showing what it had instead of
     // flipping back to spinner / null.
@@ -223,34 +223,39 @@ describe('OllamaStatusService', () => {
 
   // -------------------------------------------------------------------- pull
 
-  it('pull forwards the model name and updates the signal with the post-action snapshot', async () => {
+  it('pull forwards the model name and updates the signal with the post-action snapshot', () => {
     const postPull: OllamaStatus = {
       ...reachable,
       availableModels: ['mistral:7b', 'qwen2.5:3b'],
     };
     stub.pullQueue.push(() => of(postPull));
 
-    const result = await service.pull('mistral:7b');
+    let emitted: OllamaStatus | undefined;
+    service.pull('mistral:7b').subscribe((snap) => (emitted = snap));
 
     expect(stub.pullCalls).toEqual(['mistral:7b']);
-    expect(result).toEqual(postPull);
+    expect(emitted).toEqual(postPull);
     // The shared signal updates so the parent panel re-renders the new model in `availableModels`
     // without waiting for the next 10 s polling tick.
     expect(service.status()).toEqual(postPull);
   });
 
-  it('pull rethrows transport errors so the dialog can render an inline error message', async () => {
+  it('pull surfaces transport errors so the dialog can render an inline error message', () => {
     // Distinct from the [unload] / [refresh] contract : pull is invoked by an explicit user
     // click and the dialog needs to surface a failure rather than silently leave the user
-    // staring at a spinner. The service swallows nothing on this path.
+    // staring at a spinner. The service swallows nothing on this path — errors flow through the
+    // Observable error channel rather than as a thrown Promise rejection.
     stub.pullQueue.push(() => throwError(() => new Error('Pull failed: registry unreachable')));
 
-    await expect(service.pull('mistral:7b')).rejects.toThrow('registry unreachable');
+    let captured: unknown;
+    service.pull('mistral:7b').subscribe({ error: (e) => (captured = e) });
+
+    expect((captured as Error).message).toContain('registry unreachable');
   });
 
   // -------------------------------------------------------------------- delete
 
-  it('delete forwards the model name and updates the signal with the post-action snapshot', async () => {
+  it('delete forwards the model name and updates the signal with the post-action snapshot', () => {
     // Pre-state : two models pulled. Post-state : one removed by the delete.
     stub.deleteQueue.push(() =>
       of({
@@ -259,20 +264,20 @@ describe('OllamaStatusService', () => {
       }),
     );
 
-    await service.delete('mistral:7b');
+    service.delete('mistral:7b').subscribe();
 
     expect(stub.deleteCalls).toEqual(['mistral:7b']);
     expect(service.status()?.availableModels).toEqual(['qwen2.5:3b']);
   });
 
-  it('delete preserves the previous signal value when the HTTP call fails', async () => {
+  it('delete preserves the previous signal value when the HTTP call fails', () => {
     // Mirror of the unload contract — delete is best-effort UX (the panel's next polling tick
     // will resync). A transient failure must not blank the panel.
     stub.getQueue.push(() => of(reachable));
-    await service.refresh();
+    service.refresh().subscribe();
 
     stub.deleteQueue.push(() => throwError(() => new Error('backend down')));
-    await service.delete('mistral:7b');
+    service.delete('mistral:7b').subscribe();
 
     expect(service.status()).toEqual(reachable);
   });

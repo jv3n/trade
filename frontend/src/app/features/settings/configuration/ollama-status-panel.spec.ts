@@ -21,6 +21,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { provideTranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { OllamaStatus } from '../../../core/ollama-status.repository';
 import { OllamaStatusService } from '../../../core/ollama-status.service';
 import { OllamaStatusPanel } from './ollama-status-panel';
@@ -30,16 +31,16 @@ describe('OllamaStatusPanel', () => {
   const statusSignal = signal<OllamaStatus | null>(null);
   const startPolling = vi.fn();
   const stopPolling = vi.fn();
-  const refresh = vi.fn().mockResolvedValue(undefined);
-  const unload = vi.fn().mockResolvedValue(undefined);
+  const refresh = vi.fn().mockReturnValue(of(undefined));
+  const unload = vi.fn().mockReturnValue(of(undefined));
   const dialogOpen = vi.fn();
 
   beforeEach(async () => {
     statusSignal.set(null);
     startPolling.mockReset();
     stopPolling.mockReset();
-    refresh.mockReset().mockResolvedValue(undefined);
-    unload.mockReset().mockResolvedValue(undefined);
+    refresh.mockReset().mockReturnValue(of(undefined));
+    unload.mockReset().mockReturnValue(of(undefined));
     dialogOpen.mockReset();
 
     await TestBed.configureTestingModule({

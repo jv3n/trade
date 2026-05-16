@@ -82,11 +82,11 @@ export class OllamaStatusPanel implements OnInit, OnDestroy {
   }
 
   refresh(): void {
-    void this.statusService.refresh();
+    this.statusService.refresh().subscribe();
   }
 
   unload(model: string): void {
-    void this.statusService.unload(model);
+    this.statusService.unload(model).subscribe();
   }
 
   openPullDialog(): void {

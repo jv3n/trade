@@ -19,6 +19,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { provideTranslateService } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
 import { OllamaStatus } from '../../../core/ollama-status.repository';
 import { OllamaStatusService } from '../../../core/ollama-status.service';
 import { OllamaPullDialog } from './ollama-pull-dialog';
@@ -70,11 +71,11 @@ describe('OllamaPullDialog', () => {
     expect(component.modelControl.value).toBe('mistral:7b');
   });
 
-  it('pull closes the dialog with the typed model on success', async () => {
-    pull.mockResolvedValue(reachableSnap);
+  it('pull closes the dialog with the typed model on success', () => {
+    pull.mockReturnValue(of(reachableSnap));
     component.modelControl.setValue('mistral:7b');
 
-    await component.pull();
+    component.pull();
 
     expect(pull).toHaveBeenCalledWith('mistral:7b');
     expect(dialogClose).toHaveBeenCalledWith('mistral:7b');
@@ -82,20 +83,20 @@ describe('OllamaPullDialog', () => {
     expect(component.error()).toBeNull();
   });
 
-  it('pull trims surrounding whitespace before forwarding the model name', async () => {
-    pull.mockResolvedValue(reachableSnap);
+  it('pull trims surrounding whitespace before forwarding the model name', () => {
+    pull.mockReturnValue(of(reachableSnap));
     component.modelControl.setValue('  mistral:7b  ');
 
-    await component.pull();
+    component.pull();
 
     expect(pull).toHaveBeenCalledWith('mistral:7b');
     expect(dialogClose).toHaveBeenCalledWith('mistral:7b');
   });
 
-  it('pull short-circuits when the input is empty', async () => {
+  it('pull short-circuits when the input is empty', () => {
     component.modelControl.setValue('   '); // whitespace only
 
-    await component.pull();
+    component.pull();
 
     // No HTTP call, no dialog close — the form's required validator is what guards the button
     // in the template, but the method-level check is a defense in depth.
@@ -103,29 +104,31 @@ describe('OllamaPullDialog', () => {
     expect(dialogClose).not.toHaveBeenCalled();
   });
 
-  it('pull keeps the dialog open with an inline error when the service rejects', async () => {
-    pull.mockRejectedValue(new Error('registry unreachable'));
+  it('pull keeps the dialog open with an inline error when the service errors', () => {
+    pull.mockReturnValue(throwError(() => new Error('registry unreachable')));
     component.modelControl.setValue('mistral:7b');
 
-    await component.pull();
+    component.pull();
 
     expect(dialogClose).not.toHaveBeenCalled();
     expect(component.error()).toBe('registry unreachable');
     expect(component.busy()).toBe(false);
   });
 
-  it('pull keeps the dialog open when the snapshot reports daemon unreachable', async () => {
+  it('pull keeps the dialog open when the snapshot reports daemon unreachable', () => {
     // The backend's fail-soft contract turns most upstream errors (wrong model tag, registry
     // 5xx, network) into a 200 response carrying `daemonReachable: false`. The dialog must
     // treat that as a user-visible failure rather than a success.
-    pull.mockResolvedValue({
-      ...reachableSnap,
-      daemonReachable: false,
-      errorMessage: 'HTTP 500 from Ollama',
-    } satisfies OllamaStatus);
+    pull.mockReturnValue(
+      of({
+        ...reachableSnap,
+        daemonReachable: false,
+        errorMessage: 'HTTP 500 from Ollama',
+      } satisfies OllamaStatus),
+    );
     component.modelControl.setValue('definitely-not-a-real-model');
 
-    await component.pull();
+    component.pull();
 
     expect(dialogClose).not.toHaveBeenCalled();
     expect(component.error()).toBe('HTTP 500 from Ollama');
@@ -180,32 +183,32 @@ describe('OllamaPullDialog', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="other-pulled"]')).toBeFalsy();
   });
 
-  it('delete forwards the model name to the service and clears any prior inline error', async () => {
-    deleteFn.mockResolvedValue(undefined);
+  it('delete forwards the model name to the service and clears any prior inline error', () => {
+    deleteFn.mockReturnValue(of(undefined));
     component.error.set('previous error'); // residue from a prior failed pull
     statusSignal.set(reachableSnap); // mistral:7b + qwen2.5:3b pulled
 
-    await component.delete('mistral:7b');
+    component.delete('mistral:7b');
 
     expect(deleteFn).toHaveBeenCalledWith('mistral:7b');
     expect(component.error()).toBeNull();
   });
 
-  it('delete is a no-op while a pull is in flight', async () => {
+  it('delete is a no-op while a pull is in flight', () => {
     // Defense in depth — the trash button is disabled in the template, but the method-level
     // guard catches a programmatic call (and protects against a race where the disabled
     // attribute didn't propagate yet).
     component.busy.set(true);
 
-    await component.delete('mistral:7b');
+    component.delete('mistral:7b');
 
     expect(deleteFn).not.toHaveBeenCalled();
   });
 
-  it('delete renders an inline error when the service rejects', async () => {
-    deleteFn.mockRejectedValue(new Error('disk locked'));
+  it('delete renders an inline error when the service errors', () => {
+    deleteFn.mockReturnValue(throwError(() => new Error('disk locked')));
 
-    await component.delete('mistral:7b');
+    component.delete('mistral:7b');
 
     expect(component.error()).toBe('disk locked');
   });

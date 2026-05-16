@@ -120,7 +120,7 @@ When a service's initial value depends on an async fetch, prime it before the fi
 provideAppInitializer(() => inject(LlmTimeoutService).refresh()),
 ```
 
-The initializer returns a `Promise<void>` ; Angular waits for it before bootstrapping the routed components. Without this, the configuration page would render the LLM timeout label with the hardcoded default (400 s) and only flip to the user's saved value after a manual reload.
+The initializer returns an `Observable<void>` (the project's RxJS-only rule — see [`angular-signals > RxJS-only`](../angular-signals/SKILL.md#rxjs-only--no-promise-no-firstvaluefrom)) ; Angular accepts `Observable | Promise | void` natively and waits for completion before bootstrapping the routed components. Without this, the configuration page would render the LLM timeout label with the hardcoded default (400 s) and only flip to the user's saved value after a manual reload.
 
 **Don't** chain `provideAppInitializer` calls when one can be split inside the service. The initializer should be a single line that delegates ; logic lives in the service.
 
