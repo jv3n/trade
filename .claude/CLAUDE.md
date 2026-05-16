@@ -35,6 +35,7 @@ trade/
 │       │   ├── local/<bucket>/         # browser-persisted ports (today: annotation/ only) + adapters/*.local.ts
 │       │   ├── app-state/              # cross-cutting UI signal services : theme.service.ts, language.service.ts
 │       │   └── providers.ts            # provideRepositories() — wires every bucket
+│       ├── shared/          # pure cross-cutting helpers (no state, no DI) — one folder per concept, e.g. shared/toggle-set/toggle-set.ts
 │       └── features/        # UI pages (primary adapters)
 ├── backend/                 # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/

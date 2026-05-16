@@ -39,6 +39,13 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
+      // Allow `_`-prefixed args / vars to opt out of the unused-vars check — useful for abstract
+      // method signatures we have to declare (e.g. test mock classes that extend a port) but
+      // whose body doesn't touch the param.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
     },
   },
   {
