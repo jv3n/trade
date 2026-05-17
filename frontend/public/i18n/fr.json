@@ -535,6 +535,9 @@
         "claude": "Claude",
         "ollama": "Ollama"
       },
+      "providerDisabled": {
+        "missingKey": "Configurez la clé `{{ key }}` d'abord pour activer ce provider."
+      },
       "twelveData": {
         "title": "Twelve Data — clé API",
         "description": "Provider de données de marché (cours, OHLC, indicateurs). Free tier 800 crédits/jour. <a href=\"https://twelvedata.com/account\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",

@@ -170,6 +170,7 @@ Run from `backend/`. Spring Boot + Kotlin DSL Gradle.
 - Commit message proposals are always in **English**
 - Never commit API keys. `application-local.yml` is gitignored
 - `docs/data-input/` contains **fake** sample CSVs (versioned, used for smoke tests / demo / CI). Real Wealthsimple exports go in `docs/data-input-local/` which is gitignored — never move real exports into `data-input/`
+- **Never log user emails** — always log the `User.id` UUID. The email is PII ; in prod logs (and especially log aggregators that may retain longer than the DB), the UUID is enough to correlate with `app_user` via SQL. Same rule for any other PII (display_name, provider_id). When adding a log statement in the auth path (`CustomOAuth2UserService`, `CustomOidcUserService`, `LocalNoAuthFilter`, `AuthService`) or downstream services that capture user context (`CsvImportService` etc.), include `userId={}` with the UUID, not `email={}`. The existing `OAuth login (...) — id=… provider=…` pattern in `CustomOAuth2UserService.findOrCreateUser` is the reference.
 
 ## Instructions for Claude
 

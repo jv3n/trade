@@ -3,14 +3,29 @@ import { Observable } from 'rxjs';
 export type ConfigValueType = 'STRING' | 'INT' | 'SECRET' | 'ENUM';
 
 /**
+ * One option on an ENUM-typed config key. `disabledReason` carries the property path of a
+ * missing prerequisite (e.g. `market.twelvedata.api-key`) when the option exists but cannot be
+ * selected — the live `twelvedata` toggle is gated on the Twelve Data API key being configured.
+ * The UI renders the option as disabled and surfaces the path in a tooltip. `null` means the
+ * option is available. `mock` options are never disabled (they don't require any key).
+ */
+export interface AllowedValue {
+  value: string;
+  disabledReason: string | null;
+}
+
+/**
  * One runtime config entry as exposed by the backend `/api/config` endpoint.
  *
  * Secret keys (API keys) carry `currentValue: null` and `defaultValue: null` even when set —
  * the server never echoes the actual secret value. The UI relies on `hasValue` / `isOverridden`
  * to render state.
  *
- * ENUM keys carry an `allowedValues` array — the UI renders a toggle group restricted to those
- * values. The server rejects any value outside the list.
+ * ENUM keys carry an `allowedValues` array of [AllowedValue] entries — the UI renders a toggle
+ * group restricted to those values. Each option may carry a `disabledReason` for provider gating
+ * (cf. Phase 4). The server rejects any value outside the list AND any switch to a value whose
+ * `disabledReason` would not be null (defense in depth — UI grays out the option but a direct PUT
+ * still gets a 400).
  */
 export interface ConfigEntry {
   key: string;
@@ -19,7 +34,7 @@ export interface ConfigEntry {
   defaultValue: string | null;
   hasValue: boolean;
   isOverridden: boolean;
-  allowedValues: string[] | null;
+  allowedValues: AllowedValue[] | null;
 }
 
 export interface TestConfigResult {

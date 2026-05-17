@@ -535,6 +535,9 @@
         "claude": "Claude",
         "ollama": "Ollama"
       },
+      "providerDisabled": {
+        "missingKey": "Configure the `{{ key }}` key first to enable this provider."
+      },
       "twelveData": {
         "title": "Twelve Data — API key",
         "description": "Market data provider (quotes, OHLC, indicators). Free tier 800 credits/day. <a href=\"https://twelvedata.com/account\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",

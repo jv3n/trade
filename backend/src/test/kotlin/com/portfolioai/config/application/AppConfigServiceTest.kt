@@ -161,6 +161,46 @@ class AppConfigServiceTest {
   }
 
   @Test
+  fun `set refuses to switch to a live provider when the required API key is empty`() {
+    // Provider gating (Phase 4) — without this, a user could switch `market.provider=twelvedata`
+    // while `market.twelvedata.api-key` is empty, and the next dossier opened would surface a 503
+    // « Twelve Data API key is missing » with no in-UI way to recover. The validator blocks the
+    // switch upstream with a clear 400 message naming the missing key.
+    val service = newService(twelveDataApiKey = "", finnhubApiKey = "", anthropicApiKey = "")
+
+    val ex =
+      assertThrows<IllegalArgumentException> {
+        service.set(ConfigKeys.MARKET_PROVIDER, ConfigKeys.PROVIDER_TWELVEDATA)
+      }
+    assertTrue(ex.message?.contains("market.twelvedata.api-key") ?: false)
+
+    val newsEx =
+      assertThrows<IllegalArgumentException> {
+        service.set(ConfigKeys.NEWS_PROVIDER, ConfigKeys.PROVIDER_FINNHUB)
+      }
+    assertTrue(newsEx.message?.contains("market.finnhub.api-key") ?: false)
+
+    val claudeEx =
+      assertThrows<IllegalArgumentException> {
+        service.set(ConfigKeys.LLM_PROVIDER, ConfigKeys.PROVIDER_CLAUDE)
+      }
+    assertTrue(claudeEx.message?.contains("anthropic.api.key") ?: false)
+  }
+
+  @Test
+  fun `set allows mock provider even when no API key is configured`() {
+    // The mock providers don't need any key (they're deterministic synthetic data, no network
+    // call). Switching to mock must always work, even on a fresh clone with no secrets.
+    val service = newService(twelveDataApiKey = "", finnhubApiKey = "", anthropicApiKey = "")
+    whenever(repo.findById(ConfigKeys.MARKET_PROVIDER)).thenReturn(Optional.empty())
+    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { it.arguments[0] as AppConfigEntry }
+
+    service.set(ConfigKeys.MARKET_PROVIDER, ConfigKeys.PROVIDER_MOCK)
+
+    assertEquals(ConfigKeys.PROVIDER_MOCK, service.getString(ConfigKeys.MARKET_PROVIDER))
+  }
+
+  @Test
   fun `set rejects an unknown LLM provider value`() {
     // Same enum guarantee as the market / news providers — a typo like "claude-api" or "openai"
     // must fail at write time, not silently route nowhere when the next narrative runs.
@@ -237,15 +277,19 @@ class AppConfigServiceTest {
    * value carriers (constructor-bound `@Value`s, no logic) — mocking would just re-state the field
    * set.
    */
-  private fun newService(): AppConfigService =
+  private fun newService(
+    twelveDataApiKey: String = "yaml-twelve",
+    finnhubApiKey: String = "yaml-finn",
+    anthropicApiKey: String = "yaml-anthropic",
+  ): AppConfigService =
     AppConfigService(
         repository = repo,
         eventPublisher = publisher,
         secrets =
           SecretsDefaults(
-            twelveDataApiKey = "yaml-twelve",
-            finnhubApiKey = "yaml-finn",
-            anthropicApiKey = "yaml-anthropic",
+            twelveDataApiKey = twelveDataApiKey,
+            finnhubApiKey = finnhubApiKey,
+            anthropicApiKey = anthropicApiKey,
           ),
         dataProviders =
           DataProvidersDefaults(

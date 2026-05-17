@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   ConfigEntry,
@@ -93,6 +94,7 @@ const CLAUDE_MODEL_SUGGESTIONS = [
     MatProgressSpinnerModule,
     MatSliderModule,
     MatButtonToggleModule,
+    MatTooltipModule,
     TranslatePipe,
     OllamaStatusPanel,
   ],

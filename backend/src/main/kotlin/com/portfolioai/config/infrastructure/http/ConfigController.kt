@@ -4,6 +4,7 @@ import com.portfolioai.analysis.application.dto.OllamaStatusDto
 import com.portfolioai.analysis.infrastructure.llm.OllamaStatusService
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
+import com.portfolioai.config.application.dto.AllowedValueDto
 import com.portfolioai.config.application.dto.ConfigEntryDto
 import com.portfolioai.config.application.dto.ConfigValueType
 import com.portfolioai.config.application.dto.DeleteModelRequest
@@ -123,14 +124,14 @@ class ConfigController(
 
   private fun entryFor(key: String): ConfigEntryDto {
     val isSecret = key in ConfigKeys.SECRET_KEYS
-    val allowedValues = ConfigKeys.ENUM_KEYS[key]
+    val allowedRaw = ConfigKeys.ENUM_KEYS[key]
     val isOverridden = service.isOverridden(key)
     val effective = service.getString(key)
     val default = service.defaultFor(key)
     val type =
       when {
         isSecret -> ConfigValueType.SECRET
-        allowedValues != null -> ConfigValueType.ENUM
+        allowedRaw != null -> ConfigValueType.ENUM
         key in ConfigKeys.INT_KEYS -> ConfigValueType.INT
         else -> ConfigValueType.STRING
       }
@@ -141,7 +142,21 @@ class ConfigController(
       defaultValue = if (isSecret) null else default,
       hasValue = effective.isNotBlank(),
       isOverridden = isOverridden,
-      allowedValues = allowedValues,
+      allowedValues = allowedRaw?.map { value -> annotateAllowedValue(key, value) },
     )
+  }
+
+  /**
+   * Annotates an ENUM allowed value with a `disabledReason` when it requires an API key that's not
+   * configured. Provider gating : if the user picks `market.provider=twelvedata` without having set
+   * `market.twelvedata.api-key`, the toggle is rendered disabled in the UI. The `mock` option is
+   * always available (no required key). The reason carries the property path of the missing key —
+   * the frontend translates it via `configurationPage.providerDisabled.missingKey` (i18n
+   * placeholder substitution).
+   */
+  private fun annotateAllowedValue(providerKey: String, value: String): AllowedValueDto {
+    val requiredKey = ConfigKeys.PROVIDER_REQUIRED_KEY[providerKey to value]
+    val disabled = requiredKey != null && service.getString(requiredKey).isBlank()
+    return AllowedValueDto(value = value, disabledReason = if (disabled) requiredKey else null)
   }
 }

@@ -4,6 +4,7 @@ import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import java.time.Instant
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
@@ -34,6 +35,8 @@ class CustomOAuth2UserService(
   private val userRepository: UserRepository,
   @Value("\${app.admin.emails:}") private val adminEmailsRaw: String,
 ) : DefaultOAuth2UserService() {
+
+  private val log = LoggerFactory.getLogger(javaClass)
 
   private val adminEmails: Set<String> by lazy {
     adminEmailsRaw.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }.toSet()
@@ -75,21 +78,40 @@ class CustomOAuth2UserService(
    * OIDC path (which uses `OidcUserService`, not `OAuth2UserService`, and produces a different
    * principal type). Mutates the row in place when found ; saves a fresh row when not, applying the
    * admin-email whitelist at creation only.
+   *
+   * **Logs only the user `id` (UUID) — never the email.** The email is PII ; for prod audit /
+   * debug, the `id` is enough to correlate a login event with the row in `app_user` via SQL. The
+   * provider + role are logged because they're not PII and they're useful for "who landed in ADMIN
+   * this morning" type queries. Same convention applies anywhere else in the codebase : log
+   * `user.id`, never `user.email`.
    */
-  internal fun findOrCreateUser(email: String, sub: String, name: String?, provider: String): User =
-    userRepository.findByEmail(email)?.also {
-      if (!name.isNullOrBlank()) it.displayName = name
-      it.providerId = sub
-      it.lastLoginAt = Instant.now()
+  internal fun findOrCreateUser(email: String, sub: String, name: String?, provider: String): User {
+    val existing = userRepository.findByEmail(email)
+    if (existing != null) {
+      if (!name.isNullOrBlank()) existing.displayName = name
+      existing.providerId = sub
+      existing.lastLoginAt = Instant.now()
+      log.info("OAuth login (existing user) — id={} provider={}", existing.id, provider)
+      return existing
     }
-      ?: userRepository.save(
+    val assignedRole = if (email.lowercase() in adminEmails) Role.ADMIN else Role.USER
+    val created =
+      userRepository.save(
         User(
           email = email,
           displayName = name,
           provider = provider,
           providerId = sub,
-          role = if (email.lowercase() in adminEmails) Role.ADMIN else Role.USER,
+          role = assignedRole,
           lastLoginAt = Instant.now(),
         )
       )
+    log.info(
+      "OAuth login (new user created) — id={} provider={} role={}",
+      created.id,
+      provider,
+      assignedRole,
+    )
+    return created
+  }
 }

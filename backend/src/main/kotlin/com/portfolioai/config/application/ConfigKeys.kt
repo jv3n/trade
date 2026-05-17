@@ -47,6 +47,26 @@ object ConfigKeys {
       LLM_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_CLAUDE, PROVIDER_OLLAMA),
     )
 
+  /**
+   * Mapping `(provider key, live value) → required SECRET key`. The UI uses this to disable the
+   * live option in a toggle when the required key is empty, and the backend uses it to reject a
+   * `set(provider, liveValue)` if the prerequisite is missing — defense in depth against a stuck
+   * state where the runtime config selects a provider that can't actually serve.
+   *
+   * `mock` values never appear here — `mock` providers don't need any key (they're deterministic
+   * synthetic data, no network call). The `ollama` value is also absent because Ollama doesn't use
+   * an API key ; if the daemon isn't reachable the client surfaces a 503 at call time, which is a
+   * different failure mode than missing creds. Only the keyed live providers need gating.
+   */
+  val PROVIDER_REQUIRED_KEY: Map<Pair<String, String>, String> =
+    mapOf(
+      (MARKET_PROVIDER to PROVIDER_TWELVEDATA) to TWELVEDATA_API_KEY,
+      (NEWS_PROVIDER to PROVIDER_FINNHUB) to FINNHUB_API_KEY,
+      (ANALYST_PROVIDER to PROVIDER_FINNHUB) to FINNHUB_API_KEY,
+      (EARNINGS_PROVIDER to PROVIDER_FINNHUB) to FINNHUB_API_KEY,
+      (LLM_PROVIDER to PROVIDER_CLAUDE) to ANTHROPIC_API_KEY,
+    )
+
   val KNOWN_KEYS: Set<String> =
     setOf(
       TWELVEDATA_API_KEY,

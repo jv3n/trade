@@ -187,9 +187,12 @@ class CsvImportService(
       portfolioRepository.save(portfolio)
     }
 
+    // userId logged for multi-tenant audit trail (Phase 4) — never log the user's email, the UUID
+    // is enough to correlate with the `app_user` table via SQL.
     log.info(
-      "CSV import batch={}: {} portfolios created, {} updated, {} positions, {} closed, {} reopened, {} rows skipped",
+      "CSV import batch={} userId={}: {} portfolios created, {} updated, {} positions, {} closed, {} reopened, {} rows skipped",
       batchId,
+      currentUser.id,
       portfoliosCreated,
       portfoliosUpdated,
       totalImported,

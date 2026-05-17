@@ -121,6 +121,18 @@ class AppConfigService(
     if (allowed != null) {
       require(value in allowed) { "$key must be one of $allowed (got '$value')" }
     }
+    // Provider gating : refuse a switch to a live provider when the required API key isn't
+    // configured (neither in DB override nor in YAML fallback). The frontend already grays out
+    // the option (`AllowedValueDto.disabledReason`) but a direct PUT could bypass that — we
+    // defend in depth so the runtime config never lands in a stuck state where the user has to
+    // SQL-reset the override to recover. The `mock` option is always available ; only live
+    // values are gated.
+    val requiredKey = ConfigKeys.PROVIDER_REQUIRED_KEY[key to value]
+    if (requiredKey != null && getString(requiredKey).isBlank()) {
+      throw IllegalArgumentException(
+        "$key=$value requires $requiredKey to be configured first (DB override or env var)"
+      )
+    }
   }
 }
 

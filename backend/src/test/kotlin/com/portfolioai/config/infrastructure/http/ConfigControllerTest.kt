@@ -112,7 +112,7 @@ class ConfigControllerTest {
       // Analyst provider : ENUM, allowedValues drives the toggle group.
       .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
       .andExpect(jsonPath("$[0].type").value("ENUM"))
-      .andExpect(jsonPath("$[0].allowedValues[1]").value("finnhub"))
+      .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
       // Anthropic key : SECRET — value masked even though the YAML default has one.
       .andExpect(jsonPath("$[1].key").value(ConfigKeys.ANTHROPIC_API_KEY))
       .andExpect(jsonPath("$[1].type").value("SECRET"))
@@ -140,9 +140,9 @@ class ConfigControllerTest {
       .andExpect(jsonPath("$[4].defaultValue").value("claude"))
       .andExpect(jsonPath("$[4].isOverridden").value(true))
       .andExpect(jsonPath("$[4].allowedValues.length()").value(3))
-      .andExpect(jsonPath("$[4].allowedValues[0]").value("mock"))
-      .andExpect(jsonPath("$[4].allowedValues[1]").value("claude"))
-      .andExpect(jsonPath("$[4].allowedValues[2]").value("ollama"))
+      .andExpect(jsonPath("$[4].allowedValues[0].value").value("mock"))
+      .andExpect(jsonPath("$[4].allowedValues[1].value").value("claude"))
+      .andExpect(jsonPath("$[4].allowedValues[2].value").value("ollama"))
       // LLM timeout : INT slider, default 400, overridden to 600 here.
       .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_TIMEOUT_SECONDS))
       .andExpect(jsonPath("$[5].type").value("INT"))

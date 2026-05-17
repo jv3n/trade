@@ -75,7 +75,10 @@ const MARKET_PROVIDER: ConfigEntry = {
   defaultValue: 'mock',
   hasValue: true,
   isOverridden: false,
-  allowedValues: ['mock', 'twelvedata'],
+  allowedValues: [
+    { value: 'mock', disabledReason: null },
+    { value: 'twelvedata', disabledReason: null },
+  ],
 };
 
 const NEWS_PROVIDER: ConfigEntry = {
@@ -85,7 +88,10 @@ const NEWS_PROVIDER: ConfigEntry = {
   defaultValue: 'mock',
   hasValue: true,
   isOverridden: false,
-  allowedValues: ['mock', 'finnhub'],
+  allowedValues: [
+    { value: 'mock', disabledReason: null },
+    { value: 'finnhub', disabledReason: null },
+  ],
 };
 
 const ANALYST_PROVIDER: ConfigEntry = {
@@ -95,7 +101,10 @@ const ANALYST_PROVIDER: ConfigEntry = {
   defaultValue: 'mock',
   hasValue: true,
   isOverridden: false,
-  allowedValues: ['mock', 'finnhub'],
+  allowedValues: [
+    { value: 'mock', disabledReason: null },
+    { value: 'finnhub', disabledReason: null },
+  ],
 };
 
 const EARNINGS_PROVIDER: ConfigEntry = {
@@ -105,7 +114,10 @@ const EARNINGS_PROVIDER: ConfigEntry = {
   defaultValue: 'mock',
   hasValue: true,
   isOverridden: false,
-  allowedValues: ['mock', 'finnhub'],
+  allowedValues: [
+    { value: 'mock', disabledReason: null },
+    { value: 'finnhub', disabledReason: null },
+  ],
 };
 
 const LLM_PROVIDER: ConfigEntry = {
@@ -115,7 +127,10 @@ const LLM_PROVIDER: ConfigEntry = {
   defaultValue: 'claude',
   hasValue: true,
   isOverridden: true,
-  allowedValues: ['claude', 'ollama'],
+  allowedValues: [
+    { value: 'claude', disabledReason: null },
+    { value: 'ollama', disabledReason: null },
+  ],
 };
 
 const OLLAMA_MODEL: ConfigEntry = {
@@ -255,11 +270,29 @@ describe('Configuration', () => {
     expect(component.anthropicKey()?.key).toBe('anthropic.api.key');
     expect(component.anthropicKey()?.type).toBe('SECRET');
     expect(component.cacheTtl()?.currentValue).toBe('30');
-    expect(component.marketProvider()?.allowedValues).toEqual(['mock', 'twelvedata']);
-    expect(component.newsProvider()?.allowedValues).toEqual(['mock', 'finnhub']);
-    expect(component.analystProvider()?.allowedValues).toEqual(['mock', 'finnhub']);
-    expect(component.earningsProvider()?.allowedValues).toEqual(['mock', 'finnhub']);
-    expect(component.llmProvider()?.allowedValues).toEqual(['claude', 'ollama']);
+    // Phase 4 — allowedValues changed from string[] to AllowedValue[] (value + disabledReason)
+    // to support provider gating in the UI. We assert on the mapped values only ; the
+    // disabledReason path is exercised in dedicated tests below.
+    expect(component.marketProvider()?.allowedValues?.map((v) => v.value)).toEqual([
+      'mock',
+      'twelvedata',
+    ]);
+    expect(component.newsProvider()?.allowedValues?.map((v) => v.value)).toEqual([
+      'mock',
+      'finnhub',
+    ]);
+    expect(component.analystProvider()?.allowedValues?.map((v) => v.value)).toEqual([
+      'mock',
+      'finnhub',
+    ]);
+    expect(component.earningsProvider()?.allowedValues?.map((v) => v.value)).toEqual([
+      'mock',
+      'finnhub',
+    ]);
+    expect(component.llmProvider()?.allowedValues?.map((v) => v.value)).toEqual([
+      'claude',
+      'ollama',
+    ]);
     expect(component.ollamaModel()?.currentValue).toBe('qwen2.5:3b');
     expect(component.anthropicModel()?.currentValue).toBe('claude-opus-4-6');
     expect(component.llmTimeout()?.currentValue).toBe('600');

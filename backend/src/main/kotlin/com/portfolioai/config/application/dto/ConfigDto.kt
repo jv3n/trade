@@ -18,8 +18,16 @@ data class ConfigEntryDto(
   /**
    * Non-null on [ConfigValueType.ENUM] keys — UI renders a toggle group restricted to this list.
    */
-  val allowedValues: List<String>? = null,
+  val allowedValues: List<AllowedValueDto>? = null,
 )
+
+/**
+ * One option on an ENUM-typed config key. `disabledReason` is non-null when the option exists but
+ * cannot currently be selected — for live provider toggles, this means the required API key is
+ * empty (no DB override, no env var). The UI shows the option as disabled with a tooltip carrying
+ * the reason (i18n key). `null` means the option is available.
+ */
+data class AllowedValueDto(val value: String, val disabledReason: String? = null)
 
 enum class ConfigValueType {
   STRING,
