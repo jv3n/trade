@@ -2,10 +2,57 @@ server:
   # Port HTTP du backend natif. Surchargeable via `BACKEND_HOST_PORT` dans `.env` à la racine
   # du repo en cas de conflit avec un autre service local (cf. `.env.example`).
   port: ${BACKEND_HOST_PORT:8080}
+  # En dev, le SPA Angular tourne sur un port distinct (4200/4201) et le proxy CLI forward
+  # `/api/**`, `/oauth2/**`, `/logout`, `/login/oauth2/**` vers ce backend (cf. `frontend/proxy.conf.js`).
+  # `xfwd: true` du proxy ajoute les headers `X-Forwarded-Host/Port/Proto`. `framework` fait que
+  # Spring les lit via `ForwardedHeaderFilter` pour construire ses URLs absolues (notamment le
+  # `redirect_uri` OAuth envoyé à Google) sur le host du SPA — sinon Google reçoit
+  # `localhost:8081` et la session cookie ne sera pas accessible au SPA sur `localhost:4201`.
+  # En prod derrière un reverse proxy (nginx, traefik, ALB), même besoin : trust the forwarded
+  # headers pour générer les URLs publiques correctes. Risque de spoofing : nul tant que le
+  # backend n'est pas exposé directement à internet sans proxy devant.
+  forward-headers-strategy: framework
 
 spring:
   application:
     name: portfolioai-backend
+
+  # **Profile activation pilotée par Tilt** — le Tiltfile lit `BACKEND_AUTH_MODE` dans `.env` à
+  # l'exécution du `serve_cmd` :
+  #   - `BACKEND_AUTH_MODE=no-auth` (défaut) → lance avec `--spring.profiles.active=local,local-no-auth`
+  #     → `LocalNoAuthSecurityConfig` bypasse Spring Security, user fake ADMIN (`dev@local.test`)
+  #     seedé au boot et injecté dans le SecurityContext sur chaque request.
+  #   - `BACKEND_AUTH_MODE=oauth` → lance avec `--spring.profiles.active=local` → `SecurityConfig`
+  #     kicks in et utilise la registration `spring.security.oauth2.client.registration.google`
+  #     déclarée dans `application-local.yml`. Vrai flow OAuth Google contre localhost.
+  #
+  # Bouton Tilt « Switch auth mode → oauth/no-auth » disponible sur la ressource `backend` pour
+  # flipper sans éditer `.env` à la main.
+  #
+  # Pas de `spring.profiles.group` hardcodé ici : la décision est entièrement au Tiltfile, ce qui
+  # permet le toggle runtime via bouton + restart sans toucher au YAML.
+
+  # OAuth2 client registration — intentionally **absent** from this default config because Spring
+  # Boot's `ClientRegistration.Builder.build()` does `Assert.hasText(clientId)` and crashes at boot
+  # if a registration is declared with an empty client-id. A fresh clone / CI run needs to start
+  # without OAuth credentials (the `@SpringBootTest` smoke test relies on this).
+  #
+  # Pour activer le vrai flow OAuth Google :
+  #   1. Crée un OAuth Client ID dans Google Cloud Console > APIs & Services > Credentials
+  #      (Web application). Redirect URI : `http://localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google`
+  #      (le port FRONT, pas backend — le proxy CLI forward avec xfwd et Spring construit son
+  #      redirect_uri sur le host du SPA grâce à `server.forward-headers-strategy: framework`).
+  #   2. Dans `.env` à la racine (gitignored), définis :
+  #        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
+  #        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
+  #        APP_ADMIN_EMAILS=ton.email@gmail.com    # pour atterrir en role ADMIN
+  #        APP_FRONTEND_URL=http://localhost:4201/ # cible du redirect post-login
+  #        BACKEND_AUTH_MODE=oauth                  # bascule du `local-no-auth` au mode réel
+  #   3. Restart Tilt — le `serve_cmd` du backend `source` `.env`, exporte les vars au sous-process
+  #      gradle, et Spring Boot les pickè up via son relaxed binding (env-var → property tree).
+  #   4. Le scope OAuth est laissé aux défauts Google fournis par `CommonOAuth2Provider.GOOGLE`
+  #      (openid + profile + email) — pas besoin de le surcharger explicitement.
+  # En prod, les mêmes env vars sont injectées par le secret manager du provider.
 
   datasource:
     # Le port Postgres côté hôte est configurable via `POSTGRES_HOST_PORT` dans `.env`
@@ -37,6 +84,21 @@ management:
   endpoint:
     health:
       show-details: always
+
+# Auth — application-level config consumed by `CustomOAuth2UserService` on first user creation
+# to assign role ADMIN vs USER. Comma-separated list of emails. Email comparison is
+# case-insensitive. Modifications to this list only affect *new* user creations — existing rows
+# keep the role they were assigned on first login (DB is the source of truth post-creation).
+#
+# `frontend-url` est la cible du redirect post-login OAuth (cf. `SecurityConfig.defaultSuccessUrl`).
+# Défaut `/` est correct quand le SPA et le backend partagent la même origine (prod derrière un
+# reverse proxy). En dev où le SPA tourne sur un port distinct (Angular CLI 4200/4201), surcharger
+# dans `application-local.yml` avec l'URL complète du SPA — sinon le user atterrit sur le backend
+# (Whitelabel 404 après login).
+app:
+  admin:
+    emails: ${APP_ADMIN_EMAILS:}
+  frontend-url: ${APP_FRONTEND_URL:/}
 
 anthropic:
   api:

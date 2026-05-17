@@ -45,6 +45,8 @@ Tilt ouvre son UI sur [http://localhost:10350/](http://localhost:10350/) et dém
 
 **Le premier démarrage prend 2-3 minutes** : Gradle télécharge les dépendances et `npm install` s'exécute. Les démarrages suivants sont quasi instantanés grâce au hot-reload de Tilt.
 
+**Auth en dev (Phase 4)** : par défaut, le backend démarre en mode `local-no-auth` — un user fake ADMIN (`dev@local.test`) est seedé au boot, et Spring Security est bypassed. Tu peux directement ouvrir le frontend et tout est accessible. Pour tester le vrai flow OAuth Google contre localhost (rare en onboarding), voir [`developpement.md > Modes d'authentification`](./developpement.md#modes-dauthentification-phase-4) — il faut un OAuth Client ID Google Cloud Console + quelques variables `.env`. Pas nécessaire pour démarrer.
+
 #### Conflit de port avec un autre service local
 
 Si `tilt up` échoue sur « port already allocated » (le plus courant : un Postgres déjà installé localement occupe le `5432`), la procédure `.env` qui surcharge un seul port est documentée dans [`developpement.md`](./developpement.md) (section *Conflit de port*) — table des 4 variables, sources qui les lisent, comportement par défaut.

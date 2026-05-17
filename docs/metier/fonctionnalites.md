@@ -136,9 +136,9 @@ Deux sources visibles côté UI :
 
 ---
 
-## Phase 4 — Authentification
+## Phase 4 — Authentification (v1 livrée 2026-05-17)
 
-> Phase orthogonale aux features métier — pré-requis bloquant pour tout déploiement public (Phase 5). L'app vit aujourd'hui en single-user no-auth ; déployer en l'état exposerait tous les portfolios et clés API. Phase 4 ajoute OAuth2 (Google OIDC) + Spring Security côté backend, `AuthService` + login UI côté frontend, modèle `user_id`-aware côté BDD avec migration backfill. Un profile dev `local-no-auth` préserve le flow single-user pour les sessions quotidiennes. Pas reflétée en capacités utilisateur ici — c'est de la sécurité, pas une feature métier. Détails dans `docs/projet/backlog.md` section Phase 4.
+> Phase orthogonale aux features métier — pré-requis bloquant pour tout déploiement public (Phase 5). **v1 shippée** : OAuth2 Google OIDC + Spring Security backend, rôles ADMIN/USER via whitelist email, frontend `/login` + interceptor + guards + navbar role-gating, CSRF re-enabled (cookie-based SPA pattern), page `/error` globale, profile dev `local-no-auth` qui bypasse Spring Security pour le dev solo (user fake ADMIN seedé). Le toggle `BACKEND_AUTH_MODE` (no-auth ↔ oauth) dans `.env` + boutons Tilt permet de switcher au runtime sans éditer de fichier. **Reste à attaquer avant Phase 5** : (1) migration multi-tenant `user_id` FK + backfill (les tables `portfolio` / `watchlist_entry` / `app_config` / `portfolio_snapshot` restent single-tenant à v1), (2) redaction emails dans les logs, (3) GitHub Secrets + Environments comme vault de prod, (4) multi-provider OAuth (GitHub) si pertinent. Pas reflétée en capacités utilisateur ici — c'est de la sécurité, pas une feature métier. Détails d'implémentation dans `docs/projet/journal-livraisons.md > Phase 4` ; reste à faire dans `docs/projet/backlog.md > Phase 4`.
 
 ---
 

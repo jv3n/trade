@@ -10,6 +10,7 @@ import org.mockito.BDDMockito.given
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  *   is the shared exception between Twelve Data and Finnhub adapters — both map to 503).
  */
 @WebMvcTest(NewsController::class, GlobalExceptionHandler::class)
+@AutoConfigureMockMvc(addFilters = false)
 class NewsControllerTest {
 
   @Autowired private lateinit var mvc: MockMvc

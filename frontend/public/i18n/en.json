@@ -26,7 +26,31 @@
     "themeLight": "Switch to light theme",
     "themeDark": "Switch to dark theme",
     "language": "Change language",
-    "settings": "Settings"
+    "settings": "Settings",
+    "userMenu": "My account"
+  },
+  "auth": {
+    "login": {
+      "title": "PortfolioAI",
+      "subtitle": "Sign in to access your portfolio, your watchlist and your narrative observability.",
+      "signInWithGoogle": "Sign in with Google",
+      "disclaimer": "⚠️ This is not licensed financial advice. For educational use only."
+    },
+    "signOut": "Sign out",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "User"
+    }
+  },
+  "error": {
+    "title": "Something went wrong",
+    "subtitle": "The backend returned an unexpected response. You can sign out to start clean, or go back to the login page and try again.",
+    "details": "Technical details",
+    "status": "HTTP status",
+    "url": "Called URL",
+    "lastAuthError": "Last auth error",
+    "signOutAndRetry": "Sign out and retry",
+    "backToLogin": "Back to login"
   },
   "language": {
     "fr": "Français",
