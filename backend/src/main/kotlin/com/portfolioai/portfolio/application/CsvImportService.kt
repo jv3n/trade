@@ -1,5 +1,6 @@
 package com.portfolioai.portfolio.application
 
+import com.portfolioai.auth.application.AuthService
 import com.portfolioai.portfolio.application.dto.AccountImportPreview
 import com.portfolioai.portfolio.application.dto.CsvImportPreview
 import com.portfolioai.portfolio.application.dto.CsvImportPreviewItem
@@ -60,6 +61,7 @@ class CsvImportService(
   private val assetRepository: AssetRepository,
   private val snapshotRepository: PortfolioSnapshotRepository,
   private val snapshotPositionRepository: SnapshotPositionRepository,
+  private val authService: AuthService,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
@@ -76,6 +78,10 @@ class CsvImportService(
     val (rowsByAccount, skipped, _) = parseCsv(file)
     val batchId = UUID.randomUUID()
     val importedAt = extractDateFromFilename(file.originalFilename)
+    // Capture le user **une fois** au début du flow — pas de risque de drift si la session
+    // expirait mid-import (le import est `@Transactional`, donc soit tout passe avec ce user,
+    // soit rollback complet).
+    val currentUser = authService.getCurrentUser()
     var portfoliosCreated = 0
     var portfoliosUpdated = 0
     var totalImported = 0
@@ -83,10 +89,12 @@ class CsvImportService(
     var positionsReopened = 0
 
     for ((accountName, rows) in rowsByAccount) {
-      val existingPortfolio = portfolioRepository.findByName(accountName)
+      val existingPortfolio = portfolioRepository.findByUserIdAndName(currentUser.id, accountName)
       val portfolio =
         existingPortfolio
-          ?: portfolioRepository.save(Portfolio(name = accountName)).also { portfoliosCreated++ }
+          ?: portfolioRepository.save(Portfolio(user = currentUser, name = accountName)).also {
+            portfoliosCreated++
+          }
       if (existingPortfolio != null) portfoliosUpdated++
 
       // Charge tous les assets (OPEN + CLOSED) — il faut voir les CLOSED pour pouvoir réouvrir

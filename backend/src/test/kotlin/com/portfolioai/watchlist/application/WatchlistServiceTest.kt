@@ -1,5 +1,8 @@
 package com.portfolioai.watchlist.application
 
+import com.portfolioai.auth.application.AuthService
+import com.portfolioai.auth.domain.Role
+import com.portfolioai.auth.domain.User
 import com.portfolioai.market.application.SymbolValidator
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.InstrumentType
@@ -11,6 +14,7 @@ import com.portfolioai.watchlist.domain.WatchlistEntry
 import com.portfolioai.watchlist.infrastructure.persistence.WatchlistEntryRepository
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -65,14 +69,32 @@ class WatchlistServiceTest {
   private val repository: WatchlistEntryRepository = mock()
   private val symbolValidator: SymbolValidator = mock()
   private val tickerService: TickerService = mock()
-  private val service = WatchlistService(repository, symbolValidator, tickerService)
+  private val authService: AuthService = mock()
+  private val service = WatchlistService(repository, symbolValidator, tickerService, authService)
+
+  // Fake authenticated user — seeded into the AuthService mock for every test in the class.
+  // The id is what every `findByUserIdAndSymbol` / `deleteByUserIdAndSymbol` predicate matches.
+  // Phase 4 multi-tenant : the repository methods are scoped per user_id, so the tests pin both
+  // the symbol AND the userId in their stubs.
+  private val testUser =
+    User(
+      id = UUID.fromString("00000000-0000-0000-0000-0000000000aa"),
+      email = "alice@example.com",
+      provider = "google",
+      providerId = "sub-alice",
+      role = Role.USER,
+    )
+
+  init {
+    given(authService.getCurrentUser()).willReturn(testUser)
+  }
 
   // ---------------------------------------------------------------------- happy path
 
   @Test
   fun `add normalises uppercase trim, validates, snapshots instrumentType, then persists`() {
     given(symbolValidator.exists(eq("AAPL"))).willReturn(true)
-    given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
+    given(repository.findByUserIdAndSymbol(eq(testUser.id), eq("AAPL"))).willReturn(null)
     given(tickerService.load(eq("AAPL"))).willReturn(snapshot("AAPL", InstrumentType.STOCK))
     given(repository.save(any<WatchlistEntry>())).willAnswer { invocation ->
       invocation.arguments[0] as WatchlistEntry
@@ -101,7 +123,7 @@ class WatchlistServiceTest {
     // a paid-tier-only ticker. Reject at the boundary so we never accumulate dead entries that
     // would 404 every time the user opens the dossier.
     given(symbolValidator.exists(eq("XXXXX"))).willReturn(false)
-    given(repository.findBySymbol(eq("XXXXX"))).willReturn(null)
+    given(repository.findByUserIdAndSymbol(eq(testUser.id), eq("XXXXX"))).willReturn(null)
 
     val ex = assertThrows<IllegalArgumentException> { service.add("XXXXX") }
 
@@ -122,7 +144,7 @@ class WatchlistServiceTest {
     given(symbolValidator.exists(eq("AAPL"))).willAnswer {
       throw UpstreamUnavailableException("rate-limited")
     }
-    given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
+    given(repository.findByUserIdAndSymbol(eq(testUser.id), eq("AAPL"))).willReturn(null)
     given(tickerService.load(eq("AAPL"))).willReturn(snapshot("AAPL", InstrumentType.STOCK))
     given(repository.save(any<WatchlistEntry>())).willAnswer { invocation ->
       invocation.arguments[0] as WatchlistEntry
@@ -141,11 +163,12 @@ class WatchlistServiceTest {
     // `tickerService.load` should be called.
     val existing =
       WatchlistEntry(
+        user = testUser,
         symbol = "NVDA",
         addedAt = Instant.parse("2026-04-01T10:00:00Z"),
         instrumentType = InstrumentType.STOCK,
       )
-    given(repository.findBySymbol(eq("NVDA"))).willReturn(existing)
+    given(repository.findByUserIdAndSymbol(eq(testUser.id), eq("NVDA"))).willReturn(existing)
 
     val returned = service.add("NVDA")
 
@@ -166,7 +189,7 @@ class WatchlistServiceTest {
     // (degrade closed). Subsequent dossier opens will populate the cache and a future re-add
     // could backfill the type if we ever care.
     given(symbolValidator.exists(eq("AAPL"))).willReturn(true)
-    given(repository.findBySymbol(eq("AAPL"))).willReturn(null)
+    given(repository.findByUserIdAndSymbol(eq(testUser.id), eq("AAPL"))).willReturn(null)
     given(tickerService.load(eq("AAPL"))).willAnswer {
       throw UpstreamUnavailableException("rate-limited")
     }
@@ -187,7 +210,7 @@ class WatchlistServiceTest {
     // tickers — the symbol is real (validates), but `instrumentType` is null on the snapshot.
     // No exception, just a null. The row is saved with that null and the chip absent.
     given(symbolValidator.exists(eq("OBSCURE"))).willReturn(true)
-    given(repository.findBySymbol(eq("OBSCURE"))).willReturn(null)
+    given(repository.findByUserIdAndSymbol(eq(testUser.id), eq("OBSCURE"))).willReturn(null)
     given(tickerService.load(eq("OBSCURE"))).willReturn(snapshot("OBSCURE", instrumentType = null))
     given(repository.save(any<WatchlistEntry>())).willAnswer { invocation ->
       invocation.arguments[0] as WatchlistEntry
@@ -210,6 +233,7 @@ class WatchlistServiceTest {
     // because the user's intent ("watch AAPL") is satisfied either way.
     val concurrent =
       WatchlistEntry(
+        user = testUser,
         symbol = "AAPL",
         addedAt = Instant.parse("2026-05-10T11:59:59Z"),
         instrumentType = InstrumentType.STOCK,
@@ -217,7 +241,8 @@ class WatchlistServiceTest {
     given(symbolValidator.exists(eq("AAPL"))).willReturn(true)
     // First call (pre-network) returns null ; second call (post-network re-check) returns the row
     // a concurrent caller just inserted. Mockito-kotlin's varargs `willReturn` walks the sequence.
-    given(repository.findBySymbol(eq("AAPL"))).willReturn(null, concurrent)
+    given(repository.findByUserIdAndSymbol(eq(testUser.id), eq("AAPL")))
+      .willReturn(null, concurrent)
     given(tickerService.load(eq("AAPL"))).willReturn(snapshot("AAPL", InstrumentType.STOCK))
 
     val returned = service.add("AAPL")
@@ -248,6 +273,38 @@ class WatchlistServiceTest {
     verify(symbolValidator, never()).exists(any())
     verify(tickerService, never()).load(any())
     verify(repository, never()).save(any())
+  }
+
+  // ---------------------------------------------------------------------- multi-tenant isolation
+
+  @Test
+  fun `list filters by the current authenticated user — alice and bob see distinct entries`() {
+    // Phase 4 multi-tenant invariant : the same `service.list()` call returns DIFFERENT data
+    // depending on who's authenticated. The test mocks both
+    // `findAllByUserIdOrderByAddedAtAsc(alice)`
+    // and `findAllByUserIdOrderByAddedAtAsc(bob)` so each user has their own stub ; we flip
+    // `authService.getCurrentUser()` between calls and assert the service routes the lookup to the
+    // right user. Pin against the kind of regression where someone accidentally drops the userId
+    // filter and `list()` returns everyone's data.
+    val bob =
+      User(
+        id = UUID.fromString("00000000-0000-0000-0000-0000000000bb"),
+        email = "bob@example.com",
+        provider = "google",
+        providerId = "sub-bob",
+        role = Role.USER,
+      )
+    val aliceEntry = WatchlistEntry(user = testUser, symbol = "AAPL")
+    val bobEntry = WatchlistEntry(user = bob, symbol = "NVDA")
+    given(repository.findAllByUserIdOrderByAddedAtAsc(eq(testUser.id)))
+      .willReturn(listOf(aliceEntry))
+    given(repository.findAllByUserIdOrderByAddedAtAsc(eq(bob.id))).willReturn(listOf(bobEntry))
+
+    given(authService.getCurrentUser()).willReturn(testUser)
+    assertEquals(listOf("AAPL"), service.list().map { it.symbol })
+
+    given(authService.getCurrentUser()).willReturn(bob)
+    assertEquals(listOf("NVDA"), service.list().map { it.symbol })
   }
 
   // ---------------------------------------------------------------------- helpers

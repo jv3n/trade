@@ -1,5 +1,6 @@
 package com.portfolioai.portfolio.infrastructure.http
 
+import com.portfolioai.auth.application.AuthService
 import com.portfolioai.portfolio.application.dto.SnapshotPositionDto
 import com.portfolioai.portfolio.application.dto.SnapshotSummaryDto
 import com.portfolioai.portfolio.application.dto.toDto
@@ -21,11 +22,13 @@ import org.springframework.web.bind.annotation.RestController
 class SnapshotController(
   private val snapshotRepository: PortfolioSnapshotRepository,
   private val positionRepository: SnapshotPositionRepository,
+  private val authService: AuthService,
 ) {
 
   @GetMapping
-  fun getAll(): List<SnapshotSummaryDto> =
-    snapshotRepository.findAllWithPortfolio().map { snapshot ->
+  fun getAll(): List<SnapshotSummaryDto> {
+    val userId = authService.getCurrentUser().id
+    return snapshotRepository.findAllWithPortfolioByUserId(userId).map { snapshot ->
       val positions = positionRepository.findBySnapshotId(snapshot.id)
       SnapshotSummaryDto(
         id = snapshot.id,
@@ -37,8 +40,18 @@ class SnapshotController(
         totalBookValueCad = positions.sumOf { it.bookValueCad },
       )
     }
+  }
 
   @GetMapping("/{id}/positions")
-  fun getPositions(@PathVariable id: UUID): List<SnapshotPositionDto> =
-    positionRepository.findBySnapshotId(id).map { it.toDto() }
+  fun getPositions(@PathVariable id: UUID): List<SnapshotPositionDto> {
+    // Ownership check via portfolio.user_id — empêche le brute-force d'UUIDs de snapshots
+    // d'autres users. Sans ce check, un user authentifié pourrait énumérer les snapshots de tous
+    // les autres users via un UUID guessing (vraisemblance pratique = 0, mais defense en
+    // profondeur).
+    val userId = authService.getCurrentUser().id
+    if (!snapshotRepository.existsByIdAndPortfolioUserId(id, userId)) {
+      throw NoSuchElementException("Snapshot $id not found")
+    }
+    return positionRepository.findBySnapshotId(id).map { it.toDto() }
+  }
 }

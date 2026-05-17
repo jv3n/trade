@@ -1,5 +1,8 @@
 package com.portfolioai.portfolio
 
+import com.portfolioai.auth.application.AuthService
+import com.portfolioai.auth.domain.Role
+import com.portfolioai.auth.domain.User
 import com.portfolioai.portfolio.application.CsvImportService
 import com.portfolioai.portfolio.domain.Asset
 import com.portfolioai.portfolio.domain.AssetStatus
@@ -13,6 +16,7 @@ import com.portfolioai.portfolio.infrastructure.persistence.PortfolioSnapshotRep
 import com.portfolioai.portfolio.infrastructure.persistence.SnapshotPositionRepository
 import java.math.BigDecimal
 import java.nio.charset.Charset
+import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -21,11 +25,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argThat
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.mockito.quality.Strictness
 import org.springframework.mock.web.MockMultipartFile
 
 /**
@@ -47,15 +53,40 @@ import org.springframework.mock.web.MockMultipartFile
  * Repos are mocked with Mockito because the service does heavy IO ; full integration coverage lives
  * in CI's PostgreSQL-backed runs of the live import flow.
  */
+/**
+ * `Strictness.LENIENT` parce que la majorité des tests (~12) appellent `service.preview(...)` qui
+ * ne touche pas `authService.getCurrentUser` — le stub `whenever(authService.getCurrentUser())` du
+ * `@BeforeEach` n'est consommé que par les ~6 tests sur `service.import(...)`. Sans LENIENT, le
+ * mode strict de Mockito 5 fait échouer les preview-tests sur `UnnecessaryStubbingException` à
+ * cause d'un stub provisionné mais jamais utilisé. Trade-off accepté : on perd la détection
+ * automatique des stubs morts à l'intérieur de cette classe, mais le coût est marginal vu le
+ * partage de fixture inhérent.
+ */
 @ExtendWith(MockitoExtension::class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CsvImportServiceTest {
 
   @Mock private lateinit var portfolioRepository: PortfolioRepository
   @Mock private lateinit var assetRepository: AssetRepository
   @Mock private lateinit var snapshotRepository: PortfolioSnapshotRepository
   @Mock private lateinit var snapshotPositionRepository: SnapshotPositionRepository
+  @Mock private lateinit var authService: AuthService
 
   private lateinit var service: CsvImportService
+
+  /**
+   * Fake authenticated user — Phase 4 multi-tenant context. Every `Portfolio` the service creates
+   * is set to this user, every `findByUserIdAndName` lookup matches this user's id. The id is a
+   * stable constant so the tests can pin it in `eq(testUser.id)` expressions if needed.
+   */
+  private val testUser =
+    User(
+      id = UUID.fromString("00000000-0000-0000-0000-0000000000aa"),
+      email = "alice@example.com",
+      provider = "google",
+      providerId = "sub-alice",
+      role = Role.USER,
+    )
 
   @BeforeEach
   fun setUp() {
@@ -65,7 +96,9 @@ class CsvImportServiceTest {
         assetRepository,
         snapshotRepository,
         snapshotPositionRepository,
+        authService,
       )
+    whenever(authService.getCurrentUser()).thenReturn(testUser)
   }
 
   // ---- helpers ----
@@ -357,7 +390,8 @@ class CsvImportServiceTest {
     )
 
   private fun stubImportRepos(portfolio: Portfolio, existingAssets: List<Asset>) {
-    whenever(portfolioRepository.findByName(portfolio.name)).thenReturn(portfolio)
+    whenever(portfolioRepository.findByUserIdAndName(testUser.id, portfolio.name))
+      .thenReturn(portfolio)
     whenever(assetRepository.findByPortfolioId(portfolio.id)).thenReturn(existingAssets)
     whenever(assetRepository.save(any<Asset>())).thenAnswer { it.arguments[0] as Asset }
     whenever(snapshotRepository.save(any<PortfolioSnapshot>())).thenAnswer {
@@ -373,7 +407,7 @@ class CsvImportServiceTest {
   fun `import flips a ticker absent from the new CSV to CLOSED with closedAt set`() {
     // Le scénario "j'ai vendu XAU, mon nouvel export Wealthsimple ne le contient plus". Avant V5
     // la ligne `asset` restait OPEN à jamais et XAU continuait d'apparaître au dashboard.
-    val portfolio = Portfolio(name = "CELI")
+    val portfolio = Portfolio(user = testUser, name = "CELI")
     val xau = openAsset(portfolio, "XAU", "Gold ETF")
     val aapl = openAsset(portfolio, "AAPL")
     stubImportRepos(portfolio, listOf(xau, aapl))
@@ -395,7 +429,7 @@ class CsvImportServiceTest {
     // → OPEN, closedAt → null. Le opened_at d'origine est conservé (premier import historique
     // du ticker dans ce portfolio) — décision de design pour ne pas perdre la date d'entrée
     // initiale en BDD.
-    val portfolio = Portfolio(name = "REER")
+    val portfolio = Portfolio(user = testUser, name = "REER")
     val closedNvda =
       openAsset(portfolio, "NVDA", "NVIDIA Corp.", status = AssetStatus.CLOSED).also {
         it.closedAt = java.time.Instant.parse("2026-04-01T12:00:00Z")
@@ -415,7 +449,7 @@ class CsvImportServiceTest {
   fun `import is a no-op on lifecycle when the CSV matches the current portfolio exactly`() {
     // Garde-fou : ré-importer un export identique ne doit rien fermer ni réouvrir. Sinon on
     // pollue la BDD à chaque save Tilt qui re-déclenche l'import démo.
-    val portfolio = Portfolio(name = "CELI")
+    val portfolio = Portfolio(user = testUser, name = "CELI")
     val aapl = openAsset(portfolio, "AAPL", "Apple Inc.")
     stubImportRepos(portfolio, listOf(aapl))
 

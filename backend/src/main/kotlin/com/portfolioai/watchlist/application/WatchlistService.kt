@@ -1,5 +1,6 @@
 package com.portfolioai.watchlist.application
 
+import com.portfolioai.auth.application.AuthService
 import com.portfolioai.market.application.SymbolValidator
 import com.portfolioai.market.application.TickerService
 import com.portfolioai.market.domain.InstrumentType
@@ -64,16 +65,19 @@ class WatchlistService(
   private val repository: WatchlistEntryRepository,
   private val symbolValidator: SymbolValidator,
   private val tickerService: TickerService,
+  private val authService: AuthService,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
 
-  fun list(): List<WatchlistEntry> = repository.findAllByOrderByAddedAtAsc()
+  fun list(): List<WatchlistEntry> =
+    repository.findAllByUserIdOrderByAddedAtAsc(authService.getCurrentUser().id)
 
   fun add(symbol: String): WatchlistEntry {
     val normalised = normalise(symbol)
     require(normalised.isNotEmpty()) { "Watchlist symbol cannot be blank" }
     require(normalised.length <= 20) { "Watchlist symbol exceeds 20 characters: $normalised" }
-    repository.findBySymbol(normalised)?.let {
+    val currentUser = authService.getCurrentUser()
+    repository.findByUserIdAndSymbol(currentUser.id, normalised)?.let {
       return it
     }
     // Network calls happen here — outside any transaction the service opens. See class-level note.
@@ -81,21 +85,28 @@ class WatchlistService(
       "Symbol '$normalised' is not recognised by the configured market provider"
     }
     val instrumentType = lookupInstrumentType(normalised)
-    return persistNew(normalised, instrumentType)
+    return persistNew(currentUser, normalised, instrumentType)
   }
 
   /**
    * Persistence-only step of [add]. Spring Data's `save()` is implicitly `@Transactional`, so this
    * helper opens a short transaction just for the write. The post-network re-check on
-   * `findBySymbol` covers the TOCTOU window opened by moving the upstream calls outside the
-   * transaction — if a concurrent caller inserted the same symbol while we were on the wire, we
-   * return the existing row.
+   * `findByUserIdAndSymbol` covers the TOCTOU window opened by moving the upstream calls outside
+   * the transaction — if a concurrent caller (same user, race on a parallel POST) inserted the same
+   * symbol while we were on the wire, we return the existing row rather than surfacing the
+   * UNIQUE(user_id, symbol) integrity violation to the caller.
    */
-  private fun persistNew(symbol: String, instrumentType: InstrumentType?): WatchlistEntry {
-    repository.findBySymbol(symbol)?.let {
+  private fun persistNew(
+    user: com.portfolioai.auth.domain.User,
+    symbol: String,
+    instrumentType: InstrumentType?,
+  ): WatchlistEntry {
+    repository.findByUserIdAndSymbol(user.id, symbol)?.let {
       return it
     }
-    return repository.save(WatchlistEntry(symbol = symbol, instrumentType = instrumentType))
+    return repository.save(
+      WatchlistEntry(user = user, symbol = symbol, instrumentType = instrumentType)
+    )
   }
 
   /**
@@ -141,7 +152,7 @@ class WatchlistService(
   @Transactional
   fun remove(symbol: String) {
     val normalised = normalise(symbol)
-    val deleted = repository.deleteBySymbol(normalised)
+    val deleted = repository.deleteByUserIdAndSymbol(authService.getCurrentUser().id, normalised)
     if (deleted == 0L) {
       throw NoSuchElementException("Watchlist entry not found: $normalised")
     }

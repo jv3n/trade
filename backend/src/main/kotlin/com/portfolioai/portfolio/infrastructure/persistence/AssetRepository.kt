@@ -6,6 +6,7 @@ import com.portfolioai.portfolio.domain.AssetType
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 /**
  * Aggregate row used by [AssetRepository.findOwnedTickerRows]. Mapped via JPQL `new` constructor so
@@ -50,9 +51,10 @@ interface AssetRepository : JpaRepository<Asset, UUID> {
     )
     FROM Asset a
     WHERE a.status = com.portfolioai.portfolio.domain.AssetStatus.OPEN
+      AND a.portfolio.user.id = :userId
     GROUP BY a.ticker, a.assetType
     ORDER BY a.ticker ASC
   """
   )
-  fun findOwnedTickerRows(): List<OwnedTickerRow>
+  fun findOwnedTickerRows(@Param("userId") userId: UUID): List<OwnedTickerRow>
 }

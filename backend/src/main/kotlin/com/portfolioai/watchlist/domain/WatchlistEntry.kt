@@ -1,24 +1,29 @@
 package com.portfolioai.watchlist.domain
 
+import com.portfolioai.auth.domain.User
 import com.portfolioai.market.domain.InstrumentType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
 
 /**
  * One ticker the user wants to track without owning it. Maps 1:1 to `watchlist_entry` (V3, V7 added
- * [instrumentType]).
+ * [instrumentType], V10 added [user] for multi-tenancy).
  *
- * No portfolio link, no user link — the watchlist is a flat global list at this stage of the
- * project (single-user app). The `symbol` column has a UNIQUE constraint so the database is the
- * source of truth for "this ticker is on the list once" ; the service still normalises the symbol
- * (uppercase + trim) before insert to keep the constraint useful (`AAPL` vs `aapl` would otherwise
- * produce two rows).
+ * Since V10 (Phase 4 — 2026-05-17), the table is **user-scoped** : the UNIQUE constraint moved from
+ * `(symbol)` to `(user_id, symbol)`, so two distinct users can both watch AAPL without conflict.
+ * The service still normalises the symbol (uppercase + trim) before insert so the constraint
+ * catches `AAPL` vs `aapl` from the same user. The `user_id` is set from
+ * `AuthService.getCurrentUser` in `WatchlistService.add` and propagated by ON DELETE CASCADE if the
+ * user row is ever removed.
  *
  * [instrumentType] is the market-domain classification (`STOCK / ETF / INDEX / OTHER`) snapshotted
  * at the time of the POST add. Persisting at add-time lets the dashboard render the type chip
@@ -32,7 +37,8 @@ import java.util.UUID
 @Table(name = "watchlist_entry")
 class WatchlistEntry(
   @Id val id: UUID = UUID.randomUUID(),
-  @Column(nullable = false, length = 20, unique = true) var symbol: String,
+  @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) val user: User,
+  @Column(nullable = false, length = 20) var symbol: String,
   @Column(name = "added_at", nullable = false, updatable = false)
   val addedAt: Instant = Instant.now(),
   @Enumerated(EnumType.STRING)

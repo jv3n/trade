@@ -1,6 +1,8 @@
 package com.portfolioai.watchlist.infrastructure.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.portfolioai.auth.domain.Role
+import com.portfolioai.auth.domain.User
 import com.portfolioai.shared.GlobalExceptionHandler
 import com.portfolioai.watchlist.application.WatchlistService
 import com.portfolioai.watchlist.domain.WatchlistEntry
@@ -154,6 +156,20 @@ class WatchlistControllerTest {
 
   // ---------------------------------------------------------------------- helpers
 
+  /**
+   * Stub user attached to every test fixture. The controller slice never actually reads this field
+   * (the `@MockitoBean WatchlistService` short-circuits the user-scoped lookup) — it's only there
+   * to satisfy the `WatchlistEntry` constructor since V10 (Phase 4 multi-tenant scoping).
+   */
+  private val stubUser =
+    User(
+      id = UUID.fromString("00000000-0000-0000-0000-0000000000aa"),
+      email = "alice@example.com",
+      provider = "google",
+      providerId = "sub-alice",
+      role = Role.USER,
+    )
+
   private fun entry(symbol: String, addedAt: Instant = Instant.parse("2026-05-03T10:00:00Z")) =
-    WatchlistEntry(id = UUID.randomUUID(), symbol = symbol, addedAt = addedAt)
+    WatchlistEntry(id = UUID.randomUUID(), user = stubUser, symbol = symbol, addedAt = addedAt)
 }
