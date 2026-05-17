@@ -284,8 +284,9 @@ export class Configuration implements OnInit {
         }
         // Saving the LLM timeout updates the value [LlmTimeoutService] surfaces to the
         // "estimation max" label on this same LLM card — refresh it so the label reflects the
-        // new slider position immediately, without a page reload.
-        if (key === LLM_TIMEOUT_KEY) this.timeoutService.refresh();
+        // new slider position immediately, without a page reload. `refresh()` is a cold
+        // Observable since `22fa6f5` — without `.subscribe()` it would no-op.
+        if (key === LLM_TIMEOUT_KEY) this.timeoutService.refresh().subscribe();
       },
       error: (err) => {
         const detail =
@@ -319,8 +320,9 @@ export class Configuration implements OnInit {
               return next;
             });
             // Mirror the save() branch — a reset on the LLM timeout flips the value the
-            // "estimation max" label reads from [LlmTimeoutService].
-            if (key === LLM_TIMEOUT_KEY) this.timeoutService.refresh();
+            // "estimation max" label reads from [LlmTimeoutService]. `refresh()` cold Observable
+            // since `22fa6f5` — `.subscribe()` is what actually fires it.
+            if (key === LLM_TIMEOUT_KEY) this.timeoutService.refresh().subscribe();
           },
           error: () => this.markSaving(key, false),
         });

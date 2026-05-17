@@ -36,7 +36,7 @@ class GlobalExceptionHandler {
     ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
       .body(
         mapOf(
-          "error" to "Données de marché momentanément indisponibles",
+          "error" to "Données momentanément indisponibles",
           "detail" to (ex.message ?: "unavailable"),
         )
       )

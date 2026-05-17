@@ -265,7 +265,7 @@ The slice-by-default strategy above is the big win (×6-10 on cold start vs `@Sp
 
 1. **Measure first**. `./gradlew test --info` (or `--scan`) prints time per class. Find the top 5 slowest and ask : are they genuinely integration paths or are they `@SpringBootTest` where `@WebMvcTest` would do ? Premature parallelisation on a test suite where one class burns 80 % of the wall time wins nothing.
 
-2. **Share configuration across `@SpringBootTest` classes.** Spring caches the application context across classes when their configuration is *identical* — same properties, same `@MockitoBean` set, same profiles. With N integration tests sharing a config, you pay the boot once. To preserve the cache : avoid per-class `@TestPropertySource` with diverging values, avoid `@DirtiesContext` (forces a reload), and keep `@MockitoBean` mocks consistent. Today the project has 2 `@SpringBootTest` ; if Phase 4 introduces more on `aggregation/`, this is the discipline that keeps them cheap.
+2. **Share configuration across `@SpringBootTest` classes.** Spring caches the application context across classes when their configuration is *identical* — same properties, same `@MockitoBean` set, same profiles. With N integration tests sharing a config, you pay the boot once. To preserve the cache : avoid per-class `@TestPropertySource` with diverging values, avoid `@DirtiesContext` (forces a reload), and keep `@MockitoBean` mocks consistent. Today the project has 2 `@SpringBootTest` ; if Phase 6 introduces more on `aggregation/`, this is the discipline that keeps them cheap.
 
 3. **Parallel execution at the class level.** Drop a `src/test/resources/junit-platform.properties` :
    ```properties

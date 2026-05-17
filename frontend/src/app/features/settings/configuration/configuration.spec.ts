@@ -21,7 +21,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideTranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { Configuration } from './configuration';
 import { ConfigEntry, ConfigRepository } from '../../../core/api/config/config.repository';
 import { LlmTimeoutService } from '../../../core/api/analysis/llm-timeout.service';
@@ -201,7 +201,10 @@ describe('Configuration', () => {
       testLlm: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
     };
     timeoutServiceMock = {
-      refresh: vi.fn().mockResolvedValue(undefined),
+      // `refresh()` migré en Observable<void> par `22fa6f5` — le mock doit retourner un
+      // Observable, sinon le `.subscribe()` côté prod échoue (et inversement, un prod sans
+      // `.subscribe()` ne fait rien). Cf. audit 2026-05-16-pre-v0.5.1 Critique frontend.
+      refresh: vi.fn(() => of(undefined)),
     };
 
     await TestBed.configureTestingModule({
@@ -517,15 +520,22 @@ describe('Configuration', () => {
     expect(component.llmTimeoutDirty()).toBe(true);
   });
 
-  it('saving the LLM timeout calls LlmTimeoutService.refresh', () => {
+  it('saving the LLM timeout calls LlmTimeoutService.refresh AND subscribes to it', () => {
     // The "estimation max" label on the LLM card reads its value from LlmTimeoutService — a save
     // that didn't refresh the service would leave the label showing the stale boot-time value
     // until the user reloaded the page, which is exactly what the inline refresh prevents.
+    // Subject sentinel : `observed` flips à `true` quand au moins un subscriber a tiré. Pin la
+    // régression « refresh() Observable cold appelé sans .subscribe() » de 22fa6f5 (cf. audit
+    // 2026-05-16-pre-v0.5.1).
+    const refreshSubject = new Subject<void>();
+    timeoutServiceMock.refresh.mockReturnValueOnce(refreshSubject);
+
     component.onLlmTimeoutChange(720);
     component.save('llm.timeout-seconds');
 
     expect(repo.set).toHaveBeenCalledWith('llm.timeout-seconds', '720');
     expect(timeoutServiceMock.refresh).toHaveBeenCalledTimes(1);
+    expect(refreshSubject.observed).toBe(true);
   });
 
   it('saving an unrelated key does not refresh the LlmTimeoutService', () => {
