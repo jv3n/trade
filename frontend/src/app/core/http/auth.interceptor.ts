@@ -5,22 +5,32 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../app-state/auth.service';
 
 /**
- * HTTP error handler — two distinct failure modes, two distinct routes :
+ * Auth-related HTTP error handler. Scope deliberately **narrow** : the only routing decision the
+ * interceptor makes is "session expired → bounce to /login". Everything else propagates to the
+ * caller, who decides whether to show an inline error, a banner, a retry button, or anything else
+ * that fits the surface.
  *
  * - **401 from `/api/**`** (session expired mid-session) → clear [AuthService.currentUser] and
- *   navigate to `/login`. The user re-triggers the OAuth dance from there.
- * - **5xx from `/api/**`** (backend broken / inconsistent state — e.g. authenticated session but
- *   the DB user row is missing) → navigate to `/error`. The page shows the message and offers a
- *   logout button to clear Spring's session before re-attempting login. Without this route, the
- *   user would see the SPA's empty page or a stuck spinner with no path forward.
+ *   navigate to `/login`. The user re-triggers the OAuth dance from there. This is the only
+ *   case where global routing is correct : without an authenticated session, no other UI is
+ *   reachable anyway.
  *
- * Three skip conditions, identical for both branches :
+ * What this interceptor **deliberately does NOT do** :
+ * - **No `/error` redirect on 5xx**. A 503 on a widget endpoint (news, analyst, earnings,
+ *   narrative) is a fail-soft transient — the component shows "data unavailable" inline, the
+ *   rest of the page keeps working. Bouncing the whole user to `/error` would be hostile UX. A
+ *   500 from a mutation needs an inline snackbar / banner near the action button, not a
+ *   full-page redirect. The `/error` route stays available for explicit navigation (e.g. from a
+ *   future fatal error boundary) but the interceptor doesn't trigger it.
+ * - **No retry logic**. Components own their retry strategy (snackbar with "Réessayer" button,
+ *   etc.). Centralising retry here would race with caller-level intent.
+ *
+ * Three skip conditions for the 401 branch :
  * - **Non-`/api/**` URLs** — OAuth dance + static assets must NOT trigger any redirect.
  * - **`/api/me`** — already handled by [AuthService.refresh] which records errors into the
  *   `lastError` signal. The login page surfaces them ; no global redirect.
  * - **`/api/config`** — admin-only endpoint that the `LlmTimeoutService` boot initializer hits.
- *   Its 401 races [AuthService.refresh] under valid USER sessions ; its 5xx isn't user-fixable
- *   either. The service swallows both internally.
+ *   Its 401 races [AuthService.refresh] under valid USER sessions ; the service swallows it.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -33,14 +43,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (!isInterestingApiCall) return throwError(() => err);
-      if (err.status === 401) {
+      if (isInterestingApiCall && err.status === 401) {
         auth.clear();
         void router.navigate(['/login']);
-      } else if (err.status >= 500 && err.status < 600) {
-        void router.navigate(['/error'], {
-          queryParams: { status: err.status, url: req.url },
-        });
       }
       return throwError(() => err);
     }),
