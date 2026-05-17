@@ -187,5 +187,4 @@ Onglet Actions → cliquer sur le run → bouton "Re-run failed jobs" ou "Re-run
 
 À venir (cf. [`backlog.md`](../projet/backlog.md)) :
 
-- **Merge queue** — possible quand on aura plusieurs contributeurs ou des PRs concurrentes (gardé en backlog, pas urgent solo)
 - **Cache Vitest en CI** — à mesurer avant de coder. La transform TS→JS de Vitest vit dans `node_modules/.vite/` donc wipée à chaque `npm ci` ; déplacer le cache dans un dossier persistable + `actions/cache@v5` dédié peut couper la part Vitest si elle dépasse les 30 s. Trigger d'arbitrage : mesurer la durée Vitest brute en CI sur 5-10 runs avant de décider

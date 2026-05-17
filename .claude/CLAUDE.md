@@ -8,7 +8,7 @@ Per-ticker market intelligence app. For each ticker (held in the user's portfoli
 
 **Architecture cible — pipeline d'analyse composable** : the per-ticker dossier is the **atomic unit** of computation. Portfolio-level analyses (and future watchlist digests, cross-position alerts, etc.) are **compositions** built on top — a DAG of jobs where the leaves are `TickerAnalysis(symbol, day)` (cache-aware via `ticker_narrative_snapshot`) and parents are aggregators (`PortfolioAggregation`, …) that consume already-persisted leaf narratives instead of re-prompting on raw indicators. The cache makes portfolio analyses cheap (~M LLM calls where M = uncached tickers, often 0). Visible to the user as a GitHub-Actions-style pipeline view. Vision details in `docs/metier/vision.md > Le pipeline d'analyse` ; technical model in `docs/technique/architecture.md > Modèle pipeline d'analyse`.
 
-> Phase 0 (rebalance recommendations from RSS news + portfolio-wide LLM prompt) was **decommissioned** in Phase 2.5 — the RSS ingestion module, the legacy portfolio-analysis pipeline, and the underlying tables (`feed_article`, `feed_source`, `recommendation*`, `analysis_job`) were removed. The replacement is the arrival of `PortfolioAggregation` as a parent job over the existing per-ticker infrastructure (cf. backlog Phase 4 « Réintégration Phase 0 »). See `docs/metier/fonctionnalites.md` for the full phasing.
+> Phase 0 (rebalance recommendations from RSS news + portfolio-wide LLM prompt) was **decommissioned** in Phase 2.5 — the RSS ingestion module, the legacy portfolio-analysis pipeline, and the underlying tables (`feed_article`, `feed_source`, `recommendation*`, `analysis_job`) were removed. The replacement is the arrival of `PortfolioAggregation` as a parent job over the existing per-ticker infrastructure (cf. backlog Phase 6 « Réintégration Phase 0 »). See `docs/metier/fonctionnalites.md` for the full phasing.
 
 ## Stack
 
@@ -205,7 +205,7 @@ Feature tracking is split across two files :
 1. **⏳ À faire — sorted by priority descending** : 🔴 Critique on top, then 🟡 Moyenne, then 🟢 Basse. Within the same priority, ordering is free (recent items can stay near the top).
 2. **🚧 En cours** (rare) : right after the last 🔴 if any.
 
-This applies per-section (Phase 2.5, Phase 3, Phase 4, Phase 5, Dette technique…). Don't shuffle entries you didn't touch — reorder only the section you're editing in the same pass.
+This applies per-section (Phase 2.5, Phase 3, Phase 4, Phase 5, Phase 6, Dette technique…). Don't shuffle entries you didn't touch — reorder only the section you're editing in the same pass.
 
 ### Documentation
 
@@ -236,7 +236,9 @@ Whenever a technical decision is made (lib choice, dropped approach, architectur
 | `skills/angular-di/`                         | `inject()`, providers, injection tokens            |
 | `skills/angular-signals/`                    | `signal`, `computed`, `linkedSignal`, RxJS interop |
 | `skills/angular-testing/`                    | Vitest + TestBed patterns                          |
+| `skills/code-review/`                        | `/code-review` — spawns `agents/code-reviewer.md` for read-only pre-commit review (diff vs `master` or uncommitted) |
 | `skills/code-review-excellence/`             | PR review process and checklists                   |
+| `skills/doc-maintainer/`                     | `/doc-maintainer` — spawns `agents/doc-maintainer.md` for read-only doc-set audit (factual drift, tone, cross-links) |
 | `skills/folders-structure-backend/`          | Backend folder conventions (Kotlin + Spring)       |
 | `skills/folders-structure-frontend/`         | Frontend folder conventions for this app           |
 | `skills/git-commit/`                         | Conventional Commits workflow                      |

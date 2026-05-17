@@ -6,32 +6,32 @@ Outil d'intelligence de marché par ticker, alimenté par l'IA. Pour chaque acti
 
 ## Statut CI & qualité
 
-[![Backend CI](https://github.com/jv3n/trade/actions/workflows/backend.yml/badge.svg)](https://github.com/jv3n/trade/actions/workflows/backend.yml)
-[![Frontend CI](https://github.com/jv3n/trade/actions/workflows/frontend.yml/badge.svg)](https://github.com/jv3n/trade/actions/workflows/frontend.yml)
-[![CodeQL](https://github.com/jv3n/trade/actions/workflows/codeql.yml/badge.svg)](https://github.com/jv3n/trade/actions/workflows/codeql.yml)
-[![Deploy docs](https://github.com/jv3n/trade/actions/workflows/docs.yml/badge.svg)](https://github.com/jv3n/trade/actions/workflows/docs.yml)
+<a href="https://github.com/jv3n/trade/actions/workflows/backend.yml" target="_blank" rel="noopener"><img src="https://github.com/jv3n/trade/actions/workflows/backend.yml/badge.svg" alt="Backend CI"></a>
+<a href="https://github.com/jv3n/trade/actions/workflows/frontend.yml" target="_blank" rel="noopener"><img src="https://github.com/jv3n/trade/actions/workflows/frontend.yml/badge.svg" alt="Frontend CI"></a>
+<a href="https://github.com/jv3n/trade/actions/workflows/codeql.yml" target="_blank" rel="noopener"><img src="https://github.com/jv3n/trade/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
+<a href="https://github.com/jv3n/trade/actions/workflows/docs.yml" target="_blank" rel="noopener"><img src="https://github.com/jv3n/trade/actions/workflows/docs.yml/badge.svg" alt="Deploy docs"></a>
 
-[![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](.github/dependabot.yml)
-[![Detekt](https://img.shields.io/badge/Detekt-scanning-7F52FF?logo=kotlin&logoColor=white)](https://detekt.dev/)
-[![Code Scanning](https://img.shields.io/badge/Code%20Scanning-CodeQL%20%2B%20Detekt-2EA44F?logo=github)](https://github.com/jv3n/trade/security/code-scanning)
+<a href=".github/dependabot.yml" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot&logoColor=white" alt="Dependabot"></a>
+<a href="https://detekt.dev/" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/Detekt-scanning-7F52FF?logo=kotlin&logoColor=white" alt="Detekt"></a>
+<a href="https://github.com/jv3n/trade/security/code-scanning" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/Code%20Scanning-CodeQL%20%2B%20Detekt-2EA44F?logo=github" alt="Code Scanning"></a>
 
 ## Documentation
 
-Site complet : **[portfolioAI](https://jv3n.github.io/trade/CHANGELOG/)**
+Site complet : **<a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blank" rel="noopener">portfolioAI</a>**
 
 | Rubrique | Pour qui / quand |
 |---|---|
-| [Onboarding développeur](https://jv3n.github.io/trade/technique/developper/) | Nouvel arrivant — install, premier test, troubleshooting |
-| [Architecture](https://jv3n.github.io/trade/technique/architecture/) | Comprendre les modules, le schéma BDD et les décisions techniques |
-| [DDD — bounded contexts](https://jv3n.github.io/trade/technique/ddd/) | Cartographie des bounded contexts et de leurs frontières (vocabulaire, ports, anti-corruption layers) |
-| [Guide de développement](https://jv3n.github.io/trade/technique/developpement/) | Référence quotidienne : commandes, structure, configuration locale |
-| [Providers externes](https://jv3n.github.io/trade/technique/providers/) | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
-| [Ops (CI / CD / tooling)](https://jv3n.github.io/trade/technique/ops/) | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
-| [Commandes pratiques (devops)](https://jv3n.github.io/trade/devops/commandes-pratiques/) | Cheatsheet psql / Tilt / Ollama / cleanup jobs LLM bloqués |
-| [Décision : déploiement Ollama](https://jv3n.github.io/trade/devops/decision-ollama-deploiement/) | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
-| [Vision](https://jv3n.github.io/trade/metier/vision/) | Pourquoi le projet existe, ce qu'on essaie de prouver |
-| [Fonctionnalités](https://jv3n.github.io/trade/metier/fonctionnalites/) | Découpage par phase, ce qui est livré / gelé / à venir |
-| [Backlog](https://jv3n.github.io/trade/projet/backlog/) | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
-| [Journal des livraisons](https://jv3n.github.io/trade/projet/journal-livraisons/) | Historique reverse-chronologique des features livrées par phase |
-| [Conventions de commit](https://jv3n.github.io/trade/projet/commit-conventions/) | Conventional Commits en anglais, exemples |
-| [Changelog doc](https://jv3n.github.io/trade/CHANGELOG/) | Trace reverse-chronologique des modifications du doc set (post `/doc-maintainer`) |
+| <a href="https://jv3n.github.io/trade/technique/developper/" target="_blank" rel="noopener">Onboarding développeur</a> | Nouvel arrivant — install, premier test, troubleshooting |
+| <a href="https://jv3n.github.io/trade/technique/architecture/" target="_blank" rel="noopener">Architecture</a> | Comprendre les modules, le schéma BDD et les décisions techniques |
+| <a href="https://jv3n.github.io/trade/technique/ddd/" target="_blank" rel="noopener">DDD — bounded contexts</a> | Cartographie des bounded contexts et de leurs frontières (vocabulaire, ports, anti-corruption layers) |
+| <a href="https://jv3n.github.io/trade/technique/developpement/" target="_blank" rel="noopener">Guide de développement</a> | Référence quotidienne : commandes, structure, configuration locale |
+| <a href="https://jv3n.github.io/trade/technique/providers/" target="_blank" rel="noopener">Providers externes</a> | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
+| <a href="https://jv3n.github.io/trade/technique/ops/" target="_blank" rel="noopener">Ops (CI / CD / tooling)</a> | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
+| <a href="https://jv3n.github.io/trade/devops/commandes-pratiques/" target="_blank" rel="noopener">Commandes pratiques (devops)</a> | Cheatsheet psql / Tilt / Ollama / cleanup jobs LLM bloqués |
+| <a href="https://jv3n.github.io/trade/devops/decision-ollama-deploiement/" target="_blank" rel="noopener">Décision : déploiement Ollama</a> | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
+| <a href="https://jv3n.github.io/trade/metier/vision/" target="_blank" rel="noopener">Vision</a> | Pourquoi le projet existe, ce qu'on essaie de prouver |
+| <a href="https://jv3n.github.io/trade/metier/fonctionnalites/" target="_blank" rel="noopener">Fonctionnalités</a> | Découpage par phase, ce qui est livré / gelé / à venir |
+| <a href="https://jv3n.github.io/trade/projet/backlog/" target="_blank" rel="noopener">Backlog</a> | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
+| <a href="https://jv3n.github.io/trade/projet/journal-livraisons/" target="_blank" rel="noopener">Journal des livraisons</a> | Historique reverse-chronologique des features livrées par phase |
+| <a href="https://jv3n.github.io/trade/projet/commit-conventions/" target="_blank" rel="noopener">Conventions de commit</a> | Conventional Commits en anglais, exemples |
+| <a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blank" rel="noopener">Changelog doc</a> | Trace reverse-chronologique des modifications du doc set (post `/doc-maintainer`) |

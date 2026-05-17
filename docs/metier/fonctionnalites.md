@@ -34,17 +34,17 @@ Tilt + Docker Compose, CI GitHub Actions (backend Gradle + Postgres / frontend V
 
 #### Ingestion RSS
 
-Module `ingestion/` (scheduler Rome, déduplication, 25 sources seedées, parsing robuste DOCTYPE / `&` nus / détection HTML) **supprimé**. Tables `feed_source` et `feed_article` droppées (migration V6). La Phase 4 « Réintégration Phase 0 » repartira de sources Phase 1+2 (snapshots ticker + analyst + earnings + news per-ticker), pas d'un nouveau scraping RSS.
+Module `ingestion/` (scheduler Rome, déduplication, 25 sources seedées, parsing robuste DOCTYPE / `&` nus / détection HTML) **supprimé**. Tables `feed_source` et `feed_article` droppées (migration V6). La Phase 6 « Réintégration Phase 0 » repartira de sources Phase 1+2 (snapshots ticker + analyst + earnings + news per-ticker), pas d'un nouveau scraping RSS.
 
 #### Analyse portefeuille (LLM rebalancing)
 
-Pipeline `AnalysisExecutor` (`AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator` 8 règles, `RecommendationPersister`, `AnalysisJobStore`) **supprimé**. Tables `recommendation`, `recommendation_action`, `recommendation_score`, `analysis_job` droppées (V6). Pages frontend `/recommendations` et `/history` supprimées. Le replacement Phase 4 sera un job `PortfolioAggregation` qui agrège les snapshots ticker existants — pas un re-prompt LLM portfolio-wide.
+Pipeline `AnalysisExecutor` (`AnalysisContextLoader`, `LlmResponseParser`, `RecommendationValidator` 8 règles, `RecommendationPersister`, `AnalysisJobStore`) **supprimé**. Tables `recommendation`, `recommendation_action`, `recommendation_score`, `analysis_job` droppées (V6). Pages frontend `/recommendations` et `/history` supprimées. Le replacement Phase 6 sera un job `PortfolioAggregation` qui agrège les snapshots ticker existants — pas un re-prompt LLM portfolio-wide.
 
 #### Settings RSS back-office
 
 Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings vit aujourd'hui avec `configuration/` (config runtime Phase 2) et `prompts/` + `prompts/:id/stats` (gestion + scoring des prompts narratifs, Phase 3). La page `prompt-preview/` (aperçu interpolé du prompt narratif Phase 1) a été retirée le 2026-05-14, l'éditeur de prompts Phase 3 couvrant l'usage.
 
-> **Pourquoi décommissionné maintenant** : la Phase 0 était gelée depuis Phase 1, mais le module restait chargé et `AnalysisExecutor` chargeait encore les 200 derniers articles RSS dans le prompt LLM même quand le scheduler était off — cause d'un timeout 400 s observé sur Ollama cold-start le 2026-05-07. Plutôt que de patcher le legacy, on a tranché : drop des tables et modules, le replacement Phase 4 (PortfolioAggregation au-dessus des snapshots ticker) ne réutilisera rien de la plomberie RSS+executor.
+> **Pourquoi décommissionné maintenant** : la Phase 0 était gelée depuis Phase 1, mais le module restait chargé et `AnalysisExecutor` chargeait encore les 200 derniers articles RSS dans le prompt LLM même quand le scheduler était off — cause d'un timeout 400 s observé sur Ollama cold-start le 2026-05-07. Plutôt que de patcher le legacy, on a tranché : drop des tables et modules, le replacement Phase 6 (PortfolioAggregation au-dessus des snapshots ticker) ne réutilisera rien de la plomberie RSS+executor.
 
 ---
 
@@ -121,7 +121,7 @@ Deux sources visibles côté UI :
 
 ## Phase 3 — Observabilité narrative
 
-> **Phase 3 clôturée 2026-05-14** — tag candidat `v0.5.0`. 4 livraisons en 5 jours qui forment une boucle d'audit narrative complète : foundation prompt management + scoring (2026-05-10), page observabilité narrative timeline + index (2026-05-13), score de cohérence cross-runs (2026-05-14), détection de biais (2026-05-14). Le ticket initialement projeté ici « Page Jobs DAG » a été déplacé en Phase 4 — il dépend du DAG unifié et son contenu est intrinsèquement lié à l'archi long terme. Détail des livraisons dans `docs/projet/journal-livraisons.md > Phase 3`.
+> **Phase 3 clôturée 2026-05-14** — tag candidat `v0.5.0`. 4 livraisons en 5 jours qui forment une boucle d'audit narrative complète : foundation prompt management + scoring (2026-05-10), page observabilité narrative timeline + index (2026-05-13), score de cohérence cross-runs (2026-05-14), détection de biais (2026-05-14). Le ticket initialement projeté ici « Page Jobs DAG » a été déplacé en Phase 6 — il dépend du DAG unifié et son contenu est intrinsèquement lié à l'archi long terme. Détail des livraisons dans `docs/projet/journal-livraisons.md > Phase 3`.
 
 ### ✅ Livré
 
@@ -130,22 +130,35 @@ Deux sources visibles côté UI :
 - **Score de cohérence cross-runs** (Phase 3 #2, livré 2026-05-14) : chaque carte de la timeline porte une chip « Cohérence vs précédent » (OK / WARN / HIGH) qui flag quand le narratif change de manière non justifiée par le mouvement de prix entre les deux runs. Heuristique pure (sentiment 0.55 + jaccard key_points 0.30 + ratio longueur 0.15, discountée par le price move — un swing 5 % excuse fully un sentiment flip), pas de LLM-as-judge — gratuit, déterministe, transparent. Tooltip natif liste les 3 sous-mesures + le price move signé pour que le user puisse re-dériver le verdict à l'œil. Détail dans `docs/projet/journal-livraisons.md > Phase 3`.
 - **Détection de biais** (Phase 3 #3, livré 2026-05-14) : page `/observability/bias` qui rend une vue agrégée du corpus narratif en 4 sections — sentiment distribution avec chip « biais suspecté » à 60 %, calibration sentiment vs prix (delta moyen 1d/1w/1m par bucket sentiment), couverture thématique des key_points (top-15 tokens avec compteur, l'absence d'un thème attendu est elle-même un signal), distribution des thumbs par sentiment (auto-check biais côté humain). Filtres date range + prompt version pour comparer un prompt vs un autre. Entrée navbar « Observabilité » ajoutée, lien depuis l'index. Détail dans `docs/projet/journal-livraisons.md > Phase 3`.
 
-### 🧊 Reporté Phase 4
+### 🧊 Reporté Phase 6
 
-- **Page Jobs (DAG)** : déplacé en Phase 4 — bloqué sur le ticket fondateur « Pipeline d'analyse — modèle DAG unifié ». L'UI au-dessus du DAG n'a d'intérêt que si le DAG existe (multi-kind jobs, parent/child, cache-aware leaves). Sans ces primitives, la page se réduirait à une liste plate de `ticker_narrative_job` qui dédouble la SSE de la narrative card.
+- **Page Jobs (DAG)** : déplacé en Phase 6 — bloqué sur le ticket fondateur « Pipeline d'analyse — modèle DAG unifié ». L'UI au-dessus du DAG n'a d'intérêt que si le DAG existe (multi-kind jobs, parent/child, cache-aware leaves). Sans ces primitives, la page se réduirait à une liste plate de `ticker_narrative_job` qui dédouble la SSE de la narrative card.
 
 ---
 
-## Phase 4 — Vision long terme
+## Phase 4 — Authentification
 
-- **Croisement portefeuille × insights ticker** : sur le Dashboard, afficher pour chaque position le sentiment ticker + alerte si RSI extrême ou drawdown important
-- **Watchlist alertes** : seuils déclencheurs (RSI > 70, MA50 cassée, drawdown > 20%)
-- **Réintégration de la Phase 0 décommissionnée** : les recommandations portefeuille reviennent, mais en agrégeant les insights ticker plutôt qu'en les recalculant
-- **Paper trading** : simulation d'exécution
-- **Multi-broker** : ne plus dépendre exclusivement du CSV Wealthsimple
+> Phase orthogonale aux features métier — pré-requis bloquant pour tout déploiement public (Phase 5). L'app vit aujourd'hui en single-user no-auth ; déployer en l'état exposerait tous les portfolios et clés API. Phase 4 ajoute OAuth2 (Google OIDC) + Spring Security côté backend, `AuthService` + login UI côté frontend, modèle `user_id`-aware côté BDD avec migration backfill. Un profile dev `local-no-auth` préserve le flow single-user pour les sessions quotidiennes. Pas reflétée en capacités utilisateur ici — c'est de la sécurité, pas une feature métier. Détails dans `docs/projet/backlog.md` section Phase 4.
 
 ---
 
 ## Phase 5 — Déploiement
 
-> Phase orthogonale aux features métier — sortir l'app du localhost. Reste filed côté `backlog.md` (analyse hébergement OVH/Hetzner/Scaleway/AWS + OAuth2 multi-user comme prérequis), pas reflétée ici parce qu'elle n'apporte pas de capacités nouvelles à l'utilisateur — c'est de l'infra/sécurité qui rend les capacités existantes accessibles depuis n'importe où. Détails dans `docs/projet/backlog.md` section Phase 5.
+> Phase orthogonale aux features métier — sortir l'app du localhost. Reste filed côté `backlog.md` (analyse hébergement OVH/Hetzner/Scaleway/AWS, CI/CD deploy, secrets, backups, DNS/TLS), pas reflétée ici parce qu'elle n'apporte pas de capacités nouvelles à l'utilisateur — c'est de l'infra qui rend les capacités existantes accessibles depuis n'importe où. **Pré-requis bloquant** : la Phase 4 Authentification doit avoir livré avant tout deploy public. Détails dans `docs/projet/backlog.md` section Phase 5.
+
+---
+
+## Phase 6 — Vision long terme
+
+> Cette phase est fondée sur le **DAG d'analyse unifié** (modèle technique décrit dans `docs/technique/architecture.md > Modèle pipeline d'analyse`), qui devient le primitif sous la plupart des tickets ci-dessous : chaque analyse est un nœud cache-aware, les portfolio aggregations sont des parents qui consomment les snapshots ticker déjà calculés. Sans ce primitif, les features ci-dessous tournent à coût élevé ou sont impossibles.
+
+- **DAG d'analyse unifié** : fondation pipeline (table `job` parent/child, cache-aware leaves, dedup déterministe) — pré-requis bloquant pour la plupart des autres items
+- **Réintégration de la Phase 0 décommissionnée** : les recommandations portefeuille reviennent, mais en agrégeant les insights ticker plutôt qu'en les recalculant — `PortfolioAggregation` parent du DAG
+- **Page Jobs (DAG)** : visualisation des pipelines async, vibe « pipelines GitLab/GitHub Actions »
+- **Cron pré-chauffe quotidienne** : pré-charge les analyses des positions OPEN hors heures de bureau, l'utilisateur arrive sur un dashboard cache-hit pur
+- **Croisement portefeuille × insights ticker** : sur le Dashboard, afficher pour chaque position le sentiment ticker + alerte si RSI extrême ou drawdown important
+- **Watchlist alertes** : seuils déclencheurs (RSI > 70, MA50 cassée, drawdown > 20%)
+- **Paper trading** : simulation d'exécution (indépendant du DAG)
+- **Multi-broker** : ne plus dépendre exclusivement du CSV Wealthsimple (indépendant du DAG)
+- **Fine-tuning** : R&D long terme — entraîner un modèle sur les snapshots narratifs personnels + thumbs accumulés (indépendant du DAG)
+

@@ -303,9 +303,9 @@ Huit migrations Flyway : `V1__init.sql` (schéma Phase 0 historique — les tabl
 
 ---
 
-## Modèle pipeline d'analyse (vision Phase 3 + Phase 4)
+## Modèle pipeline d'analyse (vision Phase 3 + Phase 6)
 
-> **Statut** : design cible, non encore implémenté. Documenté ici pour cadrer les prochains tickets backlog (« Page Jobs » Phase 3 + « Réintégration Phase 0 » Phase 4). Voir `docs/metier/vision.md > Le pipeline d'analyse` pour la framing produit.
+> **Statut** : design cible, non encore implémenté. Documenté ici pour cadrer les prochains tickets backlog Phase 6 (« DAG unifié » Vague 1 #1, « Réintégration Phase 0 » Vague 1 #2, « Page Jobs » Vague 1 #3, « Cron pré-chauffe » Vague 2 #4). Voir `docs/metier/vision.md > Le pipeline d'analyse` pour la framing produit.
 
 ### Concept central
 
