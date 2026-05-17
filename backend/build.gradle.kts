@@ -28,6 +28,8 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-actuator")
   implementation("org.springframework.boot:spring-boot-starter-cache")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+  implementation("org.springframework.boot:spring-boot-starter-security")
+  implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
   implementation("org.springframework.boot:spring-boot-starter-web")
   implementation("com.github.ben-manes.caffeine:caffeine")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -44,6 +46,7 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   // Kotlin-friendly matchers for Mockito (any(), eq(), times() that respect Kotlin's non-null
   // types — the Java equivalents return `null` for non-nullable parameters and crash).

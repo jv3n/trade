@@ -28,6 +28,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -59,6 +60,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  *   into the body. A rename here cascades into the Angular page binding silently.
  */
 @WebMvcTest(NarrativeObservabilityController::class, GlobalExceptionHandler::class)
+@AutoConfigureMockMvc(addFilters = false)
 class NarrativeObservabilityControllerTest {
 
   @Autowired private lateinit var mvc: MockMvc

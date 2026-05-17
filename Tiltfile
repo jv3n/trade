@@ -73,16 +73,29 @@ cmd_button(
 # App — Backend Spring Boot & Frontend Angular
 # ────────────────────────────────────────────────
 
-# Les ports custom (.env) sont injectés via les env vars que le `application.yml` lit
-# avec leurs défauts (`${POSTGRES_HOST_PORT:5432}`, `${OLLAMA_HOST_PORT:11434}`,
-# `${BACKEND_HOST_PORT:8080}`). Important : les env vars doivent être placées en
-# **prefix de la commande `./gradlew`** elle-même (pas en prefix du `cd`), sinon le
-# shell les exporte uniquement pour `cd` et `gradlew` redémarre sans elles —
-# Spring retombe alors sur ses défauts et la connexion à Postgres échoue si l'utilisateur
-# a remappé le port hôte.
-backend_cmd = "cd backend && POSTGRES_HOST_PORT={pg} OLLAMA_HOST_PORT={ol} BACKEND_HOST_PORT={be} JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew bootRun --args='--spring.profiles.active=local'".format(
-    pg = postgres_port, ol = ollama_port, be = backend_port,
-)
+# Le `serve_cmd` source `.env` à la racine du repo (`set -a` + `. ../.env`) pour exporter
+# **toutes** ses variables au sous-process gradle. Spring Boot les lit ensuite via son
+# relaxed binding — `POSTGRES_HOST_PORT` → `${POSTGRES_HOST_PORT}` dans application.yml,
+# `ANTHROPIC_API_KEY` → `anthropic.api.key`, `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
+# → la property correspondante, etc. Plus de var-par-var hardcodée ici : la single source of
+# truth est `.env`. Si `.env` n'existe pas (fresh clone), gradle démarre sans aucune var et
+# Spring retombe sur les défauts d'application.yml — comportement attendu.
+#
+# Profils Spring : `BACKEND_AUTH_MODE` (sourcée depuis `.env`) pilote quels profiles le backend
+# active. Les boutons Tilt ci-dessous flippent le mode en éditant `.env` puis en touchant
+# `application.yml` (qui re-déclenche le `serve_cmd` via les `deps`).
+#   - no-auth (défaut) → --spring.profiles.active=local,local-no-auth
+#       → `LocalNoAuthSecurityConfig` bypasse Spring Security, user fake ADMIN seedé au boot.
+#   - oauth            → --spring.profiles.active=local
+#       → `SecurityConfig` kicks in, vrai flow OAuth Google (creds via env vars sourcées
+#         depuis `.env` → `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}`).
+backend_cmd = """cd backend && \\
+  if [ -f ../.env ]; then set -a ; . ../.env ; set +a ; fi ; \\
+  AUTH_MODE=${BACKEND_AUTH_MODE:-no-auth} ; \\
+  if [ \"$AUTH_MODE\" = \"oauth\" ]; then PROFILES=\"local\"; else PROFILES=\"local,local-no-auth\"; fi ; \\
+  echo \"[Tilt] backend launching with --spring.profiles.active=$PROFILES (BACKEND_AUTH_MODE=$AUTH_MODE)\" ; \\
+  JAVA_HOME=$(/usr/libexec/java_home -v 21) \\
+    ./gradlew bootRun --args=\"--spring.profiles.active=$PROFILES\""""
 
 local_resource(
     name = "backend",
@@ -105,6 +118,34 @@ local_resource(
     ],
 )
 
+# Boutons pour flipper `BACKEND_AUTH_MODE` dans `.env` sans éditer le fichier à la main. Chaque
+# bouton réécrit la ligne (ou l'ajoute si absente), puis touche `application.yml` qui est dans les
+# `deps` du backend → Tilt re-déclenche le `serve_cmd` → le shell lit la nouvelle valeur et lance
+# Spring avec les profiles correspondants. Aucun redémarrage de Tilt nécessaire.
+cmd_button(
+    name = "switch-auth-mode-oauth",
+    resource = "backend",
+    text = "Mode → OAuth (test login Google)",
+    icon_name = "login",
+    argv = [
+        "sh",
+        "-c",
+        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=oauth' >> .env; touch backend/src/main/resources/application.yml; echo 'Switched to OAuth mode — backend restarting. Make sure application-local.yml has real google client-id/secret + app.admin.emails.'",
+    ],
+)
+
+cmd_button(
+    name = "switch-auth-mode-no-auth",
+    resource = "backend",
+    text = "Mode → no-auth (dev rapide)",
+    icon_name = "developer_mode",
+    argv = [
+        "sh",
+        "-c",
+        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=no-auth' >> .env; touch backend/src/main/resources/application.yml; echo 'Switched to no-auth mode — backend restarting with fake ADMIN dev@local.test'",
+    ],
+)
+
 local_resource(
     name = "frontend",
     serve_cmd = "cd frontend && npm start -- --host 0.0.0.0 --port {}".format(frontend_port),
@@ -112,6 +153,13 @@ local_resource(
         "frontend/src",
         "frontend/angular.json",
         "frontend/package.json",
+        # `proxy.conf.js` n'est lu que par `ng serve` au démarrage — pas de hot-reload natif.
+        # Le mettre en deps fait que Tilt relance le `serve_cmd` (= redémarre le dev server) à
+        # chaque sauvegarde du fichier, ce qui évite le piège silencieux : on édite le proxy,
+        # Tilt indique « no changes », et on reste avec la vieille config (e.g. les routes
+        # `/oauth2/**`, `/logout`, `/login/oauth2/**` ou le flag `xfwd: true` ajoutés en Phase 4
+        # auraient été ignorés sans ce deps).
+        "frontend/proxy.conf.js",
     ],
     labels = ["app"],
     links = [link("http://{}:{}".format(host, frontend_port), "App")],

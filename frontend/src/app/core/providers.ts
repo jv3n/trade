@@ -26,6 +26,8 @@ import { NarrativeObservabilityRepository } from './api/analysis/narrative-obser
 import { HttpNarrativeObservabilityRepository } from './api/analysis/adapters/narrative-observability.http';
 import { NarrativeBiasRepository } from './api/analysis/narrative-bias.repository';
 import { HttpNarrativeBiasRepository } from './api/analysis/adapters/narrative-bias.http';
+import { AuthRepository } from './api/auth/auth.repository';
+import { HttpAuthRepository } from './api/auth/adapters/auth.http';
 import { AnnotationRepository } from './local/annotation/annotation.repository';
 import { LocalStorageAnnotationRepository } from './local/annotation/adapters/annotation.local';
 
@@ -53,5 +55,6 @@ export function provideRepositories(): EnvironmentProviders {
       useClass: HttpNarrativeObservabilityRepository,
     },
     { provide: NarrativeBiasRepository, useClass: HttpNarrativeBiasRepository },
+    { provide: AuthRepository, useClass: HttpAuthRepository },
   ]);
 }

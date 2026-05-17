@@ -51,6 +51,8 @@ Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker
 | Bouton Tilt | Action |
 |-------------|--------|
 | **Purge** (sur le panel `postgres`) | Drop schema + redémarrage backend (Flyway rejoue toutes les migrations). Bouton attaché au panel `postgres` via `cmd_button` |
+| **Mode → OAuth** (sur le panel `backend`, Phase 4) | Édite `.env` pour mettre `BACKEND_AUTH_MODE=oauth` + touche `application.yml` → backend redémarre en mode auth réel (Spring Security + OAuth Google). Pré-requis : `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}` + `APP_ADMIN_EMAILS` dans `.env`, redirect URI `http://localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google` enregistrée dans Google Cloud Console |
+| **Mode → no-auth** (sur le panel `backend`, Phase 4) | Édite `.env` pour mettre `BACKEND_AUTH_MODE=no-auth` + touche `application.yml` → backend redémarre avec Spring Security bypassed, user fake ADMIN (`dev@local.test`) seedé au boot. Mode par défaut pour le dev solo |
 
 Pour alimenter un portefeuille démo, importer un CSV Wealthsimple depuis l'onglet **Import** (le portefeuille est read-only, il n'y a pas de seed SQL).
 
@@ -62,13 +64,61 @@ L'UI et le schéma JSON (`/v3/api-docs`) sont **désactivés par défaut** dans 
 
 ## Configuration locale
 
-Le fichier `application-local.yml` (gitignored) contient les secrets et surcharges. Le **setup initial** (création du fichier, choix Claude vs Ollama, exemples YAML) est documenté dans [`developper.md > Configurer le LLM`](./developper.md#configurer-le-llm) — single-source pour éviter le drift. Cette section couvre uniquement les usages courants après ce setup.
+Le fichier `application-local.yml` (gitignored) contient les **overrides de comportement dev** (JPA verbose, `llm.provider=ollama`, providers en `mock` par défaut, `springdoc` activé). Le **setup initial** (création du fichier, choix Claude vs Ollama, exemples YAML) est documenté dans [`developper.md > Configurer le LLM`](./developper.md#configurer-le-llm) — single-source pour éviter le drift. Cette section couvre uniquement les usages courants après ce setup.
+
+**Aucun secret en YAML.** Tous les credentials boot-time (creds OAuth Google, `APP_ADMIN_EMAILS`, `APP_FRONTEND_URL`) vivent dans `.env` à la racine du repo (gitignored). Le Tiltfile source `.env` dans le `serve_cmd` du backend → exporte au sous-process gradle → Spring lit via relaxed binding (`SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID` mappe vers la property correspondante). Voir `.env.example` pour la liste complète + la doc inline. Les clés API runtime-editable (Anthropic, Twelve Data, Finnhub) **ne sont pas** dans `.env` — elles passent par l'UI runtime config (voir paragraphe « Alternative runtime » ci-dessous).
 
 > **Performance Ollama sur Mac** — Ollama tourne **dans un container Docker Desktop**, qui est lui-même une VM Linux virtualisée par macOS. Apple n'expose pas Metal dans cette VM, donc l'inférence est en **CPU pur** : un narratif `qwen2.5:3b` peut saturer 9 cores ~918 % `docker stats` pendant 60–180 s, là où le même modèle sur Ollama natif (Metal activé) répond en 5-10 s. **Décision projet** (cf. [`docs/devops/decision-ollama-deploiement.md`](../devops/decision-ollama-deploiement.md), tranchée 2026-05-09) : statu quo Claude-first, Ollama containerisé reste utilisable comme outil de dev/backup mais n'est pas le chemin quotidien. Si tu vois ton fan hurler, c'est attendu — bascule sur Claude (`/settings/configuration > LLM > Provider = claude`) ou laisse mouliner. Re-trigger : machine dédiée, usage Ollama > 20 % des sessions, ou distribution du repo.
 
-Ne jamais committer `application-local.yml`. Ne jamais mettre de clé API dans `application.yml`.
+Ne jamais committer `application-local.yml` ni `.env`. Ne jamais mettre de clé API dans `application.yml`.
 
-> **Alternative runtime — édition sans reboot** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct **douze clés** sans reboot, réparties sur deux sub-sections (Providers de données / LLM) : (1) **secrets** — `market.twelvedata.api-key`, `market.finnhub.api-key`, `anthropic.api.key` (masqués + bouton Tester) ; (2) **toggles** — `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` (mock ↔ live), `llm.provider` (claude ↔ ollama) ; (3) **strings** — `ollama.model`, `anthropic.api.model` (autocomplete suggestions, valeurs libres) ; (4) **slider INT** — `market.cache.ttl-minutes` (5–60 min) et `llm.timeout-seconds` (60–900 s). Les overrides BDD prennent le pas sur les défauts YAML — pratique pour rotater une clé ou switcher de provider sans toucher à `application-local.yml`.
+> **Alternative runtime — édition sans reboot** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct **douze clés** sans reboot, réparties sur deux sub-sections (Providers de données / LLM) : (1) **secrets** — `market.twelvedata.api-key`, `market.finnhub.api-key`, `anthropic.api.key` (masqués + bouton Tester) ; (2) **toggles** — `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` (mock ↔ live), `llm.provider` (claude ↔ ollama) ; (3) **strings** — `ollama.model`, `anthropic.api.model` (autocomplete suggestions, valeurs libres) ; (4) **slider INT** — `market.cache.ttl-minutes` (5–60 min) et `llm.timeout-seconds` (60–900 s). Les overrides BDD prennent le pas sur les défauts YAML — pratique pour rotater une clé ou switcher de provider sans toucher à `application-local.yml`. **Note Phase 4** : la page `/settings/configuration` est gated ADMIN ; en mode `BACKEND_AUTH_MODE=no-auth` le dev user (`dev@local.test`) est ADMIN par défaut, l'accès est trivial. En mode `oauth`, ton email doit être dans `APP_ADMIN_EMAILS` au premier login pour atterrir en role ADMIN.
+
+## Modes d'authentification (Phase 4)
+
+Le backend supporte deux modes d'auth, switchables sans toucher au code :
+
+### Mode `no-auth` (défaut, dev solo)
+
+Spring Security bypassed via le profile `local-no-auth`. Au boot, `LocalNoAuthUserInitializer` seed un user `dev@local.test` ADMIN ; à chaque request, `LocalNoAuthFilter` injecte ce user dans le `SecurityContext`. Aucun OAuth dance, aucun login flow. `tilt up` 0-friction.
+
+- **Activation** : valeur par défaut dans `.env` (`BACKEND_AUTH_MODE=no-auth`, ou variable absente) ou bouton Tilt **« Mode → no-auth »** sur la ressource `backend`.
+- **Profile actif** : `--spring.profiles.active=local,local-no-auth` (calculé dans le `serve_cmd` shell).
+- **Behavior** : la SPA voit toujours un user authentifié ADMIN, toutes les routes accessibles, la navbar montre user menu + logout (qui no-op effectivement — le filtre re-injecte le user au prochain request).
+
+### Mode `oauth` (test du vrai flow Google contre localhost)
+
+Spring Security actif, OAuth2 Login Google OIDC, sessions backed par cookie `JSESSIONID`. Le SPA passe par la page `/login`, déclenche le redirect dance Google, et atterrit sur `/dashboard` une fois la session établie.
+
+**Pré-requis** (à faire une fois) :
+
+1. **Google Cloud Console** → APIs & Services → Credentials → Create OAuth Client ID → Web application.
+2. **Authorized redirect URIs** : ajouter exactement `http://localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google` (le **port front**, pas backend — grâce à `xfwd` + `forward-headers-strategy: framework`, Spring construit son `redirect_uri` sur le port SPA).
+3. **`.env` à la racine** :
+   ```
+   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
+   SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
+   APP_ADMIN_EMAILS=ton.email@gmail.com    # ton email pour atterrir en ADMIN au 1er login
+   APP_FRONTEND_URL=http://localhost:4201/  # cible du redirect post-OAuth, match FRONTEND_HOST_PORT
+   ```
+4. **Activation** : bouton Tilt **« Mode → OAuth »** sur la ressource `backend`, **ou** mettre `BACKEND_AUTH_MODE=oauth` dans `.env` manuellement.
+5. **OAuth consent screen** dans Google Cloud Console : en mode `Testing`, ajouter ton email comme test user. Sinon Google bloque le login (« Access blocked »).
+
+Le flow complet :
+
+```
+SPA `/login` → bouton « Sign in with Google »
+  → window.location = `/oauth2/authorization/google`
+  → proxy CLI forward au backend avec X-Forwarded-Host: localhost:<FRONTEND_HOST_PORT>
+  → Spring 302 → Google (avec redirect_uri = localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google)
+  → tu autorises
+  → Google 302 → localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google
+  → proxy forward au backend, Spring exchange le code, crée la session
+  → Spring 302 → APP_FRONTEND_URL (= `http://localhost:4201/`)
+  → SPA reload, AuthService.refresh() call `/api/me`, user résolu, dashboard rendu
+```
+
+**Pour basculer en cours de session** : clique le bouton Tilt **« Mode → ... »** opposé sur la ressource `backend`. Le bouton édite `.env`, touche `application.yml`, le backend redémarre dans le nouveau mode. Aucun restart Tilt complet n'est nécessaire.
 
 ## Conventions de commit
 

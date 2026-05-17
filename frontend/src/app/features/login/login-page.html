@@ -1,0 +1,22 @@
+<main class="login-page">
+  <section class="login-card">
+    <header class="login-header">
+      <mat-icon class="login-logo">trending_up</mat-icon>
+      <h1>{{ 'auth.login.title' | translate }}</h1>
+      <p class="login-subtitle">{{ 'auth.login.subtitle' | translate }}</p>
+    </header>
+
+    <button
+      mat-flat-button
+      color="primary"
+      class="login-google-btn"
+      type="button"
+      (click)="signInWithGoogle()"
+    >
+      <mat-icon>login</mat-icon>
+      {{ 'auth.login.signInWithGoogle' | translate }}
+    </button>
+
+    <p class="login-disclaimer">{{ 'auth.login.disclaimer' | translate }}</p>
+  </section>
+</main>

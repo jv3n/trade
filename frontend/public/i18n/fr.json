@@ -26,7 +26,31 @@
     "themeLight": "Passer en thème clair",
     "themeDark": "Passer en thème sombre",
     "language": "Changer de langue",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "userMenu": "Mon compte"
+  },
+  "auth": {
+    "login": {
+      "title": "PortfolioAI",
+      "subtitle": "Connectez-vous pour accéder à votre portefeuille, vos tickers suivis et votre observabilité narrative.",
+      "signInWithGoogle": "Se connecter avec Google",
+      "disclaimer": "⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement."
+    },
+    "signOut": "Se déconnecter",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "Utilisateur"
+    }
+  },
+  "error": {
+    "title": "Une erreur est survenue",
+    "subtitle": "Le backend a renvoyé une réponse inattendue. Tu peux te déconnecter pour repartir d'un état propre, ou revenir à la page de connexion pour réessayer.",
+    "details": "Détails techniques",
+    "status": "Statut HTTP",
+    "url": "URL appelée",
+    "lastAuthError": "Dernière erreur d'authentification",
+    "signOutAndRetry": "Se déconnecter et réessayer",
+    "backToLogin": "Retour à la connexion"
   },
   "language": {
     "fr": "Français",

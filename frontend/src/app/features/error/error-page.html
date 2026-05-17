@@ -1,0 +1,40 @@
+<main class="error-page">
+  <section class="error-card">
+    <header class="error-header">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <h1>{{ 'error.title' | translate }}</h1>
+      <p class="error-subtitle">{{ 'error.subtitle' | translate }}</p>
+    </header>
+
+    @if (status() || url() || authError()) {
+      <details class="error-details">
+        <summary>{{ 'error.details' | translate }}</summary>
+        <dl>
+          @if (status()) {
+            <dt>{{ 'error.status' | translate }}</dt>
+            <dd>{{ status() }}</dd>
+          }
+          @if (url()) {
+            <dt>{{ 'error.url' | translate }}</dt>
+            <dd class="error-url">{{ url() }}</dd>
+          }
+          @if (authError()) {
+            <dt>{{ 'error.lastAuthError' | translate }}</dt>
+            <dd>{{ authError() }}</dd>
+          }
+        </dl>
+      </details>
+    }
+
+    <div class="error-actions">
+      <button mat-flat-button color="primary" type="button" (click)="signOut()">
+        <mat-icon>logout</mat-icon>
+        {{ 'error.signOutAndRetry' | translate }}
+      </button>
+      <button mat-stroked-button type="button" (click)="backToLogin()">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'error.backToLogin' | translate }}
+      </button>
+    </div>
+  </section>
+</main>

@@ -15,6 +15,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -43,6 +44,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  *   param yields the same series the dossier already shows on initial load.
  */
 @WebMvcTest(MarketController::class, GlobalExceptionHandler::class)
+@AutoConfigureMockMvc(addFilters = false)
 class MarketControllerTest {
 
   @Autowired private lateinit var mvc: MockMvc

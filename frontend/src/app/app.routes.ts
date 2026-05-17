@@ -1,25 +1,42 @@
 import { Routes } from '@angular/router';
+import { adminGuard, authGuard } from './core/router/auth.guards';
 
 export const routes: Routes = [
+  // `/login` and `/error` are the two routes exempt from `authGuard` — the former is where
+  // unauthenticated users land, the latter is where 5xx-from-`/api/**` errors route so the user
+  // can logout + retry without being stuck in an authenticated-but-broken state.
+  {
+    path: 'login',
+    loadComponent: () => import('./features/login/login-page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'error',
+    loadComponent: () => import('./features/error/error-page').then((m) => m.ErrorPage),
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   {
     path: 'dashboard',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
   },
   {
     path: 'import',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/import/import').then((m) => m.Import),
   },
   {
     path: 'suivi',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/suivi/suivi').then((m) => m.Suivi),
   },
   {
     path: 'ticker/:symbol',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),
   },
   {
     path: 'observability',
+    canActivate: [authGuard, adminGuard],
     loadComponent: () =>
       import('./features/observability/index/observability-index').then(
         (m) => m.ObservabilityIndexPage,
@@ -30,15 +47,18 @@ export const routes: Routes = [
   // per-ticker timeline with an empty corpus).
   {
     path: 'observability/bias',
+    canActivate: [authGuard, adminGuard],
     loadComponent: () => import('./features/observability/bias/bias').then((m) => m.BiasPage),
   },
   {
     path: 'observability/:symbol',
+    canActivate: [authGuard, adminGuard],
     loadComponent: () =>
       import('./features/observability/observability').then((m) => m.ObservabilityPage),
   },
   {
     path: 'settings',
+    canActivate: [authGuard, adminGuard],
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
     children: [
       { path: '', redirectTo: 'configuration', pathMatch: 'full' },

@@ -9,6 +9,7 @@ import org.mockito.BDDMockito.given
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  *   chart endpoint shows, so the user gets a unified "réessayez dans quelques minutes" experience.
  */
 @WebMvcTest(SymbolSearchController::class, GlobalExceptionHandler::class)
+@AutoConfigureMockMvc(addFilters = false)
 class SymbolSearchControllerTest {
 
   @Autowired private lateinit var mvc: MockMvc
