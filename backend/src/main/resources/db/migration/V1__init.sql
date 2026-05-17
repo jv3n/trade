@@ -20,13 +20,17 @@
 -- stable, et avant le premier déploiement (Phase 5) cette fusion est zéro risque. Une fois en
 -- prod, refaire ce travail demanderait un dump-restore coordonné — bien plus risqué.
 --
--- Procédure de migration pour les DB existantes : `spring.flyway.baseline-on-migrate: true` +
--- `spring.flyway.baseline-version: 1` dans `application.yml`. Au prochain boot, Flyway constate
--- que la DB a déjà `flyway_schema_history` à V10, log `Successfully baselined schema with version: 1`,
--- et toutes les futures migrations partent de V2. Aucune perte de data.
+-- Procédure de migration : `spring.flyway.baseline-on-migrate: true` + `baseline-version: 0`
+-- dans `application.yml`. Sur une DB greenfield (CI, dev fresh clone, prod first deploy), Flyway
+-- baselin'e à V0 puis applique normalement V1 → toutes les tables sont créées. **Attention**, on
+-- avait essayé `baseline-version: 1` en premier : sur DB vide Flyway baseline directement à V1 et
+-- saute l'application du V1 → Hibernate `validate` crash au boot, aucune table créée.
 --
--- Pour repartir d'un repo greenfield : `docker compose down -v && tilt up` regénère une DB qui
--- applique ce V1 ex nihilo. Les imports CSV doivent être rejoués manuellement.
+-- Pour une DB existante avec `flyway_schema_history` héritée de V1→V10 (cas dev local pré-fusion) :
+-- soit `docker compose down -v && tilt up` (reset complet, perte data acceptable single-user), soit
+-- drop manuel de la table `flyway_schema_history` avant `tilt up` (préserve les données — Flyway
+-- recrée l'history, baseline à V0, applique V1 sur le schéma existant, Hibernate `validate` passe
+-- parce que le schéma est déjà identique au V1 cible).
 --
 -- Ordre des CREATE TABLE = ordre des dépendances FK (parent avant enfant) :
 --   1. app_user        — racine du graphe multi-tenant

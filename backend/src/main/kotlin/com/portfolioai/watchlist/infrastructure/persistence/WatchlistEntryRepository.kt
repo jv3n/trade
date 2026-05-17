@@ -5,10 +5,9 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 
 /**
- * Toutes les méthodes scopées par `user_id` depuis V10 (cf.
- * `db/migration/V10__user_scoped_portfolio_watchlist.sql`). La contrainte UNIQUE sur `(user_id,
- * symbol)` permet à deux users distincts d'avoir AAPL chacun ; la table reste
- * single-row-per-user-per-symbol.
+ * Toutes les méthodes scopées par `user_id` (`user_id NOT NULL` + FK `app_user(id) ON DELETE
+ * CASCADE`, cf. `db/migration/V1__init.sql`). La contrainte UNIQUE sur `(user_id, symbol)` permet à
+ * deux users distincts d'avoir AAPL chacun ; la table reste single-row-per-user-per-symbol.
  */
 interface WatchlistEntryRepository : JpaRepository<WatchlistEntry, UUID> {
 

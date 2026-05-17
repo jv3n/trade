@@ -179,6 +179,97 @@ class ConfigControllerTest {
       .andExpect(jsonPath("$[11].allowedValues").doesNotExist())
   }
 
+  @Test
+  fun `GET config annotates allowedValues with disabledReason when the required secret is blank`() {
+    // Provider gating contract : when a live provider needs a SECRET key that isn't set, the
+    // backend tags that allowed-value with a non-null `disabledReason` carrying the property path
+    // of the missing key (e.g. `market.twelvedata.api-key`). The frontend reads that field to
+    // render the toggle in a disabled state with an i18n'd tooltip, and we cover it server-side
+    // so a future refactor of `ConfigController.annotateAllowedValue` doesn't silently drop the
+    // annotation. The `mock` option never carries a `disabledReason` — no API key required, it
+    // must always be selectable so a fresh clone stays usable.
+    //
+    // Fixture : all keys empty / on default ; only the values needed to exercise the four gated
+    // toggles are stubbed (the big GET test covers the full 12-key roundtrip independently).
+    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+    given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
+    given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
+    given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
+
+    mvc
+      .perform(get("/api/config"))
+      .andExpect(status().isOk)
+      // analyst.provider — [0]=mock (no key), [1]=finnhub (needs market.finnhub.api-key, blank).
+      .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
+      .andExpect(jsonPath("$[0].allowedValues[0].value").value("mock"))
+      .andExpect(jsonPath("$[0].allowedValues[0].disabledReason").doesNotExist())
+      .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
+      .andExpect(jsonPath("$[0].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY))
+      // earnings.provider — same shape, same FINNHUB_API_KEY dependency.
+      .andExpect(jsonPath("$[3].key").value(ConfigKeys.EARNINGS_PROVIDER))
+      .andExpect(jsonPath("$[3].allowedValues[1].value").value("finnhub"))
+      .andExpect(jsonPath("$[3].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY))
+      // llm.provider — [0]=mock, [1]=claude (needs anthropic.api.key), [2]=ollama (no key needed,
+      // daemon reachability is a different failure mode → never disabled here).
+      .andExpect(jsonPath("$[4].key").value(ConfigKeys.LLM_PROVIDER))
+      .andExpect(jsonPath("$[4].allowedValues[0].disabledReason").doesNotExist())
+      .andExpect(jsonPath("$[4].allowedValues[1].value").value("claude"))
+      .andExpect(
+        jsonPath("$[4].allowedValues[1].disabledReason").value(ConfigKeys.ANTHROPIC_API_KEY)
+      )
+      .andExpect(jsonPath("$[4].allowedValues[2].value").value("ollama"))
+      .andExpect(jsonPath("$[4].allowedValues[2].disabledReason").doesNotExist())
+      // market.provider — twelvedata gated on market.twelvedata.api-key.
+      .andExpect(jsonPath("$[8].key").value(ConfigKeys.MARKET_PROVIDER))
+      .andExpect(jsonPath("$[8].allowedValues[1].value").value("twelvedata"))
+      .andExpect(
+        jsonPath("$[8].allowedValues[1].disabledReason").value(ConfigKeys.TWELVEDATA_API_KEY)
+      )
+      // news.provider — finnhub gated on market.finnhub.api-key.
+      .andExpect(jsonPath("$[10].key").value(ConfigKeys.NEWS_PROVIDER))
+      .andExpect(jsonPath("$[10].allowedValues[1].value").value("finnhub"))
+      .andExpect(
+        jsonPath("$[10].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY)
+      )
+  }
+
+  @Test
+  fun `GET config leaves disabledReason null when the required secret is present`() {
+    // Mirror of the test above with the SECRET keys populated — every live option in the toggle
+    // group must come back selectable. Pins the negative branch of `annotateAllowedValue` so a
+    // future change can't make the disabled state sticky once the user enters their key.
+    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("real-key")
+    given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("real-key")
+    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant-real")
+    given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+    given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
+    given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
+    given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
+    given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("twelvedata")
+    given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("finnhub")
+    given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
+
+    mvc
+      .perform(get("/api/config"))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
+      .andExpect(jsonPath("$[0].allowedValues[1].disabledReason").doesNotExist())
+      .andExpect(jsonPath("$[4].allowedValues[1].value").value("claude"))
+      .andExpect(jsonPath("$[4].allowedValues[1].disabledReason").doesNotExist())
+      .andExpect(jsonPath("$[8].allowedValues[1].value").value("twelvedata"))
+      .andExpect(jsonPath("$[8].allowedValues[1].disabledReason").doesNotExist())
+  }
+
   // ---------------------------------------------------------------------- set
 
   @Test

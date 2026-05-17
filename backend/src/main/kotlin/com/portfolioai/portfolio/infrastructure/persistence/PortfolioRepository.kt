@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 /**
  * Toutes les méthodes de lecture portent `ByUserId(...)` parce que la table `portfolio` est
- * multi-tenant depuis V10 (cf. `db/migration/V10__user_scoped_portfolio_watchlist.sql`). Le
- * `findByName` historique a aussi été scopé — un name dupliqué entre deux users est légitime (alice
- * et bob peuvent tous deux avoir un portfolio « TFSA »).
+ * multi-tenant (`user_id NOT NULL` + FK `app_user(id) ON DELETE CASCADE`, cf.
+ * `db/migration/V1__init.sql`). Le `findByName` historique a aussi été scopé — un name dupliqué
+ * entre deux users est légitime (alice et bob peuvent tous deux avoir un portfolio « TFSA »).
  */
 interface PortfolioRepository : JpaRepository<Portfolio, UUID> {
 

@@ -2,9 +2,10 @@ import { Routes } from '@angular/router';
 import { adminGuard, authGuard } from './core/router/auth.guards';
 
 export const routes: Routes = [
-  // `/login` and `/error` are the two routes exempt from `authGuard` — the former is where
-  // unauthenticated users land, the latter is where 5xx-from-`/api/**` errors route so the user
-  // can logout + retry without being stuck in an authenticated-but-broken state.
+  // `/login` and `/error` are the two routes exempt from `authGuard`. `/login` is the OAuth entry
+  // point. `/error` is a manual escape hatch the user can navigate to via `AuthService.lastError`
+  // (logout + retry without being stuck in an authenticated-but-broken state) — the auth
+  // interceptor does **not** auto-redirect on 5xx, components handle local error UI in-band.
   {
     path: 'login',
     loadComponent: () => import('./features/login/login-page').then((m) => m.LoginPage),
