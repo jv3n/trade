@@ -1,0 +1,122 @@
+name: Deploy to Cloud Run
+
+# Release-triggered, not push-triggered. The rituel : clore une phase → tag annoté `vX.Y.Z` →
+# « Draft a new release » dans GitHub → Publish → ce workflow se déclenche. Les pushes sur
+# `master` continuent de faire tourner backend/frontend/codeql CI mais ne déclenchent **pas**
+# de deploy : un deploy reste un acte conscient (cf. décision 2026-05-18 dans le ticket de
+# clôture, et le walkthrough `docs/devops/deploiement.md > §6.2`).
+#
+# Les pre-releases (tags `vX.Y.Z-rcN`) déclenchent aussi `release: published` — c'est voulu
+# pour tester une release candidate sur un déploiement réel avant le tag final.
+on:
+  release:
+    types: [published]
+
+# Empêche deux deploys de tourner en parallèle. Si une 2e release est publiée pendant qu'un
+# deploy est en cours, le 2e attend la fin du 1er au lieu de se battre pour les révisions
+# Cloud Run. `cancel-in-progress: false` parce qu'un deploy à moitié appliqué laisse Cloud Run
+# dans un état inconsistant — mieux vaut séquencer.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+# Baseline workflow-level — les linters (CodeQL `actions/missing-workflow-permissions`)
+# exigent que la déclaration soit au niveau workflow, pas seulement job, pour qu'un éventuel
+# job ajouté plus tard ne reparte pas avec le token permissif par défaut.
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build, push, deploy
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      # Required pour Workload Identity Federation — `google-github-actions/auth@v2` mint un
+      # OIDC token court-terme via GitHub puis l'échange contre un access token GCP. Pas de
+      # service account JSON key long-terme dans GitHub Secrets (cf. `deploiement.md > §6`).
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate to GCP via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Pose le credential helper Docker pour pousser vers Artifact Registry. `--quiet` évite
+      # le prompt de confirmation interactif qui sinon bloquerait le runner.
+      - name: Configure Docker credential helper for Artifact Registry
+        run: gcloud auth configure-docker northamerica-northeast1-docker.pkg.dev --quiet
+
+      # Build natif amd64 sur ubuntu-latest (pas de QEMU émulation contrairement à un build
+      # local Mac M1 — gain ~5-10×). Tag = nom de la release GitHub (`v0.7.0`, `v0.7.0-rc1`…).
+      # Labels OCI standard pour que `docker inspect` retrace l'image vers le commit + le tag.
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: devops/prod/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ github.event.release.tag_name }}
+
+      # Deploy imperatif (`gcloud run deploy`) plutôt que déclaratif (`services replace --file`)
+      # — le `service.yaml` reste documentaire pour un futur passage déclaratif. Les flags
+      # repris du 1er deploy manuel validé (dev5, cf. journal Phase 5a). Pas de
+      # `APP_FRONTEND_URL` — le default `/` du base `application.yml` marche puisque backend +
+      # SPA sont même origine (Angular embarqué dans le jar via `static/`).
+      - name: Deploy revision to Cloud Run
+        run: |
+          gcloud run deploy portfolioai \
+            --image=northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }} \
+            --region=northamerica-northeast1 \
+            --project=${{ vars.GCP_PROJECT }} \
+            --platform=managed \
+            --service-account=portfolioai-runtime@${{ vars.GCP_PROJECT }}.iam.gserviceaccount.com \
+            --allow-unauthenticated \
+            --memory=1Gi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=3 \
+            --timeout=300 \
+            --port=8080 \
+            --set-env-vars=SPRING_PROFILES_ACTIVE=prod \
+            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails:latest,SPRING_DATASOURCE_URL=supabase-db-url:latest
+
+      # Smoke /actuator/health post-deploy + écriture du résumé du run. `gcloud run deploy`
+      # échoue déjà si la révision crash au boot (Cloud Run lit les startupProbes avant de
+      # router le trafic), donc ce step est de la defense-in-depth, mais c'est cheap et le
+      # résumé est utile pour pister un deploy depuis la page Actions.
+      - name: Smoke test and summary
+        run: |
+          URL=$(gcloud run services describe portfolioai \
+            --region=northamerica-northeast1 \
+            --project=${{ vars.GCP_PROJECT }} \
+            --format='value(status.url)')
+          echo "Hitting $URL/actuator/health..."
+          curl --fail --silent --show-error --max-time 30 "$URL/actuator/health"
+          echo ""
+          {
+            echo "## Deployment summary"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Release | \`${{ github.event.release.tag_name }}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo "| Image | \`northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }}\` |"
+            echo "| Service URL | $URL |"
+          } >> "$GITHUB_STEP_SUMMARY"
