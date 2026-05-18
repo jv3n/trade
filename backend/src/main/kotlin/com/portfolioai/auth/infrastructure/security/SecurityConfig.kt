@@ -85,7 +85,16 @@ class SecurityConfig(
         // would force `AuthController.getCurrentUser` to handle the anonymous principal case
         // (today it assumes one is present). The 401-as-signal contract is the simpler
         // invariant — don't move `/api/me` into `permitAll` by reflex.
-        it.anyRequest().authenticated()
+        it.requestMatchers("/api/**").authenticated()
+        // Tout le reste = `permitAll`. Couvre (a) la SPA Angular embarquée dans le jar prod
+        // (`src/main/resources/static/index.html` + bundles JS/CSS + `/assets/**` + `/i18n/**`)
+        // que Spring sert automatiquement via son resource handler, et (b) les routes client-side
+        // Angular (`/dashboard`, `/login`, `/error`, `/ticker/**`, `/settings/**`, etc.) qui se
+        // résolvent via `SpaFallbackConfig` (forward vers `index.html`, Angular Router prend le
+        // relais). Aucune surface API n'est exposée par cette ligne — toutes les routes data
+        // commencent par `/api/**` (authenticated() ci-dessus) ou `/actuator/**` (auth Spring
+        // Boot par défaut, seul `/actuator/health` est permitAll par notre matcher initial).
+        it.anyRequest().permitAll()
       }
       .exceptionHandling {
         it.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))

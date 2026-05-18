@@ -71,14 +71,27 @@ management:
         enabled: true  # active `/actuator/health/liveness` + `/readiness`
       show-details: never  # pas de details secrets dans le payload public
 
-# App-level settings — read by SecurityConfig + AuthService
-app:
-  frontend-url: ${APP_FRONTEND_URL}  # injecté par Cloud Run env var
-  admin:
-    emails: ${APP_ADMIN_EMAILS}  # injecté depuis secret manager
-
-# OAuth2 Google — creds injectées depuis Secret Manager via Cloud Run secretKeyRef
-spring.security.oauth2.client.registration.google:
-  client-id: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID}
-  client-secret: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET}
-  scope: openid, profile, email
+# App-level settings (`app.frontend-url`, `app.admin.emails`) + OAuth2 Google client registration
+# **gérés directement par le base `application.yml` + le relaxed binding env vars** :
+#
+#   - `app.frontend-url` : le base a `${APP_FRONTEND_URL:/}` (default `/` si env var non posée).
+#     En prod on peut soit poser `APP_FRONTEND_URL=https://<cloud-run-url>` au deploy pour que
+#     Spring construise les redirect URIs publiques correctes, soit laisser le default `/` qui
+#     marche aussi puisque le backend et la SPA Angular sont au même origine (Angular embarqué
+#     dans le jar via `static/`).
+#
+#   - `app.admin.emails` : le base a `${APP_ADMIN_EMAILS:}` (empty default). Cloud Run mount le
+#     secret `app-admin-emails` comme env var `APP_ADMIN_EMAILS` → Spring relaxed binding pickè
+#     up automatiquement, aucune YAML override nécessaire.
+#
+#   - `spring.security.oauth2.client.registration.google.*` : le base **n'en déclare pas** par
+#     design (`ClientRegistration.Builder.build()` crash sur `Assert.hasText(client-id)` si la
+#     registration est déclarée avec une valeur vide). Cloud Run mount les secrets
+#     `google-oauth-client-id` + `google-oauth-client-secret` comme env vars
+#     `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID` / `_CLIENT_SECRET` →
+#     Spring relaxed binding crée la registration directement depuis les env vars + utilise les
+#     défauts `CommonOAuth2Provider.GOOGLE` pour les autres champs (scope, authorization URI…).
+#
+# Bref : Cloud Run pose les 3 env vars `APP_ADMIN_EMAILS` + `SPRING_SECURITY_OAUTH2_*` via les
+# secrets mountés, et le base `application.yml` (ou son absence pour OAuth) fait le reste. Pas
+# de double déclaration ici qui pourrait introduire un placeholder unresolvable.

@@ -47,7 +47,7 @@ Livré dans le ticket `GitHub Secrets + Environments vault` (clôturé 2026-05-1
 
 | File | Status | Purpose |
 |---|---|---|
-| `Dockerfile` | ✅ Functional | Multi-stage build (Node 20 frontend → Eclipse Temurin 21 backend → JRE 21 runtime, ~200 MB final image). Non-root user `spring`, JVM tuning `-XX:MaxRAMPercentage=75`. |
+| `Dockerfile` | ✅ Functional | Multi-stage build (Node 24 frontend → Eclipse Temurin 21 JDK backend → JRE 21 runtime, ~200 MB final image). Non-root user `spring`, JVM tuning `-XX:MaxRAMPercentage=75`. |
 | `service.yaml` | ⏳ Stub | Cloud Run service descriptor — documente le shape complet (annotations scaling, healthchecks, env vars, secretKeyRef). À utiliser quand on passera à un deploy déclaratif `gcloud run services replace --file service.yaml`. Pour le 1er deploy on reste sur le pattern imperatif `gcloud run deploy` côté workflow. Tags `TODO_TAG` et `TODO_URL` à remplir. |
 | `README.md` | This file | Check-list of state + remaining steps. |
 

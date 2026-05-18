@@ -17,7 +17,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1 — Angular frontend
 # ---------------------------------------------------------------------------
-FROM node:20-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -50,7 +50,7 @@ COPY backend/ ./backend/
 # Embed the Angular build into Spring Boot's static resources directory
 # (Spring Boot serves files under `static/` automatically at the application root)
 COPY --from=frontend-builder /app/frontend/dist/ ./backend/src/main/resources/static-frontend/
-RUN ls -la ./backend/src/main/resources/static-frontend/ \
+RUN mkdir -p ./backend/src/main/resources/static/ \
  && cp -r ./backend/src/main/resources/static-frontend/*/browser/* ./backend/src/main/resources/static/ \
  && rm -rf ./backend/src/main/resources/static-frontend/
 
