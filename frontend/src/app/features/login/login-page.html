@@ -1,10 +1,28 @@
 <main class="login-page">
-  <section class="login-card">
+  <section class="login-hero">
     <header class="login-header">
-      <mat-icon class="login-logo">trending_up</mat-icon>
+      <mat-icon svgIcon="portfolioai" class="login-logo" aria-hidden="true"></mat-icon>
       <h1>{{ 'auth.login.title' | translate }}</h1>
-      <p class="login-subtitle">{{ 'auth.login.subtitle' | translate }}</p>
+      <p class="login-tagline">{{ 'auth.login.tagline' | translate }}</p>
     </header>
+
+    <ul class="login-features">
+      <li class="feature">
+        <mat-icon class="feature-icon" aria-hidden="true">query_stats</mat-icon>
+        <h3>{{ 'auth.login.features.indicators.title' | translate }}</h3>
+        <p>{{ 'auth.login.features.indicators.description' | translate }}</p>
+      </li>
+      <li class="feature">
+        <mat-icon class="feature-icon" aria-hidden="true">auto_stories</mat-icon>
+        <h3>{{ 'auth.login.features.narrative.title' | translate }}</h3>
+        <p>{{ 'auth.login.features.narrative.description' | translate }}</p>
+      </li>
+      <li class="feature">
+        <mat-icon class="feature-icon" aria-hidden="true">account_balance_wallet</mat-icon>
+        <h3>{{ 'auth.login.features.portfolio.title' | translate }}</h3>
+        <p>{{ 'auth.login.features.portfolio.description' | translate }}</p>
+      </li>
+    </ul>
 
     <button
       mat-flat-button

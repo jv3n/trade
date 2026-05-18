@@ -32,9 +32,23 @@
   "auth": {
     "login": {
       "title": "PortfolioAI",
-      "subtitle": "Connectez-vous pour accéder à votre portefeuille, vos tickers suivis et votre observabilité narrative.",
+      "tagline": "L'analyse de marché qui se lit comme une histoire, pas comme un signal d'achat.",
       "signInWithGoogle": "Se connecter avec Google",
-      "disclaimer": "⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement."
+      "disclaimer": "⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.",
+      "features": {
+        "indicators": {
+          "title": "Indicateurs calculés",
+          "description": "RSI, momentum, moyennes mobiles, drawdown — chiffrés côté serveur, jamais hallucinés par l'IA."
+        },
+        "narrative": {
+          "title": "Narration IA",
+          "description": "Un texte court qui digère les indicateurs et le contexte récent. L'IA écrit, elle ne décide pas."
+        },
+        "portfolio": {
+          "title": "Portefeuille connecté",
+          "description": "Import CSV Wealthsimple, snapshots historiques, lectures cross-position."
+        }
+      }
     },
     "signOut": "Se déconnecter",
     "role": {

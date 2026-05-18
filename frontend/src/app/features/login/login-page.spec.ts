@@ -88,7 +88,7 @@ describe('LoginPage', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/dashboard']);
   });
 
-  it('renders the title, subtitle and disclaimer i18n keys when not authenticated', () => {
+  it('renders the title, tagline, feature copy and disclaimer i18n keys when not authenticated', () => {
     // Tests run with `provideTranslateService({ lang: 'en' })` but no actual translation file
     // loaded — `TranslatePipe` falls back to the key string. We assert on the key presence in
     // the rendered DOM, which proves the template wired the pipe to the right keys.
@@ -98,7 +98,10 @@ describe('LoginPage', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('auth.login.title');
-    expect(el.textContent).toContain('auth.login.subtitle');
+    expect(el.textContent).toContain('auth.login.tagline');
+    expect(el.textContent).toContain('auth.login.features.indicators.title');
+    expect(el.textContent).toContain('auth.login.features.narrative.title');
+    expect(el.textContent).toContain('auth.login.features.portfolio.title');
     expect(el.textContent).toContain('auth.login.signInWithGoogle');
     expect(el.textContent).toContain('auth.login.disclaimer');
   });

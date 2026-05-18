@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
@@ -52,5 +54,13 @@ export const appConfig: ApplicationConfig = {
     // interceptor and the timeout falls back to the default, which is the same shape as a
     // first-clone fresh boot.
     provideAppInitializer(() => inject(LlmTimeoutService).refresh()),
+    // Register the PortfolioAI brand mark so any template can use `<mat-icon svgIcon="portfolioai">`.
+    // Loaded once at boot ; MatIconRegistry caches the SVG so subsequent uses don't re-fetch.
+    provideAppInitializer(() => {
+      inject(MatIconRegistry).addSvgIcon(
+        'portfolioai',
+        inject(DomSanitizer).bypassSecurityTrustResourceUrl('img/logo/logo.svg'),
+      );
+    }),
   ],
 };

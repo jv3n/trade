@@ -63,6 +63,10 @@ $light-theme: mat.define-theme(
   --color-accent-soft: #1e1b4b;
   --color-on-accent: #ffffff;
 
+  // Logo (consumed by `img/logo/logo.svg` via inline MatIconRegistry — see app.config.ts)
+  --logo-tile: #ffffff;
+  --logo-mark: #111318;
+
   // Semantic
   --color-success: #4ade80;
   --color-success-soft: #1a3a2a;
@@ -122,6 +126,9 @@ $light-theme: mat.define-theme(
   --color-accent-strong: #6d28d9;
   --color-accent-soft: #ede9fe;
   --color-on-accent: #ffffff;
+
+  --logo-tile: #111318;
+  --logo-mark: #e8eaf0;
 
   --color-success: #15803d;
   --color-success-soft: #dcfce7;

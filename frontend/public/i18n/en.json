@@ -32,9 +32,23 @@
   "auth": {
     "login": {
       "title": "PortfolioAI",
-      "subtitle": "Sign in to access your portfolio, your watchlist and your narrative observability.",
+      "tagline": "Market analysis that reads like a story, not a buy signal.",
       "signInWithGoogle": "Sign in with Google",
-      "disclaimer": "⚠️ This is not licensed financial advice. For educational use only."
+      "disclaimer": "⚠️ This is not licensed financial advice. For educational use only.",
+      "features": {
+        "indicators": {
+          "title": "Computed indicators",
+          "description": "RSI, momentum, moving averages, drawdown — crunched server-side, never hallucinated by the AI."
+        },
+        "narrative": {
+          "title": "AI narration",
+          "description": "A short read that digests the indicators and recent context. The AI writes, it doesn't decide."
+        },
+        "portfolio": {
+          "title": "Connected portfolio",
+          "description": "Wealthsimple CSV import, historical snapshots, cross-position takes."
+        }
+      }
     },
     "signOut": "Sign out",
     "role": {

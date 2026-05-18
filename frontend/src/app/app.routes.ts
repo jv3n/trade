@@ -82,4 +82,8 @@ export const routes: Routes = [
       },
     ],
   },
+  // 404 fallback — any unknown URL routes to the dashboard. The authGuard will catch
+  // unauthenticated users on the next hop and bounce them to /login, so the redirect target
+  // works whether the user is logged in or not.
+  { path: '**', redirectTo: 'dashboard' },
 ];
