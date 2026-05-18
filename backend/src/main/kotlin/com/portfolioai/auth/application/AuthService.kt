@@ -1,9 +1,9 @@
 package com.portfolioai.auth.application
 
+import com.portfolioai.auth.domain.AppUserPrincipal
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
-import com.portfolioai.auth.infrastructure.security.AppUserPrincipal
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 

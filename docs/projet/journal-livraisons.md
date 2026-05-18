@@ -10,7 +10,7 @@ Historique des features livrées par phase, format **reverse-chronological** (Ph
 
 ## Phase 4 — Authentification
 
-> Phase ouverte 2026-05-17. Sortie du mode single-user no-auth via OAuth2 Google + Spring Security côté backend, `AuthService` + interceptor + `/login` côté frontend — pré-requis bloquant Phase 5 Déploiement. La **foundation backend** est livrée en premier ; la migration `user_id` FK sur les tables existantes (`portfolio`, `watchlist_entry`, `app_config`, `portfolio_snapshot`) et le frontend `/login` + guards arrivent en tickets séparés.
+> Phase **clôturée 2026-05-17**. Sortie du mode single-user no-auth via OAuth2 Google OIDC + Spring Security côté backend, `AuthService` + interceptor + `/login` + guards + page `/error` standalone côté frontend, CSRF cookie-based SPA pattern, migration multi-tenant `user_id` FK sur `portfolio` + `watchlist_entry`, provider gating UI, logs redaction (convention `userId` UUID), Flyway squash V1→V10 en un seul `V1__init.sql`, DevX toggle `BACKEND_AUTH_MODE` (no-auth ↔ oauth). Les deux tickets résiduels (GitHub Secrets vault, hardening secret-management OAuth prod, `forward-headers-strategy`) sont passés en début de Phase 5 parce qu'ils dépendent du choix d'hébergement. Six commits, du `563df74` (foundation) à `f9588c2` (code review patches pré-tag).
 
 | Feature | Notes |
 |---------|-------|

@@ -78,6 +78,13 @@ class SecurityConfig(
         it
           .requestMatchers("/api/config/**", "/api/prompts/**", "/api/narrative/observability/**")
           .hasRole("ADMIN")
+        // `/api/me` is **intentionally** not in `permitAll`. The SPA calls it at boot via
+        // `AuthService.refresh()` precisely to discover whether a valid session exists : an
+        // anonymous client gets a 401, which the frontend swallow and treats as "not logged
+        // in → currentUser = null". A 200 with `null` payload would be more REST-ortho but
+        // would force `AuthController.getCurrentUser` to handle the anonymous principal case
+        // (today it assumes one is present). The 401-as-signal contract is the simpler
+        // invariant — don't move `/api/me` into `permitAll` by reflex.
         it.anyRequest().authenticated()
       }
       .exceptionHandling {

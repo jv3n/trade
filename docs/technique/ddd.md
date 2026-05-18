@@ -12,11 +12,12 @@ Chaque contexte est autonome et possède ses propres couches.
 | `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | ✅ Phase 0+ |
 | `market` | Données ticker (Twelve Data + mock) + indicateurs techniques calculés | ✅ Phase 1 |
 | `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) + gestion des prompts narratifs en BDD avec scoring continu (latence / retry / parse-validator failed / thumbs user, Phase 3) | ✅ Phase 1 — étendu Phase 3 |
-| `watchlist` | Liste plate de tickers suivis hors portefeuille (single-table, pas de user_id) | ✅ Phase 2 |
+| `watchlist` | Liste plate de tickers suivis hors portefeuille (scopée user_id depuis Phase 4, UNIQUE `(user_id, symbol)`) | ✅ Phase 2 — multi-tenant Phase 4 |
 | `news` | Headlines par ticker (Finnhub + mock), cache court | ✅ Phase 2 |
 | `analyst` | Recommandations d'analystes par ticker (consensus monthly + price target 12 mois, Finnhub + mock), cache court | ✅ Phase 2 |
 | `earnings` | Earnings trimestriels par ticker (4 derniers Q EPS estimate/actual/surprise % + prochaine date d'annonce, Finnhub + mock), cache court | ✅ Phase 2 |
 | `config` | Surcharges runtime des défauts YAML (clés API, TTL cache, providers actifs) | ✅ Phase 2 |
+| `auth` | OAuth2 Google OIDC + rôles ADMIN/USER + profile dev `local-no-auth`. Source de vérité du `user_id` consommé par `portfolio`/`watchlist` | ✅ Phase 4 |
 
 > Le contexte `analysis` a vu son périmètre changer à la Phase 1 : il a été réorienté d'une orchestration de recommandations portefeuille (Phase 0 — 8 règles de validation, targetWeight, action enum) vers la génération de narratifs par ticker (`{summary, sentiment, keyPoints[]}`). Le code Phase 0 a été supprimé en Phase 2.5 ; le contexte `ingestion` (RSS) a été décommissionné dans la même opération.
 
@@ -123,7 +124,13 @@ Les services d'`analysis` (Phase 1 narratif) peuvent dépendre du repository et 
 ```
 analysis.application → market.application                   ✓ (Phase 1)
 analysis.application → portfolio.infrastructure.persistence ✓ (récupérer la liste des tickers détenus)
+portfolio.domain → auth.domain                              ✓ (Phase 4 — @ManyToOne User sur Portfolio)
+watchlist.domain → auth.domain                              ✓ (Phase 4 — @ManyToOne User sur WatchlistEntry)
+portfolio.application → auth.application                    ✓ (Phase 4 — AuthService.getCurrentUser pour scoper les reads)
+watchlist.application → auth.application                    ✓ (Phase 4 — idem)
 ```
+
+> **Note Phase 4** : la référence à `auth.domain.User` depuis `portfolio/` et `watchlist/` au niveau **entity JPA** (`@ManyToOne`) est une exception consciente à la règle « contexts share via ID » du DDD strict. Rationale détaillée dans `architecture.md > Décisions techniques notables > Phase 4 > Multi-tenant FK`. Limite de la tolérance : seules les *entities JPA* peuvent traverser un bounded context de cette façon — les *ports* outbound restent strictement isolés dans leur context.
 
 ## Conventions de nommage
 

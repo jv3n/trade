@@ -1,5 +1,6 @@
 package com.portfolioai.auth.infrastructure.security
 
+import com.portfolioai.auth.domain.AppUserPrincipal
 import java.util.UUID
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.user.OAuth2User

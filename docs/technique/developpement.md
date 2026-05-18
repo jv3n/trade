@@ -154,14 +154,16 @@ trade/
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
-│       ├── core/              # split sur 3 axes — api/ (HTTP), local/ (browser), app-state/ (UI services)
-│       │   ├── api/<bucket>/          # 8 bounded contexts miroirs du backend : market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/
+│       ├── core/              # split sur 5 sous-dossiers — api/ (HTTP) + local/ (browser) + app-state/ (UI services) + http/ (interceptors, Phase 4) + router/ (guards, Phase 4)
+│       │   ├── api/<bucket>/          # 9 bounded contexts miroirs du backend : market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/
 │       │   │   ├── *.repository.ts            # ports (abstract class) à la racine du bucket
 │       │   │   ├── *.service.ts               # services bucket-locaux (ex. analysis/ollama-status.service.ts, analysis/job-stream.service.ts SSE, analysis/llm-timeout.service.ts)
 │       │   │   └── adapters/*.http.ts         # HttpXxxRepository (défaut)
 │       │   ├── local/<bucket>/        # ports persistés navigateur (annotation/ seul aujourd'hui) + adapters/*.local.ts
-│       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts), sans port/adapter
-│       │   └── providers.ts           # `provideRepositories()` — wires les 14 ports (api/ + local/) → adapters
+│       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts, auth.service.ts), sans port/adapter
+│       │   ├── http/                  # HTTP interceptors (Phase 4 — auth.interceptor.ts catch 401 → /login)
+│       │   ├── router/                # Route guards (Phase 4 — authGuard, adminGuard)
+│       │   └── providers.ts           # `provideRepositories()` — wires les 15 ports (api/ + local/) → adapters
 │       └── features/          # Pages UI (primary adapters)
 │           ├── dashboard/             # Portefeuille + lien dossiers ticker
 │           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA + thumbs)
@@ -171,14 +173,15 @@ trade/
 │           └── settings/              # Sidenav : configuration runtime / prompts (liste + éditeur) / prompts/:id/stats (Phase 3)
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
+│       ├── auth/              # Phase 4 — OAuth2 Google OIDC + ADMIN/USER + profile dev local-no-auth
 │       ├── market/            # TwelveData client + mock + indicateurs
 │       ├── analysis/          # Phase 1 narratif ticker + LLM dispatch (Routing/Claude/Ollama)
-│       ├── portfolio/         # Import CSV, snapshots, lecture
-│       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille
+│       ├── portfolio/         # Import CSV, snapshots, lecture (multi-tenant via user_id FK depuis Phase 4)
+│       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille (multi-tenant via user_id FK depuis Phase 4)
 │       ├── news/              # Phase 2 — Finnhub + mock, news par ticker
 │       ├── analyst/           # Phase 2 — Finnhub + mock, recommandations analystes
 │       ├── earnings/          # Phase 2 — Finnhub + mock, earnings trimestriels + next-date
-│       ├── config/            # Phase 2 — runtime-editable settings (app_config V4)
+│       ├── config/            # Phase 2 — runtime-editable settings (app_config)
 │       └── shared/            # Utilitaires transverses
 ├── docs/                      # Documentation (mkdocs-material)
 ├── .claude/                   # Skills, hooks et instructions Claude Code
