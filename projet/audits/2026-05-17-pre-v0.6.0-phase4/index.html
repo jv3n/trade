@@ -1,0 +1,1691 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/audits/2026-05-17-pre-v0.6.0-phase4/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../2026-05-16-pre-v0.5.1/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2026-05-17 — Revue globale pré-v0.6.0 (Phase 4) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#revue-de-code-globale-pre-v060-2026-05-17-cloture-phase-4" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#punch-list-detaillee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Punch-list détaillée
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Punch-list détaillée">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bloquants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bloquants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-discuter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        À discuter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mineurs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineurs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faux-positifs-filtres" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Faux positifs filtrés
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Référence
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#punch-list-detaillee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Punch-list détaillée
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Punch-list détaillée">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bloquants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bloquants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-discuter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        À discuter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mineurs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineurs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faux-positifs-filtres" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Faux positifs filtrés
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Référence
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="revue-de-code-globale-pre-v060-2026-05-17-cloture-phase-4">Revue de code globale — pré-<code>v0.6.0</code> (2026-05-17, clôture Phase 4)</h1>
+<p><strong>Scope</strong> : audit de la delta <code>v0.5.1..HEAD</code> (Phase 4 Authentification complète + multi-tenant + Flyway V1 squash), 6 commits, 98 fichiers (+3 833 / −676 lignes). Trois chantiers cumulés : (1) <strong>OAuth foundation</strong> — Google OIDC avec dual user services (<code>CustomOAuth2UserService</code> + <code>CustomOidcUserService</code> via interface marker <code>AppUserPrincipal</code>), <code>SecurityConfig</code> <code>@Profile("!local-no-auth")</code> avec CSRF cookie-based SPA (<code>CookieCsrfTokenRepository.withHttpOnlyFalse</code> + <code>CsrfTokenResponseFilter</code>), bypass profile <code>local-no-auth</code> (<code>LocalNoAuthSecurityConfig</code> + <code>LocalNoAuthFilter</code> + <code>LocalNoAuthUserInitializer</code>), refacto secrets <code>.env</code> boot-time vs runtime-editable, <code>auth.repository</code> port + adapter HTTP côté SPA, <code>AuthService</code> signal-based primé via <code>provideAppInitializer</code>, interceptor 401→<code>/login</code>, guards <code>authGuard</code> + <code>adminGuard</code>, pages <code>/login</code> et <code>/error</code> standalone, DevX toggle <code>BACKEND_AUTH_MODE</code> avec boutons Tilt ; (2) <strong>Multi-tenant <code>user_id</code> FK</strong> — <code>Portfolio</code> et <code>WatchlistEntry</code> gagnent un <code>@ManyToOne User</code>, services et repositories scopés par user (PortfolioQueryService, CsvImportService, WatchlistService, SnapshotController), convention logs <code>userId</code> UUID (jamais l'email), <code>AssetRepository.findOwnedTickerRows</code> JPQL avec <code>WHERE a.portfolio.user.id = :userId</code> ; (3) <strong>Provider gating + Flyway V1 squash</strong> — <code>ConfigKeys.PROVIDER_REQUIRED_KEY</code> map, <code>AppConfigService.set</code> refuse un live sans clé, DTO <code>AllowedValueDto.disabledReason</code>, 5 toggles UI disabled + tooltip, V1→V10 fusionnés en un seul <code>V1__init.sql</code> avec <code>baseline-on-migrate: true</code> + <code>baseline-version: 0</code>.</p>
+<p><strong>Méthode</strong> : 3 subagents <code>code-reviewer</code> lancés <strong>en parallèle</strong> sur trois lentilles complémentaires — <strong>sécurité &amp; isolation multi-tenant</strong> (focus OAuth flow, CSRF, logs redaction, secrets, multi-tenant leak paths), <strong>qualité backend</strong> (Kotlin idioms, Spring conventions, hexagonal DDD, Flyway squash correctness, tests-as-documentation, KDoc accuracy), <strong>qualité frontend</strong> (Angular 21 signals + zoneless, auth flow SPA, folder structure <code>core/</code>, i18n, Vitest discipline). Chacun briefé sur les conventions ground truth (<code>CLAUDE.md</code>, <code>architecture.md</code>, <code>ddd.md</code>, skills <code>kotlin-idioms</code>, <code>spring-boot</code>, <code>hexagonal-ddd</code>, <code>folders-structure-backend</code>, <code>angular-component</code>, <code>angular-di</code>, <code>angular-signals</code>, <code>angular-testing</code>, <code>folders-structure-frontend</code>, <code>code-review-excellence</code>) et sur l'audit précédent (<code>2026-05-16-pre-v0.5.1.md</code>) comme format de référence. Sortie : punch-list structurée Bloquants / À discuter / Mineurs avec extrait + suggestion + verdict per-tranche. Synthèse + dédup par le main thread.</p>
+<p><strong>État du commit au moment de la revue</strong> : branche <code>master</code>, dernier commit committé <code>f9588c2 fix: code-review patches (Flyway baseline-version + minors)</code>. Working tree clean. La pre-tag review locale (<code>/code-review</code> lancée plus tôt) avait surfacé un Bloquant B1 (<code>baseline-version: 1</code> → <code>0</code>) déjà patché, plus 5 Mineurs + 1 À discuter (E) déjà appliqués. Cet audit pré-tag couvre donc le <strong>post-pre-tag state</strong> : ce qui reste après les patches B1+Mineurs+E, et ce que la review locale n'avait pas vu (parce qu'elle n'a regardé que les 2 derniers commits, pas la Phase 4 entière).</p>
+<hr />
+<h2 id="resume-executif">Résumé exécutif</h2>
+<p>Phase 4 livre proprement une feature majeure : OAuth2 Google OIDC en production, isolation multi-tenant systématique côté lecture (4 services backend scopés + tests d'isolation alice/bob sur <code>WatchlistService</code>), CSRF re-enabled avec pattern cookie-based SPA correct, profile <code>local-no-auth</code> qui préserve le flow single-user dev. Le Flyway squash V1→V10 produit un état BDD final équivalent au cumulatif historique (vérifié par le reviewer backend : indices, FKs, ON DELETE policies, CHECK constraints, UNIQUE, seed prompt v2 — tout est aligné). Les patterns hexagonaux tiennent : ports outbound en <code>domain/</code>, adapters en <code>infrastructure/</code>, routing <code>@Primary</code> quand plusieurs adapters cohabitent.</p>
+<p><strong>2 Bloquants identifiés — patches courts, à appliquer avant tag <code>v0.6.0</code></strong> :</p>
+<ol>
+<li>
+<p><strong>Drift factuel <code>architecture.md</code></strong> — la section « Schéma de base de données » (lignes ~208, 210, 269) décrit encore 9 migrations séparées <code>V1__init.sql → V9__app_user.sql</code> comme si elles existaient individuellement, et affirme « portfolio/watchlist/config/snapshots restent single-tenant en BDD à v1 ». Ces deux claims sont obsolètes : (a) le squash de ce diff a supprimé les 9 fichiers et fusionné l'historique dans un <code>V1__init.sql</code> unique ; (b) le multi-tenant FK a été livré dans ce même diff (V10 historique, inclus dans V1 unifié). Un onboarding qui lit la doc et cherche <code>V9__app_user.sql</code> ne trouvera rien — contradiction directe. À patcher en remplaçant le paragraphe par une description du V1 unifié + référence au header du fichier comme source de vérité.</p>
+</li>
+<li>
+<p><strong>Violation hexagonale <code>AuthService.kt:6</code></strong> — <code>AuthService</code> (couche <code>application/</code>) importe <code>AppUserPrincipal</code> depuis <code>auth/infrastructure/security/</code>. C'est une violation de la règle forte du projet « <code>application/</code> ne dépend que de <code>domain/</code>, jamais de <code>infrastructure/</code> ». Or <code>AppUserPrincipal</code> est une interface marker pure (<code>val userId: UUID</code> uniquement, <strong>pas</strong> de dépendance à Spring Security). La déplacer en <code>auth/domain/</code> lèverait la violation sans effort, et alignerait avec le pattern « les concepts sémantiques de domaine vivent en <code>domain/</code> » (mirror : <code>Role</code>, <code>User</code>). Affecte 5 fichiers à patcher pour les imports (<code>AuthService</code>, <code>AppOAuth2User</code>, <code>AppOidcUser</code>, <code>LocalNoAuthFilter</code>, plus <code>AppUserPrincipal</code> lui-même qui change de package).</p>
+</li>
+</ol>
+<p><strong>Verdict global</strong> : <code>needs-fix</code>. Les deux Bloquants sont des patches de quelques minutes chacun, sans risque.</p>
+<p><strong>11 À discuter</strong> : 5 sécurité (forward-headers-strategy pas dans Décisions techniques notables, tests CSRF bout-en-bout absents, DB hit per-request sur <code>AuthService.getCurrentUser()</code> + <code>LocalNoAuthFilter</code>, <code>AppOidcUser</code> non exercé dans <code>AuthServiceTest</code>), 3 backend (<code>SnapshotControllerTest</code> absent malgré le nouvel ownership check, <code>PortfolioQueryServiceTest</code> absent malgré le refactor user-scoped, fragilité du test d'intégration <code>LocalNoAuthIntegrationTest</code> partagé), 3 frontend (<code>auth.interceptor.ts</code> sans spec, <code>error-page.ts</code> sans spec, <code>CLAUDE.md:101</code> qui décrit l'interceptor comme redirigeant sur 5xx alors que ce n'est plus le cas — drift doc↔code).</p>
+<p><strong>~8 Mineurs</strong> : <code>WatchlistService.persistNew:100</code> FQCN inline <code>com.portfolioai.auth.domain.User</code> au lieu d'utiliser l'import du fichier, <code>LocalNoAuthIntegrationTest:61</code> <code>dev!!</code> après <code>assertNotNull</code> (remplaçable par <code>requireNotNull</code>), <code>AuthService.kt:19</code> KDoc périmée qui mentionne <code>AppOAuth2User</code> au lieu de <code>AppUserPrincipal</code> après le refacto OIDC, <code>CsvImportServiceTest:56-64</code> double bloc KDoc successif (le second écrase le premier en doc rendering), <code>login-page.ts:35</code> <code>effect()</code> sans commentaire <code>// effect-because:</code> inline (la justification est en KDoc de classe lignes 18-22 mais pas au point d'usage comme demande le skill <code>angular-signals</code>), <code>configuration.spec.ts:273-275</code> commentaire dangling promettant des tests <code>disabledReason</code> côté SPA qui n'ont jamais été écrits (le contrat backend est testé dans <code>ConfigControllerTest.kt</code>, mais pas le rendering UI disabled + tooltip), <code>auth.http.ts:14-22</code> commentaire qui mentionne <code>logoutSuccessUrl("/")</code> alors que le backend utilise <code>defaultSuccessUrl(app.frontend-url)</code>.</p>
+<p><strong>Faux positifs / non actionnables filtrés</strong> : 4 — (a) <code>application.yml:63</code> Postgres password en clair (déjà documenté + accepté pour la DB Docker éphémère), (b) <code>app.spec.ts:24</code> <code>useValue</code> au lieu de <code>useClass</code> pour mock <code>AuthService</code> (service concret sans builders, <code>useValue</code> est l'idiome correct), (c) <code>AuthControllerTest</code> avec <code>addFilters = false</code> qui n'exerce pas la 401 (couverture intégration via <code>LocalNoAuthIntegrationTest</code>, convention du projet), (d) <code>ConfigController.annotateAllowedValue</code> branche « key non listée dans PROVIDER_REQUIRED_KEY » non testée (le cas n'est jamais déclenché car <code>OLLAMA_MODEL</code> n'est pas dans <code>ENUM_KEYS</code>, code path mort par construction).</p>
+<hr />
+<h2 id="forces">Forces</h2>
+<ul>
+<li><strong>OAuth flow correctement câblé en dual-mode</strong> — <code>userService</code> + <code>oidcUserService</code> dans <code>userInfoEndpoint</code>, interface marker <code>AppUserPrincipal</code> qui unifie <code>AppOAuth2User</code> + <code>AppOidcUser</code>. Le bug pré-fix « principal Spring <code>DefaultOidcUser</code> au lieu de <code>AppOidcUser</code> » est explicitement documenté dans <code>architecture.md &gt; Phase 4 — authentification</code>, capturé dans <code>journal-livraisons.md</code>, et le post-mortem a permis de poser une convention claire (les deux services partagent <code>findOrCreateUser</code>, seul le wrapping en principal diffère).</li>
+<li><strong>Multi-tenant isolation systématique côté lecture</strong> — 4 services scopés par <code>authService.getCurrentUser().id</code> (<code>PortfolioQueryService</code>, <code>CsvImportService</code>, <code>WatchlistService</code>, <code>SnapshotController</code> via <code>existsByIdAndPortfolioUserId</code>). <code>AssetRepository.findOwnedTickerRows</code> rejoint le <code>Portfolio.user.id</code> via JPQL natif. Le test <code>WatchlistServiceTest</code> pin l'isolation alice/bob avec un scénario complet (deux users, deux symbols, vérification que A ne voit pas la liste de B). Pattern à généraliser à <code>PortfolioQueryServiceTest</code> (filed sous À discuter).</li>
+<li><strong>Flyway squash V1__init.sql équivalent à V1→V10</strong> — l'audit backend a comparé section par section : ordre FK respecté, <code>CHECK (role IN ('ADMIN', 'USER'))</code> présent, <code>UNIQUE(user_id, symbol)</code> sur watchlist_entry, <code>ON DELETE CASCADE</code> partout où nécessaire, <code>ON DELETE SET NULL</code> sur <code>ticker_narrative_snapshot.prompt_template_id</code> (intentionnel pour absorber les snapshots pré-Phase 3), <code>ON DELETE RESTRICT</code> sur <code>prompt_score.prompt_template_id</code>, seed prompt v2 actif via dollar-quoted verbatim. <code>baseline-on-migrate: true</code> + <code>baseline-version: 0</code> (corrigé en pre-tag depuis <code>1</code> qui empêchait V1 de s'appliquer sur greenfield) — comportement validé empiriquement par l'utilisateur (<code>docker compose down -v &amp;&amp; tilt up</code> produit un schéma fonctionnel).</li>
+<li><strong>CSRF cookie-based SPA pattern complet</strong> — <code>CookieCsrfTokenRepository.withHttpOnlyFalse()</code> pour que JS lise le cookie, <code>CsrfTokenRequestAttributeHandler</code> plain (pas XOR — la SPA forward la valeur raw), <code>CsrfTokenResponseFilter</code> qui force l'écriture du cookie à chaque réponse (Spring 6 le résout lazy par défaut, sans ce filter le cookie n'existe pas et la SPA n'a rien à forwarder). Activé même sous <code>local-no-auth</code> pour matcher le shape prod — pas de divergence dev/prod sur CSRF. Angular <code>HttpClient</code> lit auto le cookie <code>XSRF-TOKEN</code> et envoie <code>X-XSRF-TOKEN</code> sur POST/PUT/PATCH/DELETE (built-in, pas d'interceptor custom requis).</li>
+<li><strong>Logs redaction stricte</strong> — convention <code>userId</code> UUID documentée dans <code>.claude/CLAUDE.md &gt; Conventions</code>. Vérification croisée : <code>CustomOAuth2UserService.findOrCreateUser</code> log <code>id=</code> (UUID), <code>CsvImportService.import</code> log <code>userId=</code> (UUID), <code>LocalNoAuthFilter</code> + <code>LocalNoAuthUserInitializer</code> ne loggent jamais l'email. Aucun site qui touche <code>User</code> et qui aurait pu logger l'email (subagent sécurité a grep-é exhaustivement).</li>
+<li><strong>Secrets management séparé boot-time vs runtime-editable</strong> — <code>.env</code> (gitignored) pour OAuth creds + <code>APP_ADMIN_EMAILS</code> + <code>APP_FRONTEND_URL</code> (lus par le <code>serve_cmd</code> Tilt → exportés au sous-process gradle → relaxed binding Spring), <code>app_config</code> table pour Anthropic/Twelve Data/Finnhub keys (runtime-editable via <code>/settings/configuration</code>). <code>application-local.yml</code> volontairement vide de credentials. <code>application.yml</code> committed n'a aucun secret en clair, juste des patterns <code>${ENV:default}</code>.</li>
+<li><strong>DevX toggle <code>BACKEND_AUTH_MODE</code></strong> — pattern propre où le mode d'auth (no-auth vs oauth) est lu <strong>au runtime</strong> dans le <code>serve_cmd</code> shell du Tiltfile (pas au parse Starlark), 2 boutons Tilt qui flip la valeur en éditant <code>.env</code> + touch <code>application.yml</code> pour redéclencher le serve_cmd. Permet de basculer entre les deux modes sans recompile.</li>
+<li><strong>Provider gating end-to-end</strong> — backend <code>ConfigKeys.PROVIDER_REQUIRED_KEY</code> map + validation <code>AppConfigService.set</code> qui refuse 400 si la clé requise est blank ; DTO <code>AllowedValueDto.disabledReason</code> carrying la property path de la clé manquante ; UI consomme et rend disabled + tooltip i18n. Tests backend ajoutés en pre-tag (<code>ConfigControllerTest &gt; GET config annotates allowedValues with disabledReason when the required secret is blank</code> + mirror négatif).</li>
+<li><strong>Tests-as-documentation respecté sur les nouveaux fichiers</strong> — <code>AuthServiceTest</code>, <code>LocalNoAuthIntegrationTest</code>, <code>WatchlistServiceTest</code> (extension multi-tenant), <code>CsvImportServiceTest</code> (extension userId) ont tous une class-level docstring qui nomme l'aire testée + les failure modes + les invariants à protéger. Test names en full sentences, fixtures réalistes (<code>dev@local.test</code>), un scenario par test (assertions multiples uniquement quand elles décrivent le même scenario).</li>
+</ul>
+<hr />
+<h2 id="punch-list-detaillee">Punch-list détaillée</h2>
+<h3 id="bloquants">Bloquants</h3>
+<p><strong>B1. <code>docs/technique/architecture.md:208-210 + 269</code> — Drift factuel sur le schéma Flyway</strong></p>
+<p>La section « Schéma de base de données » a été rédigée pré-squash. Trois claims sont obsolètes depuis ce diff :</p>
+<ol>
+<li>Ligne 269 : <em>« Neuf migrations Flyway : <code>V1__init.sql</code> (schéma Phase 0 historique...), <code>V2__ticker_narrative.sql</code>..., <code>V9__app_user.sql</code> (Phase 4 — ...) »</em>. Les 9 fichiers ont été supprimés. Seul <code>V1__init.sql</code> existe.</li>
+<li>Ligne 208 : <em>« table <code>app_user</code> V9 »</em> — référence à un fichier qui n'existe plus.</li>
+<li>Ligne 210 : <em>« portfolio/watchlist/config/snapshots restent single-tenant en BDD à v1 »</em> — faux depuis V10 historique (inclus dans V1 unifié). <code>portfolio</code> et <code>watchlist_entry</code> ont des FK <code>user_id</code>.</li>
+</ol>
+<p><strong>Suggestion</strong> : remplacer le paragraphe par une description courte du V1 unifié + référence au header du fichier comme source de vérité. Ré-énumérer les tables sans accrocher à des numéros de version.</p>
+<p><strong>B2. <code>backend/src/main/kotlin/com/portfolioai/auth/application/AuthService.kt:6</code> — <code>application/</code> importe <code>infrastructure/security/</code></strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">com.portfolioai.auth.infrastructure.security.AppUserPrincipal</span>
+</code></pre></div>
+<p>Violation hexagonale forte. <code>AppUserPrincipal</code> est une interface marker pure :</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nc">AppUserPrincipal</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">userId</span><span class="p">:</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>Aucune dépendance à Spring Security elle-même. C'est un concept de domaine (l'identifiant du principal authentifié), pas un détail d'implémentation.</p>
+<p><strong>Suggestion</strong> : déplacer <code>auth/infrastructure/security/AppUserPrincipal.kt</code> → <code>auth/domain/AppUserPrincipal.kt</code>. Mettre à jour les imports dans : <code>AuthService.kt</code>, <code>AppOAuth2User.kt</code>, <code>AppOidcUser.kt</code>, <code>LocalNoAuthFilter.kt</code> (4 fichiers + le déplacement). 5 minutes de patch, lève la violation sans effet de bord.</p>
+<p><em>Note</em> : <code>UserRepository</code> importé sur la ligne précédente traverse aussi <code>application → infrastructure</code>, mais ce pattern est accepté dans tout le projet (Spring Data <code>JpaRepository</code> est framework-tied par construction — c'est documenté dans <code>architecture.md &gt; Patterns transverses backend &gt; Ports outbound dans domain/</code>). Le cas <code>AppUserPrincipal</code> est différent — pas un repository, juste un concept sémantique.</p>
+<hr />
+<h3 id="a-discuter">À discuter</h3>
+<p><strong>A1. <code>architecture.md &gt; Décisions techniques notables &gt; Phase 4</code> — <code>forward-headers-strategy</code> pas dans les Décisions</strong></p>
+<p>Le commentaire dans <code>application.yml:7-13</code> documente le risque + la décision « <code>framework</code> choisi pour simplifier dev + matcher prod derrière LB ». Le ticket backlog Phase 5 🟡 est filed. Mais cette décision technique n'est pas dans les Décisions techniques notables d'<code>architecture.md</code> — alors que d'autres décisions équivalentes (<code>@ManyToOne User</code> cross-context, <code>defaultSuccessUrl</code> configurable, etc.) y figurent.</p>
+<p><strong>Suggestion</strong> : ajouter un paragraphe court dans <code>architecture.md &gt; Décisions techniques notables &gt; Phase 4</code>, sur le modèle du paragraphe « Multi-tenant FK » ajouté pre-tag. À discuter avec l'utilisateur si la décision est suffisamment notable, ou si le ticket backlog + commentaire YAML suffisent (option pré-tag retenue : ticket suffit).</p>
+<p><strong>A2. CSRF — pas de test bout-en-bout « POST sans token → 403, POST avec token → 200 »</strong></p>
+<p>Le wiring est correct (vérifié manuellement), mais aucun test n'épingle le contrat. <code>LocalNoAuthIntegrationTest</code> valide uniquement <code>GET /api/me</code> qui est exempté CSRF (les GET sont permitAll par défaut sur CSRF). Le risque concret reste faible (SPA Angular + same-origin via proxy en dev + cookie + header builtin), mais l'invariant n'est pas testé.</p>
+<p><strong>Suggestion</strong> : ajouter dans <code>LocalNoAuthIntegrationTest</code> un test <code>POST /api/watchlist</code> sans <code>X-XSRF-TOKEN</code> → 403, puis avec token lu du cookie → 2xx. Ancre le contrat de manière vérifiable.</p>
+<p><strong>A3. <code>AuthService.getCurrentUser()</code> — DB hit par invocation</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">fun</span><span class="w"> </span><span class="nf">getCurrentUser</span><span class="p">():</span><span class="w"> </span><span class="n">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="p">...</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">userRepository</span><span class="p">.</span><span class="na">findById</span><span class="p">(</span><span class="n">principal</span><span class="p">.</span><span class="na">userId</span><span class="p">).</span><span class="na">orElseThrow</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Chaque requête API qui appelle <code>authService.getCurrentUser()</code> (4 services + 1 controller) déclenche un SELECT sur <code>app_user</code>. Un endpoint composite (dashboard load = portfolio + watchlist + snapshots) totalise 3+ DB hits sur <code>app_user</code> par request. Acceptable single-user, mais à filer en dette Phase 5.</p>
+<p>La KDoc justifie le choix (« always get fresh fields »), pas de <code>@Cacheable</code> parce qu'un <code>role</code> peut changer SQL-live. Le bon design serait un cache <strong>request-scoped</strong> (<code>@RequestScope</code> bean qui charge une fois et expire en fin de request). Pas pré-tag.</p>
+<p><strong>A4. <code>LocalNoAuthFilter</code> — DB hit par requête HTTP</strong></p>
+<p>Idem A3 mais côté profil dev : chaque request en mode <code>local-no-auth</code> fait un <code>userRepository.findByEmail(LOCAL_DEV_EMAIL)</code>. En dev le proxy ne forward que <code>/api/**</code> + <code>/oauth2/**</code> + <code>/logout</code> + <code>/login/oauth2/**</code> (pas les assets statiques), donc le traffic est borné aux appels API. Mais si quelqu'un branche le backend directement, chaque static asset déclenche un select.</p>
+<p><strong>Suggestion</strong> : cacher le <code>devUser</code> dans un field du filter (initialisé lazy au premier appel + invalidé si row pas trouvée). Optimisation cosmétique, pas pré-tag.</p>
+<p><strong>A5. <code>AuthServiceTest</code> — <code>AppOidcUser</code> non exercé</strong></p>
+<p>Les tests utilisent uniquement <code>AppOAuth2User</code> comme principal. Le production path Google OIDC produit <code>AppOidcUser</code>. Le cast <code>as? AppUserPrincipal</code> fonctionne via l'interface, mais la branche n'est pas pin par un test.</p>
+<p><strong>Suggestion</strong> : ajouter un test <code>getCurrentUser résout aussi un AppOidcUser principal</code> qui prouve que le cast vers l'interface (pas vers la classe concrète) est stable.</p>
+<p><strong>A6. <code>SnapshotController</code> — pas de spec dédié malgré le nouvel ownership check</strong></p>
+<p><code>SnapshotController</code> injecte maintenant <code>AuthService</code> pour vérifier <code>existsByIdAndPortfolioUserId</code>. La logique d'ownership + la projection DTO + le path d'erreur <code>NoSuchElementException("Snapshot $id not found")</code> ne sont couverts par aucun test.</p>
+<p><strong>Suggestion</strong> : <code>SnapshotControllerTest</code> <code>@WebMvcTest</code> avec deux scenarios — happy path retourne les snapshots du user courant, 404 quand l'ID appartient à un autre user.</p>
+<p><strong>A7. <code>PortfolioQueryService</code> — pas de spec dédié</strong></p>
+<p>Le refactor systématique des 4 méthodes vers <code>findByUserId…</code> ou <code>findByIdAndUserId</code> n'a pas de test. <code>WatchlistServiceTest</code> couvre l'isolation alice/bob côté watchlist ; le symétrique côté portfolio manque.</p>
+<p><strong>Suggestion</strong> : <code>PortfolioQueryServiceTest</code> sur le modèle de <code>WatchlistServiceTest</code> — mock <code>AuthService</code>, vérifier que <code>findAll()</code> passe <code>currentUser.id</code> à <code>portfolioRepository.findAllByUserId()</code>, et que <code>findById</code> sur un ID appartenant à un autre user throw <code>NoSuchElementException</code>.</p>
+<p><strong>A8. <code>LocalNoAuthIntegrationTest</code> — fragilité de la DB partagée</strong></p>
+<p>Le test boot Spring + tape la vraie Postgres. Si quelqu'un a modifié le user <code>dev@local.test</code> via SQL dans sa DB locale (e.g. changé son rôle à USER pour tester l'expérience), le test échoue avec un message trompeur. C'est le pattern du projet (« no DB mocks »), donc conforme — mais ce test est plus fragile qu'un test unitaire contre une DB de test dédiée. Pas pré-tag.</p>
+<p><strong>A9. <code>auth.interceptor.ts</code> — pas de spec</strong></p>
+<p>Load-bearing : seule règle de redirection globale 401→<code>/login</code> pour <code>/api/**</code>. La logique des trois skip conditions (<code>/api/me</code>, <code>/api/config</code>, non-<code>/api/</code> URLs) est non-triviale.</p>
+<p><strong>Suggestion</strong> : 5 scenarios à couvrir — (a) 401 sur <code>/api/market/...</code> → <code>auth.clear()</code> + navigate <code>/login</code>, (b) 401 sur <code>/api/me</code> → pas de redirect, (c) 401 sur <code>/api/config</code> → pas de redirect, (d) 500 sur <code>/api/market/...</code> → pas de redirect, erreur propagée, (e) 401 sur <code>/oauth2/authorization/google</code> → pas de redirect (non-<code>/api/</code>).</p>
+<p><strong>A10. <code>error-page.ts</code> — pas de spec</strong></p>
+<p>Trois chemins : <code>signOut()</code> → <code>logout()</code> + navigate <code>/login</code> sur next + error, <code>backToLogin()</code> → <code>clearError()</code> + navigate, lecture query params via <code>toSignal(route.queryParamMap)</code>. Le troisième est subtil (résolution depuis <code>snapshot</code> si synchrone).</p>
+<p><strong>A11. <code>.claude/CLAUDE.md:101</code> — drift factuel sur l'interceptor 5xx</strong></p>
+<div class="highlight"><pre><span></span><code>// CLAUDE.md ligne 101 (description actuelle — incorrecte)
+401 → `clear()` + redirect `/login` ; 5xx → redirect `/error` avec query params `status` + `url`
+</code></pre></div>
+<p>Le code <code>auth.interceptor.ts</code> ne fait <strong>pas</strong> de redirect 5xx (décision intentionnelle, documentée dans la JSDoc + dans <code>app.routes.ts</code>). Mais <code>CLAUDE.md</code> reflète encore le plan initial. À corriger pour ne pas induire en erreur la prochaine session.</p>
+<p><strong>Suggestion</strong> : remplacer par <code>401 → clear() + redirect /login. Les 5xx ne sont pas interceptés ici — les composants gèrent leurs erreurs en local (fail-soft, banners inline) ; /error reste atteignable par navigation directe.</code></p>
+<hr />
+<h3 id="mineurs">Mineurs</h3>
+<p><strong>M1. <code>WatchlistService.kt:100</code> — FQCN inline <code>com.portfolioai.auth.domain.User</code></strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">private</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">persistNew</span><span class="p">(</span>
+<span class="w">  </span><span class="n">user</span><span class="p">:</span><span class="w"> </span><span class="n">com</span><span class="p">.</span><span class="na">portfolioai</span><span class="p">.</span><span class="na">auth</span><span class="p">.</span><span class="na">domain</span><span class="p">.</span><span class="na">User</span><span class="p">,</span><span class="w">   </span><span class="c1">// ← FQN inline</span>
+<span class="w">  </span><span class="n">symbol</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span>
+<span class="w">  </span><span class="p">...</span>
+</code></pre></div>
+<p><code>User</code> est déjà importé en haut du fichier (utilisé par <code>WatchlistEntry</code> constructor). FQCN redondant. Patch : remplacer par <code>user: User</code>.</p>
+<p><strong>M2. <code>LocalNoAuthIntegrationTest.kt:61</code> — <code>dev!!</code> après <code>assertNotNull</code></strong></p>
+<p><code>assertNotNull</code> JUnit n'impacte pas le type flow Kotlin → <code>dev!!</code> obligatoire. Alternative plus propre : <code>requireNotNull(dev) { "..." }</code> qui retourne non-nullable.</p>
+<p><strong>M3. <code>AuthService.kt:19</code> — KDoc mentionne <code>AppOAuth2User</code> au lieu de <code>AppUserPrincipal</code></strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Throws [IllegalStateException] when no authentication is set or the principal isn&#39;t an</span>
+<span class="c1">// [AppOAuth2User] — both indicate a wiring bug, not a user-facing error.</span>
+</code></pre></div>
+<p>L'implémentation cast vers <code>AppUserPrincipal</code> (interface). Le message d'erreur runtime est correct (« expected AppUserPrincipal »), la KDoc reste périmée depuis le refacto OIDC.</p>
+<p><strong>M4. <code>CsvImportServiceTest.kt:38-64</code> — double bloc KDoc successif</strong></p>
+<p>Deux <code>/** ... */</code> blocs adjacents — le second écrase le premier dans la doc rendering. Fusionner en un seul bloc avec une sous-section dédiée à <code>@MockitoSettings(strictness = Strictness.LENIENT)</code>.</p>
+<p><strong>M5. <code>login-page.ts:35</code> — <code>effect()</code> sans commentaire <code>// effect-because:</code> inline</strong></p>
+<p>Le skill <code>angular-signals &gt; Rules if you do reach for effect()</code> impose un commentaire <code>// effect-because:</code> au point d'usage. La justification existe en KDoc de classe (lignes 18-22) mais pas au niveau du <code>effect()</code> lui-même. Patch : ajouter 3 lignes de commentaire au-dessus du <code>effect()</code>.</p>
+<p><strong>M6. <code>configuration.spec.ts:273-275</code> — commentaire promettant des tests qui n'existent pas côté SPA</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Phase 4 — allowedValues changed from string[] to AllowedValue[] (value + disabledReason)</span>
+<span class="c1">// to support provider gating in the UI. We assert on the mapped values only ; the</span>
+<span class="c1">// disabledReason path is exercised in dedicated tests below.</span>
+</code></pre></div>
+<p>Confusion : le pre-tag a ajouté les tests <code>disabledReason</code> dans <code>ConfigControllerTest.kt</code> (<strong>backend</strong>), pas dans <code>configuration.spec.ts</code> (<strong>frontend</strong>). Le commentaire ment.</p>
+<p><strong>Deux options</strong> :
+- (a) Supprimer la promesse fausse : remplacer le commentaire par « Le contrat <code>disabledReason</code> est testé côté backend dans <code>ConfigControllerTest.kt</code>. Côté SPA, le rendering disabled + tooltip n'a pas de spec dédié. »
+- (b) Honorer la promesse : ajouter un fixture <code>MARKET_PROVIDER_WITH_DISABLED</code> (<code>{ value: 'twelvedata', disabledReason: 'market.twelvedata.api-key' }</code>) et un test qui vérifie le toggle est <code>disabled</code> + le tooltip contient la clé.</p>
+<p><strong>M7. <code>auth.http.ts:14-22</code> — commentaire mentionne <code>logoutSuccessUrl("/")</code></strong></p>
+<p>Le commentaire dit que Spring redirige vers <code>/</code> après logout. Mais <code>SecurityConfig</code> utilise <code>defaultSuccessUrl(app.frontend-url)</code>. Drift de détail dans un commentaire de code, pas une erreur fonctionnelle.</p>
+<p><strong>M8. <code>AppConfigServiceTest</code> — pas de test Ollama explicite pour le provider gating</strong></p>
+<p>Le test <code>set refuses to switch to a live provider when the required API key is empty</code> couvre <code>twelvedata</code>, <code>finnhub</code>, <code>claude</code>, mais pas le cas symétrique <code>ollama</code> (aucune clé requise, jamais refusé). Couvert implicitement par <code>set allows mock provider…</code>, mais une assertion explicite sur Ollama serait claire.</p>
+<hr />
+<h2 id="verdict">Verdict</h2>
+<p><strong><code>needs-fix</code></strong></p>
+<p>Deux Bloquants requièrent un patch avant tag — tous deux à courte cible :</p>
+<ul>
+<li><strong>B1</strong> : 1 paragraphe d'<code>architecture.md</code> à réécrire pour refléter le V1 unifié (5 minutes).</li>
+<li><strong>B2</strong> : 1 fichier à déplacer (<code>AppUserPrincipal.kt</code> de <code>infrastructure/security/</code> vers <code>domain/</code>) + 4 imports à mettre à jour (5 minutes).</li>
+</ul>
+<p>Les 11 À discuter et 8 Mineurs sont des améliorations à arbitrer par l'utilisateur — la décision pré-tag se fera item par item. Aucun ne bloque le tag, mais certains méritent d'être patchés dans le même pass (A11 le drift <code>CLAUDE.md</code>, M3 la KDoc périmée, M5 le <code>effect-because</code> inline, M6 le commentaire menteur, M7 le drift <code>logoutSuccessUrl</code>) parce qu'ils racontent une histoire « doc &amp; code drift après refacto » cohérente à corriger en bloc.</p>
+<p>Les autres À discuter (A1 forward-headers dans Décisions, A2 tests CSRF, A6/A7/A9/A10 specs manquants, A3/A4 DB hits) sont du polish ou de la défense en profondeur — à filer en backlog si non patchés pré-tag.</p>
+<hr />
+<h2 id="faux-positifs-filtres">Faux positifs filtrés</h2>
+<p>Quatre suggestions des subagents écartées après vérification :</p>
+<ol>
+<li><strong><code>application.yml:63</code> Postgres password en clair</strong> — délibéré pour la DB Docker éphémère locale (gitignored <code>application-local.yml</code> n'a pas de surcharge). Documenté dans <code>developpement.md</code>. À reprendre en Phase 5 deploy via secret manager — déjà ticket dette.</li>
+<li><strong><code>app.spec.ts:24</code> <code>useValue</code> au lieu de <code>useClass</code></strong> — <code>AuthService</code> est un service concret (pas un port abstrait avec builders hérités). <code>useValue</code> est l'idiome correct du projet pour les services concrets ; <code>useClass</code> ne s'applique qu'aux ports.</li>
+<li><strong><code>AuthControllerTest</code> avec <code>addFilters = false</code> qui n'exerce pas la 401</strong> — couverture intégration est explicitement déléguée à <code>LocalNoAuthIntegrationTest</code>. Le test <code>@WebMvcTest</code> reste valable pour la couche controller. Documenté dans le KDoc du test.</li>
+<li><strong><code>ConfigController.annotateAllowedValue</code> branche « key non listée dans PROVIDER_REQUIRED_KEY »</strong> — code path mort par construction. <code>OLLAMA_MODEL</code> n'est pas dans <code>ENUM_KEYS</code> (STRING free-form), donc <code>annotateAllowedValue</code> n'est jamais appelé pour lui. Le code retourne proprement <code>(value, null)</code> dans tous les cas.</li>
+</ol>
+<hr />
+<h2 id="reference">Référence</h2>
+<ul>
+<li>Audit précédent : <a href="../2026-05-16-pre-v0.5.1/"><code>2026-05-16-pre-v0.5.1.md</code></a> (delta Phase 3 + dette tech + infra Claude).</li>
+<li>Patches pre-tag déjà appliqués (avant cet audit) : <code>f9588c2 fix: code-review patches (Flyway baseline-version + minors)</code> — couvre B1 (<code>baseline-version: 0</code>), 5 Mineurs (V1 header, <code>@TestPropertySource</code> retiré, 2 refs V10 dans repositories, <code>app.routes.ts</code> comment), et À discuter E (2 tests <code>disabledReason</code> côté backend).</li>
+<li>Méthode : 3 subagents <code>code-reviewer</code> en parallèle, output : 1 verdict per-tranche (<code>mergeable</code> + <code>needs-fix</code> + <code>mergeable</code>), synthèse + dédup main thread.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.top", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

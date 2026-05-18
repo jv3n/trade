@@ -1,0 +1,1949 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/audits/2026-05-14-fin-phase-3/">
+      
+      
+        <link rel="prev" href="../2026-05-16-pre-v0.5.1/">
+      
+      
+        <link rel="next" href="../2026-05-10-fin-phase-2.5/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2026-05-14 — Revue globale fin Phase 3 - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#revue-de-code-globale-fin-phase-3-2026-05-14" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-05-14 — Revue globale fin Phase 3
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Critique">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0-patche-en-session-tickernarrativepromptservicelookuporfallback-cachait-le-fallback_template-synthetique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0. (Patché en session) TickerNarrativePromptService.lookupOrFallback cachait le FALLBACK_TEMPLATE synthétique
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Important">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-priceatorafter-ne-guarde-pas-la-borne-basse-deltas-absurdes-sur-snapshots-1y" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. priceAtOrAfter ne guarde pas la borne basse — deltas absurdes sur snapshots &gt; 1Y
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modérée
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modérée">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2-promptscoreservicesetthumbs-race-theorique-sur-deux-patch-concurrents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. PromptScoreService.setThumbs race théorique sur deux PATCH concurrents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-narrativebiasservicecomputecalibration-fan-out-chart-sequentiel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. NarrativeBiasService.computeCalibration fan-out chart séquentiel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-bias-flag-rounding-edge-pas-de-test-sur-cas-fractionnaire" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Bias flag rounding edge — pas de test sur cas fractionnaire
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mineur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineur
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mineur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5-v8-migration-commentaire-claim-de-robustesse-a-corriger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. V8 migration : commentaire claim de robustesse à corriger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-narrativeobservabilityquery-narrativebiasquery-limit-constant-interpole-au-lieu-de-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. NarrativeObservabilityQuery + NarrativeBiasQuery : LIMIT $constant interpolé au lieu de bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-tokenizer-biais-stopwords-dupliques-incoherence-price" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Tokenizer biais — stopwords dupliqués + incohérence « price »
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-biasts-observabilityts-buildfilter-nextdayiso-dupliques-entre-les-2-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. bias.ts / observability.ts : buildFilter + nextDayIso dupliqués entre les 2 pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-objectmapper-instancie-a-la-main-dans-2-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. ObjectMapper instancié à la main dans 2 services
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-narrativebiasquerynormalizeinstant-duplique-le-helper-de-narrativeobservabilityquery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. NarrativeBiasQuery.normalizeInstant duplique le helper de NarrativeObservabilityQuery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forces-remarquables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forces remarquables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#residus-audits-precedents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résidus audits précédents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommandation-tag-v050" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommandation tag v0.5.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Critique">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0-patche-en-session-tickernarrativepromptservicelookuporfallback-cachait-le-fallback_template-synthetique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0. (Patché en session) TickerNarrativePromptService.lookupOrFallback cachait le FALLBACK_TEMPLATE synthétique
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Important">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-priceatorafter-ne-guarde-pas-la-borne-basse-deltas-absurdes-sur-snapshots-1y" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. priceAtOrAfter ne guarde pas la borne basse — deltas absurdes sur snapshots &gt; 1Y
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modérée
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modérée">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2-promptscoreservicesetthumbs-race-theorique-sur-deux-patch-concurrents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. PromptScoreService.setThumbs race théorique sur deux PATCH concurrents
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-narrativebiasservicecomputecalibration-fan-out-chart-sequentiel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. NarrativeBiasService.computeCalibration fan-out chart séquentiel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-bias-flag-rounding-edge-pas-de-test-sur-cas-fractionnaire" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Bias flag rounding edge — pas de test sur cas fractionnaire
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mineur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineur
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mineur">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5-v8-migration-commentaire-claim-de-robustesse-a-corriger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. V8 migration : commentaire claim de robustesse à corriger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-narrativeobservabilityquery-narrativebiasquery-limit-constant-interpole-au-lieu-de-bound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. NarrativeObservabilityQuery + NarrativeBiasQuery : LIMIT $constant interpolé au lieu de bound
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-tokenizer-biais-stopwords-dupliques-incoherence-price" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Tokenizer biais — stopwords dupliqués + incohérence « price »
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-biasts-observabilityts-buildfilter-nextdayiso-dupliques-entre-les-2-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. bias.ts / observability.ts : buildFilter + nextDayIso dupliqués entre les 2 pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-objectmapper-instancie-a-la-main-dans-2-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. ObjectMapper instancié à la main dans 2 services
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-narrativebiasquerynormalizeinstant-duplique-le-helper-de-narrativeobservabilityquery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. NarrativeBiasQuery.normalizeInstant duplique le helper de NarrativeObservabilityQuery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forces-remarquables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forces remarquables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#residus-audits-precedents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résidus audits précédents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommandation-tag-v050" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommandation tag v0.5.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="revue-de-code-globale-fin-phase-3-2026-05-14">Revue de code globale — fin Phase 3 (2026-05-14)</h1>
+<p><strong>Scope</strong> : audit de la Phase 3 (entre <code>v0.4.0</code> et HEAD), 30 commits, 111 fichiers modifiés (+13 373 / −433 lignes). 4 livraisons fonctionnelles : (1) <strong>foundation prompt management + scoring</strong> (livré 2026-05-10, 6 sous-PRs PR1→PR6 — Flyway V8 <code>prompt_template</code> + <code>prompt_score</code>, <code>TickerNarrativePromptService</code>, <code>PromptScoreRecorder</code>, page <code>/settings/prompts</code> avec éditeur + diff + activate, page stats par prompt, thumbs feedback PATCH idempotent) ; (2) <strong>page observabilité narrative</strong> (livré 2026-05-13, 3 sous-PRs PR1→PR3 — <code>NarrativeObservabilityQuery</code> + Service + Controller, page Angular per-symbol + index, filtres date + prompt + thumbs client-side, lien depuis le dossier ticker) ; (3) <strong>score de cohérence cross-runs</strong> (livré 2026-05-14 — <code>CoherenceScorer</code> pure-function, chip OK/WARN/HIGH sur chaque card de la timeline avec tooltip 5 lignes) ; (4) <strong>détection de biais</strong> (livré 2026-05-14 — <code>NarrativeBiasQuery</code> + Service + DTOs, page <code>/observability/bias</code> avec 4 sections : sentiment distribution, calibration sentiment vs prix, topic coverage, thumbs distribution). Côté navigation : entrée navbar « Observabilité » ajoutée après Dashboard, back-link de la timeline per-symbol redirige vers l'index. Patches de maintenance hors features : bumps deps Angular 21 (commits <code>09ab31e</code>, <code>898dcce</code>), <code>ticker.scss</code> budget bump 24→32 kB (<code>ad792c4</code>), NG0955 keying fix (<code>410da26</code>).</p>
+<p><strong>Méthode</strong> : 3 subagents <code>general-purpose</code> Claude lancés <strong>en parallèle</strong> sur des slices cohérentes (foundation prompt management 2026-05-10 ; page observabilité 2026-05-13 ; cohérence + biais 2026-05-14), chacun briefé sur les conventions ground truth (<code>CLAUDE.md</code>, <code>architecture.md</code>, <code>ddd.md</code>) et sur l'audit précédent. Sortie : punch-lists structurées (Bloquants / À discuter / Mineurs) avec <code>fichier:ligne</code> + suggestion + rationale. Vérification croisée des « bloquants » par le main thread avant remontée — <strong>un faux positif filtré</strong> (cf. infra). Les findings non bloquants ont été soit patchés, soit filed en dette technique (cf. <code>backlog.md &gt; Dette technique &gt; Coutures post-livraison Phase 3 — résidus review 2026-05-14</code> + ticket 🟡 dédié <code>Bar-lookup priceAtOrAfter</code>).</p>
+<p><strong>État du commit au moment de la revue</strong> : branche <code>master</code>, dernier commit committé <code>5fa37fe feat(observability): bias dashboard + navbar entry + back-link to index</code>. Working tree dirty avec le patch issu de cet audit (3 fichiers : <code>TickerNarrativePromptService.kt</code> + son test + <code>backlog.md</code>). 4 livraisons Phase 3 toutes mergées. 14 repositories frontend (10 Phase 2 + 4 Phase 3 : Prompt, NarrativeFeedback, NarrativeObservability, NarrativeBias). Migrations Flyway V1→V8. Tests : ~2 200 lignes Kotlin + ~1 800 lignes TS ajoutées sur la phase. Tous les findings critiques de l'audit <code>2026-05-10-fin-phase-2.5.md</code> ont été clôturés avant <code>v0.4.0</code> (cf. <code>journal-livraisons.md &gt; Phase 2.5 &gt; retour audit fin Phase 2.5 (4 findings clôturés)</code>) — pas de carry-over.</p>
+<hr />
+<h2 id="resume-executif">Résumé exécutif</h2>
+<p>App globalement saine pour un tag candidat <code>v0.5.0</code>. La Phase 3 a livré une <strong>boucle d'audit narrative complète</strong> en 5 jours (foundation prompt management → timeline observabilité → cohérence chip → biais dashboard) qui transforme le corpus accumulé depuis Phase 1 en signal exploitable. Les patterns établis ont tenu : ports + adapters frontend cohérents (4 nouveaux repositories suivent le <code>&lt;name&gt;.repository.ts</code> + <code>adapters/&lt;name&gt;.http.ts</code> à la lettre), services Spring proprement isolés en <code>application/</code> avec persistence en <code>infrastructure/persistence/</code>, native SQL réservé aux cas où JPQL devient maladroit (LATERAL joins sur <code>prompt_score</code>, percentiles + <code>date_trunc</code> sur les stats prompt, agrégats <code>GROUP BY sentiment</code> sur les biais). Les nouveaux pure-function helpers (<code>CoherenceScorer</code>, <code>NarrativeBiasService.tokenize</code>) sont déterministes, sans dépendance Spring, fully unit-tested. La discipline tests-as-documentation reste très bonne : noms de tests = phrases anglaises de spec, fixtures factory + override par scénario, comments expliquent le <em>why</em> des edge cases.</p>
+<p><strong>Risque principal identifié — patché en session avant cet audit</strong> : <code>TickerNarrativePromptService.lookupOrFallback</code> mettait la <code>FALLBACK_TEMPLATE</code> synthétique dans le cache Caffeine au même titre qu'une vraie row. Conséquence : un boot pendant que Flyway V8 applique (cas typique d'un fresh deploy), ou un seed BDD manuellement wipé, causait une fenêtre de 60 s pendant laquelle <strong>chaque narratif ignorait le prompt seedé en BDD ET trippait <code>isFallback</code> → <code>PromptScoreRecorder</code> skippait son write → snapshot persisté avec <code>prompt_template_id = null</code></strong>. Single-user local masquait largement le sujet (V8 a tourné depuis longtemps), mais la classe de bug est sérieuse pour Phase 5 deploy. Patch posé : <code>cache.getIfPresent(name)?.let { return it }</code> puis lookup direct, <code>cache.put(name, row)</code> uniquement sur succès BDD ; le fallback short-circuite le caching. Test pin de régression <code>fallback is never cached so a transient empty-DB state self-heals on the next request</code> ajouté dans <code>TickerNarrativePromptServiceTest</code>.</p>
+<p><strong>Risque important non patché — filed dette tech 🟡</strong> : <code>NarrativeObservabilityService.priceAtOrAfter</code> (et son jumeau dans <code>NarrativeBiasService</code>) ne guarde pas la borne basse. Si un snapshot est généré avant le 1er bar du chart 1Y (un narratif d'avril 2025 visualisé en mai 2026), <code>target.plusDays(1)</code> reste antérieur au 1er bar disponible, donc on retourne le 1er bar du chart — soit ~12 mois après le snapshot — et on présente cette différence comme « delta1d ». Affichage trompeur. Devient observable une fois le corpus à 1+ an d'histoire (donc pas avant ~fin 2026), pas urgent mais à patcher avant de consulter sérieusement la timeline historique sur des snapshots vieux.</p>
+<p><strong>Faux positif filtré</strong> : un subagent a flaggé en bloquant un test failure putatif sur <code>CoherenceScorer.priceMove</code> (claim que <code>BigDecimal.ZERO</code> scale 0 ≠ <code>bd("0.0000")</code> scale 4). Vérification main thread : <code>priceMove</code> n'a <strong>pas</strong> de fast-path zero — <code>current.subtract(previous).divide(previous, 4, HALF_UP)</code> est inconditionnel et préserve la scale. <code>subtract</code> retourne <code>0.0000</code> scale 4, <code>divide</code> retourne <code>0.0000</code> scale 4, <code>assertEquals</code> passe. L'agent a halluciné un fast-path qui n'existe pas. <strong>Pas de patch.</strong></p>
+<p><strong>Forces</strong> : (a) <strong>3 reviews subagent en parallèle</strong> au lieu d'un seul a fonctionné — chaque agent reste dans une fenêtre de contexte gérable, les 3 vues recoupent les fichiers communs (<code>NarrativeObservabilityService</code> modifié à la fois par #2 et par les wires #2/#3) sans rater de drift. Le main thread synthétise et arbitre. (b) <strong>Tests-as-documentation très bien tenus</strong> sur les 4 livraisons : <code>CoherenceScorerTest</code> (9 tests dont les seuils 60 % bias, FLIPPED + 5 % move = OK, jaccard normalise case+trim) ; <code>NarrativeBiasServiceTest</code> (10 tests dont zero-pad 3 buckets, calibration skip null deltas, one-fetch-per-symbol, MarketUnavailableException per-symbol survive) ; <code>TickerNarrativePromptServiceTest</code> (cache-miss self-heal post-patch). (c) <strong>Routing precedence double-testée</strong> sur les segments littéraux <code>/tickers</code>, <code>/bias</code> qui doivent être déclarés avant <code>/{symbol}</code> — backend (<code>@WebMvcTest</code>) ET frontend (<code>app.routes.ts</code> test implicite via les specs page). (d) <strong>i18n parité FR/EN</strong> maintenue sur l'ensemble des nouvelles clés (<code>prompts.*</code>, <code>prompt-stats.*</code>, <code>observabilityPage.*</code>, <code>observabilityIndexPage.*</code>, <code>biasPage.*</code>, <code>nav.observability</code>). (e) <strong>Décision « pas de LLM-as-judge » documentée et défendue</strong> sur les 2 scoring (cohérence + biais) — heuristique pure pour rester gratuit, déterministe, transparent ; LLM-as-judge filed pour v2 si signal heuristique insuffisant.</p>
+<hr />
+<h2 id="critique">Critique</h2>
+<p>(blocker ou risque sévère — corruption data, sécurité, contrat cassé)</p>
+<h3 id="0-patche-en-session-tickernarrativepromptservicelookuporfallback-cachait-le-fallback_template-synthetique">0. (Patché en session) <code>TickerNarrativePromptService.lookupOrFallback</code> cachait le <code>FALLBACK_TEMPLATE</code> synthétique</h3>
+<ul>
+<li><strong>Fichier</strong> : <code>backend/src/main/kotlin/com/portfolioai/analysis/application/TickerNarrativePromptService.kt:187-201</code> (avant patch).</li>
+<li><strong>Symptôme</strong> : <code>cache.get(name) { repository.findFirstByNameAndIsActiveTrue(name) ?: FALLBACK_TEMPLATE }</code> met indistinctement la fallback dans Caffeine. Si le 1er appel post-boot tombe pendant l'application de Flyway V8 (cas typique d'un fresh deploy, ou d'un wipe seed manuel), la fallback est cachée pour le TTL (1 min). Pendant cette fenêtre : (a) chaque narratif ignore le prompt seedé en BDD même après que V8 a fini, (b) <code>isFallback(template)</code> retourne true → <code>PromptScoreRecorder</code> skippe son write côté <code>TickerNarrativeExecutor</code> → snapshot persisté avec <code>prompt_template_id = NULL</code> (FK SET NULL respecté, pas de crash, mais corrupt observability).</li>
+<li><strong>Impact</strong> : observabilité narrative trouée pour la fenêtre de 60 s × tous les runs concurrents. Single-user local masque largement (V8 a tourné depuis longtemps sur tous les checkouts existants), mais la classe de bug est sérieuse pour Phase 5 deploy + tout futur scenario où un seed est wipé/reset.</li>
+<li><strong>Patch posé</strong> : lookup direct, <code>cache.put(name, row)</code> uniquement sur succès BDD. Fallback short-circuite le caching :
+  <div class="highlight"><pre><span></span><code><span class="n">cache</span><span class="p">.</span><span class="na">getIfPresent</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">?.</span><span class="na">let</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nb">it</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">repository</span><span class="p">.</span><span class="na">findFirstByNameAndIsActiveTrue</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">cache</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">row</span><span class="p">);</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="p">}</span>
+<span class="n">log</span><span class="p">.</span><span class="na">warn</span><span class="p">(...)</span>
+<span class="k">return</span><span class="w"> </span><span class="n">FALLBACK_TEMPLATE</span>
+</code></pre></div></li>
+<li><strong>Test de régression</strong> : <code>TickerNarrativePromptServiceTest.fallback is never cached so a transient empty-DB state self-heals on the next request</code> séquence Mockito <code>.willReturn(null).willReturn(dbActiveRow())</code> puis <code>verify(repository, times(2)).findFirstByNameAndIsActiveTrue(...)</code> — pin que la 2ᵉ lecture re-hit la BDD au lieu de servir une fallback cachée.</li>
+</ul>
+<hr />
+<h2 id="important">Important</h2>
+<p>(à traiter en priorité)</p>
+<h3 id="1-priceatorafter-ne-guarde-pas-la-borne-basse-deltas-absurdes-sur-snapshots-1y">1. <code>priceAtOrAfter</code> ne guarde pas la borne basse — deltas absurdes sur snapshots &gt; 1Y</h3>
+<ul>
+<li><strong>Fichiers</strong> : <code>backend/.../NarrativeObservabilityService.kt:193-196</code> + <code>NarrativeBiasService.kt:255-258</code> (helper privé dupliqué — candidat à extraction commune en passant).</li>
+<li><strong>Symptôme</strong> : <code>bars.firstOrNull { it.timestamp &gt;= target }</code> couvre la borne haute (<code>target</code> au-delà de la dernière bar → <code>null</code> retourné, delta affiché « — »). Pas de symétrique pour la borne basse : si <code>target = generatedDate.plusDays(1)</code> est antérieur au 1er bar du chart 1Y (cas d'un snapshot daté d'avant la fenêtre 1Y, donc d'un narratif vieux de &gt;1 an consulté aujourd'hui), la 1ʳᵉ bar du chart matche. On retourne donc une bar vieille de ~12 mois, et le delta calculé <code>(bar1.close - snapshot.price) / snapshot.price</code> est présenté comme « delta1d » dans la card timeline ou dans la moyenne de calibration.</li>
+<li><strong>Impact</strong> : (a) timeline observabilité : un user qui scroll vers le bas sur un ticker actif depuis 2024 verra des deltas faux sur les 12 derniers mois de la liste (sans signal visuel pour distinguer une donnée fiable d'un faux). (b) calibration biais : la moyenne <code>avgDelta1d/1w/1m</code> peut être biaisée par ces contributions trompeuses. Devient observable une fois le corpus à 1+ an d'histoire — donc pas avant ~fin 2026.</li>
+<li><strong>Fix</strong> : guard <code>target &gt;= bars.first().date</code> côté <code>priceAtOrAfter</code> ; si en-dessous, retourner <code>null</code> (le delta apparaît « — » comme pour la borne haute).</li>
+<li><strong>Tests à ajouter</strong> : (1) <code>NarrativeObservabilityServiceTest</code> — snapshot daté avant la 1ʳᵉ bar du chart → tous les 3 deltas null. (2) <code>NarrativeBiasServiceTest</code> — calibration skip ce snapshot dans la moyenne (<code>snapshotsWithDelta1d</code> reste à N-1).</li>
+<li><strong>État</strong> : filed dette technique 🟡 « Bar-lookup <code>priceAtOrAfter</code> — guard la borne basse » dans <code>backlog.md</code>.</li>
+</ul>
+<hr />
+<h2 id="moderee">Modérée</h2>
+<p>(non bloquant, à patcher quand l'occasion se présente)</p>
+<h3 id="2-promptscoreservicesetthumbs-race-theorique-sur-deux-patch-concurrents">2. <code>PromptScoreService.setThumbs</code> race théorique sur deux PATCH concurrents</h3>
+<ul>
+<li><strong>Fichier</strong> : <code>backend/.../analysis/application/PromptScoreService.kt:55-99</code>.</li>
+<li><strong>Symptôme</strong> : <code>setThumbs</code> fait un read-then-write sous <code>@Transactional</code> (default propagation). Deux PATCH concurrents sur le même <code>snapshot_id</code> peuvent tous les deux passer le <code>findFirstBySnapshotId == null</code> check et tous les deux insérer une row <code>prompt_score</code>. Pas d'unique constraint sur <code>prompt_score(snapshot_id)</code> côté schéma. Le <code>PromptScoreRecorder</code> (PR2) écrit aussi une row par run, donc la table peut contenir N rows par snapshot — la requête de lecture filtre par <code>ORDER BY created_at DESC LIMIT 1</code> ce qui rend le sujet académique en pratique, mais l'asymétrie « write multiplie, read prend la dernière » pourrait surprendre une future feature qui agrège les scores.</li>
+<li><strong>Impact</strong> : nul en single-user (zéro PATCH concurrent en pratique). Worth a future V9 <code>UNIQUE INDEX idx_prompt_score_snapshot_unique ON prompt_score(snapshot_id) WHERE snapshot_id IS NOT NULL</code> pour blinder.</li>
+<li><strong>État</strong> : filed dette technique 🟢 dans le ticket umbrella « Coutures post-livraison Phase 3 ».</li>
+</ul>
+<h3 id="3-narrativebiasservicecomputecalibration-fan-out-chart-sequentiel">3. <code>NarrativeBiasService.computeCalibration</code> fan-out chart séquentiel</h3>
+<ul>
+<li><strong>Fichier</strong> : <code>backend/.../analysis/application/NarrativeBiasService.kt:117-124</code>.</li>
+<li><strong>Symptôme</strong> : <code>rawSnapshots.map { it.symbol }.distinct().associateWith { symbol -&gt; chartClient.fetchChart(symbol, "1y", "1d").bars }</code> enchaîne les fetchs en série. Pour 10 symbols sur cold cache Caffeine, ça fait 10× la latence single-call (typiquement 1-3 s × 10 ≈ 10-30 s). Le test <code>calibration fetches the chart exactly once per unique symbol</code> pin l'invariant « 1 fetch par symbol » mais pas la parallélisation.</li>
+<li><strong>Impact</strong> : acceptable v1 (single-user, ≤10 symbols typiques, souvent warm en cache via dossier ticker). Devient pertinent quand <code>PortfolioAggregation</code> Phase 4 consommera ce service depuis un thread request, ou quand la page bias sera ouverte plus souvent.</li>
+<li><strong>Fix futur</strong> : <code>parallelStream</code> Java ou <code>runBlocking { withContext(Dispatchers.IO) { ... } }</code> Kotlin coroutines. Bornage à 4 fetchs concurrents pour ne pas hammer Twelve Data.</li>
+<li><strong>État</strong> : filed dette technique 🟢 dans le ticket umbrella.</li>
+</ul>
+<h3 id="4-bias-flag-rounding-edge-pas-de-test-sur-cas-fractionnaire">4. Bias flag rounding edge — pas de test sur cas fractionnaire</h3>
+<ul>
+<li><strong>Fichier</strong> : <code>backend/.../analysis/application/NarrativeBiasService.kt:94-100</code> + <code>NarrativeBiasServiceTest.kt:80-95</code>.</li>
+<li><strong>Symptôme</strong> : <code>BIAS_THRESHOLD = BigDecimal("0.6000")</code>, <code>percent</code> calculé via <code>divide(scale=4, HALF_UP)</code>. Le test pin le seuil sur 60/100 = 0.6000 → flag fires (pass). Mais 5995/10000 = 0.5995 → 0.6000 après HALF_UP scale 4 → flag fires aussi. Pas de test pour documenter ce comportement de rounding au seuil. À l'inverse, 599/1000 = 0.5990 → no flag.</li>
+<li><strong>Impact</strong> : nul (le contrat est défendable — HALF_UP au scale 4 — mais non documenté). Risque qu'un futur dev change la <code>RoundingMode</code> ou la scale et casse silencieusement le seuil de bias flag.</li>
+<li><strong>Fix</strong> : 1 test ajoutant <code>5995/10000 → flag fires</code> et <code>599/1000 → no flag</code>, avec un commentaire qui pin la règle de rounding comme contrat.</li>
+<li><strong>État</strong> : filed dette technique 🟢 dans le ticket umbrella.</li>
+</ul>
+<hr />
+<h2 id="mineur">Mineur</h2>
+<p>(polish, refacto opportuniste)</p>
+<h3 id="5-v8-migration-commentaire-claim-de-robustesse-a-corriger">5. V8 migration : commentaire claim de robustesse à corriger</h3>
+<ul>
+<li><strong>Fichier</strong> : <code>backend/src/main/resources/db/migration/V8__prompt_template.sql</code> (commentaires de tête + autour du backfill).</li>
+<li><strong>Symptôme</strong> : la migration claim que le backfill <code>UPDATE ticker_narrative_snapshot SET prompt_template_id = (SELECT id FROM seeded) WHERE prompt_version = 'v2'</code> est sûr. En réalité un narratif persisté pendant l'exécution de la migration tomberait dans le gap et lariverait avec <code>prompt_template_id = NULL</code> malgré son <code>prompt_version = 'v2'</code>. Single-user ⇒ académique (Tilt restart séquentiel, pas de write concurrent), mais le commentaire affirme une garantie qu'il n'a pas.</li>
+<li><strong>Fix</strong> : soit dropper la claim et documenter explicitement la limitation single-user, soit ajouter <code>LOCK TABLE ticker_narrative_snapshot IN ACCESS EXCLUSIVE MODE;</code> au début de V8 (no-op single-user mais documente l'intention pour Phase 5 deploy).</li>
+</ul>
+<h3 id="6-narrativeobservabilityquery-narrativebiasquery-limit-constant-interpole-au-lieu-de-bound">6. <code>NarrativeObservabilityQuery</code> + <code>NarrativeBiasQuery</code> : <code>LIMIT $constant</code> interpolé au lieu de bound</h3>
+<ul>
+<li><strong>Fichiers</strong> : <code>NarrativeObservabilityQuery.kt:81</code> (<code>LIMIT $MAX_ROWS</code>) + <code>:131</code> (<code>LIMIT $MAX_TICKERS</code>) + <code>NarrativeBiasQuery.kt:118</code> (<code>LIMIT $MAX_RAW_ROWS</code>).</li>
+<li><strong>Symptôme</strong> : ces 3 LIMIT sont interpolés dans la string SQL via Kotlin string template, alors que le reste de la query bind tout via <code>setParameter</code>. Pas une faille (<code>Int</code> constants), mais incohérent et signale un drift.</li>
+<li><strong>Fix</strong> : <code>setParameter("limit", MAX_ROWS)</code> puis <code>LIMIT :limit</code> dans la SQL string.</li>
+</ul>
+<h3 id="7-tokenizer-biais-stopwords-dupliques-incoherence-price">7. Tokenizer biais — stopwords dupliqués + incohérence « price »</h3>
+<ul>
+<li><strong>Fichier</strong> : <code>backend/.../analysis/application/NarrativeBiasService.kt:288-379</code> (<code>STOPWORDS</code>).</li>
+<li><strong>Symptôme A</strong> : <code>"his"</code> apparaît 2× dans la liste, <code>"side"</code> aussi. <code>setOf</code> dedupe silencieusement donc cosmétique, mais signale que la liste n'a pas été review end-to-end.</li>
+<li><strong>Symptôme B</strong> : <code>"price"</code> est stopworded — incohérent avec le DTO comment <code>TopicCoverageDto</code> qui claim que « never said price » serait un signal pertinent (« the inverse read is « topics never mentioned » »). Trancher : strip OU surface, et aligner le commentaire.</li>
+<li><strong>Fix</strong> : dedupliquer + arbitrer sur <code>"price"</code>. Idem audit léger sur le reste de la liste pour repérer d'autres faux strips.</li>
+</ul>
+<h3 id="8-biasts-observabilityts-buildfilter-nextdayiso-dupliques-entre-les-2-pages">8. <code>bias.ts</code> / <code>observability.ts</code> : <code>buildFilter</code> + <code>nextDayIso</code> dupliqués entre les 2 pages</h3>
+<ul>
+<li><strong>Fichiers</strong> : <code>frontend/src/app/features/observability/observability.ts:188-206</code> + <code>frontend/src/app/features/observability/bias/bias.ts:113-131</code>.</li>
+<li><strong>Symptôme</strong> : les 2 méthodes sont identiques au caractère près. Le commentaire dans <code>bias.ts</code> reconnaît la duplication explicitement (« Same shape as observability.ts — kept duplicated rather than extracted to keep the page self-contained »). Self-containment défendable v1, mais une 3ᵉ page (futurs ?) referait le même copier-coller.</li>
+<li><strong>Fix</strong> : extraire <code>frontend/src/app/core/utils/filter-window.ts</code> (10 lignes) avec <code>buildFilter(fromDate, toDate, promptId, ...): FilterEnvelope | undefined</code> et <code>nextDayIso(date): string</code>. Les 2 pages importent. Un test unitaire commun.</li>
+</ul>
+<h3 id="9-objectmapper-instancie-a-la-main-dans-2-services">9. <code>ObjectMapper</code> instancié à la main dans 2 services</h3>
+<ul>
+<li><strong>Fichiers</strong> : <code>NarrativeObservabilityService.kt:53</code> (<code>private val mapper = jacksonObjectMapper()</code>) + <code>NarrativeBiasService.kt:53</code> (idem).</li>
+<li><strong>Symptôme</strong> : Spring Boot expose déjà un bean <code>ObjectMapper</code> configuré (dates, nullability, modules Kotlin). En instancier 2 nouvelles à la main contourne la config globale. Inoffensif aujourd'hui (les usages se limitent à <code>readValue&lt;Array&lt;String&gt;&gt;</code>), mais drifte si la config Jackson évolue.</li>
+<li><strong>Fix</strong> : injecter <code>private val mapper: ObjectMapper</code> au lieu d'instancier.</li>
+</ul>
+<h3 id="10-narrativebiasquerynormalizeinstant-duplique-le-helper-de-narrativeobservabilityquery">10. <code>NarrativeBiasQuery.normalizeInstant</code> duplique le helper de <code>NarrativeObservabilityQuery</code></h3>
+<ul>
+<li><strong>Fichiers</strong> : <code>NarrativeObservabilityQuery.kt:148-154</code> + <code>NarrativeBiasQuery.kt:182-188</code> (méthode privée identique au caractère près).</li>
+<li><strong>Fix</strong> : extraire en utility commune (e.g. <code>infrastructure/persistence/JpaInstantNormalizer.kt</code>) quand un 3ᵉ usage apparaît. Pas la peine d'extraire pour 2 callsites.</li>
+</ul>
+<hr />
+<h2 id="forces-remarquables">Forces remarquables</h2>
+<ol>
+<li>
+<p><strong>3 reviews subagent en parallèle au lieu d'une lecture séquentielle</strong> — chaque agent a une fenêtre de contexte gérable (~95-130k tokens chacun), les 3 ont recoupé les fichiers communs sans rater de drift, et le main thread a pu arbitrer en lisant 2-3 sections ciblées du code (vérification du faux positif <code>priceMove</code>, vérif du caching <code>lookupOrFallback</code>). À encoder dans le subagent <code>code-reviewer</code> futur (ticket dette technique « Agent Claude code-reviewer pré-commit »).</p>
+</li>
+<li>
+<p><strong>Tests as documentation tenus end-to-end</strong> sur la phase :</p>
+</li>
+<li><code>CoherenceScorerTest</code> : 9 tests dont les invariants de seuil (<code>flip + flat → HIGH</code>, <code>flip + 5 % move → excused out of HIGH</code>), edge cases (<code>empty key_points → jaccard = 1</code>, <code>previousPrice = 0 → priceMove null</code>), ladder sentiment (<code>PARTIAL</code> vs <code>FLIPPED</code>), normalisation jaccard (case + trim).</li>
+<li><code>NarrativeBiasServiceTest</code> : 10 tests dont zero-pad 3 buckets, bias flag à exactement 60 % vs 59 %, calibration skip nulls + report contributing counts, one-fetch-per-symbol invariant, graceful degradation per-symbol, topic count par snapshot pas par occurrence, stopwords filtered.</li>
+<li><code>TickerNarrativePromptServiceTest</code> : cache-miss self-heal post-patch (séquence Mockito .willReturn pour pin que la 2ᵉ lecture re-hit la DB).</li>
+<li>
+<p><code>NarrativeObservabilityServiceTest</code> : 12 tests (3 ajoutés pour le wiring scorer Phase 3 #2) dont oldest-row-no-coherence, regression guard sur la direction <code>i+1</code> du pairing.</p>
+</li>
+<li>
+<p><strong>Routing precedence pinned</strong> sur les segments littéraux (<code>/tickers</code>, <code>/bias</code>) — déclarés avant <code>/{symbol}</code> côté Spring controller ET côté Angular routes, avec test explicite « literal route resolves to ... and NOT to {symbol}=literal » dans le <code>@WebMvcTest</code>.</p>
+</li>
+<li>
+<p><strong>i18n parité FR/EN intégrale</strong> — vérification empirique : ~140 nouvelles clés ajoutées sur la phase, FR et EN matchent au caractère près sur les noms de clés. Aucun hardcoded user-facing string repéré dans les diff (le ticket dette tech sur <code>OllamaPullDialog</code> qui restait pré-Phase 3 est toujours ouvert).</p>
+</li>
+<li>
+<p><strong>Décisions design documentées</strong> — le journal et les KDoc/TSDoc des nouveaux services portent les rationales : « heuristique vs LLM-as-judge » (pour les 2 scoring), « count by snapshot vs by occurrence » (topic coverage), « page séparée vs sub-route per-prompt » (bias dashboard), « base du delta = <code>snapshot.price</code> vs close à T0 du bar » (timeline observabilité), « cache cross-rows vs re-parse JSON » (cohérence). Ces décisions seront lisibles par un dev qui revient dans 6 mois.</p>
+</li>
+<li>
+<p><strong>Dépendances Phase 4 explicitement déclarées</strong> — la Phase 3 produit un corpus + une UI au-dessus, sans introduire de couplage avec le DAG unifié futur. Le scoring (cohérence + biais) est calibré pour rester pertinent au-dessus de <code>PortfolioAggregation</code> (Phase 4 #2) sans modification — le <code>CoherenceScorer.score(current, previous)</code> ne sait pas de quel kind de snapshot il scoreil compare des <code>SnapshotProjection</code> génériques. Hookup Phase 4 zero-friction.</p>
+</li>
+</ol>
+<hr />
+<h2 id="residus-audits-precedents">Résidus audits précédents</h2>
+<ul>
+<li><strong>Audit <code>2026-05-10-fin-phase-2.5.md</code></strong> — les <strong>4 findings</strong> (Boot fragile sans ANTHROPIC_API_KEY, WatchlistService.add hors @Transactional, LlmTimeoutService dead code, validation jobId/symbol sur le SSE narratif) ont été <strong>clôturés en un commit avant le tag <code>v0.4.0</code></strong> (cf. <code>journal-livraisons.md &gt; Phase 2.5</code>). Pas de carry-over Phase 3.</li>
+<li><strong>Audit <code>2026-05-06-fin-phase-2.md</code></strong> — le finding #3 (« stratégie de cache : key-prefix par adapter vs service-cache sans préfixe ») reste ouvert dans la dette technique 🟡. Pas de progrès Phase 3, mais la phase n'a pas non plus aggravé le drift (pas de nouveau cache adapter ajouté).</li>
+<li><strong>Audit <code>2026-05-02-revue-globale.md</code></strong> — résidus déjà clôturés ou re-filed dans les audits suivants. Plus pertinent ici.</li>
+</ul>
+<p>Findings 🟡 dette technique toujours ouverts au moment de la revue (cf. <code>backlog.md &gt; Dette technique</code>) :
+- Stratégie de cache key-prefix vs service (audit 2026-05-06 #3)
+- Agent Claude <code>code-reviewer</code> pré-commit (à l'image de <code>doc-maintainer</code>)
+- Onboarding doc — découper « tester en local » et « développer »
+- Gestion d'erreur transverse — frontend <code>MatSnackBar</code> + logging backend + exceptions plus honnêtes
+- <strong>Bar-lookup <code>priceAtOrAfter</code> borne basse</strong> (filed à cet audit)</p>
+<hr />
+<h2 id="recommandation-tag-v050">Recommandation tag <code>v0.5.0</code></h2>
+<p><strong>Ready</strong> après les 3 fichiers en dirty (patch + test + backlog updates de cet audit) sont commités. Pas de bloquant restant. Les 8 résidus filed en dette technique sont tous en 🟢 (sauf bar-lookup en 🟡), aucun n'empêche un tag propre.</p>
+<p>Suggested commit message pour le delta de cet audit :
+<div class="highlight"><pre><span></span><code>refactor(prompt): never cache the synthetic fallback template
+</code></pre></div>
+ou groupé avec la dette tech si tu préfères :
+<div class="highlight"><pre><span></span><code>refactor(prompt): fix fallback caching + file Phase 3 review residues
+</code></pre></div></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.top", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

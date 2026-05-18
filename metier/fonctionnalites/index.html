@@ -1,0 +1,2100 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/metier/fonctionnalites/">
+      
+      
+        <link rel="prev" href="../vision/">
+      
+      
+        <link rel="next" href="../../technique/developper/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Fonctionnalités - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fonctionnalites" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Fonctionnalités
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-fondation-termine-partiellement-decommissionnee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0 — Fondation (terminé, partiellement décommissionnée)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 0 — Fondation (terminé, partiellement décommissionnée)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#conserve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conservé
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conservé">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#portefeuille-lecture-seule-csv-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Portefeuille (lecture seule, CSV-driven)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import CSV
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historique-des-positions-suivi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historique des positions (Suivi)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#theme-clair-sombre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thème clair / sombre
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infra-et-qualite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infra et qualité
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decommissionne-phase-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décommissionné (Phase 2.5)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Décommissionné (Phase 2.5)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ingestion-rss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingestion RSS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyse-portefeuille-llm-rebalancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyse portefeuille (LLM rebalancing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settings-rss-back-office" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings RSS back-office
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-pivot-ticker-termine-tag-v020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1 — Pivot ticker (terminé, tag v0.2.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1 — Pivot ticker (terminé, tag v0.2.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#donnees-de-marche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Données de marché
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicateurs-calcules-serveur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicateurs calculés serveur
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#narratif-llm-par-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Narratif LLM par ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dossier-ticker-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dossier ticker (UI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#watchlist-liste-de-tickers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watchlist / liste de tickers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-profondeur-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2 — Profondeur ticker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2 — Profondeur ticker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#livre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ Livré
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-observabilite-narrative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3 — Observabilité narrative
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 3 — Observabilité narrative">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#livre_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ Livré
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporte-phase-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧊 Reporté Phase 6
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-authentification-cloturee-2026-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4 — Authentification (clôturée 2026-05-17)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-deploiement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5 — Déploiement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-vision-long-terme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6 — Vision long terme
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#phase-0-fondation-termine-partiellement-decommissionnee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0 — Fondation (terminé, partiellement décommissionnée)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 0 — Fondation (terminé, partiellement décommissionnée)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#conserve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conservé
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conservé">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#portefeuille-lecture-seule-csv-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Portefeuille (lecture seule, CSV-driven)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import CSV
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historique-des-positions-suivi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historique des positions (Suivi)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#theme-clair-sombre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thème clair / sombre
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architecture-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infra-et-qualite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infra et qualité
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decommissionne-phase-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décommissionné (Phase 2.5)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Décommissionné (Phase 2.5)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ingestion-rss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ingestion RSS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyse-portefeuille-llm-rebalancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyse portefeuille (LLM rebalancing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#settings-rss-back-office" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Settings RSS back-office
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-1-pivot-ticker-termine-tag-v020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1 — Pivot ticker (terminé, tag v0.2.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 1 — Pivot ticker (terminé, tag v0.2.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#donnees-de-marche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Données de marché
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indicateurs-calcules-serveur" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indicateurs calculés serveur
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#narratif-llm-par-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Narratif LLM par ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dossier-ticker-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dossier ticker (UI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#watchlist-liste-de-tickers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Watchlist / liste de tickers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-2-profondeur-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2 — Profondeur ticker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 2 — Profondeur ticker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#livre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ Livré
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-3-observabilite-narrative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3 — Observabilité narrative
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 3 — Observabilité narrative">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#livre_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✅ Livré
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reporte-phase-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🧊 Reporté Phase 6
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-4-authentification-cloturee-2026-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4 — Authentification (clôturée 2026-05-17)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-5-deploiement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5 — Déploiement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-6-vision-long-terme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6 — Vision long terme
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="fonctionnalites">Fonctionnalités</h1>
+<h2 id="phase-0-fondation-termine-partiellement-decommissionnee">Phase 0 — Fondation (terminé, partiellement décommissionnée)</h2>
+<p>Tout ce qui constitue l'ossature de l'app aujourd'hui. <strong>Une partie est conservée et utilisée</strong>, <strong>une partie a été décommissionnée en Phase 2.5</strong> (le code et les tables associées ont été supprimés — voir plus bas).</p>
+<h3 id="conserve">Conservé</h3>
+<h4 id="portefeuille-lecture-seule-csv-driven">Portefeuille (lecture seule, CSV-driven)</h4>
+<p>Le portefeuille reflète l'état réel du courtier Wealthsimple. L'import d'un export CSV (« Positions ») crée ou met à jour automatiquement un portefeuille par compte. La vue Dashboard affiche les positions en lecture seule.</p>
+<h4 id="import-csv">Import CSV</h4>
+<p>Page <strong>Import</strong> : drag &amp; drop d'un export Wealthsimple (multi-fichiers supporté). Prévisualisation, confirmation, upsert des positions, création d'un snapshot par compte.</p>
+<h4 id="historique-des-positions-suivi">Historique des positions (Suivi)</h4>
+<p>Page <strong>Suivi</strong> : timeline des imports groupés par <code>batch_id</code>, expand par compte, détail des positions avec valeur de marché et P&amp;L.</p>
+<h4 id="theme-clair-sombre">Thème clair / sombre</h4>
+<p>Toggle dans le header (sombre par défaut). Tokens CSS, persistance localStorage, transitions fluides.</p>
+<h4 id="architecture-frontend">Architecture frontend</h4>
+<p>Ports &amp; adapters léger sous <code>core/</code> + UI dans <code>features/</code>. <em>Voir <code>docs/technique/architecture.md</code> pour la liste des repositories à jour.</em></p>
+<h4 id="infra-et-qualite">Infra et qualité</h4>
+<p>Tilt + Docker Compose, CI GitHub Actions (backend Gradle + Postgres / frontend Vitest), Flyway, ports/adapters Spring, <code>@Async</code> sur bean séparé, tests d'intégration sur vrai PostgreSQL.</p>
+<h3 id="decommissionne-phase-25">Décommissionné (Phase 2.5)</h3>
+<h4 id="ingestion-rss">Ingestion RSS</h4>
+<p>Module <code>ingestion/</code> (scheduler Rome, déduplication, 25 sources seedées, parsing robuste DOCTYPE / <code>&amp;</code> nus / détection HTML) <strong>supprimé</strong>. Tables <code>feed_source</code> et <code>feed_article</code> droppées (migration V6). La Phase 6 « Réintégration Phase 0 » repartira de sources Phase 1+2 (snapshots ticker + analyst + earnings + news per-ticker), pas d'un nouveau scraping RSS.</p>
+<h4 id="analyse-portefeuille-llm-rebalancing">Analyse portefeuille (LLM rebalancing)</h4>
+<p>Pipeline <code>AnalysisExecutor</code> (<code>AnalysisContextLoader</code>, <code>LlmResponseParser</code>, <code>RecommendationValidator</code> 8 règles, <code>RecommendationPersister</code>, <code>AnalysisJobStore</code>) <strong>supprimé</strong>. Tables <code>recommendation</code>, <code>recommendation_action</code>, <code>recommendation_score</code>, <code>analysis_job</code> droppées (V6). Pages frontend <code>/recommendations</code> et <code>/history</code> supprimées. Le replacement Phase 6 sera un job <code>PortfolioAggregation</code> qui agrège les snapshots ticker existants — pas un re-prompt LLM portfolio-wide.</p>
+<h4 id="settings-rss-back-office">Settings RSS back-office</h4>
+<p>Pages <code>/settings/sources</code> et <code>/settings/test-sources</code> (activer/désactiver flux + tester un parse RSS) <strong>supprimées</strong> avec le module <code>ingestion/</code>. Le sidenav settings vit aujourd'hui avec <code>configuration/</code> (config runtime Phase 2) et <code>prompts/</code> + <code>prompts/:id/stats</code> (gestion + scoring des prompts narratifs, Phase 3). La page <code>prompt-preview/</code> (aperçu interpolé du prompt narratif Phase 1) a été retirée le 2026-05-14, l'éditeur de prompts Phase 3 couvrant l'usage.</p>
+<blockquote>
+<p><strong>Pourquoi décommissionné maintenant</strong> : la Phase 0 était gelée depuis Phase 1, mais le module restait chargé et <code>AnalysisExecutor</code> chargeait encore les 200 derniers articles RSS dans le prompt LLM même quand le scheduler était off — cause d'un timeout 400 s observé sur Ollama cold-start le 2026-05-07. Plutôt que de patcher le legacy, on a tranché : drop des tables et modules, le replacement Phase 6 (PortfolioAggregation au-dessus des snapshots ticker) ne réutilisera rien de la plomberie RSS+executor.</p>
+</blockquote>
+<hr />
+<h2 id="phase-1-pivot-ticker-termine-tag-v020">Phase 1 — Pivot ticker (terminé, tag <code>v0.2.0</code>)</h2>
+<h3 id="donnees-de-marche">Données de marché</h3>
+<p>Module <code>market/</code> côté backend, port <code>MarketChartClient</code> derrière la clé <code>market.provider</code> :</p>
+<ul>
+<li><strong>Twelve Data (défaut prod)</strong> : REST documenté, free tier 800 credits/jour, TSX natif. Deux endpoints (<code>/time_series</code> + <code>/quote</code>).</li>
+<li><strong>Mock (défaut sans clé)</strong> : série OHLC déterministe par symbole — onboarding sans clé, CI sans réseau.</li>
+<li><strong>Caching court</strong> Caffeine 15 min.</li>
+<li><strong>Endpoint REST</strong> : <code>GET /api/market/ticker/{symbol}</code>.</li>
+</ul>
+<h3 id="indicateurs-calcules-serveur">Indicateurs calculés serveur</h3>
+<p><code>IndicatorCalculator</code> — Kotlin pur, testable unit, <strong>aucun appel LLM</strong> :</p>
+<ul>
+<li>RSI (14)</li>
+<li>MA50, MA200 et croisements</li>
+<li>Momentum 30j / 90j</li>
+<li>Performance 1m / 3m / 1y / YTD</li>
+<li>Drawdown depuis 52w high</li>
+<li>Volume relatif (vs moyenne 30j)</li>
+<li>Position vs MA50, MA200 (en %)</li>
+</ul>
+<h3 id="narratif-llm-par-ticker">Narratif LLM par ticker</h3>
+<p>Nouveau prompt <strong>par ticker</strong> (pas portfolio-wide) :</p>
+<ul>
+<li><strong>Input</strong> : <code>{ticker, currentPrice, indicators, fundamentals, recentChange}</code></li>
+<li><strong>Output JSON</strong> : <code>{summary, sentiment: 'bullish'|'bearish'|'neutral', keyPoints: string[]}</code></li>
+<li><strong>Provider par défaut</strong> : Claude API (Ollama + <code>qwen2.5:3b</code> conservé en backup pour dev offline ; Mistral 7B retiré, trop lent sur M1).</li>
+<li><strong>Pas de targetWeight, pas de BUY/SELL</strong> — l'IA décrit, elle ne décide pas.</li>
+</ul>
+<h3 id="dossier-ticker-ui">Dossier ticker (UI)</h3>
+<p>Nouvelle page <code>features/ticker/</code> :</p>
+<ul>
+<li>En-tête : symbole, nom, prix courant, variation jour, sentiment badge</li>
+<li><strong>Graphique</strong> des prix en SVG inline (pas de dépendance ajoutée). Phase 1 : courbe simple 1Y daily. Phase 2 : toggle multi-timeframe (1D / 5D / 1M / 3M / 1Y / 5Y), chart enrichi (axes + grille + crosshair), overlays multi-select (MA50 / MA200 / Bollinger / 52w hi-lo), zoom drag-select avec brush mini-chart navigator, annotations user persistées localStorage et mesure tools delta % / delta time.</li>
+<li><strong>Indicateurs en chips</strong> : RSI, drawdown, perf 1y, distance à la MA50</li>
+<li><strong>Narratif LLM</strong> : summary + keyPoints en bullets</li>
+<li><strong>Snapshot persistant</strong> : chaque consultation génère un <code>TickerNarrativeSnapshot</code> (prix + indicateurs + texte LLM + horodatage)</li>
+</ul>
+<h3 id="watchlist-liste-de-tickers">Watchlist / liste de tickers</h3>
+<p>Deux sources visibles côté UI :
+- <strong>Tickers détenus</strong> (portfolio CSV Wealthsimple) — automatique, lecture seule, agrégé sur tous les portefeuilles.
+- <strong>Watchlist persistée</strong> — saisie manuelle de tickers à surveiller hors portefeuille (cf. Phase 2 livré).</p>
+<hr />
+<h2 id="phase-2-profondeur-ticker">Phase 2 — Profondeur ticker</h2>
+<h3 id="livre">✅ Livré</h3>
+<ul>
+<li><strong>Multi-timeframe sur le graphe</strong> : toggle <code>1D / 5D / 1M / 3M / 1Y / 5Y</code> au-dessus du chart. Le dossier (indicateurs + narratif) reste ancré sur <code>1Y daily</code> ; seul le graphe se reconfigure au clic. Endpoint dédié <code>GET /api/market/ticker/{symbol}/chart?timeframe=</code>.</li>
+<li><strong>Chart enrichi</strong> : axes Y (prix) et X (dates), grille pointillée, crosshair au survol avec tooltip date + prix exacts.</li>
+<li><strong>Watchlist persistée</strong> : module backend <code>watchlist/</code> + table <code>watchlist_entry</code> (V3). Ajouter / retirer un ticker via la sidebar dashboard (input + liste avec poubelle) ou via le bouton <strong>"Suivre / Suivi"</strong> sur le header du Dossier ticker. Add idempotent côté serveur, optimistic UI côté front avec rollback sur erreur.</li>
+<li><strong>Sidebar dashboard collapsable</strong> : trois sections indépendamment foldables (Portefeuilles, Tickers détenus, Watchlist) + scrollbar custom 8px globale.</li>
+<li><strong>News par ticker</strong> : section dédiée sur le Dossier ticker entre la plage 52w et le narratif IA. Liste 10 headlines (Reuters / Bloomberg / CNBC agrégés via Finnhub), source + date relative, clic ouvre l'article dans un nouvel onglet. Provider Finnhub séparé (clé dédiée) car Twelve Data ne couvre pas les news. Mock synthétique disponible (<code>news.provider: mock</code>, défaut sans clé) pour itérer sans consommer le quota.</li>
+<li><strong>Settings &amp; config runtime</strong> : page <code>/settings/configuration</code> (4e onglet sidenav, icône <code>tune</code>) qui édite en direct <strong>douze clés</strong> sans reboot, structurées en deux sub-sections (Providers de données / LLM). Phase 2 a posé les fondations (clés API Twelve Data + Finnhub + bouton « Tester », TTL cache Caffeine 5–60 min slider, quatre toggles provider mock ↔ live <code>market.provider</code> / <code>news.provider</code> / <code>analyst.provider</code> / <code>earnings.provider</code>) ; Phase 2.5 a étendu au LLM (toggle <code>llm.provider</code> claude ↔ ollama, modèles <code>ollama.model</code> + <code>anthropic.api.model</code> en autocomplete libre, slider <code>llm.timeout-seconds</code> 60–900 s, clé <code>anthropic.api.key</code> SECRET avec bouton Tester depuis 2026-05-08). Hint conditionnel sur la card Twelve Data quand la clé Finnhub est absente : signale que le Sector benchmark utilise Finnhub même en mode market <code>twelvedata</code> (correctif post-audit Phase 2 finding #4). Persistance dans la table <code>app_config</code> (V4) qui surcharge les défauts YAML ; bouton « Réinitialiser au défaut » par clé. Note sécu : clés API stockées en clair en BDD locale — acceptable projet perso.</li>
+<li><strong>Comparaison vs benchmark (v1)</strong> : overlay opt-in d'un indice (SPY / QQQ / IWM) sur le chart du dossier ticker. <code>mat-button-toggle-group</code> Off / SPY / QQQ / IWM dans la chart-toolbar, défaut Off → zéro consommation Twelve Data tant qu'aucun click. Quand un benchmark est sélectionné, le Y-axis flippe instantanément du prix absolu vers le % return signé depuis la première bar (sinon SPY à 500 $ écraserait visuellement un small-cap à 15 $). La 2ᵉ ligne dashed semi-transparente apparaît dès que le fetch résout, le tooltip enrichi compare les deux séries au même index (swatch + symbol + valeur). Tooltip + <code>aria-label</code> sur les boutons SPY/QQQ/IWM expliquent l'indice complet ("S&amp;P 500 (SPY)"). Front-only, zéro changement back : réutilise <code>GET /api/market/ticker/{symbol}/chart?timeframe=</code> qui partage son cache Caffeine sur la clé <code>(symbol, range, interval)</code>. Refetch des deux séries en parallèle au changement de timeframe.</li>
+<li><strong>Comparaison vs benchmark (v2 — Sector + Custom)</strong> : étend l'overlay v1 avec deux nouveaux modes. <strong>Sector</strong> auto-détecte le SPDR sector ETF qui couvre le secteur GICS du ticker (AAPL → XLK Technology, JPM → XLF Financials) ; <strong>Custom</strong> laisse l'utilisateur taper n'importe quel ticker via un <code>mat-autocomplete</code> sidecar dans la toolbar (réutilise <code>searchSymbols</code> du provider de marché actif). Backend : nouveau port <code>SectorClassifier</code> avec deux adapters sélectionnés par <code>market.provider</code> — initialement <code>TwelveDataSectorClassifier</code> (REST <code>/profile</code>, 1 credit/call) <strong>remplacé le 2026-05-06 par <code>FinnhubSectorClassifier</code></strong> (<code>/stock/profile2</code>, free tier) parce que <code>/profile</code> côté Twelve Data est paid-tier only ; <code>RoutingSectorClassifier</code> route désormais le mode live <code>twelvedata</code> vers Finnhub (cf. <code>architecture.md</code> → Switch provider à chaud). L'autre adapter, <code>MockSectorClassifier</code> (~25 tickers seedés US/TSX), reste inchangé. <code>RoutingSectorClassifier</code> (<code>@Primary</code>). Mapping hardcodé <code>SpdrSectorEtfs</code> (11 GICS sectors → XLK/XLF/XLV/XLE/XLY/XLP/XLC/XLI/XLB/XLRE/XLU + table de synonymes pour les variations provider type "Information Technology" / "Health Care" / "Consumer Cyclical"). <code>SectorClassifierService</code> avec <code>@Cacheable("sector-by-symbol")</code>. Endpoint <code>GET /api/market/ticker/{symbol}/sector-benchmark</code>. UI : toggle 5-buttons (Off/SPY/QQQ/IWM/Sector) + autocomplete sidecar "or pick…". Sector hors SPDR → 404 → message inline distinct (<code>sectorNotMapped</code>) du fetch error generic.</li>
+<li><strong>Chart : analyse + sélection (v1+v2+v3)</strong> : extension du chart Dossier ticker avec trois couches d'outils interactifs. <strong>v1 zoom drag-select</strong> : <code>pointerdown</code> → drag horizontal → <code>pointerup</code> au-delà de 10 px commit un zoom (slice symétrique des séries ticker + benchmark dans <code>chartGeometry</code>), reset via bouton toolbar visible quand zoomé ou double-clic. <strong>v2 overlays multi-select</strong> : <code>mat-button-toggle-group</code> MA50 / MA200 / Bollinger (BB) / 52w hi / 52w lo, calculé front-side depuis la série complète (pour rester sémantiquement "MA50 de la série complète" même sous zoom), désactivé en mode benchmark (Y axis en % return space, MA en prix space — pas le même système). <strong>v3 brush mini-chart</strong> : SVG 52 px de haut sous le main, mirroir de la full series avec rectangle draggable indiquant la zone zoomée — trois modes selon la zone du grab (<code>pan</code> / <code>resize-left</code> / <code>resize-right</code>, hit-zone 8 px), reset si click hors rectangle. <strong>v3 annotations</strong> : nouveau port <code>AnnotationRepository</code> côté front + adapter <code>LocalStorageAnnotationRepository</code> (key <code>ticker-annotations:{SYMBOL}</code>, <code>crypto.randomUUID</code> avec fallback, <code>defer()</code> pour convertir un throw quota-exceeded en error notification). Bouton toolbar "+ Annotation" arme le mode ; le prochain click sub-threshold pose une h-line au prix cliqué (inverse-yAt via <code>geom.yMin</code> + <code>yRange</code>). Out-of-range → clamp top/bottom + suffixe ↑/↓. Click sur le handle <code>×</code> → optimistic remove avec rollback. Délégation à un futur backend-backed adapter sans rewrite UI. <strong>v3 measure tools</strong> : un click sub-threshold (sans annotation mode) pose un anchor au bar le plus proche, hover montre delta % et delta time (<code>formatDeltaTime</code> adaptatif min/h/j) dans une ligne distincte du tooltip. Anchor recovered par timestamp à chaque geometry pass — robuste au zoom qui shift les indices. Désactivé en benchmark mode (le % axis fait déjà ce travail). Click vs drag distinguishment partagé (threshold 10 px) entre les 3 features.</li>
+<li><strong>Recommandations analystes</strong> : sous-bloc « Recommandations analystes » de la nouvelle section « Fondamentaux » sur le Dossier ticker, entre les chips d'indicateurs et la section News. Affiche le consensus monthly (chip BUY/HOLD/SELL/MIXED — seuils 60 % bullish/bearish, 50 % hold, MIXED sinon), un breakdown segmented bar 5 buckets (strongBuy / buy / hold / sell / strongSell) avec tooltip par segment, une légende chips, le price target consensus 12 mois (high / low / mean, masqué si indisponible) et une trend arrow up/down/flat sur les 6 derniers mois (delta bullish-minus-bearish / total). <strong>Backend</strong> — nouveau module <code>analyst/</code> avec port <code>AnalystRecommendationClient</code>, deux adapters : <code>FinnhubAnalystClient</code> (<code>/stock/recommendation</code> requis + <code>/stock/price-target</code> optionnel, fail-soft à <code>null</code> sur 401/403/5xx parce que le price-target est derrière un paid tier sur certains comptes Finnhub) et <code>MockAnalystClient</code> (synthétique déterministe par symbole, ~50 % bullish / ~30 % mixed / ~20 % bearish, drift mois-sur-mois pour une trend non plate, symboles réservés <code>UNKNOWN</code> / <code>RATELIMIT</code> / <code>NOTARGET</code>). <code>RoutingAnalystClient</code> (<code>@Primary</code>), <code>AnalystRecommendationService</code> avec <code>@Cacheable("analyst-recommendations")</code> 15 min (Finnhub stamp les snapshots mensuellement → staleness invisible). Endpoint <code>GET /api/market/ticker/{symbol}/analyst-recommendations</code>. Nouvelle clé runtime <code>analyst.provider</code> (<code>mock</code> ↔ <code>finnhub</code>, séparée de <code>news.provider</code> pour pouvoir flipper indépendamment). Cache <code>analyst-recommendations</code> ajouté à <code>MarketConfig</code>, partage le TTL <code>market.cache.ttl-minutes</code>. <strong>Frontend</strong> — nouveau port <code>AnalystRepository</code> + adapter HTTP, signaux <code>analyst / analystLoading / analystNotCovered / analystError</code> scopés à la panel (404 = no coverage = empty state distinct du 503 = inline error). Helper <code>analystBucketPct</code> pour la segmented bar, <code>computed analystTrend</code> (epsilon 5 %, defaut flat). i18n FR + EN (chip consensus, bucket labels, tooltips, trend tooltips, target labels).</li>
+<li><strong>Earnings dates et derniers résultats</strong> : 2ᵉ sous-bloc « Résultats » de la section « Fondamentaux » sur le Dossier ticker, sous le sous-bloc analyste. Affiche la prochaine date attendue avec countdown ("dans N jours" ou "aujourd'hui" / "demain"), un badge horaire BMO/AMC quand connu, et un tableau des 4 derniers trimestres (période / EPS estimé / EPS réel / surprise % colorée beat/miss/inline). Pin de couleur warning quand la date est ≤ 7 jours pour signaler une publication imminente sans bloquer le reste. <strong>Backend</strong> — nouveau module <code>earnings/</code> avec port <code>EarningsClient</code>, deux adapters : <code>FinnhubEarningsClient</code> (<code>/stock/earnings</code> requis + <code>/calendar/earnings</code> optionnel, fail-soft à <code>null</code> sur 401/403/5xx — fenêtre 90 j en avant pour capturer la prochaine annonce sans burn de quota sur du long terme) et <code>MockEarningsClient</code> (synthétique déterministe par symbole, EPS dans la bande $0.30–$3.50, surprise ±15 % autour de l'estimé, next-date 1–60 j en avant, symboles réservés <code>UNKNOWN</code> / <code>RATELIMIT</code> / <code>NOCALENDAR</code>). <code>RoutingEarningsClient</code> (<code>@Primary</code>), <code>EarningsService</code> avec <code>@Cacheable("earnings")</code> 15 min. Endpoint <code>GET /api/market/ticker/{symbol}/earnings</code>. Nouvelle clé runtime <code>earnings.provider</code> (<code>mock</code> ↔ <code>finnhub</code>, séparée de <code>news.provider</code> et <code>analyst.provider</code>). Cache <code>earnings</code> ajouté à <code>MarketConfig</code> (6e cache, partage le TTL). Domain helper pur <code>computeSurprisePercent</code> (gère null + zero estimate + estimate négatif via <code>abs()</code> au dénominateur pour qu'un beat sur loss-making reste positif). <strong>Frontend</strong> — nouveau port <code>EarningsRepository</code> + adapter HTTP, signaux <code>earnings / earningsLoading / earningsNotCovered / earningsError</code> scopés à la panel (mêmes règles d'isolation que la news / analyst). Helper <code>earningsCountdownDays</code> (computed, anchored UTC pour éviter le drift timezone), <code>earningsSurpriseSign(report)</code> (beat/miss/inline). i18n FR + EN (col headers, time labels BMO/AMC, today/tomorrow/inDays/daysAgo).</li>
+<li><strong>News inline (v1 minimaliste)</strong> : chaque headline du panneau News du Dossier ticker est désormais un accordéon — clic sur la row toggle un body qui surface le <code>summary</code> Finnhub + un lien <code>Lire l'article complet →</code> explicite vers la <code>url</code> (target=<code>_blank</code>). Le default action « row click » garde l'utilisateur sur le dossier ; le lien sortant n'est plus la première chose qui se déclenche. Choix v1 explicite : on n'introduit ni scraping (ToS Reuters/Bloomberg fragiles, paywalls, sites JS-heavy) ni LLM-as-summarizer (hallucination + ~10 calls Claude par dossier ouvert) — on affiche ce que Finnhub fournit déjà dans le payload. Honnête (zéro contenu inventé), zéro nouvelle dépendance. Multiple items ouvrables simultanément pour comparer deux dépêches. Backlog v2 LLM-as-summarizer filed en Phase 2.5 dette si à l'usage le résumé Finnhub se révèle trop court.</li>
+</ul>
+<blockquote>
+<p><strong>Phase 2 clôturée 2026-05-06</strong> — tous les items « ticker » de profondeur sont livrés. Les sujets de stabilisation et d'outillage ont été repris sous <strong>Phase 2.5 Stabilisation et outils</strong> (clôturée 2026-05-10, tag <code>v0.4.0</code> ; détail dans <code>docs/projet/journal-livraisons.md &gt; Phase 2.5</code>) ; l'observabilité narrative ouvre la <strong>Phase 3</strong>.</p>
+</blockquote>
+<hr />
+<h2 id="phase-3-observabilite-narrative">Phase 3 — Observabilité narrative</h2>
+<blockquote>
+<p><strong>Phase 3 clôturée 2026-05-14</strong> — tag candidat <code>v0.5.0</code>. 4 livraisons en 5 jours qui forment une boucle d'audit narrative complète : foundation prompt management + scoring (2026-05-10), page observabilité narrative timeline + index (2026-05-13), score de cohérence cross-runs (2026-05-14), détection de biais (2026-05-14). Le ticket initialement projeté ici « Page Jobs DAG » a été déplacé en Phase 6 — il dépend du DAG unifié et son contenu est intrinsèquement lié à l'archi long terme. Détail des livraisons dans <code>docs/projet/journal-livraisons.md &gt; Phase 3</code>.</p>
+</blockquote>
+<h3 id="livre_1">✅ Livré</h3>
+<ul>
+<li><strong>Prompt management + scoring</strong> (foundation Phase 3, livré 2026-05-10) : persistance des prompts narratifs en BDD (<code>prompt_template</code>, V8), édition + activation live depuis <code>/settings/prompts</code> (éditeur textarea + diff side-by-side), <code>prompt_score</code> enregistré à chaque run (latency, retry, parse/validator failed), feedback 👍/👎 sur la card narrative du dossier ticker (<code>PATCH /api/narrative/snapshots/{id}/thumbs</code>), page de stats agrégées par prompt avec sparkline + tableau quotidien (<code>/settings/prompts/{id}/stats</code>). Permet le cycle « propose v3 → active → laisse tourner → compare vs v2 » sans toucher au code. Détail dans <code>docs/projet/journal-livraisons.md &gt; Phase 3</code>.</li>
+<li><strong>Page observabilité narrative</strong> (Phase 3 #1, livré 2026-05-13) : pour un ticker donné, timeline reverse-chronologique des narratifs passés mis en regard de ce que le prix a fait depuis (deltas 1 j / 1 sem / 1 mois colorisés). Filtrable par date range, par version de prompt (lecture qualitative « v3 vs v2 ») et par feedback thumbs. Page d'index <code>/observability</code> qui liste tous les symbols ayant ≥1 snapshot. Lien direct depuis le footer de la card narrative du dossier ticker. Première surface qui transforme le corpus accumulé depuis Phase 1 en signal exploitable. Verdict implicite hit/miss volontairement absent v1 — il est traité par le score de cohérence livré le lendemain. Détail dans <code>docs/projet/journal-livraisons.md &gt; Phase 3</code>.</li>
+<li><strong>Score de cohérence cross-runs</strong> (Phase 3 #2, livré 2026-05-14) : chaque carte de la timeline porte une chip « Cohérence vs précédent » (OK / WARN / HIGH) qui flag quand le narratif change de manière non justifiée par le mouvement de prix entre les deux runs. Heuristique pure (sentiment 0.55 + jaccard key_points 0.30 + ratio longueur 0.15, discountée par le price move — un swing 5 % excuse fully un sentiment flip), pas de LLM-as-judge — gratuit, déterministe, transparent. Tooltip natif liste les 3 sous-mesures + le price move signé pour que le user puisse re-dériver le verdict à l'œil. Détail dans <code>docs/projet/journal-livraisons.md &gt; Phase 3</code>.</li>
+<li><strong>Détection de biais</strong> (Phase 3 #3, livré 2026-05-14) : page <code>/observability/bias</code> qui rend une vue agrégée du corpus narratif en 4 sections — sentiment distribution avec chip « biais suspecté » à 60 %, calibration sentiment vs prix (delta moyen 1d/1w/1m par bucket sentiment), couverture thématique des key_points (top-15 tokens avec compteur, l'absence d'un thème attendu est elle-même un signal), distribution des thumbs par sentiment (auto-check biais côté humain). Filtres date range + prompt version pour comparer un prompt vs un autre. Entrée navbar « Observabilité » ajoutée, lien depuis l'index. Détail dans <code>docs/projet/journal-livraisons.md &gt; Phase 3</code>.</li>
+</ul>
+<h3 id="reporte-phase-6">🧊 Reporté Phase 6</h3>
+<ul>
+<li><strong>Page Jobs (DAG)</strong> : déplacé en Phase 6 — bloqué sur le ticket fondateur « Pipeline d'analyse — modèle DAG unifié ». L'UI au-dessus du DAG n'a d'intérêt que si le DAG existe (multi-kind jobs, parent/child, cache-aware leaves). Sans ces primitives, la page se réduirait à une liste plate de <code>ticker_narrative_job</code> qui dédouble la SSE de la narrative card.</li>
+</ul>
+<hr />
+<h2 id="phase-4-authentification-cloturee-2026-05-17">Phase 4 — Authentification (clôturée 2026-05-17)</h2>
+<blockquote>
+<p>Phase orthogonale aux features métier — pré-requis bloquant pour tout déploiement public (Phase 5). <strong>Livrée intégralement</strong> : OAuth2 Google OIDC + Spring Security backend, rôles ADMIN/USER via whitelist email, frontend <code>/login</code> + interceptor + guards + navbar role-gating, CSRF re-enabled (cookie-based SPA pattern), page <code>/error</code> globale, profile dev <code>local-no-auth</code> qui bypasse Spring Security pour le dev solo (user fake ADMIN seedé), migration multi-tenant <code>user_id</code> FK sur <code>portfolio</code> + <code>watchlist_entry</code> avec scoping systématique des reads (4 services + 1 controller), provider gating UI (toggles disabled + tooltip i18n quand la clé requise manque), logs redaction (convention <code>userId</code> UUID, jamais l'email), Flyway squash V1→V10 en un seul <code>V1__init.sql</code>. Le toggle <code>BACKEND_AUTH_MODE</code> (no-auth ↔ oauth) dans <code>.env</code> + boutons Tilt permet de switcher au runtime sans éditer de fichier. Pas reflétée en capacités utilisateur ici — c'est de la sécurité, pas une feature métier. Détails d'implémentation dans <code>docs/projet/journal-livraisons.md &gt; Phase 4</code>. Les tickets résiduels (hardening secret-management OAuth prod, <code>forward-headers-strategy</code>, GitHub Secrets vault, multi-provider OAuth) sont passés en début de Phase 5 ou en dette technique parce qu'ils dépendent du choix d'hébergement.</p>
+</blockquote>
+<hr />
+<h2 id="phase-5-deploiement">Phase 5 — Déploiement</h2>
+<blockquote>
+<p>Phase orthogonale aux features métier — sortir l'app du localhost. Reste filed côté <code>backlog.md</code> (analyse hébergement OVH/Hetzner/Scaleway/AWS, CI/CD deploy, secrets, backups, DNS/TLS), pas reflétée ici parce qu'elle n'apporte pas de capacités nouvelles à l'utilisateur — c'est de l'infra qui rend les capacités existantes accessibles depuis n'importe où. <strong>Pré-requis bloquant</strong> : la Phase 4 Authentification doit avoir livré avant tout deploy public. Détails dans <code>docs/projet/backlog.md</code> section Phase 5.</p>
+</blockquote>
+<hr />
+<h2 id="phase-6-vision-long-terme">Phase 6 — Vision long terme</h2>
+<blockquote>
+<p>Cette phase est fondée sur le <strong>DAG d'analyse unifié</strong> (modèle technique décrit dans <code>docs/technique/architecture.md &gt; Modèle pipeline d'analyse</code>), qui devient le primitif sous la plupart des tickets ci-dessous : chaque analyse est un nœud cache-aware, les portfolio aggregations sont des parents qui consomment les snapshots ticker déjà calculés. Sans ce primitif, les features ci-dessous tournent à coût élevé ou sont impossibles.</p>
+</blockquote>
+<ul>
+<li><strong>DAG d'analyse unifié</strong> : fondation pipeline (table <code>job</code> parent/child, cache-aware leaves, dedup déterministe) — pré-requis bloquant pour la plupart des autres items</li>
+<li><strong>Réintégration de la Phase 0 décommissionnée</strong> : les recommandations portefeuille reviennent, mais en agrégeant les insights ticker plutôt qu'en les recalculant — <code>PortfolioAggregation</code> parent du DAG</li>
+<li><strong>Page Jobs (DAG)</strong> : visualisation des pipelines async, vibe « pipelines GitLab/GitHub Actions »</li>
+<li><strong>Cron pré-chauffe quotidienne</strong> : pré-charge les analyses des positions OPEN hors heures de bureau, l'utilisateur arrive sur un dashboard cache-hit pur</li>
+<li><strong>Croisement portefeuille × insights ticker</strong> : sur le Dashboard, afficher pour chaque position le sentiment ticker + alerte si RSI extrême ou drawdown important</li>
+<li><strong>Watchlist alertes</strong> : seuils déclencheurs (RSI &gt; 70, MA50 cassée, drawdown &gt; 20%)</li>
+<li><strong>Paper trading</strong> : simulation d'exécution (indépendant du DAG)</li>
+<li><strong>Multi-broker</strong> : ne plus dépendre exclusivement du CSV Wealthsimple (indépendant du DAG)</li>
+<li><strong>Fine-tuning</strong> : R&amp;D long terme — entraîner un modèle sur les snapshots narratifs personnels + thumbs accumulés (indépendant du DAG)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

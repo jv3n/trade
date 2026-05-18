@@ -1,0 +1,1936 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/technique/ddd/">
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../developpement/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>DDD — Bounded Contexts - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture-ddd-portfolioai" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              DDD — Bounded Contexts
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#principes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Principes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bounded-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded Contexts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure-de-chaque-contexte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure de chaque contexte
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regles-par-couche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Règles par couche
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Règles par couche">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        domain/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        application/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructurepersistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/persistence/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructurehttp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/http/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructurellm-analysis-uniquement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/llm/ (analysis uniquement)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompt-management-scoring-analysis-uniquement-phase-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prompt management &amp; scoring (analysis uniquement, Phase 3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructuremarket-market-uniquement-phase-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/market/ (market uniquement, Phase 1+)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructureanalyst-analyst-uniquement-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/analyst/ (analyst uniquement, Phase 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructureearnings-earnings-uniquement-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/earnings/ (earnings uniquement, Phase 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config/ (Phase 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependances-cross-contextes-autorisees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dépendances cross-contextes autorisées
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conventions-de-nommage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions de nommage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ce-quon-evite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ce qu'on évite
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#principes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Principes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bounded-contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded Contexts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure-de-chaque-contexte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure de chaque contexte
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regles-par-couche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Règles par couche
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Règles par couche">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        domain/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        application/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructurepersistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/persistence/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructurehttp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/http/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructurellm-analysis-uniquement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/llm/ (analysis uniquement)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompt-management-scoring-analysis-uniquement-phase-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prompt management &amp; scoring (analysis uniquement, Phase 3)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructuremarket-market-uniquement-phase-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/market/ (market uniquement, Phase 1+)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructureanalyst-analyst-uniquement-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/analyst/ (analyst uniquement, Phase 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#infrastructureearnings-earnings-uniquement-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        infrastructure/earnings/ (earnings uniquement, Phase 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config/ (Phase 2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependances-cross-contextes-autorisees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dépendances cross-contextes autorisées
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conventions-de-nommage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions de nommage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ce-quon-evite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ce qu'on évite
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="architecture-ddd-portfolioai">Architecture DDD — PortfolioAI</h1>
+<h2 id="principes">Principes</h2>
+<p>Architecture hexagonale (Ports &amp; Adapters) organisée en Bounded Contexts DDD.
+Chaque contexte est autonome et possède ses propres couches.</p>
+<h2 id="bounded-contexts">Bounded Contexts</h2>
+<table>
+<thead>
+<tr>
+<th>Contexte</th>
+<th>Responsabilité</th>
+<th>Statut</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>portfolio</code></td>
+<td>Portefeuilles, actifs, import CSV, snapshots historiques</td>
+<td>✅ Phase 0+</td>
+</tr>
+<tr>
+<td><code>market</code></td>
+<td>Données ticker (Twelve Data + mock) + indicateurs techniques calculés</td>
+<td>✅ Phase 1</td>
+</tr>
+<tr>
+<td><code>analysis</code></td>
+<td>Narratifs ticker (LLM rédacteur, pas décideur) + gestion des prompts narratifs en BDD avec scoring continu (latence / retry / parse-validator failed / thumbs user, Phase 3)</td>
+<td>✅ Phase 1 — étendu Phase 3</td>
+</tr>
+<tr>
+<td><code>watchlist</code></td>
+<td>Liste plate de tickers suivis hors portefeuille (scopée user_id depuis Phase 4, UNIQUE <code>(user_id, symbol)</code>)</td>
+<td>✅ Phase 2 — multi-tenant Phase 4</td>
+</tr>
+<tr>
+<td><code>news</code></td>
+<td>Headlines par ticker (Finnhub + mock), cache court</td>
+<td>✅ Phase 2</td>
+</tr>
+<tr>
+<td><code>analyst</code></td>
+<td>Recommandations d'analystes par ticker (consensus monthly + price target 12 mois, Finnhub + mock), cache court</td>
+<td>✅ Phase 2</td>
+</tr>
+<tr>
+<td><code>earnings</code></td>
+<td>Earnings trimestriels par ticker (4 derniers Q EPS estimate/actual/surprise % + prochaine date d'annonce, Finnhub + mock), cache court</td>
+<td>✅ Phase 2</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td>Surcharges runtime des défauts YAML (clés API, TTL cache, providers actifs)</td>
+<td>✅ Phase 2</td>
+</tr>
+<tr>
+<td><code>auth</code></td>
+<td>OAuth2 Google OIDC + rôles ADMIN/USER + profile dev <code>local-no-auth</code>. Source de vérité du <code>user_id</code> consommé par <code>portfolio</code>/<code>watchlist</code></td>
+<td>✅ Phase 4</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Le contexte <code>analysis</code> a vu son périmètre changer à la Phase 1 : il a été réorienté d'une orchestration de recommandations portefeuille (Phase 0 — 8 règles de validation, targetWeight, action enum) vers la génération de narratifs par ticker (<code>{summary, sentiment, keyPoints[]}</code>). Le code Phase 0 a été supprimé en Phase 2.5 ; le contexte <code>ingestion</code> (RSS) a été décommissionné dans la même opération.</p>
+</blockquote>
+<h2 id="structure-de-chaque-contexte">Structure de chaque contexte</h2>
+<div class="highlight"><pre><span></span><code>{context}/
+  domain/               # Entités JPA, enums, value objects + ports outbound (interfaces) — pas de dépendance Spring
+  application/          # Services applicatifs, cas d&#39;usage, orchestration ; consomment les ports depuis domain/
+    dto/                # Objets de transfert (commandes, réponses)
+  infrastructure/
+    persistence/        # Spring Data repositories
+    http/               # Controllers REST
+    llm/                # (analysis) Adapters LLM : ClaudeClient, OllamaClient, MockLlmClient + RoutingLlmClient (@Primary) — implémentent LlmClient depuis analysis/domain/
+    market/             # (market) Adapters des 3 ports outbound (chart / symbol-search / sector) — chaque port a Twelve Data + Mock + Routing (@Primary), ports eux-mêmes dans market/domain/
+    news/               # (news) FinnhubClient + MockNewsClient + RoutingNewsClient (@Primary) — implémentent NewsClient depuis news/domain/
+    analyst/            # (analyst) FinnhubAnalystClient + MockAnalystClient + RoutingAnalystClient (@Primary) — implémentent AnalystRecommendationClient depuis analyst/domain/
+    earnings/           # (earnings) FinnhubEarningsClient + MockEarningsClient + RoutingEarningsClient (@Primary) — implémentent EarningsClient depuis earnings/domain/
+    ConfigTestClient.kt # (config) RestClient dédié pour sonder une clé API candidate sans la sauver
+
+shared/                 # Composants transverses (ex : GlobalExceptionHandler, UpstreamUnavailableException)
+</code></pre></div>
+<blockquote>
+<p><strong>Note (B1, 2026-05-15)</strong> — les interfaces de port (<code>*Client.kt</code>) ont été déplacées d'<code>infrastructure/&lt;capability&gt;/</code> vers <code>&lt;context&gt;/domain/</code> pour s'aligner sur l'hexagonal strict : le domaine déclare ce dont il a besoin de l'extérieur, l'infrastructure le réalise. Les adapters concrets (<code>Mock*</code>, <code>Finnhub*</code>, <code>Twelve*</code>, <code>Claude*</code>, <code>Ollama*</code>, <code>Routing*</code>) restent en <code>infrastructure/&lt;capability&gt;/</code>. Les <code>JpaRepository</code> Spring Data ne sont <strong>pas</strong> dans le même bucket — ils sont framework-tied par construction et restent en <code>infrastructure/persistence/</code>.</p>
+</blockquote>
+<h2 id="regles-par-couche">Règles par couche</h2>
+<h3 id="domain"><code>domain/</code></h3>
+<ul>
+<li>Entités JPA et leurs relations</li>
+<li>Enums métier (<code>AssetType</code>, <code>InstrumentType</code>, <code>EarningsTime</code>, <code>Sentiment</code>…)</li>
+<li>Value objects (les <code>Indicator</code> calculés peuvent vivre ici en data class pure)</li>
+<li><strong>Ports outbound</strong> (<code>*Client.kt</code>, <code>*Classifier.kt</code> — interfaces que la couche application appelle pour parler à l'extérieur). Le domaine possède le contrat dont il dépend ; les adapters en <code>infrastructure/&lt;capability&gt;/</code> le réalisent.</li>
+<li><strong>Pas d'import</strong> depuis <code>application/</code> ou <code>infrastructure/</code></li>
+<li><strong>Pas de logique Spring</strong> (pas de <code>@Service</code>, <code>@Repository</code>, etc.) — y compris pour les ports : aucun <code>@Component</code>, aucune annotation framework sur les interfaces</li>
+</ul>
+<h3 id="application"><code>application/</code></h3>
+<ul>
+<li>Services orchestrant le domaine (<code>@Service</code>)</li>
+<li>Un service = un cas d'usage ou une famille de requêtes cohérente</li>
+<li>Peut importer depuis <code>domain/</code>, <code>dto/</code>, et <code>infrastructure/persistence/</code></li>
+<li><strong>Pas d'import</strong> depuis <code>infrastructure/http/</code></li>
+<li>Les DTOs (<code>dto/</code>) sont des data classes pures sans annotations JPA</li>
+<li><strong>Calculs purs</strong> (ex : <code>IndicatorCalculator</code> dans <code>market/application/</code>) sans dépendance Spring — facile à tester unit</li>
+</ul>
+<h3 id="infrastructurepersistence"><code>infrastructure/persistence/</code></h3>
+<ul>
+<li>Interfaces Spring Data JPA (<code>JpaRepository</code>)</li>
+<li>Requêtes JPQL complexes (<code>@Query</code>)</li>
+<li><strong>Aucune logique métier</strong></li>
+</ul>
+<h3 id="infrastructurehttp"><code>infrastructure/http/</code></h3>
+<ul>
+<li>Controllers REST (<code>@RestController</code>)</li>
+<li>Délèguent aux services application, ne contiennent pas de logique</li>
+<li>Utilisent uniquement les DTOs de <code>application/dto/</code></li>
+<li><strong>Pas d'accès direct</strong> aux repositories</li>
+</ul>
+<h3 id="infrastructurellm-analysis-uniquement"><code>infrastructure/llm/</code> <em>(analysis uniquement)</em></h3>
+<ul>
+<li>Implémentations du port <code>LlmClient</code> (déclaré dans <code>analysis/domain/</code>) — <code>ClaudeClient</code>, <code>OllamaClient</code>, <code>MockLlmClient</code> toutes toujours instanciées (les <code>@ConditionalOnProperty</code> Phase 1 ont été retirés en Phase 2.5 v1)</li>
+<li><code>RoutingLlmClient</code> (<code>@Primary</code>) délègue per-call à l'adapter sélectionné par <code>appConfig.getString(LLM_PROVIDER)</code> — switch claude ↔ ollama prend effet au prochain narratif sans reboot. Pattern miroir de <code>RoutingMarketChartClient</code> / <code>RoutingNewsClient</code> / <code>RoutingAnalystClient</code> / <code>RoutingEarningsClient</code></li>
+<li><code>ClaudeClient</code> lit la clé Anthropic per-call via <code>appConfig.getString(ANTHROPIC_API_KEY)</code> (Phase 2.5 v2, 2026-05-08) — header <code>x-api-key</code> posé par requête plutôt que via <code>defaultHeader()</code> builder-side, rotation immédiate sans reboot</li>
+</ul>
+<h3 id="prompt-management-scoring-analysis-uniquement-phase-3">Prompt management &amp; scoring <em>(analysis uniquement, Phase 3)</em></h3>
+<p>Le contexte <code>analysis</code> héberge aussi la gestion des prompts narratifs et leur scoring continu, livrée le 2026-05-10 en 6 sous-PRs. Pas de bounded context séparé : les prompts sont <strong>un détail d'implémentation du narratif</strong>, et la table <code>prompt_score</code> est jointe à <code>ticker_narrative_snapshot</code> via <code>snapshot_id</code> — la cohabitation dans <code>analysis/</code> évite un cross-context call sur le chemin chaud du pipeline.</p>
+<ul>
+<li><code>application/TickerNarrativePromptService</code> — lookup du prompt actif depuis <code>prompt_template</code> (V8) avec <code>@Cacheable</code> 1 min + fallback hardcodé <code>NARRATIVE_SYSTEM_PROMPT</code> si BDD vide (bootstrap zéro-downtime). <code>activateVersion(id)</code> flippe l'ancien actif à FALSE + nouveau à TRUE dans la même transaction (atomique via l'index unique partiel <code>WHERE is_active = TRUE</code>). <code>createNewVersion(input)</code> pose <code>is_active = FALSE</code> par défaut — l'activation explicite reste un acte utilisateur séparé.</li>
+<li><code>application/PromptScoreRecorder</code> — branché dans <code>TickerNarrativeExecutor</code> aux 2 issues du run (succès + échec définitif). Persiste <code>prompt_score</code> avec <code>snapshot_id</code> nullable pour les runs entièrement KO (snapshot inexistant) sans casser le <code>FK</code>.</li>
+<li><code>infrastructure/persistence/PromptScoreStatsQuery</code> — query SQL native (<code>@Query(nativeQuery=true)</code>) pour les agrégats Phase 3 PR6 (<code>percentile_cont</code>, <code>date_trunc('day')</code>, fenêtre <code>INTERVAL</code>) — JPQL ne couvre pas les percentiles.</li>
+<li><code>infrastructure/http/PromptController</code> + <code>NarrativeThumbsController</code> — endpoints <code>GET/POST /api/prompts</code>, <code>POST /{id}/activate</code>, <code>GET /{id}/stats?window=30d</code>, <code>PATCH /api/narrative/snapshots/{id}/thumbs</code>.</li>
+</ul>
+<h3 id="infrastructuremarket-market-uniquement-phase-1"><code>infrastructure/market/</code> <em>(market uniquement, Phase 1+)</em></h3>
+<p>Trois familles d'adapters HTTP, une par port outbound (les ports <code>MarketChartClient</code>, <code>SymbolSearchClient</code>, <code>SectorClassifier</code> vivent dans <code>market/domain/</code>). Chaque famille suit le même triplet <code>TwelveData* + Mock* + Routing*</code> :</p>
+<ul>
+<li><strong>Chart</strong> (Phase 1) — <code>TwelveDataClient</code> (REST + apikey, deux endpoints <code>/time_series</code> + <code>/quote</code>, cache 15 min, clé API lue per-call via <code>AppConfigService</code>), <code>MockMarketChartClient</code> (provider synthétique pour dev / CI sans clé), <code>RoutingMarketChartClient</code> (<code>@Primary</code>, Phase 2 — délègue à l'adapter sélectionné par <code>appConfig.getString(market.provider)</code> à chaque appel ; permet de basculer mock ↔ live runtime sans reboot).</li>
+<li><strong>Symbol search</strong> (Phase 2 watchlist v2) — <code>TwelveDataSymbolSearchClient</code> (REST <code>/symbol_search</code>, 1 credit/call), <code>MockSymbolSearchClient</code> (~30 symbols seedés US/TSX), <code>RoutingSymbolSearchClient</code> (<code>@Primary</code>).</li>
+<li><strong>Sector classification</strong> (Phase 2 benchmark v2) — <code>FinnhubSectorClassifier</code> (REST <code>/stock/profile2</code>, free tier, lit <code>finnhubIndustry</code> + route via <code>SpdrSectorEtfs</code> pour le mapping GICS → SPDR), <code>MockSectorClassifier</code> (~25 tickers hand-curés US/TSX), <code>RoutingSectorClassifier</code> (<code>@Primary</code>, route <code>twelvedata</code> live mode → Finnhub car Twelve Data <code>/profile</code> est paid-tier only). <code>SpdrSectorEtfs</code> (<code>internal object</code>) garde la table des 11 SPDR sectors + synonymes provider (incluant les sub-industries Finnhub : Banks → Financials, Pharmaceuticals → Healthcare, Retail → Consumer Discretionary…), vit dans le même package — pure data, pas Spring.</li>
+</ul>
+<p>Pas de logique d'indicateurs ici (calculs purs en <code>application/IndicatorCalculator</code>).</p>
+<h3 id="infrastructureanalyst-analyst-uniquement-phase-2"><code>infrastructure/analyst/</code> <em>(analyst uniquement, Phase 2)</em></h3>
+<p>Mêmes triplet et mêmes conventions que <code>news/</code> : le port <code>AnalystRecommendationClient</code> vit dans <code>analyst/domain/</code>, deux adapters concrets ici (<code>FinnhubAnalystClient</code> REST + apikey, <code>MockAnalystClient</code> synthétique déterministe par symbole avec symboles réservés <code>UNKNOWN</code>/<code>RATELIMIT</code>/<code>NOTARGET</code>), et <code>RoutingAnalystClient</code> (<code>@Primary</code>) qui délègue per-call à l'adapter sélectionné par <code>appConfig.getString(analyst.provider)</code>. Les deux adapters sont qualifiés par <code>@Qualifier("mockAnalystClient")</code> / <code>@Qualifier("finnhubAnalystClient")</code> côté router. Le <code>FinnhubAnalystClient</code> réutilise le <code>RestClient</code> partagé (<code>@Qualifier("finnhubRestClient")</code>) pour ne pas dupliquer le bean côté <code>news/</code>.</p>
+<p>Le cache vit un layer au-dessus dans <code>application/AnalystRecommendationService</code> avec <code>@Cacheable("analyst-recommendations", key = "#symbol.toUpperCase()")</code> (méthode Java SpEL — l'extension Kotlin <code>uppercase()</code> ne serait pas vue par SpEL). Le provider est volontairement absent de la clé pour qu'un switch runtime s'applique au prochain dossier ouvert sans rétention de cache stale.</p>
+<p>Les mappers Finnhub (<code>FinnhubAnalystMappers</code>) sont colocalisés dans le même package mais pure Kotlin (pas Spring) pour rester testables sur des fixtures JSON sans <code>MockWebServer</code>. Ils encodent les invariants du domaine : tri défensif <code>period</code> ASC (Finnhub documente newest-first mais on ne trust pas la wire order), cap history à 6 mois, all-zero price target → <code>null</code> (Finnhub renvoie un shell zéro pour les symbols sans target — on préfère masquer la ligne plutôt que d'afficher « $0 »).</p>
+<h3 id="infrastructureearnings-earnings-uniquement-phase-2"><code>infrastructure/earnings/</code> <em>(earnings uniquement, Phase 2)</em></h3>
+<p>Mêmes triplet et mêmes conventions que <code>news/</code> et <code>analyst/</code> : le port <code>EarningsClient</code> vit dans <code>earnings/domain/</code>, deux adapters concrets ici (<code>FinnhubEarningsClient</code> REST + apikey hitting <code>/stock/earnings</code> requis + <code>/calendar/earnings</code> optionnel fail-soft, <code>MockEarningsClient</code> synthétique déterministe par symbole avec symboles réservés <code>UNKNOWN</code>/<code>RATELIMIT</code>/<code>NOCALENDAR</code>), et <code>RoutingEarningsClient</code> (<code>@Primary</code>) qui délègue per-call à l'adapter sélectionné par <code>appConfig.getString(earnings.provider)</code>. Les deux adapters sont qualifiés par <code>@Qualifier("mockEarningsClient")</code> / <code>@Qualifier("finnhubEarningsClient")</code> côté router. Le <code>FinnhubEarningsClient</code> réutilise le <code>RestClient</code> partagé (<code>@Qualifier("finnhubRestClient")</code>) pour ne pas dupliquer le bean côté <code>news/</code> et <code>analyst/</code>.</p>
+<p>Le cache vit un layer au-dessus dans <code>application/EarningsService</code> avec <code>@Cacheable("earnings", key = "#symbol.toUpperCase()")</code> (méthode Java SpEL — l'extension Kotlin <code>uppercase()</code> ne serait pas vue par SpEL). Le provider est volontairement absent de la clé pour qu'un switch runtime s'applique au prochain dossier ouvert sans rétention de cache stale.</p>
+<p>Les mappers Finnhub (<code>FinnhubEarningsMappers</code>) sont colocalisés dans le même package mais pure Kotlin (pas Spring) pour rester testables sur des fixtures JSON sans <code>MockWebServer</code>. Ils encodent les invariants du domaine : tri défensif <code>period</code> ASC, cap reports à 4 trimestres, recalcul <code>surprisePercent</code> côté code (Finnhub round inconsistemment sur les small caps), filtre calendar par symbol + <code>epsActual == null</code> (cleanest "did it happen yet" signal), pick the earliest upcoming, mapping <code>bmo</code>/<code>amc</code>/<code>""</code>/<code>dmh</code> sur l'enum <code>EarningsTime</code> (avec collapse des valeurs inconnues à <code>UNSPECIFIED</code>).</p>
+<h3 id="config-phase-2"><code>config/</code> <em>(Phase 2)</em></h3>
+<ul>
+<li><code>AppConfigService</code> (<code>application/</code>) — read layered (YAML default → BDD override via cache mémoire) ; émet <code>ConfigChangedEvent</code> sur changement effectif</li>
+<li><code>ConfigController</code> + <code>ConfigTestClient</code> (<code>infrastructure/</code>) — <code>/api/config</code> CRUD + endpoints <code>/test/{provider}</code> qui sondent une clé candidate sans la sauver</li>
+<li><code>CacheTtlListener</code> (vit dans <code>market/</code>) écoute <code>ConfigChangedEvent</code> et rebuild le <code>CaffeineCacheManager</code> quand <code>market.cache.ttl-minutes</code> bouge — pattern event-driven inter-context</li>
+</ul>
+<h2 id="dependances-cross-contextes-autorisees">Dépendances cross-contextes autorisées</h2>
+<p>Les services d'<code>analysis</code> (Phase 1 narratif) peuvent dépendre du repository et des services de <code>market</code> (récupérer les indicateurs ticker pour bâtir le prompt).</p>
+<div class="highlight"><pre><span></span><code>analysis.application → market.application                   ✓ (Phase 1)
+analysis.application → portfolio.infrastructure.persistence ✓ (récupérer la liste des tickers détenus)
+portfolio.domain → auth.domain                              ✓ (Phase 4 — @ManyToOne User sur Portfolio)
+watchlist.domain → auth.domain                              ✓ (Phase 4 — @ManyToOne User sur WatchlistEntry)
+portfolio.application → auth.application                    ✓ (Phase 4 — AuthService.getCurrentUser pour scoper les reads)
+watchlist.application → auth.application                    ✓ (Phase 4 — idem)
+</code></pre></div>
+<blockquote>
+<p><strong>Note Phase 4</strong> : la référence à <code>auth.domain.User</code> depuis <code>portfolio/</code> et <code>watchlist/</code> au niveau <strong>entity JPA</strong> (<code>@ManyToOne</code>) est une exception consciente à la règle « contexts share via ID » du DDD strict. Rationale détaillée dans <code>architecture.md &gt; Décisions techniques notables &gt; Phase 4 &gt; Multi-tenant FK</code>. Limite de la tolérance : seules les <em>entities JPA</em> peuvent traverser un bounded context de cette façon — les <em>ports</em> outbound restent strictement isolés dans leur context.</p>
+</blockquote>
+<h2 id="conventions-de-nommage">Conventions de nommage</h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Convention</th>
+<th>Exemples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service query-only</td>
+<td><code>{Context}QueryService</code></td>
+<td><code>PortfolioQueryService</code></td>
+</tr>
+<tr>
+<td>Service avec write</td>
+<td><code>{Action}Service</code></td>
+<td><code>CsvImportService</code>, <code>TickerNarrativeService</code></td>
+</tr>
+<tr>
+<td>Calculator pur</td>
+<td><code>{Domain}Calculator</code></td>
+<td><code>IndicatorCalculator</code></td>
+</tr>
+<tr>
+<td>Client externe</td>
+<td><code>{Provider}Client</code></td>
+<td><code>TwelveDataClient</code>, <code>ClaudeClient</code></td>
+</tr>
+<tr>
+<td>DTO entrée</td>
+<td><code>{Action}Request</code></td>
+<td><code>UnloadModelRequest</code>, <code>UpdateConfigRequest</code></td>
+</tr>
+<tr>
+<td>DTO sortie</td>
+<td><code>{Entity}Dto</code></td>
+<td><code>PortfolioDto</code>, <code>TickerSnapshotDto</code></td>
+</tr>
+<tr>
+<td>Repository</td>
+<td><code>{Entity}Repository</code></td>
+<td><code>PortfolioRepository</code>, <code>TickerNarrativeSnapshotRepository</code></td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>{Context}Controller</code></td>
+<td><code>MarketController</code>, <code>PortfolioController</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="ce-quon-evite">Ce qu'on évite</h2>
+<ul>
+<li>DTOs définis dans les controllers ou les services → toujours dans <code>application/dto/</code></li>
+<li>Logique métier dans les controllers</li>
+<li>Repositories injectés directement dans les controllers</li>
+<li>Entités JPA exposées directement en réponse HTTP</li>
+<li><strong>Calculs d'indicateurs faits par le LLM</strong> — ils vivent toujours dans <code>IndicatorCalculator</code> (Kotlin pur), jamais dans le prompt LLM</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1684 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/audits/2026-05-06-fin-phase-2/">
+      
+      
+        <link rel="prev" href="../2026-05-10-fin-phase-2.5/">
+      
+      
+        <link rel="next" href="../2026-05-02-revue-globale/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2026-05-06 — Revue globale fin Phase 2 - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#revue-de-code-globale-fin-phase-2-2026-05-06" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-05-06 — Revue globale fin Phase 2
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modérée
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mineure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recapitulatif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Récapitulatif
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modérée
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mineure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recapitulatif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Récapitulatif
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="revue-de-code-globale-fin-phase-2-2026-05-06">Revue de code globale — fin Phase 2 (2026-05-06)</h1>
+<p><strong>Scope</strong> : audit du nouveau code Phase 2 livré depuis le précédent audit du 2026-05-02 — modules backend <code>analyst/</code>, <code>earnings/</code>, <code>config/</code> (déjà partiellement audité), <code>news/</code>, refonte sector via <code>FinnhubSectorClassifier</code>, ajout <code>instrumentType</code> end-to-end, sidebar config et 4 routers <code>@Primary</code> ; côté frontend la sidenav outils chart, les sous-blocs Fondamentaux (analyst + earnings), l'accordéon news, le chart analyse v1+v2+v3 et l'overlay benchmark v2. Modules gelés Phase 0 hors scope, modules <code>portfolio/</code> / <code>watchlist/</code> audités uniquement sur leurs interactions Phase 2 (validation autocomplete, <code>instrumentType</code>).</p>
+<p><strong>Méthode</strong> : revue par agent automatisé, read-only sur le checkout courant, briefée sur les conventions ground truth (<code>CLAUDE.md</code>, <code>architecture.md</code>, <code>ddd.md</code>) et sur les findings que l'audit 2026-05-02 avait remontés. Findings classés par sévérité avec référence <code>fichier:ligne</code>. Limité aux risques objectifs et aux violations de conventions stated.</p>
+<p><strong>État du commit au moment de la revue</strong> : working tree de la branche <code>feat</code>, dernier commit <code>31997d2 feat: recommendation analyst</code>. Phase 2 marquée close dans <code>backlog.md</code> / <code>fonctionnalites.md</code> avec news inline minimaliste comme dernier livrable. 6 caches Caffeine, 7 clés runtime, 11 repositories frontend, 4 routers <code>@Primary</code>. Tests : 41 fichiers backend, 18 specs frontend.</p>
+<hr />
+<h2 id="resume-executif">Résumé exécutif</h2>
+<p>App globalement saine et la Phase 2 a tenu le pattern hexagonal proprement : ports/adapters appliqués sans concession à <code>analyst/</code> et <code>earnings/</code>, fail-soft documenté sur les endpoints Finnhub paid-tier, mappers purs séparés des HTTP clients, mocks avec symboles réservés cohérents (<code>UNKNOWN</code> / <code>RATELIMIT</code> / <code>NOTARGET</code> / <code>NOCALENDAR</code>). Le swap Twelve Data → Finnhub côté sector est bien couvert par le test <code>RoutingSectorClassifierTest</code> qui pin la décision routing.</p>
+<p><strong>Principaux risques identifiés</strong> : (1) le <strong><code>FinnhubAnalystClient</code> n'a pas de test MockWebServer</strong> alors que tous ses voisins (news, earnings, sector, twelvedata) en ont un — c'est une couture observable manquante ; (2) la <strong>page <code>/settings/configuration</code> n'expose ni <code>analyst.provider</code> ni <code>earnings.provider</code></strong> alors que le backend les surface dans <code>ConfigKeys.KNOWN_KEYS</code> et que la doc affirme que les 4 toggles y sont éditables — drift contrat silencieux ; (3) <code>RoutingSectorClassifier</code> route <code>twelvedata → Finnhub</code> ce qui veut dire qu'<strong>un user qui aurait rempli sa Twelve Data API key mais pas sa Finnhub se verra refuser le sector benchmark</strong> sans message évident — la validation côté Settings ne couvre pas ce cas asymétrique. Plusieurs petits items de cohérence sur la stratégie de cache (key prefix présent sur <code>MARKET_CHART_CACHE</code> mais absent ailleurs, contradiction avec la doc).</p>
+<p><strong>Forces</strong> : i18n FR / EN strictement parallèles (334 keys en miroir), tests-as-documentation très bien tenus sur les mappers Finnhub avec docstring + test names en phrases complètes, pas de wildcard imports neufs, <code>inject()</code> partout côté front, signal-based 100 %, no <code>BehaviorSubject</code>. La discipline <code>RestController/Service/Client</code> reste claire à travers tous les nouveaux modules.</p>
+<hr />
+<h2 id="critique">Critique</h2>
+<p>(blocker ou risque sévère — corruption data, sécurité, contrat cassé)</p>
+<p><strong>1. La page <code>/settings/configuration</code> cache deux clés runtime live</strong></p>
+<ul>
+<li><code>frontend/src/app/features/settings/configuration/configuration.ts:14-19</code> ne déclare que <code>TWELVE_DATA_KEY</code>, <code>FINNHUB_KEY</code>, <code>CACHE_TTL_KEY</code>, <code>MARKET_PROVIDER_KEY</code>, <code>NEWS_PROVIDER_KEY</code>. Pas de <code>ANALYST_PROVIDER_KEY</code> ni <code>EARNINGS_PROVIDER_KEY</code>.</li>
+<li><code>backend/.../config/application/ConfigKeys.kt:14-51</code> exporte les 7 clés et <code>GET /api/config</code> les retourne toutes.</li>
+<li><code>docs/technique/architecture.md:191-200</code> et <code>CLAUDE.md</code> affirment que les toggles <code>analyst.provider</code> / <code>earnings.provider</code> sont éditables depuis cette page.</li>
+</ul>
+<p>L'utilisateur pour switcher analyst/earnings provider doit éditer la BDD à la main ou redémarrer avec une YAML changée. C'est exactement ce que la Phase 2 promettait de supprimer.</p>
+<p>→ Soit afficher les deux toggles supplémentaires dans <code>configuration.html</code> (avec les keys existantes, le code est paramétrable), soit retirer ces clés de <code>ConfigKeys.KNOWN_KEYS</code> et documenter qu'elles restent YAML-only.</p>
+<hr />
+<h2 id="important">Important</h2>
+<p>(à traiter en priorité, dans la semaine)</p>
+<p><strong>2. <code>FinnhubAnalystClient</code> n'a pas de test MockWebServer</strong></p>
+<ul>
+<li><code>backend/src/test/.../analyst/infrastructure/analyst/</code> contient <code>FinnhubAnalystMappersTest</code>, <code>MockAnalystClientTest</code>, <code>RoutingAnalystClientTest</code> mais <strong>aucun test sur le client HTTP lui-même</strong>.</li>
+<li>À comparer avec <code>FinnhubClientTest</code> (news), <code>FinnhubEarningsClientTest</code>, <code>FinnhubSectorClassifierTest</code>, <code>TwelveDataClientTest</code> : tous ont un MockWebServer + mappings d'erreurs (401/403/429/5xx/network), test de fail-soft sur le second endpoint, blank-key short-circuit.</li>
+</ul>
+<p>Le code dans <code>FinnhubAnalystClient.kt:74-92</code> (mapping des exceptions HTTP) est dupliqué de <code>FinnhubClient.kt</code> mais n'est exercé par aucun test — le jour où on factorise on perdra silencieusement le bon comportement de fail-soft sur <code>/price-target</code>.</p>
+<p>→ Ajouter <code>FinnhubAnalystClientTest</code> calqué sur <code>FinnhubEarningsClientTest</code> (deux endpoints, fail-soft sur le second, suite d'erreurs HTTP, blank-key).</p>
+<p><strong>3. Cache de <code>MARKET_CHART_CACHE</code> partiel : seul <code>TwelveDataClient</code> cache, le mock pas</strong></p>
+<ul>
+<li><code>backend/.../market/infrastructure/market/TwelveDataClient.kt:55</code> : <code>@Cacheable(MARKET_CHART_CACHE, key = "'twelvedata|' + …")</code>.</li>
+<li><code>backend/.../market/infrastructure/market/MockMarketChartClient.kt</code> : pas d'<code>@Cacheable</code>.</li>
+<li><code>RoutingMarketChartClient</code> n'a pas non plus d'<code>@Cacheable</code> (dispatcher simple).</li>
+</ul>
+<p>Conséquence : en mode <code>mock</code>, chaque dossier rechargé regénère 260 bars synthétiques + une random walk. Pas dramatique en charge dev mais asymétrique, et l'<code>architecture.md</code> affirme « Cache key préfixée par adapter (<code>twelvedata|</code>, <code>mock|</code>) » — la moitié <code>mock|</code> n'existe pas. Plus important : les services <code>news/</code>, <code>analyst/</code>, <code>earnings/</code>, <code>sector</code> cachent <strong>au niveau service sans préfixe provider</strong>, donc un toggle <code>mock → finnhub</code> continue de servir le mock pour 15 min (cf. RoutingNewsClient docstring : « We deliberately don't include the provider in the key »). C'est intentionnel mais incohérent avec la stratégie de chart cache et la doc induit en erreur.</p>
+<p>→ Soit documenter explicitement les deux stratégies (chart = key prefix, autres = service cache sans prefix avec accept-stale-window-on-switch) dans <code>architecture.md</code> et <code>ddd.md</code>. Soit homogénéiser. Pas de patch code, c'est une décision de cohérence.</p>
+<p><strong>4. <code>RoutingSectorClassifier</code> route silencieusement vers Finnhub sans dépendance déclarée sur la clé Finnhub</strong></p>
+<ul>
+<li><code>RoutingSectorClassifier.kt:39</code> : <code>PROVIDER_TWELVEDATA -&gt; finnhub.classify(symbol)</code>.</li>
+<li>Si l'utilisateur a <code>market.provider=twelvedata</code> + <code>market.twelvedata.api-key</code> rempli mais <code>market.finnhub.api-key</code> <strong>vide</strong>, il reçoit <code>MarketUnavailableException("Finnhub API key is missing")</code> → 503 sur le toggle Sector benchmark, alors que tous les autres tools (chart, search) marchent.</li>
+<li><code>ConfigTestClient.testTwelveData</code> valide la clé Twelve Data isolément et ne probe pas Finnhub. La page Settings ne signale pas l'asymétrie. Ce n'est pas un bug code mais une couture utilisateur invisible.</li>
+</ul>
+<p>→ Soit afficher un avertissement dans la card Twelve Data (« Finnhub aussi requis pour le Sector benchmark »), soit rendre le Sector toggle Finnhub-aware dans <code>benchmarkChoicesForCurrentTicker</code> (filtrer si <code>market.finnhub.api-key</code> non set).</p>
+<p><strong>5. <code>AppConfigService.set</code> publie <code>ConfigChangedEvent</code> à l'intérieur de la transaction</strong></p>
+<ul>
+<li><code>AppConfigService.kt:74-88</code> est <code>@Transactional</code>, et <code>eventPublisher.publishEvent(ConfigChangedEvent(...))</code> est appelé en dernière ligne <strong>avant le commit</strong>.</li>
+<li><code>CacheTtlListener.onConfigChanged</code> appelle <code>cacheManager.setCaffeine(...)</code> qui invalide les caches <strong>avant que la nouvelle valeur soit visible aux autres threads</strong>. Si la transaction rollback (peu probable mais pas exclu sur lock conflict), le cache aurait déjà été flush.</li>
+</ul>
+<p>→ Préférer <code>@TransactionalEventListener(phase = AFTER_COMMIT)</code> sur <code>CacheTtlListener.onConfigChanged</code>, ou publish l'event après le <code>@Transactional</code> (méthode séparée).</p>
+<p><strong>6. <code>WatchlistService.add</code> fail-open silencieux sur 503 — masque les outages</strong></p>
+<ul>
+<li><code>WatchlistService.kt:66-76</code> : si <code>SymbolSearchService.validate</code> lève <code>MarketUnavailableException</code>, on log <code>warn</code> puis <code>return true</code> → save passe.</li>
+<li>Conséquence : un user clique « Add MSFT » pendant un outage Twelve Data → entrée sauvée sans validation → next dossier load échoue avec 503. Le rationale (l'autocomplete a déjà confirmé) est documenté mais (a) n'est pas testé, (b) ne distingue pas un user qui pousse une string sans avoir utilisé l'autocomplete (curl direct).</li>
+</ul>
+<p>→ Acceptable choix produit, mais ajouter un test dédié dans <code>WatchlistServiceTest</code> qui pin ce comportement et idéalement remonter un flag <code>unverified</code> côté DTO front.</p>
+<p><strong>7. <code>analystRepository.getForSymbol</code> 404 path : pas de test pour le 503 vs 404 distinguishable côté front</strong></p>
+<ul>
+<li><code>frontend/src/app/features/ticker/ticker.ts</code> distingue <code>analystNotCovered()</code> (404) de <code>analystError()</code> (503).</li>
+<li><code>ticker.spec.ts</code> est très large (1964 lignes) mais l'agent reviewer n'a pas confirmé qu'un test pin spécifiquement la branche « status: 404 → notCovered = true ». Pareil pour earnings.</li>
+<li>Le pattern est identique à news mais news est plus vieux.</li>
+</ul>
+<p>→ Vérifier dans <code>ticker.spec.ts</code> qu'il y a au moins un test pour chaque triplet (loading / 404 / 503) sur analyst et earnings. Si manquant, c'est ajouter 6 specs.</p>
+<hr />
+<h2 id="moderee">Modérée</h2>
+<p>(à filer en dette technique, à traiter quand l'occasion se présente)</p>
+<p><strong>8. <code>MockMarketChartClient.MOCK_ETF_SYMBOLS</code> ne couvre pas tous les ETFs SPDR mappés</strong></p>
+<ul>
+<li><code>MockMarketChartClient.kt:180-201</code> liste 17 symboles ETF.</li>
+<li>Les 11 SPDR sectors + 6 broad markets sont là, mais <code>MockSectorClassifier</code> peut router une stock vers un sector ETF quelconque ; un user qui clique « Sector » sur un ticker mock obtient <code>Technology (XLK)</code> puis le call de bars sur XLK retourne un type ETF — OK.</li>
+<li>Mais le commentaire Phase 2 (suite 5 du CHANGELOG) parle de masquer Sector pour les ETF. Sur un ETF qui n'est PAS dans la liste hardcodée (par exemple un ARKK fictif), il sera tagué <code>STOCK</code> → toggle Sector visible → 404 inline.</li>
+</ul>
+<p>→ Acceptable v1, à documenter comme « limite mock » ou élargir le set.</p>
+<p><strong>9. <code>EarningsClient.fetch</code> n'a pas de path "no upcoming announcement" testé en prod</strong></p>
+<ul>
+<li><code>FinnhubEarningsMappers.toEarningsSnapshot:34</code> : <code>if (reports.isEmpty() &amp;&amp; nextEntry == null) throw NoSuchElementException</code>.</li>
+<li>Le cas réaliste « entreprise vient de publier ses résultats, pas de prochaine date dans les 90 jours » (<code>reports</code> non vide + <code>nextEntry == null</code>) <strong>ne</strong> throw pas — c'est correct.</li>
+<li>Mais le test <code>FinnhubEarningsMappersTest</code> ne couvre que les paths happy / sorted defensively / empty-and-empty-throw. Pas de test pour le path « reports OK + calendar empty » qui est le cas le plus commun en pratique entre deux trimestres.</li>
+</ul>
+<p>→ Ajouter un test dédié.</p>
+<p><strong>10. <code>FinnhubPriceTarget.toDomainOrNull</code> ignore le cas <code>targetMean == 0</code> mais <code>targetHigh != 0</code></strong></p>
+<ul>
+<li><code>FinnhubAnalystMappers.kt:74-80</code> : isEmpty exige les 4 fields à 0.</li>
+<li>Si Finnhub retourne <code>{high: 200, low: 0, mean: 0, median: 0}</code> (cas dégradé partiel), on construit un <code>PriceTarget</code> avec <code>mean=0</code> que la UI affiche <code>0.00 $</code>.</li>
+</ul>
+<p>→ Considérer un check plus strict : <code>mean == 0 &amp;&amp; median == 0 → null</code>.</p>
+<p><strong>11. <code>RoutingSectorClassifier</code> <code>else</code> mismatchant l'ENUM — double validation</strong></p>
+<ul>
+<li><code>AppConfigService.validate</code> rejette toute valeur hors <code>ENUM_KEYS[market.provider]</code> (mock | twelvedata).</li>
+<li><code>RoutingSectorClassifier.classify:40</code> : <code>else -&gt; throw IllegalArgumentException("Unknown market provider: '$provider'")</code>. Cette branche ne peut être atteinte qu'en cas d'incohérence (ligne BDD écrite hors validate, ou refacto).</li>
+</ul>
+<p>→ Acceptable défensif, mais à harmoniser avec <code>RoutingMarketChartClient</code> / <code>RoutingNewsClient</code> / <code>RoutingAnalystClient</code> / <code>RoutingEarningsClient</code> qui ont tous le même pattern. C'est consistant — pas un finding seul.</p>
+<p><strong>12. <code>MockEarningsClient.previousQuarterEnd</code> peut être off-by-one en début de mois</strong></p>
+<ul>
+<li><code>MockEarningsClient.kt:128-140</code> : si <code>reference</code> (today) est un 1er Mars, le <code>quarterEndMonth</code> calculé est mars (<code>((3-1)/3)*3+3 = 3</code>), <code>quarterEnd = 31 mars</code>, <code>reference &lt; quarterEnd</code> → fallback à <code>quarterEnd.minusMonths(3) = 31 décembre</code>.</li>
+<li>Le résultat est correct mais le code est tortueux. Une simple table <code>month → quarter end</code> serait plus lisible.</li>
+</ul>
+<p>→ Refacto cosmétique, à filer en dette.</p>
+<p><strong>13. La page Configuration n'a pas de test pour le 7e/8e/... key futur</strong></p>
+<ul>
+<li><code>configuration.spec.ts</code> ne semble pas tester la résilience face à l'apparition d'une nouvelle key dans la response — le composant filtre par <code>find(e =&gt; e.key === KEY_X)</code> donc les nouvelles keys sont juste ignorées (bonne backward compat) mais on perd la visibilité si une nouvelle key apparaît back sans support front (cf. finding #1).</li>
+</ul>
+<p>→ Test « given 8 keys returned by backend, only the 5 wired in the component render » serait un canary utile.</p>
+<hr />
+<h2 id="mineure">Mineure</h2>
+<p>(nits, polish, cohérence)</p>
+<p><strong>14. <code>FinnhubModels.kt:23</code> — <code>id: Long</code> mappé en <code>String</code> plus tard, faisable directement</strong></p>
+<ul>
+<li><code>FinnhubNewsItem.id: Long</code> puis <code>id.toString()</code> dans <code>FinnhubMappers.toDomain</code>. Au lieu, déclarer <code>id: String</code> avec un converter Jackson (<code>@JsonDeserialize(using = LongAsStringDeserializer)</code>) éviterait le cast intermédiaire. Cosmétique.</li>
+</ul>
+<p><strong>15. <code>FinnhubAnalystModels.kt:42-46</code> — <code>java.math.BigDecimal</code> qualifié au lieu d'import</strong></p>
+<ul>
+<li>Les autres <code>Finnhub*Models</code> importent <code>BigDecimal</code>. Cohérence.</li>
+</ul>
+<p><strong>16. <code>MockNewsClient.kt:44</code> — magic number <code>rng.nextInt(10) == 0</code></strong></p>
+<ul>
+<li>Le « 10 % quiet symbols » est documenté en commentaire mais n'a pas de constante. Mineur.</li>
+</ul>
+<p><strong>17. <code>ticker.scss</code> 1673 lignes, 5 occurrences <code>::ng-deep</code></strong></p>
+<ul>
+<li>Documenté comme dette ouverte, à pas étendre. RAS.</li>
+</ul>
+<p><strong>18. <code>analyst.repository.ts</code> JSDoc dit « Up to 6 monthly snapshots » — la valeur exacte est en backend <code>HISTORY_DEPTH = 6</code></strong></p>
+<ul>
+<li>Pas faux mais fragile : si on bumpe la const back à 12, la JSDoc front ment. Référence croisée silencieuse.</li>
+</ul>
+<p><strong>19. <code>ticker.spec.ts</code> à 1964 lignes</strong></p>
+<ul>
+<li>Le brief réviseur demandait de checker. La taille est explicable (toutes les permutations chart/zoom/overlay/annotation/measure/news/analyst/earnings/watchlist/narrative). À envisager un split par concern (<code>ticker.chart.spec.ts</code>, <code>ticker.fundamentals.spec.ts</code>, etc.) pour la prochaine session, pas urgent.</li>
+</ul>
+<p><strong>20. <code>FinnhubEarningsClient.requireApiKey</code> dupliqué x4 (news, analyst, earnings, sector)</strong></p>
+<ul>
+<li>Le code <code>if (apiKey.isBlank()) throw MarketUnavailableException("Finnhub API key is missing — set market.finnhub.api-key (env FINNHUB_API_KEY)")</code> est dans 4 fichiers. Une <code>internal fun requireFinnhubApiKey(key: String)</code> dans un util shared pour le finnhub package éviterait la dérive du message.</li>
+</ul>
+<hr />
+<h2 id="documentation">Documentation</h2>
+<p>(drift doc → code, manques d'explication, etc.)</p>
+<p><strong>21. <code>architecture.md:200</code> affirme « Cache key préfixée par adapter ⇒ pas de collision »</strong></p>
+<ul>
+<li>Vrai uniquement pour <code>MARKET_CHART_CACHE</code> côté Twelve Data. Pas vrai pour les 4 autres caches (<code>news-by-symbol</code>, <code>analyst-recommendations</code>, <code>earnings</code>, <code>sector-by-symbol</code>) qui sont au niveau service sans préfixe — cf. finding #3.</li>
+<li>À reformuler : « Le chart cache préfixe par adapter ; les autres caches vivent au-dessus du dispatcher et acceptent une staleness post-switch (15 min max). »</li>
+</ul>
+<p><strong>22. <code>architecture.md</code> / <code>developper.md</code> / <code>providers.md</code> annoncent <code>analyst.provider</code> et <code>earnings.provider</code> éditables depuis <code>/settings/configuration</code></strong></p>
+<ul>
+<li>Pas vrai aujourd'hui — finding #1. Soit on patch l'UI, soit on patch tous ces docs en cascade.</li>
+</ul>
+<p><strong>23. <code>RoutingSectorClassifier</code> rationale dispersée</strong></p>
+<ul>
+<li>L'asymétrie « <code>market.provider=twelvedata</code> → Finnhub côté sector » est documentée dans <code>architecture.md</code>, <code>RoutingSectorClassifier.kt</code> Kotlin doc, le test, et le CHANGELOG. Beaucoup de prose, mais le fait qu'<strong>une key Finnhub vide bloque le Sector benchmark même quand <code>market.provider=twelvedata</code></strong> n'est documenté nulle part (finding #4).</li>
+</ul>
+<p><strong>24. <code>news.provider</code>, <code>analyst.provider</code>, <code>earnings.provider</code> se partagent la même clé Finnhub mais le swap est asymétrique</strong></p>
+<ul>
+<li>Si l'utilisateur met <code>news.provider=mock</code>, <code>analyst.provider=finnhub</code>, <code>earnings.provider=finnhub</code>, sa clé Finnhub est consommée par 2 modules et son quota se split. Pas documenté côté <code>developper.md</code> qui présente les toggles indépendamment.</li>
+</ul>
+<hr />
+<h2 id="recapitulatif">Récapitulatif</h2>
+<table>
+<thead>
+<tr>
+<th>Niveau</th>
+<th>Count</th>
+<th>Exemples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critique</td>
+<td>1</td>
+<td>Page Settings n'expose pas analyst.provider / earnings.provider (#1)</td>
+</tr>
+<tr>
+<td>Important</td>
+<td>6</td>
+<td>FinnhubAnalystClient pas de MockWebServer test (#2), cache strategy incohérente (#3), Sector silencieux dépend de Finnhub key (#4), event publish in-tx (#5), watchlist fail-open silencieux (#6), front 404/503 paths à pin (#7)</td>
+</tr>
+<tr>
+<td>Modérée</td>
+<td>6</td>
+<td>mock ETF set partiel (#8), earnings empty-cal path pas testé (#9), priceTarget partial-zero (#10), routing else-branch (#11), previousQuarterEnd code tortueux (#12), config UI new-key resilience (#13)</td>
+</tr>
+<tr>
+<td>Mineure</td>
+<td>7</td>
+<td>Magic numbers, JSDoc cross-ref fragile, ticker.spec.ts size, BigDecimal qualifié, requireApiKey x4, etc.</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>4</td>
+<td>Cache prefix claim faux (#21), 4 toggles éditables claim faux (#22), Sector→Finnhub key dependency non doc (#23), Finnhub quota split non expliqué (#24)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reco de priorisation (1 demi-journée chacune)</strong> :</p>
+<ol>
+<li>Patcher la page Configuration pour exposer <code>analyst.provider</code> + <code>earnings.provider</code> (15 min — le code paramétrique est déjà là, juste 2 constantes + 2 sections HTML).</li>
+<li>Ajouter <code>FinnhubAnalystClientTest</code> MockWebServer (45 min — calque <code>FinnhubEarningsClientTest</code>).</li>
+<li>Trancher la stratégie de cache (homogénéiser ou documenter explicitement les deux modèles dans <code>architecture.md</code>) (30 min doc, 1-2 h si on veut homogénéiser).</li>
+<li>Décider du UX sur le finding #4 (Sector / Finnhub key) — soit avertissement Settings, soit filtrage côté <code>benchmarkChoicesForCurrentTicker</code>.</li>
+<li><code>@TransactionalEventListener(AFTER_COMMIT)</code> sur le CacheTtlListener (10 min).</li>
+<li>Le reste en cleanup commit dédié.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.top", "search.highlight"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

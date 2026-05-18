@@ -1,0 +1,2756 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/technique/architecture/">
+      
+      
+        <link rel="prev" href="../developper/">
+      
+      
+        <link rel="next" href="../ddd/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Architecture - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vue-densemble" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vue d'ensemble
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modules backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#market-phase-1-etendu-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        market/ — Phase 1, étendu Phase 2
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="market/ — Phase 1, étendu Phase 2">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ports-adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ports + adapters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#domain-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services-applicatifs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services applicatifs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endpoints-rest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints REST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caches-caffeine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caches Caffeine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analysis-phase-1-reecrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        analysis/ — Phase 1 réécrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#portfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        portfolio/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#watchlist-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        watchlist/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#news-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        news/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyst-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        analyst/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#earnings-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        earnings/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config/ — Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auth-phase-4-v1-livre-2026-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        auth/ — Phase 4 v1 (livré 2026-05-17)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="auth/ — Phase 4 v1 (livré 2026-05-17)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#domain-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain + persistence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-http" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application + HTTP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-secret-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config + secret management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shared/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules frontend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-de-base-de-donnees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schéma de base de données
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-techniques-notables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décisions techniques notables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Décisions techniques notables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-pivot-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1 — pivot ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patterns-transverses-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patterns transverses backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1+ — frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-authentification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4 — authentification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modele-pipeline-danalyse-vision-phase-3-phase-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modèle pipeline d'analyse (vision Phase 3 + Phase 6)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modèle pipeline d&#39;analyse (vision Phase 3 + Phase 6)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept-central" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept central
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modele-de-donnees-table-job-unifiee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modèle de données — table job unifiée
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#machine-a-etats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Machine à états
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-aware-leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache-aware leaves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#origines-de-trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Origines de trigger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implications-cote-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implications côté frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pourquoi-pas-un-orchestrateur-externe-temporal-airflow-etc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pourquoi pas un orchestrateur externe (Temporal, Airflow, etc.)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vue-densemble" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vue d'ensemble
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modules backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#market-phase-1-etendu-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        market/ — Phase 1, étendu Phase 2
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="market/ — Phase 1, étendu Phase 2">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ports-adapters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ports + adapters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#domain-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain helpers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services-applicatifs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services applicatifs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endpoints-rest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints REST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caches-caffeine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caches Caffeine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analysis-phase-1-reecrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        analysis/ — Phase 1 réécrite
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#portfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        portfolio/
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#watchlist-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        watchlist/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#news-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        news/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analyst-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        analyst/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#earnings-nouveau-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        earnings/ — nouveau, Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-phase-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config/ — Phase 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auth-phase-4-v1-livre-2026-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        auth/ — Phase 4 v1 (livré 2026-05-17)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="auth/ — Phase 4 v1 (livré 2026-05-17)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#domain-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain + persistence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#application-http" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application + HTTP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#config-secret-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config + secret management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shared/
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modules frontend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#schema-de-base-de-donnees" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schéma de base de données
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-techniques-notables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décisions techniques notables
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Décisions techniques notables">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-pivot-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1 — pivot ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patterns-transverses-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Patterns transverses backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1+ — frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-authentification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4 — authentification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modele-pipeline-danalyse-vision-phase-3-phase-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modèle pipeline d'analyse (vision Phase 3 + Phase 6)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modèle pipeline d&#39;analyse (vision Phase 3 + Phase 6)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept-central" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept central
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modele-de-donnees-table-job-unifiee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modèle de données — table job unifiée
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#machine-a-etats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Machine à états
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cache-aware-leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache-aware leaves
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#origines-de-trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Origines de trigger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implications-cote-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implications côté frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pourquoi-pas-un-orchestrateur-externe-temporal-airflow-etc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pourquoi pas un orchestrateur externe (Temporal, Airflow, etc.)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="architecture">Architecture</h1>
+<h2 id="stack">Stack</h2>
+<table>
+<thead>
+<tr>
+<th>Couche</th>
+<th>Technologie</th>
+<th>Pourquoi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frontend</td>
+<td>Angular 21 + Angular Material</td>
+<td>Standalone components, signals, framework robuste pour dashboards</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Kotlin + Spring Boot</td>
+<td>Typage fort, null-safety, excellent écosystème JVM</td>
+</tr>
+<tr>
+<td>Build</td>
+<td>Gradle (Kotlin DSL)</td>
+<td>Standard Kotlin/Spring, scripts typés</td>
+</tr>
+<tr>
+<td>IA (défaut)</td>
+<td>Claude API — Anthropic</td>
+<td>Compréhension du langage naturel financier, JSON structuré fiable, raisonnement nettement supérieur à un 7B local</td>
+</tr>
+<tr>
+<td>IA (backup local)</td>
+<td>Ollama + <code>qwen2.5:3b</code> (3B Instruct)</td>
+<td>Développement offline / sans clé API. Pas le défaut depuis la Phase 1. Mistral 7B était l'ancien défaut local mais trop lent sur M1 (timeouts)</td>
+</tr>
+<tr>
+<td>Data marché</td>
+<td>Twelve Data (REST + apikey)</td>
+<td>Source primaire Phase 1+. Free tier 800 credits/jour, TSX natif, JSON documenté</td>
+</tr>
+<tr>
+<td>Data marché (dev / CI)</td>
+<td><code>MockMarketChartClient</code> (synthétique)</td>
+<td>Défaut sans clé : 260 bars OHLC déterministes par symbole. Onboarding et CI</td>
+</tr>
+<tr>
+<td>News par ticker</td>
+<td>Finnhub (REST + apikey)</td>
+<td>Phase 2. Twelve Data ne couvre pas les news. Free tier 60 calls/min, agrégation Reuters / Bloomberg / CNBC. Voir <a href="../providers/"><code>providers.md</code></a></td>
+</tr>
+<tr>
+<td>News (dev / CI)</td>
+<td><code>MockNewsClient</code> (synthétique)</td>
+<td>Défaut sans clé, sélectionné par <code>news.provider: mock</code>. Headlines déterministes par symbole, économise le quota Finnhub en itération</td>
+</tr>
+<tr>
+<td>Base de données</td>
+<td>PostgreSQL</td>
+<td>Schéma relationnel, snapshots historiques, Flyway pour les migrations</td>
+</tr>
+<tr>
+<td>Infra locale</td>
+<td>Tilt + Docker Compose</td>
+<td>Hot reload backend/frontend, reset BDD en un clic</td>
+</tr>
+<tr>
+<td>CI</td>
+<td>GitHub Actions</td>
+<td>Workflows backend (Gradle + PostgreSQL), frontend (Vitest), CodeQL, déploiement docs. Détails : <a href="../ops/"><code>ops.md</code></a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="vue-densemble">Vue d'ensemble</h2>
+<div class="highlight"><pre><span></span><code>┌────────────────────────────────────────────┐
+│         Sources de données                  │
+│  Twelve Data (REST + apikey, défaut prod)   │
+│  Finnhub (news + analyst recos, Phase 2)    │
+│  Mock local (synthétique, défaut CI / sans clé) │
+└──────────────────┬─────────────────────────┘
+                   │
+                   ▼
+┌────────────────────────────────────────────┐
+│         Backend  (Kotlin + Spring)          │
+│                                             │
+│  market/      → 3 ports : chart + symb.search│
+│                 + sector + indicateurs       │
+│  analysis/    → narratif LLM par ticker     │
+│  portfolio/   → import CSV, snapshots       │
+│  watchlist/   → tickers suivis (Phase 2)    │
+│  news/        → Finnhub + mock (Phase 2)    │
+│  analyst/     → recos analystes Finnhub +   │
+│                 mock (Phase 2)              │
+│  earnings/    → résultats trimestriels +    │
+│                 next-date (Phase 2)         │
+│  config/      → runtime overrides (Phase 2) │
+│  shared/      → utilitaires transverses     │
+└──────────────────┬─────────────────────────┘
+                   │ REST API
+                   ▼
+┌────────────────────────────────────────────┐
+│         Frontend  (Angular 21)              │
+│                                             │
+│  features/                                  │
+│    dashboard/    → portefeuille + lien      │
+│                    vers dossiers ticker     │
+│    ticker/       → dossier par symbole      │
+│    import/       → drag &amp; drop CSV          │
+│    suivi/        → timeline snapshots       │
+│    settings/     → configuration runtime +  │
+│                    prompts (CRUD + stats)   │
+│  core/                                      │
+│    api/&lt;bucket&gt;/    *.repository (ports)    │
+│                     adapters/*.http.ts      │
+│    local/&lt;bucket&gt;/  *.local.ts (browser)    │
+│    app-state/       theme + language signal │
+└────────────────────────────────────────────┘
+</code></pre></div>
+<h2 id="modules-backend">Modules backend</h2>
+<h3 id="market-phase-1-etendu-phase-2"><code>market/</code> — Phase 1, étendu Phase 2</h3>
+<p>Source primaire des données ticker. Trois ports outbound cohabitent dans le module — <code>MarketChartClient</code> et <code>SymbolSearchClient</code> ont chacun un triplet <code>TwelveData* + Mock* + Routing*</code> (<code>@Primary</code>) sélectionné par <code>market.provider</code> ; le port <code>SectorClassifier</code> dévie côté live vers <code>FinnhubSectorClassifier</code> (Twelve Data <code>/profile</code> est paid-tier only) avec son propre <code>Routing*</code> qui route mock vs Finnhub. Détails des trois familles ci-dessous.</p>
+<h4 id="ports-adapters">Ports + adapters</h4>
+<ul>
+<li><strong><code>MarketChartClient</code></strong> (port, Phase 1) — interface qui retourne un <code>MarketChart</code> (quote + bars OHLC) en types domaine. La <code>TickerQuote</code> porte un champ <code>instrumentType: InstrumentType?</code> (enum <code>STOCK | ETF | INDEX | OTHER</code>, depuis 2026-05-06) consommé par le front pour gater <strong>trois affordances</strong> réservées aux actions individuelles : (1) le toggle « Sector » du chart benchmark, (2) la section « Fondamentaux » entière du dossier (recommandations analystes + earnings), (3) les fetches <code>loadAnalyst</code> / <code>loadEarnings</code> qui ne sont plus lancés à l'init mais depuis le success callback de <code>load()</code> quand <code>instrumentType === 'STOCK'</code>. <strong>Dégrade fermé</strong> : null/undefined/ETF/INDEX/OTHER → tout est masqué et aucune Finnhub API call n'est consommée pour rien. Le choix initial (degrade-open, 2026-05-06) a été inversé le 2026-05-07 après observation que le toggle leakait sur des ETFs dont le type n'arrivait pas dans le <code>null</code> window initial. <strong>Source du type</strong> côté Twelve Data : <code>quote.type</code> quand non-blank, sinon fallback sur <code>seriesResponse.meta?.type</code> du <code>/time_series</code> — observé que <code>/quote</code> ne renvoie pas <code>type</code> sur le free tier (NVDA → null) alors que <code>/time_series.meta.type</code> carry « Common Stock » de façon fiable. Le mock tag les ~17 ETFs courants (SPDR + broad market) et défaut STOCK ailleurs.</li>
+<li><code>TwelveDataClient</code> (<code>twelvedata</code>) — REST + apikey, défaut prod. Deux appels par dossier (<code>/time_series</code> + <code>/quote</code>), parsing tolérant aux quirks (numériques en strings, erreurs renvoyées en HTTP 200 avec <code>status: error</code>).</li>
+<li><code>MockMarketChartClient</code> (<code>mock</code>, défaut sans clé) — série OHLC synthétique déterministe par symbole. Symboles réservés <code>UNKNOWN</code> (404) et <code>RATELIMIT</code> (503) pour les chemins d'erreur UI.</li>
+<li><code>RoutingMarketChartClient</code> (<code>@Primary</code>, Phase 2) — délègue à l'adapter actif lu via <code>appConfig.getString(market.provider)</code> à chaque appel.</li>
+<li><strong><code>SymbolSearchClient</code></strong> (port, Phase 2 watchlist v2) — autocomplete des tickers existants pour valider la saisie watchlist.</li>
+<li><code>TwelveDataSymbolSearchClient</code> — REST <code>/symbol_search</code> (1 credit/call).</li>
+<li><code>MockSymbolSearchClient</code> — ~30 symbols US/TSX seedés (prefix match symbol + substring match name), paths réservés <code>RATELIMIT</code> et <code>UNKNOWN</code>.</li>
+<li><code>RoutingSymbolSearchClient</code> (<code>@Primary</code>).</li>
+<li><strong><code>SectorClassifier</code></strong> (port, Phase 2 benchmark v2) — résout un ticker à un <code>SectorBenchmark</code> (sector GICS canonique + SPDR ETF + nom complet). Backe l'overlay « Sector » du chart dossier ticker.</li>
+<li><code>FinnhubSectorClassifier</code> — REST <code>/stock/profile2</code> (free tier 60 calls/min), parse le champ <code>finnhubIndustry</code>, route via <code>SpdrSectorEtfs</code> pour le mapping GICS → SPDR. <strong>Remplace <code>TwelveDataSectorClassifier</code></strong> depuis 2026-05-06 — Twelve Data <code>/profile</code> est paid-tier only sur les comptes free, ce qui rendait la feature inutilisable. Finnhub <code>/stock/profile2</code> couvre le même besoin sur le free tier et partage la clé déjà câblée pour news / analyst / earnings.</li>
+<li><code>MockSectorClassifier</code> — table hand-curée ~25 tickers populaires US/TSX (AAPL→Tech, JPM→Financials, RY.TO→Financials, etc.), paths réservés <code>UNKNOWN</code> (404) et <code>RATELIMIT</code> (503).</li>
+<li><code>RoutingSectorClassifier</code> (<code>@Primary</code>) — route <code>mock</code> → mock, <code>twelvedata</code> (live mode) → Finnhub. Le toggle reste binaire mock/live et <code>market.provider</code> continue de driver les autres routes (chart, symbol-search) vers Twelve Data ; seul le sector dévie vers Finnhub côté implémentation. Détail caché derrière le <code>RoutingSectorClassifier</code>, pas de nouveau runtime key (pas de <code>sector.provider</code>).</li>
+</ul>
+<h4 id="domain-helpers">Domain helpers</h4>
+<ul>
+<li><strong><code>IndicatorCalculator</code></strong> — Kotlin pur, sans dépendance Spring. Calcule RSI(14), MA50/MA200, momentum 30j/90j, perf 1m/3m/1y/YTD, drawdown 52w, volume relatif, position vs MA. Testable unit, sans BDD.</li>
+<li><strong><code>SpdrSectorEtfs</code></strong> (<code>internal object</code>, Phase 2) — table qui mappe les 11 GICS sectors couverts par SPDR Select Sector (Technology→XLK, Financials→XLF, Healthcare→XLV, Energy→XLE, Consumer Discretionary→XLY, Consumer Staples→XLP, Communication Services→XLC, Industrials→XLI, Materials→XLB, Real Estate→XLRE, Utilities→XLU) + table de synonymes pour les variations provider (« Information Technology » → « Technology », « Health Care » → « Healthcare », « Consumer Cyclical » → « Consumer Discretionary »…). Sector hors mapping → <code>null</code> → 404 inline côté front (« no sector benchmark available »).</li>
+</ul>
+<h4 id="services-applicatifs">Services applicatifs</h4>
+<ul>
+<li><strong><code>SymbolSearchService</code></strong> (Phase 2) — wrap <code>SymbolSearchClient</code> avec <code>@Cacheable("symbol-search")</code>. <strong>Validation séparée dans <code>SymbolValidator</code></strong> (<code>@Component</code> distinct qui dépend du service, 2026-05-16) : un appel intra-bean <code>this.search()</code> bypasse le proxy AOP Spring et brûlerait un credit Twelve Data par <code>watchlist.add()</code>. Router la validation à travers un deuxième bean force Spring à injecter le proxy par construction (pas de hack <code>@Lazy self</code>).</li>
+<li><strong><code>SectorClassifierService</code></strong> (Phase 2) — wrap <code>SectorClassifier</code> avec <code>@Cacheable("sector-by-symbol")</code>. SpEL key <code>#symbol.trim().toUpperCase()</code> (méthode Java, idem que les autres caches du module — SpEL ne voit pas l'extension Kotlin <code>uppercase()</code>).</li>
+</ul>
+<h4 id="endpoints-rest">Endpoints REST</h4>
+<ul>
+<li><code>GET /api/market/ticker/{symbol}</code> — dossier complet (quote + indicateurs + bars 1Y daily).</li>
+<li><code>GET /api/market/ticker/{symbol}/chart?timeframe={1d|5d|1mo|3mo|1y|5y}</code> — bars seuls pour le toggle multi-timeframe du graphe ; ne recalcule pas les indicateurs ni ne re-prompte le LLM, qui restent ancrés sur la 1Y daily du dossier. Whitelist côté serveur via l'enum <code>Timeframe</code> du domain — codes inconnus → 400 (défense de la clé Caffeine contre les valeurs non bornées).</li>
+<li><code>GET /api/market/ticker/{symbol}/sector-benchmark</code> — Phase 2 benchmark v2. Résout le SPDR sector ETF du ticker. Réponse <code>{tickerSymbol, sector, etfSymbol, etfName}</code>. 404 si symbol unknown OU sector hors SPDR mapping. Le front re-utilise ensuite <code>GET .../chart?timeframe=</code> avec l'<code>etfSymbol</code> pour fetch les bars de l'overlay.</li>
+<li><code>GET /api/market/symbols/search?q={query}&amp;limit={n}</code> — Phase 2 watchlist v2. Autocomplete des tickers, réponse <code>[{symbol, name, exchange}]</code>.</li>
+</ul>
+<h4 id="caches-caffeine">Caches Caffeine</h4>
+<p><code>MarketConfig</code> déclare 6 caches partagés : <code>market-chart</code> (chart endpoint), <code>news-by-symbol</code> (module <code>news/</code>), <code>symbol-search</code> (autocomplete watchlist), <code>sector-by-symbol</code> (sector classifier), <code>analyst-recommendations</code> (module <code>analyst/</code>) et <code>earnings</code> (module <code>earnings/</code>). Tous partagent le TTL piloté par <code>market.cache.ttl-minutes</code> (5–60 min, runtime-éditable depuis <code>/settings/configuration</code>).</p>
+<h3 id="analysis-phase-1-reecrite"><code>analysis/</code> — Phase 1 réécrite</h3>
+<p>Le pipeline d'analyse en Phase 1 produit un <strong>narratif LLM par ticker</strong>, pas une recommandation portefeuille.</p>
+<ul>
+<li><code>TickerNarrativeService</code> — point d'entrée : dedup d'un job pending sur le même symbole, réutilisation d'un snapshot frais (&lt; 30 min), sinon kick async.</li>
+<li><code>TickerNarrativeRunner</code> (<code>@Async</code> séparé pour respecter le proxy Spring) — exécute hors thread HTTP.</li>
+<li><code>TickerNarrativeExecutor</code> — orchestrate : <code>MarketChartClient.fetchChart</code> → <code>IndicatorCalculator</code> → <code>buildNarrativeUserMessage</code> → <code>LlmClient.complete</code> → <code>TickerNarrativeParser</code> → <code>TickerNarrativeValidator</code> → <code>TickerNarrativePersister</code>. Parse + validate + 1 retry avec les erreurs en feedback.</li>
+<li><code>TickerNarrativeParser</code> — parse <code>{summary, sentiment, keyPoints[]}</code> tolérant aux fences markdown, prose alentour, sentiment mixed-case.</li>
+<li><code>TickerNarrativeValidator</code> — règles strictes : 3-5 keyPoints, ≤15 mots/bullet, summary 2-3 phrases, sentiment ∈ enum.</li>
+<li>Persistance dans <code>TickerNarrativeSnapshot</code> : <code>{symbol, generatedAt, price, indicatorsJson, summary, sentiment, keyPointsJson, modelUsed, promptVersion, promptTemplateId}</code> — append-only, permet la relecture a posteriori. <code>promptTemplateId</code> (FK <code>prompt_template</code>, V8) ajouté en Phase 3 prompt-management pour le lookup des stats agrégées ; <code>promptVersion</code> (string) reste pour la trace historique.</li>
+<li>Job tracking dans <code>TickerNarrativeJob</code> (status BDD <code>PENDING / DONE / ERROR</code>) pour le suivi du job côté front. Transport SSE depuis Phase 2.5 — voir le bloc <code>Server-Sent Events</code> ci-dessous pour la granularité par phase.</li>
+<li><strong>Server-Sent Events (Phase 2.5)</strong> — quatre nouveaux artefacts pour streamer la progression du pipeline narratif au front en push : <code>domain/JobPhase</code> (enum 9 valeurs <code>LOADING_CONTEXT / CALLING_LLM / RECEIVED_RAW / PARSING / VALIDATING / RETRY_PROMPT / PERSISTING / DONE / ERROR</code>), <code>domain/JobEvent</code> (data class <code>{phase, attempt, elapsedMs, error?, payload?}</code>), <code>application/JobEventPublisher</code> (singleton <code>ConcurrentHashMap&lt;UUID, JobBucket&gt;</code> thread-safe avec replay-on-reconnect — chaque événement publié est retenu et rejoué à un client qui se connecte tardivement, buckets prunés 60 s après une phase terminale). Le <code>Runner</code> émet <code>LOADING_CONTEXT</code> au start + <code>DONE/ERROR</code> au catch, l'<code>Executor</code> émet les phases intermédiaires (<code>CALLING_LLM</code> → <code>RECEIVED_RAW</code> → <code>PARSING</code> → <code>VALIDATING</code> → <code>RETRY_PROMPT?</code> → <code>PERSISTING</code>) à chaque transition.</li>
+<li><strong>Prompt management (Phase 3, livré 2026-05-10)</strong> — <code>TickerNarrativePromptService</code> lit le prompt actif depuis la table <code>prompt_template</code> (un seul <code>is_active = TRUE</code> par <code>name</code> via index unique partiel) avec cache <code>@Cacheable</code> 1 min + fallback hardcodé sur la constante <code>NARRATIVE_SYSTEM_PROMPT</code> si BDD vide (bootstrap zéro-downtime). Switch live de prompt sans reboot via <code>POST /api/prompts/{id}/activate</code>. <code>PromptScoreRecorder</code> persiste un row <code>prompt_score</code> (<code>latency_ms, retry_count, parse_failed, validator_failed, user_thumbs, llm_judge_score?</code>) à chaque run du <code>TickerNarrativeExecutor</code>, succès ou échec définitif. Feedback <code>PATCH /api/narrative/snapshots/{id}/thumbs {value: -1|0|1}</code> met à jour la dernière ligne <code>prompt_score</code> du snapshot. Détail dans <a href="../../projet/journal-livraisons/#phase-3--observabilité-narrative"><code>journal-livraisons.md &gt; Phase 3</code></a>.</li>
+<li><strong>Page observabilité narrative (Phase 3 #1, livré 2026-05-13)</strong> — <code>NarrativeObservabilityQuery</code> exécute une native SQL avec LEFT JOIN sur <code>prompt_template</code> + LATERAL sur <code>prompt_score</code> (un seul round-trip, plafonné à 500 rows par symbol) ; <code>NarrativeObservabilityService</code> enrichit chaque ligne avec les deltas prix 1d/1w/1m calculés à partir du chart 1Y cached (<strong>one</strong> <code>MarketChartClient.fetchChart</code> per request, base = <code>snapshot.price</code>, lookup <code>at or after</code> pour tolérer weekends/jours fériés). Dégradation gracieuse sur <code>UpstreamUnavailableException</code> : les narratifs reviennent avec deltas null plutôt qu'un 503 qui cacherait l'historique. Endpoints <code>GET /api/narrative/observability/tickers</code> (index des symbols avec ≥1 snapshot) et <code>GET /api/narrative/observability/{symbol}?from=&amp;to=&amp;promptId=</code> (timeline filtrée). Le filtre <strong>thumbs reste client-side</strong> (asymétrie pinnée dans le KDoc) : la timeline est borne et un re-fetch à chaque chip click serait gaspilleur. Détail dans <a href="../../projet/journal-livraisons/#phase-3--observabilité-narrative"><code>journal-livraisons.md &gt; Phase 3</code></a>.</li>
+<li><strong>Score de cohérence cross-runs (Phase 3 #2, livré 2026-05-14)</strong> — <code>CoherenceScorer</code> (pure function, <code>@Component</code> sans dépendance Spring runtime, fully unit-tested) compare chaque snapshot à son chronologiquement-précédent et produit un <code>CoherenceScore { verdict ∈ {OK, WARN, HIGH}, sentimentChange ∈ {SAME, PARTIAL, FLIPPED}, keyPointsJaccard, summaryLengthRatio, priceMoveBetween }</code>. Divergence pondérée (sentiment 0.55 / key_points 0.30 / length 0.15) discountée par le price move entre les deux snapshots — un swing 5 % excuse fully un sentiment flip. Verdict surface comme chip colorisée sur chaque card de la timeline via le champ optionnel <code>coherence</code> ajouté à <code>NarrativeObservationDto</code> ; la row la plus ancienne (sans précédent) a <code>coherence = null</code>. <strong>Pas de LLM-as-judge</strong> : choisi gratuit + déterministe + transparent, le user peut re-dériver le verdict en lisant les 3 sous-mesures du tooltip.</li>
+<li><strong>Détection de biais (Phase 3 #3, livré 2026-05-14)</strong> — <code>NarrativeBiasQuery</code> exécute 3 round-trips natifs (sentiment counts, thumbs by sentiment via LATERAL sur le dernier <code>prompt_score</code>, raw snapshot rows plafonné à 2 000) ; <code>NarrativeBiasService</code> compose 4 sections : (a) <strong>sentiment distribution</strong> zero-padded sur les 3 buckets avec bias flag à &gt;= 60 % (« zero BEARISH » est lui-même un signal), (b) <strong>calibration</strong> : group snapshots par symbol → <code>MarketChartClient.fetchChart</code> une fois par unique symbol (cache-friendly Caffeine), moyenne du delta1d/1w/1m par sentiment bucket en filtrant les nulls, dégradation gracieuse per-symbol sur <code>UpstreamUnavailableException</code> (les autres sections tiennent), (c) <strong>topic coverage</strong> via regex <code>[a-z][a-z0-9]*</code> + ~80 stopwords + count-by-snapshot-not-by-occurrence (un narratif verbeux qui répète « rsi » 5× ne pèse qu'1 vote), top-15, (d) <strong>thumbs distribution</strong> par sentiment (auto-check biais côté humain). Endpoint <code>GET /api/narrative/observability/bias?from=&amp;to=&amp;promptId=</code> déclaré <strong>avant</strong> <code>/{symbol}</code> dans le controller pour la précédence routing — sinon Spring lierait <code>bias</code> comme path-variable. Backs la page <code>/observability/bias</code>.</li>
+<li>Endpoints REST narrative + prompt management + observabilité :</li>
+<li><code>/api/market/ticker/{symbol}/narrative</code> : <code>POST /</code> (kick async), <code>GET /jobs/{jobId}</code> (statut courant — toujours là pour debug), <code>GET /jobs/pending</code> (404 si aucun, sinon le job pending courant — utilisé par le front pour reattacher la SSE après un navigate-away → return-to-page), <code>GET /jobs/{jobId}/stream</code> (<code>text/event-stream</code> — l'<code>SseEmitter</code> enregistré dans le publisher), <code>GET /latest</code> (snapshot actuel).</li>
+<li><code>/api/prompts</code> (Phase 3) : <code>GET ?name=narrative-default</code> (liste reverse-chronological), <code>GET /{id}</code>, <code>POST</code> (nouvelle version, défaut <code>is_active = FALSE</code>), <code>POST /{id}/activate</code> (idempotent), <code>GET /{id}/stats?window=30d</code> (agrégats globaux + série quotidienne pour la page stats).</li>
+<li><code>/api/narrative/snapshots/{id}/thumbs</code> (Phase 3) : <code>PATCH</code> idempotent, body <code>{value: -1|0|1}</code>.</li>
+<li><code>/api/narrative/observability</code> (Phase 3 #1 livré 2026-05-13, étendu Phase 3 #3 livré 2026-05-14) : <code>GET /tickers</code> (index des symbols avec ≥1 snapshot, ordonné <code>MAX(generated_at) DESC</code>, cap 200), <code>GET /bias?from=&amp;to=&amp;promptId=</code> (4 sections agrégées corpus-wide : sentiment distribution + bias flag, calibration sentiment vs prix, topic coverage top-15, thumbs distribution), <code>GET /{symbol}?from=&amp;to=&amp;promptId=</code> (timeline avec deltas 1d/1w/1m enrichis depuis le chart 1Y cached + chip cohérence vs précédent). <code>/tickers</code> et <code>/bias</code> déclarés avant <code>/{symbol}</code> pour la précédence routing.</li>
+</ul>
+<blockquote>
+<p>Le LLM <strong>digère</strong> des indicateurs déjà calculés. Il <strong>ne calcule jamais</strong> RSI, MA, etc. — sinon il hallucine les chiffres.</p>
+</blockquote>
+<h3 id="portfolio"><code>portfolio/</code></h3>
+<p>Inchangé. Le portefeuille est <strong>read-only depuis l'UI</strong> — il reflète l'état réel du courtier Wealthsimple.</p>
+<ul>
+<li><strong>Import CSV</strong> (<code>CsvImportService</code>) : parse l'export Wealthsimple (21 colonnes, FR, NFD, BOM UTF-8), upsert des positions par compte.</li>
+<li><strong>Snapshots</strong> : <code>PortfolioSnapshot</code> + <code>SnapshotPosition</code> créés à chaque import, groupés par <code>batch_id</code>.</li>
+</ul>
+<p>Sa nouvelle utilité Phase 1 : fournir la <strong>liste des tickers détenus</strong> au <code>market/</code> pour pré-charger les dossiers ticker pertinents.</p>
+<h3 id="watchlist-nouveau-phase-2"><code>watchlist/</code> — nouveau, Phase 2</h3>
+<p>Liste plate de tickers à surveiller hors portefeuille. Single-table feature, pas de rattachement à un user (l'app reste single-user pour l'instant).</p>
+<ul>
+<li><code>WatchlistEntry</code> (entity) → table <code>watchlist_entry</code> (V3, étendue par V7 avec <code>instrument_type VARCHAR(20)</code> nullable) <code>id UUID / symbol VARCHAR(20) UNIQUE / added_at / instrument_type</code>.</li>
+<li><code>WatchlistService</code> : list (oldest first), add (idempotent — POST sur un symbole existant retourne la ligne existante), remove (404 si absent — non-idempotent volontairement pour que l'UI optimiste détecte une dérive d'état). Symbole normalisé en uppercase + trim côté service. <code>add</code> n'est délibérément <strong>pas <code>@Transactional</code></strong> : il déclenche deux appels réseau (<code>SymbolSearchService.validate</code> + <code>TickerService.load</code> pour capturer l'<code>instrumentType</code>) avant l'écriture, et le pattern projet « pas d'I/O distant sous Hikari » (cf. plus bas) interdit de tenir une connexion 1-3 s pour une cache miss. La persistence est isolée dans le helper privé <code>persistNew</code> qui re-vérifie <code>findBySymbol</code> post-network pour absorber la fenêtre TOCTOU ; la contrainte UNIQUE sur <code>symbol</code> reste le filet de sécurité côté BDD.</li>
+<li>3 endpoints REST : <code>GET / POST / DELETE /api/watchlist[/symbol]</code>.</li>
+</ul>
+<h3 id="news-nouveau-phase-2"><code>news/</code> — nouveau, Phase 2</h3>
+<p>Section actualité par ticker sur le dossier. Backend wrapper d'un provider externe (Finnhub aujourd'hui, le provider de marché Twelve Data n'expose pas de news endpoint).</p>
+<ul>
+<li>Domain <code>NewsItem</code> provider-neutre (<code>headline</code>, <code>summary</code>, <code>source</code>, <code>url</code>, <code>publishedAt</code>…).</li>
+<li>Port <code>NewsClient</code>. Deux adapters cohabitent, sélectionnés par <code>news.provider</code> :</li>
+<li><code>FinnhubClient</code> (<code>finnhub</code>) — appelle <code>/company-news?symbol=…&amp;from=…&amp;to=…&amp;token=…</code> avec une fenêtre roulante de 30 jours. <code>FinnhubMappers</code> convertit le JSON Finnhub vers le domaine (Unix seconds → <code>Instant</code>, <code>image: ""</code> → <code>null</code>, etc.).</li>
+<li><code>MockNewsClient</code> (<code>mock</code>, défaut) — feed synthétique déterministe par symbole (seed = hash). ~10 % de symboles "quiet" qui renvoient une liste vide pour exercer l'empty-state UI, ~25 % d'items sans summary pour exercer la null-handling path. Active sans clé, recommandé en dev pour ne pas chauffer le quota Finnhub.</li>
+<li><code>NewsService</code> avec <code>@Cacheable("news-by-symbol", 15 min)</code> au-dessus du port — clé <code>#symbol.toUpperCase() + '|' + #limit</code>, économise le quota sur les re-clics.</li>
+<li>1 endpoint REST : <code>GET /api/market/ticker/{symbol}/news?limit=10</code>.</li>
+<li>Erreurs upstream (401/403 → auth-failed, 429 → rate-limited, 5xx → upstream) mappées sur <code>UpstreamUnavailableException</code> partagée — surface en HTTP 503 sur l'API publique, identique à Twelve Data.</li>
+</ul>
+<blockquote>
+<p>Note SpEL : la clé du cache utilise <code>toUpperCase()</code> (méthode Java) plutôt que <code>uppercase()</code> (extension Kotlin). SpEL n'a accès qu'aux types JVM, pas aux extensions Kotlin — confondre les deux casse l'évaluation de la clé au runtime.</p>
+</blockquote>
+<h3 id="analyst-nouveau-phase-2"><code>analyst/</code> — nouveau, Phase 2</h3>
+<p>Recommandations d'analystes (consensus monthly + price target 12 mois) sur le Dossier ticker, sous-bloc « Recommandations analystes » de la section « Fondamentaux ». Même pattern hexagonal que <code>news/</code> : un port + deux adapters + dispatcher <code>@Primary</code> + service applicatif cache-bearing.</p>
+<ul>
+<li>Domain <code>AnalystSnapshot</code> provider-neutre (<code>{symbol, asOf, strongBuy, buy, hold, sell, strongSell, totalAnalysts, consensus, priceTarget?, history[]}</code>), enum <code>AnalystConsensus</code> (<code>BUY</code> / <code>HOLD</code> / <code>SELL</code> / <code>MIXED</code>), helper pur <code>deriveConsensus(...)</code> (seuils 60 % bullish/bearish, 50 % hold ; <code>MIXED</code> sinon — choix conservateur, on préfère MIXED à un BUY trompeur sur 55/45).</li>
+<li>Port <code>AnalystRecommendationClient</code>. Deux adapters cohabitent, sélectionnés par <code>analyst.provider</code> :</li>
+<li><code>FinnhubAnalystClient</code> (<code>finnhub</code>) — appelle <code>/stock/recommendation?symbol=...&amp;token=...</code> (requis) <strong>et</strong> <code>/stock/price-target?symbol=...&amp;token=...</code> (optionnel — fail-soft à <code>null</code> sur 401/403/5xx/network parce que le price-target est derrière un paid tier sur certains comptes ; le snapshot reste utile sans). Mappers purs (<code>FinnhubAnalystMappers</code>) : tri défensif <code>period</code> ASC (Finnhub documente newest-first mais on ne fait pas confiance), cap history à 6 mois, all-zero target → <code>null</code> (Finnhub renvoie le shell zéro pour les symbols sans target — afficher « $0 » serait trompeur).</li>
+<li><code>MockAnalystClient</code> (<code>mock</code>, défaut) — feed synthétique déterministe par symbole (seed = hash) avec biais réaliste (~50 % bullish, ~30 % mixed, ~20 % bearish) et drift mois-sur-mois pour que la trend line ne soit pas plate. Symboles réservés : <code>UNKNOWN</code> (404), <code>RATELIMIT</code> (503), <code>NOTARGET</code> (snapshot avec <code>priceTarget = null</code>, pour reproduire la dégradation Finnhub sans flipper de provider).</li>
+<li><code>RoutingAnalystClient</code> (<code>@Primary</code>) — délègue per-call à l'adapter actif lu via <code>appConfig.getString(analyst.provider)</code>. Cache-key prefix volontairement absent (la clé dans le service applicatif n'inclut pas le provider) → un switch s'applique au prochain dossier ouvert sans rétention d'entrée stale.</li>
+<li><code>AnalystRecommendationService</code> avec <code>@Cacheable("analyst-recommendations", key = "#symbol.toUpperCase()")</code> (méthode Java SpEL). Finnhub stamp les snapshots mensuellement → 15 min de staleness sont invisibles au user, mais ça épargne le quota free tier sur les re-clics.</li>
+<li>1 endpoint REST : <code>GET /api/market/ticker/{symbol}/analyst-recommendations</code>. Erreurs <code>NoSuchElementException</code> (404 « no analyst coverage ») et <code>UpstreamUnavailableException</code> (503, exception cross-context dans <code>shared/</code>) partagées avec tous les providers externes.</li>
+</ul>
+<h3 id="earnings-nouveau-phase-2"><code>earnings/</code> — nouveau, Phase 2</h3>
+<p>Earnings trimestriels (4 derniers Q estimate / actual / surprise %) + prochaine date d'annonce attendue sur le Dossier ticker, 2ᵉ sous-bloc « Résultats » de la section « Fondamentaux » sous le sous-bloc analyste. Même pattern hexagonal que <code>news/</code> et <code>analyst/</code> : un port + deux adapters + dispatcher <code>@Primary</code> + service applicatif cache-bearing.</p>
+<ul>
+<li>Domain <code>EarningsSnapshot</code> provider-neutre (<code>{symbol, nextEarningsDate?, nextEarningsTime?, lastReports[]}</code>), <code>EarningsReport</code> (<code>{period, epsEstimate?, epsActual?, surprisePercent?}</code>), enum <code>EarningsTime</code> (BEFORE_MARKET / AFTER_MARKET / UNSPECIFIED), helper pur <code>computeSurprisePercent</code> qui gère <code>null</code> + zero estimate (évite la div-by-zero) + estimate négatif via <code>abs()</code> au dénominateur (un beat sur loss-making garde un sign positif).</li>
+<li>Port <code>EarningsClient</code>. Deux adapters cohabitent, sélectionnés par <code>earnings.provider</code> :</li>
+<li><code>FinnhubEarningsClient</code> (<code>finnhub</code>) — appelle <code>/stock/earnings?symbol=...&amp;token=...</code> (requis) <strong>et</strong> <code>/calendar/earnings?from=...&amp;to=...&amp;symbol=...&amp;token=...</code> (optionnel — fail-soft à <code>null</code> sur 401/403/5xx/network parce que le calendrier sit derrière un paid tier sur certains comptes Finnhub ; le snapshot reste utile sans la prochaine date). Fenêtre 90 j en avant — la prochaine annonce trimestrielle est ~3 mois max, querier plus burnerait du quota sur du stale future-future. Mappers purs (<code>FinnhubEarningsMappers</code>) : tri défensif <code>period</code> ASC, cap reports à 4 trimestres, recalcul <code>surprisePercent</code> côté code (Finnhub round inconsistemment sur small caps), filtre calendar par symbol + <code>epsActual == null</code> (cleanest "did it happen yet" signal vs un date &gt;= today qui race avec la matinée du print), pick the earliest, mapping <code>bmo</code>/<code>amc</code>/<code>""</code>/<code>dmh</code> → enum (collapse les inconnus à UNSPECIFIED).</li>
+<li><code>MockEarningsClient</code> (<code>mock</code>, défaut) — feed synthétique déterministe par symbole (seed = hash) avec EPS dans la bande $0.30–$3.50, surprise ±15 % autour de l'estimé pour produire un mix réaliste beat/miss, drift ±8 % d'un trimestre à l'autre pour une time-series stable mais pas plate, next-date 1–60 j en avant pour que le countdown reste lisible. Symboles réservés : <code>UNKNOWN</code> (404), <code>RATELIMIT</code> (503), <code>NOCALENDAR</code> (snapshot avec <code>nextEarningsDate = null</code>, pour reproduire la dégradation Finnhub sans flipper de provider).</li>
+<li><code>RoutingEarningsClient</code> (<code>@Primary</code>) — délègue per-call à l'adapter actif lu via <code>appConfig.getString(earnings.provider)</code>. Cache-key prefix volontairement absent (la clé dans le service applicatif n'inclut pas le provider) → un switch s'applique au prochain dossier ouvert sans rétention d'entrée stale.</li>
+<li><code>EarningsService</code> avec <code>@Cacheable("earnings", key = "#symbol.toUpperCase()")</code> (méthode Java SpEL). Reports changent au plus une fois par trimestre, calendar move daily mais lentement → 15 min de staleness sont invisibles au user, mais ça épargne le quota free tier sur les re-clics.</li>
+<li>1 endpoint REST : <code>GET /api/market/ticker/{symbol}/earnings</code>. Erreurs <code>NoSuchElementException</code> (404 « no earnings data » quand reports ET calendar sont vides) et <code>UpstreamUnavailableException</code> (503, exception cross-context dans <code>shared/</code>) partagées avec tous les providers externes.</li>
+</ul>
+<h3 id="config-phase-2"><code>config/</code> — Phase 2</h3>
+<p>Configuration éditable en runtime, sans redémarrage backend. Couvre <strong>douze clés</strong> (Phase 2 → Phase 2.5) : <code>market.twelvedata.api-key</code>, <code>market.finnhub.api-key</code>, <code>anthropic.api.key</code> (les trois SECRETs masqués côté DTO), <code>market.cache.ttl-minutes</code>, <code>market.provider</code> (mock ↔ twelvedata), <code>news.provider</code> (mock ↔ finnhub), <code>analyst.provider</code> (mock ↔ finnhub), <code>earnings.provider</code> (mock ↔ finnhub), <code>llm.provider</code> (mock ↔ claude ↔ ollama), <code>ollama.model</code>, <code>anthropic.api.model</code> et <code>llm.timeout-seconds</code> (INT 60..900, défaut 400 — slider unique côté UI qui pilote <code>OllamaClient.readTimeout</code> et la fenêtre de dedup du <code>TickerNarrativeJobStore</code> côté backend ; côté front il alimente l'affichage « estimation max » sur la card LLM via <code>LlmTimeoutService</code>).</p>
+<ul>
+<li><strong><code>AppConfigService</code></strong> — service singleton qui lit les défauts YAML via <code>@Value</code> et les surcharge avec ce qui est en BDD (<code>app_config</code>, V4). Cache mémoire <code>ConcurrentHashMap</code> primé au boot via <code>@PostConstruct</code> puis maintenu en write-through sur chaque <code>set</code> / <code>reset</code>. Émet un <code>ConfigChangedEvent</code> sur changement effectif.</li>
+<li><strong><code>ConfigController</code></strong> — <code>GET /api/config</code> (liste avec masquage des secrets), <code>PUT /api/config/{key}</code> (set), <code>DELETE /api/config/{key}</code> (reset au défaut), <code>POST /api/config/test/{provider}</code> (probe live d'une clé candidate sans la sauver, <code>provider</code> = <code>twelvedata</code> / <code>finnhub</code> / <code>anthropic</code>), <code>POST /api/config/test/llm</code> (probe d'un couple <code>(provider, model)</code> candidate avec le prompt fixe « Reply with exactly the word OK. » — retourne latence + correctness).</li>
+<li><strong><code>ConfigTestClient</code></strong> — RestClient dédié qui appelle <code>/quote?symbol=AAPL</code> côté Twelve Data ou Finnhub pour valider une clé en cours d'édition, et <code>/v1/messages</code> (Claude) ou <code>/api/chat</code> (Ollama) pour valider un nom de modèle. Pour la clé Anthropic, <code>testAnthropicKey(candidate)</code> round-trip Claude avec la clé candidate et le modèle courant. Découplé des adapters de production parce que le test doit fonctionner même quand le provider actif est <code>mock</code> ou que le modèle/clé candidate n'a pas encore été sauvé.</li>
+<li><strong>Lecture per-call dans les adapters</strong> — <code>TwelveDataClient</code>, <code>FinnhubClient</code> et <code>ClaudeClient</code> ne stockent plus leur clé en <code>@Value</code> figée à la construction du bean ; tous lisent <code>appConfig.getString(...)</code> à chaque appel. Pour Claude, le header <code>x-api-key</code> est posé per-request (<code>request.header(...)</code>) plutôt que via <code>defaultHeader()</code> builder-side, sinon le RestClient capturerait la clé à la construction. Le YAML reste injecté comme défaut au niveau de <code>AppConfigService</code>.</li>
+<li><strong>TTL cache dynamique</strong> — <code>MarketConfig.cacheManager</code> lit le TTL initial via <code>AppConfigService</code> au boot. <code>CacheTtlListener</code> (composant séparé) écoute <code>ConfigChangedEvent</code> et appelle <code>setCaffeine(...)</code> sur le <code>CaffeineCacheManager</code> quand <code>market.cache.ttl-minutes</code> bouge. Trade-off accepté : le rebuild <strong>invalide les entrées en cours</strong> — coût marginal sur un TTL qu'on change rarement.</li>
+<li><strong>Switch provider à chaud</strong> — sept beans <code>@Primary</code> au total (<code>RoutingMarketChartClient</code>, <code>RoutingSymbolSearchClient</code>, <code>RoutingSectorClassifier</code> dans <code>market/</code>, plus <code>RoutingNewsClient</code>, <code>RoutingAnalystClient</code>, <code>RoutingEarningsClient</code>, et <code>RoutingLlmClient</code> dans <code>analysis/infrastructure/llm/</code>) délèguent à l'adapter sélectionné par <code>market.provider</code> / <code>news.provider</code> / <code>analyst.provider</code> / <code>earnings.provider</code> / <code>llm.provider</code> au moment de chaque appel. <code>RoutingSectorClassifier</code> route le mode live <code>twelvedata</code> vers Finnhub plutôt que Twelve Data — <code>/profile</code> côté Twelve Data est paid-tier only, le routing absorbe la disparité côté client sans exposer le détail au reste de l'app. Les anciens <code>@ConditionalOnProperty</code> sur les adapters concrets et les HttpConfig sont retirés ; les deux <code>RestClient</code> (Twelve Data et Finnhub) cohabitent et sont qualifiés par <code>@Qualifier("twelveDataRestClient")</code> / <code>@Qualifier("finnhubRestClient")</code> côté clients. Coût : deux RestClients en mémoire au lieu d'un (négligeable). Bénéfice : rotation provider depuis <code>/settings/configuration</code> sans reboot, le bascule s'applique au prochain dossier ouvert. <strong>Stratégie de cache hétérogène à connaître</strong> : seul <code>MARKET_CHART_CACHE</code> côté <code>TwelveDataClient</code> préfixe sa clé par adapter (<code>twelvedata|…</code>, <code>mock|…</code>). Les quatre autres caches (<code>news-by-symbol</code>, <code>analyst-recommendations</code>, <code>earnings</code>, <code>sector-by-symbol</code>) cachent au niveau service applicatif sans préfixe — un toggle <code>mock → finnhub</code> continue de servir la valeur du provider précédent jusqu'à expiration TTL (~15 min). C'est un compromis assumé : un dossier ouvert dans la fenêtre post-switch peut afficher des news mock juste après le passage en live ; corrigé soit en attendant le TTL, soit en homogénéisant les six caches sur un même modèle (ticket dette technique 🟢 Basse — démoté 2026-05-16, cosmétique).</li>
+<li><strong>LLM provider + model runtime (Phase 2.5)</strong> — <code>RoutingLlmClient</code> (<code>@Primary</code>) délègue à <code>MockLlmClient</code>, <code>ClaudeClient</code> ou <code>OllamaClient</code> selon <code>appConfig.getString(llm.provider)</code>. Les trois beans sont toujours instanciés (les <code>@ConditionalOnProperty</code> historiques sont retirés). Le nom de modèle est lu per-call via <code>appConfig.getString(anthropic.api.model)</code> / <code>appConfig.getString(ollama.model)</code> ; la clé Anthropic suit le même pattern depuis Phase 2.5 v2 (2026-05-08, cf. SECRET ci-dessus) ; l'URL base Ollama reste en YAML (rotation très rare, valeur stable sur la durée de vie du process). <code>modelId()</code> route lui aussi pour que le snapshot narratif capture l'identifiant exact du modèle qui a répondu (<code>mock:narrative-v1</code>, <code>claude:claude-opus-4-6</code>, <code>ollama:qwen2.5:3b</code>) — switcher de provider au runtime garde l'historique honnête. <strong><code>MockLlmClient</code> (livré 2026-05-15)</strong> ferme la dette « parité Mock partout » : narratif JSON déterministe par symbole (seed = hash), sentiment distribué BULLISH/NEUTRAL/BEARISH, symbole réservé <code>RATELIMIT</code> qui lève <code>UpstreamUnavailableException</code> pour exercer le 503 sans provider réel. Permet un <code>tilt up</code> sans aucune clé API ni daemon Ollama.</li>
+<li><strong>LLM timeout runtime (Phase 2.5 v1.5)</strong> — <code>llm.timeout-seconds</code> (INT 60..900, défaut 400) pilote en une seule clé : <code>OllamaClient</code> reconstruit son <code>RestClient</code> per-call avec le read timeout courant (cost négligeable, le <code>SimpleClientHttpRequestFactory</code> ne supporte pas la mutation in-place du timeout) ; <code>TickerNarrativeJobStore.pendingFor</code> lit la valeur au moment du dedup. Côté frontend, <code>LlmTimeoutService</code> (<code>providedIn: 'root'</code>) primé via <code>provideAppInitializer</code> au boot expose un <code>signal&lt;number&gt;</code> consommé par les surfaces UI qui affichent l'estimation max (card LLM dans <code>/settings/configuration</code>) ; depuis la migration SSE (Phase 2.5), il ne pilote plus d'abort de poller — la SSE qui se ferme suffit côté transport. Refresh explicite quand l'utilisateur sauve la nouvelle valeur via le slider sur <code>/settings/configuration</code>. Bénéfice : un user qui passe de qwen2.5:3b à qwen2.5:7b (cold-start plus long) tune le timeout sans code change ; un debug session peut le baisser à 60 s pour échouer plus vite. Hors scope : <code>ClaudeClient.readTimeout</code> reste à 60 s hardcoded — l'API Anthropic résout en 1-3 s, le slider serait du bruit pour ce chemin.</li>
+</ul>
+<h3 id="auth-phase-4-v1-livre-2026-05-17"><code>auth/</code> — Phase 4 v1 (livré 2026-05-17)</h3>
+<p>Authentification OAuth2 Google OIDC + rôles ADMIN/USER + profile dev <code>local-no-auth</code> qui bypasse Spring Security pour le dev solo. Phase orthogonale aux features métier ; structure hexagonale standard.</p>
+<h4 id="domain-persistence">Domain + persistence</h4>
+<ul>
+<li><strong><code>User</code></strong> (entity JPA, table <code>app_user</code>) — <code>id UUID</code>, <code>email UNIQUE</code>, <code>displayName?</code>, <code>provider</code> (<code>google</code> / <code>local-dev</code>), <code>providerId?</code> (le <code>sub</code> claim Google), <code>role</code> (enum <code>ADMIN</code> / <code>USER</code>, CHECK constraint en BDD), <code>createdAt</code>, <code>lastLoginAt</code>. Nom de table <code>app_user</code> (pas <code>user</code>) parce que <code>user</code> est un mot réservé PostgreSQL.</li>
+<li><strong><code>UserRepository</code></strong> Spring Data avec <code>findByEmail(email)</code> — la clé naturelle de lookup post-OAuth.</li>
+<li><strong>Multi-tenant <code>user_id</code> FK livrée dans le même diff Phase 4</strong> — <code>portfolio.user_id</code> et <code>watchlist_entry.user_id</code> sont des FK <code>NOT NULL ON DELETE CASCADE</code> vers <code>app_user(id)</code>. La contrainte UNIQUE de <code>watchlist_entry</code> passe de <code>(symbol)</code> à <code>(user_id, symbol)</code> (deux users peuvent watcher AAPL en parallèle). Toutes les requêtes de lecture sur portfolio / asset / watchlist sont scopées par <code>authService.getCurrentUser().id</code> via méthodes dérivées Spring Data (<code>findByIdAndUserId</code>, <code>findAllByUserId</code>, <code>findByUserIdAndName</code>, <code>findByUserIdAndSymbol</code>) ou par JPQL <code>WHERE … user.id = :userId</code>. Les tables non-scopées (snapshots narratifs, app_config, prompt_template, prompt_score) restent globales par design — voir <code>architecture.md &gt; Décisions techniques notables &gt; Phase 4</code> pour la décision <code>@ManyToOne User</code> cross-bounded-context.</li>
+</ul>
+<h4 id="security-infrastructure">Security infrastructure</h4>
+<ul>
+<li><strong><code>SecurityConfig</code></strong> (<code>@Profile("!local-no-auth")</code>) — filter chain prod : <code>requestMatchers("/actuator/health", "/login/**", "/oauth2/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()</code>, <code>requestMatchers("/api/config/**", "/api/prompts/**", "/api/narrative/observability/**").hasRole("ADMIN")</code>, <code>anyRequest().authenticated()</code>. Entry point retourne <strong>401</strong> (pas 302) pour que l'interceptor SPA décide du redirect.</li>
+<li><strong><code>oauth2Login()</code> conditionnel sur <code>ClientRegistrationRepository</code></strong> via <code>ObjectProvider.ifAvailable</code> — sans creds OAuth, le bean n'existe pas et le filter chain wire sans <code>oauth2Login</code>. Permet au smoke test <code>BackendApplicationTests.contextLoads</code> de booter sans aucune config OAuth.</li>
+<li><strong>Deux user services câblés en parallèle</strong> :</li>
+<li><code>CustomOAuth2UserService</code> extends <code>DefaultOAuth2UserService</code> — pour les futurs providers OAuth2 non-OIDC (e.g. GitHub OAuth sans scope <code>openid</code>). Wire via <code>userService(...)</code>.</li>
+<li><code>CustomOidcUserService</code> extends <code>OidcUserService</code> — pour Google OIDC. Wire via <code>oidcUserService(...)</code>. <strong>Sans ce service séparé</strong>, Spring fallback sur <code>OidcUserService</code> par défaut qui retourne un <code>DefaultOidcUser</code> — <code>AuthService.getCurrentUser</code> crash alors sur le type principal inattendu (regression observée et fixée le 2026-05-17).</li>
+<li>Les deux services partagent <code>CustomOAuth2UserService.findOrCreateUser(email, sub, name, provider)</code> qui : (a) trouve la row par email et la met à jour en place (lastLoginAt, providerId, displayName si non-blank) <strong>sans changer le rôle</strong> ; (b) la crée si absente, avec le rôle calculé une seule fois depuis la whitelist <code>app.admin.emails</code>.</li>
+<li><strong>Deux principal types</strong> convergent sur <code>AppUserPrincipal { val userId: UUID }</code> (interface marker placée dans <code>auth/domain/</code> pour respecter la frontière hexagonale <code>application/ → domain/</code> ; délibérément sans <code>email</code> pour éviter le clash JVM signature avec <code>DefaultOidcUser.getEmail()</code>) : <code>AppOAuth2User</code> (pour local-no-auth et futur OAuth2 non-OIDC) et <code>AppOidcUser extends DefaultOidcUser</code> (pour Google OIDC, hérite l'accès aux claims OIDC du DefaultOidcUser).</li>
+<li><strong><code>CsrfTokenResponseFilter</code></strong> (Spring 6 lazy CSRF workaround) — <code>OncePerRequestFilter</code> ajouté après <code>CsrfFilter</code> qui touch <code>csrfToken?.token</code> pour forcer l'écriture du cookie <code>XSRF-TOKEN</code> sur <strong>chaque réponse</strong>. Sans ça Spring 6 résout le token lazy, le cookie n'est jamais écrit, et la SPA n'a rien à forwarder.</li>
+<li><strong><code>LocalNoAuthSecurityConfig</code></strong> (<code>@Profile("local-no-auth")</code>) + <strong><code>LocalNoAuthFilter</code></strong> (<code>OncePerRequestFilter</code>) + <strong><code>LocalNoAuthUserInitializer</code></strong> (<code>CommandLineRunner</code> qui seed un user <code>dev@local.test</code> ADMIN au boot, idempotent) — bypassent Spring Security en dev. CSRF reste <strong>enabled</strong> sous ce profile aussi pour matcher le shape de prod (pas de surprise au switch en oauth mode). <code>FilterRegistrationBean(filter).isEnabled = false</code> empêche la double-registration globale du filtre.</li>
+</ul>
+<h4 id="application-http">Application + HTTP</h4>
+<ul>
+<li><strong><code>AuthService</code></strong> — <code>getCurrentUser()</code> lit <code>SecurityContextHolder.authentication.principal as? AppUserPrincipal</code> puis relit la row <code>User</code> en BDD via <code>userId</code> pour servir la version <strong>fresh</strong> (un <code>UPDATE app_user SET role=...</code> SQL est visible à la prochaine requête, pas besoin de relog). <code>isAdmin()</code> lit <code>.role == ADMIN</code>.</li>
+<li><strong><code>AuthController</code></strong> — <code>GET /api/me</code> retourne <code>{email, displayName, role}</code> via DTO. Logout via le handler natif Spring <code>POST /logout</code>, pas de controller custom.</li>
+</ul>
+<h4 id="config-secret-management">Config + secret management</h4>
+<ul>
+<li><strong><code>app.frontend-url</code></strong> (env <code>APP_FRONTEND_URL</code>, défaut <code>/</code>) — cible du <code>defaultSuccessUrl</code> post-login OAuth. En prod (SPA + backend même origine derrière reverse proxy), <code>/</code> suffit. En dev, doit pointer vers le port SPA (<code>http://localhost:4201/</code>) sinon le user atterrit sur le backend après OAuth (Whitelabel 404).</li>
+<li><strong><code>app.admin.emails</code></strong> (env <code>APP_ADMIN_EMAILS</code>) — comma-separated, case-insensitive. Seul effet : assignation du rôle ADMIN à la création de la row <code>User</code>. Modifications ultérieures via SQL (la BDD est l'autorité post-creation).</li>
+<li><strong><code>server.forward-headers-strategy: framework</code></strong> (<code>application.yml</code>) couplé avec <code>xfwd: true</code> côté <code>frontend/proxy.conf.js</code> — fait que Spring construit ses URLs (notamment le <code>redirect_uri</code> OAuth envoyé à Google) depuis <code>X-Forwarded-Host</code>. En dev, le browser parle au SPA sur <code>localhost:4201</code> ; le proxy CLI forward au backend <code>localhost:8081</code> en injectant les forwarded headers ; Spring voit <code>localhost:4201</code> et génère un <code>redirect_uri</code> sur ce port → Google redirige le browser sur <code>localhost:4201/login/oauth2/code/google</code> → le proxy attrape via la règle <code>/login/oauth2</code> → backend traite et set le cookie de session sur <code>localhost:4201</code> → utilisable par les calls <code>/api/me</code> suivants. Sans ça, le cookie serait scopé <code>localhost:8081</code> et invisible au SPA.</li>
+<li><strong>Secrets boot-time</strong> (<code>SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}</code>, <code>APP_ADMIN_EMAILS</code>, <code>APP_FRONTEND_URL</code>) vivent dans <code>.env</code> (gitignored) et sont <code>sourced</code> par le <code>serve_cmd</code> Tilt → exportés au sous-process gradle → lus par Spring via relaxed binding. <code>application-local.yml</code> est volontairement vide de credentials. <strong>Les clés API runtime-editable</strong> (Anthropic, Twelve Data, Finnhub) restent dans la table <code>app_config</code> via <code>/settings/configuration</code> (Phase 2.5, SECRET slots) — pas en <code>.env</code>.</li>
+<li><strong>Toggle <code>BACKEND_AUTH_MODE</code></strong> (<code>no-auth</code> défaut / <code>oauth</code>) dans <code>.env</code>, lu <strong>dans le shell du serve_cmd</strong> au runtime (pas au parse Starlark). 2 boutons Tilt sur la ressource <code>backend</code> flippent la valeur en éditant <code>.env</code> et touchent <code>application.yml</code> pour relancer le backend dans le mode opposé. Le shell calcule <code>--spring.profiles.active=local,local-no-auth</code> (no-auth) ou <code>local</code> (oauth).</li>
+</ul>
+<h3 id="shared"><code>shared/</code></h3>
+<p>Utilitaires transverses :</p>
+<ul>
+<li><code>GlobalExceptionHandler</code> — mapping uniforme des erreurs en JSON (<code>NoSuchElementException</code> → 404, <code>IllegalArgumentException</code> → 400, <code>UpstreamUnavailableException</code> → 503).</li>
+<li><code>UpstreamUnavailableException</code> — exception cross-context, levée par tous les adapters externes (Finnhub news / analyst / earnings, Twelve Data, Claude, Ollama) quand le provider est rate-limited / unreachable / 5xx / auth-failed. Vit ici plutôt que dans <code>market/domain/</code> parce que le contrat 503 est identique pour les six providers — pas de raison que <code>news/</code> importe une exception de <code>market/</code>.</li>
+</ul>
+<h2 id="modules-frontend">Modules frontend</h2>
+<p>Hexagonal léger sous <code>frontend/src/app/</code> :</p>
+<ul>
+<li><strong><code>core/</code></strong> — split sur <strong>5 sous-dossiers</strong> : api/ (HTTP buckets) + local/ (browser-persisted) + app-state/ (UI signal services) + http/ (interceptors, Phase 4) + router/ (guards, Phase 4).</li>
+<li><strong><code>core/api/&lt;bucket&gt;/</code></strong> — bounded contexts HTTP, un bucket par module backend (<code>market/</code>, <code>portfolio/</code> qui regroupe Portfolio + Snapshot, <code>watchlist/</code>, <code>news/</code>, <code>analyst/</code>, <code>earnings/</code>, <code>config/</code>, <code>analysis/</code>, <code>auth/</code>). Chaque bucket contient son port (<code>&lt;name&gt;.repository.ts</code> = abstract class) + ses adapters dans <code>&lt;bucket&gt;/adapters/&lt;name&gt;.http.ts</code> (<code>HttpXxxRepository</code>) + ses services bucket-locaux à la racine du bucket. Le bucket <code>analysis/</code> regroupe l'ensemble du périmètre LLM (<code>prompt.repository</code>, <code>narrative-feedback.repository</code>, <code>narrative-observability.repository</code>, <code>narrative-bias.repository</code>, <code>ollama-status.repository</code>) <strong>plus</strong> trois services bucket-locaux : <code>ollama-status.service.ts</code> (polling daemon), <code>job-stream.service.ts</code> (SSE EventSource Phase 2.5 — wrappe <code>/api/market/ticker/{symbol}/narrative/jobs/{id}/stream</code>, expose un <code>Observable&lt;JobEvent&gt;</code> qui complète sur <code>DONE</code> / <code>ERROR</code>), <code>llm-timeout.service.ts</code> (signal primé via <code>provideAppInitializer</code>). Le bucket <code>auth/</code> (Phase 4) expose <code>AuthRepository</code> (<code>getCurrentUser()</code> → <code>/api/me</code> retournant <code>{email, displayName, role}</code>, <code>logout()</code> → <code>POST /logout</code> natif Spring).</li>
+<li><strong><code>core/local/&lt;bucket&gt;/</code></strong> — bounded contexts persistés navigateur, même forme port + <code>adapters/&lt;name&gt;.local.ts</code>. Seul habitant aujourd'hui : <code>annotation/</code> (chart h-line annotations, <code>LocalStorageAnnotationRepository</code>, swap futur vers backend-backed sans rewrite UI).</li>
+<li><strong><code>core/app-state/</code></strong> — services UI signal cross-cutting (<code>theme.service.ts</code> + <code>language.service.ts</code>, couples symétriques signal + persist localStorage, drivés par le toolbar header) + <strong><code>auth.service.ts</code></strong> (Phase 4 — signal <code>currentUser</code> + computeds <code>isAuthenticated</code> / <code>isAdmin</code>, primé au boot via <code>provideAppInitializer(() =&gt; inject(AuthService).refresh())</code>. <code>refresh()</code> swallow 401 + non-401 errors et expose un signal <code>lastError</code> consommé par la page <code>/error</code> + <code>clearError()</code>. Le boot ne crash jamais — un backend down rend une SPA bootable où le user peut au moins logout). <strong>Pas de port/adapter</strong> — services concrets sans counterpart distant, pas des bounded contexts.</li>
+<li><strong><code>core/http/auth.interceptor.ts</code></strong> (Phase 4) — <code>HttpInterceptorFn</code> qui catch les erreurs <code>/api/**</code> : <strong>401 → <code>auth.clear()</code> + redirect <code>/login</code></strong> (session expirée mid-session). <strong>Les 5xx ne sont pas interceptés</strong> — les composants gèrent leurs erreurs en local (fail-soft, banners inline) ; <code>/error</code> reste atteignable par navigation manuelle (<code>AuthService.lastError</code>). Skip explicitement <code>/api/me</code> (déjà géré par <code>AuthService.refresh</code>) et <code>/api/config</code> (admin-only — un USER non-ADMIN reçoit toujours 403, et <code>LlmTimeoutService.refresh</code> peut le hitter au boot avant la résolution OAuth).</li>
+<li><strong><code>core/router/auth.guards.ts</code></strong> (Phase 4) — deux <code>CanActivateFn</code> signal-based : <code>authGuard</code> (redirect <code>/login</code> si <code>isAuthenticated()</code> false), <code>adminGuard</code> (redirect <code>/dashboard</code> si <code>isAdmin()</code> false). Stack les deux sur les routes ADMIN-only (<code>/settings/**</code>, <code>/observability/**</code>) ; <code>authGuard</code> seul sur les autres.</li>
+<li>15 repositories au total (api/ + local/) : Portfolio, Snapshot, Market, Watchlist, News, Config, <strong>Annotation</strong> (chart user annotations, single-user mono-machine), <strong>Analyst</strong> (recommandations analystes par ticker, Phase 2), <strong>Earnings</strong> (résultats trimestriels + next-date par ticker, Phase 2), <strong>OllamaStatus</strong> (santé daemon Ollama : modèles loaded/available, latence ; backs le panneau État Ollama de <code>/settings/configuration</code>, Phase 2.5), <strong>Prompt</strong> (CRUD prompts narratifs : liste / activate / new version / stats agrégées, backs <code>/settings/prompts</code> et <code>/settings/prompts/:id/stats</code>, Phase 3), <strong>NarrativeFeedback</strong> (PATCH thumbs 👍/👎 sur le dernier <code>prompt_score</code> d'un snapshot, Phase 3), <strong>NarrativeObservability</strong> (timeline narratif vs prix par symbol + index des tickers avec ≥1 snapshot + chip cohérence vs précédent par card, backs <code>/observability</code> et <code>/observability/:symbol</code>, Phase 3 #1 livré 2026-05-13 étendu Phase 3 #2 livré 2026-05-14), <strong>NarrativeBias</strong> (agrégats corpus narratif en 4 sections : sentiment distribution + bias flag, calibration sentiment vs prix, topic coverage top-15, thumbs distribution ; backs <code>/observability/bias</code>, Phase 3 #3 livré 2026-05-14), <strong>Auth</strong> (Phase 4 — current user + logout).</li>
+<li>Wiring : <code>core/providers.ts</code> (resté à la racine, dépend de chaque bucket) exporte <code>provideRepositories(): EnvironmentProviders</code> qui regroupe les 15 bindings <code>{ provide, useClass }</code> (Phase 4 a ajouté <code>Auth</code>), appelé depuis <code>app.config.ts</code> au même titre que <code>provideRouter()</code> / <code>provideHttpClient()</code>.</li>
+<li><strong><code>public/i18n/</code></strong> — fichiers de traduction <code>&lt;lang&gt;.json</code> (FR + EN), servis comme assets statiques par le HTTP loader de <code>ngx-translate</code></li>
+<li><strong><code>features/</code></strong> — <em>primary adapters</em></li>
+<li><code>login/</code> — Phase 4 — page <code>/login</code> standalone (toolbar masquée par <code>App.isStandaloneRoute()</code>). Carte centrée avec bouton « Se connecter avec Google » qui set <code>window.location.href = '/oauth2/authorization/google'</code>. <code>effect()</code> qui redirige vers <code>/dashboard</code> si <code>auth.isAuthenticated()</code> est déjà true au mount.</li>
+<li><code>error/</code> — Phase 4 — page <code>/error</code> standalone, surface globale pour les 5xx sur <code>/api/**</code> (routée par <code>auth.interceptor.ts</code> avec query params <code>status</code> + <code>url</code>). Affiche les détails techniques (HTTP status, URL appelée, dernier <code>auth.lastError()</code>) + 2 actions : « Se déconnecter et réessayer » (POST <code>/logout</code> → <code>/login</code>) et « Retour à la connexion » (navigate direct + <code>auth.clearError()</code>).</li>
+<li><code>dashboard/</code> — portefeuille, tickers détenus, watchlist (sidebar 3 sections collapsables)</li>
+<li><code>ticker/</code> — dossier par symbole en layout 2-col : <strong>sidenav outils chart</strong> à gauche (Amazon-style, foldable via chevron, sticky, état localStorage <code>ticker-sidenav-open</code>) qui héberge timeframe / benchmark / overlays / outils (annotation arm, clear anchor, reset zoom) / liste « Annotations posées » avec bouton supprimer par item ; colonne droite avec le graphe multi-timeframe + axes + crosshair + <strong>overlay benchmark opt-in</strong> (SPY/QQQ/IWM/Sector/Custom, Y-axis bi-mode prix/% return, 2ᵉ polyline dashed, <code>MatTooltipModule</code>) + <strong>chart analyse interactive</strong> (zoom drag-select avec brush mini-chart en bas, overlays MA50/MA200/Bollinger/52w hi-lo en multi-select, annotations h-line persistées localStorage par symbole, measure tools delta % + delta time entre deux clics), indicateurs, section Fondamentaux (analyst recommandations + earnings), news, narratif IA, bouton watchlist</li>
+<li><code>import/</code> — drag &amp; drop CSV</li>
+<li><code>suivi/</code> — timeline snapshots</li>
+<li><code>settings/</code> — back-office avec sidenav : <code>configuration/</code> (runtime config Phase 2 — sub-sidenav interne « Providers de données » / « LLM »), <code>prompts/</code> (Phase 3 — liste des versions du prompt <code>narrative-default</code> avec activation + éditeur inline + diff side-by-side pour proposer une nouvelle version), <code>prompts/:id/stats</code> (Phase 3 — stats agrégées par prompt sur 30 jours : sparkline latence p50 + tableau quotidien runs / latence p50-p95 / taux retry / taux parse-validator failed / distribution thumbs)</li>
+<li><code>observability/</code> — Phase 3 #1 (livré 2026-05-13) + #2 + #3 (livrés 2026-05-14) : <code>index/</code> rend <code>/observability</code> (liste des symbols avec ≥1 snapshot et lien vers chaque page per-symbol + chip vers le bias dashboard) ; la page racine <code>/observability/:symbol</code> rend la timeline reverse-chronologique de cartes expandables avec filter bar (date range côté serveur + prompt dropdown côté serveur + chips thumbs client-side + reset) et <strong>chip cohérence OK/WARN/HIGH</strong> sur chaque card avec tooltip natif 5 lignes (sentiment / shared keypoints % / length ratio / price move signé) ; la page racine <code>/observability/bias</code> rend l'agrégat corpus-wide en 4 sections cards (sentiment bars horizontales avec chip biais suspecté, calibration table sentiment × delta1d/1w/1m, topic pills monospace top-15, thumbs stacked bars cross-sentiment scaling). Entrée navbar « Observabilité » ajoutée après Dashboard, lien d'entrée depuis le footer de la card narrative du dossier ticker (icône <code>history</code>)</li>
+</ul>
+<h2 id="schema-de-base-de-donnees">Schéma de base de données</h2>
+<p>Migration unique <code>V1__init.sql</code> (fusion V1→V10 livrée 2026-05-17, cf. <code>journal-livraisons.md &gt; Phase 4</code>). Le V1 unifié crée 11 tables dans l'ordre des dépendances FK (parent avant enfant) :</p>
+<ol>
+<li><code>app_user</code> — racine du graphe multi-tenant (Phase 4) ;</li>
+<li><code>portfolio</code> — Phase 1, gagne <code>user_id NOT NULL</code> + FK <code>app_user(id) ON DELETE CASCADE</code> (Phase 4) ;</li>
+<li><code>asset</code> — Phase 1, étendu Phase 2 avec <code>status</code> / <code>opened_at</code> / <code>closed_at</code> (lifecycle OPEN/CLOSED) ;</li>
+<li><code>portfolio_snapshot</code> + <code>snapshot_position</code> — Phase 1, snapshots historiques par import CSV ;</li>
+<li><code>watchlist_entry</code> — Phase 2, gagne <code>user_id NOT NULL</code> + FK + UNIQUE <code>(user_id, symbol)</code> (Phase 4) + <code>instrument_type</code> Phase 2.5 ;</li>
+<li><code>app_config</code> — Phase 2, table key/value des surcharges runtime (global, pas scopé user) ;</li>
+<li><code>prompt_template</code> — Phase 3, versionning des prompts narratifs avec partial unique index <code>is_active = TRUE</code> par <code>name</code> ;</li>
+<li><code>ticker_narrative_snapshot</code> — Phase 1 étendu Phase 3 avec <code>prompt_template_id</code> FK <code>ON DELETE SET NULL</code> ;</li>
+<li><code>ticker_narrative_job</code> — Phase 1, job table avec <code>idempotency_key</code> ;</li>
+<li><code>prompt_score</code> — Phase 3, score par run (latency, retry, parse/validator failed, thumbs, llm_judge_score).</li>
+</ol>
+<p>Plus le seed du prompt <code>narrative-default</code> v2 actif (verbatim du <code>NARRATIVE_SYSTEM_PROMPT</code> Kotlin via dollar-quoting).</p>
+<p><code>baseline-on-migrate: true</code> + <code>baseline-version: 0</code> dans <code>application.yml</code> — sur DB greenfield (CI, fresh clone, prod first deploy), Flyway baseline à V0 puis applique V1 normalement. Le header du fichier <code>V1__init.sql</code> documente la procédure de migration pour les DB existantes pré-squash (<code>docker compose down -v &amp;&amp; tilt up</code> ou drop manuel de <code>flyway_schema_history</code>). Source de vérité = le fichier lui-même, pas cette description.</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Tables</th>
+<th>Statut</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Portefeuille &amp; actifs</td>
+<td><code>portfolio</code>, <code>asset</code></td>
+<td>Actif</td>
+</tr>
+<tr>
+<td>Snapshots historiques</td>
+<td><code>portfolio_snapshot</code>, <code>snapshot_position</code></td>
+<td>Actif</td>
+</tr>
+<tr>
+<td>Narratifs ticker</td>
+<td><code>ticker_narrative_snapshot</code>, <code>ticker_narrative_job</code></td>
+<td>Actif Phase 1</td>
+</tr>
+<tr>
+<td>Watchlist</td>
+<td><code>watchlist_entry</code></td>
+<td>Actif Phase 2</td>
+</tr>
+<tr>
+<td>Config runtime</td>
+<td><code>app_config</code></td>
+<td>Actif Phase 2</td>
+</tr>
+<tr>
+<td>Prompt management &amp; scoring</td>
+<td><code>prompt_template</code>, <code>prompt_score</code></td>
+<td>Actif Phase 3</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td><code>app_user</code></td>
+<td>Actif Phase 4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="decisions-techniques-notables">Décisions techniques notables</h2>
+<h3 id="phase-1-pivot-ticker">Phase 1 — pivot ticker</h3>
+<p><strong>LLM = rédacteur, pas décideur</strong> — le LLM digère des indicateurs <strong>déjà calculés</strong> (RSI, MA, momentum) et écrit un narratif. Il ne calcule jamais d'indicateurs (il les hallucine systématiquement) et ne produit pas de signal d'achat/vente. Cette séparation rend l'output testable (le code des indicateurs l'est) et l'IA productive sur ce qu'elle sait faire (écrire).</p>
+<p><strong>Twelve Data en source primaire</strong> — Yahoo Finance avait été choisi initialement (gratuit, sans clé, couverture mondiale) mais rate-limite agressivement les IPs résidentielles : ban observé sur résidentiel + VPN + cellulaire en validation Phase 1, malgré le cookie+crumb dance complet. Trop instable pour un projet perso à IP unique. Twelve Data prend le relais Phase 1 : REST documenté, free tier 800 credits/jour (largement suffisant avec un cache 15 min), TSX natif (XTSE), interface stable. Le code Yahoo a été supprimé — l'implémentation cookie+crumb reste consultable dans l'historique git (commit <code>b993440</code>) si on doit la rejouer pour un autre provider.</p>
+<p><strong>Caching côté serveur — deux modèles cohabitent</strong> (Caffeine, TTL 15 min, en mémoire). Pas besoin de Redis à cette échelle.</p>
+<ul>
+<li><strong>Modèle A — clé préfixée par adapter</strong> : <code>MARKET_CHART_CACHE</code> (<code>market-chart</code>) côté <code>TwelveDataClient</code> utilise la clé <code>'twelvedata|' + …</code> (avec un préfixe <code>'mock|'</code> symétrique). Conséquence : un toggle de provider ne sert <em>jamais</em> une valeur du provider précédent — chaque adapter a son propre namespace de cache, isolés au runtime. C'est le bon modèle quand on accepte qu'un toggle invalide l'effort de cache (le <code>mock</code> doit re-générer ses 260 bars synthétiques même si on revient à <code>mock</code> après un détour <code>twelvedata</code>).</li>
+<li><strong>Modèle B — clé sans préfixe, cache au niveau service applicatif</strong> : les quatre autres caches (<code>news-by-symbol</code>, <code>analyst-recommendations</code>, <code>earnings</code>, <code>sector-by-symbol</code>) vivent sur le service applicatif (<code>NewsService</code>, <code>AnalystRecommendationService</code>, <code>EarningsService</code>, <code>SectorClassifierService</code>) avec <code>@Cacheable(key = "#symbol.toUpperCase()" + éventuel</code>|#limit<code>)</code> — le provider n'est pas dans la clé. Conséquence assumée : un toggle <code>mock → finnhub</code> continue de servir la valeur cachée du précédent provider jusqu'à expiration TTL (~15 min). Le <code>RoutingNewsClient</code> / <code>RoutingAnalystClient</code> / <code>RoutingEarningsClient</code> documentent explicitement ce choix dans leur KDoc.</li>
+</ul>
+<p><strong>Pourquoi cette hétérogénéité ?</strong> Historique : <code>TwelveDataClient</code> était le premier adapter à supporter un mock co-routé, donc il a posé le préfixe défensif avant que les autres modules adoptent le même pattern (sans le porter). Le coût d'aligner sur un modèle unique est mineur (~1-2 h refacto + un test du toggle), mais le bénéfice runtime est faible : la fenêtre de staleness 15 min sur un toggle est invisible à l'usage réel (un dossier ré-ouvert plus tard repart à neuf). Le compromis est assumé — homogénéisation tracée comme dette technique 🟢 Basse (option (a) du ticket « Stratégie de cache », démoté 2026-05-16).</p>
+<p><strong>Provider de marché abstrait + mock local</strong> — <code>MarketChartClient</code> est un port qui retourne un <code>MarketChart</code> (types domaine <code>TickerQuote</code> + <code>List&lt;OhlcBar&gt;</code>). Deux implémentations cohabitent, sélectionnées par <code>market.provider</code> :
+- <code>twelvedata</code> — défaut prod, requiert <code>market.twelvedata.api-key</code> (env <code>TWELVEDATA_API_KEY</code>).
+- <code>mock</code> — défaut sans clé, génère une série OHLC déterministe par symbole (seed = hash). Symboles réservés <code>UNKNOWN</code> (404) et <code>RATELIMIT</code> (503) pour exercer les chemins d'erreur.</p>
+<p><strong>Twelve Data — quirks à absorber</strong> — l'API a deux pièges qui justifient un parser tolérant : (1) <strong>les nombres sont des strings JSON</strong> (<code>"open": "180.00"</code>) — on désérialise en <code>String</code> et convertit avec <code>toBigDecimalOrNull</code>/<code>toLongOrNull</code> ce qui tolère naturellement <code>""</code> et <code>"NaN"</code> observés sur tickers illiquides ; (2) <strong>les erreurs reviennent en HTTP 200</strong> avec <code>{status: "error", code: 404}</code> dans le body — il faut inspecter le body et pas juste le code HTTP. Mapping : <code>code 404</code> → <code>NoSuchElementException</code>, <code>429</code> → <code>UpstreamUnavailableException("rate-limited")</code>, <code>401</code>/<code>403</code> → <code>auth-failed</code>. Bonus : la clé API absente est détectée <em>avant</em> l'appel HTTP et lève <code>UpstreamUnavailableException</code> avec un message actionnable — pas de credit gaspillé sur une mauvaise config.</p>
+<p><strong>Claude API par défaut</strong> — sur les premiers itérations Phase 1, Mistral 7B sortait des narratifs grammaticalement corrects mais financièrement creux. Le saut de qualité Claude est largement supérieur au coût (~quelques cents par dossier). Ollama (<code>qwen2.5:3b</code> par défaut, sélectionnable au runtime) reste activable pour le dev offline (<code>llm.provider: ollama</code>).</p>
+<p><strong>Snapshot du narratif systématique</strong> — chaque consultation d'un ticker persiste <code>{prix_du_jour, indicateurs, narrative}</code>. Sans ça, l'observabilité Phase 3 (relire ce que disait l'IA il y a 1 mois) est aveugle.</p>
+<p><strong>Cache snapshot 30 min + dedup job 5 min</strong> — un re-clic sur un dossier ticker ne doit ni rappeler le LLM (cher en Claude, lent en Ollama) ni créer de jobs concurrents. Le service réutilise le snapshot existant si âge &lt; 30 min, sinon réutilise le job pending si âge &lt; 5 min, sinon kick un nouveau job. Front toujours uniforme : POST puis poll.</p>
+<p><strong>Configuration runtime éditable</strong> (Phase 2) — clés API et TTL de cache vivaient en <code>@Value</code> injectées à la construction du bean, donc figées jusqu'au prochain reboot. Pour permettre la rotation d'une clé sans redémarrer le backend, on a introduit <code>AppConfigService</code> (table <code>app_config</code>, surcharge BDD au-dessus du défaut YAML) et bascule les adapters (<code>TwelveDataClient</code>, <code>FinnhubClient</code>) sur une lecture per-call. Les défauts YAML sont aujourd'hui groupés dans <strong>trois <code>@Component</code> data classes</strong> (<code>SecretsDefaults</code>, <code>DataProvidersDefaults</code>, <code>LlmDefaults</code>, 2026-05-15) injectées dans <code>AppConfigService</code> ; seul <code>market.cache.ttl-minutes</code> reste en <code>@Value</code> standalone parce qu'il ne s'agence pas naturellement avec un des trois groupes — détail du pattern (vs <code>@ConfigurationProperties</code>) dans la skill <code>spring-boot</code>. Pour le TTL Caffeine, le builder est figé au moment du <code>setCaffeine</code> ; on écoute un <code>ConfigChangedEvent</code> et on rebuild le spec via <code>CaffeineCacheManager.setCaffeine(...)</code> — accepte d'invalider les entrées en cours, négligeable sur un changement rare. Pas de chiffrement BDD v1 (projet local) — à durcir si on déploie un jour.</p>
+<p><strong>Pas de wildcard imports en Kotlin</strong> (Phase 2.5 outillage) — pour éviter qu'IntelliJ consolide les imports en <code>*</code> (défaut "Optimize Imports" au-delà de 5 imports/package), deux couches de défense : (1) <code>.editorconfig</code> racine avec <code>ij_kotlin_name_count_to_use_star_import = MAX</code> qui bloque la consolidation à la source ; (2) custom step Spotless <code>no-wildcard-imports</code> (cf. <code>backend/build.gradle.kts</code>) qui scanne et lance <code>GradleException</code> sur tout wildcard hors allowlist (14 packages encore tolérés, à shrinker progressivement). Volontairement pas de ktlint — ktlint avec <code>ij_kotlin_packages_to_use_import_on_demand</code> listant des packages applique la sémantique IntelliJ et <strong>force</strong> les wildcards sur ces packages, comportement inverse au but recherché (vérifié douloureusement, 152 fichiers reformatés en consolidation <code>*</code> avant rollback). Custom step en pure-check pour cette raison. Detekt rule <code>WildcardImport</code> désactivée — Spotless casse le build, Detekt ne ferait que rapporter en double.</p>
+<p><strong>Ollama containerisé même sur Mac, malgré la dégradation CPU</strong> (Phase 2.5, décision tranchée 2026-05-09) — Docker Desktop sur Mac est une VM Linux virtualisée qui n'expose pas Metal, donc Ollama tourne en CPU pur dans le container : un narratif <code>qwen2.5:3b</code> peut saturer 9 cores ~918 % pendant 60–180 s, là où le même modèle sur Ollama natif macOS (Metal activé) répond en 5-10 s. Trois options analysées (cf. <a href="../../devops/decision-ollama-deploiement/"><code>docs/devops/decision-ollama-deploiement.md</code></a>) : (1) sortir Ollama de Compose et installer en natif via <code>brew</code>, (2) override Compose Mac vs cible Linux GPU, (3) statu quo. <strong>Option 3 retenue</strong> : depuis l'arrivée de Claude API comme défaut Phase 1, Ollama est devenu un outil de dev (exercer parsing/validation/SSE sans cramer des appels Claude) et un fallback offline, pas le chemin produit principal. Le coût onboarding de l'option 1 (un service de plus à gérer hors Tilt, perte du « clone + <code>tilt up</code> = tout marche ») ne se justifie pas tant que l'usage Ollama reste occasionnel. L'option 2 paie une dette infrastructurelle pour une cible Linux GPU hypothétique — Phase 5 hosting (OVH / Hetzner / Scaleway / Lightsail dans la fourchette 5-15 €/mois) n'a pas de GPU dans cette gamme. Re-trigger pour réévaluer : machine dédiée, usage Ollama &gt; 20 % des sessions, ou distribution du repo à des contributeurs Linux/Windows.</p>
+<p><strong>Tracking du modèle LLM par snapshot</strong> — chaque snapshot stocke <code>LlmClient.modelId()</code> (<code>mock:narrative-v1</code>, <code>ollama:qwen2.5:3b</code> ou <code>claude:claude-opus-4-6</code>) au moment de la génération. Indispensable Phase 3 pour comparer la qualité narrative entre versions de modèle ou entre providers, et pour filtrer après coup les snapshots produits par un modèle plus faible (ou par le mock, qui pollue les agrégats si laissé non filtré) sans relire le contenu.</p>
+<h3 id="patterns-transverses-backend">Patterns transverses backend</h3>
+<p><strong>Ports outbound dans <code>domain/</code></strong> (B1, 2026-05-15) — les 7 interfaces de port (<code>MarketChartClient</code>, <code>SymbolSearchClient</code>, <code>SectorClassifier</code>, <code>NewsClient</code>, <code>AnalystRecommendationClient</code>, <code>EarningsClient</code>, <code>LlmClient</code>) vivent dans <code>&lt;context&gt;/domain/</code> aux côtés des types qu'elles retournent (<code>MarketChart</code>, <code>NewsItem</code>, etc.). Lecture hexagonale stricte : le domaine déclare ce dont il a besoin de l'extérieur, l'infrastructure le réalise. Les adapters (<code>Mock*</code>, <code>Finnhub*</code>, <code>Twelve*</code>, <code>Claude*</code>, <code>Ollama*</code>, <code>Routing*</code> <code>@Primary</code>) restent en <code>&lt;context&gt;/infrastructure/&lt;capability&gt;/</code>. Trade-off accepté : on perd la co-localisation port+adapters d'avant (un argument du compromis « pragmatique » historique) ; on gagne l'inversion de dépendance honnête (<code>application/</code> importe depuis <code>domain/</code>, pas depuis <code>infrastructure/</code>) et la possibilité de tester un service applicatif sans toucher <code>infrastructure/</code>. Les <code>JpaRepository</code> Spring Data restent en <code>infrastructure/persistence/</code> parce qu'ils sont framework-tied par construction — pas le même type de port.</p>
+<p><strong><code>@Async</code> sur bean séparé</strong> — Spring AOP ne proxifie pas les appels internes (<code>this.method()</code>). Le pattern <code>Service → Runner (@Async) → Executor (@Transactional)</code> reste valide et est repris pour <code>TickerNarrativeService → TickerNarrativeRunner</code>.</p>
+<p><strong>LLM call hors transaction</strong> — l'appel LLM (1-15 s en Claude, plus long en Ollama) ne doit pas tenir de connexion Hikari. Le pipeline est éclaté pour respecter ça.</p>
+<p><strong>Validation de schéma</strong> — <code>ddl-auto: validate</code>. Hibernate valide le schéma au démarrage. Toute modification d'entité = migration Flyway.</p>
+<p><strong>Tests d'intégration sur vrai PostgreSQL</strong> — pas de mocks BDD, pas de H2. Le CI démarre un service PostgreSQL.</p>
+<p><strong>Portefeuille CSV-driven, pas de CRUD manuel</strong> — le portefeuille reflète la réalité du courtier. L'import CSV Wealthsimple reste la seule source de vérité des positions.</p>
+<p><strong>Snapshot avec <code>batch_id</code></strong> — un import CSV peut couvrir plusieurs comptes. Le <code>batch_id</code> UUID commun regroupe tous les snapshots d'un même import pour l'affichage en timeline.</p>
+<h3 id="phase-1-frontend">Phase 1+ — frontend</h3>
+<p><strong>Ports &amp; adapters léger, groupés par bounded context</strong> — depuis le refactor 2026-05-16 étendu en Phase 4, <code>core/</code> est split sur 5 sous-dossiers : <code>core/api/&lt;bucket&gt;/&lt;name&gt;.repository.ts</code> (port = abstract class) + <code>core/api/&lt;bucket&gt;/adapters/&lt;name&gt;.http.ts</code> (adapter HTTP) pour les 9 buckets miroirs du backend (<code>market/</code>, <code>portfolio/</code>, <code>watchlist/</code>, <code>news/</code>, <code>analyst/</code>, <code>earnings/</code>, <code>config/</code>, <code>analysis/</code>, <code>auth/</code>) ; <code>core/local/&lt;bucket&gt;/</code> pour les ports persistés navigateur (annotation seul aujourd'hui, adapter localStorage) ; <code>core/app-state/</code> pour les services UI signal cross-cutting (theme, language, auth — pas de split port/adapter) ; <code>core/http/</code> (interceptors, Phase 4) ; <code>core/router/</code> (route guards, Phase 4). Composants injectent l'abstraction. Tests : on mock le port, l'adapter a son propre spec HTTP dans le <code>adapters/</code> du bucket.</p>
+<p><strong>Resource builders sur le port</strong> (pilote 2026-05-16 sur <code>SnapshotRepository</code>) — au lieu d'exposer <code>Observable&lt;T&gt;</code> à plat et de laisser chaque composant câbler <code>rxResource</code> + trigger-signal + accumulator par id, le port abstract class porte <strong>des builders concrets hérités</strong> : <code>allResource()</code> retourne un <code>rxResource</code> simple, <code>xxxCache(trigger: Signal&lt;id&gt;)</code> retourne un <code>Signal&lt;Map&lt;id, T[]&gt;&gt;</code> cooked (l'accumulator <code>effect()</code> vit dans la méthode du port). Les adapters n'implémentent que les méthodes HTTP abstract ; les builders sont hérités. Composants : <code>inject(Repository).allResource()</code> à l'init de champ, lecture directe de <code>.value()</code> / <code>.isLoading()</code> / <code>.error()</code> côté template — plus de <code>.subscribe()</code>, plus de <code>ngOnInit</code>, plus de gestion manuelle <code>loading</code>/<code>error</code> à la main. <strong>Contrainte mocks</strong> : les tests doivent provisionner le mock via <code>useClass MockXxxRepository extends XxxRepository</code> (un <code>useValue</code> plat perdrait les builders hérités). <strong>Alternative écartée</strong> : <code>rxMethod</code> de <code>@ngrx/signals/rxjs-interop</code> (NgRx Signals non installé) — <code>effect()</code> du <code>@angular/core</code> couvre déjà le cas signal-native sans aller-retour <code>toObservable → pipe → subscribe</code>. Convention détaillée dans la skill <code>angular-signals &gt; Resource builders live on the port itself</code>. Adoption progressive aux 13 autres repositories suivie comme ticket Dette technique 🟡.</p>
+<p><strong>Tokens de thème</strong> — variables CSS sur <code>:root</code>, override sur <code>[data-theme='light']</code>. Material 3 wired en dual-theme. Default = sombre. Toggle dans le header, persistance localStorage, anti-FOUC via script inline dans <code>index.html</code>.</p>
+<p><strong>Zoneless explicite</strong> — <code>provideZonelessChangeDetection()</code> dans <code>app.config.ts</code>, pas de <code>zone.js</code> installé. La state est 100 % signal-based : un template re-rend automatiquement quand un signal qu'il lit change, plus une intercepte sur les events handlers et l'<code>async</code> pipe. Pas besoin d'<code>OnPush</code> puisque le rebuild est déjà opt-in par construction. La config est rendue lisible plutôt que devinée.</p>
+<p><strong>i18n runtime via <code>ngx-translate</code></strong> — fichiers <code>public/i18n/&lt;lang&gt;.json</code> chargés via le HTTP loader (assets statiques). Composants importent <code>TranslatePipe</code> (granulaire, pas tout <code>TranslateModule</code>). <code>LanguageService</code> est le miroir signal-based de <code>ThemeService</code> : signal + localStorage + fallback navigateur (<code>fr-*</code> → <code>fr</code>, sinon <code>en</code>). Le switcher header utilise un <code>mat-menu</code> avec drapeaux unicode. Aucune string utilisateur en dur dans le code — uniquement des clés. Les erreurs dynamiques côté TS passent par <code>TranslateService.instant('key', { params })</code>.</p>
+<h3 id="phase-4-authentification">Phase 4 — authentification</h3>
+<p><strong>Google = OIDC, pas OAuth2 simple — Spring traite les deux séparément</strong> — Google envoie systématiquement un ID token avec le code d'autorisation dès qu'on demande le scope <code>openid</code> (ce qui est notre cas). Spring Security route alors via <code>OidcAuthorizationCodeAuthenticationProvider</code> + <code>OidcUserService</code>, qui produit un <code>DefaultOidcUser</code> — pas le <code>OAuth2User</code> du chemin OAuth2 simple. Câbler <strong>uniquement</strong> <code>userService(customOAuth2UserService)</code> sur <code>userInfoEndpoint(...)</code> n'est jamais appelé pour Google ; il faut <strong>aussi</strong> câbler <code>oidcUserService(customOidcUserService)</code>. Sinon le principal stocké est le <code>DefaultOidcUser</code> Spring et le cast <code>as? AppUserPrincipal</code> dans <code>AuthService.getCurrentUser</code> crash en 500. Bug observé et fixé le 2026-05-17 — la stack trace <code>Unexpected principal type org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser — expected AppOAuth2User</code> est le smoking gun. Les deux services partagent un <code>findOrCreateUser</code> interne pour la persistance ; seul le wrapping en principal diffère.</p>
+<p><strong>SPA + backend sur ports distincts en dev → trust forwarded headers</strong> — sans config, le proxy CLI forward le <code>/oauth2/authorization/google</code> au backend avec <code>changeOrigin: true</code>, donc Spring voit <code>Host: localhost:8081</code> et envoie un <code>redirect_uri=http://localhost:8081/login/oauth2/code/google</code> à Google. Le browser fait alors la callback <strong>directement</strong> sur <code>:8081</code>, le cookie de session est posé sur cette origine, et le SPA tournant sur <code>:4201</code> n'y a pas accès (Chrome scope les cookies host-only par port). La solution : <code>xfwd: true</code> dans <code>frontend/proxy.conf.js</code> (ajoute <code>X-Forwarded-Host/Port/Proto</code>) + <code>server.forward-headers-strategy: framework</code> dans <code>application.yml</code> (Spring lit les forwarded headers via <code>ForwardedHeaderFilter</code>). L'OAuth dance entier passe alors par <code>localhost:4201</code> du point de vue browser + Google ; le cookie est stocké sur la bonne origine ; le SPA <code>/api/me</code> remonte la session. Conséquence : le redirect URI à enregistrer dans Google Cloud Console est <code>http://localhost:&lt;FRONTEND_HOST_PORT&gt;/login/oauth2/code/google</code> (le port front, pas backend).</p>
+<p><strong>CSRF re-enabled avec pattern cookie-based SPA</strong> — <code>CookieCsrfTokenRepository.withHttpOnlyFalse()</code> écrit le token dans un cookie <code>XSRF-TOKEN</code> lisible par JS (Angular's <code>HttpClient</code> le lit auto, set le header <code>X-XSRF-TOKEN</code> sur POST/PUT/PATCH/DELETE relatifs). <code>CsrfTokenRequestAttributeHandler</code> (plain, <strong>pas</strong> le <code>XorCsrfTokenRequestAttributeHandler</code> par défaut Spring 6) parce que la SPA forward la valeur raw du cookie sans pouvoir désobfusquer un XOR. <code>CsrfTokenResponseFilter</code> (<code>OncePerRequestFilter</code> custom, inséré après <code>CsrfFilter</code>) touch <code>csrfToken?.token</code> à chaque request pour forcer l'écriture du cookie — sans ça Spring 6 résout le token lazy et le cookie n'est jamais écrit, donc la SPA n'a rien à forwarder et tout POST 403. Activé dans <strong>les deux</strong> filter chains (prod via <code>SecurityConfig</code>, dev via <code>LocalNoAuthSecurityConfig</code>) pour matcher le shape — disabling en dev ferait apparaître des bugs uniquement au switch en oauth mode.</p>
+<p><strong><code>defaultSuccessUrl</code> configurable via <code>app.frontend-url</code></strong> — Spring's default redirect post-OAuth est <code>/</code> (résolu relativement au host). Avec <code>forward-headers-strategy: framework</code>, ce <code>/</code> résoudrait vers le SPA en dev. Mais on garde un override explicite via <code>@Value("\${app.frontend-url:/}")</code> pour deux raisons : (a) si jamais un dev oublie d'activer <code>xfwd</code>, l'override absolu sauve l'UX (atterrissage sur le SPA quand même) ; (b) en prod avec un reverse proxy, on pourra y mettre un FQDN dédié si besoin. Le défaut <code>/</code> reste correct pour la prod single-origin.</p>
+<p><strong>Profile <code>local-no-auth</code> bypass complet pour le dev solo</strong> — <code>LocalNoAuthSecurityConfig</code> <code>@Profile("local-no-auth")</code> remplace <code>SecurityConfig</code> (qui a <code>@Profile("!local-no-auth")</code>). <code>LocalNoAuthFilter</code> (<code>OncePerRequestFilter</code>) injecte un <code>AppOAuth2User</code> synthétique référençant la row <code>dev@local.test</code> seedée au boot par <code>LocalNoAuthUserInitializer</code> (<code>CommandLineRunner</code>, idempotent). <strong>Pas de session HTTP, pas d'OAuth dance</strong> — <code>tilt up</code> reste 0-friction sans config Google. Le toggle <code>BACKEND_AUTH_MODE=no-auth|oauth</code> (<code>.env</code>) est lu <strong>au runtime</strong> dans le <code>serve_cmd</code> shell du Tiltfile (pas au parse Starlark) ; 2 boutons Tilt « Mode → … » flippent la valeur en éditant <code>.env</code> et touchent <code>application.yml</code> pour redéclencher le serve_cmd, qui re-calcule les <code>--spring.profiles.active</code> sur la base de la nouvelle valeur. CSRF reste enabled même sous <code>local-no-auth</code> pour matcher le shape.</p>
+<p><strong>Whitelist email = seed du rôle ADMIN, pas re-évaluation</strong> — <code>CustomOAuth2UserService.findOrCreateUser</code> lit <code>app.admin.emails</code> (env <code>APP_ADMIN_EMAILS</code>, comma-separated, case-insensitive) <strong>uniquement à la création</strong> de la row <code>User</code> : un email matchant → ADMIN, sinon USER. Re-appliquer la whitelist à chaque login écraserait une rétrogradation manuelle SQL (<code>UPDATE app_user SET role='USER'</code>), ce qui est anti-intuitif. La BDD est l'autorité post-creation ; promotion / rétrogradation ultérieure via SQL ou endpoint admin futur.</p>
+<p><strong>Secrets boot-time vs runtime-editable</strong> — distinction stricte : (a) les credentials qui doivent être présentes au boot pour Spring Security wire-up (<code>SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}</code>, <code>APP_ADMIN_EMAILS</code>, <code>APP_FRONTEND_URL</code>) vivent dans <code>.env</code> (gitignored), sont <strong>sourced</strong> par le <code>serve_cmd</code> Tilt → exportées au sous-process gradle → lues par Spring via relaxed binding ; (b) les clés API runtime-editable (Anthropic, Twelve Data, Finnhub) <strong>restent</strong> dans <code>app_config</code> via <code>/settings/configuration</code> (Phase 2.5, SECRET slots) — pas en <code>.env</code>. <code>application-local.yml</code> est volontairement vide de credentials. En prod, même pattern : env vars injectées par le secret manager du provider (Phase 5 — ticket « GitHub Secrets + Environments » du backlog formalise le pipeline CI/CD).</p>
+<p><strong>Page <code>/error</code> globale + AuthService graceful-degraded</strong> — <code>AuthService.refresh</code> swallow tous les errors HTTP (401 et 5xx) et expose <code>lastError</code> signal, pour que le boot ne crash jamais. Sans ça, un backend down rendrait la SPA inbootable (Angular's <code>provideAppInitializer</code> failure = bootstrap failure). L'interceptor route les 5xx sur <code>/api/**</code> (sauf <code>/api/me</code> + <code>/api/config</code>) vers <code>/error</code> avec query params <code>status</code> + <code>url</code> — surface globale pour les états bloqués (e.g. session authentifiée mais user manquant en BDD). Deux actions sur la page : logout + retry, ou retour à <code>/login</code>. La toolbar applicative se masque automatiquement sur <code>/login</code> et <code>/error</code> via <code>App.isStandaloneRoute()</code> pour rendre ces pages en full-screen.</p>
+<p><strong>Multi-tenant FK — <code>@ManyToOne User</code> toléré cross-bounded-context</strong> (décision 2026-05-17 lors du wrap Phase 4 + code review « À discuter B ») — <code>Portfolio.kt</code> et <code>WatchlistEntry.kt</code> (entities JPA dans leurs <code>domain/</code> respectifs) référencent <code>com.portfolioai.auth.domain.User</code> via un <code>@ManyToOne</code> strict. C'est une <strong>dépendance cross-bounded-context au niveau du modèle</strong> — le <code>domain/</code> de <code>portfolio/</code> et <code>watchlist/</code> importe depuis le <code>domain/</code> de <code>auth/</code>. Le pattern DDD strict (« contexts share via ID, not aggregate ref ») recommanderait un <code>userId: UUID</code> plat + JOIN explicite côté requêtes. <strong>Choix pragmatique retenu</strong> : <code>@ManyToOne</code> pour deux raisons. (a) <strong>Verbosité JPQL</strong> — sans la relation, chaque query qui lit un Portfolio ou une WatchlistEntry devrait écrire <code>WHERE p.userId = :userId AND p.id = :id</code> à plat, et chaque nouvelle méthode <code>findXxx</code> du repository peut oublier le prédicat scope, créant un leak cross-user silencieux. Avec <code>@ManyToOne</code>, le scoping passe par les méthodes derivées Spring Data (<code>findByIdAndUserId</code>, <code>findAllByUserId</code>, <code>findByUserIdAndName</code>) qui sont lisibles d'un coup d'œil et impossibles à oublier (le compilateur force le second paramètre). (b) <strong>Invariant fort, pas un partage incident</strong> — <code>Portfolio</code> et <code>WatchlistEntry</code> n'existent <strong>que</strong> dans le contexte d'un User (FK <code>ON DELETE CASCADE</code> dans <code>V1__init.sql</code>). Ce n'est pas un couplage circonstanciel qu'un futur refacto voudra rompre — c'est l'essence du modèle multi-tenant. <strong>Alternative écartée</strong> (UUID plat + JOIN explicite) : 30 % de boilerplate JPQL en plus pour aucun gain ; un repository Spring Data dérivé devient un <code>@Query</code> annotation manuelle. <strong>Limite de la tolérance</strong> : seuls les <em>entities JPA</em> peuvent traverser un bounded context de cette façon ; les <em>ports</em> (<code>MarketChartClient</code>, <code>LlmClient</code>, etc.) restent strictement isolés dans leur context — un port qui dépendrait d'un type d'un autre context signalerait un vrai problème de modélisation. <strong>Trace dans le code</strong> : commentaire d'intention dans <code>Portfolio.kt:23-28</code> (au-dessus du <code>@ManyToOne</code>) et <code>WatchlistEntry.kt:18-27</code> (KDoc de classe qui couvre la contrainte UNIQUE <code>(user_id, symbol)</code> + propagation <code>ON DELETE CASCADE</code>).</p>
+<hr />
+<h2 id="modele-pipeline-danalyse-vision-phase-3-phase-6">Modèle pipeline d'analyse (vision Phase 3 + Phase 6)</h2>
+<blockquote>
+<p><strong>Statut</strong> : design cible, non encore implémenté. Documenté ici pour cadrer les prochains tickets backlog Phase 6 (« DAG unifié » Vague 1 #1, « Réintégration Phase 0 » Vague 1 #2, « Page Jobs » Vague 1 #3, « Cron pré-chauffe » Vague 2 #4). Voir <code>docs/metier/vision.md &gt; Le pipeline d'analyse</code> pour la framing produit.</p>
+</blockquote>
+<h3 id="concept-central">Concept central</h3>
+<p>L'application est un <strong>DAG de jobs</strong> dont les <strong>feuilles</strong> sont les analyses ticker individuelles et les <strong>parents</strong> sont des compositions au-dessus (analyse portefeuille, vue cross-watchlist, etc.). Chaque nœud est cache-aware : il consulte la persistence avant de firer un calcul lourd. Les feuilles partagent leur cache entre toutes les origines de trigger (ouverture manuelle de dossier, parent de pipeline, cron).</p>
+<div class="highlight"><pre><span></span><code>PortfolioAnalysis(today, portfolioId)
+├── TickerAnalysis(VOO, today)      [cache hit  → DONE_CACHED, 0 LLM]
+├── TickerAnalysis(NVDA, today)     [cache miss → RUNNING → DONE]
+├── TickerAnalysis(MSFT, today)     [cache hit  → DONE_CACHED]
+└── PortfolioAggregation(today)     [waits-for-all-leaves → DONE]
+</code></pre></div>
+<h3 id="modele-de-donnees-table-job-unifiee">Modèle de données — table <code>job</code> unifiée</h3>
+<p>Migration cible — rebuild greenfield au-dessus de la table existante <code>ticker_narrative_job</code> (Phase 1, seule survivante après le décommissionnement Phase 0 / V6) :</p>
+<table>
+<thead>
+<tr>
+<th>Colonne</th>
+<th>Type</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>UUID</td>
+<td>PK</td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td>VARCHAR</td>
+<td><code>TICKER_ANALYSIS</code> / <code>PORTFOLIO_AGGREGATION</code> / <code>MARKET_REFRESH</code> / … (extensible)</td>
+</tr>
+<tr>
+<td><code>parent_id</code></td>
+<td>UUID?</td>
+<td>FK self pour la relation DAG ; null pour les nœuds racine</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>VARCHAR</td>
+<td><code>PENDING</code> / <code>RUNNING</code> / <code>DONE</code> / <code>DONE_CACHED</code> / <code>ERROR</code> / <code>CANCELLED</code></td>
+</tr>
+<tr>
+<td><code>origin</code></td>
+<td>VARCHAR</td>
+<td><code>dashboard</code> / <code>cron</code> / <code>api</code> / <code>parent</code> (déclenché par un job parent)</td>
+</tr>
+<tr>
+<td><code>cache_key</code></td>
+<td>VARCHAR</td>
+<td>clé déterministe (e.g. <code>TickerAnalysis:NVDA:2026-05-07</code>) — sert à la dedup et au lookup cache</td>
+</tr>
+<tr>
+<td><code>target_id</code></td>
+<td>UUID?</td>
+<td>FK vers la ressource produite (<code>ticker_narrative_snapshot</code> pour une feuille, future <code>portfolio_analysis_snapshot</code> pour un parent)</td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td>JSONB</td>
+<td>input du job (symbol + date pour une feuille, portfolio_id + date pour un parent)</td>
+</tr>
+<tr>
+<td><code>result_summary</code></td>
+<td>TEXT?</td>
+<td>message court pour l'UI (« cached snapshot from 09:32 » / « LLM call 8.4s, retry 0 »)</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>TEXT?</td>
+<td>trace résumée si <code>status = ERROR</code></td>
+</tr>
+<tr>
+<td><code>created_at</code> / <code>started_at</code> / <code>ended_at</code></td>
+<td>TIMESTAMP</td>
+<td>timing</td>
+</tr>
+</tbody>
+</table>
+<h3 id="machine-a-etats">Machine à états</h3>
+<div class="highlight"><pre><span></span><code>                ┌───────────────┐
+                │   PENDING     │  (créé, en attente de slot)
+                └───────┬───────┘
+                        │ leaf : lookup cache
+                        ▼
+        ┌───────────────────────────────┐
+        │  cache hit ?                  │
+        │  ───────                      │
+        │  oui : DONE_CACHED (terminal) │
+        │  non : RUNNING                │
+        └───────┬───────────────────────┘
+                │
+                ▼
+        ┌───────────────┐       ┌───────────────┐
+        │   RUNNING     │ ────► │     DONE      │  (terminal)
+        └───────┬───────┘       └───────────────┘
+                │       \
+                │        \─►   ┌───────────────┐
+                │              │     ERROR     │  (terminal, retryable)
+                │              └───────────────┘
+                │
+                └─►   ┌───────────────┐
+                      │   CANCELLED   │  (terminal, parent-cancelled)
+                      └───────────────┘
+</code></pre></div>
+<p>Un parent <code>PortfolioAggregation</code> reste en <code>PENDING</code> tant que <strong>toutes</strong> ses feuilles ne sont pas dans un état terminal (<code>DONE</code> / <code>DONE_CACHED</code> / <code>ERROR</code> / <code>CANCELLED</code>). Le parent peut donc démarrer même si une feuille a <code>ERROR</code> — l'agrégation décide d'inclure ou pas la position selon sa propre logique métier (e.g. « si &gt; 50 % des feuilles ratent, le parent passe en ERROR sans agrégation »).</p>
+<h3 id="cache-aware-leaves">Cache-aware leaves</h3>
+<p>Le <code>TickerAnalysis(symbol, day)</code> consulte avant tout <code>ticker_narrative_snapshot</code> :</p>
+<div class="highlight"><pre><span></span><code><span class="kd">fun</span><span class="w"> </span><span class="nf">executeLeaf</span><span class="p">(</span><span class="n">symbol</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="n">day</span><span class="p">:</span><span class="w"> </span><span class="n">LocalDate</span><span class="p">):</span><span class="w"> </span><span class="n">Job</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cacheKey</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span><span class="w"> </span><span class="n">day</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">existing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">snapshotRepo</span><span class="p">.</span><span class="na">findFreshFor</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span><span class="w"> </span><span class="n">day</span><span class="p">)</span><span class="w">  </span><span class="c1">// &lt;30 min, ou même-jour selon politique</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">existing</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">job</span><span class="p">.</span><span class="na">markCached</span><span class="p">(</span><span class="n">existing</span><span class="p">.</span><span class="na">id</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;snapshot from </span><span class="si">${</span><span class="n">existing</span><span class="p">.</span><span class="na">generatedAt</span><span class="si">}</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="n">job</span><span class="p">.</span><span class="na">markRunning</span><span class="p">()</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">snapshot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tickerNarrativeService</span><span class="p">.</span><span class="na">generate</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">job</span><span class="p">.</span><span class="na">markDone</span><span class="p">(</span><span class="n">snapshot</span><span class="p">.</span><span class="na">id</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;LLM call </span><span class="si">${</span><span class="n">snapshot</span><span class="p">.</span><span class="na">latencyMs</span><span class="si">}</span><span class="s">ms&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>La politique de fraîcheur du cache est un point d'arbitrage : 30 min (cohérent avec la dedup actuelle Phase 1) vs même-jour calendaire vs séance de marché (jour de bourse). Le choix oriente l'économie LLM et la prévisibilité de l'UX.</p>
+<h3 id="origines-de-trigger">Origines de trigger</h3>
+<p>Le <strong>même</strong> primitif <code>TickerAnalysis(symbol, day)</code> est invoqué depuis trois entry points distincts, chacun annoté <code>origin = ?</code> :</p>
+<ol>
+<li><strong><code>origin = dashboard</code></strong> — l'utilisateur ouvre un dossier ticker (Phase 1) ou clique « Analyser le portefeuille » (parent qui crée des enfants <code>origin = parent</code>).</li>
+<li><strong><code>origin = cron</code></strong> — un scheduler quotidien hors heures de bureau crée des feuilles pour toutes les positions OPEN d'un user (<code>portfolio.assets.filter { OPEN }.map { TickerAnalysis(it.ticker, today) }</code>). L'utilisateur arrive le matin sur un dashboard pré-chauffé.</li>
+<li><strong><code>origin = api</code></strong> — un endpoint REST <code>POST /api/jobs/ticker-analysis</code> permet à un script externe (cf. workflow GitHub Releases Phase 5, ou un futur webhook broker) de déclencher des analyses.</li>
+</ol>
+<p>La dedup se fait sur <code>cache_key</code> : si un job <code>RUNNING</code> existe déjà pour la même clé, le nouveau request <strong>rejoint</strong> ce job au lieu d'en créer un second. C'est l'extension du pattern de dedup actuel <code>TickerNarrativeService.dedupWindow = 5 min</code> vers une dedup déterministe par clé plutôt que temporelle.</p>
+<h3 id="implications-cote-frontend">Implications côté frontend</h3>
+<p>Le composant « Pipeline » (futur, page Jobs Phase 3) devient une vue arborescente :</p>
+<ul>
+<li>Chaque parent collapse / expand pour révéler ses enfants</li>
+<li>Indicateur visuel par feuille : <code>⚡ cache</code> / <code>⏱ running</code> / <code>✅ done</code> / <code>⚠ error</code> / <code>⏸ cancelled</code></li>
+<li>Click sur une feuille → ouvre la ressource produite (<code>ticker_narrative_snapshot</code> → page dossier ticker à la date du snapshot, lecture-seule pour l'observabilité)</li>
+<li>Click sur un parent ERROR → bouton « Retry failed leaves only » qui re-PENDING uniquement les enfants en ERROR</li>
+<li>Stream live via SSE tant qu'un job du DAG est non-terminal ; arrêt automatique quand tout est terminal. L'infrastructure de transport est déjà en place pour les jobs ticker (Phase 2.5 — cf. <code>JobEventPublisher</code> côté backend, <code>JobStreamService</code> côté frontend) ; la page Jobs n'aura qu'à consommer les mêmes événements à l'échelle d'un DAG plutôt que d'un seul nœud.</li>
+</ul>
+<h3 id="pourquoi-pas-un-orchestrateur-externe-temporal-airflow-etc">Pourquoi pas un orchestrateur externe (Temporal, Airflow, etc.)</h3>
+<p>Tentation de réflexe : « un DAG de jobs, c'est ce que fait Temporal/Airflow nativement ». Volontairement écarté en v1 pour le projet :</p>
+<ul>
+<li><strong>Single-user, low concurrency</strong> — un user, ~10 positions max, ~1 portfolio analysis par jour. Le surcoût opérationnel d'un orchestrateur externe (cluster, schéma BDD séparé, déploiement, monitoring) dépasse largement le bénéfice.</li>
+<li><strong>Pas de retry distribué</strong> — on tourne sur une seule JVM. Spring <code>@Async</code> + une <code>BlockingQueue</code> ou un <code>ThreadPoolTaskExecutor</code> suffisent largement.</li>
+<li><strong>Pas de workflows multi-step à compenser</strong> — chaque job est court (~10 s LLM), idempotent au cache-key, et sans side-effect distribué qui demanderait de la compensation transactionnelle.</li>
+</ul>
+<p>Si un jour on bascule en multi-user à fort trafic (Phase 5+ : SaaS), Temporal devient pertinent. D'ici là, un schéma BDD <code>job</code> + un thread pool Spring + un poll côté frontend = 95 % du bénéfice à 5 % de la complexité.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
