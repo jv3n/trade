@@ -5,113 +5,92 @@ description: Folder conventions for the PortfolioAI backend (Kotlin + Spring Boo
 
 # Backend Folder Structure
 
-PortfolioAI's backend is a **single Spring Boot module** organised by **bounded context**. Each top-level package under `com.portfolioai/` is one context (one product capability) and follows the same `domain/` → `application/` → `infrastructure/` hexagonal split.
+A **single Spring Boot module** organised by **bounded context**. Each top-level package under `com.portfolioai/` is one context with the same `domain/` → `application/` → `infrastructure/` hexagonal split inside.
 
-There is **no top-level `domain/`, `application/`, or `infrastructure/` package**. The split is *inside* each context, not above it. This keeps related code colocated and makes "what does the `news` module own?" answerable by reading a single tree.
+**No top-level `domain/`, `application/`, or `infrastructure/` package.** The split is *inside* each context, not above it.
 
 ```
 backend/
 ├── build.gradle.kts
 ├── src/main/
 │   ├── resources/
-│   │   ├── application.yml                    # default profile
-│   │   ├── application-local.yml              # local profile (gitignored — API keys live here)
-│   │   └── db/migration/V*.sql                # Flyway scripts, append-only
+│   │   ├── application.yml
+│   │   ├── application-local.yml              # gitignored — API keys
+│   │   └── db/migration/V*.sql                # Flyway, append-only
 │   └── kotlin/com/portfolioai/
-│       ├── BackendApplication.kt              # @SpringBootApplication entry point
-│       ├── shared/                            # cross-cutting beans + exceptions (today: GlobalExceptionHandler, UpstreamUnavailableException)
-│       └── <bounded-context>/                 # one folder per context — 9 today
-│           ├── domain/                        # pure Kotlin — no Spring, no Jackson, no JPA annotations
-│           │   ├── <Aggregate>.kt             # data/sealed classes, value objects
+│       ├── BackendApplication.kt
+│       ├── shared/                            # cross-cutting beans + exceptions (GlobalExceptionHandler, UpstreamUnavailableException)
+│       └── <bounded-context>/                 # 9 today: auth, market, analysis, portfolio, watchlist, news, analyst, earnings, config
+│           ├── domain/                        # pure Kotlin — no Spring, no Jackson, no JPA
+│           │   ├── <Aggregate>.kt
 │           │   ├── <ValueObject>.kt
-│           │   ├── <Capability>Client.kt      # PORT — interface (outbound port for the application)
-│           │   └── <DomainException>.kt       # context-specific only — cross-context exceptions live in shared/
+│           │   ├── <Capability>Client.kt      # PORT — outbound port for the application
+│           │   └── <DomainException>.kt       # context-specific only — cross-context exceptions go in shared/
 │           ├── application/                   # Spring services orchestrating the domain
-│           │   ├── <UseCase>Service.kt        # @Service, constructor injection only — imports the port from domain/
-│           │   ├── <Helper>.kt                # supporting beans (Parser, Validator, Recorder…)
-│           │   └── dto/                       # HTTP-facing DTOs (request + response)
-│           │       └── <Name>Dto.kt
+│           │   ├── <UseCase>Service.kt        # @Service, constructor injection only
+│           │   ├── <Helper>.kt                # Parser, Validator, Recorder…
+│           │   └── dto/<Name>Dto.kt           # HTTP-facing DTOs
 │           └── infrastructure/                # adapters — Spring details, HTTP, persistence
-│               ├── http/                      # @RestController + URL routing
-│               │   └── <Name>Controller.kt
-│               ├── persistence/               # Spring Data JPA repositories + native queries
+│               ├── http/<Name>Controller.kt
+│               ├── persistence/
 │               │   ├── <Aggregate>Repository.kt
-│               │   └── <Name>Query.kt         # for native SQL (when @Query gets unwieldy)
-│               └── <capability>/              # subfolder when a port has ≥2 adapters (mock + real)
-│                   ├── Finnhub<X>Client.kt    # ADAPTER — real provider, implements domain port
-│                   ├── Mock<X>Client.kt       # ADAPTER — deterministic fallback
-│                   ├── Routing<X>Client.kt    # @Primary — delegates per call to selected adapter
-│                   ├── Finnhub<X>Models.kt    # wire DTOs (Jackson-bound, separate from domain)
-│                   └── Finnhub<X>Mappers.kt   # wire → domain mappers
+│               │   └── <Name>Query.kt         # native SQL when @Query gets unwieldy
+│               └── <capability>/              # when a port has ≥2 adapters
+│                   ├── Finnhub<X>Client.kt    # real provider
+│                   ├── Mock<X>Client.kt       # deterministic fallback
+│                   ├── Routing<X>Client.kt    # @Primary — delegates per call
+│                   ├── Finnhub<X>Models.kt    # wire DTOs (Jackson)
+│                   └── Finnhub<X>Mappers.kt   # wire → domain
 ```
 
-## Bounded contexts (9 today)
+When in doubt about where a new file goes: **what product capability does it serve?** That answers the bounded context. Then the hexagonal split inside is mechanical.
 
-| Package         | Owns                                                       |
-|-----------------|------------------------------------------------------------|
-| `analysis/`     | Ticker narrative pipeline, LLM dispatch, prompt management, observability |
-| `analyst/`      | Analyst recommendations + price targets (Finnhub)          |
-| `config/`       | Runtime-editable settings (`app_config` table)             |
-| `earnings/`     | Earnings history + next-date calendar (Finnhub)            |
-| `market/`       | Market chart, indicators, sector benchmark, symbol search  |
-| `news/`         | Per-ticker headlines (Finnhub)                             |
-| `portfolio/`    | Wealthsimple CSV import, portfolios, historical snapshots  |
-| `watchlist/`    | Manual ticker watchlist                                    |
-| `shared/`       | Cross-cutting beans with no context home (rare)            |
-
-When in doubt about where to place a new file: **what product capability does it serve?** That answers the bounded context. Then the hexagonal split inside is mechanical (pure Kotlin → `domain/`, Spring orchestration → `application/`, framework adapter → `infrastructure/`).
-
-## Conventions
+## Conventions per layer
 
 ### `domain/`
 
-- Pure Kotlin only. **No Spring**, no Jackson, no `@Entity`, no `@Component`.
-- Aggregates, value objects, enums (`Sentiment`, `JobPhase`, `Timeframe`). Context-specific domain exceptions live here too ; cross-context exceptions like `UpstreamUnavailableException` go in `shared/` (the 503 contract is identical across providers — no reason for `news/` to import from `market/domain/`).
-- **Outbound ports** (`*Client.kt`, `*Classifier.kt` — interfaces the application calls) also live here. The domain owns the contract it depends on ; adapters in `infrastructure/<capability>/` realise it. Keep the port file pure : same no-Spring, no-Jackson rule as the rest of `domain/`.
+- **Pure Kotlin only.** No Spring, no Jackson, no `@Entity`, no `@Component`.
+- Aggregates, value objects, enums. Context-specific domain exceptions live here; cross-context exceptions like `UpstreamUnavailableException` go in `shared/`.
+- **Outbound ports** (`*Client.kt`, `*Classifier.kt`) live here. The domain owns the contract it depends on; adapters realise it. Keep the port file pure: same no-Spring rule as the rest of `domain/`.
 - Compilable in isolation — a domain test should not need Spring context.
-- Cross-context references are allowed but rare; if a context's domain depends on another, prefer passing the resolved value through the application layer.
 
 ### `application/`
 
-- `@Service` beans, **constructor injection only** (no `@Autowired` field injection, no `lateinit var`).
-- Each service orchestrates one use case (a method on `TickerService` corresponds to one HTTP endpoint's worth of logic). Split into helpers (`TickerNarrativeRunner`, `TickerNarrativeParser`, `PromptScoreRecorder`) when a service exceeds ~200 lines.
-- DTOs live in `application/dto/` regardless of which layer consumes them. They are the contract carried between application and HTTP — not domain types.
-- `@Async` methods must live on a **separate bean** from their caller (Spring AOP unwraps proxies; `this.async()` bypasses the proxy and runs synchronously).
-- `@Cacheable` lives here in the service, not in the adapter — except where stated otherwise (see `market/` exception in `architecture.md`). Cache key is always `symbol.toUpperCase()` (Java's, not Kotlin's `.uppercase()` — SpEL targets the Java method).
+- `@Service` beans, **constructor injection only** (no `@Autowired` field injection, no `lateinit var` on deps).
+- Each service orchestrates one use case. Split into helpers (`TickerNarrativeRunner`, `TickerNarrativeParser`) when a service exceeds ~200 lines.
+- DTOs live in `application/dto/` — the contract between application and HTTP, not domain types.
+- `@Async` methods on a **separate bean** from their caller (AOP proxy bypass otherwise — see `spring-boot` skill).
+- `@Cacheable` lives here, not on adapters (one legacy exception in `market/` documented in `architecture.md`). SpEL key uses Java's `.toUpperCase()`, not Kotlin's `.uppercase()`.
 
 ### `infrastructure/`
 
-- Everything Spring-coupled that isn't a `@Service`. Controllers, JPA repositories, RestTemplate-based clients, listeners (`OrphanedJobCleanupListener`, `CacheTtlListener`), config beans.
-- Three canonical subfolders : `http/` (controllers), `persistence/` (JPA + native queries), and optionally one per **external capability** (`market/`, `news/`, `analyst/`, `earnings/`, `llm/`) when that capability has its own port + ≥2 adapters.
-- The capability subfolder name mirrors the bounded context name when the context's *primary* port is external (`news/infrastructure/news/`, `analyst/infrastructure/analyst/`). For contexts with multiple capabilities (`market/` owns chart + sector + symbol search), each ships under the same `infrastructure/market/` umbrella because the wire models (`TwelveDataModels.kt`) are shared.
-- Standalone listeners or one-off beans (`OrphanedJobCleanupListener`, `ConfigTestClient`) live at the root of `infrastructure/` — promote to a subfolder only once a second file joins them.
+- Everything Spring-coupled that isn't a `@Service`. Controllers, JPA repositories, REST clients, listeners, config beans.
+- Three canonical subfolders: `http/` (controllers), `persistence/` (JPA + native queries), and optionally one per **external capability** (`news/`, `analyst/`, `earnings/`, `llm/`) when ≥2 adapters live there.
+- Standalone listeners or one-off beans (`OrphanedJobCleanupListener`, `ConfigTestClient`) at the root of `infrastructure/` — promote to a subfolder only when a second file joins them.
 
-### Port + adapter naming
+## Port + adapter naming — verbatim
 
-A bounded context that calls an external provider follows this naming pattern verbatim :
+- **Port** — `<Capability>Client.kt`: `interface NewsClient`, `interface MarketChartClient`. In `<context>/domain/`. Pure Kotlin.
+- **Real adapter** — `<Provider><Capability>Client.kt`: `FinnhubClient`, `TwelveDataClient`, `FinnhubAnalystClient`. One file per provider, in `infrastructure/<capability>/`.
+- **Mock adapter** — `Mock<Capability>Client.kt`: `MockNewsClient`, `MockMarketChartClient`. Deterministic synthetic data, default when no API key.
+- **Routing** — `Routing<Capability>Client.kt`: `RoutingNewsClient`, `@Primary`. Delegates each call to the adapter selected by `<context>.provider` in `AppConfigService`. **All adapters always instantiated** (no `@ConditionalOnProperty`).
+- **Wire models / mappers** — `<Provider>Models.kt` + `<Provider>Mappers.kt`. Keep separate so a provider quirk doesn't leak into domain types.
 
-- **Port** — `<Capability>Client.kt` : `interface NewsClient`, `interface MarketChartClient`. Lives in `<context>/domain/` (strict hexagonal — the domain owns the contracts it depends on). Pure Kotlin, no Spring annotations.
-- **Real adapter** — `<Provider><Capability>Client.kt` : `FinnhubClient`, `TwelveDataClient`, `FinnhubAnalystClient`. One file per provider, in `infrastructure/<capability>/`. Imports the port from `domain/`.
-- **Mock adapter** — `Mock<Capability>Client.kt` : `MockNewsClient`, `MockMarketChartClient`. Deterministic synthetic data, used as default when no API key is configured. Same `infrastructure/<capability>/` folder as the real adapter.
-- **Routing** — `Routing<Capability>Client.kt` : `RoutingNewsClient`, annotated `@Primary`. Delegates each call to the adapter selected by `<context>.provider` in `AppConfigService`. **All adapters are always instantiated** (no `@ConditionalOnProperty`) so a runtime switch lands at the next call. Lives alongside the other adapters in `infrastructure/<capability>/`.
-- **Wire models / mappers** — `<Provider>Models.kt` (Jackson-bound DTOs that mirror the provider's JSON exactly) + `<Provider>Mappers.kt` (`fun Foo.toDomain(): DomainFoo`). Keep them separate so a provider quirk doesn't leak into domain types.
+## Tests
 
-### Tests
+- Mirror the main package tree exactly. `analysis/application/TickerNarrativeParser.kt` → `analysis/application/TickerNarrativeParserTest.kt`.
+- Domain tests sit under `<context>/domain/` even though there's no Spring — proximity beats grouping by test style.
+- Integration tests on real PostgreSQL (no DB mocks). External providers mocked at the HTTP layer via `MockWebServer` (`okhttp3.mockwebserver`), not by stubbing the port — testing the adapter exercises the wire mapping too.
 
-- Tests live under `src/test/kotlin/com/portfolioai/` and **mirror the main package tree** exactly. `analysis/application/TickerNarrativeParser.kt` → `analysis/application/TickerNarrativeParserTest.kt`.
-- Domain tests sit under `<context>/domain/` even though there's no Spring there — proximity beats grouping by test style.
-- Integration tests on real PostgreSQL (no DB mocks). External providers are mocked at the HTTP layer via `MockWebServer` (`okhttp3.mockwebserver`), not by stubbing the port — testing the adapter exercises the wire mapping too.
+## Flyway
 
-### Flyway
-
-- Append-only : `V<N>__<short_snake_case>.sql`. Never rewrite a shipped migration ; add a new one.
-- One numbered file per logical schema change. Don't batch unrelated changes into one V*.
-- Flyway runs with `repair-on-migrate` in `application-local.yml` only — never in `application.yml`.
+- Append-only: `V<N>__<short_snake_case>.sql`. Never rewrite a shipped migration; add a new one.
+- One numbered file per logical schema change. Don't batch unrelated changes.
+- `repair-on-migrate` in `application-local.yml` only — never in `application.yml`.
 
 ## When NOT to use this layout
 
-- **Don't create a top-level `domain/`, `application/`, or `infrastructure/` package.** The split is per bounded context. A new global folder is almost always a sign you're splitting by layer instead of by capability.
-- **Don't put DTOs in `infrastructure/http/`.** Controllers consume them, but they belong to `application/dto/` because the application layer produces and validates them.
-- **Don't put JPA `@Entity` annotations on domain types.** If a domain class needs persistence, either (a) it's already plain enough that the JPA repository handles it (most cases here, e.g. `WatchlistEntry`), or (b) introduce a separate `<Name>Entity.kt` in `infrastructure/persistence/` with a mapper — but defer this until JPA contamination of domain becomes a real friction.
-- **Don't create a `shared/` subfolder inside a bounded context.** Cross-context utilities go in top-level `shared/`. Intra-context helpers go next to their caller in `application/`.
-- **Don't anticipate a `<capability>/` subfolder under `infrastructure/` for a single adapter.** Wait until a second adapter (mock or real) joins it — premature subfoldering buries one file.
+- **Don't** create a top-level `domain/`, `application/`, or `infrastructure/` package. Splitting by layer instead of by capability is a smell.
+- **Don't** put DTOs in `infrastructure/http/`. They belong to `application/dto/`.
+- **Don't** put JPA `@Entity` on domain types. Either it's plain enough (most cases here, e.g. `WatchlistEntry`) or introduce a separate `<Name>Entity.kt` in `infrastructure/persistence/` — defer until JPA contamination becomes real friction.
+- **Don't** anticipate a `<capability>/` subfolder under `infrastructure/` for a single adapter. Wait for the second.

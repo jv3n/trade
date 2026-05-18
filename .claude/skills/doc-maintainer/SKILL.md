@@ -12,56 +12,58 @@ Spawn the **`doc-maintainer`** subagent (defined in `.claude/agents/doc-maintain
 
 - User types `/doc-maintainer`.
 - User asks for a doc check, doc pass, doc audit, doc review.
-- After a structurally significant change has been merged on the current branch — new backend module, new Flyway migration, new external provider, new frontend repository, refactored config, new CI workflow. The agent's value is highest right after these because the main thread already moved on but the doc set hasn't caught up yet.
+- After a structurally significant change has been merged on the current branch — new backend module, new Flyway migration, new external provider, new frontend repository, refactored config, new CI workflow. The agent's value is highest right after these because the main thread has already moved on but the doc set hasn't caught up yet.
 
 ## How to invoke
 
-Use the **`Agent` tool** with :
+Use the **`Agent` tool** with:
 
 - `subagent_type: "doc-maintainer"` — picks up the agent definition from `.claude/agents/doc-maintainer.md`, including the read-only tool whitelist (`Read, Glob, Grep`).
-- `description: "Doc-set audit"` (or similar 3-5 word).
-- `prompt`: a self-contained brief explaining what to audit. Always include :
+- `description: "Doc-set audit"` (or similar 3–5 words).
+- `prompt`: a self-contained brief explaining what to audit. Always include:
   - The doc set scope (full audit by default — see below).
   - Expected output shape (punch-list, prioritised, no patches applied).
-  - Any user-supplied focus area (e.g. "concentre-toi sur Phase 2") if relevant.
+  - Any user-supplied focus area (e.g. "focus on Phase 2") if relevant.
 
 ### Default prompt template
 
 ```
-Audit le doc set PortfolioAI complet. Fichiers sous responsabilité (voir le tableau dans ton system prompt) :
-`README.md`, docs/metier/*, docs/technique/*, docs/devops/*, docs/projet/* (sauf data-input/ et data-input-local/), plus le `docs/CHANGELOG.md`.
+Audit the full PortfolioAI doc set. Files under your responsibility (see the table in your system prompt):
+`README.md`, docs/metier/*, docs/technique/*, docs/devops/*, docs/projet/* (except data-input/ and data-input-local/), plus `docs/CHANGELOG.md`.
 
-Trois capacités à appliquer :
-1. Cross-check factuel — confronte les claims des docs à la réalité du repo (modules backend, repositories frontend, providers, workflows CI, migrations Flyway, commandes, statut des phases). Côté `README.md` : vérifier que les badges CI pointent vers des workflows qui existent et que la table « Documentation » utilise des URLs MkDocs hostées `https://jv3n.github.io/trade/<path>/`, pas des liens relatifs `docs/<path>.md` ; signaler aussi tout drift dans les deux sens entre les rows de la table et les entrées `mkdocs.yml > nav`.
-2. Ton — vérifie cohérence titres bas-de-casse, tirets cadratin, narratif > bullets pour les arguments.
-3. Cross-link — vérifie que chaque lien relatif résout, et que toute doc nouvellement créée est référencée depuis un point d'entrée.
+Three capabilities to apply:
+1. Factual cross-check — confront the docs' claims with the repo's reality (backend modules, frontend repositories, providers, CI workflows, Flyway migrations, commands, phase status). On `README.md`: verify that CI badges point to existing workflows and that the "Documentation" table uses MkDocs hosted URLs `https://jv3n.github.io/trade/<path>/`, not relative `docs/<path>.md` links; also flag drift in either direction between table rows and `mkdocs.yml > nav` entries.
+2. Tone — verify consistency of lowercase headings, em-dashes, narrative-over-bullets for arguments.
+3. Cross-link — verify every relative link resolves, and that every newly created doc is referenced from an entry point.
 
-Sortie : punch-list structurée par capacité, priorités HIGH/MED/LOW, verdict global. Pas d'edit, pas de patch appliqué.
+Output: punch-list structured by capability, priorities HIGH/MED/LOW, overall verdict. No edits, no patches applied.
 ```
 
 ## What NOT to do from this skill
 
-- **Don't audit yourself in the main thread.** The whole point of the subagent is to keep the main conversation context clean. If you read `architecture.md` + `ops.md` + 8 other docs in main, you waste tokens that the user needs for the actual work.
+- **Don't audit yourself in the main thread.** The whole point of the subagent is to keep the main conversation context clean. If you read `architecture.md` + `ops.md` + 8 other docs in main, you waste tokens the user needs for the actual work.
 - **Don't auto-apply the punch-list.** Return it to the user verbatim. They decide what to patch, and patching happens back in the main thread (where they have the code context).
 - **Don't promote findings to the backlog automatically.** Per CLAUDE.md ("Documentation > audits/"), the user decides which findings become actions.
 
 ## After the audit returns
 
-Relay the agent's punch-list to the user as-is (or with very light formatting). Then wait for their direction :
-- "Patch les HIGH" → apply the HIGH-priority fixes in the main thread.
-- "Patch tout" → apply everything.
-- "Ignore [n]" → skip a specific finding (note pourquoi si non-évident).
-- Silence ou "OK noté" → do nothing further, the audit was informational.
+Relay the agent's punch-list to the user as-is (or with very light formatting). Then wait for direction:
+
+- "Patch the HIGH" → apply the HIGH-priority fixes in the main thread.
+- "Patch everything" → apply all findings.
+- "Ignore [n]" → skip a specific finding (note why if non-obvious).
+- Silence or "OK noted" → do nothing further, the audit was informational.
 
 ## After patches are applied — update the CHANGELOG
 
-**This step is mandatory** as soon as one or more patches have been written to disk. Skip it only when the user said "OK noté" / "ignore tout" — i.e. no doc file was modified.
+**This step is mandatory** as soon as one or more patches have been written to disk. Skip it only when the user said "OK noted" / "ignore all" — i.e. no doc file was modified.
 
-Append a new dated section to `docs/CHANGELOG.md` (or extend today's section if it already exists). Format :
+Append a new dated section to `docs/CHANGELOG.md` (or extend today's section if it already exists). Format:
+
 - One section per date `## YYYY-MM-DD` (reverse-chronological — today's section goes at the **top**, just under the introduction header).
-- Bullets grouped by area : `### metier/`, `### technique/`, `### devops/`, `### projet/`, `### .claude/`, `### Racine` (only the areas actually touched today).
-- One bullet per file modified, narrative one-liner that explains **what changed and why** — not just the file path. Example : `` `architecture.md` : "trois clés" → "cinq clés" suite à l'extension Phase 2 du scope config (ajout des toggles `market.provider` / `news.provider`). ``
+- Bullets grouped by area: `### metier/`, `### technique/`, `### devops/`, `### projet/`, `### .claude/`, `### Racine` (only the areas actually touched today).
+- One bullet per modified file, narrative one-liner that explains **what changed and why** — not just the file path. Example: `` `architecture.md`: "three keys" → "five keys" following the Phase 2 extension of the config scope (added the `market.provider` / `news.provider` toggles). ``
 
-Why : the CHANGELOG is the only trace of *how* the doc set evolved (order, motivation, drift that was fixed). When a future audit flags something weird, the CHANGELOG is where you check whether it's a known recent change vs a real regression.
+Why: the CHANGELOG is the only trace of *how* the doc set evolved (order, motivation, drift that was fixed). When a future audit flags something odd, the CHANGELOG is where you check whether it's a known recent change vs a real regression.
 
 The agent itself never writes the CHANGELOG — it stays read-only by design. The main thread (you, in this conversation) writes the entry as the final step of the patch session, before declaring done.
