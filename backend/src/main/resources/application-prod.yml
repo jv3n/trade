@@ -1,0 +1,84 @@
+# Spring profile `prod` overrides for PortfolioAI on Cloud Run + Supabase Postgres
+#
+# Chargé automatiquement par Spring Boot quand `SPRING_PROFILES_ACTIVE=prod` est posé
+# (injecté par Cloud Run via `service.yaml` env vars, cf. `devops/prod/service.yaml`).
+# **Pas de secrets ici** — uniquement des overrides de comportement (logging, pool size,
+# Flyway baseline). Les credentials runtime sont mountés via Cloud Run `--update-secrets`
+# depuis GCP Secret Manager, cf. `docs/devops/deploiement.md > §6`.
+
+server:
+  port: ${PORT:8080}  # Cloud Run injecte PORT, on respecte
+  # Reverse proxy Cloud Run + Cloudflare devant — Spring doit faire confiance aux
+  # headers X-Forwarded-* pour générer les redirect URIs OAuth correctement.
+  forward-headers-strategy: framework
+  # Pas d'arrêt brutal — laisse 30s pour drainer les requêtes en cours quand Cloud Run
+  # déploie une nouvelle révision (zero-downtime déploiement).
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  # DataSource — URL JDBC + creds inline lus depuis le secret `supabase-db-url`.
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}  # injecté via valueFrom.secretKeyRef côté Cloud Run
+    hikari:
+      maximum-pool-size: 10  # max instances Cloud Run = 3, max conn Supabase free = 60.
+                              # 3 × 10 = 30 connexions max simultanées, sous la limite.
+      minimum-idle: 0  # libère les connexions quand scale-to-zero
+      idle-timeout: 30000  # 30 s
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # pas `update` ni `create` en prod — Flyway gère le schema
+    properties:
+      hibernate:
+        format_sql: false  # pas de SQL verbose en prod
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0  # squash V1__init.sql livré Phase 4 — démarre à partir de V1
+
+  # Pas de Tomcat verbose en prod
+  mvc:
+    log-resolved-exception: false
+
+logging:
+  level:
+    root: INFO
+    com.portfolioai: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.web: WARN
+    okhttp3: WARN
+    org.flywaydb.core: INFO  # garde le log des migrations au boot
+
+  # Format ligne unique adapté à Cloud Logging (parsing automatique côté GCP)
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+
+# Actuator — endpoints minimaux pour Cloud Run probes + Healthcheck.io
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info  # pas de `env` ni `configprops` en prod (leak risk)
+  endpoint:
+    health:
+      probes:
+        enabled: true  # active `/actuator/health/liveness` + `/readiness`
+      show-details: never  # pas de details secrets dans le payload public
+
+# App-level settings — read by SecurityConfig + AuthService
+app:
+  frontend-url: ${APP_FRONTEND_URL}  # injecté par Cloud Run env var
+  admin:
+    emails: ${APP_ADMIN_EMAILS}  # injecté depuis secret manager
+
+# OAuth2 Google — creds injectées depuis Secret Manager via Cloud Run secretKeyRef
+spring.security.oauth2.client.registration.google:
+  client-id: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID}
+  client-secret: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET}
+  scope: openid, profile, email

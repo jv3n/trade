@@ -53,35 +53,17 @@ Si `tilt up` échoue sur « port already allocated » (le plus courant : un Post
 
 ### Configurer le LLM
 
-Le backend a besoin d'un LLM pour générer les narratifs. Crée le fichier `backend/src/main/resources/application-local.yml` (gitignoré, jamais commit). Deux options selon ton contexte :
+Le backend a besoin d'un LLM pour générer les narratifs. Le fichier `backend/src/main/resources/application-local.yml` **existe déjà** (committé depuis 2026-05-18, sans secrets — juste les overrides de comportement dev). Le défaut est `llm.provider: ollama`. Deux paths pour customiser :
 
-**Option A — Claude (recommandé)** : qualité narrative nettement supérieure, latence 1-3 s, requiert une clé Anthropic.
+**Option A — Claude (recommandé)** : qualité narrative supérieure, latence 1-3 s, requiert une clé Anthropic.
 
-```yaml
-anthropic:
-  api:
-    key: sk-ant-...    # ta clé Claude
+1. Récupère ta clé sur [console.anthropic.com](https://console.anthropic.com/).
+2. **Path A.1 — Runtime via UI (recommandé)** : démarre Tilt, ouvre `/settings/configuration > LLM`, colle la clé dans le slot SECRET `anthropic.api.key`, bascule `llm.provider` sur `claude`. **Aucun reboot**, stocké en BDD (`app_config`), survit aux restarts du backend.
+3. **Path A.2 — Boot-time via `.env`** : ajoute `ANTHROPIC_API_KEY=sk-ant-...` dans le `.env` à la racine (gitignored). Spring lit la var via relaxed binding (`ANTHROPIC_API_KEY` → `anthropic.api.key`). Optionnel : bascule `llm.provider: claude` dans `application-local.yml` si tu veux Claude par défaut au boot.
 
-llm:
-  provider: claude     # défaut Phase 1
+> **Important** : ne jamais coller la clé Anthropic directement dans `application-local.yml` — le fichier est committé, ça serait un leak public. La clé vit en `.env` (gitignored) ou en BDD via UI.
 
-market:
-  provider: mock       # voir plus bas — débloque le dev sans clé Twelve Data
-```
-
-**Option B — Ollama (local, sans clé)** : tourne offline, gratuit. Le défaut `qwen2.5:3b` répond en 5-10 s sur M1 — qualité narrative en retrait par rapport à Claude mais largement OK pour itérer.
-
-```yaml
-llm:
-  provider: ollama
-
-ollama:
-  base-url: http://ollama:11434
-  model: qwen2.5:3b    # 3B params, ~2 GB — défaut local rapide et fiable sur le JSON
-
-market:
-  provider: mock
-```
+**Option B — Ollama (local, sans clé)** : tourne offline, gratuit. C'est le défaut actuel d'`application-local.yml`. Le modèle `qwen2.5:3b` répond en 5-10 s sur M1 — qualité narrative en retrait par rapport à Claude mais largement OK pour itérer. **Rien à configurer**, `tilt up` suffit.
 
 Pense à télécharger un modèle au premier lancement : ouvre `/settings/configuration > LLM`, le panneau **État Ollama** affiche les modèles déjà pull localement et un bouton **Pull…** ouvre un dialog avec suggestions (`qwen2.5:3b` ~2 GB est le bon compromis sur M1, ou `qwen2.5:7b` / `llama3.2:3b` / `phi4-mini` si tu veux pousser la qualité). Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.
 
@@ -139,14 +121,14 @@ Le projet a cinq providers configurables, chacun avec une vraie implémentation 
 | Valeur | Quand l'utiliser |
 |---|---|
 | `mock` | Défaut, sans clé requise. `MockMarketChartClient` génère 260 bars OHLC déterministes par symbole (seed = `symbol.hashCode()`). Tous les indicateurs se calculent. Symboles réservés : `UNKNOWN` (404) et `RATELIMIT` (503) pour exercer les chemins d'erreur UI. |
-| `twelvedata` | Vraie data, défaut prod. REST documenté + apikey, free tier 800 credits/jour, TSX natif. Requiert `market.twelvedata.api-key` (env `TWELVEDATA_API_KEY`). **Crée un compte gratuit** sur [twelvedata.com](https://twelvedata.com/) puis récupère ta clé sur [https://twelvedata.com/account/api-keys](https://twelvedata.com/account/api-keys), et colle-la dans `application-local.yml` sous `market.twelvedata.api-key`. |
+| `twelvedata` | Vraie data, défaut prod. REST documenté + apikey, free tier 800 credits/jour, TSX natif. Requiert `market.twelvedata.api-key`. **Crée un compte gratuit** sur [twelvedata.com](https://twelvedata.com/) puis récupère ta clé sur [https://twelvedata.com/account/api-keys](https://twelvedata.com/account/api-keys). Deux paths pour la poser : (a) **UI runtime** `/settings/configuration > Providers de données` (slot SECRET, bouton Tester, persisté en BDD) — recommandé ; (b) **Boot-time** `TWELVEDATA_API_KEY=...` dans `.env` (Spring lit via relaxed binding). **Ne jamais coller la clé dans `application-local.yml`** — le fichier est committé. |
 
 ### News par ticker — `news.provider`
 
 | Valeur | Quand l'utiliser |
 |---|---|
 | `mock` | Défaut, sans clé requise. `MockNewsClient` génère 4-10 headlines synthétiques déterministes par symbole (templates variés, sources rotation Reuters/Bloomberg/CNBC, ~10 % de symboles "quiet" pour exercer l'empty-state UI). Idéal en itération pour ne pas faire chauffer le quota Finnhub. |
-| `finnhub` | Vraie data. REST + apikey, free tier 60 calls/min sans cap quotidien. Requiert `market.finnhub.api-key` (env `FINNHUB_API_KEY`). **Crée un compte gratuit** sur [finnhub.io/register](https://finnhub.io/register) puis récupère ta clé sur [finnhub.io/dashboard](https://finnhub.io/dashboard), et colle-la dans `application-local.yml` sous `market.finnhub.api-key`. |
+| `finnhub` | Vraie data. REST + apikey, free tier 60 calls/min sans cap quotidien. Requiert `market.finnhub.api-key`. **Crée un compte gratuit** sur [finnhub.io/register](https://finnhub.io/register) puis récupère ta clé sur [finnhub.io/dashboard](https://finnhub.io/dashboard). Deux paths pour la poser : (a) **UI runtime** `/settings/configuration > Providers de données` (slot SECRET, bouton Tester) — recommandé ; (b) **Boot-time** `FINNHUB_API_KEY=...` dans `.env`. **Ne jamais coller la clé dans `application-local.yml`** — le fichier est committé. |
 
 ### Recommandations analystes — `analyst.provider`
 

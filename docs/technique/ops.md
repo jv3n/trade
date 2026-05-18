@@ -10,7 +10,7 @@ Référence sur tout ce qui tourne autour du code lui-même : workflows GitHub A
 
 ## Workflows GitHub Actions
 
-Quatre workflows, chacun déclenché sur des paths différents pour ne pas relancer toute la chaîne à chaque commit :
+Cinq workflows, chacun déclenché sur des paths différents pour ne pas relancer toute la chaîne à chaque commit :
 
 | Workflow | Trigger | Job principal | Durée typique |
 |---|---|---|---|
@@ -18,6 +18,7 @@ Quatre workflows, chacun déclenché sur des paths différents pour ne pas relan
 | **Frontend CI** (`frontend.yml`) | `push master` / `pull_request` sur `frontend/**` | `npm ci` + `npm run lint` + `npm run build` + `npm run test:coverage` + sticky PR comment | 30-60 s |
 | **CodeQL** (`codeql.yml`) | `push master` / `pull_request` / weekly `cron 06:00 UTC lundi` | Matrix `java-kotlin` (build-mode `manual`) + `javascript-typescript` (build-mode `none`) | 2-3 min |
 | **Deploy docs** (`docs.yml`) | `push master` sur `docs/**` ou `mkdocs.yml` | `mkdocs gh-deploy` | <1 min |
+| **WIF Smoke Test** (`smoke-wif.yml`) | `workflow_dispatch` manuel uniquement | Exerce Workload Identity Federation (OIDC GitHub → access token GCP via SA `github-deploy@`) + `gcloud run services list` + `gcloud artifacts repositories describe backend` pour valider que `run.admin` + `artifactregistry.writer` marchent. Utilise `environment: production` donc exige une required reviewer approval avant exécution. À utiliser comme outil de diagnostic quand on doute du pipeline GCP ; pas câblé sur un événement push pour ne pas spam. Phase 5 deploy ouverture. | 30-60 s |
 
 ## Couverture de code
 

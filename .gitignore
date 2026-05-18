@@ -33,7 +33,9 @@ hs_err_pid*
 # ========================
 # Spring Boot
 # ========================
-backend/src/main/resources/application-local.yml
+# (application-local.yml + application-prod.yml committed since 2026-05-18 —
+#  no secrets in them, only behavior overrides. Secrets vivent dans .env (local)
+#  ou GCP Secret Manager (prod). Cf. CLAUDE.md > Data & secrets.)
 
 # ========================
 # Angular / Node

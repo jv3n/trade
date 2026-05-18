@@ -43,10 +43,15 @@ trade/
 ├── docs/
 │   ├── metier/      # vision.md, fonctionnalites.md
 │   ├── technique/   # architecture.md, developpement.md, developper.md, ddd.md, ops.md, providers.md
+│   ├── devops/      # commandes-pratiques.md, deploiement.md (Phase 5), decision-ollama-deploiement.md
 │   ├── projet/      # backlog.md, journal-livraisons.md, sources.md, commit-conventions.md, audits/
 │   ├── data-input/       # fake sample CSVs (versioned)
 │   └── data-input-local/ # real Wealthsimple exports (gitignored)
-├── .github/workflows/  # backend.yml, frontend.yml, docs.yml
+├── devops/
+│   └── prod/        # Dockerfile + service.yaml + README check-list (Phase 5 deploy — local infra reste à la racine)
+├── .github/workflows/  # backend.yml, frontend.yml, codeql.yml, docs.yml, smoke-wif.yml
+├── Tiltfile            # local infra — boot Postgres + Ollama + backend + frontend
+├── docker-compose.yml  # services Docker managés par Tilt
 └── .claude/            # CLAUDE.md, agents/, skills/
 ```
 
@@ -65,7 +70,7 @@ trade/
 
 ## Local Development
 
-`tilt up` boots everything (PostgreSQL, Ollama, backend, frontend). Tilt UI: http://localhost:10350/. Backend on the `local` profile (`application-local.yml`, gitignored). Detail in `docs/technique/developpement.md`.
+`tilt up` boots everything (PostgreSQL, Ollama, backend, frontend). Tilt UI: http://localhost:10350/. Backend on the `local` profile (`application-local.yml`, committed — no secrets, only behavior overrides ; cf. `Data & secrets` ci-dessous). Detail in `docs/technique/developpement.md`.
 
 ## Commands
 
@@ -84,7 +89,7 @@ npx vitest run src/path/to/file.spec.ts   # single test
 
 - Idiomatic Kotlin (data classes, sealed classes, extension functions).
 - **No wildcard imports** — `import org.junit.jupiter.api.Assertions.assertEquals`, never `Assertions.*`. IntelliJ's "Optimize Imports" consolidates to `*` past 5 imports of the same package — disable that. The `WildcardImport.excludeImports` allowlist in `detekt.yml` is being phased out: don't add new entries, and expand any `*` you touch.
-- Config in **YAML** (`application.yml` / `application-local.yml`).
+- Config in **YAML** (`application.yml` base + `application-local.yml` dev profile + `application-prod.yml` Cloud Run profile — tous committés, sans secrets).
 - Spring `@Async` — must run on a separate bean, otherwise AOP is bypassed.
 - Integration tests on a **real PostgreSQL**, no DB mocks.
 - **Never log user emails** or other PII (`displayName`, `providerId`). Log `userId={}` (the UUID) — reference pattern in `CustomOAuth2UserService.findOrCreateUser`. The UUID is enough to correlate with `app_user` in the DB without exposing PII to log aggregators.
@@ -104,7 +109,7 @@ npx vitest run src/path/to/file.spec.ts   # single test
 
 ### Data & secrets
 
-- `application-local.yml` is gitignored — **never commit API keys**.
+- `application-local.yml` + `application-prod.yml` are **committed** since 2026-05-18 (no secrets — only behavior overrides like `spring.flyway.repair-on-migrate`, `springdoc.api-docs.enabled`, `llm.provider` selection). The dangerous-in-prod settings are isolated to the `local` profile by construction. **Never commit API keys / OAuth secrets / DB passwords** — those live in `.env` (local, gitignored) and GCP Secret Manager (prod, cf. `docs/devops/deploiement.md`).
 - `docs/data-input/` holds synthetic CSVs (versioned, used for CI / demo). Real Wealthsimple exports go to `docs/data-input-local/` (gitignored). Never mix them.
 
 ### Commits

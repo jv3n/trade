@@ -64,13 +64,13 @@ L'UI et le schéma JSON (`/v3/api-docs`) sont **désactivés par défaut** dans 
 
 ## Configuration locale
 
-Le fichier `application-local.yml` (gitignored) contient les **overrides de comportement dev** (JPA verbose, `llm.provider=ollama`, providers en `mock` par défaut, `springdoc` activé). Le **setup initial** (création du fichier, choix Claude vs Ollama, exemples YAML) est documenté dans [`developper.md > Configurer le LLM`](./developper.md#configurer-le-llm) — single-source pour éviter le drift. Cette section couvre uniquement les usages courants après ce setup.
+Le fichier `application-local.yml` (committé depuis 2026-05-18, sans secrets) contient les **overrides de comportement dev** (JPA verbose, `llm.provider=ollama`, providers en `mock` par défaut, `springdoc` activé, `flyway.repair-on-migrate=true`). Le **setup initial** (création du fichier, choix Claude vs Ollama, exemples YAML) est documenté dans [`developper.md > Configurer le LLM`](./developper.md#configurer-le-llm) — single-source pour éviter le drift. Cette section couvre uniquement les usages courants après ce setup.
 
 **Aucun secret en YAML.** Tous les credentials boot-time (creds OAuth Google, `APP_ADMIN_EMAILS`, `APP_FRONTEND_URL`) vivent dans `.env` à la racine du repo (gitignored). Le Tiltfile source `.env` dans le `serve_cmd` du backend → exporte au sous-process gradle → Spring lit via relaxed binding (`SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID` mappe vers la property correspondante). Voir `.env.example` pour la liste complète + la doc inline. Les clés API runtime-editable (Anthropic, Twelve Data, Finnhub) **ne sont pas** dans `.env` — elles passent par l'UI runtime config (voir paragraphe « Alternative runtime » ci-dessous).
 
 > **Performance Ollama sur Mac** — Ollama tourne **dans un container Docker Desktop**, qui est lui-même une VM Linux virtualisée par macOS. Apple n'expose pas Metal dans cette VM, donc l'inférence est en **CPU pur** : un narratif `qwen2.5:3b` peut saturer 9 cores ~918 % `docker stats` pendant 60–180 s, là où le même modèle sur Ollama natif (Metal activé) répond en 5-10 s. **Décision projet** (cf. [`docs/devops/decision-ollama-deploiement.md`](../devops/decision-ollama-deploiement.md), tranchée 2026-05-09) : statu quo Claude-first, Ollama containerisé reste utilisable comme outil de dev/backup mais n'est pas le chemin quotidien. Si tu vois ton fan hurler, c'est attendu — bascule sur Claude (`/settings/configuration > LLM > Provider = claude`) ou laisse mouliner. Re-trigger : machine dédiée, usage Ollama > 20 % des sessions, ou distribution du repo.
 
-Ne jamais committer `application-local.yml` ni `.env`. Ne jamais mettre de clé API dans `application.yml`.
+Ne jamais committer `.env` (contient les vrais OAuth + URLs de dev). `application-local.yml` est désormais committé mais doit **rester strictement secret-free** — aucune clé API, aucun OAuth secret. Ne jamais mettre de clé API dans `application.yml` non plus.
 
 > **Alternative runtime — édition sans reboot** : la page `/settings/configuration` (icône `tune` dans le sidenav `/settings`) édite en direct **douze clés** sans reboot, réparties sur deux sub-sections (Providers de données / LLM) : (1) **secrets** — `market.twelvedata.api-key`, `market.finnhub.api-key`, `anthropic.api.key` (masqués + bouton Tester) ; (2) **toggles** — `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` (mock ↔ live), `llm.provider` (claude ↔ ollama) ; (3) **strings** — `ollama.model`, `anthropic.api.model` (autocomplete suggestions, valeurs libres) ; (4) **slider INT** — `market.cache.ttl-minutes` (5–60 min) et `llm.timeout-seconds` (60–900 s). Les overrides BDD prennent le pas sur les défauts YAML — pratique pour rotater une clé ou switcher de provider sans toucher à `application-local.yml`. **Note Phase 4** : la page `/settings/configuration` est gated ADMIN ; en mode `BACKEND_AUTH_MODE=no-auth` le dev user (`dev@local.test`) est ADMIN par défaut, l'accès est trivial. En mode `oauth`, ton email doit être dans `APP_ADMIN_EMAILS` au premier login pour atterrir en role ADMIN.
 
@@ -185,9 +185,11 @@ trade/
 │       └── shared/            # Utilitaires transverses
 ├── docs/                      # Documentation (mkdocs-material)
 ├── .claude/                   # Skills, hooks et instructions Claude Code
-├── .github/workflows/         # CI backend + frontend + CodeQL + docs (cf. technique/ops.md)
-├── Tiltfile
-└── docker-compose.yml
+├── .github/workflows/         # CI backend + frontend + CodeQL + docs (cf. technique/ops.md) + WIF smoke test
+├── devops/
+│   └── prod/                  # Dockerfile + service.yaml + README check-list (Phase 5 deploy)
+├── Tiltfile                   # local infra — boot Postgres + Ollama + backend + frontend
+└── docker-compose.yml         # services Docker managés par Tilt
 ```
 
 ## Thème et UI
