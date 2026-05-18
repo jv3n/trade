@@ -18,6 +18,7 @@ nav:
       - Ops (CI / CD / tooling): technique/ops.md
   - Devops:
       - Commandes pratiques: devops/commandes-pratiques.md
+      - "Déploiement (choix d'hébergement Phase 5)": devops/deploiement.md
       - "Décision : déploiement Ollama": devops/decision-ollama-deploiement.md
   - Projet:
       - Backlog: projet/backlog.md
