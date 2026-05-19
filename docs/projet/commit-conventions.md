@@ -81,3 +81,7 @@ audit: add 2026-05-02 global code review report
 - Ne pas mélanger feat et fix dans le même commit
 - Les migrations Flyway ont leur propre commit avec le scope `db`
 - Le CLAUDE.md se met à jour dans le même commit que la feature concernée
+
+## Versioning
+
+Les commits ne portent pas de version — la version vit dans les **tags git** + **Releases GitHub** posés à la clôture d'une phase ou d'un patch. Format strict : `vMAJOR.MINOR.PATCH` ou `vMAJOR.MINOR.PATCH-rcN`. Règles complètes + rituel release-triggered : [`docs/devops/release-process.md > Versioning`](../devops/release-process.md#versioning).

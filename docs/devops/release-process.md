@@ -2,19 +2,48 @@
 
 > **Modèle release-triggered, pas push-triggered** (décision 2026-05-18). Chaque deploy en prod est un acte conscient : on tague une release dans GitHub, on clique « Publish », le workflow [`deploy.yml`](../../.github/workflows/deploy.yml) prend le relais. Les pushes sur `master` continuent de faire tourner la CI (backend/frontend/CodeQL/docs) mais **ne touchent pas à Cloud Run**.
 
+## Versioning
+
+Règles strictes posées 2026-05-19. Le workflow [`deploy.yml`](../../.github/workflows/deploy.yml) fail-fast si un tag publié ne matche pas la regex `^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$`.
+
+### Format des tags
+
+| Format | Usage | Exemple |
+|--------|-------|---------|
+| `vMAJOR.MINOR.PATCH` | Release stable — clôture d'une phase, ou patch sur une phase déjà clôturée | `v0.7.0`, `v0.7.1` |
+| `vMAJOR.MINOR.PATCH-rcN` | Release candidate — valider une PR à risque (migration de schéma, refacto OAuth, bump majeur lib) sur un deploy réel avant le tag final. Coché « Set as a pre-release » au Publish | `v0.7.0-rc1` |
+
+**Pas d'autre format autorisé.** Un tag `git` qui n'a pas la forme ci-dessus n'a pas vocation à devenir une Release GitHub — il ne déclenchera pas de deploy et n'aura pas de blob image associé.
+
+### Historique des phases
+
+| Phase | Tag(s) |
+|-------|--------|
+| Phase 0 — Fondation | `v0.1.0` |
+| Phase 1 — Pivot ticker | `v0.2.0` |
+| Phase 2 — Profondeur ticker | `v0.3.0` |
+| Phase 2.5 — Stabilisation et outils | `v0.4.0`, `v0.4.1` |
+| Phase 3 — Observabilité narrative | `v0.5.0`, `v0.5.1` |
+| Phase 4 — Authentification | `v0.6.0` |
+| Phase 5a — Déploiement Cloud Run + Supabase | `v0.7.0` (à venir), précédé du smoke `v0.7.0-rc1` |
+
+### Convention dev local Docker
+
+**Ne jamais pousser de tag à préfixe SemVer dans Artifact Registry depuis un build local.** Cloud Run est exclusivement nourri par le workflow GitHub Actions release-triggered, jamais par un `docker push` manuel.
+
+- Builds locaux pendant un bring-up restent dans le Docker daemon de l'user, jamais push AR.
+- Si vraiment besoin d'une itération dev manuelle sur Cloud Run (debug d'un crash boot prod-only, par exemple), utiliser un préfixe **non-SemVer** : `dev-<short-sha>` ou `dev-YYYYMMDD-N` (e.g. `dev-20260519-1`). Garde le namespace `vX.Y.Z*` clean pour les releases.
+
+> Contexte : le 1er bootstrap manuel Phase 5a a poussé `v0.7.0-dev1..dev4` dans AR avant que cette discipline ne soit posée. Ces blobs sont à cleanup une fois `v0.7.0` (stable) en service — l'historique narratif vit déjà dans [`journal-livraisons.md`](../projet/journal-livraisons.md#phase-5--déploiement-en-cours).
+
 ## Le rituel
 
 1. **Clôturer une phase ou un milestone** sur `master` — tous les commits relevants sont mergés, la CI est verte, [`journal-livraisons.md`](../projet/journal-livraisons.md) est à jour, le `backlog.md` reflète les tickets ouverts/clôturés.
-2. **Tag annoté** :
+2. **Tag annoté** (format strict, cf. [Versioning](#versioning)) :
    ```bash
    git tag -a v0.7.0 -m "Phase 5a — production ready"
    git push --tags
    ```
-   Convention SemVer :
-   - `v0.7.0` — clôture Phase 5a (deploy + workflow Releases stables)
-   - `v0.7.1` — patch sur la prod actuelle
-   - `v0.8.0` — clôture Phase 5b (Cloudflare + custom domain)
-   - `v0.7.0-rc1` — release candidate pour valider une PR à risque sur un deploy réel avant le tag final
 3. **Draft a new release** dans l'UI GitHub :
    - Bouton « Releases » dans la sidebar du repo → « Draft a new release »
    - Sélectionner le tag créé à l'étape 2
