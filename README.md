@@ -28,6 +28,10 @@ Site complet : **<a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blan
 | <a href="https://jv3n.github.io/trade/technique/providers/" target="_blank" rel="noopener">Providers externes</a> | Twelve Data, Finnhub, Anthropic, Ollama — clés, quotas, dashboards |
 | <a href="https://jv3n.github.io/trade/technique/ops/" target="_blank" rel="noopener">Ops (CI / CD / tooling)</a> | Workflows GitHub Actions, caching, Detekt, Dependabot, Code Scanning |
 | <a href="https://jv3n.github.io/trade/devops/commandes-pratiques/" target="_blank" rel="noopener">Commandes pratiques (devops)</a> | Cheatsheet psql / Tilt / Ollama / cleanup jobs LLM bloqués |
+| <a href="https://jv3n.github.io/trade/devops/liens-utiles/" target="_blank" rel="noopener">Liens utiles (consoles & dashboards)</a> | Bookmarks GCP / Supabase / GitHub / Cloudflare R2 pour les sessions ops |
+| <a href="https://jv3n.github.io/trade/devops/deploiement/" target="_blank" rel="noopener">Déploiement (analyse Phase 5)</a> | Choix Cloud Run + Supabase, plan phasé, pipeline WIF, plan de migration sortie |
+| <a href="https://jv3n.github.io/trade/devops/release-process/" target="_blank" rel="noopener">Release process</a> | Rituel deploy : tag → Draft Release → Publish → workflow Cloud Run |
+| <a href="https://jv3n.github.io/trade/devops/backup-process/" target="_blank" rel="noopener">Backup & restore process</a> | Backup weekly Postgres → Cloudflare R2 + setup + restore drill |
 | <a href="https://jv3n.github.io/trade/devops/decision-ollama-deploiement/" target="_blank" rel="noopener">Décision : déploiement Ollama</a> | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
 | <a href="https://jv3n.github.io/trade/metier/vision/" target="_blank" rel="noopener">Vision</a> | Pourquoi le projet existe, ce qu'on essaie de prouver |
 | <a href="https://jv3n.github.io/trade/metier/fonctionnalites/" target="_blank" rel="noopener">Fonctionnalités</a> | Découpage par phase, ce qui est livré / gelé / à venir |

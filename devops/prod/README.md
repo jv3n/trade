@@ -41,7 +41,7 @@ Livré dans le ticket `GitHub Secrets + Environments vault` (clôturé 2026-05-1
 | 2. Premier push manuel vers Artifact Registry | ~5 min | `gcloud auth configure-docker northamerica-northeast1-docker.pkg.dev` (1 fois), puis `docker tag` + `docker push` du jar build avec une tag `dev-001`. |
 | 3. Premier `gcloud run deploy` manuel | ~10 min | `gcloud run deploy portfolioai --image ... --service-account=portfolioai-runtime@... --update-secrets ANTHROPIC_API_KEY=... etc.` (la liste complète dans `deploiement.md > §6.2`). |
 | 4. Smoke test end-to-end | ~10 min | Ouvrir l'URL `*.run.app` retournée par Cloud Run → enregistrer la redirect URI dans Google Cloud Console OAuth client → login Google → ouvrir un dossier ticker en mode `mock`. Confirmer que l'app boote, qu'elle se connecte à Supabase (Flyway a migré V1), que l'auth marche. |
-| 5. Câbler le workflow GitHub Actions deploy | ~1 h | Créer `.github/workflows/deploy.yml` qui se déclenche `on: release: published` (cf. squelette dans `deploiement.md > §6.2`). Tester via une release candidate (ex: `v0.7.0-rc1`). |
+| 5. ✅ Workflow GitHub Actions deploy | Livré 2026-05-18 | [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml) opérationnel, déclenche sur `release: published`, smoke `v0.7.0-rc1` vert end-to-end. Rituel d'utilisation : [`docs/devops/release-process.md`](../../docs/devops/release-process.md). Workflow complémentaire `backup-postgres.yml` livré le même jour, doc : [`docs/devops/backup-process.md`](../../docs/devops/backup-process.md). |
 
 ## Files
 

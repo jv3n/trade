@@ -6,7 +6,7 @@
 
 | Quoi | Où |
 |------|----|
-| **Bucket R2 `portfolioai-backups`** (UI) | `https://dash.cloudflare.com/<ACCOUNT_ID>/r2/default/buckets/portfolioai-backups` |
+| **Bucket R2 `portfolioai-backups`** (UI) | `https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/r2/default/buckets/portfolioai-backups` |
 | **R2 dashboard global** | [dash.cloudflare.com/.../r2/buckets](https://dash.cloudflare.com/?to=/:account/r2/overview) |
 | **R2 API tokens** (rotation) | [dash.cloudflare.com/.../r2/api-tokens](https://dash.cloudflare.com/?to=/:account/r2/api-tokens) |
 | **Workflow Actions** (history + manual trigger) | [github.com/jv3n/trade/actions/workflows/backup-postgres.yml](https://github.com/jv3n/trade/actions/workflows/backup-postgres.yml) |
@@ -14,9 +14,9 @@
 | **Secret Manager `supabase-db-url`** (source de la DB URL) | [console.cloud.google.com/.../supabase-db-url](https://console.cloud.google.com/security/secret-manager/secret/supabase-db-url/versions?project=trade-496613) |
 | **Snapshots Supabase natifs** (rétention 7j, format proprio) | [supabase.com/.../database/backups](https://supabase.com/dashboard/project/flbnnnakobutaxvshcez/database/backups) |
 | **Trigger manuel via CLI** | `gh workflow run backup-postgres.yml` puis `gh run watch` |
-| **Lister les backups en CLI** | `aws s3 ls s3://portfolioai-backups/ --endpoint-url https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
+| **Lister les backups en CLI** | `aws s3 ls s3://portfolioai-backups/ --endpoint-url https://8f2780696b5e520f85b5fc80413c4c3f.r2.cloudflarestorage.com` |
 
-> `<ACCOUNT_ID>` = ton Cloudflare Account ID (visible dans l'URL du dashboard R2 ou dans le GitHub Secret `R2_ACCOUNT_ID`). À substituer manuellement la 1re fois, ou bookmark direct dans le navigateur après le 1er accès UI.
+> `8f2780696b5e520f85b5fc80413c4c3f` = ton Cloudflare Account ID (visible dans l'URL du dashboard R2 ou dans le GitHub Secret `R2_ACCOUNT_ID`). À substituer manuellement la 1re fois, ou bookmark direct dans le navigateur après le 1er accès UI.
 
 ## Le rituel automatique
 
@@ -101,7 +101,7 @@ Attendu : run vert en ~1-2 min. Vérifier côté R2 :
 
 ```bash
 aws s3 ls s3://portfolioai-backups/ \
-  --endpoint-url "https://<ACCOUNT_ID>.r2.cloudflarestorage.com" \
+  --endpoint-url "https://8f2780696b5e520f85b5fc80413c4c3f.r2.cloudflarestorage.com" \
   --profile portfolioai-r2
 # doit lister 1 fichier backup-2026-MM-DDTHH-MM-SSZ.sql.gz
 ```

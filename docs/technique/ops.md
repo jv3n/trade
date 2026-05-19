@@ -10,7 +10,7 @@ Référence sur tout ce qui tourne autour du code lui-même : workflows GitHub A
 
 ## Workflows GitHub Actions
 
-Cinq workflows, chacun déclenché sur des paths différents pour ne pas relancer toute la chaîne à chaque commit :
+Sept workflows, chacun déclenché sur des paths différents pour ne pas relancer toute la chaîne à chaque commit :
 
 | Workflow | Trigger | Job principal | Durée typique |
 |---|---|---|---|
@@ -18,7 +18,9 @@ Cinq workflows, chacun déclenché sur des paths différents pour ne pas relance
 | **Frontend CI** (`frontend.yml`) | `push master` / `pull_request` sur `frontend/**` | `npm ci` + `npm run lint` + `npm run build` + `npm run test:coverage` + sticky PR comment | 30-60 s |
 | **CodeQL** (`codeql.yml`) | `push master` / `pull_request` / weekly `cron 06:00 UTC lundi` | Matrix `java-kotlin` (build-mode `manual`) + `javascript-typescript` (build-mode `none`) | 2-3 min |
 | **Deploy docs** (`docs.yml`) | `push master` sur `docs/**` ou `mkdocs.yml` | `mkdocs gh-deploy` | <1 min |
-| **WIF Smoke Test** (`smoke-wif.yml`) | `workflow_dispatch` manuel uniquement | Exerce Workload Identity Federation (OIDC GitHub → access token GCP via SA `github-deploy@`) + `gcloud run services list` + `gcloud artifacts repositories describe backend` pour valider que `run.admin` + `artifactregistry.writer` marchent. Utilise `environment: production` donc exige une required reviewer approval avant exécution. À utiliser comme outil de diagnostic quand on doute du pipeline GCP ; pas câblé sur un événement push pour ne pas spam. Phase 5 deploy ouverture. | 30-60 s |
+| **WIF Smoke Test** (`smoke-wif.yml`) | `workflow_dispatch` manuel uniquement | Exerce Workload Identity Federation (OIDC GitHub → access token GCP via SA `github-deploy@`) + `gcloud run services list` + `gcloud artifacts repositories describe backend` pour valider que `run.admin` + `artifactregistry.writer` marchent. Utilise `environment: production` donc exige une required reviewer approval avant exécution. Outil de diagnostic quand on doute du pipeline GCP ; pas câblé sur un événement push pour ne pas spam. | 30-60 s |
+| **Deploy to Cloud Run** (`deploy.yml`) | `on: release: published` (Phase 5a) | WIF → `docker buildx build linux/amd64 --push` vers Artifact Registry tag = `release.tag_name` → `gcloud run deploy portfolioai` avec 4 secrets mountés depuis Secret Manager + profil `prod` → smoke `/actuator/health`. Gated par `environment: production` (required reviewer = self-approve). Détail dans [`docs/devops/release-process.md`](../devops/release-process.md). | 3-5 min |
+| **Backup Supabase Postgres** (`backup-postgres.yml`) | `cron '0 4 * * 0'` (dimanche 4 AM UTC, weekly) + `workflow_dispatch` manuel | WIF → install `postgresql-client-16` → fetch `supabase-db-url` depuis Secret Manager → `pg_dump --no-owner --no-acl \| gzip > backup-<ISO>.sql.gz` → `aws s3 cp` vers Cloudflare R2 bucket `portfolioai-backups` → prune au-delà des 30 plus récents. Détail dans [`docs/devops/backup-process.md`](../devops/backup-process.md). | 1-2 min |
 
 ## Couverture de code
 
@@ -94,6 +96,9 @@ Pourquoi le bloc workflow-level est obligatoire en plus du job-level : la règle
 | `frontend.yml` | `contents: read` | `contents: read` (redondant, exigé par Sonar) | Build + tests, pas de write nécessaire ; la redondance fige l'intention par job |
 | `codeql.yml` | `contents: read` | `+ security-events: write` `+ packages: read` `+ actions: read` | Standard CodeQL — upload findings + lecture deps + lecture workflows |
 | `docs.yml` | `contents: read` | `contents: write` (override) | `gh-deploy` push sur la branche `gh-pages` |
+| `smoke-wif.yml` | `contents: read` | `+ id-token: write` | OIDC token GitHub à échanger contre access token GCP via WIF |
+| `deploy.yml` | `contents: read` | `+ id-token: write` | Idem — WIF auth pour `gcloud run deploy` |
+| `backup-postgres.yml` | `contents: read` | `+ id-token: write` | Idem — WIF auth pour `gcloud secrets versions access` |
 
 ## Code Scanning (Security tab)
 

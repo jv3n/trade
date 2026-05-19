@@ -103,7 +103,7 @@ Sources brutes :
 | Frontend | Build Angular embarqué dans le jar Spring Boot (`static/`) — pas de service séparé | $0 |
 | Auth | Google OIDC déjà câblé Phase 4 (juste re-enregistrer la redirect URI `https://portfolioai-*.run.app/login/oauth2/code/google` côté Google Cloud Console) | $0 |
 | Secrets runtime | GCP Secret Manager (`ANTHROPIC_API_KEY`, `DATABASE_URL`, `GOOGLE_OAUTH_*`), montés au runtime via `--update-secrets` | $0 (free tier 6 secrets accédés/mo, on en a ~5) |
-| Backup nocturne | Workflow GitHub Actions `schedule: cron '0 4 * * *'` qui exécute `pg_dump $SUPABASE_DATABASE_URL` et upload vers Cloudflare R2 (free tier 10 GB) | $0 |
+| Backup weekly | Workflow `.github/workflows/backup-postgres.yml` `cron '0 4 * * 0'` (dimanche 4 AM UTC) qui exécute `pg_dump $SUPABASE_DATABASE_URL` et upload vers Cloudflare R2 bucket `portfolioai-backups` (free tier 10 GB). Rétention 30 backups (~7 mois d'historique). Détail dans [`backup-process.md`](./backup-process.md). | $0 |
 | **Total Phase 5a** | | **$0/mo** |
 
 **Provider LLM en 5a** : `mock` par défaut au boot (assure que l'app boote même sans `ANTHROPIC_API_KEY`), basculable vers `claude` via `/settings/configuration` dès que la clé est injectée via Secret Manager. **Ollama indisponible en prod** : la UI affiche l'option mais la sélection retourne 503.
@@ -144,52 +144,13 @@ Trois sorties propres dans l'ordre de préférence :
 4. Configurer **Workload Identity Federation** GitHub OIDC ↔ GCP (suit la procédure officielle [google-github-actions/auth#setting-up-workload-identity-federation](https://github.com/google-github-actions/auth#setting-up-workload-identity-federation)). Sortie : `projects/<num>/locations/global/workloadIdentityPools/github/providers/github`. **Pas de service account JSON key** à manipuler — Workload Identity échange un OIDC token court-terme par run.
 5. Pousser les secrets runtime dans Secret Manager : `gcloud secrets create anthropic-api-key --data-file=-` etc. (one-shot, ~5 min).
 6. Côté Supabase : créer le projet `portfolioai-prod`, exécuter le V1 Flyway via le SQL Editor (ou laisser Spring Boot le faire au 1er boot via Flyway `baseline-on-migrate: true`), récupérer la `DATABASE_URL` et la pousser dans GCP Secret Manager comme `supabase-db-url`.
-7. Côté GitHub : créer l'environment `production` avec `required reviewers` + variables `GCP_PROJECT=portfolioai`, `GCP_WIF_PROVIDER=projects/.../providers/github`, `GCP_SA_EMAIL=github-deploy@...`.
+7. Côté GitHub : créer l'environment `production` avec `required reviewers` + 3 variables environment-scoped `GCP_PROJECT=portfolioai`, `GCP_WIF_PROVIDER=projects/.../providers/github`, `GCP_SA_EMAIL=github-deploy@...`. **Dupliquer aussi ces 3 vars au repo level** (`gh variable set GCP_PROJECT --body ...`, idem pour les 2 autres) — le workflow `backup-postgres.yml` ne déclare PAS `environment: production` (un cron à 4h du matin qui attendrait un required-reviewer approval ne tient pas), il lit donc les vars repo-level. Les jobs déploy continuent de lire en priorité les versions env-scoped quand ils déclarent `environment: production`. Coexistence propre des deux scopes.
 
 ### 6.2 Workflow `.github/workflows/deploy.yml`
 
-Cible : trigger `on: release: published`, build Docker image, push vers Artifact Registry, run `gcloud run deploy`. Squelette :
+**Livré 2026-05-18.** Source : [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml). Rituel d'utilisation (tag → Draft Release → Publish → approve environment → smoke) détaillé dans [`release-process.md`](./release-process.md).
 
-```yaml
-name: Deploy to Cloud Run
-on:
-  release:
-    types: [published]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: production
-    concurrency: deploy-production
-    permissions:
-      contents: read
-      id-token: write  # required for Workload Identity Federation
-    steps:
-      - uses: actions/checkout@v5
-      - uses: docker/setup-buildx-action@v3
-      - uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_SA_EMAIL }}
-      - uses: google-github-actions/setup-gcloud@v2
-      - run: gcloud auth configure-docker northamerica-northeast1-docker.pkg.dev
-      - uses: docker/build-push-action@v6
-        with:
-          platforms: linux/amd64
-          push: true
-          tags: northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }}
-      - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy portfolioai \
-            --image northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }} \
-            --region northamerica-northeast1 \
-            --platform managed \
-            --allow-unauthenticated \
-            --update-secrets ANTHROPIC_API_KEY=anthropic-api-key:latest,DATABASE_URL=supabase-db-url:latest,GOOGLE_OAUTH_CLIENT_ID=google-oauth-client-id:latest,GOOGLE_OAUTH_CLIENT_SECRET=google-oauth-client-secret:latest \
-            --set-env-vars APP_FRONTEND_URL=https://portfolioai.example.com,APP_ADMIN_EMAILS=venet.julien@gmail.com \
-            --memory 1Gi --cpu 1 --max-instances 3
-```
-
-**Décisions ancrées** :
+**Décisions ancrées** (figées au moment de la livraison) :
 - **Trigger sur `release: published`, pas `push` master** → la release est l'acte conscient ; les pushes master continuent de bouger CI mais ne deploient pas. Évite les deploys accidentels sur un commit cassé.
 - **`environment: production`** → permet de configurer `required reviewers` côté GitHub (= l'utilisateur s'auto-approve, mais c'est documenté et auditable).
 - **Workload Identity Federation** (`id-token: write` permission) → pas de service account JSON key dans GitHub Secrets. Chaque run échange un OIDC token court-terme.
@@ -197,45 +158,11 @@ jobs:
 - **`linux/amd64` seulement** → Cloud Run tourne sur x86, pas besoin de multi-arch (économise l'overhead QEMU emulation côté GitHub runner).
 - **`--allow-unauthenticated`** → Cloud Run laisse passer toutes les requêtes ; l'auth Spring Security côté app gère les 401. (Alternative : `--no-allow-unauthenticated` + IAM users — overkill pour single-user.)
 
-### 6.3 Workflow backup nocturne `.github/workflows/backup-postgres.yml`
+### 6.3 Workflow backup weekly `.github/workflows/backup-postgres.yml`
 
-```yaml
-name: Backup Supabase Postgres
-on:
-  schedule:
-    - cron: '0 4 * * *'  # 4 AM UTC daily
-  workflow_dispatch:
-jobs:
-  backup:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v5
-      - uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_SA_EMAIL }}
-      - uses: google-github-actions/setup-gcloud@v2
-      - run: |
-          DATABASE_URL=$(gcloud secrets versions access latest --secret=supabase-db-url --project=${{ vars.GCP_PROJECT }})
-          DATE=$(date -u +%Y-%m-%d)
-          pg_dump "$DATABASE_URL" --no-owner --no-acl | gzip > backup-$DATE.sql.gz
-      - name: Upload to Cloudflare R2
-        run: |
-          aws s3 cp backup-*.sql.gz s3://portfolioai-backups/ \
-            --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_KEY }}
-      - name: Prune backups older than 30 days
-        run: |
-          # garde 30 derniers backups, supprime les plus anciens
-          aws s3 ls s3://portfolioai-backups/ --endpoint-url ... | sort | head -n -30 | awk '{print $4}' | xargs -I {} aws s3 rm s3://portfolioai-backups/{} ...
-```
+**Livré 2026-05-18.** Source : [`.github/workflows/backup-postgres.yml`](../../.github/workflows/backup-postgres.yml). Setup pré-requis (R2 bucket + 3 GH secrets + 3 GH vars repo-level + grant `secretmanager.secretAccessor` au SA deploy) + rituel + restore drill trimestriel : [`backup-process.md`](./backup-process.md).
 
-**Pourquoi backup nocturne explicite alors que Supabase fait des backups quotidiens en free** : (a) discipline d'exit — si Supabase serre/disparaît, on a un `.sql.gz` à restorer ailleurs sans dépendre de leur API ; (b) rétention 30j > rétention 7j Supabase free ; (c) format `pg_dump` standard, restorable n'importe où vs format Supabase-proprio des snapshots managés.
+**Pourquoi backup weekly explicite alors que Supabase fait des backups quotidiens en free** : (a) **Discipline d'exit** — si Supabase serre/disparaît, on a un `.sql.gz` à restorer ailleurs sans dépendre de leur API. (b) **Format `pg_dump` standard**, restorable n'importe où (Neon, Fly Postgres, VPS) vs format Supabase-proprio des snapshots managés. (c) **Cadence weekly retenue** (vs daily envisagé initialement) — Supabase fait déjà du quotidien 7j en parallèle (filet court), notre R2 est le filet long-terme (30 backups = ~7 mois d'historique). Worst-case data loss : 7j. Mitigation : `gh workflow run backup-postgres.yml` à la demande avant une opération risquée (migration schema, fix SQL).
 
 ## 7. Plan de migration — sortir de Cloud Run + Supabase si besoin
 

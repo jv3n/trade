@@ -64,7 +64,7 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 - [Repo home](https://github.com/jv3n/trade)
 - [Actions](https://github.com/jv3n/trade/actions) — runs de tous les workflows
   - [Workflow `Deploy to Cloud Run`](https://github.com/jv3n/trade/actions/workflows/deploy.yml) — déclenche sur `release: published`, trigger manuel impossible (volontaire)
-  - [Workflow `Backup Supabase Postgres`](https://github.com/jv3n/trade/actions/workflows/backup-postgres.yml) — cron `0 4 * * *` UTC + `workflow_dispatch` manuel
+  - [Workflow `Backup Supabase Postgres`](https://github.com/jv3n/trade/actions/workflows/backup-postgres.yml) — cron `0 4 * * 0` (dimanche 4 AM UTC, weekly) + `workflow_dispatch` manuel
   - [Workflow `WIF Smoke Test`](https://github.com/jv3n/trade/actions/workflows/smoke-wif.yml) — re-trigger pour valider le pipeline WIF après un changement IAM
 - [Environments](https://github.com/jv3n/trade/settings/environments) — `production` avec required reviewer + branch policy `master`
 - [Environment variables `production`](https://github.com/jv3n/trade/settings/environments) → click `production` (les 3 vars `GCP_*` sont là)
@@ -85,15 +85,15 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 
 ### R2 — bucket `portfolioai-backups`
 - [Cloudflare dashboard](https://dash.cloudflare.com/) — home, après login
-- R2 buckets overview : `https://dash.cloudflare.com/<ACCOUNT_ID>/r2/default/buckets` — _remplacer `<ACCOUNT_ID>` par le tien (visible dans l'URL une fois loggué, ou dans `R2_ACCOUNT_ID` GitHub Secret)_
-- Bucket `portfolioai-backups` : `https://dash.cloudflare.com/<ACCOUNT_ID>/r2/default/buckets/portfolioai-backups` — liste les `backup-*.sql.gz` triés par date, download/delete via UI
+- R2 buckets overview : `https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/r2/default/buckets` — _remplacer `8f2780696b5e520f85b5fc80413c4c3f` par le tien (visible dans l'URL une fois loggué, ou dans `R2_ACCOUNT_ID` GitHub Secret)_
+- Bucket `portfolioai-backups` : `https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/r2/default/buckets/portfolioai-backups` — liste les `backup-*.sql.gz` triés par date, download/delete via UI
 - [API Tokens R2](https://dash.cloudflare.com/?to=/:account/r2/api-tokens) — rotation token si compromis, audit des tokens actifs
 
 ### CLI alternative (`aws s3` pointé sur R2)
 ```bash
 # Lister les backups en CLI
 aws s3 ls s3://portfolioai-backups/ \
-  --endpoint-url "https://<ACCOUNT_ID>.r2.cloudflarestorage.com" \
+  --endpoint-url "https://8f2780696b5e520f85b5fc80413c4c3f.r2.cloudflarestorage.com" \
   --profile portfolioai-r2
 ```
 Configurer une fois : `aws configure --profile portfolioai-r2` avec les mêmes 3 creds que les GitHub Secrets.

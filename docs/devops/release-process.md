@@ -54,11 +54,11 @@ Les tags `vX.Y.Z-rcN` (e.g. `v0.7.0-rc1`) sont des pre-releases. Côté GitHub, 
 | **GCP** | Artifact Registry `backend` | région `northamerica-northeast1`, image `portfolioai:<tag>` |
 | **GCP** | 4 secrets Secret Manager | `google-oauth-client-id`, `google-oauth-client-secret`, `app-admin-emails`, `supabase-db-url` |
 
-Setup détaillé et historique dans [`prod/README.md`](./prod/README.md) et [`deploiement.md`](./deploiement.md).
+Setup détaillé et historique dans [`prod/README.md`](../../devops/prod/README.md) et [`deploiement.md`](./deploiement.md).
 
 ## Liens
 
 - Plan de déploiement complet : [`deploiement.md`](./deploiement.md)
-- Check-list infra : [`prod/README.md`](./prod/README.md)
+- Check-list infra : [`prod/README.md`](../../devops/prod/README.md)
 - Workflow source : [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml)
 - Smoke test WIF (auth standalone, déclenchable à la main) : [`.github/workflows/smoke-wif.yml`](../../.github/workflows/smoke-wif.yml)
