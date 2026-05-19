@@ -1,6 +1,6 @@
 # Backup & restore process — PortfolioAI
 
-> **Discipline d'exit propre** indépendante de Supabase. On garde notre propre archive `pg_dump` standard, restorable sur n'importe quel Postgres (Neon, Fly Postgres, VPS, RDS…) sans dépendre du format proprio des snapshots managés Supabase. Rétention 30 jours (vs 7 jours côté Supabase free). Workflow source : [`.github/workflows/backup-postgres.yml`](../../.github/workflows/backup-postgres.yml).
+> **Discipline d'exit propre** indépendante de Supabase. On garde notre propre archive `pg_dump` standard, restorable sur n'importe quel Postgres (Neon, Fly Postgres, VPS, RDS…) sans dépendre du format proprio des snapshots managés Supabase. **Cadence weekly** + **rétention 30 backups** (~7 mois d'historique). Supabase free tier fait déjà des snapshots quotidiens 7j en parallèle → notre backup R2 est le filet long-terme, pas le rolling court. Workflow source : [`.github/workflows/backup-postgres.yml`](../../.github/workflows/backup-postgres.yml).
 
 ## Quick links
 
@@ -20,10 +20,10 @@
 
 ## Le rituel automatique
 
-- **Cron** : `0 4 * * *` (4 AM UTC, ≈ minuit Eastern, creux d'activité)
+- **Cron** : `0 4 * * 0` (chaque dimanche 4 AM UTC, ≈ samedi soir minuit Eastern, creux d'activité)
 - **Pipeline** : WIF auth → install `postgresql-client-16` → fetch `supabase-db-url` depuis Secret Manager → `pg_dump | gzip > backup-<ISO-timestamp-UTC>.sql.gz` → `aws s3 cp` vers R2 → prune les objets au-delà des 30 derniers
 - **Échec** : workflow run failed → GitHub envoie une notif mail au committer du workflow. Re-déclenchable manuellement via `workflow_dispatch`.
-- **Manual spot backup** : avant une opération risquée (migration schema, fix SQL manuel) ou un restore drill, déclencher à la main via UI Actions ou `gh workflow run backup-postgres.yml`.
+- **Manual spot backup** : avant une opération risquée (migration schema, fix SQL manuel) ou un restore drill, déclencher à la main via UI Actions ou `gh workflow run backup-postgres.yml`. Recommandé aussi si tu sais que tu as fait du contenu critique pendant la semaine et que tu ne veux pas attendre dimanche.
 
 ## Setup pré-requis (one-shot)
 
@@ -48,9 +48,9 @@
      - `Secret Access Key`
      - `Account ID` (visible dans l'URL du dashboard R2, format `<hash>.r2.cloudflarestorage.com`)
 
-### 2. GitHub Secrets (3 valeurs)
+### 2. GitHub Secrets + Variables (5 valeurs)
 
-Pousser les 3 valeurs comme **repository secrets** (pas environment secrets — le workflow backup n'est pas gated par un environnement) :
+**3 secrets R2** comme repository secrets (pas environment secrets — le workflow backup n'est pas gated par un environnement) :
 
 ```bash
 gh secret set R2_ACCOUNT_ID --body "<account-id>"
@@ -58,7 +58,17 @@ gh secret set R2_ACCESS_KEY_ID --body "<access-key-id>"
 gh secret set R2_SECRET_ACCESS_KEY --body "<secret-access-key>"
 ```
 
-Vérifier : `gh secret list` doit montrer les 3.
+**3 variables GCP** comme repository variables (pas environment-scoped) :
+
+```bash
+gh variable set GCP_PROJECT --body "trade-496613"
+gh variable set GCP_WIF_PROVIDER --body "projects/912181505110/locations/global/workloadIdentityPools/github/providers/github"
+gh variable set GCP_SA_EMAIL --body "github-deploy@trade-496613.iam.gserviceaccount.com"
+```
+
+**Pourquoi repo-level pour les vars GCP plutôt que ré-utiliser le scope `production`** : le scope `production` a un `required reviewer` (légitime pour `deploy.yml` = acte conscient) ; un cron nightly de backup qui pause à 4h du matin en attendant qu'on clique « Approve » ne tient pas. Les 3 identifiers GCP sont publics (pas des secrets, juste des pointeurs), donc no-risk à les exposer au repo level. Les jobs qui déclarent `environment: production` (comme `deploy.yml`) continuent de lire en priorité la version env-scoped, les jobs sans environment (comme `backup-postgres.yml`) lisent la repo-level. Coexistence propre.
+
+Vérifier : `gh secret list` et `gh variable list` doivent montrer respectivement les 3 secrets et les 3 vars.
 
 ### 3. Grant `secretmanager.secretAccessor` au SA de deploy
 
@@ -134,6 +144,20 @@ Un backup non-testé est un backup qui n'existe pas. Tous les 3 mois, valider qu
 | **Cross-region replication** | R2 a built-in availability multi-PoP, donc le bucket survit à une panne régionale Cloudflare. Mais si Cloudflare entier disparaît : copier le dernier dump nightly vers un 2e provider (e.g. Backblaze B2). Overkill v1. | ~1 h |
 | **Restore drill automatisé** | Au lieu d'un drill manuel trimestriel, un workflow scheduled mensuel qui spin up un Neon temporaire, restore le dernier dump, run quelques `SELECT count(*)` sanity, teardown. Plus rigoureux mais demande une API Neon stable + creds. | ~3-4 h |
 | **Backup `app_config` runtime separately** | La table `app_config` (Phase 2.5) contient les clés API runtime-editable (Anthropic, Twelve Data, Finnhub). Elles sortent dans le `pg_dump` standard, donc OK pour le restore — mais ce sont des secrets qui se retrouvent dans le backup. À garder en tête le jour où on ouvre le restore process à un tiers (e.g. infra-as-code shared). | — |
+
+## Pièges rencontrés au 1er setup (2026-05-18)
+
+Notés pour épargner du debug à l'avenir si on rejoue le setup (nouveau projet, rotation full creds, etc.).
+
+1. **Cloudflare R2 affiche 4 champs après la création du token, et 3 d'entre eux ne servent pas à l'auth S3** :
+   - `Token value` (~40 chars) → API Cloudflare directe, **pas** S3 — ne PAS l'utiliser
+   - `Access Key ID` (32 chars hex) → **c'est celui-là** pour `R2_ACCESS_KEY_ID`
+   - `Secret Access Key` (64 chars hex) → **c'est celui-là** pour `R2_SECRET_ACCESS_KEY`
+   - `Endpoint URL` → l'Account ID = le sous-domaine, déjà capturé dans `R2_ACCOUNT_ID`
+
+   Le symptôme d'un mauvais paste : le step `Upload to Cloudflare R2` fail avec `InvalidArgument: Credential access key has length N, should be 32` côté `aws s3 cp`. Re-roll le token dans Cloudflare R2 si tu as paumé les valeurs, c'est gratuit.
+
+2. **Les vars `${{ vars.GCP_* }}` sont vides au runtime si le job ne déclare pas `environment: production`** — elles vivent dans le scope `production` historiquement, pas au repo level. Le symptôme : `google-github-actions/auth failed with: the GitHub Action workflow must specify exactly one of "workload_identity_provider" or "credentials_json"`. Fix : `gh variable set GCP_PROJECT/GCP_WIF_PROVIDER/GCP_SA_EMAIL --body "..."` au repo level (voir section 2 du Setup). Pas de risque sécu, ce sont des identifiers publics.
 
 ## Liens
 

@@ -1,19 +1,22 @@
 name: Backup Supabase Postgres
 
-# Daily `pg_dump` of the Supabase database to Cloudflare R2 for exit-discipline. Keeps our own
+# Weekly `pg_dump` of the Supabase database to Cloudflare R2 for exit-discipline. Keeps our own
 # archive independent of Supabase's proprietary snapshot format — if Supabase shrinks the free
 # tier or disappears, we restore from R2 to any Postgres elsewhere (Neon, Fly Postgres, VPS…).
-# Retention 30 jours (vs 7 jours côté Supabase free).
+# Cadence weekly suffisante pour un dev solo (Supabase free tier fait déjà des snapshots
+# quotidiens avec rétention 7j → notre backup R2 est le filet long-terme, pas le rolling court).
+# Rétention 30 backups (~7 mois d'historique au rythme hebdo).
 #
 # Setup pré-requis (cf. `docs/devops/backup-process.md`) :
 #   - R2 bucket `portfolioai-backups` créé chez Cloudflare
 #   - 3 GitHub Secrets : R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+#   - 3 GitHub Variables repo-level : GCP_PROJECT, GCP_WIF_PROVIDER, GCP_SA_EMAIL
 #   - Grant `roles/secretmanager.secretAccessor` à `github-deploy@` sur `supabase-db-url`
 
 on:
   schedule:
-    # 4 AM UTC daily = minuit Eastern = creux d'activité single-user Montréal.
-    - cron: '0 4 * * *'
+    # Dimanche 4 AM UTC = samedi soir minuit Eastern = creux d'activité. Une fois par semaine.
+    - cron: '0 4 * * 0'
   # Manual trigger pour les spot backups avant une opération risquée (migration schema, fix SQL
   # manuel, etc.) et pour les restore drills trimestriels.
   workflow_dispatch:
