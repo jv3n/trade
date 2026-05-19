@@ -62,7 +62,9 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 ## GitHub — repo `jv3n/trade`
 
 - [Repo home](https://github.com/jv3n/trade)
-- [Actions](https://github.com/jv3n/trade/actions) — runs des 5 workflows (backend, frontend, codeql, docs, smoke-wif)
+- [Actions](https://github.com/jv3n/trade/actions) — runs de tous les workflows
+  - [Workflow `Deploy to Cloud Run`](https://github.com/jv3n/trade/actions/workflows/deploy.yml) — déclenche sur `release: published`, trigger manuel impossible (volontaire)
+  - [Workflow `Backup Supabase Postgres`](https://github.com/jv3n/trade/actions/workflows/backup-postgres.yml) — cron `0 4 * * *` UTC + `workflow_dispatch` manuel
   - [Workflow `WIF Smoke Test`](https://github.com/jv3n/trade/actions/workflows/smoke-wif.yml) — re-trigger pour valider le pipeline WIF après un changement IAM
 - [Environments](https://github.com/jv3n/trade/settings/environments) — `production` avec required reviewer + branch policy `master`
 - [Environment variables `production`](https://github.com/jv3n/trade/settings/environments) → click `production` (les 3 vars `GCP_*` sont là)
@@ -77,10 +79,27 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 - [Finnhub dashboard](https://finnhub.io/dashboard) — clé + rate limit
 - _Toutes ces clés vivent en BDD (`app_config`) en runtime, settable via `/settings/configuration` UI quand l'app sera deployée_
 
-## Cloudflare (futur — ticket Phase 5 🟡)
+## Cloudflare
 
-- [Cloudflare dashboard](https://dash.cloudflare.com/) — _pas encore configuré_
-- À câbler quand on attaque le ticket « Cloudflare devant Cloud Run » : DNS + R2 bucket pour backups + cache devant Cloud Run
+> **Compte créé pour le bucket R2 backups Phase 5a.** Le DNS / cache devant Cloud Run reste à câbler (ticket Phase 5 🟡 « Cloudflare devant Cloud Run »).
+
+### R2 — bucket `portfolioai-backups`
+- [Cloudflare dashboard](https://dash.cloudflare.com/) — home, après login
+- R2 buckets overview : `https://dash.cloudflare.com/<ACCOUNT_ID>/r2/default/buckets` — _remplacer `<ACCOUNT_ID>` par le tien (visible dans l'URL une fois loggué, ou dans `R2_ACCOUNT_ID` GitHub Secret)_
+- Bucket `portfolioai-backups` : `https://dash.cloudflare.com/<ACCOUNT_ID>/r2/default/buckets/portfolioai-backups` — liste les `backup-*.sql.gz` triés par date, download/delete via UI
+- [API Tokens R2](https://dash.cloudflare.com/?to=/:account/r2/api-tokens) — rotation token si compromis, audit des tokens actifs
+
+### CLI alternative (`aws s3` pointé sur R2)
+```bash
+# Lister les backups en CLI
+aws s3 ls s3://portfolioai-backups/ \
+  --endpoint-url "https://<ACCOUNT_ID>.r2.cloudflarestorage.com" \
+  --profile portfolioai-r2
+```
+Configurer une fois : `aws configure --profile portfolioai-r2` avec les mêmes 3 creds que les GitHub Secrets.
+
+### DNS / proxy (à venir)
+- À câbler quand on attaque le ticket « Cloudflare devant Cloud Run » : DNS pour custom domain + cache devant Cloud Run pour bypass egress quota 1 GB/mo
 
 ## Documentation officielle (références ops fréquentes)
 
@@ -94,6 +113,8 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 ## Référence projet
 
 - [`deploiement.md`](./deploiement.md) — plan d'analyse + recommandation + plan phasé Phase 5
+- [`release-process.md`](./release-process.md) — rituel deploy (tag → Draft Release → Publish → workflow)
+- [`backup-process.md`](./backup-process.md) — backup nocturne pg_dump → R2 + restore drill
 - [`commandes-pratiques.md`](./commandes-pratiques.md) — commandes Docker / Tilt / Postgres / Ollama au quotidien
 - [`decision-ollama-deploiement.md`](./decision-ollama-deploiement.md) — pourquoi Ollama reste en CPU dégradé sur Mac
 - [`docs/projet/backlog.md > Phase 5`](../projet/backlog.md) — tickets ⏳ restants

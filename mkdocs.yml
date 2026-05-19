@@ -21,6 +21,7 @@ nav:
       - "Liens utiles (consoles & dashboards)": devops/liens-utiles.md
       - "Déploiement (choix d'hébergement Phase 5)": devops/deploiement.md
       - "Release process (workflow Cloud Run)": devops/release-process.md
+      - "Backup & restore process (Postgres → R2)": devops/backup-process.md
       - "Décision : déploiement Ollama": devops/decision-ollama-deploiement.md
   - Projet:
       - Backlog: projet/backlog.md
