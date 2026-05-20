@@ -54,6 +54,10 @@
     "role": {
       "ADMIN": "Admin",
       "USER": "User"
+    },
+    "errors": {
+      "notAuthorized": "This account is not authorised to access PortfolioAI. Contact the administrator if you think this is a mistake.",
+      "oauthFailed": "Google sign-in failed. Try again or contact the administrator if the issue persists."
     }
   },
   "error": {
@@ -410,6 +414,29 @@
     "navLabel": "Configuration",
     "configuration": "Runtime configuration",
     "prompts": "Narrative prompts",
+    "accessControl": "Access control",
+    "accessControlPage": {
+      "title": "Access control",
+      "intro": "Emails allowed to complete Google sign-in. Empty = open mode: any Google account is accepted (created as USER). Once you post the first entry, gating takes effect on the next fresh sign-in.",
+      "adminNote": "Admin emails (APP_ADMIN_EMAILS env var) are automatically included in the effective list — no need to re-add them here.",
+      "openModeNote": "Open mode is active: the list is empty. Add at least one email to start gating sign-ins.",
+      "currentLabel": "Allowed emails",
+      "emptyHint": "No emails in the list. Open mode is active — use the field below to add the first.",
+      "addLabel": "Add an email",
+      "addPlaceholder": "alice@example.com",
+      "addAriaLabel": "Add an allowed email",
+      "removeAriaLabel": "Remove {{email}} from the list",
+      "save": "Save",
+      "reset": "Reset to default",
+      "saving": "Saving…",
+      "saved": "List updated.",
+      "invalidEmail": "Invalid email format: {{value}}",
+      "loading": "Loading…",
+      "errors": {
+        "load": "Could not load the access list.",
+        "save": "Save failed."
+      }
+    },
     "promptsPage": {
       "intro": "Manage the versions of the system prompt that drives the narrative pipeline. The active version is used by every generation ; activating another version replaces the previous one without a reboot.",
       "loading": "Loading prompts…",

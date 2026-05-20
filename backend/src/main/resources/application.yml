@@ -115,6 +115,13 @@ management:
 app:
   admin:
     emails: ${APP_ADMIN_EMAILS:}
+  # Whitelist of emails authorised to complete the OAuth login. Empty = open mode (backward-compat
+  # for a fresh deploy before the admin posts the first list via `/settings/access-control`). The
+  # list is runtime-editable through the UI, not redeploy-required — the admin posts the first
+  # email shortly after the initial deploy. The effective set checked at login is `admins ∪
+  # allowed_emails` so an admin cannot lock themselves out by removing their own email from the UI.
+  allowed:
+    emails: ${APP_ALLOWED_EMAILS:}
   frontend-url: ${APP_FRONTEND_URL:/}
 
 anthropic:

@@ -3,12 +3,15 @@ package com.portfolioai.auth.infrastructure.security
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
+import com.portfolioai.config.application.AppConfigService
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
+import org.springframework.security.oauth2.core.OAuth2Error
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -34,12 +37,37 @@ import org.springframework.transaction.annotation.Transactional
 class CustomOAuth2UserService(
   private val userRepository: UserRepository,
   @Value("\${app.admin.emails:}") private val adminEmailsRaw: String,
+  private val appConfigService: AppConfigService,
 ) : DefaultOAuth2UserService() {
 
   private val log = LoggerFactory.getLogger(javaClass)
 
   private val adminEmails: Set<String> by lazy {
     adminEmailsRaw.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }.toSet()
+  }
+
+  /**
+   * Allowed-emails gate. Reads the live whitelist from [AppConfigService] (DB override > YAML
+   * default > empty), unions with [adminEmails] so the operator is auto-included, and rejects with
+   * an [OAuth2AuthenticationException] carrying the `not_authorized` error code if the inbound
+   * email is not in the effective set. [SecurityConfig] reads that code and redirects the user to
+   * `/login?error=not_authorized` for an inline message.
+   *
+   * Empty whitelist = open mode (laxiste) — anyone with a Google account is let in. Backward-compat
+   * for a fresh deploy before the admin posts the first list via `/settings/access-control`.
+   *
+   * Check happens at the **very top** of [findOrCreateUser] — covers both new logins (no row to
+   * create) and existing users (a row created under open mode should no longer log in once the
+   * admin gates the app). Pin this so a future refactor that moves the check below the
+   * existing-user lookup doesn't silently let pre-gated users bypass the whitelist.
+   */
+  private fun assertAuthorized(email: String) {
+    val allowed = appConfigService.getAllowedEmails()
+    if (allowed.isEmpty()) return
+    val emailLower = email.lowercase()
+    if (emailLower in allowed) return
+    if (emailLower in adminEmails) return
+    throw OAuth2AuthenticationException(OAuth2Error("not_authorized"))
   }
 
   @Transactional
@@ -86,6 +114,7 @@ class CustomOAuth2UserService(
    * `user.id`, never `user.email`.
    */
   internal fun findOrCreateUser(email: String, sub: String, name: String?, provider: String): User {
+    assertAuthorized(email)
     val existing = userRepository.findByEmail(email)
     if (existing != null) {
       if (!name.isNullOrBlank()) existing.displayName = name

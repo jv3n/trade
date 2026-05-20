@@ -14,19 +14,27 @@
  *   browser. The guard exists for defensive depth, not as a tested code path.
  */
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
+import { MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
+import { of } from 'rxjs';
 import { provideTranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/app-state/auth.service';
 import { CurrentUser } from '../../core/api/auth/auth.repository';
 import { LoginPage } from './login-page';
 
-function setup(currentUser: CurrentUser | null) {
+function setup(currentUser: CurrentUser | null, queryParams: Record<string, string> = {}) {
   const _currentUser = signal<CurrentUser | null>(currentUser);
   const stub = {
     currentUser: _currentUser.asReadonly(),
     isAuthenticated: () => _currentUser() !== null,
     isAdmin: () => _currentUser()?.role === 'ADMIN',
+  };
+  const paramMap = convertToParamMap(queryParams);
+  const routeStub = {
+    queryParamMap: of(paramMap),
+    snapshot: { queryParamMap: paramMap },
   };
   TestBed.configureTestingModule({
     imports: [LoginPage],
@@ -34,8 +42,17 @@ function setup(currentUser: CurrentUser | null) {
       provideRouter([{ path: 'dashboard', loadComponent: () => Promise.resolve(LoginPage) }]),
       provideTranslateService({ lang: 'en' }),
       { provide: AuthService, useValue: stub },
+      { provide: ActivatedRoute, useValue: routeStub },
     ],
   });
+  // Stubs the `portfolioai` brand-mark icon so `<mat-icon svgIcon="portfolioai">` (rendered in
+  // both the toolbar and the login hero) doesn't log a "Unable to find icon" error during the
+  // test run. The production registration lives in `app.config.ts > provideAppInitializer` ; the
+  // unit-test harness doesn't fire app initializers, so we mirror it here with an empty SVG.
+  TestBed.inject(MatIconRegistry).addSvgIconLiteral(
+    'portfolioai',
+    TestBed.inject(DomSanitizer).bypassSecurityTrustHtml('<svg></svg>'),
+  );
 }
 
 describe('LoginPage', () => {
@@ -104,5 +121,50 @@ describe('LoginPage', () => {
     expect(el.textContent).toContain('auth.login.features.portfolio.title');
     expect(el.textContent).toContain('auth.login.signInWithGoogle');
     expect(el.textContent).toContain('auth.login.disclaimer');
+  });
+
+  it('renders the not_authorized banner when the error query param signals a whitelist rejection', () => {
+    // The backend `SecurityConfig` failure handler redirects to `/login?error=not_authorized`
+    // when `CustomOAuth2UserService.assertAuthorized` throws — we want the user to see a clear
+    // inline message rather than wonder why the OAuth dance silently dropped them on /login.
+    setup(null, { error: 'not_authorized' });
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('auth.errors.notAuthorized');
+    // The generic oauth_failed key must NOT also appear — picking the right branch matters
+    expect(el.textContent).not.toContain('auth.errors.oauthFailed');
+  });
+
+  it('renders the oauth_failed banner as a fallback for any non-whitelist OAuth failure', () => {
+    setup(null, { error: 'oauth_failed' });
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('auth.errors.oauthFailed');
+    expect(el.textContent).not.toContain('auth.errors.notAuthorized');
+  });
+
+  it('renders no error banner when the error query param is missing (fresh /login visit)', () => {
+    // Happy path : the admin lands on /login without coming from a failed OAuth bounce. The
+    // template must not render the inline error block at all (no `auth.errors.*` key in the DOM).
+    setup(null);
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('auth.errors.');
+  });
+
+  it('degrades silently when the error query param carries an unknown code', () => {
+    // Defensive : a future code we haven't wired up yet (or a user pasting a hand-typed URL with
+    // a typo) must not render an opaque banner. `errorKey()` returns null on the `default` switch
+    // branch — pin that the @if degrades cleanly without a "missing translation" artefact.
+    setup(null, { error: 'something_unexpected' });
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('auth.errors.');
   });
 });

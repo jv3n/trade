@@ -1,0 +1,110 @@
+<div class="access-control-layout">
+  <div class="content-header">
+    <h2>{{ 'settings.accessControlPage.title' | translate }}</h2>
+    <p>{{ 'settings.accessControlPage.intro' | translate }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="24"></mat-spinner>
+      <span>{{ 'settings.accessControlPage.loading' | translate }}</span>
+    </div>
+  } @else if (loadError()) {
+    <div class="error-banner">
+      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <span>{{ 'settings.accessControlPage.errors.load' | translate }}</span>
+    </div>
+  } @else {
+    @if (isOpenMode()) {
+      <div class="banner warn" role="alert">
+        <mat-icon aria-hidden="true">lock_open</mat-icon>
+        <span>{{ 'settings.accessControlPage.openModeNote' | translate }}</span>
+      </div>
+    }
+
+    <div class="banner info">
+      <mat-icon aria-hidden="true">info_outline</mat-icon>
+      <span>{{ 'settings.accessControlPage.adminNote' | translate }}</span>
+    </div>
+
+    <section class="config-card emails-card" aria-labelledby="emails-display-header">
+      <div class="card-header">
+        <h3 id="emails-display-header">
+          {{ 'settings.accessControlPage.currentLabel' | translate }}
+          <span class="count">({{ emails().length }})</span>
+        </h3>
+      </div>
+      @if (emails().length === 0) {
+        <p class="empty-hint">{{ 'settings.accessControlPage.emptyHint' | translate }}</p>
+      } @else {
+        <mat-chip-set
+          class="emails-chip-set"
+          [attr.aria-label]="'settings.accessControlPage.currentLabel' | translate"
+        >
+          @for (email of emails(); track email) {
+            <mat-chip (removed)="removeEmail(email)">
+              {{ email }}
+              <button matChipRemove type="button" [attr.aria-label]="removeAriaLabel(email)">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip>
+          }
+        </mat-chip-set>
+      }
+    </section>
+
+    <mat-form-field appearance="outline" class="add-email-field">
+      <mat-label>{{ 'settings.accessControlPage.addLabel' | translate }}</mat-label>
+      <input
+        matInput
+        #addInput
+        type="email"
+        autocomplete="off"
+        [placeholder]="'settings.accessControlPage.addPlaceholder' | translate"
+        [attr.aria-label]="'settings.accessControlPage.addAriaLabel' | translate"
+        (keydown.enter)="onAddKeydown($event, addInput.value)"
+      />
+      <button
+        matSuffix
+        mat-icon-button
+        type="button"
+        [attr.aria-label]="'settings.accessControlPage.addAriaLabel' | translate"
+        (click)="onAddClick(addInput)"
+      >
+        <mat-icon>add</mat-icon>
+      </button>
+    </mat-form-field>
+
+    @if (invalidEmailMessage(); as msg) {
+      <p class="inline-error" role="alert">
+        <mat-icon aria-hidden="true">warning_amber</mat-icon>
+        <span>{{ msg }}</span>
+      </p>
+    }
+
+    <div class="actions">
+      <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="save()">
+        {{
+          (saving() ? 'settings.accessControlPage.saving' : 'settings.accessControlPage.save')
+            | translate
+        }}
+      </button>
+      <button mat-stroked-button type="button" [disabled]="saving()" (click)="reset()">
+        {{ 'settings.accessControlPage.reset' | translate }}
+      </button>
+    </div>
+
+    @if (saved()) {
+      <p class="inline-success" role="status">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        <span>{{ 'settings.accessControlPage.saved' | translate }}</span>
+      </p>
+    }
+    @if (saveError()) {
+      <p class="inline-error" role="alert">
+        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <span>{{ 'settings.accessControlPage.errors.save' | translate }}</span>
+      </p>
+    }
+  }
+</div>

@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.AuthenticationFailureHandler
 import org.springframework.security.web.authentication.HttpStatusEntryPoint
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.csrf.CsrfFilter
@@ -113,8 +115,31 @@ class SecurityConfig(
           ep.oidcUserService(customOidcUserService)
         }
         login.defaultSuccessUrl(frontendUrl, true)
+        // Translate OAuth2 failures into a clean redirect with a query param the SPA reads to
+        // render an inline message on `/login`. The `not_authorized` code is what
+        // `CustomOAuth2UserService.assertAuthorized` throws when an inbound email isn't in the
+        // effective whitelist — gives the user a clear "access denied" message instead of an
+        // opaque 500 page. Any other OAuth2 failure (network, malformed token, Google misconfig)
+        // falls through to `oauth_failed` — useful for operator debugging via the URL bar.
+        login.failureHandler(oauth2FailureHandler())
       }
     }
     return http.build()
   }
+
+  private fun oauth2FailureHandler(): AuthenticationFailureHandler =
+    AuthenticationFailureHandler { _, response, exception ->
+      val errorCode = (exception as? OAuth2AuthenticationException)?.error?.errorCode
+      val target =
+        when (errorCode) {
+          "not_authorized" -> "/login?error=not_authorized"
+          else -> "/login?error=oauth_failed"
+        }
+      // Defensive : if a filter further up the chain (e.g. CSRF on a malformed callback request)
+      // already committed the response, `sendRedirect` would throw `IllegalStateException`
+      // silently swallowed by the filter chain — leaving the user on a blank page. The current
+      // OAuth2 filter topology never commits before us, so this guard is belt-and-suspenders, but
+      // cheap insurance against a future filter order change.
+      if (!response.isCommitted) response.sendRedirect(target)
+    }
 }

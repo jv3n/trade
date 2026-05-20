@@ -34,6 +34,13 @@ enum class ConfigValueType {
   INT,
   SECRET,
   ENUM,
+  /**
+   * Comma-separated list of emails. Not a secret (the admin needs to see the current list to edit
+   * it), so [ConfigEntryDto.currentValue] is populated as-is. The UI renders a `mat-chip-grid` with
+   * one removable chip per email plus an input to add new entries. Backend [AppConfigService]
+   * validates each token contains `@` and is non-blank after trim.
+   */
+  EMAILS,
 }
 
 /** Body of `PUT /api/config/{key}` — empty `value` is rejected (use DELETE/reset to clear). */

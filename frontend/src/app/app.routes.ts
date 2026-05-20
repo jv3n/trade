@@ -80,6 +80,13 @@ export const routes: Routes = [
             (m) => m.PromptStatsPage,
           ),
       },
+      {
+        path: 'access-control',
+        loadComponent: () =>
+          import('./features/settings/access-control/access-control').then(
+            (m) => m.AccessControlPage,
+          ),
+      },
     ],
   },
   // 404 fallback — any unknown URL routes to the dashboard. The authGuard will catch

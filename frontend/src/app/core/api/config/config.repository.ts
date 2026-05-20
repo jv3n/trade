@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-export type ConfigValueType = 'STRING' | 'INT' | 'SECRET' | 'ENUM';
+export type ConfigValueType = 'STRING' | 'INT' | 'SECRET' | 'ENUM' | 'EMAILS';
 
 /**
  * One option on an ENUM-typed config key. `disabledReason` carries the property path of a

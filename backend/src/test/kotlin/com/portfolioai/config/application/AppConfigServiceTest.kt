@@ -268,6 +268,75 @@ class AppConfigServiceTest {
     verify(publisher, never()).publishEvent(any<ConfigChangedEvent>())
   }
 
+  // ---------------------------------------------------------------------- allowed emails
+
+  @Test
+  fun `getAllowedEmails returns an empty set when no override and yaml default is empty`() {
+    // Open mode (laxiste) — backward compat for a fresh deploy before the admin posts the first
+    // list. `CustomOAuth2UserService` short-circuits the gate when the set is empty.
+    val service = newService()
+    assertTrue(service.getAllowedEmails().isEmpty())
+  }
+
+  @Test
+  fun `getAllowedEmails parses the yaml default csv into a normalized set`() {
+    // Lowercase + trim + dedup + drop blank tokens. Mirrors the parsing already done for
+    // `app.admin.emails` so a future operator who copy-pastes the same env-var shape between the
+    // two doesn't get surprised by different semantics.
+    val service =
+      newService(allowedEmailsDefault = " Alice@Example.com ,  ,bob@example.com,ALICE@example.com,")
+    assertEquals(setOf("alice@example.com", "bob@example.com"), service.getAllowedEmails())
+  }
+
+  @Test
+  fun `getAllowedEmails reads from the DB override over the yaml default`() {
+    whenever(repo.findAll())
+      .thenReturn(listOf(AppConfigEntry(ConfigKeys.ALLOWED_EMAILS, "carol@example.com,dan@x.io")))
+    val service = newService(allowedEmailsDefault = "alice@example.com")
+
+    assertEquals(setOf("carol@example.com", "dan@x.io"), service.getAllowedEmails())
+  }
+
+  @Test
+  fun `set rejects an EMAILS value with a malformed token`() {
+    // Strict validation : every comma-separated token must contain '@'. Defends against the typo
+    // "alice@x.com bob@y.com" (space-separated) which would otherwise be saved as a single
+    // 19-char string the gate never matches against — a silently-broken whitelist.
+    val service = newService()
+    val ex =
+      assertThrows<IllegalArgumentException> {
+        service.set(ConfigKeys.ALLOWED_EMAILS, "alice@example.com,not-an-email,bob@example.com")
+      }
+    assertTrue(ex.message?.contains("not-an-email") ?: false)
+  }
+
+  @Test
+  fun `set accepts a well-formed EMAILS value`() {
+    val service = newService()
+    whenever(repo.findById(ConfigKeys.ALLOWED_EMAILS)).thenReturn(Optional.empty())
+    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { it.arguments[0] as AppConfigEntry }
+
+    service.set(ConfigKeys.ALLOWED_EMAILS, "alice@example.com, bob@example.com")
+
+    assertEquals(setOf("alice@example.com", "bob@example.com"), service.getAllowedEmails())
+  }
+
+  @Test
+  fun `set accepts an empty-looking EMAILS value that contains only whitespace tokens`() {
+    // The frontend "clear all" path sends `value=""` via the dedicated DELETE endpoint, but an
+    // intermediate "comma, then nothing" save shouldn't blow up either — the filter on
+    // `isNotEmpty()` makes the validator skip the whitespace-only tokens cleanly. Pinning so a
+    // future refactor that swaps `filter { it.isNotEmpty() }` for `forEach` doesn't make the
+    // edge case throw.
+    val service = newService()
+    whenever(repo.findById(ConfigKeys.ALLOWED_EMAILS)).thenReturn(Optional.empty())
+    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { it.arguments[0] as AppConfigEntry }
+
+    service.set(ConfigKeys.ALLOWED_EMAILS, " , , alice@example.com")
+
+    assertEquals(setOf("alice@example.com"), service.getAllowedEmails())
+  }
+
   // ---------------------------------------------------------------------- helpers
 
   /**
@@ -281,6 +350,7 @@ class AppConfigServiceTest {
     twelveDataApiKey: String = "yaml-twelve",
     finnhubApiKey: String = "yaml-finn",
     anthropicApiKey: String = "yaml-anthropic",
+    allowedEmailsDefault: String = "",
   ): AppConfigService =
     AppConfigService(
         repository = repo,
@@ -306,6 +376,7 @@ class AppConfigServiceTest {
             llmTimeoutSeconds = 400,
           ),
         cacheTtlDefault = 15,
+        allowedEmailsDefault = allowedEmailsDefault,
       )
       .also { it.primeCache() }
 }

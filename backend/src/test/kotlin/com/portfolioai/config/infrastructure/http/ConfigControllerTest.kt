@@ -53,24 +53,27 @@ class ConfigControllerTest {
   // ---------------------------------------------------------------------- list
 
   @Test
-  fun `GET config returns the twelve known keys with secrets masked and enums carrying allowedValues`() {
-    // Order is alphabetical on key. With the Anthropic key SECRET added in Phase 2.5 the layout is
-    // :
+  fun `GET config returns the thirteen known keys with secrets masked and enums carrying allowedValues`() {
+    // Order is alphabetical on key. With ALLOWED_EMAILS added 2026-05-19 (whitelist gating
+    // foot-print of the OAuth login), the layout is :
     // [0]  analyst.provider       ENUM
     // [1]  anthropic.api.key      SECRET (Anthropic API key, masked)
     // [2]  anthropic.api.model    STRING (Claude model name)
-    // [3]  earnings.provider      ENUM
-    // [4]  llm.provider           ENUM   (claude / ollama)
-    // [5]  llm.timeout-seconds    INT    (v1.5 — slider 60..900)
-    // [6]  market.cache.ttl-min   INT
-    // [7]  market.finnhub.key     SECRET
-    // [8]  market.provider        ENUM
-    // [9]  market.twelvedata.key  SECRET
-    // [10] news.provider          ENUM
-    // [11] ollama.model           STRING (Ollama model tag)
+    // [3]  app.allowed.emails     EMAILS (whitelist of authorised emails, not masked)
+    // [4]  earnings.provider      ENUM
+    // [5]  llm.provider           ENUM   (claude / ollama)
+    // [6]  llm.timeout-seconds    INT    (v1.5 — slider 60..900)
+    // [7]  market.cache.ttl-min   INT
+    // [8]  market.finnhub.key     SECRET
+    // [9]  market.provider        ENUM
+    // [10] market.twelvedata.key  SECRET
+    // [11] news.provider          ENUM
+    // [12] ollama.model           STRING (Ollama model tag)
     given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant-real")
     given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+    given(service.getString(ConfigKeys.ALLOWED_EMAILS))
+      .willReturn("alice@example.com,bob@example.com")
     given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("ollama")
     given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("600")
@@ -83,6 +86,7 @@ class ConfigControllerTest {
     given(service.defaultFor(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("env-anthropic")
     given(service.defaultFor(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+    given(service.defaultFor(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
     given(service.defaultFor(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
     given(service.defaultFor(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
@@ -95,6 +99,7 @@ class ConfigControllerTest {
     given(service.isOverridden(ConfigKeys.ANALYST_PROVIDER)).willReturn(false)
     given(service.isOverridden(ConfigKeys.ANTHROPIC_API_KEY)).willReturn(false)
     given(service.isOverridden(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn(false)
+    given(service.isOverridden(ConfigKeys.ALLOWED_EMAILS)).willReturn(true)
     given(service.isOverridden(ConfigKeys.EARNINGS_PROVIDER)).willReturn(false)
     given(service.isOverridden(ConfigKeys.LLM_PROVIDER)).willReturn(true)
     given(service.isOverridden(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn(true)
@@ -108,7 +113,7 @@ class ConfigControllerTest {
     mvc
       .perform(get("/api/config"))
       .andExpect(status().isOk)
-      .andExpect(jsonPath("$.length()").value(12))
+      .andExpect(jsonPath("$.length()").value(13))
       // Analyst provider : ENUM, allowedValues drives the toggle group.
       .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
       .andExpect(jsonPath("$[0].type").value("ENUM"))
@@ -126,57 +131,66 @@ class ConfigControllerTest {
       .andExpect(jsonPath("$[2].currentValue").value("claude-opus-4-6"))
       .andExpect(jsonPath("$[2].defaultValue").value("claude-opus-4-6"))
       .andExpect(jsonPath("$[2].isOverridden").value(false))
+      // Allowed emails : EMAILS — not masked, the admin needs to see the current CSV to edit it.
+      // Phase 5 whitelist gating (cf. `CustomOAuth2UserService.assertAuthorized`).
+      .andExpect(jsonPath("$[3].key").value(ConfigKeys.ALLOWED_EMAILS))
+      .andExpect(jsonPath("$[3].type").value("EMAILS"))
+      .andExpect(jsonPath("$[3].currentValue").value("alice@example.com,bob@example.com"))
+      .andExpect(jsonPath("$[3].defaultValue").value(""))
+      .andExpect(jsonPath("$[3].hasValue").value(true))
+      .andExpect(jsonPath("$[3].isOverridden").value(true))
+      .andExpect(jsonPath("$[3].allowedValues").doesNotExist())
       // Earnings provider : ENUM.
-      .andExpect(jsonPath("$[3].key").value(ConfigKeys.EARNINGS_PROVIDER))
-      .andExpect(jsonPath("$[3].type").value("ENUM"))
+      .andExpect(jsonPath("$[4].key").value(ConfigKeys.EARNINGS_PROVIDER))
+      .andExpect(jsonPath("$[4].type").value("ENUM"))
       // LLM provider : ENUM with mock / claude / ollama, currently overridden to ollama. The
       // `mock` value was added 2026-05-15 with MockLlmClient so the app runs without API key —
       // ordering pinned here matches `ConfigKeys.ENUM_KEYS[LLM_PROVIDER]` (mock first because the
       // front renders the toggle group in that order and "no-key onboarding" is the leftmost
       // affordance).
-      .andExpect(jsonPath("$[4].key").value(ConfigKeys.LLM_PROVIDER))
-      .andExpect(jsonPath("$[4].type").value("ENUM"))
-      .andExpect(jsonPath("$[4].currentValue").value("ollama"))
-      .andExpect(jsonPath("$[4].defaultValue").value("claude"))
-      .andExpect(jsonPath("$[4].isOverridden").value(true))
-      .andExpect(jsonPath("$[4].allowedValues.length()").value(3))
-      .andExpect(jsonPath("$[4].allowedValues[0].value").value("mock"))
-      .andExpect(jsonPath("$[4].allowedValues[1].value").value("claude"))
-      .andExpect(jsonPath("$[4].allowedValues[2].value").value("ollama"))
-      // LLM timeout : INT slider, default 400, overridden to 600 here.
-      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_TIMEOUT_SECONDS))
-      .andExpect(jsonPath("$[5].type").value("INT"))
-      .andExpect(jsonPath("$[5].currentValue").value("600"))
-      .andExpect(jsonPath("$[5].defaultValue").value("400"))
+      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_PROVIDER))
+      .andExpect(jsonPath("$[5].type").value("ENUM"))
+      .andExpect(jsonPath("$[5].currentValue").value("ollama"))
+      .andExpect(jsonPath("$[5].defaultValue").value("claude"))
       .andExpect(jsonPath("$[5].isOverridden").value(true))
-      // Cache TTL : INT key, value exposed as-is.
-      .andExpect(jsonPath("$[6].key").value(ConfigKeys.CACHE_TTL_MINUTES))
+      .andExpect(jsonPath("$[5].allowedValues.length()").value(3))
+      .andExpect(jsonPath("$[5].allowedValues[0].value").value("mock"))
+      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
+      .andExpect(jsonPath("$[5].allowedValues[2].value").value("ollama"))
+      // LLM timeout : INT slider, default 400, overridden to 600 here.
+      .andExpect(jsonPath("$[6].key").value(ConfigKeys.LLM_TIMEOUT_SECONDS))
       .andExpect(jsonPath("$[6].type").value("INT"))
-      .andExpect(jsonPath("$[6].currentValue").value("30"))
-      .andExpect(jsonPath("$[6].defaultValue").value("15"))
+      .andExpect(jsonPath("$[6].currentValue").value("600"))
+      .andExpect(jsonPath("$[6].defaultValue").value("400"))
+      .andExpect(jsonPath("$[6].isOverridden").value(true))
+      // Cache TTL : INT key, value exposed as-is.
+      .andExpect(jsonPath("$[7].key").value(ConfigKeys.CACHE_TTL_MINUTES))
+      .andExpect(jsonPath("$[7].type").value("INT"))
+      .andExpect(jsonPath("$[7].currentValue").value("30"))
+      .andExpect(jsonPath("$[7].defaultValue").value("15"))
       // Finnhub key : SECRET, no value set.
-      .andExpect(jsonPath("$[7].key").value(ConfigKeys.FINNHUB_API_KEY))
-      .andExpect(jsonPath("$[7].type").value("SECRET"))
-      .andExpect(jsonPath("$[7].hasValue").value(false))
+      .andExpect(jsonPath("$[8].key").value(ConfigKeys.FINNHUB_API_KEY))
+      .andExpect(jsonPath("$[8].type").value("SECRET"))
+      .andExpect(jsonPath("$[8].hasValue").value(false))
       // Market provider : ENUM, currently overridden to twelvedata.
-      .andExpect(jsonPath("$[8].key").value(ConfigKeys.MARKET_PROVIDER))
-      .andExpect(jsonPath("$[8].type").value("ENUM"))
-      .andExpect(jsonPath("$[8].currentValue").value("twelvedata"))
+      .andExpect(jsonPath("$[9].key").value(ConfigKeys.MARKET_PROVIDER))
+      .andExpect(jsonPath("$[9].type").value("ENUM"))
+      .andExpect(jsonPath("$[9].currentValue").value("twelvedata"))
       // Twelve Data key : SECRET with a value — masked.
-      .andExpect(jsonPath("$[9].key").value(ConfigKeys.TWELVEDATA_API_KEY))
-      .andExpect(jsonPath("$[9].type").value("SECRET"))
-      .andExpect(jsonPath("$[9].currentValue").doesNotExist())
-      .andExpect(jsonPath("$[9].hasValue").value(true))
-      .andExpect(jsonPath("$[9].isOverridden").value(true))
+      .andExpect(jsonPath("$[10].key").value(ConfigKeys.TWELVEDATA_API_KEY))
+      .andExpect(jsonPath("$[10].type").value("SECRET"))
+      .andExpect(jsonPath("$[10].currentValue").doesNotExist())
+      .andExpect(jsonPath("$[10].hasValue").value(true))
+      .andExpect(jsonPath("$[10].isOverridden").value(true))
       // News provider : ENUM.
-      .andExpect(jsonPath("$[10].key").value(ConfigKeys.NEWS_PROVIDER))
-      .andExpect(jsonPath("$[10].type").value("ENUM"))
+      .andExpect(jsonPath("$[11].key").value(ConfigKeys.NEWS_PROVIDER))
+      .andExpect(jsonPath("$[11].type").value("ENUM"))
       // Ollama model : STRING — free-form (the Ollama ecosystem changes too fast to whitelist).
-      .andExpect(jsonPath("$[11].key").value(ConfigKeys.OLLAMA_MODEL))
-      .andExpect(jsonPath("$[11].type").value("STRING"))
-      .andExpect(jsonPath("$[11].currentValue").value("qwen2.5:3b"))
-      .andExpect(jsonPath("$[11].defaultValue").value("qwen2.5:3b"))
-      .andExpect(jsonPath("$[11].allowedValues").doesNotExist())
+      .andExpect(jsonPath("$[12].key").value(ConfigKeys.OLLAMA_MODEL))
+      .andExpect(jsonPath("$[12].type").value("STRING"))
+      .andExpect(jsonPath("$[12].currentValue").value("qwen2.5:3b"))
+      .andExpect(jsonPath("$[12].defaultValue").value("qwen2.5:3b"))
+      .andExpect(jsonPath("$[12].allowedValues").doesNotExist())
   }
 
   @Test
@@ -195,6 +209,7 @@ class ConfigControllerTest {
     given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
     given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("")
     given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
     given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("mock")
@@ -213,31 +228,33 @@ class ConfigControllerTest {
       .andExpect(jsonPath("$[0].allowedValues[0].disabledReason").doesNotExist())
       .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
       .andExpect(jsonPath("$[0].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY))
-      // earnings.provider — same shape, same FINNHUB_API_KEY dependency.
-      .andExpect(jsonPath("$[3].key").value(ConfigKeys.EARNINGS_PROVIDER))
-      .andExpect(jsonPath("$[3].allowedValues[1].value").value("finnhub"))
-      .andExpect(jsonPath("$[3].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY))
+      // earnings.provider — same shape, same FINNHUB_API_KEY dependency. Position shifted from
+      // [3] to [4] when ALLOWED_EMAILS landed at [3] alphabetically (cf. layout map in the first
+      // GET test).
+      .andExpect(jsonPath("$[4].key").value(ConfigKeys.EARNINGS_PROVIDER))
+      .andExpect(jsonPath("$[4].allowedValues[1].value").value("finnhub"))
+      .andExpect(jsonPath("$[4].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY))
       // llm.provider — [0]=mock, [1]=claude (needs anthropic.api.key), [2]=ollama (no key needed,
       // daemon reachability is a different failure mode → never disabled here).
-      .andExpect(jsonPath("$[4].key").value(ConfigKeys.LLM_PROVIDER))
-      .andExpect(jsonPath("$[4].allowedValues[0].disabledReason").doesNotExist())
-      .andExpect(jsonPath("$[4].allowedValues[1].value").value("claude"))
+      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_PROVIDER))
+      .andExpect(jsonPath("$[5].allowedValues[0].disabledReason").doesNotExist())
+      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
       .andExpect(
-        jsonPath("$[4].allowedValues[1].disabledReason").value(ConfigKeys.ANTHROPIC_API_KEY)
+        jsonPath("$[5].allowedValues[1].disabledReason").value(ConfigKeys.ANTHROPIC_API_KEY)
       )
-      .andExpect(jsonPath("$[4].allowedValues[2].value").value("ollama"))
-      .andExpect(jsonPath("$[4].allowedValues[2].disabledReason").doesNotExist())
+      .andExpect(jsonPath("$[5].allowedValues[2].value").value("ollama"))
+      .andExpect(jsonPath("$[5].allowedValues[2].disabledReason").doesNotExist())
       // market.provider — twelvedata gated on market.twelvedata.api-key.
-      .andExpect(jsonPath("$[8].key").value(ConfigKeys.MARKET_PROVIDER))
-      .andExpect(jsonPath("$[8].allowedValues[1].value").value("twelvedata"))
+      .andExpect(jsonPath("$[9].key").value(ConfigKeys.MARKET_PROVIDER))
+      .andExpect(jsonPath("$[9].allowedValues[1].value").value("twelvedata"))
       .andExpect(
-        jsonPath("$[8].allowedValues[1].disabledReason").value(ConfigKeys.TWELVEDATA_API_KEY)
+        jsonPath("$[9].allowedValues[1].disabledReason").value(ConfigKeys.TWELVEDATA_API_KEY)
       )
       // news.provider — finnhub gated on market.finnhub.api-key.
-      .andExpect(jsonPath("$[10].key").value(ConfigKeys.NEWS_PROVIDER))
-      .andExpect(jsonPath("$[10].allowedValues[1].value").value("finnhub"))
+      .andExpect(jsonPath("$[11].key").value(ConfigKeys.NEWS_PROVIDER))
+      .andExpect(jsonPath("$[11].allowedValues[1].value").value("finnhub"))
       .andExpect(
-        jsonPath("$[10].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY)
+        jsonPath("$[11].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY)
       )
   }
 
@@ -250,6 +267,7 @@ class ConfigControllerTest {
     given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("real-key")
     given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant-real")
     given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
     given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
@@ -264,10 +282,12 @@ class ConfigControllerTest {
       .andExpect(status().isOk)
       .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
       .andExpect(jsonPath("$[0].allowedValues[1].disabledReason").doesNotExist())
-      .andExpect(jsonPath("$[4].allowedValues[1].value").value("claude"))
-      .andExpect(jsonPath("$[4].allowedValues[1].disabledReason").doesNotExist())
-      .andExpect(jsonPath("$[8].allowedValues[1].value").value("twelvedata"))
-      .andExpect(jsonPath("$[8].allowedValues[1].disabledReason").doesNotExist())
+      // llm.provider — shifted from [4] to [5] when ALLOWED_EMAILS landed at [3] alphabetically.
+      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
+      .andExpect(jsonPath("$[5].allowedValues[1].disabledReason").doesNotExist())
+      // market.provider — shifted from [8] to [9] for the same reason.
+      .andExpect(jsonPath("$[9].allowedValues[1].value").value("twelvedata"))
+      .andExpect(jsonPath("$[9].allowedValues[1].disabledReason").doesNotExist())
   }
 
   // ---------------------------------------------------------------------- set

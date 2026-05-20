@@ -133,6 +133,7 @@ class ConfigController(
         isSecret -> ConfigValueType.SECRET
         allowedRaw != null -> ConfigValueType.ENUM
         key in ConfigKeys.INT_KEYS -> ConfigValueType.INT
+        key in ConfigKeys.EMAIL_LIST_KEYS -> ConfigValueType.EMAILS
         else -> ConfigValueType.STRING
       }
     return ConfigEntryDto(

@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { signal } from '@angular/core';
+import { MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 import { App } from './app';
 import { AuthService } from './core/app-state/auth.service';
 import { CurrentUser } from './core/api/auth/auth.repository';
@@ -38,6 +40,14 @@ describe('App', () => {
         provideAuthStub({ email: 'admin@example.com', displayName: 'Admin', role: 'ADMIN' }),
       ],
     }).compileComponents();
+    // Stub the `portfolioai` brand-mark icon so `<mat-icon svgIcon="portfolioai">` in the toolbar
+    // doesn't log a "Unable to find icon" error during the test run. The production registration
+    // lives in `app.config.ts > provideAppInitializer` ; the unit-test harness doesn't fire app
+    // initializers, so we mirror it here with an empty SVG.
+    TestBed.inject(MatIconRegistry).addSvgIconLiteral(
+      'portfolioai',
+      TestBed.inject(DomSanitizer).bypassSecurityTrustHtml('<svg></svg>'),
+    );
   });
 
   it('should create the app', () => {

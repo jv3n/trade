@@ -89,6 +89,24 @@
   color: var(--color-accent);
 }
 
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-danger, #e53935);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-danger, #e53935) 12%, transparent);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  max-width: 520px;
+
+  mat-icon {
+    color: var(--color-danger, #e53935);
+    flex-shrink: 0;
+  }
+}
+
 .login-google-btn {
   height: 48px;
   font-size: 1rem;

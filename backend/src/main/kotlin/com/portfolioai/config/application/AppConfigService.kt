@@ -40,6 +40,7 @@ class AppConfigService(
   private val dataProviders: DataProvidersDefaults,
   private val llm: LlmDefaults,
   @Value("\${market.cache.ttl-minutes:15}") private val cacheTtlDefault: Int,
+  @Value("\${app.allowed.emails:}") private val allowedEmailsDefault: String,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
   private val overrides = ConcurrentHashMap<String, String>()
@@ -54,6 +55,17 @@ class AppConfigService(
   fun getString(key: String): String = overrides[key] ?: defaultFor(key)
 
   fun getInt(key: String): Int = getString(key).toInt()
+
+  /**
+   * Parsed view of [ConfigKeys.ALLOWED_EMAILS] — the CSV stored as a single string is split,
+   * trimmed, lowercased, deduplicated, and empty tokens dropped. Consumed by
+   * [CustomOAuth2UserService] at each login. Empty set = open mode (no gating ; let everyone in).
+   *
+   * Returns a fresh `Set` on every call — fine because logins are cheap (~handful per day) and the
+   * underlying string is short. If this ever becomes hot, memoize against the current override
+   * value.
+   */
+  fun getAllowedEmails(): Set<String> = parseEmailList(getString(ConfigKeys.ALLOWED_EMAILS))
 
   /** Whether the given key currently has a DB override (vs falling back to YAML). */
   fun isOverridden(key: String): Boolean = overrides.containsKey(key)
@@ -73,6 +85,7 @@ class AppConfigService(
       ConfigKeys.OLLAMA_MODEL -> llm.ollamaModel
       ConfigKeys.ANTHROPIC_API_MODEL -> llm.anthropicApiModel
       ConfigKeys.LLM_TIMEOUT_SECONDS -> llm.llmTimeoutSeconds.toString()
+      ConfigKeys.ALLOWED_EMAILS -> allowedEmailsDefault
       else -> throw IllegalArgumentException("Unknown config key: $key")
     }
 
@@ -121,6 +134,21 @@ class AppConfigService(
     if (allowed != null) {
       require(value in allowed) { "$key must be one of $allowed (got '$value')" }
     }
+    if (key in ConfigKeys.EMAIL_LIST_KEYS) {
+      // Strict validation : every comma-separated token must contain '@' and be non-blank after
+      // trim. Defends against typos (e.g. an admin pastes "alice@x.com bob@y.com" with a space and
+      // expects two entries) — surface the error at save time, not as a silently-broken whitelist
+      // that lets the wrong email in.
+      value
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .forEach { token ->
+          require("@" in token) {
+            "$key contains malformed entry '$token' — each comma-separated token must be a valid email"
+          }
+        }
+    }
     // Provider gating : refuse a switch to a live provider when the required API key isn't
     // configured (neither in DB override nor in YAML fallback). The frontend already grays out
     // the option (`AllowedValueDto.disabledReason`) but a direct PUT could bypass that — we
@@ -142,3 +170,11 @@ class AppConfigService(
  * [ConfigKeys.CACHE_TTL_MINUTES] changes.
  */
 data class ConfigChangedEvent(val key: String, val newValue: String)
+
+/**
+ * Parses a comma-separated email list into a normalized [Set]. Used by [AppConfigService] for the
+ * read path and reused by tests that need to assert on the same shape without going through the
+ * service.
+ */
+internal fun parseEmailList(raw: String): Set<String> =
+  raw.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }.toSet()

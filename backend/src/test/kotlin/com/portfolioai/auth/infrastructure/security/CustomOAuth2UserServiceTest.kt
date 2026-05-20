@@ -3,6 +3,7 @@ package com.portfolioai.auth.infrastructure.security
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
+import com.portfolioai.config.application.AppConfigService
 import java.time.Instant
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,6 +19,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User
 
 /**
@@ -48,8 +50,20 @@ class CustomOAuth2UserServiceTest {
 
   private val userRepository: UserRepository = mock()
 
-  private fun service(adminEmails: String = "venet.julien@gmail.com,ops@portfolioai.com") =
-    CustomOAuth2UserService(userRepository, adminEmails)
+  private fun service(
+    adminEmails: String = "venet.julien@gmail.com,ops@portfolioai.com",
+    allowedEmails: Set<String> = emptySet(),
+  ): CustomOAuth2UserService {
+    // `AppConfigService` is a concrete Kotlin `@Service` class. Mockito can subclass it only
+    // because `kotlin-allopen` (configured under the `spring` preset in `build.gradle.kts`) opens
+    // `@Service`-annotated classes and their methods. If the allopen scope is ever narrowed, this
+    // `mock()` call will fail with "Cannot mock/spy because final class" — switch to mocking the
+    // single method via a hand-rolled stub class implementing the same `getAllowedEmails()`
+    // contract.
+    val appConfigService: AppConfigService = mock()
+    given(appConfigService.getAllowedEmails()).willReturn(allowedEmails)
+    return CustomOAuth2UserService(userRepository, adminEmails, appConfigService)
+  }
 
   // ---------------------------------------------------------------------- creation
 
@@ -216,6 +230,102 @@ class CustomOAuth2UserServiceTest {
       }
     assertTrue(ex.message?.contains("sub claim") ?: false)
     verify(userRepository, never()).save(any())
+  }
+
+  // ---------------------------------------------------------------------- allowed-emails gate
+
+  @Test
+  fun `login is open when the allowed list is empty (laxiste mode)`() {
+    // Backward-compat for a fresh deploy : the admin hasn't yet posted the first list, so the gate
+    // lets everyone in (with role USER by default). The moment they post the first email via
+    // `/settings/access-control`, the next login of anyone else gets rejected.
+    given(userRepository.findByEmail(eq("stranger@example.com"))).willReturn(null)
+    given(userRepository.save(any<User>())).willAnswer { it.arguments[0] as User }
+
+    service(allowedEmails = emptySet())
+      .processOAuth2User(googleUser("stranger@example.com", "sub-x", "X"), "google")
+
+    verify(userRepository).save(any())
+  }
+
+  @Test
+  fun `login is allowed when the email is in the whitelist`() {
+    given(userRepository.findByEmail(eq("alice@example.com"))).willReturn(null)
+    given(userRepository.save(any<User>())).willAnswer { it.arguments[0] as User }
+
+    service(allowedEmails = setOf("alice@example.com", "bob@example.com"))
+      .processOAuth2User(googleUser("alice@example.com", "sub-alice", "Alice"), "google")
+
+    verify(userRepository).save(any())
+  }
+
+  @Test
+  fun `login is rejected with not_authorized when the email is not in the whitelist`() {
+    // Critical security invariant. The exception code is `not_authorized` — `SecurityConfig` reads
+    // it in its `failureHandler` to redirect with `?error=not_authorized` so the SPA can show an
+    // inline message. Any other code would fall through to the generic "oauth_failed" banner,
+    // which would be misleading.
+    val ex =
+      assertThrows<OAuth2AuthenticationException> {
+        service(allowedEmails = setOf("alice@example.com"))
+          .processOAuth2User(googleUser("eve@example.com", "sub-eve", "Eve"), "google")
+      }
+    assertEquals("not_authorized", ex.error.errorCode)
+    // No row is created — the rejection happens before `findByEmail` even runs, so the DB stays
+    // untouched. Pinning this so a future refactor that moves the gate below the existing-user
+    // lookup doesn't silently start leaking USER rows for rejected emails.
+    verify(userRepository, never()).save(any())
+    verify(userRepository, never()).findByEmail(any())
+  }
+
+  @Test
+  fun `admin emails are auto-included in the effective whitelist`() {
+    // Foot-gun guard : the operator can't lock themselves out by retiring their own email from the
+    // UI list. `APP_ADMIN_EMAILS` (boot-time env var) is always in the effective set, regardless
+    // of what the DB-backed allowed list says.
+    given(userRepository.findByEmail(eq("ops@portfolioai.com"))).willReturn(null)
+    given(userRepository.save(any<User>())).willAnswer { it.arguments[0] as User }
+
+    // `ops@portfolioai.com` is in the default adminEmails seed but NOT in allowedEmails.
+    service(allowedEmails = setOf("alice@example.com"))
+      .processOAuth2User(googleUser("ops@portfolioai.com", "sub-ops", "Ops"), "google")
+
+    val saved = argumentCaptor<User>().also { verify(userRepository).save(it.capture()) }.firstValue
+    assertEquals(Role.ADMIN, saved.role)
+  }
+
+  @Test
+  fun `existing user is rejected if their email is no longer in the effective whitelist`() {
+    // Pre-gated row (created during the open-mode bootstrap) must NOT be able to relogin once the
+    // admin gates the app and forgets to add this user back. The check sits at the top of
+    // `findOrCreateUser`, before the existing-user lookup — so even a row that already exists in
+    // the DB gets rejected at the gate.
+    val existing = user(email = "alice@example.com", role = Role.USER)
+    given(userRepository.findByEmail(eq("alice@example.com"))).willReturn(existing)
+
+    val ex =
+      assertThrows<OAuth2AuthenticationException> {
+        service(allowedEmails = setOf("carol@example.com"))
+          .processOAuth2User(googleUser("alice@example.com", "sub-alice", "Alice"), "google")
+      }
+    assertEquals("not_authorized", ex.error.errorCode)
+    // Existing row remains in the DB (we don't auto-delete on whitelist removal) but no update
+    // either — the row is frozen in its last-known state until the admin re-adds the email.
+    verify(userRepository, never()).save(any())
+  }
+
+  @Test
+  fun `whitelist match is case-insensitive on inbound email`() {
+    // The whitelist is lowercased once at `AppConfigService.getAllowedEmails()` ; the inbound
+    // email may come back from Google with mixed casing depending on how the user typed their
+    // Gmail at signup. Pin that the lowercasing on the lookup side matches.
+    given(userRepository.findByEmail(eq("Alice@Example.com"))).willReturn(null)
+    given(userRepository.save(any<User>())).willAnswer { it.arguments[0] as User }
+
+    service(allowedEmails = setOf("alice@example.com"))
+      .processOAuth2User(googleUser("Alice@Example.com", "sub-alice", "Alice"), "google")
+
+    verify(userRepository).save(any())
   }
 
   // ---------------------------------------------------------------------- helpers

@@ -25,6 +25,15 @@ object ConfigKeys {
   const val ANTHROPIC_API_MODEL = "anthropic.api.model"
   const val LLM_TIMEOUT_SECONDS = "llm.timeout-seconds"
 
+  /**
+   * Comma-separated whitelist of emails authorised to complete the OAuth login. Empty value = open
+   * mode (anyone with a Google account is let in — backward-compat for fresh deploys before the
+   * admin posts the first list). Non-empty = gated mode : the effective whitelist is the union of
+   * this list and `app.admin.emails` (admins are auto-included so the operator can't lock
+   * themselves out by removing their own email from the UI).
+   */
+  const val ALLOWED_EMAILS = "app.allowed.emails"
+
   const val PROVIDER_MOCK = "mock"
   const val PROVIDER_TWELVEDATA = "twelvedata"
   const val PROVIDER_FINNHUB = "finnhub"
@@ -33,6 +42,7 @@ object ConfigKeys {
 
   val SECRET_KEYS: Set<String> = setOf(TWELVEDATA_API_KEY, FINNHUB_API_KEY, ANTHROPIC_API_KEY)
   val INT_KEYS: Set<String> = setOf(CACHE_TTL_MINUTES, LLM_TIMEOUT_SECONDS)
+  val EMAIL_LIST_KEYS: Set<String> = setOf(ALLOWED_EMAILS)
 
   /**
    * Keys whose value is constrained to a fixed list of strings. The UI renders them as a toggle
@@ -81,5 +91,6 @@ object ConfigKeys {
       OLLAMA_MODEL,
       ANTHROPIC_API_MODEL,
       LLM_TIMEOUT_SECONDS,
+      ALLOWED_EMAILS,
     )
 }

@@ -54,6 +54,10 @@
     "role": {
       "ADMIN": "Admin",
       "USER": "Utilisateur"
+    },
+    "errors": {
+      "notAuthorized": "Ce compte n'est pas autorisé à accéder à PortfolioAI. Contacte l'administrateur si tu penses qu'il s'agit d'une erreur.",
+      "oauthFailed": "La connexion Google a échoué. Réessaie ou contacte l'administrateur si le problème persiste."
     }
   },
   "error": {
@@ -410,6 +414,29 @@
     "navLabel": "Configuration",
     "configuration": "Configuration runtime",
     "prompts": "Prompts narratifs",
+    "accessControl": "Contrôle d'accès",
+    "accessControlPage": {
+      "title": "Contrôle d'accès",
+      "intro": "Liste des emails autorisés à compléter le login Google. Vide = mode ouvert : tout compte Google est accepté (créé en rôle USER). Posée la 1re fois, la liste prend effet au prochain login d'une nouvelle session.",
+      "adminNote": "Les emails ADMIN (variable d'env APP_ADMIN_EMAILS) sont automatiquement inclus dans la liste effective — pas besoin de les ré-ajouter ici.",
+      "openModeNote": "Mode ouvert actif : aucun email n'est dans la liste. Ajoute au moins un email pour activer le filtrage.",
+      "currentLabel": "Emails autorisés",
+      "emptyHint": "Aucun email dans la liste. Mode ouvert actif — utilisez le champ ci-dessous pour ajouter le premier.",
+      "addLabel": "Ajouter un email",
+      "addPlaceholder": "alice@example.com",
+      "addAriaLabel": "Ajouter un email autorisé",
+      "removeAriaLabel": "Retirer {{email}} de la liste",
+      "save": "Enregistrer",
+      "reset": "Réinitialiser au défaut",
+      "saving": "Enregistrement…",
+      "saved": "Liste mise à jour.",
+      "invalidEmail": "Format d'email invalide : {{value}}",
+      "loading": "Chargement…",
+      "errors": {
+        "load": "Impossible de charger la liste d'accès.",
+        "save": "Échec de l'enregistrement."
+      }
+    },
     "promptsPage": {
       "intro": "Gestion des versions du prompt système qui pilote le pipeline narratif. La version active est utilisée par chaque génération ; activer une autre version remplace la précédente sans redémarrage.",
       "loading": "Chargement des prompts…",
