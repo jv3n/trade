@@ -15,12 +15,22 @@
 .gradle/
 build/
 out/
+bin/
+.kotlin
 *.class
 *.jar
 *.war
 *.ear
 *.log
 hs_err_pid*
+HELP.md
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
 # IntelliJ IDEA
 .idea/
@@ -43,7 +53,8 @@ hs_err_pid*
 node_modules/
 dist/
 .angular/
-frontend/.angular/
+coverage/
+__screenshots__/
 
 # npm / yarn / pnpm
 npm-debug.log*
@@ -53,7 +64,7 @@ yarn-error.log*
 .pnp.js
 
 # ========================
-# macOS
+# macOS / Windows
 # ========================
 .DS_Store
 .AppleDouble
@@ -61,6 +72,7 @@ yarn-error.log*
 ._*
 .Spotlight-V100
 .Trashes
+Thumbs.db
 
 # ========================
 # Docker
@@ -89,9 +101,17 @@ docs/data-input-local/
 docs/tmp-files/
 
 # ========================
-# Divers IDE
+# Procédures opérationnelles perso (PSO)
+# ========================
+# Notes de procédures locales (rebuild npm manuel, recettes d'ops perso…)
+# qui n'ont pas vocation à être partagées dans le repo.
+docs/pso/
+
+# ========================
+# Éditeurs divers
 # ========================
 .vscode/
+.history/
 *.swp
 *.swo
 *~

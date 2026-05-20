@@ -22,7 +22,14 @@ import { PortfolioRepository } from '../../../core/api/portfolio/portfolio.repos
 import { CsvImport } from './csv-import';
 
 const EMPTY_PREVIEW = { accounts: [], totalItems: 0, skippedRows: 0, warnings: [] };
-const IMPORT_RESULT = { portfoliosCreated: 1, portfoliosUpdated: 0, totalImported: 3, skipped: 0 };
+const IMPORT_RESULT = {
+  portfoliosCreated: 1,
+  portfoliosUpdated: 0,
+  totalImported: 3,
+  skipped: 0,
+  positionsClosed: 1,
+  positionsReopened: 2,
+};
 
 function makeFile(name: string): File {
   return new File(['a,b'], name, { type: 'text/csv' });
@@ -34,6 +41,13 @@ function makeDrop(files: File[]): DragEvent {
     stopPropagation: vi.fn(),
     dataTransfer: { files } as unknown as DataTransfer,
   } as unknown as DragEvent;
+}
+
+function makeFileInputChange(files: File[]): Event {
+  const input = document.createElement('input');
+  input.type = 'file';
+  Object.defineProperty(input, 'files', { value: files, configurable: true });
+  return { target: input } as unknown as Event;
 }
 
 describe('CsvImport', () => {
@@ -175,6 +189,214 @@ describe('CsvImport', () => {
       expect(component.step()).toBe('idle');
       expect(component.pendingFiles()).toHaveLength(0);
       expect(component.error()).toBeNull();
+    });
+
+    it('reset clears lastResult so the "again" banner is not stale', () => {
+      component.onDrop(makeDrop([makeFile('report.csv')]));
+      component.confirm();
+      expect(component.lastResult()).not.toBeNull();
+      component.reset();
+      expect(component.step()).toBe('idle');
+      expect(component.lastResult()).toBeNull();
+    });
+  });
+
+  // ---- Drag & drop visual state ----
+
+  describe('drag state', () => {
+    it('onDragOver flips dragging on, onDragLeave flips it off', () => {
+      const over = makeDrop([]);
+      component.onDragOver(over);
+      expect(component.dragging()).toBe(true);
+      expect(over.preventDefault).toHaveBeenCalled();
+
+      const leave = makeDrop([]);
+      component.onDragLeave(leave);
+      expect(component.dragging()).toBe(false);
+      expect(leave.preventDefault).toHaveBeenCalled();
+    });
+
+    it('onDrop clears dragging even when no CSV is dropped', () => {
+      component.onDragOver(makeDrop([]));
+      component.onDrop(makeDrop([new File(['x'], 'image.png', { type: 'image/png' })]));
+      expect(component.dragging()).toBe(false);
+      expect(component.step()).toBe('idle');
+      expect(service.previewCsvImport).not.toHaveBeenCalled();
+    });
+
+    it('onDrop filters out non-CSV files before triggering preview', () => {
+      component.onDrop(
+        makeDrop([new File(['x'], 'image.png', { type: 'image/png' }), makeFile('report.csv')]),
+      );
+      // Single CSV survives the filter → single-file flow, not batch.
+      expect(component.step()).toBe('preview');
+      expect(service.previewCsvImport).toHaveBeenCalledOnce();
+    });
+  });
+
+  // ---- File input (click) ----
+
+  describe('onFileChange', () => {
+    it('handles a single file like a drop', () => {
+      component.onFileChange(makeFileInputChange([makeFile('report.csv')]));
+      expect(component.step()).toBe('preview');
+      expect(service.previewCsvImport).toHaveBeenCalledOnce();
+    });
+
+    it('handles multiple files like a batch drop', () => {
+      component.onFileChange(
+        makeFileInputChange([makeFile('a-2026-04-24.csv'), makeFile('b-2026-04-25.csv')]),
+      );
+      expect(component.step()).toBe('batch-ready');
+      expect(component.pendingFiles()).toHaveLength(2);
+    });
+
+    it('is a no-op when the input is empty', () => {
+      component.onFileChange(makeFileInputChange([]));
+      expect(component.step()).toBe('idle');
+      expect(service.previewCsvImport).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---- Template rendering ----
+  // Without forcing detectChanges in each state, every @if branch past "idle" stays unrendered
+  // and the template coverage cratered (~15%). These tests pin each branch by setting signals
+  // directly, calling detectChanges, then querying the DOM for the structural anchor.
+
+  describe('template rendering', () => {
+    function render(): HTMLElement {
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    const previewWithEverything = {
+      totalItems: 2,
+      skippedRows: 3,
+      warnings: ['unmapped column "Notes"'],
+      accounts: [
+        {
+          accountName: 'TFSA',
+          items: [
+            {
+              ticker: 'AAPL',
+              name: 'Apple',
+              quantity: 10,
+              avgBuyPrice: 100,
+              assetType: 'STOCK',
+              bookValue: 1000,
+              currency: 'USD',
+            },
+            {
+              ticker: 'MSFT',
+              name: 'Microsoft',
+              quantity: 5,
+              avgBuyPrice: 200,
+              assetType: 'STOCK',
+              bookValue: 1000,
+              currency: 'USD',
+            },
+          ],
+        },
+      ],
+    };
+
+    it('renders the drop zone in idle state', () => {
+      expect(render().querySelector('.drop-zone')).not.toBeNull();
+    });
+
+    it('marks the drop zone with has-error and surfaces the error message', () => {
+      component.step.set('error');
+      component.error.set('boom');
+      const el = render();
+      expect(el.querySelector('.drop-zone.has-error')).not.toBeNull();
+      expect(el.querySelector('.drop-error')?.textContent).toContain('boom');
+    });
+
+    it('toggles the dragging class when dragging is true', () => {
+      component.dragging.set(true);
+      expect(render().querySelector('.drop-zone.dragging')).not.toBeNull();
+    });
+
+    it('renders the parsing spinner while previewing', () => {
+      component.step.set('previewing');
+      expect(render().querySelector('.import-loading')).not.toBeNull();
+    });
+
+    it('renders the preview panel with skipped pill, warnings and rows', () => {
+      component.preview.set(previewWithEverything);
+      component.step.set('preview');
+      const el = render();
+      expect(el.querySelector('.preview-panel')).not.toBeNull();
+      // The skipped-rows pill only renders when skippedRows > 0.
+      expect(el.querySelector('.pill-gray')).not.toBeNull();
+      // Warnings list.
+      expect(el.querySelectorAll('.warning-row').length).toBe(1);
+      // One row per item.
+      expect(el.querySelectorAll('.preview-row').length).toBe(2);
+      expect(el.querySelector('.btn-confirm')).not.toBeNull();
+    });
+
+    it('renders the importing spinner during single-file confirm', () => {
+      component.step.set('importing');
+      expect(render().querySelector('.import-loading')).not.toBeNull();
+    });
+
+    it('renders the batch list and only shows the date pill for dated files', () => {
+      component.pendingFiles.set([makeFile('holdings-2026-04-24.csv'), makeFile('no-date.csv')]);
+      component.step.set('batch-ready');
+      const el = render();
+      expect(el.querySelectorAll('.batch-item').length).toBe(2);
+      // `extractDate` returns null on the second file → only one .batch-date renders.
+      expect(el.querySelectorAll('.batch-date').length).toBe(1);
+    });
+
+    it('renders the batch progress spinner during batch-importing', () => {
+      component.pendingFiles.set([makeFile('a.csv'), makeFile('b.csv')]);
+      component.batchIndex.set(1);
+      component.step.set('batch-importing');
+      expect(render().querySelector('.import-loading')).not.toBeNull();
+    });
+
+    it('renders the done banner with both counters when > 0', () => {
+      component.lastResult.set({ totalImported: 3, positionsClosed: 2, positionsReopened: 1 });
+      component.step.set('done');
+      const el = render();
+      expect(el.querySelector('.import-done')).not.toBeNull();
+      expect(el.querySelector('.counter-closed')).not.toBeNull();
+      expect(el.querySelector('.counter-reopened')).not.toBeNull();
+    });
+
+    it('hides the counters in the done banner when both are zero', () => {
+      component.lastResult.set({ totalImported: 3, positionsClosed: 0, positionsReopened: 0 });
+      component.step.set('done');
+      const el = render();
+      expect(el.querySelector('.counter-closed')).toBeNull();
+      expect(el.querySelector('.counter-reopened')).toBeNull();
+    });
+  });
+
+  // ---- lastResult counters (drives the "done" banner) ----
+
+  describe('lastResult counters', () => {
+    it('exposes lifecycle counters after a single import', () => {
+      component.onDrop(makeDrop([makeFile('report.csv')]));
+      component.confirm();
+      expect(component.lastResult()).toEqual({
+        totalImported: 3,
+        positionsClosed: 1,
+        positionsReopened: 2,
+      });
+    });
+
+    it('aggregates counters across a batch', () => {
+      component.onDrop(makeDrop([makeFile('a-2026-04-24.csv'), makeFile('b-2026-04-25.csv')]));
+      component.confirmBatch();
+      // Two files × IMPORT_RESULT → totals doubled.
+      expect(component.lastResult()).toEqual({
+        totalImported: 6,
+        positionsClosed: 2,
+        positionsReopened: 4,
+      });
     });
   });
 });
