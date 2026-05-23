@@ -37,6 +37,12 @@ RUN npm run build
 # ---------------------------------------------------------------------------
 FROM eclipse-temurin:21-jdk-jammy AS backend-builder
 
+# Version passée par le workflow `deploy.yml` (= tag de la GitHub Release, ex: `v0.7.0`). Le
+# build gradle pickup la valeur via `-Pversion=$APP_VERSION` plus bas → finit dans
+# `META-INF/build-info.properties` → exposé sur `/actuator/info > build.version`. Default
+# `0.0.0-SNAPSHOT` pour un `docker build` local sans `--build-arg`.
+ARG APP_VERSION=0.0.0-SNAPSHOT
+
 WORKDIR /app
 
 # Cache the gradle wrapper + dependency resolution before copying source
@@ -47,6 +53,12 @@ RUN cd backend && ./gradlew --no-daemon dependencies > /dev/null 2>&1 || true
 # Copy backend source
 COPY backend/ ./backend/
 
+# Copy `.git/` so `gradle-git-properties` peut générer `META-INF/git.properties` (commit SHA,
+# branche, tag) → exposé sur `/actuator/info > git`. Le workflow CI doit faire un `fetch-depth: 0`
+# côté `actions/checkout` pour que les tags soient présents (sinon la section `git.tags` du payload
+# sera vide). Le plugin a `failOnNoGitDirectory = false` donc un build hors-git ne casse pas.
+COPY .git/ ./.git/
+
 # Embed the Angular build into Spring Boot's static resources directory
 # (Spring Boot serves files under `static/` automatically at the application root)
 COPY --from=frontend-builder /app/frontend/dist/ ./backend/src/main/resources/static-frontend/
@@ -54,8 +66,11 @@ RUN mkdir -p ./backend/src/main/resources/static/ \
  && cp -r ./backend/src/main/resources/static-frontend/*/browser/* ./backend/src/main/resources/static/ \
  && rm -rf ./backend/src/main/resources/static-frontend/
 
-# Build the fat jar
-RUN cd backend && ./gradlew --no-daemon bootJar -x test
+# Build the fat jar — `-Pversion=$APP_VERSION` propage le tag de release au gradle `version`
+# property (cf. `build.gradle.kts` ligne `version = …`). Le `v` initial du tag GitHub
+# (`v0.7.0`) est conservé tel quel dans `build.version` — cohérent avec le tag Cloud Run /
+# Docker image / SENTRY_RELEASE.
+RUN cd backend && ./gradlew --no-daemon bootJar -x test -Pversion=$APP_VERSION
 
 # ---------------------------------------------------------------------------
 # Stage 3 — Minimal runtime image

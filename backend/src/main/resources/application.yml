@@ -105,6 +105,16 @@ management:
   endpoint:
     health:
       show-details: always
+  # `/actuator/info` — exposé via `endpoints.web.exposure` ci-dessus. Les contributeurs `build` et
+  # `git` sont activés par défaut en Spring Boot 3.x (auto-détectent `build-info.properties` /
+  # `git.properties` posés par `springBoot.buildInfo()` + plugin `gradle-git-properties` dans
+  # `build.gradle.kts`). `git.mode: full` exporte tous les champs déclarés dans `gitProperties.keys`
+  # (commit message court + tags inclus) — le défaut `simple` n'expose que `branch + commit.id +
+  # commit.time`, ce qui prive l'endpoint de l'info utile pour corréler une révision Cloud Run à
+  # un tag de release.
+  info:
+    git:
+      mode: full
 
 # Auth — application-level config consumed by `CustomOAuth2UserService` on first user creation
 # to assign role ADMIN vs USER. Comma-separated list of emails. Email comparison is

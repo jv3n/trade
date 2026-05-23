@@ -51,7 +51,13 @@ jobs:
           fi
           echo "Release tag '$TAG' matches SemVer policy."
 
+      # `fetch-depth: 0` — full history + tags. Requis pour que `gradle-git-properties` (lancé
+      # dans le Dockerfile prod) trouve le tag courant et le pose dans `git.properties >
+      # git.tags`, et pour que `git describe` voie l'historique. Sans ça, le shallow clone par
+      # défaut (depth 1) n'expose ni le tag annoté ni les SHA parents.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -81,6 +87,12 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }}
+          # `APP_VERSION` consommé par `Dockerfile > ARG APP_VERSION` → `./gradlew bootJar
+          # -Pversion=$APP_VERSION` → `build.version` sur `/actuator/info`. Source de vérité
+          # unique : le tag de la GitHub Release sert à la fois pour l'image Docker, le tag
+          # GlitchTip (SENTRY_RELEASE), le label OCI version, et désormais la version Spring Boot.
+          build-args: |
+            APP_VERSION=${{ github.event.release.tag_name }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

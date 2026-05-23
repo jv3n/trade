@@ -14,11 +14,23 @@ plugins {
   // via `koverHtmlReport` / `koverXmlReport`. Voir bloc `kover { … }` plus bas pour la
   // configuration des excludes (entry point, DTOs, etc. qui ne portent pas de logique testable).
   id("org.jetbrains.kotlinx.kover") version "0.9.8"
+  // gradle-git-properties — génère `git.properties` dans le jar au build, consommé par Spring Boot
+  // Actuator pour peupler `/actuator/info > git` (commit SHA, branche, build time). Combiné avec
+  // `springBoot { buildInfo() }` plus bas, l'endpoint retourne version + commit + time sans avoir
+  // à mounter de configMap ou exposer une env var custom. Léger (~5 KB de plus dans le jar).
+  id("com.gorylenko.gradle-git-properties") version "2.4.2"
 }
 
 group = "com.portfolioai"
 
-version = "0.0.1-SNAPSHOT"
+// Version is overridable via `-Pversion=…` from the CLI / CI. The Cloud Run deploy workflow
+// (`.github/workflows/deploy.yml`) passes the GitHub Release tag as `APP_VERSION` build-arg →
+// `./gradlew bootJar -Pversion=$APP_VERSION` → ends up in `META-INF/build-info.properties` via
+// `springBoot.buildInfo()` → surfaced as `build.version` on `/actuator/info`. Fallback default
+// `0.0.0-SNAPSHOT` covers local dev / Tilt where no version is passed.
+version =
+  (project.findProperty("version") as? String)?.takeIf { it.isNotBlank() && it != "unspecified" }
+    ?: "0.0.0-SNAPSHOT"
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
@@ -86,6 +98,34 @@ allOpen {
   annotation("jakarta.persistence.Entity")
   annotation("jakarta.persistence.MappedSuperclass")
   annotation("jakarta.persistence.Embeddable")
+}
+
+// Active la génération de `META-INF/build-info.properties` lue au boot par Spring Boot Actuator
+// (peuple `/actuator/info > build` avec group/artifact/name/version/time). Couplé avec le plugin
+// `com.gorylenko.gradle-git-properties` plus haut qui ajoute la section `git`. Pas de
+// configuration supplémentaire requise — la `version` vient du bloc `version = "…"` ci-dessus,
+// `group` vient de `group = "com.portfolioai"`.
+springBoot { buildInfo() }
+
+// gradle-git-properties — configuration explicite des champs exposés via `/actuator/info > git`.
+// Par défaut le plugin ne génère que `git.branch + git.commit.id + git.commit.time` ; on ajoute
+// `git.commit.message.short` et `git.tags` qui sont utiles pour corréler une révision Cloud Run
+// à un tag de release sans avoir à grep le commit SHA. `dotGitDirectory` pointe vers `../.git`
+// parce que le projet Gradle vit dans `backend/` mais le `.git` est à la racine du repo.
+gitProperties {
+  dotGitDirectory.set(file("../.git"))
+  keys =
+    listOf(
+      "git.branch",
+      "git.commit.id",
+      "git.commit.id.abbrev",
+      "git.commit.time",
+      "git.commit.message.short",
+      "git.tags",
+    )
+  // `failOnNoGitDirectory = false` évite de casser le build dans les contextes hors-git (tarball,
+  // worktree corrompu) — la section `git` du payload sera simplement absente.
+  failOnNoGitDirectory = false
 }
 
 // Read `.env` from the repo root (gitignored) and inject every key into the test task's

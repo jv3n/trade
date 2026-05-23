@@ -164,6 +164,75 @@ Trois sorties propres dans l'ordre de préférence :
 
 **Pourquoi backup weekly explicite alors que Supabase fait des backups quotidiens en free** : (a) **Discipline d'exit** — si Supabase serre/disparaît, on a un `.sql.gz` à restorer ailleurs sans dépendre de leur API. (b) **Format `pg_dump` standard**, restorable n'importe où (Neon, Fly Postgres, VPS) vs format Supabase-proprio des snapshots managés. (c) **Cadence weekly retenue** (vs daily envisagé initialement) — Supabase fait déjà du quotidien 7j en parallèle (filet court), notre R2 est le filet long-terme (30 backups = ~7 mois d'historique). Worst-case data loss : 7j. Mitigation : `gh workflow run backup-postgres.yml` à la demande avant une opération risquée (migration schema, fix SQL).
 
+### 6.4 Surface de version — `/actuator/info`
+
+**Livré 2026-05-23, post-clôture Phase 5.** Décision et trade-offs dans [`architecture.md > Décisions Phase 5 > Version surface`](../technique/architecture.md#phase-5--déploiement). Cette section documente le pipeline et le payload pour debug en prod.
+
+**Endpoint** : `GET https://tickerstory.org/actuator/info` (public, non-authentifié — pas de PII, info purement build/git). Exposé via `management.endpoints.web.exposure.include: health, info` dans `application-prod.yml`.
+
+**Payload type post-deploy** :
+```json
+{
+  "build": {
+    "artifact": "backend",
+    "name": "backend",
+    "group": "com.portfolioai",
+    "version": "v0.8.0-rc1",
+    "time": "2026-05-23T14:32:11.000Z"
+  },
+  "git": {
+    "branch": "master",
+    "commit": {
+      "id": "fcd0b5c7e9a1b2c3d4e5f6789abcdef0123456789",
+      "id.abbrev": "fcd0b5c",
+      "time": "2026-05-23T13:55:00Z",
+      "message": { "short": "docs: align doc-set after Phase 5 closure (audit punch-list)" }
+    },
+    "tags": "v0.8.0-rc1"
+  }
+}
+```
+
+**Pipeline** :
+
+1. **Build tooling** (`backend/build.gradle.kts`) — deux plugins coordonnés :
+   - `springBoot { buildInfo() }` → génère `META-INF/build-info.properties` (consommé par `BuildInfoContributor`).
+   - Plugin `com.gorylenko.gradle-git-properties:2.4.2` → génère `META-INF/git.properties` (consommé par `GitInfoContributor`). `dotGitDirectory.set(file("../.git"))` parce que le projet Gradle vit dans `backend/`. `failOnNoGitDirectory = false` pour ne pas casser un build hors-git. `keys = ["git.branch", "git.commit.id", "git.commit.id.abbrev", "git.commit.time", "git.commit.message.short", "git.tags"]`.
+   - `management.info.git.mode: full` dans `application.yml` (sinon Spring n'expose que branch + commit.id + commit.time même si le fichier en contient plus).
+
+2. **Version** (`build.gradle.kts` ligne `version = …`) — lue depuis la property gradle `version` avec fallback `0.0.0-SNAPSHOT` :
+   ```kotlin
+   version = (project.findProperty("version") as? String)
+     ?.takeIf { it.isNotBlank() && it != "unspecified" } ?: "0.0.0-SNAPSHOT"
+   ```
+   Le CI passe `-Pversion=$APP_VERSION` au gradle build dans le Dockerfile.
+
+3. **Dockerfile** (`devops/prod/Dockerfile`) — deux ajouts dans le stage `backend-builder` :
+   - `ARG APP_VERSION=0.0.0-SNAPSHOT` (recevoir le build-arg du CI).
+   - `COPY .git/ ./.git/` (sinon `gradle-git-properties` ne trouve pas le repo et la section `info.git` reste vide).
+   - `RUN cd backend && ./gradlew --no-daemon bootJar -x test -Pversion=$APP_VERSION` (propager la version).
+
+4. **CI workflow** (`.github/workflows/deploy.yml`) — deux ajouts :
+   - `actions/checkout@v4` avec `fetch-depth: 0` (le défaut shallow `depth: 1` n'expose ni les tags annotés ni l'historique → `git.tags` serait vide).
+   - `docker/build-push-action@v6` avec `build-args: APP_VERSION=${{ github.event.release.tag_name }}`.
+
+**Source de vérité unique** : le tag GitHub Release (`v0.7.0`, `v0.7.0-rc1`) propage simultanément à 5 surfaces :
+
+| Surface | Provenance |
+|---|---|
+| Image Docker Artifact Registry | `tags: …/portfolioai:${{ github.event.release.tag_name }}` |
+| Label OCI `image.version` | `labels: org.opencontainers.image.version=…` |
+| Env var `SENTRY_RELEASE` (events GlitchTip) | `--set-env-vars=SENTRY_RELEASE=${{ github.event.release.tag_name }}` |
+| `/actuator/info > build.version` | `build-args: APP_VERSION=…` → `-Pversion=…` → `build-info.properties` |
+| `/actuator/info > git.tags` | `gradle-git-properties` lit le tag courant via `git describe --tags` |
+
+Un changement de tag = 5 surfaces synchronisées sans aucune saisie manuelle.
+
+**Notes pratiques** :
+- Le `v` initial du tag (`v0.7.0` plutôt que `0.7.0`) est conservé tel quel dans `build.version` pour cohérence cross-surface. Si tu veux dropper le `v`, ajoute un `sed 's/^v//'` au workflow avant de propager `APP_VERSION`.
+- Build local sans `-Pversion` (Tilt dev) → `build.version = "0.0.0-SNAPSHOT"`, `git.*` rempli normalement parce que `.git` est présent au workspace.
+- `COPY .git/` coûte ~70 MB de build context local. Sur CI le shallow clone d'origine est étendu via `fetch-depth: 0` (~quelques MB pour ce repo solo). À reconsidérer si le repo grossit beaucoup et que les builds Docker ralentissent notablement.
+
 ## 7. Plan de migration — sortir de Cloud Run + Supabase si besoin
 
 Lock-in à inventorier précisément pour respecter la contrainte #2 :
