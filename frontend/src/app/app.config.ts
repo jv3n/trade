@@ -1,6 +1,8 @@
 import {
   ApplicationConfig,
+  ErrorHandler,
   inject,
+  isDevMode,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
@@ -11,12 +13,30 @@ import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import * as Sentry from '@sentry/browser';
 
 import { routes } from './app.routes';
 import { provideRepositories } from './core/providers';
 import { LlmTimeoutService } from './core/api/analysis/llm-timeout.service';
 import { AuthService } from './core/app-state/auth.service';
 import { authInterceptor } from './core/http/auth.interceptor';
+
+/**
+ * Forwards Angular's caught unhandled errors to GlitchTip via the Sentry SDK + keeps the default
+ * console.error behaviour so errors stay visible to a dev who opens DevTools on a prod URL. This
+ * replaces `@sentry/angular`'s `Sentry.createErrorHandler()` factory — we use `@sentry/browser`
+ * instead because the Angular-specific package peer-deps cap at Angular 19 and we run on 21.
+ *
+ * Wired only when `!isDevMode()` in `appConfig.providers` ; dev keeps the default Angular handler
+ * so errors stay in the console and don't ship to GlitchTip.
+ */
+class GlitchtipErrorHandler implements ErrorHandler {
+  handleError(error: unknown): void {
+    Sentry.captureException(error);
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,6 +45,12 @@ export const appConfig: ApplicationConfig = {
     // `computed()` ; le template re-rend automatiquement quand les signaux qu'il lit changent.
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
+    // Global GlitchTip ErrorHandler — forwards unhandled exceptions bubbling up from component
+    // lifecycles, signal effects, and async handlers to GlitchTip via `Sentry.captureException`.
+    // Init lives in `main.ts` (must run before `bootstrapApplication`) ; this provider plugs the
+    // captured errors into the Angular DI graph. Skipped in dev so local crashes stay in the
+    // browser console.
+    ...(isDevMode() ? [] : [{ provide: ErrorHandler, useClass: GlitchtipErrorHandler }]),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
     // i18n — translation files live in `public/i18n/<lang>.json` so they are served as static

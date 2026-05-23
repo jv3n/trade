@@ -55,9 +55,34 @@ logging:
     okhttp3: WARN
     org.flywaydb.core: INFO  # garde le log des migrations au boot
 
-  # Format ligne unique adapté à Cloud Logging (parsing automatique côté GCP)
+  # Format ligne unique adapté à Cloud Logging (parsing automatique côté GCP). `[%X{userId:-}]`
+  # surface le userId UUID posé par `SentryUserContextFilter` quand la requête est authentifiée
+  # (vide entre crochets sinon : `[]`). Pas l'email — convention `CLAUDE.md > Backend > Never log
+  # user emails`.
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{userId:-}] %logger{36} - %msg%n"
+
+# Sentry — DSN + tags posés ici parce qu'ils sont prod-only. Le base `application.yml` déclare le
+# bloc `sentry:` avec `dsn` vide (no-op SDK) ; on l'override ici avec la valeur Secret Manager.
+# Cf. `docs/devops/deploiement.md > §monitoring` pour la procédure de rotation du DSN.
+sentry:
+  # Injecté via `--update-secrets=SENTRY_DSN=sentry-dsn-backend:latest` dans `deploy.yml`. Si le
+  # secret est vide ou absent, le SDK no-op silencieusement — pas de crash boot.
+  dsn: ${SENTRY_DSN:}
+  environment: prod
+  # Tag chaque event avec la release courante (= tag git GitHub Release). `deploy.yml` propage la
+  # valeur via `--set-env-vars=SENTRY_RELEASE=${tag}`. Permet de filtrer dans le dashboard "errors
+  # introduced in v0.8.0" et d'attribuer les régressions à une release précise.
+  release: ${SENTRY_RELEASE:}
+  # 100% errors + 0% performance traces — décision figée 2026-05-23, optimise le quota free tier
+  # (5K events/mo GlitchTip SaaS, ou illimité si self-host plus tard). Ne tracé aucune transaction
+  # HTTP ni span (overkill solo dev, et brûlerait le quota rapidement). À ré-évaluer si on passe
+  # multi-user ou si on veut profiler une endpoint en particulier.
+  traces-sample-rate: 0.0
+  # Limite l'instrumentation aux packages projet — Spring framework / Hibernate / etc. ne sont pas
+  # marqués `in_app: true` et leurs frames apparaissent en gris dans la stack trace (collapsable).
+  # Améliore la lisibilité du debugger sans perdre d'info.
+  in-app-includes: com.portfolioai
 
 # Actuator — endpoints minimaux pour Cloud Run probes + Healthcheck.io
 management:

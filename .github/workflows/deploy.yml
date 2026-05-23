@@ -106,8 +106,8 @@ jobs:
             --max-instances=3 \
             --timeout=300 \
             --port=8080 \
-            --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=https://tickerstory.org/,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=https://tickerstory.org/login/oauth2/code/google \
-            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails:latest,SPRING_DATASOURCE_URL=supabase-db-url:latest
+            --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=https://tickerstory.org/,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=https://tickerstory.org/login/oauth2/code/google,SENTRY_RELEASE=${{ github.event.release.tag_name }} \
+            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails:latest,SPRING_DATASOURCE_URL=supabase-db-url:latest,SENTRY_DSN=sentry-dsn-backend:latest
 
       # Smoke /actuator/health post-deploy + écriture du résumé du run. `gcloud run deploy`
       # échoue déjà si la révision crash au boot (Cloud Run lit les startupProbes avant de

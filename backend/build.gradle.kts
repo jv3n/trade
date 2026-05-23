@@ -43,6 +43,13 @@ dependencies {
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("org.apache.commons:commons-csv:1.14.1")
+  // Sentry SDK — error tracking + breadcrumbs + user context. Points at GlitchTip via `sentry.dsn`
+  // (Sentry-compatible ingest API) in prod ; no-op when the DSN is empty (dev local default). The
+  // Spring Boot starter auto-instruments uncaught controller exceptions and pulls in the Logback
+  // appender so MDC values (notably `userId`) become event extras automatically. The `-jakarta`
+  // variant targets Spring Boot 3 (Jakarta EE) — picking `sentry-spring-boot-starter` (no suffix)
+  // would silently link the javax-namespaced classes and the bean wiring would crash at boot.
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.10.0")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")

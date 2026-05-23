@@ -183,6 +183,18 @@ earnings:
   #   finnhub  — real REST `/stock/earnings` + `/calendar/earnings` (requires market.finnhub.api-key)
   provider: mock
 
+# Sentry — error tracking. **Disabled by default** so dev local and CI don't ship events.
+# `application-prod.yml` flips this to true and provides the DSN (sourced from Secret Manager) +
+# environment tag + release tag. We keep an empty `dsn` here so a fresh clone boots without any
+# Sentry network activity — the SDK no-ops when the DSN is empty, even with `enabled: true`.
+sentry:
+  dsn: ${SENTRY_DSN:}
+  # `send-default-pii: false` is intentional — we capture `userId` UUID via the Logback MDC
+  # appender (cf. `SentryUserContextFilter`), never the email or IP. Same convention as
+  # `CustomOAuth2UserService.findOrCreateUser` log redaction. Flipping this to true would leak
+  # `User-Agent`, `Cookie`, `Referer`, IP, and any header marked PII by Sentry's filter.
+  send-default-pii: false
+
 # springdoc-openapi — Swagger UI / OpenAPI schema. **Disabled by default** so any environment that
 # does not explicitly opt-in (CI, eventual prod) never exposes the REST surface. The `local` profile
 # overrides both flags to `true` (cf. `application-local.yml`) — Swagger UI is then reachable at
