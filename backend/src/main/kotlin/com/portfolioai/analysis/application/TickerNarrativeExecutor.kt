@@ -64,6 +64,10 @@ class TickerNarrativeExecutor(
     // user activates a new version mid-LLM-call. Cache TTL 1 min on the service side absorbs the
     // burst when `n` requests fire at once.
     val prompt = promptService.activePrompt()
+    // Body (persisted, user-editable) + immutable technical envelope assembled at the call site.
+    // The envelope guarantees a valid JSON contract even if a user blanks the body or types a
+    // one-word persona — only the assembled string is what the LLM ever sees.
+    val systemPrompt = assembleNarrativeSystemPrompt(prompt.systemPrompt)
     val userMessage = buildNarrativeUserMessage(market.quote, indicators)
 
     // Score tracking — populated as the loop progresses, written in `finally` so both success
@@ -89,7 +93,7 @@ class TickerNarrativeExecutor(
           MAX_ATTEMPTS,
         )
         publisher.publish(jobId, JobPhase.CALLING_LLM, attempt = attemptIndex)
-        val raw = llmClient.complete(prompt.systemPrompt, message, maxTokens = 600)
+        val raw = llmClient.complete(systemPrompt, message, maxTokens = 600)
         publisher.publish(jobId, JobPhase.RECEIVED_RAW, attempt = attemptIndex)
         log.debug("Raw narrative response (attempt {}): {}", attemptIndex, raw)
 

@@ -71,10 +71,22 @@ export interface CreatePromptInput {
   notes?: string | null;
 }
 
+/**
+ * Read-only view of the immutable technical envelope appended after the editable body when the
+ * narrative prompt is assembled. The `/settings/prompts` page renders [suffix] in a collapsible
+ * panel so the user sees exactly what the LLM receives around their body — without being able to
+ * edit it. [version] mirrors the backend's `NARRATIVE_PROMPT_VERSION`.
+ */
+export interface PromptEnvelope {
+  version: string;
+  suffix: string;
+}
+
 export abstract class PromptRepository {
   abstract list(name?: string): Observable<PromptTemplate[]>;
   abstract get(id: string): Observable<PromptTemplate>;
   abstract activate(id: string): Observable<PromptTemplate>;
   abstract create(input: CreatePromptInput): Observable<PromptTemplate>;
   abstract getStats(id: string): Observable<PromptStats>;
+  abstract getEnvelope(): Observable<PromptEnvelope>;
 }

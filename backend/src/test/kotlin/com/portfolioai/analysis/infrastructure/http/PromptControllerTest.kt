@@ -104,6 +104,25 @@ class PromptControllerTest {
       .andExpect(jsonPath("$.systemPrompt").value(org.hamcrest.Matchers.containsString("body")))
   }
 
+  // ----------------------------------------------------------------- GET /api/prompts/envelope
+
+  @Test
+  fun `GET envelope returns the immutable technical contract version + suffix`() {
+    // The envelope endpoint is static (no DB hit, no service interaction). We assert the wire
+    // shape the frontend depends on : { version, suffix } where suffix is the literal string
+    // appended after the body. The page renders it read-only in the collapsible panel.
+    mvc
+      .perform(get("/api/prompts/envelope").accept(MediaType.APPLICATION_JSON))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.version").exists())
+      .andExpect(jsonPath("$.suffix").exists())
+      .andExpect(
+        jsonPath("$.suffix").value(org.hamcrest.Matchers.containsString("OUTPUT CONTRACT"))
+      )
+      .andExpect(jsonPath("$.suffix").value(org.hamcrest.Matchers.containsString("\"summary\"")))
+      .andExpect(jsonPath("$.suffix").value(org.hamcrest.Matchers.containsString("Sentiment rule")))
+  }
+
   @Test
   fun `GET prompt by id returns 404 when the id is unknown`() {
     val unknown = UUID.fromString("99999999-9999-9999-9999-999999999999")

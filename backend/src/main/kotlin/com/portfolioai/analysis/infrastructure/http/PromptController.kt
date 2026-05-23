@@ -1,8 +1,11 @@
 package com.portfolioai.analysis.infrastructure.http
 
+import com.portfolioai.analysis.application.NARRATIVE_PROMPT_VERSION
+import com.portfolioai.analysis.application.NARRATIVE_TECHNICAL_ENVELOPE_SUFFIX
 import com.portfolioai.analysis.application.PromptScoreService
 import com.portfolioai.analysis.application.TickerNarrativePromptService
 import com.portfolioai.analysis.application.dto.CreatePromptInput
+import com.portfolioai.analysis.application.dto.PromptEnvelopeDto
 import com.portfolioai.analysis.application.dto.PromptStatsDto
 import com.portfolioai.analysis.application.dto.PromptTemplateDto
 import com.portfolioai.analysis.application.dto.toDto
@@ -56,6 +59,20 @@ class PromptController(
   fun list(
     @RequestParam(name = "name", defaultValue = "narrative-default") name: String
   ): List<PromptTemplateDto> = service.listAll(name).map { it.toDto() }
+
+  /**
+   * Returns the immutable technical envelope appended after the editable body when the narrative
+   * prompt is assembled. The `/settings/prompts` page renders this in a collapsible « contract »
+   * panel so the user sees exactly what wraps their body — without being able to edit it.
+   *
+   * Static content : no DB hit, no caching needed (the JVM constants are already in memory).
+   */
+  @GetMapping("/envelope")
+  fun envelope(): PromptEnvelopeDto =
+    PromptEnvelopeDto(
+      version = NARRATIVE_PROMPT_VERSION,
+      suffix = NARRATIVE_TECHNICAL_ENVELOPE_SUFFIX,
+    )
 
   @GetMapping("/{id}")
   fun get(@PathVariable id: UUID): PromptTemplateDto =

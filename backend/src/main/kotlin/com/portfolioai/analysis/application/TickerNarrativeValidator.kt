@@ -23,8 +23,10 @@ class TickerNarrativeValidator {
     val errors = mutableListOf<String>()
     if (parsed.summary.isBlank()) errors += "summary must not be empty"
     val sentenceCount = parsed.summary.count { it == '.' || it == '!' || it == '?' }
-    if (sentenceCount > 4) {
-      errors += "summary should be 2-3 sentences (got $sentenceCount sentence terminators)"
+    if (sentenceCount > MAX_SENTENCE_TERMINATORS) {
+      errors +=
+        "summary exceeds the runaway-protection limit of $MAX_SENTENCE_TERMINATORS sentences " +
+          "(got $sentenceCount sentence terminators)"
     }
     if (parsed.keyPoints.size < MIN_KEY_POINTS) {
       errors += "keyPoints must have at least $MIN_KEY_POINTS entries, got ${parsed.keyPoints.size}"
@@ -47,5 +49,12 @@ class TickerNarrativeValidator {
     private const val MIN_KEY_POINTS = 3
     private const val MAX_KEY_POINTS = 5
     private const val MAX_WORDS_PER_POINT = 15
+
+    // Runaway-protection ceiling on sentence terminators in the summary. The prompt asks for a
+    // thorough summary (5-12 sentences) ; this guardrail is just here to catch truly pathological
+    // output (a paragraph-essay that overflows the dossier UI) — `max_tokens=600` on the LLM call
+    // already caps the response well before this number, so the check is a belt-and-braces safety
+    // net rather than a length policy.
+    private const val MAX_SENTENCE_TERMINATORS = 100
   }
 }

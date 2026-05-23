@@ -119,6 +119,9 @@
                     <span class="field-label">{{
                       'settings.promptsPage.editor.systemPromptLabel' | translate
                     }}</span>
+                    <span class="field-help">{{
+                      'settings.promptsPage.editor.systemPromptHelp' | translate
+                    }}</span>
                     <textarea
                       class="field-textarea"
                       [ngModel]="editorSystemPrompt()"
@@ -128,6 +131,8 @@
                       spellcheck="false"
                     ></textarea>
                   </label>
+
+                  <ng-container *ngTemplateOutlet="envelopePanel"></ng-container>
 
                   <section class="prompt-block diff-block">
                     <header>
@@ -188,6 +193,8 @@
                   <pre>{{ p.systemPrompt }}</pre>
                 </section>
 
+                <ng-container *ngTemplateOutlet="envelopePanel"></ng-container>
+
                 <div class="card-actions">
                   <a [routerLink]="['/settings/prompts', p.id, 'stats']" class="btn-secondary">
                     <mat-icon>analytics</mat-icon>
@@ -221,3 +228,46 @@
     </ul>
   }
 </div>
+
+<!--
+  Read-only collapsible panel rendering the immutable technical envelope (JSON contract,
+  sentiment rule, length ceilings) that the backend appends after the editable body. Shown
+  inside every expanded card and inside the editor — defined once here and projected via
+  ngTemplateOutlet to avoid duplicating the markup.
+-->
+<ng-template #envelopePanel>
+  <section class="prompt-block envelope-block">
+    <button
+      type="button"
+      class="envelope-toggle"
+      (click)="toggleEnvelope()"
+      [attr.aria-expanded]="envelopeOpen()"
+    >
+      <mat-icon>{{ envelopeOpen() ? 'expand_less' : 'expand_more' }}</mat-icon>
+      <span>{{
+        (envelopeOpen() ? 'settings.promptsPage.envelopeHide' : 'settings.promptsPage.envelopeShow')
+          | translate
+      }}</span>
+    </button>
+    @if (envelopeOpen()) {
+      <div class="envelope-body">
+        <p class="envelope-intro">{{ 'settings.promptsPage.envelopeIntro' | translate }}</p>
+        @if (envelopeLoading()) {
+          <div class="loading-state">
+            <mat-spinner diameter="16"></mat-spinner>
+          </div>
+        } @else if (envelopeError(); as e) {
+          <div class="error-banner inline">
+            <mat-icon>error_outline</mat-icon>
+            {{ e }}
+          </div>
+        } @else if (envelope(); as env) {
+          <pre>{{ env.suffix }}</pre>
+          <p class="envelope-version">
+            {{ 'settings.promptsPage.envelopeVersion' | translate: { version: env.version } }}
+          </p>
+        }
+      </div>
+    }
+  </section>
+</ng-template>

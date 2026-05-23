@@ -32,11 +32,13 @@ describe('PromptsPage', () => {
   const list = vi.fn();
   const activate = vi.fn();
   const create = vi.fn();
+  const getEnvelope = vi.fn();
 
   beforeEach(async () => {
     list.mockReset();
     activate.mockReset();
     create.mockReset();
+    getEnvelope.mockReset();
 
     await TestBed.configureTestingModule({
       imports: [PromptsPage],
@@ -56,6 +58,7 @@ describe('PromptsPage', () => {
             getStats: vi.fn(() =>
               throwError(() => new Error('PromptsPage should not call getStats()')),
             ),
+            getEnvelope,
           },
         },
       ],
@@ -312,6 +315,45 @@ describe('PromptsPage', () => {
 
     expect(component.isExpanded(v3Active().id)).toBe(false);
     expect(component.editorSourceId()).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------- envelope toggle
+
+  it('does not fetch the envelope until the panel is opened — lazy load', () => {
+    list.mockReturnValue(of([v3Active()]));
+    fixture.detectChanges();
+
+    expect(getEnvelope).not.toHaveBeenCalled();
+    expect(component.envelope()).toBeNull();
+  });
+
+  it('fetches the envelope on first toggle, caches it, and surfaces close/open without re-fetching', () => {
+    list.mockReturnValue(of([v3Active()]));
+    getEnvelope.mockReturnValue(
+      of({ version: 'v3', suffix: '--- OUTPUT CONTRACT ---\n{"summary":"…"}' }),
+    );
+    fixture.detectChanges();
+
+    component.toggleEnvelope();
+    expect(getEnvelope).toHaveBeenCalledTimes(1);
+    expect(component.envelopeOpen()).toBe(true);
+    expect(component.envelope()?.version).toBe('v3');
+
+    // Close + reopen must reuse the cached envelope — the envelope is immutable per backend
+    // build, no point hitting the network twice.
+    component.toggleEnvelope();
+    component.toggleEnvelope();
+    expect(getEnvelope).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces an error banner when the envelope fetch fails', () => {
+    list.mockReturnValue(of([v3Active()]));
+    getEnvelope.mockReturnValue(throwError(() => new Error('500')));
+    fixture.detectChanges();
+
+    component.toggleEnvelope();
+    expect(component.envelopeError()).not.toBeNull();
+    expect(component.envelopeLoading()).toBe(false);
   });
 
   // ---------------------------------------------------------------------- lineDiff helper

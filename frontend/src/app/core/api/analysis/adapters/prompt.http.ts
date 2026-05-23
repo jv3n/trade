@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   CreatePromptInput,
+  PromptEnvelope,
   PromptRepository,
   PromptStats,
   PromptTemplate,
@@ -32,5 +33,9 @@ export class HttpPromptRepository extends PromptRepository {
 
   getStats(id: string): Observable<PromptStats> {
     return this.http.get<PromptStats>(`${this.base}/${encodeURIComponent(id)}/stats`);
+  }
+
+  getEnvelope(): Observable<PromptEnvelope> {
+    return this.http.get<PromptEnvelope>(`${this.base}/envelope`);
   }
 }

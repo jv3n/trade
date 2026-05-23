@@ -1,11 +1,15 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe, NgClass, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/prompt.repository';
+import {
+  PromptEnvelope,
+  PromptRepository,
+  PromptTemplate,
+} from '../../../core/api/analysis/prompt.repository';
 
 /**
  * Settings → Prompts (Phase 3 PR3 list + view + activate, PR4 inline editor + diff + create
@@ -32,6 +36,7 @@ import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/pro
   imports: [
     DatePipe,
     NgClass,
+    NgTemplateOutlet,
     FormsModule,
     RouterLink,
     MatProgressSpinnerModule,
@@ -57,6 +62,15 @@ export class PromptsPage implements OnInit {
   activateError = signal<string | null>(null);
 
   activePrompt = computed(() => this.prompts().find((p) => p.isActive) ?? null);
+
+  // -------------------------------------------------------------------- envelope state
+  // The technical envelope is a static, read-only string appended after the editable body
+  // when the narrative prompt is assembled. Loaded lazily on first user expand to avoid a
+  // round-trip on the initial page load (the panel is collapsed by default).
+  envelope = signal<PromptEnvelope | null>(null);
+  envelopeOpen = signal<boolean>(false);
+  envelopeLoading = signal<boolean>(false);
+  envelopeError = signal<string | null>(null);
 
   // -------------------------------------------------------------------- editor state (PR4)
 
@@ -202,6 +216,36 @@ export class PromptsPage implements OnInit {
       this.editorVersion().trim().length > 0 &&
       this.editorSystemPrompt().trim().length > 0
     );
+  }
+
+  // -------------------------------------------------------------------- envelope toggle
+
+  /**
+   * Toggles the collapsible technical-envelope panel. Lazy-loads the envelope on the first
+   * open ; subsequent opens reuse the cached signal (the envelope is immutable per backend
+   * version, no need to refresh).
+   */
+  toggleEnvelope() {
+    const next = !this.envelopeOpen();
+    this.envelopeOpen.set(next);
+    if (next && this.envelope() === null && !this.envelopeLoading()) {
+      this.loadEnvelope();
+    }
+  }
+
+  private loadEnvelope() {
+    this.envelopeLoading.set(true);
+    this.envelopeError.set(null);
+    this.repo.getEnvelope().subscribe({
+      next: (env) => {
+        this.envelope.set(env);
+        this.envelopeLoading.set(false);
+      },
+      error: () => {
+        this.envelopeError.set(this.translate.instant('settings.promptsPage.envelopeLoadError'));
+        this.envelopeLoading.set(false);
+      },
+    });
   }
 
   saveDraft() {

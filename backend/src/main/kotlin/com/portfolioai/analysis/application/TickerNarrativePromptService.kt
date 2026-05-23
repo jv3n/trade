@@ -28,11 +28,12 @@ import org.springframework.transaction.annotation.Transactional
  * for the 1-minute timer). PR1 leaves the method exposed for that future use ; today no caller
  * invokes it, the cache just expires naturally.
  *
- * **Fallback contract** — if no active row is found in the DB (bootstrap : V8 hasn't run yet, or
- * the seed was wiped manually), the service falls back to a synthetic [PromptTemplate] backed by
- * the hardcoded `NARRATIVE_SYSTEM_PROMPT` constant. The fallback row carries `id =
- * FALLBACK_TEMPLATE_ID` (a fixed UUID, never persisted) so callers downstream
- * ([TickerNarrativePersister], [PromptScore] writes in PR2) can still record a non-null
+ * **Fallback contract** — if no active row is found in the DB (bootstrap : Flyway hasn't run yet,
+ * or the seed was wiped manually), the service falls back to a synthetic [PromptTemplate] whose
+ * `systemPrompt` field carries the hardcoded `NARRATIVE_DEFAULT_BODY` (raw body only, the technical
+ * envelope is appended at the call site by [TickerNarrativeExecutor]). The fallback row carries `id
+ * = FALLBACK_TEMPLATE_ID` (a fixed UUID, never persisted) so callers downstream
+ * ([TickerNarrativePersister], [PromptScore] writes) can still record a non-null
  * `prompt_template_id` if they need to — but the persister checks against this sentinel and stores
  * `null` rather than inserting a foreign-key violation.
  *
@@ -199,7 +200,7 @@ class TickerNarrativePromptService(private val repository: PromptTemplateReposit
       return row
     }
     log.warn(
-      "No active prompt_template for name={} — falling back to hardcoded NARRATIVE_SYSTEM_PROMPT. " +
+      "No active prompt_template for name={} — falling back to hardcoded NARRATIVE_DEFAULT_BODY. " +
         "Run Flyway migrations or seed the table to silence this.",
       name,
     )
@@ -225,15 +226,17 @@ class TickerNarrativePromptService(private val repository: PromptTemplateReposit
     private val FALLBACK_TEMPLATE_ID =
       java.util.UUID.fromString("00000000-0000-0000-0000-000000000001")
 
-    // Constructed once at class init from the hardcoded constant. The version tag mirrors
-    // `NARRATIVE_PROMPT_VERSION` so historical scripts that filter `prompt_version = 'v2'` still
-    // work even if the bootstrap row never made it to the DB.
+    // Constructed once at class init from the hardcoded default body. The version tag mirrors
+    // `NARRATIVE_PROMPT_VERSION` so historical scripts that filter on `prompt_version` still work
+    // even if the bootstrap row never made it to the DB. Stores the *body* only (not the assembled
+    // prompt) — assembly happens at the call site in TickerNarrativeExecutor so the entity stays
+    // consistent with what the UI edits and persists.
     private val FALLBACK_TEMPLATE =
       PromptTemplate(
         id = FALLBACK_TEMPLATE_ID,
         name = NARRATIVE_FAMILY,
         version = NARRATIVE_PROMPT_VERSION,
-        systemPrompt = NARRATIVE_SYSTEM_PROMPT,
+        systemPrompt = NARRATIVE_DEFAULT_BODY,
         isActive = true,
       )
   }

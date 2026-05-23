@@ -37,8 +37,9 @@ import org.mockito.kotlin.verify
  *   writer reads the same `id` we used in `complete(...)`, doing a fresh DB lookup each time would
  *   be wasteful and racey.
  * - **Fallback to the hardcoded constant** — when the repository returns null (DB empty, bootstrap
- *   before Flyway V8, or seed wiped manually), the service does NOT throw : it constructs a
- *   synthetic [PromptTemplate] backed by `NARRATIVE_SYSTEM_PROMPT`. This keeps the pipeline
+ *   before Flyway, or seed wiped manually), the service does NOT throw : it constructs a synthetic
+ *   [PromptTemplate] whose `systemPrompt` carries the hardcoded `NARRATIVE_DEFAULT_BODY` (raw body,
+ *   the technical envelope is appended at the call site by the executor). This keeps the pipeline
  *   functional even when the DB is in an unexpected state — degrading silently is the contract the
  *   runner depends on.
  * - **`isFallback` is the persister's escape hatch** — the synthetic fallback row carries a
@@ -96,9 +97,10 @@ class TickerNarrativePromptServiceTest {
     assertTrue(service.isFallback(result), "no active row → service must surface its fallback")
     assertEquals(NARRATIVE_PROMPT_VERSION, result.version)
     assertEquals(
-      NARRATIVE_SYSTEM_PROMPT,
+      NARRATIVE_DEFAULT_BODY,
       result.systemPrompt,
-      "fallback systemPrompt must be the verbatim hardcoded constant — not a paraphrase",
+      "fallback systemPrompt must be the verbatim hardcoded body — not a paraphrase, and not " +
+        "the assembled prompt (assembly happens at the call site)",
     )
   }
 

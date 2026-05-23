@@ -102,4 +102,45 @@ class TickerNarrativePromptTest {
     // The ticker symbol itself is non-optional and always renders.
     assertTrue(msg.contains("Ticker: AAPL"))
   }
+
+  // ---------------------------------------------------------------------------
+  // System prompt assembly (envelope + body)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `assembles body before the technical envelope`() {
+    // The user body comes first so the LLM reads the persona before the contract — anchors the
+    // role/tone, then the contract locks down the output shape.
+    val assembled = assembleNarrativeSystemPrompt("You are a financial writer.")
+
+    val bodyIdx = assembled.indexOf("You are a financial writer.")
+    val envelopeIdx = assembled.indexOf("OUTPUT CONTRACT")
+
+    assertTrue(bodyIdx >= 0, "body should appear in assembled prompt")
+    assertTrue(envelopeIdx >= 0, "envelope marker should appear in assembled prompt")
+    assertTrue(bodyIdx < envelopeIdx, "body must precede the envelope")
+  }
+
+  @Test
+  fun `appends the envelope regardless of body content`() {
+    // Even a one-word body must still receive the full JSON contract — the whole point of the
+    // split is that the envelope is non-overridable from the UI.
+    val assembled = assembleNarrativeSystemPrompt("bonjour")
+
+    assertTrue(assembled.startsWith("bonjour"))
+    assertTrue(assembled.contains("\"summary\""))
+    assertTrue(assembled.contains("\"sentiment\""))
+    assertTrue(assembled.contains("\"keyPoints\""))
+    assertTrue(assembled.contains("Sentiment rule"))
+  }
+
+  @Test
+  fun `falls back to envelope-only when body is blank`() {
+    // Defensive : if a user clears the body entirely, the envelope alone is still enough to
+    // produce valid JSON. Protects the dossier UX from an accidental wipe.
+    val assembled = assembleNarrativeSystemPrompt("   ")
+
+    assertTrue(assembled.startsWith("--- OUTPUT CONTRACT"))
+    assertTrue(assembled.contains("\"summary\""))
+  }
 }
