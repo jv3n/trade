@@ -99,7 +99,7 @@ Les fichiers de traduction sont dans `frontend/public/i18n/<lang>.json`. Toute s
 
 ### 5. Générer un narratif LLM
 
-Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique sur **Générer / Régénérer** — le frontend POST `/api/market/ticker/AAPL/narrative`, reçoit un job `PENDING`, et ouvre un `EventSource` sur `/api/market/ticker/AAPL/narrative/jobs/{id}/stream`. Le backend pousse une transition de phase à chaque étape du pipeline (`LOADING_CONTEXT` → `CALLING_LLM` → `RECEIVED_RAW` → `PARSING` → `VALIDATING` → `PERSISTING` → `DONE`) ; le bandeau de progression sous le titre affiche la phase courante avec un compteur de secondes. Une fois `DONE` reçu, le frontend recharge le snapshot — résumé en 2-3 phrases, badge `BULLISH` / `NEUTRAL` / `BEARISH`, et 3 à 5 bullet points factuels.
+Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique sur **Générer / Régénérer** — le frontend POST `/api/market/ticker/AAPL/narrative`, reçoit un job `PENDING`, et ouvre un `EventSource` sur `/api/market/ticker/AAPL/narrative/jobs/{id}/stream`. Le backend pousse une transition de phase à chaque étape du pipeline (`LOADING_CONTEXT` → `CALLING_LLM` → `RECEIVED_RAW` → `PARSING` → `VALIDATING` → `PERSISTING` → `DONE`) ; le bandeau de progression sous le titre affiche la phase courante avec un compteur de secondes. Une fois `DONE` reçu, le frontend recharge le snapshot — résumé technique détaillé (typiquement 5-12 phrases, walk-through de chaque indicateur disponible), badge `BULLISH` / `NEUTRAL` / `BEARISH`, et 3 à 5 bullet points factuels.
 
 > Si tu cliques deux fois en moins de 30 minutes sur le même ticker, le 2e clic réutilise le snapshot existant (cache 30 min côté service). Pas de re-prompt LLM, pas de coût supplémentaire.
 
