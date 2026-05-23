@@ -6,13 +6,13 @@ Historique des features livrées par phase, format **reverse-chronological** (Ph
 
 > Pour le changelog du **doc-set** lui-même (audits doc-maintainer, drift narratives, refactos doc), voir `docs/CHANGELOG.md`. Ce fichier-ci est consacré aux livraisons **code + UX**.
 
-> Les tags git de clôture de chaque phase (`v0.1.0` → `v0.6.0`, puis `v0.7.0` à venir Phase 5a) sont publiés en parallèle comme **Releases GitHub** — cf. [`docs/devops/release-process.md > Versioning`](../devops/release-process.md#versioning) pour la table phase↔tag et les règles de format.
+> Les tags git de clôture de chaque phase (`v0.1.0` → `v0.6.0` historiques, `v0.7.0` Phase 5a, `v0.8.0-rc1` Phase 5b observability) sont publiés en parallèle comme **Releases GitHub** — cf. [`docs/devops/release-process.md > Versioning`](../devops/release-process.md#versioning) pour la table phase↔tag et les règles de format.
 
 ---
 
-## Phase 5 — Déploiement (en cours)
+## Phase 5 — Déploiement (clôturée 2026-05-23)
 
-> Phase ouverte 2026-05-18. **Provider retenu** (après révision même journée) : **Google Cloud Run + Supabase Postgres**, $0/mo durable dans les free tiers, région compute Montréal native (`northamerica-northeast1`), DB Supabase Toronto (`ca-central-1`) en mode Session pooler IPv4. Fly.io ($10/mo) et Oracle A1 Ampere ($0 + sysadmin léger) restent documentés en fallbacks. Détail de l'analyse et de la révision dans [`docs/devops/deploiement.md`](../devops/deploiement.md). Tickets `⏳ À faire` restants (devops/ skeleton, Provisionner v1, backup nocturne, Cloudflare, monitoring, hardening, releases) au backlog.
+> Phase ouverte 2026-05-18, clôturée 2026-05-23. **Provider retenu** (après révision même journée) : **Google Cloud Run + Supabase Postgres**, $0/mo durable dans les free tiers, région compute Montréal native (`northamerica-northeast1`), DB Supabase Toronto (`ca-central-1`) en mode Session pooler IPv4. Fly.io ($10/mo) et Oracle A1 Ampere ($0 + sysadmin léger) restent documentés en fallbacks. Détail de l'analyse et de la révision dans [`docs/devops/deploiement.md`](../devops/deploiement.md). Tous les tickets initiaux `⏳ À faire` (devops/ skeleton, Provisionner v1, backup nocturne, Cloudflare custom domain, monitoring/observability, hardening, releases versionning) sont passés à ✅. Le ticket résiduel « Persister préfs user backend » a été déplacé en Phase 6 Hors-vague (11) parce que non-critique single-device.
 
 | Feature | Notes |
 |---------|-------|

@@ -38,7 +38,7 @@ Aujourd'hui l'app vit uniquement en local via `tilt up` sur le poste de l'utilis
 
 **Quatre candidats survivent** :
 
-- **Google Cloud Run + Supabase Postgres** — serverless managé total, $0/mo durable, région Montréal native côté compute, Supabase US-East côté DB.
+- **Google Cloud Run + Supabase Postgres** — serverless managé total, $0/mo durable, région Montréal native côté compute, Supabase Toronto (`ca-central-1`) côté DB.
 - **Fly.io Phase 5a** — PaaS Docker-first single-vendor, ~$10/mo, région `yyz` Toronto.
 - **Oracle Cloud A1 Ampere** — VM ARM 4 OCPU/24 GB Always Free, région `ca-montreal-1`, sysadmin léger récurrent.
 - **Railway / Render** — alternatives PaaS US-East, $5-13/mo, latence pénalisée vs Cloud Run et Fly.
@@ -50,7 +50,7 @@ Prix relevés 2026-05-18. Vérifier les pages officielles avant provisioning —
 | Critère | **Cloud Run + Supabase** | Fly.io Phase 5a | Oracle A1 Ampere | Railway / Render |
 |---|---|---|---|---|
 | **Coût mensuel** | **$0** (durable dans free tier) | ~$10 (backend $5.7 + Postgres unmanaged $7.20) | **$0** (Always Free) | $5-13 |
-| **Région la plus proche de Montréal** | `northamerica-northeast1` (Montréal natif) ~5 ms compute, Supabase DB US-East ~25 ms | `yyz` (Toronto) ~5 ms | `ca-montreal-1` ~5 ms | US-East ~25 ms |
+| **Région la plus proche de Montréal** | `northamerica-northeast1` (Montréal natif) ~5 ms compute, Supabase DB Toronto (`ca-central-1`) ~5-10 ms | `yyz` (Toronto) ~5 ms | `ca-montreal-1` ~5 ms | US-East ~25 ms |
 | **Quota backend** | 2M req/mo + 360K GB-s + 180K vCPU-s + 1 GB egress N. America/mo | shared-cpu-1x@1GB scale-to-zero | 4 OCPU ARM + 24 GB RAM + 200 GB block + 10 TB egress | Métré |
 | **Postgres** | **Supabase free** 500 MB DB + 50K MAU + 2 GB transfer + auto-pause après 7j inactivité | Fly Postgres unmanaged 1 GB + 10 GB volume | Self-hosted dans la VM (gratuit illimité) | Inclus tier |
 | **Scale-to-zero** | ✅ natif (cold-start 1-3 s) | ✅ `auto_stop_machines = "stop"` | ❌ VM toujours-on (reclamation 7j idle si pas PAYG) | ❌ |
@@ -73,13 +73,13 @@ Sources brutes :
 **Choix retenu : Google Cloud Run (compute) + Supabase Postgres (DB)**. Quatre arguments décisifs :
 
 1. **$0/mo durable** — Cloud Run free tier (2M req + 360K GB-s + 180K vCPU-s + 1 GB egress N. America) couvre un usage single-user 1000× ; Supabase free (500 MB DB + 50K MAU) couvre tout le modèle PortfolioAI single-user (~50 MB de données prévisibles). Pas un free trial 12 mois — un free tier qui tient depuis 2019 (Cloud Run) et qui a globalement **augmenté** 2020-2026 (Supabase).
-2. **Région Montréal native côté compute** — Google a un datacenter physique à Montréal (`northamerica-northeast1`). Latence TTL ~5 ms. La DB Supabase reste US-East (~25 ms RTT par requête), invisible à l'usage single-user.
+2. **Région Montréal native côté compute** — Google a un datacenter physique à Montréal (`northamerica-northeast1`). Latence TTL ~5 ms. La DB Supabase est en Toronto (`ca-central-1`, Session pooler IPv4), ~5-10 ms RTT par requête, invisible à l'usage single-user.
 3. **Charge ops récurrente = zéro** — Cloud Run gère scale-to-zero, OS patches, TLS Cloud Run, alerting natif. Supabase gère backups Postgres quotidiens (rétention 7j en free), patches PG, monitoring. Aucun cron à câbler pour la maintenance routinière (on en câble UN, pour le backup d'exit cf. §5).
 4. **Lock-in cosmétique** — code applicatif n'a aucune dépendance Supabase-specific (uniquement `DATABASE_URL` JDBC standard) ni Cloud Run-specific (Dockerfile multi-stage classique). Migration sortie = `pg_dump | pg_restore` vers Neon free + redeploy ailleurs = ~2-3 h.
 
 **Concessions assumées** :
 
-- **Latence DB cross-région** — Supabase US-East par défaut (le datacenter Supabase Montréal n'est pas dans le free tier). ~25 ms RTT par requête, cumulé 100-200 ms par page chart multi-timeframe. Invisible single-user, à reconsidérer si on serre les indicateurs front-end pour réactivité.
+- **Latence DB cross-région minime** — Supabase région Toronto (`ca-central-1`) retenue au provisioning au lieu de US-East (default Supabase) parce que disponible en free tier et proche de Cloud Run Montréal. ~5-10 ms RTT par requête (vs ~25 ms si on était resté US-East), négligeable même cumulé. Le mode **Session pooler** `aws-1-ca-central-1.pooler.supabase.com:5432` est retenu vs Direct (IPv6-only, incompatible Cloud Run) vs Transaction pooler (port 6543, casse les advisory locks Flyway au boot).
 - **Cold-start Cloud Run ~1-3 s** — scale-to-zero forcé en free tier. La 1ère requête après ~15 min d'inactivité paye un cold-start. Acceptable single-user qui ouvre l'app quelques fois par jour.
 - **Supabase auto-pause après 7j inactivité** — re-réveille à la 1ère requête (~10-20 s). Invisible quotidien, sensible après vacances. Mitigation = cron ping (5 lignes de GitHub Actions schedule) si jamais.
 - **Multi-vendor stack** — 2 dashboards (GCP Console + Supabase) à regarder si quelque chose pète. Mitigé par scope clair : Cloud Run = compute, Supabase = data. Acceptable pour les $120/an économisés vs Fly.
@@ -99,14 +99,14 @@ Sources brutes :
 | Composant | Setup | Coût |
 |---|---|---|
 | Backend Spring Boot + Angular static | 1 Cloud Run service `portfolioai` région `northamerica-northeast1`, image Docker `linux/amd64` poussée sur Artifact Registry, scale-to-zero | $0 (sous free tier) |
-| Postgres | Projet Supabase `portfolioai-prod` (free tier, US-East-1) | $0 (sous free tier) |
+| Postgres | Projet Supabase `portfolioai-prod` (free tier, région `ca-central-1` Toronto, Session pooler IPv4) | $0 (sous free tier) |
 | Frontend | Build Angular embarqué dans le jar Spring Boot (`static/`) — pas de service séparé | $0 |
 | Auth | Google OIDC déjà câblé Phase 4 (juste re-enregistrer la redirect URI `https://portfolioai-*.run.app/login/oauth2/code/google` côté Google Cloud Console) | $0 |
-| Secrets runtime | GCP Secret Manager (`ANTHROPIC_API_KEY`, `DATABASE_URL`, `GOOGLE_OAUTH_*`), montés au runtime via `--update-secrets` | $0 (free tier 6 secrets accédés/mo, on en a ~5) |
+| Secrets runtime | GCP Secret Manager — 5 secrets en prod : `google-oauth-client-id`, `google-oauth-client-secret`, `app-admin-emails`, `supabase-db-url`, `sentry-dsn-backend` (ajouté Phase 5b). Montés au runtime via `--update-secrets` du `gcloud run deploy`. **La clé Anthropic n'est PAS un secret Secret Manager** — elle vit dans la table `app_config` (DB runtime, settable via `/settings/configuration` UI) | $0 (sous free tier Secret Manager) |
 | Backup weekly | Workflow `.github/workflows/backup-postgres.yml` `cron '0 4 * * 0'` (dimanche 4 AM UTC) qui exécute `pg_dump $SUPABASE_DATABASE_URL` et upload vers Cloudflare R2 bucket `portfolioai-backups` (free tier 10 GB). Rétention 30 backups (~7 mois d'historique). Détail dans [`backup-process.md`](./backup-process.md). | $0 |
 | **Total Phase 5a** | | **$0/mo** |
 
-**Provider LLM en 5a** : `mock` par défaut au boot (assure que l'app boote même sans `ANTHROPIC_API_KEY`), basculable vers `claude` via `/settings/configuration` dès que la clé est injectée via Secret Manager. **Ollama indisponible en prod** : la UI affiche l'option mais la sélection retourne 503.
+**Provider LLM en 5a** : `mock` par défaut au boot (assure que l'app boote même sans clé Anthropic). Basculable vers `claude` via `/settings/configuration` UI dès que la clé est posée dans le slot SECRET runtime (table `app_config`). Pattern différent des 5 secrets boot-time : la clé Anthropic est éditable runtime sans redéploiement (cohérence avec les clés Twelve Data / Finnhub aussi runtime-editable). **Ollama indisponible en prod** : la UI affiche l'option mais la sélection retourne 503.
 
 ### Phase 5b — Hardening prod ($0/mo encore)
 
@@ -114,11 +114,11 @@ Sources brutes :
 
 | Composant additionnel | Setup | Coût |
 |---|---|---|
-| Domain + TLS | Cloudflare gratuit devant Cloud Run — pointer `portfolioai.example.com` (CNAME vers le service Cloud Run), TLS Let's Encrypt auto via Cloudflare | $0 (hors prix du domaine) |
-| Cache + bypass egress | Cloudflare cache static + bypass egress quota Cloud Run (les hits cache ne comptent pas dans le 1 GB/mo N. America) | $0 |
-| Monitoring uptime | Healthcheck.io free tier (1 check, 5 min interval) ou UptimeRobot free tier — endpoint `/actuator/health` Spring Boot | $0 |
-| Error tracking | Sentry SaaS hobby tier (5K events/mo gratuits) — Spring Boot + Angular SDKs déjà bien supportés | $0 |
-| **Total Phase 5b** | | **$0/mo** |
+| Domain + TLS | **Domaine `tickerstory.org`** via Cloudflare Registrar (~$7.50/an at-cost). **Worker Cloudflare** `tickerstory-proxy` devant Cloud Run (le native domain mapping Cloud Run n'est pas dispo en `northamerica-northeast1` → pivot Worker). TLS Cloudflare auto (pas Let's Encrypt — Cloudflare émet via sa propre CA). Cf. [`dns-analyse.md`](./dns-analyse.md) pour le choix du nom + TLD, et `architecture.md > Décisions Phase 5 > Worker Cloudflare` pour le wiring complet | ~$7.50/an domaine + $0 Worker/TLS |
+| Cache + bypass egress | 2 Cache Rules Cloudflare : `Bypass cache for API` (`/api/*`) + `Cache static assets aggressively` (`URI File Extension is in {js, css, woff…}` + Edge/Browser TTL 1 year). Les hits cache ne comptent pas dans le quota egress Cloud Run free 1 GB/mo | $0 |
+| Monitoring uptime | **UptimeRobot free tier** — HTTP polling externe toutes les 5 min sur `/actuator/health`. Pivot Healthchecks.io → UptimeRobot parce que Healthchecks.io free est dead-man's-switch (l'app ping, alerte si manquant) incompatible avec Cloud Run scale-to-zero | $0 |
+| Error tracking | **GlitchTip SaaS free tier** (5K events/mo) — serveur d'ingestion Sentry-API-compatible. Pivot Sentry → GlitchTip parce que le free Developer plan Sentry est caché derrière un trial Business $89/mo. Backend `io.sentry:sentry-spring-boot-starter-jakarta:8.10.0`, frontend `@sentry/browser` (le package `@sentry/angular` cape à Angular 19, incompatible avec notre Angular 21). DSN backend dans Secret Manager (`sentry-dsn-backend`), DSN frontend hardcodé `main.ts` (public par design) | $0 |
+| **Total Phase 5b** | | **~$7.50/an** (domaine) |
 
 ### Phase 5c — Si free tier serre (~$25-30/mo)
 
@@ -142,7 +142,7 @@ Trois sorties propres dans l'ordre de préférence :
 2. Créer un repo Artifact Registry Docker `northamerica-northeast1-docker.pkg.dev/portfolioai/backend`.
 3. Créer un service account `github-deploy@portfolioai.iam.gserviceaccount.com` avec rôles `roles/run.admin` + `roles/iam.serviceAccountUser` + `roles/artifactregistry.writer` + `roles/secretmanager.secretAccessor`.
 4. Configurer **Workload Identity Federation** GitHub OIDC ↔ GCP (suit la procédure officielle [google-github-actions/auth#setting-up-workload-identity-federation](https://github.com/google-github-actions/auth#setting-up-workload-identity-federation)). Sortie : `projects/<num>/locations/global/workloadIdentityPools/github/providers/github`. **Pas de service account JSON key** à manipuler — Workload Identity échange un OIDC token court-terme par run.
-5. Pousser les secrets runtime dans Secret Manager : `gcloud secrets create anthropic-api-key --data-file=-` etc. (one-shot, ~5 min).
+5. Pousser les 5 secrets runtime dans Secret Manager via stdin (jamais en clair dans `--data="..."`) : `google-oauth-client-id`, `google-oauth-client-secret`, `app-admin-emails`, `supabase-db-url`, `sentry-dsn-backend`. Pattern : `echo -n "<valeur>" | gcloud secrets create <nom> --data-file=- --project=trade-496613` puis grant per-secret au runtime SA `portfolioai-runtime@` (one-shot, ~5 min). Détail + procédure de rotation dans [`secret-rotation.md`](./secret-rotation.md).
 6. Côté Supabase : créer le projet `portfolioai-prod`, exécuter le V1 Flyway via le SQL Editor (ou laisser Spring Boot le faire au 1er boot via Flyway `baseline-on-migrate: true`), récupérer la `DATABASE_URL` et la pousser dans GCP Secret Manager comme `supabase-db-url`.
 7. Côté GitHub : créer l'environment `production` avec `required reviewers` + 3 variables environment-scoped `GCP_PROJECT=portfolioai`, `GCP_WIF_PROVIDER=projects/.../providers/github`, `GCP_SA_EMAIL=github-deploy@...`. **Dupliquer aussi ces 3 vars au repo level** (`gh variable set GCP_PROJECT --body ...`, idem pour les 2 autres) — le workflow `backup-postgres.yml` ne déclare PAS `environment: production` (un cron à 4h du matin qui attendrait un required-reviewer approval ne tient pas), il lit donc les vars repo-level. Les jobs déploy continuent de lire en priorité les versions env-scoped quand ils déclarent `environment: production`. Coexistence propre des deux scopes.
 
@@ -154,7 +154,7 @@ Trois sorties propres dans l'ordre de préférence :
 - **Trigger sur `release: published`, pas `push` master** → la release est l'acte conscient ; les pushes master continuent de bouger CI mais ne deploient pas. Évite les deploys accidentels sur un commit cassé.
 - **`environment: production`** → permet de configurer `required reviewers` côté GitHub (= l'utilisateur s'auto-approve, mais c'est documenté et auditable).
 - **Workload Identity Federation** (`id-token: write` permission) → pas de service account JSON key dans GitHub Secrets. Chaque run échange un OIDC token court-terme.
-- **`--update-secrets`** → Cloud Run mount les secrets depuis Secret Manager au runtime comme env vars. Pas de secret en clair dans le manifest.
+- **`--update-secrets`** → Cloud Run mount les 5 secrets depuis Secret Manager au runtime comme env vars. Pas de secret en clair dans le manifest.
 - **`linux/amd64` seulement** → Cloud Run tourne sur x86, pas besoin de multi-arch (économise l'overhead QEMU emulation côté GitHub runner).
 - **`--allow-unauthenticated`** → Cloud Run laisse passer toutes les requêtes ; l'auth Spring Security côté app gère les 401. (Alternative : `--no-allow-unauthenticated` + IAM users — overkill pour single-user.)
 
@@ -198,7 +198,7 @@ Lock-in à inventorier précisément pour respecter la contrainte #2 :
 
 **Multi-vendor stack = 2 dashboards à observer** — Cloud Run + Supabase au lieu d'un seul Fly. Atténué par scope clair (compute vs data) et par incidents rares à cette échelle. Le prix à payer pour les $120/an économisés.
 
-**Latence DB cross-région (~25 ms RTT)** — Supabase US-East par défaut sur free tier (Montréal n'est dispo qu'en payant). Cumulé sur N requêtes par page, ~100-200 ms additionnel. Invisible single-user, à reconsidérer si front devient ultra-réactif demand.
+**Latence DB cross-région minime (~5-10 ms RTT)** — Supabase région Toronto (`ca-central-1`) en Session pooler IPv4. ~5-10 ms RTT par requête, négligeable même cumulé. Le risque initial estimé à 2026-05-18 (~25 ms US-East par défaut) ne s'est pas matérialisé parce qu'on a choisi `ca-central-1` au provisioning.
 
 **Cold-start Cloud Run ~1-3 s** — la 1ère requête après ~15 min d'inactivité paye le cold-start. Acceptable single-user, frustrant si beaucoup d'utilisateurs occasionnels.
 
@@ -206,22 +206,22 @@ Lock-in à inventorier précisément pour respecter la contrainte #2 :
 
 ## 9. Tickets dépendants
 
-Une fois ce document validé, files les suivants dans `backlog.md > Phase 5` :
+> **Note 2026-05-23** : Phase 5 entièrement clôturée. Tous les tickets ci-dessous sont livrés, l'historique d'exécution (pivots, gotchas, effort réel) vit dans [`journal-livraisons.md > Phase 5`](../projet/journal-livraisons.md#phase-5--déploiement-clôturée-2026-05-23). Liste gardée ici comme **trace du plan initial** vs la réalisation.
 
-1. **Provisionner et déployer v1 (Phase 5a)** — créer projet GCP, configurer Workload Identity Federation, créer projet Supabase, écrire `Dockerfile` multi-stage backend, faire le 1er deploy manuel via `gcloud run deploy`, valider end-to-end (login Google OAuth + dashboard + ouverture dossier ticker avec Mock LLM). Effort estimé : ~½-1 j.
-2. **Câbler le workflow GitHub Actions deploy** — décrit en §6.2 ci-dessus. Effort : ~1 h post-bootstrap manuel réussi.
-3. **Backup Postgres nocturne automatisé** — workflow §6.3 + R2 bucket Cloudflare + premier restore drill. Effort : ~2-3 h. **À câbler dès le 1er deploy, pas dans 6 mois.**
-4. **Cloudflare devant Cloud Run** — custom domain + TLS + cache + bypass egress. Effort : ~30 min hors achat du domaine.
-5. **Monitoring uptime + Sentry** — Healthcheck.io free + Sentry hobby tier. Effort : ~1-2 h.
+1. **Provisionner et déployer v1 (Phase 5a)** ✅ — créer projet GCP, configurer Workload Identity Federation, créer projet Supabase, écrire `Dockerfile` multi-stage backend, faire le 1er deploy manuel via `gcloud run deploy`, valider end-to-end (login Google OAuth + dashboard + ouverture dossier ticker avec Mock LLM). Livré 2026-05-18 en 5 itérations Docker.
+2. **Câbler le workflow GitHub Actions deploy** ✅ — décrit en §6.2 ci-dessus. Livré 2026-05-18 (`v0.7.0-rc1` smoke).
+3. **Backup Postgres weekly → Cloudflare R2** ✅ — workflow + R2 bucket + premier restore drill. Livré 2026-05-18.
+4. **Cloudflare devant Cloud Run** ✅ — custom domain `tickerstory.org` + TLS + cache + bypass egress. Livré 2026-05-22 (custom domain) → 2026-05-23 (Cache Rules + smoke). 3 pivots vécus (Cloud Run regional domain-mapping indispo Montréal, Origin Rules Enterprise-only, X-Forwarded-Host strip).
+5. **Monitoring uptime + Sentry** ✅ — UptimeRobot HTTP polling + GlitchTip SaaS (pivot Sentry → GlitchTip + pivot `@sentry/angular` → `@sentry/browser`). Livré 2026-05-23 sous tag `v0.8.0-rc1`.
 
-Et les tickets *hardening* déjà filed dans la phase (OAuth secret management + `server.forward-headers-strategy`) deviennent adressables maintenant que le provider est connu. Le ticket « GitHub Secrets + Environments vault » est plus pertinent que jamais — il documente le Workload Identity Federation et le secrets pipeline.
+Les tickets *hardening* (OAuth secret management + `server.forward-headers-strategy`) ✅ livrés 2026-05-23 par documentation explicite : `architecture.md > Décisions Phase 5 > Forward-headers strategy` + `> Secret management` + nouveau [`secret-rotation.md`](./secret-rotation.md). Le ticket « GitHub Secrets + Environments vault » ✅ livré 2026-05-18 avec le pipeline Workload Identity Federation décrit en §6.
 
 ## 10. Décisions clés — résumé
 
 | Décision | Choix | Pourquoi |
 |---|---|---|
 | **Compute** | **Google Cloud Run** région `northamerica-northeast1` | Serverless managé, scale-to-zero natif, Montréal native, $0/mo durable |
-| **Database** | **Supabase Postgres** free tier (US-East par défaut) | $0/mo durable, Postgres standard (pas de SDK Supabase) |
+| **Database** | **Supabase Postgres** free tier (région Toronto `ca-central-1`, Session pooler IPv4) | $0/mo durable, Postgres standard (pas de SDK Supabase) |
 | **Frontend** | Servi par le backend (build Angular embarqué dans le jar) | Économise 1 service, simplifie CORS + cookies session |
 | **TLS + DNS** | Cloudflare gratuit devant Cloud Run | Custom domain + cache + bypass egress quota Cloud Run free |
 | **LLM provider** | Mock + Claude API uniquement | Ollama exclu prod (décision user 2026-05-18) |

@@ -88,9 +88,11 @@ jobs:
 
       # Deploy imperatif (`gcloud run deploy`) plutôt que déclaratif (`services replace --file`)
       # — le `service.yaml` reste documentaire pour un futur passage déclaratif. Les flags
-      # repris du 1er deploy manuel validé (dev5, cf. journal Phase 5a). Pas de
-      # `APP_FRONTEND_URL` — le default `/` du base `application.yml` marche puisque backend +
-      # SPA sont même origine (Angular embarqué dans le jar via `static/`).
+      # repris du 1er deploy manuel validé (dev5, cf. journal Phase 5a). `APP_FRONTEND_URL` +
+      # `SPRING_SECURITY_OAUTH2_..._REDIRECT_URI` posés depuis Phase 5b custom domain Cloudflare
+      # (cf. journal Phase 5b) — Cloud Run strip `X-Forwarded-Host` que le Worker envoie, donc
+      # Spring ne peut pas inférer l'hostname public ; on force ces 2 URIs à la valeur littérale.
+      # `SENTRY_RELEASE` propagé pour tagger chaque event GlitchTip avec la release courante.
       - name: Deploy revision to Cloud Run
         run: |
           gcloud run deploy portfolioai \

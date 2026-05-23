@@ -61,9 +61,7 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 > Aujourd'hui l'app vit uniquement en local via `tilt up` sur le poste de l'utilisateur — aucun accès depuis un autre appareil, aucun moyen d'autoriser quelqu'un d'autre à l'utiliser. Phase 5 ouvre l'app au-delà du localhost. **Provider retenu 2026-05-18** (post-révision après clarification « pas d'Ollama en prod ») : **Google Cloud Run + Supabase Postgres**, $0/mo durable dans le free tier, région compute Montréal native (`northamerica-northeast1`), DB Supabase US-East. Fly.io ($10/mo) et Oracle A1 Ampere ($0 + sysadmin léger) restent documentés en fallbacks. **Pré-requis bloquant déjà livré** : Phase 4 Authentification (OAuth2 Google OIDC + multi-tenant `user_id` FK). Détail de l'analyse fournisseur, plan phasé, pipeline GitOps Workload Identity Federation et plan de migration sortie : [`docs/devops/deploiement.md`](../devops/deploiement.md). **Discipline non-négociable** dès le 1er deploy : zéro SDK Supabase dans le code (juste `DATABASE_URL` JDBC), backup `pg_dump` nocturne vers Cloudflare R2, Cloudflare devant Cloud Run pour bypass egress quota.
 
-### ⏳ À faire
-
-> Phase 5 entièrement livrée. Tous les tickets sont passés en ✅ dans [`journal-livraisons.md > Phase 5`](./journal-livraisons.md#phase-5--déploiement-en-cours).
+> **Phase 5 entièrement livrée 2026-05-23.** Tous les tickets sont passés en ✅ dans [`journal-livraisons.md > Phase 5`](./journal-livraisons.md#phase-5--déploiement-clôturée-2026-05-23). Le ticket résiduel « Persister préfs user backend » a été déplacé en Phase 6 Hors-vague (11).
 
 > Reste hors-backlog v1 mais déclenchable Phase 5c si trigger : (a) **Migration Supabase → Neon free** si Supabase serre (effort ~30 min `pg_dump | pg_restore`), (b) **upgrade Supabase Pro $25/mo** si Neon ne tient pas, (c) **bascule globale Fly Phase 5a $10/mo** comme plan C ultime — tous documentés dans [`docs/devops/deploiement.md > §5 Phase 5c`](../devops/deploiement.md).
 

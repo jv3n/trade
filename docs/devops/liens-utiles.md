@@ -15,7 +15,7 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 
 ### Cloud Run (compute)
 - [Services Cloud Run](https://console.cloud.google.com/run?project=trade-496613) — liste + métriques + logs
-- [Service `portfolioai`](https://console.cloud.google.com/run/detail/northamerica-northeast1/portfolioai/metrics?project=trade-496613) — _pas encore déployé, lien anticipé_
+- [Service `portfolioai`](https://console.cloud.google.com/run/detail/northamerica-northeast1/portfolioai/metrics?project=trade-496613) — métriques + révisions + traffic split
 - [Logs Cloud Run](https://console.cloud.google.com/logs/query;query=resource.type%3D%22cloud_run_revision%22?project=trade-496613) — query Cloud Logging filtrée Cloud Run
 
 ### Artifact Registry (Docker images)

@@ -25,7 +25,8 @@ Règles strictes posées 2026-05-19. Le workflow [`deploy.yml`](../../.github/wo
 | Phase 2.5 — Stabilisation et outils | `v0.4.0`, `v0.4.1` |
 | Phase 3 — Observabilité narrative | `v0.5.0`, `v0.5.1` |
 | Phase 4 — Authentification | `v0.6.0` |
-| Phase 5a — Déploiement Cloud Run + Supabase | `v0.7.0` (à venir), précédé du smoke `v0.7.0-rc1` |
+| Phase 5a — Déploiement Cloud Run + Supabase | `v0.7.0`, précédé du smoke `v0.7.0-rc1` |
+| Phase 5b — Cloudflare custom domain + Observability GlitchTip | `v0.8.0-rc1` (smoke), `v0.8.0` stable optionnel |
 
 ### Convention dev local Docker
 
@@ -34,7 +35,7 @@ Règles strictes posées 2026-05-19. Le workflow [`deploy.yml`](../../.github/wo
 - Builds locaux pendant un bring-up restent dans le Docker daemon de l'user, jamais push AR.
 - Si vraiment besoin d'une itération dev manuelle sur Cloud Run (debug d'un crash boot prod-only, par exemple), utiliser un préfixe **non-SemVer** : `dev-<short-sha>` ou `dev-YYYYMMDD-N` (e.g. `dev-20260519-1`). Garde le namespace `vX.Y.Z*` clean pour les releases.
 
-> Contexte : le 1er bootstrap manuel Phase 5a a poussé `v0.7.0-dev1..dev4` dans AR avant que cette discipline ne soit posée. Ces blobs sont à cleanup une fois `v0.7.0` (stable) en service — l'historique narratif vit déjà dans [`journal-livraisons.md`](../projet/journal-livraisons.md#phase-5--déploiement-en-cours).
+> Contexte : le 1er bootstrap manuel Phase 5a a poussé `v0.7.0-dev1..dev4` dans AR avant que cette discipline ne soit posée. Ces 4 blobs ont été supprimés 2026-05-19 dans le cadre du ticket « industrialiser le versionning » (cf. `gcloud artifacts docker images delete ...:v0.7.0-dev{1,2,3,4} --delete-tags --quiet`) ; `v0.7.0-rc1` conservée comme 1er artefact reproducible du workflow release-triggered. L'historique narratif des 5 itérations vit dans [`journal-livraisons.md`](../projet/journal-livraisons.md#phase-5--déploiement-clôturée-2026-05-23).
 
 ## Le rituel
 
@@ -53,7 +54,7 @@ Règles strictes posées 2026-05-19. Le workflow [`deploy.yml`](../../.github/wo
    - Authentification GCP via Workload Identity Federation (pas de SA key)
    - Build Docker `linux/amd64` natif sur runner ubuntu-latest (pas de QEMU émulation, gain ~5-10× vs build Mac M1)
    - Push vers Artifact Registry avec le tag de la release
-   - `gcloud run deploy` avec les flags validés (4 secrets mountés depuis Secret Manager, profil `prod`)
+   - `gcloud run deploy` avec les flags validés (5 secrets mountés depuis Secret Manager, profil `prod`)
    - Smoke `/actuator/health` post-deploy + résumé dans le summary du run Actions
 5. **Approuver le deploy** : l'Environment `production` a un required reviewer (l'user solo s'auto-approve) — le run se met en `Waiting for review` jusqu'au click « Approve and deploy ». Audit trail naturel : qui a approuvé quel deploy quand, sans extra tooling.
 6. **Smoke browser** : ouvrir l'URL Cloud Run (visible dans le summary du workflow), confirmer login Google + ouverture d'un dossier ticker en mode `mock` pour valider que la révision tient.
@@ -104,7 +105,7 @@ Les tags `vX.Y.Z-rcN` (e.g. `v0.7.0-rc1`) sont des pre-releases. Côté GitHub, 
 | **GitHub** | 3 Environment variables | `GCP_PROJECT`, `GCP_WIF_PROVIDER`, `GCP_SA_EMAIL` (non-secrets — identifiants publics) |
 | **GCP** | Workload Identity Pool `github` | attribute condition `assertion.repository_owner == 'jv3n'` + binding sur `principalSet://.../attribute.repository/jv3n/trade` |
 | **GCP** | Service account `github-deploy@` | `roles/run.admin` + `roles/artifactregistry.writer` au projet + `iam.serviceAccountUser` sur le runtime SA |
-| **GCP** | Service account `portfolioai-runtime@` | `roles/secretmanager.secretAccessor` per-secret (4 secrets) |
+| **GCP** | Service account `portfolioai-runtime@` | `roles/secretmanager.secretAccessor` per-secret (5 secrets) |
 | **GCP** | Artifact Registry `backend` | région `northamerica-northeast1`, image `portfolioai:<tag>` |
 | **GCP** | 5 secrets Secret Manager | `google-oauth-client-id`, `google-oauth-client-secret`, `app-admin-emails`, `supabase-db-url`, `sentry-dsn-backend` |
 
