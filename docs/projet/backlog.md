@@ -101,6 +101,30 @@ Suivi des features par phase. Mis à jour à chaque session de développement.
 
 ---
 
+## Phase 7 — Radar d'anomalies de marché
+
+> Repérer en temps quasi-réel les tickers mid-cap du Nasdaq Composite (~3500 listings) qui montrent un mouvement anormal à l'ouverture des marchés US — typiquement le pattern précurseur d'un pump-and-dump (gap haussier important + volume disproportionné par rapport à la moyenne 30j). **Objectif** : surfacer un signal d'investigation, pas une recommandation d'achat. **Reste aligné au positionnement « narrateur, pas devin »** : le radar liste les tickers candidats avec leurs métriques (gap %, volume relative, market cap, exchange), et le pipeline narratif Phase 1 existant produit le narratif technique du ticker quand l'utilisateur clique. Le LLM ne dit jamais « pump suspect » — il décrit ce que les indicateurs montrent (RSI surchauffé, écart MA200 extrême, volume vs moyenne) et l'utilisateur décide.
+
+**Décisions ouvertes à l'attaque** :
+- **Univers exact** : Nasdaq Composite (~3500), Russell 3000, ou Nasdaq Capital Market (microcap dominant) ? Reco initiale : Nasdaq Composite + filtre market cap.
+- **Définition mid-cap** : seuils standards $2B-$10B (à confirmer). Source du market cap : Finnhub `/stock/profile2` (déjà câblé Phase 2) ou alternative bulk.
+- **Seuil « mouvement anormal »** : gap d'ouverture >X% + volume premier 30 min >Yx la moyenne 30j ? RSI déjà au-dessus de Z ? À calibrer sur historique.
+- **Provider screener** : **Polygon.io** (`/v2/snapshot/locale/us/markets/stocks/tickers`) couvre exactement le cas — snapshot full marché en une requête, free tier 5 req/min suffisant à l'ouverture. Alternatives : Finnhub (`/stock/market-status` + parcours manuel), FMP (`/v3/stock_market/gainers`), Alpaca. À benchmarker tarif / latence / completeness.
+- **Fréquence** : poll au refresh manuel uniquement, ou cron sur les 30 premières minutes après l'ouverture (9:30-10:00 ET) ?
+- **Stockage** : persister les détections (table `market_alert` avec `symbol, detected_at, gap_pct, volume_ratio, market_cap_usd, screener_filter_snapshot JSONB`) pour analyser après coup quels signaux ont tenu et lesquels étaient du bruit → boucle d'amélioration.
+
+| Feature | Description | Priorité |
+|---------|-------------|----------|
+| ⏳ **(1) Provider screener — recherche + adapter** | Benchmarker Polygon vs Finnhub vs FMP vs Alpaca : couverture (univers complet ? mid-cap ?), latence (snapshot temps-réel vs 15-min delayed sur free tier), tarif (free tier suffit pour solo dev ?), shape de la réponse. Choisir 1 provider + adapter le port `MarketScreenerClient` (interface `findMovers(filter: ScreenerFilter): List<TickerMover>`), + un `MockMarketScreenerClient` pour le dev sans clé. Premier adapter : Polygon (snapshot all-tickers le plus prometteur). Alignement avec le pattern existant `RoutingXxxClient` de Phase 2 si on veut multi-provider plus tard | 🔴 Haute |
+| ⏳ **(2) Pipeline screener + filtre** | Service `MarketScreenerService` qui orchestre : (a) fetch univers via le port, (b) applique les filtres configurables (market cap range, gap %, volume ratio, optionnel : exchange, sector), (c) retourne la shortlist enrichie de quelques champs prêts à afficher. Endpoint `GET /api/screener/movers?marketCapMin=2000000000&gapPctMin=10&...`. Pas de persistance v1 (snapshot in-memory) — voir ticket #4 pour la persistance | 🔴 Haute |
+| ⏳ **(3) Page `/radar` frontend** | Nouvelle feature `features/radar/` : tableau des candidats avec colonnes symbol + name + price + gap % + volume ratio + market cap + sector. Tri cliquable, lien vers le dossier ticker Phase 1 (réutilise le narratif existant). Panneau de filtres latéral éditable runtime, persisté local-storage (cohérent avec le pattern `core/local/`). Auto-refresh optionnel (30 s ?) avec toggle pause | 🔴 Haute |
+| ⏳ **(4) Persistance des détections — historique radar** | Table `market_alert` (`id, symbol, detected_at, gap_pct, volume_ratio, market_cap_usd, exchange, sector, screener_filter_snapshot JSONB`). Permet de rejouer après coup « qu'est-ce qui s'est déclenché ce matin et qu'est-ce qui a tenu vs s'est effondré » → boucle d'amélioration sur les seuils. Endpoint `GET /api/screener/history?from=...&to=...`. Pas une priorité v1, à attaquer une fois (1)(2)(3) stabilisés | 🟡 Moyenne |
+| ⏳ **(5) Cron pré-fetch ouverture marché** | Job programmé qui poll le screener à 9:31, 9:35, 9:45, 10:00 ET (heures d'ouverture marché US, fuseau Eastern). Cache en mémoire le snapshot le plus récent pour que la page `/radar` charge instant. Reuse du pattern Phase 6 Vague 2 #4 cron pré-chauffe quand il sera livré | 🟡 Moyenne |
+| ⏳ **(6) Intégration watchlist — ajout 1-clic depuis le radar** | Bouton « Ajouter à la watchlist » sur chaque ligne du radar. Réutilise le module `watchlist/` Phase 2 existant. Permet de glisser un ticker repéré au radar dans le flow d'analyse normal sans saisie manuelle | 🟢 Basse |
+| ⏳ **(7) Alertes push/email sur seuils** | Quand un ticker matche les filtres pendant N minutes consécutives, notification (mail / browser push). Dépend de la décision Phase 6 Vague 3 #6 Watchlist alertes pour le canal de notification (cohérence : un seul système d'alertes) | 🟢 Basse |
+
+---
+
 ## Dette technique
 
 Sujets identifiés en cours de session, pas bloquants pour la phase courante mais à traiter quand l'occasion se présente. Les items livrés (cleanup jobs orphelins, ESLint, doc-maintainer, Twelve Data, refacto tests-as-documentation) sont dans [`journal-livraisons.md > Dette technique — items livrés`](./journal-livraisons.md#dette-technique--items-livrés).
