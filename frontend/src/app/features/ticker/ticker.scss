@@ -1711,6 +1711,11 @@ $sidenav-width-collapsed: 48px;
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0 0 0.75rem;
+  // Preserve the \n\n paragraph breaks the LLM emits in the summary (per the technical envelope
+  // spec asking for 2-3 paragraphs separated by a blank line). `pre-wrap` keeps newlines while
+  // still wrapping long lines naturally — without this, the browser collapses every whitespace
+  // run into a single space and the summary renders as one big wall of text.
+  white-space: pre-wrap;
 }
 
 .narrative-points {

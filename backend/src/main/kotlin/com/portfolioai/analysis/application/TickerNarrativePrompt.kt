@@ -58,7 +58,7 @@ internal val NARRATIVE_TECHNICAL_ENVELOPE_SUFFIX =
 
   Reply with ONLY this JSON object (no prose, no markdown fences) :
   {
-    "summary": "A thorough technical summary, typically 5-12 sentences, walking through each available indicator (price vs MA50/MA200, RSI, momentum 30d/90d, drawdown, volume). Neutral, factual tone. No predictions, no buy/sell advice.",
+    "summary": "A thorough technical summary, typically 5-12 sentences, walking through each available indicator (price vs MA50/MA200, RSI, momentum 30d/90d, drawdown, volume). Structure the text as 2-3 short paragraphs separated by a blank line (use \\n\\n in the JSON string) — typically one paragraph for price action vs moving averages, one for RSI + momentum, one for drawdown + volume — so the reader can scan rather than wade through a wall of text. Neutral, factual tone. No predictions, no buy/sell advice.",
     "sentiment": "BULLISH" | "NEUTRAL" | "BEARISH",
     "keyPoints": ["3-5 bullets, each ≤15 words, each grounded in one indicator value from the input. No invented numbers."]
   }
