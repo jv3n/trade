@@ -2,6 +2,11 @@
 
 Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actuels (GCP `trade-496613` + Supabase `portfolioai-prod` + GitHub `jv3n/trade`). Garde cette page ouverte dans un onglet pendant les sessions ops.
 
+## Production
+
+- **App prod** : [https://tickerstory.org](https://tickerstory.org) — domaine custom (Cloudflare Worker proxy → Cloud Run Montréal)
+- **App prod (URL Cloud Run directe)** : [https://portfolioai-vybmfauwxq-nn.a.run.app](https://portfolioai-vybmfauwxq-nn.a.run.app) — fallback de debug, contourne Cloudflare
+
 ## Google Cloud Platform — projet `trade-496613`
 
 ### Vue d'ensemble
@@ -35,7 +40,7 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 ### OAuth 2.0 (Google Sign-In Phase 4)
 - [APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials?project=trade-496613) — OAuth 2.0 Client IDs
 - [Consent Screen](https://console.cloud.google.com/apis/credentials/consent?project=trade-496613) — branding + scopes + test users
-- ⚠️ **Au 1er deploy prod** : ajouter la redirect URI `https://<cloud-run-url>/login/oauth2/code/google` puis (plus tard) `https://<custom-domain>/login/oauth2/code/google`
+- ✅ **Redirect URIs configurées 2026-05-22** : `http://localhost:8081/login/oauth2/code/google` (dev local), `https://portfolioai-vybmfauwxq-nn.a.run.app/login/oauth2/code/google` (Cloud Run direct, fallback debug), `https://tickerstory.org/login/oauth2/code/google` (prod custom domain). Authorized JavaScript origin : `https://tickerstory.org`. **À noter** : Spring n'honore pas `X-Forwarded-Host` que le Worker envoie (Cloud Run le strip) — `spring.security.oauth2.client.registration.google.redirect-uri` est forcée à la valeur littérale `https://tickerstory.org/...` via env var `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI` posée dans `deploy.yml`, idem pour `app.frontend-url` via `APP_FRONTEND_URL=https://tickerstory.org/` (sinon le redirect post-login fallback sur `*.run.app`).
 
 ### Billing
 - [Billing account `0159AE-56FF40-037FC8`](https://console.cloud.google.com/billing/0159AE-56FF40-037FC8?project=trade-496613) — facturation, alertes budget
@@ -81,11 +86,17 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 
 ## Cloudflare
 
-> **Compte créé pour le bucket R2 backups Phase 5a, étendu 2026-05-22 avec le registrar (domaine `tickerstory.org`).** Le DNS / cache devant Cloud Run reste à câbler (ticket Phase 5 🟡 « Cloudflare devant Cloud Run »).
+> **Compte étendu au fil de Phase 5 :** R2 bucket backups (Phase 5a), registrar (`tickerstory.org` acheté 2026-05-22), **Worker `tickerstory-proxy`** déployé 2026-05-22 comme proxy custom-domain → Cloud Run (Cloud Run domain mappings indispo à Montréal + Origin Rules Host rewrite Enterprise-only → pivot Worker, cf. journal Phase 5).
 
 ### Registrar — domaines
 - [Domaines enregistrés](https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/domains/registrations) — liste des domaines achetés via Cloudflare Registrar (`tickerstory.org` depuis 2026-05-22, ~$7.50/an at-cost, auto-renew on)
 - Choix du domaine documenté dans [`dns-analyse.md`](./dns-analyse.md) — historique des 2 pivots de reco (`.app` pris → `.us` écarté nexus → `.org` retenu)
+
+### Workers — `tickerstory-proxy`
+- [Worker overview](https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/workers/services/view/tickerstory-proxy/production) — code + deployments + observability + custom domain bindings
+- [Edit code](https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/workers/services/view/tickerstory-proxy/production?showActionMenu=open-quick-edit) — éditeur inline + preview pane
+- **Rôle** : intercepte toute requête `tickerstory.org/*`, forge un `fetch()` vers `portfolioai-vybmfauwxq-nn.a.run.app` avec Host header réécrit (sinon Cloud Run rejette avec 404)
+- **Custom Domain** attaché : `tickerstory.org` (DNS auto-managed par Cloudflare quand on attache un domaine à un Worker — l'ancien CNAME manuel a été supprimé pour permettre l'attache)
 
 ### R2 — bucket `portfolioai-backups`
 - [Cloudflare dashboard](https://dash.cloudflare.com/) — home, après login
@@ -101,9 +112,6 @@ aws s3 ls s3://portfolioai-backups/ \
   --profile portfolioai-r2
 ```
 Configurer une fois : `aws configure --profile portfolioai-r2` avec les mêmes 3 creds que les GitHub Secrets.
-
-### DNS / proxy (à venir)
-- À câbler quand on attaque le ticket « Cloudflare devant Cloud Run » : DNS pour custom domain + cache devant Cloud Run pour bypass egress quota 1 GB/mo
 
 ## Documentation officielle (références ops fréquentes)
 
