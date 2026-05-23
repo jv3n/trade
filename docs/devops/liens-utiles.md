@@ -98,6 +98,12 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 - **Rôle** : intercepte toute requête `tickerstory.org/*`, forge un `fetch()` vers `portfolioai-vybmfauwxq-nn.a.run.app` avec Host header réécrit (sinon Cloud Run rejette avec 404)
 - **Custom Domain** attaché : `tickerstory.org` (DNS auto-managed par Cloudflare quand on attache un domaine à un Worker — l'ancien CNAME manuel a été supprimé pour permettre l'attache)
 
+### Cache Rules — `tickerstory.org`
+- [Cache Rules dashboard](https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/tickerstory.org/caching/cache-rules) — UI Caching → Cache Rules pour la zone
+- **Rule 1 — `Bypass cache for API`** (ordre 1) : `URI Path starts with /api/` → **Bypass cache**. Préserve le streaming SSE narratif (zéro bufferisation Cloudflare), zéro stale sur les responses JSON live, zéro risque de cache leak cross-user.
+- **Rule 2 — `Cache static assets aggressively`** (ordre 2) : `URI File Extension is in {js, css, woff, woff2, ttf, eot, svg, png, jpg, jpeg, gif, ico, webp}` → **Eligible for cache**, Edge TTL 1 year, Browser TTL 1 year. Wirefilter raw : `(http.request.uri.path.extension in {"js" "css" "woff" "woff2" "ttf" "eot" "svg" "png" "jpg" "jpeg" "gif" "ico" "webp"})`. Les assets Angular sont hash-named → cache éternel safe. Bypass partiel du quota egress Cloud Run free (1 GB/mo N. America).
+- **Note** : `matches regex` est Enterprise-only sur Cloudflare ; `URI File Extension is in {…}` couvre 95 % des cas. Vérifier le header `cf-cache-status` (`BYPASS`/`DYNAMIC` sur `/api/`, `MISS` puis `HIT` sur les assets).
+
 ### R2 — bucket `portfolioai-backups`
 - [Cloudflare dashboard](https://dash.cloudflare.com/) — home, après login
 - R2 buckets overview : `https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/r2/default/buckets` — _remplacer `8f2780696b5e520f85b5fc80413c4c3f` par le tien (visible dans l'URL une fois loggué, ou dans `R2_ACCOUNT_ID` GitHub Secret)_
