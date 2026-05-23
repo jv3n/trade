@@ -22,6 +22,7 @@ nav:
       - "Déploiement (choix d'hébergement Phase 5)": devops/deploiement.md
       - "Release process (workflow Cloud Run)": devops/release-process.md
       - "Backup & restore process (Postgres → R2)": devops/backup-process.md
+      - "Analyse DNS (choix nom de domaine)": devops/dns-analyse.md
       - "Décision : déploiement Ollama": devops/decision-ollama-deploiement.md
   - Projet:
       - Backlog: projet/backlog.md

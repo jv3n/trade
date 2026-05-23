@@ -81,7 +81,11 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 
 ## Cloudflare
 
-> **Compte créé pour le bucket R2 backups Phase 5a.** Le DNS / cache devant Cloud Run reste à câbler (ticket Phase 5 🟡 « Cloudflare devant Cloud Run »).
+> **Compte créé pour le bucket R2 backups Phase 5a, étendu 2026-05-22 avec le registrar (domaine `tickerstory.org`).** Le DNS / cache devant Cloud Run reste à câbler (ticket Phase 5 🟡 « Cloudflare devant Cloud Run »).
+
+### Registrar — domaines
+- [Domaines enregistrés](https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/domains/registrations) — liste des domaines achetés via Cloudflare Registrar (`tickerstory.org` depuis 2026-05-22, ~$7.50/an at-cost, auto-renew on)
+- Choix du domaine documenté dans [`dns-analyse.md`](./dns-analyse.md) — historique des 2 pivots de reco (`.app` pris → `.us` écarté nexus → `.org` retenu)
 
 ### R2 — bucket `portfolioai-backups`
 - [Cloudflare dashboard](https://dash.cloudflare.com/) — home, après login
