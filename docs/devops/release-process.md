@@ -67,6 +67,31 @@ Règles strictes posées 2026-05-19. Le workflow [`deploy.yml`](../../.github/wo
 - **Release supprimée** — si on `gh release delete`, le tag git reste mais le workflow ne re-déclenche pas. Pour redéployer un tag existant, re-créer la Release dans l'UI (le workflow distingue les events, pas les tags).
 - **Failed deploy** — Cloud Run rejette une révision dont la `startupProbe` `/actuator/health` échoue (container crashe au boot, Spring config invalide, secret manquant…). Le step `gcloud run deploy` du workflow remonte l'échec → le run Actions fail. **Pas de routage trafic vers une révision cassée** : la précédente reste en service. Bug-bash via `gcloud run revisions logs read` ou Cloud Logging.
 
+## Failure modes connus
+
+Patterns d'échec récurrents côté CI/CD avec remediation standard. À consulter en first response avant de plonger dans le debug profond.
+
+### Transient — `auth failed: could not read Username for 'https://github.com'`
+
+**Symptôme** : un workflow CI (`deploy.yml`, `docs.yml`, `backup-postgres.yml`, ou tout autre qui utilise `actions/checkout@v4`) fail au step `actions/checkout` ou au `git push` (`mkdocs gh-deploy`), avec un message du genre :
+
+```
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+# ou
+fatal: could not read Username for 'https://github.com': No such device or address
+```
+
+**Cause** : transient infrastructure GitHub Actions — le `GITHUB_TOKEN` n'est pas injecté à temps dans le runner avant que `actions/checkout` ne tente le fetch (ou avant que `mkdocs gh-deploy` ne pousse sur `gh-pages`). Le token finit par arriver mais trop tard pour cette step. **Pas un bug de config workflow** — le rendre explicit (`with: token: ${{ secrets.GITHUB_TOKEN }}`) ne fix pas, c'est identique au default behavior de `actions/checkout@v4`.
+
+**Remediation** : **re-run la job failed** depuis l'UI Actions (`Re-run failed jobs`). C'est résolu à la 2e tentative dans 95% des cas. ~30 s.
+
+**Si persiste sur plusieurs re-runs** :
+- Check [https://www.githubstatus.com/](https://www.githubstatus.com/) — incident infrastructure ongoing ?
+- Check `Settings → Actions → General → Workflow permissions` — doit être sur **« Read and write permissions »** (ou au minimum lecture)
+- Workaround temporaire : ajouter explicitement `token: ${{ secrets.GITHUB_TOKEN }}` sur le step `actions/checkout@v4` du workflow concerné — pas une fix mais parfois débloque les race conditions
+
+**Vécu 2026-05-23** : deux failures de ce type dans la même session (`deploy.yml` puis `docs.yml`), tous deux résolus par re-run. Pas modifié les workflows.
+
 ## Pre-releases et release candidates
 
 Les tags `vX.Y.Z-rcN` (e.g. `v0.7.0-rc1`) sont des pre-releases. Côté GitHub, cocher « Set as a pre-release » au moment du Publish ; côté workflow, **rien à câbler** — `release: published` fire pour les deux types. Use case : valider une PR à risque (schema migration, refacto OAuth, bump majeur lib) sur un déploiement réel avant le tag final.
@@ -81,7 +106,7 @@ Les tags `vX.Y.Z-rcN` (e.g. `v0.7.0-rc1`) sont des pre-releases. Côté GitHub, 
 | **GCP** | Service account `github-deploy@` | `roles/run.admin` + `roles/artifactregistry.writer` au projet + `iam.serviceAccountUser` sur le runtime SA |
 | **GCP** | Service account `portfolioai-runtime@` | `roles/secretmanager.secretAccessor` per-secret (4 secrets) |
 | **GCP** | Artifact Registry `backend` | région `northamerica-northeast1`, image `portfolioai:<tag>` |
-| **GCP** | 4 secrets Secret Manager | `google-oauth-client-id`, `google-oauth-client-secret`, `app-admin-emails`, `supabase-db-url` |
+| **GCP** | 5 secrets Secret Manager | `google-oauth-client-id`, `google-oauth-client-secret`, `app-admin-emails`, `supabase-db-url`, `sentry-dsn-backend` |
 
 Setup détaillé et historique dans [`prod/README.md`](../../devops/prod/README.md) et [`deploiement.md`](./deploiement.md).
 

@@ -23,12 +23,13 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 - [Repo `backend` (northamerica-northeast1)](https://console.cloud.google.com/artifacts/docker/trade-496613/northamerica-northeast1/backend?project=trade-496613) — images poussées + tags
 - Path complet des images : `northamerica-northeast1-docker.pkg.dev/trade-496613/backend/portfolioai:<tag>`
 
-### Secret Manager (4 secrets runtime)
+### Secret Manager (5 secrets runtime)
 - [Tous les secrets](https://console.cloud.google.com/security/secret-manager?project=trade-496613)
 - [`google-oauth-client-id`](https://console.cloud.google.com/security/secret-manager/secret/google-oauth-client-id/versions?project=trade-496613)
 - [`google-oauth-client-secret`](https://console.cloud.google.com/security/secret-manager/secret/google-oauth-client-secret/versions?project=trade-496613)
 - [`app-admin-emails`](https://console.cloud.google.com/security/secret-manager/secret/app-admin-emails/versions?project=trade-496613)
 - [`supabase-db-url`](https://console.cloud.google.com/security/secret-manager/secret/supabase-db-url/versions?project=trade-496613)
+- [`sentry-dsn-backend`](https://console.cloud.google.com/security/secret-manager/secret/sentry-dsn-backend/versions?project=trade-496613) — DSN GlitchTip backend (cf. section Observability ci-dessous). Le DSN frontend n'est PAS un secret (public par design), il est hardcodé dans `frontend/src/main.ts`.
 
 ### IAM & Service Accounts
 - [Service accounts](https://console.cloud.google.com/iam-admin/serviceaccounts?project=trade-496613)
@@ -76,6 +77,27 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 - [Code Security](https://github.com/jv3n/trade/settings/security_analysis) — Secret Scanning + Push Protection + Dependabot
 - [Releases](https://github.com/jv3n/trade/releases) — _à utiliser pour le 1er deploy via `on: release: published`_
 - [Issues](https://github.com/jv3n/trade/issues) — _peu utilisé, le backlog vit dans le repo (`docs/projet/backlog.md`)_
+
+## Observability — GlitchTip + UptimeRobot
+
+> Wiring livré `v0.8.0-rc1` (2026-05-23). GlitchTip = serveur d'ingestion Sentry-API-compatible (on utilise les SDK officiels Sentry, le DSN dirige vers GlitchTip plutôt que vers Sentry SaaS). UptimeRobot = HTTP polling externe sur `/actuator/health`. Détail wiring + pivots dans [`journal-livraisons.md > Phase 5`](../projet/journal-livraisons.md#phase-5--déploiement-en-cours) et [`architecture.md > Décisions Phase 5`](../technique/architecture.md#phase-5--déploiement).
+
+### GlitchTip (error tracking)
+- [Organization `portfolioai`](https://app.glitchtip.com/portfolioai) — overview, billing, members
+- [Projet `portfolioai-backend`](https://app.glitchtip.com/portfolioai/issues/?project=portfolioai-backend) — events Spring Boot, tag `release: v<X.Y.Z>` propagé via env var `SENTRY_RELEASE` au deploy
+- [Projet `portfolioai-frontend`](https://app.glitchtip.com/portfolioai/issues/?project=portfolioai-frontend) — events browser Angular, pas de tag `release` v1
+- **Alert rules** : email immédiat sur new issue + burst alert >10 events/h, configurées via UI **Settings → Alerts** sur chacun des 2 projets
+- **Quota free tier** : 5K events/mo combiné (réinitialisé chaque mois calendaire) — surveiller le total côté Org settings
+
+### UptimeRobot (uptime monitor)
+- [Dashboard](https://uptimerobot.com/dashboard) — liste des monitors actifs
+- **Monitor actif** : `PortfolioAI prod` sur `https://tickerstory.org/actuator/health`, interval 5 min, alert email
+- Free tier 50 monitors — on en utilise 1
+
+### Wiring & secrets
+- DSN backend dans Secret Manager : [`sentry-dsn-backend`](https://console.cloud.google.com/security/secret-manager/secret/sentry-dsn-backend/versions?project=trade-496613). Mounté au runtime Cloud Run via `--update-secrets=SENTRY_DSN=sentry-dsn-backend:latest` dans `deploy.yml`. Rotation = nouvelle version du secret + redeploy (~3 min).
+- DSN frontend hardcodé dans `frontend/src/main.ts` (public par design, commit safe — c'est le modèle Sentry/GlitchTip standard).
+- Release tagging backend : `SENTRY_RELEASE=${{ github.event.release.tag_name }}` propagé via `--set-env-vars` dans `deploy.yml`, lu par `application-prod.yml` → `sentry.release` SDK config. Permet le filtrage "errors introduced in v0.8.0" dans le dashboard.
 
 ## Providers externes (clés API runtime-editable via UI)
 
