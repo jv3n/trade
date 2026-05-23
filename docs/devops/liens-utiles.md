@@ -155,6 +155,7 @@ Configurer une fois : `aws configure --profile portfolioai-r2` avec les mêmes 3
 - [`deploiement.md`](./deploiement.md) — plan d'analyse + recommandation + plan phasé Phase 5
 - [`release-process.md`](./release-process.md) — rituel deploy (tag → Draft Release → Publish → workflow)
 - [`backup-process.md`](./backup-process.md) — backup nocturne pg_dump → R2 + restore drill
+- [`secret-rotation.md`](./secret-rotation.md) — procédure step-by-step rotation des 5 secrets prod (OAuth, DB, admin emails, Sentry)
 - [`commandes-pratiques.md`](./commandes-pratiques.md) — commandes Docker / Tilt / Postgres / Ollama au quotidien
 - [`decision-ollama-deploiement.md`](./decision-ollama-deploiement.md) — pourquoi Ollama reste en CPU dégradé sur Mac
 - [`docs/projet/backlog.md > Phase 5`](../projet/backlog.md) — tickets ⏳ restants

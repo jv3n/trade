@@ -10,7 +10,11 @@ server:
   # `localhost:8081` et la session cookie ne sera pas accessible au SPA sur `localhost:4201`.
   # En prod derrière un reverse proxy (nginx, traefik, ALB), même besoin : trust the forwarded
   # headers pour générer les URLs publiques correctes. Risque de spoofing : nul tant que le
-  # backend n'est pas exposé directement à internet sans proxy devant.
+  # backend n'est pas exposé directement à internet sans proxy devant — invariant tenu en prod
+  # par le Google Front End Cloud Run + Cloudflare Worker, cf. `docs/technique/architecture.md
+  # > Décisions techniques notables > Phase 5 > Forward-headers strategy`. Sur VPS self-managed
+  # (Hetzner, Oracle, etc.), basculer ici sur `NATIVE` + `server.tomcat.remoteip.internal-proxies`
+  # pinné sur l'IP du reverse proxy local (e.g. `127\.0\.0\.1|::1` pour nginx/Caddy sidecar).
   forward-headers-strategy: framework
 
 spring:
