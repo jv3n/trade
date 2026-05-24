@@ -16,7 +16,7 @@
 | **Trigger manuel via CLI** | `gh workflow run backup-postgres.yml` puis `gh run watch` |
 | **Lister les backups en CLI** | `aws s3 ls s3://portfolioai-backups/ --endpoint-url https://8f2780696b5e520f85b5fc80413c4c3f.r2.cloudflarestorage.com` |
 
-> `8f2780696b5e520f85b5fc80413c4c3f` = ton Cloudflare Account ID (visible dans l'URL du dashboard R2 ou dans le GitHub Secret `R2_ACCOUNT_ID`). À substituer manuellement la 1re fois, ou bookmark direct dans le navigateur après le 1er accès UI.
+> `8f2780696b5e520f85b5fc80413c4c3f` = ton Cloudflare Account ID (visible dans l'URL du dashboard R2 ou dans le GitHub Secret `R2_ACCOUNT_ID`). **Pas un secret** — c'est un identifiant public qui apparaît dans toute URL Cloudflare, ne donne aucun accès sans les creds R2 (`R2_ACCESS_KEY_ID` + `R2_SECRET_ACCESS_KEY`). Hardcodé volontairement ici pour les clics rapides ; à substituer manuellement la 1re fois si le repo est cloné, ou bookmark direct dans le navigateur après le 1er accès UI.
 
 ## Le rituel automatique
 

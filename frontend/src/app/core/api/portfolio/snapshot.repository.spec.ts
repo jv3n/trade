@@ -114,6 +114,9 @@ describe('SnapshotRepository builders', () => {
       const trigger = signal<string | undefined>(undefined);
 
       const cache = TestBed.runInInjectionContext(() => repo.positionsCache(trigger));
+      // No `await whenStable()` here — when `trigger()` is `undefined`, `rxResource` never
+      // subscribes to the stream, so there's nothing async to flush. Adding a `whenStable()` call
+      // would be redundant and might mask the « truly idle » intent of this scenario.
 
       expect(calls).toEqual([]);
       expect(cache().size).toBe(0);

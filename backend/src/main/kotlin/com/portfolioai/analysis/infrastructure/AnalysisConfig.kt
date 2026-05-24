@@ -1,4 +1,4 @@
-package com.portfolioai.analysis
+package com.portfolioai.analysis.infrastructure
 
 import java.time.Clock
 import org.springframework.context.annotation.Bean

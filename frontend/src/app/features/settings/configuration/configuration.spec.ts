@@ -309,13 +309,21 @@ describe('Configuration', () => {
     expect(component.ttlValue()).toBe(30);
   });
 
-  it('save on a secret key clears the typed input after success', () => {
+  it('save on a secret key refetches the list and clears the typed input after success', () => {
+    // Two behaviours pinned here (the SECRET save path does BOTH since the 2026-05-24 refacto) :
+    // (a) `repo.list()` is re-fired so dependent provider toggles' `disabledReason` annotations
+    //     can re-evaluate server-side ; (b) the typed input is cleared so the rotated key
+    //     doesn't linger on screen (the saved value is now masked, reading it back would be
+    //     inconsistent UX). Test « saving a SECRET refetches the list … » below covers (a) more
+    //     deeply via the actual `disabledReason` propagation ; here we just pin both effects
+    //     fire together on a SECRET save.
+    const listCallsBefore = repo.list.mock.calls.length; // 1 from beforeEach load()
+
     component.onInput('market.twelvedata.api-key', 'rotated-key');
     component.save('market.twelvedata.api-key');
 
     expect(repo.set).toHaveBeenCalledWith('market.twelvedata.api-key', 'rotated-key');
-    // After save the input is cleared so the rotated key doesn't linger on screen — the saved
-    // value is now masked server-side and reading it back would be inconsistent UX.
+    expect(repo.list.mock.calls.length).toBe(listCallsBefore + 1);
     expect(component.editValue('market.twelvedata.api-key')).toBe('');
   });
 

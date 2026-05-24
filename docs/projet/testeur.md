@@ -34,7 +34,7 @@ Concrètement, tu pourras :
 ## Démarrer
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/jv3n/trade.git
 cd trade
 tilt up
 ```
@@ -50,7 +50,7 @@ Une fois tout vert, ouvre [http://localhost:4200](http://localhost:4200) — l'a
 1. **Import** — `/import` : glisse-dépose les deux CSV de `docs/data-input/` (`DEMO-CELI-...csv` + `DEMO-REER-...csv`). Le portefeuille apparaît.
 2. **Dashboard** — `/dashboard` : la liste des positions agrégée, avec un sparkline et le P/L par ticker.
 3. **Dossier ticker** — clic sur n'importe quelle row : chart 1Y + indicateurs + news synthétiques + recommandations analystes + earnings.
-4. **Générer un narratif IA** — bouton **Analyser** sur le dossier. ~1 s de latence (mock), tu vois un texte court avec un sentiment BULLISH / NEUTRAL / BEARISH.
+4. **Générer un narratif IA** — bouton **Générer le narratif** sur le dossier (en bas de la card narrative). ~1 s de latence (mock), tu vois un texte court avec un sentiment BULLISH / NEUTRAL / BEARISH.
 5. **Watchlist** — `/dashboard` panneau **Watchlist**, ajoute n'importe quel symbole (`AAPL`, `NVDA`, `MSFT`…). Pas besoin qu'il soit dans le portefeuille — la watchlist est indépendante.
 
 Pour switcher la langue : icône globe en haut à droite (FR ↔ EN, ~700 clés traduites).

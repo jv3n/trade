@@ -158,6 +158,12 @@ class AppConfigService(
       } ?: AppConfigEntry(configKey = key, configValue = value)
     repository.save(entry)
     overrides[key] = value
+    // **Never add `value={}` to this log line.** `KNOWN_KEYS` includes `ALLOWED_EMAILS` (CSV of
+    // emails — PII, cf. `CLAUDE.md > Backend > Never log user emails`) and the SECRET keys
+    // (`TWELVEDATA_API_KEY`, `FINNHUB_API_KEY`, `ANTHROPIC_API_KEY`). Logging the value would
+    // land them in GCP Cloud Logging in cleartext (default 30-day retention). The key alone is
+    // enough to audit « who changed what when » via the timestamp + the override row in
+    // `app_config`. Same constraint applies to [reset]'s log line below.
     log.info("Config override set : key={}", key)
     if (previous != value) eventPublisher.publishEvent(ConfigChangedEvent(key, value))
   }
@@ -168,6 +174,7 @@ class AppConfigService(
     val previous = overrides[key]
     if (repository.existsById(key)) repository.deleteById(key)
     overrides.remove(key)
+    // Same redaction contract as [set] — log only the key, never the value (PII / SECRETs).
     log.info("Config override reset to default : key={}", key)
     if (previous != null) eventPublisher.publishEvent(ConfigChangedEvent(key, defaultFor(key)))
   }

@@ -6,6 +6,14 @@
 # Ce YAML servira à un futur passage à un deploy déclaratif `gcloud run services replace`.
 #
 # Tags `TODO_...` à remplacer au moment du 1er deploy.
+#
+# **Désynchronisé volontairement avec `.github/workflows/deploy.yml`** :
+# - `deploy.yml` injecte aussi `sentry-dsn-backend` (variable d'env `SENTRY_DSN`) via
+#   `--update-secrets` au runtime — pas listé dans ce STUB pour éviter une fausse symétrie.
+# - Si un day on bascule sur un deploy déclaratif `gcloud run services replace service.yaml`,
+#   ajouter `SENTRY_DSN` au bloc `env:` ci-dessous avec un `valueFrom.secretKeyRef.name:
+#   sentry-dsn-backend`. Tant que c'est `gcloud run deploy --update-secrets`, le workflow
+#   reste la source de vérité.
 
 apiVersion: serving.knative.dev/v1
 kind: Service

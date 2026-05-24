@@ -26,8 +26,11 @@ import org.springframework.web.filter.OncePerRequestFilter
  * UUID is the join key for prod audit, the email is PII and stays out of logs and Sentry
  * breadcrumbs.
  *
- * **Cleanup in `finally`** — MDC and Sentry scope are thread-local; without explicit reset they'd
- * leak across pooled threads (Spring Web's Tomcat reuses request-handler threads).
+ * **Cleanup strategy** — MDC is thread-local on Tomcat's pooled request-handler threads ; we wrap
+ * the chain in `try { … } finally { MDC.remove(…) }` to prevent leak across reused threads. Sentry
+ * uses `Sentry.withScope { … }` which pushes a temporary scope, runs the body, and **auto-restores
+ * the parent scope** on return (or exception). Replaces the deprecated `Sentry.configureScope` +
+ * manual `user = null` reset pattern (Sentry SDK v8 deprecation, removed in v9).
  */
 @Component
 class SentryUserContextFilter : OncePerRequestFilter() {
@@ -38,17 +41,23 @@ class SentryUserContextFilter : OncePerRequestFilter() {
   ) {
     val principal = SecurityContextHolder.getContext().authentication?.principal
     val userId = (principal as? AppUserPrincipal)?.userId?.toString()
-    if (userId != null) {
-      MDC.put(USER_ID_KEY, userId)
-      Sentry.configureScope { scope -> scope.user = User().apply { id = userId } }
-    }
-    try {
+    if (userId == null) {
+      // Unauthenticated request — no MDC tag, no Sentry user. Forward unchanged.
       filterChain.doFilter(request, response)
-    } finally {
-      if (userId != null) {
-        MDC.remove(USER_ID_KEY)
-        Sentry.configureScope { it.user = null }
+      return
+    }
+
+    MDC.put(USER_ID_KEY, userId)
+    try {
+      // `withScope` pushes a temporary scope cloned from the parent, runs the body, then pops the
+      // scope and restores the parent on return / exception. Cleaner than the v7-style
+      // `configureScope` + `finally { user = null }` pair (deprecated v8, removed v9).
+      Sentry.withScope { scope ->
+        scope.user = User().apply { id = userId }
+        filterChain.doFilter(request, response)
       }
+    } finally {
+      MDC.remove(USER_ID_KEY)
     }
   }
 

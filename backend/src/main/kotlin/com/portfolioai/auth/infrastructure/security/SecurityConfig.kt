@@ -93,9 +93,15 @@ class SecurityConfig(
         // que Spring sert automatiquement via son resource handler, et (b) les routes client-side
         // Angular (`/dashboard`, `/login`, `/error`, `/ticker/**`, `/settings/**`, etc.) qui se
         // résolvent via `SpaFallbackConfig` (forward vers `index.html`, Angular Router prend le
-        // relais). Aucune surface API n'est exposée par cette ligne — toutes les routes data
-        // commencent par `/api/**` (authenticated() ci-dessus) ou `/actuator/**` (auth Spring
-        // Boot par défaut, seul `/actuator/health` est permitAll par notre matcher initial).
+        // relais). **Aussi public par construction** : `/actuator/info` (build version + git
+        // commit, no PII — public by design, cf. `docs/devops/deploiement.md > §6.4`).
+        // `/actuator/health` est explicitement `permitAll` ci-dessus. Les autres endpoints
+        // (`/actuator/env`, `/actuator/configprops`) ne sont **pas exposés en prod** par le
+        // include `health, info` d'`application-prod.yml > management.endpoints.web.exposure`.
+        // En profil base (dev local) `/actuator/metrics` est aussi exposé et tombe ici en
+        // `permitAll` — acceptable en local. Si jamais on active `/actuator/env` ou
+        // `configprops`, ajouter `requestMatchers("/actuator/**").authenticated()` AVANT cette
+        // règle pour ne pas leaker le secret tree.
         it.anyRequest().permitAll()
       }
       .exceptionHandling {

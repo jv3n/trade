@@ -11,7 +11,7 @@ Project-specific Spring choices, plus the AOP / proxy gotchas that bite enough t
 
 - **`@Service`** — `application/` orchestrators. Where `@Cacheable`, `@Async`, `@Transactional` live.
 - **`@Component`** — everything else Spring-managed: adapters, listeners, routing clients.
-- **`@Configuration`** — bean factories. Three exist: `MarketConfig` (cache manager — at root of `market/`, not `infrastructure/`, because the spec is shared), `TwelveDataHttpConfig`, `FinnhubHttpConfig`.
+- **`@Configuration`** — bean factories, placed in `<context>/infrastructure/` by default. Four exist: `MarketConfig` (cache manager — at root of `market/`, not `infrastructure/`, because the spec is shared cross-layer), `market/infrastructure/market/TwelveDataHttpConfig`, `news/infrastructure/news/FinnhubHttpConfig`, `analysis/infrastructure/AnalysisConfig` (declares the explicit `@Bean Clock` consumed by `JobEventPublisher`).
 - **`@RestController`** — under `<context>/infrastructure/http/`. Depends on application services only.
 - **`@RestControllerAdvice`** — one only (`shared/GlobalExceptionHandler`). Map new domain exceptions there.
 

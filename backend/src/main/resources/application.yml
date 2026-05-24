@@ -100,6 +100,15 @@ spring:
 management:
   endpoints:
     web:
+      # `metrics` est inclus ici parce que le profil base sert aussi `local` (dev) où on peut
+      # vouloir grep `/actuator/metrics` pour debug à la main (heap, HikariCP, http server.requests).
+      # **En prod**, `application-prod.yml` surcharge cette liste à `health, info` uniquement —
+      # `metrics` n'est PAS exposé en prod (cf. décision Phase 5 : surface publique minimale).
+      # `SecurityConfig.kt` laisse `/actuator/**` autre que `/health` en `permitAll` (cf. commentaire
+      # de la chaîne de sécurité), donc `/metrics` est public sur le profil base. Acceptable tant
+      # qu'on tourne sur `localhost` ; **si tu partages la session via tunnel (ngrok, Cloudflare
+      # Tunnel, etc.), exclus `metrics` ici** — ou ajoute un `requestMatchers("/actuator/**").authenticated()`
+      # dans SecurityConfig avant de tunneler.
       exposure:
         include: health,info,metrics
   endpoint:

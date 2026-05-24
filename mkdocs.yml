@@ -33,6 +33,7 @@ nav:
       - Conventions de commit: projet/commit-conventions.md
       - Audits:
           - Vue d'ensemble: projet/audits/index.md
+          - 2026-05-24 — Revue globale pré-clôture Phase 5: projet/audits/2026-05-24-pre-phase5-close.md
           - 2026-05-17 — Revue globale pré-v0.6.0 (Phase 4): projet/audits/2026-05-17-pre-v0.6.0-phase4.md
           - 2026-05-16 — Revue globale pré-v0.5.1: projet/audits/2026-05-16-pre-v0.5.1.md
           - 2026-05-14 — Revue globale fin Phase 3: projet/audits/2026-05-14-fin-phase-3.md

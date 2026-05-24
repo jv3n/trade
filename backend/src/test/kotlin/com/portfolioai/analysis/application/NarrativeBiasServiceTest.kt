@@ -103,7 +103,8 @@ class NarrativeBiasServiceTest {
   fun `bias flag fires on a fractional ratio that rounds UP to 0_6000 via HALF_UP at scale 4`() {
     // Pin the rounding contract — `percentOf` divides with `RoundingMode.HALF_UP` at scale 4, so
     // a count/total whose exact value is just below 0.6 can still flag if the 5th decimal is ≥ 5.
-    // Concretely : 5999 / 9999 = 0.59995999... → HALF_UP at scale 4 → 0.6000 → ≥ threshold →
+    // Concretely : total = 5999 + 4000 = 9999. Bullish percent = 5999 / (5999 + 4000) = 5999 /
+    // 9999 = 0.59995999… → HALF_UP at scale 4 (5th digit = 5) rounds UP → 0.6000 → ≥ threshold →
     // flagged. A future refactor that switches to HALF_EVEN or RoundingMode.DOWN would silently
     // change this behavior ; this test surfaces the regression.
     given(query.sentimentCounts(anyOrNull(), anyOrNull(), anyOrNull()))

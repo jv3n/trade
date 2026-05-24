@@ -92,10 +92,13 @@ jobs:
           DATABASE_URL: ${{ steps.db.outputs.url }}
         run: |
           TIMESTAMP=$(date -u +%Y-%m-%dT%H-%M-%SZ)
-          FILE="backup-$TIMESTAMP.sql.gz"
-          pg_dump "$DATABASE_URL" --no-owner --no-acl --format=plain | gzip > "$FILE"
-          ls -lh "$FILE"
-          echo "file=$FILE" >> "$GITHUB_ENV"
+          BACKUP_FILE="backup-$TIMESTAMP.sql.gz"
+          pg_dump "$DATABASE_URL" --no-owner --no-acl --format=plain | gzip > "$BACKUP_FILE"
+          ls -lh "$BACKUP_FILE"
+          # `BACKUP_FILE=...` (uppercase, conventional) becomes available to subsequent steps as
+          # the env var `BACKUP_FILE`. The key in `$GITHUB_ENV` defines the exported var name —
+          # no auto-lowercase magic.
+          echo "BACKUP_FILE=$BACKUP_FILE" >> "$GITHUB_ENV"
 
       # R2 est S3-compatible : `aws s3` marche en pointant `--endpoint-url`. La région virtuelle
       # `auto` est la convention R2 (pas de région réelle, replication transparente côté
@@ -107,8 +110,8 @@ jobs:
           AWS_DEFAULT_REGION: auto
           ENDPOINT_URL: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
         run: |
-          aws s3 cp "$file" "s3://portfolioai-backups/$file" --endpoint-url "$ENDPOINT_URL"
-          echo "uploaded=s3://portfolioai-backups/$file" >> "$GITHUB_ENV"
+          aws s3 cp "$BACKUP_FILE" "s3://portfolioai-backups/$BACKUP_FILE" --endpoint-url "$ENDPOINT_URL"
+          echo "BACKUP_UPLOADED=s3://portfolioai-backups/$BACKUP_FILE" >> "$GITHUB_ENV"
 
       # Garde les 30 plus récents, supprime les anciens. `aws s3 ls` retourne
       # "DATE TIME SIZE NAME" trié alphabétiquement par NAME ; comme NAME est ISO-timestamped UTC,
@@ -141,7 +144,7 @@ jobs:
             echo ""
             echo "| | |"
             echo "|---|---|"
-            echo "| File | \`$file\` |"
-            echo "| Destination | \`$uploaded\` |"
+            echo "| File | \`$BACKUP_FILE\` |"
+            echo "| Destination | \`$BACKUP_UPLOADED\` |"
             echo "| Trigger | \`${{ github.event_name }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"

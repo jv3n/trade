@@ -48,12 +48,11 @@ describe('buildFilterWindow', () => {
     expect(result).toEqual({ from: undefined, to: undefined, promptId: 'abc-123' });
   });
 
-  it('collapses an empty promptId string to undefined', () => {
-    // The page sets `promptId.set('')` when the user clears the dropdown ; that's not a real
-    // filter value. The helper must drop it rather than forwarding `?promptId=` empty.
-    const result = buildFilterWindow('2026-04-03', '', '');
-    expect(result?.promptId).toBeUndefined();
-  });
+  // The « empty promptId string collapses to undefined » contract is exercised implicitly by the
+  // "expands a from date" test above (line 24) — `buildFilterWindow('2026-04-03', '', '')`
+  // asserts `promptId: undefined` in its full-shape `toEqual`. The page sets `promptId.set('')`
+  // when the user clears the dropdown ; the helper drops it rather than forwarding `?promptId=`
+  // empty. Documented here for the next reader.
 
   it('combines all three axes when set together', () => {
     const result = buildFilterWindow('2026-04-03', '2026-04-10', 'abc-123');
