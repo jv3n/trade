@@ -170,7 +170,7 @@ trade/
 │           ├── import/                # Drag & drop CSV Wealthsimple
 │           ├── suivi/                 # Timeline snapshots
 │           ├── observability/         # Phase 3 — index symbols, timeline narratif vs prix par ticker (#1) + chip cohérence (#2), bias dashboard (#3)
-│           └── settings/              # Sidenav : configuration runtime / prompts (liste + éditeur) / prompts/:id/stats (Phase 3)
+│           └── settings/              # Sidenav : configuration runtime / prompts (liste + éditeur) / prompts/:id/stats (Phase 3) / access-control (Phase 5, whitelist ADMIN-only)
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
 │       ├── auth/              # Phase 4 — OAuth2 Google OIDC + ADMIN/USER + profile dev local-no-auth

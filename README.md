@@ -32,9 +32,12 @@ Site complet : **<a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blan
 | <a href="https://jv3n.github.io/trade/devops/deploiement/" target="_blank" rel="noopener">Déploiement (analyse Phase 5)</a> | Choix Cloud Run + Supabase, plan phasé, pipeline WIF, plan de migration sortie |
 | <a href="https://jv3n.github.io/trade/devops/release-process/" target="_blank" rel="noopener">Release process</a> | Rituel deploy : tag → Draft Release → Publish → workflow Cloud Run |
 | <a href="https://jv3n.github.io/trade/devops/backup-process/" target="_blank" rel="noopener">Backup & restore process</a> | Backup weekly Postgres → Cloudflare R2 + setup + restore drill |
+| <a href="https://jv3n.github.io/trade/devops/secret-rotation/" target="_blank" rel="noopener">Rotation des secrets prod</a> | Procédure step-by-step par secret (OAuth, Anthropic, R2, Sentry, Supabase) + smoke après deploy |
+| <a href="https://jv3n.github.io/trade/devops/dns-analyse/" target="_blank" rel="noopener">Analyse DNS (nom de domaine)</a> | Choix `tickerstory.org` — comparaison registrars, tarif renouvellement, Cloudflare DNS |
 | <a href="https://jv3n.github.io/trade/devops/decision-ollama-deploiement/" target="_blank" rel="noopener">Décision : déploiement Ollama</a> | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
 | <a href="https://jv3n.github.io/trade/metier/vision/" target="_blank" rel="noopener">Vision</a> | Pourquoi le projet existe, ce qu'on essaie de prouver |
 | <a href="https://jv3n.github.io/trade/metier/fonctionnalites/" target="_blank" rel="noopener">Fonctionnalités</a> | Découpage par phase, ce qui est livré / gelé / à venir |
+| <a href="https://jv3n.github.io/trade/projet/testeur/" target="_blank" rel="noopener">Onboarding testeur</a> | Pour qui veut juste cliquer dans l'app — Docker Desktop + Java + Node + Tilt, tout en mock par défaut |
 | <a href="https://jv3n.github.io/trade/projet/backlog/" target="_blank" rel="noopener">Backlog</a> | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
 | <a href="https://jv3n.github.io/trade/projet/journal-livraisons/" target="_blank" rel="noopener">Journal des livraisons</a> | Historique reverse-chronologique des features livrées par phase |
 | <a href="https://jv3n.github.io/trade/projet/sources/" target="_blank" rel="noopener">Sources de données</a> | Twelve Data, Finnhub — endpoints, quotas, mocks |

@@ -14,7 +14,7 @@ Sept workflows, chacun déclenché sur des paths différents pour ne pas relance
 
 | Workflow | Trigger | Job principal | Durée typique |
 |---|---|---|---|
-| **Backend CI** (`backend.yml`) | `push master` / `pull_request` sur `backend/**` | `./gradlew build` (compile + test + Spotless + Detekt) avec PostgreSQL en service Docker, puis Kover (couverture) + sticky PR comment | 1-2 min |
+| **Backend CI** (`backend.yml`) | `push master` / `pull_request` sur `backend/**` | `./gradlew build` (compile + test + Spotless + Detekt). Les tests d'intégration `@SpringBootTest` bootent leur propre Postgres via **Testcontainers** (singleton `testsupport/PostgresContainer.kt` + SPI `LauncherSessionListener`), donc plus de bloc `services:` dans le workflow — Docker est dispo sur les runners `ubuntu-latest`. Suivi de Kover (couverture) + sticky PR comment | 1-2 min |
 | **Frontend CI** (`frontend.yml`) | `push master` / `pull_request` sur `frontend/**` | `npm ci` + `npm run lint` + `npm run build` + `npm run test:coverage` + sticky PR comment | 30-60 s |
 | **CodeQL** (`codeql.yml`) | `push master` / `pull_request` / weekly `cron 06:00 UTC lundi` | Matrix `java-kotlin` (build-mode `manual`) + `javascript-typescript` (build-mode `none`) | 2-3 min |
 | **Deploy docs** (`docs.yml`) | `push master` sur `docs/**` ou `mkdocs.yml` | `mkdocs gh-deploy` | <1 min |
@@ -181,7 +181,7 @@ GitHub affiche un résumé en haut de chaque run. Pour les workflows avec setup-
 | `Property 'X' is misspelled` (Detekt) | Règle YAML dans le mauvais ruleset (style vs naming vs exceptions) | Cf. doc Detekt 1.23 — chaque rule a son ruleset |
 | `Run failed with N invalid config properties` (Detekt) | Same | Same |
 | `No source code seen during build` (CodeQL, exit 32 sur `database finalize`) | `compileKotlin` est sorti `FROM-CACHE` ou `UP-TO-DATE` → l'agent JVM CodeQL n'a vu aucune compilation. Symptôme typique après une PR qui touche à peine le Kotlin et où le build cache est restauré tel quel | Vérifier que la step `Compile Kotlin` de `codeql.yml` passe bien `--rerun-tasks` et **pas** `--build-cache`. Voir section "Stratégie de cache > CodeQL" plus haut |
-| `Postgres connection refused` (backend) | Service `postgres` pas encore healthy | Augmenter `--health-retries` dans `backend.yml` ou ajouter un retry au boot Spring |
+| `Cannot connect to the Docker daemon` (backend test) | Testcontainers échoue à booter son PG parce que Docker n'est pas dispo sur le runner | Vérifier que la job CI tourne sur `ubuntu-latest` (Docker pré-installé) ; sur un self-hosted runner, installer Docker + ajouter l'user runner au group `docker`. |
 | `npm error ERESOLVE` (frontend Dependabot PR) | Conflit peer-dep — souvent une majeure de dep liée (TS / Angular) | Fermer la PR, attendre que la dep amont accepte. Penser à ajouter à l'`ignore` Dependabot si récurrent |
 | `Property 'X' cannot be resolved` (Spring config) | Warning IDE bénin sur les props lues via `@Value` | Ignorer — ça ne casse pas le build |
 

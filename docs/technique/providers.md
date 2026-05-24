@@ -79,35 +79,37 @@ Ollama tourne en local — **aucune clé, aucun crédit**, mais qualité narrati
 
 ## Récapitulatif config locale
 
-À copier dans `backend/src/main/resources/application-local.yml` (gitignored) :
+Depuis 2026-05-18, `application-local.yml` est **committé** mais doit **rester strictement secret-free** — il ne carrie que les overrides de comportement dev (`llm.provider`, `springdoc`, `flyway.repair-on-migrate`, etc.). Les clés API vivent dans deux slots distincts :
 
-```yaml
-anthropic:
-  api:
-    key: sk-ant-api03-...        # https://console.anthropic.com/settings/keys
+1. **`.env` à la racine du repo (gitignored)** — pour les credentials boot-time (OAuth, `APP_ADMIN_EMAILS`, `APP_FRONTEND_URL`). Lu par le `serve_cmd` Tilt qui les exporte au sous-process Gradle → Spring les pickè up via relaxed binding (`${ANTHROPIC_API_KEY:}`, `${TWELVEDATA_API_KEY:}`, `${FINNHUB_API_KEY:}` dans `application.yml`). Cf. [`.env.example`](../../.env.example) pour la liste complète.
+2. **`/settings/configuration` UI (runtime-editable, sans reboot)** — pour les clés API qu'on veut rotater ou activer sans toucher au filesystem. Backend persiste l'override dans la table `app_config` (clés `market.twelvedata.api-key`, `market.finnhub.api-key`, `anthropic.api.key`). C'est la voie recommandée pour `anthropic.api.key` parce que la rotation est fréquente. Détails dans [`developpement.md > Alternative runtime — édition sans reboot`](./developpement.md).
 
-llm:
-  provider: claude               # ou `ollama` pour offline
+Exemple `.env` minimal pour un dev qui veut Claude + Twelve Data + Finnhub :
 
-ollama:
-  base-url: http://localhost:11434
-  model: qwen2.5:3b              # pull depuis /settings/configuration > LLM > Pull…
+```bash
+# OAuth (boot-time) — uniquement si BACKEND_AUTH_MODE=oauth, optionnel en mode no-auth
+SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
+SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
+APP_ADMIN_EMAILS=ton.email@gmail.com
 
-market:
-  provider: twelvedata           # ou `mock` sans clé
-  twelvedata:
-    api-key: ...                 # https://twelvedata.com/account/api-keys
-  finnhub:
-    api-key: ...                 # https://finnhub.io/dashboard
-
-news:
-  provider: finnhub              # ou `mock` (défaut, pas de credits consommés)
-
-analyst:
-  provider: finnhub              # ou `mock` (défaut, pas de credits consommés). Partage market.finnhub.api-key
-
-earnings:
-  provider: finnhub              # ou `mock` (défaut, pas de credits consommés). Partage market.finnhub.api-key
+# API keys (boot-time alternative à l'UI runtime)
+ANTHROPIC_API_KEY=sk-ant-api03-...        # https://console.anthropic.com/settings/keys
+TWELVEDATA_API_KEY=...                    # https://twelvedata.com/account/api-keys
+FINNHUB_API_KEY=...                       # https://finnhub.io/dashboard
 ```
 
-**Sécurité** : ne jamais committer ces clés. `application-local.yml` est gitignored, `application.yml` lit les env vars (`${TWELVEDATA_API_KEY:}` etc.) qui restent vides en CI / fresh clone — c'est volontaire pour que l'onboarding marche en mode mock sans clés.
+Et `application-local.yml` ressemble à (voir le fichier réel sur disque) :
+
+```yaml
+llm:
+  provider: claude               # ou `ollama` pour offline (défaut historique)
+
+ollama:
+  model: qwen2.5:3b              # pull depuis /settings/configuration > LLM > Pull…
+
+# `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` restent en `mock`
+# par défaut côté application.yml — basculer en `twelvedata` / `finnhub` via l'UI runtime,
+# pas en YAML committé (la valeur committée serait visible dans `git log`).
+```
+
+**Sécurité** : ne jamais coller de clé API ni de credentials OAuth directement dans `application-local.yml` ni dans `application.yml` — les deux fichiers sont committés. Les `.env` (gitignored) + `app_config` runtime (BDD locale) sont les **seuls** dépôts de secrets en dev. En CI / fresh clone, les env vars restent vides et l'onboarding marche en mode mock sans clés — c'est volontaire.

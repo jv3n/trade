@@ -42,7 +42,7 @@ Pipeline `AnalysisExecutor` (`AnalysisContextLoader`, `LlmResponseParser`, `Reco
 
 #### Settings RSS back-office
 
-Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings vit aujourd'hui avec `configuration/` (config runtime Phase 2) et `prompts/` + `prompts/:id/stats` (gestion + scoring des prompts narratifs, Phase 3). La page `prompt-preview/` (aperçu interpolé du prompt narratif Phase 1) a été retirée le 2026-05-14, l'éditeur de prompts Phase 3 couvrant l'usage.
+Pages `/settings/sources` et `/settings/test-sources` (activer/désactiver flux + tester un parse RSS) **supprimées** avec le module `ingestion/`. Le sidenav settings vit aujourd'hui avec `configuration/` (config runtime Phase 2), `prompts/` + `prompts/:id/stats` (gestion + scoring des prompts narratifs, Phase 3), et `access-control/` (whitelist email Phase 5, ADMIN-only). La page `prompt-preview/` (aperçu interpolé du prompt narratif Phase 1) a été retirée le 2026-05-14, l'éditeur de prompts Phase 3 couvrant l'usage.
 
 > **Pourquoi décommissionné maintenant** : la Phase 0 était gelée depuis Phase 1, mais le module restait chargé et `AnalysisExecutor` chargeait encore les 200 derniers articles RSS dans le prompt LLM même quand le scheduler était off — cause d'un timeout 400 s observé sur Ollama cold-start le 2026-05-07. Plutôt que de patcher le legacy, on a tranché : drop des tables et modules, le replacement Phase 7 (PortfolioAggregation au-dessus des snapshots ticker) ne réutilisera rien de la plomberie RSS+executor.
 
@@ -142,9 +142,15 @@ Deux sources visibles côté UI :
 
 ---
 
-## Phase 5 — Déploiement
+## Phase 5 — Déploiement (clôturée 2026-05-23)
 
-> Phase orthogonale aux features métier — sortir l'app du localhost. Reste filed côté `backlog.md` (analyse hébergement OVH/Hetzner/Scaleway/AWS, CI/CD deploy, secrets, backups, DNS/TLS), pas reflétée ici parce qu'elle n'apporte pas de capacités nouvelles à l'utilisateur — c'est de l'infra qui rend les capacités existantes accessibles depuis n'importe où. **Pré-requis bloquant** : la Phase 4 Authentification doit avoir livré avant tout deploy public. Détails dans `docs/projet/backlog.md` section Phase 5.
+> Phase orthogonale aux features métier — sortir l'app du localhost. **Clôturée 2026-05-23**. Choix d'hébergement Cloud Run + Supabase Postgres ($0/mo durable, région Montréal native), pipeline GitOps release-triggered avec Workload Identity Federation (zéro service account JSON key), 5 secrets runtime mountés via GCP Secret Manager, backup hebdomadaire `pg_dump → R2` avec rétention 30j, custom domain Cloudflare (`tickerstory.org`), Sentry/GlitchTip wiring backend + frontend (errors-only, `traces-sample-rate: 0.0`), `/actuator/info` qui expose la release tag + commit SHA. Aucune capacité utilisateur nouvelle ici — c'est de l'infra qui rend les capacités Phase 1-4 accessibles depuis n'importe où, dans un cadre auto-régénérable (un redeploy depuis zéro reproductible via les 5 docs `docs/devops/`). Détails d'implémentation dans `docs/projet/journal-livraisons.md > Phase 5`.
+
+---
+
+## Phase 6 — Radar d'anomalies de marché
+
+> Surface produit en cours de cadrage. Repérer en quasi-temps réel les tickers mid-cap du Nasdaq Composite qui montrent un mouvement anormal à l'ouverture des marchés US (gap haussier + volume disproportionné vs moyenne 30j) — pattern précurseur typique d'un pump-and-dump. **Reste aligné au positionnement « narrateur, pas devin »** : le radar liste les candidats avec leurs métriques, le narratif technique du ticker reste produit par le pipeline Phase 1 quand l'utilisateur clique. 7 tickets dont 3 en 🔴 (provider screener, pipeline filtre, page `/radar` frontend). Détails dans `docs/projet/backlog.md > Phase 6` (renuméroté depuis Phase 7 le 2026-05-24).
 
 ---
 
