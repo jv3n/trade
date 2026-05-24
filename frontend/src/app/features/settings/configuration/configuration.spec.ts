@@ -248,10 +248,14 @@ describe('Configuration', () => {
             status: signal<OllamaStatus | null>(null).asReadonly(),
             startPolling: vi.fn(),
             stopPolling: vi.fn(),
-            refresh: vi.fn().mockResolvedValue(undefined),
-            unload: vi.fn().mockResolvedValue(undefined),
+            // `refresh` / `unload` / `delete` retournent `Observable<void>` côté prod (cf.
+            // `ollama-status.service.ts`) — mocker en Promise via `mockResolvedValue` reproduit
+            // exactement le pattern qui a causé le Critique v0.5.1 sur `LlmTimeoutService.refresh`
+            // (cold Observable instancié mais jamais subscribed). Aligner sur `of(undefined)`.
+            refresh: vi.fn(() => of(undefined)),
+            unload: vi.fn(() => of(undefined)),
             pull: vi.fn(),
-            delete: vi.fn().mockResolvedValue(undefined),
+            delete: vi.fn(() => of(undefined)),
           },
         },
       ],
