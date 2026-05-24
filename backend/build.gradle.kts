@@ -74,7 +74,19 @@ dependencies {
   // TwelveDataClientTest and FinnhubClientTest to assert rate-limit / 404 / auth-failure
   // behaviour deterministically.
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  // Testcontainers — boots a real Postgres in Docker for `@SpringBootTest` integration tests so
+  // `./gradlew test` no longer needs Tilt / docker-compose orchestrated by the dev infra. A single
+  // container is shared across the JVM via a JUnit Platform LauncherSessionListener (singleton in
+  // `testsupport/PostgresContainer.kt`) and stays warm between runs when the dev opts into reuse
+  // (`testcontainers.reuse.enable=true` in `~/.testcontainers.properties`). Docker is the only
+  // host-side prerequisite — already required for Tilt anyway.
+  testImplementation("org.testcontainers:postgresql:1.20.4")
+  testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+  // Promoted from testRuntimeOnly → testImplementation 2026-05-24 : `TestcontainersBootstrap`
+  // implements `LauncherSessionListener` (the SPI hook that boots the Postgres container before
+  // any test class loads), which needs the launcher API visible at compile time. The runtime SPI
+  // discovery still works — `testImplementation` is a strict superset.
+  testImplementation("org.junit.platform:junit-platform-launcher")
 }
 
 kotlin {
@@ -128,31 +140,13 @@ gitProperties {
   failOnNoGitDirectory = false
 }
 
-// Read `.env` from the repo root (gitignored) and inject every key into the test task's
-// environment so that `@SpringBootTest` integration tests pick up the same custom ports as
-// `tilt up` — without forcing the dev to remember `POSTGRES_HOST_PORT=5444 ./gradlew test`.
-// Mirrors the Starlark `load_env_file()` helper in `Tiltfile` ; duplicate parser intentional :
-// Gradle has no native .env support and pulling a third-party plugin would be heavyweight for a
-// dead-simple format (`KEY=value`, optional surrounding quotes, `#` comments, no escapes).
-// When `.env` is absent (CI, fresh clone), the map is empty and the test task falls back to the
-// defaults baked into `application.yml` — same behaviour as before this hook existed.
-val dotenv: Map<String, String> =
-  file("../.env").let { f ->
-    if (!f.exists()) emptyMap()
-    else
-      f.readLines()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() && !it.startsWith("#") && "=" in it }
-        .associate { line ->
-          val (k, v) = line.split("=", limit = 2)
-          k.trim() to v.trim().trim('"').trim('\'')
-        }
-  }
-
-tasks.withType<Test> {
-  useJUnitPlatform()
-  dotenv.forEach { (k, v) -> environment(k, v) }
-}
+// Integration tests boot their own Postgres via Testcontainers (`testsupport/PostgresContainer.kt`)
+// so `./gradlew test` no longer depends on Tilt / docker-compose for a running DB — Docker is the
+// only host prerequisite. The previous `.env` loader (which forwarded `POSTGRES_HOST_PORT` to the
+// test JVM so `@SpringBootTest` would hit the Tilt-managed Postgres) was retired 2026-05-24 ; the
+// JUnit Platform launcher listener in `testsupport/TestcontainersBootstrap.kt` overrides the JDBC
+// coordinates as system properties before any Spring context loads.
+tasks.withType<Test> { useJUnitPlatform() }
 
 spotless {
   kotlin {

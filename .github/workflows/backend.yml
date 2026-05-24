@@ -33,21 +33,9 @@ jobs:
       # push events — the action only fires when `github.event_name == 'pull_request'`.
       pull-requests: write
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: portfolioai
-          POSTGRES_USER: portfolioai
-          POSTGRES_PASSWORD: portfolioai
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
+    # No `services:` block — integration tests boot their own Postgres via Testcontainers
+    # (`backend/src/test/kotlin/com/portfolioai/testsupport/PostgresContainer.kt`). Docker is
+    # already available on `ubuntu-latest` runners, no extra setup needed.
     steps:
       - uses: actions/checkout@v4
 
@@ -71,9 +59,11 @@ jobs:
         working-directory: backend
         run: ./gradlew build --build-cache
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/portfolioai
-          SPRING_DATASOURCE_USERNAME: portfolioai
-          SPRING_DATASOURCE_PASSWORD: portfolioai
+          # `SPRING_DATASOURCE_*` are no longer injected here — Testcontainers boots a per-run
+          # Postgres in Docker and publishes the JDBC coordinates as system properties at JUnit
+          # launcher-session open (cf. `testsupport/TestcontainersBootstrap.kt`).
+          # `ANTHROPIC_API_KEY` stays as a defensive placeholder so any future test that wires
+          # the LLM client without `@TestPropertySource` doesn't crash on an empty `@Value`.
           ANTHROPIC_API_KEY: local-placeholder
 
       # Coverage reports — Kover is wired in `build.gradle.kts`. Runs after `build` (which executes

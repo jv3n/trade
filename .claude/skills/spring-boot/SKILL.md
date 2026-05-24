@@ -116,8 +116,9 @@ Don't reach for events when a direct method call would do. Events earn their kee
 ## YAML & profiles
 
 - `application.yml` — defaults, committed. No secrets.
-- `application-local.yml` — local profile, **gitignored**. Real API keys here. Activated by `SPRING_PROFILES_ACTIVE=local`.
-- `application-test.yml` — test profile, committed. Overrides `spring.datasource.url` for the integration test DB.
+- `application-local.yml` — local profile, committed. Behaviour overrides for dev (no secrets — those live in `.env`). Activated by `SPRING_PROFILES_ACTIVE=local`.
+- `application-prod.yml` — prod profile, committed. Cloud Run overrides (no secrets — those come via `--update-secrets` from Secret Manager). Activated by `SPRING_PROFILES_ACTIVE=prod`.
+- **No `application-test.yml`** — integration tests get their datasource coordinates from Testcontainers via a JUnit Platform listener (`testsupport/PostgresContainer.kt` + `TestcontainersBootstrap.kt`) that publishes `spring.datasource.url/username/password` as system properties before any Spring context boots. System properties outrank `application.yml`, so no test-profile YAML needed.
 
 Env injection: `${ENV_VAR:default}`. `@Profile("local")` annotations are rare — runtime branching via `AppConfigService` covers the same need without reboot.
 
@@ -152,7 +153,9 @@ class NewsControllerTest {
 
 ### `@SpringBootTest` — only for genuinely integration cases
 
-Reserved for things slices can't fake: `@TransactionalEventListener(AFTER_COMMIT)` wiring (needs a real `PlatformTransactionManager`), full bean-graph smoke tests, JPA-against-PostgreSQL behaviour. Two usages today: `BackendApplicationTests` (context-boots smoke) and `CacheTtlListenerIntegrationTest` (transactional event flow).
+Reserved for things slices can't fake: `@TransactionalEventListener(AFTER_COMMIT)` wiring (needs a real `PlatformTransactionManager`), full bean-graph smoke tests, JPA-against-PostgreSQL behaviour. Three usages today: `BackendApplicationTests` (context-boots smoke), `CacheTtlListenerIntegrationTest` (transactional event flow), `LocalNoAuthIntegrationTest` (full security chain with the `local-no-auth` profile).
+
+Postgres for these tests is provisioned by **Testcontainers** — a singleton container (`testsupport/PostgresContainer.kt`) boots once per JVM via a JUnit Platform launcher listener. Zero annotations on the test class. Docker is the only host prerequisite (already required for Tilt anyway). Opt into reuse globally with `echo "testcontainers.reuse.enable=true" >> ~/.testcontainers.properties` so the container survives between `./gradlew test` invocations (~5 s saved per run).
 
 **Don't reach for `@SpringBootTest` on a controller** — if tempted, a `@MockitoBean` would do the same job ~10× faster.
 
@@ -168,10 +171,13 @@ For adapter tests that exercise wire mapping (`FinnhubMappers.toDomain`, Twelve 
 
 1. **Measure first.** `./gradlew test --info` prints time per class. Find the top 5 slowest and ask: integration paths, or `@SpringBootTest` where `@WebMvcTest` would do?
 2. **Share `@SpringBootTest` config across classes.** Spring caches the context across classes when config is *identical*. Avoid per-class `@TestPropertySource` divergence, avoid `@DirtiesContext` (forces reload).
-3. **Parallel execution at class level** via `src/test/resources/junit-platform.properties` (`parallel.enabled=true`, `parallel.mode.classes.default=concurrent`). Gain ~×4 on an 8-core M1. Risk: tests touching shared state will flake — audit before enabling.
-4. **Gradle build cache.** `./gradlew test --build-cache` for free dev re-runs.
+3. **Testcontainers reuse.** With `withReuse(true)` on the singleton + `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`, the Postgres container survives across `./gradlew test` runs — first run pays ~5 s, subsequent runs ~0 s container boot. CI runners are ephemeral so the gain is dev-side only.
+4. **Parallel execution at class level** via `src/test/resources/junit-platform.properties` (`parallel.enabled=true`, `parallel.mode.classes.default=concurrent`). Gain ~×4 on an 8-core M1. Risk: tests touching shared state will flake — audit before enabling. Risk for our setup: every `@SpringBootTest` class hits the same Postgres container ; tests that mutate global state (`app_config` rows, user table) would interfere.
+5. **Gradle build cache.** `./gradlew test --build-cache` for free dev re-runs.
 
 Trigger: start intervening when the suite passes 1 min in CI on the test step alone.
+
+> **Why Testcontainers** — the historical position « Testcontainers is not worth the perf overhead » was *perf*-framed and wrong for this project. The deciding factor is **isolation/correctness** : tests have nothing to do with Tilt or docker-compose dev infra, and forcing the dev to remember `tilt up` before `./gradlew test` is a leaky abstraction. Migrated 2026-05-24.
 
 ## Logging — SLF4J
 

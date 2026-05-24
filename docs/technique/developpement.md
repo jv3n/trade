@@ -40,9 +40,9 @@ tilt up
 | `BACKEND_HOST_PORT` | `8080` | Spring Boot natif (pas en container) |
 | `FRONTEND_HOST_PORT` | `4200` | Angular dev server |
 
-Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker-compose.yml`, le `Tiltfile`, `application.yml`, `backend/build.gradle.kts` et `frontend/proxy.conf.js` retombent sur les défauts si la variable n'est pas définie. Seul le port côté **hôte** change ; les services dans les containers (Postgres, Ollama) gardent leur port natif en interne, et le backend Spring est automatiquement reconfiguré pour s'y connecter via les env vars injectées dans le `serve_cmd` du Tiltfile.
+Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker-compose.yml`, le `Tiltfile`, `application.yml` et `frontend/proxy.conf.js` retombent sur les défauts si la variable n'est pas définie. Seul le port côté **hôte** change ; les services dans les containers (Postgres, Ollama) gardent leur port natif en interne, et le backend Spring est automatiquement reconfiguré pour s'y connecter via les env vars injectées dans le `serve_cmd` du Tiltfile.
 
-> **`./gradlew test` lit aussi `.env`** — `backend/build.gradle.kts` mirroir le `load_env_file()` du `Tiltfile` et injecte chaque clé dans l'environnement du `tasks.withType<Test>`. Conséquence : si tu as `POSTGRES_HOST_PORT=5444` dans ton `.env`, les tests d'intégration `@SpringBootTest` (Flyway, JDBC) tapent automatiquement sur le bon port — pas besoin de préfixer chaque appel. Si `.env` n'existe pas (CI, fresh clone), les tests retombent sur les défauts d'`application.yml` exactement comme avant.
+> **`./gradlew test` ne dépend plus de Tilt ni de `.env`** (refacto 2026-05-24) — les tests d'intégration `@SpringBootTest` bootent leur **propre** Postgres via Testcontainers (`backend/src/test/kotlin/com/portfolioai/testsupport/PostgresContainer.kt`). Docker reste le seul prérequis hôte (déjà requis pour Tilt). Le container est partagé via un `LauncherSessionListener` JUnit Platform — un seul boot par run, JDBC coordinates publiées en system properties avant que Spring ne lise `application.yml`. **Activer le reuse global** (optionnel, gain ~5 s/run) : `echo "testcontainers.reuse.enable=true" >> ~/.testcontainers.properties` — sans cette opt-in Testcontainers spin un container neuf à chaque run.
 
 > **Le proxy frontend (`/api` → backend) lit aussi `.env`** — `frontend/proxy.conf.js` (en remplacement du `.json` historique) mirroir le même parser et résout `BACKEND_HOST_PORT` dans cet ordre : `process.env` (Tilt-injecté) > fichier `.env` > défaut `8080`. Si tu changes `BACKEND_HOST_PORT=8081` dans `.env`, l'Angular dev server proxy `/api/**` vers `localhost:8081` automatiquement, sans toucher à `angular.json`.
 
@@ -201,7 +201,7 @@ trade/
 
 ## Tests
 
-- Backend : JUnit 5 + Spring Boot Test. Intégration sur **vrai PostgreSQL** (le CI démarre un service Postgres — détails workflow + cache dans [`ops.md`](./ops.md)). `./gradlew test`
+- Backend : JUnit 5 + Spring Boot Test. Intégration sur **vrai PostgreSQL** via **Testcontainers** (Docker requis, plus de dépendance à Tilt ni au container `docker-compose` du dev) — détails workflow + cache dans [`ops.md`](./ops.md). `./gradlew test`
 - Frontend : **Vitest** + TestBed. Tests `*.spec.ts` co-localisés avec la source. `npm run test`
 - Lancer un seul test Vitest : `cd frontend && npx vitest run src/path/to/file.spec.ts`
 

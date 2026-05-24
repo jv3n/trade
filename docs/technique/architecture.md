@@ -15,7 +15,7 @@
 | News (dev / CI) | `MockNewsClient` (synthétique) | Défaut sans clé, sélectionné par `news.provider: mock`. Headlines déterministes par symbole, économise le quota Finnhub en itération |
 | Base de données | PostgreSQL | Schéma relationnel, snapshots historiques, Flyway pour les migrations |
 | Infra locale | Tilt + Docker Compose | Hot reload backend/frontend, reset BDD en un clic |
-| CI | GitHub Actions | Workflows backend (Gradle + PostgreSQL), frontend (Vitest), CodeQL, déploiement docs. Détails : [`ops.md`](./ops.md) |
+| CI | GitHub Actions | Workflows backend (Gradle + PostgreSQL via Testcontainers), frontend (Vitest), CodeQL, déploiement docs. Détails : [`ops.md`](./ops.md) |
 
 ## Vue d'ensemble
 
@@ -344,7 +344,7 @@ Plus le seed du prompt `narrative-default` actif (verbatim du `NARRATIVE_DEFAULT
 
 **Validation de schéma** — `ddl-auto: validate`. Hibernate valide le schéma au démarrage. Toute modification d'entité = migration Flyway.
 
-**Tests d'intégration sur vrai PostgreSQL** — pas de mocks BDD, pas de H2. Le CI démarre un service PostgreSQL.
+**Tests d'intégration sur vrai PostgreSQL via Testcontainers** (refacto 2026-05-24) — pas de mocks BDD, pas de H2. Un singleton `testsupport/PostgresContainer.kt` boot un container PG 16 via Docker au `LauncherSessionListener` JUnit Platform, publie les JDBC coordinates en system properties avant que Spring ne charge `application.yml`, et est partagé sur toute la durée du JVM. Trade-off levé : avant ce refacto, `./gradlew test` exigeait un `tilt up` préalable parce que Postgres était orchestré par docker-compose côté dev — fuite d'abstraction (les tests n'ont rien à voir avec l'infra de dev). Maintenant Docker est l'unique prérequis (déjà nécessaire pour Tilt), et `withReuse(true)` + opt-in `~/.testcontainers.properties` garde le container chaud entre runs. Côté CI, la `services: postgres:` du workflow GitHub Actions a disparu — Testcontainers brings its own.
 
 **Portefeuille CSV-driven, pas de CRUD manuel** — le portefeuille reflète la réalité du courtier. L'import CSV Wealthsimple reste la seule source de vérité des positions.
 
