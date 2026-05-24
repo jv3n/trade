@@ -73,4 +73,4 @@ Si Twelve Data devient indisponible ou trop limitant, candidats par ordre de pr�
 
 Le pipeline d'ingestion RSS et l'analyse portefeuille de la Phase 0 ont été supprimés en Phase 2.5 (table `feed_source`, module `ingestion/`, pages `/recommendations` et `/history` — voir `docs/CHANGELOG.md`). Les sources qui étaient seedées en V1 (Le Monde Économie, CNBC Markets, MarketWatch, FRED, BCE, CoinGecko, etc.) ne sont plus présentes en base.
 
-Si la Phase 6 « Réintégration Phase 0 » ressuscite un besoin de sources macro ou crypto, repartir d'un greenfield basé sur les snapshots Phase 1+2 (déjà couverts par Twelve Data + Finnhub) — l'historique des seeds Phase 0 est dans `git log` (commit du V1 d'origine + V6 du drop).
+Si la Phase 7 « Réintégration Phase 0 » ressuscite un besoin de sources macro ou crypto, repartir d'un greenfield basé sur les snapshots Phase 1+2 (déjà couverts par Twelve Data + Finnhub) — l'historique des seeds Phase 0 est dans `git log` (commit du V1 d'origine + V6 du drop).
