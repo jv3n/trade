@@ -11,6 +11,7 @@ import {
   NarrativeBiasRepository,
 } from '../../../core/api/analysis/narrative-bias.repository';
 import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/prompt.repository';
+import { buildFilterWindow } from '../../../shared/filter-window/filter-window';
 
 /**
  * `/observability/bias` — Phase 3 #3 « narrative bias dashboard ». Aggregates the entire corpus
@@ -118,19 +119,9 @@ export class BiasPage implements OnInit {
     });
   }
 
-  /** Same shape as observability.ts — kept duplicated rather than extracted to keep the page self-contained. */
+  /** Delegates to the shared [buildFilterWindow] helper — same contract as observability.ts. */
   private buildFilter(): NarrativeBiasFilter | undefined {
-    const from = this.fromDate() ? `${this.fromDate()}T00:00:00Z` : undefined;
-    const to = this.toDate() ? `${this.nextDayIso(this.toDate())}T00:00:00Z` : undefined;
-    const promptId = this.promptId() || undefined;
-    if (!from && !to && !promptId) return undefined;
-    return { from, to, promptId };
-  }
-
-  private nextDayIso(date: string): string {
-    const d = new Date(`${date}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + 1);
-    return d.toISOString().slice(0, 10);
+    return buildFilterWindow(this.fromDate(), this.toDate(), this.promptId());
   }
 
   applyFilters() {

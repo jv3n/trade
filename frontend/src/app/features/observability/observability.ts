@@ -12,6 +12,7 @@ import {
   NarrativeObservationsFilter,
 } from '../../core/api/analysis/narrative-observability.repository';
 import { PromptRepository, PromptTemplate } from '../../core/api/analysis/prompt.repository';
+import { buildFilterWindow } from '../../shared/filter-window/filter-window';
 
 /**
  * Thumbs filter state on the page — `'all'` shows every observation, the three numeric values
@@ -183,28 +184,11 @@ export class ObservabilityPage implements OnInit {
   }
 
   /**
-   * Translates the page's filter signals into the wire-shape consumed by the adapter. Date
-   * pickers emit `YYYY-MM-DD` ; we expand to the boundary of the day in UTC (`00:00:00Z` for
-   * `from`, `00:00:00Z` of the next day for `to` so the interval stays half-open). `promptId =
-   * ''` collapses to undefined — the adapter omits empty strings anyway, but the explicit
-   * collapse keeps the contract obvious at the call site.
+   * Translates the page's filter signals into the wire-shape consumed by the adapter — delegates
+   * to the shared [buildFilterWindow] helper (same contract as the bias page).
    */
   private buildFilter(): NarrativeObservationsFilter | undefined {
-    const from = this.fromDate() ? `${this.fromDate()}T00:00:00Z` : undefined;
-    const to = this.toDate() ? `${this.nextDayIso(this.toDate())}T00:00:00Z` : undefined;
-    const promptId = this.promptId() || undefined;
-    if (!from && !to && !promptId) return undefined;
-    return { from, to, promptId };
-  }
-
-  /**
-   * `YYYY-MM-DD` → `YYYY-MM-DD` of the next calendar day. Lets the `to` filter behave as «
-   * include this day ». No DST gymnastics needed — we're working in UTC plain dates.
-   */
-  private nextDayIso(date: string): string {
-    const d = new Date(`${date}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + 1);
-    return d.toISOString().slice(0, 10);
+    return buildFilterWindow(this.fromDate(), this.toDate(), this.promptId());
   }
 
   /**
