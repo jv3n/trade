@@ -54,7 +54,7 @@ Prix relevés 2026-05-18. Vérifier les pages officielles avant provisioning —
 | **Quota backend** | 2M req/mo + 360K GB-s + 180K vCPU-s + 1 GB egress N. America/mo | shared-cpu-1x@1GB scale-to-zero | 4 OCPU ARM + 24 GB RAM + 200 GB block + 10 TB egress | Métré |
 | **Postgres** | **Supabase free** 500 MB DB + 50K MAU + 2 GB transfer + auto-pause après 7j inactivité | Fly Postgres unmanaged 1 GB + 10 GB volume | Self-hosted dans la VM (gratuit illimité) | Inclus tier |
 | **Scale-to-zero** | ✅ natif (cold-start 1-3 s) | ✅ `auto_stop_machines = "stop"` | ❌ VM toujours-on (reclamation 7j idle si pas PAYG) | ❌ |
-| **GitOps + Releases** | ✅ `google-github-actions/auth@v2` + Workload Identity Federation (pas de key long-lived) + `gcloud run deploy` | ✅ `superfly/flyctl-actions@v1.5` + `FLY_API_TOKEN` | ✅ Terraform OCI + ssh deploy via cloud-init | ✅ |
+| **GitOps + Releases** | ✅ `google-github-actions/auth@v3` + Workload Identity Federation (pas de key long-lived) + `gcloud run deploy` | ✅ `superfly/flyctl-actions@v1.5` + `FLY_API_TOKEN` | ✅ Terraform OCI + ssh deploy via cloud-init | ✅ |
 | **TLS + custom domain** | Via Cloudflare devant (gratuit) ou Cloud Run custom domain mapping (gratuit) | `flyctl certs add` + CNAME, Let's Encrypt auto | Caddy containerisé + Let's Encrypt (à câbler) | Inclus |
 | **Sysadmin récurrent** | **Aucun** (full managed) | Aucun (PaaS) | ~30 min/mois (`unattended-upgrades`, monitoring, restore drill) | Aucun |
 | **Risque free tier shrink (2-3 ans)** | Modéré côté Supabase (VC startup), faible côté Google (Cloud Run GA stable depuis 2019) | Faible (mais c'est déjà payant) | Modéré (terms évolués 2× depuis 2021) | Modéré |

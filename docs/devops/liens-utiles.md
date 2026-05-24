@@ -146,7 +146,7 @@ Configurer une fois : `aws configure --profile portfolioai-r2` avec les mêmes 3
 - [Cloud Run pricing](https://cloud.google.com/run/pricing) — vérifier free tier limits
 - [Cloud Run docs — Secrets](https://cloud.google.com/run/docs/configuring/services/secrets) — pattern `--update-secrets`
 - [Workload Identity Federation — GitHub](https://github.com/google-github-actions/auth#setting-up-workload-identity-federation) — re-setup ou tightening de la WIF
-- [`google-github-actions/auth` releases](https://github.com/google-github-actions/auth/releases) — surveiller la `@v3` qui basculera sur Node 24 (cf. dette technique 🟢 backlog)
+- [`google-github-actions/auth` releases](https://github.com/google-github-actions/auth/releases) — surveiller les bumps (sur `@v3` Node 24 depuis 2026-05-24)
 - [Supabase free tier limits](https://supabase.com/pricing) — surveiller DB size + MAU
 - [Fly.io pricing](https://fly.io/docs/about/pricing/) — _fallback documenté, pas activé v1_
 
