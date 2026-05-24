@@ -41,6 +41,7 @@ class AppConfigService(
   private val llm: LlmDefaults,
   @Value("\${market.cache.ttl-minutes:15}") private val cacheTtlDefault: Int,
   @Value("\${app.allowed.emails:}") private val allowedEmailsDefault: String,
+  @Value("\${app.ollama.enabled:true}") private val ollamaEnabledFlag: Boolean,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
   private val overrides = ConcurrentHashMap<String, String>()
@@ -48,7 +49,34 @@ class AppConfigService(
   @PostConstruct
   fun primeCache() {
     repository.findAll().forEach { overrides[it.configKey] = it.configValue }
+    pruneStaleOllamaOverrides()
     log.info("AppConfigService primed with {} override(s)", overrides.size)
+  }
+
+  /**
+   * Defense in depth on environments where Ollama is disabled (`app.ollama.enabled=false`) : if the
+   * DB carries stale `llm.provider=ollama` or `ollama.model=…` rows (e.g. from a local-to-prod DB
+   * clone), drop them from the in-memory cache so the next [getString] falls back to the YAML
+   * default for this env. The DB rows themselves are left untouched — historical record stays
+   * intact, only the runtime view is sanitised.
+   */
+  private fun pruneStaleOllamaOverrides() {
+    if (isOllamaEnabled()) return
+    if (overrides[ConfigKeys.LLM_PROVIDER] == ConfigKeys.PROVIDER_OLLAMA) {
+      log.warn(
+        "Pruning stale `{}={}` override — invalid when app.ollama.enabled=false",
+        ConfigKeys.LLM_PROVIDER,
+        ConfigKeys.PROVIDER_OLLAMA,
+      )
+      overrides.remove(ConfigKeys.LLM_PROVIDER)
+    }
+    if (overrides.containsKey(ConfigKeys.OLLAMA_MODEL)) {
+      log.warn(
+        "Pruning stale `{}` override — invalid when app.ollama.enabled=false",
+        ConfigKeys.OLLAMA_MODEL,
+      )
+      overrides.remove(ConfigKeys.OLLAMA_MODEL)
+    }
   }
 
   /** Returns the DB override if present, else the YAML default. Never null for a known key. */
@@ -69,6 +97,35 @@ class AppConfigService(
 
   /** Whether the given key currently has a DB override (vs falling back to YAML). */
   fun isOverridden(key: String): Boolean = overrides.containsKey(key)
+
+  /**
+   * Whether Ollama-related runtime configuration is exposed in this environment. Local dev → `true`
+   * ; prod (Cloud Run, cf. `application-prod.yml`) → `false` because no daemon is deployed
+   * alongside the backend. Consumed by [allowedValuesFor] + [listedKeys] to hide the ollama
+   * option/entries, and by [validate] to reject any write that would re-enable them out-of-band.
+   */
+  fun isOllamaEnabled(): Boolean = ollamaEnabledFlag
+
+  /**
+   * Subset of [ConfigKeys.KNOWN_KEYS] exposed by the listing endpoint in the current environment.
+   * Drops [ConfigKeys.OLLAMA_MODEL] when [isOllamaEnabled] is `false` — otherwise the entry would
+   * surface in `/settings/configuration` and invite a stuck-state write.
+   */
+  fun listedKeys(): Set<String> =
+    if (isOllamaEnabled()) ConfigKeys.KNOWN_KEYS
+    else ConfigKeys.KNOWN_KEYS - ConfigKeys.OLLAMA_MODEL
+
+  /**
+   * Allowed values for an ENUM key, filtered for the current environment. Returns the static
+   * [ConfigKeys.ENUM_KEYS] list with [ConfigKeys.PROVIDER_OLLAMA] removed from
+   * [ConfigKeys.LLM_PROVIDER] when [isOllamaEnabled] is `false`. Non-ENUM keys return `null`.
+   */
+  fun allowedValuesFor(key: String): List<String>? {
+    val raw = ConfigKeys.ENUM_KEYS[key] ?: return null
+    return if (key == ConfigKeys.LLM_PROVIDER && !isOllamaEnabled()) {
+      raw - ConfigKeys.PROVIDER_OLLAMA
+    } else raw
+  }
 
   /** Returns the YAML default for the key — used by the UI to show "default vs current". */
   fun defaultFor(key: String): String =
@@ -130,9 +187,18 @@ class AppConfigService(
         require(intValue in 60..900) { "$key must be between 60 and 900 seconds" }
       }
     }
-    val allowed = ConfigKeys.ENUM_KEYS[key]
+    val allowed = allowedValuesFor(key)
     if (allowed != null) {
       require(value in allowed) { "$key must be one of $allowed (got '$value')" }
+    }
+    // Defense in depth on the Ollama-disabled environments — `ollama.model` is a free-form STRING
+    // (not an ENUM, so the allowed-values check above doesn't cover it). Reject any write to it
+    // when the daemon isn't deployed in this environment, otherwise a stale ollama.model row in
+    // `app_config` could carry stale state to a future env where ollama gets re-enabled.
+    if (key == ConfigKeys.OLLAMA_MODEL && !isOllamaEnabled()) {
+      throw IllegalArgumentException(
+        "$key cannot be set in this environment (app.ollama.enabled=false)"
+      )
     }
     if (key in ConfigKeys.EMAIL_LIST_KEYS) {
       // Strict validation : every comma-separated token must contain '@' and be non-blank after

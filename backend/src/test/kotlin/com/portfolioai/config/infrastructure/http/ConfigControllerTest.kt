@@ -10,8 +10,10 @@ import com.portfolioai.config.application.dto.TestConfigResult
 import com.portfolioai.config.infrastructure.ConfigTestClient
 import com.portfolioai.shared.GlobalExceptionHandler
 import java.time.Instant
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
+import org.mockito.kotlin.any
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -49,6 +51,18 @@ class ConfigControllerTest {
   @MockitoBean private lateinit var service: AppConfigService
   @MockitoBean private lateinit var testClient: ConfigTestClient
   @MockitoBean private lateinit var ollamaStatusService: OllamaStatusService
+
+  @BeforeEach
+  fun setUp() {
+    // Default mock behavior — every test starts in an env where ollama is enabled (mirrors the
+    // local dev profile). The ollama-disabled tests below override these stubs explicitly to
+    // exercise the prod branch (no `ollama.model` entry, no `ollama` in llm.provider
+    // allowedValues).
+    given(service.listedKeys()).willReturn(ConfigKeys.KNOWN_KEYS)
+    given(service.allowedValuesFor(any())).willAnswer { invocation ->
+      ConfigKeys.ENUM_KEYS[invocation.arguments[0] as String]
+    }
+  }
 
   // ---------------------------------------------------------------------- list
 
@@ -288,6 +302,46 @@ class ConfigControllerTest {
       // market.provider — shifted from [8] to [9] for the same reason.
       .andExpect(jsonPath("$[9].allowedValues[1].value").value("twelvedata"))
       .andExpect(jsonPath("$[9].allowedValues[1].disabledReason").doesNotExist())
+  }
+
+  @Test
+  fun `GET config omits ollama model and ollama option when app ollama enabled is false`() {
+    // Prod-side branch — `app.ollama.enabled=false` in application-prod.yml drops the
+    // `ollama.model` entry from the listing and removes `ollama` from `llm.provider.allowedValues`.
+    // The frontend then renders neither the Ollama Model card (`@if (ollamaModel(); as entry)`) nor
+    // the Ollama Status Panel (gated by `llmProvider().currentValue === 'ollama'` which can't
+    // happen if the option isn't selectable).
+    given(service.listedKeys()).willReturn(ConfigKeys.KNOWN_KEYS - ConfigKeys.OLLAMA_MODEL)
+    given(service.allowedValuesFor(any())).willAnswer { invocation ->
+      val key = invocation.arguments[0] as String
+      val raw = ConfigKeys.ENUM_KEYS[key] ?: return@willAnswer null
+      if (key == ConfigKeys.LLM_PROVIDER) raw - ConfigKeys.PROVIDER_OLLAMA else raw
+    }
+    given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant")
+    given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
+    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
+    given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
+    given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
+    given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
+
+    mvc
+      .perform(get("/api/config"))
+      .andExpect(status().isOk)
+      // 12 entries instead of 13 — `ollama.model` is gone.
+      .andExpect(jsonPath("$.length()").value(12))
+      // llm.provider — index [5], allowedValues should be exactly [mock, claude] without ollama.
+      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_PROVIDER))
+      .andExpect(jsonPath("$[5].allowedValues.length()").value(2))
+      .andExpect(jsonPath("$[5].allowedValues[0].value").value("mock"))
+      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
+      // No entry whose key is `ollama.model` anywhere in the response.
+      .andExpect(jsonPath("$[?(@.key == 'ollama.model')]").isEmpty)
   }
 
   // ---------------------------------------------------------------------- set

@@ -5,6 +5,7 @@ import com.portfolioai.config.infrastructure.persistence.AppConfigRepository
 import java.util.Optional
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -210,6 +211,117 @@ class AppConfigServiceTest {
   }
 
   @Test
+  fun `set rejects ollama as llm provider when app ollama enabled is false`() {
+    // Foot-gun observed 2026-05-24 : in prod (Cloud Run, no daemon), an admin clicking `ollama`
+    // in the LLM toggle would save a valid `app_config` row, then every narrative would 503 on
+    // `localhost:11434 refused`. The flag-off branch refuses the write upstream.
+    val service = newService(ollamaEnabledFlag = false)
+
+    val ex =
+      assertThrows<IllegalArgumentException> {
+        service.set(ConfigKeys.LLM_PROVIDER, ConfigKeys.PROVIDER_OLLAMA)
+      }
+    // The rejection message must carry "ollama" so the operator can correlate the 400 to the
+    // env flag — the gating message names the disallowed value via the enum-validation path.
+    assertTrue(ex.message?.contains(ConfigKeys.PROVIDER_OLLAMA) ?: false)
+  }
+
+  @Test
+  fun `set still allows claude when app ollama enabled is false`() {
+    // Sanity check that disabling ollama doesn't accidentally ban every other llm provider.
+    val service = newService(ollamaEnabledFlag = false)
+    whenever(repo.findById(ConfigKeys.LLM_PROVIDER)).thenReturn(Optional.empty())
+    whenever(repo.save(any<AppConfigEntry>())).thenAnswer { it.arguments[0] as AppConfigEntry }
+
+    service.set(ConfigKeys.LLM_PROVIDER, ConfigKeys.PROVIDER_CLAUDE)
+
+    assertEquals(ConfigKeys.PROVIDER_CLAUDE, service.getString(ConfigKeys.LLM_PROVIDER))
+  }
+
+  @Test
+  fun `set rejects ollama model writes when app ollama enabled is false`() {
+    // `ollama.model` is a free-form STRING, not an enum, so the allowed-values check above
+    // doesn't cover it — the env-disabled branch in validate() catches it explicitly. Without
+    // this guard a stale `ollama.model` row could land in the DB and survive into a future env
+    // where ollama gets re-enabled.
+    val service = newService(ollamaEnabledFlag = false)
+
+    val ex =
+      assertThrows<IllegalArgumentException> { service.set(ConfigKeys.OLLAMA_MODEL, "llama3.2:3b") }
+    assertTrue(ex.message?.contains("app.ollama.enabled") ?: false)
+  }
+
+  @Test
+  fun `allowedValuesFor filters ollama out of llm provider when disabled`() {
+    val service = newService(ollamaEnabledFlag = false)
+    val values = service.allowedValuesFor(ConfigKeys.LLM_PROVIDER)
+    assertNotNull(values)
+    assertFalse(values!!.contains(ConfigKeys.PROVIDER_OLLAMA))
+    assertTrue(values.contains(ConfigKeys.PROVIDER_CLAUDE))
+    assertTrue(values.contains(ConfigKeys.PROVIDER_MOCK))
+  }
+
+  @Test
+  fun `allowedValuesFor keeps ollama when enabled`() {
+    val service = newService(ollamaEnabledFlag = true)
+    val values = service.allowedValuesFor(ConfigKeys.LLM_PROVIDER)
+    assertTrue(values!!.contains(ConfigKeys.PROVIDER_OLLAMA))
+  }
+
+  @Test
+  fun `listedKeys drops ollama model when ollama is disabled`() {
+    val disabled = newService(ollamaEnabledFlag = false)
+    assertFalse(disabled.listedKeys().contains(ConfigKeys.OLLAMA_MODEL))
+
+    val enabled = newService(ollamaEnabledFlag = true)
+    assertTrue(enabled.listedKeys().contains(ConfigKeys.OLLAMA_MODEL))
+  }
+
+  @Test
+  fun `primeCache prunes a stale ollama provider override when the flag is off`() {
+    // Defense in depth for an env where the DB carries a stale `llm.provider=ollama` row
+    // (typical of a local-to-prod DB clone). Without pruning, the next narrative would 503 on
+    // localhost:11434. With pruning, `getString` falls back to the YAML default (claude in
+    // application-prod.yml).
+    whenever(repo.findAll())
+      .thenReturn(listOf(AppConfigEntry(ConfigKeys.LLM_PROVIDER, ConfigKeys.PROVIDER_OLLAMA)))
+
+    val service = newService(ollamaEnabledFlag = false)
+
+    assertEquals("claude", service.getString(ConfigKeys.LLM_PROVIDER))
+    assertFalse(service.isOverridden(ConfigKeys.LLM_PROVIDER))
+  }
+
+  @Test
+  fun `primeCache prunes a stale ollama model override when the flag is off`() {
+    whenever(repo.findAll())
+      .thenReturn(listOf(AppConfigEntry(ConfigKeys.OLLAMA_MODEL, "llama3.2:3b")))
+
+    val service = newService(ollamaEnabledFlag = false)
+
+    // YAML default fallback — the override is dropped from the in-memory cache.
+    assertEquals("qwen2.5:3b", service.getString(ConfigKeys.OLLAMA_MODEL))
+    assertFalse(service.isOverridden(ConfigKeys.OLLAMA_MODEL))
+  }
+
+  @Test
+  fun `primeCache keeps ollama overrides when the flag is on`() {
+    // Symmetric sanity check : the prune logic must NOT fire in dev where ollama is enabled.
+    whenever(repo.findAll())
+      .thenReturn(
+        listOf(
+          AppConfigEntry(ConfigKeys.LLM_PROVIDER, ConfigKeys.PROVIDER_OLLAMA),
+          AppConfigEntry(ConfigKeys.OLLAMA_MODEL, "llama3.2:3b"),
+        )
+      )
+
+    val service = newService(ollamaEnabledFlag = true)
+
+    assertEquals(ConfigKeys.PROVIDER_OLLAMA, service.getString(ConfigKeys.LLM_PROVIDER))
+    assertEquals("llama3.2:3b", service.getString(ConfigKeys.OLLAMA_MODEL))
+  }
+
+  @Test
   fun `set accepts an ollama model string with no whitelist`() {
     // The Ollama ecosystem moves fast (qwen2.5:3b, llama3.2:3b, phi4-mini, …) — keeping a strict
     // enum here would force a code change every time the user pulls a new model. The UI surfaces
@@ -351,6 +463,7 @@ class AppConfigServiceTest {
     finnhubApiKey: String = "yaml-finn",
     anthropicApiKey: String = "yaml-anthropic",
     allowedEmailsDefault: String = "",
+    ollamaEnabledFlag: Boolean = true,
   ): AppConfigService =
     AppConfigService(
         repository = repo,
@@ -377,6 +490,7 @@ class AppConfigServiceTest {
           ),
         cacheTtlDefault = 15,
         allowedEmailsDefault = allowedEmailsDefault,
+        ollamaEnabledFlag = ollamaEnabledFlag,
       )
       .also { it.primeCache() }
 }

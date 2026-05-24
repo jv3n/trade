@@ -96,6 +96,13 @@ management:
         enabled: true  # active `/actuator/health/liveness` + `/readiness`
       show-details: never  # pas de details secrets dans le payload public
 
+# Ollama excluded from prod — décision Phase 5 (RAM ~2 GB sans daemon, justifie Cloud Run free
+# tier). Cf. `docs/devops/deploiement.md` + `memory project_phase5_deploiement`. Le flag pilote
+# la visibilité UI + la validation backend (cf. base `application.yml > app.ollama.enabled`).
+app:
+  ollama:
+    enabled: false
+
 # App-level settings (`app.frontend-url`, `app.admin.emails`) + OAuth2 Google client registration
 # **gérés directement par le base `application.yml` + le relaxed binding env vars** :
 #

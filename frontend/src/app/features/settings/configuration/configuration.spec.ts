@@ -769,5 +769,54 @@ describe('Configuration', () => {
         fixture.nativeElement.querySelector('[data-testid="claude-not-applicable"]'),
       ).not.toBeNull();
     });
+
+    it('hides the Ollama Model card + status panel entirely when the backend omits ollama (prod env)', () => {
+      // Pin the prod-side branch — when `app.ollama.enabled=false` server-side, the listing
+      // endpoint drops the `ollama.model` entry and removes `ollama` from
+      // `llm.provider.allowedValues`. The frontend needs zero conditional code : the existing
+      // `@if (ollamaModel(); as entry)` guard on the Ollama Model card and the `isOllamaActive()`
+      // gate on the Ollama Status Panel both evaluate to false naturally.
+      const llmProviderWithoutOllama = {
+        ...LLM_PROVIDER,
+        currentValue: 'claude',
+        defaultValue: 'claude',
+        isOverridden: false,
+        allowedValues: [
+          { value: 'mock', disabledReason: null },
+          { value: 'claude', disabledReason: null },
+        ],
+      };
+      // Mimic the prod listing payload : no `ollama.model` entry, `llm.provider.allowedValues`
+      // sans ollama.
+      repo.list.mockReturnValueOnce(
+        of([
+          TTL,
+          FINN,
+          ANTHROPIC,
+          MARKET_PROVIDER,
+          TWELVE,
+          NEWS_PROVIDER,
+          ANALYST_PROVIDER,
+          EARNINGS_PROVIDER,
+          llmProviderWithoutOllama,
+          ANTHROPIC_MODEL,
+          LLM_TIMEOUT,
+          // OLLAMA_MODEL deliberately omitted.
+        ]),
+      );
+      component.load();
+      fixture.detectChanges();
+
+      expect(component.ollamaModel()).toBeUndefined();
+      expect(component.isOllamaActive()).toBe(false);
+
+      component.setSection('llm');
+      fixture.detectChanges();
+
+      // Ollama Status Panel : absent because `isOllamaActive()` is false.
+      expect(fixture.nativeElement.querySelector('[data-testid="ollama-status-panel"]')).toBeNull();
+      // Ollama Model card : absent because `ollamaModel()` is undefined → the `@if` guard skips it.
+      expect(fixture.nativeElement.textContent).not.toContain('ollama.model');
+    });
   });
 });

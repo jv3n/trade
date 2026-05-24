@@ -55,7 +55,7 @@ class ConfigController(
 ) {
 
   @GetMapping
-  fun list(): List<ConfigEntryDto> = ConfigKeys.KNOWN_KEYS.sorted().map { key -> entryFor(key) }
+  fun list(): List<ConfigEntryDto> = service.listedKeys().sorted().map { key -> entryFor(key) }
 
   @PutMapping("/{key}")
   fun set(@PathVariable key: String, @RequestBody body: SetConfigRequest): ConfigEntryDto {
@@ -124,7 +124,9 @@ class ConfigController(
 
   private fun entryFor(key: String): ConfigEntryDto {
     val isSecret = key in ConfigKeys.SECRET_KEYS
-    val allowedRaw = ConfigKeys.ENUM_KEYS[key]
+    // Delegates to AppConfigService.allowedValuesFor so the LLM provider toggle drops `ollama`
+    // automatically when the env-side flag (`app.ollama.enabled=false`) excludes it.
+    val allowedRaw = service.allowedValuesFor(key)
     val isOverridden = service.isOverridden(key)
     val effective = service.getString(key)
     val default = service.defaultFor(key)

@@ -127,6 +127,15 @@ management:
 # dans `application-local.yml` avec l'URL complète du SPA — sinon le user atterrit sur le backend
 # (Whitelabel 404 après login).
 app:
+  # Whether Ollama-related runtime configuration is exposed in this environment. Default `true`
+  # (local dev runs Ollama in docker-compose alongside the backend) ; overridden to `false` in
+  # `application-prod.yml` because the Phase 5 deploy decision (Cloud Run + Supabase) excludes
+  # Ollama from prod — no daemon to reach. When `false`, the `llm.provider` toggle in
+  # `/settings/configuration` hides the `ollama` option, the `ollama.model` entry is omitted from
+  # the listing endpoint, and `AppConfigService.validate()` rejects any `set(llm.provider, ollama)`
+  # or `set(ollama.model, …)` write that would land the runtime config in a stuck state.
+  ollama:
+    enabled: ${APP_OLLAMA_ENABLED:true}
   admin:
     emails: ${APP_ADMIN_EMAILS:}
   # Whitelist of emails authorised to complete the OAuth login. Empty = open mode (backward-compat
