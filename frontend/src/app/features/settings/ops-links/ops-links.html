@@ -1,0 +1,34 @@
+<div class="ops-links-page" data-testid="ops-links-page">
+  <header class="page-header">
+    <h2>{{ 'settings.opsLinksPage.title' | translate }}</h2>
+    <p class="description">{{ 'settings.opsLinksPage.description' | translate }}</p>
+  </header>
+
+  @for (section of sections; track section.titleKey) {
+    <section class="ops-section">
+      <header class="section-header">
+        <mat-icon>{{ section.icon }}</mat-icon>
+        <div class="section-titles">
+          <h3>{{ section.titleKey | translate }}</h3>
+          <p class="section-description">{{ section.descriptionKey | translate }}</p>
+        </div>
+      </header>
+      <ul class="ops-link-list">
+        @for (link of section.links; track link.url) {
+          <li>
+            <!-- `target="_blank" rel="noopener noreferrer"` — ops UX (don't lose the running
+                 app session) + standard security pair (no window.opener access, no referer
+                 header leak to the destination). Pinned by the smoke spec. -->
+            <a [href]="link.url" target="_blank" rel="noopener noreferrer">
+              {{ link.label }}
+              <mat-icon class="external-icon">open_in_new</mat-icon>
+            </a>
+            @if (link.descriptionKey) {
+              <p class="link-description">{{ link.descriptionKey | translate }}</p>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

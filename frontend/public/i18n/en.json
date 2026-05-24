@@ -412,9 +412,64 @@
   },
   "settings": {
     "navLabel": "Configuration",
+    "opsLinks": "Ops links",
     "configuration": "Runtime configuration",
     "prompts": "Narrative prompts",
     "accessControl": "Access control",
+    "opsLinksPage": {
+      "title": "Ops links — dashboards & billing",
+      "description": "Shortcuts to the external consoles used to operate the app. Every link opens in a new tab — the running session stays intact.",
+      "sections": {
+        "billing": {
+          "title": "Billing — every card on file",
+          "description": "Centralised view of the billing dashboards where a credit card is on file. Check weekly to avoid end-of-month surprises."
+        },
+        "production": {
+          "title": "Production",
+          "description": "Live app URLs + debug fallback."
+        },
+        "hosting": {
+          "title": "Hosting & compute (GCP)",
+          "description": "Cloud Run, IAM, Secret Manager, Artifact Registry, OAuth, billing — project `trade-496613`."
+        },
+        "database": {
+          "title": "Database (Supabase)",
+          "description": "Project `portfolioai-prod` in Toronto (`ca-central-1`). Active connection mode: Session pooler IPv4."
+        },
+        "storage": {
+          "title": "Storage (Cloudflare R2)",
+          "description": "Bucket `portfolioai-backups` — weekly Postgres backups, 30-day retention."
+        },
+        "cdn": {
+          "title": "DNS & CDN (Cloudflare)",
+          "description": "Registrar `tickerstory.org`, Worker `tickerstory-proxy` (custom-domain proxy → Cloud Run), Cache Rules."
+        },
+        "observability": {
+          "title": "Observability",
+          "description": "GlitchTip for errors (Sentry-compatible), UptimeRobot for external availability."
+        },
+        "externalApis": {
+          "title": "External APIs (runtime keys)",
+          "description": "Providers wired through `/settings/configuration`. Key rotation lives on each vendor's console."
+        },
+        "github": {
+          "title": "GitHub — `jv3n/trade`",
+          "description": "Actions, Releases, Environments, Secrets — where the deploy pipeline runs and the repo is audited."
+        }
+      },
+      "links": {
+        "gcpBilling": "Cloud Run + Artifact Registry + Secret Manager billing. Durable free tier, watch the egress quota (1 GB/mo N. America).",
+        "supabaseBilling": "Free tier 500 MB DB + 50K MAU. Card on file to absorb an overage without downtime.",
+        "cloudflareBilling": "Card on file for the `tickerstory.org` registrar (~$7.50/yr at-cost). R2 free tier 10 GB as long as we stay under.",
+        "anthropicBilling": "Pay-as-you-go on Claude — token usage billed monthly. Check after an intensive analysis session.",
+        "tickerstoryDomain": "Cloudflare custom domain (Worker proxy → Cloud Run Montréal).",
+        "cloudRunDirect": "Raw Cloud Run URL — fallback when Cloudflare is suspected.",
+        "supabaseBackups": "Native Supabase daily snapshots — independent from our weekly `pg_dump → R2`.",
+        "cloudflareWorker": "Intercepts `tickerstory.org/*` and forges a `fetch()` to Cloud Run with rewritten Host header.",
+        "glitchtipOrg": "Overview + alert rules (instant email on new issue + burst >10 events/h) + free-tier quota 5K events/mo.",
+        "anthropicConsole": "Claude API overview — token usage + available models + key rotation."
+      }
+    },
     "accessControlPage": {
       "title": "Access control",
       "intro": "Emails allowed to complete Google sign-in. Empty = open mode: any Google account is accepted (created as USER). Once you post the first entry, gating takes effect on the next fresh sign-in.",

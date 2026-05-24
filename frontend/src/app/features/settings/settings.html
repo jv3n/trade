@@ -1,6 +1,10 @@
 <div class="settings-shell">
   <nav class="settings-nav">
     <span class="nav-section-label">{{ 'settings.navLabel' | translate }}</span>
+    <a routerLink="/settings/ops-links" routerLinkActive="active" class="nav-item">
+      <mat-icon>open_in_new</mat-icon>
+      {{ 'settings.opsLinks' | translate }}
+    </a>
     <a routerLink="/settings/configuration" routerLinkActive="active" class="nav-item">
       <mat-icon>tune</mat-icon>
       {{ 'settings.configuration' | translate }}

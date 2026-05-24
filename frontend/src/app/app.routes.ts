@@ -62,7 +62,12 @@ export const routes: Routes = [
     canActivate: [authGuard, adminGuard],
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
     children: [
-      { path: '', redirectTo: 'configuration', pathMatch: 'full' },
+      { path: '', redirectTo: 'ops-links', pathMatch: 'full' },
+      {
+        path: 'ops-links',
+        loadComponent: () =>
+          import('./features/settings/ops-links/ops-links').then((m) => m.OpsLinksPage),
+      },
       {
         path: 'configuration',
         loadComponent: () =>
