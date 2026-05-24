@@ -62,6 +62,11 @@ class MockAnalystClient : AnalystRecommendationClient {
     // Build the 6-month history by drifting the head backwards : each previous month shifts ~1
     // analyst between buckets at random, so the trend line is non-flat without being volatile.
     // History is oldest-first per the domain contract.
+    //
+    // TODO(coutures-analyst-residus-2) — `LocalDate.now()` direct couples the mock's output to the
+    // wall clock. No existing test pins an absolute period (assertions are relative — `out.asOf ==
+    // out.history.last().period`), so no flake today. Inject a `Clock` if a future test ever needs
+    // to assert on a fixed period. Cf. backlog dette « Coutures post-livraison analyst — résidus ».
     val today = LocalDate.now()
     val history = buildList {
       var cursor = head

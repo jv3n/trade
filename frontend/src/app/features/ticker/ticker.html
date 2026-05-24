@@ -858,8 +858,11 @@
                   role="img"
                   [attr.aria-label]="'ticker.fundamentals.analyst.barAria' | translate"
                 >
+                  <!-- `[hidden]` on zero-width segments drops the phantom `border-left` they'd
+                       otherwise paint (~1 px per empty bucket = up to 4-5 px on sparse panels). -->
                   <span
                     class="analyst-bar-segment seg-strong-buy"
+                    [hidden]="!a.strongBuy"
                     [style.width.%]="analystBucketPct('strongBuy')"
                     [matTooltip]="
                       'ticker.fundamentals.analyst.tooltip.strongBuy'
@@ -868,6 +871,7 @@
                   ></span>
                   <span
                     class="analyst-bar-segment seg-buy"
+                    [hidden]="!a.buy"
                     [style.width.%]="analystBucketPct('buy')"
                     [matTooltip]="
                       'ticker.fundamentals.analyst.tooltip.buy' | translate: { count: a.buy }
@@ -875,6 +879,7 @@
                   ></span>
                   <span
                     class="analyst-bar-segment seg-hold"
+                    [hidden]="!a.hold"
                     [style.width.%]="analystBucketPct('hold')"
                     [matTooltip]="
                       'ticker.fundamentals.analyst.tooltip.hold' | translate: { count: a.hold }
@@ -882,6 +887,7 @@
                   ></span>
                   <span
                     class="analyst-bar-segment seg-sell"
+                    [hidden]="!a.sell"
                     [style.width.%]="analystBucketPct('sell')"
                     [matTooltip]="
                       'ticker.fundamentals.analyst.tooltip.sell' | translate: { count: a.sell }
@@ -889,6 +895,7 @@
                   ></span>
                   <span
                     class="analyst-bar-segment seg-strong-sell"
+                    [hidden]="!a.strongSell"
                     [style.width.%]="analystBucketPct('strongSell')"
                     [matTooltip]="
                       'ticker.fundamentals.analyst.tooltip.strongSell'

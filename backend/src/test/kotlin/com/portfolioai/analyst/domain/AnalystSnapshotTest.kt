@@ -59,4 +59,17 @@ class AnalystSnapshotTest {
     val c = deriveConsensus(strongBuy = 0, buy = 0, hold = 0, sell = 0, strongSell = 0)
     assertEquals(AnalystConsensus.MIXED, c)
   }
+
+  @Test
+  fun `enum surface stays exactly the four values the frontend types as a union`() {
+    // Contract pin — `AnalystSnapshotDto.consensus: String` carries `enum.name` over the wire, and
+    // the frontend types it as `'BUY' | 'HOLD' | 'SELL' | 'MIXED'`. Adding (e.g.) `STRONG_BUY`
+    // here without updating the frontend would silently land a value TS can't validate at runtime.
+    // The exact-match assertion below trips on any addition/removal/rename, forcing a deliberate
+    // contract review.
+    assertEquals(
+      setOf("BUY", "HOLD", "SELL", "MIXED"),
+      AnalystConsensus.entries.map { it.name }.toSet(),
+    )
+  }
 }

@@ -968,7 +968,7 @@ $sidenav-width-collapsed: 48px;
 .analyst-bar {
   display: flex;
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--color-surface-2);
 }

@@ -100,6 +100,15 @@ class FinnhubAnalystClient(
    * snapshot is still useful without the target. Server errors (5xx) and network failures are also
    * absorbed for the same reason — better degrade than fail. We log at `warn` so the operator sees
    * the issue in the Tilt logs without it bubbling to the user.
+   *
+   * **Distinct cause channels** : each error path below has its own `log.warn` line — `HTTP $code`
+   * for 4xx (typically 401/403 on the free tier), `upstream HTTP $code` for 5xx, and `unreachable`
+   * for `ResourceAccessException` (network / timeout). Operators can `grep` Tilt logs to tell « no
+   * target available from Finnhub » apart from a transient blip. **Limitation known** : the return
+   * value is a flat `null` regardless of cause, so the frontend renders the same « pas d'objectif »
+   * label in both cases. A v2 enhancement would surface the distinction as a DTO field
+   * (`priceTargetUnavailable: Boolean`) or as a metric counter ; deferred until the friction is
+   * observed in practice (cf. ticket dette « Coutures post-livraison analyst — résidus » #1).
    */
   private fun fetchPriceTargetOrNull(upper: String): FinnhubPriceTarget? {
     return try {
