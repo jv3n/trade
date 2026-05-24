@@ -45,11 +45,13 @@ export abstract class SnapshotRepository {
 
   // Flavour 1 — eager fetch on subscribe.
   allResource() {
+    assertInInjectionContext(this.allResource);
     return rxResource({ stream: () => this.getAll() });
   }
 
   // Flavour 2 — per-id cache. Returns a Signal<Map<id, T[]>> that grows as the trigger fires.
   positionsCache(trigger: Signal<string | undefined>) {
+    assertInInjectionContext(this.positionsCache);
     const cache = signal(new Map<string, SnapshotPosition[]>());
     const resource = rxResource({
       params: () => trigger(),
@@ -65,6 +67,8 @@ export abstract class SnapshotRepository {
   }
 }
 ```
+
+**`assertInInjectionContext` guard** — both builders MUST run inside an injection context (field initialiser of a component / directive / service, or wrapped in `runInInjectionContext`). `rxResource` and `effect()` tie their cleanup to the caller's `DestroyRef` ; calling the builder from a non-DI scope would leak the subscription for the lifetime of the JS heap. The guard fails loudly at runtime instead of leaking silently — copy it into every new builder when generalising the pattern to the 13 other repositories.
 
 Component side stays minimal — no `.subscribe()`, no `ngOnInit`, no manual loading/error signals.
 

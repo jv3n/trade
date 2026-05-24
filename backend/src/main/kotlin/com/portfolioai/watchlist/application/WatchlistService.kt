@@ -135,6 +135,14 @@ class WatchlistService(
   // The broad catch is the contract — any failure from the chart provider degrades the chip
   // rather than blocking the add. See the class-level note. Suppressing the lint here rather
   // than in `detekt.yml` so the intent stays at the call site.
+  //
+  // TODO(gestion-erreur-transverse-volet-3) — flagged by audit pré-v0.5.1 finding #3 for the
+  // catch-tightening pass : resserrer sur les exceptions vraiment attendues
+  // (`HttpClientErrorException`,
+  // `ResourceAccessException`, `UpstreamUnavailableException`, `JsonProcessingException`) et
+  // laisser propager les `RuntimeException` génériques pour qu'elles soient loggées en `ERROR`
+  // avec stacktrace par `GlobalExceptionHandler`. Cf. `backlog.md > Dette technique > Gestion
+  // d'erreur transverse > Volet 3 — Exceptions plus honnêtes`.
   @Suppress("TooGenericExceptionCaught")
   private fun lookupInstrumentType(symbol: String): InstrumentType? =
     try {

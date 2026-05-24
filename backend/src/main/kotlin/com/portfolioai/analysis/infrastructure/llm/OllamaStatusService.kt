@@ -172,10 +172,16 @@ class OllamaStatusService(
       unreachable("Unreachable : ${e.message?.take(MAX_ERROR_LENGTH)}")
     } catch (e: HttpStatusCodeException) {
       log.debug("Ollama pull HTTP {} for name={} : {}", e.statusCode, name, e.message)
-      // Ollama returns 500 with `{"error": "model 'foo' not found"}` for unknown names rather
-      // than 404. We don't try to disambiguate here — surface the upstream code, the dialog can
-      // show it inline. Mirrors [unloadModel] for consistency.
-      unreachable("HTTP ${e.statusCode.value()} from Ollama")
+      // Ollama returns 500 with `{"error": "model 'foo' not found"}` for unknown names today.
+      // Should the upstream API ever align on 404 for that case (consistent with /api/show and
+      // /api/delete), surface a friendlier hint — the pull-dialog reads this verbatim and "model
+      // not in the Ollama registry" is more actionable than "HTTP 404 from Ollama" for the user
+      // who's trying to figure out why their typed name didn't resolve. Mirrors the
+      // [unloadModel] / [deleteModel] 404 branch.
+      val message =
+        if (e.statusCode.value() == HTTP_NOT_FOUND) "Model not in the Ollama registry : $name"
+        else "HTTP ${e.statusCode.value()} from Ollama"
+      unreachable(message)
     }
   }
 

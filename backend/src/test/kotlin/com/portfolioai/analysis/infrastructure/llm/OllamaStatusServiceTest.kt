@@ -308,6 +308,28 @@ class OllamaStatusServiceTest {
   }
 
   @Test
+  fun `pullModel surfaces 404 from Ollama as a registry-not-found hint`() {
+    // Forward-compat with a hypothetical Ollama API alignment on 404 for unknown model names
+    // (today the daemon returns 500 — cf. the 5xx test above). Mirrors the 404 branch on
+    // [unloadModel] and [deleteModel] so the panel renders an actionable hint instead of a
+    // cryptic "HTTP 404 from Ollama" when the upstream eventually flips.
+    server.enqueue(MockResponse().setResponseCode(404).setBody("""{"error": "not found"}"""))
+
+    val out = service.pullModel("definitely-not-a-real-model")
+
+    assertFalse(out.daemonReachable)
+    assertNotNull(out.errorMessage)
+    assertTrue(
+      out.errorMessage!!.contains("registry"),
+      "expected registry hint in error message, got '${out.errorMessage}'",
+    )
+    assertTrue(
+      out.errorMessage!!.contains("definitely-not-a-real-model"),
+      "expected model name in error message, got '${out.errorMessage}'",
+    )
+  }
+
+  @Test
   fun `pullModel surfaces unreachable daemon as fail-soft`() {
     server.shutdown()
 

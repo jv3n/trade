@@ -32,6 +32,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
  * Redis pub/sub or to the unified `job` DAG table (Phase 4) ; the contract on this class stays the
  * same.
  */
+// Spring auto-wires the [Clock] bean declared by [AnalysisConfig] when the publisher boots ; the
+// constructor default `Clock.systemUTC()` is kept solely so unit tests in `JobEventPublisherTest`
+// can do `JobEventPublisher()` without re-stating the wall-clock. Don't drop the default or 7
+// test sites + the `TestablePublisher` subclass would need to re-pass a Clock.
 @Component
 open class JobEventPublisher(private val clock: Clock = Clock.systemUTC()) {
 
