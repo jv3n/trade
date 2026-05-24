@@ -26,6 +26,7 @@ nav:
       - "Analyse DNS (choix nom de domaine)": devops/dns-analyse.md
       - "Décision : déploiement Ollama": devops/decision-ollama-deploiement.md
   - Projet:
+      - Onboarding testeur: projet/testeur.md
       - Backlog: projet/backlog.md
       - Journal des livraisons: projet/journal-livraisons.md
       - Sources de données: projet/sources.md
