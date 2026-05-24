@@ -1,6 +1,6 @@
 package com.portfolioai.analysis.application
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.portfolioai.analysis.application.dto.CoherenceScoreDto
 import com.portfolioai.analysis.application.dto.NarrativeObservationDto
 import com.portfolioai.analysis.application.dto.NarrativeObservationsResponse
@@ -49,9 +49,9 @@ class NarrativeObservabilityService(
   private val query: NarrativeObservabilityQuery,
   private val chartClient: MarketChartClient,
   private val coherenceScorer: CoherenceScorer,
+  private val mapper: ObjectMapper,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
-  private val mapper = jacksonObjectMapper()
 
   fun findFor(
     symbol: String,

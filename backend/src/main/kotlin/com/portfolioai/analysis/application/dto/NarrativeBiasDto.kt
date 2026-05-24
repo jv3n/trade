@@ -74,6 +74,12 @@ data class CalibrationBucketDto(
  *
  * The page surfaces the top-N as pills with their % coverage of [snapshotsTotal] ; the inverse read
  * is « topics never mentioned » (the user knows what they expected to see).
+ *
+ * **Pre-filtered tokens** — `STOPWORDS` in `NarrativeBiasService` strips common English particles
+ * **and** financial filler that adds no signal (« stock », « price », « level », « trend »…).
+ * Consequence : those tokens never appear in this list nor in the « never mentioned » inverse read,
+ * even if the LLM truly skipped them. The page should not promise the user that an absent « price »
+ * is a meaningful absence ; it's the pre-filter at work.
  */
 data class TopicCoverageDto(val snapshotsTotal: Int, val topics: List<TopicDto>)
 

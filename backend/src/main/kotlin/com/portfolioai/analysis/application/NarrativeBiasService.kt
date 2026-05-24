@@ -1,6 +1,6 @@
 package com.portfolioai.analysis.application
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.portfolioai.analysis.application.dto.BiasFlagDto
 import com.portfolioai.analysis.application.dto.CalibrationBucketDto
 import com.portfolioai.analysis.application.dto.NarrativeBiasResponse
@@ -48,9 +48,9 @@ import org.springframework.stereotype.Service
 class NarrativeBiasService(
   private val query: NarrativeBiasQuery,
   private val chartClient: MarketChartClient,
+  private val mapper: ObjectMapper,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
-  private val mapper = jacksonObjectMapper()
 
   fun computeBias(
     from: Instant? = null,
@@ -342,7 +342,6 @@ class NarrativeBiasService(
         "you",
         "your",
         "our",
-        "his",
         "she",
         "him",
         "them",
@@ -375,7 +374,6 @@ class NarrativeBiasService(
         "values",
         "trend",
         "trends",
-        "side",
         "side",
         "current",
         "currently",

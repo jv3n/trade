@@ -1,5 +1,6 @@
 package com.portfolioai.analysis.application
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.portfolioai.analysis.domain.Sentiment
 import com.portfolioai.analysis.infrastructure.persistence.BiasSnapshotRow
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeBiasQuery
@@ -60,7 +61,7 @@ class NarrativeBiasServiceTest {
 
   private val query: NarrativeBiasQuery = mock()
   private val chartClient: MarketChartClient = mock()
-  private val service = NarrativeBiasService(query, chartClient)
+  private val service = NarrativeBiasService(query, chartClient, jacksonObjectMapper())
 
   // ---------------------------------------------------------------------- sentiment distribution
 

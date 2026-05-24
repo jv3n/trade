@@ -128,11 +128,12 @@ class NarrativeBiasQuery(@PersistenceContext private val em: EntityManager) {
       FROM ticker_narrative_snapshot
       $whereClause
       ORDER BY generated_at DESC
-      LIMIT $MAX_RAW_ROWS
+      LIMIT :limitRows
       """
         .trimIndent()
     val q = em.createNativeQuery(sql)
     params.forEach { (k, v) -> q.setParameter(k, v) }
+    q.setParameter("limitRows", MAX_RAW_ROWS)
 
     @Suppress("UNCHECKED_CAST") val rows = q.resultList as List<Array<*>>
     return rows.map {

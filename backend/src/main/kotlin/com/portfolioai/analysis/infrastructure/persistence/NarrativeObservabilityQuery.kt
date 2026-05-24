@@ -78,12 +78,13 @@ class NarrativeObservabilityQuery(@PersistenceContext private val em: EntityMana
       ) ps ON TRUE
       WHERE ${conditions.joinToString(" AND ")}
       ORDER BY s.generated_at DESC
-      LIMIT $MAX_ROWS
+      LIMIT :limitRows
       """
         .trimIndent()
 
     val query = em.createNativeQuery(sql)
     params.forEach { (k, v) -> query.setParameter(k, v) }
+    query.setParameter("limitRows", MAX_ROWS)
 
     @Suppress("UNCHECKED_CAST") val rows = query.resultList as List<Array<*>>
     return rows.map(::mapRow)
@@ -128,11 +129,13 @@ class NarrativeObservabilityQuery(@PersistenceContext private val em: EntityMana
       FROM ticker_narrative_snapshot
       GROUP BY symbol
       ORDER BY MAX(generated_at) DESC
-      LIMIT $MAX_TICKERS
+      LIMIT :limitTickers
       """
         .trimIndent()
 
-    @Suppress("UNCHECKED_CAST") val rows = em.createNativeQuery(sql).resultList as List<Array<*>>
+    val query = em.createNativeQuery(sql)
+    query.setParameter("limitTickers", MAX_TICKERS)
+    @Suppress("UNCHECKED_CAST") val rows = query.resultList as List<Array<*>>
     return rows.map { row ->
       TickerObservationCount(
         symbol = row[0] as String,

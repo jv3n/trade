@@ -1,5 +1,6 @@
 package com.portfolioai.analysis.application
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.portfolioai.analysis.domain.SentimentChange
 import com.portfolioai.analysis.domain.Verdict
 import com.portfolioai.analysis.infrastructure.persistence.NarrativeObservabilityQuery
@@ -57,7 +58,8 @@ class NarrativeObservabilityServiceTest {
   private val query: NarrativeObservabilityQuery = mock()
   private val chartClient: MarketChartClient = mock()
   private val coherenceScorer = CoherenceScorer()
-  private val service = NarrativeObservabilityService(query, chartClient, coherenceScorer)
+  private val service =
+    NarrativeObservabilityService(query, chartClient, coherenceScorer, jacksonObjectMapper())
 
   // ---------------------------------------------------------------------- happy path
 
