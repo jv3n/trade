@@ -100,6 +100,27 @@ class NarrativeBiasServiceTest {
   }
 
   @Test
+  fun `bias flag fires on a fractional ratio that rounds UP to 0_6000 via HALF_UP at scale 4`() {
+    // Pin the rounding contract — `percentOf` divides with `RoundingMode.HALF_UP` at scale 4, so
+    // a count/total whose exact value is just below 0.6 can still flag if the 5th decimal is ≥ 5.
+    // Concretely : 5999 / 9999 = 0.59995999... → HALF_UP at scale 4 → 0.6000 → ≥ threshold →
+    // flagged. A future refactor that switches to HALF_EVEN or RoundingMode.DOWN would silently
+    // change this behavior ; this test surfaces the regression.
+    given(query.sentimentCounts(anyOrNull(), anyOrNull(), anyOrNull()))
+      .willReturn(listOf(SentimentCountRow("BULLISH", 5999L), SentimentCountRow("NEUTRAL", 4000L)))
+    given(query.thumbsBySentiment(anyOrNull(), anyOrNull(), anyOrNull())).willReturn(emptyList())
+    given(query.rawSnapshots(anyOrNull(), anyOrNull(), anyOrNull())).willReturn(emptyList())
+
+    val out = service.computeBias()
+
+    val flag = out.sentimentDistribution.biasFlag
+    assertNotNull(flag)
+    assertEquals(Sentiment.BULLISH, flag!!.sentiment)
+    // 5999 / 9999 rounded HALF_UP at scale 4 lands exactly on the threshold.
+    assertEquals(0, flag.percent.compareTo(BigDecimal("0.6000")))
+  }
+
+  @Test
   fun `bias flag stays null when no bucket dominates above 60 percent`() {
     given(query.sentimentCounts(anyOrNull(), anyOrNull(), anyOrNull()))
       .willReturn(
