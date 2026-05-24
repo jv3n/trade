@@ -319,6 +319,137 @@ describe('Configuration', () => {
     expect(component.editValue('market.twelvedata.api-key')).toBe('');
   });
 
+  it('saving a SECRET refetches the list so dependent provider toggles re-evaluate disabledReason', () => {
+    // Regression for a bug observed 2026-05-24 : saving a fresh Finnhub key left the
+    // `news.provider=finnhub` / `analyst.provider=finnhub` / `earnings.provider=finnhub` toggles
+    // stuck in the disabled state because the save() handler only patched the single saved
+    // entry. The dependent provider entries kept their stale `disabledReason` until a manual
+    // page reload. Fix : after a SECRET save, refetch the full list so the server's recomputed
+    // annotations land in `entries()`.
+    const newsProviderDisabled = {
+      ...NEWS_PROVIDER,
+      allowedValues: [
+        { value: 'mock', disabledReason: null },
+        { value: 'finnhub', disabledReason: 'market.finnhub.api-key' },
+      ],
+    };
+    const newsProviderEnabled = {
+      ...NEWS_PROVIDER,
+      allowedValues: [
+        { value: 'mock', disabledReason: null },
+        { value: 'finnhub', disabledReason: null },
+      ],
+    };
+    // Seed the page with the disabled state — first override consumed by the manual reload
+    // below.
+    repo.list.mockReturnValueOnce(
+      of([
+        TTL,
+        FINN,
+        ANTHROPIC,
+        MARKET_PROVIDER,
+        TWELVE,
+        newsProviderDisabled,
+        ANALYST_PROVIDER,
+        EARNINGS_PROVIDER,
+        LLM_PROVIDER,
+        OLLAMA_MODEL,
+        ANTHROPIC_MODEL,
+        LLM_TIMEOUT,
+      ]),
+    );
+    component.load();
+    fixture.detectChanges();
+    expect(component.newsProvider()?.allowedValues?.[1].disabledReason).toBe(
+      'market.finnhub.api-key',
+    );
+
+    // Second override consumed by the refetch the save() handler queues after a SECRET save.
+    repo.list.mockReturnValueOnce(
+      of([
+        TTL,
+        FINN,
+        ANTHROPIC,
+        MARKET_PROVIDER,
+        TWELVE,
+        newsProviderEnabled,
+        ANALYST_PROVIDER,
+        EARNINGS_PROVIDER,
+        LLM_PROVIDER,
+        OLLAMA_MODEL,
+        ANTHROPIC_MODEL,
+        LLM_TIMEOUT,
+      ]),
+    );
+    component.onInput('market.finnhub.api-key', 'fresh-key');
+    component.save('market.finnhub.api-key');
+
+    // Saving the SECRET un-disabled the finnhub option without a page reload.
+    expect(component.newsProvider()?.allowedValues?.[1].disabledReason).toBeNull();
+  });
+
+  it('saving a non-SECRET (provider toggle) does NOT refetch the list', () => {
+    // Defensive : the refetch on SECRET save is targeted because secrets flip `disabledReason`
+    // server-side. A provider toggle save only updates its own currentValue ; refetching there
+    // would be wasted network. This test pins the optimization.
+    // Use `twelvedata` (vs the seeded `mock`) so `selectProvider` actually fires `repo.set` —
+    // it short-circuits as a no-op when the value matches the current one.
+    const callsBefore = repo.list.mock.calls.length;
+    component.selectProvider('market.provider', 'twelvedata');
+
+    expect(repo.set).toHaveBeenCalledWith('market.provider', 'twelvedata');
+    expect(repo.list.mock.calls.length).toBe(callsBefore);
+  });
+
+  it('renders a disabled mat-button-toggle when allowedValue carries a disabledReason', () => {
+    // Pin the rendering invariant that the gating ticket promised : when an allowedValue carries
+    // a non-null `disabledReason`, the corresponding `mat-button-toggle` is rendered disabled.
+    // Without this test, a future refactor of the toggle template could silently drop the
+    // `[disabled]="!!option.disabledReason"` binding and the gating would degrade to backend-only
+    // enforcement (the user would still get a 400 if they POST'ed directly, but the UI would no
+    // longer warn them upfront).
+    const newsProviderDisabled = {
+      ...NEWS_PROVIDER,
+      allowedValues: [
+        { value: 'mock', disabledReason: null },
+        { value: 'finnhub', disabledReason: 'market.finnhub.api-key' },
+      ],
+    };
+    repo.list.mockReturnValueOnce(
+      of([
+        TTL,
+        FINN,
+        ANTHROPIC,
+        MARKET_PROVIDER,
+        TWELVE,
+        newsProviderDisabled,
+        ANALYST_PROVIDER,
+        EARNINGS_PROVIDER,
+        LLM_PROVIDER,
+        OLLAMA_MODEL,
+        ANTHROPIC_MODEL,
+        LLM_TIMEOUT,
+      ]),
+    );
+    component.load();
+    fixture.detectChanges();
+
+    // Sanity check on the data side — the disabled annotation actually lands in entries().
+    expect(component.newsProvider()?.allowedValues?.[1].disabledReason).toBe(
+      'market.finnhub.api-key',
+    );
+
+    // Material applies the host class `mat-button-toggle-disabled` to each toggle whose
+    // `[disabled]` binding is true — we use it as the rendering signal rather than querying
+    // by translated button text (the template runs `option.value` through `| translate`, so
+    // the textContent depends on the active i18n fixture). Exactly one toggle is seeded as
+    // disabled here (news.provider's finnhub option).
+    const disabledToggles = fixture.nativeElement.querySelectorAll(
+      'mat-button-toggle.mat-button-toggle-disabled',
+    );
+    expect(disabledToggles.length).toBeGreaterThanOrEqual(1);
+  });
+
   it('save trims whitespace before sending', () => {
     component.onInput('market.twelvedata.api-key', '  spaced-key  ');
     component.save('market.twelvedata.api-key');

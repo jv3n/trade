@@ -277,13 +277,29 @@ export class Configuration implements OnInit {
 
     this.repo.set(key, value).subscribe({
       next: (updated) => {
+        const isSecret = key === TWELVE_DATA_KEY || key === FINNHUB_KEY || key === ANTHROPIC_KEY;
+        if (isSecret) {
+          // Saving a SECRET flips `disabledReason` on **dependent provider toggles** server-side
+          // (e.g. saving the Finnhub key un-disables `news.provider=finnhub`,
+          // `analyst.provider=finnhub`, `earnings.provider=finnhub` at once). Refetch the full
+          // list to pick up the new annotations rather than trying to mirror the gating mapping
+          // on the client — the source of truth lives in `ConfigKeys.PROVIDER_REQUIRED_KEY`. The
+          // reset() path already does this for the inverse direction (clearing a SECRET
+          // re-disables the toggles).
+          this.repo.list().subscribe({
+            next: (list) => {
+              this.entries.set(list);
+              this.markSaving(key, false);
+              // Blank the input — the saved value is now masked, no need to leave the typed
+              // key on screen.
+              this.edits.update((m) => ({ ...m, [key]: '' }));
+            },
+            error: () => this.markSaving(key, false),
+          });
+          return;
+        }
         this.entries.update((list) => list.map((e) => (e.key === key ? updated : e)));
         this.markSaving(key, false);
-        // For secrets, blank the input back out — the saved value is now masked and we don't
-        // want the typed key to linger on screen.
-        if (key === TWELVE_DATA_KEY || key === FINNHUB_KEY || key === ANTHROPIC_KEY) {
-          this.edits.update((m) => ({ ...m, [key]: '' }));
-        }
         // Saving the LLM timeout updates the value [LlmTimeoutService] surfaces to the
         // "estimation max" label on this same LLM card — refresh it so the label reflects the
         // new slider position immediately, without a page reload. `refresh()` is a cold
