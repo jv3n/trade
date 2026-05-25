@@ -146,9 +146,19 @@ cmd_button(
     ],
 )
 
+
+# `serve_cmd` runs under non-interactive `sh -c`, which doesn't source ~/.zshrc and thus
+# never initializes nvm — `npm` ends up off PATH. We source nvm.sh and run `nvm use`
+# (no arg, which reads `frontend/.nvmrc`), mirroring the backend's `/usr/libexec/java_home`
+# trick. Bumping node = bumping `frontend/.nvmrc`; no Tiltfile edit needed.
+frontend_cmd = """cd frontend && \\
+  export NVM_DIR=\"$HOME/.nvm\" ; \\
+  if [ -s \"$NVM_DIR/nvm.sh\" ]; then . \"$NVM_DIR/nvm.sh\" --no-use ; nvm use >/dev/null ; fi ; \\
+  npm start -- --host 0.0.0.0 --port {}""".format(frontend_port)
+
 local_resource(
     name = "frontend",
-    serve_cmd = "cd frontend && npm start -- --host 0.0.0.0 --port {}".format(frontend_port),
+    serve_cmd = frontend_cmd,
     deps = [
         "frontend/src",
         "frontend/angular.json",
