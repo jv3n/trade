@@ -11,6 +11,7 @@
  * hard-coded in the component ; the tests pin them down so a refactor doesn't accidentally drift
  * the colors.
  */
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -182,6 +183,7 @@ describe('TickerPage', () => {
     await TestBed.configureTestingModule({
       imports: [TickerPage],
       providers: [
+        provideZonelessChangeDetection(),
         provideTranslateService({ lang: 'en' }),
         { provide: MarketRepository, useValue: market },
         { provide: WatchlistRepository, useValue: watchlist },

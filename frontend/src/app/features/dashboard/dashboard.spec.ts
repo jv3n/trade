@@ -13,6 +13,7 @@
  * HTTP layer (covered separately in `core/adapters/*.http.spec.ts`).
  */
 import { vi } from 'vitest';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -95,6 +96,7 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
+        provideZonelessChangeDetection(),
         provideRouter([]),
         provideTranslateService({ lang: 'en' }),
         { provide: PortfolioRepository, useValue: mockPortfolioRepository },

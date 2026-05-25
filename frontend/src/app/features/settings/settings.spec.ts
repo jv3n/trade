@@ -1,3 +1,4 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -11,7 +12,11 @@ describe('Settings', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Settings],
-      providers: [provideRouter([]), provideTranslateService({ lang: 'en' })],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        provideTranslateService({ lang: 'en' }),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Settings);

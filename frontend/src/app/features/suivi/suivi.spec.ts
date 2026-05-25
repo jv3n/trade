@@ -19,6 +19,7 @@
  *   lives on the port). Regression guard for the original missing-subscribe bug — the component
  *   used to build a `.pipe()` in its constructor without `.subscribe()`, so the map stayed empty.
  */
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
@@ -80,6 +81,7 @@ describe('Suivi', () => {
     await TestBed.configureTestingModule({
       imports: [Suivi],
       providers: [
+        provideZonelessChangeDetection(),
         provideTranslateService({ lang: 'en' }),
         { provide: SnapshotRepository, useClass: MockSnapshotRepository },
       ],

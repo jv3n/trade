@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { signal } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { App } from './app';
@@ -35,6 +35,7 @@ describe('App', () => {
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
+        provideZonelessChangeDetection(),
         provideRouter([]),
         provideTranslateService({ lang: 'en' }),
         provideAuthStub({ email: 'admin@example.com', displayName: 'Admin', role: 'ADMIN' }),

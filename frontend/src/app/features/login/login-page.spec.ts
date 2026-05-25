@@ -15,7 +15,7 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { signal } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { of } from 'rxjs';
@@ -39,6 +39,7 @@ function setup(currentUser: CurrentUser | null, queryParams: Record<string, stri
   TestBed.configureTestingModule({
     imports: [LoginPage],
     providers: [
+      provideZonelessChangeDetection(),
       provideRouter([{ path: 'dashboard', loadComponent: () => Promise.resolve(LoginPage) }]),
       provideTranslateService({ lang: 'en' }),
       { provide: AuthService, useValue: stub },

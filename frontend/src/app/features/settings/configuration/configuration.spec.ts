@@ -19,7 +19,7 @@
  *   has already set Finnhub the hint disappears so it doesn't become noise.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
 import { Configuration } from './configuration';
@@ -225,6 +225,7 @@ describe('Configuration', () => {
     await TestBed.configureTestingModule({
       imports: [Configuration],
       providers: [
+        provideZonelessChangeDetection(),
         provideTranslateService({ lang: 'en' }),
         { provide: ConfigRepository, useValue: repo },
         // The component triggers timeoutService.refresh() after save/reset of the LLM timeout
