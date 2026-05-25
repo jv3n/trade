@@ -4,6 +4,23 @@ site_url: https://jv3n.github.io/trade/
 docs_dir: docs
 
 nav:
+  # Projet first because it's the daily-use section ; Backlog first inside Projet for the same
+  # reason. Other top-level sections + remaining Projet sub-entries keep their relative order.
+  - Projet:
+      - Backlog: projet/backlog.md
+      - Onboarding testeur: projet/testeur.md
+      - Journal des livraisons: projet/journal-livraisons.md
+      - Sources de données: projet/sources.md
+      - Conventions de commit: projet/commit-conventions.md
+      - Audits:
+          - Vue d'ensemble: projet/audits/index.md
+          - 2026-05-24 — Revue globale pré-clôture Phase 5: projet/audits/2026-05-24-pre-phase5-close.md
+          - 2026-05-17 — Revue globale pré-v0.6.0 (Phase 4): projet/audits/2026-05-17-pre-v0.6.0-phase4.md
+          - 2026-05-16 — Revue globale pré-v0.5.1: projet/audits/2026-05-16-pre-v0.5.1.md
+          - 2026-05-14 — Revue globale fin Phase 3: projet/audits/2026-05-14-fin-phase-3.md
+          - 2026-05-10 — Revue globale fin Phase 2.5: projet/audits/2026-05-10-fin-phase-2.5.md
+          - 2026-05-06 — Revue globale fin Phase 2: projet/audits/2026-05-06-fin-phase-2.md
+          - 2026-05-02 — Revue globale: projet/audits/2026-05-02-revue-globale.md
   - Accueil:
       - Changelog doc: CHANGELOG.md
   - Métier:
@@ -25,34 +42,74 @@ nav:
       - "Rotation des secrets prod": devops/secret-rotation.md
       - "Analyse DNS (choix nom de domaine)": devops/dns-analyse.md
       - "Décision : déploiement Ollama": devops/decision-ollama-deploiement.md
-  - Projet:
-      - Onboarding testeur: projet/testeur.md
-      - Backlog: projet/backlog.md
-      - Journal des livraisons: projet/journal-livraisons.md
-      - Sources de données: projet/sources.md
-      - Conventions de commit: projet/commit-conventions.md
-      - Audits:
-          - Vue d'ensemble: projet/audits/index.md
-          - 2026-05-24 — Revue globale pré-clôture Phase 5: projet/audits/2026-05-24-pre-phase5-close.md
-          - 2026-05-17 — Revue globale pré-v0.6.0 (Phase 4): projet/audits/2026-05-17-pre-v0.6.0-phase4.md
-          - 2026-05-16 — Revue globale pré-v0.5.1: projet/audits/2026-05-16-pre-v0.5.1.md
-          - 2026-05-14 — Revue globale fin Phase 3: projet/audits/2026-05-14-fin-phase-3.md
-          - 2026-05-10 — Revue globale fin Phase 2.5: projet/audits/2026-05-10-fin-phase-2.5.md
-          - 2026-05-06 — Revue globale fin Phase 2: projet/audits/2026-05-06-fin-phase-2.md
-          - 2026-05-02 — Revue globale: projet/audits/2026-05-02-revue-globale.md
 
 theme:
   name: material
+  # Two-scheme palette so the reader can flip light/dark via the icon in the header. `media`
+  # queries default to OS preference (light if your OS is light, dark if dark) ; the toggle
+  # overrides at will. Same `deep purple` accent across both for visual consistency.
   palette:
-    scheme: slate
-    primary: deep purple
-    accent: purple
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
-    - navigation.sections
+    # Top-level horizontal tabs (Accueil / Métier / Technique / Devops / Projet) — faster context
+    # switching than scrolling the sidebar. `sticky` keeps them visible while you scroll the page.
+    - navigation.tabs
+    - navigation.tabs.sticky
+    # `navigation.sections` deliberately NOT enabled : it renders sub-groups (e.g. Projet > Audits)
+    # as static headers with no toggle, so once expanded they stay expanded. Without it, sub-groups
+    # become click-to-toggle accordions (open AND close on click). We bold the first-level entries
+    # via CSS (see docs/stylesheets/extra.css) to recover the visual hierarchy `navigation.sections`
+    # used to provide.
+    # Breadcrumb (Métier > Vision) at the top of each page — helps locate yourself when arriving
+    # via search or a direct link.
+    - navigation.path
+    # XHR-based page transitions — no white flash, no full reload between docs.
+    - navigation.instant
+    # URL updates with the active anchor as you scroll — copy the address bar to share a deep link.
+    - navigation.tracking
+    # Prev/next buttons at the bottom of each page — sequential reading without going back to nav.
+    - navigation.footer
     - navigation.top
+    # Move per-page TOC into the left navigation. Without this, Material renders the TOC on the
+    # right side and hides it below ~1220 px viewport — long pages (architecture.md, audits)
+    # became hard to scan on narrower screens. Trade-off : the right-side TOC is gone on desktop
+    # too ; the user navigates via the left sidebar which now shows both the global nav AND the
+    # current page's TOC inline.
+    - toc.integrate
     - search.highlight
+    # Autocomplete on the search box + share button on results.
+    - search.suggest
+    - search.share
+    # Copy button on every code block — stop having to triple-click + Cmd+C for shell snippets.
+    - content.code.copy
+
+extra_css:
+  # Auto-numbering h2/h3 via CSS counters — see docs/stylesheets/extra.css for the WHY.
+  - stylesheets/extra.css
 
 markdown_extensions:
   - tables
   - admonition
   - pymdownx.superfences
+  # Collapsible admonitions (`???` instead of `!!!`) — useful for FAQ sections, long appendices,
+  # and detailed audit findings that the reader can skip past unless interested.
+  - pymdownx.details
+  # Permalink anchor next to every heading (¶) — copy-link is now click-not-Cmd-F. `toc_depth: 3`
+  # caps the in-page TOC at h2/h3 so deeper headings (rare) don't bloat the sidebar nav under
+  # `toc.integrate`.
+  - toc:
+      permalink: true
+      toc_depth: 3

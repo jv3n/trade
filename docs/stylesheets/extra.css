@@ -1,0 +1,73 @@
+/* =============================================================================
+ * Widen the content container.
+ *
+ * Material's default `.md-grid` caps at `max-width: 61rem` (~976 px) — comfortable
+ * for prose but wastes horizontal real estate on wide screens, especially for
+ * tables and code-heavy docs (architecture.md, audits). Bumping to 80rem
+ * (~1280 px) gives ~30 % more width without pushing line-length past the
+ * comfortable reading limit (~100 chars/line for prose). Tweak this value if
+ * you want even wider (90rem = ~1440 px, full viewport on most laptops).
+ * ============================================================================= */
+
+.md-grid {
+  max-width: 80rem;
+}
+
+/* =============================================================================
+ * Bold the first-level entries in the left sidebar nav.
+ *
+ * We disabled `navigation.sections` in mkdocs.yml so sub-groups can be collapsed
+ * on click. The trade-off : the visual hierarchy of « section header vs leaf »
+ * disappears (Material renders all entries with the same weight without sections).
+ * This rule restores that hierarchy by bolding the first-level `.md-nav__item`
+ * under the primary nav. Nested items (e.g. children of an `Audits` accordion)
+ * keep the regular weight so the tree remains readable.
+ * ============================================================================= */
+
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link {
+  font-weight: 600;
+}
+
+/* =============================================================================
+ * Auto-numbering of h2/h3 headings in rendered Markdown pages.
+ *
+ * Why CSS counters and not numbering in the .md sources :
+ * - The sources stay clean — readable on GitHub (which doesn't apply this CSS)
+ *   and easy to reorder without renumbering manually.
+ * - MkDocs Material gets the visual hierarchy on the site, the index in the
+ *   TOC stays numbered too (the counter applies to the rendered h2/h3 inside
+ *   `.md-content`, and Material's TOC is built from the same headings).
+ *
+ * Scope is strictly `.md-content` (the article container) so we don't number
+ * nav labels or footer / sidebar headings that may use h2/h3 elements.
+ *
+ * h1 is deliberately NOT numbered — there's one h1 per page (the title), no
+ * value in showing « 1. Architecture ».
+ * ============================================================================= */
+
+.md-content {
+  counter-reset: h2counter;
+}
+
+.md-content h2 {
+  counter-reset: h3counter;
+}
+
+/* `opacity: 0.6` over `currentColor` (inherited from the heading) keeps the counter discreet
+ * vs the heading text, adapts to both `slate` and `default` Material schemes for free, and
+ * avoids depending on Material's `--md-*` custom properties (the IDE flags them as unknown
+ * because they're defined at runtime by the theme CSS, not in this file).
+ */
+.md-content h2::before {
+  counter-increment: h2counter;
+  content: counter(h2counter) ". ";
+  opacity: 0.6;
+  font-weight: normal;
+}
+
+.md-content h3::before {
+  counter-increment: h3counter;
+  content: counter(h2counter) "." counter(h3counter) " ";
+  opacity: 0.6;
+  font-weight: normal;
+}
