@@ -80,8 +80,8 @@ dependencies {
   // `testsupport/PostgresContainer.kt`) and stays warm between runs when the dev opts into reuse
   // (`testcontainers.reuse.enable=true` in `~/.testcontainers.properties`). Docker is the only
   // host-side prerequisite — already required for Tilt anyway.
-  testImplementation("org.testcontainers:postgresql:1.20.4")
-  testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+  testImplementation("org.testcontainers:postgresql:1.21.4")
+  testImplementation("org.testcontainers:junit-jupiter:1.21.4")
   // Promoted from testRuntimeOnly → testImplementation 2026-05-24 : `TestcontainersBootstrap`
   // implements `LauncherSessionListener` (the SPI hook that boots the Postgres container before
   // any test class loads), which needs the launcher API visible at compile time. The runtime SPI
