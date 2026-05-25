@@ -18,7 +18,7 @@ plugins {
   // Actuator pour peupler `/actuator/info > git` (commit SHA, branche, build time). Combiné avec
   // `springBoot { buildInfo() }` plus bas, l'endpoint retourne version + commit + time sans avoir
   // à mounter de configMap ou exposer une env var custom. Léger (~5 KB de plus dans le jar).
-  id("com.gorylenko.gradle-git-properties") version "2.4.2"
+  id("com.gorylenko.gradle-git-properties") version "2.5.7"
 }
 
 group = "com.portfolioai"
