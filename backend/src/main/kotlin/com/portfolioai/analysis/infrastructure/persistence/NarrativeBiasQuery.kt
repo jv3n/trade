@@ -180,14 +180,6 @@ class NarrativeBiasQuery(@PersistenceContext private val em: EntityManager) {
     return whereClause to params
   }
 
-  private fun normalizeInstant(value: Any?): Instant {
-    return when (value) {
-      is Instant -> value
-      is Timestamp -> value.toInstant()
-      else -> Instant.parse(value.toString())
-    }
-  }
-
   companion object {
     /**
      * Hard cap on the raw snapshot select. Above this we'd pay too much chart fan-out for

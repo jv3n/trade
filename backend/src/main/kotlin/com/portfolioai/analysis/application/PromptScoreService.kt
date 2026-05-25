@@ -49,6 +49,12 @@ class PromptScoreService(
    * have no way to recover from. The created row has `latency = 0` etc. which is honest (we don't
    * have measurements for runs the recorder didn't see).
    *
+   * **Concurrent PATCHes** — DB-enforced uniqueness via the V3 partial unique index on
+   * `prompt_score(snapshot_id)` rules out two rows for the same snapshot. Under a hypothetical race
+   * (two PATCHes pass `findFirstBySnapshotId == null` simultaneously), the second insert surfaces
+   * as `DataIntegrityViolationException`. Single-user practice makes that essentially impossible ;
+   * if a second concurrent user ever joins, wrap the insert in a try/catch + re-read.
+   *
    * Throws [NoSuchElementException] only when the snapshot itself doesn't exist or has a null
    * `prompt_template_id` (genuine fallback path, no FK target to write).
    */

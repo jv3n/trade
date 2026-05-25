@@ -145,17 +145,6 @@ class NarrativeObservabilityQuery(@PersistenceContext private val em: EntityMana
     }
   }
 
-  // Hibernate maps `TIMESTAMPTZ` to either `java.sql.Timestamp` or `java.time.Instant` depending on
-  // driver version. Normalize so the row type carries a stable `Instant` regardless. Same trick as
-  // [PromptScoreStatsQuery] does for `DATE_TRUNC` outputs.
-  private fun normalizeInstant(value: Any?): Instant {
-    return when (value) {
-      is Instant -> value
-      is Timestamp -> value.toInstant()
-      else -> Instant.parse(value.toString())
-    }
-  }
-
   companion object {
     private const val MAX_ROWS = 500
     private const val MAX_TICKERS = 200

@@ -16,10 +16,12 @@ import org.springframework.data.jpa.repository.JpaRepository
  */
 interface PromptScoreRepository : JpaRepository<PromptScore, UUID> {
   /**
-   * Returns the score row for the given narrative snapshot, or null when none exists. There is at
-   * most one row per snapshot in the normal flow ([PromptScoreRecorder] writes exactly one per
-   * run). The fallback prompt path skips the write, so a snapshot generated under it has no row —
-   * the PR5 thumbs endpoint surfaces that as a 404.
+   * Returns the score row for the given narrative snapshot, or null when none exists. Uniqueness is
+   * DB-enforced since V3 (partial unique index on `snapshot_id` WHERE NOT NULL — see
+   * `V3__prompt_score_snapshot_unique.sql`) ; before V3 it was an implicit invariant that the
+   * `setThumbs` upsert path could theoretically violate under concurrent PATCHes. The fallback
+   * prompt path skips the write, so a snapshot generated under it has no row — the PR5 thumbs
+   * endpoint creates it on demand or surfaces a 404 when the snapshot itself is missing.
    */
   fun findFirstBySnapshotId(snapshotId: UUID): PromptScore?
 }

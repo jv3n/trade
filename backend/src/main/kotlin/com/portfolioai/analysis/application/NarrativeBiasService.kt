@@ -108,20 +108,22 @@ class NarrativeBiasService(
       return Sentiment.entries.map { emptyCalibrationBucket(it) }
     }
 
-    // Fetch the chart once per unique symbol — Caffeine cache hits for symbols the user has
-    // already opened in their dossier mean this is essentially free in practice.
+    // Fetch the chart once per unique symbol. On a warm Caffeine cache (symbols the user has
+    // already opened in their dossier) the loop is essentially free ; on a cold cache (~10 distinct
+    // symbols × 1-2s each upstream = 10-20s sequential) we fan out in parallel via the FJ common
+    // pool. Trade-off acknowledged : blocking HTTP on the FJ common pool is an anti-pattern at
+    // scale because it can starve other parallel ops, but in this single-user app no other
+    // workload contends for the pool. If Phase 7 portfolio-aggregation ever calls this from a
+    // request thread under load, swap to a dedicated `Executors.newFixedThreadPool` +
+    // `supplyAsync`.
     val barsBySymbol: Map<String, List<OhlcBar>> =
       rawSnapshots
         .map { it.symbol }
         .distinct()
-        .associateWith { symbol ->
-          try {
-            chartClient.fetchChart(symbol, range = "1y", interval = "1d").bars
-          } catch (e: UpstreamUnavailableException) {
-            log.warn("Skipping calibration deltas for symbol={} — upstream unavailable", symbol, e)
-            emptyList()
-          }
-        }
+        .parallelStream()
+        .map { symbol -> symbol to fetchBarsOrEmpty(symbol) }
+        .toList()
+        .toMap()
 
     // For each snapshot, compute its three deltas (each may be null if window not elapsed or
     // upstream missing), then group by sentiment and average the non-null contributions.
@@ -163,6 +165,16 @@ class NarrativeBiasService(
       avgDelta1w = null,
       avgDelta1m = null,
     )
+
+  // Extracted from the parallel fan-out so the try/catch stays readable. Each symbol degrades
+  // independently — an upstream blip on AAPL doesn't disqualify TSLA's deltas from the average.
+  private fun fetchBarsOrEmpty(symbol: String): List<OhlcBar> =
+    try {
+      chartClient.fetchChart(symbol, range = "1y", interval = "1d").bars
+    } catch (e: UpstreamUnavailableException) {
+      log.warn("Skipping calibration deltas for symbol={} — upstream unavailable", symbol, e)
+      emptyList()
+    }
 
   // ---------------------------------------------------------------------- topic coverage
 
