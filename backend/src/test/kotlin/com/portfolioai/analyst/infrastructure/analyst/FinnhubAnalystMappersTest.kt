@@ -150,6 +150,6 @@ class FinnhubAnalystMappersTest {
 
     assertNotNull(out.priceTarget)
     assertEquals(BigDecimal("280.00"), out.priceTarget!!.high)
-    assertEquals(41, out.priceTarget!!.numberOfAnalysts)
+    assertEquals(41, out.priceTarget.numberOfAnalysts)
   }
 }

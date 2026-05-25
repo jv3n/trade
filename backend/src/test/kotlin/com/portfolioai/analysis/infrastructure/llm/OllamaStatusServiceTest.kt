@@ -217,7 +217,7 @@ class OllamaStatusServiceTest {
       out.errorMessage!!.contains("not pulled locally"),
       "expected hint about pull, got '${out.errorMessage}'",
     )
-    assertTrue(out.errorMessage!!.contains("mistral:7b"))
+    assertTrue(out.errorMessage.contains("mistral:7b"))
   }
 
   @Test
@@ -324,7 +324,7 @@ class OllamaStatusServiceTest {
       "expected registry hint in error message, got '${out.errorMessage}'",
     )
     assertTrue(
-      out.errorMessage!!.contains("definitely-not-a-real-model"),
+      out.errorMessage.contains("definitely-not-a-real-model"),
       "expected model name in error message, got '${out.errorMessage}'",
     )
   }
@@ -401,7 +401,7 @@ class OllamaStatusServiceTest {
       out.errorMessage!!.contains("not pulled locally"),
       "expected hint about not-pulled, got '${out.errorMessage}'",
     )
-    assertTrue(out.errorMessage!!.contains("never-pulled:7b"))
+    assertTrue(out.errorMessage.contains("never-pulled:7b"))
   }
 
   @Test

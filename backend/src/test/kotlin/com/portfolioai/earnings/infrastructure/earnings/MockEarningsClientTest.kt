@@ -100,7 +100,7 @@ class MockEarningsClientTest {
     assertNotNull(out.nextEarningsDate)
     assertTrue(
       out.nextEarningsDate!!.isAfter(today.minusDays(1)) &&
-        out.nextEarningsDate!!.isBefore(maxFuture),
+        out.nextEarningsDate.isBefore(maxFuture),
       "expected ${out.nextEarningsDate} to fall within (today, today+60d]",
     )
   }
