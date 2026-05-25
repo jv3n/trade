@@ -4,8 +4,10 @@ import com.portfolioai.analyst.domain.AnalystConsensus
 import java.math.BigDecimal
 import java.time.LocalDate
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -151,5 +153,52 @@ class FinnhubAnalystMappersTest {
     assertNotNull(out.priceTarget)
     assertEquals(BigDecimal("280.00"), out.priceTarget!!.high)
     assertEquals(41, out.priceTarget.numberOfAnalysts)
+    // Invariant: a successful fetch always reads `unavailable=false` on the snapshot, regardless
+    // of what value the caller forwarded.
+    assertFalse(out.priceTargetUnavailable)
+  }
+
+  @Test
+  fun `propagates priceTargetUnavailable when the upstream call failed transiently`() {
+    // The adapter passes `priceTargetUnavailable=true` when the price-target call hit a 5xx or a
+    // network blip. With no payload to map, the mapper must surface the flag verbatim so the
+    // front can render « temporairement indisponible » instead of « pas d'objectif ».
+    val out =
+      toAnalystSnapshot(
+        "AAPL",
+        listOf(rec("2026-04-01", buy = 5)),
+        priceTarget = null,
+        priceTargetUnavailable = true,
+      )
+
+    assertNull(out.priceTarget)
+    assertTrue(out.priceTargetUnavailable)
+  }
+
+  @Test
+  fun `clears priceTargetUnavailable when a real target is mapped, even if the caller forwarded true`() {
+    // Defensive invariant: the flag is only meaningful when there's no target to show. If a real
+    // target made it through (somehow — the adapter wouldn't, but a future caller might), the
+    // mapper trumps the caller and reports `false`. The UI never needs to inspect both fields.
+    val target =
+      FinnhubPriceTarget(
+        symbol = "AAPL",
+        targetHigh = BigDecimal("280.00"),
+        targetLow = BigDecimal("175.00"),
+        targetMean = BigDecimal("235.50"),
+        targetMedian = BigDecimal("240.00"),
+        numberOfAnalysts = 41,
+      )
+
+    val out =
+      toAnalystSnapshot(
+        "AAPL",
+        listOf(rec("2026-04-01", buy = 5)),
+        priceTarget = target,
+        priceTargetUnavailable = true,
+      )
+
+    assertNotNull(out.priceTarget)
+    assertFalse(out.priceTargetUnavailable)
   }
 }

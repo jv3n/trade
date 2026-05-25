@@ -60,8 +60,13 @@ class FinnhubAnalystClient(
     log.info("Fetching Finnhub analyst recommendations symbol={}", upper)
 
     val recommendations = fetchRecommendations(upper)
-    val priceTarget = fetchPriceTargetOrNull(upper)
-    return toAnalystSnapshot(upper, recommendations, priceTarget)
+    val priceTargetFetch = fetchPriceTarget(upper)
+    return toAnalystSnapshot(
+      symbol = upper,
+      recommendations = recommendations,
+      priceTarget = priceTargetFetch.payload,
+      priceTargetUnavailable = priceTargetFetch.unavailable,
+    )
   }
 
   private fun fetchRecommendations(upper: String): List<FinnhubRecommendationItem> {
@@ -103,20 +108,22 @@ class FinnhubAnalystClient(
    *
    * **Distinct cause channels** : each error path below has its own `log.warn` line — `HTTP $code`
    * for 4xx (typically 401/403 on the free tier), `upstream HTTP $code` for 5xx, and `unreachable`
-   * for `ResourceAccessException` (network / timeout). Operators can `grep` Tilt logs to tell « no
-   * target available from Finnhub » apart from a transient blip. **Limitation known** : the return
-   * value is a flat `null` regardless of cause, so the frontend renders the same « pas d'objectif »
-   * label in both cases. A v2 enhancement would surface the distinction as a DTO field
-   * (`priceTargetUnavailable: Boolean`) or as a metric counter ; deferred until the friction is
-   * observed in practice (cf. ticket dette « Coutures post-livraison analyst — résidus » #1).
+   * for `ResourceAccessException` (network / timeout). The return value also carries an
+   * [PriceTargetFetch.unavailable] flag that splits the two semantic cases for the UI :
+   * - 4xx (paid-tier gate, unknown symbol) → `unavailable = false` ; a retry won't help, render «
+   *   pas d'objectif ».
+   * - 5xx / network → `unavailable = true` ; the upstream had a transient blip, render «
+   *   temporairement indisponible » so the user knows a retry is meaningful.
    */
-  private fun fetchPriceTargetOrNull(upper: String): FinnhubPriceTarget? {
+  private fun fetchPriceTarget(upper: String): PriceTargetFetch {
     return try {
-      rest
-        .get()
-        .uri("$baseUrl/stock/price-target?symbol={symbol}&token={token}", upper, apiKey)
-        .retrieve()
-        .body(FinnhubPriceTarget::class.java)
+      val body =
+        rest
+          .get()
+          .uri("$baseUrl/stock/price-target?symbol={symbol}&token={token}", upper, apiKey)
+          .retrieve()
+          .body(FinnhubPriceTarget::class.java)
+      PriceTargetFetch(payload = body, unavailable = false)
     } catch (e: HttpClientErrorException) {
       // SLF4J treats a trailing Throwable as the cause and prints its stack trace. Swallowing
       // only the status leaves an opaque "401" in the logs ; passing the exception preserves the
@@ -127,24 +134,30 @@ class FinnhubAnalystClient(
         upper,
         e,
       )
-      null
+      PriceTargetFetch(payload = null, unavailable = false)
     } catch (e: HttpServerErrorException) {
       log.warn(
-        "Finnhub price-target upstream {} symbol={} — surfacing snapshot without target",
+        "Finnhub price-target upstream {} symbol={} — surfacing snapshot as temporarily unavailable",
         e.statusCode,
         upper,
         e,
       )
-      null
+      PriceTargetFetch(payload = null, unavailable = true)
     } catch (e: ResourceAccessException) {
       log.warn(
-        "Finnhub price-target unreachable symbol={} — surfacing snapshot without target",
+        "Finnhub price-target unreachable symbol={} — surfacing snapshot as temporarily unavailable",
         upper,
         e,
       )
-      null
+      PriceTargetFetch(payload = null, unavailable = true)
     }
   }
+
+  /**
+   * Internal carrier for the price-target fetch — pairs the optional payload with a transient-error
+   * flag so the mapper can populate [AnalystSnapshot.priceTargetUnavailable] without a second pass.
+   */
+  private data class PriceTargetFetch(val payload: FinnhubPriceTarget?, val unavailable: Boolean)
 
   private fun requireApiKey() {
     if (apiKey.isBlank()) {

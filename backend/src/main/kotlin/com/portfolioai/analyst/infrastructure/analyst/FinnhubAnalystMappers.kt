@@ -30,6 +30,7 @@ fun toAnalystSnapshot(
   symbol: String,
   recommendations: List<FinnhubRecommendationItem>,
   priceTarget: FinnhubPriceTarget?,
+  priceTargetUnavailable: Boolean = false,
 ): AnalystSnapshot {
   if (recommendations.isEmpty()) {
     throw NoSuchElementException("No analyst coverage for $symbol")
@@ -50,6 +51,7 @@ fun toAnalystSnapshot(
         strongSell = it.strongSell,
       )
     }
+  val target = priceTarget?.toDomainOrNull()
   return AnalystSnapshot(
     symbol = symbol.uppercase(),
     asOf = LocalDate.parse(head.period),
@@ -60,7 +62,10 @@ fun toAnalystSnapshot(
     strongSell = head.strongSell,
     totalAnalysts = total,
     consensus = deriveConsensus(head.strongBuy, head.buy, head.hold, head.sell, head.strongSell),
-    priceTarget = priceTarget?.toDomainOrNull(),
+    priceTarget = target,
+    // Invariant: only meaningful when the target is null. A successful fetch always reads
+    // `unavailable=false` regardless of what the caller passed.
+    priceTargetUnavailable = target == null && priceTargetUnavailable,
     history = history,
   )
 }

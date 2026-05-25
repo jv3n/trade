@@ -19,6 +19,13 @@ data class AnalystSnapshotDto(
   /** `BUY` / `HOLD` / `SELL` / `MIXED` — front maps each to a coloured chip. */
   val consensus: String,
   val priceTarget: PriceTargetDto?,
+  /**
+   * `true` when the upstream price-target call failed transiently (5xx, network / timeout) — front
+   * renders « temporairement indisponible » so the user knows a retry is meaningful. `false`
+   * (default) when [priceTarget] is non-null OR the upstream legitimately returned « no target »
+   * (200 empty shell or 4xx paid-tier gate). Always `false` when [priceTarget] is non-null.
+   */
+  val priceTargetUnavailable: Boolean,
   val history: List<MonthlyRecommendationDto>,
 )
 
@@ -51,6 +58,7 @@ fun AnalystSnapshot.toDto(): AnalystSnapshotDto =
     totalAnalysts = totalAnalysts,
     consensus = consensus.name,
     priceTarget = priceTarget?.toDto(),
+    priceTargetUnavailable = priceTargetUnavailable,
     history = history.map { it.toDto() },
   )
 

@@ -18,6 +18,13 @@ import java.time.LocalDate
  * tier on certain accounts (we observed 401/403 in practice for some symbols). When the call fails
  * we keep the recommendation breakdown and surface a `null` target rather than failing the whole
  * fetch. The front degrades the layout gracefully.
+ *
+ * **[priceTargetUnavailable] flag** — disambiguates the two "null target" cases for the UI :
+ * `false` (default) means the upstream call succeeded but the provider legitimately has no target
+ * for this symbol (200 with empty shell, or 4xx like a paid-tier gate that won't recover on retry)
+ * — front renders « pas d'objectif ». `true` means the call failed with a transient error (5xx,
+ * network / timeout) — front renders « temporairement indisponible » so the user knows a retry is
+ * meaningful. Always `false` when [priceTarget] is non-null.
  */
 data class AnalystSnapshot(
   val symbol: String,
@@ -35,6 +42,8 @@ data class AnalystSnapshot(
   /** Derived label : majority direction read off the breakdown — see [AnalystConsensus]. */
   val consensus: AnalystConsensus,
   val priceTarget: PriceTarget?,
+  /** See class-level KDoc — transient vs permanent disambiguation. Defaults to `false`. */
+  val priceTargetUnavailable: Boolean,
   /**
    * Up to the last 6 months of recommendation snapshots, **oldest first** for a natural left-to-
    * right trend display. The first element is the oldest, the last element matches the head-of-

@@ -938,8 +938,12 @@
                   </span>
                 </div>
 
-                <!-- 12-month price target (optional — Finnhub /price-target may 401 on free tier ;
-               the line is hidden when the backend returned null). -->
+                <!-- 12-month price target — three rendering paths :
+                  - target available → numbers panel below ;
+                  - target absent + `priceTargetUnavailable=true` → transient hint (5xx / network
+                    failure on the upstream optional endpoint), the user knows a retry is meaningful ;
+                  - target absent + `priceTargetUnavailable=false` → silent (no target published, or
+                    paid-tier gate). The breakdown panel above stays useful on its own. -->
                 @if (a.priceTarget; as pt) {
                   <div class="analyst-target">
                     <div class="analyst-target-row">
@@ -961,6 +965,12 @@
                         'ticker.fundamentals.analyst.target.basedOn'
                           | translate: { count: pt.numberOfAnalysts }
                       }}
+                    </span>
+                  </div>
+                } @else if (a.priceTargetUnavailable) {
+                  <div class="analyst-target analyst-target-unavailable">
+                    <span class="analyst-target-meta">
+                      {{ 'ticker.fundamentals.analyst.target.unavailable' | translate }}
                     </span>
                   </div>
                 }

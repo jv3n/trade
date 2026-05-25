@@ -123,6 +123,7 @@ class AnalystControllerTest {
           median = BigDecimal("240.00"),
           numberOfAnalysts = 41,
         ),
+      priceTargetUnavailable = false,
       history =
         listOf(
           MonthlyRecommendation(

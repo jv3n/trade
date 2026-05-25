@@ -1403,6 +1403,7 @@ describe('TickerPage', () => {
         median: 240,
         numberOfAnalysts: 41,
       },
+      priceTargetUnavailable: false,
       history: [
         { period: '2025-11-01', strongBuy: 4, buy: 5, hold: 5, sell: 1, strongSell: 1 },
         { period: '2025-12-01', strongBuy: 5, buy: 5, hold: 4, sell: 1, strongSell: 1 },

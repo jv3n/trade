@@ -91,6 +91,11 @@ class MockAnalystClient : AnalystRecommendationClient {
       totalAnalysts = totalAnalysts,
       consensus = deriveConsensus(head.strongBuy, head.buy, head.hold, head.sell, head.strongSell),
       priceTarget = priceTarget,
+      // The mock never simulates an upstream blip — `NOTARGET` reproduces the "no target" path
+      // (200 empty shell), not the transient-error path. A future test hook could add a
+      // `TARGETBLIP` reserved symbol if we ever need to exercise the unavailable=true branch in
+      // local dev without spinning up MockWebServer.
+      priceTargetUnavailable = false,
       history = history,
     )
   }

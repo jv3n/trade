@@ -1081,6 +1081,12 @@ $sidenav-width-collapsed: 48px;
   color: var(--color-text-dim);
 }
 
+// Transient-error variant — same panel chrome as the regular target, italic to signal "not the
+// authoritative reading, the upstream blipped". The breakdown panel above remains the useful read.
+.analyst-target-unavailable .analyst-target-meta {
+  font-style: italic;
+}
+
 .analyst-footer {
   font-size: 0.72rem;
   color: var(--color-text-dim);

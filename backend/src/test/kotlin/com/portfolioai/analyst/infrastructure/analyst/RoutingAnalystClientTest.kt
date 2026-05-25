@@ -40,6 +40,7 @@ class RoutingAnalystClientTest {
       totalAnalysts = 16,
       consensus = AnalystConsensus.BUY,
       priceTarget = null,
+      priceTargetUnavailable = false,
       history = emptyList(),
     )
 

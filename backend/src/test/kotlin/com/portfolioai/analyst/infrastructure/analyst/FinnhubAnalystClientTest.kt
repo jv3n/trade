@@ -8,6 +8,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -142,20 +143,33 @@ class FinnhubAnalystClientTest {
     val out = client.fetch("AAPL")
 
     assertNull(out.priceTarget)
+    // 4xx is treated as permanent (paid-tier gate, unknown symbol) — front renders « pas
+    // d'objectif », no retry hint. Distinct from 5xx / network where the flag flips to `true`.
+    assertFalse(out.priceTargetUnavailable)
     assertEquals(2, out.history.size) // recommendations still present
     assertEquals(7, out.strongBuy)
   }
 
   @Test
-  fun `swallows a 5xx on the price-target endpoint and surfaces a snapshot without target`() {
-    // Server-side errors on the optional endpoint are also absorbed — better degrade than fail.
-    // Logged at warn so the operator notices but the user only sees a hidden price-target line.
+  fun `swallows a 5xx on the price-target endpoint and flags it as transiently unavailable`() {
+    // Server-side errors on the optional endpoint are absorbed — better degrade than fail. The
+    // `priceTargetUnavailable=true` flag lets the front render « temporairement indisponible » so
+    // the user knows a retry on the next refresh is meaningful. Logged at warn so the operator
+    // notices.
+    //
+    // **Not tested separately** : the `ResourceAccessException` branch (network / timeout) is the
+    // 3rd path that also sets `unavailable=true`, but simulating a network failure
+    // deterministically
+    // via MockWebServer is fragile (SocketPolicy.DISCONNECT_AT_START interacts poorly with JDK
+    // HttpClient connection pooling). The catch block is 4 lines mirroring this one — no logic to
+    // protect, same outcome on the DTO. Maps the same way through `toAnalystSnapshot`.
     server.enqueue(jsonOk(RECOMMENDATIONS_NEWEST_FIRST))
     server.enqueue(MockResponse().setResponseCode(503).setBody("upstream blip"))
 
     val out = client.fetch("AAPL")
 
     assertNull(out.priceTarget)
+    assertTrue(out.priceTargetUnavailable)
     assertEquals(2, out.history.size)
   }
 

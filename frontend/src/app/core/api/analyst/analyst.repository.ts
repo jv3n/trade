@@ -5,8 +5,14 @@ import { Observable } from 'rxjs';
  * agnostic on this side — today the backend hits Finnhub but the front sees a uniform shape.
  *
  * `priceTarget` is **explicitly null** (Jackson `Include.ALWAYS`) when the upstream `/price-target`
- * endpoint is unavailable for the symbol — distinct from "loading" or "error". The component
- * branches on `null` to hide the target line and keep the rest of the panel rendered.
+ * endpoint returned no data — distinct from "loading" or "error". The component branches on `null`
+ * to hide the target line and keep the rest of the panel rendered.
+ *
+ * `priceTargetUnavailable` disambiguates the two "null target" cases : `true` when the upstream
+ * call failed transiently (5xx, network / timeout) — UI renders « temporairement indisponible »
+ * with a retry hint. `false` when the call succeeded but no target was published, OR when a 4xx
+ * gates the endpoint (paid plan, unknown symbol) — UI renders « pas d'objectif ». Always `false`
+ * when `priceTarget` is non-null.
  */
 export interface AnalystSnapshot {
   symbol: string;
@@ -22,6 +28,7 @@ export interface AnalystSnapshot {
   /** `BUY` / `HOLD` / `SELL` / `MIXED` — UI maps each to a coloured chip. */
   consensus: AnalystConsensus;
   priceTarget: AnalystPriceTarget | null;
+  priceTargetUnavailable: boolean;
   /** Up to 6 monthly snapshots, **oldest first** for natural left-to-right trend rendering. */
   history: MonthlyRecommendation[];
 }
