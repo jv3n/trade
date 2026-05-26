@@ -28,7 +28,7 @@ trade/
 │   ├── core/        # api/<bucket> (HTTP ports + adapters), local/<bucket> (browser persistence),
 │   │                # app-state/ (UI signal services), http/ (interceptors), router/ (guards), providers.ts
 │   ├── shared/      # cross-cutting helpers (no state, no DI)
-│   └── features/    # primary adapters — login, error, dashboard, ticker, import, suivi, settings, observability
+│   └── features/    # primary adapters — login, error, dashboard, ticker, import, suivi, settings, observability, radar
 ├── backend/src/main/kotlin/com/portfolioai/
 │   ├── auth/        # Phase 4 — OAuth2/OIDC + roles ADMIN/USER + local-no-auth profile
 │   ├── market/      # MarketChartClient port + TwelveData/Mock + IndicatorCalculator (pure Kotlin)
@@ -39,6 +39,7 @@ trade/
 │   ├── analyst/     # Phase 2 — Finnhub-backed analyst recommendations
 │   ├── earnings/    # Phase 2 — Finnhub-backed earnings (4 last Q + next date)
 │   ├── config/      # Phase 2 — runtime-editable settings + routing clients
+│   ├── screener/    # Phase 6 — market radar (Mock adapter v1 ; real provider TBD)
 │   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
 ├── docs/
 │   ├── metier/      # vision.md, fonctionnalites.md

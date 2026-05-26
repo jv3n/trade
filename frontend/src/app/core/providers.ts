@@ -28,8 +28,12 @@ import { NarrativeBiasRepository } from './api/analysis/narrative-bias.repositor
 import { HttpNarrativeBiasRepository } from './api/analysis/adapters/narrative-bias.http';
 import { AuthRepository } from './api/auth/auth.repository';
 import { HttpAuthRepository } from './api/auth/adapters/auth.http';
+import { ScreenerRepository } from './api/screener/screener.repository';
+import { HttpScreenerRepository } from './api/screener/adapters/screener.http';
 import { AnnotationRepository } from './local/annotation/annotation.repository';
 import { LocalStorageAnnotationRepository } from './local/annotation/adapters/annotation.local';
+import { ScreenerFilterRepository } from './local/screener-filter/screener-filter.repository';
+import { LocalStorageScreenerFilterRepository } from './local/screener-filter/adapters/screener-filter.local';
 
 /**
  * Wires every port (`*.repository.ts`) to its default adapter. Aligned on the
@@ -46,6 +50,8 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: ConfigRepository, useClass: HttpConfigRepository },
     { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
     { provide: AnalystRepository, useClass: HttpAnalystRepository },
+    { provide: ScreenerRepository, useClass: HttpScreenerRepository },
+    { provide: ScreenerFilterRepository, useClass: LocalStorageScreenerFilterRepository },
     { provide: EarningsRepository, useClass: HttpEarningsRepository },
     { provide: OllamaStatusRepository, useClass: HttpOllamaStatusRepository },
     { provide: PromptRepository, useClass: HttpPromptRepository },
