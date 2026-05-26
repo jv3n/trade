@@ -20,6 +20,7 @@
     "dashboard": "Dashboard",
     "import": "Import",
     "suivi": "Suivi",
+    "radar": "Radar",
     "observability": "Observabilité"
   },
   "header": {
@@ -811,6 +812,33 @@
     },
     "errors": {
       "load": "Échec du chargement des agrégats. Réessayez."
+    }
+  },
+  "radar": {
+    "title": "Radar de marché",
+    "subtitle": "Tickers mid-cap Nasdaq qui montrent un mouvement anormal — gap d'ouverture et volume inhabituels. Signal d'investigation, pas une recommandation.",
+    "empty": "Aucun mouvement anormal détecté avec ces filtres.",
+    "errors": {
+      "fetch": "Impossible de charger le radar. Le fournisseur est peut-être indisponible — réessayez."
+    },
+    "columns": {
+      "symbol": "Symbole",
+      "name": "Nom",
+      "price": "Prix",
+      "gapPct": "Gap %",
+      "volumeRatio": "Volume / moy. 30j",
+      "marketCap": "Capitalisation",
+      "sector": "Secteur"
+    },
+    "filter": {
+      "title": "Filtres",
+      "gapPctMin": "Gap minimum",
+      "volumeRatioMin": "Volume × minimum",
+      "marketCapMin": "Cap. minimum",
+      "marketCapMax": "Cap. maximum",
+      "sector": "Secteur",
+      "sectorAny": "Tous les secteurs",
+      "reset": "Réinitialiser"
     }
   }
 }

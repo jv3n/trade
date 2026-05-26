@@ -31,6 +31,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/suivi/suivi').then((m) => m.Suivi),
   },
   {
+    path: 'radar',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/radar/radar').then((m) => m.RadarPage),
+  },
+  {
     path: 'ticker/:symbol',
     canActivate: [authGuard],
     loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),

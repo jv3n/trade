@@ -20,6 +20,7 @@
     "dashboard": "Dashboard",
     "import": "Import",
     "suivi": "Tracking",
+    "radar": "Radar",
     "observability": "Observability"
   },
   "header": {
@@ -811,6 +812,33 @@
     },
     "errors": {
       "load": "Failed to load the aggregates. Try again."
+    }
+  },
+  "radar": {
+    "title": "Market radar",
+    "subtitle": "Mid-cap Nasdaq tickers showing an abnormal move — unusual opening gap and volume. An investigation signal, not a recommendation.",
+    "empty": "No abnormal move detected with these filters.",
+    "errors": {
+      "fetch": "Could not load the radar. The provider may be unavailable — please retry."
+    },
+    "columns": {
+      "symbol": "Symbol",
+      "name": "Name",
+      "price": "Price",
+      "gapPct": "Gap %",
+      "volumeRatio": "Volume / 30d avg",
+      "marketCap": "Market cap",
+      "sector": "Sector"
+    },
+    "filter": {
+      "title": "Filters",
+      "gapPctMin": "Min gap",
+      "volumeRatioMin": "Min volume ×",
+      "marketCapMin": "Min market cap",
+      "marketCapMax": "Max market cap",
+      "sector": "Sector",
+      "sectorAny": "Any sector",
+      "reset": "Reset"
     }
   }
 }

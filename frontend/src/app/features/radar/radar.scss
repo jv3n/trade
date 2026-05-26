@@ -1,0 +1,98 @@
+.radar-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  align-items: start;
+}
+
+.radar-sidebar {
+  position: sticky;
+  top: 1rem;
+  background: var(--mat-app-surface-container);
+  border-radius: 8px;
+}
+
+.radar-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.radar-header h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+}
+
+.radar-subtitle {
+  margin: 0;
+  color: var(--mat-app-on-surface-variant);
+  font-size: 0.95rem;
+}
+
+.radar-loading,
+.radar-error,
+.radar-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.radar-error {
+  background: var(--mat-app-error-container);
+  color: var(--mat-app-on-error-container);
+}
+
+.radar-empty {
+  flex-direction: column;
+  padding: 2rem;
+  color: var(--mat-app-on-surface-variant);
+  text-align: center;
+
+  mat-icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+.radar-table {
+  width: 100%;
+  background: var(--mat-app-surface);
+}
+
+.num-col {
+  text-align: right;
+}
+
+.gap-up {
+  color: var(--mat-sys-tertiary, #1b873e);
+  font-weight: 500;
+}
+
+.gap-down {
+  color: var(--mat-sys-error, #c62828);
+  font-weight: 500;
+}
+
+.symbol-link {
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--mat-app-primary);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 900px) {
+  .radar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .radar-sidebar {
+    position: static;
+  }
+}

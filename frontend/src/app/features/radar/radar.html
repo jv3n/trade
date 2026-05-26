@@ -1,0 +1,105 @@
+<div class="radar-layout">
+  <aside class="radar-sidebar">
+    <app-radar-filter-panel
+      [initial]="filter()"
+      (filterChanged)="onFilterChanged($event)"
+      (resetRequested)="onResetRequested()"
+    />
+  </aside>
+
+  <section class="radar-main">
+    <header class="radar-header">
+      <h1>{{ 'radar.title' | translate }}</h1>
+      <p class="radar-subtitle">{{ 'radar.subtitle' | translate }}</p>
+    </header>
+
+    @if (loading()) {
+      <div class="radar-loading">
+        <mat-spinner diameter="32" />
+        <span>{{ 'common.loading' | translate }}</span>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="radar-error" role="alert">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    @if (isEmpty()) {
+      <div class="radar-empty">
+        <mat-icon>radar</mat-icon>
+        <p>{{ 'radar.empty' | translate }}</p>
+      </div>
+    }
+
+    @if (!loading() && !error() && movers().length > 0) {
+      <table mat-table [dataSource]="movers()" class="radar-table">
+        <ng-container matColumnDef="symbol">
+          <th mat-header-cell *matHeaderCellDef>{{ 'radar.columns.symbol' | translate }}</th>
+          <td mat-cell *matCellDef="let row">
+            <a [routerLink]="['/ticker', row.symbol]" class="symbol-link">{{ row.symbol }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>{{ 'radar.columns.name' | translate }}</th>
+          <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef class="num-col">
+            {{ 'radar.columns.price' | translate }}
+          </th>
+          <td mat-cell *matCellDef="let row" class="num-col">
+            {{ row.price | number: '1.2-2' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="gapPct">
+          <th mat-header-cell *matHeaderCellDef class="num-col">
+            {{ 'radar.columns.gapPct' | translate }}
+          </th>
+          <td
+            mat-cell
+            *matCellDef="let row"
+            class="num-col"
+            [class.gap-up]="row.gapPct > 0"
+            [class.gap-down]="row.gapPct < 0"
+          >
+            {{ row.gapPct | number: '1.2-2' }}%
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="volumeRatio">
+          <th mat-header-cell *matHeaderCellDef class="num-col">
+            {{ 'radar.columns.volumeRatio' | translate }}
+          </th>
+          <td mat-cell *matCellDef="let row" class="num-col">
+            {{ row.volumeRatio | number: '1.2-2' }}×
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="marketCapUsd">
+          <th mat-header-cell *matHeaderCellDef class="num-col">
+            {{ 'radar.columns.marketCap' | translate }}
+          </th>
+          <td mat-cell *matCellDef="let row" class="num-col">
+            {{ row.marketCapUsd / 1000000000 | number: '1.2-2' }}B
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="sector">
+          <th mat-header-cell *matHeaderCellDef>{{ 'radar.columns.sector' | translate }}</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.sector ?? ('common.noData' | translate) }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </section>
+</div>

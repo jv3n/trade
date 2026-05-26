@@ -1,0 +1,44 @@
+@if (form) {
+  <form [formGroup]="form" class="filter-form">
+    <h2 class="filter-title">{{ 'radar.filter.title' | translate }}</h2>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'radar.filter.gapPctMin' | translate }}</mat-label>
+      <input matInput type="number" step="0.5" formControlName="gapPctMin" />
+      <span matTextSuffix>%</span>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'radar.filter.volumeRatioMin' | translate }}</mat-label>
+      <input matInput type="number" step="0.5" min="0" formControlName="volumeRatioMin" />
+      <span matTextSuffix>×</span>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'radar.filter.marketCapMin' | translate }}</mat-label>
+      <input matInput type="number" step="100000000" formControlName="marketCapMin" />
+      <span matTextSuffix>$</span>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'radar.filter.marketCapMax' | translate }}</mat-label>
+      <input matInput type="number" step="100000000" formControlName="marketCapMax" />
+      <span matTextSuffix>$</span>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'radar.filter.sector' | translate }}</mat-label>
+      <mat-select formControlName="sector">
+        <mat-option value="">{{ 'radar.filter.sectorAny' | translate }}</mat-option>
+        @for (s of sectorOptions; track s) {
+          <mat-option [value]="s">{{ s }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-stroked-button type="button" (click)="reset()">
+      <mat-icon>restart_alt</mat-icon>
+      {{ 'radar.filter.reset' | translate }}
+    </button>
+  </form>
+}
