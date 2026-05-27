@@ -226,6 +226,67 @@
             </section>
           }
 
+          <!-- Screener (market radar) provider -->
+          @if (screenerProvider(); as entry) {
+            <section class="config-card">
+              <div class="card-header">
+                <h3>{{ 'settings.configurationPage.screenerProvider.title' | translate }}</h3>
+                @if (entry.isOverridden) {
+                  <span class="badge override">{{
+                    'settings.configurationPage.statusOverridden' | translate
+                  }}</span>
+                } @else {
+                  <span class="badge default">{{
+                    'settings.configurationPage.statusDefault' | translate
+                  }}</span>
+                }
+              </div>
+              <p class="description">
+                {{ 'settings.configurationPage.screenerProvider.description' | translate }}
+              </p>
+              <mat-button-toggle-group
+                [value]="entry.currentValue"
+                (change)="selectProvider(entry.key, $event.value)"
+                [disabled]="isSaving(entry.key)"
+              >
+                @for (option of entry.allowedValues; track option.value) {
+                  <mat-button-toggle
+                    [value]="option.value"
+                    [disabled]="isSaving(entry.key) || !!option.disabledReason"
+                    [matTooltip]="
+                      option.disabledReason
+                        ? ('settings.configurationPage.providerDisabled.missingKey'
+                          | translate: { key: option.disabledReason })
+                        : null
+                    "
+                  >
+                    {{ 'settings.configurationPage.providers.' + option.value | translate }}
+                  </mat-button-toggle>
+                }
+              </mat-button-toggle-group>
+
+              @if (saveErrors()[entry.key]; as err) {
+                <div class="error-banner inline">
+                  <mat-icon>error_outline</mat-icon>
+                  {{ err }}
+                </div>
+              }
+
+              @if (entry.isOverridden) {
+                <div class="card-actions">
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="reset(entry.key)"
+                    [disabled]="isSaving(entry.key)"
+                  >
+                    {{ 'settings.configurationPage.actions.reset' | translate }}
+                  </button>
+                </div>
+              }
+            </section>
+          }
+
           <!-- Earnings provider -->
           @if (earningsProvider(); as entry) {
             <section class="config-card">
@@ -413,6 +474,190 @@
                 <mat-label>{{
                   'settings.configurationPage.finnhub.inputLabel' | translate
                 }}</mat-label>
+                <input
+                  matInput
+                  type="password"
+                  autocomplete="new-password"
+                  [value]="editValue(entry.key)"
+                  (input)="onInput(entry.key, $any($event.target).value)"
+                  [placeholder]="
+                    entry.hasValue
+                      ? ('settings.configurationPage.placeholderMasked' | translate)
+                      : ('settings.configurationPage.placeholderEmpty' | translate)
+                  "
+                />
+              </mat-form-field>
+
+              @if (testResults()[entry.key]; as result) {
+                <div class="test-result" [class.ok]="result.ok" [class.ko]="!result.ok">
+                  <mat-icon>{{ result.ok ? 'check_circle' : 'error_outline' }}</mat-icon>
+                  <span>{{ result.message }}</span>
+                </div>
+              }
+
+              @if (saveErrors()[entry.key]; as err) {
+                <div class="error-banner inline">
+                  <mat-icon>error_outline</mat-icon>
+                  {{ err }}
+                </div>
+              }
+
+              <div class="card-actions">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="test(entry.key)"
+                  [disabled]="!editValue(entry.key) || isTesting(entry.key)"
+                >
+                  @if (isTesting(entry.key)) {
+                    <mat-spinner diameter="16"></mat-spinner>
+                  }
+                  {{ 'settings.configurationPage.actions.test' | translate }}
+                </button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="save(entry.key)"
+                  [disabled]="!editValue(entry.key) || isSaving(entry.key)"
+                >
+                  @if (isSaving(entry.key)) {
+                    <mat-spinner diameter="16"></mat-spinner>
+                  }
+                  {{ 'settings.configurationPage.actions.save' | translate }}
+                </button>
+                @if (entry.isOverridden) {
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="reset(entry.key)"
+                    [disabled]="isSaving(entry.key)"
+                  >
+                    {{ 'settings.configurationPage.actions.reset' | translate }}
+                  </button>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- Polygon (Massive) API key -->
+          @if (polygon(); as entry) {
+            <section class="config-card">
+              <div class="card-header">
+                <h3>{{ 'settings.configurationPage.polygon.title' | translate }}</h3>
+                <span class="badge" [class.set]="entry.hasValue" [class.unset]="!entry.hasValue">
+                  {{
+                    (entry.hasValue
+                      ? 'settings.configurationPage.statusSet'
+                      : 'settings.configurationPage.statusUnset'
+                    ) | translate
+                  }}
+                </span>
+                @if (entry.isOverridden) {
+                  <span class="badge override">{{
+                    'settings.configurationPage.statusOverridden' | translate
+                  }}</span>
+                }
+              </div>
+              <p
+                class="description"
+                [innerHTML]="'settings.configurationPage.polygon.description' | translate"
+              ></p>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{
+                  'settings.configurationPage.polygon.inputLabel' | translate
+                }}</mat-label>
+                <input
+                  matInput
+                  type="password"
+                  autocomplete="new-password"
+                  [value]="editValue(entry.key)"
+                  (input)="onInput(entry.key, $any($event.target).value)"
+                  [placeholder]="
+                    entry.hasValue
+                      ? ('settings.configurationPage.placeholderMasked' | translate)
+                      : ('settings.configurationPage.placeholderEmpty' | translate)
+                  "
+                />
+              </mat-form-field>
+
+              @if (testResults()[entry.key]; as result) {
+                <div class="test-result" [class.ok]="result.ok" [class.ko]="!result.ok">
+                  <mat-icon>{{ result.ok ? 'check_circle' : 'error_outline' }}</mat-icon>
+                  <span>{{ result.message }}</span>
+                </div>
+              }
+
+              @if (saveErrors()[entry.key]; as err) {
+                <div class="error-banner inline">
+                  <mat-icon>error_outline</mat-icon>
+                  {{ err }}
+                </div>
+              }
+
+              <div class="card-actions">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="test(entry.key)"
+                  [disabled]="!editValue(entry.key) || isTesting(entry.key)"
+                >
+                  @if (isTesting(entry.key)) {
+                    <mat-spinner diameter="16"></mat-spinner>
+                  }
+                  {{ 'settings.configurationPage.actions.test' | translate }}
+                </button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="save(entry.key)"
+                  [disabled]="!editValue(entry.key) || isSaving(entry.key)"
+                >
+                  @if (isSaving(entry.key)) {
+                    <mat-spinner diameter="16"></mat-spinner>
+                  }
+                  {{ 'settings.configurationPage.actions.save' | translate }}
+                </button>
+                @if (entry.isOverridden) {
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="reset(entry.key)"
+                    [disabled]="isSaving(entry.key)"
+                  >
+                    {{ 'settings.configurationPage.actions.reset' | translate }}
+                  </button>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- FMP (Financial Modeling Prep) API key -->
+          @if (fmp(); as entry) {
+            <section class="config-card">
+              <div class="card-header">
+                <h3>{{ 'settings.configurationPage.fmp.title' | translate }}</h3>
+                <span class="badge" [class.set]="entry.hasValue" [class.unset]="!entry.hasValue">
+                  {{
+                    (entry.hasValue
+                      ? 'settings.configurationPage.statusSet'
+                      : 'settings.configurationPage.statusUnset'
+                    ) | translate
+                  }}
+                </span>
+                @if (entry.isOverridden) {
+                  <span class="badge override">{{
+                    'settings.configurationPage.statusOverridden' | translate
+                  }}</span>
+                }
+              </div>
+              <p
+                class="description"
+                [innerHTML]="'settings.configurationPage.fmp.description' | translate"
+              ></p>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{ 'settings.configurationPage.fmp.inputLabel' | translate }}</mat-label>
                 <input
                   matInput
                   type="password"

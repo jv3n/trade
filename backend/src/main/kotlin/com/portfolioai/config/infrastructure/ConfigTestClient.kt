@@ -39,6 +39,10 @@ class ConfigTestClient(
   private val twelveDataBaseUrl: String,
   @Value("\${market.finnhub.base-url:https://finnhub.io/api/v1}")
   private val finnhubBaseUrl: String,
+  @Value("\${screener.polygon.base-url:https://api.massive.com}")
+  private val polygonBaseUrl: String,
+  @Value("\${screener.fmp.base-url:https://financialmodelingprep.com}")
+  private val fmpBaseUrl: String,
   @Value("\${ollama.base-url:http://localhost:11434}") private val ollamaBaseUrl: String,
 ) {
   private val log = LoggerFactory.getLogger(javaClass)
@@ -130,6 +134,80 @@ class ConfigTestClient(
       TestConfigResult(false, msg)
     } catch (e: ResourceAccessException) {
       log.warn("Finnhub test unreachable : {}", e.message)
+      TestConfigResult(false, "Unreachable : ${e.message?.take(120)}")
+    }
+  }
+
+  /**
+   * Validates a candidate Polygon (rebranded Massive) key by hitting a cheap reference endpoint. We
+   * deliberately don't probe `/v2/snapshot/locale/us/markets/stocks/tickers` because that's the
+   * heavy full-market call we save for actual radar fetches — `/v3/reference/tickers?limit=1`
+   * round-trips ~200 bytes and answers the only question the probe needs : "does this key open the
+   * door ?".
+   *
+   * Polygon returns real HTTP 401/403 on bad keys (not HTTP 200 with an error in the body like
+   * Twelve Data), so the catch on `HttpClientErrorException` is sufficient — no body inspection for
+   * the success path.
+   */
+  fun testPolygon(apiKey: String): TestConfigResult {
+    if (apiKey.isBlank()) return TestConfigResult(false, "API key is blank")
+    return try {
+      rest
+        .get()
+        .uri("$polygonBaseUrl/v3/reference/tickers?limit=1&apiKey={key}", apiKey)
+        .retrieve()
+        .body(Map::class.java) ?: return TestConfigResult(false, "Empty response")
+      TestConfigResult(true, "OK — Polygon accepted the key")
+    } catch (e: HttpClientErrorException) {
+      val code = e.statusCode.value()
+      val msg =
+        when (code) {
+          401,
+          403 -> "Invalid Polygon API key"
+          429 -> "Rate-limited — try again in a minute"
+          else -> "HTTP $code from Polygon"
+        }
+      log.warn("Polygon test failed : {}", msg)
+      TestConfigResult(false, msg)
+    } catch (e: ResourceAccessException) {
+      log.warn("Polygon test unreachable : {}", e.message)
+      TestConfigResult(false, "Unreachable : ${e.message?.take(120)}")
+    }
+  }
+
+  /**
+   * Validates a candidate FMP key by probing the biggest-gainers endpoint. FMP returns HTTP 401/403
+   * on invalid or unauthorized keys (similar to Finnhub, unlike Twelve Data which embeds errors in
+   * a 200 body). We hit `/stable/biggest-gainers?apikey=…` directly because (a) it's the exact
+   * endpoint the radar adapter uses, so a passing probe guarantees the radar will work and (b)
+   * there's no cheaper "reference" endpoint that's representative of the radar workflow.
+   *
+   * **August 2025 migration** : the legacy `/api/v3/stock_market/gainers` returns 403 with a
+   * "Legacy Endpoint" message for any subscription started after that cutoff. We use the
+   * `/stable/...` namespace which is the post-migration replacement and serves the same shape.
+   */
+  fun testFmp(apiKey: String): TestConfigResult {
+    if (apiKey.isBlank()) return TestConfigResult(false, "API key is blank")
+    return try {
+      rest
+        .get()
+        .uri("$fmpBaseUrl/stable/biggest-gainers?apikey={key}", apiKey)
+        .retrieve()
+        .body(Array::class.java) ?: return TestConfigResult(false, "Empty response")
+      TestConfigResult(true, "OK — FMP accepted the key")
+    } catch (e: HttpClientErrorException) {
+      val code = e.statusCode.value()
+      val msg =
+        when (code) {
+          401,
+          403 -> "Invalid FMP API key"
+          429 -> "Rate-limited — try again in a minute (free tier 250 req/day)"
+          else -> "HTTP $code from FMP"
+        }
+      log.warn("FMP test failed : {}", msg)
+      TestConfigResult(false, msg)
+    } catch (e: ResourceAccessException) {
+      log.warn("FMP test unreachable : {}", e.message)
       TestConfigResult(false, "Unreachable : ${e.message?.take(120)}")
     }
   }

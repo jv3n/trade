@@ -215,6 +215,35 @@ earnings:
   #   finnhub  — real REST `/stock/earnings` + `/calendar/earnings` (requires market.finnhub.api-key)
   provider: mock
 
+# Market radar provider (Phase 6) — separate vendor from market/news/analyst/earnings.
+# Phase 6 cycles through 3 live providers + the mock :
+#   - Polygon (rebrand Massive 2026) snapshot endpoint → paid Stocks Starter only (403 on Basic)
+#   - Polygon grouped-daily → 403 on the rebranded free tier too (was advertised free pre-2026)
+#   - FMP `/stable/biggest-gainers+losers` → free tier 250 req/jour, retained as the live
+#     provider that actually works on $0 (no volume signal — documented limitation, the radar
+#     filter on volumeRatio becomes no-op when fmp is the active provider). The legacy
+#     `/api/v3/stock_market/*` paths were deprecated by FMP in August 2025 (403 "Legacy
+#     Endpoint" for any subscription started post-cutoff) — `/stable/*` is the replacement and
+#     serves the same JSON shape.
+# `polygon` remains wired for the day the user upgrades to Stocks Basic+. Sign-ups :
+# https://massive.com for Polygon, https://site.financialmodelingprep.com for FMP.
+screener:
+  # provider:
+  #   mock     — deterministic synthetic snapshot (default, no network needed)
+  #   polygon  — real REST `/v2/aggs/grouped/locale/us/market/stocks/{date}` (2 calls per refresh
+  #              to join recent + previous trading day ; requires screener.polygon.api-key AND a
+  #              paid Stocks Basic+ Polygon subscription — the 2026 rebrand 403'd the historically
+  #              free tier)
+  #   fmp      — real REST `/stable/biggest-gainers` + `/biggest-losers` (top 50 movers in 1 call
+  #              each ; requires screener.fmp.api-key, free tier 250 req/jour, no volume signal)
+  provider: mock
+  polygon:
+    base-url: https://api.massive.com
+    api-key: ${POLYGON_API_KEY:}
+  fmp:
+    base-url: https://financialmodelingprep.com
+    api-key: ${FMP_API_KEY:}
+
 # Sentry — error tracking. **Disabled by default** so dev local and CI don't ship events.
 # `application-prod.yml` flips this to true and provides the DSN (sourced from Secret Manager) +
 # environment tag + release tag. We keep an empty `dsn` here so a fresh clone boots without any

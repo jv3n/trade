@@ -39,7 +39,7 @@ trade/
 │   ├── analyst/     # Phase 2 — Finnhub-backed analyst recommendations
 │   ├── earnings/    # Phase 2 — Finnhub-backed earnings (4 last Q + next date)
 │   ├── config/      # Phase 2 — runtime-editable settings + routing clients
-│   ├── screener/    # Phase 6 — market radar (Mock adapter v1 ; real provider TBD)
+│   ├── screener/    # Phase 6 — market radar (Mock + Polygon/Massive adapters + Routing client)
 │   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
 ├── docs/
 │   ├── metier/      # vision.md, fonctionnalites.md

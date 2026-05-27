@@ -67,22 +67,26 @@ class ConfigControllerTest {
   // ---------------------------------------------------------------------- list
 
   @Test
-  fun `GET config returns the thirteen known keys with secrets masked and enums carrying allowedValues`() {
-    // Order is alphabetical on key. With ALLOWED_EMAILS added 2026-05-19 (whitelist gating
-    // foot-print of the OAuth login), the layout is :
-    // [0]  analyst.provider       ENUM
-    // [1]  anthropic.api.key      SECRET (Anthropic API key, masked)
-    // [2]  anthropic.api.model    STRING (Claude model name)
-    // [3]  app.allowed.emails     EMAILS (whitelist of authorised emails, not masked)
-    // [4]  earnings.provider      ENUM
-    // [5]  llm.provider           ENUM   (claude / ollama)
-    // [6]  llm.timeout-seconds    INT    (v1.5 — slider 60..900)
-    // [7]  market.cache.ttl-min   INT
-    // [8]  market.finnhub.key     SECRET
-    // [9]  market.provider        ENUM
-    // [10] market.twelvedata.key  SECRET
-    // [11] news.provider          ENUM
-    // [12] ollama.model           STRING (Ollama model tag)
+  fun `GET config returns the sixteen known keys with secrets masked and enums carrying allowedValues`() {
+    // Order is alphabetical on key. Phase 6 (2026-05-27) added 3 keys for the market radar :
+    // `screener.fmp.api-key`, `screener.polygon.api-key`, `screener.provider`. They sort at the
+    // end alphabetically so the earlier indices [0]..[12] match the pre-Phase-6 layout.
+    // [0]  analyst.provider          ENUM
+    // [1]  anthropic.api.key         SECRET
+    // [2]  anthropic.api.model       STRING
+    // [3]  app.allowed.emails        EMAILS
+    // [4]  earnings.provider         ENUM
+    // [5]  llm.provider              ENUM
+    // [6]  llm.timeout-seconds       INT
+    // [7]  market.cache.ttl-min      INT
+    // [8]  market.finnhub.api-key    SECRET
+    // [9]  market.provider           ENUM
+    // [10] market.twelvedata.api-key SECRET
+    // [11] news.provider             ENUM
+    // [12] ollama.model              STRING
+    // [13] screener.fmp.api-key      SECRET   (Phase 6)
+    // [14] screener.polygon.api-key  SECRET   (Phase 6)
+    // [15] screener.provider         ENUM     (Phase 6, mock / polygon / fmp)
     given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant-real")
     given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
@@ -97,6 +101,9 @@ class ConfigControllerTest {
     given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("real-key")
     given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
+    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("env-anthropic")
     given(service.defaultFor(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
@@ -110,6 +117,9 @@ class ConfigControllerTest {
     given(service.defaultFor(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("env-default")
     given(service.defaultFor(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
     given(service.defaultFor(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
+    given(service.defaultFor(ConfigKeys.FMP_API_KEY)).willReturn("")
+    given(service.defaultFor(ConfigKeys.POLYGON_API_KEY)).willReturn("")
+    given(service.defaultFor(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
     given(service.isOverridden(ConfigKeys.ANALYST_PROVIDER)).willReturn(false)
     given(service.isOverridden(ConfigKeys.ANTHROPIC_API_KEY)).willReturn(false)
     given(service.isOverridden(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn(false)
@@ -123,11 +133,14 @@ class ConfigControllerTest {
     given(service.isOverridden(ConfigKeys.TWELVEDATA_API_KEY)).willReturn(true)
     given(service.isOverridden(ConfigKeys.NEWS_PROVIDER)).willReturn(false)
     given(service.isOverridden(ConfigKeys.OLLAMA_MODEL)).willReturn(false)
+    given(service.isOverridden(ConfigKeys.FMP_API_KEY)).willReturn(false)
+    given(service.isOverridden(ConfigKeys.POLYGON_API_KEY)).willReturn(false)
+    given(service.isOverridden(ConfigKeys.SCREENER_PROVIDER)).willReturn(false)
 
     mvc
       .perform(get("/api/config"))
       .andExpect(status().isOk)
-      .andExpect(jsonPath("$.length()").value(13))
+      .andExpect(jsonPath("$.length()").value(16))
       // Analyst provider : ENUM, allowedValues drives the toggle group.
       .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
       .andExpect(jsonPath("$[0].type").value("ENUM"))
@@ -205,6 +218,22 @@ class ConfigControllerTest {
       .andExpect(jsonPath("$[12].currentValue").value("qwen2.5:3b"))
       .andExpect(jsonPath("$[12].defaultValue").value("qwen2.5:3b"))
       .andExpect(jsonPath("$[12].allowedValues").doesNotExist())
+      // FMP key : SECRET, no value set.
+      .andExpect(jsonPath("$[13].key").value(ConfigKeys.FMP_API_KEY))
+      .andExpect(jsonPath("$[13].type").value("SECRET"))
+      .andExpect(jsonPath("$[13].hasValue").value(false))
+      // Polygon (Massive) key : SECRET, no value set.
+      .andExpect(jsonPath("$[14].key").value(ConfigKeys.POLYGON_API_KEY))
+      .andExpect(jsonPath("$[14].type").value("SECRET"))
+      .andExpect(jsonPath("$[14].hasValue").value(false))
+      // Screener provider : ENUM (mock / polygon / fmp), default mock.
+      .andExpect(jsonPath("$[15].key").value(ConfigKeys.SCREENER_PROVIDER))
+      .andExpect(jsonPath("$[15].type").value("ENUM"))
+      .andExpect(jsonPath("$[15].currentValue").value("mock"))
+      .andExpect(jsonPath("$[15].allowedValues.length()").value(3))
+      .andExpect(jsonPath("$[15].allowedValues[0].value").value("mock"))
+      .andExpect(jsonPath("$[15].allowedValues[1].value").value("polygon"))
+      .andExpect(jsonPath("$[15].allowedValues[2].value").value("fmp"))
   }
 
   @Test
@@ -232,6 +261,9 @@ class ConfigControllerTest {
     given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
+    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
 
     mvc
       .perform(get("/api/config"))
@@ -270,6 +302,17 @@ class ConfigControllerTest {
       .andExpect(
         jsonPath("$[11].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY)
       )
+      // screener.provider (Phase 6) — polygon gated on screener.polygon.api-key, fmp gated on
+      // screener.fmp.api-key. Pins the gating contract added when the radar shipped.
+      .andExpect(jsonPath("$[15].key").value(ConfigKeys.SCREENER_PROVIDER))
+      .andExpect(jsonPath("$[15].allowedValues[0].value").value("mock"))
+      .andExpect(jsonPath("$[15].allowedValues[0].disabledReason").doesNotExist())
+      .andExpect(jsonPath("$[15].allowedValues[1].value").value("polygon"))
+      .andExpect(
+        jsonPath("$[15].allowedValues[1].disabledReason").value(ConfigKeys.POLYGON_API_KEY)
+      )
+      .andExpect(jsonPath("$[15].allowedValues[2].value").value("fmp"))
+      .andExpect(jsonPath("$[15].allowedValues[2].disabledReason").value(ConfigKeys.FMP_API_KEY))
   }
 
   @Test
@@ -290,6 +333,9 @@ class ConfigControllerTest {
     given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("twelvedata")
     given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("finnhub")
     given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
+    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("polygon-real-key")
+    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("fmp-real-key")
+    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("fmp")
 
     mvc
       .perform(get("/api/config"))
@@ -329,12 +375,16 @@ class ConfigControllerTest {
     given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
     given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("")
     given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
+    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("")
+    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
 
     mvc
       .perform(get("/api/config"))
       .andExpect(status().isOk)
-      // 12 entries instead of 13 — `ollama.model` is gone.
-      .andExpect(jsonPath("$.length()").value(12))
+      // 15 entries instead of 16 — `ollama.model` is gone (Phase 6 added 3 screener entries, so
+      // KNOWN_KEYS.size = 16, minus ollama.model = 15).
+      .andExpect(jsonPath("$.length()").value(15))
       // llm.provider — index [5], allowedValues should be exactly [mock, claude] without ollama.
       .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_PROVIDER))
       .andExpect(jsonPath("$[5].allowedValues.length()").value(2))
@@ -439,6 +489,38 @@ class ConfigControllerTest {
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.ok").value(false))
       .andExpect(jsonPath("$.message").value("Invalid Finnhub API key"))
+  }
+
+  @Test
+  fun `POST test polygon returns the result from the test client`() {
+    given(testClient.testPolygon("polygon-candidate"))
+      .willReturn(TestConfigResult(true, "OK — Polygon accepted the key"))
+
+    mvc
+      .perform(
+        post("/api/config/test/polygon")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(json.writeValueAsString(mapOf("value" to "polygon-candidate")))
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.ok").value(true))
+      .andExpect(jsonPath("$.message").value("OK — Polygon accepted the key"))
+  }
+
+  @Test
+  fun `POST test fmp returns the result from the test client`() {
+    given(testClient.testFmp("fmp-candidate"))
+      .willReturn(TestConfigResult(false, "Invalid FMP API key"))
+
+    mvc
+      .perform(
+        post("/api/config/test/fmp")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(json.writeValueAsString(mapOf("value" to "fmp-candidate")))
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.ok").value(false))
+      .andExpect(jsonPath("$.message").value("Invalid FMP API key"))
   }
 
   @Test

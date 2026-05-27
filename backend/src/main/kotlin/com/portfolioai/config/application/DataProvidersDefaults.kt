@@ -22,4 +22,5 @@ data class DataProvidersDefaults(
   @Value("\${news.provider:mock}") val newsProvider: String,
   @Value("\${analyst.provider:mock}") val analystProvider: String,
   @Value("\${earnings.provider:mock}") val earningsProvider: String,
+  @Value("\${screener.provider:mock}") val screenerProvider: String,
 )

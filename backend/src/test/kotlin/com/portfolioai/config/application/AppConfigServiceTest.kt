@@ -461,6 +461,8 @@ class AppConfigServiceTest {
   private fun newService(
     twelveDataApiKey: String = "yaml-twelve",
     finnhubApiKey: String = "yaml-finn",
+    polygonApiKey: String = "yaml-polygon",
+    fmpApiKey: String = "yaml-fmp",
     anthropicApiKey: String = "yaml-anthropic",
     allowedEmailsDefault: String = "",
     ollamaEnabledFlag: Boolean = true,
@@ -472,6 +474,8 @@ class AppConfigServiceTest {
           SecretsDefaults(
             twelveDataApiKey = twelveDataApiKey,
             finnhubApiKey = finnhubApiKey,
+            polygonApiKey = polygonApiKey,
+            fmpApiKey = fmpApiKey,
             anthropicApiKey = anthropicApiKey,
           ),
         dataProviders =
@@ -480,6 +484,7 @@ class AppConfigServiceTest {
             newsProvider = "mock",
             analystProvider = "mock",
             earningsProvider = "mock",
+            screenerProvider = "mock",
           ),
         llm =
           LlmDefaults(

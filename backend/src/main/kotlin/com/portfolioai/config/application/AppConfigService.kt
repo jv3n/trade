@@ -132,12 +132,15 @@ class AppConfigService(
     when (key) {
       ConfigKeys.TWELVEDATA_API_KEY -> secrets.twelveDataApiKey
       ConfigKeys.FINNHUB_API_KEY -> secrets.finnhubApiKey
+      ConfigKeys.POLYGON_API_KEY -> secrets.polygonApiKey
+      ConfigKeys.FMP_API_KEY -> secrets.fmpApiKey
       ConfigKeys.ANTHROPIC_API_KEY -> secrets.anthropicApiKey
       ConfigKeys.CACHE_TTL_MINUTES -> cacheTtlDefault.toString()
       ConfigKeys.MARKET_PROVIDER -> dataProviders.marketProvider
       ConfigKeys.NEWS_PROVIDER -> dataProviders.newsProvider
       ConfigKeys.ANALYST_PROVIDER -> dataProviders.analystProvider
       ConfigKeys.EARNINGS_PROVIDER -> dataProviders.earningsProvider
+      ConfigKeys.SCREENER_PROVIDER -> dataProviders.screenerProvider
       ConfigKeys.LLM_PROVIDER -> llm.llmProvider
       ConfigKeys.OLLAMA_MODEL -> llm.ollamaModel
       ConfigKeys.ANTHROPIC_API_MODEL -> llm.anthropicApiModel

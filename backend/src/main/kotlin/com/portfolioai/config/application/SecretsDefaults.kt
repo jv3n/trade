@@ -23,5 +23,7 @@ import org.springframework.stereotype.Component
 data class SecretsDefaults(
   @Value("\${market.twelvedata.api-key:}") val twelveDataApiKey: String,
   @Value("\${market.finnhub.api-key:}") val finnhubApiKey: String,
+  @Value("\${screener.polygon.api-key:}") val polygonApiKey: String,
+  @Value("\${screener.fmp.api-key:}") val fmpApiKey: String,
   @Value("\${anthropic.api.key:}") val anthropicApiKey: String,
 )

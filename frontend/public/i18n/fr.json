@@ -598,6 +598,10 @@
         "title": "Provider des earnings",
         "description": "Bascule entre le mock local (déterministe par symbole) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
       },
+      "screenerProvider": {
+        "title": "Provider du radar de marché",
+        "description": "Bascule entre le mock local (snapshot synthétique déterministe), Polygon (endpoint grouped-daily, requiert une souscription Polygon Stocks Basic+ — le free Basic ne couvre plus cet endpoint depuis le rebrand 2026) et FMP (top gainers/losers, free tier 250 req/jour — pas de signal volume, mets ton volumeRatioMin à 0 pour voir les résultats). Le changement s'applique au prochain refresh du radar."
+      },
       "llmProvider": {
         "title": "Provider LLM",
         "description": "Choisit le moteur qui rédige le narratif du dossier ticker : Claude (cloud Anthropic, requiert anthropic.api.key dans application-local.yml) ou Ollama (local, requiert un daemon Ollama en écoute). La bascule s'applique à la prochaine analyse."
@@ -637,6 +641,8 @@
         "mock": "Mock (local)",
         "twelvedata": "Twelve Data",
         "finnhub": "Finnhub",
+        "polygon": "Polygon / Massive",
+        "fmp": "FMP",
         "claude": "Claude",
         "ollama": "Ollama"
       },
@@ -653,6 +659,16 @@
         "title": "Finnhub — clé API",
         "description": "Provider des dépêches du dossier ticker. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
         "inputLabel": "Clé API Finnhub"
+      },
+      "polygon": {
+        "title": "Polygon (Massive) — clé API",
+        "description": "Provider du radar de marché (Phase 6). Depuis le rebrand 2026, le free Basic ne couvre que <code>/v3/reference/...</code> — l'endpoint grouped-daily que notre adapter utilise nécessite Stocks Basic+ (payant). Polygon a rebrandé en Massive en 2026 — l'API base est passée à api.massive.com. <a href=\"https://massive.com/dashboard/keys\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
+        "inputLabel": "Clé API Polygon"
+      },
+      "fmp": {
+        "title": "FMP (Financial Modeling Prep) — clé API",
+        "description": "Provider du radar de marché (Phase 6). Free tier 250 req/jour, pas de carte requise. Le radar appelle <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> (top 50 chacun = ~100 movers par refresh ; les paths legacy <code>/api/v3/stock_market/*</code> ont été dépréciés en août 2025). <strong>Pas de signal volume</strong> sur cet endpoint — le filtre volumeRatioMin du radar est no-op quand FMP est le provider actif, descends-le à 0 dans le panneau pour voir des résultats. <a href=\"https://site.financialmodelingprep.com/developer/docs/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
+        "inputLabel": "Clé API FMP"
       },
       "anthropicKey": {
         "title": "Anthropic — clé API",

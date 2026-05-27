@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController
  * - `PUT /api/config/{key}` — set an override.
  * - `DELETE /api/config/{key}` — remove the override and fall back to the YAML default.
  * - `POST /api/config/test/{provider}` — exercise a candidate API key against the live provider
- *   without saving it. `provider` is `twelvedata`, `finnhub`, or `anthropic`.
+ *   without saving it. `provider` is `twelvedata`, `finnhub`, `polygon`, `fmp`, or `anthropic`.
  * - `POST /api/config/test/llm` — probe a candidate (provider, model) pair with a fixed prompt and
  *   report latency + whether the response actually contains "OK".
  *
@@ -75,6 +75,14 @@ class ConfigController(
   @PostMapping("/test/finnhub")
   fun testFinnhub(@RequestBody body: TestConfigRequest): TestConfigResult =
     testClient.testFinnhub(body.value.trim())
+
+  @PostMapping("/test/polygon")
+  fun testPolygon(@RequestBody body: TestConfigRequest): TestConfigResult =
+    testClient.testPolygon(body.value.trim())
+
+  @PostMapping("/test/fmp")
+  fun testFmp(@RequestBody body: TestConfigRequest): TestConfigResult =
+    testClient.testFmp(body.value.trim())
 
   @PostMapping("/test/anthropic")
   fun testAnthropic(@RequestBody body: TestConfigRequest): TestConfigResult =

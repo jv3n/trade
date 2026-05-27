@@ -63,6 +63,22 @@ describe('HttpConfigRepository', () => {
     req.flush({ ok: false, message: 'Invalid key' });
   });
 
+  it('testPolygon POSTs the candidate value to /test/polygon', () => {
+    repo.testPolygon('polygon-candidate').subscribe();
+    const req = http.expectOne('/api/config/test/polygon');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ value: 'polygon-candidate' });
+    req.flush({ ok: true, message: 'OK — Polygon accepted the key' });
+  });
+
+  it('testFmp POSTs the candidate value to /test/fmp', () => {
+    repo.testFmp('fmp-candidate').subscribe();
+    const req = http.expectOne('/api/config/test/fmp');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ value: 'fmp-candidate' });
+    req.flush({ ok: true, message: 'OK — FMP accepted the key' });
+  });
+
   it('testAnthropic POSTs the candidate value to /test/anthropic', () => {
     // Mirrors the Twelve Data / Finnhub probes — the candidate Anthropic key is round-tripped
     // unsaved so the user can validate before committing the rotation.

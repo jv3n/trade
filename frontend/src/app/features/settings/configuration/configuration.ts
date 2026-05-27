@@ -21,12 +21,15 @@ import { OllamaStatusPanel } from './ollama-status-panel';
 
 const TWELVE_DATA_KEY = 'market.twelvedata.api-key';
 const FINNHUB_KEY = 'market.finnhub.api-key';
+const POLYGON_KEY = 'screener.polygon.api-key';
+const FMP_KEY = 'screener.fmp.api-key';
 const ANTHROPIC_KEY = 'anthropic.api.key';
 const CACHE_TTL_KEY = 'market.cache.ttl-minutes';
 const MARKET_PROVIDER_KEY = 'market.provider';
 const NEWS_PROVIDER_KEY = 'news.provider';
 const ANALYST_PROVIDER_KEY = 'analyst.provider';
 const EARNINGS_PROVIDER_KEY = 'earnings.provider';
+const SCREENER_PROVIDER_KEY = 'screener.provider';
 const LLM_PROVIDER_KEY = 'llm.provider';
 const OLLAMA_MODEL_KEY = 'ollama.model';
 const ANTHROPIC_MODEL_KEY = 'anthropic.api.model';
@@ -126,12 +129,15 @@ export class Configuration implements OnInit {
 
   twelveData = computed(() => this.entries().find((e) => e.key === TWELVE_DATA_KEY));
   finnhub = computed(() => this.entries().find((e) => e.key === FINNHUB_KEY));
+  polygon = computed(() => this.entries().find((e) => e.key === POLYGON_KEY));
+  fmp = computed(() => this.entries().find((e) => e.key === FMP_KEY));
   anthropicKey = computed(() => this.entries().find((e) => e.key === ANTHROPIC_KEY));
   cacheTtl = computed(() => this.entries().find((e) => e.key === CACHE_TTL_KEY));
   marketProvider = computed(() => this.entries().find((e) => e.key === MARKET_PROVIDER_KEY));
   newsProvider = computed(() => this.entries().find((e) => e.key === NEWS_PROVIDER_KEY));
   analystProvider = computed(() => this.entries().find((e) => e.key === ANALYST_PROVIDER_KEY));
   earningsProvider = computed(() => this.entries().find((e) => e.key === EARNINGS_PROVIDER_KEY));
+  screenerProvider = computed(() => this.entries().find((e) => e.key === SCREENER_PROVIDER_KEY));
   llmProvider = computed(() => this.entries().find((e) => e.key === LLM_PROVIDER_KEY));
   ollamaModel = computed(() => this.entries().find((e) => e.key === OLLAMA_MODEL_KEY));
   anthropicModel = computed(() => this.entries().find((e) => e.key === ANTHROPIC_MODEL_KEY));
@@ -277,7 +283,12 @@ export class Configuration implements OnInit {
 
     this.repo.set(key, value).subscribe({
       next: (updated) => {
-        const isSecret = key === TWELVE_DATA_KEY || key === FINNHUB_KEY || key === ANTHROPIC_KEY;
+        const isSecret =
+          key === TWELVE_DATA_KEY ||
+          key === FINNHUB_KEY ||
+          key === POLYGON_KEY ||
+          key === FMP_KEY ||
+          key === ANTHROPIC_KEY;
         if (isSecret) {
           // Saving a SECRET flips `disabledReason` on **dependent provider toggles** server-side
           // (e.g. saving the Finnhub key un-disables `news.provider=finnhub`,
@@ -370,7 +381,11 @@ export class Configuration implements OnInit {
         ? this.repo.testTwelveData(value)
         : key === ANTHROPIC_KEY
           ? this.repo.testAnthropic(value)
-          : this.repo.testFinnhub(value);
+          : key === POLYGON_KEY
+            ? this.repo.testPolygon(value)
+            : key === FMP_KEY
+              ? this.repo.testFmp(value)
+              : this.repo.testFinnhub(value);
     probe$.subscribe({
       next: (result) => {
         this.testResults.update((m) => ({ ...m, [key]: result }));

@@ -598,6 +598,10 @@
         "title": "Earnings provider",
         "description": "Switch between the local mock (deterministic per symbol) and Finnhub (live, requires the API key below). Takes effect on the next dossier load."
       },
+      "screenerProvider": {
+        "title": "Market radar provider",
+        "description": "Switch between the local mock (deterministic synthetic snapshot), Polygon (grouped-daily endpoint, requires a Polygon Stocks Basic+ subscription — Basic free no longer covers it post-2026 rebrand), and FMP (top gainers/losers, free tier 250 req/day — no volume signal, drop your volumeRatioMin filter to 0 to see results). Takes effect on the next radar refresh."
+      },
       "llmProvider": {
         "title": "LLM provider",
         "description": "Picks the engine that writes the ticker dossier narrative: Claude (Anthropic cloud, requires anthropic.api.key in application-local.yml) or Ollama (local, requires an Ollama daemon listening). The switch takes effect on the next analysis."
@@ -637,6 +641,8 @@
         "mock": "Mock (local)",
         "twelvedata": "Twelve Data",
         "finnhub": "Finnhub",
+        "polygon": "Polygon / Massive",
+        "fmp": "FMP",
         "claude": "Claude",
         "ollama": "Ollama"
       },
@@ -653,6 +659,16 @@
         "title": "Finnhub — API key",
         "description": "Provider for the news section on the ticker dossier. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
         "inputLabel": "Finnhub API key"
+      },
+      "polygon": {
+        "title": "Polygon (Massive) — API key",
+        "description": "Provider for the market radar (Phase 6). Post-2026 rebrand the free Basic tier only includes <code>/v3/reference/...</code> — the grouped-daily endpoint our adapter calls requires Stocks Basic+ (paid). Polygon rebranded as Massive in 2026 — the API base moved to api.massive.com. <a href=\"https://massive.com/dashboard/keys\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
+        "inputLabel": "Polygon API key"
+      },
+      "fmp": {
+        "title": "FMP (Financial Modeling Prep) — API key",
+        "description": "Provider for the market radar (Phase 6). Free tier 250 req/day, no credit card required. The radar calls <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> (top 50 each = ~100 movers per refresh ; the legacy <code>/api/v3/stock_market/*</code> paths were deprecated August 2025). <strong>No volume signal</strong> on this endpoint — the radar's volumeRatioMin filter is no-op when FMP is the active provider, drop it to 0 in the panel to see results. <a href=\"https://site.financialmodelingprep.com/developer/docs/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
+        "inputLabel": "FMP API key"
       },
       "anthropicKey": {
         "title": "Anthropic — API key",

@@ -248,6 +248,14 @@ const OPS_LINKS_SECTIONS: OpsLinkSection[] = [
         label: 'Finnhub — dashboard & rate limit',
         url: 'https://finnhub.io/dashboard',
       },
+      {
+        label: 'Polygon (Massive) — API keys & free tier (5 req/min, EOD-only on Basic)',
+        url: 'https://massive.com/dashboard/keys',
+      },
+      {
+        label: 'FMP (Financial Modeling Prep) — dashboard & free tier (250 req/day, top movers)',
+        url: 'https://site.financialmodelingprep.com/developer/docs/dashboard',
+      },
     ],
   },
   {

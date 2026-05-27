@@ -28,6 +28,14 @@ export class HttpConfigRepository extends ConfigRepository {
     return this.http.post<TestConfigResult>(`${this.base}/test/finnhub`, { value });
   }
 
+  testPolygon(value: string): Observable<TestConfigResult> {
+    return this.http.post<TestConfigResult>(`${this.base}/test/polygon`, { value });
+  }
+
+  testFmp(value: string): Observable<TestConfigResult> {
+    return this.http.post<TestConfigResult>(`${this.base}/test/fmp`, { value });
+  }
+
   testAnthropic(value: string): Observable<TestConfigResult> {
     return this.http.post<TestConfigResult>(`${this.base}/test/anthropic`, { value });
   }

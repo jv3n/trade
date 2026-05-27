@@ -14,12 +14,15 @@ import com.portfolioai.config.application.ConfigKeys.KNOWN_KEYS
 object ConfigKeys {
   const val TWELVEDATA_API_KEY = "market.twelvedata.api-key"
   const val FINNHUB_API_KEY = "market.finnhub.api-key"
+  const val POLYGON_API_KEY = "screener.polygon.api-key"
+  const val FMP_API_KEY = "screener.fmp.api-key"
   const val ANTHROPIC_API_KEY = "anthropic.api.key"
   const val CACHE_TTL_MINUTES = "market.cache.ttl-minutes"
   const val MARKET_PROVIDER = "market.provider"
   const val NEWS_PROVIDER = "news.provider"
   const val ANALYST_PROVIDER = "analyst.provider"
   const val EARNINGS_PROVIDER = "earnings.provider"
+  const val SCREENER_PROVIDER = "screener.provider"
   const val LLM_PROVIDER = "llm.provider"
   const val OLLAMA_MODEL = "ollama.model"
   const val ANTHROPIC_API_MODEL = "anthropic.api.model"
@@ -37,10 +40,13 @@ object ConfigKeys {
   const val PROVIDER_MOCK = "mock"
   const val PROVIDER_TWELVEDATA = "twelvedata"
   const val PROVIDER_FINNHUB = "finnhub"
+  const val PROVIDER_POLYGON = "polygon"
+  const val PROVIDER_FMP = "fmp"
   const val PROVIDER_CLAUDE = "claude"
   const val PROVIDER_OLLAMA = "ollama"
 
-  val SECRET_KEYS: Set<String> = setOf(TWELVEDATA_API_KEY, FINNHUB_API_KEY, ANTHROPIC_API_KEY)
+  val SECRET_KEYS: Set<String> =
+    setOf(TWELVEDATA_API_KEY, FINNHUB_API_KEY, POLYGON_API_KEY, FMP_API_KEY, ANTHROPIC_API_KEY)
   val INT_KEYS: Set<String> = setOf(CACHE_TTL_MINUTES, LLM_TIMEOUT_SECONDS)
   val EMAIL_LIST_KEYS: Set<String> = setOf(ALLOWED_EMAILS)
 
@@ -54,6 +60,7 @@ object ConfigKeys {
       NEWS_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
       ANALYST_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
       EARNINGS_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_FINNHUB),
+      SCREENER_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_POLYGON, PROVIDER_FMP),
       LLM_PROVIDER to listOf(PROVIDER_MOCK, PROVIDER_CLAUDE, PROVIDER_OLLAMA),
     )
 
@@ -74,6 +81,8 @@ object ConfigKeys {
       (NEWS_PROVIDER to PROVIDER_FINNHUB) to FINNHUB_API_KEY,
       (ANALYST_PROVIDER to PROVIDER_FINNHUB) to FINNHUB_API_KEY,
       (EARNINGS_PROVIDER to PROVIDER_FINNHUB) to FINNHUB_API_KEY,
+      (SCREENER_PROVIDER to PROVIDER_POLYGON) to POLYGON_API_KEY,
+      (SCREENER_PROVIDER to PROVIDER_FMP) to FMP_API_KEY,
       (LLM_PROVIDER to PROVIDER_CLAUDE) to ANTHROPIC_API_KEY,
     )
 
@@ -81,12 +90,15 @@ object ConfigKeys {
     setOf(
       TWELVEDATA_API_KEY,
       FINNHUB_API_KEY,
+      POLYGON_API_KEY,
+      FMP_API_KEY,
       ANTHROPIC_API_KEY,
       CACHE_TTL_MINUTES,
       MARKET_PROVIDER,
       NEWS_PROVIDER,
       ANALYST_PROVIDER,
       EARNINGS_PROVIDER,
+      SCREENER_PROVIDER,
       LLM_PROVIDER,
       OLLAMA_MODEL,
       ANTHROPIC_API_MODEL,

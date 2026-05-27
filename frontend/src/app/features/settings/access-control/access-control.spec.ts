@@ -59,6 +59,12 @@ class StubConfigRepository implements ConfigRepository {
   testFinnhub(): Observable<TestConfigResult> {
     return of({ ok: true, message: '' });
   }
+  testPolygon(): Observable<TestConfigResult> {
+    return of({ ok: true, message: '' });
+  }
+  testFmp(): Observable<TestConfigResult> {
+    return of({ ok: true, message: '' });
+  }
   testAnthropic(): Observable<TestConfigResult> {
     return of({ ok: true, message: '' });
   }

@@ -48,6 +48,26 @@ const FINN: ConfigEntry = {
   allowedValues: null,
 };
 
+const POLYGON: ConfigEntry = {
+  key: 'screener.polygon.api-key',
+  type: 'SECRET',
+  currentValue: null,
+  defaultValue: null,
+  hasValue: false,
+  isOverridden: false,
+  allowedValues: null,
+};
+
+const FMP: ConfigEntry = {
+  key: 'screener.fmp.api-key',
+  type: 'SECRET',
+  currentValue: null,
+  defaultValue: null,
+  hasValue: false,
+  isOverridden: false,
+  allowedValues: null,
+};
+
 const ANTHROPIC: ConfigEntry = {
   key: 'anthropic.api.key',
   type: 'SECRET',
@@ -120,6 +140,20 @@ const EARNINGS_PROVIDER: ConfigEntry = {
   ],
 };
 
+const SCREENER_PROVIDER: ConfigEntry = {
+  key: 'screener.provider',
+  type: 'ENUM',
+  currentValue: 'mock',
+  defaultValue: 'mock',
+  hasValue: true,
+  isOverridden: false,
+  allowedValues: [
+    { value: 'mock', disabledReason: null },
+    { value: 'polygon', disabledReason: 'screener.polygon.api-key' },
+    { value: 'fmp', disabledReason: 'screener.fmp.api-key' },
+  ],
+};
+
 const LLM_PROVIDER: ConfigEntry = {
   key: 'llm.provider',
   type: 'ENUM',
@@ -172,6 +206,8 @@ describe('Configuration', () => {
     reset: ReturnType<typeof vi.fn>;
     testTwelveData: ReturnType<typeof vi.fn>;
     testFinnhub: ReturnType<typeof vi.fn>;
+    testPolygon: ReturnType<typeof vi.fn>;
+    testFmp: ReturnType<typeof vi.fn>;
     testAnthropic: ReturnType<typeof vi.fn>;
     testLlm: ReturnType<typeof vi.fn>;
   };
@@ -188,12 +224,15 @@ describe('Configuration', () => {
           of([
             TTL,
             FINN,
+            POLYGON,
+            FMP,
             ANTHROPIC,
             MARKET_PROVIDER,
             TWELVE,
             NEWS_PROVIDER,
             ANALYST_PROVIDER,
             EARNINGS_PROVIDER,
+            SCREENER_PROVIDER,
             LLM_PROVIDER,
             OLLAMA_MODEL,
             ANTHROPIC_MODEL,
@@ -212,6 +251,8 @@ describe('Configuration', () => {
       reset: vi.fn().mockReturnValue(of(undefined)),
       testTwelveData: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
       testFinnhub: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
+      testPolygon: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
+      testFmp: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
       testAnthropic: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
       testLlm: vi.fn().mockReturnValue(of({ ok: true, message: 'OK' })),
     };
@@ -270,7 +311,9 @@ describe('Configuration', () => {
 
   it('loads the entries on init', () => {
     expect(repo.list).toHaveBeenCalledTimes(1);
-    expect(component.entries().length).toBe(12);
+    // 12 baseline keys + Phase 6 trio (screener.polygon.api-key, screener.fmp.api-key,
+    // screener.provider) = 15. See the fixtures block at the top of this file.
+    expect(component.entries().length).toBe(15);
     expect(component.twelveData()?.key).toBe('market.twelvedata.api-key');
     expect(component.anthropicKey()?.key).toBe('anthropic.api.key');
     expect(component.anthropicKey()?.type).toBe('SECRET');

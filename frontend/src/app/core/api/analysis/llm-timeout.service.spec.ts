@@ -56,6 +56,12 @@ class StubRepository extends ConfigRepository {
   testFinnhub(): Observable<TestConfigResult> {
     throw new Error('LlmTimeoutService should not call testFinnhub()');
   }
+  testPolygon(): Observable<TestConfigResult> {
+    throw new Error('LlmTimeoutService should not call testPolygon()');
+  }
+  testFmp(): Observable<TestConfigResult> {
+    throw new Error('LlmTimeoutService should not call testFmp()');
+  }
   testAnthropic(): Observable<TestConfigResult> {
     throw new Error('LlmTimeoutService should not call testAnthropic()');
   }

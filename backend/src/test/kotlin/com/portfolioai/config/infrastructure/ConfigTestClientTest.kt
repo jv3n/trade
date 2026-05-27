@@ -43,6 +43,8 @@ class ConfigTestClientTest {
       appConfig = appConfig,
       twelveDataBaseUrl = "https://api.twelvedata.com",
       finnhubBaseUrl = "https://finnhub.io/api/v1",
+      polygonBaseUrl = "https://api.massive.com",
+      fmpBaseUrl = "https://financialmodelingprep.com",
       ollamaBaseUrl = "http://localhost:11434",
     )
   }
