@@ -9,8 +9,30 @@
 
   <section class="radar-main">
     <header class="radar-header">
-      <h1>{{ 'radar.title' | translate }}</h1>
-      <p class="radar-subtitle">{{ 'radar.subtitle' | translate }}</p>
+      <div class="radar-header-titles">
+        <h1>{{ 'radar.title' | translate }}</h1>
+        <p class="radar-subtitle">{{ 'radar.subtitle' | translate }}</p>
+      </div>
+      <div class="radar-header-actions">
+        @if (fetchedAt()) {
+          <span class="radar-last-fetched">
+            {{ 'radar.lastFetched' | translate }} {{ fetchedAt() | date: 'short' }}
+          </span>
+        }
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="onRefreshRequested()"
+          [disabled]="refreshing() || loading()"
+        >
+          @if (refreshing()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>refresh</mat-icon>
+          }
+          <span>{{ 'radar.refresh' | translate }}</span>
+        </button>
+      </div>
     </header>
 
     @if (loading()) {
@@ -27,15 +49,22 @@
       </div>
     }
 
-    @if (isEmpty()) {
+    @if (!loading() && !error() && notYetFetched()) {
       <div class="radar-empty">
         <mat-icon>radar</mat-icon>
+        <p>{{ 'radar.notYetFetched' | translate }}</p>
+      </div>
+    }
+
+    @if (emptyAfterFilter()) {
+      <div class="radar-empty">
+        <mat-icon>filter_alt_off</mat-icon>
         <p>{{ 'radar.empty' | translate }}</p>
       </div>
     }
 
-    @if (!loading() && !error() && movers().length > 0) {
-      <table mat-table [dataSource]="movers()" class="radar-table">
+    @if (!loading() && !error() && filtered().length > 0) {
+      <table mat-table [dataSource]="filtered()" class="radar-table">
         <ng-container matColumnDef="symbol">
           <th mat-header-cell *matHeaderCellDef>{{ 'radar.columns.symbol' | translate }}</th>
           <td mat-cell *matCellDef="let row">

@@ -1,14 +1,19 @@
 /**
- * Pins the URL / query-param contract between [HttpScreenerRepository] and the backend
- * `/api/screener/movers` endpoint. The shape `?gapPctMin=...&volumeRatioMin=...&...` is the only
- * surface the front commits to ; the backend's filter / sort / empty-list semantics are tested
- * server-side.
+ * Pins the URL contract between [HttpScreenerRepository] and the backend post Phase 6 ticket (9) :
+ * - `POST /api/screener/refresh` with no body — the active provider is resolved server-side, the
+ *   frontend doesn't pass it. The response carries the envelope (date, provider, fetchedAt,
+ *   movers).
+ * - `GET /api/screener/movers` with optional `?date=YYYY-MM-DD`. The dynamic filter is no longer
+ *   sent — the client applies it locally on the persisted snapshot.
+ *
+ * Empty envelope (200 OK with `fetchedAt === null`) is part of the contract — the page reads it
+ * as the "press Rechercher to amorcer" empty state.
  */
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { ScreenerSnapshotResponse } from '../screener.repository';
 import { HttpScreenerRepository } from './screener.http';
-import { DEFAULT_SCREENER_FILTER, ScreenerFilter } from '../screener.repository';
 
 describe('HttpScreenerRepository', () => {
   let repo: HttpScreenerRepository;
@@ -24,73 +29,60 @@ describe('HttpScreenerRepository', () => {
 
   afterEach(() => http.verify());
 
-  it('sends GET /api/screener/movers with the default thresholds when no override is supplied', () => {
-    repo.findMovers(DEFAULT_SCREENER_FILTER).subscribe();
+  it('POSTs an empty body to /api/screener/refresh and returns the parsed envelope', () => {
+    let received: ScreenerSnapshotResponse | null = null;
+    repo.refresh().subscribe((r) => (received = r));
+    const req = http.expectOne('/api/screener/refresh');
+    expect(req.request.method).toBe('POST');
+    // The backend resolves the active provider — frontend mustn't smuggle one in.
+    expect(req.request.body).toBeNull();
+    req.flush(sampleEnvelope());
+    expect(received).toEqual(sampleEnvelope());
+  });
+
+  it('sends GET /api/screener/movers with no date param when called without arguments', () => {
+    repo.loadSnapshot().subscribe();
     const req = http.expectOne((r) => r.url === '/api/screener/movers');
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('gapPctMin')).toBe('5');
-    expect(req.request.params.get('volumeRatioMin')).toBe('3');
-    // Null fields must NOT be serialised — the backend's own defaults / open universe take over.
-    expect(req.request.params.has('marketCapMin')).toBe(false);
-    expect(req.request.params.has('marketCapMax')).toBe(false);
-    expect(req.request.params.has('exchange')).toBe(false);
-    expect(req.request.params.has('sector')).toBe(false);
-    req.flush([]);
+    expect(req.request.params.has('date')).toBe(false);
+    req.flush(sampleEnvelope());
   });
 
-  it('serialises every non-null filter field as a query param', () => {
-    const filter: ScreenerFilter = {
-      gapPctMin: 10,
-      volumeRatioMin: 5,
-      marketCapMin: 3_000_000_000,
-      marketCapMax: 8_000_000_000,
-      exchange: 'NASDAQ',
-      sector: 'Technology',
+  it('serialises the explicit date as ?date=YYYY-MM-DD', () => {
+    repo.loadSnapshot('2026-05-27').subscribe();
+    const req = http.expectOne((r) => r.url === '/api/screener/movers');
+    expect(req.request.params.get('date')).toBe('2026-05-27');
+    req.flush(sampleEnvelope());
+  });
+
+  it('parses the empty-envelope shape (no snapshot persisted yet)', () => {
+    let received: ScreenerSnapshotResponse | null = null;
+    repo.loadSnapshot().subscribe((r) => (received = r));
+    const req = http.expectOne((r) => r.url === '/api/screener/movers');
+    req.flush({ date: null, provider: 'fmp', fetchedAt: null, movers: [] });
+    expect(received).toEqual({ date: null, provider: 'fmp', fetchedAt: null, movers: [] });
+  });
+
+  function sampleEnvelope(): ScreenerSnapshotResponse {
+    return {
+      date: '2026-05-29',
+      provider: 'fmp',
+      fetchedAt: '2026-05-29T14:32:00Z',
+      movers: [
+        {
+          symbol: 'RDDT',
+          name: 'Reddit Inc.',
+          price: 78.4,
+          previousClose: 67.2,
+          gapPct: 16.67,
+          volume: 24_500_000,
+          volumeAvg30d: 6_000_000,
+          volumeRatio: 4.08,
+          marketCapUsd: 9_800_000_000,
+          exchange: 'NASDAQ',
+          sector: 'Communication Services',
+        },
+      ],
     };
-    repo.findMovers(filter).subscribe();
-    const req = http.expectOne((r) => r.url === '/api/screener/movers');
-    expect(req.request.params.get('gapPctMin')).toBe('10');
-    expect(req.request.params.get('volumeRatioMin')).toBe('5');
-    expect(req.request.params.get('marketCapMin')).toBe('3000000000');
-    expect(req.request.params.get('marketCapMax')).toBe('8000000000');
-    expect(req.request.params.get('exchange')).toBe('NASDAQ');
-    expect(req.request.params.get('sector')).toBe('Technology');
-    req.flush([]);
-  });
-
-  it('returns the parsed list of TickerMover rows', () => {
-    let received: unknown = null;
-    repo.findMovers(DEFAULT_SCREENER_FILTER).subscribe((r) => (received = r));
-    const req = http.expectOne((r) => r.url === '/api/screener/movers');
-    req.flush([
-      {
-        symbol: 'RDDT',
-        name: 'Reddit Inc.',
-        price: 78.4,
-        previousClose: 67.2,
-        gapPct: 16.67,
-        volume: 24_500_000,
-        volumeAvg30d: 6_000_000,
-        volumeRatio: 4.08,
-        marketCapUsd: 9_800_000_000,
-        exchange: 'NASDAQ',
-        sector: 'Communication Services',
-      },
-    ]);
-    expect(received).toEqual([
-      {
-        symbol: 'RDDT',
-        name: 'Reddit Inc.',
-        price: 78.4,
-        previousClose: 67.2,
-        gapPct: 16.67,
-        volume: 24_500_000,
-        volumeAvg30d: 6_000_000,
-        volumeRatio: 4.08,
-        marketCapUsd: 9_800_000_000,
-        exchange: 'NASDAQ',
-        sector: 'Communication Services',
-      },
-    ]);
-  });
+  }
 });

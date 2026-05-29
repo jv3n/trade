@@ -1,33 +1,26 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ScreenerFilter, ScreenerRepository, TickerMover } from '../screener.repository';
+import { ScreenerRepository, ScreenerSnapshotResponse } from '../screener.repository';
 
 /**
- * HTTP adapter for `ScreenerRepository`. Maps the filter into query params — `null` fields are
- * dropped so the backend uses its own defaults (gap≥5 %, volume≥3×) when the caller doesn't
- * override. Keeps the wire-level contract minimal : no body, no envelope, just `?param=value`.
+ * HTTP adapter for [ScreenerRepository]. Two paths after Phase 6 ticket (9) :
+ * - `refresh()` → `POST /api/screener/refresh` — server-side fetch + persist, returns the fresh
+ *   envelope. Body is empty ; the active provider is resolved server-side via [AppConfigService].
+ * - `loadSnapshot(date?)` → `GET /api/screener/movers` (with optional `?date=YYYY-MM-DD`) — reads
+ *   the persisted envelope. No filter query params ; the dynamic filter runs client-side on the
+ *   raw movers list.
  */
 @Injectable()
 export class HttpScreenerRepository extends ScreenerRepository {
   private readonly http = inject(HttpClient);
 
-  findMovers(filter: ScreenerFilter): Observable<TickerMover[]> {
-    let params = new HttpParams()
-      .set('gapPctMin', String(filter.gapPctMin))
-      .set('volumeRatioMin', String(filter.volumeRatioMin));
-    if (filter.marketCapMin !== null) {
-      params = params.set('marketCapMin', String(filter.marketCapMin));
-    }
-    if (filter.marketCapMax !== null) {
-      params = params.set('marketCapMax', String(filter.marketCapMax));
-    }
-    if (filter.exchange !== null) {
-      params = params.set('exchange', filter.exchange);
-    }
-    if (filter.sector !== null) {
-      params = params.set('sector', filter.sector);
-    }
-    return this.http.get<TickerMover[]>('/api/screener/movers', { params });
+  refresh(): Observable<ScreenerSnapshotResponse> {
+    return this.http.post<ScreenerSnapshotResponse>('/api/screener/refresh', null);
+  }
+
+  loadSnapshot(date?: string | null): Observable<ScreenerSnapshotResponse> {
+    const params = date ? new HttpParams().set('date', date) : undefined;
+    return this.http.get<ScreenerSnapshotResponse>('/api/screener/movers', { params });
   }
 }

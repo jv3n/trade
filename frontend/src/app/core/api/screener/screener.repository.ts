@@ -28,9 +28,9 @@ export interface TickerMover {
 }
 
 /**
- * Dynamic, user-editable thresholds applied to the universe snapshot. Mirrors the backend
- * `ScreenerFilter` shape — every field is serialised as a query param when present, defaults
- * mirror the Phase 6 kick-off decision (gap≥5 %, volume≥3×, no cap/exchange/sector narrowing).
+ * Dynamic, user-editable thresholds applied client-side to the persisted snapshot. Mirrors the
+ * backend `ScreenerFilter` shape — kept identical so a future move back to server-side filtering
+ * doesn't need a contract change.
  *
  * `gapPctMin` is **directional** — positive value filters gap-up only, negative value lets
  * gap-down rows through. v1 stays positive ; the field is signed so a future preset can flip it.
@@ -55,15 +55,58 @@ export const DEFAULT_SCREENER_FILTER: ScreenerFilter = {
 };
 
 /**
- * Port — read-only access to the market radar. Backed by the backend `screener/` module ; the
- * upstream provider (mock today, Polygon-or-equivalent later) is opaque to the front.
+ * Envelope returned by both `POST /api/screener/refresh` and `GET /api/screener/movers`. The
+ * radar UI reads `fetchedAt === null` as the "no snapshot yet — press Rechercher to amorcer"
+ * empty state, distinct from "snapshot exists but the filter matches nothing".
+ *
+ * `date` is an ISO-8601 calendar date (`YYYY-MM-DD`, ET market day) ; `fetchedAt` is an ISO-8601
+ * timestamp the UI formats via the locale-aware `date` pipe.
+ */
+export interface ScreenerSnapshotResponse {
+  date: string | null;
+  provider: string;
+  fetchedAt: string | null;
+  movers: TickerMover[];
+}
+
+/**
+ * Port — two paths since Phase 6 ticket (9) introduced snapshot persistance :
+ * - [refresh] triggers a live fetch on the active provider, persists the snapshot, returns it.
+ *   The page exposes this behind the « Rechercher » button — the only quota-burning call.
+ * - [loadSnapshot] reads the persisted snapshot for the active provider (optionally for a given
+ *   day). Zero call to the provider → safe on every page load.
  *
  * Errors :
- * - HTTP 503 when the upstream provider is unavailable — the page renders an inline error
- *   banner with a retry hint.
- * - **Empty list (200 OK with `[]`) is a valid state** — "no abnormal move detected right now".
- *   The page renders an empty-state hint, not an error.
+ * - HTTP 503 from [refresh] when the upstream provider is unavailable — the page renders an
+ *   inline error banner with a retry hint, the previous snapshot stays visible.
+ * - **Empty envelope (200 OK with `fetchedAt === null`) is a valid state** — no snapshot has been
+ *   persisted yet for the active provider. The page renders the "press Rechercher" hint.
  */
 export abstract class ScreenerRepository {
-  abstract findMovers(filter: ScreenerFilter): Observable<TickerMover[]>;
+  abstract refresh(): Observable<ScreenerSnapshotResponse>;
+  abstract loadSnapshot(date?: string | null): Observable<ScreenerSnapshotResponse>;
+}
+
+/**
+ * Pure client-side filter — mirrors the backend `MarketScreenerService.matches()` predicate so the
+ * panel tweaks operate locally without re-hitting the API. Lives next to the port so the contract
+ * and the predicate stay in sync.
+ *
+ * `gapPctMin` is directional (cf. [TickerMover.gapPct] doc) ; `null` market-cap bounds are no-ops ;
+ * `null` exchange / sector are no-ops (wildcard). A mover with `sector === null` cannot match a
+ * non-null sector filter ("unknown — can't claim membership").
+ */
+export function applyScreenerFilter(rows: TickerMover[], filter: ScreenerFilter): TickerMover[] {
+  return rows
+    .filter(
+      (row) =>
+        row.gapPct >= filter.gapPctMin &&
+        row.volumeRatio >= filter.volumeRatioMin &&
+        (filter.marketCapMin === null || row.marketCapUsd >= filter.marketCapMin) &&
+        (filter.marketCapMax === null || row.marketCapUsd <= filter.marketCapMax) &&
+        (filter.exchange === null ||
+          row.exchange.toLowerCase() === filter.exchange.toLowerCase()) &&
+        (filter.sector === null || row.sector?.toLowerCase() === filter.sector.toLowerCase()),
+    )
+    .sort((a, b) => b.gapPct - a.gapPct);
 }

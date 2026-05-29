@@ -833,9 +833,13 @@
   "radar": {
     "title": "Radar de marché",
     "subtitle": "Tickers mid-cap Nasdaq qui montrent un mouvement anormal — gap d'ouverture et volume inhabituels. Signal d'investigation, pas une recommandation.",
+    "refresh": "Rechercher",
+    "lastFetched": "Dernière recherche :",
+    "notYetFetched": "Aucun snapshot pour l'instant. Cliquez sur « Rechercher » pour interroger le fournisseur.",
     "empty": "Aucun mouvement anormal détecté avec ces filtres.",
     "errors": {
-      "fetch": "Impossible de charger le radar. Le fournisseur est peut-être indisponible — réessayez."
+      "fetch": "Impossible de charger le snapshot du radar. Réessayez.",
+      "refresh": "Le fournisseur a rejeté la requête. Il est peut-être indisponible ou rate-limited — réessayez."
     },
     "columns": {
       "symbol": "Symbole",

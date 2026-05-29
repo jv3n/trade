@@ -19,7 +19,15 @@
   gap: 1rem;
 }
 
-.radar-header h1 {
+.radar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.radar-header-titles h1 {
   margin: 0 0 0.25rem 0;
   font-size: 1.5rem;
 }
@@ -28,6 +36,18 @@
   margin: 0;
   color: var(--mat-app-on-surface-variant);
   font-size: 0.95rem;
+}
+
+.radar-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.radar-last-fetched {
+  font-size: 0.85rem;
+  color: var(--mat-app-on-surface-variant);
 }
 
 .radar-loading,

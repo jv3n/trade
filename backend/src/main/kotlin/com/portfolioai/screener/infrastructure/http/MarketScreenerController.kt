@@ -1,51 +1,40 @@
 package com.portfolioai.screener.infrastructure.http
 
 import com.portfolioai.screener.application.MarketScreenerService
-import com.portfolioai.screener.application.dto.TickerMoverDto
-import com.portfolioai.screener.application.dto.toDto
-import com.portfolioai.screener.domain.ScreenerFilter
-import com.portfolioai.screener.domain.ScreenerUniverse
+import com.portfolioai.screener.application.dto.ScreenerSnapshotResponse
 import io.swagger.v3.oas.annotations.tags.Tag
-import java.math.BigDecimal
+import java.time.LocalDate
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * Market radar endpoint (Phase 6). Returns the list of tickers in the configured universe (Nasdaq
- * Composite mid-cap, $2B–$10B) whose current session shows an abnormal move — gap % and / or volume
- * disproportion vs the 30-day average — above the user-supplied thresholds.
+ * Market radar endpoints (Phase 6). Two paths since ticket (9) introduced snapshot persistance :
+ * - `POST /api/screener/refresh` — explicit user trigger (« Rechercher » button). Calls the active
+ *   provider, persists the snapshot, returns it. The only path that burns a provider quota.
+ * - `GET /api/screener/movers` — read path. Returns the latest persisted snapshot for the active
+ *   provider, or a specific day when `?date=YYYY-MM-DD` is passed. Empty envelope (200 + `null`
+ *   date / fetchedAt + empty movers) when nothing has been persisted yet — the UI then shows the «
+ *   clique sur Rechercher pour amorcer » hint.
  *
- * Defaults align with the Phase 6 kick-off decision (`gapPctMin = 5`, `volumeRatioMin = 3`) so a
- * caller without any query params still gets a sensible v1 radar.
+ * The dynamic filter (gap %, volume ratio, market cap, exchange, sector) used to be query params on
+ * the GET ; it now runs client-side on the persisted snapshot so panel tweaks don't burn quota.
  *
- * Errors flow through the global exception handler — a 503 means the upstream snapshot failed, an
- * empty list (200 OK with `[]`) is a *valid* result that means "nothing matches right now".
+ * Errors flow through the global exception handler — 503 means the upstream provider failed (only
+ * reachable on the POST path), 400 means the active provider name is unknown (mis-config).
  */
 @Tag(name = "Screener", description = "Market radar — tickers showing abnormal moves at the open")
 @RestController
 @RequestMapping("/api/screener")
 class MarketScreenerController(private val service: MarketScreenerService) {
 
+  @PostMapping("/refresh") fun refresh(): ScreenerSnapshotResponse = service.refresh()
+
   @GetMapping("/movers")
   fun movers(
-    @RequestParam(defaultValue = "5.0") gapPctMin: BigDecimal,
-    @RequestParam(defaultValue = "3.0") volumeRatioMin: BigDecimal,
-    @RequestParam(required = false) marketCapMin: Long?,
-    @RequestParam(required = false) marketCapMax: Long?,
-    @RequestParam(required = false) exchange: String?,
-    @RequestParam(required = false) sector: String?,
-  ): List<TickerMoverDto> {
-    val filter =
-      ScreenerFilter(
-        gapPctMin = gapPctMin,
-        volumeRatioMin = volumeRatioMin,
-        marketCapMin = marketCapMin,
-        marketCapMax = marketCapMax,
-        exchange = exchange,
-        sector = sector,
-      )
-    return service.findMovers(ScreenerUniverse.NASDAQ_MID_CAP, filter).map { it.toDto() }
-  }
+    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?
+  ): ScreenerSnapshotResponse = service.loadSnapshot(date)
 }

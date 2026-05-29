@@ -1,39 +1,47 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, of } from 'rxjs';
 import {
   DEFAULT_SCREENER_FILTER,
   ScreenerFilter,
   ScreenerRepository,
+  ScreenerSnapshotResponse,
   TickerMover,
+  applyScreenerFilter,
 } from '../../core/api/screener/screener.repository';
 import { ScreenerFilterRepository } from '../../core/local/screener-filter/screener-filter.repository';
 import { RadarFilterPanel } from './radar-filter-panel';
 
 /**
- * Market radar page — Phase 6 v1 entry surface. Lays out the user-editable filter panel on the
- * left and the result table on the right. The table is sorted by `gapPct` descending so the
- * loudest movers float to the top, matching the backend's sort order.
+ * Market radar page after Phase 6 ticket (9) — snapshot persistance + in-process filtering.
  *
  * **State model** :
  * - `filter` (signal) — the active filter, hydrated from `localStorage` on construction with a
- *   fallback to [DEFAULT_SCREENER_FILTER]. The panel emits `filterChanged` (debounced 300 ms),
- *   which the page persists + uses to refetch.
- * - `movers` (signal) — the current table rows, mutated by the fetch pipeline.
- * - `loading` / `error` (signals) — drive the loading spinner and the inline error banner. Empty
- *   `movers` is **not** an error : the empty-state hint covers "no abnormal move detected"
- *   distinctly from "fetch failed".
+ *   fallback to [DEFAULT_SCREENER_FILTER]. Mutated by the panel ; **does not** trigger an HTTP
+ *   call.
+ * - `entries` (signal) — raw movers list from the last persisted snapshot. Mutated only by
+ *   [refresh] or the initial [loadSnapshot] on init. The filter tweaks the **derived** view, not
+ *   this list.
+ * - `filtered` (computed) — `applyScreenerFilter(entries(), filter())`, sorted by gap desc. This
+ *   is what the table renders.
+ * - `fetchedAt` (signal) — ISO timestamp of the persisted snapshot. `null` when no snapshot is
+ *   persisted yet (first visit) — drives the "press Rechercher" hint.
+ * - `loading` / `refreshing` / `error` (signals) — `loading` covers the initial GET ; `refreshing`
+ *   covers the explicit POST so the « Rechercher » button can show its own spinner without
+ *   blanking the table.
  *
- * Errors from the repo (typically a 503 when the upstream provider is rate-limited or down)
- * surface as an inline banner with a translated message — the rest of the page stays usable so
- * the user can adjust filters and retry.
+ * **Why this split** : the previous v0.3 flow re-hit the provider on every panel tweak — quota
+ * was burned in seconds on FMP (250 req/jour). v0.4 isolates the live fetch behind the explicit
+ * « Rechercher » button ; subsequent filter tweaks are zero-HTTP and instant. The frontend filter
+ * predicate mirrors the backend's old `MarketScreenerService.matches()` 1:1 so a future move back
+ * to server-side filtering wouldn't shift behaviour.
  */
 @Component({
   selector: 'app-radar',
@@ -58,8 +66,10 @@ export class RadarPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly filter = signal<ScreenerFilter>(this.filterStorage.load() ?? DEFAULT_SCREENER_FILTER);
-  readonly movers = signal<TickerMover[]>([]);
+  readonly entries = signal<TickerMover[]>([]);
+  readonly fetchedAt = signal<string | null>(null);
   readonly loading = signal(false);
+  readonly refreshing = signal(false);
   readonly error = signal<string | null>(null);
 
   readonly displayedColumns = [
@@ -72,39 +82,73 @@ export class RadarPage implements OnInit {
     'sector',
   ];
 
-  readonly isEmpty = computed(() => !this.loading() && !this.error() && this.movers().length === 0);
+  /** What the table renders — raw entries filtered + sorted in-process. */
+  readonly filtered = computed(() => applyScreenerFilter(this.entries(), this.filter()));
+
+  /** No snapshot persisted yet — user has never pressed « Rechercher ». */
+  readonly notYetFetched = computed(() => this.fetchedAt() === null);
+
+  /** Snapshot exists but the active filter matches nothing — show the "loosen filters" hint. */
+  readonly emptyAfterFilter = computed(
+    () => !this.notYetFetched() && this.filtered().length === 0 && !this.loading() && !this.error(),
+  );
 
   ngOnInit(): void {
-    this.fetch(this.filter());
+    this.loadInitial();
   }
 
   onFilterChanged(next: ScreenerFilter): void {
     this.filter.set(next);
     this.filterStorage.save(next);
-    this.fetch(next);
   }
 
   onResetRequested(): void {
     this.filter.set(DEFAULT_SCREENER_FILTER);
     this.filterStorage.save(DEFAULT_SCREENER_FILTER);
-    this.fetch(DEFAULT_SCREENER_FILTER);
   }
 
-  private fetch(filter: ScreenerFilter): void {
-    this.loading.set(true);
+  onRefreshRequested(): void {
+    this.refreshing.set(true);
     this.error.set(null);
     this.screener
-      .findMovers(filter)
+      .refresh()
       .pipe(
         catchError(() => {
-          this.error.set(this.translate.instant('radar.errors.fetch'));
-          return of<TickerMover[]>([]);
+          this.error.set(this.translate.instant('radar.errors.refresh'));
+          return of<ScreenerSnapshotResponse | null>(null);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((rows) => {
-        this.movers.set(rows);
+      .subscribe((response) => {
+        if (response) {
+          this.apply(response);
+        }
+        this.refreshing.set(false);
+      });
+  }
+
+  private loadInitial(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.screener
+      .loadSnapshot()
+      .pipe(
+        catchError(() => {
+          this.error.set(this.translate.instant('radar.errors.fetch'));
+          return of<ScreenerSnapshotResponse | null>(null);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((response) => {
+        if (response) {
+          this.apply(response);
+        }
         this.loading.set(false);
       });
+  }
+
+  private apply(response: ScreenerSnapshotResponse): void {
+    this.entries.set(response.movers);
+    this.fetchedAt.set(response.fetchedAt);
   }
 }

@@ -1,34 +1,39 @@
 /**
- * Tests on the radar page. Pin the orchestration logic — the parts a refactor could break
- * silently — rather than every signal-to-template pass-through :
+ * Radar page after Phase 6 ticket (9). The page now juggles two orthogonal axes — when to hit the
+ * provider (only on the « Rechercher » button) vs when to filter (every panel tweak, client-side).
+ * Tests pin the parts a refactor could blur silently :
  *
- * - **Hydration on init** — the persisted filter is loaded from local storage and used for the
- *   first fetch ; defaults kick in only when nothing is persisted.
- * - **Filter changes are persisted before the refetch** — a reload after a tweak must surface
- *   the same filter, not the previous one.
- * - **Reset path** — restores [DEFAULT_SCREENER_FILTER] both in-memory and in storage.
- * - **Error fallback** — an HTTP failure leaves the table empty and surfaces the translated
- *   error message ; the empty-state hint does NOT also render in that case.
- * - **Empty-state branching** — an empty 200 OK is distinct from an error : the empty hint
- *   shows, the error banner does not.
+ * - **Init hydrates from /movers** — the persisted snapshot loads on init via GET, NOT the
+ *   POST refresh. A regression that called refresh on init would re-burn the provider quota every
+ *   page load.
+ * - **« Rechercher » triggers POST /refresh** — the only path that calls the provider.
+ * - **Filter changes do NOT trigger any HTTP** — once a snapshot is loaded, panel tweaks operate
+ *   purely on the in-memory `entries` signal. Burning quota on filter tweaks is the regression we
+ *   ship this ticket to fix.
+ * - **`filtered` reflects both `entries` and `filter`** — derived view, must recompute when either
+ *   signal changes.
+ * - **Empty envelope (`fetchedAt === null`) → "press Rechercher" hint** — distinct from "snapshot
+ *   loaded but filter matches nothing".
+ * - **Error fallback** — failures on init or refresh leave the previous data intact and surface a
+ *   translated error.
  *
- * Repos are mocked with simple stubs — the HTTP wire format is verified separately in
- * `core/api/screener/adapters/screener.http.spec.ts`.
+ * Repos are mocked with simple stubs ; HTTP wire format is verified separately in the http spec.
  */
-import { vi } from 'vitest';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
-import { RadarPage } from './radar';
+import { vi } from 'vitest';
 import {
   DEFAULT_SCREENER_FILTER,
   ScreenerFilter,
   ScreenerRepository,
+  ScreenerSnapshotResponse,
   TickerMover,
 } from '../../core/api/screener/screener.repository';
 import { ScreenerFilterRepository } from '../../core/local/screener-filter/screener-filter.repository';
+import { RadarPage } from './radar';
 
 const sampleMover: TickerMover = {
   symbol: 'RDDT',
@@ -44,8 +49,25 @@ const sampleMover: TickerMover = {
   sector: 'Communication Services',
 };
 
+const sampleEnvelope: ScreenerSnapshotResponse = {
+  date: '2026-05-29',
+  provider: 'fmp',
+  fetchedAt: '2026-05-29T14:32:00Z',
+  movers: [sampleMover],
+};
+
+const emptyEnvelope: ScreenerSnapshotResponse = {
+  date: null,
+  provider: 'fmp',
+  fetchedAt: null,
+  movers: [],
+};
+
 class StubScreenerRepository {
-  findMovers = vi.fn<(f: ScreenerFilter) => Observable<TickerMover[]>>(() => of([sampleMover]));
+  refresh = vi.fn<() => Observable<ScreenerSnapshotResponse>>(() => of(sampleEnvelope));
+  loadSnapshot = vi.fn<(date?: string | null) => Observable<ScreenerSnapshotResponse>>(() =>
+    of(sampleEnvelope),
+  );
 }
 
 class StubScreenerFilterRepository {
@@ -59,10 +81,16 @@ describe('RadarPage', () => {
   let screener: StubScreenerRepository;
   let storage: StubScreenerFilterRepository;
 
-  async function setup(persistedFilter: ScreenerFilter | null = null): Promise<void> {
+  async function setup(
+    opts: {
+      persistedFilter?: ScreenerFilter | null;
+      initialLoad?: Observable<ScreenerSnapshotResponse>;
+    } = {},
+  ): Promise<void> {
     screener = new StubScreenerRepository();
     storage = new StubScreenerFilterRepository();
-    storage.load.mockReturnValue(persistedFilter);
+    storage.load.mockReturnValue(opts.persistedFilter ?? null);
+    if (opts.initialLoad) screener.loadSnapshot.mockReturnValue(opts.initialLoad);
 
     await TestBed.configureTestingModule({
       imports: [RadarPage],
@@ -81,118 +109,126 @@ describe('RadarPage', () => {
     await fixture.whenStable();
   }
 
-  it('fetches with the default filter when nothing is persisted', async () => {
-    await setup(null);
+  it('loads the persisted snapshot via GET on init, not via refresh', async () => {
+    await setup();
 
-    expect(screener.findMovers).toHaveBeenCalledWith(DEFAULT_SCREENER_FILTER);
-    expect(component.filter()).toEqual(DEFAULT_SCREENER_FILTER);
-    expect(component.movers()).toEqual([sampleMover]);
-    expect(component.loading()).toBe(false);
-    expect(component.error()).toBeNull();
+    expect(screener.loadSnapshot).toHaveBeenCalledTimes(1);
+    expect(screener.refresh).not.toHaveBeenCalled();
+    expect(component.entries()).toEqual([sampleMover]);
+    expect(component.fetchedAt()).toBe('2026-05-29T14:32:00Z');
+    expect(component.notYetFetched()).toBe(false);
   });
 
   it('seeds the filter from local storage when a persisted value is present', async () => {
+    // Filter is intentionally loose enough that `sampleMover` survives — the goal is to assert
+    // the hydration path, not the filter predicate (covered by other tests).
     const persisted: ScreenerFilter = {
       gapPctMin: 10,
-      volumeRatioMin: 5,
-      marketCapMin: 3_000_000_000,
-      marketCapMax: 8_000_000_000,
+      volumeRatioMin: 3,
+      marketCapMin: 5_000_000_000,
+      marketCapMax: 10_000_000_000,
       exchange: null,
-      sector: 'Technology',
+      sector: 'Communication Services',
     };
-    await setup(persisted);
+    await setup({ persistedFilter: persisted });
 
-    expect(screener.findMovers).toHaveBeenCalledWith(persisted);
     expect(component.filter()).toEqual(persisted);
+    expect(component.filtered()).toEqual([sampleMover]);
   });
 
-  it('persists the filter before refetching when the panel emits a change', async () => {
-    await setup(null);
-    screener.findMovers.mockClear();
+  it('falls back to DEFAULT_SCREENER_FILTER when nothing is persisted', async () => {
+    await setup();
+    expect(component.filter()).toEqual(DEFAULT_SCREENER_FILTER);
+  });
 
-    const next: ScreenerFilter = {
-      ...DEFAULT_SCREENER_FILTER,
-      gapPctMin: 12,
-      sector: 'Healthcare',
-    };
+  it('persists the filter on a panel change but does NOT hit the provider', async () => {
+    // This is the core ticket (9) invariant — filter tweaks must not burn provider quota.
+    await setup();
+    screener.refresh.mockClear();
+    screener.loadSnapshot.mockClear();
+
+    const next: ScreenerFilter = { ...DEFAULT_SCREENER_FILTER, gapPctMin: 12 };
     component.onFilterChanged(next);
     await fixture.whenStable();
 
     expect(storage.save).toHaveBeenCalledWith(next);
-    expect(screener.findMovers).toHaveBeenCalledWith(next);
     expect(component.filter()).toEqual(next);
+    expect(screener.refresh).not.toHaveBeenCalled();
+    expect(screener.loadSnapshot).not.toHaveBeenCalled();
   });
 
-  it('restores the defaults on reset and persists them', async () => {
-    const persisted: ScreenerFilter = {
-      ...DEFAULT_SCREENER_FILTER,
-      gapPctMin: 20,
-      sector: 'Energy',
-    };
-    await setup(persisted);
-    screener.findMovers.mockClear();
+  it('recomputes filtered when the filter tightens past the in-memory data', async () => {
+    await setup();
+    expect(component.filtered()).toEqual([sampleMover]);
+
+    // Tighten gap floor past the sample mover's 16.67 — it should drop out of the derived view.
+    component.onFilterChanged({ ...DEFAULT_SCREENER_FILTER, gapPctMin: 50 });
+    await fixture.whenStable();
+
+    expect(component.entries()).toEqual([sampleMover]); // raw data unchanged
+    expect(component.filtered()).toEqual([]); // derived view tightened
+    expect(component.emptyAfterFilter()).toBe(true);
+  });
+
+  it('reset restores DEFAULT_SCREENER_FILTER without re-hitting the provider', async () => {
+    await setup({
+      persistedFilter: { ...DEFAULT_SCREENER_FILTER, gapPctMin: 20, sector: 'Energy' },
+    });
+    screener.refresh.mockClear();
+    screener.loadSnapshot.mockClear();
 
     component.onResetRequested();
     await fixture.whenStable();
 
     expect(component.filter()).toEqual(DEFAULT_SCREENER_FILTER);
     expect(storage.save).toHaveBeenCalledWith(DEFAULT_SCREENER_FILTER);
-    expect(screener.findMovers).toHaveBeenCalledWith(DEFAULT_SCREENER_FILTER);
+    expect(screener.refresh).not.toHaveBeenCalled();
+    expect(screener.loadSnapshot).not.toHaveBeenCalled();
   });
 
-  it('surfaces a translated error message and clears the table on HTTP failure', async () => {
-    screener = new StubScreenerRepository();
-    storage = new StubScreenerFilterRepository();
-    storage.load.mockReturnValue(null);
-    screener.findMovers.mockReturnValue(throwError(() => new Error('boom')));
+  it('« Rechercher » triggers POST /refresh and updates entries + fetchedAt', async () => {
+    await setup({ initialLoad: of(emptyEnvelope) });
+    expect(component.notYetFetched()).toBe(true);
+    expect(component.refreshing()).toBe(false);
 
-    await TestBed.configureTestingModule({
-      imports: [RadarPage],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideRouter([]),
-        provideTranslateService({ lang: 'en' }),
-        { provide: ScreenerRepository, useValue: screener },
-        { provide: ScreenerFilterRepository, useValue: storage },
-      ],
-    }).compileComponents();
+    component.onRefreshRequested();
+    await fixture.whenStable();
 
-    fixture = TestBed.createComponent(RadarPage);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    expect(screener.refresh).toHaveBeenCalledTimes(1);
+    expect(component.entries()).toEqual([sampleMover]);
+    expect(component.fetchedAt()).toBe('2026-05-29T14:32:00Z');
+    expect(component.notYetFetched()).toBe(false);
+    expect(component.refreshing()).toBe(false);
+  });
+
+  it('surfaces a translated error and keeps the previous entries when refresh fails', async () => {
+    await setup();
+    expect(component.entries()).toEqual([sampleMover]);
+
+    screener.refresh.mockReturnValue(throwError(() => new Error('503')));
+    component.onRefreshRequested();
     await fixture.whenStable();
 
     expect(component.error()).not.toBeNull();
-    expect(component.movers()).toEqual([]);
-    // Error and empty-state are mutually exclusive in the template — `isEmpty` returns false so
-    // the empty hint doesn't pile up on top of the error banner.
-    expect(component.isEmpty()).toBe(false);
+    // Previous snapshot stays visible — the user keeps the data they already had.
+    expect(component.entries()).toEqual([sampleMover]);
+    expect(component.refreshing()).toBe(false);
   });
 
-  it('flags the empty state when the backend returns an empty array', async () => {
-    screener = new StubScreenerRepository();
-    storage = new StubScreenerFilterRepository();
-    storage.load.mockReturnValue(null);
-    screener.findMovers.mockReturnValue(of<TickerMover[]>([]));
+  it('renders the "not yet fetched" state when the initial load envelope has fetchedAt null', async () => {
+    await setup({ initialLoad: of(emptyEnvelope) });
 
-    await TestBed.configureTestingModule({
-      imports: [RadarPage],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideRouter([]),
-        provideTranslateService({ lang: 'en' }),
-        { provide: ScreenerRepository, useValue: screener },
-        { provide: ScreenerFilterRepository, useValue: storage },
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(RadarPage);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    expect(component.movers()).toEqual([]);
+    expect(component.notYetFetched()).toBe(true);
+    expect(component.entries()).toEqual([]);
+    expect(component.emptyAfterFilter()).toBe(false);
     expect(component.error()).toBeNull();
-    expect(component.isEmpty()).toBe(true);
+  });
+
+  it('surfaces a translated error and clears nothing when the initial load fails', async () => {
+    await setup({ initialLoad: throwError(() => new Error('boom')) });
+
+    expect(component.error()).not.toBeNull();
+    expect(component.entries()).toEqual([]);
+    expect(component.notYetFetched()).toBe(true);
   });
 });

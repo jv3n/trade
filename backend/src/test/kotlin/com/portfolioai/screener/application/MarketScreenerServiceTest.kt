@@ -1,213 +1,263 @@
 package com.portfolioai.screener.application
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.portfolioai.config.application.AppConfigService
+import com.portfolioai.config.application.ConfigKeys
+import com.portfolioai.screener.application.dto.TickerMoverDto
+import com.portfolioai.screener.application.dto.toDto
 import com.portfolioai.screener.domain.MarketScreenerClient
-import com.portfolioai.screener.domain.ScreenerFilter
+import com.portfolioai.screener.domain.ScreenerSnapshotDay
 import com.portfolioai.screener.domain.ScreenerUniverse
 import com.portfolioai.screener.domain.TickerMover
+import com.portfolioai.screener.infrastructure.persistence.ScreenerSnapshotRepository
+import com.portfolioai.shared.UpstreamUnavailableException
 import java.math.BigDecimal
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 /**
- * Filter / sort logic for the market radar. The service is the only layer between the adapter and
- * the controller — its filter contract is what the UI binds to via the `gapPctMin` /
- * `volumeRatioMin` / `marketCap*` / `exchange` / `sector` query params. A regression here would
- * either flood the radar with noise (filters too permissive) or hide legitimate candidates (filters
- * too aggressive), both of which a user can't easily diagnose from the UI.
+ * Refresh / read split for the market radar after Phase 6 ticket (9). The service is the only layer
+ * that touches both the live adapter (via [MarketScreenerClient]) and the persisted snapshot
+ * (`screener_snapshot_day`) — a regression here would either (a) re-burn quota on every page load
+ * (read path accidentally calling the adapter) or (b) silently land the snapshot under the wrong
+ * provider (UPSERT key misaligned with the active provider name).
  *
- * Each test pins one axis at a time, plus one combo, plus the sort order — the matrix isn't
- * exhaustive but the rules AND together so axis-by-axis coverage protects the whole.
+ * Each test pins one slice : the persist side-effect of refresh, the provider tagging, the
+ * upstream-blip propagation, the per-provider scoping of the read, and the empty envelope returned
+ * when no snapshot exists yet. The dynamic filter (gap %, volume ratio…) was removed from the
+ * service in v0.4 — it now runs client-side in the radar page.
+ *
+ * Stubbed dependencies — adapter ([StubScreenerClient]), repository (Mockito), [AppConfigService]
+ * (Mockito for the single key lookup). A real [ObjectMapper] is used because the JSON round-trip
+ * through `moversJson` is part of the contract under test — a Jackson regression on `BigDecimal` or
+ * `Instant` would slip past a mocked mapper.
  */
 class MarketScreenerServiceTest {
 
-  @Test
-  fun `applies the gap floor when filtering`() {
-    val service = serviceOf(mover("AAA", gapPct = "10.0"), mover("BBB", gapPct = "3.0"))
-
-    val out = service.findMovers(filter = filter(gapPctMin = "5.0"))
-
-    assertEquals(listOf("AAA"), out.map { it.symbol })
-  }
+  private val objectMapper: ObjectMapper =
+    jacksonObjectMapper().registerKotlinModule().registerModule(JavaTimeModule())
 
   @Test
-  fun `applies the volume ratio floor when filtering`() {
-    val service = serviceOf(mover("AAA", volumeRatio = "5.0"), mover("BBB", volumeRatio = "1.5"))
-
-    val out = service.findMovers(filter = filter(volumeRatioMin = "3.0"))
-
-    assertEquals(listOf("AAA"), out.map { it.symbol })
-  }
-
-  @Test
-  fun `AND-combines all filter axes`() {
+  fun `refresh fetches the active provider snapshot and persists it under that provider key`() {
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.save(any<ScreenerSnapshotDay>())).thenAnswer {
+      it.arguments[0] as ScreenerSnapshotDay
+    }
     val service =
-      serviceOf(
-        // matches both axes — should pass
-        mover("PASS", gapPct = "10.0", volumeRatio = "5.0"),
-        // gap OK, volume too low — fails
-        mover("VOLFAIL", gapPct = "10.0", volumeRatio = "1.0"),
-        // volume OK, gap too low — fails
-        mover("GAPFAIL", gapPct = "1.0", volumeRatio = "5.0"),
+      serviceWith(
+        client = StubScreenerClient(listOf(sampleMover("RDDT"))),
+        repo = repo,
+        activeProvider = ConfigKeys.PROVIDER_FMP,
       )
 
-    val out = service.findMovers(filter = filter(gapPctMin = "5.0", volumeRatioMin = "3.0"))
+    val response = service.refresh()
 
-    assertEquals(listOf("PASS"), out.map { it.symbol })
+    verify(repo, times(1)).save(any<ScreenerSnapshotDay>())
+    assertEquals(ConfigKeys.PROVIDER_FMP, response.provider)
+    assertEquals(1, response.movers.size)
+    assertEquals("RDDT", response.movers.first().symbol)
   }
 
   @Test
-  fun `keeps gap-down candidates when gapPctMin is negative`() {
-    // Directional filter — a negative gapPctMin lets gap-down rows through. Important for any
-    // future « gap-down preset » in the UI.
-    val service =
-      serviceOf(
-        mover("UP", gapPct = "8.0", volumeRatio = "4.0"),
-        mover("DOWN", gapPct = "-10.0", volumeRatio = "4.0"),
-      )
+  fun `refresh keys the snapshot on today's ET market date`() {
+    // ET market timezone — clock-skew across the runner shouldn't change the date the snapshot is
+    // tagged with. We assert on the property `the persisted date matches today in NY` instead of
+    // freezing time, because the service grabs `LocalDate.now(ZoneId)` directly.
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.save(any<ScreenerSnapshotDay>())).thenAnswer {
+      it.arguments[0] as ScreenerSnapshotDay
+    }
+    val service = serviceWith(repo = repo)
+    val expectedDate = LocalDate.now(ZoneId.of("America/New_York"))
 
-    val out = service.findMovers(filter = filter(gapPctMin = "-20.0", volumeRatioMin = "3.0"))
+    val response = service.refresh()
 
-    assertTrue("UP" in out.map { it.symbol })
-    assertTrue("DOWN" in out.map { it.symbol })
+    assertEquals(expectedDate, response.date)
   }
 
   @Test
-  fun `narrows the market-cap range further when the filter provides bounds`() {
-    val service =
-      serviceOf(
-        mover("MID", marketCapUsd = 5_000_000_000L),
-        mover("LOW", marketCapUsd = 2_500_000_000L),
-        mover("HIGH", marketCapUsd = 9_000_000_000L),
-      )
+  fun `refresh propagates the upstream blip and does not persist`() {
+    val failingClient = StubScreenerClient.throwing(UpstreamUnavailableException("rate-limited"))
+    val repo: ScreenerSnapshotRepository = mock()
+    val service = serviceWith(client = failingClient, repo = repo)
 
-    val out =
-      service.findMovers(
-        filter =
-          filter(
-            gapPctMin = "0.0",
-            volumeRatioMin = "0.0",
-            marketCapMin = 3_000_000_000L,
-            marketCapMax = 8_000_000_000L,
-          )
-      )
-
-    assertEquals(listOf("MID"), out.map { it.symbol })
+    assertThrows(UpstreamUnavailableException::class.java) { service.refresh() }
+    verify(repo, times(0)).save(any<ScreenerSnapshotDay>())
   }
 
   @Test
-  fun `filters by sector when provided`() {
-    val service =
-      serviceOf(mover("TECH", sector = "Technology"), mover("FIN", sector = "Financial Services"))
+  fun `loadSnapshot null date returns the most recent persisted row for the active provider`() {
+    val repo: ScreenerSnapshotRepository = mock()
+    val expectedDate = LocalDate.of(2026, 5, 29)
+    whenever(repo.findFirstByProviderOrderByDateDesc(ConfigKeys.PROVIDER_FMP))
+      .thenReturn(persistedSnapshot(expectedDate, ConfigKeys.PROVIDER_FMP, listOf("NEW")))
+    val service = serviceWith(repo = repo, activeProvider = ConfigKeys.PROVIDER_FMP)
 
-    val out =
-      service.findMovers(
-        filter = filter(gapPctMin = "0.0", volumeRatioMin = "0.0", sector = "Technology")
-      )
+    val response = service.loadSnapshot(date = null)
 
-    assertEquals(listOf("TECH"), out.map { it.symbol })
+    assertEquals(expectedDate, response.date)
+    assertEquals(listOf("NEW"), response.movers.map { it.symbol })
+    verify(repo, times(1)).findFirstByProviderOrderByDateDesc(ConfigKeys.PROVIDER_FMP)
   }
 
   @Test
-  fun `sector filter is case-insensitive`() {
-    val service = serviceOf(mover("TECH", sector = "Technology"))
-
-    val out =
-      service.findMovers(
-        filter = filter(gapPctMin = "0.0", volumeRatioMin = "0.0", sector = "technology")
+  fun `loadSnapshot scopes the latest-row lookup to the active provider`() {
+    // A polygon snapshot must NOT surface when the active provider is FMP — the read path is
+    // per-provider so a runtime switch doesn't silently serve another provider's data.
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.findFirstByProviderOrderByDateDesc(ConfigKeys.PROVIDER_FMP))
+      .thenReturn(
+        persistedSnapshot(LocalDate.of(2026, 5, 27), ConfigKeys.PROVIDER_FMP, listOf("FMP"))
       )
+    val service = serviceWith(repo = repo, activeProvider = ConfigKeys.PROVIDER_FMP)
 
-    assertEquals(listOf("TECH"), out.map { it.symbol })
+    service.loadSnapshot(date = null)
+
+    verify(repo, times(1)).findFirstByProviderOrderByDateDesc(eq(ConfigKeys.PROVIDER_FMP))
   }
 
   @Test
-  fun `drops rows whose sector is null when a sector filter is set`() {
-    // A null sector on a [TickerMover] cannot match any non-null sector filter — equivalent to
-    // « unknown sector, can't claim membership ». The opposite (no sector filter = wildcard) is
-    // already exercised by other tests.
-    val service = serviceOf(mover("UNK", sector = null), mover("TECH", sector = "Technology"))
+  fun `loadSnapshot with explicit date returns that exact row when it exists`() {
+    val targetDate = LocalDate.of(2026, 5, 27)
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.findByDateAndProvider(targetDate, ConfigKeys.PROVIDER_FMP))
+      .thenReturn(persistedSnapshot(targetDate, ConfigKeys.PROVIDER_FMP, listOf("HIT")))
+    val service = serviceWith(repo = repo, activeProvider = ConfigKeys.PROVIDER_FMP)
 
-    val out =
-      service.findMovers(
-        filter = filter(gapPctMin = "0.0", volumeRatioMin = "0.0", sector = "Technology")
-      )
+    val response = service.loadSnapshot(date = targetDate)
 
-    assertFalse("UNK" in out.map { it.symbol })
+    assertEquals(targetDate, response.date)
+    assertEquals(listOf("HIT"), response.movers.map { it.symbol })
   }
 
   @Test
-  fun `sorts the matches by gapPct descending`() {
-    // Most-gapping at the top is the v1 radar reading order. Without this sort the user has to
-    // re-sort every refresh which defeats the « surface what's loud » purpose of the radar.
-    val service =
-      serviceOf(
-        mover("LOW", gapPct = "6.0", volumeRatio = "5.0"),
-        mover("MID", gapPct = "12.0", volumeRatio = "5.0"),
-        mover("HIGH", gapPct = "20.0", volumeRatio = "5.0"),
-      )
+  fun `loadSnapshot returns empty envelope when no row exists for the active provider`() {
+    // First-time visit, no « Rechercher » press yet — the UI uses `fetchedAt == null` to render the
+    // « clique sur Rechercher » empty state. Throwing or returning 404 would force the frontend
+    // into error-handling for a normal cold-start state.
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.findFirstByProviderOrderByDateDesc(any())).thenReturn(null)
+    val service = serviceWith(repo = repo, activeProvider = ConfigKeys.PROVIDER_FMP)
 
-    val out = service.findMovers(filter = filter(gapPctMin = "5.0", volumeRatioMin = "3.0"))
+    val response = service.loadSnapshot(date = null)
 
-    assertEquals(listOf("HIGH", "MID", "LOW"), out.map { it.symbol })
+    assertNull(response.date)
+    assertNull(response.fetchedAt)
+    assertEquals(ConfigKeys.PROVIDER_FMP, response.provider)
+    assertTrue(response.movers.isEmpty())
   }
 
   @Test
-  fun `returns an empty list when nothing matches`() {
-    // Empty is a valid result — the controller passes it through as 200 OK with []. The UI
-    // renders an empty-state hint rather than an error.
-    val service = serviceOf(mover("AAA", gapPct = "1.0", volumeRatio = "1.0"))
+  fun `loadSnapshot returns empty envelope when the explicit date has no row`() {
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.findByDateAndProvider(any(), any())).thenReturn(null)
+    val service = serviceWith(repo = repo, activeProvider = ConfigKeys.PROVIDER_FMP)
 
-    val out = service.findMovers(filter = filter(gapPctMin = "5.0", volumeRatioMin = "3.0"))
+    val response = service.loadSnapshot(date = LocalDate.of(2025, 1, 1))
 
-    assertTrue(out.isEmpty())
+    assertNull(response.date)
+    assertTrue(response.movers.isEmpty())
   }
 
-  // --- Test factory helpers ---------------------------------------------------------------------
+  @Test
+  fun `refresh response carries the fetchedAt timestamp returned by the repository`() {
+    val fixedInstant = Instant.parse("2026-05-29T14:32:00Z")
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.save(any<ScreenerSnapshotDay>())).thenAnswer {
+      val arg = it.arguments[0] as ScreenerSnapshotDay
+      ScreenerSnapshotDay(arg.date, arg.provider, arg.moversJson, fetchedAt = fixedInstant)
+    }
+    val service = serviceWith(repo = repo)
 
-  private fun serviceOf(vararg movers: TickerMover): MarketScreenerService =
-    MarketScreenerService(StubScreenerClient(movers.toList()))
+    val response = service.refresh()
 
-  private fun filter(
-    gapPctMin: String = "0.0",
-    volumeRatioMin: String = "0.0",
-    marketCapMin: Long? = null,
-    marketCapMax: Long? = null,
-    exchange: String? = null,
-    sector: String? = null,
-  ) =
-    ScreenerFilter(
-      gapPctMin = BigDecimal(gapPctMin),
-      volumeRatioMin = BigDecimal(volumeRatioMin),
-      marketCapMin = marketCapMin,
-      marketCapMax = marketCapMax,
-      exchange = exchange,
-      sector = sector,
+    assertNotNull(response.fetchedAt)
+    assertEquals(fixedInstant, response.fetchedAt)
+  }
+
+  // --- Helpers
+  // ------------------------------------------------------------------------------------
+
+  private fun serviceWith(
+    client: MarketScreenerClient = StubScreenerClient(listOf(sampleMover("RDDT"))),
+    repo: ScreenerSnapshotRepository = passthroughRepo(),
+    activeProvider: String = ConfigKeys.PROVIDER_MOCK,
+  ): MarketScreenerService {
+    val appConfig: AppConfigService = mock()
+    whenever(appConfig.getString(ConfigKeys.SCREENER_PROVIDER)).thenReturn(activeProvider)
+    return MarketScreenerService(
+      client = client,
+      repository = repo,
+      appConfig = appConfig,
+      jsonMapper = objectMapper,
     )
+  }
 
-  private fun mover(
-    symbol: String,
-    gapPct: String = "10.0",
-    volumeRatio: String = "5.0",
-    marketCapUsd: Long = 5_000_000_000L,
-    sector: String? = "Technology",
-    exchange: String = "NASDAQ",
-  ): TickerMover =
+  private fun passthroughRepo(): ScreenerSnapshotRepository {
+    val repo: ScreenerSnapshotRepository = mock()
+    whenever(repo.save(any<ScreenerSnapshotDay>())).thenAnswer {
+      it.arguments[0] as ScreenerSnapshotDay
+    }
+    return repo
+  }
+
+  /** Builds a `ScreenerSnapshotDay` with a serialised payload, simulating a freshly-read DB row. */
+  private fun persistedSnapshot(
+    date: LocalDate,
+    provider: String,
+    symbols: List<String>,
+  ): ScreenerSnapshotDay {
+    val dtos: List<TickerMoverDto> = symbols.map { sampleMover(it).toDto() }
+    return ScreenerSnapshotDay(
+      date = date,
+      provider = provider,
+      moversJson = objectMapper.writeValueAsString(dtos),
+      fetchedAt = Instant.now(),
+    )
+  }
+
+  private fun sampleMover(symbol: String): TickerMover =
     TickerMover(
       symbol = symbol,
-      name = symbol,
+      name = "$symbol Inc.",
       price = BigDecimal("100.00"),
       previousClose = BigDecimal("90.00"),
-      gapPct = BigDecimal(gapPct),
+      gapPct = BigDecimal("11.11"),
       volume = 10_000_000L,
       volumeAvg30d = 2_000_000L,
-      volumeRatio = BigDecimal(volumeRatio),
-      marketCapUsd = marketCapUsd,
-      exchange = exchange,
-      sector = sector,
+      volumeRatio = BigDecimal("5.00"),
+      marketCapUsd = 5_000_000_000L,
+      exchange = "NASDAQ",
+      sector = "Technology",
     )
 
-  private class StubScreenerClient(private val snapshot: List<TickerMover>) : MarketScreenerClient {
-    override fun snapshotMovers(universe: ScreenerUniverse): List<TickerMover> = snapshot
+  private class StubScreenerClient(
+    private val snapshot: List<TickerMover>,
+    private val toThrow: RuntimeException? = null,
+  ) : MarketScreenerClient {
+    override fun snapshotMovers(universe: ScreenerUniverse): List<TickerMover> {
+      toThrow?.let { throw it }
+      return snapshot
+    }
+
+    companion object {
+      fun throwing(ex: RuntimeException) = StubScreenerClient(emptyList(), toThrow = ex)
+    }
   }
 }

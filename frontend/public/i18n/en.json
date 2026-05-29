@@ -833,9 +833,13 @@
   "radar": {
     "title": "Market radar",
     "subtitle": "Mid-cap Nasdaq tickers showing an abnormal move — unusual opening gap and volume. An investigation signal, not a recommendation.",
+    "refresh": "Search",
+    "lastFetched": "Last search:",
+    "notYetFetched": "No snapshot yet. Press « Search » to query the provider.",
     "empty": "No abnormal move detected with these filters.",
     "errors": {
-      "fetch": "Could not load the radar. The provider may be unavailable — please retry."
+      "fetch": "Could not load the radar snapshot. Please retry.",
+      "refresh": "The provider rejected the refresh. It may be rate-limited or down — please retry."
     },
     "columns": {
       "symbol": "Symbol",
