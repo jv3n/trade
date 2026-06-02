@@ -155,7 +155,7 @@ jobs:
           always()
           && github.event_name == 'pull_request'
           && hashFiles('backend/build/reports/kover/report.xml') != ''
-        uses: madrapps/jacoco-report@v1.7.2
+        uses: madrapps/jacoco-report@v1.8.0
         with:
           paths: backend/build/reports/kover/report.xml
           token: ${{ secrets.GITHUB_TOKEN }}
