@@ -50,7 +50,8 @@ import org.springframework.web.client.RestClient
  *
  * **What FMP gets right vs Polygon free tier** :
  * - `name` is populated → the radar displays the issuer name without a separate enrichment call.
- * - `exchange` is populated → the exchange filter actually works.
+ * - `exchange` is populated → the universe's exchange bound is enforced at the adapter level (Phase
+ *   6 ticket (8) v0.5). Non-NASDAQ entries are dropped before the snapshot is persisted.
  *
  * Auth : the API key is read at every call from [AppConfigService] (DB override layered on top of
  * the YAML default `screener.fmp.api-key` / env var `FMP_API_KEY`). Reading per-call is required
@@ -71,8 +72,21 @@ class FmpMarketScreenerClient(
     requireApiKey()
     val gainers = fetchMovers("biggest-gainers")
     val losers = fetchMovers("biggest-losers")
-    log.info("FMP movers : gainers={} losers={}", gainers.size, losers.size)
-    return (gainers + losers).mapNotNull { it.toMoverOrNull() }
+    val all = (gainers + losers).mapNotNull { it.toMoverOrNull() }
+    // FMP carries `exchange` on each entry — honor the universe's exchange bound at the adapter
+    // level (Phase 6 ticket (8)). Cap range is NOT honored because the payload doesn't expose
+    // `marketCapUsd` — Phase 6 ticket (1bis) covers the cap-aware path via the nightly
+    // `ticker_reference` join.
+    val scoped = all.filter { it.exchange.equals(universe.exchange, ignoreCase = true) }
+    log.info(
+      "FMP movers : gainers={} losers={} parsed={} after exchange={} filter={}",
+      gainers.size,
+      losers.size,
+      all.size,
+      universe.exchange,
+      scoped.size,
+    )
+    return scoped
   }
 
   private fun fetchMovers(path: String): List<FmpMoverEntry> {

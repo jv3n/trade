@@ -155,11 +155,11 @@ trade/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
 │       ├── core/              # split sur 5 sous-dossiers — api/ (HTTP) + local/ (browser) + app-state/ (UI services) + http/ (interceptors, Phase 4) + router/ (guards, Phase 4)
-│       │   ├── api/<bucket>/          # 9 bounded contexts miroirs du backend : market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/
+│       │   ├── api/<bucket>/          # 10 bounded contexts miroirs du backend : market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/
 │       │   │   ├── *.repository.ts            # ports (abstract class) à la racine du bucket
 │       │   │   ├── *.service.ts               # services bucket-locaux (ex. analysis/ollama-status.service.ts, analysis/job-stream.service.ts SSE, analysis/llm-timeout.service.ts)
 │       │   │   └── adapters/*.http.ts         # HttpXxxRepository (défaut)
-│       │   ├── local/<bucket>/        # ports persistés navigateur (annotation/ seul aujourd'hui) + adapters/*.local.ts
+│       │   ├── local/<bucket>/        # ports persistés navigateur (annotation/ + screener-filter/) + adapters/*.local.ts
 │       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts, auth.service.ts), sans port/adapter
 │       │   ├── http/                  # HTTP interceptors (Phase 4 — auth.interceptor.ts catch 401 → /login)
 │       │   ├── router/                # Route guards (Phase 4 — authGuard, adminGuard)

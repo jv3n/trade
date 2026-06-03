@@ -122,14 +122,7 @@ describe('RadarPage', () => {
   it('seeds the filter from local storage when a persisted value is present', async () => {
     // Filter is intentionally loose enough that `sampleMover` survives — the goal is to assert
     // the hydration path, not the filter predicate (covered by other tests).
-    const persisted: ScreenerFilter = {
-      gapPctMin: 10,
-      volumeRatioMin: 3,
-      marketCapMin: 5_000_000_000,
-      marketCapMax: 10_000_000_000,
-      exchange: null,
-      sector: 'Communication Services',
-    };
+    const persisted: ScreenerFilter = { gapPctMin: 10, volumeRatioMin: 3 };
     await setup({ persistedFilter: persisted });
 
     expect(component.filter()).toEqual(persisted);
@@ -170,9 +163,26 @@ describe('RadarPage', () => {
     expect(component.emptyAfterFilter()).toBe(true);
   });
 
+  it('lets movers with volumeRatio=0 through regardless of the volume floor (FMP no-volume sentinel)', async () => {
+    // FMP's gainers/losers endpoint doesn't expose volume — every mover comes through with
+    // `volumeRatio = 0`. Without sentinel handling the radar would render empty for the default
+    // FMP user even though the snapshot has data. Mock + Polygon emit a real volumeRatio so the
+    // floor still applies to them.
+    const fmpMover: TickerMover = { ...sampleMover, symbol: 'HUBC', volumeRatio: 0 };
+    const envelope: ScreenerSnapshotResponse = {
+      ...sampleEnvelope,
+      movers: [fmpMover],
+    };
+    await setup({ initialLoad: of(envelope) });
+
+    // Default volumeRatioMin is 3 — but the sentinel 0 must pass through anyway.
+    expect(component.filter().volumeRatioMin).toBe(3);
+    expect(component.filtered()).toEqual([fmpMover]);
+  });
+
   it('reset restores DEFAULT_SCREENER_FILTER without re-hitting the provider', async () => {
     await setup({
-      persistedFilter: { ...DEFAULT_SCREENER_FILTER, gapPctMin: 20, sector: 'Energy' },
+      persistedFilter: { ...DEFAULT_SCREENER_FILTER, gapPctMin: 20 },
     });
     screener.refresh.mockClear();
     screener.loadSnapshot.mockClear();

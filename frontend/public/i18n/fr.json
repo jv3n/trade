@@ -600,7 +600,7 @@
       },
       "screenerProvider": {
         "title": "Provider du radar de marché",
-        "description": "Bascule entre le mock local (snapshot synthétique déterministe), Polygon (endpoint grouped-daily, requiert une souscription Polygon Stocks Basic+ — le free Basic ne couvre plus cet endpoint depuis le rebrand 2026) et FMP (top gainers/losers, free tier 250 req/jour — pas de signal volume, mets ton volumeRatioMin à 0 pour voir les résultats). Le changement s'applique au prochain refresh du radar."
+        "description": "Bascule entre le mock local (snapshot synthétique déterministe), Polygon (endpoint grouped-daily, requiert une souscription Polygon Stocks Basic+ — le free Basic ne couvre plus cet endpoint depuis le rebrand 2026) et FMP (top gainers/losers, free tier 250 req/jour — pas de signal volume, le filtre volume du radar est contourné automatiquement pour les movers FMP). Le changement s'applique au prochain refresh du radar."
       },
       "llmProvider": {
         "title": "Provider LLM",
@@ -667,7 +667,7 @@
       },
       "fmp": {
         "title": "FMP (Financial Modeling Prep) — clé API",
-        "description": "Provider du radar de marché (Phase 6). Free tier 250 req/jour, pas de carte requise. Le radar appelle <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> (top 50 chacun = ~100 movers par refresh ; les paths legacy <code>/api/v3/stock_market/*</code> ont été dépréciés en août 2025). <strong>Pas de signal volume</strong> sur cet endpoint — le filtre volumeRatioMin du radar est no-op quand FMP est le provider actif, descends-le à 0 dans le panneau pour voir des résultats. <a href=\"https://site.financialmodelingprep.com/developer/docs/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
+        "description": "Provider du radar de marché (Phase 6). Free tier 250 req/jour, pas de carte requise. Le radar appelle <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> (top 50 chacun = ~100 movers par refresh ; les paths legacy <code>/api/v3/stock_market/*</code> ont été dépréciés en août 2025). <strong>Pas de signal volume</strong> sur cet endpoint — les movers FMP portent <code>volumeRatio = 0</code> comme sentinelle et contournent automatiquement le filtre volume du radar. <a href=\"https://site.financialmodelingprep.com/developer/docs/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
         "inputLabel": "Clé API FMP"
       },
       "anthropicKey": {
@@ -852,12 +852,9 @@
     },
     "filter": {
       "title": "Filtres",
+      "universeHint": "Univers : NASDAQ mid-cap, 2 G$–10 G$ (appliqué côté serveur).",
       "gapPctMin": "Gap minimum",
       "volumeRatioMin": "Volume × minimum",
-      "marketCapMin": "Cap. minimum",
-      "marketCapMax": "Cap. maximum",
-      "sector": "Secteur",
-      "sectorAny": "Tous les secteurs",
       "reset": "Réinitialiser"
     }
   }

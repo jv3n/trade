@@ -6,11 +6,10 @@ package com.portfolioai.screener.domain
  * paid providers (Polygon, Finnhub) bill per call and you'd rather have the API constrain by
  * exchange + cap range upstream than pull the whole US market every refresh.
  *
- * **Dynamic [ScreenerFilter] is NOT this port's concern** — gap % / volume ratio / sector
- * thresholds are applied by `MarketScreenerService` after the snapshot lands, so the user can tweak
- * them in the UI without re-hitting the adapter. Splitting the two responsibilities lets the
- * adapter focus on "what slice of the market" while the service focuses on "what subset is worth
- * surfacing".
+ * **The dynamic user filter is NOT this port's concern** — gap % / volume ratio thresholds are
+ * applied **client-side** on the persisted snapshot (Phase 6 ticket (9), 2026-05-29). The adapter
+ * focuses on "what slice of the market", the persisted snapshot carries the raw movers, the
+ * frontend's `applyScreenerFilter` narrows the view at zero HTTP cost per tweak.
  *
  * Failure contract :
  * - **Upstream blip** (rate-limit, 5xx, network, auth) → throw

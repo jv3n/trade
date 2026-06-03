@@ -28,30 +28,28 @@ export interface TickerMover {
 }
 
 /**
- * Dynamic, user-editable thresholds applied client-side to the persisted snapshot. Mirrors the
- * backend `ScreenerFilter` shape — kept identical so a future move back to server-side filtering
- * doesn't need a contract change.
+ * Dynamic, user-editable thresholds applied client-side to the persisted snapshot. Two axes since
+ * Phase 6 ticket (8) v0.5 simplified the panel : exchange + market-cap range are now enforced at
+ * the backend universe level ([ScreenerUniverse.NASDAQ_MID_CAP]) and sector was no-op on every
+ * live provider (FMP / Polygon don't carry it).
  *
  * `gapPctMin` is **directional** — positive value filters gap-up only, negative value lets
  * gap-down rows through. v1 stays positive ; the field is signed so a future preset can flip it.
+ * `volumeRatioMin` is no-op on FMP (volume not exposed by the gainers/losers endpoint) but used on
+ * Mock + Polygon ; the user can drop it to 0 when running with FMP.
  */
 export interface ScreenerFilter {
   gapPctMin: number;
   volumeRatioMin: number;
-  marketCapMin: number | null;
-  marketCapMax: number | null;
-  exchange: string | null;
-  sector: string | null;
 }
 
-/** Default thresholds — match the backend `ScreenerFilter.DEFAULT`. */
+/**
+ * Default thresholds — `gapPctMin = 10` matches the Phase 6 ticket (8) re-targeting (focus on
+ * **truly** abnormal moves, drop the 5 % noise floor inherited from Sprint 1).
+ */
 export const DEFAULT_SCREENER_FILTER: ScreenerFilter = {
-  gapPctMin: 5,
+  gapPctMin: 10,
   volumeRatioMin: 3,
-  marketCapMin: null,
-  marketCapMax: null,
-  exchange: null,
-  sector: null,
 };
 
 /**
@@ -88,25 +86,23 @@ export abstract class ScreenerRepository {
 }
 
 /**
- * Pure client-side filter — mirrors the backend `MarketScreenerService.matches()` predicate so the
- * panel tweaks operate locally without re-hitting the API. Lives next to the port so the contract
- * and the predicate stay in sync.
+ * Pure client-side filter — gap floor + volume ratio floor + sort by `gapPct` descending. Lives
+ * next to the port so the contract and the predicate stay in sync. `gapPctMin` is directional (cf.
+ * [TickerMover.gapPct] doc).
  *
- * `gapPctMin` is directional (cf. [TickerMover.gapPct] doc) ; `null` market-cap bounds are no-ops ;
- * `null` exchange / sector are no-ops (wildcard). A mover with `sector === null` cannot match a
- * non-null sector filter ("unknown — can't claim membership").
+ * **`volumeRatio === 0` is treated as a sentinel meaning "provider doesn't expose volume"** and
+ * passes through regardless of [ScreenerFilter.volumeRatioMin]. Without this, FMP-sourced movers
+ * (which all carry `volumeRatio = 0` because the gainers/losers endpoint doesn't expose volume)
+ * would be silently filtered out by any positive volume floor — the radar would render empty even
+ * though the snapshot has data. Mock + Polygon compute a real volumeRatio so the floor still
+ * applies to them.
  */
 export function applyScreenerFilter(rows: TickerMover[], filter: ScreenerFilter): TickerMover[] {
   return rows
     .filter(
       (row) =>
         row.gapPct >= filter.gapPctMin &&
-        row.volumeRatio >= filter.volumeRatioMin &&
-        (filter.marketCapMin === null || row.marketCapUsd >= filter.marketCapMin) &&
-        (filter.marketCapMax === null || row.marketCapUsd <= filter.marketCapMax) &&
-        (filter.exchange === null ||
-          row.exchange.toLowerCase() === filter.exchange.toLowerCase()) &&
-        (filter.sector === null || row.sector?.toLowerCase() === filter.sector.toLowerCase()),
+        (row.volumeRatio === 0 || row.volumeRatio >= filter.volumeRatioMin),
     )
     .sort((a, b) => b.gapPct - a.gapPct);
 }

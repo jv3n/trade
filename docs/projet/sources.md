@@ -97,7 +97,7 @@ Le rebrand Polygon → Massive 2026 a verrouillé le free tier sur `/v3/referenc
 - Setup zero-friction : sign-up email + clé immédiate
 
 **Limites à connaître** :
-- **Pas de signal volume** sur gainers/losers → `volumeRatio = 0` sentinel côté domain ; le filtre radar `volumeRatioMin` devient no-op quand FMP est actif (hint UI dans la card Settings)
+- **Pas de signal volume** sur gainers/losers → l'adapter `FmpMarketScreenerClient` (infrastructure) renvoie `volumeRatio = 0` comme sentinelle ; le filtre client-side `applyScreenerFilter` traite cette valeur comme « provider sans donnée volume » et la laisse passer indépendamment de `volumeRatioMin` (Mock + Polygon calculent un vrai ratio donc le floor s'applique normalement à eux)
 - Univers borné top 50 par direction (~100 movers max par refresh)
 - Pas de `marketCapUsd` ni `sector` (mêmes sentinels que Polygon)
 

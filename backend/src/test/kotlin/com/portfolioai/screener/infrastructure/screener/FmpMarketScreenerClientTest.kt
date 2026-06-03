@@ -115,6 +115,20 @@ class FmpMarketScreenerClientTest {
     assertTrue(movers.isEmpty())
   }
 
+  @Test
+  fun `filters out entries whose exchange does not match the universe`() {
+    // Phase 6 ticket (8) v0.5 — the FMP payload carries `exchange` per entry, so the universe's
+    // exchange bound (NASDAQ for NASDAQ_MID_CAP) is enforced at the adapter level. A mover on
+    // NYSE / AMEX / OTC is dropped before the snapshot lands in the radar.
+    server.enqueue(jsonOk(MIXED_EXCHANGE_GAINERS_BODY))
+    server.enqueue(jsonOk("[]"))
+
+    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+
+    assertEquals(1, movers.size)
+    assertEquals("NASDAQONLY", movers.first().symbol)
+  }
+
   // ---------------------------------------------------------------------- skip rules
 
   @Test
@@ -237,6 +251,37 @@ class FmpMarketScreenerClientTest {
     """
       .trimIndent()
 
+  private val MIXED_EXCHANGE_GAINERS_BODY =
+    """
+    [
+      {
+        "symbol": "NASDAQONLY",
+        "name": "Nasdaq Mover",
+        "change": 5.00,
+        "price": 100.00,
+        "changesPercentage": 5.26,
+        "exchange": "NASDAQ"
+      },
+      {
+        "symbol": "NYSEDROPPED",
+        "name": "NYSE Mover",
+        "change": 8.00,
+        "price": 80.00,
+        "changesPercentage": 11.11,
+        "exchange": "NYSE"
+      },
+      {
+        "symbol": "AMEXDROPPED",
+        "name": "AMEX Mover",
+        "change": 1.00,
+        "price": 25.00,
+        "changesPercentage": 4.17,
+        "exchange": "AMEX"
+      }
+    ]
+    """
+      .trimIndent()
+
   private val GAINERS_WITH_PARTIAL_ENTRIES_BODY =
     """
     [
@@ -246,7 +291,7 @@ class FmpMarketScreenerClientTest {
         "change": 5.00,
         "price": 100.00,
         "changesPercentage": 5.26,
-        "exchange": "NYSE"
+        "exchange": "NASDAQ"
       },
       {
         "name": "No Symbol Co",

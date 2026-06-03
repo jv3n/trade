@@ -600,7 +600,7 @@
       },
       "screenerProvider": {
         "title": "Market radar provider",
-        "description": "Switch between the local mock (deterministic synthetic snapshot), Polygon (grouped-daily endpoint, requires a Polygon Stocks Basic+ subscription — Basic free no longer covers it post-2026 rebrand), and FMP (top gainers/losers, free tier 250 req/day — no volume signal, drop your volumeRatioMin filter to 0 to see results). Takes effect on the next radar refresh."
+        "description": "Switch between the local mock (deterministic synthetic snapshot), Polygon (grouped-daily endpoint, requires a Polygon Stocks Basic+ subscription — Basic free no longer covers it post-2026 rebrand), and FMP (top gainers/losers, free tier 250 req/day — no volume signal, the radar's volume floor is auto-bypassed for FMP movers). Takes effect on the next radar refresh."
       },
       "llmProvider": {
         "title": "LLM provider",
@@ -667,7 +667,7 @@
       },
       "fmp": {
         "title": "FMP (Financial Modeling Prep) — API key",
-        "description": "Provider for the market radar (Phase 6). Free tier 250 req/day, no credit card required. The radar calls <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> (top 50 each = ~100 movers per refresh ; the legacy <code>/api/v3/stock_market/*</code> paths were deprecated August 2025). <strong>No volume signal</strong> on this endpoint — the radar's volumeRatioMin filter is no-op when FMP is the active provider, drop it to 0 in the panel to see results. <a href=\"https://site.financialmodelingprep.com/developer/docs/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
+        "description": "Provider for the market radar (Phase 6). Free tier 250 req/day, no credit card required. The radar calls <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> (top 50 each = ~100 movers per refresh ; the legacy <code>/api/v3/stock_market/*</code> paths were deprecated August 2025). <strong>No volume signal</strong> on this endpoint — FMP movers carry <code>volumeRatio = 0</code> as a sentinel and bypass the radar's volume floor automatically. <a href=\"https://site.financialmodelingprep.com/developer/docs/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Get an API key</a>.",
         "inputLabel": "FMP API key"
       },
       "anthropicKey": {
@@ -852,12 +852,9 @@
     },
     "filter": {
       "title": "Filters",
+      "universeHint": "Universe: NASDAQ mid-cap, $2B–$10B (enforced server-side).",
       "gapPctMin": "Min gap",
       "volumeRatioMin": "Min volume ×",
-      "marketCapMin": "Min market cap",
-      "marketCapMax": "Max market cap",
-      "sector": "Sector",
-      "sectorAny": "Any sector",
       "reset": "Reset"
     }
   }
