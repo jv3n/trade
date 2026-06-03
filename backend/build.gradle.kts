@@ -61,7 +61,7 @@ dependencies {
   // appender so MDC values (notably `userId`) become event extras automatically. The `-jakarta`
   // variant targets Spring Boot 3 (Jakarta EE) — picking `sentry-spring-boot-starter` (no suffix)
   // would silently link the javax-namespaced classes and the bean wiring would crash at boot.
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.43.0")
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.43.1")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
