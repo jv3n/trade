@@ -1,44 +1,65 @@
-import { Canvas, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import { Canvas, Controls, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
 import * as ButtonStories from './buttons.stories';
 
 <Meta of={ButtonStories} />
 
-# Buttons
+# Button
 
-The design owned by `libs/ui/styles/components/_buttons.scss` is a **pure SCSS override** of Angular Material's MDC button. Touch the SCSS, every `<button mat-button>` / `mat-flat-button` / `mat-stroked-button` / `mat-icon-button` / `mat-raised-button` in the consumer app reflects the change — no HTML migration, no `UiButton` wrapper.
+Material's `<button mat-*>` restyled via the lib (`libs/ui/src/lib/button/button.scss`), shipped with two directives carried by `StbButtonModule` :
+
+- **`[stbSize]`** — `xs | sm | md | lg` swaps the MDC container-height + label-text-size tokens.
+- **`[stbSpinnerEnd]`** — applied to a `<mat-spinner>` inside a button, pushes it to the end of the row (trailing position) instead of the leading-icon slot.
+
+## Playground
+
+Use the **Controls** panel on the right to flip the variant, size, label, icon, disabled / loading state, and where the spinner sits.
+
+<Canvas of={ButtonStories.Default} />
+
+<Controls of={ButtonStories.Default} />
 
 ## How to use
 
-1. Add `MatButtonModule` to the component's `imports` (it's a standalone import).
-2. Use Material's regular attribute directives on a native `<button>` (or `<a>`) :
-
 <Source
   language="ts"
-  code={`import { Component } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
+  code={`import { StbButtonModule } from '@portfolioai/ui';
 
 @Component({
-  selector: 'app-my-feature',
-  imports: [MatButtonModule],
+  imports: [StbButtonModule],
   template: \`
     <button mat-flat-button (click)="save()">Save</button>
-    <button mat-stroked-button (click)="cancel()">Cancel</button>
+    <button mat-flat-button stbSize="lg" (click)="signIn()">Sign in with Google</button>
+    <button mat-icon-button stbSize="xs"><mat-icon>close</mat-icon></button>
   \`,
-})
-export class MyFeature {}`}
+})`}
 />
 
-## Variant cheat-sheet
+## Variants
 
 <Markdown>
 {`
-| Selector              | Material role           | Use it for                                                  |
-| --------------------- | ----------------------- | ----------------------------------------------------------- |
-| \`mat-flat-button\`     | Filled, no elevation    | **Primary CTA** — replaces the legacy \`.btn-primary\` class. |
-| \`mat-stroked-button\`  | Outlined                | **Secondary CTA** — replaces the legacy \`.btn-secondary\`.  |
-| \`mat-button\`          | Text only, low emphasis | Tertiary actions, inline toolbar buttons.                   |
-| \`mat-icon-button\`     | Square icon, no label   | Toolbar / overflow / quick toggle.                          |
-| \`mat-raised-button\`   | Filled + elevation      | Rare ; same palette as \`mat-flat-button\` here.             |
+| Selector              | Role                       | Use it for                                            |
+| --------------------- | -------------------------- | ----------------------------------------------------- |
+| \`mat-flat-button\`     | Filled, no elevation       | **Primary CTA** (Save, Generate, Confirm…).            |
+| \`mat-stroked-button\`  | Outlined                   | **Secondary CTA** (Cancel, Edit…).                     |
+| \`mat-button\`          | Text only, low emphasis    | Tertiary actions, inline toolbar buttons.              |
+| \`mat-icon-button\`     | Square icon, no label      | Toolbar / overflow / quick toggles.                    |
+| \`mat-raised-button\`   | Filled + elevation         | Rare ; same palette as \`mat-flat-button\`.            |
+`}
+</Markdown>
+
+## Sizes
+
+`sm` is the design-system default — same height as a button without `[stbSize]`.
+
+<Markdown>
+{`
+| Token            | Container height | Label size | Typical use                              |
+| ---------------- | ---------------- | ---------- | ---------------------------------------- |
+| \`stbSize="xs"\`   | 24 px            | 0.75 rem   | Inline chip-row actions, table row icons. |
+| \`stbSize="sm"\`   | 32 px (default)  | 0.8125 rem | Dialogs, dense toolbars.                  |
+| \`stbSize="md"\`   | 38 px            | 0.875 rem  | Default CTAs in the journal / settings.   |
+| \`stbSize="lg"\`   | 44 px            | 0.95 rem   | Hero CTAs (login, primary action page).   |
 `}
 </Markdown>
 
@@ -54,7 +75,7 @@ Drop the icon and the label as direct siblings inside the button — Material pr
 </button>`}
 />
 
-**Caveat** (Material 21+) : if the icon is wrapped in a `@if` / `@else` block, the branch **must contain a single root node** matching the icon-slot selector. Otherwise the compiler raises `NG8011` and refuses to project. Split the conditional :
+**Caveat** (Material 21+) : if the icon is wrapped in a `@if` / `@else` block, each branch **must contain a single root node** matching the icon-slot selector. Otherwise the compiler raises `NG8011`. Split the conditional :
 
 <Source
   language="html"
@@ -68,54 +89,21 @@ Drop the icon and the label as direct siblings inside the button — Material pr
 </button>`}
 />
 
-## Tokens consumed
-
-The SCSS rewrites Material's MDC tokens to point at the design-system custom properties — same palette dark + light, no per-variant logic to maintain :
-
-<Markdown>
-{`
-| Variant      | MDC token override                                  | Resolves to            |
-| ------------ | --------------------------------------------------- | ---------------------- |
-| Flat         | \`--mdc-filled-button-container-color\`               | \`var(--color-accent)\`  |
-| Flat         | \`--mdc-filled-button-label-text-color\`              | \`var(--color-on-accent)\`|
-| Stroked      | \`--mdc-outlined-button-outline-color\`               | \`var(--color-border)\`  |
-| Stroked      | \`--mdc-outlined-button-label-text-color\`            | \`var(--color-text)\`    |
-| Text         | \`--mdc-text-button-label-text-color\`                | \`var(--color-text)\`    |
-| Icon         | \`--mdc-icon-button-icon-color\`                      | \`var(--color-text-muted)\`|
-| All          | \`--mdc-*-container-shape\`                           | \`var(--radius)\` (8 px) |
-| All          | \`--mdc-*-container-height\`                          | 36 px                  |
-`}
-</Markdown>
-
-Editing the design = editing two files :
-
-- `libs/ui/styles/_tokens.scss` — the palette/radii (cascades to all consumers, dark + light)
-- `libs/ui/styles/components/_buttons.scss` — the button-specific overrides
-
-## Variants
-
-<Canvas of={ButtonStories.Variants} />
-
-## With icons
-
-<Canvas of={ButtonStories.WithIcons} />
-
 ## Loading state
 
-<Canvas of={ButtonStories.Loading} />
+Place the spinner where the icon would naturally go (leading), OR at the end via `[stbSpinnerEnd]` :
 
-## Disabled
+<Source
+  language="html"
+  code={`<!-- Leading (replaces the icon) -->
+<button mat-flat-button disabled>
+  <mat-spinner diameter="16"></mat-spinner>
+  <span>Saving…</span>
+</button>
 
-<Canvas of={ButtonStories.Disabled} />
-
-## Primary CTA — replaces `.btn-primary`
-
-<Canvas of={ButtonStories.CTAPrimary} />
-
-## Secondary CTA — replaces `.btn-secondary`
-
-<Canvas of={ButtonStories.CTASecondary} />
-
-## Dark vs Light
-
-<Canvas of={ButtonStories.BothThemes} />
+<!-- Trailing -->
+<button mat-flat-button disabled>
+  <span>Saving</span>
+  <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>
+</button>`}
+/>

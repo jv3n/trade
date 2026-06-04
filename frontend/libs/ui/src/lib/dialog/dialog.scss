@@ -1,0 +1,84 @@
+// Material dialog design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/dialog/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/dialog/_m3-dialog.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.dialog-overrides()` — with ~22 tokens
+// split across :
+//   • Container (9 base + 1 color)  — overlay shape / sizing / shadow / background.
+//   • Headline / actions / content padding (3 base).
+//   • Headline + supporting-text typography (10 typography + 2 color).
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+//
+// **Why `:root`** : the dialog overlay lives outside the consumer's view-encapsulated tree
+// (CDK overlay container, mounted on `<body>`). The overrides have to be global to reach it.
+//
+// The default `mat.all-component-themes` derivation lands on `--mat-sys-surface` for the
+// container, which in our dark-dimmed palette is too close to the page bg — the dialog reads
+// as "black on black" against the body. We bump it to `--color-surface` (one step lighter)
+// so the dialog floats clearly above the content.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.dialog-overrides(
+    (
+      // ============================================================================
+      // Base — container shape / sizing / shadow
+      // ============================================================================
+      container-shape: var(--radius-lg),
+      // container-elevation-shadow: none,            // M3 default — none. The CDK backdrop
+                                                       // already darkens the page behind ; no
+                                                       // panel-level shadow needed in our
+                                                       // dark-dimmed palette.
+      // container-min-width: 280px,                  // M3 default — covers most cases.
+      // container-max-width: 560px,                  // M3 default — small CTA-style dialog.
+      //                                              // The add-trade dialog uses
+      //                                              // `[panelClass]` to override this on the
+      //                                              // open() call site.
+      // container-small-max-width: calc(100vw - 32px),
+
+      // ============================================================================
+      // Base — internal padding (headline / content / actions slots)
+      // M3 ships pixel-precise paddings tuned around an MDC `::before` pseudo on the title ;
+      // hard to fine-tune without breaking the rhythm. Keep at defaults.
+      // ============================================================================
+      // headline-padding: 6px 24px 13px,
+      // content-padding: 20px 24px,
+      // with-actions-content-padding: 20px 24px 0,
+      // actions-padding: 16px 24px,
+      // actions-alignment: flex-end,
+
+      // ============================================================================
+      // Color
+      // ============================================================================
+      container-color: var(--color-surface),
+      subhead-color: var(--color-text),
+      supporting-text-color: var(--color-text-muted),
+
+      // ============================================================================
+      // Typography — headline (`<h2 mat-dialog-title>`)
+      // M3 defaults pull from `headline-small` — coherent with our page-level h2 hierarchy.
+      // ============================================================================
+      // subhead-font: inherit,                       // System font from `mat.core()` is fine.
+      // subhead-size: ...,
+      // subhead-weight: ...,
+      // subhead-line-height: ...,
+      // subhead-tracking: ...,
+
+      // ============================================================================
+      // Typography — supporting text (default `<mat-dialog-content>` body)
+      // M3 defaults pull from `body-medium` — already coherent with the form-field family.
+      // ============================================================================
+      // supporting-text-font: inherit,
+      // supporting-text-size: ...,
+      // supporting-text-weight: ...,
+      // supporting-text-line-height: ...,
+      // supporting-text-tracking: ...,
+    )
+  );
+}

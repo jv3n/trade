@@ -59,17 +59,18 @@ module.exports = defineConfig([
     },
   },
 
-  // ======== libs/ui — selector prefix `ui` ========
+  // ======== libs/ui — selector prefixes `ui` (Storybook demo components) + `stb` (design-system
+  //                     directives & wrapped surfaces, e.g. `[stbSize]`, `[stbCol]`, `[stbChip]`) ========
   {
     files: ['libs/ui/**/*.ts'],
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
-        { type: 'attribute', prefix: 'ui', style: 'camelCase' },
+        { type: 'attribute', prefix: ['ui', 'stb'], style: 'camelCase' },
       ],
       '@angular-eslint/component-selector': [
         'error',
-        { type: 'element', prefix: 'ui', style: 'kebab-case' },
+        { type: 'element', prefix: ['ui', 'stb'], style: 'kebab-case' },
       ],
     },
   },

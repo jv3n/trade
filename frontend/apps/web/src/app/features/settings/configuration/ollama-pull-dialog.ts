@@ -1,14 +1,19 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { MatDialogRef } from '@angular/material/dialog';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
+import {
+  StbButtonModule,
+  StbDialogModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 /**
  * Suggestions re-used from the LLM provider card on `/settings/configuration` so the dialog
@@ -47,13 +52,13 @@ const OLLAMA_MODEL_SUGGESTIONS = [
   imports: [
     ReactiveFormsModule,
     TranslatePipe,
-    MatButtonModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
+    StbButtonModule,
+    StbDialogModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
+    StbProgressSpinnerModule,
+    StbTooltipModule,
   ],
   templateUrl: './ollama-pull-dialog.html',
   styleUrl: './ollama-pull-dialog.scss',

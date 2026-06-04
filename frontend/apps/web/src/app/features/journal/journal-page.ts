@@ -9,18 +9,12 @@ import {
 } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
+
 import { MatDialog } from '@angular/material/dialog';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
-import { MatSortModule, Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { MatSidenav } from '@angular/material/sidenav';
+import { Sort } from '@angular/material/sort';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { StbDatePickerModule } from '@portfolioai/ui';
@@ -39,6 +33,20 @@ import {
 } from '../../core/api/journal/trade-entry.model';
 import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog/add-trade-dialog';
 import { PERIOD_PRESETS, PeriodPresetKey, computePeriodRange } from './period-preset';
+import {
+  StbButtonModule,
+  StbChipsModule,
+  StbDividerModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbSelectModule,
+  StbSidenavModule,
+  StbSortHeaderModule,
+  StbTableModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 interface FilterFormModel {
   period: PeriodPresetKey;
@@ -76,18 +84,19 @@ const EMPTY_FILTER: FilterFormModel = {
   imports: [
     DatePipe,
     DecimalPipe,
-    MatButtonModule,
-    MatDividerModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSidenavModule,
-    MatSortModule,
+    StbButtonModule,
+    StbChipsModule,
+    StbDividerModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
+    StbProgressSpinnerModule,
+    StbSelectModule,
+    StbSidenavModule,
+    StbSortHeaderModule,
     StbDatePickerModule,
-    MatTableModule,
-    MatTooltipModule,
+    StbTableModule,
+    StbTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './journal-page.html',
@@ -259,11 +268,6 @@ export class JournalPage {
       },
       error: () => this.error.set(this.translate.instant('journal.errors.delete')),
     });
-  }
-
-  profitClass(value: number | null): string {
-    if (value === null || value === 0) return '';
-    return value > 0 ? 'profit-positive' : 'profit-negative';
   }
 
   private fetch(filter: TradeEntryFilter): void {

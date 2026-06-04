@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './autocomplete.stories';
+
+<Meta of={Stories} />
+
+# Autocomplete
+
+Material autocomplete — type-ahead suggestions anchored to an `<input>`. Pair with `StbFormFieldModule` + `StbInputModule` for the surrounding chrome.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbAutocompleteModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbAutocompleteModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

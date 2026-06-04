@@ -46,13 +46,19 @@
   --logo-tile: #ffffff;
   --logo-mark: #111318;
 
-  // Semantic — calibrated against the dimmed surfaces (GH dimmed semantic palette)
+  // Semantic — calibrated against the dimmed surfaces (GH dimmed semantic palette).
+  // The `-on-*` pair is the foreground colour to use on top of the corresponding semantic
+  // surface (snack-bar variants, success / error chips, banners…). White at full contrast
+  // works against both the dark-mode and light-mode semantic backgrounds.
   --color-success: #6cbe6e;
   --color-success-soft: #1e2c1f;
+  --color-on-success: #ffffff;
   --color-warning: #e3b341;
   --color-warning-soft: #2e2a17;
+  --color-on-warning: #ffffff;
   --color-danger: #f47067;
   --color-danger-soft: #2d1f1f;
+  --color-on-danger: #ffffff;
   --color-info: #588fdc;
   --color-info-soft: #1c2a3a;
   --color-purple: #b083f0;
@@ -129,10 +135,13 @@
   // Semantic — GH light semantic.
   --color-success: #1a7f37;
   --color-success-soft: #dafbe1;
+  --color-on-success: #ffffff;
   --color-warning: #9a6700;
   --color-warning-soft: #fff8c5;
+  --color-on-warning: #ffffff;
   --color-danger: #cf222e;
   --color-danger-soft: #ffebe9;
+  --color-on-danger: #ffffff;
   --color-info: #0969da;
   --color-info-soft: #ddf4ff;
   --color-purple: #8250df;

@@ -1,18 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, min, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
+
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+
 import { TranslatePipe } from '@ngx-translate/core';
 import { StbDatePickerModule } from '@portfolioai/ui';
 
@@ -30,6 +20,17 @@ import {
   TradePattern,
   TradePlay,
 } from '../../../core/api/journal/trade-entry.model';
+import {
+  StbButtonModule,
+  StbCheckboxModule,
+  StbDialogModule,
+  StbDividerModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbSelectModule,
+} from '@portfolioai/ui';
 
 /** Data passed to the dialog — `entry` non-null = edit mode, null = create mode. */
 export interface AddTradeDialogData {
@@ -80,15 +81,15 @@ interface TradeFormModel {
   standalone: true,
   imports: [
     FormField,
-    MatButtonModule,
-    MatCheckboxModule,
-    MatDialogModule,
-    MatDividerModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
+    StbButtonModule,
+    StbCheckboxModule,
+    StbDialogModule,
+    StbDividerModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
+    StbProgressSpinnerModule,
+    StbSelectModule,
     NumberMaskDirective,
     StbDatePickerModule,
     TranslatePipe,
@@ -98,9 +99,8 @@ interface TradeFormModel {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddTradeDialog {
-  private readonly dialogRef = inject<MatDialogRef<AddTradeDialog, TradeEntryInput | undefined>>(
-    MatDialogRef,
-  );
+  private readonly dialogRef =
+    inject<MatDialogRef<AddTradeDialog, TradeEntryInput | undefined>>(MatDialogRef);
   private readonly data = inject<AddTradeDialogData>(MAT_DIALOG_DATA);
 
   readonly isEdit = computed(() => this.data.entry !== null);

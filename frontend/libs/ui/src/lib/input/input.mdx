@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './input.stories';
+
+<Meta of={Stories} />
+
+# Input
+
+Plain text input + textarea. For numeric fields use the `appNumberMask` directive in `apps/web/shared/`. For Signal Forms binding, see the journal dialog.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbFormFieldModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbFormFieldModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

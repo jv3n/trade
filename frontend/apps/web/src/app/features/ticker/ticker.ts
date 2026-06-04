@@ -3,17 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import {
-  MatAutocompleteModule,
-  MatAutocompleteSelectedEvent,
-} from '@angular/material/autocomplete';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   Subscription,
@@ -44,6 +35,16 @@ import { AnalystRepository, AnalystSnapshot } from '../../core/api/analyst/analy
 import { EarningsRepository, EarningsSnapshot } from '../../core/api/earnings/earnings.repository';
 import { JobEvent, JobPhase, JobStreamService } from '../../core/api/analysis/job-stream.service';
 import { NarrativeFeedbackRepository } from '../../core/api/analysis/narrative-feedback.repository';
+import {
+  StbAutocompleteModule,
+  StbButtonModule,
+  StbButtonToggleModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
@@ -285,14 +286,14 @@ const BRUSH_MIN_BARS = 2;
     CommonModule,
     ReactiveFormsModule,
     RouterLink,
-    MatAutocompleteModule,
-    MatButtonModule,
-    MatButtonToggleModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
+    StbAutocompleteModule,
+    StbButtonModule,
+    StbButtonToggleModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
+    StbProgressSpinnerModule,
+    StbTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './ticker.html',

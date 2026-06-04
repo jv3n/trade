@@ -1,0 +1,176 @@
+// Material form-field design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/form-field/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/form-field/_m3-form-field.scss > get-tokens()
+//
+// `mat.form-field-overrides()` is the largest M3 override surface in the lib — ~80 tokens
+// across **two appearances** (`outlined` + `filled`) × **5 interaction states** (idle / hover
+// / focus / error / disabled) × **5 anchor points** (container, label, outline / active
+// indicator, input text, icon).
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+//
+// PortfolioAI primarily uses **`appearance="outline"`** (journal, settings, dialogs) — the
+// `outlined-*` section is the most heavily customised. The `filled-*` section is also styled
+// to stay coherent if a filled variant lands later. The shared (icon, error text, select)
+// tokens land at the top of the color block.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.form-field-overrides(
+    (
+      // ============================================================================
+      // Base — outline / active-indicator widths + corner radius
+      // ============================================================================
+      outlined-container-shape: var(--radius),
+      filled-container-shape: var(--radius),
+      // outlined-outline-width: 1px,                  // M3 default — 1 px.
+      // outlined-focus-outline-width: 2px,            // M3 default — 2 px on focus.
+      // filled-active-indicator-height: 1px,
+      // filled-focus-active-indicator-height: 2px,
+
+      // ============================================================================
+      // Color — shared (icons, error text, select arrow, state layer, caret)
+      // ============================================================================
+      leading-icon-color: var(--color-text-muted),
+      trailing-icon-color: var(--color-text-muted),
+      enabled-select-arrow-color: var(--color-text-muted),
+      focus-select-arrow-color: var(--color-accent),
+      state-layer-color: var(--color-accent),
+      // hover-state-layer-opacity: 0.08,              // M3 default — accent at 8 %.
+      // focus-state-layer-opacity: 0,                 // M3 default — none (focus uses outline/
+                                                        //  indicator instead of bg tint).
+      //
+      // Error
+      error-text-color: var(--color-danger),
+      error-trailing-icon-color: var(--color-danger),
+      error-focus-trailing-icon-color: var(--color-danger),
+      error-hover-trailing-icon-color: var(--color-danger),
+      //
+      // Disabled — lean on M3 defaults (on-surface @ 38 % / 12 %)
+      // disabled-input-text-placeholder-color: ...,
+      // disabled-leading-icon-color: ...,
+      // disabled-trailing-icon-color: ...,
+      // disabled-select-arrow-color: ...,
+
+      // ============================================================================
+      // Color — outlined (primary appearance)
+      // ============================================================================
+      // ── Outline (the visible border) ──
+      outlined-outline-color: var(--color-border),
+      outlined-hover-outline-color: var(--color-text-faint),
+      outlined-focus-outline-color: var(--color-accent),
+      // outlined-disabled-outline-color: ...,
+      outlined-error-outline-color: var(--color-danger),
+      outlined-error-hover-outline-color: var(--color-danger),
+      outlined-error-focus-outline-color: var(--color-danger),
+      //
+      // ── Label ──
+      outlined-label-text-color: var(--color-text-muted),
+      outlined-hover-label-text-color: var(--color-text),
+      outlined-focus-label-text-color: var(--color-accent),
+      // outlined-disabled-label-text-color: ...,
+      outlined-error-label-text-color: var(--color-danger),
+      outlined-error-hover-label-text-color: var(--color-danger),
+      outlined-error-focus-label-text-color: var(--color-danger),
+      //
+      // ── Input text + caret ──
+      outlined-input-text-color: var(--color-text),
+      outlined-input-text-placeholder-color: var(--color-text-faint),
+      // outlined-disabled-input-text-color: ...,
+      outlined-caret-color: var(--color-accent),
+      outlined-error-caret-color: var(--color-danger),
+
+      // ============================================================================
+      // Color — filled (secondary appearance, kept consistent for future use)
+      // ============================================================================
+      // ── Container ──
+      filled-container-color: var(--color-surface-2),
+      // filled-disabled-container-color: ...,
+      //
+      // ── Active indicator (the bottom border) ──
+      filled-active-indicator-color: var(--color-border),
+      filled-hover-active-indicator-color: var(--color-text-faint),
+      filled-focus-active-indicator-color: var(--color-accent),
+      // filled-disabled-active-indicator-color: ...,
+      filled-error-active-indicator-color: var(--color-danger),
+      filled-error-hover-active-indicator-color: var(--color-danger),
+      filled-error-focus-active-indicator-color: var(--color-danger),
+      //
+      // ── Label ──
+      filled-label-text-color: var(--color-text-muted),
+      filled-hover-label-text-color: var(--color-text),
+      filled-focus-label-text-color: var(--color-accent),
+      // filled-disabled-label-text-color: ...,
+      filled-error-label-text-color: var(--color-danger),
+      filled-error-hover-label-text-color: var(--color-danger),
+      filled-error-focus-label-text-color: var(--color-danger),
+      //
+      // ── Input text + caret ──
+      filled-input-text-color: var(--color-text),
+      filled-input-text-placeholder-color: var(--color-text-faint),
+      // filled-disabled-input-text-color: ...,
+      filled-caret-color: var(--color-accent),
+      filled-error-caret-color: var(--color-danger),
+
+      // ============================================================================
+      // Color — `<select>` options (native dropdown — rare ; M3 defaults are fine)
+      // ============================================================================
+      // select-option-text-color: ...,
+      // select-disabled-option-text-color: ...,
+
+      // ============================================================================
+      // Typography — container (input text + value), subscript (hint / error / counter)
+      // ============================================================================
+      // M3 ships `body-large` for input text + label, `body-small` for the subscript line.
+      // Both are coherent with the rest of the form family.
+      //
+      // container-text-font: inherit,                 // System font from `mat.core()` is fine.
+      container-text-size: 0.875rem,
+      // container-text-weight: ...,
+      // container-text-line-height: ...,
+      // container-text-tracking: ...,
+      //
+      // subscript-text-font: inherit,
+      // subscript-text-size: ...,
+      // subscript-text-weight: ...,
+      // subscript-text-line-height: ...,
+      // subscript-text-tracking: ...,
+      //
+      // ── Label typography — outlined ──
+      // outlined-label-text-font: inherit,
+      // outlined-label-text-size: ...,
+      // outlined-label-text-tracking: ...,
+      // outlined-label-text-weight: ...,
+      // outlined-label-text-populated-size: null,    // Sizing of the floated-up label.
+      //
+      // ── Label typography — filled ──
+      // filled-label-text-font: inherit,
+      // filled-label-text-size: ...,
+      // filled-label-text-tracking: ...,
+      // filled-label-text-weight: ...,
+
+      // ============================================================================
+      // Density
+      // ============================================================================
+      // M3 ships a coordinated density scale (-5 → 0) that tunes container-height +
+      // vertical-padding + filled-label-display + the two filled-with-label paddings as a
+      // set. Editing one without the others breaks the visual rhythm.
+      //
+      // For now we stick to the M3 default (density 0 — 56 px container height). The journal
+      // search field handles its own per-instance density via a local override ; if we lean
+      // toward dense fields globally, switch to `mat.form-field-density(-2)` (= 48 px) at the
+      // theme entrypoint rather than touching the tokens here.
+      //
+      // container-height: 56px,
+      // container-vertical-padding: 16px,
+      // filled-label-display: block,
+      // filled-with-label-container-padding-top: 24px,
+      // filled-with-label-container-padding-bottom: 8px,
+    )
+  );
+}

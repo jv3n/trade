@@ -1,0 +1,82 @@
+// Material autocomplete design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/autocomplete/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/autocomplete/_m3-autocomplete.scss > get-tokens()
+//   node_modules/@angular/material/core/option/_m3-option.scss        > get-tokens()
+//
+// The autocomplete API surface is split across **two** Material override mixins :
+//   • `mat.autocomplete-overrides()` — 3 tokens that drive the **panel** chrome (the overlay
+//     container holding the options).
+//   • `mat.option-overrides()`       — 10 tokens that drive the **rows** (`<mat-option>`) :
+//     text colour, hover / focus / selected layers, and typography.
+//
+// We list every token from both APIs. Tokens we actually override carry a value ; tokens we
+// leave to Material's M3 default are kept as commented entries so the next person sees at a
+// glance what's still on the table without re-reading the Material source.
+//
+// **Why `:root`** : the autocomplete panel lives in the CDK overlay, mounted outside the
+// consumer's view-encapsulated tree. The overrides have to be global to reach it.
+
+@use '@angular/material' as mat;
+
+:root {
+  // ============================================================================
+  // Panel — `<mat-autocomplete>` overlay container
+  // ============================================================================
+  @include mat.autocomplete-overrides(
+    (
+      // ── Base ──────────────────────────────────────────────────────────────
+      // M3 defaults to `corner-extra-small` (4 px) — we use the lib 6 px radius for
+      // alignment with the rest of the surfaces.
+      container-shape: var(--radius),
+      container-elevation-shadow: var(--shadow),
+
+      // ── Color ─────────────────────────────────────────────────────────────
+      background-color: var(--color-surface),
+    )
+  );
+
+  // ============================================================================
+  // Option — `<mat-option>` rows inside the panel
+  // ============================================================================
+  // Hover / focus / selected layers reuse the `.chip-active` recipe : accent-soft surface +
+  // accent-strong text. Same pattern as the active sidenav item in `_shell.scss`, for visual
+  // coherence across the app.
+  @include mat.option-overrides(
+    (
+      // ── Color ─────────────────────────────────────────────────────────────
+      label-text-color: var(--color-text),
+      selected-state-label-text-color: var(--color-accent-strong),
+      hover-state-layer-color: var(--color-accent-soft),
+      focus-state-layer-color: var(--color-accent-soft),
+      selected-state-layer-color: var(--color-accent-soft),
+
+      // ── Typography ────────────────────────────────────────────────────────
+      label-text-size: 0.875rem,
+      label-text-line-height: 1.4,
+      // label-text-weight: 500,        // M3 default — body-large weight is fine.
+      // label-text-font: inherit,      // System font from `mat.core()` is fine.
+      // label-text-tracking: ...,      // Driven by M3 label-large by default.
+    )
+  );
+}
+
+// ============================================================================
+// Selector-level tweaks — things the token APIs don't expose.
+// ============================================================================
+
+.mat-mdc-autocomplete-panel {
+  // Hairline border for crispness against close-toned surfaces (panel sits on `--color-surface`
+  // which can be 1-2 shades off the page background depending on theme). No M3 token covers
+  // the panel border colour or width.
+  border: 1px solid var(--color-border-soft);
+
+  // Tighter option sizing — Material defaults to 48 px to honour touch targets ; 36 px matches
+  // our `mat-icon-button` rhythm + dense form-field. No M3 density token is shipped for the
+  // autocomplete option (`density-scale` only affects the parent form-field), hence the
+  // selector override.
+  .mat-mdc-option {
+    min-height: 36px;
+  }
+}

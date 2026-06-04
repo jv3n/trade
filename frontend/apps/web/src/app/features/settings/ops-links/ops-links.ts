@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
+
 import { TranslatePipe } from '@ngx-translate/core';
+import { StbIconModule } from '@portfolioai/ui';
 
 /**
  * One external link rendered in the ops-links page. `label` is the proper name of the
@@ -317,7 +318,7 @@ const OPS_LINKS_SECTIONS: OpsLinkSection[] = [
  */
 @Component({
   selector: 'app-ops-links',
-  imports: [MatIconModule, TranslatePipe],
+  imports: [StbIconModule, TranslatePipe],
   templateUrl: './ops-links.html',
   styleUrl: './ops-links.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

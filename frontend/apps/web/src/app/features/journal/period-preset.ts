@@ -45,10 +45,7 @@ export interface PeriodRange {
  * Resolves a preset key to a date range. `now` is injectable for tests ; production callers
  * leave it default and get the current instant.
  */
-export function computePeriodRange(
-  key: PeriodPresetKey,
-  now: Date = new Date(),
-): PeriodRange {
+export function computePeriodRange(key: PeriodPresetKey, now: Date = new Date()): PeriodRange {
   switch (key) {
     case 'all':
     case 'custom':

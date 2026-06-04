@@ -54,9 +54,9 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
     // `DateAdapter` is needed by `<mat-datepicker>`. We register it at the app level (rather
-    // than scoping `MatNativeDateModule` to each consumer) because Material's datepicker
+    // than scoping `` to each consumer) because Material's datepicker
     // looks up the adapter in the **Environment Injector** — a standalone-component import
-    // of `MatNativeDateModule` is too narrow and NG0201s. Use the date-fns adapter
+    // of `` is too narrow and NG0201s. Use the date-fns adapter
     // (`provideDateFnsAdapter` from `@angular/material-date-fns-adapter`) if we ever need
     // locale-aware parsing / formatting beyond the browser default.
     provideNativeDateAdapter(),

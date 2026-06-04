@@ -1,0 +1,28 @@
+// Material progress-spinner design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/progress-spinner/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/progress-spinner/_m3-progress-spinner.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.progress-spinner-overrides()` — with
+// exactly **3 tokens** : `active-indicator-color`, `size`, `active-indicator-width`. We swap
+// the indicator colour to our accent ; size + stroke width stay at M3 defaults (the
+// `<mat-spinner>` consumer typically sets `diameter` and `strokeWidth` inputs per-instance,
+// e.g. `<mat-spinner diameter="20" />` in the journal loading state).
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.progress-spinner-overrides(
+    (
+      // ── Color ────────────────────────────────────────────────────────────
+      active-indicator-color: var(--color-accent),
+
+      // ── Base ─────────────────────────────────────────────────────────────
+      // size: 48px,                       // M3 default — overridden per-instance via
+                                            //  the `diameter` input.
+      // active-indicator-width: 4px,      // M3 default — overridden per-instance via
+                                            //  the `strokeWidth` input.
+    )
+  );
+}

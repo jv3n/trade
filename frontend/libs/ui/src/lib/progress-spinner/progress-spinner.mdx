@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './progress-spinner.stories';
+
+<Meta of={Stories} />
+
+# Progress spinner
+
+Indeterminate spinner (default) or determinate with `[value]` 0–100. Embed in CTAs to surface loading states.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbProgressSpinnerModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbProgressSpinnerModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

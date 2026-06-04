@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './slider.stories';
+
+<Meta of={Stories} />
+
+# Slider
+
+Range input. `discrete` shows the value tooltip on drag. Material 16+ requires the inner `<input matSliderThumb>` accessor.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbSliderModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbSliderModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './select.stories';
+
+<Meta of={Stories} />
+
+# Select
+
+Dropdown picker. Wrap in `<mat-form-field appearance="outline">` to match the journal form field style.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbSelectModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbSelectModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

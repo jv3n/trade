@@ -1,15 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSliderModule } from '@angular/material/slider';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   ConfigEntry,
@@ -18,6 +10,17 @@ import {
 } from '../../../core/api/config/config.repository';
 import { LlmTimeoutService } from '../../../core/api/analysis/llm-timeout.service';
 import { OllamaStatusPanel } from './ollama-status-panel';
+import {
+  StbAutocompleteModule,
+  StbButtonModule,
+  StbButtonToggleModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbSliderModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 const TWELVE_DATA_KEY = 'market.twelvedata.api-key';
 const FINNHUB_KEY = 'market.finnhub.api-key';
@@ -89,15 +92,15 @@ const CLAUDE_MODEL_SUGGESTIONS = [
   imports: [
     CommonModule,
     FormsModule,
-    MatAutocompleteModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSliderModule,
-    MatButtonToggleModule,
-    MatTooltipModule,
+    StbAutocompleteModule,
+    StbButtonModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
+    StbProgressSpinnerModule,
+    StbSliderModule,
+    StbButtonToggleModule,
+    StbTooltipModule,
     TranslatePipe,
     OllamaStatusPanel,
   ],

@@ -1,0 +1,46 @@
+// Material tooltip design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/tooltip/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/tooltip/_m3-tooltip.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.tooltip-overrides()` — with 8 tokens
+// split across `base / color / typography`. Density has no tokens.
+//
+// The tooltip is **deliberately high-contrast** : M3 ships `inverse-surface` for the
+// container (light in dark mode, dark in light mode) and `inverse-on-surface` for the text,
+// so the tooltip pops against any page surface. We mirror that with our own tokens
+// (`--color-text` / `--color-bg`) so the dark / light swap travels through the lib's palette
+// rather than M3's derived inverse pair.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.tooltip-overrides(
+    (
+      // ============================================================================
+      // Base
+      // ============================================================================
+      container-shape: var(--radius),
+
+      // ============================================================================
+      // Color
+      // High-contrast inverted pair — container is whatever `--color-text` resolves to in
+      // the current theme (light in dark mode, dark in light mode), text is the inverse via
+      // `--color-bg`. The tooltip pops against any page surface in either theme.
+      // ============================================================================
+      container-color: var(--color-text),
+      supporting-text-color: var(--color-bg),
+
+      // ============================================================================
+      // Typography — supporting text
+      // M3 default = `body-small` (12 px) — already correct for the tooltip's compact slot.
+      // ============================================================================
+      // supporting-text-font: inherit,                // System font from `mat.core()` is fine.
+      // supporting-text-size: ...,
+      // supporting-text-weight: ...,
+      // supporting-text-line-height: ...,
+      // supporting-text-tracking: ...,
+    )
+  );
+}

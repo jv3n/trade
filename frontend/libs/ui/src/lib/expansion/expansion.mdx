@@ -1,0 +1,61 @@
+import { Canvas, Controls, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './expansion.stories';
+
+<Meta of={Stories} />
+
+# Expansion
+
+Material's `<mat-expansion-panel>` restyled via the lib (`libs/ui/src/lib/expansion/expansion.scss`). Use it for **disclosure** — content that's secondary to the main task but worth showing inline (settings sections, advanced filters, FAQ).
+
+Two component flavours :
+
+- **`<mat-expansion-panel>`** — single collapsible card.
+- **`<mat-accordion>`** — group of panels. Add `multi` to allow several open at once, or `displayMode="flat"` to drop the inter-panel margin (panels render edge-to-edge as one stacked card).
+
+## Playground
+
+<Canvas of={Stories.Default} />
+
+<Controls of={Stories.Default} />
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbExpansionModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbExpansionModule],
+  template: \`
+    <mat-accordion>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>Risk profile</mat-panel-title>
+          <mat-panel-description>Sizing + stop rules</mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <p>Default rules used when opening a trade…</p>
+
+        <mat-action-row>
+          <button mat-button>Reset</button>
+          <button mat-flat-button>Save</button>
+        </mat-action-row>
+      </mat-expansion-panel>
+    </mat-accordion>
+  \`,
+})`}
+/>
+
+## Slots
+
+<Markdown>
+{`
+| Slot                            | Role                                                            |
+| ------------------------------- | --------------------------------------------------------------- |
+| \`<mat-expansion-panel-header>\` | Clickable header row — toggles the panel on click.              |
+| \`<mat-panel-title>\`             | Primary header text (\`title-medium\` typography).               |
+| \`<mat-panel-description>\`       | Secondary subtitle line, rendered in muted text.                |
+| **Default content**             | Anything between header and \`<mat-action-row>\` is the body.    |
+| \`<mat-action-row>\`              | Bottom action bar with a top divider — typical for save/cancel. |
+`}
+</Markdown>

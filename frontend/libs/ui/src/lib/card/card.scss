@@ -1,0 +1,75 @@
+// Material card design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/card/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/card/_m3-card.scss > get-tokens()
+//
+// Material 22 ships **three card appearances**, each with its own token group :
+//   • `<mat-card appearance="raised">`    → `elevated-*` tokens (default — surface + level1 shadow).
+//   • `<mat-card appearance="filled">`    → `filled-*`   tokens (denser surface, no shadow).
+//   • `<mat-card appearance="outlined">`  → `outlined-*` tokens (transparent fill, hairline border).
+//
+// We list every token from all three variants, grouped by variant then by
+// `base / color / typography`. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.card-overrides(
+    (
+      // ──────────────────────── Elevated (appearance="raised") ─────────────
+      // Default appearance — slightly raised surface against the page background, soft shadow
+      // for depth. Used for content cards (dashboard tiles, configuration sections).
+      //
+      // Base
+      elevated-container-shape: var(--radius-lg),
+      // Color
+      elevated-container-color: var(--color-surface),
+      elevated-container-elevation: var(--shadow),
+
+      // ──────────────────────── Filled (appearance="filled") ───────────────
+      // Denser surface, no shadow — reads as embedded into the page. Used for inline groupings
+      // (a card inside a card, or a card on a same-toned background).
+      //
+      // Base
+      filled-container-shape: var(--radius-lg),
+      // Color
+      filled-container-color: var(--color-surface-2),
+      // filled-container-elevation: none,   // M3 default — level0 (no shadow).
+
+      // ──────────────────────── Outlined (appearance="outlined") ───────────
+      // Transparent fill + hairline border — reads as bounded but not raised. Used for
+      // selectable / clickable surfaces, often paired with `:hover` border tweaks.
+      //
+      // Base
+      outlined-container-shape: var(--radius-lg),
+      // outlined-outline-width: 1px,        // M3 default — 1 px.
+      // Color
+      outlined-container-color: var(--color-surface),
+      outlined-outline-color: var(--color-border),
+      // outlined-container-elevation: none, // M3 default — level0 (no shadow).
+
+      // ──────────────────────── Shared — header text ───────────────────────
+      // The card header's `<mat-card-title>` and `<mat-card-subtitle>` share one token set
+      // across all three variants. Title inherits the page body font ; subtitle reads as
+      // secondary metadata in muted text.
+      //
+      // Color
+      subtitle-text-color: var(--color-text-muted),
+      // Typography — title
+      title-text-size: 1.0625rem,
+      title-text-weight: 600,
+      // title-text-font: inherit,            // System font from `mat.core()` is fine.
+      // title-text-line-height: 1.5,         // M3 default — title-large line-height.
+      // title-text-tracking: ...,            // Driven by M3 title-large by default.
+      // Typography — subtitle
+      subtitle-text-size: 0.85rem,
+      subtitle-text-weight: 500,
+      // subtitle-text-font: inherit,
+      // subtitle-text-line-height: ...,
+      // subtitle-text-tracking: ...,
+    )
+  );
+}

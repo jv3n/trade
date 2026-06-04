@@ -1,0 +1,56 @@
+import { Canvas, Controls, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './card.stories';
+
+<Meta of={Stories} />
+
+# Card
+
+Material's `<mat-card>` restyled via the lib (`libs/ui/src/lib/card/card.scss`). Three appearances are supported, each with its own token group :
+
+- **`appearance="raised"`** *(default — M3 elevated)* — slightly raised surface, soft shadow. Dashboard tiles, configuration sections.
+- **`appearance="filled"`** — denser surface, no shadow. Inline groupings (card inside a card, or card on same-toned background).
+- **`appearance="outlined"`** — transparent fill, hairline border. Selectable / clickable surfaces.
+
+## Playground
+
+Use the **Controls** panel on the right to flip the appearance and the header / content / actions slots.
+
+<Canvas of={Stories.Default} />
+
+<Controls of={Stories.Default} />
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbCardModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbCardModule],
+  template: \`
+    <mat-card appearance="raised">
+      <mat-card-header>
+        <mat-card-title>Trading journal</mat-card-title>
+        <mat-card-subtitle>Last 30 days</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>Log every trade with its setup, execution and review.</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-button>Cancel</button>
+        <button mat-flat-button>Confirm</button>
+      </mat-card-actions>
+    </mat-card>
+  \`,
+})`}
+/>
+
+## Appearances
+
+<Markdown>
+{`
+| Appearance        | Container                            | Use it for                                                |
+| ----------------- | ------------------------------------ | --------------------------------------------------------- |
+| \`raised\`          | \`--color-surface\` + \`--shadow\`       | Dashboard tiles, configuration sections (default).        |
+| \`filled\`          | \`--color-surface-2\`, no shadow        | Inline groupings on a same-toned background.              |
+| \`outlined\`        | \`--color-surface\` + 1 px border        | Selectable / clickable surfaces, often hover-decorated.    |
+`}
+</Markdown>

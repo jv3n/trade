@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './checkbox.stories';
+
+<Meta of={Stories} />
+
+# Checkbox
+
+Tri-state checkbox — checked, unchecked, indeterminate. Disabled state respects the lib palette.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbCheckboxModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbCheckboxModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

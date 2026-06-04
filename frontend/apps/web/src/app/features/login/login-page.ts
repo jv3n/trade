@@ -2,10 +2,10 @@ import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core'
 import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/app-state/auth.service';
+import { StbButtonModule, StbIconModule } from '@portfolioai/ui';
 
 /**
  * `/login` page. One job : trigger the OAuth dance.
@@ -23,7 +23,7 @@ import { AuthService } from '../../core/app-state/auth.service';
  */
 @Component({
   selector: 'app-login-page',
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [StbButtonModule, StbIconModule, TranslatePipe],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
 })

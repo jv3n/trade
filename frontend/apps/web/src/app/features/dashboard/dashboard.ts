@@ -4,16 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
-import {
-  MatAutocompleteModule,
-  MatAutocompleteSelectedEvent,
-} from '@angular/material/autocomplete';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -25,6 +17,15 @@ import {
 } from '../../core/api/portfolio/portfolio.repository';
 import { MarketRepository, SymbolMatch } from '../../core/api/market/market.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
+import {
+  StbAutocompleteModule,
+  StbButtonModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 /**
  * Debounce window between a keystroke in the watchlist search and the actual `/symbols/search`
@@ -96,13 +97,13 @@ function readSidebarOpenState(): SidebarOpenState {
     ReactiveFormsModule,
     RouterLink,
     DragDropModule,
-    MatAutocompleteModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
+    StbAutocompleteModule,
+    StbButtonModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
+    StbProgressSpinnerModule,
+    StbTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './dashboard.html',

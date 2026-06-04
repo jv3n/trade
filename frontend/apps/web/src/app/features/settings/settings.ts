@@ -1,14 +1,19 @@
 import { Component, effect, inject, viewChild } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatSidenavContainer, MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { MatSidenavContainer } from '@angular/material/sidenav';
+
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/app-state/auth.service';
 import { SidenavCollapseService } from '../../core/app-state/sidenav-collapse.service';
+import {
+  StbButtonModule,
+  StbDividerModule,
+  StbIconModule,
+  StbListModule,
+  StbSidenavModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 /**
  * Settings shell — left sidenav (`MatSidenavContainer` + `MatSidenav` + `MatNavList`) hosting
@@ -26,12 +31,12 @@ import { SidenavCollapseService } from '../../core/app-state/sidenav-collapse.se
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatIconModule,
-    MatButtonModule,
-    MatSidenavModule,
-    MatListModule,
-    MatDividerModule,
-    MatTooltipModule,
+    StbIconModule,
+    StbButtonModule,
+    StbSidenavModule,
+    StbListModule,
+    StbDividerModule,
+    StbTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './settings.html',

@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './form-field.stories';
+
+<Meta of={Stories} />
+
+# Form field
+
+Outlined input wrapper with label / hint / error / prefix / suffix slots. Used everywhere in the app for text input.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbFormFieldModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbFormFieldModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

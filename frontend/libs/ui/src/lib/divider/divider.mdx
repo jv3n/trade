@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './divider.stories';
+
+<Meta of={Stories} />
+
+# Divider
+
+Horizontal rule between sections. `vertical` attribute for a vertical separator inside flex rows.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbDividerModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbDividerModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

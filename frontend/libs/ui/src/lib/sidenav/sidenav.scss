@@ -1,0 +1,67 @@
+// Material sidenav design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/sidenav/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/sidenav/_m3-sidenav.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.sidenav-overrides()` — with **9 tokens**
+// split across :
+//   • Container (drawer)  — shape / shadow / width / divider between drawer and content.
+//   • Container surface   — background + text colour of the drawer itself.
+//   • Content surface     — background + text colour of the main content area next to the
+//                            drawer (`<mat-sidenav-content>`).
+//   • Scrim               — the modal backdrop overlay when the drawer is in `mode="over"`.
+//
+// Used in PortfolioAI for two distinct surfaces :
+//   • Main shell — left-side `mode="side"` navigation rail (`Journal`, future routes).
+//   • Filter drawer — right-side `mode="over"` filter panel in the journal page.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.sidenav-overrides(
+    (
+      // ============================================================================
+      // Base — drawer chrome
+      // ============================================================================
+      container-shape: 0,
+      // container-elevation-shadow: none,             // M3 default — none. The drawer rests
+                                                        //  against the viewport edge ; no
+                                                        //  panel-level shadow needed.
+      // container-width: 360px,                       // M3 default — overridden per-instance
+                                                        //  (e.g. the journal filter drawer
+                                                        //   bumps this to 380 px).
+      //
+      // Visible 1 px divider between drawer and main content. M3 ships this as transparent,
+      // but losing the boundary makes the drawer bleed into the page in dark-dimmed palettes.
+      // `--color-border-strong` is the lib's value for "must-be-seen border" (a tier above
+      // the regular `--color-border` used by form-field outlines).
+      container-divider-color: var(--color-border-strong),
+
+      // ============================================================================
+      // Color — drawer surface
+      // ============================================================================
+      container-background-color: var(--color-surface),
+      container-text-color: var(--color-text),
+
+      // ============================================================================
+      // Color — main content surface (`<mat-sidenav-content>`)
+      // The content area uses the **page background** token, not the drawer's surface, so
+      // the drawer reads as a raised panel against a darker / lighter body.
+      // ============================================================================
+      content-background-color: var(--color-bg),
+      content-text-color: var(--color-text),
+
+      // ============================================================================
+      // Color — scrim (modal backdrop for `mode="over"`)
+      // M3 ships `neutral-variant20 @ 40 %` which already reads as a balanced dimming layer
+      // in both dark and light themes. Keep at default.
+      // ============================================================================
+      // scrim-color: ...,
+    )
+  );
+}

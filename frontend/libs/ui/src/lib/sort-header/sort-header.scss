@@ -1,0 +1,34 @@
+// Material sort-header design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/sort/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/sort/_m3-sort.scss > get-tokens()
+//
+// `MatSortModule` ships two directives :
+//   • `matSort`         — applied to `<table mat-table>` ; emits `(matSortChange)` events.
+//                          Pure behaviour, no visual surface.
+//   • `mat-sort-header` — applied to a `<th mat-header-cell>` ; renders the visible asc /
+//                          desc arrow next to the column label, and toggles the sort state
+//                          on click. **This is the styled element.**
+//
+// The corresponding override mixin (`mat.sort-overrides()`) is named after the *module*,
+// not the directive, hence the slight terminology mismatch — but the single token below
+// targets the sort-header arrow.
+//
+// The rest of the header styling (text colour, weight, alignment) lives on the table itself,
+// through `mat.table-overrides()` in `libs/ui/src/lib/table/table.scss`. See the demo in
+// `Components > Table` for the visual coupling.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.sort-overrides(
+    (
+      // ── Color ────────────────────────────────────────────────────────────
+      // Accent for the active sort indicator. M3 default = `on-surface` (same as the header
+      // text) reads as a quiet status ; accent reads as "this column is the one currently
+      // sorted" which matches our journal / settings tables better.
+      arrow-color: var(--color-accent),
+    )
+  );
+}

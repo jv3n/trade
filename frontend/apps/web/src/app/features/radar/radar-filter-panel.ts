@@ -9,16 +9,19 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
+
 import { TranslatePipe } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {
   DEFAULT_SCREENER_FILTER,
   ScreenerFilter,
 } from '../../core/api/screener/screener.repository';
+import {
+  StbButtonModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+} from '@portfolioai/ui';
 
 /**
  * Debounce on filter form changes — 300 ms sweet spot used elsewhere in the app (e.g. watchlist
@@ -51,10 +54,10 @@ const FILTER_CHANGE_DEBOUNCE_MS = 300;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
+    StbButtonModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
     TranslatePipe,
   ],
   templateUrl: './radar-filter-panel.html',

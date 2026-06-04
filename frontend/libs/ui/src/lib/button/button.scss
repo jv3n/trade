@@ -1,0 +1,323 @@
+// Material button design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/button/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/button/_m3-button.scss        > get-tokens()
+//   node_modules/@angular/material/button/_m3-icon-button.scss   > get-tokens()
+//
+// The button API surface is split across **two** Material override mixins :
+//   • `mat.button-overrides()`      — 5 variants : text / filled / outlined / protected / tonal
+//     (≈ 80 tokens).
+//   • `mat.icon-button-overrides()` — the icon-only square button (≈ 13 tokens).
+//
+// We list every token from both APIs, grouped by variant then by `base / color / typography /
+// density`. Tokens we actually override carry a value ; tokens we leave to Material's M3
+// default are kept as commented entries.
+//
+// Material 22 also ships `mat.fab-overrides()` (≈ 30 tokens for `mat-fab` / `mat-mini-fab` /
+// extended-fab). PortfolioAI doesn't use FAB anywhere, so it's intentionally not styled here —
+// add a sibling `fab.scss` if a FAB ever lands in the product.
+//
+// Variants mapped to Angular Material selectors :
+//   • text       → `<button mat-button>`        — low-emphasis, no background until hover.
+//   • filled     → `<button mat-flat-button>`   — primary CTA.
+//   • outlined   → `<button mat-stroked-button>` — secondary CTA.
+//   • protected  → `<button mat-raised-button>`  — filled + elevation (rare).
+//   • tonal      → no Material selector ; the tokens are still emitted so we list them, but the
+//                  variant isn't used in PortfolioAI today.
+
+@use '@angular/material' as mat;
+@use '../../../styles/sizes' as s;
+
+:root {
+  // ============================================================================
+  // `mat.button-overrides()` — 5 variants
+  // ============================================================================
+  @include mat.button-overrides(
+    (
+      // ───────────────────────── Text (mat-button) ─────────────────────────
+      // Base
+      text-container-shape: var(--radius),
+      // text-horizontal-padding: 12px,
+      // text-icon-offset: -4px,
+      // text-icon-spacing: 8px,
+      // text-with-icon-horizontal-padding: 16px,
+      // text-label-text-transform: null,
+      // text-touch-target-size: 48px,
+      // Color
+      text-label-text-color: var(--color-text),
+      text-state-layer-color: var(--color-accent),
+      text-hover-state-layer-opacity: 0.08,
+      text-focus-state-layer-opacity: 0.12,
+      text-pressed-state-layer-opacity: 0.16,
+      // text-disabled-label-text-color: ...,   // Handled globally by `:disabled { opacity }` below.
+      // text-disabled-state-layer-color: ...,
+      // text-ripple-color: ...,                 // M3 default — primary at pressed opacity.
+      // Typography
+      text-label-text-size: 0.8125rem,
+      text-label-text-weight: 500,
+      text-label-text-tracking: -0.005em,
+      // text-label-text-font: inherit,
+      // Density
+      text-container-height: #{s.$button-height},
+      // text-touch-target-display: block,
+
+      // ──────────────────────── Filled (mat-flat-button) ───────────────────
+      // Base
+      filled-container-shape: var(--radius),
+      // filled-horizontal-padding: 24px,
+      // filled-icon-offset: -8px,
+      // filled-icon-spacing: 8px,
+      // filled-label-text-transform: null,
+      // filled-touch-target-size: 48px,
+      // Color
+      filled-container-color: var(--color-accent),
+      filled-label-text-color: var(--color-on-accent),
+      filled-state-layer-color: var(--color-on-accent),
+      filled-hover-state-layer-opacity: 0.08,
+      filled-focus-state-layer-opacity: 0.12,
+      filled-pressed-state-layer-opacity: 0.16,
+      // filled-disabled-container-color: ...,
+      // filled-disabled-label-text-color: ...,
+      // filled-disabled-state-layer-color: ...,
+      // filled-ripple-color: ...,
+      // filled-progress-active-indicator-color: ...,
+      // Typography
+      filled-label-text-size: 0.8125rem,
+      filled-label-text-weight: 500,
+      filled-label-text-tracking: -0.005em,
+      // filled-label-text-font: inherit,
+      // Density
+      filled-container-height: #{s.$button-height},
+      // filled-touch-target-display: block,
+
+      // ──────────────────────── Outlined (mat-stroked-button) ──────────────
+      // Base
+      outlined-container-shape: var(--radius),
+      // outlined-horizontal-padding: 24px,
+      // outlined-icon-offset: -8px,
+      // outlined-icon-spacing: 8px,
+      // outlined-outline-width: 1px,
+      // outlined-label-text-transform: null,
+      // outlined-touch-target-size: 48px,
+      // Color
+      outlined-label-text-color: var(--color-text),
+      outlined-outline-color: var(--color-border),
+      outlined-state-layer-color: var(--color-accent),
+      outlined-hover-state-layer-opacity: 0.08,
+      outlined-focus-state-layer-opacity: 0.12,
+      outlined-pressed-state-layer-opacity: 0.16,
+      // outlined-disabled-label-text-color: ...,
+      // outlined-disabled-outline-color: ...,
+      // outlined-disabled-state-layer-color: ...,
+      // outlined-ripple-color: ...,
+      // Typography
+      outlined-label-text-size: 0.8125rem,
+      outlined-label-text-weight: 500,
+      outlined-label-text-tracking: -0.005em,
+      // outlined-label-text-font: inherit,
+      // Density
+      outlined-container-height: #{s.$button-height},
+      // outlined-touch-target-display: block,
+
+      // ──────────────────────── Protected (mat-raised-button) ──────────────
+      // Base
+      // protected-container-shape: var(--radius),    // Could override ; raised uses corner-full
+                                                       // by default but PortfolioAI rarely uses
+                                                       // the variant, leaving as default.
+      // protected-horizontal-padding: 24px,
+      // protected-icon-offset: -8px,
+      // protected-icon-spacing: 8px,
+      // protected-label-text-transform: null,
+      // protected-touch-target-size: 48px,
+      // Color
+      protected-container-color: var(--color-accent),
+      protected-label-text-color: var(--color-on-accent),
+      protected-state-layer-color: var(--color-on-accent),
+      // protected-container-elevation-shadow: ...,
+      // protected-focus-container-elevation-shadow: ...,
+      // protected-hover-container-elevation-shadow: ...,
+      // protected-pressed-container-elevation-shadow: ...,
+      // protected-disabled-container-color: ...,
+      // protected-disabled-container-elevation-shadow: ...,
+      // protected-disabled-label-text-color: ...,
+      // protected-disabled-state-layer-color: ...,
+      // protected-focus-state-layer-opacity: ...,
+      // protected-hover-state-layer-opacity: ...,
+      // protected-pressed-state-layer-opacity: ...,
+      // protected-ripple-color: ...,
+      // Typography
+      // protected-label-text-size: 0.8125rem,        // Mirrors filled — uncomment if a raised
+      // protected-label-text-weight: 500,            // button lands in the product.
+      // protected-label-text-tracking: -0.005em,
+      // protected-label-text-font: inherit,
+      // Density
+      // protected-container-height: ...,
+      // protected-touch-target-display: block,
+
+      // ──────────────────────── Tonal — unused in PortfolioAI ──────────────
+      // Listed for completeness ; uncomment if `<button mat-tonal-button>` (M3-only) ever ships.
+      //
+      // tonal-container-shape: ...,
+      // tonal-horizontal-padding: ...,
+      // tonal-icon-offset: ...,
+      // tonal-icon-spacing: ...,
+      // tonal-label-text-transform: ...,
+      // tonal-touch-target-size: ...,
+      // tonal-container-color: ...,
+      // tonal-label-text-color: ...,
+      // tonal-state-layer-color: ...,
+      // tonal-hover-state-layer-opacity: ...,
+      // tonal-focus-state-layer-opacity: ...,
+      // tonal-pressed-state-layer-opacity: ...,
+      // tonal-disabled-container-color: ...,
+      // tonal-disabled-label-text-color: ...,
+      // tonal-disabled-state-layer-color: ...,
+      // tonal-ripple-color: ...,
+      // tonal-label-text-font: ...,
+      // tonal-label-text-size: ...,
+      // tonal-label-text-weight: ...,
+      // tonal-label-text-tracking: ...,
+      // tonal-container-height: ...,
+      // tonal-touch-target-display: ...,
+    )
+  );
+
+  // ============================================================================
+  // `mat.icon-button-overrides()` — `<button mat-icon-button>`
+  // ============================================================================
+  @include mat.icon-button-overrides(
+    (
+      // ── Base ──────────────────────────────────────────────────────────────
+      // icon-size: 24px,                  // M3 default — matches `mat-icon` default.
+      // container-shape: corner-full,     // M3 default — round.
+      // touch-target-size: 48px,
+      // ── Color ─────────────────────────────────────────────────────────────
+      icon-color: var(--color-text-muted),
+      state-layer-color: var(--color-accent),
+      hover-state-layer-opacity: 0.08,
+      focus-state-layer-opacity: 0.12,
+      pressed-state-layer-opacity: 0.16,
+      // disabled-icon-color: ...,         // Handled globally by `:disabled { opacity }` below.
+      // disabled-state-layer-color: ...,
+      // ripple-color: ...,
+      // ── Density ───────────────────────────────────────────────────────────
+      // Tighter than Material's 48 px default — fits dense toolbars without crowding.
+      state-layer-size: #{s.$icon-button-size},
+      // touch-target-display: block,
+    )
+  );
+}
+
+// ============================================================================
+// Selector-level tweaks — things the token APIs don't expose.
+// ============================================================================
+
+// Global disabled affordance — Material's M3 disabled tokens deal with each property
+// separately (text color, container color, state layer) ; we want a single flat opacity that
+// reads consistently across every variant in one rule.
+.mat-mdc-button-base {
+  &:disabled,
+  &.mat-mdc-button-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Filled / Raised — push the **container** colour darker on hover. The M3 state-layer tints
+// with `on-accent` at 8 % opacity (already wired via the tokens above) ; the extra
+// `background-color` flip gives a more visible CTA hover that better matches the design
+// system. No M3 token models the container hover colour directly.
+.mat-mdc-unelevated-button:not(:disabled),
+.mat-mdc-raised-button:not(:disabled) {
+  &:hover {
+    background-color: var(--color-accent-strong);
+  }
+}
+
+// Outlined — darken the outline on hover. Same rationale as above : the state-layer tints the
+// surface but doesn't touch the border. No M3 token models a hover-outline colour.
+.mat-mdc-outlined-button:not(:disabled):hover {
+  --mdc-outlined-button-outline-color: var(--color-text-faint);
+}
+
+// Icon-button — bump icon colour on hover (idle = muted, hover = full text). No M3 token
+// models the hover icon colour.
+.mat-mdc-icon-button:not(:disabled):hover {
+  --mdc-icon-button-icon-color: var(--color-text);
+}
+
+// ============================================================================
+// `[stbSize]` size variants — design-system convention, not exposed by M3.
+//
+// The `StbSize` directive puts a `.stb-size--{xs|sm|md|lg}` class on the button host. `sm`
+// matches the design-system default (already set via the density tokens above), so no
+// override there. Each variant overrides the MDC container-height + label-text-size tokens
+// for every Material button variant ; the icon-button gets its own `state-layer-size` matched
+// to the same height.
+// ============================================================================
+
+.stb-size--xs {
+  --mdc-text-button-container-height: 24px;
+  --mdc-filled-button-container-height: 24px;
+  --mdc-outlined-button-container-height: 24px;
+  --mdc-text-button-label-text-size: 0.75rem;
+  --mdc-filled-button-label-text-size: 0.75rem;
+  --mdc-outlined-button-label-text-size: 0.75rem;
+
+  &.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 24px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1rem;
+
+    .mat-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+}
+
+.stb-size--md {
+  --mdc-text-button-container-height: 38px;
+  --mdc-filled-button-container-height: 38px;
+  --mdc-outlined-button-container-height: 38px;
+  --mdc-text-button-label-text-size: 0.875rem;
+  --mdc-filled-button-label-text-size: 0.875rem;
+  --mdc-outlined-button-label-text-size: 0.875rem;
+
+  &.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.stb-size--lg {
+  --mdc-text-button-container-height: 44px;
+  --mdc-filled-button-container-height: 44px;
+  --mdc-outlined-button-container-height: 44px;
+  --mdc-text-button-label-text-size: 0.95rem;
+  --mdc-filled-button-label-text-size: 0.95rem;
+  --mdc-outlined-button-label-text-size: 0.95rem;
+
+  &.mat-mdc-icon-button {
+    --mdc-icon-button-state-layer-size: 44px;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+// ============================================================================
+// `[stbSpinnerEnd]` — push a `<mat-spinner>` to the end of the button's flex row instead of
+// the leading-icon slot. `margin-left: auto` lets the spinner drift right when the label
+// takes the available width ; `order: 99` is a belt for browsers where the row uses gap
+// without an auto-spacer.
+// ============================================================================
+.mat-mdc-button-base .stb-spinner-end {
+  margin-left: auto;
+  order: 99;
+}

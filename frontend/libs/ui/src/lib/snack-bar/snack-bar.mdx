@@ -1,0 +1,89 @@
+import { Canvas, Controls, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './snack-bar.stories';
+
+<Meta of={Stories} />
+
+# Snack-bar
+
+Ephemeral notifications — opened imperatively via the `MatSnackBar` service. The snackbar container is rendered into the CDK overlay on `<body>` ; there's no `<mat-snack-bar>` selector on the consumer side.
+
+Use it for : "Trade saved", "Filter applied", "Connection lost — retrying", "Undo" affordances on destructive actions. Never use it for errors that need a stable resolution path (use an inline error banner instead — the snackbar auto-dismisses).
+
+## Playground
+
+Click **Show snack-bar** in the canvas. Use the Controls panel to tune the message, action button label, duration, and position.
+
+<Canvas of={Stories.Default} />
+
+<Controls of={Stories.Default} />
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { inject } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { StbSnackBarModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbSnackBarModule],   // brings the MatSnackBar service into the DI graph
+  template: \`<button mat-flat-button (click)="save()">Save</button>\`,
+})
+export class TradeForm {
+  private readonly snackBar = inject(MatSnackBar);
+
+  save(): void {
+    // ... persist the trade ...
+    this.snackBar.open('Trade saved.', 'Undo', { duration: 3000 });
+  }
+}`}
+/>
+
+## Options
+
+<Markdown>
+{`
+| Option               | Type                              | Notes                                                |
+| -------------------- | --------------------------------- | ---------------------------------------------------- |
+| \`duration\`           | number (ms)                       | \`0\` = no auto-dismiss. Default in M3 = \`0\`.          |
+| \`horizontalPosition\` | \`start / center / end / left / right\` | Default \`center\`.                                    |
+| \`verticalPosition\`   | \`top / bottom\`                    | Default \`bottom\`.                                    |
+| \`panelClass\`         | string \\| string[]                | Custom class on the overlay panel (e.g. for variants). |
+| \`data\`               | unknown                           | Payload for custom snackbar components.              |
+`}
+</Markdown>
+
+## Variants
+
+Two semantic variants ship out of the box via `panelClass` :
+
+<Markdown>
+{`
+| Variant                     | Use it for                                              | Palette                                 |
+| --------------------------- | ------------------------------------------------------- | --------------------------------------- |
+| (default)                   | Neutral confirmations, generic notifications.           | Inverted pair — \`--color-text\` bg.      |
+| \`stb-snack-bar--error\`     | Failed actions, lost connections, rejected validation.  | \`--color-danger\` bg + \`--color-on-danger\`. |
+| \`stb-snack-bar--success\`   | Saved / persisted state, applied filters, settings OK. | \`--color-success\` bg + \`--color-on-success\`. |
+`}
+</Markdown>
+
+<Source
+  language="ts"
+  code={`// Error variant
+this.snackBar.open('Connection failed.', 'Retry', {
+  duration: 5000,
+  panelClass: 'stb-snack-bar--error',
+});
+
+// Success variant
+this.snackBar.open('Trade saved.', undefined, {
+  duration: 3000,
+  panelClass: 'stb-snack-bar--success',
+});`}
+/>
+
+## Visual contract
+
+The default snack-bar follows the same intent as the tooltip — **high-contrast inverted pair**. The container resolves to whatever `--color-text` is in the current theme (light in dark mode, dark in light mode), the text to `--color-bg`, the action button to `--color-accent`. The notification pops against any page surface in either theme.
+
+The semantic variants (`error` / `success`) override the same three `--mat-snack-bar-*` CSS vars on the panel host, swapping the inverted pair for the matching semantic palette. They use `--color-on-danger` / `--color-on-success` (white) for the foreground so the contrast holds on the red / green container in both themes.

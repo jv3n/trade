@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './tooltip.stories';
+
+<Meta of={Stories} />
+
+# Tooltip
+
+`matTooltip` directive — hover / focus reveals a small bubble. `matTooltipPosition` controls placement (`above` / `below` / `left` / `right`).
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbTooltipModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbTooltipModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

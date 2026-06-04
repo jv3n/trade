@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './icon.stories';
+
+<Meta of={Stories} />
+
+# Icon
+
+Material font icon. The app uses the `material-icons` package (loaded in `angular.json > styles`). Colour follows `currentColor`.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbIconModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbIconModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

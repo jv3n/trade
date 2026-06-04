@@ -1,0 +1,89 @@
+// Material menu design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/menu/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/menu/_m3-menu.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.menu-overrides()` — with ~22 tokens
+// split across :
+//   • Container chrome — panel shape / surface / shadow / divider colour.
+//   • Menu items       — idle text + icon colours, hover + focus state layers.
+//   • Item spacing     — 7 base tokens for internal padding (with vs. without leading icon,
+//                        plus divider top / bottom).
+//   • Typography       — `label-large` defaults.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+//
+// **Why `:root`** : the menu panel lives in the CDK overlay, mounted outside the consumer's
+// view-encapsulated tree. The overrides have to be global to reach it.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.menu-overrides(
+    (
+      // ============================================================================
+      // Base — item spacing
+      // ============================================================================
+      // M3 ships sensible 12 px paddings. Keep at defaults.
+      //
+      // item-icon-size: 24px,
+      // item-spacing: 12px,
+      // item-leading-spacing: 12px,
+      // item-trailing-spacing: 12px,
+      // item-with-icon-leading-spacing: 12px,
+      // item-with-icon-trailing-spacing: 12px,
+      // divider-top-spacing: 8px,
+      // divider-bottom-spacing: 8px,
+
+      // ============================================================================
+      // Color — container chrome
+      // Panel sits on `--color-surface-2` (one step lighter than `--color-surface`) so it
+      // reads as raised against the page background — same recipe as the datepicker overlay.
+      // ============================================================================
+      container-shape: var(--radius),
+      container-color: var(--color-surface-2),
+      container-elevation-shadow: var(--shadow),
+      divider-color: var(--color-border-soft),
+
+      // ============================================================================
+      // Color — menu item, idle
+      // ============================================================================
+      item-label-text-color: var(--color-text),
+      item-icon-color: var(--color-text-muted),
+
+      // ============================================================================
+      // Color — menu item, hover / focus
+      // M3 ties the state layer to `on-surface` (neutral wash) — we steer to the accent-soft
+      // surface for the same "this row is interactive" affordance as the autocomplete option
+      // and the list item.
+      // ============================================================================
+      item-hover-state-layer-color: var(--color-accent-soft),
+      item-focus-state-layer-color: var(--color-accent-soft),
+
+      // ============================================================================
+      // Typography — menu item label
+      // M3 default = label-large (14 px) ; we ship 0.875 rem to match the autocomplete option
+      // and the list item label.
+      // ============================================================================
+      item-label-text-size: 0.875rem,
+      // item-label-text-font: inherit,                  // System font from `mat.core()` fine.
+      // item-label-text-weight: ...,                     // M3 label-large weight already 500.
+      // item-label-text-line-height: ...,
+      // item-label-text-tracking: ...,
+    )
+  );
+}
+
+// ============================================================================
+// Selector-level tweaks — things the token API doesn't expose.
+// ============================================================================
+
+// Hairline border on the menu panel — `mat.menu-overrides()` doesn't expose a border token,
+// but a 1 px outline reads crisper than the M3 surface-tinted default, especially against
+// close-toned page backgrounds. Same approach as the autocomplete and datepicker panels.
+.mat-mdc-menu-panel {
+  border: 1px solid var(--color-border-soft);
+}

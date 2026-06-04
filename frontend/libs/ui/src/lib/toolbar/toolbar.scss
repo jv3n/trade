@@ -1,0 +1,58 @@
+// Material toolbar design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/toolbar/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/toolbar/_m3-toolbar.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.toolbar-overrides()` — with 9 tokens
+// split across :
+//   • Container       — background + text colour.
+//   • Title typography — font / size / weight / line-height / tracking on `<mat-toolbar-row>`
+//                        titles.
+//   • Density          — coordinated standard + mobile heights (M3 ships a 4-step density
+//                        scale).
+//
+// PortfolioAI uses the toolbar for the **app shell top bar** (cf. `apps/web/src/app/app.html`)
+// — brand icon on the left, user menu trigger on the right, sticky to the viewport top. The
+// `color="primary"` legacy attribute on the `<mat-toolbar>` is a no-op in M3 (M3 unifies on
+// the surface token below) ; the visible chrome comes entirely from the overrides here.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.toolbar-overrides(
+    (
+      // ============================================================================
+      // Color
+      // ============================================================================
+      container-background-color: var(--color-surface),
+      container-text-color: var(--color-text),
+
+      // ============================================================================
+      // Typography — toolbar title (used when a `<span>` or text node is the toolbar's
+      // primary slot ; PortfolioAI's top bar uses an icon brand + button, not a title node,
+      // so these tokens are mostly idle today but kept aligned with the card title for the
+      // future case of a labelled toolbar).
+      // ============================================================================
+      title-text-size: 1.0625rem,
+      title-text-weight: 600,
+      // title-text-font: inherit,                  // System font from `mat.core()` is fine.
+      // title-text-line-height: ...,               // Driven by M3 title-large by default.
+      // title-text-tracking: ...,                  // Same.
+
+      // ============================================================================
+      // Density
+      // M3 ships a coordinated 4-step density scale that tunes standard + mobile heights as
+      // a set. Defaults : 64 px standard / 56 px mobile — already coherent with the lib's
+      // sidenav rhythm. Switch to `mat.toolbar-density(-1)` (= 60 / 52 px) at the theme
+      // entrypoint if a denser toolbar is needed globally.
+      // ============================================================================
+      // standard-height: 64px,
+      // mobile-height: 56px,
+    )
+  );
+}

@@ -1,0 +1,79 @@
+// Material checkbox design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/checkbox/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/checkbox/_m3-checkbox.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin for the checkbox — `mat.checkbox-overrides()`
+// — with ~30 tokens split across `base / color / typography / density`. The token surface is
+// **doubled** on the color axis : every interaction colour exists in both a `selected-*` and
+// an `unselected-*` flavour (idle / hover / focus / pressed / state-layer).
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+@use '../../../styles/sizes' as s;
+
+:root {
+  @include mat.checkbox-overrides(
+    (
+      // ── Base ──────────────────────────────────────────────────────────────
+      // M3 ships sensible defaults for the state-layer opacities — keep them.
+      //
+      // selected-focus-state-layer-opacity: 0.12,
+      // selected-hover-state-layer-opacity: 0.08,
+      // selected-pressed-state-layer-opacity: 0.16,
+      // unselected-focus-state-layer-opacity: 0.12,
+      // unselected-hover-state-layer-opacity: 0.08,
+      // unselected-pressed-state-layer-opacity: 0.16,
+      // touch-target-size: 48px,
+
+      // ── Color — label ─────────────────────────────────────────────────────
+      label-text-color: var(--color-text),
+
+      // ── Color — selected (checked) ────────────────────────────────────────
+      selected-icon-color: var(--color-accent),
+      selected-focus-icon-color: var(--color-accent),
+      selected-hover-icon-color: var(--color-accent),
+      selected-pressed-icon-color: var(--color-accent),
+      selected-checkmark-color: var(--color-on-accent),
+      selected-focus-state-layer-color: var(--color-accent),
+      selected-hover-state-layer-color: var(--color-accent),
+      selected-pressed-state-layer-color: var(--color-accent),
+
+      // ── Color — unselected ────────────────────────────────────────────────
+      // Idle reads as muted (low-emphasis) ; hover / focus pull it up to full text colour so
+      // the affordance is unambiguous when the user reaches the control.
+      unselected-icon-color: var(--color-text-muted),
+      unselected-focus-icon-color: var(--color-text),
+      unselected-hover-icon-color: var(--color-text),
+      unselected-focus-state-layer-color: var(--color-text),
+      unselected-hover-state-layer-color: var(--color-text),
+      unselected-pressed-state-layer-color: var(--color-accent),
+
+      // ── Color — disabled ──────────────────────────────────────────────────
+      // M3 defaults already render disabled checkboxes at on-surface @ 38 % opacity, which is
+      // close enough to our design ; leave them on the table for future tuning.
+      //
+      // disabled-label-color: ...,
+      // disabled-selected-icon-color: ...,
+      // disabled-selected-checkmark-color: ...,
+      // disabled-unselected-icon-color: ...,
+
+      // ── Typography ────────────────────────────────────────────────────────
+      label-text-size: 0.875rem,
+      label-text-weight: 500,
+      // label-text-font: inherit,        // System font from `mat.core()` is fine.
+      // label-text-line-height: ...,     // Driven by M3 body-medium by default.
+      // label-text-tracking: ...,        // Same.
+
+      // ── Density ───────────────────────────────────────────────────────────
+      // Tighter than Material's 40 px default — matches the lib's icon-button rhythm so a
+      // `<mat-checkbox>` next to a `<button mat-icon-button>` lines up visually.
+      state-layer-size: #{s.$icon-button-size},
+      // touch-target-display: block,
+    )
+  );
+}

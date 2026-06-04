@@ -1,0 +1,73 @@
+import { Canvas, Controls, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './paginator.stories';
+
+<Meta of={Stories} />
+
+# Paginator
+
+Page navigation control — pairs with `<mat-table>` or any list-like surface. The paginator shows the current page range, a page-size dropdown, and prev / next (+ optional first / last) arrows. It emits a `(page)` event when the user navigates ; the consumer wires it to a backend refetch or a client-side slice.
+
+## Playground
+
+<Canvas of={Stories.Default} />
+
+<Controls of={Stories.Default} />
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbPaginatorModule, StbTableModule } from '@portfolioai/ui';
+import { PageEvent } from '@angular/material/paginator';
+
+@Component({
+  imports: [StbTableModule, StbPaginatorModule],
+  template: \`
+    <div stbTable>
+      <table mat-table [dataSource]="pageRows()">
+        <!-- ... columns ... -->
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="totalCount()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      showFirstLastButtons
+      (page)="onPage($event)"
+    />
+  \`,
+})
+export class JournalPage {
+  readonly pageRows = signal<TradeEntry[]>([]);
+  readonly totalCount = signal(0);
+  readonly pageSize = signal(10);
+
+  onPage(e: PageEvent): void {
+    this.pageSize.set(e.pageSize);
+    // refetch with page index + page size, or slice the local array
+  }
+}`}
+/>
+
+## Inputs
+
+<Markdown>
+{`
+| Input                  | Type            | Notes                                                            |
+| ---------------------- | --------------- | ---------------------------------------------------------------- |
+| \`length\`               | number          | **Total** item count across all pages — not the current page.     |
+| \`pageSize\`             | number          | Initial value of the page-size dropdown.                          |
+| \`pageSizeOptions\`      | number[]        | Choices shown in the dropdown (e.g. \`[5, 10, 25, 50]\`).          |
+| \`hidePageSize\`         | boolean         | Hide the "Items per page" dropdown.                               |
+| \`showFirstLastButtons\` | boolean         | Show the « first » and » last » arrows alongside prev / next.    |
+| \`disabled\`             | boolean         | Disables the whole paginator (incl. dropdown + arrows).            |
+| \`(page)\`               | PageEvent       | Fires on prev / next / first / last / page-size change.            |
+`}
+</Markdown>
+
+## Visual contract
+
+The paginator's container is **transparent** — it sits cleanly on top of a `[stbTable]` wrapper (or any surface) without doubling the M3 default `surface` token. The metadata text (`"1 – 10 of 42"`) reads in `--color-text-muted` to stay quiet next to the table content, and the prev / next icons use the same muted token in idle state.
+
+See `libs/ui/src/lib/paginator/paginator.scss` for the full token map.

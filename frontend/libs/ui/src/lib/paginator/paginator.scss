@@ -1,0 +1,69 @@
+// Material paginator design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/paginator/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/paginator/_m3-paginator.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.paginator-overrides()` — with ~16
+// tokens split across `base / color / typography / density`. The paginator usually sits
+// **on top of a `[stbTable]` wrapper**, so the lib makes its container transparent and lets
+// the table card's surface bleed through (M3 default would double-paint a surface here).
+//
+// The embedded page-size selector is a tiny `<mat-form-field>` — its visual contract is
+// driven through the dedicated `paginator-form-field-*` density tokens below, not through
+// `mat.form-field-overrides()`.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.paginator-overrides(
+    (
+      // ============================================================================
+      // Base — page-size select dropdown
+      // ============================================================================
+      // page-size-select-width: 84px,                 // M3 default — fits "5 / 10 / 25 / 50".
+      // page-size-select-touch-target-height: 48px,
+
+      // ============================================================================
+      // Color
+      // Container goes transparent so the paginator sits cleanly on top of `[stbTable]` (or
+      // any other surface) without the M3 default `surface` token doubling the colour.
+      // ============================================================================
+      container-background-color: transparent,
+      container-text-color: var(--color-text-muted),
+      enabled-icon-color: var(--color-text-muted),
+      // disabled-icon-color: ...,                     // M3 default — on-surface @ 38 %. Fine.
+
+      // ============================================================================
+      // Typography — container text (the "1–10 of 42" info + "Items per page :" label)
+      // M3 default = `body-small` (12 px) — already the right tone for metadata.
+      // ============================================================================
+      // container-text-font: inherit,                 // System font from `mat.core()` fine.
+      // container-text-size: ...,
+      // container-text-weight: ...,
+      // container-text-line-height: ...,
+      // container-text-tracking: ...,
+
+      // ============================================================================
+      // Typography — page-size select trigger (the value shown in the dropdown)
+      // ============================================================================
+      // select-trigger-text-size: ...,                // M3 default — body-small. Fine.
+
+      // ============================================================================
+      // Density
+      // M3 ships a coordinated 6-step density scale. Defaults (56 px container, 40 px
+      // form-field) match the lib's row rhythm. Keep at defaults ; switch to
+      // `mat.paginator-density(-2)` at the theme entrypoint if a denser paginator is needed
+      // globally.
+      // ============================================================================
+      // container-size: 56px,
+      // form-field-container-height: 40px,
+      // form-field-container-vertical-padding: 8px,
+      // touch-target-display: block,
+    )
+  );
+}

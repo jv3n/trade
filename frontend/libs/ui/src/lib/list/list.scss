@@ -1,0 +1,148 @@
+// Material list design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/list/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/list/_m3-list.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.list-overrides()` — with ~50 tokens
+// covering 5 zones :
+//   • Container       — `<mat-list>` / `<mat-nav-list>` / `<mat-action-list>` outer surface.
+//   • List item       — `<mat-list-item>` row : label, supporting text, leading + trailing
+//                       icons, leading avatar, and 4 interaction states (idle / hover /
+//                       focus / disabled).
+//   • Active indicator — the highlighted pill on the currently-routed nav item
+//                        (`<mat-nav-list>` only).
+//   • Selection state  — `mat-list-option` selected trailing checkmark colour.
+//   • Density          — coordinated height scale for one-line / two-line / three-line items.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.list-overrides(
+    (
+      // ============================================================================
+      // Color — active indicator (nav-list highlighted route)
+      // ============================================================================
+      // Accent-soft pill, matching the sidenav-active recipe in `_shell.scss`. Shape uses
+      // `--radius` (6 px rounded square) rather than M3's `corner-full` (pill) so the active
+      // indicator reads as a card highlight, not a chip.
+      active-indicator-color: var(--color-accent-soft),
+      active-indicator-shape: var(--radius),
+
+      // ============================================================================
+      // Color — list item container + selection
+      // ============================================================================
+      // list-item-container-color: transparent,         // M3 default — transparent.
+      // list-item-container-shape: corner-none,         // M3 default — square corners
+                                                          // (rounded by `active-indicator-shape`
+                                                          // when active).
+      // list-item-selected-container-color: null,       // M3 default — null. Selection styling
+                                                          // is carried by the active-indicator
+                                                          // for nav-list and by the trailing
+                                                          // checkmark for list-option.
+      list-item-selected-trailing-icon-color: var(--color-accent),
+
+      // ============================================================================
+      // Color — list item, idle text + icons
+      // ============================================================================
+      list-item-label-text-color: var(--color-text),
+      list-item-supporting-text-color: var(--color-text-muted),
+      list-item-leading-icon-color: var(--color-text-muted),
+      list-item-trailing-icon-color: var(--color-text-muted),
+      list-item-trailing-supporting-text-color: var(--color-text-muted),
+
+      // ============================================================================
+      // Color — list item, hover
+      // M3 ties the state layer to `on-surface` (neutral wash) — we steer to the accent for
+      // the same "this row is interactive" affordance as button / autocomplete option / chip.
+      // ============================================================================
+      list-item-hover-label-text-color: var(--color-text),
+      list-item-hover-state-layer-color: var(--color-accent),
+      // list-item-hover-state-layer-opacity: 0.08,      // M3 default — accent at 8 %.
+      // list-item-hover-leading-icon-color: null,        // M3 default — keep idle colour on
+                                                           // hover.
+      // list-item-hover-trailing-icon-color: null,
+
+      // ============================================================================
+      // Color — list item, focus
+      // ============================================================================
+      list-item-focus-label-text-color: var(--color-text),
+      list-item-focus-state-layer-color: var(--color-accent),
+      // list-item-focus-state-layer-opacity: 0.12,      // M3 default — accent at 12 %.
+
+      // ============================================================================
+      // Color — list item, disabled (lean on M3 defaults — opacity-driven)
+      // ============================================================================
+      // list-item-disabled-label-text-color: ...,
+      // list-item-disabled-label-text-opacity: 0.3,
+      // list-item-disabled-leading-icon-color: ...,
+      // list-item-disabled-leading-icon-opacity: 0.38,
+      // list-item-disabled-trailing-icon-color: ...,
+      // list-item-disabled-trailing-icon-opacity: 0.38,
+      // list-item-disabled-state-layer-color: ...,
+      // list-item-disabled-state-layer-opacity: ...,
+
+      // ============================================================================
+      // Color — leading avatar (`<img matListItemAvatar>` or initials circle)
+      // ============================================================================
+      list-item-leading-avatar-color: var(--color-accent-soft),
+      // list-item-leading-avatar-shape: corner-full,    // M3 default — circle.
+      // list-item-leading-avatar-size: 40px,             // M3 default — 40 px.
+
+      // ============================================================================
+      // Color — leading + trailing icon sizing
+      // ============================================================================
+      // list-item-leading-icon-size: 24px,              // M3 default — 24 px (matches
+                                                          // `<mat-icon>` default).
+      // list-item-trailing-icon-size: 24px,
+
+      // ============================================================================
+      // Typography — primary label
+      // M3 default = body-large (1 rem) ; we ship a denser 0.875 rem to match the autocomplete
+      // option and the rest of the form family.
+      // ============================================================================
+      list-item-label-text-size: 0.875rem,
+      // list-item-label-text-font: inherit,             // System font from `mat.core()` fine.
+      // list-item-label-text-weight: ...,
+      // list-item-label-text-line-height: ...,
+      // list-item-label-text-tracking: ...,
+
+      // ============================================================================
+      // Typography — supporting text (secondary subtitle line)
+      // M3 default = body-medium ; tightened one step.
+      // ============================================================================
+      list-item-supporting-text-size: 0.8125rem,
+      // list-item-supporting-text-font: inherit,
+      // list-item-supporting-text-weight: ...,
+      // list-item-supporting-text-line-height: ...,
+      // list-item-supporting-text-tracking: ...,
+
+      // ============================================================================
+      // Typography — trailing supporting text (right-aligned metadata)
+      // M3 default = label-small (12 px) ; already coherent with our metadata convention.
+      // ============================================================================
+      // list-item-trailing-supporting-text-font: inherit,
+      // list-item-trailing-supporting-text-size: ...,
+      // list-item-trailing-supporting-text-weight: ...,
+      // list-item-trailing-supporting-text-line-height: ...,
+      // list-item-trailing-supporting-text-tracking: ...,
+
+      // ============================================================================
+      // Density
+      // M3 ships a coordinated 5-step density scale — heights + leading-icon spacing tune
+      // together. Default (48 / 64 / 88 px for 1- / 2- / 3-line items) matches the lib's
+      // other row-style surfaces. Switch to `mat.list-density(-1)` (= 44 / 60 / 84 px) at the
+      // theme entrypoint if a denser list is needed globally.
+      // ============================================================================
+      // list-item-one-line-container-height: 48px,
+      // list-item-two-line-container-height: 64px,
+      // list-item-three-line-container-height: 88px,
+      // list-item-leading-icon-start-space: 16px,
+      // list-item-leading-icon-end-space: 16px,
+    )
+  );
+}

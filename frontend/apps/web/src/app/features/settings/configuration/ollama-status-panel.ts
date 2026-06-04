@@ -1,12 +1,16 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
+
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
 import { OllamaPullDialog } from './ollama-pull-dialog';
+import {
+  StbButtonModule,
+  StbIconModule,
+  StbProgressSpinnerModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 /**
  * Panel rendered at the top of the LLM section of `/settings/configuration` when
@@ -32,10 +36,10 @@ import { OllamaPullDialog } from './ollama-pull-dialog';
   standalone: true,
   imports: [
     TranslatePipe,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
+    StbIconModule,
+    StbButtonModule,
+    StbProgressSpinnerModule,
+    StbTooltipModule,
   ],
   templateUrl: './ollama-status-panel.html',
   styleUrl: './ollama-status-panel.scss',

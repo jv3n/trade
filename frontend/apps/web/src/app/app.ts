@@ -3,19 +3,22 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs/operators';
 import { MatSidenavContainer } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
+
 import { TranslatePipe } from '@ngx-translate/core';
 import { ThemeService } from './core/app-state/theme.service';
 import { LanguageService } from './core/app-state/language.service';
 import { AuthService } from './core/app-state/auth.service';
 import { SidenavCollapseService } from './core/app-state/sidenav-collapse.service';
+import {
+  StbButtonModule,
+  StbDividerModule,
+  StbIconModule,
+  StbListModule,
+  StbMenuModule,
+  StbSidenavModule,
+  StbToolbarModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
 
 /**
  * Application shell — top toolbar + left sidenav + router outlet (v1.0 pivot layout, cf.
@@ -39,14 +42,14 @@ import { SidenavCollapseService } from './core/app-state/sidenav-collapse.servic
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule,
-    MatMenuModule,
-    MatDividerModule,
-    MatSidenavModule,
-    MatListModule,
+    StbToolbarModule,
+    StbButtonModule,
+    StbIconModule,
+    StbTooltipModule,
+    StbMenuModule,
+    StbDividerModule,
+    StbSidenavModule,
+    StbListModule,
     TranslatePipe,
   ],
   templateUrl: './app.html',

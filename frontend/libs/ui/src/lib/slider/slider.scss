@@ -1,0 +1,120 @@
+// Material slider design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/slider/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/slider/_m3-slider.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.slider-overrides()` — with ~45 tokens
+// split across :
+//   • Track          — active (filled portion) + inactive (rest), height + colour + shape.
+//   • Handle         — the draggable knob : colour / shape / elevation / hover + focus states.
+//   • State layers   — overlay tint around the handle on hover / focus, plus ripple.
+//   • Value indicator — the floating tooltip showing the current value when dragging.
+//   • Tick marks     — discrete slider tick visuals (when `[discrete]="true"`).
+//   • Disabled       — disabled state colours for track / handle / ticks.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.slider-overrides(
+    (
+      // ============================================================================
+      // Base — track + handle sizing
+      // ============================================================================
+      // M3 defaults : track 4 px, handle 20×20 px, indicator 28×28 px. All sensible.
+      //
+      // active-track-height: 4px,
+      // inactive-track-height: 4px,
+      // handle-height: 20px,
+      // handle-width: 20px,
+      // with-overlap-handle-outline-width: 1px,
+      //
+      // Value indicator (the floating tooltip when dragging) — M3 ships a teardrop shape via
+      // a rotated square ; the geometry tokens below describe that transform. Keep at default.
+      //
+      // value-indicator-width: 28px,
+      // value-indicator-height: 28px,
+      // value-indicator-padding: 0,
+      // value-indicator-opacity: 1,
+      // value-indicator-caret-display: none,
+      // value-indicator-border-radius: 50% 50% 50% 0,
+      // value-indicator-text-transform: rotate(45deg),
+      // value-indicator-container-transform: translateX(-50%) rotate(-45deg),
+      // value-indicator-transform-origin: 0 28px,
+      //
+      // Tick marks
+      // with-tick-marks-container-size: 2px,
+      // with-tick-marks-active-container-opacity: 0.38,
+      // with-tick-marks-inactive-container-opacity: 0.38,
+
+      // ============================================================================
+      // Color — track
+      // ============================================================================
+      active-track-color: var(--color-accent),
+      inactive-track-color: var(--color-border-soft),
+      // active-track-shape: corner-full,             // M3 default — pill.
+      // inactive-track-shape: corner-full,           // M3 default — pill.
+
+      // ============================================================================
+      // Color — handle (the draggable knob)
+      // Idle / hover / focus all hit the accent palette ; focus uses `accent-strong` for the
+      // "this is the active control" emphasis.
+      // ============================================================================
+      handle-color: var(--color-accent),
+      hover-handle-color: var(--color-accent),
+      focus-handle-color: var(--color-accent-strong),
+      // handle-shape: corner-full,                   // M3 default — circle.
+      // handle-elevation: ...,                        // M3 default — level1 box-shadow.
+
+      // ============================================================================
+      // Color — state layers (overlay tint around the handle)
+      // M3 ties these to `primary @ 5 %` (hover) and `primary @ 20 %` (focus) ; we steer to
+      // `accent-soft` for the soft halo that matches the rest of the lib's interactive
+      // surfaces.
+      // ============================================================================
+      hover-state-layer-color: var(--color-accent-soft),
+      focus-state-layer-color: var(--color-accent-soft),
+      ripple-color: var(--color-accent),
+
+      // ============================================================================
+      // Color — value indicator (floating tooltip when dragging)
+      // ============================================================================
+      label-container-color: var(--color-accent),
+      label-label-text-color: var(--color-on-accent),
+
+      // ============================================================================
+      // Color — overlap handle outline (range slider, two handles crossing)
+      // ============================================================================
+      with-overlap-handle-outline-color: var(--color-on-accent),
+
+      // ============================================================================
+      // Color — tick marks (discrete slider via `[discrete]="true"`)
+      // ============================================================================
+      with-tick-marks-active-container-color: var(--color-on-accent),
+      with-tick-marks-inactive-container-color: var(--color-text-muted),
+      // with-tick-marks-container-shape: corner-full, // M3 default — round tick.
+
+      // ============================================================================
+      // Color — disabled (lean on M3 defaults — opacity-driven tinting)
+      // ============================================================================
+      // disabled-active-track-color: ...,
+      // disabled-inactive-track-color: ...,
+      // disabled-handle-color: ...,
+      // with-tick-marks-disabled-container-color: ...,
+
+      // ============================================================================
+      // Typography — value indicator label
+      // M3 default = `label-medium` (12 px) — already coherent with our metadata convention.
+      // ============================================================================
+      // label-label-text-font: inherit,
+      // label-label-text-size: ...,
+      // label-label-text-weight: ...,
+      // label-label-text-line-height: ...,
+      // label-label-text-tracking: ...,
+    )
+  );
+}

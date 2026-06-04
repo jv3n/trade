@@ -1,12 +1,15 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ConfigRepository } from '../../../core/api/config/config.repository';
+import {
+  StbButtonModule,
+  StbChipsModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+} from '@portfolioai/ui';
 
 const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
 
@@ -36,12 +39,12 @@ const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
 @Component({
   selector: 'app-access-control',
   imports: [
-    MatButtonModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
+    StbButtonModule,
+    StbChipsModule,
+    StbFormFieldModule,
+    StbIconModule,
+    StbInputModule,
+    StbProgressSpinnerModule,
     TranslatePipe,
   ],
   templateUrl: './access-control.html',

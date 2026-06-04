@@ -1,0 +1,149 @@
+// Material chips design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/chips/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/chips/_m3-chip.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.chips-overrides()` — with ~44 tokens.
+// The surface fragments along several axes :
+//   • idle / hover / focus / selected / disabled — each interaction state has its own colour
+//     entries on the chip body AND on the inner state-layer overlay.
+//   • leading icon (`with-icon-*`)   — colour + size for chips that prepend an icon.
+//   • trailing icon (`with-trailing-icon-*` and `trailing-action-*`) — icon colour, dismiss
+//     action state-layer, opacities (the trailing slot has its own opacity track so a remove
+//     button can fade in / out independently of the chip body).
+//   • avatar (`with-avatar-*`)       — shape + size + disabled opacity for chips with an avatar.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries.
+
+@use '@angular/material' as mat;
+@use '../../../styles/sizes' as s;
+
+:root {
+  @include mat.chips-overrides(
+    (
+      // ============================================================================
+      // Base
+      // ============================================================================
+      // Pill shape — feels more native for chips than M3's default 8 px squared corner.
+      container-shape-radius: var(--radius-pill),
+      // disabled-container-opacity: 1,           // Idle disabled relies on per-token tinting.
+      // elevated-container-color: transparent,   // Idle chip is borderless ; flat appearance.
+      // flat-selected-outline-width: 0,          // Selected chip drops its outline by design.
+      // outline-width: 1px,                       // M3 default — 1 px hairline.
+      // trailing-action-opacity: 1,
+      // trailing-action-focus-opacity: 1,
+      //
+      // Avatar (`<mat-chip><img matChipAvatar>`)
+      // with-avatar-avatar-shape-radius: 24px,
+      // with-avatar-avatar-size: 24px,
+      // with-avatar-disabled-avatar-opacity: 0.38,
+      //
+      // Leading icon (`<mat-chip><mat-icon matChipLeadingIcon>`)
+      with-icon-icon-size: 16px,
+      // with-icon-disabled-icon-opacity: 0.38,
+      //
+      // Trailing icon / remove action (`<button matChipRemove>`)
+      // with-trailing-icon-disabled-trailing-icon-opacity: 0.38,
+
+      // ============================================================================
+      // Color — idle (unselected) chip
+      // ============================================================================
+      label-text-color: var(--color-text-muted),
+      outline-color: var(--color-border),
+      hover-state-layer-color: var(--color-accent),
+      // hover-state-layer-opacity: 0.08,        // M3 default — accent at 8 %.
+
+      // ============================================================================
+      // Color — focus (visible focus ring on keyboard nav)
+      // ============================================================================
+      focus-outline-color: var(--color-accent),
+      focus-state-layer-color: var(--color-accent),
+      // focus-state-layer-opacity: 0.12,        // M3 default — accent at 12 %.
+
+      // ============================================================================
+      // Color — selected chip
+      // Same recipe as the journal `.chip-active` pattern + the autocomplete option's
+      // selected row : accent-soft surface + accent-strong text / icon.
+      // ============================================================================
+      elevated-selected-container-color: var(--color-accent-soft),
+      selected-label-text-color: var(--color-accent-strong),
+      selected-focus-state-layer-color: var(--color-accent),
+      selected-hover-state-layer-color: var(--color-accent),
+      // selected-focus-state-layer-opacity: 0.12,
+      // selected-hover-state-layer-opacity: 0.08,
+
+      // ============================================================================
+      // Color — leading icon (`matChipLeadingIcon`)
+      // ============================================================================
+      with-icon-icon-color: var(--color-text-muted),
+      with-icon-selected-icon-color: var(--color-accent-strong),
+      // with-icon-disabled-icon-color: ...,
+
+      // ============================================================================
+      // Color — trailing icon / remove action (`matChipRemove`)
+      // ============================================================================
+      with-trailing-icon-trailing-icon-color: var(--color-text-muted),
+      selected-trailing-icon-color: var(--color-accent-strong),
+      trailing-action-state-layer-color: var(--color-accent),
+      selected-trailing-action-state-layer-color: var(--color-accent),
+      // with-trailing-icon-disabled-trailing-icon-color: ...,
+      // selected-disabled-trailing-icon-color: ...,
+      // trailing-action-focus-state-layer-opacity: 0.12,
+      // trailing-action-hover-state-layer-opacity: 0.08,
+
+      // ============================================================================
+      // Color — disabled (lean on M3 defaults — on-surface tinted at 38 % / 12 %)
+      // ============================================================================
+      // disabled-label-text-color: ...,
+      // disabled-outline-color: ...,
+      // elevated-disabled-container-color: null,
+      // flat-disabled-selected-container-color: ...,
+
+      // ============================================================================
+      // Typography
+      // ============================================================================
+      // Mirrors the rest of the button family (0.8125 rem, weight 500) so a `<mat-chip>` reads
+      // at the same baseline as a `<button mat-stroked-button>` in the same row.
+      label-text-size: 0.8125rem,
+      label-text-weight: 500,
+      // label-text-font: inherit,            // System font from `mat.core()` is fine.
+      // label-text-line-height: ...,         // Driven by M3 label-large by default.
+      // label-text-tracking: ...,            // Same.
+
+      // ============================================================================
+      // Density
+      // ============================================================================
+      // Match the lib's button height so chips and buttons in the same toolbar share a
+      // baseline.
+      container-height: #{s.$button-height},
+    )
+  );
+}
+
+// ============================================================================
+// `[stbChip]` variants — applied by the `StbChip` directive on the chip host.
+//
+// Each variant overrides the relevant `--mat-chip-*` CSS variables on the host element,
+// reusing the same M3 token plumbing as the base styling above — just scoped to the host.
+// ============================================================================
+
+// `ticker` — trading-domain variant for chips that wrap a ticker symbol (BAC, AAPL, NVDA…).
+// Label rendered in success-green to match the rest of the PnL / buy-side palette
+// (`--color-action-buy` is `var(--color-success)`). Selected state swaps to the success-soft
+// container surface for visual coherence with the rest of the success affordances.
+.stb-chip--ticker {
+  --mat-chip-label-text-color: var(--color-success);
+  --mat-chip-label-text-weight: 600;
+  --mat-chip-outline-color: var(--color-success-soft);
+  --mat-chip-focus-outline-color: var(--color-success);
+  --mat-chip-hover-state-layer-color: var(--color-success);
+  --mat-chip-focus-state-layer-color: var(--color-success);
+  --mat-chip-selected-label-text-color: var(--color-success);
+  --mat-chip-elevated-selected-container-color: var(--color-success-soft);
+  --mat-chip-selected-focus-state-layer-color: var(--color-success);
+  --mat-chip-selected-hover-state-layer-color: var(--color-success);
+  --mat-chip-with-icon-icon-color: var(--color-success);
+  --mat-chip-with-icon-selected-icon-color: var(--color-success);
+}

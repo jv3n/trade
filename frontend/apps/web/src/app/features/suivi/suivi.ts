@@ -1,16 +1,16 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SnapshotRepository, SnapshotPosition } from '../../core/api/portfolio/snapshot.repository';
 import { toggleSet } from '../../shared/toggle-set/toggle-set';
 import { groupIntoBatches } from './suivi.helper';
 import { Batch } from './suivi.model';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 @Component({
   selector: 'app-suivi',
-  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
+  imports: [CommonModule, StbIconModule, StbProgressSpinnerModule, TranslatePipe],
   templateUrl: './suivi.html',
   styleUrl: './suivi.scss',
 })

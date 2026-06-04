@@ -2,8 +2,7 @@ import { Component, LOCALE_ID, OnInit, computed, inject, signal } from '@angular
 import { DatePipe, DecimalPipe, NgClass, PercentPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   CoherenceScore,
@@ -13,6 +12,7 @@ import {
 } from '../../core/api/analysis/narrative-observability.repository';
 import { PromptRepository, PromptTemplate } from '../../core/api/analysis/prompt.repository';
 import { buildFilterWindow } from '../../shared/filter-window/filter-window';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 /**
  * Thumbs filter state on the page — `'all'` shows every observation, the three numeric values
@@ -51,8 +51,8 @@ export type ThumbsFilter = 'all' | 1 | 0 | -1;
     NgClass,
     PercentPipe,
     RouterLink,
-    MatProgressSpinnerModule,
-    MatIconModule,
+    StbProgressSpinnerModule,
+    StbIconModule,
     TranslatePipe,
   ],
   templateUrl: './observability.html',

@@ -1,14 +1,14 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe, NgClass, PercentPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   PromptRepository,
   PromptStats,
   PromptTemplate,
 } from '../../../../core/api/analysis/prompt.repository';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 /**
  * Settings → Prompts → Stats (Phase 3 PR6). Per-prompt aggregated view :
@@ -34,8 +34,8 @@ import {
     NgClass,
     PercentPipe,
     RouterLink,
-    MatProgressSpinnerModule,
-    MatIconModule,
+    StbProgressSpinnerModule,
+    StbIconModule,
     TranslatePipe,
   ],
   templateUrl: './prompt-stats.html',

@@ -1,0 +1,23 @@
+// Material divider design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/divider/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/divider/_m3-divider.scss > get-tokens()
+//
+// The divider is the smallest M3 surface in the lib — `mat.divider-overrides()` accepts
+// exactly two tokens : `color` and `width`. We override `color` to match the lib's hairline
+// convention (`--color-border-soft`) ; `width` is left at the M3 default (1 px).
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.divider-overrides(
+    (
+      // ── Color ────────────────────────────────────────────────────────────
+      color: var(--color-border-soft),
+
+      // ── Base ─────────────────────────────────────────────────────────────
+      // width: 1px,        // M3 default — already 1 px hairline.
+    )
+  );
+}

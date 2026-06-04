@@ -14,20 +14,20 @@ export default meta;
 type Story = StoryObj;
 
 const swatch = (token: string) => `
-  <div style="display:flex; align-items:center; gap:0.75rem; padding:0.4rem 0.6rem; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius); font-size:0.8rem; color:var(--color-text); font-family:var(--font-family);">
-    <span style="display:inline-block; width:1.5rem; height:1.5rem; border-radius:var(--radius-sm); background:var(--${token}); border:1px solid var(--color-border-soft);"></span>
-    <code style="font-family:var(--font-mono); color:var(--color-text-muted); font-size:0.72rem;">--${token}</code>
+  <div>
+    <span></span>
+    <code>--${token}</code>
   </div>
 `;
 
 const grid = (tokens: string[]) => `
-  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:0.5rem;">
+  <div>
     ${tokens.map(swatch).join('')}
   </div>
 `;
 
 const section = (title: string, tokens: string[]) => `
-  <h3 style="margin:1.25rem 0 0.5rem; color:var(--color-text); font-family:var(--font-family); font-size:0.95rem; font-weight:600;">${title}</h3>
+  <h3>${title}</h3>
   ${grid(tokens)}
 `;
 
@@ -58,47 +58,13 @@ const allSections = `
   ${section('Semantic', semanticTokens)}
 `;
 
-export const Dark: Story = {
+export const Default: Story = {
   render: () => ({
     template: `
-      <div style="padding:1.5rem; background:var(--color-bg); min-height:100vh;">
-        <h2 style="margin:0 0 0.5rem; color:var(--color-text); font-family:var(--font-family); font-size:1.1rem;">Dark — GitHub dimmed</h2>
-        <p style="margin:0 0 1rem; color:var(--color-text-muted); font-family:var(--font-family); font-size:0.85rem;">Default <code>:root</code> tokens (no <code>data-theme</code> set).</p>
+      <div>
+        <h2>Dark — GitHub dimmed</h2>
+        <p>Default <code>:root</code> tokens (no <code>data-theme</code> set).</p>
         ${allSections}
-      </div>
-    `,
-  }),
-};
-
-export const Light: Story = {
-  render: () => ({
-    template: `
-      <div data-theme="light" style="padding:1.5rem; background:var(--color-bg); min-height:100vh;">
-        <h2 style="margin:0 0 0.5rem; color:var(--color-text); font-family:var(--font-family); font-size:1.1rem;">Light — GitHub light</h2>
-        <p style="margin:0 0 1rem; color:var(--color-text-muted); font-family:var(--font-family); font-size:0.85rem;">Tokens scoped via <code>[data-theme='light']</code> on the wrapper div.</p>
-        ${allSections}
-      </div>
-    `,
-  }),
-};
-
-export const SideBySide: Story = {
-  name: 'Side by side',
-  render: () => ({
-    template: `
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:#000; min-height:100vh;">
-        <div style="padding:1.25rem; background:var(--color-bg);">
-          <h3 style="margin:0 0 1rem; color:var(--color-text); font-family:var(--font-family); font-size:1rem;">Dark</h3>
-          ${section('Surfaces', surfaceTokens)}
-          ${section('Brand', brandTokens)}
-          ${section('Semantic', semanticTokens)}
-        </div>
-        <div data-theme="light" style="padding:1.25rem; background:var(--color-bg);">
-          <h3 style="margin:0 0 1rem; color:var(--color-text); font-family:var(--font-family); font-size:1rem;">Light</h3>
-          ${section('Surfaces', surfaceTokens)}
-          ${section('Brand', brandTokens)}
-          ${section('Semantic', semanticTokens)}
-        </div>
       </div>
     `,
   }),

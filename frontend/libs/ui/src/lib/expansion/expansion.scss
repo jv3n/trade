@@ -1,0 +1,85 @@
+// Material expansion-panel design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/expansion/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/expansion/_m3-expansion.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.expansion-overrides()` — with ~22 tokens
+// split across `base / color / typography / density`. The component renders two halves :
+//
+//   • Container        — the panel wrapper : shape, surface, shadow.
+//   • Header           — `<mat-expansion-panel-header>` row : title, description, chevron
+//                        indicator, plus three interaction states (idle / hover / focus) and
+//                        a `disabled` text colour.
+//   • Body / actions   — `mat-action-row` (optional bottom action bar) divider colour.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.expansion-overrides(
+    (
+      // ============================================================================
+      // Base — container chrome
+      // ============================================================================
+      container-shape: var(--radius),
+      container-elevation-shadow: var(--shadow),
+      // header-indicator-display: inline-block,        // M3 default — keep chevron visible.
+      // legacy-header-indicator-display: none,         // Pre-M3 indicator slot — hidden.
+
+      // ============================================================================
+      // Color — container
+      // ============================================================================
+      container-background-color: var(--color-surface),
+      container-text-color: var(--color-text),
+
+      // ============================================================================
+      // Color — header (title + description + chevron + state layers)
+      // ============================================================================
+      header-text-color: var(--color-text),
+      header-description-color: var(--color-text-muted),
+      header-indicator-color: var(--color-text-muted),
+      // Hover / focus state layers tinted with the accent palette, matching the rest of the
+      // interactive surfaces (button, autocomplete option, chip). M3 default ties them to
+      // `on-surface` at hover/focus opacity, which reads as a neutral grey wash — we want
+      // the affordance to read as "this control is interactive".
+      header-hover-state-layer-color: var(--color-accent-soft),
+      header-focus-state-layer-color: var(--color-accent-soft),
+      // header-disabled-state-text-color: ...,         // M3 default — on-surface @ 38 %.
+
+      // ============================================================================
+      // Color — actions row divider (`<mat-action-row>` separator)
+      // ============================================================================
+      actions-divider-color: var(--color-border-soft),
+
+      // ============================================================================
+      // Typography — container body + header
+      // M3 defaults pull from `body-large` (container content) + `title-medium` (header) —
+      // already coherent with the rest of the surface family.
+      // ============================================================================
+      // container-text-font: inherit,                  // System font from `mat.core()` is fine.
+      // container-text-size: ...,
+      // container-text-weight: ...,
+      // container-text-line-height: ...,
+      // container-text-tracking: ...,
+      //
+      // header-text-font: inherit,
+      // header-text-size: ...,
+      // header-text-weight: ...,
+      // header-text-line-height: ...,
+      // header-text-tracking: ...,
+
+      // ============================================================================
+      // Density
+      // M3 ships a coordinated density scale (-3 → 0) that tunes the collapsed + expanded
+      // header heights as a set. Default heights (48 / 64 px) match the lib's other
+      // header-style surfaces ; leave them alone unless a tighter accordion is needed.
+      // ============================================================================
+      // header-collapsed-state-height: 48px,
+      // header-expanded-state-height: 64px,
+    )
+  );
+}

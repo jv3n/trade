@@ -1,0 +1,30 @@
+// Material icon design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/icon/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/icon/_m3-icon.scss > get-tokens()
+//
+// The icon is the smallest M3 surface in the lib — `mat.icon-overrides()` accepts exactly
+// **one** token : `icon-color`. The M3 default is `inherit`, which is exactly what we want
+// 99 % of the time : a `<mat-icon>` inside a `<button mat-button>` picks up the button's
+// label colour token, an icon inside a `<mat-form-field>` picks up the form-field
+// leading/trailing-icon token, an icon in the journal page picks up `--color-text`. The
+// inheritance chain does the right thing for free.
+//
+// Listed below as a documented no-op so future contributors see at a glance that we audited
+// the surface and intentionally landed on M3 defaults.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.icon-overrides(
+    (
+      // ── Color ────────────────────────────────────────────────────────────
+      // icon-color: inherit,    // M3 default — inherits from parent text-color context.
+                                  // Overriding this with a fixed colour would break the
+                                  // existing button / form-field / icon-button token plumbing
+                                  // (their icon-colour tokens would be silently bypassed).
+                                  // Keep `inherit`.
+    )
+  );
+}

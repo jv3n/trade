@@ -30,14 +30,11 @@
           The whole `<mat-form-field>` is wired to `picker.open()` so clicking anywhere on the
           field — not just the icon — opens the calendar.
         -->
-        <mat-form-field
-          appearance="outline"
-          class="date-field"
-          (click)="picker.open()"
-        >
+        <mat-form-field appearance="outline" class="date-field" (click)="picker.open()">
           <mat-label>{{ 'journal.fields.tradeDate' | translate }}</mat-label>
           <input
             matInput
+            readonly
             [matDatepicker]="picker"
             [value]="model().tradeDate"
             (dateChange)="setTradeDate($event.value)"

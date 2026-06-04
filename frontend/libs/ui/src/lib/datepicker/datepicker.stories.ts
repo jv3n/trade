@@ -17,7 +17,7 @@ import { StbDatePickerModule } from './datepicker.module';
   standalone: true,
   imports: [MatFormFieldModule, MatIconModule, MatInputModule, StbDatePickerModule],
   template: `
-    <div style="display:flex; flex-direction:column; gap:1rem; padding:1.5rem; min-width:320px;">
+    <div>
       <mat-form-field appearance="outline">
         <mat-label>Trade date</mat-label>
         <input
@@ -29,8 +29,8 @@ import { StbDatePickerModule } from './datepicker.module';
         <mat-datepicker-toggle matIconSuffix [for]="picker" />
         <mat-datepicker #picker />
       </mat-form-field>
-      <p style="margin:0; font-family:var(--font-family); color:var(--color-text-muted); font-size:0.85rem;">
-        Bound value : <code style="font-family:var(--font-mono); color:var(--color-text);">{{ value()?.toISOString() ?? 'null' }}</code>
+      <p>
+        Bound value : <code>{{ value()?.toISOString() ?? 'null' }}</code>
       </p>
     </div>
   `,
@@ -40,7 +40,7 @@ class DatepickerDemo {
 }
 
 const meta: Meta<DatepickerDemo> = {
-  title: 'Form/Datepicker',
+  title: 'Components/Datepicker',
   component: DatepickerDemo,
   decorators: [
     // `DateAdapter` is registered at the application level (same pattern as
@@ -53,7 +53,7 @@ const meta: Meta<DatepickerDemo> = {
     docs: {
       description: {
         component:
-          'Material datepicker themed through the lib. Bind via `[value]` + `(dateChange)` (not `[formField]`) — Material\'s `MatDatepickerInput` is its own `ControlValueAccessor` and conflicts with Signal Forms\' binding.',
+          "Material datepicker themed through the lib. Bind via `[value]` + `(dateChange)` (not `[formField]`) — Material's `MatDatepickerInput` is its own `ControlValueAccessor` and conflicts with Signal Forms' binding.",
       },
     },
   },
@@ -63,28 +63,4 @@ export default meta;
 
 type Story = StoryObj<DatepickerDemo>;
 
-export const Dark: Story = {};
-
-export const Light: Story = {
-  render: () => ({
-    template: `<div data-theme="light"><ui-datepicker-demo /></div>`,
-  }),
-};
-
-export const BothThemes: Story = {
-  name: 'Dark vs Light',
-  render: () => ({
-    template: `
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px; background:#000;">
-        <div style="background:var(--color-bg); padding:1rem;">
-          <h4 style="margin:0 0 0.5rem; color:var(--color-text); font-family:var(--font-family); font-size:0.85rem; font-weight:600;">Dark</h4>
-          <ui-datepicker-demo />
-        </div>
-        <div data-theme="light" style="background:var(--color-bg); padding:1rem;">
-          <h4 style="margin:0 0 0.5rem; color:var(--color-text); font-family:var(--font-family); font-size:0.85rem; font-weight:600;">Light</h4>
-          <ui-datepicker-demo />
-        </div>
-      </div>
-    `,
-  }),
-};
+export const Default: Story = {};

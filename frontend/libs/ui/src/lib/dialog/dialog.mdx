@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './dialog.stories';
+
+<Meta of={Stories} />
+
+# Dialog
+
+Modal dialog — use `MatDialog.open(...)` to launch. Custom width / max-width passed in the open() options (cf. `add-trade-dialog` in the app).
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbDialogModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbDialogModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

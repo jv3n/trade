@@ -56,35 +56,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-.table-wrapper {
-  overflow-x: auto;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-}
-
-table {
-  width: 100%;
-  background: transparent;
-}
-
-.numeric {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.mono {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.actions-col {
-  width: 88px;
-  text-align: right;
-  padding-right: 0.5rem !important;
-}
-
+// `.profit-positive` / `.profit-negative` remain page-local — they encode the trading-domain
+// semantics of a profitable vs. losing position, not a generic table column type. The neutral
+// numeric / mono / actions column styling moved to `libs/ui/src/lib/table/table.scss` (consumed
+// via `[stbTable]` + `[stbCol]` directives).
 .profit-positive {
   color: var(--color-success);
   font-weight: 600;

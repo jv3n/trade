@@ -1,0 +1,95 @@
+// Material select design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/select/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/select/_m3-select.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.select-overrides()` — with ~14 tokens
+// split across :
+//   • Panel              — overlay container shape / surface / shadow.
+//   • Trigger            — the visible value shown in the field when collapsed (text colour +
+//                          placeholder colour).
+//   • Arrow (chevron)    — 4 colour states : enabled / disabled / focused / invalid.
+//   • Typography         — trigger text typography.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+//
+// **Option rows are shared with the autocomplete** — `<mat-select>` renders its dropdown via
+// `<mat-option>` rows whose contract lives on `mat.option-overrides()`. That mixin is invoked
+// once in `libs/ui/src/lib/autocomplete/autocomplete.scss` and the result applies to every
+// option in the app (autocomplete + select). No duplication needed.
+//
+// **Why `:root`** : the select panel lives in the CDK overlay, mounted outside the consumer's
+// view-encapsulated tree. The overrides have to be global to reach it.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.select-overrides(
+    (
+      // ============================================================================
+      // Base
+      // ============================================================================
+      container-elevation-shadow: var(--shadow),
+
+      // ============================================================================
+      // Color — panel (overlay surface)
+      // Same recipe as the menu / datepicker overlay : `--color-surface-2` (one step lighter
+      // than `--color-surface`) so the panel reads as raised against the page background.
+      // ============================================================================
+      panel-background-color: var(--color-surface-2),
+
+      // ============================================================================
+      // Color — trigger (the visible value in the collapsed field)
+      // ============================================================================
+      enabled-trigger-text-color: var(--color-text),
+      placeholder-text-color: var(--color-text-faint),
+      // disabled-trigger-text-color: ...,           // M3 default — on-surface @ 38 %. Fine.
+
+      // ============================================================================
+      // Color — arrow (chevron on the right of the trigger)
+      // ============================================================================
+      enabled-arrow-color: var(--color-text-muted),
+      focused-arrow-color: var(--color-accent),
+      invalid-arrow-color: var(--color-danger),
+      // disabled-arrow-color: ...,                  // M3 default — on-surface @ 38 %. Fine.
+
+      // ============================================================================
+      // Typography — trigger text
+      // M3 default = body-large (1 rem) ; we ship 0.875 rem to match the form-field
+      // container text and the autocomplete option.
+      // ============================================================================
+      trigger-text-size: 0.875rem,
+      // trigger-text-font: inherit,                 // System font from `mat.core()` fine.
+      // trigger-text-weight: ...,
+      // trigger-text-line-height: ...,
+      // trigger-text-tracking: ...,
+
+      // ============================================================================
+      // Density
+      // M3 ships an `arrow-transform` token that lifts the chevron by 8 px on density 0 / -1
+      // so it stays vertically centred when the form-field is at its tallest. Keep at default.
+      // ============================================================================
+      // arrow-transform: translateY(-8px),
+    )
+  );
+}
+
+// ============================================================================
+// Selector-level tweaks — things the token API doesn't expose.
+// ============================================================================
+
+// Hairline border on the dropdown panel — `mat.select-overrides()` doesn't expose a border
+// token. Same approach as the autocomplete + menu + datepicker overlays.
+.mat-mdc-select-panel {
+  border: 1px solid var(--color-border-soft);
+
+  // Tighter option sizing — Material defaults to 48 px to honour touch targets ; 36 px matches
+  // the autocomplete option density and the lib's icon-button rhythm. Scoped to the select
+  // panel so the rule travels with this file rather than living silently in `autocomplete.scss`.
+  .mat-mdc-option {
+    min-height: 36px;
+  }
+}

@@ -12,7 +12,7 @@ import { moduleMetadata, type Meta, type StoryObj } from '@storybook/angular';
 // `--mat-sidenav-container-shape`) set on `.ui-sidenav` so the rules read our values.
 
 const meta: Meta = {
-  title: 'Shell/Sidenav',
+  title: 'Components/Sidenav',
   decorators: [
     moduleMetadata({
       imports: [MatSidenavModule, MatToolbarModule, MatListModule, MatIconModule],
@@ -37,14 +37,14 @@ type Story = StoryObj;
 // `data-theme` cascades CSS custom properties through children, so the light variant is just
 // the same template scoped under `[data-theme='light']`.
 const shellTemplate = (themeAttr: string) => `
-  <div ${themeAttr} style="height:520px; display:flex; flex-direction:column; background:var(--color-bg);">
-    <mat-toolbar style="height:64px; flex-shrink:0;">
-      <span style="font-family:var(--font-family); font-weight:600; font-size:0.95rem;">PortfolioAI</span>
-      <span style="flex:1;"></span>
+  <div ${themeAttr}>
+    <mat-toolbar>
+      <span>PortfolioAI</span>
+      <span></span>
       <button mat-icon-button aria-label="theme"><mat-icon>light_mode</mat-icon></button>
       <button mat-icon-button aria-label="settings"><mat-icon>settings</mat-icon></button>
     </mat-toolbar>
-    <mat-sidenav-container class="ui-shell" style="flex:1; height:auto;">
+    <mat-sidenav-container class="ui-shell">
       <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
         <mat-nav-list class="sidenav-list">
           <a mat-list-item class="sidenav-active">
@@ -62,11 +62,11 @@ const shellTemplate = (themeAttr: string) => `
         </mat-nav-list>
       </mat-sidenav>
       <mat-sidenav-content>
-        <main style="padding:1.5rem 2rem; font-family:var(--font-family); color:var(--color-text);">
-          <h2 style="margin:0 0 0.4rem; font-size:1.25rem;">Trading journal</h2>
-          <p style="margin:0; color:var(--color-text-muted); font-size:0.875rem;">
+        <main>
+          <h2>Trading journal</h2>
+          <p>
             Content panel — the right corners of the sidenav are square because we set
-            <code style="font-family:var(--font-mono); font-size:0.8rem;">--mat-sidenav-container-shape: 0</code>.
+            <code>--mat-sidenav-container-shape: 0</code>.
           </p>
         </main>
       </mat-sidenav-content>
@@ -74,64 +74,6 @@ const shellTemplate = (themeAttr: string) => `
   </div>
 `;
 
-export const Dark: Story = {
+export const Default: Story = {
   render: () => ({ template: shellTemplate('') }),
-};
-
-export const Light: Story = {
-  render: () => ({ template: shellTemplate(`data-theme="light"`) }),
-};
-
-export const BothThemes: Story = {
-  name: 'Dark vs Light',
-  render: () => ({
-    template: `
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px; background:#000;">
-        ${shellTemplate('')}
-        ${shellTemplate(`data-theme="light"`)}
-      </div>
-    `,
-  }),
-};
-
-// Sidenav only (no toolbar, no content panel) — useful to focus on the inner nav-list active
-// pill, item spacing, and the right border.
-export const SidenavOnly: Story = {
-  name: 'Sidenav only',
-  render: () => ({
-    template: `
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px; background:#000; height:480px;">
-        <mat-sidenav-container class="ui-shell" style="height:480px; background:var(--color-bg);">
-          <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
-            <mat-nav-list class="sidenav-list">
-              <a mat-list-item class="sidenav-active">
-                <mat-icon matListItemIcon>book</mat-icon>
-                <span matListItemTitle>Journal</span>
-              </a>
-              <a mat-list-item>
-                <mat-icon matListItemIcon>insights</mat-icon>
-                <span matListItemTitle>Stats</span>
-              </a>
-            </mat-nav-list>
-          </mat-sidenav>
-          <mat-sidenav-content></mat-sidenav-content>
-        </mat-sidenav-container>
-        <mat-sidenav-container data-theme="light" class="ui-shell" style="height:480px; background:var(--color-bg);">
-          <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
-            <mat-nav-list class="sidenav-list">
-              <a mat-list-item class="sidenav-active">
-                <mat-icon matListItemIcon>book</mat-icon>
-                <span matListItemTitle>Journal</span>
-              </a>
-              <a mat-list-item>
-                <mat-icon matListItemIcon>insights</mat-icon>
-                <span matListItemTitle>Stats</span>
-              </a>
-            </mat-nav-list>
-          </mat-sidenav>
-          <mat-sidenav-content></mat-sidenav-content>
-        </mat-sidenav-container>
-      </div>
-    `,
-  }),
 };

@@ -1,13 +1,13 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   NarrativeObservabilityRepository,
   TickerObservationIndex,
 } from '../../../core/api/analysis/narrative-observability.repository';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 /**
  * `/observability` — Phase 3 #1 PR3. Landing page that lists every ticker with at least one
@@ -28,8 +28,8 @@ import {
     DatePipe,
     DecimalPipe,
     RouterLink,
-    MatProgressSpinnerModule,
-    MatIconModule,
+    StbProgressSpinnerModule,
+    StbIconModule,
     TranslatePipe,
   ],
   templateUrl: './observability-index.html',

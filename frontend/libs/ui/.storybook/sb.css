@@ -1,4 +1,23 @@
 /* Storybook-only overrides applied on top of the lib's main.scss. */
+
+/*
+ * The preview iframe's html/body inherit our lib's `--color-bg` via the base resets in
+ * `_base.scss`, but Storybook layers a couple of its own roots on top (`#storybook-root` and
+ * `.sb-show-main`) that need an explicit background-color so they follow the theme toggle.
+ * Without this, the canvas stays whatever Storybook's preset is — usually a hard white — and
+ * the dark / light switch in the toolbar appears to do nothing.
+ */
+html,
+body,
+#storybook-root,
+.sb-show-main {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;

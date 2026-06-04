@@ -107,14 +107,12 @@ describe('HttpJournalRepository', () => {
       expect(entries[0].tradeDate.getMonth()).toBe(5);
       expect(entries[0].tradeDate.getDate()).toBe(4);
     });
-    http
-      .expectOne('/api/journal/trades')
-      .flush([
-        {
-          ...wireFixture(),
-          tradeDate: '2026-06-04',
-        },
-      ]);
+    http.expectOne('/api/journal/trades').flush([
+      {
+        ...wireFixture(),
+        tradeDate: '2026-06-04',
+      },
+    ]);
   });
 
   it('parses createdAt / updatedAt as Date instances', () => {

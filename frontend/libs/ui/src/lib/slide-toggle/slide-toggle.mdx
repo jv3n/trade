@@ -1,0 +1,51 @@
+import { Canvas, Controls, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './slide-toggle.stories';
+
+<Meta of={Stories} />
+
+# Slide-toggle
+
+Boolean toggle — used for **binary settings** that take effect immediately (feature flags, "compact mode", auto-refresh on/off, notification preferences). For mutually exclusive choices reach for `StbButtonToggleModule` (segmented control) ; for in-form checked state reach for `StbCheckboxModule`.
+
+## Playground
+
+<Canvas of={Stories.Default} />
+
+<Controls of={Stories.Default} />
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbSlideToggleModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbSlideToggleModule],
+  template: \`
+    <mat-slide-toggle [(ngModel)]="autoRefresh">Auto-refresh</mat-slide-toggle>
+  \`,
+})`}
+/>
+
+## Slide-toggle vs. checkbox vs. button-toggle
+
+<Markdown>
+{`
+| Component             | Best for                                                            |
+| --------------------- | ------------------------------------------------------------------- |
+| **Slide-toggle**      | Binary setting that takes effect **immediately** (no Save button).   |
+| **Checkbox**          | Form-bound boolean that's committed when the user submits the form.  |
+| **Button-toggle**     | Mutually exclusive choices (single-select) or multi-select tag-like.  |
+`}
+</Markdown>
+
+## Visual contract
+
+The toggle's full **interaction matrix** is wired through the M3 token system :
+
+- **On (selected)** — track = `--color-accent`, handle = `--color-on-accent`. Hover / pressed shift the track to `--color-accent-strong` for affordance.
+- **Off (unselected)** — track = `--color-surface-2`, handle = `--color-text-muted`. Hover / focus lift the handle to `--color-text` to signal interactivity.
+- **State layers** — overlay tint follows the same axis : accent on selected, text on unselected (8 % hover, 12 % focus, 16 % pressed).
+- **Disabled** — M3 opacity-driven defaults (12 % track, 38 % handle / icon).
+
+See `libs/ui/src/lib/slide-toggle/slide-toggle.scss` for the full token map.

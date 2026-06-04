@@ -1,9 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { MatButtonToggleChange, MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatIconModule } from '@angular/material/icon';
+import { MatButtonToggleChange } from '@angular/material/button-toggle';
+
 import { TranslatePipe } from '@ngx-translate/core';
 import { Language, LanguageService } from '../../../core/app-state/language.service';
 import { Theme, ThemeService } from '../../../core/app-state/theme.service';
+import { StbButtonToggleModule, StbIconModule } from '@portfolioai/ui';
 
 /**
  * Settings → Preferences (USER + ADMIN accessible). Hosts the two app-wide knobs that used to
@@ -13,7 +14,7 @@ import { Theme, ThemeService } from '../../../core/app-state/theme.service';
  */
 @Component({
   selector: 'app-preferences',
-  imports: [MatButtonToggleModule, MatIconModule, TranslatePipe],
+  imports: [StbButtonToggleModule, StbIconModule, TranslatePipe],
   templateUrl: './preferences.html',
   styleUrl: './preferences.scss',
 })

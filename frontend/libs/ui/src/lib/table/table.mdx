@@ -1,0 +1,69 @@
+import { Canvas, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './table.stories';
+
+<Meta of={Stories} />
+
+# Table
+
+Material's `<table mat-table>` restyled via the lib (`libs/ui/src/lib/table/table.scss`), shipped with two directives carried by `StbTableModule` :
+
+- **`[stbTable]`** — applied to the `<div>` that hosts the table. Adds the surface background, border, radius, and horizontal overflow scroll for wide column sets.
+- **`[stbCol]`** — applied to **both** the `<th>` and the `<td>` of a column. Variants : `numeric` (right-aligned, tabular-nums), `mono` (monospace, used for tickers / IDs), `actions` (fixed-width right-aligned slot for icon-button rows).
+
+Sortable headers come from `StbSortHeaderModule` (Material's `matSort` + `mat-sort-header`). It's a standalone module — no dedicated story since it has no design-system surface of its own, but the demo below exercises it end-to-end.
+
+## How to use
+
+<Source
+  language="html"
+  code={`<div stbTable>
+  <table mat-table [dataSource]="rows" matSort (matSortChange)="onSort($event)">
+    <ng-container matColumnDef="ticker">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="ticker">Ticker</th>
+      <td mat-cell *matCellDef="let r" stbCol="mono">{{ r.ticker }}</td>
+    </ng-container>
+    <ng-container matColumnDef="pnl">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header="pnl" stbCol="numeric">PnL</th>
+      <td mat-cell *matCellDef="let r" stbCol="numeric">{{ r.pnl | number:'1.2-2' }}</td>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
+      <td mat-cell *matCellDef="let r" stbCol="actions">
+        <button mat-icon-button (click)="edit(r)"><mat-icon>edit</mat-icon></button>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="cols"></tr>
+    <tr mat-row *matRowDef="let r; columns: cols"></tr>
+  </table>
+</div>`}
+/>
+
+Import `StbTableModule` + `StbSortHeaderModule` together in the consumer component :
+
+<Source
+  language="ts"
+  code={`@Component({
+  imports: [StbTableModule, StbSortHeaderModule],
+  template: \`...\`,
+})`}
+/>
+
+## Column variants
+
+<Markdown>
+{`
+| Variant            | Effect                                    | Use it for                                |
+| ------------------ | ----------------------------------------- | ----------------------------------------- |
+| \`stbCol="numeric"\` | Right-aligned, \`font-variant: tabular-nums\` | Prices, sizes, PnL — anything that benefits from digit alignment. |
+| \`stbCol="mono"\`    | Monospace 0.85 rem, weight 600            | Tickers, IDs, hashes, anything that reads as a code.               |
+| \`stbCol="actions"\` | Fixed 88 px width, right-aligned          | Trailing column hosting icon-button row actions.                   |
+`}
+</Markdown>
+
+**Caveat** — `mat-table` does not propagate column-level classes to its cells, so `[stbCol]` must be set on **both** the `<th mat-header-cell>` *and* the `<td mat-cell>` separately. Skipping the header drops the alignment on the column heading.
+
+## Default
+
+Click any column header to toggle asc / desc / unsorted.
+
+<Canvas of={Stories.Default} />

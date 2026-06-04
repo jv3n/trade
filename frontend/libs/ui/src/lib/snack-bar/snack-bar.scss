@@ -1,0 +1,83 @@
+// Material snack-bar design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/snack-bar/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/snack-bar/_m3-snack-bar.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.snack-bar-overrides()` — with 9 tokens
+// split across `base / color / typography`. Density has no tokens.
+//
+// The snack-bar is **deliberately high-contrast** — same intent as the tooltip. M3 ships
+// `inverse-surface` for the container (light in dark mode, dark in light mode) +
+// `inverse-on-surface` for text + `inverse-primary` for the action button label, so the
+// notification pops against any page surface. We mirror that with our own tokens
+// (`--color-text` / `--color-bg` / `--color-accent`) so the dark / light swap travels
+// through the lib's palette.
+//
+// **Why `:root`** : the snack-bar container lives in the CDK overlay, mounted on `<body>`
+// outside the consumer's view-encapsulated tree. The overrides have to be global to reach it.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.snack-bar-overrides(
+    (
+      // ============================================================================
+      // Base
+      // ============================================================================
+      container-shape: var(--radius),
+
+      // ============================================================================
+      // Color
+      // High-contrast inverted pair — same recipe as the tooltip : container is whatever
+      // `--color-text` resolves to in the current theme (light in dark mode, dark in light
+      // mode), text is the inverse via `--color-bg`. The action button label uses our accent
+      // so the call-to-action stands out against the inverted surface.
+      // ============================================================================
+      container-color: var(--color-text),
+      supporting-text-color: var(--color-bg),
+      button-color: var(--color-accent),
+
+      // ============================================================================
+      // Typography — supporting text
+      // M3 default = `body-medium` (14 px). Slightly tightened to align with the form-field
+      // family.
+      // ============================================================================
+      supporting-text-size: 0.875rem,
+      // supporting-text-font: inherit,                // System font from `mat.core()` fine.
+      // supporting-text-weight: ...,
+      // supporting-text-line-height: ...,
+    )
+  );
+}
+
+// ============================================================================
+// Semantic variants — applied via the `panelClass` option of `MatSnackBar.open(...)`.
+//
+// Usage :
+//   this.snackBar.open('Connection failed.', 'Retry', {
+//     duration: 5000,
+//     panelClass: 'stb-snack-bar--error',
+//   });
+//
+// Both variants override the same three `--mat-snack-bar-*` CSS vars as the base recipe —
+// container colour, supporting text colour, and action button label colour — so the
+// notification stays on its standard surface contract but swaps to the semantic palette.
+// ============================================================================
+
+// `error` — red surface for failed actions, lost connections, validation rejections that the
+// user can retry. The action button reads `--color-on-danger` (white) for sufficient contrast
+// against the red container.
+.stb-snack-bar--error {
+  --mat-snack-bar-container-color: var(--color-danger);
+  --mat-snack-bar-supporting-text-color: var(--color-on-danger);
+  --mat-snack-bar-button-color: var(--color-on-danger);
+}
+
+// `success` — green surface for confirmation of saved / persisted state (trade created, filter
+// applied, settings saved). Same colour rationale as `--error`.
+.stb-snack-bar--success {
+  --mat-snack-bar-container-color: var(--color-success);
+  --mat-snack-bar-supporting-text-color: var(--color-on-success);
+  --mat-snack-bar-button-color: var(--color-on-success);
+}

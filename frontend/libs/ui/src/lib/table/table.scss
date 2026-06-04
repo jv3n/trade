@@ -1,0 +1,143 @@
+// Material table design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/table/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/table/_m3-table.scss > get-tokens()
+//
+// Material 22 exposes a single override mixin — `mat.table-overrides()` — with ~24 tokens.
+// On top of that, the lib ships two directives (`StbTable` + `StbCol`, see
+// `table.directives.ts`) whose CSS lives in this file as selector-level rules :
+//
+//   • `.stb-table` (applied by the `[stbTable]` directive on a wrapping `<div>`) — the visual
+//     container : surface bg, border, radius, horizontal overflow scroll for wide tables.
+//   • `.stb-col--{numeric|mono|actions}` (applied by the `[stbCol]` directive on `<th>` /
+//     `<td>`) — column-level cell variants that don't deserve a full Material density tweak.
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.table-overrides(
+    (
+      // ============================================================================
+      // Base
+      // ============================================================================
+      // row-item-outline-width: 1px,            // M3 default — 1 px hairline between rows.
+
+      // ============================================================================
+      // Color
+      // ============================================================================
+      // The table's own background is set to `transparent` so the `[stbTable]` wrapper below
+      // controls the surface (with its border + radius). Letting Material paint a surface
+      // here would double-up against the wrapper's `--color-surface`.
+      background-color: transparent,
+      header-headline-color: var(--color-text),
+      row-item-label-text-color: var(--color-text),
+      row-item-outline-color: var(--color-border-soft),
+
+      // ============================================================================
+      // Typography — header (`<th mat-header-cell>`)
+      // M3 default = `title-small` ; we ship a denser 0.78 rem + weight 600 so the header
+      // reads as label-style metadata rather than a full title.
+      // ============================================================================
+      header-headline-size: 0.78rem,
+      header-headline-weight: 600,
+      // header-headline-font: inherit,          // System font from `mat.core()` is fine.
+      // header-headline-line-height: ...,       // Driven by M3 title-small by default.
+      // header-headline-tracking: ...,          // Same.
+
+      // ============================================================================
+      // Typography — row (`<td mat-cell>`)
+      // M3 default = `body-medium` ; we tighten to 0.85 rem to match the rest of the dense
+      // form / list family.
+      // ============================================================================
+      row-item-label-text-size: 0.85rem,
+      // row-item-label-text-font: inherit,
+      // row-item-label-text-weight: ...,
+      // row-item-label-text-line-height: ...,
+      // row-item-label-text-tracking: ...,
+
+      // ============================================================================
+      // Typography — footer (`<td mat-footer-cell>` ; rarely used in PortfolioAI)
+      // M3 default = `body-medium` ; align with `row-item` if a footer ever lands.
+      // ============================================================================
+      // footer-supporting-text-font: inherit,
+      // footer-supporting-text-size: ...,
+      // footer-supporting-text-weight: ...,
+      // footer-supporting-text-line-height: ...,
+      // footer-supporting-text-tracking: ...,
+
+      // ============================================================================
+      // Density
+      // M3 ships a coordinated density scale (-4 → 0) that tunes the header / row / footer
+      // heights as a set. Default (56 / 52 / 52 px) matches the lib's row-style surfaces ;
+      // switch to `mat.table-density(-1)` (= 52 / 48 / 48 px) at the theme entrypoint if a
+      // denser table is needed globally.
+      // ============================================================================
+      // header-container-height: 56px,
+      // row-item-container-height: 52px,
+      // footer-container-height: 52px,
+    )
+  );
+}
+
+// ============================================================================
+// `[stbTable]` wrapper — applied to the `<div>` hosting a `<table mat-table>`.
+// The wrapper carries the surface chrome (background + border + radius + horizontal scroll)
+// because `<table>` itself doesn't take overflow rules cleanly across browsers.
+// ============================================================================
+.stb-table {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+
+  // Material's emitted `<table>` doesn't take a class binding from us, so target it through
+  // the wrapper. `background: transparent` lets the surface bleed through to the rounded
+  // corners of `.stb-table`.
+  > .mat-mdc-table {
+    width: 100%;
+    background: transparent;
+  }
+}
+
+// ============================================================================
+// `[stbCol]` cell variants — applied to BOTH the `<th mat-header-cell>` and the
+// `<td mat-cell>` since mat-table doesn't propagate column-level classes.
+// ============================================================================
+
+// Right-aligned, tabular-nums — for prices, sizes, PnL columns. Digit alignment matters as
+// soon as the column has more than one numeric row.
+.stb-col--numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+// Monospace label — for tickers, IDs, hashes. Slightly denser size to keep the row baseline.
+.stb-col--mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+// Fixed-width right-aligned slot for trailing icon-button rows (edit / delete).
+.stb-col--actions {
+  width: 96px;
+  text-align: right;
+  // `!important` because Material's `.mat-mdc-cell` ships its own padding override that
+  // would otherwise win the cascade for a single-pixel difference.
+  padding-right: 0.5rem !important;
+}
+
+// Cell side only — switch the `<td>` to flex so icon-button siblings sit side-by-side with a
+// tight gap, regardless of how narrow the column gets. The `<th>` keeps table-cell semantics
+// so the header label (if any) stays aligned with the rest of the row of headers.
+td.stb-col--actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.25rem;
+}

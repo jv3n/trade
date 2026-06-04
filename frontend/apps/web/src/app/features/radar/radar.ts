@@ -1,10 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTableModule } from '@angular/material/table';
+
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, of } from 'rxjs';
@@ -18,6 +15,12 @@ import {
 } from '../../core/api/screener/screener.repository';
 import { ScreenerFilterRepository } from '../../core/local/screener-filter/screener-filter.repository';
 import { RadarFilterPanel } from './radar-filter-panel';
+import {
+  StbButtonModule,
+  StbIconModule,
+  StbProgressSpinnerModule,
+  StbTableModule,
+} from '@portfolioai/ui';
 
 /**
  * Market radar page after Phase 6 ticket (9) — snapshot persistance + in-process filtering.
@@ -49,10 +52,10 @@ import { RadarFilterPanel } from './radar-filter-panel';
   imports: [
     CommonModule,
     RouterLink,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatTableModule,
+    StbButtonModule,
+    StbIconModule,
+    StbProgressSpinnerModule,
+    StbTableModule,
     TranslatePipe,
     RadarFilterPanel,
   ],

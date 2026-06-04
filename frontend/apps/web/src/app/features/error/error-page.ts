@@ -1,10 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/app-state/auth.service';
+import { StbButtonModule, StbIconModule } from '@portfolioai/ui';
 
 /**
  * `/error` — global "something went wrong" page reached by the auth interceptor on a 5xx from
@@ -23,7 +23,7 @@ import { AuthService } from '../../core/app-state/auth.service';
  */
 @Component({
   selector: 'app-error-page',
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [StbButtonModule, StbIconModule, TranslatePipe],
   templateUrl: './error-page.html',
   styleUrl: './error-page.scss',
 })

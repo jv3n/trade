@@ -1,0 +1,181 @@
+// Material slide-toggle design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/slide-toggle/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/slide-toggle/_m3-slide-toggle.scss > get-tokens()
+//
+// `mat.slide-toggle-overrides()` is one of the largest M3 surfaces in the lib — ~75 tokens
+// because every visual sub-part (track, handle, icon, state-layer, label) has its **full
+// interaction matrix** :
+//   • selected (on)   × idle / hover / focus / pressed / disabled
+//   • unselected (off) × idle / hover / focus / pressed / disabled
+//
+// We list every token. Tokens we actually override carry a value ; tokens we leave to
+// Material's M3 default are kept as commented entries so the next person sees at a glance
+// what's still on the table without re-reading the Material source.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.slide-toggle-overrides(
+    (
+      // ============================================================================
+      // Base — dimensions / shape / transitions
+      // ============================================================================
+      // M3 ships a carefully-calibrated geometry (52 × 32 px track, 24 px selected handle,
+      // 16 px unselected handle, 40 px state-layer, 75 ms opacity transition). Tweaking one
+      // without the others breaks the centring. Leave at defaults.
+      //
+      // Shape
+      // handle-shape: corner-full,
+      // track-shape: corner-full,
+      //
+      // Track dimensions
+      // track-width: 52px,
+      // track-height: 32px,
+      // track-outline-width: 2px,
+      // selected-track-outline-width: 2px,
+      // disabled-unselected-track-outline-width: 2px,
+      //
+      // Handle dimensions
+      // selected-handle-size: 24px,
+      // unselected-handle-size: 16px,
+      // with-icon-handle-size: 24px,
+      // pressed-handle-size: 28px,
+      // handle-width: null,
+      // handle-height: null,
+      // selected-icon-size: 16px,
+      // unselected-icon-size: 16px,
+      //
+      // Handle horizontal margins (5 variants — keeps the handle centred for each state)
+      // selected-handle-horizontal-margin: 0 24px,
+      // unselected-handle-horizontal-margin: 0 8px,
+      // selected-pressed-handle-horizontal-margin: 0 22px,
+      // unselected-pressed-handle-horizontal-margin: 0 2px,
+      // selected-with-icon-handle-horizontal-margin: 0 24px,
+      // unselected-with-icon-handle-horizontal-margin: 0 4px,
+      //
+      // State layer + touch target
+      // state-layer-size: 40px,
+      // touch-target-size: 48px,
+      //
+      // Track outline (the visible ring around the off-state track)
+      // selected-track-outline-color: transparent,    // No outline when "on" — track is filled.
+      //
+      // Opacities (M3 ships disabled at 12-38 %, OK as-is)
+      // hidden-track-opacity: 0,
+      // visible-track-opacity: 1,
+      // disabled-selected-handle-opacity: 1,
+      // disabled-selected-icon-opacity: 0.38,
+      // disabled-track-opacity: 0.12,
+      // disabled-unselected-handle-opacity: 0.38,
+      // disabled-unselected-icon-opacity: 0.38,
+      //
+      // Transitions
+      // hidden-track-transition: opacity 75ms,
+      // visible-track-transition: opacity 75ms,
+
+      // ============================================================================
+      // Color — label
+      // ============================================================================
+      label-text-color: var(--color-text),
+      // disabled-label-text-color: ...,             // M3 default — on-surface @ opacity. Fine.
+
+      // ============================================================================
+      // Color — selected (on) — track + handle + icon
+      // The "on" state hits the accent palette. Track = accent ; track goes one shade darker
+      // (`accent-strong`) on hover / pressed for affordance. Handle stays `on-accent` (white)
+      // for the contrast against the filled accent track.
+      // ============================================================================
+      // ── Track ──
+      selected-track-color: var(--color-accent),
+      selected-focus-track-color: var(--color-accent),
+      selected-hover-track-color: var(--color-accent-strong),
+      selected-pressed-track-color: var(--color-accent-strong),
+      //
+      // ── Handle ──
+      selected-handle-color: var(--color-on-accent),
+      selected-focus-handle-color: var(--color-on-accent),
+      selected-hover-handle-color: var(--color-on-accent),
+      selected-pressed-handle-color: var(--color-on-accent),
+      //
+      // ── Icon (when `[hideIcon]="false"` — the checkmark inside the knob) ──
+      selected-icon-color: var(--color-accent),
+
+      // ============================================================================
+      // Color — unselected (off) — track + handle + icon
+      // The "off" state reads as a neutral surface : track on `--color-surface-2` so it sits
+      // a step above the page bg, handle in muted text colour so the knob is visible but
+      // low-emphasis. Hover / focus / pressed lift the handle to full text colour for
+      // affordance.
+      // ============================================================================
+      // ── Track ──
+      track-outline-color: var(--color-border),
+      unselected-track-color: var(--color-surface-2),
+      unselected-focus-track-color: var(--color-surface-2),
+      unselected-hover-track-color: var(--color-surface-3),
+      unselected-pressed-track-color: var(--color-surface-3),
+      //
+      // ── Handle ──
+      unselected-handle-color: var(--color-text-muted),
+      unselected-focus-handle-color: var(--color-text),
+      unselected-hover-handle-color: var(--color-text),
+      unselected-pressed-handle-color: var(--color-text),
+      //
+      // ── Icon ──
+      unselected-icon-color: var(--color-text-muted),
+
+      // ============================================================================
+      // Color — state layers (overlay tint around the handle on hover / focus / pressed)
+      // Selected hits accent ; unselected hits neutral text. Opacities stay at M3 defaults
+      // (8 % hover, 12 % focus, 16 % pressed).
+      // ============================================================================
+      selected-hover-state-layer-color: var(--color-accent),
+      selected-focus-state-layer-color: var(--color-accent),
+      selected-pressed-state-layer-color: var(--color-accent),
+      unselected-hover-state-layer-color: var(--color-text),
+      unselected-focus-state-layer-color: var(--color-text),
+      unselected-pressed-state-layer-color: var(--color-text),
+      // selected-hover-state-layer-opacity: 0.08,
+      // selected-focus-state-layer-opacity: 0.12,
+      // selected-pressed-state-layer-opacity: 0.16,
+      // unselected-hover-state-layer-opacity: 0.08,
+      // unselected-focus-state-layer-opacity: 0.12,
+      // unselected-pressed-state-layer-opacity: 0.16,
+
+      // ============================================================================
+      // Color — disabled (lean on M3 defaults — opacity-driven tinting)
+      // ============================================================================
+      // disabled-selected-handle-color: ...,
+      // disabled-selected-icon-color: ...,
+      // disabled-selected-track-color: ...,
+      // disabled-unselected-handle-color: ...,
+      // disabled-unselected-icon-color: ...,
+      // disabled-unselected-track-color: ...,
+      // disabled-unselected-track-outline-color: ...,
+
+      // ============================================================================
+      // Color — handle elevation (null in M3, kept here for visibility)
+      // ============================================================================
+      // handle-surface-color: null,
+      // handle-elevation-shadow: null,
+      // disabled-handle-elevation-shadow: null,
+
+      // ============================================================================
+      // Typography — label
+      // ============================================================================
+      label-text-size: 0.875rem,
+      label-text-weight: 500,
+      // label-text-font: inherit,                   // System font from `mat.core()` fine.
+      // label-text-line-height: ...,
+      // label-text-tracking: ...,
+
+      // ============================================================================
+      // Density
+      // M3 ships a 4-step density scale that toggles `touch-target-display` only ; the visual
+      // sizing of the toggle stays the same. Keep at default.
+      // ============================================================================
+      // touch-target-display: block,
+    )
+  );
+}

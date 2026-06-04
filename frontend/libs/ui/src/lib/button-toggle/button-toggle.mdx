@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './button-toggle.stories';
+
+<Meta of={Stories} />
+
+# Button toggle
+
+Segmented control — exclusive single-selection by default, multi-select via `multiple`.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbButtonToggleModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbButtonToggleModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+

@@ -1,12 +1,12 @@
 import { Component, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   PortfolioRepository,
   CsvImportPreview,
 } from '../../../core/api/portfolio/portfolio.repository';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 type ImportStep =
   | 'idle'
@@ -20,7 +20,7 @@ type ImportStep =
 
 @Component({
   selector: 'app-csv-import',
-  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, TranslatePipe],
+  imports: [CommonModule, StbIconModule, StbProgressSpinnerModule, TranslatePipe],
   templateUrl: './csv-import.html',
   styleUrl: './csv-import.scss',
 })

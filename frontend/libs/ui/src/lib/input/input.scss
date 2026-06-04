@@ -1,0 +1,25 @@
+// Material input — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/input/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/input/_input-theme.scss > _define-overrides()
+//
+// `mat.input-overrides()` exists for API symmetry with the rest of the lib, but its surface
+// is **intentionally empty** in Material 22 / M3. `MatInput` is a directive that decorates a
+// native `<input matInput>` ; every visual concern (text colour, placeholder, caret, outline,
+// active indicator, label colour, error states, disabled state, density…) lives on the
+// surrounding `<mat-form-field>` and is exposed through `mat.form-field-overrides()`.
+//
+// See `libs/ui/src/lib/form-field/form-field.scss` for the actual style surface — that file
+// is the right edit target for anything you'd intuitively call an "input style".
+//
+// This file is the documented no-op : it tells future contributors that we audited
+// `mat.input-overrides()`, found it empty, and intentionally landed on no overrides.
+
+@use '@angular/material' as mat;
+
+:root {
+  // The mixin emits nothing today — kept here so that any future Material release adding
+  // input-level tokens (e.g. `input-padding-inline-end`) gets picked up at the right layer.
+  @include mat.input-overrides(());
+}

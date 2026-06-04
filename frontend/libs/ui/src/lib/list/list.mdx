@@ -1,0 +1,25 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './list.stories';
+
+<Meta of={Stories} />
+
+# List
+
+Vertical list with leading icon + title slots. `<mat-nav-list>` for clickable variants (sidenav).
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbListModule } from '@portfolioai/ui';
+
+@Component({
+  imports: [StbListModule],
+  template: \`...\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+
