@@ -30,24 +30,22 @@
       // ============================================================================
       container-shape: 0,
       // container-elevation-shadow: none,             // M3 default — none. The drawer rests
-                                                        //  against the viewport edge ; no
-                                                        //  panel-level shadow needed.
+      //  against the viewport edge ; no
+      //  panel-level shadow needed.
       // container-width: 360px,                       // M3 default — overridden per-instance
-                                                        //  (e.g. the journal filter drawer
-                                                        //   bumps this to 380 px).
+      //  (e.g. the journal filter drawer
+      //   bumps this to 380 px).
       //
       // Visible 1 px divider between drawer and main content. M3 ships this as transparent,
       // but losing the boundary makes the drawer bleed into the page in dark-dimmed palettes.
       // `--color-border-strong` is the lib's value for "must-be-seen border" (a tier above
       // the regular `--color-border` used by form-field outlines).
       container-divider-color: var(--color-border-strong),
-
       // ============================================================================
       // Color — drawer surface
       // ============================================================================
       container-background-color: var(--color-surface),
       container-text-color: var(--color-text),
-
       // ============================================================================
       // Color — main content surface (`<mat-sidenav-content>`)
       // The content area uses the **page background** token, not the drawer's surface, so
@@ -55,13 +53,12 @@
       // ============================================================================
       content-background-color: var(--color-bg),
       content-text-color: var(--color-text),
-
       // ============================================================================
       // Color — scrim (modal backdrop for `mode="over"`)
       // M3 ships `neutral-variant20 @ 40 %` which already reads as a balanced dimming layer
       // in both dark and light themes. Keep at default.
       // ============================================================================
-      // scrim-color: ...,
+       // scrim-color: ...,
     )
   );
 }

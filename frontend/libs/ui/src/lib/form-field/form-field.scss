@@ -32,7 +32,6 @@
       // outlined-focus-outline-width: 2px,            // M3 default — 2 px on focus.
       // filled-active-indicator-height: 1px,
       // filled-focus-active-indicator-height: 2px,
-
       // ============================================================================
       // Color — shared (icons, error text, select arrow, state layer, caret)
       // ============================================================================
@@ -43,7 +42,7 @@
       state-layer-color: var(--color-accent),
       // hover-state-layer-opacity: 0.08,              // M3 default — accent at 8 %.
       // focus-state-layer-opacity: 0,                 // M3 default — none (focus uses outline/
-                                                        //  indicator instead of bg tint).
+      //  indicator instead of bg tint).
       //
       // Error
       error-text-color: var(--color-danger),
@@ -56,7 +55,6 @@
       // disabled-leading-icon-color: ...,
       // disabled-trailing-icon-color: ...,
       // disabled-select-arrow-color: ...,
-
       // ============================================================================
       // Color — outlined (primary appearance)
       // ============================================================================
@@ -84,7 +82,6 @@
       // outlined-disabled-input-text-color: ...,
       outlined-caret-color: var(--color-accent),
       outlined-error-caret-color: var(--color-danger),
-
       // ============================================================================
       // Color — filled (secondary appearance, kept consistent for future use)
       // ============================================================================
@@ -116,13 +113,11 @@
       // filled-disabled-input-text-color: ...,
       filled-caret-color: var(--color-accent),
       filled-error-caret-color: var(--color-danger),
-
       // ============================================================================
       // Color — `<select>` options (native dropdown — rare ; M3 defaults are fine)
       // ============================================================================
       // select-option-text-color: ...,
       // select-disabled-option-text-color: ...,
-
       // ============================================================================
       // Typography — container (input text + value), subscript (hint / error / counter)
       // ============================================================================
@@ -153,7 +148,6 @@
       // filled-label-text-size: ...,
       // filled-label-text-tracking: ...,
       // filled-label-text-weight: ...,
-
       // ============================================================================
       // Density
       // ============================================================================
@@ -170,7 +164,7 @@
       // container-vertical-padding: 16px,
       // filled-label-display: block,
       // filled-with-label-container-padding-top: 24px,
-      // filled-with-label-container-padding-bottom: 8px,
+       // filled-with-label-container-padding-bottom: 8px,
     )
   );
 }

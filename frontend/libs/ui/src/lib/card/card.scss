@@ -28,7 +28,6 @@
       // Color
       elevated-container-color: var(--color-surface),
       elevated-container-elevation: var(--shadow),
-
       // ──────────────────────── Filled (appearance="filled") ───────────────
       // Denser surface, no shadow — reads as embedded into the page. Used for inline groupings
       // (a card inside a card, or a card on a same-toned background).
@@ -38,7 +37,6 @@
       // Color
       filled-container-color: var(--color-surface-2),
       // filled-container-elevation: none,   // M3 default — level0 (no shadow).
-
       // ──────────────────────── Outlined (appearance="outlined") ───────────
       // Transparent fill + hairline border — reads as bounded but not raised. Used for
       // selectable / clickable surfaces, often paired with `:hover` border tweaks.
@@ -50,7 +48,6 @@
       outlined-container-color: var(--color-surface),
       outlined-outline-color: var(--color-border),
       // outlined-container-elevation: none, // M3 default — level0 (no shadow).
-
       // ──────────────────────── Shared — header text ───────────────────────
       // The card header's `<mat-card-title>` and `<mat-card-subtitle>` share one token set
       // across all three variants. Title inherits the page body font ; subtitle reads as
@@ -69,7 +66,7 @@
       subtitle-text-weight: 500,
       // subtitle-text-font: inherit,
       // subtitle-text-line-height: ...,
-      // subtitle-text-tracking: ...,
+       // subtitle-text-tracking: ...,
     )
   );
 }

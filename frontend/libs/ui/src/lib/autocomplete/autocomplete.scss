@@ -31,9 +31,8 @@
       // alignment with the rest of the surfaces.
       container-shape: var(--radius),
       container-elevation-shadow: var(--shadow),
-
       // ── Color ─────────────────────────────────────────────────────────────
-      background-color: var(--color-surface),
+      background-color: var(--color-surface)
     )
   );
 
@@ -51,13 +50,12 @@
       hover-state-layer-color: var(--color-accent-soft),
       focus-state-layer-color: var(--color-accent-soft),
       selected-state-layer-color: var(--color-accent-soft),
-
       // ── Typography ────────────────────────────────────────────────────────
       label-text-size: 0.875rem,
       label-text-line-height: 1.4,
       // label-text-weight: 500,        // M3 default — body-large weight is fine.
       // label-text-font: inherit,      // System font from `mat.core()` is fine.
-      // label-text-tracking: ...,      // Driven by M3 label-large by default.
+       // label-text-tracking: ...,      // Driven by M3 label-large by default.
     )
   );
 }

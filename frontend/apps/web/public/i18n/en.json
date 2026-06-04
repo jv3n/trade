@@ -24,7 +24,8 @@
     "radar": "Radar",
     "observability": "Observability",
     "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar"
+    "expand": "Expand sidebar",
+    "importExport": "Import / Export"
   },
   "journal": {
     "title": "Trading journal",
@@ -962,6 +963,39 @@
       "gapPctMin": "Min gap",
       "volumeRatioMin": "Min volume ×",
       "reset": "Reset"
+    }
+  },
+  "journalIo": {
+    "title": "Import / Export",
+    "subtitle": "Move your journal in and out as CSV.",
+    "export": {
+      "title": "Export",
+      "subtitle": "Download every trade",
+      "description": "Get a CSV snapshot of every trade in your journal. The format is roundtrip-safe with the upcoming importer — every input field on a trade is preserved.",
+      "format": {
+        "encoding": "UTF-8 with BOM, Excel-friendly.",
+        "columns": "19 columns matching the trade input schema.",
+        "roundtrip": "Can be re-imported as-is when the import flow ships."
+      },
+      "button": "Download CSV",
+      "exporting": "Preparing your export…",
+      "success": "Export ready — check your downloads.",
+      "error": "Export failed. Please retry in a moment."
+    },
+    "import": {
+      "title": "Import",
+      "subtitle": "Restore from a CSV",
+      "description": "Drop a CSV exported from this page (or hand-edited following the same column layout). Atomic batch — if any row is invalid, no trade is persisted and you get a per-line error report below.",
+      "dropLabel": "Drag your CSV here",
+      "or": "or",
+      "browse": "Browse",
+      "hint": ".csv only — single file, no batch yet.",
+      "uploading": "Uploading and validating…",
+      "success": "{{ count }} trade(s) imported.",
+      "failed": "{{ count }} error(s) found — nothing was imported.",
+      "errorLine": "line {{ line }}",
+      "errorNetwork": "Network error. Please retry.",
+      "again": "Import another file"
     }
   }
 }

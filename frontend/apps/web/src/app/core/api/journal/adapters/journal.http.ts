@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
-import { JournalRepository } from '../journal.repository';
+import { ImportResult, JournalRepository, PageRequest, PagedResult } from '../journal.repository';
 import {
   TradeEntry,
   TradeEntryFilter,
@@ -130,6 +130,27 @@ function toWire(input: TradeEntryInput): TradeEntryWireRequest {
   };
 }
 
+// Spring's `Page<T>` JSON shape — keeps the fields we actually use (`content`, `number`,
+// `size`, `totalElements`, `totalPages`). Spring serialises the page index as `number` ;
+// we rename to `pageIndex` in the domain type so the consumer doesn't grep the wrong field.
+interface SpringPageWireDto<T> {
+  content: T[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+function fromPageWire(p: SpringPageWireDto<TradeEntryWireDto>): PagedResult<TradeEntry> {
+  return {
+    content: p.content.map(fromWire),
+    pageIndex: p.number,
+    pageSize: p.size,
+    totalElements: p.totalElements,
+    totalPages: p.totalPages,
+  };
+}
+
 // Filter → `HttpParams`. Multi-value fields (`plays`, `patterns`) use the repeated
 // `?play=A&play=B` form Spring expects ; empty arrays / blank strings / nullish values are
 // omitted entirely so the backend treats them as "no filter on that axis".
@@ -167,10 +188,19 @@ export class HttpJournalRepository extends JournalRepository {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/journal/trades';
 
-  findAll(filter?: TradeEntryFilter): Observable<TradeEntry[]> {
+  findAll(filter?: TradeEntryFilter, page?: PageRequest): Observable<PagedResult<TradeEntry>> {
+    let params = buildFilterParams(filter);
+    if (page) {
+      params = params.set('page', page.pageIndex).set('size', page.pageSize);
+      if (page.sortField && page.sortDirection) {
+        // Spring's `Pageable` accepts `?sort=field,direction` (repeatable). One sort axis is
+        // enough for the journal — Material's MatSort emits one (active, direction) at a time.
+        params = params.set('sort', `${page.sortField},${page.sortDirection}`);
+      }
+    }
     return this.http
-      .get<TradeEntryWireDto[]>(this.base, { params: buildFilterParams(filter) })
-      .pipe(map((list) => list.map(fromWire)));
+      .get<SpringPageWireDto<TradeEntryWireDto>>(this.base, { params })
+      .pipe(map((p) => fromPageWire(p)));
   }
 
   findById(id: string): Observable<TradeEntry> {
@@ -189,5 +219,28 @@ export class HttpJournalRepository extends JournalRepository {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  /**
+   * Streams the export endpoint as a binary `Blob` so the consumer can hand it to a download
+   * trick (`URL.createObjectURL` + anchor click). The server sets the `Content-Disposition`
+   * filename ; the consumer here just cares about the body.
+   */
+  exportCsv(): Observable<Blob> {
+    return this.http.get(`${this.base}/export`, {
+      responseType: 'blob',
+      headers: { Accept: 'text/csv' },
+    });
+  }
+
+  /**
+   * Posts the picked file as `multipart/form-data` to the import endpoint. The server always
+   * returns 200 with an [ImportResult] — per-row errors are surfaced in the body so we can
+   * render them inline without a 4xx detour.
+   */
+  importCsv(file: File): Observable<ImportResult> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<ImportResult>(`${this.base}/import`, form);
   }
 }

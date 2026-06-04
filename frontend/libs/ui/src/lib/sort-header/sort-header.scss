@@ -28,7 +28,7 @@
       // Accent for the active sort indicator. M3 default = `on-surface` (same as the header
       // text) reads as a quiet status ; accent reads as "this column is the one currently
       // sorted" which matches our journal / settings tables better.
-      arrow-color: var(--color-accent),
+      arrow-color: var(--color-accent)
     )
   );
 }

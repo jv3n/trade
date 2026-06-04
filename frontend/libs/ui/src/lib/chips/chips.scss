@@ -46,7 +46,6 @@
       //
       // Trailing icon / remove action (`<button matChipRemove>`)
       // with-trailing-icon-disabled-trailing-icon-opacity: 0.38,
-
       // ============================================================================
       // Color — idle (unselected) chip
       // ============================================================================
@@ -54,14 +53,12 @@
       outline-color: var(--color-border),
       hover-state-layer-color: var(--color-accent),
       // hover-state-layer-opacity: 0.08,        // M3 default — accent at 8 %.
-
       // ============================================================================
       // Color — focus (visible focus ring on keyboard nav)
       // ============================================================================
       focus-outline-color: var(--color-accent),
       focus-state-layer-color: var(--color-accent),
       // focus-state-layer-opacity: 0.12,        // M3 default — accent at 12 %.
-
       // ============================================================================
       // Color — selected chip
       // Same recipe as the journal `.chip-active` pattern + the autocomplete option's
@@ -73,14 +70,12 @@
       selected-hover-state-layer-color: var(--color-accent),
       // selected-focus-state-layer-opacity: 0.12,
       // selected-hover-state-layer-opacity: 0.08,
-
       // ============================================================================
       // Color — leading icon (`matChipLeadingIcon`)
       // ============================================================================
       with-icon-icon-color: var(--color-text-muted),
       with-icon-selected-icon-color: var(--color-accent-strong),
       // with-icon-disabled-icon-color: ...,
-
       // ============================================================================
       // Color — trailing icon / remove action (`matChipRemove`)
       // ============================================================================
@@ -92,7 +87,6 @@
       // selected-disabled-trailing-icon-color: ...,
       // trailing-action-focus-state-layer-opacity: 0.12,
       // trailing-action-hover-state-layer-opacity: 0.08,
-
       // ============================================================================
       // Color — disabled (lean on M3 defaults — on-surface tinted at 38 % / 12 %)
       // ============================================================================
@@ -100,7 +94,6 @@
       // disabled-outline-color: ...,
       // elevated-disabled-container-color: null,
       // flat-disabled-selected-container-color: ...,
-
       // ============================================================================
       // Typography
       // ============================================================================
@@ -111,13 +104,12 @@
       // label-text-font: inherit,            // System font from `mat.core()` is fine.
       // label-text-line-height: ...,         // Driven by M3 label-large by default.
       // label-text-tracking: ...,            // Same.
-
       // ============================================================================
       // Density
       // ============================================================================
       // Match the lib's button height so chips and buttons in the same toolbar share a
       // baseline.
-      container-height: #{s.$button-height},
+      container-height: #{s.$button-height}
     )
   );
 }

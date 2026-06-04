@@ -31,7 +31,6 @@
       // ============================================================================
       container-background-color: var(--color-surface),
       container-text-color: var(--color-text),
-
       // ============================================================================
       // Typography — toolbar title (used when a `<span>` or text node is the toolbar's
       // primary slot ; PortfolioAI's top bar uses an icon brand + button, not a title node,
@@ -43,7 +42,6 @@
       // title-text-font: inherit,                  // System font from `mat.core()` is fine.
       // title-text-line-height: ...,               // Driven by M3 title-large by default.
       // title-text-tracking: ...,                  // Same.
-
       // ============================================================================
       // Density
       // M3 ships a coordinated 4-step density scale that tunes standard + mobile heights as
@@ -52,7 +50,7 @@
       // entrypoint if a denser toolbar is needed globally.
       // ============================================================================
       // standard-height: 64px,
-      // mobile-height: 56px,
+       // mobile-height: 56px,
     )
   );
 }

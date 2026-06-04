@@ -61,7 +61,6 @@
       // Density
       text-container-height: #{s.$button-height},
       // text-touch-target-display: block,
-
       // ──────────────────────── Filled (mat-flat-button) ───────────────────
       // Base
       filled-container-shape: var(--radius),
@@ -90,7 +89,6 @@
       // Density
       filled-container-height: #{s.$button-height},
       // filled-touch-target-display: block,
-
       // ──────────────────────── Outlined (mat-stroked-button) ──────────────
       // Base
       outlined-container-shape: var(--radius),
@@ -119,12 +117,11 @@
       // Density
       outlined-container-height: #{s.$button-height},
       // outlined-touch-target-display: block,
-
       // ──────────────────────── Protected (mat-raised-button) ──────────────
       // Base
       // protected-container-shape: var(--radius),    // Could override ; raised uses corner-full
-                                                       // by default but PortfolioAI rarely uses
-                                                       // the variant, leaving as default.
+      // by default but PortfolioAI rarely uses
+      // the variant, leaving as default.
       // protected-horizontal-padding: 24px,
       // protected-icon-offset: -8px,
       // protected-icon-spacing: 8px,
@@ -154,7 +151,6 @@
       // Density
       // protected-container-height: ...,
       // protected-touch-target-display: block,
-
       // ──────────────────────── Tonal — unused in PortfolioAI ──────────────
       // Listed for completeness ; uncomment if `<button mat-tonal-button>` (M3-only) ever ships.
       //
@@ -179,7 +175,7 @@
       // tonal-label-text-weight: ...,
       // tonal-label-text-tracking: ...,
       // tonal-container-height: ...,
-      // tonal-touch-target-display: ...,
+       // tonal-touch-target-display: ...,
     )
   );
 

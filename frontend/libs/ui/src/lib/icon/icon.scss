@@ -21,10 +21,10 @@
     (
       // ── Color ────────────────────────────────────────────────────────────
       // icon-color: inherit,    // M3 default — inherits from parent text-color context.
-                                  // Overriding this with a fixed colour would break the
-                                  // existing button / form-field / icon-button token plumbing
-                                  // (their icon-colour tokens would be silently bypassed).
-                                  // Keep `inherit`.
+      // Overriding this with a fixed colour would break the
+      // existing button / form-field / icon-button token plumbing
+      // (their icon-colour tokens would be silently bypassed).
+       // Keep `inherit`.
     )
   );
 }

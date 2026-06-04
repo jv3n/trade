@@ -26,7 +26,6 @@
       // Base
       // ============================================================================
       container-shape: var(--radius),
-
       // ============================================================================
       // Color
       // High-contrast inverted pair — same recipe as the tooltip : container is whatever
@@ -37,7 +36,6 @@
       container-color: var(--color-text),
       supporting-text-color: var(--color-bg),
       button-color: var(--color-accent),
-
       // ============================================================================
       // Typography — supporting text
       // M3 default = `body-medium` (14 px). Slightly tightened to align with the form-field
@@ -46,7 +44,7 @@
       supporting-text-size: 0.875rem,
       // supporting-text-font: inherit,                // System font from `mat.core()` fine.
       // supporting-text-weight: ...,
-      // supporting-text-line-height: ...,
+       // supporting-text-line-height: ...,
     )
   );
 }

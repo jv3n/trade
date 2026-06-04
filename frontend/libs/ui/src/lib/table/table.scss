@@ -26,7 +26,6 @@
       // Base
       // ============================================================================
       // row-item-outline-width: 1px,            // M3 default — 1 px hairline between rows.
-
       // ============================================================================
       // Color
       // ============================================================================
@@ -37,7 +36,6 @@
       header-headline-color: var(--color-text),
       row-item-label-text-color: var(--color-text),
       row-item-outline-color: var(--color-border-soft),
-
       // ============================================================================
       // Typography — header (`<th mat-header-cell>`)
       // M3 default = `title-small` ; we ship a denser 0.78 rem + weight 600 so the header
@@ -48,7 +46,6 @@
       // header-headline-font: inherit,          // System font from `mat.core()` is fine.
       // header-headline-line-height: ...,       // Driven by M3 title-small by default.
       // header-headline-tracking: ...,          // Same.
-
       // ============================================================================
       // Typography — row (`<td mat-cell>`)
       // M3 default = `body-medium` ; we tighten to 0.85 rem to match the rest of the dense
@@ -59,7 +56,6 @@
       // row-item-label-text-weight: ...,
       // row-item-label-text-line-height: ...,
       // row-item-label-text-tracking: ...,
-
       // ============================================================================
       // Typography — footer (`<td mat-footer-cell>` ; rarely used in PortfolioAI)
       // M3 default = `body-medium` ; align with `row-item` if a footer ever lands.
@@ -69,7 +65,6 @@
       // footer-supporting-text-weight: ...,
       // footer-supporting-text-line-height: ...,
       // footer-supporting-text-tracking: ...,
-
       // ============================================================================
       // Density
       // M3 ships a coordinated density scale (-4 → 0) that tunes the header / row / footer
@@ -79,7 +74,7 @@
       // ============================================================================
       // header-container-height: 56px,
       // row-item-container-height: 52px,
-      // footer-container-height: 52px,
+       // footer-container-height: 52px,
     )
   );
 }

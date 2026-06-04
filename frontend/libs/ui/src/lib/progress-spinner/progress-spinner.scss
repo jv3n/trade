@@ -17,12 +17,11 @@
     (
       // ── Color ────────────────────────────────────────────────────────────
       active-indicator-color: var(--color-accent),
-
       // ── Base ─────────────────────────────────────────────────────────────
       // size: 48px,                       // M3 default — overridden per-instance via
-                                            //  the `diameter` input.
+      //  the `diameter` input.
       // active-indicator-width: 4px,      // M3 default — overridden per-instance via
-                                            //  the `strokeWidth` input.
+       //  the `strokeWidth` input.
     )
   );
 }

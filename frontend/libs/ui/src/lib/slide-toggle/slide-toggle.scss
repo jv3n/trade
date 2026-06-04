@@ -74,13 +74,11 @@
       // Transitions
       // hidden-track-transition: opacity 75ms,
       // visible-track-transition: opacity 75ms,
-
       // ============================================================================
       // Color — label
       // ============================================================================
       label-text-color: var(--color-text),
       // disabled-label-text-color: ...,             // M3 default — on-surface @ opacity. Fine.
-
       // ============================================================================
       // Color — selected (on) — track + handle + icon
       // The "on" state hits the accent palette. Track = accent ; track goes one shade darker
@@ -101,7 +99,6 @@
       //
       // ── Icon (when `[hideIcon]="false"` — the checkmark inside the knob) ──
       selected-icon-color: var(--color-accent),
-
       // ============================================================================
       // Color — unselected (off) — track + handle + icon
       // The "off" state reads as a neutral surface : track on `--color-surface-2` so it sits
@@ -124,7 +121,6 @@
       //
       // ── Icon ──
       unselected-icon-color: var(--color-text-muted),
-
       // ============================================================================
       // Color — state layers (overlay tint around the handle on hover / focus / pressed)
       // Selected hits accent ; unselected hits neutral text. Opacities stay at M3 defaults
@@ -142,7 +138,6 @@
       // unselected-hover-state-layer-opacity: 0.08,
       // unselected-focus-state-layer-opacity: 0.12,
       // unselected-pressed-state-layer-opacity: 0.16,
-
       // ============================================================================
       // Color — disabled (lean on M3 defaults — opacity-driven tinting)
       // ============================================================================
@@ -153,14 +148,12 @@
       // disabled-unselected-icon-color: ...,
       // disabled-unselected-track-color: ...,
       // disabled-unselected-track-outline-color: ...,
-
       // ============================================================================
       // Color — handle elevation (null in M3, kept here for visibility)
       // ============================================================================
       // handle-surface-color: null,
       // handle-elevation-shadow: null,
       // disabled-handle-elevation-shadow: null,
-
       // ============================================================================
       // Typography — label
       // ============================================================================
@@ -169,13 +162,12 @@
       // label-text-font: inherit,                   // System font from `mat.core()` fine.
       // label-text-line-height: ...,
       // label-text-tracking: ...,
-
       // ============================================================================
       // Density
       // M3 ships a 4-step density scale that toggles `touch-target-display` only ; the visual
       // sizing of the toggle stays the same. Keep at default.
       // ============================================================================
-      // touch-target-display: block,
+       // touch-target-display: block,
     )
   );
 }

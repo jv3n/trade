@@ -36,10 +36,13 @@
 
   // Make the inner container a flex column so the nav-list can grow + the toggle can pin to
   // the bottom edge. The default Material CSS sets `display: block; overflow: auto` — we
-  // override the display only, keeping `height: 100%`.
+  // override **both** the display and the overflow : the inner container itself must never
+  // scroll (any scroll on it pushes a phantom scrollbar on the global sidenav even when the
+  // content fits), and the nav-list inside owns its own `overflow-y: auto` for long lists.
   .mat-drawer-inner-container {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 }
 

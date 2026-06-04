@@ -68,13 +68,25 @@
             mat-list-item
             routerLink="/journal"
             routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: false }"
+            [routerLinkActiveOptions]="{ exact: true }"
             [matTooltip]="'nav.journal' | translate"
             [matTooltipDisabled]="!sidenavCollapse.collapsed()"
             matTooltipPosition="right"
           >
             <mat-icon matListItemIcon>book</mat-icon>
             <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
+          </a>
+          <a
+            mat-list-item
+            routerLink="/journal-io"
+            routerLinkActive="sidenav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [matTooltip]="'nav.importExport' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>swap_vert</mat-icon>
+            <span matListItemTitle>{{ 'nav.importExport' | translate }}</span>
           </a>
         </mat-nav-list>
         <div class="sidenav-toggle">

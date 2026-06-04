@@ -61,19 +61,14 @@
           <mat-spinner diameter="20" />
           <span>{{ 'journal.loading' | translate }}</span>
         </div>
-      } @else if (sortedEntries().length === 0) {
+      } @else if (entries().length === 0) {
         <div class="empty-state">
           <mat-icon>book</mat-icon>
           <p>{{ 'journal.empty' | translate }}</p>
         </div>
       } @else {
         <div stbTable>
-          <table
-            mat-table
-            [dataSource]="sortedEntries()"
-            matSort
-            (matSortChange)="onSortChange($event)"
-          >
+          <table mat-table [dataSource]="entries()" matSort (matSortChange)="onSortChange($event)">
             <ng-container matColumnDef="tradeDate">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeDate">
                 {{ 'journal.fields.tradeDate' | translate }}
@@ -194,6 +189,15 @@
             <tr mat-row *matRowDef="let row; columns: columns"></tr>
           </table>
         </div>
+
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="pageSizeOptions"
+          showFirstLastButtons
+          (page)="onPage($event)"
+        />
       }
     </div>
   </mat-sidenav-content>

@@ -50,7 +50,6 @@
       // with-tick-marks-container-size: 2px,
       // with-tick-marks-active-container-opacity: 0.38,
       // with-tick-marks-inactive-container-opacity: 0.38,
-
       // ============================================================================
       // Color — track
       // ============================================================================
@@ -58,7 +57,6 @@
       inactive-track-color: var(--color-border-soft),
       // active-track-shape: corner-full,             // M3 default — pill.
       // inactive-track-shape: corner-full,           // M3 default — pill.
-
       // ============================================================================
       // Color — handle (the draggable knob)
       // Idle / hover / focus all hit the accent palette ; focus uses `accent-strong` for the
@@ -69,7 +67,6 @@
       focus-handle-color: var(--color-accent-strong),
       // handle-shape: corner-full,                   // M3 default — circle.
       // handle-elevation: ...,                        // M3 default — level1 box-shadow.
-
       // ============================================================================
       // Color — state layers (overlay tint around the handle)
       // M3 ties these to `primary @ 5 %` (hover) and `primary @ 20 %` (focus) ; we steer to
@@ -79,25 +76,21 @@
       hover-state-layer-color: var(--color-accent-soft),
       focus-state-layer-color: var(--color-accent-soft),
       ripple-color: var(--color-accent),
-
       // ============================================================================
       // Color — value indicator (floating tooltip when dragging)
       // ============================================================================
       label-container-color: var(--color-accent),
       label-label-text-color: var(--color-on-accent),
-
       // ============================================================================
       // Color — overlap handle outline (range slider, two handles crossing)
       // ============================================================================
       with-overlap-handle-outline-color: var(--color-on-accent),
-
       // ============================================================================
       // Color — tick marks (discrete slider via `[discrete]="true"`)
       // ============================================================================
       with-tick-marks-active-container-color: var(--color-on-accent),
       with-tick-marks-inactive-container-color: var(--color-text-muted),
       // with-tick-marks-container-shape: corner-full, // M3 default — round tick.
-
       // ============================================================================
       // Color — disabled (lean on M3 defaults — opacity-driven tinting)
       // ============================================================================
@@ -105,7 +98,6 @@
       // disabled-inactive-track-color: ...,
       // disabled-handle-color: ...,
       // with-tick-marks-disabled-container-color: ...,
-
       // ============================================================================
       // Typography — value indicator label
       // M3 default = `label-medium` (12 px) — already coherent with our metadata convention.
@@ -114,7 +106,7 @@
       // label-label-text-size: ...,
       // label-label-text-weight: ...,
       // label-label-text-line-height: ...,
-      // label-label-text-tracking: ...,
+       // label-label-text-tracking: ...,
     )
   );
 }

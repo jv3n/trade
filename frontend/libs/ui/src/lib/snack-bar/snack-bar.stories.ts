@@ -1,5 +1,9 @@
 import { Component, inject } from '@angular/core';
-import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition } from '@angular/material/snack-bar';
+import {
+  MatSnackBar,
+  MatSnackBarHorizontalPosition,
+  MatSnackBarVerticalPosition,
+} from '@angular/material/snack-bar';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 
 import { StbButtonModule } from '../button/button.module';
@@ -22,9 +26,7 @@ interface SnackBarArgs {
   selector: 'ui-snack-bar-demo',
   standalone: true,
   imports: [StbButtonModule, StbSnackBarModule],
-  template: `
-    <button mat-flat-button type="button" (click)="show()">Show snack-bar</button>
-  `,
+  template: ` <button mat-flat-button type="button" (click)="show()">Show snack-bar</button> `,
 })
 class Demo implements SnackBarArgs {
   private readonly snackBar = inject(MatSnackBar);

@@ -22,7 +22,6 @@
       // Base
       // ============================================================================
       container-shape: var(--radius),
-
       // ============================================================================
       // Color
       // High-contrast inverted pair — container is whatever `--color-text` resolves to in
@@ -31,7 +30,6 @@
       // ============================================================================
       container-color: var(--color-text),
       supporting-text-color: var(--color-bg),
-
       // ============================================================================
       // Typography — supporting text
       // M3 default = `body-small` (12 px) — already correct for the tooltip's compact slot.
@@ -40,7 +38,7 @@
       // supporting-text-size: ...,
       // supporting-text-weight: ...,
       // supporting-text-line-height: ...,
-      // supporting-text-tracking: ...,
+       // supporting-text-tracking: ...,
     )
   );
 }

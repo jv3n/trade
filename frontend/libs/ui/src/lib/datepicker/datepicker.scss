@@ -32,14 +32,13 @@
       // ============================================================================
       calendar-container-shape: var(--radius),
       // calendar-container-elevation-shadow: ...,      // M3 default = level0 (no shadow).
-                                                          // The CDK overlay already ships its
-                                                          // own backdrop shadow, no need to
-                                                          // double up.
+      // The CDK overlay already ships its
+      // own backdrop shadow, no need to
+      // double up.
       // Touch mode — `<mat-datepicker touchUi>` flips the overlay to a centred modal sheet.
       // PortfolioAI uses the inline mode only ; leave the touch tokens at M3 defaults.
       // calendar-container-touch-shape: ...,
       // calendar-container-touch-elevation-shadow: ...,
-
       // ============================================================================
       // Color — calendar container
       // `--color-surface-2` is **one step lighter** than `--color-surface` in dark mode (and
@@ -49,7 +48,6 @@
       calendar-container-background-color: var(--color-surface-2),
       calendar-container-text-color: var(--color-text),
       // calendar-header-divider-color: transparent,    // M3 default — transparent. Fine.
-
       // ============================================================================
       // Color — calendar header (month name + nav arrows + period button)
       // ============================================================================
@@ -58,7 +56,6 @@
       calendar-period-button-text-color: var(--color-text),
       calendar-period-button-icon-color: var(--color-text),
       calendar-body-label-text-color: var(--color-text-muted),
-
       // ============================================================================
       // Color — date cells, idle + hover/focus
       // ============================================================================
@@ -66,7 +63,6 @@
       calendar-date-hover-state-background-color: var(--color-accent-soft),
       calendar-date-focus-state-background-color: var(--color-accent-soft),
       // calendar-date-outline-color: transparent,      // M3 default — transparent.
-
       // ============================================================================
       // Color — date cells, selected
       // The selected day is the **filled accent** ; `selected-state-text-color` follows
@@ -75,7 +71,6 @@
       calendar-date-selected-state-background-color: var(--color-accent),
       calendar-date-selected-state-text-color: var(--color-on-accent),
       calendar-date-selected-disabled-state-background-color: var(--color-accent-soft),
-
       // ============================================================================
       // Color — date cells, today marker
       // Outline-only ring, no fill — keeps the selection ring visible on top when today **is**
@@ -84,12 +79,10 @@
       calendar-date-today-outline-color: var(--color-accent),
       calendar-date-today-selected-state-outline-color: var(--color-on-accent),
       // calendar-date-today-disabled-state-outline-color: ...,
-
       // ============================================================================
       // Color — date cells, disabled
       // ============================================================================
       calendar-date-disabled-state-text-color: var(--color-text-faint),
-
       // ============================================================================
       // Color — date cells, range-selection (`<mat-date-range-input>`)
       // PortfolioAI doesn't ship range pickers today ; tokens listed for completeness so a
@@ -100,20 +93,17 @@
       // calendar-date-in-overlap-range-state-background-color: ...,
       // calendar-date-in-overlap-range-selected-state-background-color: ...,
       // calendar-date-preview-state-outline-color: ...,
-
       // ============================================================================
       // Color — range input (`<mat-date-range-input>` field)
       // ============================================================================
       range-input-separator-color: var(--color-text-muted),
       // range-input-disabled-state-separator-color: ...,
       // range-input-disabled-state-text-color: ...,
-
       // ============================================================================
       // Color — toggle (`<mat-datepicker-toggle>` icon button)
       // ============================================================================
       toggle-icon-color: var(--color-text-muted),
       toggle-active-state-icon-color: var(--color-accent),
-
       // ============================================================================
       // Typography
       // M3 defaults pull from `title-small` for header / period / body-label and `body-medium`
@@ -126,7 +116,7 @@
       // calendar-period-button-text-size: ...,
       // calendar-period-button-text-weight: ...,
       // calendar-text-font: inherit,
-      // calendar-text-size: ...,
+       // calendar-text-size: ...,
     )
   );
 }

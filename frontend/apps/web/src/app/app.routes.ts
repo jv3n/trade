@@ -33,6 +33,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/journal/journal-page').then((m) => m.JournalPage),
   },
   {
+    path: 'journal-io',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/journal-io/journal-io-page').then((m) => m.JournalIoPage),
+  },
+  {
     path: 'settings',
     canActivate: [authGuard],
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),

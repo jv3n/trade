@@ -29,13 +29,11 @@
       container-elevation-shadow: var(--shadow),
       // header-indicator-display: inline-block,        // M3 default — keep chevron visible.
       // legacy-header-indicator-display: none,         // Pre-M3 indicator slot — hidden.
-
       // ============================================================================
       // Color — container
       // ============================================================================
       container-background-color: var(--color-surface),
       container-text-color: var(--color-text),
-
       // ============================================================================
       // Color — header (title + description + chevron + state layers)
       // ============================================================================
@@ -49,12 +47,10 @@
       header-hover-state-layer-color: var(--color-accent-soft),
       header-focus-state-layer-color: var(--color-accent-soft),
       // header-disabled-state-text-color: ...,         // M3 default — on-surface @ 38 %.
-
       // ============================================================================
       // Color — actions row divider (`<mat-action-row>` separator)
       // ============================================================================
       actions-divider-color: var(--color-border-soft),
-
       // ============================================================================
       // Typography — container body + header
       // M3 defaults pull from `body-large` (container content) + `title-medium` (header) —
@@ -71,7 +67,6 @@
       // header-text-weight: ...,
       // header-text-line-height: ...,
       // header-text-tracking: ...,
-
       // ============================================================================
       // Density
       // M3 ships a coordinated density scale (-3 → 0) that tunes the collapsed + expanded
@@ -79,7 +74,7 @@
       // header-style surfaces ; leave them alone unless a tighter accordion is needed.
       // ============================================================================
       // header-collapsed-state-height: 48px,
-      // header-expanded-state-height: 64px,
+       // header-expanded-state-height: 64px,
     )
   );
 }

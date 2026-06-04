@@ -37,7 +37,6 @@
       // item-with-icon-trailing-spacing: 12px,
       // divider-top-spacing: 8px,
       // divider-bottom-spacing: 8px,
-
       // ============================================================================
       // Color — container chrome
       // Panel sits on `--color-surface-2` (one step lighter than `--color-surface`) so it
@@ -47,13 +46,11 @@
       container-color: var(--color-surface-2),
       container-elevation-shadow: var(--shadow),
       divider-color: var(--color-border-soft),
-
       // ============================================================================
       // Color — menu item, idle
       // ============================================================================
       item-label-text-color: var(--color-text),
       item-icon-color: var(--color-text-muted),
-
       // ============================================================================
       // Color — menu item, hover / focus
       // M3 ties the state layer to `on-surface` (neutral wash) — we steer to the accent-soft
@@ -62,7 +59,6 @@
       // ============================================================================
       item-hover-state-layer-color: var(--color-accent-soft),
       item-focus-state-layer-color: var(--color-accent-soft),
-
       // ============================================================================
       // Typography — menu item label
       // M3 default = label-large (14 px) ; we ship 0.875 rem to match the autocomplete option
@@ -72,7 +68,7 @@
       // item-label-text-font: inherit,                  // System font from `mat.core()` fine.
       // item-label-text-weight: ...,                     // M3 label-large weight already 500.
       // item-label-text-line-height: ...,
-      // item-label-text-tracking: ...,
+       // item-label-text-tracking: ...,
     )
   );
 }

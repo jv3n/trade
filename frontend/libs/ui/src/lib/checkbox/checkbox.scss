@@ -29,10 +29,8 @@
       // unselected-hover-state-layer-opacity: 0.08,
       // unselected-pressed-state-layer-opacity: 0.16,
       // touch-target-size: 48px,
-
       // ── Color — label ─────────────────────────────────────────────────────
       label-text-color: var(--color-text),
-
       // ── Color — selected (checked) ────────────────────────────────────────
       selected-icon-color: var(--color-accent),
       selected-focus-icon-color: var(--color-accent),
@@ -42,7 +40,6 @@
       selected-focus-state-layer-color: var(--color-accent),
       selected-hover-state-layer-color: var(--color-accent),
       selected-pressed-state-layer-color: var(--color-accent),
-
       // ── Color — unselected ────────────────────────────────────────────────
       // Idle reads as muted (low-emphasis) ; hover / focus pull it up to full text colour so
       // the affordance is unambiguous when the user reaches the control.
@@ -52,7 +49,6 @@
       unselected-focus-state-layer-color: var(--color-text),
       unselected-hover-state-layer-color: var(--color-text),
       unselected-pressed-state-layer-color: var(--color-accent),
-
       // ── Color — disabled ──────────────────────────────────────────────────
       // M3 defaults already render disabled checkboxes at on-surface @ 38 % opacity, which is
       // close enough to our design ; leave them on the table for future tuning.
@@ -61,14 +57,12 @@
       // disabled-selected-icon-color: ...,
       // disabled-selected-checkmark-color: ...,
       // disabled-unselected-icon-color: ...,
-
       // ── Typography ────────────────────────────────────────────────────────
       label-text-size: 0.875rem,
       label-text-weight: 500,
       // label-text-font: inherit,        // System font from `mat.core()` is fine.
       // label-text-line-height: ...,     // Driven by M3 body-medium by default.
       // label-text-tracking: ...,        // Same.
-
       // ── Density ───────────────────────────────────────────────────────────
       // Tighter than Material's 40 px default — matches the lib's icon-button rhythm so a
       // `<mat-checkbox>` next to a `<button mat-icon-button>` lines up visually.

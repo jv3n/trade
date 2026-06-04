@@ -7,7 +7,7 @@ import { TradeEntryInput } from '../trade-entry.model';
 import { HttpJournalRepository } from './journal.http';
 
 /**
- * Pins the wire ↔ domain mapping inside [HttpJournalRepository]. Three things this test
+ * Pins the wire ↔ domain mapping inside [HttpJournalRepository]. Four things this test
  * catches that a typecheck alone can't :
  *
  *  - **Date round-trip preserves the user's local day** — `tradeDate: '2026-06-04'` from the
@@ -21,6 +21,9 @@ import { HttpJournalRepository } from './journal.http';
  *    repeated `?play=A&play=B` form ; null / empty / blank values must be **omitted**, not
  *    sent as `?q=&dateFrom=` (which the backend would parse as empty-string filter and
  *    return nothing).
+ *  - **Pagination wire shape** — page coordinates land as `?page=N&size=N&sort=field,direction`
+ *    on the way out, and Spring's `Page<T>` body unwraps into our `PagedResult<T>` shape with
+ *    `number` renamed to `pageIndex`.
  */
 describe('HttpJournalRepository', () => {
   let repo: HttpJournalRepository;
@@ -45,20 +48,20 @@ describe('HttpJournalRepository', () => {
     const req = http.expectOne('/api/journal/trades');
     expect(req.request.method).toBe('GET');
     expect(req.request.params.keys()).toEqual([]);
-    req.flush([]);
+    req.flush(wirePageFixture([]));
   });
 
   it('findAll with query trims and forwards as ?q=', () => {
     repo.findAll({ query: '  aapl  ' }).subscribe();
     const req = http.expectOne((r) => r.params.get('q') === 'aapl');
-    req.flush([]);
+    req.flush(wirePageFixture([]));
   });
 
   it('findAll with blank query omits the q param entirely (avoids empty-string filter)', () => {
     repo.findAll({ query: '   ' }).subscribe();
     const req = http.expectOne('/api/journal/trades');
     expect(req.request.params.has('q')).toBe(false);
-    req.flush([]);
+    req.flush(wirePageFixture([]));
   });
 
   it('findAll formats dateFrom / dateTo as yyyy-MM-dd using the local day', () => {
@@ -69,7 +72,7 @@ describe('HttpJournalRepository', () => {
         r.params.get('dateFrom') === '2026-06-01' &&
         r.params.get('dateTo') === '2026-06-30',
     );
-    req.flush([]);
+    req.flush(wirePageFixture([]));
   });
 
   it('findAll repeats play and pattern params for multi-value filters', () => {
@@ -77,7 +80,7 @@ describe('HttpJournalRepository', () => {
     const req = http.expectOne((r) => r.url === '/api/journal/trades');
     expect(req.request.params.getAll('play')).toEqual(['A', 'B']);
     expect(req.request.params.getAll('pattern')).toEqual(['GUS']);
-    req.flush([]);
+    req.flush(wirePageFixture([]));
   });
 
   it('findAll omits empty arrays (no-filter on that axis)', () => {
@@ -85,13 +88,71 @@ describe('HttpJournalRepository', () => {
     const req = http.expectOne('/api/journal/trades');
     expect(req.request.params.has('play')).toBe(false);
     expect(req.request.params.has('pattern')).toBe(false);
-    req.flush([]);
+    req.flush(wirePageFixture([]));
   });
 
   it('findAll forwards status as ?status=', () => {
     repo.findAll({ status: 'PROFITABLE' }).subscribe();
     const req = http.expectOne((r) => r.params.get('status') === 'PROFITABLE');
-    req.flush([]);
+    req.flush(wirePageFixture([]));
+  });
+
+  // ---------------------------------------------------------------------------
+  // findAll — pagination params
+  // ---------------------------------------------------------------------------
+
+  it('findAll omits pagination params when no PageRequest is passed (relies on backend defaults)', () => {
+    repo.findAll().subscribe();
+    const req = http.expectOne('/api/journal/trades');
+    expect(req.request.params.has('page')).toBe(false);
+    expect(req.request.params.has('size')).toBe(false);
+    expect(req.request.params.has('sort')).toBe(false);
+    req.flush(wirePageFixture([]));
+  });
+
+  it('findAll forwards page + size when a PageRequest is passed', () => {
+    repo.findAll(undefined, { pageIndex: 2, pageSize: 25 }).subscribe();
+    const req = http.expectOne((r) => r.url === '/api/journal/trades');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('size')).toBe('25');
+    req.flush(wirePageFixture([]));
+  });
+
+  it('findAll forwards sort as `field,direction` when both are provided', () => {
+    repo
+      .findAll(undefined, { pageIndex: 0, pageSize: 10, sortField: 'ticker', sortDirection: 'asc' })
+      .subscribe();
+    const req = http.expectOne((r) => r.url === '/api/journal/trades');
+    expect(req.request.params.get('sort')).toBe('ticker,asc');
+    req.flush(wirePageFixture([]));
+  });
+
+  it('findAll skips the sort param when sortField or sortDirection is missing', () => {
+    repo.findAll(undefined, { pageIndex: 0, pageSize: 10, sortField: 'ticker' }).subscribe();
+    // Predicate match — when a PageRequest is forwarded, the URL carries `?page=0&size=10`
+    // and a plain `expectOne('/api/journal/trades')` would fail to match (string match
+    // requires the full URL incl. query string).
+    const req = http.expectOne((r) => r.url === '/api/journal/trades');
+    expect(req.request.params.has('sort')).toBe(false);
+    req.flush(wirePageFixture([]));
+  });
+
+  it('findAll renames Spring `number` to `pageIndex` on the way back', () => {
+    repo.findAll(undefined, { pageIndex: 1, pageSize: 10 }).subscribe((result) => {
+      expect(result.pageIndex).toBe(1);
+      expect(result.pageSize).toBe(10);
+      expect(result.totalElements).toBe(42);
+      expect(result.totalPages).toBe(5);
+      expect(result.content).toHaveLength(1);
+    });
+    const req = http.expectOne((r) => r.url === '/api/journal/trades');
+    req.flush({
+      content: [wireFixture()],
+      number: 1,
+      size: 10,
+      totalElements: 42,
+      totalPages: 5,
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -99,28 +160,32 @@ describe('HttpJournalRepository', () => {
   // ---------------------------------------------------------------------------
 
   it('parses tradeDate as midnight local (not UTC) to preserve the user’s day', () => {
-    repo.findAll().subscribe((entries) => {
-      expect(entries[0].tradeDate).toBeInstanceOf(Date);
+    repo.findAll().subscribe((result) => {
+      const entry = result.content[0];
+      expect(entry.tradeDate).toBeInstanceOf(Date);
       // Local day must be 4 (June 4), not 3 (June 3) — which is what `new Date('2026-06-04')`
       // would produce in negative-UTC timezones because the native parse treats it as UTC.
-      expect(entries[0].tradeDate.getFullYear()).toBe(2026);
-      expect(entries[0].tradeDate.getMonth()).toBe(5);
-      expect(entries[0].tradeDate.getDate()).toBe(4);
+      expect(entry.tradeDate.getFullYear()).toBe(2026);
+      expect(entry.tradeDate.getMonth()).toBe(5);
+      expect(entry.tradeDate.getDate()).toBe(4);
     });
-    http.expectOne('/api/journal/trades').flush([
-      {
-        ...wireFixture(),
-        tradeDate: '2026-06-04',
-      },
-    ]);
+    http.expectOne('/api/journal/trades').flush(
+      wirePageFixture([
+        {
+          ...wireFixture(),
+          tradeDate: '2026-06-04',
+        },
+      ]),
+    );
   });
 
   it('parses createdAt / updatedAt as Date instances', () => {
-    repo.findAll().subscribe((entries) => {
-      expect(entries[0].createdAt).toBeInstanceOf(Date);
-      expect(entries[0].updatedAt).toBeInstanceOf(Date);
+    repo.findAll().subscribe((result) => {
+      const entry = result.content[0];
+      expect(entry.createdAt).toBeInstanceOf(Date);
+      expect(entry.updatedAt).toBeInstanceOf(Date);
     });
-    http.expectOne('/api/journal/trades').flush([wireFixture()]);
+    http.expectOne('/api/journal/trades').flush(wirePageFixture([wireFixture()]));
   });
 
   // ---------------------------------------------------------------------------
@@ -197,6 +262,20 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     createdAt: '2026-06-04T15:30:00Z',
     updatedAt: '2026-06-04T15:30:00Z',
     ...overrides,
+  };
+}
+
+/**
+ * Spring `Page<T>` wire shape. Default pageIndex 0 / size 10 / totalElements derived from the
+ * content length — overrideable when a test wants to assert a specific paging contract.
+ */
+function wirePageFixture(content: ReturnType<typeof wireFixture>[]) {
+  return {
+    content,
+    number: 0,
+    size: 10,
+    totalElements: content.length,
+    totalPages: content.length === 0 ? 0 : 1,
   };
 }
 

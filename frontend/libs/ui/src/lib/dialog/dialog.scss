@@ -32,16 +32,15 @@
       // ============================================================================
       container-shape: var(--radius-lg),
       // container-elevation-shadow: none,            // M3 default — none. The CDK backdrop
-                                                       // already darkens the page behind ; no
-                                                       // panel-level shadow needed in our
-                                                       // dark-dimmed palette.
+      // already darkens the page behind ; no
+      // panel-level shadow needed in our
+      // dark-dimmed palette.
       // container-min-width: 280px,                  // M3 default — covers most cases.
       // container-max-width: 560px,                  // M3 default — small CTA-style dialog.
       //                                              // The add-trade dialog uses
       //                                              // `[panelClass]` to override this on the
       //                                              // open() call site.
       // container-small-max-width: calc(100vw - 32px),
-
       // ============================================================================
       // Base — internal padding (headline / content / actions slots)
       // M3 ships pixel-precise paddings tuned around an MDC `::before` pseudo on the title ;
@@ -52,14 +51,12 @@
       // with-actions-content-padding: 20px 24px 0,
       // actions-padding: 16px 24px,
       // actions-alignment: flex-end,
-
       // ============================================================================
       // Color
       // ============================================================================
       container-color: var(--color-surface),
       subhead-color: var(--color-text),
       supporting-text-color: var(--color-text-muted),
-
       // ============================================================================
       // Typography — headline (`<h2 mat-dialog-title>`)
       // M3 defaults pull from `headline-small` — coherent with our page-level h2 hierarchy.
@@ -69,7 +66,6 @@
       // subhead-weight: ...,
       // subhead-line-height: ...,
       // subhead-tracking: ...,
-
       // ============================================================================
       // Typography — supporting text (default `<mat-dialog-content>` body)
       // M3 defaults pull from `body-medium` — already coherent with the form-field family.
@@ -78,7 +74,7 @@
       // supporting-text-size: ...,
       // supporting-text-weight: ...,
       // supporting-text-line-height: ...,
-      // supporting-text-tracking: ...,
+       // supporting-text-tracking: ...,
     )
   );
 }

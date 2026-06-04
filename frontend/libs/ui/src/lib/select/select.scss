@@ -33,21 +33,18 @@
       // Base
       // ============================================================================
       container-elevation-shadow: var(--shadow),
-
       // ============================================================================
       // Color — panel (overlay surface)
       // Same recipe as the menu / datepicker overlay : `--color-surface-2` (one step lighter
       // than `--color-surface`) so the panel reads as raised against the page background.
       // ============================================================================
       panel-background-color: var(--color-surface-2),
-
       // ============================================================================
       // Color — trigger (the visible value in the collapsed field)
       // ============================================================================
       enabled-trigger-text-color: var(--color-text),
       placeholder-text-color: var(--color-text-faint),
       // disabled-trigger-text-color: ...,           // M3 default — on-surface @ 38 %. Fine.
-
       // ============================================================================
       // Color — arrow (chevron on the right of the trigger)
       // ============================================================================
@@ -55,7 +52,6 @@
       focused-arrow-color: var(--color-accent),
       invalid-arrow-color: var(--color-danger),
       // disabled-arrow-color: ...,                  // M3 default — on-surface @ 38 %. Fine.
-
       // ============================================================================
       // Typography — trigger text
       // M3 default = body-large (1 rem) ; we ship 0.875 rem to match the form-field
@@ -66,13 +62,12 @@
       // trigger-text-weight: ...,
       // trigger-text-line-height: ...,
       // trigger-text-tracking: ...,
-
       // ============================================================================
       // Density
       // M3 ships an `arrow-transform` token that lifts the chevron by 8 px on density 0 / -1
       // so it stays vertically centred when the form-field is at its tallest. Keep at default.
       // ============================================================================
-      // arrow-transform: translateY(-8px),
+       // arrow-transform: translateY(-8px),
     )
   );
 }

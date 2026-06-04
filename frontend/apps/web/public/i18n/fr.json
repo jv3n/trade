@@ -24,7 +24,8 @@
     "radar": "Radar",
     "observability": "Observabilité",
     "collapse": "Réduire la sidebar",
-    "expand": "Déployer la sidebar"
+    "expand": "Déployer la sidebar",
+    "importExport": "Import / Export"
   },
   "journal": {
     "title": "Journal de trading",
@@ -962,6 +963,39 @@
       "gapPctMin": "Gap minimum",
       "volumeRatioMin": "Volume × minimum",
       "reset": "Réinitialiser"
+    }
+  },
+  "journalIo": {
+    "title": "Import / Export",
+    "subtitle": "Sors et remets ton journal au format CSV.",
+    "export": {
+      "title": "Export",
+      "subtitle": "Télécharge tous tes trades",
+      "description": "Récupère un instantané CSV de chaque trade du journal. Le format est compatible avec le futur import — chaque champ d'entrée d'un trade est préservé.",
+      "format": {
+        "encoding": "UTF-8 avec BOM, lisible directement dans Excel.",
+        "columns": "19 colonnes alignées sur le schéma d'un trade.",
+        "roundtrip": "Réimportable tel quel quand le flow d'import sera prêt."
+      },
+      "button": "Télécharger le CSV",
+      "exporting": "Préparation de l'export…",
+      "success": "Export prêt — regarde tes téléchargements.",
+      "error": "Échec de l'export. Réessaie dans un instant."
+    },
+    "import": {
+      "title": "Import",
+      "subtitle": "Restaurer depuis un CSV",
+      "description": "Dépose un CSV exporté depuis cette page (ou édité à la main avec la même grille de colonnes). Lot atomique — si une ligne est invalide, aucun trade n'est créé et tu reçois le détail ligne par ligne ci-dessous.",
+      "dropLabel": "Glisse ton CSV ici",
+      "or": "ou",
+      "browse": "Parcourir",
+      "hint": ".csv uniquement — un seul fichier à la fois.",
+      "uploading": "Envoi et validation…",
+      "success": "{{ count }} trade(s) importé(s).",
+      "failed": "{{ count }} erreur(s) trouvée(s) — aucun trade n'a été créé.",
+      "errorLine": "ligne {{ line }}",
+      "errorNetwork": "Erreur réseau. Réessaie.",
+      "again": "Importer un autre fichier"
     }
   }
 }

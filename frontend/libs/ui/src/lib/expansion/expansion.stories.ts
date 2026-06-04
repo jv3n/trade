@@ -30,8 +30,8 @@ interface ExpansionArgs {
         </mat-expansion-panel-header>
 
         <p>
-          Default rules used when opening a trade : 1 % account risk per trade, hard stop at
-          the swing low, daily loss limit at 3 % of equity.
+          Default rules used when opening a trade : 1 % account risk per trade, hard stop at the
+          swing low, daily loss limit at 3 % of equity.
         </p>
 
         @if (showActionRow) {
@@ -46,14 +46,12 @@ interface ExpansionArgs {
         <mat-expansion-panel-header>
           <mat-panel-title>Plays</mat-panel-title>
           @if (showDescription) {
-            <mat-panel-description>
-              Setup taxonomy used in the journal
-            </mat-panel-description>
+            <mat-panel-description> Setup taxonomy used in the journal </mat-panel-description>
           }
         </mat-expansion-panel-header>
         <p>
-          Breakout, Reversal, Momentum, Pullback. Tracked per-trade in the journal table for
-          PnL attribution by play.
+          Breakout, Reversal, Momentum, Pullback. Tracked per-trade in the journal table for PnL
+          attribution by play.
         </p>
       </mat-expansion-panel>
 
@@ -61,9 +59,7 @@ interface ExpansionArgs {
         <mat-expansion-panel-header>
           <mat-panel-title>Patterns</mat-panel-title>
           @if (showDescription) {
-            <mat-panel-description>
-              Chart structures triggering an entry
-            </mat-panel-description>
+            <mat-panel-description> Chart structures triggering an entry </mat-panel-description>
           }
         </mat-expansion-panel-header>
         <p>Flag, Cup &amp; Handle, ABCD, Double-bottom, Bull-flag continuation.</p>

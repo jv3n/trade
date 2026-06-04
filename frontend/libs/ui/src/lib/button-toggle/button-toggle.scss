@@ -31,36 +31,30 @@
       shape: var(--radius),
       // focus-state-layer-opacity: 0.12,  // M3 default — accent state-layer at 12 %.
       // hover-state-layer-opacity: 0.08,  // M3 default — accent state-layer at 8 %.
-
       // ── Typography ────────────────────────────────────────────────────────
       label-text-size: 0.8125rem,
       label-text-weight: 500,
       // label-text-font: inherit,         // System font from `mat.core()` is fine.
       // label-text-line-height: ...,      // Driven by M3 label-large by default.
       // label-text-tracking: ...,         // Same.
-
       // ── Color — container / idle ──────────────────────────────────────────
       background-color: transparent,
       text-color: var(--color-text-muted),
       divider-color: var(--color-border),
-
       // ── Color — selected ──────────────────────────────────────────────────
       // Accent-soft pill + accent-strong text — same recipe as `.chip-active` in the
       // journal filter panel.
       selected-state-background-color: var(--color-accent-soft),
       selected-state-text-color: var(--color-accent-strong),
-
       // ── Color — state layer (hover / focus / press overlay) ───────────────
       // M3 ties the hover/focus/press tint to `on-surface` ; we steer it to the accent so
       // the affordance reads as interactive without flipping to the selected pill.
       state-layer-color: var(--color-accent),
-
       // ── Color — disabled ──────────────────────────────────────────────────
       disabled-state-text-color: var(--color-text-faint),
       disabled-selected-state-background-color: var(--color-surface-2),
       disabled-selected-state-text-color: var(--color-text-muted),
       // disabled-state-background-color: transparent,  // M3 default — already transparent.
-
       // ── Density ───────────────────────────────────────────────────────────
       height: s.$button-height,
 
@@ -83,7 +77,7 @@
       // legacy-selected-state-text-color: null,
       // legacy-disabled-state-background-color: null,
       // legacy-disabled-state-text-color: null,
-      // legacy-disabled-selected-state-background-color: null,
+       // legacy-disabled-selected-state-background-color: null,
     )
   );
 }
