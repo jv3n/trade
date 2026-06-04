@@ -7,6 +7,7 @@ nav:
   # Projet first because it's the daily-use section ; Backlog first inside Projet for the same
   # reason. Other top-level sections + remaining Projet sub-entries keep their relative order.
   - Projet:
+      - Roadmap (pivot v1.0): projet/roadmap.md
       - Backlog: projet/backlog.md
       - Onboarding testeur: projet/testeur.md
       - Journal des livraisons: projet/journal-livraisons.md

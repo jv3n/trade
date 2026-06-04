@@ -106,6 +106,7 @@ docs/tmp-files/
 # Notes de procédures locales (rebuild npm manuel, recettes d'ops perso…)
 # qui n'ont pas vocation à être partagées dans le repo.
 docs/pso/
+docs/TTD/
 
 # ========================
 # Éditeurs divers

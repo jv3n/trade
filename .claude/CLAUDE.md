@@ -2,6 +2,21 @@
 
 Source of truth for project conventions and Claude-specific configuration. Read this first when working on PortfolioAI.
 
+> ## ⚠️ PIVOT EN COURS — depuis 2026-06-03
+>
+> The app is pivoting **180°** away from a per-ticker dossier app with LLM narratives → toward a **trading journal** where the user logs their trades each day (stats / charts / Excel export come in a phase 2).
+>
+> **Source of truth for the pivot** : [`docs/projet/roadmap.md`](../docs/projet/roadmap.md). Read it before every session — it carries the in/out scope, the docs to rewrite, and the 7 open questions that drive the next sessions.
+>
+> Context note triggering the pivot : [`docs/TTD/changement direction`](../docs/TTD/changement%20direction).
+>
+> **What stays vs goes** (résumé — détail dans la roadmap) :
+> - **Goes** : `analysis/` (LLM narratives + prompts + observability), `portfolio/` (CSV imports + snapshots), `news/`, `analyst/`, `earnings/`, screener UI/service, most `features/*` (dashboard, ticker, suivi, observability, settings/prompts, radar, import).
+> - **Stays** : every provider client (TwelveData, FMP, Polygon, Finnhub — reused later to enrich journaled trades), `auth/`, `config/`, `shared/`, the Phase 5 deployment stack.
+> - **New** : table `trade_entry`, module backend `journal/`, frontend `features/journal/`.
+>
+> **State of this file** : everything below describes the **pre-pivot** state (PortfolioAI as a per-ticker app). Sections will be updated piecewise as the pivot lands. Treat the roadmap as authoritative when the two disagree.
+
 ## Project
 
 Per-ticker market intelligence app. The backend fetches market data, computes indicators server-side (RSI, MA, momentum, drawdown…), the LLM writes a short narrative summary. **The LLM is a writer, not a decider** — no price predictions, no BUY/SELL signals.
