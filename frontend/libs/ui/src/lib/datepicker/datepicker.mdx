@@ -1,0 +1,67 @@
+import { Canvas, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as DatepickerStories from './datepicker.stories';
+
+<Meta of={DatepickerStories} />
+
+# Datepicker
+
+Material's `<mat-datepicker>` themed through the lib's design tokens (palette, radii, typography). No wrapper component — consumers use Material's regular API.
+
+## How to use
+
+1. Import `MatDatepickerModule`, `MatFormFieldModule`, `MatInputModule`, and `MatNativeDateModule` (or one of the adapter modules — `MatLuxonDateModule`, `MatDateFnsModule` if you swap from `Date`).
+2. **Do not pair `[matDatepicker]` with Signal Forms' `[formField]`** on the same input. `MatDatepickerInput` is its own `ControlValueAccessor` ; both directives compete for the `NG_VALUE_ACCESSOR` seat and one of them silently writes `null`. Drive the value imperatively instead :
+
+<Source
+  language="html"
+  code={`<mat-form-field appearance="outline">
+  <mat-label>Trade date</mat-label>
+  <input
+    matInput
+    [matDatepicker]="picker"
+    [value]="model().tradeDate"
+    (dateChange)="setTradeDate($event.value)"
+  />
+  <mat-datepicker-toggle matIconSuffix [for]="picker" />
+  <mat-datepicker #picker />
+</mat-form-field>`}
+/>
+
+The component pushes the date into the model signal :
+
+<Source
+  language="ts"
+  code={`setTradeDate(d: Date | null): void {
+  this.model.update((m) => ({ ...m, tradeDate: d ?? new Date() }));
+}`}
+/>
+
+Signal Forms still picks up the change for validation — the schema runs against the model signal regardless of whether `[formField]` is on the input or not.
+
+## Why no `[formField]` integration
+
+<Markdown>
+{`
+| Concern                              | Detail                                                                                                                                                |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CVA collision**                    | \`MatDatepickerInput\` registers itself on \`NG_VALUE_ACCESSOR\`. Signal Forms' \`[formField]\` selects the first CVA on the element — one wins, the other gets ignored. |
+| **Type mismatch**                    | \`[formField]\` over a native input treats the value as a string. Material's datepicker writes a \`Date\` (or a moment / luxon object) — coercion to/from string would lose hour info. |
+| **No \`required\` attribute**          | NG8022 blocks \`required\` on \`[formField]\` inputs. Validation lives in the schema (\`required(path.tradeDate)\`) — no need to repeat on the element.    |
+`}
+</Markdown>
+
+## Tokens consumed
+
+The datepicker reads Material 3 tokens (`--mat-datepicker-*`) that the lib's `_theme.scss` populates via `mat.all-component-themes`. No additional override is needed — the violet accent appears on the selected day, the surface uses `--mat-sys-surface` which the lib pins to `--color-surface` on dark / `--color-bg` on light.
+
+## Dark
+
+<Canvas of={DatepickerStories.Dark} />
+
+## Light
+
+<Canvas of={DatepickerStories.Light} />
+
+## Dark vs Light side-by-side
+
+<Canvas of={DatepickerStories.BothThemes} />

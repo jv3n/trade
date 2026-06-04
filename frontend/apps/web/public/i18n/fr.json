@@ -28,8 +28,93 @@
   },
   "journal": {
     "title": "Journal de trading",
-    "subtitle": "v1.0 — en construction",
-    "placeholderBody": "L'app pivote vers un journal de trading où tu enregistreras tes trades du jour. Cette page sert de placeholder pendant le pivot — la table principale + le bouton « Ajouter » seront construits dans les prochaines sessions. Voir la roadmap pour le détail."
+    "subtitle": "Consigne chaque trade avec son setup, son exécution et son débrief.",
+    "addTrade": "Ajouter un trade",
+    "searchPlaceholder": "Rechercher un ticker…",
+    "clearSearch": "Effacer la recherche",
+    "filters": "Filtres",
+    "toggleFilters": "Afficher / masquer les filtres",
+    "filterPanel": {
+      "period": "Période",
+      "dateFrom": "De",
+      "dateTo": "À",
+      "play": "Play",
+      "pattern": "Pattern",
+      "status": "Statut",
+      "statusAll": "Tout statut",
+      "apply": "Appliquer",
+      "reset": "Réinitialiser",
+      "periodPresets": {
+        "all": "Toutes périodes",
+        "custom": "Plage personnalisée",
+        "thisMonth": "Ce mois",
+        "lastMonth": "Mois dernier",
+        "thisQuarter": "Ce trimestre",
+        "lastQuarter": "Trimestre dernier",
+        "thisYear": "Cette année",
+        "lastYear": "Année dernière"
+      }
+    },
+    "loading": "Chargement du journal…",
+    "empty": "Aucun trade pour l'instant. Clique sur « Ajouter un trade » pour le premier.",
+    "confirmDelete": "Supprimer le trade sur {{ticker}} ? Action irréversible.",
+    "errors": {
+      "load": "Impossible de charger le journal. Réessaye.",
+      "save": "Impossible d'enregistrer le trade. Réessaye.",
+      "delete": "Impossible de supprimer le trade. Réessaye."
+    },
+    "fields": {
+      "tradeDate": "Date",
+      "ticker": "Ticker",
+      "play": "Play",
+      "pattern": "Pattern",
+      "size": "Taille (actions)",
+      "openPrice": "Prix d'entrée",
+      "exitPrice": "Prix de sortie",
+      "profitDollars": "Profit ($)",
+      "gainPercent": "Gain (%)",
+      "note": "Notes",
+      "pre935To10h": "9h35 → 10h",
+      "preGapUp50": "Gap up 50 %",
+      "prePrice1To10": "Prix $1 → $10",
+      "preFloat3To50m": "Float 3M → 50M",
+      "preWaitPush": "Attendre le push",
+      "openSide": "Entrée sur",
+      "shortOnResistance": "Short sur résistance",
+      "exitStrategy": "Stratégie de sortie",
+      "errorNote": "Erreur / leçon"
+    },
+    "enums": {
+      "openSide": {
+        "FRONT": "Front side",
+        "BACK": "Back side"
+      },
+      "exitStrategy": {
+        "SWING_20": "Swing 20 %",
+        "EOD": "Fin de journée"
+      },
+      "status": {
+        "OPEN": "Ouvert",
+        "CLOSED": "Fermé",
+        "PROFITABLE": "Gagnant",
+        "LOSING": "Perdant"
+      }
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "dialog": {
+      "createTitle": "Saisir un trade",
+      "editTitle": "Modifier le trade",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "sections": {
+        "execution": "Exécution",
+        "exit": "Sortie",
+        "preparation": "Checklist de préparation"
+      }
+    }
   },
   "header": {
     "settings": "Paramètres",

@@ -1,0 +1,45 @@
+// Material datepicker design-token overrides. Applied at `:root` so the rules cascade
+// regardless of where `<mat-datepicker>` is rendered (CDK overlay, dialog, etc.). Companion
+// to `libs/ui/src/lib/datepicker/datepicker.module.ts` — the NgModule wraps the API surface,
+// this file owns the visual.
+//
+// Tokens read from our design system (`_tokens.scss`) so dark / light themes stay in sync
+// automatically. `mat.datepicker-overrides(...)` accepts any valid CSS value, including
+// `var(--…)` references.
+
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.datepicker-overrides(
+    (
+      calendar-container-background-color: var(--color-surface),
+      calendar-container-text-color: var(--color-text),
+      calendar-container-shape: var(--radius),
+
+      calendar-header-text-color: var(--color-text-muted),
+      calendar-body-label-text-color: var(--color-text-muted),
+
+      calendar-date-text-color: var(--color-text),
+      calendar-date-disabled-state-text-color: var(--color-text-faint),
+      calendar-date-hover-state-background-color: var(--color-accent-soft),
+      calendar-date-focus-state-background-color: var(--color-accent-soft),
+
+      // Selected day — filled accent. The text colour follows `--color-on-accent` so a future
+      // palette swap (light vs dark accent) keeps the contrast right.
+      calendar-date-selected-state-background-color: var(--color-accent),
+      calendar-date-selected-state-text-color: var(--color-on-accent),
+      calendar-date-selected-disabled-state-background-color: var(--color-accent-soft),
+
+      // Today marker — outline only (no fill) so the user still sees the selection ring on
+      // top when today is the selected day.
+      calendar-date-today-outline-color: var(--color-accent),
+      calendar-date-today-selected-state-outline-color: var(--color-on-accent),
+
+      calendar-navigation-button-icon-color: var(--color-text),
+      calendar-period-button-text-color: var(--color-text),
+      calendar-period-button-icon-color: var(--color-text),
+
+      range-input-separator-color: var(--color-text-muted),
+    )
+  );
+}

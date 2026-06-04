@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -52,6 +53,13 @@ export const appConfig: ApplicationConfig = {
     ...(isDevMode() ? [] : [{ provide: ErrorHandler, useClass: GlitchtipErrorHandler }]),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
+    // `DateAdapter` is needed by `<mat-datepicker>`. We register it at the app level (rather
+    // than scoping `MatNativeDateModule` to each consumer) because Material's datepicker
+    // looks up the adapter in the **Environment Injector** — a standalone-component import
+    // of `MatNativeDateModule` is too narrow and NG0201s. Use the date-fns adapter
+    // (`provideDateFnsAdapter` from `@angular/material-date-fns-adapter`) if we ever need
+    // locale-aware parsing / formatting beyond the browser default.
+    provideNativeDateAdapter(),
     // i18n — translation files live in `public/i18n/<lang>.json` so they are served as static
     // assets at `/i18n/<lang>.json`. Active language is driven by `LanguageService`
     // (signal + localStorage). Default to French (project's primary audience) ; English fallback

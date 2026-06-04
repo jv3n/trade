@@ -28,8 +28,93 @@
   },
   "journal": {
     "title": "Trading journal",
-    "subtitle": "v1.0 — under construction",
-    "placeholderBody": "The app is pivoting to a trading journal where you'll log your daily trades. This page is a placeholder during the pivot — the main table and the « Add » button will be built in upcoming sessions. See the roadmap for details."
+    "subtitle": "Log every trade with its setup, execution and review.",
+    "addTrade": "Add trade",
+    "searchPlaceholder": "Search ticker…",
+    "clearSearch": "Clear search",
+    "filters": "Filters",
+    "toggleFilters": "Show / hide filters",
+    "filterPanel": {
+      "period": "Period",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "play": "Play",
+      "pattern": "Pattern",
+      "status": "Status",
+      "statusAll": "Any status",
+      "apply": "Apply",
+      "reset": "Reset",
+      "periodPresets": {
+        "all": "All time",
+        "custom": "Custom range",
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "thisQuarter": "This quarter",
+        "lastQuarter": "Last quarter",
+        "thisYear": "This year",
+        "lastYear": "Last year"
+      }
+    },
+    "loading": "Loading journal…",
+    "empty": "No trades yet. Click « Add trade » to log your first one.",
+    "confirmDelete": "Delete the trade on {{ticker}}? This can't be undone.",
+    "errors": {
+      "load": "Couldn't load the journal. Please retry.",
+      "save": "Couldn't save the trade. Please retry.",
+      "delete": "Couldn't delete the trade. Please retry."
+    },
+    "fields": {
+      "tradeDate": "Date",
+      "ticker": "Ticker",
+      "play": "Play",
+      "pattern": "Pattern",
+      "size": "Size (shares)",
+      "openPrice": "Open price",
+      "exitPrice": "Exit price",
+      "profitDollars": "Profit ($)",
+      "gainPercent": "Gain (%)",
+      "note": "Notes",
+      "pre935To10h": "9h35 → 10h",
+      "preGapUp50": "Gap up 50 %",
+      "prePrice1To10": "Price $1 → $10",
+      "preFloat3To50m": "Float 3M → 50M",
+      "preWaitPush": "Wait for the push",
+      "openSide": "Open on",
+      "shortOnResistance": "Short on resistance",
+      "exitStrategy": "Exit strategy",
+      "errorNote": "Mistake / lesson"
+    },
+    "enums": {
+      "openSide": {
+        "FRONT": "Front side",
+        "BACK": "Back side"
+      },
+      "exitStrategy": {
+        "SWING_20": "Swing 20 %",
+        "EOD": "End of day"
+      },
+      "status": {
+        "OPEN": "Open",
+        "CLOSED": "Closed",
+        "PROFITABLE": "Profitable",
+        "LOSING": "Losing"
+      }
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "createTitle": "Log a trade",
+      "editTitle": "Edit trade",
+      "save": "Save",
+      "cancel": "Cancel",
+      "sections": {
+        "execution": "Execution",
+        "exit": "Exit",
+        "preparation": "Preparation checklist"
+      }
+    }
   },
   "header": {
     "settings": "Settings",

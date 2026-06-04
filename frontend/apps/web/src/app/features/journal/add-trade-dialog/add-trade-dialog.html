@@ -1,0 +1,226 @@
+<h2 mat-dialog-title>
+  {{ (isEdit() ? 'journal.dialog.editTitle' : 'journal.dialog.createTitle') | translate }}
+</h2>
+
+<!--
+  Signal Forms doesn't accept HTML validation attributes (`required`, `min`, `maxlength`,
+  `step`) on inputs that carry `[formField]` — the schema in `add-trade-dialog.ts` is the
+  single source of truth. Number `step` for UX purposes only would be allowed by Material but
+  Signal Forms flags it too ; we drop it everywhere for consistency.
+-->
+<!--
+  Signal Forms has no `<form>` directive that emits `ngSubmit` (that event lives on Reactive
+  Forms' `NgForm` / `FormGroupDirective`). Without it, clicking a `type="submit"` button — or
+  pressing Enter inside any input — fires the browser's native submit, which reloads the page.
+  We bind the native `(submit)` event and `preventDefault()` ourselves before delegating to
+  the component method.
+-->
+<form (submit)="$event.preventDefault(); submit()" class="add-trade-form">
+  <mat-dialog-content>
+    <!-- Section 1 : Execution (required fields — see schema in `add-trade-dialog.ts`) -->
+    <section class="form-section">
+      <h3>{{ 'journal.dialog.sections.execution' | translate }}</h3>
+      <div class="grid-2">
+        <!--
+          `[formField]` + `[matDatepicker]` on the same input fight over the value accessor —
+          Signal Forms binds via NG_VALUE_ACCESSOR, and `MatDatepickerInput` is itself a CVA,
+          so one of them ends up writing nulls. We skip `[formField]` and push the picked date
+          into the model imperatively via `setTradeDate` (same pattern as the number-mask
+          inputs below).
+          The whole `<mat-form-field>` is wired to `picker.open()` so clicking anywhere on the
+          field — not just the icon — opens the calendar.
+        -->
+        <mat-form-field
+          appearance="outline"
+          class="date-field"
+          (click)="picker.open()"
+        >
+          <mat-label>{{ 'journal.fields.tradeDate' | translate }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            [value]="model().tradeDate"
+            (dateChange)="setTradeDate($event.value)"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" />
+          <mat-datepicker #picker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.ticker' | translate }}</mat-label>
+          <input matInput [formField]="tradeForm.ticker" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.play' | translate }}</mat-label>
+          <mat-select [formField]="tradeForm.play">
+            @for (p of plays; track p) {
+              <mat-option [value]="p">{{ p }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.pattern' | translate }}</mat-label>
+          <mat-select [formField]="tradeForm.pattern">
+            @for (p of patterns; track p) {
+              <mat-option [value]="p">{{ p }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.size' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="0"
+            [min]="1"
+            [value]="model().size"
+            (numberChange)="setSize($event)"
+            inputmode="numeric"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.openPrice' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().openPrice"
+            (numberChange)="setOpenPrice($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>$</span>
+        </mat-form-field>
+      </div>
+    </section>
+
+    <mat-divider />
+
+    <!-- Section 2 : Exit (optional until the position is closed) -->
+    <section class="form-section">
+      <h3>{{ 'journal.dialog.sections.exit' | translate }}</h3>
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.exitPrice' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().exitPrice"
+            (numberChange)="setExitPrice($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>$</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.profitDollars' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [allowNegative]="true"
+            [value]="model().profitDollars"
+            (numberChange)="setProfitDollars($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>$</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.gainPercent' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [allowNegative]="true"
+            [value]="model().gainPercent"
+            (numberChange)="setGainPercent($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>%</span>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'journal.fields.note' | translate }}</mat-label>
+        <textarea matInput [formField]="tradeForm.note" rows="2"></textarea>
+      </mat-form-field>
+    </section>
+
+    <mat-divider />
+
+    <!-- Section 3 : Preparation checklist -->
+    <section class="form-section">
+      <h3>{{ 'journal.dialog.sections.preparation' | translate }}</h3>
+      <div class="checklist">
+        <mat-checkbox [formField]="tradeForm.pre935To10h">
+          {{ 'journal.fields.pre935To10h' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="tradeForm.preGapUp50">
+          {{ 'journal.fields.preGapUp50' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="tradeForm.prePrice1To10">
+          {{ 'journal.fields.prePrice1To10' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="tradeForm.preFloat3To50m">
+          {{ 'journal.fields.preFloat3To50m' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="tradeForm.preWaitPush">
+          {{ 'journal.fields.preWaitPush' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="tradeForm.shortOnResistance">
+          {{ 'journal.fields.shortOnResistance' | translate }}
+        </mat-checkbox>
+      </div>
+
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.openSide' | translate }}</mat-label>
+          <mat-select [formField]="tradeForm.openSide">
+            <mat-option [value]="null">—</mat-option>
+            @for (s of openSides; track s) {
+              <mat-option [value]="s">{{ 'journal.enums.openSide.' + s | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.exitStrategy' | translate }}</mat-label>
+          <mat-select [formField]="tradeForm.exitStrategy">
+            <mat-option [value]="null">—</mat-option>
+            @for (e of exitStrategies; track e) {
+              <mat-option [value]="e">
+                {{ 'journal.enums.exitStrategy.' + e | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'journal.fields.errorNote' | translate }}</mat-label>
+        <textarea matInput [formField]="tradeForm.errorNote" rows="2"></textarea>
+      </mat-form-field>
+    </section>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancel()" [disabled]="submitting()">
+      {{ 'journal.dialog.cancel' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      @if (submitting()) {
+        <mat-spinner diameter="16" />
+      } @else {
+        <mat-icon>save</mat-icon>
+      }
+      <span>{{ 'journal.dialog.save' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

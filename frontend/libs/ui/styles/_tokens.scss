@@ -15,10 +15,13 @@
 // Violet accent stays in both (user choice).
 
 :root {
-  // Surfaces — canvas-inset (page chrome) < canvas-default (main) < canvas-subtle (elevated)
-  --color-bg: #1c2128;
-  --color-surface: #22272e;
-  --color-surface-2: #2d333b;
+  // Surfaces — GH dimmed pattern : main reading area on `canvas-default` (#22272e), elevated
+  // cards / sidenav on `canvas-subtle` (#2d333b), insets / deepest chrome on `canvas-inset`
+  // (#1c2128). The previous mapping had `--color-bg` on `canvas-inset` which made the content
+  // area read as the darkest tone — too dark for long reading sessions.
+  --color-bg: #22272e;
+  --color-surface: #2d333b;
+  --color-surface-2: #373e47;
   --color-surface-3: #1c2128;
 
   // Borders — three steps. `-soft` for subtle dividers (table rows), default for cards /

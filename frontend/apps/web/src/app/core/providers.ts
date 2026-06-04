@@ -28,6 +28,8 @@ import { NarrativeBiasRepository } from './api/analysis/narrative-bias.repositor
 import { HttpNarrativeBiasRepository } from './api/analysis/adapters/narrative-bias.http';
 import { AuthRepository } from './api/auth/auth.repository';
 import { HttpAuthRepository } from './api/auth/adapters/auth.http';
+import { JournalRepository } from './api/journal/journal.repository';
+import { HttpJournalRepository } from './api/journal/adapters/journal.http';
 import { ScreenerRepository } from './api/screener/screener.repository';
 import { HttpScreenerRepository } from './api/screener/adapters/screener.http';
 import { AnnotationRepository } from './local/annotation/annotation.repository';
@@ -62,5 +64,6 @@ export function provideRepositories(): EnvironmentProviders {
     },
     { provide: NarrativeBiasRepository, useClass: HttpNarrativeBiasRepository },
     { provide: AuthRepository, useClass: HttpAuthRepository },
+    { provide: JournalRepository, useClass: HttpJournalRepository },
   ]);
 }

@@ -1,0 +1,319 @@
+<mat-sidenav-container class="journal-shell" autosize>
+  <mat-sidenav-content>
+    <div class="journal-page">
+      <header class="content-header">
+        <div class="header-row">
+          <div>
+            <h2>{{ 'journal.title' | translate }}</h2>
+            <p>{{ 'journal.subtitle' | translate }}</p>
+          </div>
+          <div class="header-actions">
+            <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                type="text"
+                [value]="searchValue()"
+                (input)="onSearchInput($any($event.target).value)"
+                [placeholder]="'journal.searchPlaceholder' | translate"
+              />
+              @if (searchValue()) {
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="clearSearch()"
+                  [matTooltip]="'journal.clearSearch' | translate"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </mat-form-field>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="toggleDrawer()"
+              [matTooltip]="'journal.toggleFilters' | translate"
+            >
+              <mat-icon>filter_list</mat-icon>
+              <span>{{ 'journal.filters' | translate }}</span>
+              @if (activeFilterCount() > 0) {
+                <span class="filter-count">{{ activeFilterCount() }}</span>
+              }
+            </button>
+            <button mat-flat-button type="button" (click)="openCreate()">
+              <mat-icon>add</mat-icon>
+              <span>{{ 'journal.addTrade' | translate }}</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      @if (error(); as msg) {
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ msg }}</span>
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="20" />
+          <span>{{ 'journal.loading' | translate }}</span>
+        </div>
+      } @else if (sortedEntries().length === 0) {
+        <div class="empty-state">
+          <mat-icon>book</mat-icon>
+          <p>{{ 'journal.empty' | translate }}</p>
+        </div>
+      } @else {
+        <div class="table-wrapper">
+          <table
+            mat-table
+            [dataSource]="sortedEntries()"
+            matSort
+            (matSortChange)="onSortChange($event)"
+          >
+            <ng-container matColumnDef="tradeDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeDate">
+                {{ 'journal.fields.tradeDate' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e">{{ e.tradeDate | date: 'mediumDate' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="ticker">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="ticker">
+                {{ 'journal.fields.ticker' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" class="mono">{{ e.ticker }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="play">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="play">
+                {{ 'journal.fields.play' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e">{{ e.play }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="pattern">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="pattern">
+                {{ 'journal.fields.pattern' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e">{{ e.pattern }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="size">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="size" class="numeric">
+                {{ 'journal.fields.size' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" class="numeric">{{ e.size }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="openPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="openPrice" class="numeric">
+                {{ 'journal.fields.openPrice' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" class="numeric">
+                {{ e.openPrice | number: '1.2-4' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="exitPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="exitPrice" class="numeric">
+                {{ 'journal.fields.exitPrice' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" class="numeric">
+                {{ e.exitPrice !== null ? (e.exitPrice | number: '1.2-4') : '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="profitDollars">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="profitDollars"
+                class="numeric"
+              >
+                {{ 'journal.fields.profitDollars' | translate }}
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let e"
+                class="numeric"
+                [class]="profitClass(e.profitDollars)"
+              >
+                {{ e.profitDollars !== null ? (e.profitDollars | number: '1.2-2') : '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="gainPercent">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="gainPercent" class="numeric">
+                {{ 'journal.fields.gainPercent' | translate }}
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let e"
+                class="numeric"
+                [class]="profitClass(e.gainPercent)"
+              >
+                {{ e.gainPercent !== null ? (e.gainPercent | number: '1.2-2') + ' %' : '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="actions-col"></th>
+              <td mat-cell *matCellDef="let e" class="actions-col">
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="openEdit(e)"
+                  [matTooltip]="'journal.actions.edit' | translate"
+                  aria-label="Edit"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="delete(e)"
+                  [matTooltip]="'journal.actions.delete' | translate"
+                  aria-label="Delete"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns"></tr>
+          </table>
+        </div>
+      }
+    </div>
+  </mat-sidenav-content>
+
+  <!-- Filter drawer — right-side sidenav, mode="over" so it floats above content. Closed by
+       default ; toggled via the « Filters » button in the page header. -->
+  <mat-sidenav #filterDrawer position="end" mode="over" class="filter-drawer">
+    <div class="filter-drawer-content">
+      <header class="filter-header">
+        <h3>{{ 'journal.filters' | translate }}</h3>
+        <button mat-icon-button type="button" (click)="toggleDrawer()" aria-label="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <mat-divider />
+
+      <section class="filter-section">
+        <h4>{{ 'journal.filterPanel.period' | translate }}</h4>
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <mat-select
+            [value]="filterModel().period"
+            (selectionChange)="onPeriodChange($event.value)"
+          >
+            @for (p of periods; track p) {
+              <mat-option [value]="p">
+                {{ 'journal.filterPanel.periodPresets.' + p | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="date-range">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'journal.filterPanel.dateFrom' | translate }}</mat-label>
+            <input
+              matInput
+              [matDatepicker]="fromPicker"
+              [value]="filterModel().dateFrom"
+              (dateChange)="setDateFrom($event.value)"
+            />
+            <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+            <mat-datepicker #fromPicker />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'journal.filterPanel.dateTo' | translate }}</mat-label>
+            <input
+              matInput
+              [matDatepicker]="toPicker"
+              [value]="filterModel().dateTo"
+              (dateChange)="setDateTo($event.value)"
+            />
+            <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+            <mat-datepicker #toPicker />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="filter-section">
+        <h4>{{ 'journal.filterPanel.play' | translate }}</h4>
+        <div class="chip-row">
+          @for (p of plays; track p) {
+            <button
+              mat-stroked-button
+              type="button"
+              [class.chip-active]="filterModel().plays.includes(p)"
+              (click)="togglePlay(p, !filterModel().plays.includes(p))"
+            >
+              {{ p }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="filter-section">
+        <h4>{{ 'journal.filterPanel.pattern' | translate }}</h4>
+        <div class="chip-row">
+          @for (p of patterns; track p) {
+            <button
+              mat-stroked-button
+              type="button"
+              [class.chip-active]="filterModel().patterns.includes(p)"
+              (click)="togglePattern(p, !filterModel().patterns.includes(p))"
+            >
+              {{ p }}
+            </button>
+          }
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="filter-section">
+        <h4>{{ 'journal.filterPanel.status' | translate }}</h4>
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <mat-select
+            [value]="filterModel().status"
+            (selectionChange)="setStatus($event.value)"
+          >
+            <mat-option [value]="null">
+              {{ 'journal.filterPanel.statusAll' | translate }}
+            </mat-option>
+            @for (s of statuses; track s) {
+              <mat-option [value]="s">
+                {{ 'journal.enums.status.' + s | translate }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </section>
+
+      <mat-divider />
+
+      <footer class="filter-actions">
+        <button mat-stroked-button type="button" (click)="resetFilters()">
+          {{ 'journal.filterPanel.reset' | translate }}
+        </button>
+        <button mat-flat-button type="button" (click)="applyFilters()">
+          {{ 'journal.filterPanel.apply' | translate }}
+        </button>
+      </footer>
+    </div>
+  </mat-sidenav>
+</mat-sidenav-container>
