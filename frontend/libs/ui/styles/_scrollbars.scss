@@ -1,0 +1,37 @@
+// Thin scrollbar that adopts the theme colours.
+// Webkit (Chrome / Safari / Edge / Chromium) reads `::-webkit-scrollbar*`; Firefox uses the
+// standard `scrollbar-color` / `scrollbar-width`. The universal rule is cheap — these props
+// don't trigger reflow.
+
+@use 'sizes' as s;
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: s.$space-sm;
+  height: s.$space-sm;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+  border: s.$space-hairline solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dim);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

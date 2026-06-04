@@ -42,6 +42,7 @@ postgres_port = env.get("POSTGRES_HOST_PORT", "5432")
 ollama_port = env.get("OLLAMA_HOST_PORT", "11434")
 backend_port = env.get("BACKEND_HOST_PORT", "8080")
 frontend_port = env.get("FRONTEND_HOST_PORT", "4200")
+storybook_port = env.get("STORYBOOK_HOST_PORT", "6006")
 
 # ────────────────────────────────────────────────
 # Infra — services Docker (PostgreSQL, Ollama)
@@ -160,7 +161,8 @@ local_resource(
     name = "frontend",
     serve_cmd = frontend_cmd,
     deps = [
-        "frontend/src",
+        "frontend/apps/web/src",
+        "frontend/libs/ui/src",
         "frontend/angular.json",
         "frontend/package.json",
         # `proxy.conf.js` n'est lu que par `ng serve` au démarrage — pas de hot-reload natif.
@@ -169,13 +171,33 @@ local_resource(
         # Tilt indique « no changes », et on reste avec la vieille config (e.g. les routes
         # `/oauth2/**`, `/logout`, `/login/oauth2/**` ou le flag `xfwd: true` ajoutés en Phase 4
         # auraient été ignorés sans ce deps).
-        "frontend/proxy.conf.js",
+        "frontend/apps/web/proxy.conf.js",
     ],
     labels = ["app"],
     links = [link("http://{}:{}".format(host, frontend_port), "App")],
 )
 
+# Storybook — sert la lib `@portfolioai/ui` en isolation. Ressource désactivée au boot
+# (`auto_init=False`) parce que Storybook met ~10 s à démarrer et qu'on ne s'en sert pas à
+# chaque session : déclenche-la manuellement depuis l'UI Tilt quand tu travailles sur la lib
+# (bouton « play » sur le panel `storybook`). HMR géré par Storybook directement, donc pas de
+# `deps` qui forceraient Tilt à relancer le serveur sur chaque story édit.
+storybook_cmd = """cd frontend && \\
+  export NVM_DIR=\"$HOME/.nvm\" ; \\
+  if [ -s \"$NVM_DIR/nvm.sh\" ]; then . \"$NVM_DIR/nvm.sh\" --no-use ; nvm use >/dev/null ; fi ; \\
+  npm run storybook -- --host 0.0.0.0 --port {} --no-open""".format(storybook_port)
+
+local_resource(
+    name = "storybook",
+    serve_cmd = storybook_cmd,
+    auto_init = False,
+    trigger_mode = TRIGGER_MODE_MANUAL,
+    labels = ["app"],
+    links = [link("http://{}:{}".format(host, storybook_port), "Storybook")],
+)
+
 # Affichage des liens utiles
-print("Frontend : http://{}:{}".format(host, frontend_port))
-print("Backend  : http://{}:{}".format(host, backend_port))
-print("Health   : http://{}:{}/actuator/health".format(host, backend_port))
+print("Frontend  : http://{}:{}".format(host, frontend_port))
+print("Storybook : http://{}:{} (manual start)".format(host, storybook_port))
+print("Backend   : http://{}:{}".format(host, backend_port))
+print("Health    : http://{}:{}/actuator/health".format(host, backend_port))

@@ -79,12 +79,12 @@ jobs:
       # `coverage/frontend/`), pas directement à la racine `coverage/`. Pure Node (déjà
       # installé via setup-node ci-dessus), pas d'action externe.
       - name: Coverage summary
-        if: always() && hashFiles('frontend/coverage/frontend/coverage-summary.json') != ''
+        if: always() && hashFiles('frontend/coverage/web/coverage-summary.json') != ''
         run: |
           node <<'JS' >> "$GITHUB_STEP_SUMMARY"
           const fs = require('fs');
           const data = JSON.parse(
-            fs.readFileSync('frontend/coverage/frontend/coverage-summary.json', 'utf8'),
+            fs.readFileSync('frontend/coverage/web/coverage-summary.json', 'utf8'),
           );
           const total = data.total || {};
           console.log('## Frontend coverage');
@@ -109,9 +109,9 @@ jobs:
         if: |
           always()
           && github.event_name == 'pull_request'
-          && hashFiles('frontend/coverage/frontend/coverage-summary.json') != ''
+          && hashFiles('frontend/coverage/web/coverage-summary.json') != ''
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           name: Frontend
-          json-summary-path: frontend/coverage/frontend/coverage-summary.json
-          json-final-path: frontend/coverage/frontend/coverage-final.json
+          json-summary-path: frontend/coverage/web/coverage-summary.json
+          json-final-path: frontend/coverage/web/coverage-final.json

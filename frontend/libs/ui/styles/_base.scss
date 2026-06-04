@@ -1,0 +1,72 @@
+// Base resets — box-sizing, body font, smooth theme transitions, sticky toolbar.
+
+@use 'sizes' as s;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: var(--font-family);
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  // Tabular numerals globally — keeps prices, P/L, percentages aligned in tables without
+  // forcing `font-variant-numeric` on every cell. Inter ships this feature natively.
+  font-variant-numeric: tabular-nums;
+  // Sharper rendering on macOS / iOS WebKit — small but visible win on dark theme.
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Headers tighten a touch (Linear / Vercel direction) — slightly negative tracking reads as
+// more "designed" than Material's default. Applied at the global level so any feature picks
+// it up by default ; component SCSS can opt out by re-setting `letter-spacing`.
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.01em;
+}
+
+// Smooth fade across surfaces / borders when the theme toggles. Element-level
+// transitions on `background` / `border` shorthand still win for hover states
+// because the shorthand replaces this rule entirely on those elements.
+* {
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+
+// Form controls don't inherit font-family by default in all browsers.
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+.mat-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  // Subtle bottom border so the toolbar separates from the content area regardless of theme.
+  // Without it the white-on-white light theme had no visible boundary between header and body.
+  border-bottom: s.$border-width solid var(--color-border);
+  // Force the toolbar onto our `--color-bg` instead of Material 3's `--mat-sys-surface`, which
+  // is derived from the violet primary palette and carries a faint lavender tint in light mode.
+  --mat-toolbar-container-background-color: var(--color-bg);
+  --mat-toolbar-container-text-color: var(--color-text);
+}
+
+// Same dance for the sidenav content panel — Material 3 derives its bg from the primary palette
+// which leaks a violet tint into the main content area on light theme.
+.mat-drawer-content {
+  --mat-sidenav-content-background-color: var(--color-bg);
+  --mat-sidenav-content-text-color: var(--color-text);
+}

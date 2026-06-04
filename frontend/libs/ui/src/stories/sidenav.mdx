@@ -1,0 +1,100 @@
+import { Canvas, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as SidenavStories from './sidenav.stories';
+
+<Meta of={SidenavStories} />
+
+# Shell — sidenav
+
+The app shell layout (toolbar on top, sidenav on the left, content on the right) is owned by `libs/ui/styles/_shell.scss`. Consumers wire it via three class names on Material's regular components — no `Ui*` wrapper needed.
+
+## How to use
+
+1. Import `MatSidenavModule` (+ `MatListModule` / `MatToolbarModule` if you use them on the same page) in the component.
+2. Apply the lib's class names :
+
+<Source
+  language="html"
+  code={`<mat-sidenav-container class="ui-shell">
+  <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
+    <mat-nav-list class="sidenav-list">
+      <a
+        mat-list-item
+        routerLink="/journal"
+        routerLinkActive="sidenav-active"
+      >
+        <mat-icon matListItemIcon>book</mat-icon>
+        <span matListItemTitle>Journal</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <main class="app-content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>`}
+/>
+
+## Class cheat-sheet
+
+<Markdown>
+{`
+| Class             | Element                          | Role                                                  |
+| ----------------- | -------------------------------- | ----------------------------------------------------- |
+| \`ui-shell\`        | \`<mat-sidenav-container>\`        | Sizes the container to the viewport minus the toolbar.|
+| \`ui-sidenav\`      | \`<mat-sidenav>\`                  | 240 px wide, \`--color-surface\` bg, strong right border.|
+| \`sidenav-list\`    | \`<mat-nav-list>\`                 | Padding-top + scope for the active modifier.          |
+| \`sidenav-active\`  | (toggled on the active \`<a>\`)    | Soft accent background + accent-strong text.          |
+`}
+</Markdown>
+
+## Material's specificity trap — why this looks the way it does
+
+A bare `border-right` / `background` rule on `.ui-sidenav` doesn't survive the runtime. Material's `<mat-sidenav>` component injects its own CSS **after** the global stylesheet ; `.mat-drawer-side` ends up with the same selector specificity as `.ui-sidenav` and Material wins on source order — the border disappears as soon as Angular bootstraps.
+
+The supported escape hatch is to set Material's own theming tokens on the element. The internal rules then read **our** values without us fighting the cascade :
+
+<Source
+  language="scss"
+  code={`.ui-sidenav {
+  width: 240px;
+  --mat-sidenav-container-background-color: var(--color-surface);
+  --mat-sidenav-container-divider-color: var(--color-border-strong);
+  --mat-sidenav-container-shape: 0;
+}`}
+/>
+
+The third token, `--mat-sidenav-container-shape`, flattens the right-side corners — Material 3 defaults to `--mat-sys-corner-large` (16 px) which gave the sidenav rounded edges against the content area.
+
+## Tokens consumed
+
+<Markdown>
+{`
+| Material token                              | Resolves to                  |
+| ------------------------------------------- | ---------------------------- |
+| \`--mat-sidenav-container-background-color\`  | \`var(--color-surface)\`       |
+| \`--mat-sidenav-container-divider-color\`     | \`var(--color-border-strong)\` |
+| \`--mat-sidenav-container-shape\`             | \`0\` (flat right edge)        |
+| \`--mat-sidenav-content-background-color\`    | \`var(--color-bg)\` *(set in \`_base.scss\` on \`.mat-drawer-content\`)* |
+`}
+</Markdown>
+
+The last one is the **content panel** background — Material 3 derives its default from the violet primary palette which leaks a faint lavender tint in light mode. We override on `.mat-drawer-content` in `_base.scss` to pin it to our neutral `--color-bg`.
+
+## Full shell — dark
+
+<Canvas of={SidenavStories.Dark} />
+
+## Full shell — light
+
+<Canvas of={SidenavStories.Light} />
+
+## Dark vs Light side-by-side
+
+<Canvas of={SidenavStories.BothThemes} />
+
+## Sidenav only (no toolbar / content)
+
+Focused view to inspect the nav-list active pill, item spacing, and the right border in isolation.
+
+<Canvas of={SidenavStories.SidenavOnly} />

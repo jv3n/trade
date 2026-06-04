@@ -1,0 +1,101 @@
+// Inline badges — small pills used in tables and headers to flag a confidence level,
+// recommendation, status, or asset type.
+
+.confidence-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+
+  &.high {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+  }
+  &.medium {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+  }
+  &.low {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+}
+
+.action-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+
+  &.action-buy {
+    background: var(--color-action-buy-bg);
+    color: var(--color-action-buy);
+  }
+  &.action-sell {
+    background: var(--color-action-sell-bg);
+    color: var(--color-action-sell);
+  }
+  &.action-hold {
+    background: var(--color-action-hold-bg);
+    color: var(--color-action-hold);
+  }
+  &.action-reduce {
+    background: var(--color-action-reduce-bg);
+    color: var(--color-action-reduce);
+  }
+}
+
+.status-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+
+  &.status-pending {
+    background: var(--color-info-soft);
+    color: var(--color-info);
+  }
+  &.status-applied {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+  }
+  &.status-ignored {
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+  }
+  &.status-evaluated {
+    background: var(--color-purple-soft);
+    color: var(--color-purple);
+  }
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.type-stock {
+    background: var(--color-info-soft);
+    color: var(--color-info);
+  }
+  &.type-etf {
+    background: var(--color-success-soft);
+    color: var(--color-success);
+  }
+  &.type-crypto {
+    background: var(--color-orange-soft);
+    color: var(--color-orange);
+  }
+  &.type-bond {
+    background: var(--color-warning-soft);
+    color: var(--color-warning);
+  }
+  &.type-commodity {
+    background: var(--color-purple-soft);
+    color: var(--color-purple);
+  }
+}

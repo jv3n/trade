@@ -1,0 +1,41 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# @portfolioai/ui
+
+CSS-first design system for the PortfolioAI app. The lib ships a Material theme override + design tokens + shared component patterns through SCSS partials. **No TypeScript wrappers** — touch the SCSS, all `<button mat-*>` / `<mat-card>` / etc. in the consumer app reflect the change on the next reload.
+
+## How to consume the lib
+
+Once, in the consumer app's global stylesheet (`apps/web/src/styles.scss`) :
+
+```scss
+@use '../../../libs/ui/styles';
+```
+
+That single import wires :
+
+- Material theme (`@angular/material` + violet primary + cyan tertiary, dark default with `[data-theme='light']` override)
+- CSS custom properties for colours / radii / shadows / typography (`--color-*`, `--radius`, `--shadow`, `--font-family`)
+- Base resets (`*`, `body`, smooth theme-transition, custom scrollbars)
+- Shell layout helpers (`.ui-shell`, `.ui-sidenav`, `.sidenav-list`)
+- Component patterns (`.error-banner`, `.warn-banner`, `.info-banner`, `.loading-state`, `.empty-state`, `.content-header`, `.config-card`, `.confidence-badge`, `.action-badge`, `.status-badge`, `.type-badge`)
+- Material component overrides for buttons + autocomplete
+
+## Browse the lib
+
+- **Design tokens / Palette** — every `--color-*` token side-by-side in dark + light. Edit `libs/ui/styles/_tokens.scss` to iterate.
+- **Buttons / Material** — variants of `<button mat-button>` / `mat-flat-button` / `mat-stroked-button` / `mat-icon-button`. Restyled via `--mdc-*-button` token overrides in `_buttons.scss`.
+
+## Adding a new shared pattern
+
+1. Pick the right partial in `libs/ui/styles/` :
+   - Global rule (touches every page) → top-level partial (`_base.scss`, `_scrollbars.scss`, `_shell.scss`)
+   - Reusable UI fragment → `components/_<name>.scss`
+2. Wire the new partial into `libs/ui/styles/index.scss` via `@forward`.
+3. Add a `*.stories.ts` + `*.mdx` companion under `libs/ui/src/stories/` so contributors can preview + read the contract.
+
+## Adding a typed component
+
+Only when CSS alone isn't enough (composite slots, signal inputs/outputs, focus management). Drop the component under `libs/ui/src/lib/<name>/`, re-export from `public-api.ts`, selector prefix `ui` (enforced by ESLint).

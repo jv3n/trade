@@ -1,0 +1,5 @@
+// All global styles live in the `@portfolioai/ui` lib — theme, tokens, base, scrollbars,
+// shared component patterns (banners, badges), button design. Adding a new global rule means
+// editing `libs/ui/styles/` and (if needed) `libs/ui/styles/index.scss` to wire the new
+// partial in.
+@use '../../../libs/ui/styles';

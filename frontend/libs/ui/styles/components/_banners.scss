@@ -1,0 +1,157 @@
+// Shared structural components — usable from any feature via global classes.
+
+.content-header {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+
+  h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem;
+    color: var(--color-text);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-dim);
+  }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-danger-soft);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  color: var(--color-danger);
+  margin-bottom: 1rem;
+
+  mat-icon {
+    font-size: 1rem;
+    height: 1rem;
+    width: 1rem;
+  }
+}
+
+// Soft variant of `.error-banner` for "info, not error" cases — opt-in features (e.g. benchmark
+// overlay) that fail to load without breaking the rest of the dossier. Same layout, info-blue
+// colours instead of danger-red.
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-info-soft);
+  border: 1px solid var(--color-info);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  color: var(--color-info);
+  margin-bottom: 1rem;
+
+  mat-icon {
+    font-size: 1rem;
+    height: 1rem;
+    width: 1rem;
+    flex-shrink: 0;
+  }
+}
+
+// Warning banner — for advisory notes the user should acknowledge before acting (e.g.
+// "Open mode is enabled, admins are auto-included"). Same shape as `.info-banner` / `.error-banner`,
+// warning-yellow palette.
+.warn-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-warning-soft);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  font-size: 0.85rem;
+  color: var(--color-warning);
+  margin-bottom: 1rem;
+
+  mat-icon {
+    font-size: 1rem;
+    height: 1rem;
+    width: 1rem;
+    flex-shrink: 0;
+  }
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 0;
+  color: var(--color-text-dim);
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--color-text-faint);
+
+  mat-icon {
+    font-size: 2.5rem;
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+// Generic settings-style card (background + border + radius + padding + bottom margin).
+// Defined globally because it is consumed both by the `Configuration` page directly and by
+// child components rendered inside it (e.g. `OllamaStatusPanel`). Angular's emulated view
+// encapsulation prevents a child component from picking up a class defined in its parent's
+// SCSS, so this used to break silently when a child element opted into `.config-card`.
+.config-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1rem;
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+
+    h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--color-text);
+      flex: 1;
+    }
+  }
+
+  .description {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin: 0 0 0.9rem;
+
+    a {
+      color: var(--color-accent);
+      text-decoration: underline;
+
+      &:hover {
+        opacity: 0.85;
+      }
+    }
+  }
+}

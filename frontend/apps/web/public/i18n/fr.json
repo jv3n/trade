@@ -1,0 +1,882 @@
+{
+  "common": {
+    "loading": "Chargement…",
+    "loadingDots": "Chargement...",
+    "cancel": "Annuler",
+    "retry": "Réessayer",
+    "noData": "—",
+    "errorIcon": "error_outline",
+    "instrumentLabel": {
+      "STOCK": "Action",
+      "ETF": "ETF",
+      "INDEX": "Indice",
+      "OTHER": "Autre",
+      "CRYPTO": "Crypto",
+      "BOND": "Obligation",
+      "COMMODITY": "Matière première"
+    }
+  },
+  "nav": {
+    "journal": "Journal",
+    "dashboard": "Dashboard",
+    "import": "Import",
+    "suivi": "Suivi",
+    "radar": "Radar",
+    "observability": "Observabilité",
+    "collapse": "Réduire la sidebar",
+    "expand": "Déployer la sidebar"
+  },
+  "journal": {
+    "title": "Journal de trading",
+    "subtitle": "v1.0 — en construction",
+    "placeholderBody": "L'app pivote vers un journal de trading où tu enregistreras tes trades du jour. Cette page sert de placeholder pendant le pivot — la table principale + le bouton « Ajouter » seront construits dans les prochaines sessions. Voir la roadmap pour le détail."
+  },
+  "header": {
+    "settings": "Paramètres",
+    "userMenu": "Mon compte"
+  },
+  "auth": {
+    "login": {
+      "title": "PortfolioAI",
+      "tagline": "L'analyse de marché qui se lit comme une histoire, pas comme un signal d'achat.",
+      "signInWithGoogle": "Se connecter avec Google",
+      "disclaimer": "⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.",
+      "features": {
+        "indicators": {
+          "title": "Indicateurs calculés",
+          "description": "RSI, momentum, moyennes mobiles, drawdown — chiffrés côté serveur, jamais hallucinés par l'IA."
+        },
+        "narrative": {
+          "title": "Narration IA",
+          "description": "Un texte court qui digère les indicateurs et le contexte récent. L'IA écrit, elle ne décide pas."
+        },
+        "portfolio": {
+          "title": "Portefeuille connecté",
+          "description": "Import CSV Wealthsimple, snapshots historiques, lectures cross-position."
+        }
+      }
+    },
+    "signOut": "Se déconnecter",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "Utilisateur"
+    },
+    "errors": {
+      "notAuthorized": "Ce compte n'est pas autorisé à accéder à PortfolioAI. Contacte l'administrateur si tu penses qu'il s'agit d'une erreur.",
+      "oauthFailed": "La connexion Google a échoué. Réessaie ou contacte l'administrateur si le problème persiste."
+    }
+  },
+  "error": {
+    "title": "Une erreur est survenue",
+    "subtitle": "Le backend a renvoyé une réponse inattendue. Tu peux te déconnecter pour repartir d'un état propre, ou revenir à la page de connexion pour réessayer.",
+    "details": "Détails techniques",
+    "status": "Statut HTTP",
+    "url": "URL appelée",
+    "lastAuthError": "Dernière erreur d'authentification",
+    "signOutAndRetry": "Se déconnecter et réessayer",
+    "backToLogin": "Retour à la connexion"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English"
+  },
+  "sentiment": {
+    "BULLISH": "BULLISH",
+    "NEUTRAL": "NEUTRAL",
+    "BEARISH": "BEARISH"
+  },
+  "categories": {
+    "RSS": "Presse & Flux RSS",
+    "MARKET": "Données de marché",
+    "MACRO": "Indicateurs macro-économiques",
+    "CRYPTO": "Crypto"
+  },
+  "statuses": {
+    "all": "Toutes",
+    "PENDING": "En attente",
+    "APPLIED": "Appliquée",
+    "IGNORED": "Ignorée",
+    "EVALUATED": "Évaluée",
+    "PENDING_PLURAL": "En attente",
+    "APPLIED_PLURAL": "Appliquées",
+    "IGNORED_PLURAL": "Ignorées",
+    "EVALUATED_PLURAL": "Évaluées"
+  },
+  "dashboard": {
+    "title": "PortfolioAI",
+    "disclaimer": "⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.",
+    "portfolios": "Portefeuilles",
+    "grandTotalLabel": "Total agrégé",
+    "assetCount": "{{count}} actif(s)",
+    "totalLabel": "Valeur comptable totale (CAD)",
+    "noPortfolios": "Importez un CSV pour créer vos portefeuilles.",
+    "reorderPortfolio": "Glisser pour réordonner",
+    "noAssets": "Aucune position — importez un CSV pour peupler ce portefeuille.",
+    "ownedTickersLabel": "Tickers détenus",
+    "ownedTickersTooltip": "Voir le dossier {{symbol}} (présent dans {{count}} portefeuille(s))",
+    "watchlist": {
+      "label": "Watchlist",
+      "placeholder": "Rechercher un ticker (ex : NVDA, Apple…)",
+      "addTooltip": "Ajouter à la watchlist",
+      "removeTooltip": "Retirer {{symbol}} de la watchlist",
+      "empty": "Aucun ticker suivi pour l'instant.",
+      "errors": {
+        "add": "Impossible d'ajouter ce ticker.",
+        "invalid": "Ticker non reconnu par le fournisseur de marché. Sélectionne une suggestion.",
+        "remove": "Impossible de retirer ce ticker."
+      }
+    },
+    "emptySelection": "Sélectionnez un portefeuille ou importez un CSV pour commencer.",
+    "positions": "Positions",
+    "errors": {
+      "loadPortfolios": "Erreur lors du chargement des portefeuilles",
+      "loadAssets": "Erreur lors du chargement des actifs"
+    },
+    "table": {
+      "ticker": "Ticker",
+      "name": "Nom",
+      "type": "Type",
+      "qty": "Qté",
+      "avgPrice": "Px moyen",
+      "marketPrice": "Px marché",
+      "bookValue": "Val. comptable",
+      "marketValue": "Val. marchande",
+      "pnl": "P&L non réalisé"
+    },
+    "tooltipDossier": "Voir le dossier {{symbol}}"
+  },
+  "ticker": {
+    "back": "Retour au portefeuille",
+    "loading": "Chargement du ticker {{symbol}}…",
+    "exchange": "{{exchange}}",
+    "noChart": "Pas assez de données pour tracer la courbe.",
+    "sidenav": {
+      "title": "Outils chart",
+      "aria": "Barre latérale outils chart",
+      "collapse": "Réduire la barre latérale",
+      "expand": "Déplier la barre latérale",
+      "sections": {
+        "timeframe": "Période",
+        "benchmark": "Benchmark",
+        "overlays": "Overlays",
+        "tools": "Outils",
+        "annotations": "Annotations posées"
+      },
+      "annotations": {
+        "empty": "Aucune annotation posée pour l'instant.",
+        "deleteTooltip": "Supprimer l'annotation",
+        "deleteAria": "Supprimer l'annotation"
+      }
+    },
+    "chart": {
+      "timeframeLabel": "Plage temporelle",
+      "timeframes": {
+        "1d": "1J",
+        "5d": "5J",
+        "1mo": "1M",
+        "3mo": "3M",
+        "1y": "1A",
+        "5y": "5A"
+      },
+      "zoom": {
+        "reset": "Réinitialiser",
+        "resetTooltip": "Restaurer la plage complète (ou double-cliquer le graphique)"
+      },
+      "overlays": {
+        "label": "Overlays",
+        "ma50": "MM50",
+        "ma200": "MM200",
+        "boll": "BB",
+        "hi52w": "Plus haut 52s",
+        "lo52w": "Plus bas 52s",
+        "tooltips": {
+          "ma50": "Moyenne mobile 50 périodes",
+          "ma200": "Moyenne mobile 200 périodes",
+          "boll": "Bandes de Bollinger (MM 20 périodes ± 2σ)",
+          "hi52w": "Plus haut sur 52 semaines",
+          "lo52w": "Plus bas sur 52 semaines"
+        }
+      },
+      "annotation": {
+        "add": "+ Annotation",
+        "cancel": "Annuler",
+        "delete": "Supprimer l'annotation"
+      },
+      "measure": {
+        "delta": "Delta",
+        "clear": "Effacer le repère",
+        "clearTooltip": "Effacer le repère de mesure"
+      },
+      "brush": {
+        "label": "Navigateur de plage temporelle"
+      }
+    },
+    "benchmark": {
+      "compare": "Comparer à",
+      "label": "Benchmark",
+      "off": "Désactivé",
+      "sector": "Secteur",
+      "options": {
+        "spy": "S&P 500 (SPY)",
+        "qqq": "Nasdaq 100 (QQQ)",
+        "iwm": "Russell 2000 (IWM)",
+        "sector": "Détecter automatiquement le SPDR sectoriel pour ce ticker"
+      },
+      "custom": {
+        "placeholder": "ou choisir…",
+        "empty": "Aucun ticker correspondant"
+      },
+      "errors": {
+        "fetch": "Données du benchmark indisponibles — essayez-en un autre ou vérifiez votre plan provider.",
+        "sectorNotMapped": "Pas de benchmark sectoriel disponible pour ce ticker."
+      }
+    },
+    "indicators": {
+      "rsi": "RSI(14)",
+      "drawdown52w": "Drawdown 52w",
+      "perf1m": "Perf 1m",
+      "perf3m": "Perf 3m",
+      "perf1y": "Perf 1y",
+      "ma50": "MA50",
+      "ma200": "MA200",
+      "vsMa50": "vs MA50",
+      "vsMa200": "vs MA200",
+      "volRel30d": "Vol relatif 30j"
+    },
+    "rangeLabel": "Plage 52 semaines",
+    "errors": {
+      "missingSymbol": "Symbole manquant dans l'URL",
+      "notFound": "Ticker introuvable : {{symbol}}",
+      "rateLimit": "Données de marché momentanément indisponibles. Réessaie dans quelques minutes.",
+      "generic": "Erreur lors du chargement du ticker"
+    },
+    "narrative": {
+      "title": "Narratif IA",
+      "generate": "Générer le narratif",
+      "regenerate": "Régénérer",
+      "generating": "Génération en cours…",
+      "empty": "Pas encore de narratif pour ce ticker. Clique sur « Générer le narratif » pour qu'on rédige une lecture des indicateurs ci-dessus.",
+      "errorRequest": "Impossible de lancer la génération",
+      "errorGeneric": "Erreur lors de la génération du narratif",
+      "errorPolling": "Erreur lors du polling du job",
+      "errorReload": "Narratif généré mais impossible à recharger",
+      "phase": {
+        "LOADING_CONTEXT": "Chargement du contexte",
+        "CALLING_LLM": "Appel au LLM",
+        "RECEIVED_RAW": "Réponse reçue",
+        "PARSING": "Analyse de la réponse",
+        "VALIDATING": "Validation",
+        "RETRY_PROMPT": "Nouvelle tentative",
+        "PERSISTING": "Sauvegarde",
+        "DONE": "Terminé",
+        "ERROR": "Erreur"
+      },
+      "thumbs": {
+        "label": "Pertinent ?",
+        "up": "Narratif pertinent",
+        "down": "Narratif décevant",
+        "errorSave": "Vote non enregistré, réessaie"
+      },
+      "promptVersion": "prompt {{version}}",
+      "viewHistory": "Voir l'historique des narratifs"
+    },
+    "watchlist": {
+      "watch": "Suivre",
+      "watching": "Suivi",
+      "addAria": "Ajouter ce ticker à la watchlist",
+      "removeAria": "Retirer ce ticker de la watchlist"
+    },
+    "news": {
+      "title": "Actualité",
+      "loading": "Chargement des dépêches…",
+      "empty": "Pas d'actualité récente pour ce ticker.",
+      "noSummary": "Pas de résumé disponible — ouvrir l'article pour le contenu complet.",
+      "readFull": "Lire l'article complet"
+    },
+    "fundamentals": {
+      "title": "Fondamentaux",
+      "analyst": {
+        "title": "Recommandations analystes",
+        "loading": "Chargement des recommandations…",
+        "notCovered": "Aucun analyste ne suit ce ticker pour l'instant.",
+        "basedOn": "sur {{count}} analyste(s)",
+        "asOf": "Mise à jour :",
+        "barAria": "Répartition des recommandations analystes",
+        "consensus": {
+          "BUY": "Achat",
+          "HOLD": "Conserver",
+          "SELL": "Vente",
+          "MIXED": "Avis partagés"
+        },
+        "bucket": {
+          "strongBuy": "Achat fort",
+          "buy": "Achat",
+          "hold": "Conserver",
+          "sell": "Vente",
+          "strongSell": "Vente forte"
+        },
+        "tooltip": {
+          "strongBuy": "{{count}} achat fort",
+          "buy": "{{count}} achat",
+          "hold": "{{count}} conserver",
+          "sell": "{{count}} vente",
+          "strongSell": "{{count}} vente forte"
+        },
+        "trend": {
+          "up": "Tendance haussière sur 6 mois",
+          "down": "Tendance baissière sur 6 mois",
+          "flat": "Recommandations stables sur 6 mois"
+        },
+        "target": {
+          "mean": "Objectif de cours moyen",
+          "range": "Fourchette",
+          "basedOn": "Sur {{count}} analyste(s)",
+          "unavailable": "Objectif de cours temporairement indisponible."
+        }
+      },
+      "earnings": {
+        "title": "Résultats",
+        "loading": "Chargement des résultats…",
+        "notCovered": "Pas de données de résultats pour ce ticker.",
+        "next": "Prochain résultat :",
+        "today": "aujourd'hui",
+        "tomorrow": "demain",
+        "inDays": "dans {{count}} jours",
+        "daysAgo": "il y a {{count}} jours",
+        "time": {
+          "BEFORE_MARKET": "avant ouverture",
+          "AFTER_MARKET": "après clôture",
+          "UNSPECIFIED": "horaire non précisé"
+        },
+        "col": {
+          "period": "Période",
+          "estimate": "Estimé",
+          "actual": "Réel",
+          "surprise": "Surprise"
+        }
+      }
+    }
+  },
+  "import": {
+    "title": "Synchroniser depuis Wealthsimple",
+    "intro": "Importez votre export de positions CSV. Un portfolio sera créé ou mis à jour pour chaque compte, et un snapshot sera enregistré pour le suivi historique."
+  },
+  "csvImport": {
+    "dropLabel": "Synchroniser depuis un CSV Wealthsimple",
+    "or": "ou",
+    "browse": "Choisir un ou plusieurs fichiers",
+    "hint": "Export WS : Compte → Positions → ↓ Télécharger",
+    "parsing": "Analyse du fichier…",
+    "previewSummary": "{{items}} position(s) — {{accounts}} compte(s)",
+    "skippedRows": "{{count}} lignes ignorées",
+    "accountPositions": "{{count}} position(s)",
+    "table": {
+      "ticker": "Ticker",
+      "name": "Nom",
+      "qty": "Quantité",
+      "avgPrice": "Prix moy.",
+      "bookValue": "Valeur comptable"
+    },
+    "confirmSingle": "Importer {{items}} position(s) dans {{accounts}} portfolio(s)",
+    "importing": "Import en cours…",
+    "batchSummary": "{{count}} fichiers à importer",
+    "confirmBatch": "Importer {{count}} fichiers",
+    "batchProgress": "Fichier {{current}} / {{total}} — {{name}}",
+    "done": "Portefeuilles synchronisés avec succès.",
+    "counters": {
+      "closed": "{{count}} position(s) fermée(s)",
+      "reopened": "{{count}} position(s) réouverte(s)"
+    },
+    "again": "Importer un autre fichier",
+    "errors": {
+      "preview": "Impossible de lire le fichier. Vérifiez qu'il s'agit bien d'un export Wealthsimple (positions).",
+      "import": "L'import a échoué. Réessayez.",
+      "batchItem": "Échec de l'import de « {{name}} »."
+    }
+  },
+  "suivi": {
+    "title": "Suivi des portefeuilles",
+    "intro": "Historique des imports CSV — chaque import crée un snapshot daté de vos positions.",
+    "empty": "Aucun historique pour l'instant. Importez un CSV pour commencer le suivi.",
+    "batch": {
+      "accounts": "{{count}} compte(s)",
+      "totalLabel": "Total valeur comptable"
+    },
+    "snapshot": {
+      "positions": "{{count}} position(s)"
+    },
+    "positions": {
+      "ticker": "Ticker",
+      "name": "Nom",
+      "type": "Type",
+      "qty": "Qté",
+      "bookValueCad": "Val. comptable (CAD)",
+      "marketValue": "Valeur marché",
+      "pnl": "P&L"
+    },
+    "loadingPositions": "Chargement des positions…",
+    "loadError": "Impossible de charger l'historique. Réessaie."
+  },
+  "settings": {
+    "navLabel": "Configuration",
+    "backToApp": "Retour à l'app",
+    "preferences": "Préférences",
+    "opsLinks": "Liens ops",
+    "configuration": "Configuration runtime",
+    "prompts": "Prompts narratifs",
+    "accessControl": "Contrôle d'accès",
+    "preferencesPage": {
+      "title": "Préférences",
+      "description": "Thème et langue. Ces paramètres sont stockés localement dans ton navigateur.",
+      "theme": {
+        "label": "Thème",
+        "description": "Bascule toute l'application entre la palette sombre (défaut) et claire.",
+        "dark": "Sombre",
+        "light": "Clair"
+      },
+      "language": {
+        "label": "Langue",
+        "description": "Locale utilisée pour toute la copie d'interface. S'applique à la session courante et persiste dans le navigateur."
+      }
+    },
+    "opsLinksPage": {
+      "title": "Liens ops — dashboards & billing",
+      "description": "Raccourcis vers les consoles externes utilisées pour opérer l'app. Tout ouvre dans un nouvel onglet — la session en cours reste intacte.",
+      "sections": {
+        "billing": {
+          "title": "Facturation — toutes les cartes sur fichier",
+          "description": "Vue centralisée des dashboards facturation où une carte est enregistrée. À checker en routine hebdomadaire pour éviter les surprises de fin de mois."
+        },
+        "production": {
+          "title": "Production",
+          "description": "URLs de l'app live + fallback de debug."
+        },
+        "hosting": {
+          "title": "Hébergement & compute (GCP)",
+          "description": "Cloud Run, IAM, Secret Manager, Artifact Registry, OAuth, billing — projet `trade-496613`."
+        },
+        "database": {
+          "title": "Base de données (Supabase)",
+          "description": "Projet `portfolioai-prod` à Toronto (`ca-central-1`). Connection mode utilisée : Session pooler IPv4."
+        },
+        "storage": {
+          "title": "Stockage (Cloudflare R2)",
+          "description": "Bucket `portfolioai-backups` — backups Postgres weekly, rétention 30 jours."
+        },
+        "cdn": {
+          "title": "DNS & CDN (Cloudflare)",
+          "description": "Registrar `tickerstory.org`, Worker `tickerstory-proxy` (proxy custom-domain → Cloud Run), Cache Rules."
+        },
+        "observability": {
+          "title": "Observabilité",
+          "description": "GlitchTip pour les erreurs (Sentry-compatible), UptimeRobot pour la disponibilité externe."
+        },
+        "externalApis": {
+          "title": "APIs externes (clés runtime)",
+          "description": "Providers consommés via `/settings/configuration`. La rotation des clés se fait sur leur console respective."
+        },
+        "github": {
+          "title": "GitHub — `jv3n/trade`",
+          "description": "Actions, Releases, Environments, Secrets — où le pipeline de deploy s'exécute et où le repo s'audite."
+        }
+      },
+      "links": {
+        "gcpBilling": "Facturation Cloud Run + Artifact Registry + Secret Manager. Free tier durable, surveille le quota egress (1 GB/mo N. America).",
+        "supabaseBilling": "Free tier 500 MB DB + 50K MAU. Carte sur fichier pour absorber un dépassement sans coupure.",
+        "cloudflareBilling": "Carte sur fichier pour le registrar `tickerstory.org` (~$7.50/an at-cost). R2 free tier 10 GB tant qu'on reste sous.",
+        "anthropicBilling": "Pay-as-you-go sur Claude — usage tokens facturé mensuellement. À checker après une session d'analyse intensive.",
+        "tickerstoryDomain": "Domaine custom Cloudflare (Worker proxy → Cloud Run Montréal).",
+        "cloudRunDirect": "URL Cloud Run brute — sert de fallback quand on suspecte un problème côté Cloudflare.",
+        "supabaseBackups": "Snapshots Supabase natifs quotidiens — indépendants de notre backup `pg_dump → R2` weekly.",
+        "cloudflareWorker": "Intercepte `tickerstory.org/*` et forge un `fetch()` vers Cloud Run avec Host header réécrit.",
+        "glitchtipOrg": "Overview + alert rules (email immédiat sur new issue + burst >10 events/h) + quota free tier 5K events/mo.",
+        "anthropicConsole": "Vue d'ensemble Claude API — usage tokens + modèles dispo + rotation clé."
+      }
+    },
+    "accessControlPage": {
+      "title": "Contrôle d'accès",
+      "intro": "Liste des emails autorisés à compléter le login Google. Vide = mode ouvert : tout compte Google est accepté (créé en rôle USER). Posée la 1re fois, la liste prend effet au prochain login d'une nouvelle session.",
+      "adminNote": "Les emails ADMIN (variable d'env APP_ADMIN_EMAILS) sont automatiquement inclus dans la liste effective — pas besoin de les ré-ajouter ici.",
+      "openModeNote": "Mode ouvert actif : aucun email n'est dans la liste. Ajoute au moins un email pour activer le filtrage.",
+      "currentLabel": "Emails autorisés",
+      "emptyHint": "Aucun email dans la liste. Mode ouvert actif — utilisez le champ ci-dessous pour ajouter le premier.",
+      "addLabel": "Ajouter un email",
+      "addPlaceholder": "alice@example.com",
+      "addAriaLabel": "Ajouter un email autorisé",
+      "removeAriaLabel": "Retirer {{email}} de la liste",
+      "save": "Enregistrer",
+      "reset": "Réinitialiser au défaut",
+      "saving": "Enregistrement…",
+      "saved": "Liste mise à jour.",
+      "invalidEmail": "Format d'email invalide : {{value}}",
+      "loading": "Chargement…",
+      "errors": {
+        "load": "Impossible de charger la liste d'accès.",
+        "save": "Échec de l'enregistrement."
+      }
+    },
+    "promptsPage": {
+      "intro": "Gestion des versions du corps de prompt qui pilote le pipeline narratif. Seule la persona / le ton est éditable ; le contrat technique JSON est géré par le système et ne peut pas être modifié. La version active est utilisée par chaque génération ; activer une autre version remplace la précédente sans redémarrage.",
+      "loading": "Chargement des prompts…",
+      "empty": "Aucun prompt en base. Vérifiez que les migrations Flyway ont bien tourné (seed du prompt narrative-default).",
+      "activeChip": "Actif",
+      "inactiveChip": "Inactif",
+      "created": "Créé",
+      "activated": "Activé",
+      "deprecated": "Déprécié",
+      "systemPrompt": "Corps du prompt (persona / ton)",
+      "envelopeTitle": "Enveloppe technique (lecture seule)",
+      "envelopeIntro": "Ajoutée automatiquement après votre corps de prompt. Définit le contrat JSON, la règle de sentiment et les limites de longueur — non éditable.",
+      "envelopeShow": "Voir l'enveloppe technique",
+      "envelopeHide": "Masquer l'enveloppe technique",
+      "envelopeLoadError": "Impossible de charger l'enveloppe technique.",
+      "envelopeVersion": "Version du contrat : {{version}}",
+      "activate": "Activer cette version",
+      "activating": "Activation…",
+      "viewStats": "Voir les stats",
+      "stats": {
+        "title": "Stats du prompt",
+        "intro": "Métriques agrégées sur tous les runs narratifs persistés pour cette version.",
+        "loading": "Chargement des stats…",
+        "empty": "Aucun run pour cette version pour l'instant. Lance un narratif sur un dossier ticker pour commencer à collecter des métriques.",
+        "back": "Retour à la liste",
+        "kpi": {
+          "totalRuns": "Total runs",
+          "latencyP50": "Latence p50",
+          "latencyP95": "Latence p95",
+          "retryRate": "Taux de retry",
+          "parseFailedRate": "Échecs parseur",
+          "validatorFailedRate": "Échecs validateur",
+          "thumbsBalance": "Balance 👍/👎"
+        },
+        "thumbs": {
+          "title": "Distribution des votes",
+          "neutral": "Neutres"
+        },
+        "latency": {
+          "title": "Latence p50 sur 90 jours",
+          "notEnough": "Pas assez de points pour tracer une courbe (au moins 2 jours avec runs nécessaires)."
+        },
+        "daily": {
+          "title": "Par jour",
+          "day": "Jour",
+          "runs": "Runs",
+          "latencyP50": "Latence p50"
+        },
+        "errors": {
+          "load": "Impossible de charger les stats. Réessaye.",
+          "missingId": "Identifiant de prompt manquant dans l'URL."
+        }
+      },
+      "editor": {
+        "openButton": "Modifier comme nouvelle version",
+        "basedOn": "Édition basée sur la version {{version}}",
+        "versionLabel": "Nouvelle étiquette de version",
+        "versionPlaceholder": "ex. v3-bullish-fix",
+        "notesLabel": "Notes (optionnel)",
+        "notesPlaceholder": "Pourquoi cette version ? À quoi répond ce changement ?",
+        "systemPromptLabel": "Corps du prompt (persona / ton)",
+        "systemPromptHelp": "Définit le rôle et le ton du writer. Le contrat JSON technique est ajouté automatiquement et ne peut pas être édité ici.",
+        "diffLabel": "Diff vs source",
+        "diffEmpty": "aucun changement",
+        "cancel": "Annuler",
+        "save": "Sauvegarder comme nouvelle version",
+        "saving": "Sauvegarde…"
+      },
+      "errors": {
+        "loadList": "Impossible de charger la liste des prompts.",
+        "activate": "Impossible d'activer la version {{version}}. Réessayez.",
+        "create": "Impossible de sauvegarder la nouvelle version."
+      }
+    },
+    "configurationPage": {
+      "title": "Configuration runtime",
+      "intro": "Édite en direct ce qui vit normalement dans application-local.yml. Les modifications s'appliquent sans redémarrer le backend.",
+      "loading": "Chargement de la configuration…",
+      "sections": {
+        "providers": "Providers de données",
+        "llm": "LLM"
+      },
+      "statusSet": "Définie",
+      "statusUnset": "Non définie",
+      "statusOverridden": "Surchargée",
+      "statusDefault": "Par défaut",
+      "placeholderEmpty": "Saisis une nouvelle valeur",
+      "placeholderMasked": "•••• déjà définie — saisis une nouvelle valeur pour remplacer",
+      "marketProvider": {
+        "title": "Provider de marché",
+        "description": "Bascule entre le mock local (déterministe, sans réseau) et Twelve Data (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
+      "newsProvider": {
+        "title": "Provider de news",
+        "description": "Bascule entre le mock local (feed synthétique) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
+      "analystProvider": {
+        "title": "Provider des recommandations analystes",
+        "description": "Bascule entre le mock local (déterministe par symbole) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
+      "earningsProvider": {
+        "title": "Provider des earnings",
+        "description": "Bascule entre le mock local (déterministe par symbole) et Finnhub (live, requiert une clé API ci-dessous). Le changement s'applique au prochain dossier ouvert."
+      },
+      "screenerProvider": {
+        "title": "Provider du radar de marché",
+        "description": "Bascule entre le mock local (snapshot synthétique déterministe), Polygon (endpoint grouped-daily, requiert une souscription Polygon Stocks Basic+ — le free Basic ne couvre plus cet endpoint depuis le rebrand 2026) et FMP (top gainers/losers, free tier 250 req/jour — pas de signal volume, le filtre volume du radar est contourné automatiquement pour les movers FMP). Le changement s'applique au prochain refresh du radar."
+      },
+      "llmProvider": {
+        "title": "Provider LLM",
+        "description": "Choisit le moteur qui rédige le narratif du dossier ticker : Claude (cloud Anthropic, requiert anthropic.api.key dans application-local.yml) ou Ollama (local, requiert un daemon Ollama en écoute). La bascule s'applique à la prochaine analyse."
+      },
+      "ollamaStatus": {
+        "title": "État Ollama",
+        "loading": "Interrogation du daemon…",
+        "daemonReachable": "Daemon en ligne",
+        "daemonUnreachable": "Daemon injoignable",
+        "baseUrlLabel": "URL :",
+        "loadedModelsLabel": "Modèles chargés en mémoire",
+        "noLoadedModels": "Aucun modèle chargé en VRAM. Le premier appel pull le modèle puis le garde le temps de l'idle timeout (5 min par défaut côté Ollama).",
+        "availableModelsLabel": "Modèles pull localement",
+        "noAvailableModels": "Aucun modèle pull localement. Lance `ollama pull <tag>` (ou le bouton Tilt) avant de cibler un modèle ici.",
+        "expiresIn": "expire dans {{value}}",
+        "expired": "expiré",
+        "refresh": "Rafraîchir",
+        "pullCta": "Pull…",
+        "unloadAriaLabel": "Décharger {{model}} de la VRAM",
+        "notApplicableForClaude": "État Ollama non applicable pour le provider Claude — utilise le bouton Tester de la card « Modèle Claude » plus bas pour valider la connectivité Anthropic.",
+        "pullDialog": {
+          "title": "Pull un modèle Ollama",
+          "hint": "Tape le tag du modèle à télécharger (ex. mistral:7b) ou choisis une suggestion. Le download bloque 1 à 3 minutes selon la taille — laisse le dialog ouvert.",
+          "inputLabel": "Tag du modèle",
+          "pulling": "Téléchargement de {{model}}…",
+          "confirm": "Pull",
+          "cancel": "Annuler",
+          "alsoPulled": "Déjà pull localement",
+          "deleteAriaLabel": "Supprimer {{model}} du disque",
+          "errors": {
+            "pullFailed": "Échec du pull",
+            "deleteFailed": "Échec de la suppression"
+          }
+        }
+      },
+      "providers": {
+        "mock": "Mock (local)",
+        "twelvedata": "Twelve Data",
+        "finnhub": "Finnhub",
+        "polygon": "Polygon / Massive",
+        "fmp": "FMP",
+        "claude": "Claude",
+        "ollama": "Ollama"
+      },
+      "providerDisabled": {
+        "missingKey": "Configurez la clé `{{ key }}` d'abord pour activer ce provider."
+      },
+      "twelveData": {
+        "title": "Twelve Data — clé API",
+        "description": "Provider de données de marché (cours, OHLC, indicateurs). Free tier 800 crédits/jour. <a href=\"https://twelvedata.com/account\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
+        "inputLabel": "Clé API Twelve Data",
+        "sectorHint": "À noter : le Sector benchmark du dossier ticker utilise Finnhub même quand Twelve Data est le provider de marché. Renseigne aussi la clé Finnhub plus bas pour garder ce toggle opérationnel."
+      },
+      "finnhub": {
+        "title": "Finnhub — clé API",
+        "description": "Provider des dépêches du dossier ticker. Free tier 60 calls/min. <a href=\"https://finnhub.io/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
+        "inputLabel": "Clé API Finnhub"
+      },
+      "polygon": {
+        "title": "Polygon (Massive) — clé API",
+        "description": "Provider du radar de marché (Phase 6). Depuis le rebrand 2026, le free Basic ne couvre que <code>/v3/reference/...</code> — l'endpoint grouped-daily que notre adapter utilise nécessite Stocks Basic+ (payant). Polygon a rebrandé en Massive en 2026 — l'API base est passée à api.massive.com. <a href=\"https://massive.com/dashboard/keys\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
+        "inputLabel": "Clé API Polygon"
+      },
+      "fmp": {
+        "title": "FMP (Financial Modeling Prep) — clé API",
+        "description": "Provider du radar de marché (Phase 6). Free tier 250 req/jour, pas de carte requise. Le radar appelle <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> (top 50 chacun = ~100 movers par refresh ; les paths legacy <code>/api/v3/stock_market/*</code> ont été dépréciés en août 2025). <strong>Pas de signal volume</strong> sur cet endpoint — les movers FMP portent <code>volumeRatio = 0</code> comme sentinelle et contournent automatiquement le filtre volume du radar. <a href=\"https://site.financialmodelingprep.com/developer/docs/dashboard\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer une clé</a>.",
+        "inputLabel": "Clé API FMP"
+      },
+      "anthropicKey": {
+        "title": "Anthropic — clé API",
+        "description": "Clé utilisée par le provider LLM Claude pour tous les narratifs ticker. Rotation supportée à chaud — la nouvelle valeur est lue au prochain appel sans reboot. <a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\" rel=\"noopener noreferrer\">Récupérer ou faire tourner une clé</a>.",
+        "inputLabel": "Clé API Anthropic"
+      },
+      "ollamaModel": {
+        "title": "Ollama — modèle",
+        "description": "Tag du modèle utilisé quand le provider LLM est Ollama (ex. qwen2.5:3b, llama3.2:3b). Le modèle doit être pull localement (`ollama pull <tag>`). Le bouton Tester envoie un prompt court et mesure la latence.",
+        "inputLabel": "Modèle Ollama"
+      },
+      "claudeModel": {
+        "title": "Claude — modèle",
+        "description": "Identifiant du modèle utilisé quand le provider LLM est Claude (ex. claude-opus-4-6, claude-sonnet-4-5). Le bouton Tester valide que le modèle répond avec la clé Anthropic actuellement configurée plus haut.",
+        "inputLabel": "Modèle Claude"
+      },
+      "llmTimeout": {
+        "title": "Timeout LLM",
+        "description": "Durée maximale d'un appel LLM avant abandon — couvre à la fois le read timeout HTTP côté backend (Ollama), la fenêtre de polling côté front et la fenêtre de dédup des jobs. À pousser quand tu testes un gros modèle Ollama avec un cold-start long ; à baisser pour échouer plus vite si tu débugs.",
+        "minutes": "{{value}} min",
+        "defaultHint": "défaut : {{value}} min"
+      },
+      "cacheTtl": {
+        "title": "Cache marché & news — TTL",
+        "description": "Durée de mise en cache des appels Twelve Data et Finnhub (Caffeine). Plus court = données plus fraîches mais plus d'appels API.",
+        "minutes": "{{value}} min",
+        "defaultHint": "défaut : {{value}} min"
+      },
+      "actions": {
+        "test": "Tester",
+        "save": "Enregistrer",
+        "reset": "Réinitialiser au défaut"
+      },
+      "errors": {
+        "load": "Impossible de charger la configuration.",
+        "save": "Échec de l'enregistrement.",
+        "reset": "Échec de la réinitialisation.",
+        "test": "Erreur lors du test de la clé."
+      }
+    }
+  },
+  "observabilityPage": {
+    "title": "Observabilité narrative",
+    "intro": "Narratifs passés sur ce ticker, mis en regard de ce que le prix a fait depuis. Faites défiler pour inspecter ; cliquez sur une carte pour ouvrir le résumé complet.",
+    "back": "Retour à l'index observabilité",
+    "loading": "Chargement de la timeline…",
+    "empty": "Aucun narratif n'a encore été généré pour {{symbol}}. Ouvrez le dossier et lancez une analyse pour peupler l'historique.",
+    "filteredEmpty": "Aucun narratif ne correspond aux filtres actifs.",
+    "pricesUnavailable": "Le cours est temporairement indisponible (échec de la source de données chart). Les narratifs s'affichent sans les colonnes de delta.",
+    "filters": {
+      "title": "Filtres",
+      "from": "Depuis",
+      "to": "Jusqu'à",
+      "prompt": "Prompt",
+      "promptAll": "Tous les prompts",
+      "thumbs": "Vote",
+      "thumbsAll": "Tous",
+      "thumbsNeutral": "—",
+      "reset": "Réinitialiser"
+    },
+    "deltas": {
+      "1d": "1j",
+      "1w": "1 sem.",
+      "1m": "1 mois"
+    },
+    "thumbs": {
+      "up": "Pouce vers le haut",
+      "down": "Pouce vers le bas"
+    },
+    "meta": {
+      "priceAtGeneration": "Prix à la génération",
+      "priceAt1d": "Prix à +1 jour",
+      "priceAt1w": "Prix à +1 semaine",
+      "priceAt1m": "Prix à +1 mois",
+      "model": "Modèle",
+      "prompt": "Prompt"
+    },
+    "errors": {
+      "missingSymbol": "Symbole manquant dans l'URL.",
+      "load": "Échec du chargement de la timeline. Réessayez."
+    },
+    "coherence": {
+      "label": "Cohérence vs précédent",
+      "verdict": {
+        "OK": "Cohérent",
+        "WARN": "À surveiller",
+        "HIGH": "Divergence injustifiée"
+      },
+      "tooltip": {
+        "title": "Cohérence vs narratif du {{date}}",
+        "sentiment": "Sentiment : {{change}}",
+        "keyPoints": "Mots-clés communs : {{percent}}",
+        "length": "Longueur du résumé : ×{{ratio}}",
+        "priceMove": "Prix entre les deux : {{percent}}",
+        "priceMoveUnknown": "Mouvement de prix : indisponible"
+      },
+      "sentimentChange": {
+        "SAME": "identique",
+        "PARTIAL": "1 cran",
+        "FLIPPED": "inversé"
+      }
+    }
+  },
+  "observabilityIndexPage": {
+    "title": "Observabilité narrative — index",
+    "intro": "Tickers ayant au moins un narratif persisté. Sélectionnez-en un pour ouvrir la timeline des narratifs passés et du prix qui a suivi.",
+    "biasLink": "Détection de biais (corpus complet)",
+    "loading": "Chargement des tickers…",
+    "empty": "Aucun narratif n'a encore été généré. Ouvrez un dossier et lancez une analyse pour peupler l'historique.",
+    "snapshotCount": "{{count}} narratifs",
+    "lastGenerated": "Dernier :",
+    "errors": {
+      "load": "Échec du chargement de l'index. Réessayez."
+    }
+  },
+  "biasPage": {
+    "title": "Détection de biais",
+    "intro": "Vue agrégée du corpus narratif : distribution des sentiments, calibration sentiment/prix, couverture thématique, votes utilisateur. Filtrer par version de prompt permet de comparer un prompt vs un autre.",
+    "back": "Retour à l'index observabilité",
+    "loading": "Chargement des agrégats…",
+    "empty": "Pas de narratif dans le corpus pour le filtre actif. Élargissez la fenêtre, ou attendez ~50 snapshots avant que les agrégats deviennent significatifs.",
+    "snapshotsConsidered": "{{count}} narratifs analysés",
+    "filters": {
+      "title": "Filtres",
+      "from": "Depuis",
+      "to": "Jusqu'à",
+      "prompt": "Prompt",
+      "promptAll": "Tous les prompts",
+      "reset": "Réinitialiser"
+    },
+    "sentiment": {
+      "title": "Distribution des sentiments",
+      "biasFlag": {
+        "label": "Biais suspecté : {{sentiment}} {{percent}} (seuil {{threshold}})",
+        "aria": "Avertissement biais"
+      }
+    },
+    "calibration": {
+      "title": "Calibration sentiment vs prix",
+      "hint": "Delta moyen après le narratif. BULLISH attendu positif, BEARISH attendu négatif.",
+      "sentimentColumn": "Sentiment",
+      "snapshotsColumn": "Snapshots"
+    },
+    "topics": {
+      "title": "Couverture thématique (top 15)",
+      "hint": "Tokens les plus mentionnés dans les key_points. L'absence d'un thème attendu (ex. volatility) est elle-même un signal.",
+      "empty": "Aucun token significatif extrait du corpus."
+    },
+    "thumbs": {
+      "title": "Votes utilisateur par sentiment",
+      "hint": "Si vous validez systématiquement les BULLISH et rejetez les BEARISH, c'est aussi un biais — côté humain cette fois.",
+      "up": "Pouce haut",
+      "neutral": "Neutre",
+      "down": "Pouce bas",
+      "noVote": "Sans vote",
+      "aria": "{{sentiment}} : {{up}} pouces hauts, {{neutral}} neutres, {{down}} pouces bas, {{novote}} sans vote"
+    },
+    "errors": {
+      "load": "Échec du chargement des agrégats. Réessayez."
+    }
+  },
+  "radar": {
+    "title": "Radar de marché",
+    "subtitle": "Tickers mid-cap Nasdaq qui montrent un mouvement anormal — gap d'ouverture et volume inhabituels. Signal d'investigation, pas une recommandation.",
+    "refresh": "Rechercher",
+    "lastFetched": "Dernière recherche :",
+    "notYetFetched": "Aucun snapshot pour l'instant. Cliquez sur « Rechercher » pour interroger le fournisseur.",
+    "empty": "Aucun mouvement anormal détecté avec ces filtres.",
+    "errors": {
+      "fetch": "Impossible de charger le snapshot du radar. Réessayez.",
+      "refresh": "Le fournisseur a rejeté la requête. Il est peut-être indisponible ou rate-limited — réessayez."
+    },
+    "columns": {
+      "symbol": "Symbole",
+      "name": "Nom",
+      "price": "Prix",
+      "gapPct": "Gap %",
+      "volumeRatio": "Volume / moy. 30j",
+      "marketCap": "Capitalisation",
+      "sector": "Secteur"
+    },
+    "filter": {
+      "title": "Filtres",
+      "universeHint": "Univers : NASDAQ mid-cap, 2 G$–10 G$ (appliqué côté serveur).",
+      "gapPctMin": "Gap minimum",
+      "volumeRatioMin": "Volume × minimum",
+      "reset": "Réinitialiser"
+    }
+  }
+}

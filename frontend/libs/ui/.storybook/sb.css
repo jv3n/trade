@@ -1,0 +1,5 @@
+/* Storybook-only overrides applied on top of the lib's main.scss. */
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+}

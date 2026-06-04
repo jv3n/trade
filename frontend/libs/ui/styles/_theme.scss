@@ -1,0 +1,43 @@
+// Material theme setup — violet primary, cyan tertiary, Inter typography.
+// `mat.core()` ships the base Material styles; we then apply the dark theme on `:root`
+// and override colors only on `[data-theme='light']` (typography/density stay constant).
+
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$dark-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: mat.$violet-palette,
+      tertiary: mat.$cyan-palette,
+    ),
+    typography: (
+      brand-family: 'Inter, system-ui, sans-serif',
+      plain-family: 'Inter, system-ui, sans-serif',
+    ),
+  )
+);
+
+$light-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: light,
+      primary: mat.$violet-palette,
+      tertiary: mat.$cyan-palette,
+    ),
+    typography: (
+      brand-family: 'Inter, system-ui, sans-serif',
+      plain-family: 'Inter, system-ui, sans-serif',
+    ),
+  )
+);
+
+:root {
+  @include mat.all-component-themes($dark-theme);
+}
+
+[data-theme='light'] {
+  @include mat.all-component-colors($light-theme);
+}

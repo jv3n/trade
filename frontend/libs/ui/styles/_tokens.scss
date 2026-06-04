@@ -1,0 +1,144 @@
+// CSS custom properties — design tokens.
+//
+// Dark = default (`:root`), light = `[data-theme='light']` override. The anti-FOUC inline
+// script in `apps/web/src/index.html` reads `localStorage.theme` and sets `data-theme`
+// before Angular bootstraps, so the right palette is in place from the first paint.
+//
+// **Dark palette** — GitHub "Dark dimmed" inspired (warm desaturated greys instead of the
+// quasi-black blue-tinted palette we had before). Easier on the eyes for long-session work,
+// fits better with the violet accent we kept from the previous pass. Reference :
+// https://primer.style/foundations/color/overview
+//
+// **Light palette** — GitHub Light inspired (cool greys on white, sharp borders, vivid
+// semantic colours).
+//
+// Violet accent stays in both (user choice).
+
+:root {
+  // Surfaces — canvas-inset (page chrome) < canvas-default (main) < canvas-subtle (elevated)
+  --color-bg: #1c2128;
+  --color-surface: #22272e;
+  --color-surface-2: #2d333b;
+  --color-surface-3: #1c2128;
+
+  // Borders — three steps. `-soft` for subtle dividers (table rows), default for cards /
+  // banners, `-strong` for chrome separators where contrast matters (sidenav vs content).
+  --color-border-soft: #373e47;
+  --color-border: #444c56;
+  --color-border-strong: #636e7b;
+
+  // Text
+  --color-text: #adbac7;
+  --color-text-muted: #768390;
+  --color-text-dim: #636e7b;
+  --color-text-faint: #545d68;
+
+  // Brand (violet — kept from the previous palette)
+  --color-accent: #7c6af7;
+  --color-accent-strong: #a78bfa;
+  --color-accent-soft: #2c2849;
+  --color-on-accent: #ffffff;
+
+  // Logo (consumed by `img/logo/logo.svg` via inline MatIconRegistry — see app.config.ts)
+  --logo-tile: #ffffff;
+  --logo-mark: #111318;
+
+  // Semantic — calibrated against the dimmed surfaces (GH dimmed semantic palette)
+  --color-success: #6cbe6e;
+  --color-success-soft: #1e2c1f;
+  --color-warning: #e3b341;
+  --color-warning-soft: #2e2a17;
+  --color-danger: #f47067;
+  --color-danger-soft: #2d1f1f;
+  --color-info: #588fdc;
+  --color-info-soft: #1c2a3a;
+  --color-purple: #b083f0;
+  --color-purple-soft: #251f3a;
+  --color-orange: #cc6b2f;
+  --color-orange-soft: #2e1f17;
+
+  // Action mapping (recommendations) — derive from semantic so renaming one cascades.
+  --color-action-buy: var(--color-success);
+  --color-action-buy-bg: var(--color-success-soft);
+  --color-action-sell: var(--color-danger);
+  --color-action-sell-bg: var(--color-danger-soft);
+  --color-action-hold: var(--color-info);
+  --color-action-hold-bg: var(--color-info-soft);
+  --color-action-reduce: var(--color-warning);
+  --color-action-reduce-bg: var(--color-warning-soft);
+
+  // Radii — tightened from 4/8/12 to 3/6/10 (Linear/Vercel/Stripe-dashboard direction).
+  // The pill stays at 999px for chips/badges.
+  --radius-sm: 3px;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+
+  // Shadows — layered (hairline + soft ambient) instead of a single big blur. Dimmed surfaces
+  // are close in brightness so the ambient leans heavier than on a pure-black theme.
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
+
+  // Typography
+  --font-family: 'Inter', system-ui, sans-serif;
+  --font-mono: 'SF Mono', Menlo, Consolas, monospace;
+
+  // Aliases — semantic shortcuts so consumers don't have to remember which colour to grab.
+  --color-link: var(--color-accent);
+  --color-primary: var(--color-accent);
+}
+
+[data-theme='light'] {
+  // Surfaces — GH light pattern : chrome / nav / cards in subtle grey, main reading area on
+  // pure white. The previous palette had both `--color-bg` and `--color-surface` at #ffffff
+  // which made the sidenav merge into the content.
+  //
+  //   --color-bg       = main content area (the surface where the user reads)
+  //   --color-surface  = chrome / sidenav / card background (slightly grey)
+  //   --color-surface-2 = nested cards on top of `surface` (a step deeper)
+  --color-bg: #ffffff;
+  --color-surface: #f6f8fa;
+  --color-surface-2: #eaeef2;
+  --color-surface-3: #eaeef2;
+
+  --color-border-soft: #d8dee4;
+  --color-border: #d0d7de;
+  --color-border-strong: #afb8c1;
+
+  --color-text: #1f2328;
+  --color-text-muted: #59636e;
+  --color-text-dim: #6e7781;
+  --color-text-faint: #8c959f;
+
+  --color-accent: #7c3aed;
+  --color-accent-strong: #6d28d9;
+  // Light theme follows GitHub Light's selected-nav pattern : **neutral grey** background for
+  // the active state, accent strictly reserved for emphasis (text colour, links, focus rings).
+  // The previous `#eef0fa` indigo tint dominated the visual weight of the sidenav — the active
+  // pill read as a lavender splash even though the surrounding `--color-surface` is neutral
+  // `#f6f8fa`. Using a neutral grey here lets the sidenav read as cleanly cool-gray.
+  --color-accent-soft: #eaeef2;
+  --color-on-accent: #ffffff;
+
+  --logo-tile: #111318;
+  --logo-mark: #e8eaf0;
+
+  // Semantic — GH light semantic.
+  --color-success: #1a7f37;
+  --color-success-soft: #dafbe1;
+  --color-warning: #9a6700;
+  --color-warning-soft: #fff8c5;
+  --color-danger: #cf222e;
+  --color-danger-soft: #ffebe9;
+  --color-info: #0969da;
+  --color-info-soft: #ddf4ff;
+  --color-purple: #8250df;
+  --color-purple-soft: #fbefff;
+  --color-orange: #bc4c00;
+  --color-orange-soft: #fff1e5;
+
+  // Light shadows — hairline + ambient pair, much lighter than dark. Stripe-dashboard style :
+  // the hairline gives crispness, the ambient hints at elevation without a heavy halo.
+  --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.06);
+  --shadow: 0 1px 2px rgba(31, 35, 40, 0.06), 0 4px 12px rgba(31, 35, 40, 0.06);
+}

@@ -1,0 +1,56 @@
+// `mat-autocomplete` panel overrides.
+//
+// The panel is rendered in the CDK overlay (sibling of `<app-root>`), so component-scoped CSS
+// can't reach it. We ship a global rule keyed on the `class="*-autocomplete-panel"` set on the
+// `<mat-autocomplete>` element. Material's default option size (~0.875 rem, 3 rem height) reads
+// oversized in tight sidebars / chart toolbars — we match it to the surrounding 0.75 rem
+// typography. Kept as separate panel classes (watchlist vs benchmark) rather than reused so
+// renaming one won't silently break the other.
+
+.watchlist-autocomplete-panel.mat-mdc-autocomplete-panel {
+  .mat-mdc-option {
+    min-height: 2rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+
+    .mdc-list-item__primary-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  .watchlist-suggestion-name {
+    color: var(--color-text-dim);
+    font-weight: 400;
+    margin-left: 0.15rem;
+  }
+
+  .watchlist-suggestion-exchange {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+    margin-left: 0.4rem;
+  }
+}
+
+.benchmark-autocomplete-panel.mat-mdc-autocomplete-panel {
+  .mat-mdc-option {
+    min-height: 2rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+
+    .mdc-list-item__primary-text {
+      font-size: 0.75rem;
+    }
+  }
+
+  .benchmark-suggestion-name {
+    color: var(--color-text-dim);
+    font-weight: 400;
+    margin-left: 0.15rem;
+  }
+
+  .benchmark-suggestion-exchange {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+    margin-left: 0.4rem;
+  }
+}

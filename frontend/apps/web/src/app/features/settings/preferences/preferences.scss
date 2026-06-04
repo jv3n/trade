@@ -1,0 +1,31 @@
+// `.content-header`, `.config-card`, `.card-header` viennent de la lib (`libs/ui/styles/`).
+// La page reste skinny — juste le layout outer et un fix de baseline pour les emojis-drapeau.
+
+.preferences-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem 2.5rem;
+  max-width: 720px;
+}
+
+// Apple Color Emoji descender — neutralise un décalage vertical sous le glyph.
+.lang-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+// Icônes Material à l'intérieur des `<mat-button-toggle>` du thème — légèrement plus serrées
+// que par défaut pour cohérence avec l'icon-button densité 36 px de la toolbar.
+mat-button-toggle mat-icon {
+  font-size: 1.05rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}

@@ -1,0 +1,46 @@
+<div class="preferences-page">
+  <header class="content-header">
+    <h2>{{ 'settings.preferencesPage.title' | translate }}</h2>
+    <p>{{ 'settings.preferencesPage.description' | translate }}</p>
+  </header>
+
+  <section class="config-card">
+    <div class="card-header">
+      <h3>{{ 'settings.preferencesPage.theme.label' | translate }}</h3>
+    </div>
+    <p class="description">{{ 'settings.preferencesPage.theme.description' | translate }}</p>
+    <mat-button-toggle-group
+      [value]="theme.theme()"
+      (change)="setTheme($event)"
+      [hideSingleSelectionIndicator]="true"
+    >
+      <mat-button-toggle value="dark">
+        <mat-icon>dark_mode</mat-icon>
+        <span>{{ 'settings.preferencesPage.theme.dark' | translate }}</span>
+      </mat-button-toggle>
+      <mat-button-toggle value="light">
+        <mat-icon>light_mode</mat-icon>
+        <span>{{ 'settings.preferencesPage.theme.light' | translate }}</span>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </section>
+
+  <section class="config-card">
+    <div class="card-header">
+      <h3>{{ 'settings.preferencesPage.language.label' | translate }}</h3>
+    </div>
+    <p class="description">{{ 'settings.preferencesPage.language.description' | translate }}</p>
+    <mat-button-toggle-group
+      [value]="language.lang()"
+      (change)="setLanguage($event)"
+      [hideSingleSelectionIndicator]="true"
+    >
+      @for (l of language.supported; track l) {
+        <mat-button-toggle [value]="l">
+          <span class="lang-flag" aria-hidden="true">{{ language.flag(l) }}</span>
+          <span>{{ 'language.' + l | translate }}</span>
+        </mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </section>
+</div>

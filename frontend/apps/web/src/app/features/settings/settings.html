@@ -1,0 +1,109 @@
+<mat-sidenav-container class="ui-shell" #sidenavContainer>
+  <mat-sidenav
+    mode="side"
+    opened
+    class="ui-sidenav"
+    [class.ui-sidenav--collapsed]="sidenavCollapse.collapsed()"
+    disableClose
+  >
+    <mat-nav-list class="sidenav-list">
+      <a
+        mat-list-item
+        routerLink="/journal"
+        class="back-to-app"
+        [matTooltip]="'settings.backToApp' | translate"
+        [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+        matTooltipPosition="right"
+      >
+        <mat-icon matListItemIcon>arrow_back</mat-icon>
+        <span matListItemTitle>{{ 'settings.backToApp' | translate }}</span>
+      </a>
+      <mat-divider></mat-divider>
+      <h3 matSubheader>{{ 'settings.navLabel' | translate }}</h3>
+
+      <a
+        mat-list-item
+        routerLink="/settings/preferences"
+        routerLinkActive="sidenav-active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        [matTooltip]="'settings.preferences' | translate"
+        [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+        matTooltipPosition="right"
+      >
+        <mat-icon matListItemIcon>palette</mat-icon>
+        <span matListItemTitle>{{ 'settings.preferences' | translate }}</span>
+      </a>
+
+      @if (auth.isAdmin()) {
+        <mat-divider></mat-divider>
+
+        <a
+          mat-list-item
+          routerLink="/settings/ops-links"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          [matTooltip]="'settings.opsLinks' | translate"
+          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+          matTooltipPosition="right"
+        >
+          <mat-icon matListItemIcon>open_in_new</mat-icon>
+          <span matListItemTitle>{{ 'settings.opsLinks' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
+          routerLink="/settings/configuration"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          [matTooltip]="'settings.configuration' | translate"
+          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+          matTooltipPosition="right"
+        >
+          <mat-icon matListItemIcon>tune</mat-icon>
+          <span matListItemTitle>{{ 'settings.configuration' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
+          routerLink="/settings/prompts"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          [matTooltip]="'settings.prompts' | translate"
+          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+          matTooltipPosition="right"
+        >
+          <mat-icon matListItemIcon>auto_awesome</mat-icon>
+          <span matListItemTitle>{{ 'settings.prompts' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
+          routerLink="/settings/access-control"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          [matTooltip]="'settings.accessControl' | translate"
+          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+          matTooltipPosition="right"
+        >
+          <mat-icon matListItemIcon>lock_person</mat-icon>
+          <span matListItemTitle>{{ 'settings.accessControl' | translate }}</span>
+        </a>
+      }
+    </mat-nav-list>
+    <div class="sidenav-toggle">
+      <button
+        mat-icon-button
+        type="button"
+        (click)="sidenavCollapse.toggle()"
+        [matTooltip]="(sidenavCollapse.collapsed() ? 'nav.expand' : 'nav.collapse') | translate"
+        matTooltipPosition="right"
+      >
+        <mat-icon>{{
+          sidenavCollapse.collapsed() ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left'
+        }}</mat-icon>
+      </button>
+    </div>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <div class="settings-content">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

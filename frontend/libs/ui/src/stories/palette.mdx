@@ -1,0 +1,249 @@
+import { Canvas, Markdown, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as PaletteStories from './palette.stories';
+
+<Meta of={PaletteStories} />
+
+# Design tokens — palette
+
+Single source of truth : `libs/ui/styles/_tokens.scss`. Every colour exposed as a CSS custom property on `:root` (dark default) with a `[data-theme='light']` override. The anti-FOUC inline script in `apps/web/src/index.html` reads `localStorage.theme` and sets `data-theme` **before** Angular bootstraps, so the right palette is in place from the first paint.
+
+The dark palette draws from **GitHub "Dark dimmed"** — warm desaturated greys that pair better with the violet accent than the previous quasi-black palette. The light palette mirrors **GitHub Light**.
+
+## How to use
+
+Anywhere SCSS or CSS — component file, global stylesheet, inline style :
+
+<Source
+  language="scss"
+  code={`.my-element {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}`}
+/>
+
+Both palettes cascade through the same `var()` calls — never hard-code a hex. If a token doesn't exist for a use case, **add it to `_tokens.scss`** rather than picking the closest neighbour.
+
+## Token reference
+
+### Surfaces
+
+<Markdown>
+{`
+| Token                  | Role                                          |
+| ---------------------- | --------------------------------------------- |
+| \`--color-bg\`           | Page background (chrome).                     |
+| \`--color-surface\`      | Main content area, cards.                     |
+| \`--color-surface-2\`    | Elevated / hover state, secondary cards.      |
+| \`--color-surface-3\`    | Inset / sidebar (deepest tone).               |
+`}
+</Markdown>
+
+### Borders
+
+<Markdown>
+{`
+| Token                  | Role                                          |
+| ---------------------- | --------------------------------------------- |
+| \`--color-border\`       | Default 1 px borders, dividers.               |
+| \`--color-border-soft\`  | Subtle separators, less prominent.            |
+`}
+</Markdown>
+
+### Text
+
+<Markdown>
+{`
+| Token                  | Role                                          |
+| ---------------------- | --------------------------------------------- |
+| \`--color-text\`         | Default body text.                            |
+| \`--color-text-muted\`   | Descriptions, metadata.                       |
+| \`--color-text-dim\`     | Placeholders, captions.                       |
+| \`--color-text-faint\`   | Empty-state copy, watermarks.                 |
+`}
+</Markdown>
+
+### Brand — violet, kept across both themes
+
+<Markdown>
+{`
+| Token                         | Role                                          |
+| ----------------------------- | --------------------------------------------- |
+| \`--color-accent\`              | Primary accent. Default for CTA backgrounds.  |
+| \`--color-accent-strong\`       | Hover state on filled CTAs.                   |
+| \`--color-accent-soft\`         | Background for active sidenav, pill chips.    |
+| \`--color-on-accent\`           | Foreground colour over \`--color-accent\`.      |
+| \`--color-link\` (alias)        | Inline hyperlinks ; equals \`--color-accent\`.  |
+| \`--color-primary\` (alias)     | Legacy alias ; equals \`--color-accent\`.       |
+`}
+</Markdown>
+
+### Semantic
+
+Pair `--color-<role>` (foreground + border) with `--color-<role>-soft` (filled background) for soft banners / badges :
+
+<Markdown>
+{`
+| Role     | Foreground / border token | Soft background token        |
+| -------- | ------------------------- | ---------------------------- |
+| Success  | \`--color-success\`         | \`--color-success-soft\`       |
+| Warning  | \`--color-warning\`         | \`--color-warning-soft\`       |
+| Danger   | \`--color-danger\`          | \`--color-danger-soft\`        |
+| Info     | \`--color-info\`            | \`--color-info-soft\`          |
+| Purple   | \`--color-purple\`          | \`--color-purple-soft\`        |
+| Orange   | \`--color-orange\`          | \`--color-orange-soft\`        |
+`}
+</Markdown>
+
+### Action mapping (recommendations)
+
+Convenience aliases — derive from the semantic palette so renaming one cascades :
+
+<Markdown>
+{`
+| Token                       | Aliases to              |
+| --------------------------- | ----------------------- |
+| \`--color-action-buy\`        | \`--color-success\`       |
+| \`--color-action-sell\`       | \`--color-danger\`        |
+| \`--color-action-hold\`       | \`--color-info\`          |
+| \`--color-action-reduce\`     | \`--color-warning\`       |
+`}
+</Markdown>
+
+### Radii / shadows / typography
+
+<Markdown>
+{`
+| Token                       | Value                                   |
+| --------------------------- | --------------------------------------- |
+| \`--radius-sm\`               | 4 px                                    |
+| \`--radius\`                  | 8 px (default — buttons, cards, badges) |
+| \`--radius-lg\`               | 12 px                                   |
+| \`--radius-pill\`             | 999 px (pills, chips)                   |
+| \`--shadow-sm\`               | Soft elevation for hovered rows.        |
+| \`--shadow\`                  | Default elevation for cards, dialogs.   |
+| \`--font-family\`             | Inter system stack.                     |
+| \`--font-mono\`               | SF Mono / Menlo (code, prices, tickers).|
+`}
+</Markdown>
+
+## Dimensional tokens — SCSS variables
+
+The visual tokens above (colors / radii / shadows / typography) are **CSS custom properties** : they cascade at runtime, vary with the active theme, can be inspected in devtools and overridden inline.
+
+Layout sizes (toolbar height, sidenav width, button heights, spacing scale) are a different beast — they're fixed across themes. The lib exposes them as **SCSS variables** in `libs/ui/styles/_sizes.scss`, imported via `@use`. Compile-time → smaller runtime CSS, no `var()` resolution cost, typo'd references fail the build instead of silently rendering as `initial`.
+
+### How to use
+
+From a partial inside the lib :
+
+<Source
+  language="scss"
+  code={`@use 'sizes' as s;
+
+.foo {
+  padding-top: s.$space-sm;
+  height: s.$button-height;
+}`}
+/>
+
+From a component SCSS in the consumer app, go through the aggregator so the rest of the design system stays available too :
+
+<Source
+  language="scss"
+  code={`@use '../../../../libs/ui/styles' as ui;
+
+.foo {
+  padding-top: ui.$space-sm;
+}`}
+/>
+
+When interpolating into a CSS custom property value (typical for Material token overrides), wrap with `#{}` — Sass treats `--*` as opaque :
+
+<Source
+  language="scss"
+  code={`.mat-mdc-button-base {
+  --mdc-filled-button-container-height: #{s.$button-height};
+}`}
+/>
+
+### Spacing scale
+
+Named by *intent*, not by number, so the underlying value can evolve without breaking consumers' semantics. 4 px baseline with a 2 px hairline step for tight grids.
+
+<Markdown>
+{`
+| Variable               | Value | Typical use                                       |
+| ---------------------- | ----- | ------------------------------------------------- |
+| \`$space-hairline\`      | 2 px  | Sidenav inter-item gap, badge inner padding       |
+| \`$space-xs\`            | 4 px  | Tight component padding                           |
+| \`$space-sm\`            | 8 px  | Default card / banner padding step, scrollbar     |
+| \`$space-md\`            | 12 px | Section padding                                   |
+| \`$space-lg\`            | 16 px | Card outer padding                                |
+| \`$space-xl\`            | 24 px | Page padding                                      |
+| \`$space-2xl\`           | 32 px | Hero spacing                                      |
+| \`$space-3xl\`           | 48 px | Major layout gutters                              |
+`}
+</Markdown>
+
+### Layout
+
+<Markdown>
+{`
+| Variable             | Value  | Where it's used                                          |
+| -------------------- | ------ | -------------------------------------------------------- |
+| \`$toolbar-height\`    | 64 px  | \`.ui-shell { height: calc(100vh - …) }\`                  |
+| \`$sidenav-width\`     | 240 px | \`.ui-sidenav { width: … }\`                               |
+`}
+</Markdown>
+
+### Component sizes
+
+<Markdown>
+{`
+| Variable             | Value | Where it's used                                                          |
+| -------------------- | ----- | ------------------------------------------------------------------------ |
+| \`$button-height\`     | 32 px | \`mat-button\` / \`mat-flat-button\` / \`mat-stroked-button\` MDC height |
+| \`$icon-button-size\`  | 36 px | \`mat-icon-button\` hit area (square)                                     |
+`}
+</Markdown>
+
+### Borders
+
+<Markdown>
+{`
+| Variable          | Value | Where it's used                                  |
+| ----------------- | ----- | ------------------------------------------------ |
+| \`$border-width\`   | 1 px  | Toolbar bottom border, banner outlines, dividers |
+`}
+</Markdown>
+
+### CSS custom property vs SCSS variable — when which ?
+
+<Markdown>
+{`
+| Use a **CSS custom property** (\`--foo\`) when…    | Use a **SCSS variable** (\`$foo\`) when…             |
+| ------------------------------------------------ | -------------------------------------------------- |
+| The value varies by theme (dark / light).        | The value is fixed across themes.                  |
+| A consumer might override it inline / runtime.   | The token is internal to the design system.        |
+| You need to inspect it in devtools.              | You want compile-time validation of references.    |
+| Typography family, color, radius, shadow.        | Layout sizes, spacing, breakpoints, z-index scale. |
+`}
+</Markdown>
+
+## Iterating the palette
+
+The stories below render every swatch in both themes. Edit `libs/ui/styles/_tokens.scss`, save — Storybook HMR repaints. When the contrast pair feels right, the app picks it up too (same `var(--color-*)` calls everywhere).
+
+## Dark
+
+<Canvas of={PaletteStories.Dark} />
+
+## Light
+
+<Canvas of={PaletteStories.Light} />
+
+## Side by side
+
+<Canvas of={PaletteStories.SideBySide} />

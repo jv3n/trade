@@ -1,0 +1,62 @@
+// Dimensional tokens — SCSS variables (compile-time), `@use`-imported by partials that need them.
+//
+// Why SCSS variables here vs CSS custom properties in `_tokens.scss` :
+//   - These values are **fixed across themes** (a sidenav is 240 px wide in both dark and light).
+//   - SCSS variables compile away → smaller runtime CSS, no `var()` resolution cost.
+//   - CSS custom properties stay reserved for theme-varying tokens (colors / shadows) and for
+//     anything a consumer might want to override at runtime via `style="--…"`.
+//
+// Reference from a partial :
+//   @use '../sizes' as s;
+//   .foo { padding-top: s.$space-sm; }
+// or for interpolation into a CSS custom property value :
+//   --mdc-button-container-height: #{s.$button-height};
+
+// ============================================================================
+// Spacing scale
+// ============================================================================
+//
+// Named tokens (not numbered) so the *intent* survives a refactor of the value. The scale
+// follows a 4 px baseline with a 2 px hairline step at the bottom for tight grids
+// (sidenav inter-item gap, badge padding).
+
+$space-hairline: 2px;
+$space-xs: 4px;
+$space-sm: 8px;
+$space-md: 12px;
+$space-lg: 16px;
+$space-xl: 24px;
+$space-2xl: 32px;
+$space-3xl: 48px;
+
+// ============================================================================
+// Layout
+// ============================================================================
+
+// Top toolbar height. Mirrored in `.ui-shell { height: calc(100vh - …) }` and used by
+// consumers that need to size below it. Keep in sync with the Material toolbar default.
+$toolbar-height: 64px;
+
+// Sidenav width — expanded vs collapsed (icon-only rail). The collapsed width matches
+// `$icon-button-size` + a small symmetric padding so the icons sit visually centred.
+$sidenav-width: 240px;
+$sidenav-collapsed-width: 64px;
+
+// ============================================================================
+// Component sizes
+// ============================================================================
+
+// Material button height (text / filled / outlined / raised). Tighter than Material's 36 px
+// default — fits dense toolbars like Linear / Stripe.
+$button-height: 32px;
+
+// Material icon-button hit area (square). Material defaults to 48 px which is overkill for
+// dense toolbars ; 36 px keeps the chevron / settings / theme icons compact without losing
+// the click target.
+$icon-button-size: 36px;
+
+// ============================================================================
+// Borders
+// ============================================================================
+
+$border-width: 1px;

@@ -1,0 +1,120 @@
+// App shell — sidenav layout reused by the app root and the settings sub-app.
+//
+// Sizing : the container fills the viewport minus the toolbar above it. Keep `$toolbar-height`
+// in sync with whatever Material toolbar variant the consumer wires.
+//
+// Collapsed mode : add `.ui-sidenav--collapsed` on the `<mat-sidenav>` element to switch to an
+// icon-only rail. The width swaps instantly (no CSS transition — see comment below), labels
+// hide, the toggle button stays clickable.
+//
+// Layout strategy : the `<mat-sidenav>`'s inner container (`.mat-drawer-inner-container`) is
+// made a flex column so the nav-list grows to fill available vertical space and the toggle
+// pinned at the bottom doesn't scroll with the list.
+
+@use 'sizes' as s;
+
+.ui-shell {
+  height: calc(100vh - #{s.$toolbar-height});
+}
+
+.ui-sidenav {
+  // Sizes routed through Material's own token (`.mat-drawer` reads `var(--mat-sidenav-container-width)`).
+  // Setting the token instead of a direct `width:` rule wins the specificity battle against
+  // Material's component CSS (same lesson as `--mat-sidenav-container-divider-color`).
+  //
+  // **No `transition: width` here** — the previous attempt with `transition: width 0.2s ease`
+  // produced a janky 200 ms window where Material's `MatSidenavContainer` had already
+  // computed `mat-drawer-content { margin-left: <old-width> }` and didn't recompute until the
+  // transition settled, leaving the content body floating in dead space. Snapping the width
+  // lets Material's ResizeObserver pick up the new dimension on the next frame. Consumers
+  // belt-and-brace this by calling `container.updateContentMargins()` from a signal effect
+  // on the collapsed state — see `app.ts`.
+  --mat-sidenav-container-width: #{s.$sidenav-width};
+  --mat-sidenav-container-background-color: var(--color-surface);
+  --mat-sidenav-container-divider-color: var(--color-border-strong);
+  --mat-sidenav-container-shape: 0;
+
+  // Make the inner container a flex column so the nav-list can grow + the toggle can pin to
+  // the bottom edge. The default Material CSS sets `display: block; overflow: auto` — we
+  // override the display only, keeping `height: 100%`.
+  .mat-drawer-inner-container {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.ui-sidenav--collapsed {
+  --mat-sidenav-container-width: #{s.$sidenav-collapsed-width};
+
+  // Hide every text wrapper Material emits inside a `mat-list-item` — the leading icon stays
+  // because it's in a different slot (`matListItemIcon`). `mat-mdc-list-item-unscoped-content`
+  // covers the `matListItemTitle` and its primary-text wrapper ; the explicit `[matSubheader]`
+  // selector covers the standalone `<h3 matSubheader>` blocks.
+  .mat-mdc-list-item-unscoped-content,
+  [matSubheader] {
+    display: none;
+  }
+
+  // Centre the icon. Material's list-item is `display: flex` with the leading-icon slot
+  // (`.mdc-list-item__start` / `.mat-mdc-list-item-icon`) carrying internal margin/padding to
+  // space it from the start edge — needs to be zeroed for true centering in a 64 px rail.
+  // The MDC token `--mdc-list-list-item-leading-icon-start-space` controls the gap between
+  // the icon slot and the start edge ; setting it to 0 plus `justify-content: center` on the
+  // list-item gives a clean centred glyph.
+  .mat-mdc-list-item {
+    --mdc-list-list-item-leading-icon-start-space: 0;
+    --mdc-list-list-item-leading-icon-end-space: 0;
+    --mdc-list-list-item-one-line-container-height: #{s.$icon-button-size};
+    padding-left: 0;
+    padding-right: 0;
+    justify-content: center;
+  }
+
+  .mdc-list-item__start,
+  .mat-mdc-list-item-icon {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+// Nav list inside the sidenav. The `.sidenav-active` modifier is set by the consumer
+// (e.g. via `[class.sidenav-active]="route === current"`).
+.sidenav-list {
+  padding-top: s.$space-xs;
+  padding-left: s.$space-xs;
+  padding-right: s.$space-xs;
+  flex: 1 1 auto;
+  overflow-y: auto;
+
+  // Small breathing room between nav items — Material stacks them flush by default which
+  // makes the active pill blend into its neighbours. `$space-hairline` (2 px) is enough to
+  // read as "individual items" without breaking the column rhythm.
+  .mat-mdc-list-item {
+    margin-bottom: s.$space-hairline;
+    border-radius: var(--radius);
+  }
+
+  .sidenav-active {
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
+  }
+}
+
+// Toggle button — pinned at the bottom of the sidenav, separated from the nav-list by a
+// subtle top border. `flex: 0 0 auto` keeps it at its natural size while the nav-list above
+// expands to fill the rest of the column.
+.sidenav-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  padding: s.$space-xs s.$space-sm;
+  border-top: s.$border-width solid var(--color-border-soft);
+
+  // When collapsed, the parent shrinks to `$sidenav-collapsed-width` ; centre the toggle so
+  // it doesn't slam into the right edge.
+  .ui-sidenav--collapsed & {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}

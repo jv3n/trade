@@ -1,0 +1,126 @@
+// Material button design — first pass.
+//
+// Strategy: override Material's MDC button tokens via CSS custom properties on the
+// `.mat-mdc-button-base` root so that **every** `<button mat-button>` / `mat-flat-button` /
+// `mat-stroked-button` / `mat-icon-button` / `mat-fab` picks up the new look automatically.
+// No HTML migration needed — the rules below target Material's emitted classes.
+//
+// Variants:
+//   • `mat-button`          → text button (low emphasis, no background until hover)
+//   • `mat-flat-button`     → filled accent (primary CTAs)
+//   • `mat-stroked-button`  → outlined (secondary CTAs)
+//   • `mat-icon-button`     → square icon-only
+//   • `mat-fab` / mini-fab  → floating action (rare in PortfolioAI surfaces)
+//
+// Tokens: every colour comes from the design-token layer (`--color-accent`, etc.), so the
+// dark/light theme swap on `[data-theme='light']` cascades through without per-variant logic.
+// Sizes pulled from `_sizes.scss` (compile-time SCSS vars) via `@use`.
+
+@use '../sizes' as s;
+
+.mat-mdc-button-base {
+  // Snap radius + height onto our scale. 6 px radius = Linear/Vercel-like, less playful than
+  // the previous 8 px. `$button-height` (32 px) = denser than Material's 36 px default,
+  // matches Stripe / Linear toolbars.
+  --mdc-text-button-container-shape: var(--radius);
+  --mdc-filled-button-container-shape: var(--radius);
+  --mdc-outlined-button-container-shape: var(--radius);
+  --mdc-text-button-container-height: #{s.$button-height};
+  --mdc-filled-button-container-height: #{s.$button-height};
+  --mdc-outlined-button-container-height: #{s.$button-height};
+
+  // Typography — medium weight everywhere (no bold on filled). Slightly negative letter
+  // spacing reads as more designed/modern. Size 13 px aligns with body text in tight UIs.
+  --mdc-text-button-label-text-weight: 500;
+  --mdc-filled-button-label-text-weight: 500;
+  --mdc-outlined-button-label-text-weight: 500;
+  --mdc-text-button-label-text-size: 0.8125rem;
+  --mdc-filled-button-label-text-size: 0.8125rem;
+  --mdc-outlined-button-label-text-size: 0.8125rem;
+
+  letter-spacing: -0.005em;
+
+  &:disabled,
+  &.mat-mdc-button-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ============================================================================
+// mat-button — text (low-emphasis)
+// ============================================================================
+.mat-mdc-button:not(:disabled) {
+  --mdc-text-button-label-text-color: var(--color-text);
+  --mat-text-button-state-layer-color: var(--color-accent);
+  --mat-text-button-hover-state-layer-opacity: 0.08;
+  --mat-text-button-focus-state-layer-opacity: 0.12;
+  --mat-text-button-pressed-state-layer-opacity: 0.16;
+}
+
+// ============================================================================
+// mat-flat-button — filled accent (primary CTAs)
+// ============================================================================
+.mat-mdc-unelevated-button:not(:disabled) {
+  --mdc-filled-button-container-color: var(--color-accent);
+  --mdc-filled-button-label-text-color: var(--color-on-accent);
+  --mat-filled-button-state-layer-color: var(--color-on-accent);
+  --mat-filled-button-hover-state-layer-opacity: 0.08;
+  --mat-filled-button-focus-state-layer-opacity: 0.12;
+  --mat-filled-button-pressed-state-layer-opacity: 0.16;
+
+  &:hover {
+    background-color: var(--color-accent-strong);
+  }
+}
+
+// ============================================================================
+// mat-stroked-button — outlined (secondary CTAs)
+// ============================================================================
+.mat-mdc-outlined-button:not(:disabled) {
+  --mdc-outlined-button-label-text-color: var(--color-text);
+  --mdc-outlined-button-outline-color: var(--color-border);
+  --mat-outlined-button-state-layer-color: var(--color-accent);
+  --mat-outlined-button-hover-state-layer-opacity: 0.08;
+  --mat-outlined-button-focus-state-layer-opacity: 0.12;
+  --mat-outlined-button-pressed-state-layer-opacity: 0.16;
+
+  &:hover {
+    --mdc-outlined-button-outline-color: var(--color-text-faint);
+  }
+}
+
+// ============================================================================
+// mat-icon-button — square, icon-only
+// ============================================================================
+.mat-mdc-icon-button {
+  // Tighter than Material's 48 px default — fits dense toolbars without crowding.
+  --mdc-icon-button-state-layer-size: #{s.$icon-button-size};
+  width: var(--mdc-icon-button-state-layer-size);
+  height: var(--mdc-icon-button-state-layer-size);
+
+  &:not(:disabled) {
+    --mdc-icon-button-icon-color: var(--color-text-muted);
+    --mat-icon-button-state-layer-color: var(--color-accent);
+    --mat-icon-button-hover-state-layer-opacity: 0.08;
+    --mat-icon-button-focus-state-layer-opacity: 0.12;
+    --mat-icon-button-pressed-state-layer-opacity: 0.16;
+
+    &:hover {
+      --mdc-icon-button-icon-color: var(--color-text);
+    }
+  }
+}
+
+// ============================================================================
+// mat-raised-button — elevated filled (rare; kept consistent with flat for now)
+// ============================================================================
+.mat-mdc-raised-button:not(:disabled) {
+  --mdc-protected-button-container-color: var(--color-accent);
+  --mdc-protected-button-label-text-color: var(--color-on-accent);
+  --mat-protected-button-state-layer-color: var(--color-on-accent);
+
+  &:hover {
+    background-color: var(--color-accent-strong);
+  }
+}

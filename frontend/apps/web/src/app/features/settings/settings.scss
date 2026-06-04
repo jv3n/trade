@@ -1,0 +1,19 @@
+// Shell layout (`.ui-shell` + `.ui-sidenav` + `.sidenav-list`) lives in
+// `libs/ui/styles/_shell.scss`. The settings-specific bits are the `.back-to-app` escape-hatch
+// modifier on the nav list and the content panel's padding/scroll behaviour.
+
+.sidenav-list {
+  // Slight visual differentiation so the "back to app" entry reads as an escape hatch rather
+  // than a peer of the settings sub-routes — muted text colour.
+  .back-to-app {
+    color: var(--color-text-muted);
+  }
+}
+
+.settings-content {
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+  background: var(--color-bg);
+  height: 100%;
+  box-sizing: border-box;
+}
