@@ -59,10 +59,9 @@ export class App {
 
   // Side-effect-only injections — see class-level docstring. The services' constructors apply
   // the persisted theme / language before the first paint ; without these references they'd
-  // never be constructed because no other code path injects them at boot.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // never be constructed because no other code path injects them at boot. `_`-prefixed so the
+  // unused-vars rule (configured to ignore that prefix) lets them through without a directive.
   private readonly _theme = inject(ThemeService);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private readonly _language = inject(LanguageService);
 
   // `<mat-sidenav-container>` query — needed to manually trigger Material's content-margin

@@ -33,7 +33,6 @@ import { authInterceptor } from './core/http/auth.interceptor';
 class GlitchtipErrorHandler implements ErrorHandler {
   handleError(error: unknown): void {
     Sentry.captureException(error);
-    // eslint-disable-next-line no-console
     console.error(error);
   }
 }

@@ -1,7 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": ".",
+    // `baseUrl` removed — TS 6+ deprecates it and TS 7 drops it. `paths` resolves relative to
+    // the tsconfig.json's directory when `baseUrl` is omitted, which is exactly what we want.
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -15,8 +16,8 @@
     "module": "preserve",
     "types": ["vitest/globals", "node"],
     "paths": {
-      "@portfolioai/ui": ["libs/ui/src/public-api.ts"],
-      "@portfolioai/ui/*": ["libs/ui/src/*"]
+      "@portfolioai/ui": ["./libs/ui/src/public-api.ts"],
+      "@portfolioai/ui/*": ["./libs/ui/src/*"]
     }
   },
   "angularCompilerOptions": {
