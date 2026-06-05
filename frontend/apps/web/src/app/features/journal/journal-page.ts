@@ -16,8 +16,19 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Sort } from '@angular/material/sort';
 
+import { MatSnackBar } from '@angular/material/snack-bar';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import {
+  EMPTY,
+  Subject,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { StbDatePickerModule } from '@portfolioai/ui';
 
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
@@ -49,6 +60,19 @@ import {
   StbTableModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+
+/**
+ * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
+ *   - `columnName` empty  → no user sort, backend falls back to its DEFAULT_SORT.
+ *   - `columnName` set    → sort by this column ; `isAscending` picks the direction.
+ *
+ * Bound back into MatSort via `[matSortActive]` + `[matSortDirection]` in the template so
+ * the visible arrow always tracks the actual sort applied server-side.
+ */
+interface SortRequest {
+  columnName: string;
+  isAscending: boolean;
+}
 
 interface FilterFormModel {
   period: PeriodPresetKey;
@@ -118,6 +142,7 @@ export class JournalPage {
   private readonly repo = inject(JournalRepository);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
+  private readonly snackBar = inject(MatSnackBar);
 
   // ---- Data state ----
   readonly loading = signal(true);
@@ -129,6 +154,13 @@ export class JournalPage {
   readonly pageIndex = signal(0);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly pageSizeOptions = [10, 25, 50, 100];
+
+  // ---- Refetch nudge ----
+  // The CRUD ops (create / update / delete) bump this counter to force the fetch effect to
+  // re-fire even when no other dependency (search, filter, sort, page) has changed. Using
+  // a dedicated signal avoids the `distinctUntilChanged` of the search pipe swallowing the
+  // refresh request when the search hasn't changed.
+  private readonly refetchTrigger = signal(0);
 
   // ---- Search (debounced 250 ms before the backend call) ----
   private readonly searchInput$ = new Subject<string>();
@@ -154,8 +186,13 @@ export class JournalPage {
     return n;
   });
 
-  // ---- Sort (server-side) ----
-  readonly sort = signal<Sort>({ active: '', direction: '' });
+  // ---- Sort (server-side, controlled-component pattern à la ic3) ----
+  // The `sort` signal is the **source of truth** for the table's sort state. It's bound back
+  // into MatSort via `[matSortActive]` + `[matSortDirection]` in the template, so a) the
+  // arrow always reflects what the server returned, b) MatSort doesn't end up in a stale
+  // internal state divergent from the data. Empty `columnName` = no user sort (server falls
+  // back to its DEFAULT_SORT).
+  readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
   // ---- Constants for the template ----
   readonly periods = PERIOD_PRESETS;
@@ -183,6 +220,7 @@ export class JournalPage {
       const sort = this.sort();
       const pageIndex = this.pageIndex();
       const pageSize = this.pageSize();
+      this.refetchTrigger(); // read so the effect re-fires when the CRUD path bumps it
       this.fetch(
         {
           query: q || null,
@@ -195,8 +233,12 @@ export class JournalPage {
         {
           pageIndex,
           pageSize,
-          sortField: sort.active || undefined,
-          sortDirection: sort.direction || undefined,
+          sortField: sort.columnName || undefined,
+          sortDirection: sort.columnName
+            ? sort.isAscending
+              ? 'asc'
+              : 'desc'
+            : undefined,
         },
       );
     });
@@ -274,8 +316,14 @@ export class JournalPage {
   }
 
   // ---- Sort handler ----
+  // Normalises Material's `Sort` event into the lib's `SortRequest` shape : an empty
+  // direction (3rd click, cleared) maps to an empty columnName so the effect knows "no user
+  // sort" and the backend falls back to its DEFAULT_SORT.
   onSortChange(s: Sort): void {
-    this.sort.set(s);
+    this.sort.set({
+      columnName: s.direction !== '' ? s.active : '',
+      isAscending: s.direction === 'asc',
+    });
     this.pageIndex.set(0);
   }
 
@@ -298,22 +346,42 @@ export class JournalPage {
     const confirmMsg = this.translate.instant('journal.confirmDelete', { ticker: entry.ticker });
     if (!confirm(confirmMsg)) return;
 
-    this.repo.delete(entry.id).subscribe({
-      next: () => {
-        // Refetch the current page — local splicing would leave us with N-1 rows on the page
-        // and the total count out of sync ; trust the server for both.
-        this.refetch();
-      },
-      error: () => this.error.set(this.translate.instant('journal.errors.delete')),
-    });
+    // Decide BEFORE the request : if we're about to delete the **last row** of a non-zero
+    // page, we should backstep one page after the delete. Computing this from the current
+    // signals (entries + pageIndex) is safe — they reflect the state the user is staring at.
+    const willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
+
+    this.repo
+      .delete(entry.id)
+      .pipe(
+        tap(() => {
+          this.toast('journal.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
+          if (willEmptyPage) {
+            // Decrementing pageIndex triggers the effect — no need to bump `refetchTrigger`,
+            // the page change is enough to re-fire the fetch on the previous (existing) page.
+            this.pageIndex.update((n) => n - 1);
+          } else {
+            // Refetch the current page — local splicing would leave us with N-1 rows on the
+            // page and the total count out of sync ; trust the server for both.
+            this.refetch();
+          }
+        }),
+        catchError(() => {
+          this.toast('journal.snackbar.deleteError', 'error');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   }
 
   /**
-   * Re-runs the current effect by nudging one of its dependencies. We bump the search input
-   * with the same value to force a refetch without touching any user-facing state.
+   * Re-runs the fetch effect without touching any user-facing state. Bumping a dedicated
+   * counter sidesteps the search pipe's `distinctUntilChanged` (which would swallow a "push
+   * the same value" trick if the search hasn't moved) and any signal-identity short-circuit
+   * on the other deps.
    */
   private refetch(): void {
-    this.searchInput$.next(this.searchValue());
+    this.refetchTrigger.update((n) => n + 1);
   }
 
   private fetch(filter: TradeEntryFilter, page: PageRequest): void {
@@ -332,19 +400,58 @@ export class JournalPage {
     });
   }
 
+  /**
+   * Dialog → save pipeline. The afterClosed() stream emits one value (the dialog result), then
+   * completes ; `switchMap` chains into the right CRUD call. `tap` posts the success
+   * snackbar + refetches ; `catchError` swallows the error after the user-facing toast so the
+   * outer subscription completes cleanly.
+   */
   private openDialog(entry: TradeEntry | null): void {
+    const isUpdate = entry !== null;
     const data: AddTradeDialogData = { entry };
     const ref = this.dialog.open<AddTradeDialog, AddTradeDialogData, TradeEntryInput | undefined>(
       AddTradeDialog,
       { data, width: '880px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
     );
-    ref.afterClosed().subscribe((input) => {
-      if (!input) return;
-      const obs = entry ? this.repo.update(entry.id, input) : this.repo.create(input);
-      obs.subscribe({
-        next: () => this.refetch(),
-        error: () => this.error.set(this.translate.instant('journal.errors.save')),
-      });
+    ref
+      .afterClosed()
+      .pipe(
+        filter((input): input is TradeEntryInput => !!input),
+        switchMap((input) =>
+          (isUpdate ? this.repo.update(entry!.id, input) : this.repo.create(input)).pipe(
+            tap((saved) => {
+              const key = isUpdate
+                ? 'journal.snackbar.updateSuccess'
+                : 'journal.snackbar.createSuccess';
+              this.toast(key, 'success', { ticker: saved.ticker });
+              this.refetch();
+            }),
+            catchError(() => {
+              this.toast(
+                isUpdate ? 'journal.snackbar.updateError' : 'journal.snackbar.createError',
+                'error',
+              );
+              return EMPTY;
+            }),
+          ),
+        ),
+      )
+      .subscribe();
+  }
+
+  /**
+   * Snackbar helper — keeps the call-sites focused on the i18n key + variant. `success` lives
+   * 3 s, `error` lives 5 s (more time to read the message). Variants are the global classes
+   * declared in `libs/ui/src/lib/snack-bar/snack-bar.scss`.
+   */
+  private toast(
+    key: string,
+    variant: 'success' | 'error',
+    params?: Record<string, unknown>,
+  ): void {
+    this.snackBar.open(this.translate.instant(key, params), undefined, {
+      duration: variant === 'success' ? 3000 : 5000,
+      panelClass: `stb-snack-bar--${variant}`,
     });
   }
 }

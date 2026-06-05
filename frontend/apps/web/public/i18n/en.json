@@ -115,6 +115,14 @@
         "exit": "Exit",
         "preparation": "Preparation checklist"
       }
+    },
+    "snackbar": {
+      "createSuccess": "Trade {{ticker}} created.",
+      "createError": "Failed to create the trade. Please retry.",
+      "updateSuccess": "Trade {{ticker}} updated.",
+      "updateError": "Failed to update the trade. Please retry.",
+      "deleteSuccess": "Trade {{ticker}} deleted.",
+      "deleteError": "Failed to delete the trade. Please retry."
     }
   },
   "header": {

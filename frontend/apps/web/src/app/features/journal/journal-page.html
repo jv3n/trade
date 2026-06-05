@@ -68,7 +68,14 @@
         </div>
       } @else {
         <div stbTable>
-          <table mat-table [dataSource]="entries()" matSort (matSortChange)="onSortChange($event)">
+          <table
+            mat-table
+            [dataSource]="entries()"
+            matSort
+            [matSortActive]="sort().columnName"
+            [matSortDirection]="sort().isAscending ? 'asc' : 'desc'"
+            (matSortChange)="onSortChange($event)"
+          >
             <ng-container matColumnDef="tradeDate">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeDate">
                 {{ 'journal.fields.tradeDate' | translate }}

@@ -8,6 +8,7 @@ import {
   StbProgressSpinnerModule,
 } from '@portfolioai/ui';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { EMPTY, catchError, tap } from 'rxjs';
 
 import { ImportResult, JournalRepository } from '../../core/api/journal/journal.repository';
 
@@ -52,23 +53,21 @@ export class JournalIoPage {
   // ============================================================================
   download(): void {
     this.exporting.set(true);
-    this.repo.exportCsv().subscribe({
-      next: (blob: Blob) => {
-        triggerBlobDownload(blob, `journal-export-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-        this.exporting.set(false);
-        this.snackBar.open(this.translate.instant('journalIo.export.success'), undefined, {
-          duration: 3000,
-          panelClass: 'stb-snack-bar--success',
-        });
-      },
-      error: () => {
-        this.exporting.set(false);
-        this.snackBar.open(this.translate.instant('journalIo.export.error'), undefined, {
-          duration: 5000,
-          panelClass: 'stb-snack-bar--error',
-        });
-      },
-    });
+    this.repo
+      .exportCsv()
+      .pipe(
+        tap((blob: Blob) => {
+          triggerBlobDownload(blob, `journal-export-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+          this.exporting.set(false);
+          this.toast('journalIo.export.success', 'success');
+        }),
+        catchError(() => {
+          this.exporting.set(false);
+          this.toast('journalIo.export.error', 'error');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   }
 
   // ============================================================================
@@ -110,37 +109,47 @@ export class JournalIoPage {
   private uploadFile(file: File): void {
     this.importStep.set('uploading');
     this.lastResult.set(null);
-    this.repo.importCsv(file).subscribe({
-      next: (result) => {
-        this.lastResult.set(result);
-        if (result.errors.length === 0) {
-          this.importStep.set('success');
-          this.snackBar.open(
-            this.translate.instant('journalIo.import.success', { count: result.created }),
-            undefined,
-            { duration: 3000, panelClass: 'stb-snack-bar--success' },
-          );
-        } else {
+    this.repo
+      .importCsv(file)
+      .pipe(
+        tap((result) => {
+          this.lastResult.set(result);
+          if (result.errors.length === 0) {
+            this.importStep.set('success');
+            this.toast('journalIo.import.success', 'success', { count: result.created });
+          } else {
+            this.importStep.set('failed');
+            this.toast('journalIo.import.failed', 'error', { count: result.errors.length });
+          }
+        }),
+        catchError(() => {
           this.importStep.set('failed');
-          this.snackBar.open(
-            this.translate.instant('journalIo.import.failed', { count: result.errors.length }),
-            undefined,
-            { duration: 5000, panelClass: 'stb-snack-bar--error' },
-          );
-        }
-      },
-      error: () => {
-        this.importStep.set('failed');
-        this.lastResult.set({
-          parsed: 0,
-          created: 0,
-          errors: [{ line: 0, message: this.translate.instant('journalIo.import.errorNetwork') }],
-        });
-        this.snackBar.open(this.translate.instant('journalIo.import.errorNetwork'), undefined, {
-          duration: 5000,
-          panelClass: 'stb-snack-bar--error',
-        });
-      },
+          this.lastResult.set({
+            parsed: 0,
+            created: 0,
+            errors: [
+              { line: 0, message: this.translate.instant('journalIo.import.errorNetwork') },
+            ],
+          });
+          this.toast('journalIo.import.errorNetwork', 'error');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
+
+  /**
+   * Snackbar helper — same shape as `JournalPage.toast`. `success` lives 3 s, `error` lives
+   * 5 s. Variants are the global classes from `libs/ui/src/lib/snack-bar/snack-bar.scss`.
+   */
+  private toast(
+    key: string,
+    variant: 'success' | 'error',
+    params?: Record<string, unknown>,
+  ): void {
+    this.snackBar.open(this.translate.instant(key, params), undefined, {
+      duration: variant === 'success' ? 3000 : 5000,
+      panelClass: `stb-snack-bar--${variant}`,
     });
   }
 

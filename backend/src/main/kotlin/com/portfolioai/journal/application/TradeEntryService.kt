@@ -12,6 +12,7 @@ import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecificatio
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
@@ -45,13 +46,21 @@ class TradeEntryService(
   }
 
   /**
-   * Paginated variant of [findAll], wired to the controller's `@PageableDefault` so the server-side
-   * journal page can move through trades in batches of 50. Sort defaults (`tradeDate desc,
-   * createdAt desc`) are passed in by Spring through [Pageable] when the client omits the `sort`
-   * query parameter.
+   * Paginated variant of [findAll].
    *
-   * The CSV export path stays on the unpaged [findAll] / dedicated [exportAllAsCsv] for now — a
-   * paged export would force the importer to handle chunks.
+   * **Sort resolution** — the sort that lands on the JPA query is owned **here**, not by Spring's
+   * `@PageableDefault` resolver. The controller passes through whatever Spring built from the URL
+   * `sort` params (or empty if none). This service then : • Uses the URL sort when the client
+   * provided one. • Falls back to [DEFAULT_SORT] (`tradeDate desc, createdAt desc`) when the client
+   * sent no `sort` param — so the table always opens on the latest trades.
+   *
+   * The previous setup leant on `@PageableDefault(sort = …, direction = DESC)` on the controller
+   * but the resolver behaviour with multiple URL `sort` params (primary + tie-breaker) was
+   * inconsistent in practice — the URL sort wasn't taking effect. Owning the decision in the
+   * service is bug-proof and trivially testable.
+   *
+   * The CSV export path stays on the unpaged [findAll] / dedicated [exportAllAsCsv] — a paged
+   * export would force the importer to handle chunks.
    */
   @Transactional(readOnly = true)
   fun findAllPaged(
@@ -60,7 +69,17 @@ class TradeEntryService(
   ): Page<TradeEntryDto> {
     val userId = authService.getCurrentUser().id
     val spec = TradeEntrySpecifications.matching(userId, filter)
-    return repo.findAll(spec, pageable).map { it.toDto() }
+    val effective =
+      if (pageable.sort.isUnsorted)
+        PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
+      else pageable
+    return repo.findAll(spec, effective).map { it.toDto() }
+  }
+
+  companion object {
+    /** Used as the implicit sort when the client doesn't send any `sort` URL param. */
+    private val DEFAULT_SORT: Sort =
+      Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
   }
 
   @Transactional(readOnly = true) fun findById(id: UUID): TradeEntryDto = loadOwned(id).toDto()

@@ -13,7 +13,6 @@ import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpHeaders
@@ -66,8 +65,10 @@ class TradeEntryController(private val service: TradeEntryService) {
     @RequestParam(required = false) play: List<TradePlay>? = null,
     @RequestParam(required = false) pattern: List<TradePattern>? = null,
     @RequestParam(required = false) status: TradeStatus? = null,
-    @PageableDefault(size = 50, sort = ["tradeDate", "createdAt"], direction = Sort.Direction.DESC)
-    pageable: Pageable,
+    // No `sort` default here — the service applies its own fallback when the URL has no `sort`
+    // param, so we get a single source of truth and avoid the `@PageableDefault` quirk that was
+    // making the user-supplied sort silently ignored.
+    @PageableDefault(size = 50) pageable: Pageable,
   ): Page<TradeEntryDto> =
     service.findAllPaged(
       TradeEntryFilter(

@@ -193,9 +193,18 @@ export class HttpJournalRepository extends JournalRepository {
     if (page) {
       params = params.set('page', page.pageIndex).set('size', page.pageSize);
       if (page.sortField && page.sortDirection) {
-        // Spring's `Pageable` accepts `?sort=field,direction` (repeatable). One sort axis is
-        // enough for the journal — Material's MatSort emits one (active, direction) at a time.
-        params = params.set('sort', `${page.sortField},${page.sortDirection}`);
+        // Spring's `Pageable` accepts `?sort=field,direction` repeatedly — when several `sort`
+        // params are present, they apply in order, the first one being primary.
+        //
+        // **Why two sort axes** : Material's MatSort emits only one (active, direction), but
+        // sorting on a low-cardinality column (`play`, `pattern`) creates massive ties — and
+        // SQL doesn't guarantee a stable order for tied rows. With pagination on top, the same
+        // trade could appear on two consecutive pages or jump between them when the user
+        // navigates. We append `createdAt,desc` as a **tie-breaker** so the order is always
+        // deterministic across requests, regardless of the user's chosen primary sort.
+        params = params
+          .append('sort', `${page.sortField},${page.sortDirection}`)
+          .append('sort', 'createdAt,desc');
       }
     }
     return this.http

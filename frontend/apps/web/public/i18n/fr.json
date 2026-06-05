@@ -115,6 +115,14 @@
         "exit": "Sortie",
         "preparation": "Checklist de préparation"
       }
+    },
+    "snackbar": {
+      "createSuccess": "Trade {{ticker}} créé.",
+      "createError": "Échec de la création du trade. Réessaie.",
+      "updateSuccess": "Trade {{ticker}} mis à jour.",
+      "updateError": "Échec de la mise à jour du trade. Réessaie.",
+      "deleteSuccess": "Trade {{ticker}} supprimé.",
+      "deleteError": "Échec de la suppression du trade. Réessaie."
     }
   },
   "header": {
