@@ -1,2 +1,2 @@
-export * from './public-api';
 export * from './paginator.module';
+export * from './public-api';

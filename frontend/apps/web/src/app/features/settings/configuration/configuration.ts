@@ -1,15 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import {
-  ConfigEntry,
-  ConfigRepository,
-  TestConfigResult,
-} from '../../../core/api/config/config.repository';
-import { LlmTimeoutService } from '../../../core/api/analysis/llm-timeout.service';
-import { OllamaStatusPanel } from './ollama-status-panel';
 import {
   StbAutocompleteModule,
   StbButtonModule,
@@ -21,6 +12,13 @@ import {
   StbSliderModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { LlmTimeoutService } from '../../../core/api/analysis/llm-timeout.service';
+import {
+  ConfigEntry,
+  ConfigRepository,
+  TestConfigResult,
+} from '../../../core/api/config/config.repository';
+import { OllamaStatusPanel } from './ollama-status-panel';
 
 const TWELVE_DATA_KEY = 'market.twelvedata.api-key';
 const FINNHUB_KEY = 'market.finnhub.api-key';
@@ -90,7 +88,6 @@ const CLAUDE_MODEL_SUGGESTIONS = [
 @Component({
   selector: 'app-configuration',
   imports: [
-    CommonModule,
     FormsModule,
     StbAutocompleteModule,
     StbButtonModule,

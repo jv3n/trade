@@ -1,11 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { Import } from './import';
 import { PortfolioRepository } from '../../core/api/portfolio/portfolio.repository';
+import { Import } from './import';
 
 const mockPortfolioRepository = {
   previewCsvImport: () => of({ accounts: [], totalItems: 0, skippedRows: 0, warnings: [] }),

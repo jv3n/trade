@@ -1,6 +1,6 @@
-import { map, Observable } from 'rxjs';
+import { assertInInjectionContext, effect, Signal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { Signal, assertInInjectionContext, effect, signal } from '@angular/core';
+import { map, Observable } from 'rxjs';
 
 export interface SnapshotSummary {
   id: string;

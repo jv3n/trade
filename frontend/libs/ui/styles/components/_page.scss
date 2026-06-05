@@ -1,0 +1,47 @@
+// Page container — every feature route wraps its content in a `.page` element to get the
+// app-wide `padding + max-width + margin: 0 auto` baseline. Before this partial, each feature
+// duplicated the same three lines in its component SCSS with subtly drifting numbers (some at
+// 720, some at 900, some at 1040, some at 1100, some at 1200, some at 1400). Centralising
+// here means a single source of truth and a smaller diff when the rhythm needs to change.
+//
+// **Default width = 1400 px** — the data-dense pages (journal, radar, ticker) that show wide
+// tables. Other widths use a modifier :
+//   • `.page--medium`  → 1200 px (e.g. import / export)
+//   • `.page--narrow`  → 1100 px (e.g. settings, observability, prompts)
+//   • `.page--form`    → 720 px  (settings forms — preferences, access-control)
+//
+// **Centering** — `.page` centers itself with `margin: 0 auto`. Pages that live inside the
+// settings sub-sidenav (which already provides its own left chrome) opt out via `.page--flush`,
+// which removes the auto-centering so the content snaps to the sub-sidenav border.
+//
+// **Responsive** — under 900 px the side padding tightens to 1 rem so the content keeps
+// breathing room on a phone without losing horizontal real estate.
+
+.page {
+  padding: 2rem 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page--medium {
+  max-width: 1200px;
+}
+
+.page--narrow {
+  max-width: 1100px;
+}
+
+.page--form {
+  max-width: 720px;
+}
+
+.page--flush {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 1.5rem 1rem;
+  }
+}

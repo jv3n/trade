@@ -1,6 +1,6 @@
 <mat-sidenav-container class="journal-shell" autosize>
   <mat-sidenav-content>
-    <div class="journal-page">
+    <div class="page">
       <header class="content-header">
         <div class="header-row">
           <div>
@@ -89,7 +89,13 @@
               </th>
               <td mat-cell *matCellDef="let e">
                 <mat-chip-set>
-                  <mat-chip stbChip="ticker" disableRipple>{{ e.ticker }}</mat-chip>
+                  <mat-chip
+                    stbChip="ticker"
+                    disableRipple
+                    class="ticker-chip--link"
+                    [routerLink]="['/ticker', e.ticker]"
+                    >{{ e.ticker }}</mat-chip
+                  >
                 </mat-chip-set>
               </td>
             </ng-container>

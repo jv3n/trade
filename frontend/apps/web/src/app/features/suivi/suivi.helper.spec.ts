@@ -11,8 +11,8 @@
  *   to `false` when present.
  * - **Empty input** returns an empty list (vacuous, but the page relies on this for the empty-state).
  */
-import { groupIntoBatches } from './suivi.helper';
 import { SnapshotSummary } from '../../core/api/portfolio/snapshot.repository';
+import { groupIntoBatches } from './suivi.helper';
 
 const makeSummary = (overrides: Partial<SnapshotSummary> = {}): SnapshotSummary => ({
   id: 'snap-1',

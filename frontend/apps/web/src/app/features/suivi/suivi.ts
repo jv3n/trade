@@ -1,16 +1,15 @@
-import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { SnapshotRepository, SnapshotPosition } from '../../core/api/portfolio/snapshot.repository';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
+import { SnapshotPosition, SnapshotRepository } from '../../core/api/portfolio/snapshot.repository';
 import { toggleSet } from '../../shared/toggle-set/toggle-set';
 import { groupIntoBatches } from './suivi.helper';
 import { Batch } from './suivi.model';
-import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 @Component({
   selector: 'app-suivi',
-  imports: [CommonModule, StbIconModule, StbProgressSpinnerModule, TranslatePipe],
+  imports: [StbIconModule, StbProgressSpinnerModule, DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './suivi.html',
   styleUrl: './suivi.scss',
 })

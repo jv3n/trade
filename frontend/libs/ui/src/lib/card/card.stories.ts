@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
 import { StbButtonModule } from '../button/button.module';
 import { StbCardModule } from './card.module';
 
@@ -16,7 +15,7 @@ interface CardArgs {
 
 @Component({
   selector: 'ui-card-demo',
-  standalone: true,
+
   imports: [StbCardModule, StbButtonModule],
   template: `
     <mat-card [appearance]="appearance">

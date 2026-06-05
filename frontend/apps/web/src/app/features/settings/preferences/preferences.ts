@@ -2,9 +2,9 @@ import { Component, inject } from '@angular/core';
 import { MatButtonToggleChange } from '@angular/material/button-toggle';
 
 import { TranslatePipe } from '@ngx-translate/core';
+import { StbButtonToggleModule, StbIconModule } from '@portfolioai/ui';
 import { Language, LanguageService } from '../../../core/app-state/language.service';
 import { Theme, ThemeService } from '../../../core/app-state/theme.service';
-import { StbButtonToggleModule, StbIconModule } from '@portfolioai/ui';
 
 /**
  * Settings → Preferences (USER + ADMIN accessible). Hosts the two app-wide knobs that used to

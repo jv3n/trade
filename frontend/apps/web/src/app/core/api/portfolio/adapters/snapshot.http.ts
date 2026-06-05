@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { SnapshotRepository, SnapshotSummary, SnapshotPosition } from '../snapshot.repository';
+import { SnapshotPosition, SnapshotRepository, SnapshotSummary } from '../snapshot.repository';
 
 @Injectable()
 export class HttpSnapshotRepository extends SnapshotRepository {

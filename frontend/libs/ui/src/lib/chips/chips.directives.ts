@@ -14,7 +14,7 @@ export type StbChipVariant = 'ticker';
 
 @Directive({
   selector: 'mat-chip[stbChip], mat-chip-option[stbChip], mat-chip-row[stbChip]',
-  standalone: true,
+
   host: { '[class]': 'hostClass()' },
 })
 export class StbChip {

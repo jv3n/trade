@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { format } from 'date-fns';
+import { Component, inject, signal } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -7,7 +7,7 @@ import {
   StbIconModule,
   StbProgressSpinnerModule,
 } from '@portfolioai/ui';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { format } from 'date-fns';
 import { EMPTY, catchError, tap } from 'rxjs';
 
 import { ImportResult, JournalRepository } from '../../core/api/journal/journal.repository';
@@ -29,11 +29,10 @@ type ImportStep = 'idle' | 'uploading' | 'success' | 'failed';
  */
 @Component({
   selector: 'app-journal-io-page',
-  standalone: true,
+
   imports: [StbButtonModule, StbCardModule, StbIconModule, StbProgressSpinnerModule, TranslatePipe],
   templateUrl: './journal-io-page.html',
   styleUrl: './journal-io-page.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JournalIoPage {
   private readonly repo = inject(JournalRepository);
@@ -127,9 +126,7 @@ export class JournalIoPage {
           this.lastResult.set({
             parsed: 0,
             created: 0,
-            errors: [
-              { line: 0, message: this.translate.instant('journalIo.import.errorNetwork') },
-            ],
+            errors: [{ line: 0, message: this.translate.instant('journalIo.import.errorNetwork') }],
           });
           this.toast('journalIo.import.errorNetwork', 'error');
           return EMPTY;
@@ -142,11 +139,7 @@ export class JournalIoPage {
    * Snackbar helper — same shape as `JournalPage.toast`. `success` lives 3 s, `error` lives
    * 5 s. Variants are the global classes from `libs/ui/src/lib/snack-bar/snack-bar.scss`.
    */
-  private toast(
-    key: string,
-    variant: 'success' | 'error',
-    params?: Record<string, unknown>,
-  ): void {
+  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
     this.snackBar.open(this.translate.instant(key, params), undefined, {
       duration: variant === 'success' ? 3000 : 5000,
       panelClass: `stb-snack-bar--${variant}`,

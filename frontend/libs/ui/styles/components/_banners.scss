@@ -20,6 +20,27 @@
   }
 }
 
+// Two-column row inside `.content-header` — title block on the left, action cluster on the
+// right. Lifted from the journal page so any feature using `.content-header` (radar, journal,
+// future pages) gets the same alignment without re-declaring `justify-content: space-between`.
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+// Right-hand action cluster (search, filter toggle, primary CTA…). `align-items: center` so
+// inline buttons + form fields sit on the same baseline. `flex-wrap` so a long stack of actions
+// wraps to a second row on narrow viewports rather than overflowing.
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .error-banner {
   display: flex;
   align-items: center;

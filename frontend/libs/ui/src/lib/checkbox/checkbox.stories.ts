@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
 import { StbCheckboxModule } from './checkbox.module';
 
 @Component({
   selector: 'ui-checkbox-demo',
-  standalone: true,
+
   imports: [StbCheckboxModule],
   template: `
     <div>

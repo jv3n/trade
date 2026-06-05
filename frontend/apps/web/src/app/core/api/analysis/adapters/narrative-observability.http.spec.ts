@@ -20,9 +20,9 @@
  *   Pinned because Angular's `HttpParams` API silently drops `undefined`, but an `else` branch
  *   could regress to forwarding empty strings — checked here.
  */
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpNarrativeObservabilityRepository } from './narrative-observability.http';
 
 describe('HttpNarrativeObservabilityRepository', () => {

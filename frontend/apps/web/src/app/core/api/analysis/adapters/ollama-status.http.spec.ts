@@ -4,9 +4,9 @@
  * side : here we only verify that the front emits the right HTTP call and surfaces the wire
  * payload as-is.
  */
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpOllamaStatusRepository } from './ollama-status.http';
 
 describe('HttpOllamaStatusRepository', () => {

@@ -3,9 +3,9 @@
  * `/api/watchlist` routes. Idempotency / 404 semantics are tested server-side ; here we just
  * pin the wire format the front commits to.
  */
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpWatchlistRepository } from './watchlist.http';
 
 describe('HttpWatchlistRepository', () => {

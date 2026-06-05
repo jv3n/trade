@@ -1,22 +1,12 @@
-import { Component, DestroyRef, inject, signal, computed, OnInit } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { DecimalPipe } from '@angular/common';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { RouterLink } from '@angular/router';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import {
-  PortfolioRepository,
-  Portfolio,
-  Asset,
-  OwnedTicker,
-} from '../../core/api/portfolio/portfolio.repository';
-import { MarketRepository, SymbolMatch } from '../../core/api/market/market.repository';
-import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
 import {
   StbAutocompleteModule,
   StbButtonModule,
@@ -26,6 +16,16 @@ import {
   StbProgressSpinnerModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { MarketRepository, SymbolMatch } from '../../core/api/market/market.repository';
+import {
+  Asset,
+  OwnedTicker,
+  Portfolio,
+  PortfolioRepository,
+} from '../../core/api/portfolio/portfolio.repository';
+import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
 
 /**
  * Debounce window between a keystroke in the watchlist search and the actual `/symbols/search`
@@ -93,7 +93,7 @@ function readSidebarOpenState(): SidebarOpenState {
 @Component({
   selector: 'app-dashboard',
   imports: [
-    CommonModule,
+    DecimalPipe,
     ReactiveFormsModule,
     RouterLink,
     DragDropModule,

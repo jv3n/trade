@@ -19,9 +19,9 @@
  * - **`hasActiveFilter`** flips true as soon as one filter is set, false after reset.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
 import {
   NarrativeBias,
   NarrativeBiasRepository,

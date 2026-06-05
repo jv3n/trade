@@ -1,9 +1,14 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import {
+  StbButtonModule,
+  StbIconModule,
+  StbProgressSpinnerModule,
+  StbTableModule,
+} from '@portfolioai/ui';
 import { catchError, of } from 'rxjs';
 import {
   DEFAULT_SCREENER_FILTER,
@@ -15,12 +20,6 @@ import {
 } from '../../core/api/screener/screener.repository';
 import { ScreenerFilterRepository } from '../../core/local/screener-filter/screener-filter.repository';
 import { RadarFilterPanel } from './radar-filter-panel';
-import {
-  StbButtonModule,
-  StbIconModule,
-  StbProgressSpinnerModule,
-  StbTableModule,
-} from '@portfolioai/ui';
 
 /**
  * Market radar page after Phase 6 ticket (9) — snapshot persistance + in-process filtering.
@@ -48,16 +47,16 @@ import {
  */
 @Component({
   selector: 'app-radar',
-  standalone: true,
   imports: [
-    CommonModule,
+    DatePipe,
+    DecimalPipe,
+    RadarFilterPanel,
     RouterLink,
     StbButtonModule,
     StbIconModule,
     StbProgressSpinnerModule,
     StbTableModule,
     TranslatePipe,
-    RadarFilterPanel,
   ],
   templateUrl: './radar.html',
   styleUrl: './radar.scss',

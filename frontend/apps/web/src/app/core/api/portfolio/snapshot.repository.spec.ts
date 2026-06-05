@@ -19,8 +19,8 @@
  *   that forgets the contract. Without this guard `effect()` would leak its cleanup until JS
  *   heap shutdown.
  */
-import { TestBed } from '@angular/core/testing';
 import { ApplicationRef, Signal, provideZonelessChangeDetection, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { SnapshotPosition, SnapshotRepository, SnapshotSummary } from './snapshot.repository';
 

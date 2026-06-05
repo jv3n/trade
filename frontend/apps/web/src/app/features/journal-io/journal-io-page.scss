@@ -1,12 +1,6 @@
 // Page layout. `.content-header` comes from the lib (`libs/ui/styles/`) — only the io-specific
 // arrangement lives here.
 
-.journal-io-page {
-  padding: 2rem 2.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));

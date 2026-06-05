@@ -1,21 +1,34 @@
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
-  Subscription,
+  StbAutocompleteModule,
+  StbButtonModule,
+  StbButtonToggleModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbTooltipModule,
+} from '@portfolioai/ui';
+import {
   catchError,
   debounceTime,
   distinctUntilChanged,
   filter,
   of,
+  Subscription,
   switchMap,
 } from 'rxjs';
-import { LanguageService } from '../../core/app-state/language.service';
+import { JobEvent, JobPhase, JobStreamService } from '../../core/api/analysis/job-stream.service';
+import { NarrativeFeedbackRepository } from '../../core/api/analysis/narrative-feedback.repository';
+import { AnalystRepository, AnalystSnapshot } from '../../core/api/analyst/analyst.repository';
+import { EarningsRepository, EarningsSnapshot } from '../../core/api/earnings/earnings.repository';
 import {
   MarketRepository,
   OhlcBar,
@@ -27,24 +40,11 @@ import {
 } from '../../core/api/market/market.repository';
 import { NewsItem, NewsRepository } from '../../core/api/news/news.repository';
 import { WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
+import { LanguageService } from '../../core/app-state/language.service';
 import {
   Annotation,
   AnnotationRepository,
 } from '../../core/local/annotation/annotation.repository';
-import { AnalystRepository, AnalystSnapshot } from '../../core/api/analyst/analyst.repository';
-import { EarningsRepository, EarningsSnapshot } from '../../core/api/earnings/earnings.repository';
-import { JobEvent, JobPhase, JobStreamService } from '../../core/api/analysis/job-stream.service';
-import { NarrativeFeedbackRepository } from '../../core/api/analysis/narrative-feedback.repository';
-import {
-  StbAutocompleteModule,
-  StbButtonModule,
-  StbButtonToggleModule,
-  StbFormFieldModule,
-  StbIconModule,
-  StbInputModule,
-  StbProgressSpinnerModule,
-  StbTooltipModule,
-} from '@portfolioai/ui';
 
 /**
  * Same value as the dashboard watchlist autocomplete — keeps the typing-vs-search rhythm uniform
@@ -283,7 +283,7 @@ const BRUSH_MIN_BARS = 2;
 @Component({
   selector: 'app-ticker',
   imports: [
-    CommonModule,
+    DecimalPipe,
     ReactiveFormsModule,
     RouterLink,
     StbAutocompleteModule,
@@ -295,6 +295,7 @@ const BRUSH_MIN_BARS = 2;
     StbProgressSpinnerModule,
     StbTooltipModule,
     TranslatePipe,
+    DatePipe,
   ],
   templateUrl: './ticker.html',
   styleUrl: './ticker.scss',

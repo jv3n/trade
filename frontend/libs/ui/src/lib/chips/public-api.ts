@@ -1,2 +1,2 @@
-export * from './chips.module';
 export * from './chips.directives';
+export * from './chips.module';

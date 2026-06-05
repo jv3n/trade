@@ -4,7 +4,6 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
 import {
   StbButtonModule,
   StbDialogModule,
@@ -14,6 +13,7 @@ import {
   StbProgressSpinnerModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
 
 /**
  * Suggestions re-used from the LLM provider card on `/settings/configuration` so the dialog
@@ -48,7 +48,7 @@ const OLLAMA_MODEL_SUGGESTIONS = [
  */
 @Component({
   selector: 'app-ollama-pull-dialog',
-  standalone: true,
+
   imports: [
     ReactiveFormsModule,
     TranslatePipe,

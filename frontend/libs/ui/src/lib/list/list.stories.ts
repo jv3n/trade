@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { StbListModule } from './list.module';
 import { StbIconModule } from '../icon';
+import { StbListModule } from './list.module';
 
 @Component({
   selector: 'ui-list-demo',
-  standalone: true,
+
   imports: [StbListModule, StbIconModule],
   template: `
     <div>

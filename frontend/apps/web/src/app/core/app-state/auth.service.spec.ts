@@ -21,8 +21,8 @@
  * - **`clear()`** : sync local clear without HTTP. Used by the auth interceptor on a `/api/**`
  *   401 so the toolbar reflects the logged-out state before the navigation completes.
  */
-import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { AuthRepository, CurrentUser } from '../api/auth/auth.repository';
 import { AuthService } from './auth.service';

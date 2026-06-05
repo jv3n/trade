@@ -1,14 +1,13 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
-import { StbAutocompleteModule } from './autocomplete.module';
 import { FormsModule } from '@angular/forms';
 import { StbFormFieldModule } from '../form-field';
 import { StbInputModule } from '../input';
+import { StbAutocompleteModule } from './autocomplete.module';
 
 @Component({
   selector: 'ui-autocomplete-demo',
-  standalone: true,
+
   imports: [StbAutocompleteModule, FormsModule, StbFormFieldModule, StbInputModule],
   template: `
     <div>

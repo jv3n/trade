@@ -3,12 +3,12 @@
 // à la page d'access-control : layout outer, modifier de la card emails, et les inline
 // messages success/error sous les actions.
 
+// Container (padding + max-width 720) comes from the global `.page page--form` composition ;
+// the local class only carries the flex-stack rhythm for the access-control sections.
 .access-control-layout {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 2rem 2.5rem;
-  max-width: 720px;
 }
 
 // `.config-card` (lib) avec une `.card-header h3` qui héberge la pastille `(N)` à droite du titre.

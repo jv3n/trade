@@ -14,11 +14,11 @@
  * spinning up the Router — the `inject(Router)` call needs an injection context, but the actual
  * `router.createUrlTree(...)` is deterministic on its input.
  */
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, UrlTree } from '@angular/router';
-import { signal } from '@angular/core';
 import { AuthService } from '../app-state/auth.service';
-import { authGuard, adminGuard } from './auth.guards';
+import { adminGuard, authGuard } from './auth.guards';
 
 // Mocking ActivatedRouteSnapshot + RouterStateSnapshot — both are unused by our guards, so we
 // pass `undefined as never`. If a future guard reads them, the test compiler error will surface

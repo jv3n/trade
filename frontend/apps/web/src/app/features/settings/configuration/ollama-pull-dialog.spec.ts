@@ -15,8 +15,8 @@
  *   visible, and clicking the input or suggestions is a no-op (avoids a second concurrent
  *   pull while waiting).
  */
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';

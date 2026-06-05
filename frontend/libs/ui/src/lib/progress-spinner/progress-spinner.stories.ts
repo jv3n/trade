@@ -5,7 +5,7 @@ import { StbProgressSpinnerModule } from '../progress-spinner';
 
 @Component({
   selector: 'ui-progress-spinner-demo',
-  standalone: true,
+
   imports: [StbProgressSpinnerModule],
   template: `
     <div>

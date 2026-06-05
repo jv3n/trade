@@ -21,8 +21,8 @@
  *   so a future cleanup doesn't accidentally hide this onboarding hint.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
 import { provideTranslateService } from '@ngx-translate/core';
+import { Observable, of, throwError } from 'rxjs';
 import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/prompt.repository';
 import { PromptsPage, lineDiff } from './prompts';
 

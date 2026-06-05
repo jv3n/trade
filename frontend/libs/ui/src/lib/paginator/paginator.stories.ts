@@ -15,7 +15,7 @@ interface PaginatorArgs {
 
 @Component({
   selector: 'ui-paginator-demo',
-  standalone: true,
+
   imports: [StbPaginatorModule],
   template: `
     <mat-paginator

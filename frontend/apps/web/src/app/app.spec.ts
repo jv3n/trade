@@ -1,12 +1,12 @@
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { provideTranslateService } from '@ngx-translate/core';
 import { App } from './app';
-import { AuthService } from './core/app-state/auth.service';
 import { CurrentUser } from './core/api/auth/auth.repository';
+import { AuthService } from './core/app-state/auth.service';
 
 /**
  * Smoke tests on [App] — the application shell.

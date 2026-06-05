@@ -12,25 +12,25 @@
  * Repos are mocked with simple stubs because we're verifying *the component's logic*, not the
  * HTTP layer (covered separately in `core/adapters/*.http.spec.ts`).
  */
-import { vi } from 'vitest';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { Dashboard } from './dashboard';
-import {
-  PortfolioRepository,
-  Asset,
-  Portfolio,
-  OwnedTicker,
-} from '../../core/api/portfolio/portfolio.repository';
+import { vi } from 'vitest';
 import {
   MarketRepository,
   SymbolMatch,
   TickerSnapshot,
 } from '../../core/api/market/market.repository';
+import {
+  Asset,
+  OwnedTicker,
+  Portfolio,
+  PortfolioRepository,
+} from '../../core/api/portfolio/portfolio.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
+import { Dashboard } from './dashboard';
 
 const mockPortfolioRepository: {
   getAll: () => Observable<Portfolio[]>;

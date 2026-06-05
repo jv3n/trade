@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
 import { StbFormFieldModule } from '../form-field';
 import { StbInputModule } from '../input';
 
 @Component({
   selector: 'ui-form-field-demo',
-  standalone: true,
+
   imports: [StbFormFieldModule, StbInputModule],
   template: `
     <div>

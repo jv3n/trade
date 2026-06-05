@@ -12,9 +12,9 @@
  *   `promptTemplateId`) is the wire contract — no compile-time check links it to the Kotlin name.
  * - **Empty filter** : calling `findBias()` without a filter sends no query params at all.
  */
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpNarrativeBiasRepository } from './narrative-bias.http';
 
 describe('HttpNarrativeBiasRepository', () => {

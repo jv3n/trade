@@ -1,14 +1,14 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe, NgClass, PercentPipe } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 import {
   PromptRepository,
   PromptStats,
   PromptTemplate,
 } from '../../../../core/api/analysis/prompt.repository';
-import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 /**
  * Settings → Prompts → Stats (Phase 3 PR6). Per-prompt aggregated view :

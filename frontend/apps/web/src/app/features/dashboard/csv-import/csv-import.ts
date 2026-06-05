@@ -1,12 +1,11 @@
-import { Component, inject, signal, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
+import { DecimalPipe } from '@angular/common';
+import { Component, inject, output, signal } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import {
-  PortfolioRepository,
-  CsvImportPreview,
-} from '../../../core/api/portfolio/portfolio.repository';
 import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
+import {
+  CsvImportPreview,
+  PortfolioRepository,
+} from '../../../core/api/portfolio/portfolio.repository';
 
 type ImportStep =
   | 'idle'
@@ -20,7 +19,7 @@ type ImportStep =
 
 @Component({
   selector: 'app-csv-import',
-  imports: [CommonModule, StbIconModule, StbProgressSpinnerModule, TranslatePipe],
+  imports: [DecimalPipe, StbIconModule, StbProgressSpinnerModule, TranslatePipe],
   templateUrl: './csv-import.html',
   styleUrl: './csv-import.scss',
 })

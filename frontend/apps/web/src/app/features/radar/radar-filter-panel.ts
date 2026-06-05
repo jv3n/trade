@@ -1,27 +1,20 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  effect,
-  inject,
-  input,
-  output,
-} from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslatePipe } from '@ngx-translate/core';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import {
-  DEFAULT_SCREENER_FILTER,
-  ScreenerFilter,
-} from '../../core/api/screener/screener.repository';
 import {
   StbButtonModule,
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
+  StbTooltipModule,
 } from '@portfolioai/ui';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import {
+  DEFAULT_SCREENER_FILTER,
+  ScreenerFilter,
+} from '../../core/api/screener/screener.repository';
 
 /**
  * Debounce on filter form changes — 300 ms sweet spot used elsewhere in the app (e.g. watchlist
@@ -30,34 +23,44 @@ import {
  */
 const FILTER_CHANGE_DEBOUNCE_MS = 300;
 
+/** localStorage key for the sidenav rail open/collapsed state. Persists per browser. */
+const SIDENAV_STORAGE_KEY = 'radar-sidenav-open';
+/** localStorage key for the expanded accordion sections — JSON-encoded array of section keys. */
+const SIDENAV_SECTIONS_STORAGE_KEY = 'radar-filter-sections';
+
+/** Section keys for the filter accordion — closed type so a typo in the template fails at build. */
+type SidenavSectionKey = 'gap' | 'volume';
+
+const ALL_SECTIONS: SidenavSectionKey[] = ['gap', 'volume'];
+
 /**
- * Filter panel for the market radar after Phase 6 ticket (8) v0.5 simplification — only the two
- * axes the user can meaningfully tweak on the persisted snapshot remain : **gap %** and **volume
- * ratio**. The previously-exposed cap range + sector knobs were dropped because (a) the universe
- * is hardcoded to NASDAQ_MID_CAP so the cap range is enforced server-side, (b) sector is no-op on
- * every live provider (FMP / Polygon don't carry it), and (c) the ticket's UX intent was « strict
- * nécessaire ».
+ * Filter panel for the market radar — same chrome as the ticker dossier's tools sidenav :
+ *   - foldable rail (full content + collapsed icon-only rail), persisted in localStorage ;
+ *   - accordion sections — one per filter axis (gap %, volume ratio), each with its own
+ *     header button + chevron + collapsible body ;
+ *   - reset button pinned to the footer.
+ *
+ * **State** :
+ *   - [initial] (input) — seed value from the parent's localStorage cache, snapshotted once into
+ *     the FormGroup at the first effect run. Not a two-way binding ; a re-seed (e.g. parent
+ *     reset) is handled by re-rendering the panel.
+ *   - [sidenavOpen] (signal) — controls the rail collapse. Defaults open ; persists user toggles.
+ *   - [expandedSections] (signal) — accordion state. Defaults both open (the panel IS the radar's
+ *     filter UI ; defaulting closed would land the user on a blank rail).
  *
  * **Why a separate component** : the radar page reads as filter (left) + table (right). The
- * filter form, even slim, stays extractable for unit testing without bringing in `mat-table` and
- * the HTTP repository.
- *
- * **Initial value via [input.required<ScreenerFilter>]** — parent owns the persisted filter
- * (locally cached in `localStorage`) and seeds this panel on construction. We snapshot the input
- * once into the FormGroup at the first effect run ; subsequent emissions flow *outwards* via
- * [filterChanged]. The input is **not** a two-way binding — a future re-seed (e.g. the « Reset »
- * button at the page level) is handled by re-rendering the panel.
+ * filter panel stays extractable for unit testing without bringing in `mat-table` and the HTTP
+ * repository.
  */
 @Component({
   selector: 'app-radar-filter-panel',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     StbButtonModule,
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
+    StbTooltipModule,
     TranslatePipe,
   ],
   templateUrl: './radar-filter-panel.html',
@@ -74,6 +77,13 @@ export class RadarFilterPanel {
   readonly filterChanged = output<ScreenerFilter>();
   /** Fires when the user hits « Reset to defaults ». */
   readonly resetRequested = output<void>();
+
+  /** Sidenav rail open / collapsed. */
+  readonly sidenavOpen = signal<boolean>(RadarFilterPanel.loadSidenavOpenInitial());
+  /** Accordion sections currently expanded. */
+  readonly expandedSections = signal<Set<SidenavSectionKey>>(
+    RadarFilterPanel.loadExpandedSectionsInitial(),
+  );
 
   /** Initialised once in the constructor effect — see class KDoc. */
   form!: FormGroup;
@@ -112,5 +122,58 @@ export class RadarFilterPanel {
 
   reset(): void {
     this.resetRequested.emit();
+  }
+
+  toggleSidenav(): void {
+    const next = !this.sidenavOpen();
+    this.sidenavOpen.set(next);
+    try {
+      localStorage.setItem(SIDENAV_STORAGE_KEY, String(next));
+    } catch {
+      /* localStorage unavailable — in-memory state still works for the session */
+    }
+  }
+
+  isSectionExpanded(key: SidenavSectionKey): boolean {
+    return this.expandedSections().has(key);
+  }
+
+  toggleSection(key: SidenavSectionKey): void {
+    const next = new Set(this.expandedSections());
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    this.expandedSections.set(next);
+    try {
+      localStorage.setItem(SIDENAV_SECTIONS_STORAGE_KEY, JSON.stringify(Array.from(next)));
+    } catch {
+      /* localStorage unavailable — in-memory state still works for the session */
+    }
+  }
+
+  // Default open : the filter panel IS the radar's filter UI ; defaulting closed would land the
+  // user on an empty rail.
+  private static loadSidenavOpenInitial(): boolean {
+    try {
+      const raw = localStorage.getItem(SIDENAV_STORAGE_KEY);
+      return raw === null ? true : raw === 'true';
+    } catch {
+      return true;
+    }
+  }
+
+  // Default = both sections open. Falls back to a clean default if the stored JSON is malformed
+  // (defensive : a stale entry from a previous schema shouldn't crash the page).
+  private static loadExpandedSectionsInitial(): Set<SidenavSectionKey> {
+    try {
+      const raw = localStorage.getItem(SIDENAV_SECTIONS_STORAGE_KEY);
+      if (raw === null) return new Set(ALL_SECTIONS);
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return new Set(ALL_SECTIONS);
+      return new Set(
+        parsed.filter((k): k is SidenavSectionKey => ALL_SECTIONS.includes(k as SidenavSectionKey)),
+      );
+    } catch {
+      return new Set(ALL_SECTIONS);
+    }
   }
 }

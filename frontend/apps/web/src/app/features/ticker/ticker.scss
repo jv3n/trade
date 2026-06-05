@@ -1,6 +1,7 @@
+// Container (`max-width: 1400px; margin: 0 auto`) comes from the global `.page` class. Ticker
+// keeps a local padding override because the dossier hangs a long brush chart at the bottom and
+// the extra `3rem` bottom keeps the brush handles clear of the viewport edge.
 .ticker-page {
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 1.5rem 2rem 3rem;
 }
 

@@ -16,7 +16,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
-import { TickerPage } from './ticker';
+import { JobEvent, JobStreamService } from '../../core/api/analysis/job-stream.service';
+import {
+  NarrativeFeedbackRepository,
+  PromptScore,
+} from '../../core/api/analysis/narrative-feedback.repository';
+import { AnalystRepository, AnalystSnapshot } from '../../core/api/analyst/analyst.repository';
+import { EarningsRepository, EarningsSnapshot } from '../../core/api/earnings/earnings.repository';
 import {
   ChartResponse,
   MarketRepository,
@@ -28,19 +34,13 @@ import {
   TickerSnapshot,
   TimeframeCode,
 } from '../../core/api/market/market.repository';
-import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
 import { NewsItem, NewsRepository } from '../../core/api/news/news.repository';
+import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
 import {
   Annotation,
   AnnotationRepository,
 } from '../../core/local/annotation/annotation.repository';
-import { AnalystRepository, AnalystSnapshot } from '../../core/api/analyst/analyst.repository';
-import { EarningsRepository, EarningsSnapshot } from '../../core/api/earnings/earnings.repository';
-import { JobEvent, JobStreamService } from '../../core/api/analysis/job-stream.service';
-import {
-  NarrativeFeedbackRepository,
-  PromptScore,
-} from '../../core/api/analysis/narrative-feedback.repository';
+import { TickerPage } from './ticker';
 
 const EMPTY_SNAPSHOT: TickerSnapshot = {
   quote: {

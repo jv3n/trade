@@ -1,106 +1,51 @@
-.radar-layout {
-  display: grid;
-  grid-template-columns: minmax(240px, 280px) 1fr;
-  gap: 1rem;
-  padding: 1rem;
-  align-items: start;
+// Radar page — the container (padding + max-width + margin auto) comes from the global `.page`
+// class in `libs/ui/styles/components/_page.scss`. Only the radar-specific flex rhythm + 2-col
+// row + gap-tinted cells live here.
+
+.radar-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.radar-sidebar {
-  position: sticky;
-  top: 1rem;
-  background: var(--mat-app-surface-container);
-  border-radius: 8px;
+.radar-body {
+  display: grid;
+  // `auto 1fr` lets the filter panel size itself — full width when open, 48 px rail when
+  // collapsed. The grid responds to the panel's width transition for free.
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
 
 .radar-main {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.radar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.radar-header-titles h1 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.5rem;
-}
-
-.radar-subtitle {
-  margin: 0;
-  color: var(--mat-app-on-surface-variant);
-  font-size: 0.95rem;
-}
-
-.radar-header-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
+  min-width: 0; // let the table claim the remaining column without pushing the grid wider
 }
 
 .radar-last-fetched {
-  font-size: 0.85rem;
-  color: var(--mat-app-on-surface-variant);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.radar-loading,
-.radar-error,
-.radar-empty {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.radar-error {
-  background: var(--mat-app-error-container);
-  color: var(--mat-app-on-error-container);
-}
-
-.radar-empty {
-  flex-direction: column;
-  padding: 2rem;
-  color: var(--mat-app-on-surface-variant);
-  text-align: center;
-
-  mat-icon {
-    font-size: 2.5rem;
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-}
-
-.radar-table {
-  width: 100%;
-  background: var(--mat-app-surface);
-}
-
-.num-col {
-  text-align: right;
-}
-
+// Gap-up / gap-down tints — the trading-domain semantics of an abnormal opening move. Lives
+// page-local for the same reason as `.profit-positive` / `.profit-negative` in the journal :
+// the colour encodes domain meaning, not a generic numeric column.
 .gap-up {
-  color: var(--mat-sys-tertiary, #1b873e);
-  font-weight: 500;
+  color: var(--color-success);
+  font-weight: 600;
 }
 
 .gap-down {
-  color: var(--mat-sys-error, #c62828);
-  font-weight: 500;
+  color: var(--color-danger);
+  font-weight: 600;
 }
 
 .symbol-link {
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
-  color: var(--mat-app-primary);
+  color: var(--color-link);
 
   &:hover {
     text-decoration: underline;
@@ -108,11 +53,7 @@
 }
 
 @media (max-width: 900px) {
-  .radar-layout {
+  .radar-body {
     grid-template-columns: 1fr;
-  }
-
-  .radar-sidebar {
-    position: static;
   }
 }

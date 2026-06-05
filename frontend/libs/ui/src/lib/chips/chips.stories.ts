@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
-import { StbChipsModule } from './chips.module';
 import { StbIconModule } from '../icon';
-import type { StbChipVariant } from './chips.directives';
+import type { StbChipVariant } from '@portfolioai/ui';
+import { StbChipsModule } from './chips.module';
 
 type Variant = StbChipVariant | 'default';
 
@@ -17,7 +16,7 @@ interface ChipArgs {
 
 @Component({
   selector: 'ui-chips-demo',
-  standalone: true,
+
   imports: [StbChipsModule, StbIconModule],
   template: `
     <mat-chip-set>

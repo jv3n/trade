@@ -23,12 +23,12 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
-import { Suivi } from './suivi';
 import {
+  SnapshotPosition,
   SnapshotRepository,
   SnapshotSummary,
-  SnapshotPosition,
 } from '../../core/api/portfolio/snapshot.repository';
+import { Suivi } from './suivi';
 
 const makeSummary = (overrides: Partial<SnapshotSummary> = {}): SnapshotSummary => ({
   id: 'snap-1',

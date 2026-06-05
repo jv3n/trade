@@ -88,6 +88,29 @@
             <mat-icon matListItemIcon>swap_vert</mat-icon>
             <span matListItemTitle>{{ 'nav.importExport' | translate }}</span>
           </a>
+          <a
+            mat-list-item
+            routerLink="/ticker/AAPL"
+            routerLinkActive="sidenav-active"
+            [matTooltip]="'nav.ticker' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>show_chart</mat-icon>
+            <span matListItemTitle>{{ 'nav.ticker' | translate }}</span>
+          </a>
+          <a
+            mat-list-item
+            routerLink="/radar"
+            routerLinkActive="sidenav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [matTooltip]="'nav.radar' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>radar</mat-icon>
+            <span matListItemTitle>{{ 'nav.radar' | translate }}</span>
+          </a>
         </mat-nav-list>
         <div class="sidenav-toggle">
           <button

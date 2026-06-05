@@ -7,7 +7,7 @@ import { Directive, computed, input } from '@angular/core';
  */
 @Directive({
   selector: 'div[stbTable]',
-  standalone: true,
+
   host: { class: 'stb-table' },
 })
 export class StbTable {}
@@ -27,7 +27,7 @@ export type StbTableColVariant = 'numeric' | 'mono' | 'actions';
  */
 @Directive({
   selector: 'th[stbCol], td[stbCol]',
-  standalone: true,
+
   host: { '[class]': 'hostClass()' },
 })
 export class StbCol {

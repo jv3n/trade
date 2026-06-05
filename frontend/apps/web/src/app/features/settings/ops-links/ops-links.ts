@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 
 import { TranslatePipe } from '@ngx-translate/core';
 import { StbIconModule } from '@portfolioai/ui';
@@ -321,7 +321,6 @@ const OPS_LINKS_SECTIONS: OpsLinkSection[] = [
   imports: [StbIconModule, TranslatePipe],
   templateUrl: './ops-links.html',
   styleUrl: './ops-links.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OpsLinksPage {
   readonly sections = OPS_LINKS_SECTIONS;

@@ -26,7 +26,7 @@ export type StbButtonSize = 'xs' | 'sm' | 'md' | 'lg';
     button[mat-icon-button][stbSize], a[mat-icon-button][stbSize],
     button[mat-fab][stbSize], button[mat-mini-fab][stbSize]
   `,
-  standalone: true,
+
   host: {
     '[class]': 'hostClass()',
   },
@@ -54,7 +54,7 @@ export class StbSize {
  */
 @Directive({
   selector: 'mat-spinner[stbSpinnerEnd], mat-progress-spinner[stbSpinnerEnd]',
-  standalone: true,
+
   host: { class: 'stb-spinner-end' },
 })
 export class StbSpinnerEnd {}

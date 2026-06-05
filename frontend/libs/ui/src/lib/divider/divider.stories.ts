@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
 import { StbDividerModule } from './divider.module';
 
 @Component({
   selector: 'ui-divider-demo',
-  standalone: true,
+
   imports: [StbDividerModule],
   template: `
     <div>

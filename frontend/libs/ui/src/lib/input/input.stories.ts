@@ -27,7 +27,7 @@ interface InputArgs {
 
 @Component({
   selector: 'ui-input-demo',
-  standalone: true,
+
   imports: [StbFormFieldModule, StbIconModule, StbInputModule],
   template: `
     <mat-form-field [appearance]="appearance" subscriptSizing="dynamic">

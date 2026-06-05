@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { StbTooltipModule } from './tooltip.module';
 import { StbButtonModule } from '../button';
 import { StbIconModule } from '../icon';
+import { StbTooltipModule } from './tooltip.module';
 
 @Component({
   selector: 'ui-tooltip-demo',
-  standalone: true,
+
   imports: [StbTooltipModule, StbButtonModule, StbIconModule],
   template: `
     <div>

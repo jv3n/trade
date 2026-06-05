@@ -1,8 +1,8 @@
 import { isDevMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import * as Sentry from '@sentry/browser';
-import { appConfig } from './app/app.config';
 import { App } from './app/app';
+import { appConfig } from './app/app.config';
 
 // GlitchTip / Sentry-compatible DSN — public by design (visible in browser DevTools on every
 // request). Committing it to git is the standard Sentry pattern, the DSN identifies the project

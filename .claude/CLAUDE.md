@@ -119,6 +119,7 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 ### Frontend (Angular 22)
 
 - Standalone components, **zoneless** (`provideZonelessChangeDetection()`, no `zone.js`). State is signal-based, no need for `OnPush` everywhere.
+- **No `CommonModule`** — standalone components import only what they actually use. Pipes come from their dedicated entry points : `import { DatePipe, DecimalPipe } from '@angular/common'`, then list them in `imports: [...]`. Control flow is the `@if` / `@for` / `@else` syntax, not `*ngIf` / `*ngFor` (so `NgIf` / `NgForOf` are never needed either). Pulling `CommonModule` in drags the whole legacy directive set for no payoff.
 - **Angular Material 22** wrapped through `@portfolioai/ui` (`libs/ui/`). Consumer code imports `Stb<Name>Module`, never `Mat<Name>Module` directly.
 - **Workspace** — `apps/web` is the consumer app, `libs/ui` is the design system (ng-packagr build, Storybook 10.4 playground). TypeScript alias `@portfolioai/ui` → `libs/ui/src/public-api.ts`.
 - **i18n via `ngx-translate`** — translation files in `apps/web/public/i18n/<lang>.json` (FR + EN), templates use `'key' | translate`, TS uses `TranslateService.instant('key', { params })`. Active locale lives in `LanguageService` (signal). **Never hard-code a user-facing string** — always route through a key.

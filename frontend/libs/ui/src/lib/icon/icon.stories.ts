@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
 import { StbIconModule } from './icon.module';
 
 @Component({
   selector: 'ui-icon-demo',
-  standalone: true,
+
   imports: [StbIconModule],
   template: `
     <div>

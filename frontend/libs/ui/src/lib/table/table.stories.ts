@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { Component, signal } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 
@@ -24,7 +24,7 @@ const ROWS: Row[] = [
 
 @Component({
   selector: 'ui-table-demo',
-  standalone: true,
+
   imports: [StbTableModule, StbSortHeaderModule, DecimalPipe],
   template: `
     <div stbTable>

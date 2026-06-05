@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 
-import { AuthService } from '../../core/app-state/auth.service';
 import { CurrentUser } from '../../core/api/auth/auth.repository';
+import { AuthService } from '../../core/app-state/auth.service';
 import { Settings } from './settings';
 
 /**

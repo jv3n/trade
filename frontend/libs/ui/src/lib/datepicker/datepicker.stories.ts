@@ -4,7 +4,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { applicationConfig, moduleMetadata, type Meta, type StoryObj } from '@storybook/angular';
-
 import { StbDatePickerModule } from './datepicker.module';
 
 // Stories for the Material datepicker theming. Material's `MatDatepickerInput` is its own
@@ -14,7 +13,7 @@ import { StbDatePickerModule } from './datepicker.module';
 
 @Component({
   selector: 'ui-datepicker-demo',
-  standalone: true,
+
   imports: [MatFormFieldModule, MatIconModule, MatInputModule, StbDatePickerModule],
   template: `
     <div>

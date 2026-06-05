@@ -1,10 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { AuthService } from '../../core/app-state/auth.service';
 import { StbButtonModule, StbIconModule } from '@portfolioai/ui';
+import { AuthService } from '../../core/app-state/auth.service';
 
 /**
  * `/error` — global "something went wrong" page reached by the auth interceptor on a 5xx from

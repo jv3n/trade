@@ -3,14 +3,14 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { MatDialog } from '@angular/material/dialog';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
-import { OllamaPullDialog } from './ollama-pull-dialog';
 import {
   StbButtonModule,
   StbIconModule,
   StbProgressSpinnerModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
+import { OllamaPullDialog } from './ollama-pull-dialog';
 
 /**
  * Panel rendered at the top of the LLM section of `/settings/configuration` when
@@ -33,7 +33,7 @@ import {
  */
 @Component({
   selector: 'app-ollama-status-panel',
-  standalone: true,
+
   imports: [
     TranslatePipe,
     StbIconModule,

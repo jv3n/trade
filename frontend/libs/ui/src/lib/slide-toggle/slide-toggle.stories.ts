@@ -15,7 +15,7 @@ interface SlideToggleArgs {
 
 @Component({
   selector: 'ui-slide-toggle-demo',
-  standalone: true,
+
   imports: [StbSlideToggleModule],
   template: `
     <mat-slide-toggle

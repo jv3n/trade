@@ -1,14 +1,9 @@
 import { Component, computed, effect, inject, viewChild } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map, startWith } from 'rxjs/operators';
 import { MatSidenavContainer } from '@angular/material/sidenav';
-
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map, startWith } from 'rxjs/operators';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ThemeService } from './core/app-state/theme.service';
-import { LanguageService } from './core/app-state/language.service';
-import { AuthService } from './core/app-state/auth.service';
-import { SidenavCollapseService } from './core/app-state/sidenav-collapse.service';
 import {
   StbButtonModule,
   StbDividerModule,
@@ -19,6 +14,10 @@ import {
   StbToolbarModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { AuthService } from './core/app-state/auth.service';
+import { LanguageService } from './core/app-state/language.service';
+import { SidenavCollapseService } from './core/app-state/sidenav-collapse.service';
+import { ThemeService } from './core/app-state/theme.service';
 
 /**
  * Application shell — top toolbar + left sidenav + router outlet (v1.0 pivot layout, cf.

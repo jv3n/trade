@@ -1,13 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
 import { StbButtonModule } from '../button';
 import { StbDialogModule } from './dialog.module';
 
 @Component({
   selector: 'ui-dialog-sample',
-  standalone: true,
+
   imports: [StbDialogModule, StbButtonModule],
   template: `
     <h2 mat-dialog-title>Confirm</h2>
@@ -22,7 +21,7 @@ class DialogSample {}
 
 @Component({
   selector: 'ui-dialog-demo',
-  standalone: true,
+
   imports: [StbDialogModule, StbButtonModule],
   template: `
     <div>

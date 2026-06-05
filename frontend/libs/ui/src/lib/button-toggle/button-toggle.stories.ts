@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
 import { StbButtonToggleModule } from '@portfolioai/ui';
 
 @Component({
   selector: 'ui-button-toggle-demo',
-  standalone: true,
+
   imports: [StbButtonToggleModule],
   template: `
     <div>

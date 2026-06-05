@@ -1,5 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
 import { AuthRepository, CurrentUser } from '../api/auth/auth.repository';
 

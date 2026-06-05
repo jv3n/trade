@@ -1,5 +1,5 @@
-import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 
 const STORAGE_KEY = 'portfolioai.sidenav-collapsed';
 

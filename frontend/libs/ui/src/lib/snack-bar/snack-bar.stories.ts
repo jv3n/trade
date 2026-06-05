@@ -24,7 +24,7 @@ interface SnackBarArgs {
 
 @Component({
   selector: 'ui-snack-bar-demo',
-  standalone: true,
+
   imports: [StbButtonModule, StbSnackBarModule],
   template: ` <button mat-flat-button type="button" (click)="show()">Show snack-bar</button> `,
 })

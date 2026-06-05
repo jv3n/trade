@@ -1,11 +1,11 @@
-import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { TranslatePipe } from '@ngx-translate/core';
-import { AuthService } from '../../core/app-state/auth.service';
 import { StbButtonModule, StbIconModule } from '@portfolioai/ui';
+import { AuthService } from '../../core/app-state/auth.service';
 
 /**
  * `/login` page. One job : trigger the OAuth dance.

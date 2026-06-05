@@ -3,9 +3,9 @@
  * routes. Validation rules and 400/404 semantics are tested server-side ; here we just pin the
  * wire format.
  */
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpConfigRepository } from './config.http';
 
 describe('HttpConfigRepository', () => {

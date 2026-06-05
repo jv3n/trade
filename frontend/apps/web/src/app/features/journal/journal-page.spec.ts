@@ -8,10 +8,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  JournalRepository,
-  PagedResult,
-} from '../../core/api/journal/journal.repository';
+import { JournalRepository, PagedResult } from '../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { JournalPage } from './journal-page';
 

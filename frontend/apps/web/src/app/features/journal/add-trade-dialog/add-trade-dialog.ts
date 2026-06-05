@@ -1,13 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, min, required } from '@angular/forms/signals';
-
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-
 import { TranslatePipe } from '@ngx-translate/core';
 import { StbDatePickerModule } from '@portfolioai/ui';
-
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
-
+import {
+  StbButtonModule,
+  StbCheckboxModule,
+  StbDialogModule,
+  StbDividerModule,
+  StbFormFieldModule,
+  StbIconModule,
+  StbInputModule,
+  StbProgressSpinnerModule,
+  StbSelectModule,
+} from '@portfolioai/ui';
 import {
   TRADE_EXIT_STRATEGIES,
   TRADE_OPEN_SIDES,
@@ -20,17 +27,6 @@ import {
   TradePattern,
   TradePlay,
 } from '../../../core/api/journal/trade-entry.model';
-import {
-  StbButtonModule,
-  StbCheckboxModule,
-  StbDialogModule,
-  StbDividerModule,
-  StbFormFieldModule,
-  StbIconModule,
-  StbInputModule,
-  StbProgressSpinnerModule,
-  StbSelectModule,
-} from '@portfolioai/ui';
 
 /** Data passed to the dialog — `entry` non-null = edit mode, null = create mode. */
 export interface AddTradeDialogData {
@@ -78,7 +74,7 @@ interface TradeFormModel {
  */
 @Component({
   selector: 'app-add-trade-dialog',
-  standalone: true,
+
   imports: [
     FormField,
     StbButtonModule,
@@ -96,7 +92,6 @@ interface TradeFormModel {
   ],
   templateUrl: './add-trade-dialog.html',
   styleUrl: './add-trade-dialog.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddTradeDialog {
   private readonly dialogRef =

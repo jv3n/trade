@@ -13,15 +13,15 @@
  *   explicitly because the production code path is "click on a button", which only runs in a
  *   browser. The guard exists for defensive depth, not as a tested code path.
  */
-import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../core/app-state/auth.service';
+import { of } from 'rxjs';
 import { CurrentUser } from '../../core/api/auth/auth.repository';
+import { AuthService } from '../../core/app-state/auth.service';
 import { LoginPage } from './login-page';
 
 function setup(currentUser: CurrentUser | null, queryParams: Record<string, string> = {}) {

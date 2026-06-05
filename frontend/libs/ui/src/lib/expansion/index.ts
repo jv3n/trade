@@ -1,2 +1,2 @@
-export * from './public-api';
 export * from './expansion.module';
+export * from './public-api';

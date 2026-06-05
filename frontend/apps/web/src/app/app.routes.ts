@@ -39,6 +39,16 @@ export const routes: Routes = [
       import('./features/journal-io/journal-io-page').then((m) => m.JournalIoPage),
   },
   {
+    path: 'ticker/:symbol',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),
+  },
+  {
+    path: 'radar',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/radar/radar').then((m) => m.RadarPage),
+  },
+  {
     path: 'settings',
     canActivate: [authGuard],
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),

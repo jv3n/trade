@@ -17,8 +17,8 @@
  *   when the deadline has passed (the panel keeps showing the entry while Ollama hasn't yet
  *   reflected the unload — better than a stale "5m 0s" forever).
  */
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';

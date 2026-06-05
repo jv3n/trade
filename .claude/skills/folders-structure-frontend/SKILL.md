@@ -123,7 +123,7 @@ When a wrapped Material primitive needs lib-specific variants (size, semantic fl
 ```typescript
 @Directive({
   selector: '<base-selector>[stbSize]',
-  standalone: true,
+  
   host: { '[class]': 'hostClass()' },
 })
 export class StbSize {

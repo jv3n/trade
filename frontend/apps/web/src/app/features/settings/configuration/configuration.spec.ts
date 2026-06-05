@@ -18,15 +18,15 @@
  *   being required for the Sector benchmark, but only when that key is unset. If the user
  *   has already set Finnhub the hint disappears so it doesn't become noise.
  */
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, Subject, throwError } from 'rxjs';
-import { Configuration } from './configuration';
-import { ConfigEntry, ConfigRepository } from '../../../core/api/config/config.repository';
 import { LlmTimeoutService } from '../../../core/api/analysis/llm-timeout.service';
-import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
 import { OllamaStatus } from '../../../core/api/analysis/ollama-status.repository';
+import { OllamaStatusService } from '../../../core/api/analysis/ollama-status.service';
+import { ConfigEntry, ConfigRepository } from '../../../core/api/config/config.repository';
+import { Configuration } from './configuration';
 
 const TWELVE: ConfigEntry = {
   key: 'market.twelvedata.api-key',

@@ -1,3 +1,4 @@
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   ApplicationConfig,
   ErrorHandler,
@@ -7,20 +8,19 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import * as Sentry from '@sentry/browser';
 
 import { routes } from './app.routes';
-import { provideRepositories } from './core/providers';
 import { LlmTimeoutService } from './core/api/analysis/llm-timeout.service';
 import { AuthService } from './core/app-state/auth.service';
 import { authInterceptor } from './core/http/auth.interceptor';
+import { provideRepositories } from './core/providers';
 
 /**
  * Forwards Angular's caught unhandled errors to GlitchTip via the Sentry SDK + keeps the default

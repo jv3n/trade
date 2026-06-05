@@ -1,9 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe, NgClass, PercentPipe } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 import {
   NarrativeBias,
   NarrativeBiasFilter,
@@ -11,7 +11,6 @@ import {
 } from '../../../core/api/analysis/narrative-bias.repository';
 import { PromptRepository, PromptTemplate } from '../../../core/api/analysis/prompt.repository';
 import { buildFilterWindow } from '../../../shared/filter-window/filter-window';
-import { StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 /**
  * `/observability/bias` — Phase 3 #3 « narrative bias dashboard ». Aggregates the entire corpus

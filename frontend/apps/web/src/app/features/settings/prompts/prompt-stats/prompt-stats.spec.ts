@@ -20,10 +20,9 @@
  *   bogus API call on an empty string.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
 import {
   PromptRepository,
   PromptStats,

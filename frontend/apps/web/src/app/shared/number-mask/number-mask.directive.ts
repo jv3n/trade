@@ -47,7 +47,6 @@ import {
  */
 @Directive({
   selector: 'input[appNumberMask]',
-  standalone: true,
 })
 export class NumberMaskDirective {
   private readonly host = inject<ElementRef<HTMLInputElement>>(ElementRef);

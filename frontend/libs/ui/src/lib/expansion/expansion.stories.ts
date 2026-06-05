@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
-
-import { StbExpansionModule } from './expansion.module';
 import { StbButtonModule } from '../button/button.module';
 import { StbIconModule } from '../icon';
+import { StbExpansionModule } from './expansion.module';
 
 interface ExpansionArgs {
   hideToggle: boolean;
@@ -15,7 +14,7 @@ interface ExpansionArgs {
 
 @Component({
   selector: 'ui-expansion-demo',
-  standalone: true,
+
   imports: [StbExpansionModule, StbButtonModule, StbIconModule],
   template: `
     <mat-accordion [multi]="multi" displayMode="default">

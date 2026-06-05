@@ -25,7 +25,8 @@
     "observability": "Observabilité",
     "collapse": "Réduire la sidebar",
     "expand": "Déployer la sidebar",
-    "importExport": "Import / Export"
+    "importExport": "Import / Export",
+    "ticker": "Ticker"
   },
   "journal": {
     "title": "Journal de trading",
@@ -970,7 +971,15 @@
       "universeHint": "Univers : NASDAQ mid-cap, 2 G$–10 G$ (appliqué côté serveur).",
       "gapPctMin": "Gap minimum",
       "volumeRatioMin": "Volume × minimum",
-      "reset": "Réinitialiser"
+      "reset": "Réinitialiser",
+      "sidenav": {
+        "expand": "Déplier les filtres",
+        "collapse": "Replier les filtres"
+      },
+      "sections": {
+        "gap": "Gap",
+        "volume": "Volume"
+      }
     }
   },
   "journalIo": {

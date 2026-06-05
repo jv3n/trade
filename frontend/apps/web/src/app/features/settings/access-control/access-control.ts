@@ -1,7 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ConfigRepository } from '../../../core/api/config/config.repository';
 import {
   StbButtonModule,
   StbChipsModule,
@@ -10,6 +8,7 @@ import {
   StbInputModule,
   StbProgressSpinnerModule,
 } from '@portfolioai/ui';
+import { ConfigRepository } from '../../../core/api/config/config.repository';
 
 const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
 

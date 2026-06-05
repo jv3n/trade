@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 
-import { StbMenuModule } from './menu.module';
 import { StbButtonModule } from '../button';
 import { StbIconModule } from '../icon';
+import { StbMenuModule } from './menu.module';
 
 @Component({
   selector: 'ui-menu-demo',
-  standalone: true,
+
   imports: [StbMenuModule, StbButtonModule, StbIconModule],
   template: `
     <div>

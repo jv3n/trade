@@ -1,13 +1,13 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  PortfolioRepository,
-  Portfolio,
   Asset,
-  OwnedTicker,
   CsvImportPreview,
   CsvImportResult,
+  OwnedTicker,
+  Portfolio,
+  PortfolioRepository,
 } from '../portfolio.repository';
 
 @Injectable()

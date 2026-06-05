@@ -25,7 +25,8 @@
     "observability": "Observability",
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
-    "importExport": "Import / Export"
+    "importExport": "Import / Export",
+    "ticker": "Ticker"
   },
   "journal": {
     "title": "Trading journal",
@@ -970,7 +971,15 @@
       "universeHint": "Universe: NASDAQ mid-cap, $2B–$10B (enforced server-side).",
       "gapPctMin": "Min gap",
       "volumeRatioMin": "Min volume ×",
-      "reset": "Reset"
+      "reset": "Reset",
+      "sidenav": {
+        "expand": "Expand filters",
+        "collapse": "Collapse filters"
+      },
+      "sections": {
+        "gap": "Gap",
+        "volume": "Volume"
+      }
     }
   },
   "journalIo": {

@@ -23,9 +23,9 @@
  *   NOT trigger it (the heuristic requires at least one observation).
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
 import {
   NarrativeObservabilityRepository,
   NarrativeObservation,

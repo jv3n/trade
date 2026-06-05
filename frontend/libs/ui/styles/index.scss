@@ -21,7 +21,9 @@
 @forward 'base';
 @forward 'scrollbars';
 @forward 'shell';
-// Global utility classes — banners + badges. NOT tied to a Material module ; stay here.
+// Global utility classes — page container + banners + badges. NOT tied to a Material module ;
+// stay here.
+@forward 'components/page';
 @forward 'components/banners';
 @forward 'components/badges';
 

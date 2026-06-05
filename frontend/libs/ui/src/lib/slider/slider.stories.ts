@@ -5,7 +5,7 @@ import { StbSliderModule } from './slider.module';
 
 @Component({
   selector: 'ui-slider-demo',
-  standalone: true,
+
   imports: [StbSliderModule],
   template: `
     <div>

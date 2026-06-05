@@ -1,13 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { MatDialog } from '@angular/material/dialog';
@@ -15,10 +7,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Sort } from '@angular/material/sort';
+import { RouterLink } from '@angular/router';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { StbDatePickerModule } from '@portfolioai/ui';
 import {
   EMPTY,
   Subject,
@@ -29,22 +23,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { StbDatePickerModule } from '@portfolioai/ui';
 
-import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
-import {
-  TRADE_PATTERNS,
-  TRADE_PLAYS,
-  TRADE_STATUSES,
-  TradeEntry,
-  TradeEntryFilter,
-  TradeEntryInput,
-  TradePattern,
-  TradePlay,
-  TradeStatus,
-} from '../../core/api/journal/trade-entry.model';
-import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog/add-trade-dialog';
-import { PERIOD_PRESETS, PeriodPresetKey, computePeriodRange } from './period-preset';
 import {
   StbButtonModule,
   StbChipsModule,
@@ -60,6 +39,20 @@ import {
   StbTableModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
+import {
+  TRADE_PATTERNS,
+  TRADE_PLAYS,
+  TRADE_STATUSES,
+  TradeEntry,
+  TradeEntryFilter,
+  TradeEntryInput,
+  TradePattern,
+  TradePlay,
+  TradeStatus,
+} from '../../core/api/journal/trade-entry.model';
+import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog/add-trade-dialog';
+import { PERIOD_PRESETS, PeriodPresetKey, computePeriodRange } from './period-preset';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
@@ -114,7 +107,7 @@ const DEFAULT_PAGE_SIZE = 10;
  */
 @Component({
   selector: 'app-journal-page',
-  standalone: true,
+
   imports: [
     DatePipe,
     DecimalPipe,
@@ -133,10 +126,10 @@ const DEFAULT_PAGE_SIZE = 10;
     StbTableModule,
     StbTooltipModule,
     TranslatePipe,
+    RouterLink,
   ],
   templateUrl: './journal-page.html',
   styleUrl: './journal-page.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JournalPage {
   private readonly repo = inject(JournalRepository);
@@ -234,11 +227,7 @@ export class JournalPage {
           pageIndex,
           pageSize,
           sortField: sort.columnName || undefined,
-          sortDirection: sort.columnName
-            ? sort.isAscending
-              ? 'asc'
-              : 'desc'
-            : undefined,
+          sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
         },
       );
     });
@@ -444,11 +433,7 @@ export class JournalPage {
    * 3 s, `error` lives 5 s (more time to read the message). Variants are the global classes
    * declared in `libs/ui/src/lib/snack-bar/snack-bar.scss`.
    */
-  private toast(
-    key: string,
-    variant: 'success' | 'error',
-    params?: Record<string, unknown>,
-  ): void {
+  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
     this.snackBar.open(this.translate.instant(key, params), undefined, {
       duration: variant === 'success' ? 3000 : 5000,
       panelClass: `stb-snack-bar--${variant}`,

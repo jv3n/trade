@@ -1,15 +1,15 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, NgClass, NgTemplateOutlet } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { StbButtonModule, StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 import {
   PromptEnvelope,
   PromptRepository,
   PromptTemplate,
 } from '../../../core/api/analysis/prompt.repository';
-import { StbButtonModule, StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
 
 /**
  * Settings → Prompts (Phase 3 PR3 list + view + activate, PR4 inline editor + diff + create
