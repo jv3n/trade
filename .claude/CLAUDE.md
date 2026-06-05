@@ -2,98 +2,103 @@
 
 Source of truth for project conventions and Claude-specific configuration. Read this first when working on PortfolioAI.
 
-> ## ⚠️ PIVOT EN COURS — depuis 2026-06-03
+> ## Post-pivot focus
 >
-> The app is pivoting **180°** away from a per-ticker dossier app with LLM narratives → toward a **trading journal** where the user logs their trades each day (stats / charts / Excel export come in a phase 2).
+> The app pivoted in June 2026 from a per-ticker dossier app with LLM narratives → toward a **trading journal**. The user logs their trades each day ; stats / charts / Excel export come in phase 2.
 >
-> **Source of truth for the pivot** : [`docs/projet/roadmap.md`](../docs/projet/roadmap.md). Read it before every session — it carries the in/out scope, the docs to rewrite, and the 7 open questions that drive the next sessions.
+> **Live modules** : `journal/` (backend) + `features/journal/` + `features/journal-io/` (frontend). Pre-pivot modules (`analysis/`, `portfolio/`, `news/`, `analyst/`, `earnings/`, `screener/`, plus the matching frontend features `dashboard`, `ticker`, `suivi`, `observability`, `radar`, `import`) remain in the tree in dormant state until phase 2 decides what gets re-wired vs. deleted.
 >
-> Context note triggering the pivot : [`docs/TTD/changement direction`](../docs/TTD/changement%20direction).
->
-> **What stays vs goes** (résumé — détail dans la roadmap) :
-> - **Goes** : `analysis/` (LLM narratives + prompts + observability), `portfolio/` (CSV imports + snapshots), `news/`, `analyst/`, `earnings/`, screener UI/service, most `features/*` (dashboard, ticker, suivi, observability, settings/prompts, radar, import).
-> - **Stays** : every provider client (TwelveData, FMP, Polygon, Finnhub — reused later to enrich journaled trades), `auth/`, `config/`, `shared/`, the Phase 5 deployment stack.
-> - **New** : table `trade_entry`, module backend `journal/`, frontend `features/journal/`.
->
-> **State of this file** : everything below describes the **pre-pivot** state (PortfolioAI as a per-ticker app). Sections will be updated piecewise as the pivot lands. Treat the roadmap as authoritative when the two disagree.
+> Treat `docs/projet/roadmap.md` as authoritative for in/out scope when this file and the roadmap disagree.
 
 ## Project
 
-Per-ticker market intelligence app. The backend fetches market data, computes indicators server-side (RSI, MA, momentum, drawdown…), the LLM writes a short narrative summary. **The LLM is a writer, not a decider** — no price predictions, no BUY/SELL signals.
-
-Target architecture — the per-ticker dossier is the **atomic unit**. Portfolio / watchlist / cross-position analyses are **compositions** over a DAG where the leaves are `TickerAnalysis(symbol, day)` (cache-aware via `ticker_narrative_snapshot`) and the parents aggregate already-persisted narratives. Detail in `docs/metier/vision.md` + `docs/technique/architecture.md > Modèle pipeline d'analyse`.
+Trading journal app — short small-caps focused (gap-up shorts, $1-$10 price range). The user logs each trade with execution + pre-trade checklist + post-mortem fields ; the table is the atomic unit and the export/import is roundtrip-safe CSV. No LLM in the live path today ; the provider clients (TwelveData, FMP, Polygon, Finnhub) are kept for phase 2 enrichment but not wired to any UI route.
 
 ## Stack
 
-| Layer       | Tech                                  |
-| ----------- | ------------------------------------- |
-| Frontend    | Angular 21 + Angular Material         |
-| Backend     | Kotlin + Spring Boot                  |
-| Build       | Gradle (Kotlin DSL)                   |
-| AI          | Claude API (Anthropic) — Ollama local |
-| DB          | PostgreSQL + Flyway                   |
-| Local infra | Tilt + Docker Compose                 |
-| CI          | GitHub Actions                        |
+| Layer        | Tech                                            |
+| ------------ | ----------------------------------------------- |
+| Frontend     | Angular 22 + Angular Material 22                |
+| Design system | `libs/ui` — `@portfolioai/ui` (ng-packagr)      |
+| Storybook    | Storybook 10.4 (`projects: ui`)                  |
+| Backend      | Kotlin + Spring Boot 3 + Hibernate 6            |
+| Build        | Gradle (Kotlin DSL) ; Angular CLI workspace     |
+| DB           | PostgreSQL + Flyway                             |
+| Tests        | Vitest (frontend), JUnit 5 + Testcontainers (backend) |
+| Local infra  | Tilt + Docker Compose                           |
+| CI           | GitHub Actions                                  |
 
 ## Repository Structure
 
 ```
 trade/
-├── frontend/src/app/
-│   ├── core/        # api/<bucket> (HTTP ports + adapters), local/<bucket> (browser persistence),
-│   │                # app-state/ (UI signal services), http/ (interceptors), router/ (guards), providers.ts
-│   ├── shared/      # cross-cutting helpers (no state, no DI)
-│   └── features/    # primary adapters — login, error, dashboard, ticker, import, suivi, settings, observability, radar
+├── frontend/                                       # Angular CLI workspace
+│   ├── apps/web/                                   # The consumer app
+│   │   └── src/app/
+│   │       ├── app.{ts,html,scss,config,routes}.ts
+│   │       ├── core/      # api/<bucket> (HTTP ports + adapters), local/<bucket>,
+│   │       │              # app-state/ (UI signal services), http/ (interceptors),
+│   │       │              # router/ (guards), providers.ts
+│   │       ├── shared/    # cross-cutting helpers (no state, no DI)
+│   │       └── features/  # journal, journal-io, settings, login, error
+│   │                      # (+ dormant pre-pivot features: dashboard, ticker,
+│   │                      #  suivi, observability, radar, import)
+│   ├── libs/ui/                                    # @portfolioai/ui design-system lib
+│   │   ├── src/lib/<component>/                    # Stb*Module wrappers + scss overrides
+│   │   ├── styles/                                 # global tokens, base, shell, scrollbars
+│   │   └── .storybook/                             # Storybook config (theme toggle, etc.)
+│   ├── public/i18n/<lang>.json                     # ngx-translate
+│   ├── eslint.config.js                            # flat config — `ui` + `stb` selector prefixes
+│   └── angular.json                                # 2 projects : web, ui
 ├── backend/src/main/kotlin/com/portfolioai/
-│   ├── auth/        # Phase 4 — OAuth2/OIDC + roles ADMIN/USER + local-no-auth profile
-│   ├── market/      # MarketChartClient port + TwelveData/Mock + IndicatorCalculator (pure Kotlin)
-│   ├── analysis/    # Ticker narrative pipeline + LLM dispatch + prompt mgmt + observability + bias
-│   ├── portfolio/   # CSV imports, snapshots, read-only portfolios
-│   ├── watchlist/   # Phase 2 — manual watchlist
-│   ├── news/        # Phase 2 — Finnhub-backed headlines per ticker
-│   ├── analyst/     # Phase 2 — Finnhub-backed analyst recommendations
-│   ├── earnings/    # Phase 2 — Finnhub-backed earnings (4 last Q + next date)
-│   ├── config/      # Phase 2 — runtime-editable settings + routing clients
-│   ├── screener/    # Phase 6 — market radar (Mock + Polygon/Massive adapters + Routing client)
+│   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles + local-no-auth profile
+│   ├── journal/     # Trade journal — primary post-pivot module (CRUD + CSV io + Pageable)
+│   ├── config/      # Runtime-editable settings + routing clients
+│   ├── market/, analysis/, portfolio/, news/, analyst/, earnings/, screener/, watchlist/
+│   │                # Pre-pivot — dormant, provider clients kept for phase 2 enrichment
 │   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
 ├── docs/
-│   ├── metier/      # vision.md, fonctionnalites.md
-│   ├── technique/   # architecture.md, developpement.md, developper.md, ddd.md, ops.md, providers.md
-│   ├── devops/      # commandes-pratiques.md, deploiement.md (Phase 5), decision-ollama-deploiement.md
-│   ├── projet/      # backlog.md, journal-livraisons.md, sources.md, commit-conventions.md, audits/
-│   ├── data-input/       # fake sample CSVs (versioned)
-│   └── data-input-local/ # real Wealthsimple exports (gitignored)
-├── devops/
-│   └── prod/        # Dockerfile + service.yaml + README check-list (Phase 5 deploy — local infra reste à la racine)
-├── .github/workflows/  # backend.yml, frontend.yml, codeql.yml, docs.yml, smoke-wif.yml
-├── Tiltfile            # local infra — boot Postgres + Ollama + backend + frontend
-├── docker-compose.yml  # services Docker managés par Tilt
-└── .claude/            # CLAUDE.md, agents/, skills/
+│   ├── metier/, technique/, devops/                # Product + ops docs (FR)
+│   ├── projet/                                     # backlog.md, journal-livraisons.md, audits/
+│   ├── TTD/                                        # Trading-domain references (patterns, sizing, level2, red flags)
+│   ├── data-input/                                 # synthetic CSVs (versioned)
+│   └── data-input-local/                           # real Wealthsimple exports (gitignored)
+├── devops/prod/                                    # Dockerfile + service.yaml (Phase 5 deploy)
+├── .github/workflows/                              # backend.yml, frontend.yml, codeql.yml, docs.yml, smoke-wif.yml
+├── Tiltfile                                        # local infra — Postgres + backend + frontend
+├── docker-compose.yml                              # services managed by Tilt
+└── .claude/                                        # CLAUDE.md, agents/, skills/
 ```
 
-> The `docs/` tree stays in French (project-wide convention for product and technical documentation). Only the `.claude/` tree is normalized to English.
+> The `docs/` tree stays in French (project-wide convention for product and technical documentation). The `.claude/` tree is normalized to English.
 
-**Per-module detail** : see `docs/technique/architecture.md` (sections "Modules backend", "Modules frontend", "Schéma de base de données", "Décisions techniques notables"). Always reason in terms of ports (`*.repository.ts` on the frontend, `*Client` port on the backend) + HTTP / local / Routing adapters.
+**Per-module detail** : see `docs/technique/architecture.md` (sections "Modules backend", "Modules frontend", "Schéma de base de données", "Décisions techniques notables"). Always reason in terms of ports (`*.repository.ts` on the frontend, `*Client` port on the backend) + adapters.
 
 ## Cross-cutting patterns
 
-- **Hexagonal + light DDD** — domain → application → infrastructure ; ports live in `domain/`, adapters in `infrastructure/`.
-- **`@Primary` routing clients** on the backend — `RoutingMarketChartClient`, `RoutingNewsClient`, `RoutingAnalystClient`, `RoutingEarningsClient`, `RoutingLlmClient`, `RoutingSymbolSearchClient`, `RoutingSectorClassifier`. Delegate per-call to the adapter selected by `*.provider`, read from `AppConfigService`. Switch without reboot, hits at the next dossier opened.
-- **Mock adapter for each provider** (`MockNewsClient`, `MockMarketChartClient`, `MockAnalystClient`, `MockEarningsClient`, `MockLlmClient`) — `tilt up` boots with no API keys. Reserved symbols `UNKNOWN` / `RATELIMIT` / `NOTARGET` / `NOCALENDAR` exercise the error paths.
-- **Fail-soft** on optional endpoints (price-target, calendar/earnings) — fallback to `null`, the snapshot remains useful. Upstream errors map to `UpstreamUnavailableException` (lives in `shared/`) → unified 503.
-- **The LLM never computes indicators** — `IndicatorCalculator` is pure Kotlin, unit-tested. The LLM digests, it doesn't compute (otherwise it hallucinates the numbers).
+- **Hexagonal + light DDD** — domain → application → infrastructure ; ports live in `domain/`, adapters in `infrastructure/`. See [`hexagonal-ddd`](./skills/hexagonal-ddd/SKILL.md).
+- **Frontend Material wrappers** — every `Mat*Module` is wrapped under `libs/ui/src/lib/<name>/` as a `Stb<Name>Module` that re-exports the Material module + ships an exhaustive M3 token-override SCSS. Consumer code imports `Stb<Name>Module` from `@portfolioai/ui`, never the raw `Mat*Module`. See [`material-overrides`](./skills/material-overrides/SKILL.md).
+- **Design-system directives** — when a wrapped Material primitive needs lib-specific variants (size, variant, position), it ships a standalone directive (`StbSize`, `StbCol`, `StbChip`, `StbTable`, `StbSpinnerEnd`) under `<name>/<name>.directives.ts`. The directive posts a class via `host: { '[class]': 'hostClass()' }` + `computed`. Selectors use `stb` prefix (in addition to `ui` for component selectors).
+- **Server-side pagination + sort** — the journal listing exposes Spring `Pageable` (`?page&size&sort=field,direction`). Sort default lives in the **service** (not in `@PageableDefault`) so the URL sort is honoured without resolver quirks. Frontend uses the controlled-component pattern : `[matSortActive] + [matSortDirection]` bound to a signal `{ columnName, isAscending }`. See [`spring-boot > Pageable defaults`](./skills/spring-boot/SKILL.md#pageable-defaults--sort-resolution).
+- **Snackbar variants** — CRUD success/error feedback uses `MatSnackBar.open(message, undefined, { panelClass: 'stb-snack-bar--success' | 'stb-snack-bar--error', duration: 3000 | 5000 })`. The variants and the `toast(key, variant, params?)` helper convention live in [`material-overrides > Snackbar variants`](./skills/material-overrides/SKILL.md#snackbar-variants).
 - **Spring `@Async`** — always on a separate bean, never `this.asyncMethod()` (bypasses AOP).
 
 ## Local Development
 
-`tilt up` boots everything (PostgreSQL, Ollama, backend, frontend). Tilt UI: http://localhost:10350/. Backend on the `local` profile (`application-local.yml`, committed — no secrets, only behavior overrides ; cf. `Data & secrets` ci-dessous). Detail in `docs/technique/developpement.md`.
+`tilt up` boots everything (PostgreSQL, backend, frontend). Tilt UI: http://localhost:10350/. Backend on the `local` profile (`application-local.yml`, committed — no secrets, only behavior overrides ; cf. `Data & secrets` below). Detail in `docs/technique/developpement.md`.
 
 ## Commands
 
 ```bash
 # Frontend (from frontend/)
-npm run start | build | test | lint | format
-npx vitest run src/path/to/file.spec.ts   # single test
+npm run start                                       # ng serve web
+npm run build                                       # ng build web
+npm run test                                        # ng test web (Vitest)
+npm run lint                                        # ng lint web && ng lint ui
+npm run format                                      # prettier across apps + libs
+npm run storybook                                   # ng run ui:storybook (lib playground)
+npm run storybook:build                             # ng run ui:build-storybook
+npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 
 # Backend (from backend/)
 ./gradlew bootRun | test | spotlessApply
@@ -105,28 +110,25 @@ npx vitest run src/path/to/file.spec.ts   # single test
 
 - Idiomatic Kotlin (data classes, sealed classes, extension functions).
 - **No wildcard imports** — `import org.junit.jupiter.api.Assertions.assertEquals`, never `Assertions.*`. IntelliJ's "Optimize Imports" consolidates to `*` past 5 imports of the same package — disable that. The `WildcardImport.excludeImports` allowlist in `detekt.yml` is being phased out: don't add new entries, and expand any `*` you touch.
-- Config in **YAML** (`application.yml` base + `application-local.yml` dev profile + `application-prod.yml` Cloud Run profile — tous committés, sans secrets).
+- Config in **YAML** (`application.yml` base + `application-local.yml` dev profile + `application-prod.yml` Cloud Run profile — all committed, no secrets).
 - Spring `@Async` — must run on a separate bean, otherwise AOP is bypassed.
-- Integration tests on a **real PostgreSQL**, no DB mocks.
+- Integration tests on a **real PostgreSQL**, no DB mocks. Testcontainers singleton via JUnit Platform listener (`testsupport/PostgresContainer.kt`).
 - **Never log user emails** or other PII (`displayName`, `providerId`). Log `userId={}` (the UUID) — reference pattern in `CustomOAuth2UserService.findOrCreateUser`. The UUID is enough to correlate with `app_user` in the DB without exposing PII to log aggregators.
+- **Server-side pagination** — `Page<T>` + Spring `Pageable`. Sort default belongs in the **service** (not `@PageableDefault`) ; see [`spring-boot`](./skills/spring-boot/SKILL.md).
 
-### Frontend (Angular 21)
+### Frontend (Angular 22)
 
 - Standalone components, **zoneless** (`provideZonelessChangeDetection()`, no `zone.js`). State is signal-based, no need for `OnPush` everywhere.
-- Angular Material for all UI components.
-- **i18n via `ngx-translate`** — translation files in `frontend/public/i18n/<lang>.json` (FR + EN), templates use `'key' | translate`, TS uses `TranslateService.instant('key', { params })`. Active locale lives in `LanguageService` (signal). **Never hard-code a user-facing string** — always route through a key.
-- **ESLint flat config** (`eslint.config.js`, Angular ESLint 21) — `npm run lint` blocks CI. Prettier remains the only formatter (`eslint-config-prettier` applied last). No casual `recommended-type-checked` (5–10× slower, deserves a dedicated session).
-- Tests on **Vitest** (not Karma, not Jest). Specs whose templates use `translate` must add `provideTranslateService({ lang: 'en' })` to the TestBed (otherwise `instant('foo.bar')` returns the key as a fallback, which is acceptable for assertions).
-
-### LLM
-
-- **Claude API by default** (`llm.provider: claude`). Ollama + `qwen2.5:3b` is the offline backup (5–10s on M1, solid JSON, weaker narratives). Mistral 7B was dropped (30–60s per narrative → timeouts).
-- Timeouts unified under `llm.timeout-seconds` (60..900, default 400) in `/settings/configuration > LLM`. The frontend reads it via `LlmTimeoutService`, primed at boot through `provideAppInitializer`.
+- **Angular Material 22** wrapped through `@portfolioai/ui` (`libs/ui/`). Consumer code imports `Stb<Name>Module`, never `Mat<Name>Module` directly.
+- **Workspace** — `apps/web` is the consumer app, `libs/ui` is the design system (ng-packagr build, Storybook 10.4 playground). TypeScript alias `@portfolioai/ui` → `libs/ui/src/public-api.ts`.
+- **i18n via `ngx-translate`** — translation files in `apps/web/public/i18n/<lang>.json` (FR + EN), templates use `'key' | translate`, TS uses `TranslateService.instant('key', { params })`. Active locale lives in `LanguageService` (signal). **Never hard-code a user-facing string** — always route through a key.
+- **ESLint flat config** (`eslint.config.js`, Angular ESLint 22) — `npm run lint` blocks CI. Two selector-prefix rule sets : `apps/web/**` uses `app`, `libs/ui/**` uses `['ui', 'stb']`. Prettier remains the only formatter (`eslint-config-prettier` applied last).
+- Tests on **Vitest** (`@angular/build:unit-test` builder, jsdom environment). Specs whose templates use `translate` must add `provideTranslateService({ lang: 'en' })` ; specs whose templates use `<mat-datepicker>` must add `provideNativeDateAdapter()`. See [`angular-testing`](./skills/angular-testing/SKILL.md).
 
 ### Data & secrets
 
-- `application-local.yml` + `application-prod.yml` are **committed** since 2026-05-18 (no secrets — only behavior overrides like `spring.flyway.repair-on-migrate`, `springdoc.api-docs.enabled`, `llm.provider` selection). The dangerous-in-prod settings are isolated to the `local` profile by construction. **Never commit API keys / OAuth secrets / DB passwords** — those live in `.env` (local, gitignored) and GCP Secret Manager (prod, cf. `docs/devops/deploiement.md`).
-- `docs/data-input/` holds synthetic CSVs (versioned, used for CI / demo). Real Wealthsimple exports go to `docs/data-input-local/` (gitignored). Never mix them.
+- `application-local.yml` + `application-prod.yml` are **committed** (no secrets — only behavior overrides like `spring.flyway.repair-on-migrate`, `springdoc.api-docs.enabled`). The dangerous-in-prod settings are isolated to the `local` profile by construction. **Never commit API keys / OAuth secrets / DB passwords** — those live in `.env` (local, gitignored) and GCP Secret Manager (prod, cf. `docs/devops/deploiement.md`).
+- `docs/data-input/` holds synthetic CSVs (versioned, used for CI / demo + the journal-import demo file `journal-demo.csv`). Real exports go to `docs/data-input-local/` (gitignored). Never mix them.
 
 ### Commits
 
@@ -155,13 +157,9 @@ Tests serve as a top-to-bottom-readable spec. Concretely:
 - **Class-level docstring** — short paragraph: area under test, failure modes protected, design intent.
 - **Test names are full sentences** (Kotlin backtick names, Vitest `it('…')` strings). Describe the **behavior**, not the mechanics: `rejects unknown sentiment` ✓, `test parser 5` ✗.
 - **Inline comments** when the *why* is non-obvious (real bug observed, surprising edge case, regression to protect against). Not the mechanics.
-- **Setup factories with sensible defaults** (`parsed()`, `quote()`, `indicators()`) — each test only overrides the field that matters.
+- **Setup factories with sensible defaults** (`makeTrade()`, `makePage()`, `parsed()`, `quote()`) — each test only overrides the field that matters.
 - **One scenario per test** (but multiple assertions on the same scenario are fine).
-- **Realistic fixtures** when the cost is similar — `"Price above MA200, RSI 62"` beats `"x"`.
-
-### Portfolio philosophy
-
-The portfolio is **read-only** in the UI — it mirrors the broker's reality. The only input path is the Wealthsimple CSV import. No manual portfolio creation, no asset add/remove.
+- **Realistic fixtures** when the cost is similar — `"Trade BAC short, GUS pattern, gap 50%"` beats `"x"`.
 
 ### Backlog
 
@@ -182,7 +180,7 @@ Two files:
 
 | File                                | Update when…                                                                 |
 | ----------------------------------- | ---------------------------------------------------------------------------- |
-| `docs/metier/vision.md`             | Product framing or the LLM's role changes                                    |
+| `docs/metier/vision.md`             | Product framing changes (post-pivot scope shift, new MVP guardrails)         |
 | `docs/metier/fonctionnalites.md`    | A feature changes status, or a phase advances                                |
 | `docs/technique/architecture.md`    | New module, notable technical decision, new pattern                          |
 | `docs/technique/developpement.md`   | Local config changes, a Tilt command is added                                |

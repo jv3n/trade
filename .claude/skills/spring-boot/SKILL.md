@@ -113,6 +113,48 @@ Custom events are plain Kotlin classes (no `ApplicationEvent` inheritance since 
 
 Don't reach for events when a direct method call would do. Events earn their keep when the publisher shouldn't know its consumers.
 
+## Pageable defaults — sort resolution
+
+Paginated listings use Spring's standard `Pageable` parameter with `?page=N&size=N&sort=field,direction`. **The default sort belongs in the application service, NOT in `@PageableDefault`** — the resolver's behaviour with the URL `sort` param + the annotation default is inconsistent in practice : the URL sort can be silently ignored when both are present, depending on how the resolver merges them. Owning the decision in the service is bug-proof and trivially unit-testable.
+
+```kotlin
+// Controller — only declare the page-size default, never sort.
+@GetMapping
+fun findAll(
+  /* filter params … */
+  @PageableDefault(size = 50) pageable: Pageable,
+): Page<TradeEntryDto> =
+  service.findAllPaged(/* filter, */ pageable)
+
+// Service — apply the default sort iff the client sent none.
+@Transactional(readOnly = true)
+fun findAllPaged(filter: Filter, pageable: Pageable): Page<TradeEntryDto> {
+  val spec = TradeEntrySpecifications.matching(/* … */)
+  val effective =
+    if (pageable.sort.isUnsorted)
+      PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
+    else pageable
+  return repo.findAll(spec, effective).map { it.toDto() }
+}
+
+companion object {
+  private val DEFAULT_SORT: Sort =
+    Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
+}
+```
+
+**Frontend pairing** — the journal page sends a tie-breaker secondary sort on top of the user's primary, so rows tied on the primary axis (low-cardinality columns like `play` / `pattern`) stay deterministic across pages :
+
+```typescript
+params = params
+  .append('sort', `${page.sortField},${page.sortDirection}`)
+  .append('sort', 'createdAt,desc');
+```
+
+Spring honours multiple `?sort=` params in declaration order. Primary first, tie-breaker second.
+
+Verbatim in `TradeEntryController` + `TradeEntryService.findAllPaged`. Adopt for any new paginated controller.
+
 ## YAML & profiles
 
 - `application.yml` — defaults, committed. No secrets.

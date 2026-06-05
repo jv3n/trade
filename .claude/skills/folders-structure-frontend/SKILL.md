@@ -1,62 +1,75 @@
 ---
 name: folders-structure-frontend
-description: Folder conventions for the PortfolioAI frontend (single Angular 21 app under `frontend/`). Use when creating new modules, services or components, or when reviewing where new files should live.
+description: Folder conventions for the PortfolioAI frontend (Angular 22 CLI workspace with `apps/web` consumer app + `libs/ui` design-system lib under `frontend/`). Use when creating new modules, services, components, lib wrappers, or design-system directives — or when reviewing where new files should live.
 ---
 
 # Frontend Folder Structure
 
-A **single Angular app** (no monorepo). Light hexagonal split at the top of `app/`:
+The frontend is an **Angular CLI workspace** with two projects :
 
-- **`core/`** — cross-feature data access, split along **three axes**:
-  - `core/api/<bucket>/` — HTTP-backed bounded contexts mirroring the backend modules. Port + `adapters/` subfolder.
-  - `core/local/<bucket>/` — bounded contexts persisted in the browser (localStorage). Same port/adapter shape. Today only `annotation/`.
-  - `core/app-state/` — cross-cutting UI signal services (theme, language, auth). No port/adapter split.
-  - `core/http/` — HTTP interceptors (Phase 4).
-  - `core/router/` — Route guards (Phase 4).
-  - `core/providers.ts` — wires every bucket via `provideRepositories()`.
-- **`shared/`** — pure cross-cutting helpers, no state, no DI. Rule: *"things you `inject()`" go in `core/`, "things you `import` as functions" go in `shared/`*. One folder per concept (e.g. `shared/toggle-set/`).
-- **`features/`** — UI feature folders, one per top-level route. The *primary adapters*.
+- **`apps/web`** — the consumer app. Light hexagonal split at the top of `app/`.
+- **`libs/ui`** — the `@portfolioai/ui` design-system library. ng-packagr build, Storybook 10.4 playground. Every Material module gets wrapped here as a `Stb*Module` with co-located M3 token overrides.
+
+TypeScript path mapping (`@portfolioai/ui` → `libs/ui/src/public-api.ts`) lets the app import the lib without relative paths.
 
 ```
 frontend/
-├── public/i18n/                     # ngx-translate JSONs (fr.json + en.json)
-├── proxy.conf.json
-├── angular.json
-└── src/
-    ├── main.ts
-    └── app/
-        ├── app.ts                        # root component
-        ├── app.config.ts                 # standalone bootstrap (providers wire ports → adapters)
-        ├── app.routes.ts                 # top-level routes (loadComponent → ./features/...)
-        ├── core/
-        │   ├── api/<bucket>/             # market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/
-        │   │   ├── <name>.repository.ts  # PORT: abstract class
-        │   │   ├── <name>.service.ts     # bucket-local services next to the port (optional)
-        │   │   └── adapters/<name>.http.ts (+ spec)
-        │   ├── local/<bucket>/           # browser-persisted (today: annotation/)
-        │   │   ├── <name>.repository.ts
-        │   │   └── adapters/<name>.local.ts
-        │   ├── app-state/                # UI signal services (no port/adapter)
-        │   │   ├── theme.service.ts (+ spec)
-        │   │   ├── language.service.ts
-        │   │   └── auth.service.ts
-        │   ├── http/auth.interceptor.ts
-        │   ├── router/auth.guards.ts
-        │   └── providers.ts              # provideRepositories()
-        ├── shared/                       # pure helpers — one folder per concept
-        │   └── toggle-set/
-        │       ├── toggle-set.ts
-        │       └── toggle-set.spec.ts
-        └── features/                     # primary adapters
-            ├── login/, error/, dashboard/, ticker/, import/, suivi/, settings/, observability/
-            └── <name>/
-                ├── <name>.ts
-                ├── <name>.html
-                ├── <name>.scss
-                └── <name>.spec.ts
+├── angular.json                              # 2 projects : web, ui
+├── eslint.config.js                          # flat config, selector prefixes per project
+├── package.json                              # workspace scripts
+├── .npmrc                                    # legacy-peer-deps shim for Storybook ↔ Angular 22
+├── apps/web/                                 # ─────────── CONSUMER APP ───────────
+│   ├── public/i18n/{en,fr}.json              # ngx-translate
+│   ├── proxy.conf.json                        # dev proxy to backend
+│   └── src/
+│       ├── main.ts
+│       ├── styles.scss                        # @use 'libs/ui/styles' as ui;
+│       └── app/
+│           ├── app.{ts,html,scss,config,routes}.ts
+│           ├── core/
+│           │   ├── api/<bucket>/             # auth, journal, …
+│           │   │   ├── <name>.repository.ts  # PORT: abstract class
+│           │   │   ├── <name>-models.ts      # domain types (optional)
+│           │   │   └── adapters/<name>.http.ts (+ spec)
+│           │   ├── local/<bucket>/           # browser-persisted (annotation/)
+│           │   ├── app-state/                # signal services (theme, language, auth)
+│           │   ├── http/                     # interceptors
+│           │   ├── router/                   # guards
+│           │   └── providers.ts              # provideRepositories()
+│           ├── shared/                       # pure helpers, one folder per concept
+│           └── features/                     # primary adapters, one folder per top-level route
+│               ├── journal/                  # ← live, post-pivot
+│               ├── journal-io/               # ← live (CSV export + drop-zone import)
+│               ├── login/, error/, settings/ # always-live
+│               └── dashboard/, ticker/, suivi/, observability/, radar/, import/
+│                                              # ↑ dormant — pre-pivot, not currently routed
+└── libs/ui/                                  # ──────── DESIGN-SYSTEM LIB ────────
+    ├── ng-package.json                       # ng-packagr build config
+    ├── project.json                          # ng project metadata
+    ├── src/
+    │   ├── public-api.ts                     # barrel — re-exports every Stb*Module
+    │   └── lib/<component>/                  # one folder per Material primitive wrapped
+    │       ├── <component>.module.ts         # @NgModule that imports + re-exports Mat<X>Module
+    │       ├── <component>.scss              # exhaustive M3 token overrides (commented defaults)
+    │       ├── <component>.directives.ts     # design-system directives when needed (StbSize, StbCol…)
+    │       ├── <component>.stories.ts        # Storybook story (single `Default` with Controls)
+    │       ├── <component>.mdx               # Storybook docs page
+    │       ├── public-api.ts                 # barrel for this component
+    │       └── index.ts                      # re-exports public-api + the .module
+    ├── styles/
+    │   ├── index.scss                        # aggregator — @forward to every component scss
+    │   ├── main.scss
+    │   ├── _theme.scss                       # mat.theme(...) + Inter + tokens
+    │   ├── _tokens.scss                      # CSS custom properties (dark + light)
+    │   ├── _base.scss                        # box-sizing, body, toolbar sticky
+    │   ├── _shell.scss                       # ui-shell + ui-sidenav layout
+    │   ├── _sizes.scss                       # SCSS vars (button-height, sidenav-width…)
+    │   ├── _scrollbars.scss
+    │   └── components/{banners,badges}.scss  # global utility classes
+    └── .storybook/                            # main.ts, preview.ts (theme toggle), sb.css
 ```
 
-## Conventions
+## `apps/web` conventions
 
 ### `features/`
 
@@ -64,48 +77,84 @@ frontend/
 - Each feature owns its components, templates, styles, tests.
 - Sub-folders for internal components — keep nesting shallow.
 - Routes load components via `./features/<name>/<name>` (see `app.routes.ts`).
-- Imports from `core/` use relative paths.
+- Imports from `core/` use relative paths ; imports from the design system use `@portfolioai/ui`.
 
-### `core/api/<bucket>/` — HTTP-backed bounded contexts
+### `core/api/<bucket>/`
 
-Each bucket mirrors a backend module. The `analysis/` bucket also owns LLM infra (`ollama-status.*`, `llm-timeout.service`, `job-stream.service`, `prompt.repository`) because the backend keeps LLM dispatch under `analysis/infrastructure/llm/`.
-
-Inside each bucket:
-
-- **Port** = `<bucket>/<name>.repository.ts` — `abstract class XxxRepository` declaring the contract. Components depend on this abstraction. **The abstract class doubles as the type and the DI token** — no `InjectionToken` needed.
+- **Port** = `<bucket>/<name>.repository.ts` — `abstract class XxxRepository`. **The abstract class doubles as the type and the DI token** — no `InjectionToken` needed.
 - **Adapter** = `<bucket>/adapters/<name>.http.ts` — `HttpXxxRepository extends XxxRepository`, decorated `@Injectable()` (no `providedIn: 'root'`).
-- **Bucket-local services** at the **root** of the bucket (e.g. `core/api/analysis/ollama-status.service.ts`). The `adapters/` subfolder only contains HTTP adapters.
+- **Bucket-local services** at the **root** of the bucket (e.g. `core/api/journal/journal-period.service.ts`). The `adapters/` subfolder only contains HTTP adapters.
 - **Tests** = HTTP behaviour tested in `adapters/<name>.http.spec.ts` against the adapter.
+- For **Spring `Page<T>`** responses, the adapter unwraps to the lib-local `PagedResult<T>` shape (`{ content, pageIndex, pageSize, totalElements, totalPages }`). Spring's `number` field is renamed `pageIndex` on the way back — see `core/api/journal/journal.repository.ts`.
 
 ### `core/local/<bucket>/`
 
-Same port + `adapters/` shape, but the adapter is `*.local.ts` (localStorage). Today only `annotation/` (chart h-line annotations per symbol).
+Same port + `adapters/` shape, but the adapter is `*.local.ts` (localStorage).
 
 ### `core/app-state/`
 
-Theme + language + auth signal services. **No port/adapter** — concrete signal-based services with localStorage persistence baked in. They aren't bounded contexts; they're shared UI state with no remote counterpart and no expectation of swapping adapters.
+Theme + language + auth signal services. **No port/adapter** — concrete signal-based services with localStorage persistence baked in. They aren't bounded contexts ; they're shared UI state.
 
 ### Cross-axis
 
-- **Wiring**: `core/providers.ts` → `provideRepositories()` called from `app.config.ts`. Depends on every bucket, sits at root of `core/`.
-- Components mock a port via `{ provide: XxxRepository, useClass: MockXxxRepository }` (or `useValue` when the port has no inherited builders — see [`angular-signals > Resource builders`](../angular-signals/SKILL.md#resource-builders-live-on-the-port-itself)).
+- **Wiring** : `core/providers.ts` → `provideRepositories()` called from `app.config.ts`.
+- Components mock a port via `{ provide: XxxRepository, useClass: MockXxxRepository }` (or `useValue` when the port has no inherited builders).
 - No UI components in `core/`.
 
-### File naming
+## `libs/ui` conventions
 
-- Component: `<feature>.ts` + `.html` + `.scss` + `.spec.ts` (kebab-case if multiple words).
-- Port: `api/<bucket>/<name>.repository.ts` (or `local/<bucket>/<name>.repository.ts`).
-- HTTP adapter: `api/<bucket>/adapters/<name>.http.ts`.
-- localStorage adapter: `local/<bucket>/adapters/<name>.local.ts`.
-- Bucket-local service: `api/<bucket>/<name>.service.ts` (next to ports, not in `adapters/`).
-- Cross-cutting UI service: `app-state/<name>.service.ts`.
+### `lib/<component>/` — Material module wrapper
 
-### Tests
+Every Material primitive used by the app gets a wrapper here. Folder name matches the Material module name without the `Mat`/`Module` parts (`button`, `card`, `table`, `chips`, `snack-bar`, etc.). The `sort-header` folder is named after the visible directive `mat-sort-header`, not the `MatSortModule`.
 
-Vitest, `*.spec.ts` next to source — see [`angular-testing`](../angular-testing/SKILL.md).
+**Minimum files** :
+
+- `<name>.module.ts` — `@NgModule({ imports: [MatXxxModule], exports: [MatXxxModule] })` exporting `StbXxxModule`. Constructor injection only. KDoc explains intent + design-system specifics.
+- `<name>.scss` — the **exhaustive M3 token override**. Always reads node_modules `_m3-<name>.scss > get-tokens()` first, then lists every token : applied ones carry a value, deferred ones are commented with a one-line rationale. See [`material-overrides`](../material-overrides/SKILL.md).
+- `<name>.stories.ts` — a single `Default` story with Storybook `args` + `argTypes` (controls panel). No `Variants` / `Disabled` / `WithIcons` story explosion ; the controls do the variants.
+- `<name>.mdx` — Storybook docs : preamble, `<Canvas of={Default}/>`, `<Controls of={Default}/>`, a "How to use" `<Source>` snippet, optionally a comparison table.
+- `public-api.ts` — `export * from './<name>.module'` (+ directives + types).
+- `index.ts` — `export * from './public-api'; export * from './<name>.module'`.
+
+### `lib/<component>/<name>.directives.ts` — design-system variants
+
+When a wrapped Material primitive needs lib-specific variants (size, semantic flavour, position…), it ships standalone directives in this file. Pattern :
+
+```typescript
+@Directive({
+  selector: '<base-selector>[stbSize]',
+  standalone: true,
+  host: { '[class]': 'hostClass()' },
+})
+export class StbSize {
+  readonly stbSize = input.required<StbButtonSize>();
+  protected readonly hostClass = computed(() => `stb-size--${this.stbSize()}`);
+}
+```
+
+Selectors **always** start with `stb` (eslint rule) ; input bindings use the same name as the property to avoid the `no-input-rename` ESLint rule.
+
+Existing examples : `StbSize` + `StbSpinnerEnd` (button), `StbTable` + `StbCol` (table), `StbChip` (chips), `StbSort` (sort-header).
+
+### `styles/`
+
+- `styles/index.scss` aggregates everything : `@forward` every `_<name>.scss` partial, then every `lib/<component>/<component>.scss` for the M3 overrides.
+- New M3 override : add the SCSS at `lib/<component>/<component>.scss` then append `@forward '../src/lib/<component>/<component>';` to `styles/index.scss`.
+- The app consumes via `@use 'libs/ui/styles' as ui;` in `apps/web/src/styles.scss`.
+
+### Storybook
+
+- One project (`ui` in `angular.json`). Toolbar global type `theme` (`dark` / `light`) toggles `document.documentElement.dataset.theme` via the `withDataTheme` decorator (see `.storybook/preview.ts`).
+- Story titles : `Components/<Name>`. Single `Default` story per component with the playground controls. Don't ship many small stories — the user explicitly asked for one playground per component.
+- Run with `npm run storybook` ; build with `npm run storybook:build`.
+
+## Tests
+
+Vitest, `*.spec.ts` next to source. See [`angular-testing`](../angular-testing/SKILL.md) — especially the **DateAdapter** + **jsdom gotchas** sections, both bit us recently.
 
 ## When NOT to use this layout
 
-- Pure helpers (no state, no DI) → `shared/<concept>/<concept>.ts`, not `core/`. Avoid the name `utils/` — domain-flavoured concepts get a real name (`toggle-set`, `filter-window`).
+- Pure helpers (no state, no DI) → `apps/web/src/app/shared/<concept>/<concept>.ts`, not `core/`. Avoid `utils/` — domain-flavoured concepts get a real name (`toggle-set`, `period-preset`).
 - Don't create `domain/`, `usecases/`, or `views/` folders. Use-cases (when justified) live as services in `core/`.
 - Don't put HTTP details in components or features — go through a port from `core/`.
+- Don't import `Mat*Module` directly in app code — go through the matching `Stb*Module` from `@portfolioai/ui`. The token overrides + variants live there.

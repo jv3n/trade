@@ -1,20 +1,20 @@
 ---
 name: angular-testing
-description: Write unit and integration tests for Angular v21+ in the PortfolioAI frontend using Vitest with TestBed and modern testing patterns. Use for testing components with signals, services with inject(), and HTTP interactions. Triggers on test creation, testing signal-based components, mocking dependencies, or setting up test infrastructure.
+description: Write unit and integration tests for Angular v22+ in the PortfolioAI frontend using Vitest with TestBed and modern testing patterns. Use for testing components with signals, services with inject(), HTTP interactions, and DOM-related side-effects (datepickers, file inputs, blob downloads). Triggers on test creation, testing signal-based components, mocking dependencies, or setting up test infrastructure.
 ---
 
 # Angular Testing
 
-Test with **Vitest**, focused on signal-based components. Tests live next to source (`*.spec.ts`).
+Test with **Vitest** (`@angular/build:unit-test` builder, jsdom environment), focused on signal-based components. Tests live next to source (`*.spec.ts`).
 
 ## Commands
 
 From `frontend/`:
 
 ```bash
-npm run test                                          # full suite
-npx vitest run src/app/dashboard/dashboard.spec.ts    # single file
-npx vitest                                            # watch mode
+npm run test                                                    # full suite (ng test web)
+npx vitest run apps/web/src/app/.../some.spec.ts                # single file
+npx vitest                                                      # watch mode
 ```
 
 Use `vi.fn()` from Vitest (not `jest.fn()`). HTTP testing uses `HttpTestingController` + `provideHttpClient()` + `provideHttpClientTesting()`.
@@ -178,6 +178,101 @@ authMock.user.set({ id: '1', name: 'Test User' });
 ### Translated templates
 
 Components whose templates use `'key' | translate` need `provideTranslateService({ lang: 'en' })` in the TestBed providers. Without it, `instant('foo.bar')` returns the key as fallback (acceptable for assertions).
+
+### Datepicker templates — required `provideNativeDateAdapter()`
+
+Any component whose template contains `<mat-datepicker>` (typically a filter drawer) needs `provideNativeDateAdapter()` in the TestBed providers, even when no test exercises the picker directly. `MatDatepickerInput` reaches for a `DateAdapter` at construction time ; without one, every test in the file fails with the same "No provider found for DateAdapter" trace rather than the actual regression you're trying to pin.
+
+```typescript
+import { provideNativeDateAdapter } from '@angular/material/core';
+
+providers: [
+  provideZonelessChangeDetection(),
+  provideRouter([]),
+  provideTranslateService({ lang: 'en' }),
+  provideNativeDateAdapter(),               // ← required for any datepicker in the template
+  /* ... */
+],
+```
+
+Bit us on the journal-page spec — the filter drawer hosts two `<mat-datepicker>` for the date range. Without `provideNativeDateAdapter()`, the 5 delete-pipeline tests we wanted to pin all reported NG0201 instead of the logic they cover.
+
+## jsdom limitations — file/drag/blob workarounds
+
+jsdom (the DOM Vitest uses) does **not** implement a few browser APIs the UI relies on. The workarounds, all already used in the codebase :
+
+### `DataTransfer` is undefined
+
+`new DataTransfer()` throws `ReferenceError: DataTransfer is not defined`. Drag-and-drop tests can't construct a `DragEvent` with a populated `dataTransfer.files`.
+
+**Workaround** — route the test through the **file-input** handler instead of `onDrop`. Both `onFileChange` and `onDrop` in our journal-io page funnel into the same private `uploadFile` ; testing one exercises the same pipeline as the other.
+
+```typescript
+const file = new File(['header\nrow'], 'demo.csv', { type: 'text/csv' });
+page.onFileChange({
+  target: { files: [file], value: '' } as unknown as HTMLInputElement,
+} as unknown as Event);
+```
+
+The `files: [file]` array is enough — Angular's template binding reads it via `input.files`, which accepts an array-like object in jsdom.
+
+### `URL.createObjectURL` is undefined
+
+The blob-download trick (`URL.createObjectURL(blob)` + anchor `.click()` + `URL.revokeObjectURL(url)`) is the cross-browser way to trigger a "Save as" without the File System Access API. jsdom doesn't ship it.
+
+**Workaround** — stub both URL methods in `beforeEach`, restore in `afterEach`:
+
+```typescript
+beforeEach(() => {
+  vi.stubGlobal('URL', {
+    ...URL,
+    createObjectURL: vi.fn(() => 'blob:mock-url'),
+    revokeObjectURL: vi.fn(),
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+```
+
+The `triggerBlobDownload` helper then runs through its `appendChild → click → removeChild → revokeObjectURL` sequence without throwing, and you can assert on the snackbar fired in the `tap` body.
+
+### `window.confirm` — stub it explicitly
+
+`vi.spyOn(window, 'confirm').mockReturnValue(true)` (or `false`) for tests that exercise `delete()` or any other native-confirm-gated flow.
+
+## RxJS pipelines — test via `Subject` emissions
+
+For components that use `repo.method().pipe(tap, catchError).subscribe()`, control the emission side via a `Subject<T>` returned by the mock repo. The test pushes `next(value)` or `error(...)` to drive each branch :
+
+```typescript
+let deleteSubject: Subject<void>;
+
+beforeEach(() => {
+  deleteSubject = new Subject<void>();
+  /* provide: JournalRepository → { delete: () => deleteSubject.asObservable(), … } */
+});
+
+it('delete error fires an error snackbar', () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  const fixture = TestBed.createComponent(JournalPage);
+  fixture.detectChanges();
+
+  fixture.componentInstance.delete(makeTrade());
+  deleteSubject.error(new Error('500 from server'));
+  fixture.detectChanges();
+
+  expect(snackBarOpen).toHaveBeenCalledWith(
+    expect.any(String),
+    undefined,
+    expect.objectContaining({ panelClass: 'stb-snack-bar--error' }),
+  );
+});
+```
+
+The `tap` runs on `next`, `catchError` runs on `error` — both are exercised cleanly with two separate test cases.
 
 ## Testing inputs and outputs
 

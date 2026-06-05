@@ -1,6 +1,6 @@
 ---
 name: angular-signals
-description: Signal-based reactive state conventions for the PortfolioAI frontend (Angular 21, zoneless). Use when adding state to a service or component, deriving values with `computed()`, wiring side effects with `effect()`, or designing signal-based component I/O via `input()`/`output()`. Skips general Angular signals tutorial content.
+description: Signal-based reactive state conventions for the PortfolioAI frontend (Angular 22, zoneless). Use when adding state to a service or component, deriving values with `computed()`, wiring side effects with `effect()`, designing signal-based component I/O via `input()`/`output()`, or forcing an effect to re-fire when no dependency changed. Skips general Angular signals tutorial content.
 ---
 
 # Angular Signals
@@ -160,6 +160,38 @@ constructor() {
 2. Create in an injection context — field initialiser, `constructor()`, or via an explicit injector. Never from inside an event handler.
 3. **Read** every signal you want to track. Never write a signal the effect reads (feedback loop).
 4. Browser-global side effects must gate on `isBrowser` — see [`angular-di > SSR-safe pattern`](../angular-di/SKILL.md#ssr-safe-pattern--platform_id--isplatformbrowser).
+
+## `refetchTrigger` — force an `effect()` to re-fire on demand
+
+When a single `effect()` reads N signals and one path needs to re-fire the effect **without** any of those signals changing (typically : a CRUD op completed, the data on the server moved, the listing should refresh), expose a dedicated counter signal :
+
+```typescript
+private readonly refetchTrigger = signal(0);
+
+constructor() {
+  effect(() => {
+    const q = this.searchTerm();
+    const f = this.appliedFilter();
+    const sort = this.sort();
+    const pageIndex = this.pageIndex();
+    const pageSize = this.pageSize();
+    this.refetchTrigger();              // read so the effect re-fires when bumped
+    this.fetch(/* … */);
+  });
+}
+
+private refetch(): void {
+  this.refetchTrigger.update((n) => n + 1);
+}
+```
+
+**Why a dedicated signal** rather than "push the current value into one of the other dependencies" :
+
+- Search-style pipes typically end with `distinctUntilChanged()` to dedupe debounced keystrokes. Pushing the same string back through `searchInput$.next(this.searchValue())` after a delete is **swallowed** — the `distinctUntilChanged` filters it out, the effect never re-fires, the table shows stale data. Real bug hit on the journal CRUD before the `refetchTrigger` rewrite.
+- Signal equality on a `signal({ ... })` doesn't fire if the new value is *structurally* the same. `signal(n + 1)` is the only shape guaranteed to notify on every bump (number identity always changes).
+- The trigger is **read-only from the effect's perspective** — no risk of feedback loop.
+
+Pattern verbatim in `journal-page.ts` (`refetchTrigger` bumped from the `tap` success of every CRUD op). Apply it to any page where the same effect must serve both "user changed a filter" and "data on the server moved".
 
 ## Component-level signals — same pattern, narrower scope
 
