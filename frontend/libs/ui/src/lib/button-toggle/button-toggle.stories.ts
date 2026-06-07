@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 import { StbButtonToggleModule } from '@portfolioai/ui';
+import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 
 @Component({
   selector: 'ui-button-toggle-demo',

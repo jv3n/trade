@@ -2,11 +2,10 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, min, required } from '@angular/forms/signals';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
-import { StbDatePickerModule } from '@portfolioai/ui';
-import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 import {
   StbButtonModule,
   StbCheckboxModule,
+  StbDatePickerModule,
   StbDialogModule,
   StbDividerModule,
   StbFormFieldModule,
@@ -27,6 +26,7 @@ import {
   TradePattern,
   TradePlay,
 } from '../../../core/api/journal/trade-entry.model';
+import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 
 /** Data passed to the dialog — `entry` non-null = edit mode, null = create mode. */
 export interface AddTradeDialogData {

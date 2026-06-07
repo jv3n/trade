@@ -7,9 +7,13 @@ Chaque contexte est autonome et possède ses propres couches.
 
 ## Bounded Contexts
 
+> **Pivot juin 2026** — seuls `journal` (le produit) et `auth` (dont le journal dépend pour le multi-tenant) sont **live**. Les contextes `market` / `analysis` / `portfolio` / `news` / `analyst` / `earnings` / `watchlist` / `config` restent dans l'arbre en **sommeil** (providers conservés pour un éventuel enrichissement Phase 2).
+
 | Contexte | Responsabilité | Statut |
 |----------|----------------|--------|
-| `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | ✅ Phase 0+ |
+| `journal` | **Journal de trading** — trade entries (CRUD + CSV io roundtrip + pagination / tri / filtres serveur), multi-tenant `user_id`. 4 enums Postgres natifs (play A/B, pattern GUS/FRD, open side FRONT/BACK, exit strategy SWING_20/EOD) | ✅ **Pivot v1.0 (live)** |
+| `auth` | OAuth2 Google OIDC + rôles ADMIN/USER + profile dev `local-no-auth`. Source de vérité du `user_id` consommé par `journal` (et `portfolio`/`watchlist` dormants) | ✅ Phase 4 (live) |
+| `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | 💤 Dormant (pré-pivot) |
 | `market` | Données ticker (Twelve Data + mock) + indicateurs techniques calculés | ✅ Phase 1 |
 | `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) + gestion des prompts narratifs en BDD avec scoring continu (latence / retry / parse-validator failed / thumbs user, Phase 3) | ✅ Phase 1 — étendu Phase 3 |
 | `watchlist` | Liste plate de tickers suivis hors portefeuille (scopée user_id depuis Phase 4, UNIQUE `(user_id, symbol)`) | ✅ Phase 2 — multi-tenant Phase 4 |
@@ -17,7 +21,6 @@ Chaque contexte est autonome et possède ses propres couches.
 | `analyst` | Recommandations d'analystes par ticker (consensus monthly + price target 12 mois, Finnhub + mock), cache court | ✅ Phase 2 |
 | `earnings` | Earnings trimestriels par ticker (4 derniers Q EPS estimate/actual/surprise % + prochaine date d'annonce, Finnhub + mock), cache court | ✅ Phase 2 |
 | `config` | Surcharges runtime des défauts YAML (clés API, TTL cache, providers actifs) | ✅ Phase 2 |
-| `auth` | OAuth2 Google OIDC + rôles ADMIN/USER + profile dev `local-no-auth`. Source de vérité du `user_id` consommé par `portfolio`/`watchlist` | ✅ Phase 4 |
 
 > Le contexte `analysis` a vu son périmètre changer à la Phase 1 : il a été réorienté d'une orchestration de recommandations portefeuille (Phase 0 — 8 règles de validation, targetWeight, action enum) vers la génération de narratifs par ticker (`{summary, sentiment, keyPoints[]}`). Le code Phase 0 a été supprimé en Phase 2.5 ; le contexte `ingestion` (RSS) a été décommissionné dans la même opération.
 
@@ -128,6 +131,8 @@ portfolio.domain → auth.domain                              ✓ (Phase 4 — @
 watchlist.domain → auth.domain                              ✓ (Phase 4 — @ManyToOne User sur WatchlistEntry)
 portfolio.application → auth.application                    ✓ (Phase 4 — AuthService.getCurrentUser pour scoper les reads)
 watchlist.application → auth.application                    ✓ (Phase 4 — idem)
+journal.domain → auth.domain                                ✓ (pivot — @ManyToOne User sur TradeEntry)
+journal.application → auth.application                       ✓ (pivot — AuthService.getCurrentUser pour scoper les trades)
 ```
 
 > **Note Phase 4** : la référence à `auth.domain.User` depuis `portfolio/` et `watchlist/` au niveau **entity JPA** (`@ManyToOne`) est une exception consciente à la règle « contexts share via ID » du DDD strict. Rationale détaillée dans `architecture.md > Décisions techniques notables > Phase 4 > Multi-tenant FK`. Limite de la tolérance : seules les *entities JPA* peuvent traverser un bounded context de cette façon — les *ports* outbound restent strictement isolés dans leur context.

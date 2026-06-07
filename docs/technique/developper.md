@@ -1,6 +1,8 @@
 # Onboarding développeur
 
-Bienvenue. Ce document est conçu pour qu'un nouvel arrivant soit **productif sur PortfolioAI en moins d'une heure** — depuis le clone du repo jusqu'à un dossier ticker complet avec un narratif LLM. Si tu cherches un détail technique précis (commandes, structure, conventions), va plutôt dans [`developpement.md`](./developpement.md). Ici on raconte une histoire, pas une référence.
+> ⚠️ **Pivot juin 2026** — l'app est désormais un **journal de trading** ; la surface produit live est le module journal (`features/journal/`). Le parcours guidé ci-dessous décrit encore le **flow pré-pivot dormant** (import Wealthsimple → dossier ticker → narratif LLM) et reste à réécrire autour du journal. Le setup environnement (Docker / WSL / `mise` / Tilt / `application-local.yml`) et le « quand ça merde » restent valables.
+
+Bienvenue. Ce document est conçu pour qu'un nouvel arrivant soit **productif sur PortfolioAI en moins d'une heure**. Si tu cherches un détail technique précis (commandes, structure, conventions), va plutôt dans [`developpement.md`](./developpement.md). Ici on raconte une histoire, pas une référence.
 
 ---
 

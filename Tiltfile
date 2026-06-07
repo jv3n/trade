@@ -95,7 +95,7 @@ backend_cmd = """cd backend && \\
   AUTH_MODE=${BACKEND_AUTH_MODE:-no-auth} ; \\
   if [ \"$AUTH_MODE\" = \"oauth\" ]; then PROFILES=\"local\"; else PROFILES=\"local,local-no-auth\"; fi ; \\
   echo \"[Tilt] backend launching with --spring.profiles.active=$PROFILES (BACKEND_AUTH_MODE=$AUTH_MODE)\" ; \\
-  JAVA_HOME=$(/usr/libexec/java_home -v 21) \\
+  JAVA_HOME=$(mise where java) \\
     ./gradlew bootRun --args=\"--spring.profiles.active=$PROFILES\""""
 
 local_resource(
@@ -148,14 +148,13 @@ cmd_button(
 )
 
 
-# `serve_cmd` runs under non-interactive `sh -c`, which doesn't source ~/.zshrc and thus
-# never initializes nvm — `npm` ends up off PATH. We source nvm.sh and run `nvm use`
-# (no arg, which reads `frontend/.nvmrc`), mirroring the backend's `/usr/libexec/java_home`
-# trick. Bumping node = bumping `frontend/.nvmrc`; no Tiltfile edit needed.
+# `serve_cmd` runs under non-interactive `sh -c`, so we resolve node/npm through `mise exec`
+# rather than relying on PATH. mise reads the repo-root `.tool-versions` (`nodejs 24.15.0`) to
+# pick the version — bumping node = bumping `.tool-versions`, no Tiltfile edit needed. Same
+# resolver as the backend's `mise where java`, so a single tool manages both runtimes on macOS
+# and Linux/WSL alike (replaced the previous nvm + `/usr/libexec/java_home` macOS-only combo).
 frontend_cmd = """cd frontend && \\
-  export NVM_DIR=\"$HOME/.nvm\" ; \\
-  if [ -s \"$NVM_DIR/nvm.sh\" ]; then . \"$NVM_DIR/nvm.sh\" --no-use ; nvm use >/dev/null ; fi ; \\
-  npm start -- --host 0.0.0.0 --port {}""".format(frontend_port)
+  mise exec -- npm start -- --host 0.0.0.0 --port {}""".format(frontend_port)
 
 local_resource(
     name = "frontend",
@@ -183,9 +182,7 @@ local_resource(
 # (bouton « play » sur le panel `storybook`). HMR géré par Storybook directement, donc pas de
 # `deps` qui forceraient Tilt à relancer le serveur sur chaque story édit.
 storybook_cmd = """cd frontend && \\
-  export NVM_DIR=\"$HOME/.nvm\" ; \\
-  if [ -s \"$NVM_DIR/nvm.sh\" ]; then . \"$NVM_DIR/nvm.sh\" --no-use ; nvm use >/dev/null ; fi ; \\
-  npm run storybook -- --host 0.0.0.0 --port {} --no-open""".format(storybook_port)
+  mise exec -- npm run storybook -- --host 0.0.0.0 --port {} --no-open""".format(storybook_port)
 
 local_resource(
     name = "storybook",

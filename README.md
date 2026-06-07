@@ -1,8 +1,10 @@
 # PortfolioAI
 
-Outil d'intelligence de marché par ticker, alimenté par l'IA. Pour chaque action / ETF / crypto suivie, le backend récupère les données via Twelve Data, calcule les indicateurs techniques côté serveur (RSI, MA, momentum, drawdown…), et le LLM rédige un court narratif factuel — il décrit les chiffres, il ne décide pas.
+**Journal de trading** pour short small-caps (gap-up shorts, $1–$10). L'utilisateur logue chaque trade — exécution (ticker, play A/B, pattern GUS/FRD, taille, prix, P&L) + checklist pré-trade + post-mortem. La table est l'unité atomique ; l'export / import CSV est roundtrip-safe. Stats, charts et export Excel arrivent en Phase 2. Aucun LLM dans le chemin live.
 
-> **Disclaimer** : PortfolioAI est un outil d'aide à la décision. Il ne constitue pas un conseil en investissement agréé.
+> L'app a pivoté en juin 2026 depuis un outil d'analyse de marché par ticker à narratif IA. L'ancienne surface (dossiers ticker, narratifs LLM, radar, portefeuille) reste dans le code en sommeil — voir la [roadmap](https://jv3n.github.io/trade/projet/roadmap/).
+
+> **Disclaimer** : PortfolioAI est un outil personnel de journalisation de trades. Il ne constitue pas un conseil en investissement agréé.
 
 ## Statut CI & qualité
 
@@ -35,11 +37,12 @@ Site complet : **<a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blan
 | <a href="https://jv3n.github.io/trade/devops/secret-rotation/" target="_blank" rel="noopener">Rotation des secrets prod</a> | Procédure step-by-step par secret (OAuth, Anthropic, R2, Sentry, Supabase) + smoke après deploy |
 | <a href="https://jv3n.github.io/trade/devops/dns-analyse/" target="_blank" rel="noopener">Analyse DNS (nom de domaine)</a> | Choix `tickerstory.org` — comparaison registrars, tarif renouvellement, Cloudflare DNS |
 | <a href="https://jv3n.github.io/trade/devops/decision-ollama-deploiement/" target="_blank" rel="noopener">Décision : déploiement Ollama</a> | ADR brouillon — Ollama natif Mac vs Compose vs statu quo |
-| <a href="https://jv3n.github.io/trade/metier/vision/" target="_blank" rel="noopener">Vision</a> | Pourquoi le projet existe, ce qu'on essaie de prouver |
-| <a href="https://jv3n.github.io/trade/metier/fonctionnalites/" target="_blank" rel="noopener">Fonctionnalités</a> | Découpage par phase, ce qui est livré / gelé / à venir |
+| <a href="https://jv3n.github.io/trade/metier/vision/" target="_blank" rel="noopener">Vision</a> | Le pivot journal de trading — pourquoi le trade entry est l'unité atomique |
+| <a href="https://jv3n.github.io/trade/metier/fonctionnalites/" target="_blank" rel="noopener">Fonctionnalités</a> | Le module journal live + les phases pré-pivot dormantes |
+| <a href="https://jv3n.github.io/trade/projet/roadmap/" target="_blank" rel="noopener">Roadmap (pivot v1.0)</a> | Le périmètre in / out du pivot — ce qui est gardé, dormant, ou décommissionné |
 | <a href="https://jv3n.github.io/trade/projet/testeur/" target="_blank" rel="noopener">Onboarding testeur</a> | Pour qui veut juste cliquer dans l'app — Docker Desktop + Java + Node + Tilt, tout en mock par défaut |
 | <a href="https://jv3n.github.io/trade/projet/backlog/" target="_blank" rel="noopener">Backlog</a> | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
-| <a href="https://jv3n.github.io/trade/projet/journal-livraisons/" target="_blank" rel="noopener">Journal des livraisons</a> | Historique reverse-chronologique des features livrées par phase |
+| <a href="https://jv3n.github.io/trade/projet/journal-livraisons/" target="_blank" rel="noopener">Journal des livraisons</a> | Historique reverse-chronologique des livraisons (1.0 journal ; les phases 1-6 pré-pivot sont archivées) |
 | <a href="https://jv3n.github.io/trade/projet/sources/" target="_blank" rel="noopener">Sources de données</a> | Twelve Data, Finnhub — endpoints, quotas, mocks |
 | <a href="https://jv3n.github.io/trade/projet/commit-conventions/" target="_blank" rel="noopener">Conventions de commit</a> | Conventional Commits en anglais, exemples |
 | <a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blank" rel="noopener">Changelog doc</a> | Trace reverse-chronologique des modifications du doc set (post `/doc-maintainer`) |

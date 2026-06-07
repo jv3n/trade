@@ -2,7 +2,6 @@ import { Component, computed, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatSidenavContainer } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter, map, startWith } from 'rxjs/operators';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -14,6 +13,7 @@ import {
   StbToolbarModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from './core/app-state/auth.service';
 import { LanguageService } from './core/app-state/language.service';
 import { SidenavCollapseService } from './core/app-state/sidenav-collapse.service';

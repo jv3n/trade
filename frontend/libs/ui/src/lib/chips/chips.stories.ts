@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
+import type { StbChipVariant } from '@portfolioai/ui';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 import { StbIconModule } from '../icon';
-import type { StbChipVariant } from '@portfolioai/ui';
 import { StbChipsModule } from './chips.module';
 
 type Variant = StbChipVariant | 'default';

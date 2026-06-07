@@ -80,7 +80,7 @@ Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actu
 
 ## Observability — GlitchTip + UptimeRobot
 
-> Wiring livré `v0.8.0-rc1` (2026-05-23). GlitchTip = serveur d'ingestion Sentry-API-compatible (on utilise les SDK officiels Sentry, le DSN dirige vers GlitchTip plutôt que vers Sentry SaaS). UptimeRobot = HTTP polling externe sur `/actuator/health`. Détail wiring + pivots dans [`journal-livraisons.md > Phase 5`](../projet/journal-livraisons.md#phase-5--déploiement-en-cours) et [`architecture.md > Décisions Phase 5`](../technique/architecture.md#phase-5--déploiement).
+> Wiring livré `v0.8.0-rc1` (2026-05-23). GlitchTip = serveur d'ingestion Sentry-API-compatible (on utilise les SDK officiels Sentry, le DSN dirige vers GlitchTip plutôt que vers Sentry SaaS). UptimeRobot = HTTP polling externe sur `/actuator/health`. Détail wiring + pivots dans [`archive/journal-livraisons.md > Phase 5`](../projet/archive/journal-livraisons.md) et [`architecture.md > Décisions Phase 5`](../technique/architecture.md#phase-5--déploiement).
 
 ### GlitchTip (error tracking)
 - [Organization `portfolioai`](https://app.glitchtip.com/portfolioai) — overview, billing, members
@@ -159,4 +159,4 @@ Configurer une fois : `aws configure --profile portfolioai-r2` avec les mêmes 3
 - [`commandes-pratiques.md`](./commandes-pratiques.md) — commandes Docker / Tilt / Postgres / Ollama au quotidien
 - [`decision-ollama-deploiement.md`](./decision-ollama-deploiement.md) — pourquoi Ollama reste en CPU dégradé sur Mac
 - [`docs/projet/backlog.md > Phase 5`](../projet/backlog.md) — tickets ⏳ restants
-- [`docs/projet/journal-livraisons.md > Phase 5`](../projet/journal-livraisons.md) — livré + notes d'implémentation
+- [`docs/projet/archive/journal-livraisons.md > Phase 5`](../projet/archive/journal-livraisons.md) — livré + notes d'implémentation

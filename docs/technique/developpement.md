@@ -99,7 +99,7 @@ Spring Security actif, OAuth2 Login Google OIDC, sessions backed par cookie `JSE
    SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
    SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
    APP_ADMIN_EMAILS=ton.email@gmail.com    # ton email pour atterrir en ADMIN au 1er login
-   APP_FRONTEND_URL=http://localhost:4201/  # cible du redirect post-OAuth, match FRONTEND_HOST_PORT
+   APP_FRONTEND_URL=http://localhost:4200/  # cible du redirect post-OAuth, match FRONTEND_HOST_PORT
    ```
 4. **Activation** : bouton Tilt **« Mode → OAuth »** sur la ressource `backend`, **ou** mettre `BACKEND_AUTH_MODE=oauth` dans `.env` manuellement.
 5. **OAuth consent screen** dans Google Cloud Console : en mode `Testing`, ajouter ton email comme test user. Sinon Google bloque le login (« Access blocked »).
@@ -114,7 +114,7 @@ SPA `/login` → bouton « Sign in with Google »
   → tu autorises
   → Google 302 → localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google
   → proxy forward au backend, Spring exchange le code, crée la session
-  → Spring 302 → APP_FRONTEND_URL (= `http://localhost:4201/`)
+  → Spring 302 → APP_FRONTEND_URL (= `http://localhost:4200/`)
   → SPA reload, AuthService.refresh() call `/api/me`, user résolu, dashboard rendu
 ```
 
@@ -150,12 +150,12 @@ Voir le détail dans [`commit-conventions.md`](../projet/commit-conventions.md).
 
 ```
 trade/
-├── frontend/                  # Angular 21 (single app, standalone, zoneless)
+├── frontend/                  # Angular 22 (single app, standalone, zoneless)
 │   ├── public/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
 │       ├── core/              # split sur 5 sous-dossiers — api/ (HTTP) + local/ (browser) + app-state/ (UI services) + http/ (interceptors, Phase 4) + router/ (guards, Phase 4)
-│       │   ├── api/<bucket>/          # 10 bounded contexts miroirs du backend : market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/
+│       │   ├── api/<bucket>/          # 11 buckets : journal/ (★ LIVE pivot) + market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/ (dormants)
 │       │   │   ├── *.repository.ts            # ports (abstract class) à la racine du bucket
 │       │   │   ├── *.service.ts               # services bucket-locaux (ex. analysis/ollama-status.service.ts, analysis/job-stream.service.ts SSE, analysis/llm-timeout.service.ts)
 │       │   │   └── adapters/*.http.ts         # HttpXxxRepository (défaut)
@@ -163,9 +163,11 @@ trade/
 │       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts, auth.service.ts), sans port/adapter
 │       │   ├── http/                  # HTTP interceptors (Phase 4 — auth.interceptor.ts catch 401 → /login)
 │       │   ├── router/                # Route guards (Phase 4 — authGuard, adminGuard)
-│       │   └── providers.ts           # `provideRepositories()` — wires les 15 ports (api/ + local/) → adapters
+│       │   └── providers.ts           # `provideRepositories()` — wires les 18 ports (api/ + local/) → adapters
 │       └── features/          # Pages UI (primary adapters)
-│           ├── dashboard/             # Portefeuille + lien dossiers ticker
+│           ├── journal/               # ★ LIVE (pivot) — table trades + dialog add/edit + filtres
+│           ├── journal-io/            # ★ LIVE (pivot) — export / import CSV
+│           ├── dashboard/             # 💤 dormant (pré-pivot) — Portefeuille + lien dossiers ticker
 │           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA + thumbs)
 │           ├── import/                # Drag & drop CSV Wealthsimple
 │           ├── suivi/                 # Timeline snapshots
@@ -208,4 +210,30 @@ trade/
 ## Lint et formatage
 
 - Backend : **Spotless ktfmt** (Google style) — `./gradlew spotlessApply` reformate, `./gradlew spotlessCheck` vérifie. Spotless porte aussi un custom step `no-wildcard-imports` qui casse le build sur tout import en `package.*` hors allowlist (14 packages tolérés temporairement, à shrinker progressivement — cf. dette technique `backlog.md`). Le `.editorconfig` racine bloque IntelliJ d'introduire des wildcards via "Optimize Imports" — défense en profondeur côté éditeur + côté pipeline. **Detekt** pour le reste de l'analyse statique Kotlin (`./gradlew detekt`, rapport HTML + SARIF — voir [`ops.md`](./ops.md) section Detekt).
-- Frontend : **ESLint flat config** (`frontend/eslint.config.js`, Angular ESLint 21) pour l'analyse statique TS + a11y des templates. **Prettier** reste seul responsable du formatage (`eslint-config-prettier` désactive les règles formatage qui chevauchent). `npm run lint` en local et en CI (avant le build) ; `npm run lint -- --fix` pour auto-fixer les violations triviales. Détails ruleset dans [`ops.md`](./ops.md) section ESLint.
+- Frontend : **ESLint flat config** (`frontend/eslint.config.js`, Angular ESLint 21) pour l'analyse statique TS + a11y des templates. **Prettier** reste seul responsable du formatage (`eslint-config-prettier` désactive les règles formatage qui chevauchent). `npm run lint` en local et en CI (avant le build) ; `npm run lint -- --fix` pour auto-fixer les violations triviales. Détails ruleset dans [`ops.md`](./ops.md) section ESLint. Pour lancer `npm run format` / `lint` / `test` **depuis IntelliJ** quand Node tourne sous WSL, voir la section suivante.
+
+## IntelliJ IDEA — interpréteur Node sous WSL
+
+Quand le repo vit sur le filesystem Windows (`C:\…\trade`) mais que la toolchain tourne sous **WSL via `mise`** (le `Tiltfile` résout `node`/`java` avec `mise`, versions épinglées dans `.tool-versions` à la racine — pas de Node natif Windows), IntelliJ doit pointer sur le **Node de WSL** pour exécuter les scripts npm (`format`, `lint`, `test`) depuis l'IDE.
+
+`mise` n'installe pas Node dans un emplacement standard et ne l'expose pas sur le PATH non-interactif. Il faut donc générer les **shims `mise`** — un shim relit `.tool-versions` à chaque appel, donc la config IDE survit à un bump de version Node sans rien retoucher :
+
+```bash
+mise reshim   # crée ~/.local/share/mise/shims/{node,npm,npx}
+```
+
+Puis dans IntelliJ — `Settings → Languages & Frameworks → Node.js` :
+
+1. *Node interpreter* → `Add…` → **Add WSL Node Interpreter…** → distribution **Ubuntu**.
+2. *Node interpreter path* (chemin Linux — pas de `~`, expanser `$HOME`) :
+   ```
+   $HOME/.local/share/mise/shims/node     # p.ex. /home/<user>/.local/share/mise/shims/node
+   ```
+   (équivalent UNC pour parcourir depuis l'explorateur : `\\wsl.localhost\Ubuntu\home\<user>\.local\share\mise\shims\node`)
+3. *Package manager* : `npm` (auto-détecté à côté du shim).
+
+Lancer un script : clique le ▶ dans la gouttière à côté de l'entrée dans `frontend/package.json`, ou via la fenêtre d'outils **npm**. Tout s'exécute sous le Node WSL.
+
+> **Pourquoi pas le chemin concret `…/installs/node/<version>/bin/node` ?** Il marche aussi, mais il fige la version (p.ex. `24.15.0`) : au prochain bump de `.tool-versions`, IntelliJ pointe sur un install supprimé et il faut corriger le chemin à la main. Le shim évite ça.
+
+> **Prettier natif (optionnel)** — pour *Reformat Code* / format-on-save sans passer par le script npm : `Settings → Languages & Frameworks → JavaScript → Prettier`, *Prettier package* = `…\frontend\node_modules\prettier` (le `node_modules` du frontend, installé par le npm WSL → binaires Linux), coche *On 'Reformat Code' action* / *On save*. Prettier tourne alors avec l'interpréteur WSL configuré ci-dessus.

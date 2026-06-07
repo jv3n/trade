@@ -275,7 +275,7 @@ Lock-in à inventorier précisément pour respecter la contrainte #2 :
 
 ## 9. Tickets dépendants
 
-> **Note 2026-05-23** : Phase 5 entièrement clôturée. Tous les tickets ci-dessous sont livrés, l'historique d'exécution (pivots, gotchas, effort réel) vit dans [`journal-livraisons.md > Phase 5`](../projet/journal-livraisons.md#phase-5--déploiement-clôturée-2026-05-23). Liste gardée ici comme **trace du plan initial** vs la réalisation.
+> **Note 2026-05-23** : Phase 5 entièrement clôturée. Tous les tickets ci-dessous sont livrés, l'historique d'exécution (pivots, gotchas, effort réel) vit dans [`archive/journal-livraisons.md > Phase 5`](../projet/archive/journal-livraisons.md#phase-5--déploiement-clôturée-2026-05-23). Liste gardée ici comme **trace du plan initial** vs la réalisation.
 
 1. **Provisionner et déployer v1 (Phase 5a)** ✅ — créer projet GCP, configurer Workload Identity Federation, créer projet Supabase, écrire `Dockerfile` multi-stage backend, faire le 1er deploy manuel via `gcloud run deploy`, valider end-to-end (login Google OAuth + dashboard + ouverture dossier ticker avec Mock LLM). Livré 2026-05-18 en 5 itérations Docker.
 2. **Câbler le workflow GitHub Actions deploy** ✅ — décrit en §6.2 ci-dessus. Livré 2026-05-18 (`v0.7.0-rc1` smoke).

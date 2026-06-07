@@ -133,7 +133,7 @@ Le `ignoreFailures = true` actuel signifie que Detekt n'échoue pas le build, ju
 
 ## ESLint — analyse statique TypeScript / Angular
 
-Configuration : [`frontend/eslint.config.js`](../../frontend/eslint.config.js) (flat config, Angular ESLint 21).
+Configuration : [`frontend/eslint.config.js`](../../frontend/eslint.config.js) (flat config, Angular ESLint 22).
 
 Extends posés par le schematic `ng add @angular-eslint/schematics` :
 - TS : `eslint:recommended` + `tseslint:recommended` + `tseslint:stylistic` + `angular-eslint:tsRecommended`
@@ -159,7 +159,7 @@ Configuration : [`.github/dependabot.yml`](../../.github/dependabot.yml).
 - **Scan quotidien 06:00 America/Toronto** sur trois écosystèmes : `gradle` (backend), `npm` (frontend), `github-actions`. Le bruit reste maîtrisé par le filtre patch-only ci-dessous.
 - **Patch only** sur tous les écosystèmes (`update-types: [patch]`) — 1 PR par eco par semaine, le bruit reste dans le couloir des bug-fixes upstream. Les minors et majors restent **manuels** : ils peuvent embarquer des breaking changes silencieux (Kotlin 2.1 → 2.3 a cassé le `resolutionStrategy` Detekt en routine), pas envie de checker des PRs qui plantent.
 - **Ignore list** (belt-and-suspenders au cas où la policy bouge — déjà bloqués par le patch-only) :
-  - `typescript` major bumps (Angular 21 borne à `>=5.9 <6.0`)
+  - `typescript` major bumps (Angular 22 borne à `>=5.9 <6.0`)
   - `io.gitlab.arturbosch.detekt` major bumps (refactor manuel demandé pour 2.0)
   - `com.diffplug.spotless` major bumps (peut reformater toute la codebase)
   - `zone.js` (zoneless explicite, garde-fou si transitif)
