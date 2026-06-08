@@ -520,6 +520,45 @@
     "configuration": "Configuration runtime",
     "prompts": "Prompts narratifs",
     "accessControl": "Contrôle d'accès",
+    "statsImport": "Import des stats",
+    "statsImportPage": {
+      "title": "Import des stats",
+      "description": "Admin uniquement — injecte le jeu de stats de trade (généré par scripts/stats) en base via CSV, ou réexporte toute la table.",
+      "export": {
+        "title": "Export",
+        "subtitle": "Télécharger toute la table",
+        "description": "Télécharge toutes les lignes de stats en CSV, dans le même format que l'import.",
+        "format": {
+          "encoding": "UTF-8 avec BOM, RFC 4180 — s'ouvre proprement dans Excel.",
+          "columns": "14 colonnes — identique à l'import (calculées %push / %LOD / %EOD omises).",
+          "roundtrip": "Roundtrip-safe — le fichier exporté se réimporte tel quel."
+        },
+        "button": "Exporter en CSV",
+        "exporting": "Export en cours…",
+        "success": "Export téléchargé.",
+        "error": "Échec de l'export. Réessaie."
+      },
+      "import": {
+        "title": "Import",
+        "subtitle": "Injecter le CSV de stats",
+        "description": "Dépose le stats-data-prod.csv produit par scripts/stats (ou tout fichier au même format de colonnes). Lot atomique — si une ligne est invalide, rien n'est enregistré et tu obtiens un rapport d'erreurs par ligne ci-dessous.",
+        "format": {
+          "source": "Généré par scripts/stats depuis la feuille de stats de trade.",
+          "columns": "14 colonnes — %push / %LOD / %EOD sont calculés côté serveur.",
+          "atomic": "Lot atomique — une seule ligne invalide rejette tout le fichier."
+        },
+        "dropLabel": "Glisse ton CSV ici",
+        "or": "ou",
+        "browse": "Parcourir",
+        "hint": ".csv uniquement — un seul fichier.",
+        "uploading": "Envoi et validation…",
+        "success": "{{ count }} ligne(s) de stats importée(s).",
+        "failed": "{{ count }} erreur(s) trouvée(s) — rien n'a été importé.",
+        "errorLine": "ligne {{ line }}",
+        "errorNetwork": "Erreur réseau. Réessaie.",
+        "again": "Importer un autre fichier"
+      }
+    },
     "preferencesPage": {
       "title": "Préférences",
       "description": "Thème et langue. Ces paramètres sont stockés localement dans ton navigateur.",

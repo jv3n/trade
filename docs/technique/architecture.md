@@ -83,6 +83,19 @@ Le module **central post-pivot**. Journal de trading : l'utilisateur logue chaqu
 
 ---
 
+### `stats/` — dataset stats trade global + import CSV admin (live, phase 2)
+
+Module **distinct du `journal/`** : une seconde table (`stat_entry`) centrée sur le **contexte pré-trade** (gap, float, % institutions, restrictions) + les **niveaux de prix** intraday. Hexagonal, sans enum Postgres (tout numérique / booléen). **Dataset global** : contrairement au journal, **pas de `user_id`** — un seul jeu partagé, lisible par tout utilisateur authentifié, alimentable par les **ADMIN** uniquement.
+
+- **Domain** — `StatEntry` (16 champs : identité + setup saisi à la main + 4 niveaux de prix + 3 colonnes `%` dérivées + audit, **sans `user`**). `StatMetrics` : fonction pure qui calcule les **3 colonnes dérivées à l'insertion**, encodage valeur ×100, 2 décimales, `HALF_UP` — `pushPercent = (high − open)/open×100`, `lodPercent = (lod − open)/open×100`, `eodPercent = (eod − open)/open×100` (négatif = niveau sous l'open = favorable au short). Jamais lues du CSV.
+- **Application** — `StatEntryService.importCsv` (aucun contexte user) : décode, et sur lot **propre** persiste chaque ligne avec les `%` calculés ; **import atomique** (toute erreur ligne → 0 persistée, diagnostics `{line, message}`). `StatEntryCsvDecoder` : RFC 4180, UTF-8 BOM, CRLF, **14 colonnes à en-têtes humains** (`Date, Ticker, Gap Up, Float, Institutions %, >20% Inst?, <$1 stock?, SSR?, Entry after 11AM?, Notes, Open, High, LOD (Low of Day), EOD (End of Day)`) — CSV hand-authored, pas un export roundtrip donc en-têtes lisibles plutôt que noms de champs. DTOs `StatEntryRequest` / `ImportResult` (locaux au module, pas de dépendance vers `journal/`).
+- **Infrastructure** — `StatEntryController` : `POST /api/stats/import` (multipart `file`, réponse 200 + `ImportResult`). `StatEntryRepository` (Spring Data minimal — l'import est le seul writer ; listing / agrégats stats en phase 2).
+- **Sécurité** — `SecurityConfig` gate `POST /api/stats/**` en `hasRole("ADMIN")` (write admin-only) ; les futurs `GET /api/stats/**` tombent dans `/api/**` → `authenticated` (lecture pour tous). Double défense côté front : `adminGuard` sur la route + entrée nav rendue seulement pour ADMIN.
+- **Frontend** — page **admin-only** `/settings/stats-import` (sous-route settings, `adminGuard`). Port `StatsRepository` + adaptateur `HttpStatsRepository` (multipart), UI drop-zone + file-picker mirroré sur `journal-io`. Le CSV est produit hors-app par `scripts/stats` (outil Go : copier-coller de la feuille Excel → CSV d'import).
+- **Schéma** — migrations Flyway **V6** (`stat_entry`) puis **V7** (drop `user_id` + index `(trade_date DESC)`). CSV d'exemple : `docs/data-input/stats-demo.csv`.
+
+---
+
 > Les modules ci-dessous (`market/` → `config/`) sont **pré-pivot, dormants** : le code est présent mais n'est plus câblé à aucune route produit. Conservés pour un éventuel enrichissement Phase 2 (les clients providers en particulier). Détail historique conservé pour référence.
 
 ### `market/` — Phase 1, étendu Phase 2

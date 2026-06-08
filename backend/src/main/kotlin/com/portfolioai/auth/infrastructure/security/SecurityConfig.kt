@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -80,6 +81,10 @@ class SecurityConfig(
         it
           .requestMatchers("/api/config/**", "/api/prompts/**", "/api/narrative/observability/**")
           .hasRole("ADMIN")
+        // Trade-stats are a **global, shared** dataset : reads are open to any authenticated user
+        // (they fall through to `/api/**` below), but mutations — the CSV import — are ADMIN-only.
+        // Gated by HTTP method so a future `GET /api/stats/**` listing stays readable by everyone.
+        it.requestMatchers(HttpMethod.POST, "/api/stats/**").hasRole("ADMIN")
         // `/api/me` is **intentionally** not in `permitAll`. The SPA calls it at boot via
         // `AuthService.refresh()` precisely to discover whether a valid session exists : an
         // anonymous client gets a 401, which the frontend swallow and treats as "not logged

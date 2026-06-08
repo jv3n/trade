@@ -1,5 +1,4 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
-
 import { HttpNarrativeBiasRepository } from './api/analysis/adapters/narrative-bias.http';
 import { HttpNarrativeFeedbackRepository } from './api/analysis/adapters/narrative-feedback.http';
 import { HttpNarrativeObservabilityRepository } from './api/analysis/adapters/narrative-observability.http';
@@ -30,6 +29,8 @@ import { PortfolioRepository } from './api/portfolio/portfolio.repository';
 import { SnapshotRepository } from './api/portfolio/snapshot.repository';
 import { HttpScreenerRepository } from './api/screener/adapters/screener.http';
 import { ScreenerRepository } from './api/screener/screener.repository';
+import { HttpStatsRepository } from './api/stats/adapters/stats.http';
+import { StatsRepository } from './api/stats/stats.repository';
 import { HttpWatchlistRepository } from './api/watchlist/adapters/watchlist.http';
 import { WatchlistRepository } from './api/watchlist/watchlist.repository';
 import { LocalStorageAnnotationRepository } from './local/annotation/adapters/annotation.local';
@@ -65,5 +66,6 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: NarrativeBiasRepository, useClass: HttpNarrativeBiasRepository },
     { provide: AuthRepository, useClass: HttpAuthRepository },
     { provide: JournalRepository, useClass: HttpJournalRepository },
+    { provide: StatsRepository, useClass: HttpStatsRepository },
   ]);
 }

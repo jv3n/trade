@@ -85,6 +85,18 @@
           <mat-icon matListItemIcon>lock_person</mat-icon>
           <span matListItemTitle>{{ 'settings.accessControl' | translate }}</span>
         </a>
+        <a
+          mat-list-item
+          routerLink="/settings/stats-import"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          [matTooltip]="'settings.statsImport' | translate"
+          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+          matTooltipPosition="right"
+        >
+          <mat-icon matListItemIcon>query_stats</mat-icon>
+          <span matListItemTitle>{{ 'settings.statsImport' | translate }}</span>
+        </a>
       }
     </mat-nav-list>
     <div class="sidenav-toggle">

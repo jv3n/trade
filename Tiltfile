@@ -56,8 +56,14 @@ dc_resource(
     links = [link("http://{}:{}".format(host, ollama_port), "Ollama API")],
 )
 
-# Bouton « Purge » attaché au panel `postgres` — drop schéma + redémarrage backend
-# automatique (via touch d'application.yml).
+# Bouton « Purge » attaché au panel `postgres` — drop schéma + redémarrage backend (qui rejoue
+# Flyway from scratch sur le schéma vide).
+#
+# Le restart passe par `tilt trigger backend`, PAS par un `touch application.yml`. Raison : sur WSL2
+# le repo est sur un montage `/mnt/c` (9p) où l'inotify ne se propage pas de façon fiable — Tilt ne
+# voit donc pas le `touch` et ne relance jamais le `serve_cmd`. Résultat (piège vécu) : schéma droppé
+# mais backend toujours up sur ses vieilles connexions → tables manquantes, `/actuator/health` KO.
+# `tilt trigger` force l'update du resource indépendamment du file-watch → 100 % fiable.
 cmd_button(
     name = "db-purge",
     resource = "postgres",
@@ -66,7 +72,7 @@ cmd_button(
     argv = [
         "sh",
         "-c",
-        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && touch backend/src/main/resources/application.yml",
+        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && tilt trigger backend",
     ],
 )
 
@@ -120,9 +126,10 @@ local_resource(
 )
 
 # Boutons pour flipper `BACKEND_AUTH_MODE` dans `.env` sans éditer le fichier à la main. Chaque
-# bouton réécrit la ligne (ou l'ajoute si absente), puis touche `application.yml` qui est dans les
-# `deps` du backend → Tilt re-déclenche le `serve_cmd` → le shell lit la nouvelle valeur et lance
-# Spring avec les profiles correspondants. Aucun redémarrage de Tilt nécessaire.
+# bouton réécrit la ligne (ou l'ajoute si absente), puis force le restart du backend via
+# `tilt trigger backend` → le shell relance `bootRun`, relit `.env` et démarre Spring avec les
+# profiles correspondants. On utilise `tilt trigger` plutôt qu'un `touch application.yml` parce que
+# l'inotify de Tilt n'est pas fiable sur le montage `/mnt/c` 9p en WSL2 (cf. bouton db-purge).
 cmd_button(
     name = "switch-auth-mode-oauth",
     resource = "backend",
@@ -131,7 +138,7 @@ cmd_button(
     argv = [
         "sh",
         "-c",
-        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=oauth' >> .env; touch backend/src/main/resources/application.yml; echo 'Switched to OAuth mode — backend restarting. Make sure application-local.yml has real google client-id/secret + app.admin.emails.'",
+        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=oauth' >> .env; tilt trigger backend; echo 'Switched to OAuth mode — backend restarting. Make sure application-local.yml has real google client-id/secret + app.admin.emails.'",
     ],
 )
 
@@ -143,7 +150,7 @@ cmd_button(
     argv = [
         "sh",
         "-c",
-        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=no-auth' >> .env; touch backend/src/main/resources/application.yml; echo 'Switched to no-auth mode — backend restarting with fake ADMIN dev@local.test'",
+        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=no-auth' >> .env; tilt trigger backend; echo 'Switched to no-auth mode — backend restarting with fake ADMIN dev@local.test'",
     ],
 )
 
@@ -153,8 +160,14 @@ cmd_button(
 # pick the version — bumping node = bumping `.tool-versions`, no Tiltfile edit needed. Same
 # resolver as the backend's `mise where java`, so a single tool manages both runtimes on macOS
 # and Linux/WSL alike (replaced the previous nvm + `/usr/libexec/java_home` macOS-only combo).
+#
+# `--poll 2000` forces `ng serve` to stat-poll the source tree every 2 s instead of relying on
+# native filesystem events. Required on WSL2 : the repo sits on a `/mnt/c` 9p/drvfs mount where
+# inotify does **not** fire for writes made from the Windows side (e.g. an editor or tool running
+# on Windows). Without polling those edits never trigger a rebuild and the dev server looks stuck
+# even though the code on disk is correct. The 2 s interval is a CPU/latency compromise.
 frontend_cmd = """cd frontend && \\
-  mise exec -- npm start -- --host 0.0.0.0 --port {}""".format(frontend_port)
+  mise exec -- npm start -- --host 0.0.0.0 --port {} --poll 2000""".format(frontend_port)
 
 local_resource(
     name = "frontend",

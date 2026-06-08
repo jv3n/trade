@@ -1,0 +1,132 @@
+<div class="stats-import-page" data-testid="stats-import-page">
+  <header class="page-header">
+    <h2>{{ 'settings.statsImportPage.title' | translate }}</h2>
+    <p class="description">{{ 'settings.statsImportPage.description' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="io-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar class="card-icon">file_download</mat-icon>
+      <mat-card-title>{{ 'settings.statsImportPage.export.title' | translate }}</mat-card-title>
+      <mat-card-subtitle>{{
+        'settings.statsImportPage.export.subtitle' | translate
+      }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ 'settings.statsImportPage.export.description' | translate }}</p>
+      <ul class="format-list">
+        <li>{{ 'settings.statsImportPage.export.format.encoding' | translate }}</li>
+        <li>{{ 'settings.statsImportPage.export.format.columns' | translate }}</li>
+        <li>{{ 'settings.statsImportPage.export.format.roundtrip' | translate }}</li>
+      </ul>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button mat-flat-button type="button" [disabled]="exporting()" (click)="download()">
+        @if (exporting()) {
+          <mat-spinner diameter="16"></mat-spinner>
+        } @else {
+          <mat-icon>download</mat-icon>
+        }
+        <span>{{
+          (exporting()
+            ? 'settings.statsImportPage.export.exporting'
+            : 'settings.statsImportPage.export.button'
+          ) | translate
+        }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="io-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar class="card-icon">file_upload</mat-icon>
+      <mat-card-title>{{ 'settings.statsImportPage.import.title' | translate }}</mat-card-title>
+      <mat-card-subtitle>{{
+        'settings.statsImportPage.import.subtitle' | translate
+      }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ 'settings.statsImportPage.import.description' | translate }}</p>
+      <ul class="format-list">
+        <li>{{ 'settings.statsImportPage.import.format.source' | translate }}</li>
+        <li>{{ 'settings.statsImportPage.import.format.columns' | translate }}</li>
+        <li>{{ 'settings.statsImportPage.import.format.atomic' | translate }}</li>
+      </ul>
+
+      @if (importStep() === 'idle' || importStep() === 'failed') {
+        <div
+          class="drop-zone"
+          [class.dragging]="dragging()"
+          [class.has-error]="importStep() === 'failed'"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+        >
+          <mat-icon>upload_file</mat-icon>
+          <span class="drop-label">{{
+            'settings.statsImportPage.import.dropLabel' | translate
+          }}</span>
+          <span class="drop-or">{{ 'settings.statsImportPage.import.or' | translate }}</span>
+          <label class="btn-browse">
+            <input type="file" accept=".csv,text/csv" (change)="onFileChange($event)" hidden />
+            {{ 'settings.statsImportPage.import.browse' | translate }}
+          </label>
+          <span class="drop-hint">{{ 'settings.statsImportPage.import.hint' | translate }}</span>
+        </div>
+      }
+
+      @if (importStep() === 'uploading') {
+        <div class="import-loading">
+          <mat-spinner diameter="20"></mat-spinner>
+          <span>{{ 'settings.statsImportPage.import.uploading' | translate }}</span>
+        </div>
+      }
+
+      @if (lastResult(); as r) {
+        <div
+          class="result-panel"
+          [class.result-success]="importStep() === 'success'"
+          [class.result-failed]="importStep() === 'failed'"
+        >
+          <div class="result-header">
+            @if (importStep() === 'success') {
+              <mat-icon>check_circle</mat-icon>
+              <span>{{
+                'settings.statsImportPage.import.success' | translate: { count: r.created }
+              }}</span>
+            } @else {
+              <mat-icon>error_outline</mat-icon>
+              <span>{{
+                'settings.statsImportPage.import.failed' | translate: { count: r.errors.length }
+              }}</span>
+            }
+          </div>
+
+          @if (r.errors.length > 0) {
+            <ul class="error-list">
+              @for (err of r.errors; track err.line + err.message) {
+                <li>
+                  @if (err.line > 0) {
+                    <span class="error-line">{{
+                      'settings.statsImportPage.import.errorLine' | translate: { line: err.line }
+                    }}</span>
+                  }
+                  <span class="error-msg">{{ err.message }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </mat-card-content>
+
+    @if (importStep() === 'success' || importStep() === 'failed') {
+      <mat-card-actions align="end">
+        <button mat-stroked-button type="button" (click)="resetImport()">
+          <mat-icon>refresh</mat-icon>
+          <span>{{ 'settings.statsImportPage.import.again' | translate }}</span>
+        </button>
+      </mat-card-actions>
+    }
+  </mat-card>
+</div>

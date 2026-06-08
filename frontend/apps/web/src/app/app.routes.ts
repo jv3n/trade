@@ -93,6 +93,12 @@ export const routes: Routes = [
             (m) => m.AccessControlPage,
           ),
       },
+      {
+        path: 'stats-import',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/settings/stats-import/stats-import').then((m) => m.StatsImportPage),
+      },
     ],
   },
   // 404 fallback — any unknown URL routes to `/journal`. The authGuard will catch

@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+#
+# Pre-commit — auto-format staged files before they land, so formatting never reaches CI.
+#
+#   • Frontend (apps/web, libs/ui) : `prettier --write` on staged .ts / .html / .scss
+#                                    (mirrors `npm run format` — i18n JSON is out of scope there).
+#   • Backend                      : `./gradlew spotlessApply` (ktfmt googleStyle) when staged
+#                                    .kt / .gradle.kts files are present.
+#
+# Whatever gets rewritten is re-staged so the commit captures the formatted version. The frontend
+# build has no format gate in CI and Spotless only fails late in `./gradlew build`, so this hook is
+# the earliest (and only local) enforcement point.
+#
+# Activated via `git config core.hooksPath .githooks` (run once per clone — see
+# docs/technique/developpement.md). Bypass in a pinch with `git commit --no-verify`.
+#
+# Caveat (partial staging) : formatting runs on the working-tree copy, so if a file is only
+# partially staged (`git add -p`), re-staging pulls in its unstaged hunks too. Same limitation as
+# any non-stashing format hook — commit whole files, or `--no-verify` then format manually.
+
+set -euo pipefail
+
+# The toolchain (node + java) lives in WSL via mise. Git is often invoked from Windows (IDE /
+# Git-for-Windows), whose MSYS bash has neither mise nor node on PATH — that's why a naive hook dies
+# on `npx: command not found`. When we detect we're NOT inside WSL but WSL is reachable, re-exec the
+# hook inside WSL so the mise shims resolve. `/proc/version` contains "microsoft" under WSL but not
+# under MSYS, which is how we tell the two bashes apart.
+if ! grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null && command -v wsl.exe >/dev/null 2>&1; then
+  win_root="$(git rev-parse --show-toplevel)"
+  wsl_root="$(wsl.exe -e wslpath "$win_root" | tr -d '\r')"
+  exec wsl.exe -e bash -lc "cd \"$wsl_root\" && exec bash .githooks/pre-commit"
+fi
+
+cd "$(git rev-parse --show-toplevel)"
+
+# mise lives in ~/.local/bin and may be absent from a non-interactive shell's PATH — add it so the
+# resolution below finds it. Resolve node / java through `mise exec`; fall back to bare PATH for a
+# plain non-mise checkout.
+export PATH="$HOME/.local/bin:$PATH"
+if command -v mise >/dev/null 2>&1; then
+  run() { mise exec -- "$@"; }
+  JAVA_HOME_RESOLVED="$(mise where java 2>/dev/null || true)"
+else
+  run() { "$@"; }
+  JAVA_HOME_RESOLVED="${JAVA_HOME:-}"
+fi
+
+# Staged paths, NUL-delimited, added/copied/modified/renamed only (a deletion has nothing to format).
+mapfile -d '' -t staged < <(git diff --cached --name-only --diff-filter=ACMR -z)
+[ "${#staged[@]}" -eq 0 ] && exit 0
+
+# ---- Frontend : prettier on staged .ts / .html / .scss ----------------------------------------
+front=()
+for f in "${staged[@]}"; do
+  case "$f" in
+    frontend/apps/*.ts | frontend/apps/*.html | frontend/apps/*.scss | \
+      frontend/libs/*.ts | frontend/libs/*.html | frontend/libs/*.scss) front+=("$f") ;;
+  esac
+done
+if [ "${#front[@]}" -gt 0 ]; then
+  echo "[pre-commit] prettier → ${#front[@]} file(s)"
+  # prettier runs from frontend/, so feed it paths relative to that dir.
+  rel=()
+  for f in "${front[@]}"; do rel+=("${f#frontend/}"); done
+  (cd frontend && run npx prettier --write "${rel[@]}")
+  git add -- "${front[@]}"
+fi
+
+# ---- Backend : spotlessApply when staged kotlin is present ------------------------------------
+kt=()
+for f in "${staged[@]}"; do
+  case "$f" in
+    backend/*.kt | backend/*.kts) kt+=("$f") ;;
+  esac
+done
+if [ "${#kt[@]}" -gt 0 ]; then
+  echo "[pre-commit] spotlessApply → ${#kt[@]} kotlin file(s)"
+  # `--project-cache-dir` outside the repo's `.gradle` so this invocation doesn't fight the file-hash
+  # lock held by a running `bootRun` (the Tilt dev backend) — otherwise every commit-with-kotlin
+  # while the stack is up would die on "currently in use by another Gradle instance".
+  (cd backend &&
+    JAVA_HOME="$JAVA_HOME_RESOLVED" \
+      ./gradlew --quiet --project-cache-dir "$HOME/.cache/trade-precommit-gradle" spotlessApply)
+  git add -- "${kt[@]}"
+fi
+
+exit 0
