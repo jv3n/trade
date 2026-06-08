@@ -9,6 +9,16 @@
 # défaut, Ollama wiring, SQL verbeux, Swagger activé.
 
 spring:
+  # Lazy initialization — les beans ne sont créés qu'au premier usage, pas au boot. Gros gain de
+  # démarrage en dev : les modules dormants post-pivot (analysis, portfolio, news, analyst,
+  # earnings, screener) + les clients providers (TwelveData, FMP, Polygon, Finnhub) ne sont
+  # instanciés que s'ils sont sollicités — ce qui n'arrive jamais sur le path journal aujourd'hui.
+  # Contrepartie acceptée en dev solo : une erreur de wiring n'apparaît qu'au 1ᵉʳ appel du bean
+  # concerné (pas au boot), et la 1ʳᵉ requête sur un module froid est un peu plus lente. **Local
+  # uniquement** — la prod (`application-prod.yml`) garde l'eager init pour fail-fast au déploiement.
+  main:
+    lazy-initialization: true
+
   # JPA SQL logging désactivé par défaut — bruit excessif sur les logs Tilt (chaque cache hit,
   # chaque /api/me, chaque check ownership produit 3-5 lignes de SQL formatté). Repasse à `true`
   # ponctuellement quand tu debug un comportement persistance spécifique (lazy fetch en trop,
