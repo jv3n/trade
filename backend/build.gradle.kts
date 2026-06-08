@@ -5,19 +5,20 @@ plugins {
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.1.21"
   id("com.diffplug.spotless") version "6.25.0"
-  // Detekt — Kotlin static analysis (complexité cyclomatique, magic numbers, méthodes longues,
-  // potentiels bugs). Complémentaire de Spotless qui ne fait que la mise en forme. Voir bloc
-  // `detekt { … }` plus bas pour la stratégie de ramp-up.
+  // Detekt — Kotlin static analysis (cyclomatic complexity, magic numbers, long methods,
+  // potential bugs). Complements Spotless, which only handles formatting. See the `detekt { … }`
+  // block below for the ramp-up strategy.
   id("io.gitlab.arturbosch.detekt") version "1.23.8"
-  // Kover — couverture de tests Kotlin (replaces JaCoCo pour les projets Kotlin DSL purs).
-  // S'instrumente automatiquement sur le `test` task ; les rapports sont générés à la demande
-  // via `koverHtmlReport` / `koverXmlReport`. Voir bloc `kover { … }` plus bas pour la
-  // configuration des excludes (entry point, DTOs, etc. qui ne portent pas de logique testable).
+  // Kover — Kotlin test coverage (replaces JaCoCo for pure Kotlin DSL projects). Instruments the
+  // `test` task automatically; reports are generated on demand via `koverHtmlReport` /
+  // `koverXmlReport`. See the `kover { … }` block below for the excludes configuration (entry
+  // point, DTOs, etc. that carry no testable logic).
   id("org.jetbrains.kotlinx.kover") version "0.9.8"
-  // gradle-git-properties — génère `git.properties` dans le jar au build, consommé par Spring Boot
-  // Actuator pour peupler `/actuator/info > git` (commit SHA, branche, build time). Combiné avec
-  // `springBoot { buildInfo() }` plus bas, l'endpoint retourne version + commit + time sans avoir
-  // à mounter de configMap ou exposer une env var custom. Léger (~5 KB de plus dans le jar).
+  // gradle-git-properties — generates `git.properties` in the jar at build time, consumed by
+  // Spring Boot Actuator to populate `/actuator/info > git` (commit SHA, branch, build time).
+  // Combined with `springBoot { buildInfo() }` below, the endpoint returns version + commit + time
+  // without mounting a configMap or exposing a custom env var. Lightweight (~5 KB extra in the
+  // jar).
   id("com.gorylenko.gradle-git-properties") version "2.5.7"
 }
 
@@ -112,18 +113,18 @@ allOpen {
   annotation("jakarta.persistence.Embeddable")
 }
 
-// Active la génération de `META-INF/build-info.properties` lue au boot par Spring Boot Actuator
-// (peuple `/actuator/info > build` avec group/artifact/name/version/time). Couplé avec le plugin
-// `com.gorylenko.gradle-git-properties` plus haut qui ajoute la section `git`. Pas de
-// configuration supplémentaire requise — la `version` vient du bloc `version = "…"` ci-dessus,
-// `group` vient de `group = "com.portfolioai"`.
+// Enables generation of `META-INF/build-info.properties`, read at boot by Spring Boot Actuator
+// (populates `/actuator/info > build` with group/artifact/name/version/time). Paired with the
+// `com.gorylenko.gradle-git-properties` plugin above, which adds the `git` section. No extra
+// configuration required — `version` comes from the `version = "…"` block above, `group` comes
+// from `group = "com.portfolioai"`.
 springBoot { buildInfo() }
 
-// gradle-git-properties — configuration explicite des champs exposés via `/actuator/info > git`.
-// Par défaut le plugin ne génère que `git.branch + git.commit.id + git.commit.time` ; on ajoute
-// `git.commit.message.short` et `git.tags` qui sont utiles pour corréler une révision Cloud Run
-// à un tag de release sans avoir à grep le commit SHA. `dotGitDirectory` pointe vers `../.git`
-// parce que le projet Gradle vit dans `backend/` mais le `.git` est à la racine du repo.
+// gradle-git-properties — explicit configuration of the fields exposed via `/actuator/info > git`.
+// By default the plugin only generates `git.branch + git.commit.id + git.commit.time`; we add
+// `git.commit.message.short` and `git.tags`, which are useful to correlate a Cloud Run revision to
+// a release tag without grepping the commit SHA. `dotGitDirectory` points to `../.git` because the
+// Gradle project lives in `backend/` but the `.git` is at the repo root.
 gitProperties {
   dotGitDirectory.set(file("../.git"))
   keys =
@@ -135,33 +136,47 @@ gitProperties {
       "git.commit.message.short",
       "git.tags",
     )
-  // `failOnNoGitDirectory = false` évite de casser le build dans les contextes hors-git (tarball,
-  // worktree corrompu) — la section `git` du payload sera simplement absente.
+  // `failOnNoGitDirectory = false` avoids breaking the build in non-git contexts (tarball, corrupt
+  // worktree) — the `git` section of the payload will simply be absent.
   failOnNoGitDirectory = false
 }
 
 // Integration tests boot their own Postgres via Testcontainers (`testsupport/PostgresContainer.kt`)
 // so `./gradlew test` no longer depends on Tilt / docker-compose for a running DB — Docker is the
 // only host prerequisite. The previous `.env` loader (which forwarded `POSTGRES_HOST_PORT` to the
-// test JVM so `@SpringBootTest` would hit the Tilt-managed Postgres) was retired 2026-05-24 ; the
+// test JVM so `@SpringBootTest` would hit the Tilt-managed Postgres) was retired 2026-05-24; the
 // JUnit Platform launcher listener in `testsupport/TestcontainersBootstrap.kt` overrides the JDBC
 // coordinates as system properties before any Spring context loads.
 tasks.withType<Test> { useJUnitPlatform() }
+
+// ----------------------------------------------------------------------------- bootRun (dev)
+//
+// `bootRun` forks its own JVM — `org.gradle.jvmargs` (gradle.properties) does not touch it, it
+// configures the Gradle/Kotlin daemons. Here we speed up the startup of that dev JVM by capping
+// JIT compilation at the C1 level (`-XX:TieredStopAtLevel=1`): no profiling, no C2 compilation,
+// which reduces warmup time at boot. Steady-state throughput is lower (C1 only), which is
+// irrelevant for local dev where we restart often and request latency is not a criterion. **Local
+// only**: the prod `bootJar` is unaffected — only the `bootRun` task (never used in prod) gets
+// this flag.
+tasks.withType<org.springframework.boot.gradle.tasks.run.BootRun> {
+  jvmArgs("-XX:TieredStopAtLevel=1")
+}
 
 spotless {
   kotlin {
     ktfmt("0.62").googleStyle()
     target("src/**/*.kt")
     // Forbid every wildcard import — no allowlist. Implemented as a custom check (read-only —
-    // throws on detection, never auto-fixes) rather than a ktlint step on purpose : ktlint reads
+    // throws on detection, never auto-fixes) rather than a ktlint step on purpose: ktlint reads
     // `ij_kotlin_packages_to_use_import_on_demand` as IntelliJ does and would *force* wildcards on
     // listed packages on `spotlessApply`, doing the exact opposite of what we want. A throwing
     // custom step plays no formatter role — it just reports — so it's safe.
     //
     // The previous allowlist (14 entries spanning `java.util.*`, JPA, JUnit, mockito-kotlin,
     // Spring web, MockMvc helpers, plus 7 project-internal packages) was kept as a safety net
-    // back when wildcard imports were sprinkled across the codebase. Dette ticket #10 (livré
-    // 2026-05-15) verified that **zero** wildcard imports remain in any `.kt` file (grep -rEn
+    // back when wildcard imports were sprinkled across the codebase. Tech-debt ticket #10
+    // (delivered 2026-05-15) verified that **zero** wildcard imports remain in any `.kt` file (grep
+    // -rEn
     // "^import [^ ]+\\.\\*( |$)" backend/src — returns empty) and that the `.editorconfig` at the
     // repo root pins `ij_kotlin_name_count_to_use_star_import = Int.MAX_VALUE` so IntelliJ can't
     // reintroduce them spontaneously on Optimize Imports. The allowlist was therefore vestigial
@@ -188,17 +203,15 @@ spotless {
 
 // ----------------------------------------------------------------------------- Detekt
 //
-// Stratégie de ramp-up — `ignoreFailures = true` au démarrage : Detekt génère ses rapports
-// (HTML + SARIF), la CI les uploade vers GitHub Code Scanning, mais le `./gradlew build` ne
-// casse pas. Une fois la première vague de findings revue, on bascule vers `false` (et on
-// génère un baseline via `./gradlew detektBaseline` pour ne plus échouer que sur le code
-// nouveau si on accepte la dette existante).
+// Ramp-up strategy — `ignoreFailures = true` to start with: Detekt generates its reports
+// (HTML + SARIF), CI uploads them to GitHub Code Scanning, but `./gradlew build` does not break.
+// Once the first wave of findings has been reviewed, we flip it to `false` (and generate a
+// baseline via `./gradlew detektBaseline` so only new code fails if we accept the existing debt).
 //
-// `buildUponDefaultConfig = true` part du jeu de règles curé livré par Detekt et **applique en
-// surcouche** le fichier `config/detekt/detekt.yml` — qui assouplit les rules les plus bruyantes
-// pour Kotlin/Spring/JPA (LongParameterList sur `@Entity`, WildcardImport pour
-// `jakarta.persistence.*`, MagicNumber sur HTTP codes / timeouts / percentages…). Voir le fichier
-// pour le détail des choix.
+// `buildUponDefaultConfig = true` starts from the curated rule set shipped by Detekt and **layers
+// on top** the `config/detekt/detekt.yml` file — which relaxes the noisiest rules for
+// Kotlin/Spring/JPA (LongParameterList on `@Entity`, WildcardImport for `jakarta.persistence.*`,
+// MagicNumber on HTTP codes / timeouts / percentages…). See the file for the detailed choices.
 detekt {
   buildUponDefaultConfig = true
   allRules = false
@@ -210,9 +223,9 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
   jvmTarget = "21"
   reports {
     html.required.set(true)
-    // SARIF est le format que GitHub Code Scanning consomme — voir le step d'upload dans
-    // `.github/workflows/backend.yml`. Les findings apparaissent dans l'onglet Security
-    // alongside des résultats CodeQL.
+    // SARIF is the format GitHub Code Scanning consumes — see the upload step in
+    // `.github/workflows/backend.yml`. Findings show up in the Security tab alongside the CodeQL
+    // results.
     sarif.required.set(true)
     xml.required.set(false)
     md.required.set(false)
@@ -225,24 +238,24 @@ tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configure
 
 // ----------------------------------------------------------------------------- Kover
 //
-// Couverture mesurée sur le `test` task standard ; pas de seuil bloquant pour l'instant — on
-// publie le rapport (HTML pour browsing, XML pour le step summary GitHub Actions) et on tune si
-// la couverture descend de manière inattendue. Excludes ciblés sur le code qui ne porte pas de
-// logique testable (entry point Spring, classes-conteneur de modèles vendor, DTOs Jackson) — un
-// fichier qui n'a que des annotations + accesseurs gonfle artificiellement le dénominateur.
+// Coverage measured on the standard `test` task; no blocking threshold for now — we publish the
+// report (HTML for browsing, XML for the GitHub Actions step summary) and tune if coverage drops
+// unexpectedly. Excludes target code that carries no testable logic (Spring entry point, vendor
+// model container classes, Jackson DTOs) — a file with only annotations + accessors artificially
+// inflates the denominator.
 //
-// Pour browser localement après `./gradlew test koverHtmlReport` : ouvrir
+// To browse locally after `./gradlew test koverHtmlReport`: open
 // `backend/build/reports/kover/html/index.html`.
 kover {
   reports {
     filters {
       excludes {
-        // Spring Boot application entry point — `runApplication<App>(*args)` n'a pas de surface
-        // testable utile, l'instrumentation au démarrage du contexte le couvre indirectement.
+        // Spring Boot application entry point — `runApplication<App>(*args)` has no useful testable
+        // surface; the context-startup instrumentation covers it indirectly.
         classes("com.portfolioai.BackendApplication", "com.portfolioai.BackendApplicationKt")
-        // Vendor wire-format models : data classes Jackson dont la valeur testable est dans les
-        // mappers voisins (testés via `MockWebServer`). Inclure les data classes elles-mêmes
-        // double-compte la couverture déjà acquise via les mappers.
+        // Vendor wire-format models: Jackson data classes whose testable value lives in the
+        // neighbouring mappers (tested via `MockWebServer`). Including the data classes themselves
+        // double-counts the coverage already gained through the mappers.
         classes(
           "com.portfolioai.market.infrastructure.market.TwelveData*",
           "com.portfolioai.market.infrastructure.market.Finnhub*Models*",
@@ -250,21 +263,21 @@ kover {
           "com.portfolioai.analyst.infrastructure.analyst.Finnhub*Response*",
           "com.portfolioai.earnings.infrastructure.earnings.Finnhub*Response*",
         )
-        // DTOs applicatifs (REST surface) — les controllers les exercent end-to-end via les tests
-        // `@WebMvcTest`. Couverture indirecte mais suffisante.
+        // Application DTOs (REST surface) — the controllers exercise them end-to-end via the
+        // `@WebMvcTest` tests. Indirect but sufficient coverage.
         packages("com.portfolioai.*.application.dto")
       }
     }
   }
 }
 
-// Detekt 1.23.x ship un compilateur Kotlin embarqué (2.0.21 dans la 1.23.8). Avec Kotlin 2.1 côté
-// projet, la classpath runtime arrive avec un stdlib non-compatible et Detekt refuse de charger
-// (« detekt was compiled with Kotlin 2.0.21 but is currently running with 2.1.21 »). On isole
-// la classpath `detekt` sur la version Kotlin qu'il attend — n'affecte ni `compileKotlin` ni
-// `compileTestKotlin` qui restent en 2.1.21. À retirer le jour où Detekt 2.0 sort en stable avec
-// support natif Kotlin 2.1+. Important : la version pinned doit suivre celle attendue par la
-// version de Detekt active — un bump Detekt patch peut shifter la version Kotlin embarquée
+// Detekt 1.23.x ships an embedded Kotlin compiler (2.0.21 in 1.23.8). With Kotlin 2.1 on the
+// project side, the runtime classpath ends up with an incompatible stdlib and Detekt refuses to
+// load ("detekt was compiled with Kotlin 2.0.21 but is currently running with 2.1.21"). We isolate
+// the `detekt` classpath on the Kotlin version it expects — this affects neither `compileKotlin`
+// nor `compileTestKotlin`, which stay on 2.1.21. Remove this the day Detekt 2.0 ships stable with
+// native Kotlin 2.1+ support. Important: the pinned version must track the one expected by the
+// active Detekt version — a Detekt patch bump can shift the embedded Kotlin version
 // (1.23.7 → 2.0.10, 1.23.8 → 2.0.21).
 configurations
   .matching { it.name == "detekt" }

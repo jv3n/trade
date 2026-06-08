@@ -7,9 +7,9 @@ services:
       POSTGRES_USER: portfolioai
       POSTGRES_PASSWORD: portfolioai
     ports:
-      # Le port hôte est configurable via `.env` (POSTGRES_HOST_PORT) en cas de conflit
-      # avec un autre service local. Le port interne du container reste 5432 — seul le
-      # mapping host:container change.
+      # The host port is configurable via `.env` (POSTGRES_HOST_PORT) in case of a conflict with
+      # another local service. The container's internal port stays 5432 — only the host:container
+      # mapping changes.
       - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data

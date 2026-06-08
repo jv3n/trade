@@ -141,7 +141,15 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 
 Every file under `.claude/` (CLAUDE.md, `agents/*.md`, `skills/**/*.md`) is written in **English**. This applies to every new file or edit in the folder. The rest of the project (notably `docs/`) follows its own language conventions.
 
+## Build & infra tooling — comment language
+
+Comments in the build and local-infra orchestration config are written in **English**: `backend/build.gradle.kts`, `backend/settings.gradle.kts`, `backend/gradle.properties`, `Tiltfile`, `docker-compose.yml`. Same spirit as the `.claude/` rule — this is developer-tooling plumbing, not product/runtime documentation. The Spring runtime config (`application*.yml`) is **out of scope** and keeps its French comments (it documents product/runtime behaviour, in the `docs/`-French spirit).
+
 ## Instructions for Claude
+
+### Line endings
+
+Always write files with **LF** line endings, never CRLF — even when editing from the Windows side. The repo is LF-only (enforced by `.editorconfig` / `.gitattributes`); introducing CRLF produces spurious whole-file diffs and breaks the WSL toolchain. When editing an existing file, match its existing LF endings and never convert them to CRLF.
 
 ### Files the user wants to show you
 
