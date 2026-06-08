@@ -1,0 +1,2 @@
+Date	Ticker	Gap Up	Float	Institutions %	>20% Inst?	<$1 stock?	SSR?	Entry after 11AM?	Notes		Open	High	Push	LOD (Low of Day)	LOD	EOD (End of Day)	EOD
+2026-01-05	VRME	61%	10M	8%	no	no	no	no			$1.070	$1.410	31.78%	$0.920	-14.02%	$1.060	-0.93%

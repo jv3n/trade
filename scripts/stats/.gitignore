@@ -1,0 +1,7 @@
+# Real data + generated artifact stay local — never committed. Only folder markers are tracked.
+output/*
+!output/.gitkeep
+
+# Compiled binary from `go build .` (named after the module dir).
+/stats
+*.exe
