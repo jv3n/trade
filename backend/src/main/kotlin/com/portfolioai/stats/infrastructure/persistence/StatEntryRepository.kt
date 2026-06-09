@@ -5,7 +5,10 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 
 /**
- * Multi-tenant on `user.id` (FK to `app_user`). The import path is the only writer today ; reads
- * (listing / stats aggregation) land in phase 2. Kept minimal until then.
+ * **Global, shared dataset** — no `user_id`, no per-user scoping (unlike `TradeEntryRepository`).
+ * Writes go through the ADMIN-gated CSV import ; reads are the paginated listing
+ * ([JpaRepository.findAll] with a `Pageable`) and the whole-table export. Stats aggregation lands
+ * in phase 2. The inherited `findAll(Pageable)` / `findAll(Sort)` cover today's needs, so this
+ * stays a marker interface.
  */
 interface StatEntryRepository : JpaRepository<StatEntry, UUID>

@@ -39,6 +39,11 @@ export const routes: Routes = [
       import('./features/journal-io/journal-io-page').then((m) => m.JournalIoPage),
   },
   {
+    path: 'stats',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/stats/stats-page').then((m) => m.StatsPage),
+  },
+  {
     path: 'ticker/:symbol',
     canActivate: [authGuard],
     loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),

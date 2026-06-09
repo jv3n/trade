@@ -1,0 +1,42 @@
+// Page layout. `.page`, `.content-header`, `.error-banner`, `.loading-state`, `.empty-state` come
+// from the lib (`libs/ui/styles/`) — only the stats-table specifics live here.
+
+.ticker-chip--link {
+  cursor: pointer;
+}
+
+// `.stat-positive` / `.stat-negative` colour the derived `%push` / `%LOD` / `%EOD` cells by sign,
+// mirroring the journal's `.profit-positive` / `.profit-negative` (kept page-local — it's a
+// trading-domain read aid, not a generic table column type).
+.stat-positive {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.stat-negative {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+// Boolean setup flags : a muted dash when off, an accent check when on. Centred in the numeric
+// column the `[stbCol="numeric"]` directive right-aligns.
+.bool-flag {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+
+  &.bool-flag--on {
+    color: var(--color-accent-strong);
+  }
+}
+
+// Notes can be long — clamp to a readable width with an ellipsis ; the full text is in the tooltip.
+.note-cell span {
+  display: inline-block;
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}

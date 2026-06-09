@@ -1,10 +1,15 @@
 package com.portfolioai.stats.application
 
 import com.portfolioai.stats.application.dto.ImportResult
+import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.application.dto.toDto
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatMetrics
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -57,8 +62,35 @@ class StatEntryService(private val repo: StatEntryRepository) {
    */
   @Transactional(readOnly = true)
   fun exportAllAsCsv(): String {
-    val sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
-    return StatEntryCsvEncoder.encode(repo.findAll(sort))
+    return StatEntryCsvEncoder.encode(repo.findAll(DEFAULT_SORT))
+  }
+
+  /**
+   * Paginated listing for the read-only stats table. The dataset is global — no per-user scoping —
+   * so the whole `stat_entry` table is the candidate set.
+   *
+   * **Sort resolution** — owned **here**, not by Spring's `@PageableDefault` resolver (same
+   * rationale as `TradeEntryService.findAllPaged`). The controller passes through whatever Spring
+   * built from the URL `sort` params (or empty if none) ; this service falls back to [DEFAULT_SORT]
+   * (`tradeDate desc, createdAt desc`) only when the client sent no `sort`, so the table opens on
+   * the freshest rows while a user-supplied sort is always honoured.
+   */
+  @Transactional(readOnly = true)
+  fun findAllPaged(pageable: Pageable): Page<StatEntryDto> {
+    val effective =
+      if (pageable.sort.isUnsorted)
+        PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
+      else pageable
+    return repo.findAll(effective).map { it.toDto() }
+  }
+
+  companion object {
+    /**
+     * Newest-first, with `createdAt` as a stable tiebreaker for same-day rows. Used both as the
+     * export order and as the implicit listing sort when the client sends no `sort` URL param.
+     */
+    private val DEFAULT_SORT: Sort =
+      Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
   }
 
   private fun toEntity(r: StatEntryRequest): StatEntry =

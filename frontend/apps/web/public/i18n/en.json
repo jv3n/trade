@@ -18,6 +18,7 @@
   },
   "nav": {
     "journal": "Journal",
+    "stats": "Stats",
     "dashboard": "Dashboard",
     "import": "Import",
     "suivi": "Tracking",
@@ -124,6 +125,34 @@
       "updateError": "Failed to update the trade. Please retry.",
       "deleteSuccess": "Trade {{ticker}} deleted.",
       "deleteError": "Failed to delete the trade. Please retry."
+    }
+  },
+  "stats": {
+    "title": "Trade stats",
+    "subtitle": "Gap-up shorts dataset — setup context, the day's price levels and the derived push / LOD / EOD moves.",
+    "loading": "Loading stats…",
+    "empty": "No stats yet. An admin can import the dataset from Settings → Stats import.",
+    "errors": {
+      "load": "Couldn't load the stats. Please retry."
+    },
+    "fields": {
+      "tradeDate": "Date",
+      "ticker": "Ticker",
+      "gapUpPercent": "Gap up",
+      "floatSharesMillions": "Float",
+      "institutionsPercent": "Inst. %",
+      "instOver20": "> 20 % inst.",
+      "under1Dollar": "< $1",
+      "ssr": "SSR",
+      "entryAfter11am": "Entry > 11 AM",
+      "openPrice": "Open",
+      "highPrice": "High",
+      "lodPrice": "LOD",
+      "eodPrice": "EOD",
+      "pushPercent": "% Push",
+      "lodPercent": "% LOD",
+      "eodPercent": "% EOD",
+      "note": "Notes"
     }
   },
   "header": {

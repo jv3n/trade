@@ -90,6 +90,18 @@
           </a>
           <a
             mat-list-item
+            routerLink="/stats"
+            routerLinkActive="sidenav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [matTooltip]="'nav.stats' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>insights</mat-icon>
+            <span matListItemTitle>{{ 'nav.stats' | translate }}</span>
+          </a>
+          <a
+            mat-list-item
             routerLink="/ticker/AAPL"
             routerLinkActive="sidenav-active"
             [matTooltip]="'nav.ticker' | translate"

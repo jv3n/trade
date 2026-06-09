@@ -2,8 +2,12 @@ package com.portfolioai.stats.infrastructure.http
 
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.ImportResult
+import com.portfolioai.stats.application.dto.StatEntryDto
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -21,6 +25,21 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 @RequestMapping("/api/stats")
 class StatEntryController(private val service: StatEntryService) {
+
+  /**
+   * Filtered-free, paginated listing of the global `stat_entry` dataset. Readable by any
+   * authenticated user (no per-user scoping ; only the import is ADMIN-gated). Unlike the journal
+   * this exposes no filter params yet — the table is the whole shared dataset, browsable page by
+   * page. Charts / aggregates land in phase 2.
+   *
+   * Standard Spring `Pageable` — clients pass `?page=0&size=50&sort=pushPercent,desc`. Default : 50
+   * rows per page, sorted `tradeDate` desc then `createdAt` desc (latest rows on page 0). The sort
+   * fallback is owned by the service (cf. [StatEntryService.findAllPaged]) so a URL `sort` is
+   * always honoured. Response body is Spring's `Page<T>` shape.
+   */
+  @GetMapping
+  fun findAll(@PageableDefault(size = 50) pageable: Pageable): Page<StatEntryDto> =
+    service.findAllPaged(pageable)
 
   /**
    * CSV export of the whole stats table. Readable by any authenticated user (the dataset is global

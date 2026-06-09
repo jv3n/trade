@@ -37,6 +37,25 @@ Module `journal/` (hexagonal) : `TradeEntry` (19 champs) + 4 enums Postgres nati
 
 ---
 
+## Stats trades — live
+
+Dataset **global, partagé** (pas multi-tenant) : le contexte de setup des shorts gap-up + les niveaux de prix du jour + les mouvements dérivés `%push` / `%LOD` / `%EOD`. Alimenté par un **import CSV admin**, lisible par tout utilisateur authentifié.
+
+### Affichage (`/stats`)
+
+- **Table read-only** des 17 colonnes (date, ticker, gap, float, % institutions, flags `>20% inst` / `<$1` / `SSR` / `entrée > 11h`, niveaux open/high/lod/eod, `%push`/`%LOD`/`%EOD`, notes). Flags booléens en icônes, `%` colorés par signe.
+- **Tri + pagination serveur** (`Page<T>` Spring, tri par défaut date décroissante, tailles 10 / 25 / 50 / 100). Pas de CRUD ni filtres : le dataset est alimenté par l'import.
+
+### Import / export CSV (admin)
+
+- Page **admin-only** `/settings/stats-import` (drag-drop ou file picker). **Batch atomique** ; export → import **roundtrip-safe** (14 colonnes, les `%` recalculées à l'insertion sont omises). Le CSV source est produit hors-app par l'outil Go `scripts/stats`.
+
+### Backend
+
+Module `stats/` (hexagonal, distinct de `journal/`) : `StatEntry` (table `stat_entry`, **sans `user_id`**), `StatMetrics` (calcul pur des 3 `%`), `StatEntryService` (`importCsv` atomique + `findAllPaged` + `exportAllAsCsv`), `StatEntryController` (`GET /api/stats` lecture pour tous, `POST /api/stats/import` ADMIN-only, `GET /api/stats/export`). Schéma : migrations Flyway **V6** / **V7**. Détail technique : [`architecture.md`](../technique/architecture.md).
+
+---
+
 ## Authentification & multi-tenant — toujours actif (Phase 4)
 
 OAuth2 Google OIDC + Spring Security, rôles ADMIN / USER via whitelist email, profile dev `local-no-auth` (bypass Spring Security + ADMIN fake `dev@local.test`). **Le journal en dépend** : `trade_entry.user_id` est une FK vers `app_user`. Toggle `BACKEND_AUTH_MODE` (no-auth ↔ oauth) dans `.env` + boutons Tilt. Détail : [`developpement.md > Modes d'authentification`](../technique/developpement.md#modes-dauthentification-phase-4).
