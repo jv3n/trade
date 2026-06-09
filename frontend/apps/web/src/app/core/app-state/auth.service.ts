@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
-import { AuthRepository, CurrentUser } from '../api/auth/auth.repository';
+import { AuthRepository, CurrentUser, PreferencesUpdate } from '../api/auth/auth.repository';
 
 /**
  * Source of truth for the authenticated user on the SPA side.
@@ -84,6 +84,20 @@ export class AuthService {
    */
   logout(): Observable<void> {
     return this.repo.logout().pipe(finalize(() => this._currentUser.set(null)));
+  }
+
+  /**
+   * Persists a UI preference change (theme / language) via `PUT /api/me/preferences` and updates
+   * [currentUser] with the refreshed row on success. `ThemeService` / `LanguageService` derive their
+   * applied value from [currentUser], so the signal update is what drives the DOM / ngx-translate
+   * change — no separate local mirror to keep in sync. Errors propagate to the caller (the
+   * preference simply doesn't change).
+   */
+  updatePreferences(prefs: PreferencesUpdate): Observable<void> {
+    return this.repo.updatePreferences(prefs).pipe(
+      tap((user) => this._currentUser.set(user)),
+      map(() => undefined),
+    );
   }
 
   /**

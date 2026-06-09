@@ -1,70 +1,51 @@
 import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, computed, effect, inject } from '@angular/core';
+import { Theme } from '../api/auth/auth.repository';
+import { AuthService } from './auth.service';
 
-export type Theme = 'dark' | 'light';
+export type { Theme };
 
-const STORAGE_KEY = 'portfolioai.theme';
+const DEFAULT_THEME: Theme = 'dark';
 
 /**
- * Theme toggle (dark / light) — signal-based, persists to localStorage and mirrors the active
- * choice onto `<html data-theme="…">` so the global SCSS can branch on it.
+ * Theme (dark / light) — now **persisted on the user**, not in localStorage. The applied value is
+ * derived from [AuthService.currentUser] (the `theme` field served by `/api/me`), defaulting to
+ * `'dark'` when there is no user yet (boot, login page). [set] writes the choice through
+ * `PUT /api/me/preferences` ; the resulting `currentUser` update re-drives [theme] + the DOM effect.
  *
- * **Side effects at the mutation site** — the `apply()` call lives inside [set] (and via [toggle],
- * which delegates to [set]) rather than inside an `effect()` watching the signal. Reasons : the
- * write happens exactly once per user action (an `effect()` also fires on initial signal
- * construction, producing a redundant `localStorage.setItem` echoing the value just read), the
- * flow is testable without `TestBed.tick()` or microtask awaiting, and there is no risk of a
- * reactive feedback loop.
+ * **DOM mirroring** — the active value is written onto `<html data-theme="…">` so the global SCSS
+ * can branch on it. Applied once synchronously at construction (before first paint) and via an
+ * `effect()` on every subsequent change (login, preference update). The write is idempotent so the
+ * double-apply on boot is harmless.
  *
- * **SSR safety** — `document` and `localStorage` are browser-only globals. We gate every access on
- * [isPlatformBrowser] (resolved from [PLATFORM_ID]) so server-side rendering can construct the
- * service without throwing.
+ * **SSR safety** — `document` is browser-only ; the [applyDom] write is gated on [isPlatformBrowser]
+ * so the server can construct the service without throwing.
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
-  private readonly _theme = signal<Theme>(this.loadInitial());
-  readonly theme = this._theme.asReadonly();
+  private readonly auth = inject(AuthService);
+
+  /** Resolved theme : the current user's preference, or the default when no user is loaded. */
+  readonly theme = computed<Theme>(() => this.auth.currentUser()?.theme ?? DEFAULT_THEME);
 
   constructor() {
-    // Initial DOM sync — the `<html data-theme>` attribute must reflect the loaded value at boot,
-    // even before any user action. No localStorage write here : the value already came from there.
-    this.applyDom(this._theme());
+    this.applyDom(this.theme());
+    effect(() => this.applyDom(this.theme()));
+  }
+
+  /** Persists the choice on the user ; [theme] + the effect re-apply once `currentUser` updates. */
+  set(theme: Theme): void {
+    this.auth.updatePreferences({ theme }).subscribe();
   }
 
   toggle(): void {
-    this.set(this._theme() === 'dark' ? 'light' : 'dark');
-  }
-
-  set(theme: Theme): void {
-    this._theme.set(theme);
-    this.applyDom(theme);
-    this.persist(theme);
+    this.set(this.theme() === 'dark' ? 'light' : 'dark');
   }
 
   private applyDom(theme: Theme): void {
     if (!this.isBrowser) return;
     document.documentElement.setAttribute('data-theme', theme);
-  }
-
-  private persist(theme: Theme): void {
-    if (!this.isBrowser) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // localStorage unavailable (private mode, quota exceeded, etc.); silently ignore
-    }
-  }
-
-  private loadInitial(): Theme {
-    if (!this.isBrowser) return 'dark';
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'dark' || saved === 'light') return saved;
-    } catch {
-      // ignore
-    }
-    return 'dark';
   }
 }

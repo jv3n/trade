@@ -15,11 +15,14 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.BDDMockito.given
+import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.server.ResponseStatusException
 
 /**
  * Tests on [AuthService] — the read-side bridge between the Spring `SecurityContext` and our [User]
@@ -118,6 +121,48 @@ class AuthServiceTest {
 
     val ex = assertThrows<IllegalStateException> { service.getCurrentUser() }
     assertTrue(ex.message?.contains("no longer exists") ?: false)
+  }
+
+  // ---------------------------------------------------------------------- updatePreferences
+
+  @Test
+  fun `updatePreferences applies theme and language and persists`() {
+    val u = user(email = "u@example.com", role = Role.USER) // defaults theme=dark, language=fr
+    setPrincipal(AppOAuth2User(u.id, u.email, emptyMap(), emptyList()))
+    given(userRepository.findById(eq(u.id))).willReturn(Optional.of(u))
+    given(userRepository.save(any<User>())).willAnswer { it.getArgument(0) }
+
+    val saved = service.updatePreferences(theme = "light", language = "en")
+
+    assertEquals("light", saved.theme)
+    assertEquals("en", saved.language)
+  }
+
+  @Test
+  fun `updatePreferences leaves a null field untouched`() {
+    // The SPA sends only the knob that changed — a null field must not reset the other preference.
+    val u = user(email = "u@example.com", role = Role.USER) // theme=dark, language=fr
+    setPrincipal(AppOAuth2User(u.id, u.email, emptyMap(), emptyList()))
+    given(userRepository.findById(eq(u.id))).willReturn(Optional.of(u))
+    given(userRepository.save(any<User>())).willAnswer { it.getArgument(0) }
+
+    service.updatePreferences(theme = "light", language = null)
+
+    assertEquals("light", u.theme)
+    assertEquals("fr", u.language, "language left at its default — not nulled")
+  }
+
+  @Test
+  fun `updatePreferences rejects an unknown theme with 400`() {
+    val u = user(email = "u@example.com", role = Role.USER)
+    setPrincipal(AppOAuth2User(u.id, u.email, emptyMap(), emptyList()))
+    given(userRepository.findById(eq(u.id))).willReturn(Optional.of(u))
+
+    val ex =
+      assertThrows<ResponseStatusException> {
+        service.updatePreferences(theme = "sepia", language = null)
+      }
+    assertEquals(HttpStatus.BAD_REQUEST, ex.statusCode)
   }
 
   // ---------------------------------------------------------------------- helpers

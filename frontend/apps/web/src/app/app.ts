@@ -59,10 +59,11 @@ export class App {
   readonly sidenavCollapse = inject(SidenavCollapseService);
   private readonly router = inject(Router);
 
-  // Side-effect-only injections — see class-level docstring. The services' constructors apply
-  // the persisted theme / language before the first paint ; without these references they'd
-  // never be constructed because no other code path injects them at boot. `_`-prefixed so the
-  // unused-vars rule (configured to ignore that prefix) lets them through without a directive.
+  // Side-effect-only injections — see class-level docstring. The services derive theme / language
+  // from `AuthService.currentUser` (loaded by the boot initializer) and apply them to the DOM /
+  // ngx-translate before the first paint ; without these references they'd never be constructed
+  // because no other code path injects them at boot. `_`-prefixed so the unused-vars rule
+  // (configured to ignore that prefix) lets them through without a directive.
   private readonly _theme = inject(ThemeService);
   private readonly _language = inject(LanguageService);
 

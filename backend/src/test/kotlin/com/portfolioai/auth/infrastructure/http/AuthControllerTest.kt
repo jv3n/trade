@@ -11,9 +11,11 @@ import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -87,5 +89,55 @@ class AuthControllerTest {
       // The frontend reads it as `null` and falls back to the email prefix.
       .andExpect(jsonPath("$.displayName").value(nullValue()))
       .andExpect(jsonPath("$.role").value("USER"))
+  }
+
+  @Test
+  fun `GET api me exposes the user's theme and language preferences`() {
+    given(authService.getCurrentUser())
+      .willReturn(
+        User(
+          id = UUID.randomUUID(),
+          email = "venet.julien@gmail.com",
+          displayName = "Julien Venet",
+          provider = "google",
+          providerId = "sub-julien",
+          role = Role.ADMIN,
+          theme = "light",
+          language = "en",
+        )
+      )
+
+    mvc
+      .perform(get("/api/me"))
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.theme").value("light"))
+      .andExpect(jsonPath("$.language").value("en"))
+  }
+
+  @Test
+  fun `PUT api me preferences echoes the refreshed user`() {
+    given(authService.updatePreferences("light", "en"))
+      .willReturn(
+        User(
+          id = UUID.randomUUID(),
+          email = "venet.julien@gmail.com",
+          displayName = "Julien Venet",
+          provider = "google",
+          providerId = "sub-julien",
+          role = Role.ADMIN,
+          theme = "light",
+          language = "en",
+        )
+      )
+
+    mvc
+      .perform(
+        put("/api/me/preferences")
+          .contentType(MediaType.APPLICATION_JSON)
+          .content("""{"theme":"light","language":"en"}""")
+      )
+      .andExpect(status().isOk)
+      .andExpect(jsonPath("$.theme").value("light"))
+      .andExpect(jsonPath("$.language").value("en"))
   }
 }

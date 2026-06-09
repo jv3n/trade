@@ -2,15 +2,31 @@ import { Observable } from 'rxjs';
 
 export type Role = 'ADMIN' | 'USER';
 
+/** UI preference value types — persisted per-user, mirror of the backend `app_user` columns. */
+export type Theme = 'dark' | 'light';
+export type Language = 'fr' | 'en';
+
 /**
  * The shape returned by `GET /api/me` — what the SPA needs to render the navbar (email +
- * optional display name) and gate admin-only routes (role). Mirror of the backend
- * `CurrentUserDto`.
+ * optional display name), gate admin-only routes (role), and apply the user's UI preferences
+ * ([theme] + [language]). Mirror of the backend `CurrentUserDto`.
+ *
+ * [theme] / [language] are typed optional so the `?? default` fallback in `ThemeService` /
+ * `LanguageService` covers both the unauthenticated case (no user at all) and any older payload
+ * uniformly — the live backend always populates them.
  */
 export interface CurrentUser {
   email: string;
   displayName: string | null;
   role: Role;
+  theme?: Theme;
+  language?: Language;
+}
+
+/** Partial preference update sent to `PUT /api/me/preferences` — only the changed knob. */
+export interface PreferencesUpdate {
+  theme?: Theme;
+  language?: Language;
 }
 
 /**
@@ -33,4 +49,6 @@ export interface CurrentUser {
 export abstract class AuthRepository {
   abstract getCurrentUser(): Observable<CurrentUser>;
   abstract logout(): Observable<void>;
+  /** `PUT /api/me/preferences` — persists theme / language on the user, returns the refreshed user. */
+  abstract updatePreferences(prefs: PreferencesUpdate): Observable<CurrentUser>;
 }

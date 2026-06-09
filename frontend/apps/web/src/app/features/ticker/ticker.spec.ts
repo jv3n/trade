@@ -36,6 +36,7 @@ import {
 } from '../../core/api/market/market.repository';
 import { NewsItem, NewsRepository } from '../../core/api/news/news.repository';
 import { WatchlistEntry, WatchlistRepository } from '../../core/api/watchlist/watchlist.repository';
+import { AuthService } from '../../core/app-state/auth.service';
 import {
   Annotation,
   AnnotationRepository,
@@ -185,6 +186,12 @@ describe('TickerPage', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideTranslateService({ lang: 'en' }),
+        // LanguageService (pulled in transitively by TickerPage) now derives the active language
+        // from AuthService.currentUser — stub it so the DI graph resolves without the HTTP chain.
+        {
+          provide: AuthService,
+          useValue: { currentUser: () => null, updatePreferences: () => of(undefined) },
+        },
         { provide: MarketRepository, useValue: market },
         { provide: WatchlistRepository, useValue: watchlist },
         { provide: NewsRepository, useValue: news },

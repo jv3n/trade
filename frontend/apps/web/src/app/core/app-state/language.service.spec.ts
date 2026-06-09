@@ -1,107 +1,83 @@
 /**
- * Tests on [LanguageService] — focus on the SSR-safety wrap and the localStorage / browser-locale
- * fallback chain. The toggle / set methods are pure signal updates and don't deserve their own
- * tests.
+ * Tests on [LanguageService] — now backed by the **user** (via [AuthService.currentUser]) rather
+ * than localStorage. What we pin :
  *
- * What we pin :
- * - **Server platform** — instantiation does not throw despite `document` / `localStorage` /
- *   `navigator` being undefined in Node. Default is `'fr'` (project's primary audience) so SSR
- *   renders a deterministic page. No side-effect reaches a browser global.
- * - **Browser platform** — `loadInitial` honours a saved `'fr'` / `'en'` value first ; falls back
- *   to the browser locale via `navigator.language` if absent ; defaults to `'en'` for non-`fr-*`
- *   locales.
- * - **Set-site side-effects** — both `<html lang>` and `localStorage` are written when the language
- *   changes.
+ * - **Derivation** — the applied language is the user's `language`, or the browser locale when
+ *   there is no user (jsdom defaults `navigator.language` to `en-US` → `'en'`).
+ * - **Boot sync** — the constructor sets `<html lang>` synchronously from the resolved value.
+ * - **set()** — delegates to [AuthService.updatePreferences] (no localStorage) and the resolved
+ *   language reflects the change once the (stubbed) backend round-trip updates `currentUser`.
+ * - **SSR safety** — on the server platform no `<html lang>` write happens (default `'fr'`).
  */
-import { PLATFORM_ID } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
+import { Observable, of } from 'rxjs';
+import { CurrentUser, PreferencesUpdate } from '../api/auth/auth.repository';
+import { AuthService } from './auth.service';
 import { LanguageService } from './language.service';
 
-const STORAGE_KEY = 'portfolioai.language';
+function fakeAuth(initial: CurrentUser | null) {
+  const user = signal<CurrentUser | null>(initial);
+  const calls: PreferencesUpdate[] = [];
+  const stub = {
+    currentUser: user.asReadonly(),
+    updatePreferences(prefs: PreferencesUpdate): Observable<void> {
+      calls.push(prefs);
+      user.update((u) => (u ? { ...u, ...prefs } : u));
+      return of(undefined);
+    },
+  };
+  return { stub, calls };
+}
+
+function makeUser(language?: 'fr' | 'en'): CurrentUser {
+  return { email: 'u@example.com', displayName: null, role: 'USER', language };
+}
+
+function setup(initial: CurrentUser | null, platform: 'browser' | 'server' = 'browser') {
+  const { stub, calls } = fakeAuth(initial);
+  TestBed.configureTestingModule({
+    providers: [
+      provideTranslateService({ lang: 'fr' }),
+      { provide: AuthService, useValue: stub },
+      { provide: PLATFORM_ID, useValue: platform },
+    ],
+  });
+  return { service: TestBed.inject(LanguageService), calls };
+}
 
 describe('LanguageService', () => {
   beforeEach(() => {
-    localStorage.removeItem(STORAGE_KEY);
     document.documentElement.removeAttribute('lang');
   });
 
-  describe('server platform (SSR safety)', () => {
-    it('instantiates without touching document or localStorage when PLATFORM_ID is server', () => {
-      TestBed.configureTestingModule({
-        providers: [
-          provideTranslateService({ lang: 'fr' }),
-          { provide: PLATFORM_ID, useValue: 'server' },
-        ],
-      });
-      const service = TestBed.inject(LanguageService);
-
-      // Default is fr (project's primary audience) — and no side-effect leaked. A real SSR pass
-      // would have crashed on `document.documentElement` / `navigator.language` if the guard was
-      // missing.
-      expect(service.lang()).toBe('fr');
-      expect(document.documentElement.getAttribute('lang')).toBeNull();
-      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
-    });
-
-    it('toggle works in-memory on the server platform without writing localStorage', () => {
-      TestBed.configureTestingModule({
-        providers: [
-          provideTranslateService({ lang: 'fr' }),
-          { provide: PLATFORM_ID, useValue: 'server' },
-        ],
-      });
-      const service = TestBed.inject(LanguageService);
-
-      service.toggle();
-      expect(service.lang()).toBe('en');
-      expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
-    });
+  it('derives the language from the current user', () => {
+    const { service } = setup(makeUser('en'));
+    expect(service.lang()).toBe('en');
   });
 
-  describe('browser platform', () => {
-    it('hydrates the language from localStorage on init', () => {
-      localStorage.setItem(STORAGE_KEY, 'en');
-      TestBed.configureTestingModule({
-        providers: [
-          provideTranslateService({ lang: 'fr' }),
-          { provide: PLATFORM_ID, useValue: 'browser' },
-        ],
-      });
-      const service = TestBed.inject(LanguageService);
+  it('falls back to the browser locale when there is no user (jsdom → en)', () => {
+    const { service } = setup(null);
+    expect(service.lang()).toBe('en');
+  });
 
-      expect(service.lang()).toBe('en');
-    });
+  it('writes <html lang> at construction from the resolved value', () => {
+    setup(makeUser('en'));
+    expect(document.documentElement.getAttribute('lang')).toBe('en');
+  });
 
-    it('falls back to browser locale when localStorage is empty', () => {
-      // jsdom defaults `navigator.language` to `'en-US'` — so a fresh user with no saved choice
-      // lands on `'en'`. We don't try to mock `navigator.language` here because jsdom's default is
-      // already the path we want to pin.
-      TestBed.configureTestingModule({
-        providers: [
-          provideTranslateService({ lang: 'fr' }),
-          { provide: PLATFORM_ID, useValue: 'browser' },
-        ],
-      });
-      const service = TestBed.inject(LanguageService);
+  it('set() persists via AuthService.updatePreferences and the resolved language follows', () => {
+    const { service, calls } = setup(makeUser('fr'));
 
-      // navigator.language in jsdom is 'en-US' → starts with 'en' → 'en'
-      expect(service.lang()).toBe('en');
-    });
+    service.set('en');
 
-    it('writes <html lang> and localStorage when the language changes', () => {
-      TestBed.configureTestingModule({
-        providers: [
-          provideTranslateService({ lang: 'fr' }),
-          { provide: PLATFORM_ID, useValue: 'browser' },
-        ],
-      });
-      const service = TestBed.inject(LanguageService);
+    expect(calls).toEqual([{ language: 'en' }]);
+    expect(service.lang()).toBe('en');
+  });
 
-      service.set('fr');
-
-      expect(document.documentElement.getAttribute('lang')).toBe('fr');
-      expect(localStorage.getItem(STORAGE_KEY)).toBe('fr');
-    });
+  it('does not touch the DOM on the server platform', () => {
+    setup(makeUser('en'), 'server');
+    expect(document.documentElement.getAttribute('lang')).toBeNull();
   });
 });

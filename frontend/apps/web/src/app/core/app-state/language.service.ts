@@ -1,8 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Language } from '../api/auth/auth.repository';
+import { AuthService } from './auth.service';
 
-export type Language = 'fr' | 'en';
+export type { Language };
 
 export const SUPPORTED_LANGUAGES: readonly Language[] = ['fr', 'en'];
 
@@ -16,62 +18,47 @@ const LANGUAGE_FLAGS: Readonly<Record<Language, string>> = {
   en: '🇬🇧',
 };
 
-const STORAGE_KEY = 'portfolioai.language';
-
 /**
- * Signal-based wrapper around `ngx-translate` — same shape as `ThemeService` so the two are
- * symmetric in `App` (toggle from the toolbar, persist to localStorage, set the matching
- * `<html lang>` attribute for accessibility / browser-spell-check).
+ * Active language — now **persisted on the user**, not in localStorage. Symmetric with
+ * `ThemeService` : the applied value is derived from [AuthService.currentUser] (the `language` field
+ * served by `/api/me`), falling back to the browser locale (then `'fr'`) when there is no user yet
+ * (boot, login page). [set] writes the choice through `PUT /api/me/preferences` ; the resulting
+ * `currentUser` update re-drives [lang] + the apply effect.
  *
- * The active language drives `TranslateService.use(...)` which loads `/i18n/<lang>.json` via the
- * HTTP loader configured in `app.config.ts`.
+ * The active language drives `TranslateService.use(...)` which loads `/i18n/<lang>.json`, and is
+ * mirrored onto `<html lang>` for accessibility / browser spell-check. Applied once at construction
+ * (before first paint) and via an `effect()` on every subsequent change.
  *
- * **Side effects at the mutation site** — `translate.use(...)`, the `<html lang>` write and the
- * `localStorage` persist all live inside [set] (and via [toggle], which delegates to it) rather
- * than in an `effect()` watching the signal. Same rationale as `ThemeService` : the writes
- * happen exactly once per user action, there's no redundant initial echo of the freshly-loaded
- * value, the flow is testable without microtask awaiting, and `translate.use` runs on every
- * platform (it isn't a browser-only API) while `document` and `localStorage` are gated.
- *
- * **SSR safety** — `document`, `localStorage`, and `navigator` are browser-only. Each access is
- * gated on [isPlatformBrowser] so the server can instantiate the service without throwing ;
- * mirror of the same pattern in [ThemeService].
+ * **SSR safety** — `document` / `navigator` are browser-only and gated on [isPlatformBrowser] ;
+ * `translate.use` runs on every platform.
  */
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly translate = inject(TranslateService);
-  private readonly _lang = signal<Language>(this.loadInitial());
-  readonly lang = this._lang.asReadonly();
+  private readonly auth = inject(AuthService);
   readonly supported = SUPPORTED_LANGUAGES;
+
+  /** Resolved language : the user's preference, else the browser locale, else `'fr'`. */
+  readonly lang = computed<Language>(
+    () => this.auth.currentUser()?.language ?? this.browserDefault(),
+  );
 
   constructor() {
     this.translate.addLangs([...SUPPORTED_LANGUAGES]);
-    // Initial framework sync — `translate.use(...)` must reflect the loaded language at boot
-    // before any user action. No localStorage write : the value already came from there.
-    this.apply(this._lang(), /* persist */ false);
+    this.apply(this.lang());
+    effect(() => this.apply(this.lang()));
   }
 
+  /** Persists the choice on the user ; [lang] + the effect re-apply once `currentUser` updates. */
   set(lang: Language): void {
-    this._lang.set(lang);
-    this.apply(lang, /* persist */ true);
+    this.auth.updatePreferences({ language: lang }).subscribe();
   }
 
   /** Quick toggle — useful for a 2-language app where a single button cycles through. */
   toggle(): void {
-    this.set(this._lang() === 'fr' ? 'en' : 'fr');
-  }
-
-  private apply(lang: Language, persist: boolean): void {
-    this.translate.use(lang);
-    if (!this.isBrowser) return;
-    try {
-      document.documentElement.setAttribute('lang', lang);
-      if (persist) localStorage.setItem(STORAGE_KEY, lang);
-    } catch {
-      // localStorage unavailable (private mode, quota exceeded); silently ignore
-    }
+    this.set(this.lang() === 'fr' ? 'en' : 'fr');
   }
 
   /** Flag emoji for a language, suitable for inline display next to the name. */
@@ -79,15 +66,14 @@ export class LanguageService {
     return LANGUAGE_FLAGS[lang];
   }
 
-  private loadInitial(): Language {
+  private apply(lang: Language): void {
+    this.translate.use(lang);
+    if (this.isBrowser) document.documentElement.setAttribute('lang', lang);
+  }
+
+  /** Browser locale fallback for the unauthenticated case : `fr-*` → `fr`, anything else → `en`. */
+  private browserDefault(): Language {
     if (!this.isBrowser) return 'fr';
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'fr' || saved === 'en') return saved;
-    } catch {
-      // ignore
-    }
-    // Browser locale fallback : `fr-CA` / `fr-FR` → `fr`. Anything else → `en`.
     const browser = navigator.language ? navigator.language.toLowerCase() : 'en';
     return browser.startsWith('fr') ? 'fr' : 'en';
   }

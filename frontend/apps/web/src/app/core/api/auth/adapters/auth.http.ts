@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AuthRepository, CurrentUser } from '../auth.repository';
+import { AuthRepository, CurrentUser, PreferencesUpdate } from '../auth.repository';
 
 @Injectable()
 export class HttpAuthRepository extends AuthRepository {
@@ -9,6 +9,10 @@ export class HttpAuthRepository extends AuthRepository {
 
   getCurrentUser(): Observable<CurrentUser> {
     return this.http.get<CurrentUser>('/api/me');
+  }
+
+  updatePreferences(prefs: PreferencesUpdate): Observable<CurrentUser> {
+    return this.http.put<CurrentUser>('/api/me/preferences', prefs);
   }
 
   logout(): Observable<void> {

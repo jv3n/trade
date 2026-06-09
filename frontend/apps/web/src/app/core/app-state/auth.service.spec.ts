@@ -24,14 +24,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
-import { AuthRepository, CurrentUser } from '../api/auth/auth.repository';
+import { AuthRepository, CurrentUser, PreferencesUpdate } from '../api/auth/auth.repository';
 import { AuthService } from './auth.service';
 
 class StubRepository extends AuthRepository {
   getCurrentUserQueue: (() => Observable<CurrentUser>)[] = [];
   logoutQueue: (() => Observable<void>)[] = [];
+  updatePreferencesQueue: (() => Observable<CurrentUser>)[] = [];
   getCurrentUserCount = 0;
   logoutCount = 0;
+  lastPreferences: PreferencesUpdate | null = null;
 
   getCurrentUser(): Observable<CurrentUser> {
     this.getCurrentUserCount += 1;
@@ -47,6 +49,15 @@ class StubRepository extends AuthRepository {
     const next = this.logoutQueue.shift();
     if (!next) {
       throw new Error('StubRepository: logout queue empty — test forgot to enqueue');
+    }
+    return next();
+  }
+
+  updatePreferences(prefs: PreferencesUpdate): Observable<CurrentUser> {
+    this.lastPreferences = prefs;
+    const next = this.updatePreferencesQueue.shift();
+    if (!next) {
+      throw new Error('StubRepository: updatePreferences queue empty — test forgot to enqueue');
     }
     return next();
   }
@@ -190,6 +201,22 @@ describe('AuthService', () => {
     expect(repo.logoutCount).toBe(1);
     expect(service.currentUser()).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
+  });
+
+  it('updatePreferences() persists and lands the refreshed user on the signal', () => {
+    // The theme / language services lean on this : they call updatePreferences and read the change
+    // back off `currentUser`, so the signal update is what drives the DOM / ngx-translate switch.
+    const { service, repo } = setup();
+    repo.getCurrentUserQueue.push(() => of(admin()));
+    service.refresh().subscribe();
+
+    const updated: CurrentUser = { ...admin(), theme: 'light', language: 'en' };
+    repo.updatePreferencesQueue.push(() => of(updated));
+
+    service.updatePreferences({ theme: 'light' }).subscribe();
+
+    expect(repo.lastPreferences).toEqual({ theme: 'light' });
+    expect(service.currentUser()).toEqual(updated);
   });
 
   it('clear() nullifies the signal without calling the repository', () => {
