@@ -1,0 +1,15 @@
+Changement de direction a 180
+
+Finalement l'application va etre en fait un journal de trading
+Ou l'on va rentrer nos stats de trading chaque jours
+On pourra ensuite faire des stats avec les data chart export excel etc mais ca viendra dans un second temps
+Pour le moment on veut un tableau avec un click sur add pour ajouter le nouveau trad effectué dans la journee, on specifiera tout ca plus tard
+
+Pour ce qui est de l'existant, ROAD MAP
+
+On va d'abord faire la passe de refacto css
+On va decommissionner ce qu'on ne veux plus
+On garde tout ce qui est en lien avec tous les provider car ce sera utilisé a terme
+
+J'aimerais quand meme garder toutes les evole des docs qu'on a fait mais je pense qu'on peut faire un nouveau backlog 1.0
+Je ferais le nettoyage plus tard
