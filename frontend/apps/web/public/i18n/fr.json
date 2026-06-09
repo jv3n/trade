@@ -19,6 +19,7 @@
   "nav": {
     "journal": "Journal",
     "stats": "Stats",
+    "lexicon": "Lexique",
     "dashboard": "Dashboard",
     "import": "Import",
     "suivi": "Suivi",
@@ -153,6 +154,45 @@
       "lodPercent": "% LOD",
       "eodPercent": "% EOD",
       "note": "Notes"
+    }
+  },
+  "lexicon": {
+    "title": "Lexique trading",
+    "subtitle": "Glossaire partagé des termes de trading et leurs définitions.",
+    "addTerm": "Ajouter un terme",
+    "searchPlaceholder": "Rechercher un terme ou une définition…",
+    "clearSearch": "Effacer la recherche",
+    "loading": "Chargement du lexique…",
+    "empty": "Le glossaire est vide pour l'instant.",
+    "emptyAdmin": "Aucun terme pour l'instant. Clique sur « Ajouter un terme » pour créer le premier.",
+    "noMatch": "Aucun terme ne correspond à « {{query}} ».",
+    "confirmDelete": "Supprimer le terme « {{term}} » ? Action irréversible.",
+    "errors": {
+      "load": "Impossible de charger le lexique. Réessaie."
+    },
+    "fields": {
+      "term": "Terme",
+      "definition": "Définition",
+      "definitionFr": "Définition (FR)",
+      "definitionEn": "Définition (EN)"
+    },
+    "actions": {
+      "edit": "Éditer",
+      "delete": "Supprimer"
+    },
+    "dialog": {
+      "createTitle": "Ajouter un terme",
+      "editTitle": "Éditer le terme",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "snackbar": {
+      "createSuccess": "Terme « {{term}} » ajouté.",
+      "createError": "Échec de l'ajout du terme. Réessaie.",
+      "updateSuccess": "Terme « {{term}} » mis à jour.",
+      "updateError": "Échec de la mise à jour du terme. Réessaie.",
+      "deleteSuccess": "Terme « {{term}} » supprimé.",
+      "deleteError": "Échec de la suppression du terme. Réessaie."
     }
   },
   "header": {
@@ -550,6 +590,11 @@
     "prompts": "Prompts narratifs",
     "accessControl": "Contrôle d'accès",
     "statsImport": "Import des stats",
+    "lexicon": "Lexique",
+    "lexiconPage": {
+      "title": "Lexique",
+      "description": "Réservé à l'admin — gère le glossaire trading partagé (ajout, édition, suppression des termes). La vue en lecture seule est accessible à tous via « Lexique » dans la navigation principale."
+    },
     "statsImportPage": {
       "title": "Import des stats",
       "description": "Admin uniquement — injecte le jeu de stats de trade (généré par scripts/stats) en base via CSV, ou réexporte toute la table.",

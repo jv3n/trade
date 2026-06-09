@@ -1,0 +1,40 @@
+<div class="lexicon-admin-page" data-testid="lexicon-admin-page">
+  <header class="page-header">
+    <div class="header-row">
+      <div>
+        <h2>{{ 'settings.lexiconPage.title' | translate }}</h2>
+        <p class="description">{{ 'settings.lexiconPage.description' | translate }}</p>
+      </div>
+      <button mat-flat-button type="button" (click)="openCreate()">
+        <mat-icon>add</mat-icon>
+        <span>{{ 'lexicon.addTerm' | translate }}</span>
+      </button>
+    </div>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ msg }}</span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="20" />
+      <span>{{ 'lexicon.loading' | translate }}</span>
+    </div>
+  } @else if (entries().length === 0) {
+    <div class="empty-state">
+      <mat-icon>menu_book</mat-icon>
+      <p>{{ 'lexicon.emptyAdmin' | translate }}</p>
+    </div>
+  } @else {
+    <app-lexicon-table
+      [entries]="entries()"
+      [editable]="true"
+      (editEntry)="openEdit($event)"
+      (deleteEntry)="delete($event)"
+    />
+  }
+</div>

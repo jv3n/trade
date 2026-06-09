@@ -103,6 +103,15 @@
   }
 }
 
+// Footer nav-list — a secondary `.sidenav-list` pinned just above the toggle (the main list above
+// it grows with `flex: 1`). `flex: 0 0 auto` keeps it at its natural height instead of stretching,
+// and the top border sets it apart from the primary navigation.
+.sidenav-list--footer {
+  flex: 0 0 auto;
+  overflow-y: visible;
+  border-top: s.$border-width solid var(--color-border-soft);
+}
+
 // Toggle button — pinned at the bottom of the sidenav, separated from the nav-list by a
 // subtle top border. `flex: 0 0 auto` keeps it at its natural size while the nav-list above
 // expands to fill the rest of the column.

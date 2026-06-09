@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>
+  {{ (isEdit() ? 'lexicon.dialog.editTitle' : 'lexicon.dialog.createTitle') | translate }}
+</h2>
+
+<form (submit)="$event.preventDefault(); submit()" class="lexicon-form">
+  <mat-dialog-content>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'lexicon.fields.term' | translate }}</mat-label>
+      <input matInput [formField]="lexiconForm.term" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'lexicon.fields.definitionFr' | translate }}</mat-label>
+      <textarea matInput [formField]="lexiconForm.definitionFr" rows="4"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'lexicon.fields.definitionEn' | translate }}</mat-label>
+      <textarea matInput [formField]="lexiconForm.definitionEn" rows="4"></textarea>
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancel()">
+      {{ 'lexicon.dialog.cancel' | translate }}
+    </button>
+    <button mat-flat-button type="submit">
+      <mat-icon>save</mat-icon>
+      <span>{{ 'lexicon.dialog.save' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

@@ -1,0 +1,31 @@
+<div class="page">
+  <header class="content-header">
+    <div class="header-row">
+      <div>
+        <h2>{{ 'lexicon.title' | translate }}</h2>
+        <p>{{ 'lexicon.subtitle' | translate }}</p>
+      </div>
+    </div>
+  </header>
+
+  @if (error(); as msg) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ msg }}</span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="20" />
+      <span>{{ 'lexicon.loading' | translate }}</span>
+    </div>
+  } @else if (entries().length === 0) {
+    <div class="empty-state">
+      <mat-icon>menu_book</mat-icon>
+      <p>{{ 'lexicon.empty' | translate }}</p>
+    </div>
+  } @else {
+    <app-lexicon-table [entries]="entries()" />
+  }
+</div>

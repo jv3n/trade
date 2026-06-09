@@ -124,6 +124,22 @@
             <span matListItemTitle>{{ 'nav.radar' | translate }}</span>
           </a>
         </mat-nav-list>
+        <!-- Pinned to the bottom of the sidenav (above the collapse toggle) — the lexicon is a
+             reference/help surface, not a primary workflow, so it sits apart from the main list. -->
+        <mat-nav-list class="sidenav-list sidenav-list--footer">
+          <a
+            mat-list-item
+            routerLink="/lexicon"
+            routerLinkActive="sidenav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [matTooltip]="'nav.lexicon' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>menu_book</mat-icon>
+            <span matListItemTitle>{{ 'nav.lexicon' | translate }}</span>
+          </a>
+        </mat-nav-list>
         <div class="sidenav-toggle">
           <button
             mat-icon-button

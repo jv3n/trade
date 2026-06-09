@@ -85,6 +85,14 @@ class SecurityConfig(
         // (they fall through to `/api/**` below), but mutations — the CSV import — are ADMIN-only.
         // Gated by HTTP method so a future `GET /api/stats/**` listing stays readable by everyone.
         it.requestMatchers(HttpMethod.POST, "/api/stats/**").hasRole("ADMIN")
+        // The lexicon is likewise a global, shared dataset : the `GET` listing is readable by every
+        // authenticated user (it falls through to `/api/**` below), but create / update / delete
+        // are
+        // ADMIN-only (managed from the `/settings/lexicon` page). Gated per HTTP method so the read
+        // path stays open ; POST hits the collection root, PUT / DELETE the `/{id}` sub-paths.
+        it.requestMatchers(HttpMethod.POST, "/api/lexicon").hasRole("ADMIN")
+        it.requestMatchers(HttpMethod.PUT, "/api/lexicon/**").hasRole("ADMIN")
+        it.requestMatchers(HttpMethod.DELETE, "/api/lexicon/**").hasRole("ADMIN")
         // `/api/me` is **intentionally** not in `permitAll`. The SPA calls it at boot via
         // `AuthService.refresh()` precisely to discover whether a valid session exists : an
         // anonymous client gets a 401, which the frontend swallow and treats as "not logged

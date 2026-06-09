@@ -44,6 +44,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/stats/stats-page').then((m) => m.StatsPage),
   },
   {
+    path: 'lexicon',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/lexicon/lexicon-page').then((m) => m.LexiconPage),
+  },
+  {
     path: 'ticker/:symbol',
     canActivate: [authGuard],
     loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),
@@ -103,6 +108,12 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/settings/stats-import/stats-import').then((m) => m.StatsImportPage),
+      },
+      {
+        path: 'lexicon',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/settings/lexicon/lexicon-admin').then((m) => m.LexiconAdminPage),
       },
     ],
   },

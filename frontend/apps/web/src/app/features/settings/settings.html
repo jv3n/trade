@@ -97,6 +97,18 @@
           <mat-icon matListItemIcon>query_stats</mat-icon>
           <span matListItemTitle>{{ 'settings.statsImport' | translate }}</span>
         </a>
+        <a
+          mat-list-item
+          routerLink="/settings/lexicon"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          [matTooltip]="'settings.lexicon' | translate"
+          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+          matTooltipPosition="right"
+        >
+          <mat-icon matListItemIcon>menu_book</mat-icon>
+          <span matListItemTitle>{{ 'settings.lexicon' | translate }}</span>
+        </a>
       }
     </mat-nav-list>
     <div class="sidenav-toggle">

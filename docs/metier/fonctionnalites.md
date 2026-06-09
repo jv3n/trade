@@ -52,7 +52,26 @@ Dataset **global, partagé** (pas multi-tenant) : le contexte de setup des short
 
 ### Backend
 
-Module `stats/` (hexagonal, distinct de `journal/`) : `StatEntry` (table `stat_entry`, **sans `user_id`**), `StatMetrics` (calcul pur des 3 `%`), `StatEntryService` (`importCsv` atomique + `findAllPaged` + `exportAllAsCsv`), `StatEntryController` (`GET /api/stats` lecture pour tous, `POST /api/stats/import` ADMIN-only, `GET /api/stats/export`). Schéma : migrations Flyway **V6** / **V7**. Détail technique : [`architecture.md`](../technique/architecture.md).
+Module `stats/` (hexagonal, distinct de `journal/`) : `StatEntry` (table `stat_entry`, **sans `user_id`**), `StatMetrics` (calcul pur des 3 `%`), `StatEntryService` (`importCsv` atomique + `findAllPaged` + `exportAllAsCsv`), `StatEntryController` (`GET /api/stats` lecture pour tous, `POST /api/stats/import` ADMIN-only, `GET /api/stats/export`). Schéma : migration Flyway **V6**. Détail technique : [`architecture.md`](../technique/architecture.md).
+
+---
+
+## Lexique — live
+
+Glossaire **partagé** des termes de trading (label EN + définition **FR et EN**, les deux obligatoires). Dataset global (pas multi-tenant) : **lecture pour tous, édition réservée à l'admin**. **Pas d'import/export.**
+
+### Consultation (`/lexicon`, tous)
+
+- Accessible depuis le **bas de la sidenav** (icône `menu_book`, séparée de la navigation principale).
+- **Table en lecture seule** (terme / définition **dans la langue de l'utilisateur**) avec **recherche client-side sur le terme + les deux définitions** : le glossaire est chargé d'un coup et filtré en direct, sans round-trip backend.
+
+### Gestion (`/settings/lexicon`, admin)
+
+- Même table en **mode CRUD** : ajout / édition via dialog (2 champs), suppression confirmée, snackbars de feedback. Terme **unique** (insensible à la casse).
+
+### Backend
+
+Module `lexicon/` (hexagonal, distinct) : `LexiconEntry` (table `lexicon_entry`, `definition_fr` + `definition_en`, **sans `user_id`**), `LexiconEntryService` (`findAll` non paginé trié + CRUD, unicité casse-insensible → 409, champs vides → 400), `LexiconEntryController` (`/api/lexicon` : `GET` lecture pour tous, `POST` / `PUT` / `DELETE` **ADMIN-only**). Schéma : migration Flyway **V8** (`lexicon_entry` bilingue + seed FR/EN des 117 termes). Détail technique : [`architecture.md`](../technique/architecture.md).
 
 ---
 
