@@ -174,14 +174,9 @@ Le pipeline d'analyse en Phase 1 produit un **narratif LLM par ticker**, pas une
 
 > Le LLM **digère** des indicateurs déjà calculés. Il **ne calcule jamais** RSI, MA, etc. — sinon il hallucine les chiffres.
 
-### `portfolio/`
+### `portfolio/` — **décommissionné (2026-06-10)**
 
-Inchangé. Le portefeuille est **read-only depuis l'UI** — il reflète l'état réel du courtier Wealthsimple.
-
-- **Import CSV** (`CsvImportService`) : parse l'export Wealthsimple (21 colonnes, FR, NFD, BOM UTF-8), upsert des positions par compte.
-- **Snapshots** : `PortfolioSnapshot` + `SnapshotPosition` créés à chaque import, groupés par `batch_id`.
-
-Sa nouvelle utilité Phase 1 : fournir la **liste des tickers détenus** au `market/` pour pré-charger les dossiers ticker pertinents.
+Supprimé. Le portefeuille (import CSV Wealthsimple + snapshots de positions) était hors scope du journal de trading : module backend entier (entités `Portfolio` / `Asset` / `PortfolioSnapshot` / `SnapshotPosition`, controllers `/api/portfolios` · `/api/snapshots`, services, repos, tests) + features front `dashboard` / `import` / `suivi` + les 4 tables retirés. Détail : [`journal-livraisons.md`](../projet/journal-livraisons.md) et la décision « décommissionnement + re-squash » ci-dessus.
 
 ### `watchlist/` — nouveau, Phase 2
 
@@ -368,6 +363,14 @@ Plus le seed initial du prompt `narrative-default` actif dans V1 (verbatim du `N
 | Snapshot radar | `screener_snapshot_day` | Actif Phase 6 |
 
 ## Décisions techniques notables
+
+### Pivot journal — décommissionnement `portfolio/` + re-squash migrations (2026-06-10)
+
+**`portfolio/` supprimé, `watchlist/` conservé** — le portefeuille (import CSV Wealthsimple + snapshots de positions) était hors scope du journal. Décommissionnement complet : module backend (entités + controllers + repos + tests), features front `dashboard` / `import` / `suivi`, et les 4 tables. À l'inverse, l'audit de code mort a montré que `watchlist/` (et `market`, `news`, `analyst`, `earnings`, `screener`, narratif `analysis`) reste **vivant** : la page `ticker`, encore routée et atteinte via des liens depuis le journal / stats / nav, consomme ces modules. Seul `portfolio` et ses 3 features front étaient réellement morts.
+
+**Couplage drop-table ↔ entité sous `ddl-auto: validate`** — avec `spring.jpa.hibernate.ddl-auto: validate` (base + prod), dropper une table dont l'`@Entity` existe encore fait crasher la validation au boot ; inversement, livrer le DROP avant la suppression des entités est impossible. Les deux doivent voyager dans le même changement — contrainte structurante de tout décommissionnement de table ici.
+
+**Re-squash V1→V9 en un seul `V1__init.sql`** — deuxième squash (le premier collapsait V1→V10 le 2026-05-17). Méthode : rejeu des 9 migrations sur une DB jetable + `pg_dump --schema-only` comme source de vérité, **jamais un hand-merge** (trop d'erreurs subtiles sur contraintes / defaults / index partiels). Les deux seeds (prompt `narrative-default` body-only dans son état post-V2, + 117 termes du lexique) réintégrés dans leur état final. Les anciens fichiers `V2`→`V9` supprimés : les références « Migration Vx » dans les décisions plus anciennes ci-dessous pointent donc vers des fichiers désormais fondus dans `V1`. **Prod** : un re-squash casserait le checksum V1 enregistré → choix retenu = drop manuel du schéma prod (single-user, pré-pivot, sans donnée journal), qui repart sur le V1 unique au prochain deploy.
 
 ### Phase 1 — pivot ticker
 

@@ -16,8 +16,7 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 
 /**
- * One trade in the journal. Multi-tenant via [user] (`@ManyToOne` matching the pattern used by
- * [com.portfolioai.portfolio.domain.Portfolio]).
+ * One trade in the journal. Multi-tenant via [user] (`@ManyToOne` on the FK, `ON DELETE CASCADE`).
  *
  * Categorical fields ([play], [pattern], [openSide], [exitStrategy]) map to Postgres ENUM types via
  * `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` — Hibernate 6 reads the Postgres enum cast directly without

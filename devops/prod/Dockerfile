@@ -21,8 +21,12 @@ FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Cache layer for npm install — only invalidated when package.json/lock changes
-COPY frontend/package.json frontend/package-lock.json ./
+# Cache layer for npm install — only invalidated when package.json/lock/.npmrc changes.
+# `.npmrc` carries `legacy-peer-deps=true` (Storybook 10.x vs Angular 22 peer-dep shim) and MUST
+# be present before `npm ci`, otherwise the install fails with ERESOLVE inside the Docker build
+# (the later `COPY frontend/ ./` brings it in too late). Drop the `.npmrc` from this COPY the day
+# Storybook ships native Angular 22 support and the shim is removed.
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 RUN npm ci --no-audit --no-fund --prefer-offline
 
 # Source + build

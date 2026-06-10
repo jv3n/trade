@@ -2,6 +2,26 @@
 
 Bookmarks pour l'admin courant. Tous les liens sont scopés sur les projets actuels (GCP `trade-496613` + Supabase `portfolioai-prod` + GitHub `jv3n/trade`). Garde cette page ouverte dans un onglet pendant les sessions ops.
 
+## Outillage CLI local (auth par service)
+
+> Quels CLI authentifier sur la machine de dev, et lesquels s'épargner. Complète les dashboards web ci-dessous. Setup sous **WSL** (le stack tourne en WSL via mise). Le critère : un CLI ne vaut une auth locale que si un service est piloté en ligne de commande au quotidien — sinon le dashboard suffit.
+
+| Service | CLI | À authentifier en local ? |
+| --- | --- | --- |
+| **GCP** (Cloud Run, Secret Manager) | `gcloud` | ✅ Oui — `gcloud auth login` + `gcloud config set project trade-496613` |
+| **GitHub** (repo, Actions) | `gh` | ✅ Oui — `gh auth login` en HTTPS, configure le credential helper Git (plus de PAT à gérer) |
+| **Supabase** (DB prod) | `psql` / DBeaver | ✅ Accès DB via `psql` ou DBeaver (creds dans le secret `supabase-db-url`). ❌ Pas de CLI `supabase` — les migrations sont **Flyway**, pas Supabase |
+| **Cloudflare R2** (backups) | `aws` (S3-compat) | ⚠️ Situationnel — uniquement pour le restore drill, cf. [§ CLI alternative (`aws s3` pointé sur R2)](#cli-alternative-aws-s3-pointé-sur-r2). Ne pas laisser authentifié en permanence (creds R2 = GitHub Secrets, pas Secret Manager) |
+| **Cloudflare DNS / Worker** | `wrangler` / `flarectl` | ❌ Non — piloté via dashboard, jamais en CLI dans le projet |
+| **GlitchTip / Sentry** | `sentry-cli` | ❌ Non — pas d'upload sourcemaps câblé en CI |
+
+**État de référence** (machine dev WSL, 2026-06-10) :
+
+- `gcloud` 572.0.0 — loggé `venet.julien@gmail.com`, projet `trade-496613`
+- `gh` 2.93.0 — loggé `jv3n`, ADMIN sur `jv3n/trade`, helper Git câblé
+- `psql` 18.4 — connexion prod testée (Supabase PG 17.6, session pooler Toronto)
+- Les trois installés via dépôt **apt officiel** ; mise à jour via `sudo apt upgrade`
+
 ## Production
 
 - **App prod** : [https://tickerstory.org](https://tickerstory.org) — domaine custom (Cloudflare Worker proxy → Cloud Run Montréal)

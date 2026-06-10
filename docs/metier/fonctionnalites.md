@@ -87,12 +87,12 @@ Cloud Run + Supabase Postgres (région Montréal `ca-central-1`), pipeline GitOp
 
 ## Surface pré-pivot (dormante)
 
-> Le code ci-dessous **existe toujours dans l'arbre** mais n'est **plus câblé à aucune route produit**. Conservé pour un éventuel enrichissement Phase 2 (les clients providers notamment — graphe du symbole au moment d'un trade). L'historique détaillé des livraisons phases 0 → 6 vit dans [`archive/journal-livraisons.md`](../projet/archive/journal-livraisons.md).
+> Le code ci-dessous **existe toujours dans l'arbre**, conservé pour un éventuel enrichissement Phase 2 (les clients providers notamment — graphe du symbole au moment d'un trade). Nuance : une partie reste **routée et atteignable** — les pages `ticker` (liens depuis le journal / stats / nav) et `radar` tirent sur `market` / `news` / `analyst` / `earnings` / `watchlist` / `screener` + le narratif d'`analysis`. Le module **`portfolio/` a été décommissionné** (2026-06-10). L'historique détaillé des livraisons phases 0 → 6 vit dans [`archive/journal-livraisons.md`](../projet/archive/journal-livraisons.md).
 
 - **Phase 1 — dossier ticker** : `market/` (Twelve Data + mock, `IndicatorCalculator` : RSI / MA / momentum / drawdown), `analysis/` (narratif LLM par ticker + snapshots persistés), page `ticker/`. Ports `MarketChartClient` / `SymbolSearchClient` / `SectorClassifier` conservés.
 - **Phase 2 / 2.5 — profondeur ticker** : `news/`, `analyst/`, `earnings/` (Finnhub + mock), `watchlist/`, chart multi-timeframe + overlays + annotations, config runtime (`config/`), streaming SSE du pipeline narratif.
 - **Phase 3 — observabilité narrative** : prompt management + scoring, timeline reverse-chronologique, score de cohérence cross-runs, détection de biais corpus-wide.
 - **Phase 6 — radar d'anomalies** : `screener/` (Polygon + FMP + mock), détection gap + volume sur les mid-caps NASDAQ. Providers conservés.
-- **Portefeuille** : `portfolio/` (import CSV Wealthsimple, snapshots) — hors scope d'un journal de trade actif.
+- **Portefeuille** : `portfolio/` (import CSV Wealthsimple, snapshots) — **décommissionné le 2026-06-10** (module backend + features front `dashboard` / `import` / `suivi` + 4 tables supprimés ; hors scope d'un journal de trade actif).
 
 Le module `config/` (rotation des clés provider à chaud, sans reboot) reste utile le jour où la Phase 2 réveille un provider pour enrichir les trades.

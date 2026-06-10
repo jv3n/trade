@@ -23,15 +23,16 @@ Le cœur du produit (table des trades + saisie + filtres + export/import CSV rou
 | ⏳ **Export Excel** | Au-delà du CSV brut : classeur `.xlsx` avec mise en forme / formules. | 🟡 Moyenne |
 | ⏳ **Enrichissement chart d'un trade** | Rattacher le graphe du symbole au moment du trade via les providers conservés (`MarketChartClient`). | 🟢 Basse |
 
-## Décommissionnement (à trancher)
+## Décommissionnement
 
-> La roadmap garde les modules pré-pivot dormants jusqu'à ce que la Phase 2 décide quoi réveiller vs supprimer.
+> Premier passage fait (2026-06-10) : `portfolio/` supprimé. `ticker` / `radar` — et leurs modules backing (`market`, `news`, `analyst`, `earnings`, `screener`, `watchlist`, narratif `analysis`) — **conservés** car encore routés (liens depuis le journal / stats / nav). `settings/prompts` et `observability` (front) conservés pour l'instant.
 
-| Item | Description | Priorité |
-|------|-------------|----------|
-| 🧊 **Drop des modules dormants non réutilisés** | Une fois la Phase 2 cadrée, supprimer le code + tables (`analysis/`, `portfolio/`, `news/`, `analyst/`, `earnings/`, observabilité…) qui ne serviront pas l'enrichissement. Migration de drop = **V6**. | 🟡 Moyenne |
-| 🧊 **Décision auth** | Garder l'OAuth multi-user ou simplifier en solo single-user ? (cf. roadmap question 4). Le journal dépend aujourd'hui de `user_id`. | 🟡 Moyenne |
-| 🧊 **Nettoyage UI dormante** | Retirer du routing les features pré-pivot (`dashboard`, `ticker`, `radar`, `observability`, `suivi`, `import`, `settings/prompts`) si elles ne reviennent pas. | 🟢 Basse |
+| Item | Description | Statut |
+|------|-------------|--------|
+| ❌ **`portfolio/` décommissionné** | Backend `portfolio/` (entités + controllers + repos + 2 tests) + features front `dashboard` / `import` / `suivi` + 4 tables (`portfolio`, `asset`, `portfolio_snapshot`, `snapshot_position`) supprimés. Détail : [`journal-livraisons.md`](./journal-livraisons.md). | Fait 2026-06-10 |
+| 🧊 **Slice observability d'`analysis/`** | `NarrativeObservabilityController` / `NarrativeBiasService` ne servent que la feature front `observability` (gardée). Seul candidat de drop restant, mais délicat (vit dans `analysis/`, gardé pour le narratif ticker). | À trancher |
+| 🧊 **Repos front portfolio orphelins** | `core/api/portfolio/` (`PortfolioRepository`, `SnapshotRepository`) + bindings `providers.ts` + i18n `dashboard`/`import`/`suivi` morts depuis le drop backend — nettoyage de cascade. | À trancher |
+| 🧊 **Décision auth** | Garder l'OAuth multi-user ou simplifier en solo single-user ? (cf. roadmap question 4). Le journal dépend de `trade_entry.user_id`. | À trancher |
 
 ## Questions ouvertes
 

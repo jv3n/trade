@@ -8,6 +8,14 @@ Historique des livraisons depuis le **pivot** (juin 2026) vers le journal de tra
 
 > Bascule de l'app : d'un outil d'analyse de marché par ticker (narratif LLM) vers un **journal de trading**. L'unité atomique devient le **trade entry**.
 
+### ✅ Livré — décommissionnement `portfolio/` + squash des migrations (2026-06-10)
+
+- **Frontend** — suppression des features pré-pivot **orphelines** (aucune route, aucun lien entrant vivant) : `dashboard/` (+ `csv-import/`), `import/`, `suivi/` (18 fichiers). Les repos `core/api/portfolio/` (`PortfolioRepository`, `SnapshotRepository`) + leurs bindings `providers.ts` + sections i18n deviennent orphelins — laissés pour un nettoyage ultérieur.
+- **Backend** — suppression du **module `portfolio/` entier** (16 fichiers + 2 tests) : controllers `/api/portfolios`, `/api/portfolios/import`, `/api/snapshots` ; entités `Portfolio` / `Asset` / `PortfolioSnapshot` / `SnapshotPosition` ; services + repos. Zéro référence entrante depuis du code vivant (seul un lien KDoc dans `TradeEntry.kt`, retiré). Compilation + suite de tests vertes.
+- **`watchlist/` conservée** — la table `watchlist_entry` et le module restent : la page `ticker` (vivante, atteinte depuis le journal / stats / nav) utilise le bouton « watch » (`WatchlistRepository.list/add/remove`).
+- **Squash migrations** — les 9 fichiers `V1__init` → `V9__drop_portfolio_tables` re-consolidés en **un seul `V1__init.sql`** (12 tables, 4 enums, 3 triggers, seeds : prompt `narrative-default` body-only post-V2 + 117 termes du lexique). Schéma régénéré par rejeu des 9 migrations sur une DB jetable + `pg_dump` (source de vérité, pas de hand-merge). **Couplage `ddl-auto: validate`** : le drop des tables portfolio devait obligatoirement accompagner la suppression des entités, sinon crash `validate` au boot. Validé par la suite Testcontainers complète. Hygiène du V1 : commentaires retirés, bloc audit `created_at`/`updated_at` uniformisé sur toutes les tables, index FK ajouté sur `ticker_narrative_job.snapshot_id`.
+- **Prod** — re-squash en prod = risqué (checksum V1 modifié) ; choix retenu : **drop manuel du schéma** (prod single-user, pré-pivot, sans donnée journal) → repart sur le V1 unique au prochain deploy.
+
 ### ✅ Livré — module `journal/` (MVP)
 
 - **Backend `journal/`** (hexagonal) — `TradeEntry` (19 champs : exécution + checklist pré-trade + post-mortem + audit), 4 enums Postgres natifs (`trade_play` A/B, `trade_pattern` GUS/FRD, `trade_open_side` FRONT/BACK, `trade_exit_strategy` SWING_20/EOD), `TradeEntryService` (CRUD scopé `user_id`, **défaut de tri `tradeDate DESC, createdAt DESC` posé dans le service** ; P&L saisi par l'utilisateur, pas calculé), `TradeEntryRepository` + `TradeEntrySpecifications` (prédicats dynamiques des filtres), `TradeEntryController` (**7 endpoints** sous `/api/journal/trades`). Migration Flyway **V5** (`trade_entry` + enums + index `(user_id, trade_date DESC)` / `(ticker)` + trigger `set_updated_at`). Multi-tenant : ID étranger → 404.
@@ -37,6 +45,6 @@ Historique des livraisons depuis le **pivot** (juin 2026) vers le journal de tra
 
 ### Conservé en sommeil
 
-Les modules pré-pivot (`market/`, `analysis/`, `portfolio/`, `news/`, `analyst/`, `earnings/`, `screener/`, `watchlist/`, `config/`) restent dans l'arbre, plus câblés à aucune route produit — providers conservés pour un éventuel enrichissement Phase 2. `auth/` (Phase 4) et l'infra de déploiement (Phase 5) restent **actifs** ; le journal dépend de `auth/` (FK `trade_entry.user_id`).
+Les modules pré-pivot (`market/`, `analysis/`, `news/`, `analyst/`, `earnings/`, `screener/`, `watchlist/`, `config/`) restent dans l'arbre. Une partie est **encore atteignable** : la page `ticker` (lien depuis le journal / stats / nav) consomme `market/`, `news/`, `analyst/`, `earnings/`, `watchlist/` + le narratif d'`analysis/` ; la page `radar` consomme `screener/`. Le module **`portfolio/` a été supprimé** (2026-06-10, cf. entrée ci-dessus). Providers conservés pour un éventuel enrichissement Phase 2. `auth/` (Phase 4) et l'infra de déploiement (Phase 5) restent **actifs** ; le journal dépend de `auth/` (FK `trade_entry.user_id`).
 
 > Le détail des livraisons phases 0 → 6 (ticker, narratif, observabilité, déploiement, radar) est conservé dans [`archive/journal-livraisons.md`](./archive/journal-livraisons.md).
