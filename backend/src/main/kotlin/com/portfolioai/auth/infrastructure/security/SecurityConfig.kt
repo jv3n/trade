@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
@@ -122,8 +123,19 @@ class SecurityConfig(
       }
       .logout { it.logoutSuccessUrl("/").permitAll() }
 
-    clientRegistrationRepository.ifAvailable?.let {
+    clientRegistrationRepository.ifAvailable?.let { repo ->
       http.oauth2Login { login ->
+        // Force Google's account chooser on every login. Without `prompt=select_account`, an active
+        // Google session + a prior consent makes Google silently re-pick the last account — no way
+        // to switch identity (e.g. to exercise the not-authorized path with a non-whitelisted
+        // email) short of an incognito window.
+        login.authorizationEndpoint { endpoint ->
+          val resolver = DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization")
+          resolver.setAuthorizationRequestCustomizer { builder ->
+            builder.additionalParameters { params -> params["prompt"] = "select_account" }
+          }
+          endpoint.authorizationRequestResolver(resolver)
+        }
         login.userInfoEndpoint { ep ->
           // `userService` handles non-OIDC OAuth2 flows (hypothetical future GitHub OAuth2
           // without OIDC scope) ; `oidcUserService` handles OIDC flows (Google login with the
