@@ -1,7 +1,7 @@
 plugins {
   kotlin("jvm") version "2.1.21"
   kotlin("plugin.spring") version "2.3.21"
-  id("org.springframework.boot") version "3.5.14"
+  id("org.springframework.boot") version "3.5.15"
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.1.21"
   id("com.diffplug.spotless") version "6.25.0"
@@ -62,7 +62,7 @@ dependencies {
   // appender so MDC values (notably `userId`) become event extras automatically. The `-jakarta`
   // variant targets Spring Boot 3 (Jakarta EE) — picking `sentry-spring-boot-starter` (no suffix)
   // would silently link the javax-namespaced classes and the bean wiring would crash at boot.
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.43.1")
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.43.2")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
