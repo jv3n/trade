@@ -4,9 +4,9 @@
 // 720, some at 900, some at 1040, some at 1100, some at 1200, some at 1400). Centralising
 // here means a single source of truth and a smaller diff when the rhythm needs to change.
 //
-// **Default width = 1400 px** — the data-dense pages (journal, radar, ticker) that show wide
-// tables. Other widths use a modifier :
-//   • `.page--medium`  → 1200 px (e.g. import / export)
+// **Default width = 1400 px** — a sensible cap for medium-content pages. Other widths use a modifier :
+//   • `.page--full`    → no cap  (the wide data-table pages : radar, stats, journal, import, ticker)
+//   • `.page--medium`  → 1200 px
 //   • `.page--narrow`  → 1100 px (e.g. settings, observability, prompts)
 //   • `.page--form`    → 720 px  (settings forms — preferences, access-control)
 //
@@ -33,6 +33,12 @@
 
 .page--form {
   max-width: 720px;
+}
+
+// Full-bleed — no width cap. For the widest data tables (radar, stats) whose many columns need
+// every pixel of horizontal real estate ; the page spans the viewport minus the side padding.
+.page--full {
+  max-width: none;
 }
 
 .page--flush {
