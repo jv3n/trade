@@ -96,6 +96,15 @@
   > .mat-mdc-table {
     width: 100%;
     background: transparent;
+
+    // No line-wrapping inside cells — a header like « % Push » or a long value should never
+    // break onto two lines. Cells stay on one line ; when the columns together exceed the
+    // container width the whole table overflows and the wrapper's `overflow-x: auto` kicks in
+    // (horizontal scroll), which is the preferred trade-off over wrapped, ragged rows.
+    th.mat-mdc-header-cell,
+    td.mat-mdc-cell {
+      white-space: nowrap;
+    }
   }
 }
 
