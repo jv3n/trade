@@ -1,0 +1,2236 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/technique/ops/">
+      
+      
+        <link rel="prev" href="../providers/">
+      
+      
+        <link rel="next" href="../../devops/commandes-pratiques/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Ops (CI / CD / tooling) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ops-ci-cd-caching-tooling" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Ops (CI / CD / tooling)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#workflows-github-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflows GitHub Actions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#couverture-de-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Couverture de code
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#strategie-de-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stratégie de cache
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stratégie de cache">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-backendyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend (backend.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontend-frontendyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend (frontend.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codeql-codeqlyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CodeQL (codeql.yml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnostiquer-un-cache-miss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostiquer un cache miss
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#permissions-github_token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permissions GITHUB_TOKEN
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-scanning-security-tab" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Scanning (Security tab)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#detekt-analyse-statique-kotlin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detekt — analyse statique Kotlin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#eslint-analyse-statique-typescript-angular" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ESLint — analyse statique TypeScript / Angular
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependabot-auto-prs-deps-obsoletes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependabot — auto-PRs deps obsolètes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quand-un-workflow-casse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quand un workflow casse
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quand un workflow casse">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#premier-reflexe-regarder-le-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Premier réflexe : regarder le summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#erreurs-courantes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Erreurs courantes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#re-run-dun-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Re-run d'un workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roadmap-ci-ops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roadmap CI / ops
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="ops-ci-cd-caching-tooling">Ops — CI / CD, caching, tooling<a class="headerlink" href="#ops-ci-cd-caching-tooling" title="Permanent link">&para;</a></h1>
+<p>Référence sur tout ce qui tourne autour du code lui-même : workflows GitHub Actions, stratégie de cache, analyse statique, code scanning, dépendances. Différent des autres docs technique :</p>
+<ul>
+<li><a href="../architecture/"><code>architecture.md</code></a> — modules backend / frontend, schéma BDD, décisions techniques</li>
+<li><a href="../developpement/"><code>developpement.md</code></a> — commandes locales (Tilt, gradle, npm), structure projet</li>
+<li><a href="../developper/"><code>developper.md</code></a> — onboarding pas à pas, premier lancement, debug</li>
+<li><a href="../providers/"><code>providers.md</code></a> — providers externes (Twelve Data, Finnhub, Anthropic, Ollama)</li>
+<li><strong><code>ops.md</code></strong> <em>(ce fichier)</em> — pipeline CI, caching, sécurité, tooling</li>
+</ul>
+<h2 id="workflows-github-actions">Workflows GitHub Actions<a class="headerlink" href="#workflows-github-actions" title="Permanent link">&para;</a></h2>
+<p>Sept workflows, chacun déclenché sur des paths différents pour ne pas relancer toute la chaîne à chaque commit :</p>
+<table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Trigger</th>
+<th>Job principal</th>
+<th>Durée typique</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Backend CI</strong> (<code>backend.yml</code>)</td>
+<td><code>push master</code> / <code>pull_request</code> sur <code>backend/**</code></td>
+<td><code>./gradlew build</code> (compile + test + Spotless + Detekt). Les tests d'intégration <code>@SpringBootTest</code> bootent leur propre Postgres via <strong>Testcontainers</strong> (singleton <code>testsupport/PostgresContainer.kt</code> + SPI <code>LauncherSessionListener</code>), donc plus de bloc <code>services:</code> dans le workflow — Docker est dispo sur les runners <code>ubuntu-latest</code>. Suivi de Kover (couverture) + sticky PR comment</td>
+<td>1-2 min</td>
+</tr>
+<tr>
+<td><strong>Frontend CI</strong> (<code>frontend.yml</code>)</td>
+<td><code>push master</code> / <code>pull_request</code> sur <code>frontend/**</code></td>
+<td><code>npm ci</code> + <code>npm run lint</code> + <code>npm run build</code> + <code>npm run test:coverage</code> + sticky PR comment</td>
+<td>30-60 s</td>
+</tr>
+<tr>
+<td><strong>CodeQL</strong> (<code>codeql.yml</code>)</td>
+<td><code>push master</code> / <code>pull_request</code> / weekly <code>cron 06:00 UTC lundi</code></td>
+<td>Matrix <code>java-kotlin</code> (build-mode <code>manual</code>) + <code>javascript-typescript</code> (build-mode <code>none</code>)</td>
+<td>2-3 min</td>
+</tr>
+<tr>
+<td><strong>Deploy docs</strong> (<code>docs.yml</code>)</td>
+<td><code>push master</code> sur <code>docs/**</code> ou <code>mkdocs.yml</code></td>
+<td><code>mkdocs gh-deploy</code></td>
+<td>&lt;1 min</td>
+</tr>
+<tr>
+<td><strong>WIF Smoke Test</strong> (<code>smoke-wif.yml</code>)</td>
+<td><code>workflow_dispatch</code> manuel uniquement</td>
+<td>Exerce Workload Identity Federation (OIDC GitHub → access token GCP via SA <code>github-deploy@</code>) + <code>gcloud run services list</code> + <code>gcloud artifacts repositories describe backend</code> pour valider que <code>run.admin</code> + <code>artifactregistry.writer</code> marchent. Utilise <code>environment: production</code> donc exige une required reviewer approval avant exécution. Outil de diagnostic quand on doute du pipeline GCP ; pas câblé sur un événement push pour ne pas spam.</td>
+<td>30-60 s</td>
+</tr>
+<tr>
+<td><strong>Deploy to Cloud Run</strong> (<code>deploy.yml</code>)</td>
+<td><code>on: release: published</code> (Phase 5a)</td>
+<td>WIF → <code>docker buildx build linux/amd64 --push</code> vers Artifact Registry tag = <code>release.tag_name</code> → <code>gcloud run deploy portfolioai</code> avec 4 secrets mountés depuis Secret Manager + profil <code>prod</code> → smoke <code>/actuator/health</code>. Gated par <code>environment: production</code> (required reviewer = self-approve). Détail dans <a href="../../devops/release-process/"><code>docs/devops/release-process.md</code></a>.</td>
+<td>3-5 min</td>
+</tr>
+<tr>
+<td><strong>Backup Supabase Postgres</strong> (<code>backup-postgres.yml</code>)</td>
+<td><code>cron '0 4 * * 0'</code> (dimanche 4 AM UTC, weekly) + <code>workflow_dispatch</code> manuel</td>
+<td>WIF → install <code>postgresql-client-16</code> → fetch <code>supabase-db-url</code> depuis Secret Manager → <code>pg_dump --no-owner --no-acl \| gzip &gt; backup-&lt;ISO&gt;.sql.gz</code> → <code>aws s3 cp</code> vers Cloudflare R2 bucket <code>portfolioai-backups</code> → prune au-delà des 30 plus récents. Détail dans <a href="../../devops/backup-process/"><code>docs/devops/backup-process.md</code></a>.</td>
+<td>1-2 min</td>
+</tr>
+</tbody>
+</table>
+<h2 id="couverture-de-code">Couverture de code<a class="headerlink" href="#couverture-de-code" title="Permanent link">&para;</a></h2>
+<p>Deux générateurs distincts, deux <strong>commentaires PR « sticky »</strong> distincts dans la conversation de la PR (édités sur chaque push, pas spammés). Aucun service externe — tout reste dans GitHub Actions.</p>
+<table>
+<thead>
+<tr>
+<th>Côté</th>
+<th>Générateur</th>
+<th>Format consommé</th>
+<th>Action commentaire</th>
+<th>Préfixe du sticky comment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend</td>
+<td><code>kover</code> (Gradle plugin, <code>./gradlew koverHtmlReport koverXmlReport</code>)</td>
+<td>XML JaCoCo-compatible (<code>backend/build/reports/kover/report.xml</code>)</td>
+<td><a href="https://github.com/madrapps/jacoco-report"><code>madrapps/jacoco-report@v1.8.0</code></a></td>
+<td><code>Backend coverage</code> (via <code>title</code>)</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>Vitest reporters <code>json-summary</code> + <code>json</code> (configurés dans <code>angular.json &gt; test &gt; configurations &gt; coverage</code>)</td>
+<td><code>coverage-summary.json</code> + <code>coverage-final.json</code> sous <code>frontend/coverage/frontend/</code></td>
+<td><a href="https://github.com/davelosert/vitest-coverage-report-action"><code>davelosert/vitest-coverage-report-action@v2</code></a></td>
+<td><code>Frontend</code> (via <code>name</code>)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Pourquoi un pin précis (<code>@v1.8.0</code>) et pas le tag major <code>@v1</code></strong> : le tag flottant <code>@v1</code> de <code>madrapps/jacoco-report</code> est sticky à un commit ancien (<code>be8ba5e9</code>) dont l'<code>action.yml</code> n'expose que 4 inputs (<code>path</code> singulier, <code>token</code>, <code>min-coverage-overall</code>, <code>min-coverage-changed-files</code>). Les inputs <code>paths</code> (pluriel, support multi-fichiers + glob), <code>title</code> et <code>update-comment</code> ont été introduits en v1.7.0 (2024-08) mais le mainteneur n'a jamais re-pointé le tag major. Sans le pin explicite, l'action plante avec <code>ENOENT: no such file or directory, open ''</code> parce que notre <code>paths:</code> est silencieusement ignoré (input inconnu) et l'action retombe sur un chemin vide. Le bump 1.7.2 → 1.8.0 (Dependabot, commit <code>0f5ac10</code>) reste minor donc sûr ; vérifier le changelog upstream avant un futur bump.</p>
+</blockquote>
+<p><strong>Pourquoi 2 commentaires séparés et pas 1 unifié</strong> : (a) les actions de chaque side lisent leur propre format natif (XML JaCoCo pour Kover, JSON Istanbul pour Vitest) — pas de format pivot intermédiaire à maintenir, (b) chaque workflow ne s'exécute que sur les changes pertinents (<code>paths:</code> filter), donc une PR purement docs ne kicke aucun workflow et n'a aucun comment couverture (vs un service unifié type Codecov qui devrait soit fail soft, soit reposter le même comment à chaque trigger). Trade-off accepté : 2 entrées au lieu d'une dans la timeline PR.</p>
+<p><strong>Permissions</strong> : <code>pull-requests: write</code> au scope <strong>job</strong> (le baseline workflow-level reste <code>contents: read</code>). Les deux actions utilisent automatiquement le <code>GITHUB_TOKEN</code> déjà fourni par Actions — pas de secret à provisionner.</p>
+<p><strong>Conditions de déclenchement</strong> : <code>if: always() &amp;&amp; github.event_name == 'pull_request' &amp;&amp; hashFiles(&lt;rapport&gt;) != ''</code>. Composantes :
+- <code>always()</code> — le step tourne même si un step antérieur a failed (un test rouge laisse quand même le rapport partiel utile).
+- <code>github.event_name == 'pull_request'</code> — no-op sur les pushes vers master ; il n'y a pas de PR à commenter.
+- <code>hashFiles(...)</code> — garde contre un crash dans la génération du rapport en amont (Kover/Vitest plante avant d'écrire le fichier). Sans ce guard, le step échouerait sur fichier manquant et empilerait une fausse erreur CI au-dessus de la vraie cause.</p>
+<p><strong>Step Summary conservé en parallèle</strong> : chaque workflow continue d'écrire la table de totaux dans <code>$GITHUB_STEP_SUMMARY</code> (pure Node côté front, pure Python côté back). C'est ce qui s'affiche sur la page du run lui-même — utile quand on est dans Actions plutôt que dans la PR. Les deux surfaces sont indépendantes : un sticky comment qui n'est pas posté (push master, ou rapport absent) n'affecte pas le step summary.</p>
+<p><strong>Pas de seuil bloquant</strong> — les deux actions sont configurées avec <code>min-coverage-overall: 0</code> côté back et aucun threshold côté front. On veut <strong>observer la couverture évoluer dans la PR</strong>, pas faire échouer le merge sur un drop temporaire. Si on veut un guard plus tard, c'est un changement de YAML d'une ligne par côté.</p>
+<h2 id="strategie-de-cache">Stratégie de cache<a class="headerlink" href="#strategie-de-cache" title="Permanent link">&para;</a></h2>
+<p>Chaque workflow a son cache calibré pour minimiser le temps de feedback sans gonfler le storage GitHub Actions.</p>
+<h3 id="backend-backendyml">Backend (<code>backend.yml</code>)<a class="headerlink" href="#backend-backendyml" title="Permanent link">&para;</a></h3>
+<p>Géré par <strong><code>gradle/actions/setup-gradle@v6</code></strong> — action officielle Gradle qui orchestre <strong>trois caches</strong> :</p>
+<ol>
+<li><strong>Dependency cache</strong> — <code>~/.gradle/caches</code> : tous les JAR de dépendances Maven Central / Spring. Invalidé par <code>gradle.lockfile</code> ou changement de version dans <code>build.gradle.kts</code>.</li>
+<li><strong>Build cache</strong> — résultats incrémentaux des tâches : <code>compileKotlin</code>, <code>test</code>, <code>detekt</code>, <code>spotlessCheck</code>. Si une tâche a déjà tourné avec les mêmes inputs, son output est réutilisé sans re-exécution. <strong>C'est le gros gain</strong> sur les runs incrémentaux.</li>
+<li><strong>Configuration cache</strong> — skip la phase de configuration de Gradle (~5-10 s par run).</li>
+</ol>
+<p>Mode <strong>read-only sur les PRs</strong> (<code>cache-read-only: ${{ github.ref != 'refs/heads/master' }}</code>) — évite que deux PRs concurrentes ne s'écrasent leurs caches mutuellement. La branche <code>master</code> reste l'autorité d'écriture.</p>
+<p>Flag <code>--build-cache</code> explicite sur <code>./gradlew build</code> pour activer le 2nd niveau.</p>
+<h3 id="frontend-frontendyml">Frontend (<code>frontend.yml</code>)<a class="headerlink" href="#frontend-frontendyml" title="Permanent link">&para;</a></h3>
+<p>Un seul cache, géré par <code>actions/setup-node@v6</code> avec <code>cache: 'npm'</code> et <code>cache-dependency-path: frontend/package-lock.json</code> — couvre les deps installées par <code>npm ci</code>. Un cache Angular incremental (<code>frontend/.angular/cache</code>) avait été tenté en parallèle mais retiré : <code>ng build</code> en mode production ne génère pas le répertoire (<code>Path Validation Error: Path(s) specified in the action for caching do(es) not exist</code>), donc le cache n'était jamais alimenté et le step n'apportait que de l'overhead. Le coût de redémarrage à froid sur le frontend reste sous les 60 s, suffisant.</p>
+<h3 id="codeql-codeqlyml">CodeQL (<code>codeql.yml</code>)<a class="headerlink" href="#codeql-codeqlyml" title="Permanent link">&para;</a></h3>
+<p>Trois caches, <strong>mais le build cache Gradle est explicitement bypassé</strong> sur ce workflow :</p>
+<ol>
+<li><strong>Gradle dependency cache uniquement</strong> (matrix <code>java-kotlin</code>) — même <code>gradle/actions/setup-gradle@v6</code> que <code>backend.yml</code>, mais la step <code>Compile Kotlin</code> passe <code>--rerun-tasks</code> (et <strong>pas</strong> <code>--build-cache</code>). Pourquoi : CodeQL extrait l'AST Java/Kotlin via un agent JVM injecté pendant la compilation. Si <code>compileKotlin</code> ressort <code>FROM-CACHE</code> ou <code>UP-TO-DATE</code>, l'agent ne voit rien → erreur fatale <code>database finalize</code> exit 32 (« No source code seen during build »). Le dep cache (JARs Maven) est OK car c'est juste du download. Le build cache (outputs incrémentaux) est interdit ici par construction.</li>
+<li><strong>TRAP cache</strong> (<code>trap-caching: true</code> sur <code>github/codeql-action/init@v4</code>) — cache la BDD CodeQL extraite par langage. C'est le seul cache de "résultats" qui marche pour CodeQL parce qu'il vit côté outil (pas côté Gradle), donc indépendant des up-to-date checks Gradle. Sur Java/Kotlin l'extraction est le bottleneck (~2 min cold) ; le TRAP cache la fait tomber sous 30 s sur runs incrémentaux.</li>
+<li><strong>CodeQL DB serveur</strong> — auto-géré par GitHub Code Scanning, pas à configurer.</li>
+</ol>
+<blockquote>
+<p><strong>Gotcha à connaître</strong> : tout ajout futur de <code>--build-cache</code> ou <code>cache-from-task-outputs</code> à la step <code>Compile Kotlin</code> recasse l'analyse en silence (le job vert pendant des semaines puis rouge dès qu'un PR effleure du Kotlin déjà compilé). Voir <a href="https://gh.io/troubleshooting-code-scanning/no-source-code-seen-during-build">docs GitHub : "No source code seen during build"</a>.</p>
+</blockquote>
+<h3 id="diagnostiquer-un-cache-miss">Diagnostiquer un cache miss<a class="headerlink" href="#diagnostiquer-un-cache-miss" title="Permanent link">&para;</a></h3>
+<p><code>gradle/actions/setup-gradle@v6</code> ajoute un summary lisible à chaque run avec le récap <strong>cache hits / misses</strong> par layer. Si un run est plus lent que prévu, regarde dedans avant tout. Causes fréquentes :</p>
+<ul>
+<li>Premier run après merge sur master : warmup attendu, pas grave</li>
+<li>Lockfile changé : invalidation normale du dependency cache</li>
+<li>Branche feature avec <code>cache-read-only: true</code> qui ne peut pas écrire : c'est voulu (anti-thrash), accepter le warmup</li>
+</ul>
+<h2 id="permissions-github_token">Permissions GITHUB_TOKEN<a class="headerlink" href="#permissions-github_token" title="Permanent link">&para;</a></h2>
+<p>Principe : <strong>chaque workflow déclare un bloc <code>permissions:</code> au niveau workflow</strong> (baseline <code>contents: read</code>) et <strong>override au niveau job</strong> quand un job a besoin de plus. Le défaut GitHub est trop permissif (read/write sur tout le repo).</p>
+<p>Pourquoi le bloc workflow-level est obligatoire en plus du job-level : la règle CodeQL <code>actions/missing-workflow-permissions</code> (et la règle Sonar équivalente) ne reconnaît que la déclaration au scope workflow. Un job-level seul laisse tout futur job ajouté retomber sur le token permissif par défaut — la règle protège contre cette dérive.</p>
+<table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Workflow-level</th>
+<th>Job-level (override)</th>
+<th>Pourquoi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backend.yml</code></td>
+<td><code>contents: read</code></td>
+<td><code>+ security-events: write</code></td>
+<td>Upload SARIF Detekt vers Code Scanning</td>
+</tr>
+<tr>
+<td><code>frontend.yml</code></td>
+<td><code>contents: read</code></td>
+<td><code>contents: read</code> (redondant, exigé par Sonar)</td>
+<td>Build + tests, pas de write nécessaire ; la redondance fige l'intention par job</td>
+</tr>
+<tr>
+<td><code>codeql.yml</code></td>
+<td><code>contents: read</code></td>
+<td><code>+ security-events: write</code> <code>+ packages: read</code> <code>+ actions: read</code></td>
+<td>Standard CodeQL — upload findings + lecture deps + lecture workflows</td>
+</tr>
+<tr>
+<td><code>docs.yml</code></td>
+<td><code>contents: read</code></td>
+<td><code>contents: write</code> (override)</td>
+<td><code>gh-deploy</code> push sur la branche <code>gh-pages</code></td>
+</tr>
+<tr>
+<td><code>smoke-wif.yml</code></td>
+<td><code>contents: read</code></td>
+<td><code>+ id-token: write</code></td>
+<td>OIDC token GitHub à échanger contre access token GCP via WIF</td>
+</tr>
+<tr>
+<td><code>deploy.yml</code></td>
+<td><code>contents: read</code></td>
+<td><code>+ id-token: write</code></td>
+<td>Idem — WIF auth pour <code>gcloud run deploy</code></td>
+</tr>
+<tr>
+<td><code>backup-postgres.yml</code></td>
+<td><code>contents: read</code></td>
+<td><code>+ id-token: write</code></td>
+<td>Idem — WIF auth pour <code>gcloud secrets versions access</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="code-scanning-security-tab">Code Scanning (Security tab)<a class="headerlink" href="#code-scanning-security-tab" title="Permanent link">&para;</a></h2>
+<p>Deux sources alimentent l'onglet <strong>Security → Code scanning</strong> du repo :</p>
+<ul>
+<li><strong>CodeQL</strong> (deux catégories : <code>java-kotlin</code>, <code>javascript-typescript</code>) — analyse statique vulnérabilités + anti-patterns, couverture native par GitHub. Findings classés par gravité.</li>
+<li><strong>Detekt SARIF</strong> (catégorie <code>detekt</code>) — uploadé par <code>backend.yml</code> après chaque <code>./gradlew build</code>. Détecte les complexités cyclomatiques, code smells Kotlin spécifiques. Voir <a href="../../backend/config/detekt/detekt.yml"><code>detekt.yml</code> config</a> pour les règles tunées.</li>
+</ul>
+<p>Les findings des deux outils cohabitent dans la même UI, dédupliqués par règle + emplacement. Si tu remontes un faux positif, <strong>dismissable</strong> depuis l'UI sur un finding individuel ou via la config (Detekt) pour la règle entière.</p>
+<h2 id="detekt-analyse-statique-kotlin">Detekt — analyse statique Kotlin<a class="headerlink" href="#detekt-analyse-statique-kotlin" title="Permanent link">&para;</a></h2>
+<p>Configuration : <a href="../../backend/config/detekt/detekt.yml"><code>backend/config/detekt/detekt.yml</code></a>.</p>
+<p>Tuning pragmatique pour Kotlin/Spring/JPA :
+- <code>LongParameterList</code> exclu sur <code>@Entity</code> / <code>@Embeddable</code> (les entités JPA ont légitimement 8-14 params constructeur)
+- <code>MagicNumber</code> ignore une whitelist large (HTTP codes, percent, timeouts standard) + exclut tests + <code>MockMarketChartClient</code> + <code>IndicatorCalculator</code>
+- <code>TooGenericExceptionCaught</code> exclut adapters HTTP / parsers / runners (catches larges légitimes)
+- <code>SwallowedException</code> accepte <code>_</code> / <code>ignored*</code> / <code>expected*</code> comme noms de variables (idiome Kotlin)</p>
+<p><code>WildcardImport</code> est désactivée — l'enforcement vit côté <strong>Spotless</strong> custom step (cf. <code>backend/build.gradle.kts</code>) plutôt que Detekt parce qu'on veut que la pipeline <strong>casse</strong> sur l'introduction d'un nouveau wildcard, pas seulement qu'elle rapporte. Volontairement pas de ktlint comme runner : avec <code>ij_kotlin_packages_to_use_import_on_demand</code> ktlint applique la sémantique IntelliJ et <strong>force</strong> les wildcards sur les packages listés, comportement inverse au but recherché (cf. <code>architecture.md &gt; Décisions techniques notables</code> pour le rationale détaillé du rollback). Le custom step Spotless <code>no-wildcard-imports</code> scanne les imports et lance <code>GradleException</code> sur tout wildcard hors allowlist de 14 packages (<code>java.util.*</code>, <code>jakarta.persistence.*</code>, JUnit <code>Assertions.*</code>, MockMvc helpers, Mockito-kotlin, Spring web.bind.annotation, plus 7 packages internes <code>com.portfolioai.*</code> à shrinker progressivement). Garder la rule Detekt active aurait dupliqué le rapport sans valeur ajoutée.</p>
+<p>Lancer en local :</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>backend
+./gradlew<span class="w"> </span>detekt<span class="w">              </span><span class="c1"># rapport HTML + SARIF</span>
+open<span class="w"> </span>build/reports/detekt/detekt.html
+</code></pre></div>
+<p>Le <code>ignoreFailures = true</code> actuel signifie que Detekt n'échoue pas le build, juste génère le rapport. Le jour où on flippe à <code>false</code>, soit on fix les findings, soit on génère un baseline (<code>./gradlew detektBaseline</code>) pour grandfather la dette existante.</p>
+<h2 id="eslint-analyse-statique-typescript-angular">ESLint — analyse statique TypeScript / Angular<a class="headerlink" href="#eslint-analyse-statique-typescript-angular" title="Permanent link">&para;</a></h2>
+<p>Configuration : <a href="../../frontend/eslint.config.js"><code>frontend/eslint.config.js</code></a> (flat config, Angular ESLint 22).</p>
+<p>Extends posés par le schematic <code>ng add @angular-eslint/schematics</code> :
+- TS : <code>eslint:recommended</code> + <code>tseslint:recommended</code> + <code>tseslint:stylistic</code> + <code>angular-eslint:tsRecommended</code>
+- HTML : <code>angular-eslint:templateRecommended</code> + <code>angular-eslint:templateAccessibility</code> (a11y)
+- <code>eslint-config-prettier</code> appliqué en dernier pour désactiver les règles formatage qui chevauchent Prettier (qui reste seul format)</p>
+<p><strong>Pas</strong> de <code>recommended-type-checked</code> côté TS — 5-10× plus lent (résolution complète des types) ; à activer plus tard en session dédiée si on veut serrer.</p>
+<p>Step CI dédiée dans <code>frontend.yml</code> <strong>avant le build</strong> (un linter qui pète tôt évite de cramer ~10 s de build pour rien). Échec sur erreur → CI rouge, pas de tolérance aux warnings (zéro warning aujourd'hui, on garde la règle binaire).</p>
+<p>Lancer en local :</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>frontend
+npm<span class="w"> </span>run<span class="w"> </span>lint<span class="w">        </span><span class="c1"># rapport stdout</span>
+npm<span class="w"> </span>run<span class="w"> </span>lint<span class="w"> </span>--<span class="w"> </span>--fix<span class="w">   </span><span class="c1"># auto-fix ce qui est fixable (formatage, array-type, …)</span>
+</code></pre></div>
+<h2 id="dependabot-auto-prs-deps-obsoletes">Dependabot — auto-PRs deps obsolètes<a class="headerlink" href="#dependabot-auto-prs-deps-obsoletes" title="Permanent link">&para;</a></h2>
+<p>Configuration : <a href="../../.github/dependabot.yml"><code>.github/dependabot.yml</code></a>.</p>
+<ul>
+<li><strong>Scan quotidien 06:00 America/Toronto</strong> sur trois écosystèmes : <code>gradle</code> (backend), <code>npm</code> (frontend), <code>github-actions</code>. Le bruit reste maîtrisé par le filtre patch-only ci-dessous.</li>
+<li><strong>Patch only</strong> sur tous les écosystèmes (<code>update-types: [patch]</code>) — 1 PR par eco par semaine, le bruit reste dans le couloir des bug-fixes upstream. Les minors et majors restent <strong>manuels</strong> : ils peuvent embarquer des breaking changes silencieux (Kotlin 2.1 → 2.3 a cassé le <code>resolutionStrategy</code> Detekt en routine), pas envie de checker des PRs qui plantent.</li>
+<li><strong>Ignore list</strong> (belt-and-suspenders au cas où la policy bouge — déjà bloqués par le patch-only) :</li>
+<li><code>typescript</code> major bumps (Angular 22 borne à <code>&gt;=5.9 &lt;6.0</code>)</li>
+<li><code>io.gitlab.arturbosch.detekt</code> major bumps (refactor manuel demandé pour 2.0)</li>
+<li><code>com.diffplug.spotless</code> major bumps (peut reformater toute la codebase)</li>
+<li><code>zone.js</code> (zoneless explicite, garde-fou si transitif)</li>
+<li><strong>Groups</strong> (tous filtrés sur <code>update-types: [patch]</code>) :</li>
+<li><code>angular</code> : tous <code>@angular/*</code>, <code>@angular-*/*</code>, <code>@ngtools/*</code> ensemble (peer-deps internes)</li>
+<li><code>ngx-translate</code> : <code>core</code> + <code>http-loader</code></li>
+<li><code>spring-boot</code> : starter + plugin + dependency-management</li>
+</ul>
+<h2 id="quand-un-workflow-casse">Quand un workflow casse<a class="headerlink" href="#quand-un-workflow-casse" title="Permanent link">&para;</a></h2>
+<h3 id="premier-reflexe-regarder-le-summary">Premier réflexe : regarder le summary<a class="headerlink" href="#premier-reflexe-regarder-le-summary" title="Permanent link">&para;</a></h3>
+<p>GitHub affiche un résumé en haut de chaque run. Pour les workflows avec setup-gradle / setup-node, le summary inclut un récap cache → identifier instantanément un cache miss inattendu.</p>
+<h3 id="erreurs-courantes">Erreurs courantes<a class="headerlink" href="#erreurs-courantes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Erreur</th>
+<th>Cause probable</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Property 'X' is misspelled</code> (Detekt)</td>
+<td>Règle YAML dans le mauvais ruleset (style vs naming vs exceptions)</td>
+<td>Cf. doc Detekt 1.23 — chaque rule a son ruleset</td>
+</tr>
+<tr>
+<td><code>Run failed with N invalid config properties</code> (Detekt)</td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>No source code seen during build</code> (CodeQL, exit 32 sur <code>database finalize</code>)</td>
+<td><code>compileKotlin</code> est sorti <code>FROM-CACHE</code> ou <code>UP-TO-DATE</code> → l'agent JVM CodeQL n'a vu aucune compilation. Symptôme typique après une PR qui touche à peine le Kotlin et où le build cache est restauré tel quel</td>
+<td>Vérifier que la step <code>Compile Kotlin</code> de <code>codeql.yml</code> passe bien <code>--rerun-tasks</code> et <strong>pas</strong> <code>--build-cache</code>. Voir section "Stratégie de cache &gt; CodeQL" plus haut</td>
+</tr>
+<tr>
+<td><code>Cannot connect to the Docker daemon</code> (backend test)</td>
+<td>Testcontainers échoue à booter son PG parce que Docker n'est pas dispo sur le runner</td>
+<td>Vérifier que la job CI tourne sur <code>ubuntu-latest</code> (Docker pré-installé) ; sur un self-hosted runner, installer Docker + ajouter l'user runner au group <code>docker</code>.</td>
+</tr>
+<tr>
+<td><code>npm error ERESOLVE</code> (frontend Dependabot PR)</td>
+<td>Conflit peer-dep — souvent une majeure de dep liée (TS / Angular)</td>
+<td>Fermer la PR, attendre que la dep amont accepte. Penser à ajouter à l'<code>ignore</code> Dependabot si récurrent</td>
+</tr>
+<tr>
+<td><code>Property 'X' cannot be resolved</code> (Spring config)</td>
+<td>Warning IDE bénin sur les props lues via <code>@Value</code></td>
+<td>Ignorer — ça ne casse pas le build</td>
+</tr>
+</tbody>
+</table>
+<h3 id="re-run-dun-workflow">Re-run d'un workflow<a class="headerlink" href="#re-run-dun-workflow" title="Permanent link">&para;</a></h3>
+<p>Onglet Actions → cliquer sur le run → bouton "Re-run failed jobs" ou "Re-run all jobs". Les caches sont préservés, le re-run profite de tout ce qui a déjà tourné.</p>
+<h2 id="roadmap-ci-ops">Roadmap CI / ops<a class="headerlink" href="#roadmap-ci-ops" title="Permanent link">&para;</a></h2>
+<p>À venir (cf. <a href="../../projet/backlog/"><code>backlog.md</code></a>) :</p>
+<ul>
+<li><strong>Cache Vitest en CI</strong> — à mesurer avant de coder. La transform TS→JS de Vitest vit dans <code>node_modules/.vite/</code> donc wipée à chaque <code>npm ci</code> ; déplacer le cache dans un dossier persistable + <code>actions/cache@v5</code> dédié peut couper la part Vitest si elle dépasse les 30 s. Trigger d'arbitrage : mesurer la durée Vitest brute en CI sur 5-10 runs avant de décider</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../providers/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Providers externes">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Providers externes
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../devops/commandes-pratiques/" class="md-footer__link md-footer__link--next" aria-label="Next: Commandes pratiques">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Commandes pratiques
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

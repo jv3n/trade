@@ -1,0 +1,2336 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/audits/2026-05-16-pre-v0.5.1/">
+      
+      
+        <link rel="prev" href="../2026-05-17-pre-v0.6.0-phase4/">
+      
+      
+        <link rel="next" href="../2026-05-14-fin-phase-3/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2026-05-16 — Revue globale pré-v0.5.1 - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#revue-de-code-globale-pre-v051-2026-05-16" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-05-16 — Revue globale pré-v0.5.1
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#perimetre-couvert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Périmètre couvert
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#critique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mineur-a-discuter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineur / À discuter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#faux-positifs-filtres" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Faux positifs filtrés
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Frontend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#perimetre-couvert_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Périmètre couvert
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#critique_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mineur-a-discuter_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineur / À discuter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#faux-positifs-filtres_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Faux positifs filtrés
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verdict_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#claude-doc-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .claude/ + doc-set
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=".claude/ + doc-set">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#perimetre-couvert_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Périmètre couvert
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#critique_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#important_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mineur-a-discuter_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineur / À discuter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#faux-positifs-filtres_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Faux positifs filtrés
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verdict_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verdict-global-et-prochaines-etapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verdict global et prochaines étapes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verdict global et prochaines étapes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#action-plan-suggere" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Action plan suggéré
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decisions-retenues-du-dry-run-code-reviewer-avant-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décisions retenues du dry-run code-reviewer (avant audit)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../roadmap/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Projet
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Audits
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="revue-de-code-globale-pre-v051-2026-05-16">Revue de code globale — pré-v0.5.1 (2026-05-16)<a class="headerlink" href="#revue-de-code-globale-pre-v051-2026-05-16" title="Permanent link">&para;</a></h1>
+<p><strong>Scope</strong> : audit de la delta <code>v0.5.0..HEAD</code> (Phase 3 close 2026-05-14 09:08 → maintenant), 19 commits, 213 fichiers modifiés (+3 765 / −2 382 lignes). Trois grands chantiers : (1) <strong>dette technique backend</strong> — 7 refactors structurels (B1 ports <code>infrastructure/ → domain/</code>, B2 <code>MarketUnavailableException → shared/UpstreamUnavailableException</code>, B3 <code>SymbolSearchService</code> split en deux beans avec <code>SymbolValidator</code> dédié, B6 <code>AppConfigService</code> 14 <code>@Value</code> → 3 <code>@Component</code> data classes, B7 <code>spring-boot/SKILL.md</code> test section corrigée, plus 2 fixes Ollama + 1 fix lower-bound observability) ; (2) <strong>dette technique frontend</strong> — pilote <code>Resource builders on the port</code> sur <code>SnapshotRepository</code> + <code>Suivi</code>, split <code>core/</code> en 3 axes (<code>api/&lt;bucket&gt;/</code> + <code>local/&lt;bucket&gt;/</code> + <code>app-state/</code>), bascule <code>LlmTimeoutService</code> + <code>OllamaStatusService</code> <code>Promise → Observable</code>, OllamaPullDialog i18n, drop <code>/settings/prompt-preview</code> ; (3) <strong>chantier de l'après-midi 2026-05-16</strong> — création de 4 skills backend (<code>kotlin-idioms</code>, <code>spring-boot</code>, <code>hexagonal-ddd</code>, <code>folders-structure-backend</code>), création du subagent <code>code-reviewer</code> + slash command <code>/code-review</code>, renumérotage des phases (Phase 4 = Auth nouveau, Phase 5 = Deploy inchangé, Phase 6 = ancienne Phase 4 Vision/DAG), nettoyage substantiel de la Dette technique (démotions 🟡 → 🟢, freezes ⏳ → 🧊, closures de 2 tickets), conversion des liens README en HTML <code>target="_blank"</code>, audit doc-maintainer Pass 2 + Pass 3.</p>
+<p><strong>Méthode</strong> : 3 subagents <code>general-purpose</code> Claude lancés <strong>en parallèle</strong> sur trois tranches cohérentes — Backend (8 commits, <code>backend/*</code>), Frontend (5 commits, <code>frontend/*</code>), <code>.claude/</code> + doc-set (6 commits, <code>.claude/*</code> + <code>docs/*</code> + <code>README.md</code>). Chacun briefé sur les conventions ground truth (<code>CLAUDE.md</code>, <code>architecture.md</code>, <code>ddd.md</code>, skills pertinents) et sur l'audit précédent comme format de référence (<code>2026-05-14-fin-phase-3.md</code>). Sortie : punch-lists structurées (Critique / Important / Mineur) avec <code>fichier:ligne</code> + suggestion + rationale, plus une section <code>Faux positifs filtrés</code> pour traçabilité. Vérification croisée des « Critiques » par le main thread avant consolidation.</p>
+<p><strong>État du commit au moment de la revue</strong> : branche <code>master</code>, dernier commit committé <code>8bb04df chore: phase renumber + code-reviewer agent + dette cleanup</code>. Working tree clean. CI verte (« la pipeline passe » confirmé par l'utilisateur avant lancement de l'audit). 14 repositories frontend répartis sur 3 axes (<code>core/api/</code> 8 buckets + <code>core/local/</code> 1 bucket + <code>core/app-state/</code> 2 services). 9 modules backend stables (pas de nouvelle migration Flyway — V8 reste la dernière). 13 skills <code>.claude/</code> + 2 subagents (<code>doc-maintainer</code> + <code>code-reviewer</code> nouveau). Tag candidat : <code>v0.5.1</code> (patch — pas de phase close depuis Phase 3, la delta est dette tech + infra Claude + renumérotage prospectif).</p>
+<hr />
+<h2 id="resume-executif">Résumé exécutif<a class="headerlink" href="#resume-executif" title="Permanent link">&para;</a></h2>
+<p>App globalement saine pour un tag <code>v0.5.1</code>. La delta <code>v0.5.0..HEAD</code> n'est pas une livraison de feature mais un <strong>consolidation pass</strong> : refactors structurels backend + frontend, dette technique sérieusement nettoyée (3 tickets clos, 4 démotés, 2 frozen), infra Claude étoffée (4 nouveaux skills backend + nouveau code-reviewer agent), renumérotage des phases pour mettre OAuth2 en Phase 4 avant le Deploy Phase 5. Les patterns établis ont tenu : ports outbound vivent maintenant en <code>domain/</code> (hexagonal strict), exception cross-context centralisée dans <code>shared/</code>, <code>@Lazy self</code> éliminé au profit de la split-bean discipline, <code>@Value</code> groupés en holders cohérents, frontend split <code>core/</code> 3-axes propre, pilote rxResource validé sur 1 repo.</p>
+<p><strong>2 Critiques identifiés — patches 1-liner chacun, à appliquer avant tag</strong> :</p>
+<ol>
+<li>
+<p><strong>Backend</strong> — <code>GlobalExceptionHandler.kt:39</code> : le body 503 reste hardcodé à « Données de marché momentanément indisponibles » après le rename B2 <code>MarketUnavailableException → UpstreamUnavailableException</code>. L'exception couvre désormais 5 providers (market + news + analyst + earnings + LLM) mais l'utilisateur voit toujours « marché » sur tous les 503. Le journal-livraisons claim explicitement « message HTTP 503 inchangé (« Données momentanément indisponibles ») » — le journal s'est trompé sur le verbe « inchangé », le code a raté le sweep.</p>
+</li>
+<li>
+<p><strong>Frontend</strong> — <code>configuration.ts:288</code> + <code>:323</code> : <code>this.timeoutService.refresh()</code> appelé sans <code>.subscribe()</code> après la migration <code>22fa6f5</code> qui a basculé l'API de Promise vers Observable. <strong>Régression runtime silencieuse</strong> : sauvegarder ou reset la clé <code>llm.timeout-seconds</code> ne rafraîchit plus le signal <code>LlmTimeoutService.seconds</code>, le label « estimation max » sous le slider reste figé jusqu'au prochain reload. Le test <code>configuration.spec.ts:520-529</code> stubbe la méthode et vérifie l'appel via <code>toHaveBeenCalledTimes(1)</code> sans tester l'effet du retour Observable cold — le mock masque la régression.</p>
+</li>
+</ol>
+<p><strong>9 Important</strong> : 3 par tranche. Côté backend : <code>Clock</code> seam fragile sur <code>JobEventPublisher</code> (default value Kotlin sans <code>@Bean Clock</code>), asymétrie 404 vs 5xx dans <code>OllamaStatusService.pullModel</code>, <code>@Suppress("TooGenericExceptionCaught")</code> sur <code>WatchlistService.lookupInstrumentType</code>. Côté frontend : pas de spec dédié sur <code>snapshot.repository.ts</code> (les builders rxResource testés indirectement via <code>suivi.spec.ts</code>), <code>effect()</code> dans <code>positionsCache(...)</code> qui capture le <code>DestroyRef</code> du caller sans contrainte explicite, mocks <code>mockResolvedValue</code> qui retournent Promise au lieu d'Observable depuis la migration. Côté doc-set : <code>architecture.md</code> lignes 198 + 254 décrivent toujours la stratégie de cache comme dette 🟡 alors qu'elle a été démotée à 🟢 ce matin, <code>spring-boot/SKILL.md</code> ligne 268 mentionne « Phase 4 aggregation/ » périmé par le renumérotage, <code>README.md</code> table doc manque une row <code>Sources de données</code> qui existe dans <code>mkdocs.yml &gt; nav</code>.</p>
+<p><strong>~14 Mineur</strong> : polish (KDoc verbose, helpers dupliqués déjà filed en dette, imports nested companion, hint string non i18n côté <code>ConfigTestClient</code>, commit <code>chore(.claude)</code> qui livrait en fait un adapter Mock — scope creep rétrospectif), 5 refs forward-looking « Phase 4 » résiduelles dans les fichiers historiques (<code>audits/2026-05-10</code> + <code>audits/2026-05-14</code> + 1 occurrence ratée dans <code>journal-livraisons.md</code> ligne 88) — le code-reviewer agent recommande de laisser les audits historiques intacts mais de patcher l'occurrence journal qui contredit la Pass 3.</p>
+<p><strong>Faux positifs filtrés</strong> : 11 au total entre les 3 agents (suspicion boot fail sans <code>@Bean Clock</code> → en réalité Spring Kotlin honore le défaut, B6 « 14 → 6 params » comptabilité correcte, B1 SectorClassifier port présent en <code>domain/</code>, <code>useValue</code> mocks sur ports sans builders OK, drop <code>/settings/prompt-preview</code> complet, OllamaPullDialog i18n clés bien présentes, etc.). Trace conservée pour rendre la review reproductible.</p>
+<p><strong>Forces</strong> :</p>
+<ul>
+<li><strong>3 reviews subagent en parallèle ont fonctionné une 2ᵉ fois</strong> — chaque agent reste dans une fenêtre de contexte gérable, les 3 vues se complètent sans recouvrement (chaque commit appartient à une seule tranche). Le main thread synthétise et arbitre les 2 Critiques.</li>
+<li><strong>Tests-as-documentation conservés</strong> : <code>SymbolValidatorTest</code> 4 tests sémantiques + class-level docstring, <code>AppConfigServiceTest.newService()</code> helper réécrit, <code>JobEventPublisherTest</code> avec <code>MutableClock</code> test seam, lower-bound guard <code>priceAtOrAfter</code> pin pour observability + bias. Les commit messages B-tickets décrivent le <em>why</em> (le Detekt threshold est descendu à 8 parce que les holders absorbent les params naturellement, pas parce qu'on est devenu plus strict pour les autres beans).</li>
+<li><strong>Discipline doc-set</strong> : Pass 2 de doc-maintainer a couvert 8 fichiers du renumérotage en une session, Pass 3 a corrigé 7 résidus drift-driven sortis du dry-run code-reviewer. Le CHANGELOG 2026-05-16 trace les 3 passes proprement.</li>
+<li><strong>Skills backend immédiatement consommés</strong> : les 4 skills créés le 2026-05-15 (<code>kotlin-idioms</code>, <code>spring-boot</code>, <code>hexagonal-ddd</code>, <code>folders-structure-backend</code>) ont déjà été validés par les refactors B1/B2/B3/B6 qui suivent (et raffinés en passant — c6b78b8 + 9f8f828 + 2517735 + d203ede + 16feff4 portent chacun un fix skill aligné). La valeur d'un skill se mesure au moment où on l'utilise pour la première fois — ici, validation immédiate.</li>
+<li><strong>Convention <code>Resource builders on the port</code> documentée avant généralisation</strong> : pilote <code>SnapshotRepository</code> + entrée dans <code>angular-signals/SKILL.md &gt; Resource builders live on the port itself</code>, ticket dette 🟢 ouvert pour la généralisation aux 13 autres repos. Le pattern est défensible et les premiers consumers (<code>Suivi</code>) montrent le bénéfice mesurable (<code>−40 lignes</code>, zéro <code>subscribe</code>).</li>
+</ul>
+<hr />
+<h2 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h2>
+<h3 id="perimetre-couvert">Périmètre couvert<a class="headerlink" href="#perimetre-couvert" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>16feff4 refactor(backend): hoist outbound ports infrastructure/ → domain/</code> — ✅ 7 ports déplacés (<code>MarketChartClient</code>, <code>SymbolSearchClient</code>, <code>SectorClassifier</code>, <code>NewsClient</code>, <code>AnalystRecommendationClient</code>, <code>EarningsClient</code>, <code>LlmClient</code>), KDoc bracket-refs dégradés en plain backticks, imports propres, journal entry exhaustive.</li>
+<li><code>9f8f828 refactor(backend): rename MarketUnavailableException → shared/UpstreamUnavailableException</code> — ⚠️ sweep correct, mais le <strong>body 503 reste « Données de marché… »</strong> alors que l'exception couvre maintenant news/analyst/earnings/LLM (cf. Critique #1).</li>
+<li><code>2517735 refactor(backend): split SymbolSearchService cache vs validation into two beans</code> — ✅ <code>@Lazy self</code> retiré, <code>SymbolValidator</code> <code>@Component</code> dédié, <code>WatchlistService</code> recâblé, 4 tests dédiés + 6 sites mocks adaptés.</li>
+<li><code>d203ede refactor(backend): group AppConfigService @Value params into 3 @Component holders</code> — ✅ 3 data classes + service 14 → 6 params + Detekt <code>constructorThreshold</code> 16 → 8, <code>AppConfigServiceTest.newService()</code> réécrit proprement.</li>
+<li><code>274a47d test(backend): pin pruneStale TTL eviction and Ollama 200 status:error fail-soft</code> — ✅ <code>Clock</code> seam injecté avec défaut Kotlin (<code>Clock.systemUTC()</code>), 2 tests défensifs ajoutés (mais voir Important #1 sur le risque Spring/Kotlin du défaut constructor).</li>
+<li><code>49c2094 chore(backend): align Ollama pullModel/deleteModel on \</code>model` body field<code>— ✅ bascule</code>name → model`, 2 lignes de body + KDoc + 2 tests assertion strings rafraîchies.</li>
+<li><code>5acff4d fix(backend): point Ollama 404 hint at the in-app Pull dialog</code> — ⚠️ string change visible utilisateur, <strong>pas couverte par un test</strong> et <strong>pas i18n-isée</strong> (cf. Mineur #2).</li>
+<li><code>06ba7ec fix(observability): guard priceAtOrAfter lower bound so pre-chart snapshots get null deltas</code> — ✅ guard symétrique ajouté aux deux helpers + 2 tests (observability + bias). Helper toujours dupliqué — déjà filed en dette « Coutures Phase 3 ».</li>
+<li><em>(hors brief explicite mais présent dans le diff)</em> <code>c6b78b8 chore(.claude): align spring-boot test section…</code> — ⚠️ commit <code>chore(.claude)</code> qui livre en réalité aussi <code>MockLlmClient.kt</code> (140 lignes) + son test (120 lignes) + edits sur <code>TickerNarrativeExecutor</code>, <code>RoutingLlmClient</code>, <code>ConfigKeys</code>. Scope creep silencieux ; le code est sain mais le commit message est trompeur.</li>
+</ul>
+<h3 id="critique">Critique<a class="headerlink" href="#critique" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>backend/src/main/kotlin/com/portfolioai/shared/GlobalExceptionHandler.kt:39</code></strong> — Body 503 hardcodé à « Données de marché momentanément indisponibles » après le rename B2 <code>MarketUnavailableException → UpstreamUnavailableException</code>.</li>
+<li><strong>Symptôme</strong> : tout 503 issu de Finnhub <code>/company-news</code>, <code>/stock/recommendation</code>, <code>/stock/earnings</code>, ou de Claude / Ollama, surface au frontend avec le message « Données de marché momentanément indisponibles ». Faux pour 4 des 5 providers que l'exception couvre désormais.</li>
+<li><strong>Cause</strong> : oubli pendant le sweep B2. La KDoc juste au-dessus du handler (« le user-facing message stay intentionally generic — la distinction <code>market vs LLM vs news</code> lives in the <code>detail</code> field ») se contredit avec le code. La KDoc sur l'exception elle-même (<code>UpstreamUnavailableException.kt:5-7</code>) parle d'un message générique « try again later ». Le <code>journal-livraisons.md &gt; B2</code> claim aussi « message HTTP 503 inchangé (« Données momentanément indisponibles ») » — le journal s'est trompé sur le verbe « inchangé », le code a raté le sweep.</li>
+<li><strong>Patch suggéré</strong> :
+    <div class="highlight"><pre><span></span><code><span class="s">&quot;error&quot;</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="s">&quot;Données momentanément indisponibles&quot;</span><span class="p">,</span>
+</code></pre></div>
+    Aligne le body sur l'intention déclarée et sur la chaîne déjà présente dans <code>journal-livraisons.md &gt; B2</code>. Le frontend lit déjà <code>error</code> + <code>detail</code> séparément (<code>market.repository.ts</code> reformule via <code>detail</code> si présent), donc pas de breaking change frontend.</li>
+</ul>
+<h3 id="important">Important<a class="headerlink" href="#important" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>backend/src/main/kotlin/com/portfolioai/analysis/application/JobEventPublisher.kt:36</code></strong> — <code>Clock</code> seam avec défaut Kotlin (<code>= Clock.systemUTC()</code>) sur un <code>@Component</code>. Pas de <code>@Bean Clock</code> déclaré ailleurs dans le projet. Spring 6 + Kotlin Reflection devraient honorer le défaut, et <code>BackendApplicationTests.contextLoads()</code> couvre le boot — mais le contrat est fragile (un futur <code>Clock</code> bean introduit par un autre développeur capturerait silencieusement la dépendance et casserait <code>JobEventPublisherTest.MutableClock</code>). <strong>Suggestion</strong> : ajouter un commentaire au-dessus du constructor explicitant l'invariant (<code>// No Clock bean is registered intentionally — Kotlin default value resolves at construction. Adding a @Bean Clock elsewhere would silently change the production behavior to track that bean's clock.</code>) ou, plus simple, déclarer un <code>@Bean fun clock(): Clock = Clock.systemUTC()</code> quelque part dans <code>analysis/AnalysisConfig.kt</code> et basculer le constructor en injection explicite.</p>
+</li>
+<li>
+<p><strong><code>backend/src/main/kotlin/com/portfolioai/analysis/infrastructure/llm/OllamaStatusService.kt:173-179</code></strong> — <code>pullModel</code> catch <code>HttpStatusCodeException</code> mais, à la différence de <code>unloadModel</code>/<code>deleteModel</code> (<code>:131-137</code>, <code>:209-216</code>), <strong>ne gère pas le 404 spécifique</strong> « model not pulled locally ». Le commit message (et la KDoc :175-178) justifient ça par « Ollama returns 500 with <code>error: model not found</code> rather than 404 ». OK mais asymétrie surprenante — si Ollama un jour aligne <code>/api/pull</code> sur 404, le user verra « HTTP 404 from Ollama » au lieu du hint utile. Le test <code>pullModel surfaces 5xx from Ollama as fail-soft</code> ne pin que la branche 500. <strong>Suggestion</strong> : soit ajouter le même branchement 404 défensif (1 if), soit ajouter une note de test qui pin explicitement « si Ollama jamais renvoie 404, on retombe sur le message générique ».</p>
+</li>
+<li>
+<p><strong><code>backend/src/main/kotlin/com/portfolioai/watchlist/application/WatchlistService.kt:127-139</code></strong> — <code>@Suppress("TooGenericExceptionCaught")</code> sur <code>lookupInstrumentType(symbol)</code> qui <code>catch (e: Exception)</code> autour de <code>tickerService.load(...)</code>. Ce hint est inscrit dans le backlog ticket « Gestion d'erreur transverse — frontend MatSnackBar + logging backend + exceptions plus honnêtes » (Volet 3) qui demande explicitement de resserrer ce catch sur <code>HttpClientErrorException</code>/<code>UpstreamUnavailableException</code>. Ne bloque pas le tag, mais inscrire un TODO inline ne ferait pas de mal pour que le lecteur soit prévenu que ce site est ciblé.</p>
+</li>
+</ul>
+<h3 id="mineur-a-discuter">Mineur / À discuter<a class="headerlink" href="#mineur-a-discuter" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>backend/src/main/kotlin/com/portfolioai/config/application/AppConfigService.kt:42</code></strong> — <code>cacheTtlDefault</code> est resté en <code>@Value</code> standalone tandis que les 12 autres params YAML sont regroupés en 3 holders. Le KDoc le justifie (« doesn't bundle naturally with any of the three groups »), mais quand on lit le constructor on cligne — soit ajouter un 4ᵉ holder <code>MarketCacheDefaults</code> minuscule pour homogénéité (overkill), soit laisser comme tel mais raboter le commentaire de 3 lignes à 1.</p>
+</li>
+<li>
+<p><strong><code>backend/src/main/kotlin/com/portfolioai/config/infrastructure/ConfigTestClient.kt:226</code></strong> — Le hint Pull dialog est une chaîne anglaise embarquée dans une <code>TestConfigResult</code> qui sera affichée tel quel au user. La convention projet veut qu'aucune chaîne user-facing ne soit hardcodée (passer par <code>ngx-translate</code> côté front). Trade-off : ici la chaîne est forgée backend et passe par le <code>message</code> du DTO ; pour respecter la convention il faudrait un code d'erreur (ex. <code>OLLAMA_MODEL_NOT_FOUND_PULL_HINT</code>) que le front traduit. Pas critique mais pin la dette « Gestion d'erreur transverse » qui prévoit justement les enum reasons.</p>
+</li>
+<li>
+<p><strong><code>backend/src/main/kotlin/com/portfolioai/analysis/application/NarrativeBiasService.kt:248-254</code> + <code>NarrativeObservabilityService.kt:205-211</code></strong> — Le helper <code>priceAtOrAfter</code> est dupliqué entre les 2 services (la KDoc l'avoue : « Mirror of …, kept duplicated to keep services independent »). Le fix B7 (06ba7ec) a dû patcher les 2 endroits. Candidat à extraction dans <code>market/domain/BarLookups.kt</code> (top-level fun) — déjà filed dans dette « Coutures Phase 3 » mais ce delta y replonge en cumulant la duplication.</p>
+</li>
+<li>
+<p><strong><code>backend/src/main/kotlin/com/portfolioai/market/application/SymbolValidator.kt:3</code></strong> — Import <code>import com.portfolioai.market.application.SymbolSearchService.Companion.DEFAULT_LIMIT</code> traverse une nested companion. Kotlin idiomatic, mais légèrement inhabituel — un <code>private const val DEFAULT_LIMIT = 10</code> dans <code>SymbolValidator</code> (avec un commentaire « must stay aligned with SymbolSearchService.DEFAULT_LIMIT for shared cache hit ») serait plus auto-documenté. À voir si la centralisation actuelle paye réellement.</p>
+</li>
+<li>
+<p><strong><code>backend/build.gradle.kts</code></strong> — Le drop de l'allowlist <code>no-wildcard-imports</code> est verbose (~25 lignes de commentaire). OK pour un changement structurel, à raboter à 5-6 lignes la prochaine fois que ce bloc est touché.</p>
+</li>
+<li>
+<p><strong>Commit <code>c6b78b8</code></strong> — <code>chore(.claude)</code> qui livre un adapter Mock entier (260 lignes code+tests). À titre rétrospectif, le commit aurait gagné à être splitté en deux : (1) <code>chore(.claude): align skills</code>, (2) <code>feat(backend): MockLlmClient for keyless onboarding</code>. Pas actionnable rétroactivement, simple note pour le futur.</p>
+</li>
+</ul>
+<h3 id="faux-positifs-filtres">Faux positifs filtrés<a class="headerlink" href="#faux-positifs-filtres" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>Boot avec <code>JobEventPublisher(Clock)</code> sans <code>@Bean Clock</code></strong> — premier réflexe : « Spring va échouer à autowire <code>Clock</code> puisque c'est un type non-Spring ». Vérification : <code>BackendApplicationTests.contextLoads()</code> est <code>@SpringBootTest</code> smoke-test et tourne en CI ; Spring 6 + Kotlin reflection honore les valeurs par défaut Kotlin via <code>KotlinDetector</code> + <code>BeanUtils.findPrimaryConstructor</code> ; et le test <code>JobEventPublisherTest</code> instancie <code>JobEventPublisher()</code> sans arg (zero-arg overload synthétique fourni par Kotlin) — qui passe. Donc le boot est OK. <strong>Reclassé en Important #1</strong> (commentaire d'invariant + bean clock explicite) plutôt qu'en Critique.</p>
+</li>
+<li>
+<p><strong>B6 « 14 → 6 params »</strong> — Le diff exhibe 6 params au constructor mais le commit message + le journal claiment « 14 → 6 ». Vérif : 2 deps (<code>repository</code>, <code>eventPublisher</code>) + 3 data classes (<code>secrets</code>, <code>dataProviders</code>, <code>llm</code>) + 1 standalone <code>@Value cacheTtlDefault</code> = 6 ✓. La comptabilité est correcte.</p>
+</li>
+<li>
+<p><strong>Suspicion B1 ports manquants</strong> — premier comptage : KDoc de <code>SectorClassifier.kt</code> mentionne uniquement <code>MockSectorClassifier</code> et <code>FinnhubSectorClassifier</code>, mais le brief liste <code>SectorClassifier</code> comme port distinct. Vérif : <code>git show 16feff4 -- '**/SectorClassifier.kt'</code> → bien déplacé en <code>domain/</code>, et <code>RoutingSectorClassifier</code> existe en <code>infrastructure/</code>. Les 7 ports sont bien tous présents.</p>
+</li>
+</ul>
+<h3 id="verdict">Verdict<a class="headerlink" href="#verdict" title="Permanent link">&para;</a></h3>
+<p><strong>needs-fix</strong> pour la tranche backend.</p>
+<p>Le seul finding bloquant est le body 503 « Données de marché… » resté en place après le rename B2 — patch ~1 ligne, contredit explicitement le journal et la KDoc du handler. Les 3 Important sont défensifs (clock seam, asymétrie <code>pullModel</code> 404, <code>@Suppress</code> étendu) et peuvent stationner en backlog si l'utilisateur préfère taguer rapidement. La tranche est globalement très propre : B1/B2/B3/B6 respectent leurs intentions journal, tests robustes (Clock injecté, 200-status:error pin, lower-bound guard pin), aucun wildcard import, aucun <code>this.method()</code> AOP-bypass, aucune nouvelle migration Flyway (V8 reste la dernière).</p>
+<hr />
+<h2 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h2>
+<h3 id="perimetre-couvert_1">Périmètre couvert<a class="headerlink" href="#perimetre-couvert_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>1fbe90d refactor(frontend): port-side rxResource builders — Snapshot pilot</code> — ⚠️ pilote solide mais sans spec dédié sur <code>snapshot.repository.ts</code> (testé indirectement via <code>suivi.spec.ts</code>), et l'<code>effect()</code> dans <code>positionsCache(...)</code> capture le <code>DestroyRef</code> du caller sans contrainte explicite documentée.</li>
+<li><code>a8f8a48 refactor(frontend): split core/ on 3 axes — api/, local/, app-state/</code> — ✅ split propre, chacun des 14 repositories est dans la catégorie attendue, <code>providers.ts</code> wire les 14 explicitement.</li>
+<li><code>22fa6f5 refactor(frontend): LlmTimeout + OllamaStatus services Promise → Observable</code> — 🚨 régression runtime silencieuse sur <code>configuration.ts</code> (cf. Critique #1).</li>
+<li><code>b4aa264 fix(frontend): route OllamaPullDialog fallback strings through TranslateService</code> — ✅ 3 fallback strings basculées sur <code>translate.instant()</code>, clés présentes verbatim dans <code>fr.json:502-503</code> + <code>en.json:502-503</code>.</li>
+<li><code>e0c43ff refactor(settings): drop the /settings/prompt-preview page now that the Phase 3 editor covers it</code> — ✅ suppression complète (composant + spec + route + sub-sidenav entry + i18n keys orphelines purgées).</li>
+</ul>
+<h3 id="critique_1">Critique<a class="headerlink" href="#critique_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>frontend/src/app/features/settings/configuration/configuration.ts:288</code> et <code>:323</code></strong> — <code>this.timeoutService.refresh()</code> est appelé sans <code>.subscribe()</code> après la migration Promise → Observable (<code>22fa6f5</code>).</li>
+<li><strong>Symptôme</strong> : sauvegarder ou reset la clé <code>llm.timeout-seconds</code> ne rafraîchit plus le signal <code>LlmTimeoutService.seconds</code>, donc le label « estimation max » sous le slider reste figé sur la valeur de boot jusqu'au prochain reload. La docstring de <code>LlmTimeoutService</code> (lignes 8-12) garantit pourtant explicitement « refreshed on save so the label updates immediately after a slider drag ». Régression runtime invisible aux tests parce qu'elle vit uniquement à l'exécution.</li>
+<li><strong>Cause</strong> : <code>refresh()</code> était <code>async refresh(): Promise&lt;void&gt;</code> (hot, démarrait à l'appel) et est devenu <code>refresh(): Observable&lt;void&gt;</code> (cold, n'exécute rien sans subscribe). Le commit <code>22fa6f5</code> a modifié <code>refresh()</code> mais a oublié de toucher <code>configuration.ts</code> ; le test <code>configuration.spec.ts:520-529</code> stubbe la méthode et vérifie uniquement qu'elle a été <em>appelée</em> (<code>toHaveBeenCalledTimes(1)</code>), donc le mock masque la régression — l'invocation a bien lieu en prod aussi, mais retourne un Observable jeté.</li>
+<li><strong>Patch suggéré</strong> :
+    <div class="highlight"><pre><span></span><code><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">key</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">LLM_TIMEOUT_KEY</span><span class="p">)</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">timeoutService</span><span class="p">.</span><span class="nx">refresh</span><span class="p">().</span><span class="nx">subscribe</span><span class="p">();</span>
+</code></pre></div>
+    aux deux callsites (<code>configuration.ts:288</code> et <code>:323</code>), et durcir le test pour le pointer (par ex. faire émettre un Observable mock et assert que la value du signal a bougé, ou stubber <code>refresh: vi.fn(() =&gt; of(undefined))</code> + asserter que <code>subscribe</code> a tiré).</li>
+</ul>
+<h3 id="important_1">Important<a class="headerlink" href="#important_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>frontend/src/app/core/api/portfolio/snapshot.repository.ts:51-55</code></strong> — l'<code>effect()</code> dans <code>positionsCache(...)</code> capture le <code>DestroyRef</code> de l'injection context dans lequel le builder est appelé. Aujourd'hui c'est OK parce que le pilote <code>Suivi</code> invoque la méthode en field initialiser (DI scope = component). Si un consommateur futur appelle <code>positionsCache(...)</code> depuis un handler / un <code>providedIn: 'root'</code> service / un <code>runInInjectionContext</code> mal placé, l'effect leakera ou throwera selon le contexte. La KDoc de la convention (skill <code>angular-signals</code>) <strong>doit</strong> explicitement contraindre l'appelant : « à invoquer dans un injection context lié au DestroyRef souhaité — typiquement field initialiser de composant ». Filé en doc-debt à minima, idéalement contrainte runtime via <code>assertInInjectionContext()</code> au début du builder.</p>
+</li>
+<li>
+<p><strong>Pas de <code>snapshot.repository.spec.ts</code></strong> — les deux builders du port (<code>allResource</code>, <code>positionsCache</code>) ne sont testés qu'indirectement à travers <code>suivi.spec.ts</code> + <code>MockSnapshotRepository</code>. Pour un pattern qui va être généralisé aux 13 autres repos (cf. backlog 🟢 « Resource builders généralisés »), un spec qui pin spécifiquement le comportement des builders contre une fake <code>extends SnapshotRepository</code> (id rotation, cache hit, undefined trigger → idle, accumulator effect) limiterait la dette quand les autres repos copieront la convention. Test bonus à 30 min.</p>
+</li>
+<li>
+<p><strong><code>configuration.spec.ts:204</code> et <code>:233</code></strong> — <code>mockResolvedValue(undefined)</code> (renvoie un <code>Promise</code>) pour <code>LlmTimeoutService.refresh</code> et <code>OllamaStatusService.refresh/unload/delete</code>, alors que la production renvoie maintenant un <code>Observable</code>. Les tests passent par chance (les composants n'introspectent pas le retour), mais la divergence test ↔ runtime est exactement le pattern qui a permis au bug critique ci-dessus de passer. À harmoniser sur <code>vi.fn(() =&gt; of(undefined))</code>.</p>
+</li>
+</ul>
+<h3 id="mineur-a-discuter_1">Mineur / À discuter<a class="headerlink" href="#mineur-a-discuter_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>frontend/src/app/core/api/analysis/llm-timeout.service.ts:50-51</code></strong> — <code>catchError(() =&gt; of(undefined))</code> puis <code>map(() =&gt; undefined)</code>. Le <code>map</code> final ne sert qu'à typer le retour en <code>Observable&lt;void&gt;</code> ; <code>tap()</code> ne change pas le type d'output, donc en l'absence d'erreur on émet déjà un <code>ConfigEntry[]</code>. Le <code>map(() =&gt; undefined)</code> force le contrat <code>void</code>, OK, mais l'enchaînement <code>catchError + map</code> est redondant — <code>catchError(() =&gt; of&lt;void&gt;(undefined)), map(() =&gt; undefined as void)</code> ou directement un <code>mapTo(undefined)</code> suffirait. Pure lisibilité.</p>
+</li>
+<li>
+<p><strong><code>frontend/src/app/core/api/analysis/ollama-status.service.ts:58-61</code></strong> — <code>startPolling</code> appelle <code>this.refresh().subscribe()</code> puis <code>setInterval(() =&gt; this.refresh().subscribe(), ...)</code>. Les subscriptions internes n'ont pas de <code>takeUntilDestroyed</code> (service <code>providedIn: 'root'</code> → pas de destroy). Si jamais la page panel mount/unmount en rafale et que le polling tick déclenche un <code>refresh()</code> après un <code>stopPolling()</code>, on a une race bénigne (le snapshot post-stop écraserait le <code>_status</code> signal). Pas un bug aujourd'hui — <code>stopPolling</code> clear l'interval avant qu'un tick supplémentaire ne soit déclenché. À garder en tête si on ajoute une 2ᵉ surface d'appel.</p>
+</li>
+<li>
+<p><strong>Mock convention</strong> — la skill <code>angular-signals</code> impose <code>useClass extends Port</code> pour les ports à builders hérités. Aujourd'hui seule <code>SnapshotRepository</code> est concernée et <code>suivi.spec.ts</code> applique bien la règle. Les 13 autres repos restent en <code>useValue</code> ailleurs (<code>ticker.spec.ts</code>, <code>dashboard.spec.ts</code>, <code>configuration.spec.ts</code>, <code>bias.spec.ts</code>, etc.) — pas un problème puisque ces ports n'ont pas de builders, mais à pin dans le backlog 🟢 « Resource builders généralisés » : chaque migration de repo doit aussi convertir ses specs <code>useValue → useClass extends</code>.</p>
+</li>
+<li>
+<p><strong><code>frontend/eslint.config.js</code></strong> — l'ajout <code>no-unused-vars</code> avec <code>argsIgnorePattern: '^_'</code> est sain et motivé par le commentaire ; rien à dire.</p>
+</li>
+<li>
+<p><strong><code>frontend/src/app/core/api/portfolio/snapshot.repository.ts:1-3</code></strong> — les imports sont <code>map, Observable</code> puis <code>rxResource</code> puis <code>Signal, effect, signal</code> répartis sur trois lignes. Pure cosmétique mais le regroupement <code>@angular/core</code> vs <code>rxjs</code> vs <code>@angular/core/rxjs-interop</code> mérite d'être stable pour les autres ports qui copieront la convention. (Pas un blocker.)</p>
+</li>
+</ul>
+<h3 id="faux-positifs-filtres_1">Faux positifs filtrés<a class="headerlink" href="#faux-positifs-filtres_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>useValue</code> dans <code>OllamaStatusService.spec</code> et <code>LlmTimeoutService.spec</code></strong> — les ports <code>OllamaStatusRepository</code> / <code>ConfigRepository</code> n'ont pas de builders hérités (juste des méthodes abstraites). Un mock <code>useValue</code> qui est en fait une <code>class extends Port</code> instanciée fonctionne (les méthodes sont sur l'instance), et c'est ce que font les deux specs. Pas une violation de la convention.</p>
+</li>
+<li>
+<p><strong>Réorganisation <code>core/</code> 3 axes</strong> — chacun des 14 repositories listés dans <code>providers.ts</code> est bien dans la catégorie attendue (HTTP → <code>api/</code>, localStorage <code>annotation/</code> → <code>local/</code>, signal services → <code>app-state/</code>). <code>providers.ts</code> wire les 14 explicitement, l'ordre est cohérent avec le commentaire d'introduction. Aucune omission détectée.</p>
+</li>
+<li>
+<p><strong>Drop <code>/settings/prompt-preview</code></strong> — grep verbatim sur <code>prompt-preview</code> / <code>promptPreview</code> / <code>PromptPreview</code> dans <code>frontend/src/</code>, <code>frontend/public/i18n/*.json</code>, <code>app.routes.ts</code>, <code>settings.html</code>, <code>settings.ts</code> et <code>app.html</code> : zéro hit. Suppression complète, pas de clé i18n orpheline.</p>
+</li>
+<li>
+<p><strong>OllamaPullDialog i18n</strong> — les deux clés <code>settings.configurationPage.ollamaStatus.pullDialog.errors.pullFailed</code> et <code>.deleteFailed</code> sont présentes verbatim dans <code>en.json:502-503</code> et <code>fr.json:502-503</code>. Le fix <code>b4aa264</code> est complet.</p>
+</li>
+</ul>
+<h3 id="verdict_1">Verdict<a class="headerlink" href="#verdict_1" title="Permanent link">&para;</a></h3>
+<p><strong>needs-fix</strong> pour la tranche frontend.</p>
+<p>Le bug <code>timeoutService.refresh()</code> sans <code>.subscribe()</code> est une régression runtime silencieuse introduite par le commit <code>22fa6f5</code> ; à patcher avant d'apposer <code>v0.5.1</code>. Les deux autres « Important » (KDoc contrainte injection context sur les builders + harmonisation des mocks Promise→Observable) sont du polish à attaquer dans la foulée. Le pilote <code>Snapshot</code> est solide côté implémentation et tests ; le split <code>core/</code> 3 axes est propre et la migration Ollama/i18n est complète.</p>
+<hr />
+<h2 id="claude-doc-set">.claude/ + doc-set<a class="headerlink" href="#claude-doc-set" title="Permanent link">&para;</a></h2>
+<h3 id="perimetre-couvert_2">Périmètre couvert<a class="headerlink" href="#perimetre-couvert_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>5aae398 chore(.claude): overhaul skills + drop effect() from frontend services</code> — ✅ 4 nouveaux skills backend posés + refresh <code>angular-signals</code> aligné sur set-site convention.</li>
+<li><code>c6b78b8 chore(.claude): align spring-boot test section with reality + add perf guidance</code> — ⚠️ corrige le claim <code>@SpringBootTest</code>, mais réintroduit une ref forward-looking « Phase 4 aggregation/ » périmée le même jour (cf. Important #2).</li>
+<li><code>5ddd339 chore(backlog): file .claude/ overhaul + Kotlin/Spring/hexa-DDD skills as tech debt</code> — ✅ ticket préparatoire, depuis clos.</li>
+<li><code>1c78f72 docs(backend): document the two cache models explicitly (key-prefixed vs service-level)</code> — ⚠️ Modèle A/B documenté côté <code>architecture.md</code>, mais le statut 🟡 → 🟢 du ticket cache n'est pas propagé dans la section « Décisions techniques notables » (cf. Important #1).</li>
+<li><code>f4113b4 docs(backlog): file mkdocs numbering + TOC and EN translation as tech debt</code> — ✅ 2 tickets posés, depuis l'un freezé 🧊.</li>
+<li><code>8bb04df chore: phase renumber + code-reviewer agent + dette cleanup</code> — ⚠️ mega-commit globalement propre ; deux refs forward-looking « Phase 4 » oubliées et le README ne pointe pas sur <code>Sources de données</code> qui vit dans <code>mkdocs.yml</code>.</li>
+</ul>
+<h3 id="critique_2">Critique<a class="headerlink" href="#critique_2" title="Permanent link">&para;</a></h3>
+<p>Aucun blocker pour <code>v0.5.1</code> côté <code>.claude/</code> + doc-set. Les drifts identifiés ne mentent pas à un nouveau dev sur l'état actuel, ils trahissent juste la propagation incomplète du renumérotage de phases.</p>
+<h3 id="important_2">Important<a class="headerlink" href="#important_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>docs/technique/architecture.md:198</code></strong> et <strong><code>docs/technique/architecture.md:254</code></strong> — la « Stratégie de cache » est toujours décrite comme « dette technique 🟡 ouvert(e) » dans les deux endroits. Le <code>backlog.md &gt; Dette technique</code> l'a explicitement démotée à <strong>🟢 Basse</strong> le 2026-05-16 (mention « <strong>Pourquoi 🟢 Basse</strong> : démoté 2026-05-16 — cosmétique »), et l'audit Pass 2 du CHANGELOG mentionne ce nettoyage parmi les démotions 🟡 → 🟢. Symptôme : un lecteur de <code>architecture.md</code> croit l'effort nécessaire à court terme alors que le backlog l'a explicitement repoussé. <strong>Patch</strong> : remplacer les deux occurrences <code>🟡</code> par <code>🟢</code> (ou « dette technique tracée en 🟢 Basse »).</p>
+</li>
+<li>
+<p><strong><code>.claude/skills/spring-boot/SKILL.md:268</code></strong> — la section perf des tests évoque « if <strong>Phase 4</strong> introduces more on <code>aggregation/</code> ». Avec le renumérotage du 2026-05-16 (chore <code>8bb04df</code>), <code>aggregation/</code> vit en <strong>Phase 6</strong> (Vague 1 #2 « Réintégration Phase 0 — PortfolioAggregation »). Le skill a été écrit l'avant-veille du renumérotage et n'a pas été repassé. Le <code>code-reviewer</code> agent (<code>.claude/agents/code-reviewer.md:98</code>) classe explicitement les <code>.claude/skills/*</code> parmi les « fichiers vivants » à patcher si périmés (par opposition à <code>journal-livraisons.md</code> + <code>audits/*</code> historiques). <strong>Patch</strong> : « Phase 6 introduces more on <code>aggregation/</code> ».</p>
+</li>
+<li>
+<p><strong><code>README.md</code> ↔ <code>mkdocs.yml</code></strong> — la table doc du README liste 14 rubriques, mais <strong><code>projet/sources.md</code></strong> n'y figure pas alors que <code>mkdocs.yml:25</code> l'expose dans la nav (« Sources de données »). Le <code>doc-maintainer.md:52</code> énonce explicitement la règle d'audit bidirectionnel : « nav additions … might warrant a README row too ». <strong>Patch suggéré</strong> : ajouter une row <code>&lt;a href="https://jv3n.github.io/trade/projet/sources/"&gt;Sources de données&lt;/a&gt; | Twelve Data, Finnhub — endpoints, quotas, mocks</code> entre les rows « Journal des livraisons » et « Conventions de commit ».</p>
+</li>
+</ul>
+<h3 id="mineur-a-discuter_2">Mineur / À discuter<a class="headerlink" href="#mineur-a-discuter_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong><code>docs/projet/journal-livraisons.md:88</code></strong> — entrée historique « Lifecycle de position OPEN/CLOSED » contient encore <code>(snapshots Phase 3, croisement Phase 4)</code>. Le « croisement » est la Phase 6 Vague 3 #5 depuis le renumérotage. Pass 3 du CHANGELOG a explicitement décidé que <strong>les forward-looking refs du journal doivent rester cohérentes avec le backlog vivant</strong>, et a patché 6 occurrences — celle-ci a échappé au sweep. Borderline : « croisement Phase 4 » est dans une parenthèse d'explication de design (forward-looking), pas dans un libellé de section historique. À arbitrer : laisser tomber par fatigue, ou aligner sur la convention Pass 3.</p>
+</li>
+<li>
+<p><strong><code>docs/projet/audits/2026-05-14-fin-phase-3.md:73, 144</code></strong> — 2 refs forward-looking « PortfolioAggregation Phase 4 ». Le <code>code-reviewer.md:98</code> documente explicitement que les <code>audits/*</code> sont des « snapshots datés » et qu'une ref périmée s'y signale « <code>À discuter</code> avec la note « ref historique, à arbitrer », jamais en <code>Bloquant</code> ». Ne pas patcher mais signaler — le contrat du fichier est immuable par date.</p>
+</li>
+<li>
+<p><strong><code>docs/projet/audits/2026-05-10-fin-phase-2.5.md:53, 196, 218</code></strong> — 3 refs « Phase 4 cron / job orchestration » et « DAG cible Phase 4 ». Même cas que ci-dessus, historique daté.</p>
+</li>
+<li>
+<p><strong><code>.claude/skills/hexagonal-ddd/SKILL.md:174</code></strong> — « Dette technique ticket #1 tracks homogenising it ». Le <code>backlog.md</code> n'utilise pas une numérotation de ticket (#1, #2…) — l'identifiant relève d'un autre projet ou d'une convention abandonnée. Le ticket existe bien sous le libellé <code>« Stratégie de cache : homogénéiser les six caches sur le pattern service-sans-préfixe »</code>. <strong>Patch suggéré</strong> : remplacer « ticket #1 » par « le ticket « Stratégie de cache » de la Dette technique ».</p>
+</li>
+<li>
+<p><strong><code>.claude/CLAUDE.md</code> Skills and hooks table</strong> — la table ne référence pas le dossier <code>.claude/agents/</code> directement. Les deux agents (<code>code-reviewer.md</code>, <code>doc-maintainer.md</code>) sont mentionnés indirectement via leurs slash commands (rows <code>skills/code-review/</code> et <code>skills/doc-maintainer/</code>). C'est un choix éditorial défendable (les agents ne sont pas auto-invocables, on passe par le skill) mais un lecteur qui cherche directement où trouver les agents ne le voit pas. À discuter — soit ajouter une row <code>agents/</code> qui pointe vers les deux fichiers, soit laisser tel quel et compter sur les references croisées dans les SKILL.md.</p>
+</li>
+<li>
+<p><strong><code>docs/CHANGELOG.md</code> 2026-05-16 Pass 3</strong> — l'entrée mentionne « 6 refs Phase 4 corrigées en Phase 6 dans 5 entrées datées 2026-05-07 → 2026-05-14 » du journal. Reste 1 ref (<code>Lifecycle OPEN/CLOSED</code> ligne 88) qui contredit le claim « toutes les forward-looking refs sont corrigées ». La discordance est sub-bullet, pas grave, mais elle illustre la limite de complétude du sweep.</p>
+</li>
+</ul>
+<h3 id="faux-positifs-filtres_2">Faux positifs filtrés<a class="headerlink" href="#faux-positifs-filtres_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>Pas de blocage sur <strong><code>code-reviewer.md</code> exception gros diffs</strong> : ajoutée dans la Pass 3 sur retour du dry-run, et bien testée conceptuellement même si pas exercée — pas un drift, c'est une convention rédigée préventivement.</p>
+</li>
+<li>
+<p>Pas de signalement sur les <strong>HTML links dans le README</strong> : tous les 18 liens (badges + table doc) sont bien en <code>&lt;a target="_blank" rel="noopener"&gt;</code>, conforme à la conversion <code>8bb04df</code>. Aucun lien relatif <code>.md</code> résiduel.</p>
+</li>
+<li>
+<p>Pas de signalement sur l'<strong>absence des nouveaux skills backend dans <code>developper.md</code></strong> : ces skills sont du tooling Claude interne, pas du contenu onboarding humain ; <code>developper.md</code> n'a pas vocation à les référencer. Le <code>doc-maintainer.md</code> ne l'exige pas non plus.</p>
+</li>
+<li>
+<p>Pas de signalement sur la mention <code>MarketUnavailableException</code> dans <code>audits/2026-05-14-fin-phase-3.md</code> : le rename <code>MarketUnavailableException → shared/UpstreamUnavailableException</code> est postérieur (commit <code>9f8f828</code>) ; l'audit historique daté reflète l'état du code à la date du 2026-05-14, fidèle au contrat des <code>audits/*</code>.</p>
+</li>
+</ul>
+<h3 id="verdict_2">Verdict<a class="headerlink" href="#verdict_2" title="Permanent link">&para;</a></h3>
+<p><strong>mergeable</strong> pour la tranche <code>.claude/</code> + doc-set.</p>
+<p>Aucun blocker pour <code>v0.5.1</code>. Deux corrections importantes (<code>architecture.md</code> × 2 statuts cache 🟡 → 🟢, <code>spring-boot/SKILL.md</code> ref Phase 4 → Phase 6) et un nice-to-have (<code>README.md</code> row <code>Sources de données</code>) — ~10 minutes de patch total. Les forward-looking refs résiduelles dans les fichiers historiques (audits + 1 oubli journal) sont défendables par la règle « historique daté immuable » du <code>code-reviewer.md</code> ; le seul vrai oubli journalistique est ligne 88 sur le « croisement Phase 4 ». Le mega-commit <code>8bb04df</code> qui porte le renumérotage est globalement bien propagé — 95 % de couverture, les 5 % restants n'introduisent aucune confusion grave pour un lecteur en 2026-05-16.</p>
+<hr />
+<h2 id="verdict-global-et-prochaines-etapes">Verdict global et prochaines étapes<a class="headerlink" href="#verdict-global-et-prochaines-etapes" title="Permanent link">&para;</a></h2>
+<p><strong>État pour <code>v0.5.1</code></strong> : <code>needs-fix</code> global, dominé par les 2 régressions runtime (1 backend, 1 frontend) — chacune un patch 1-liner. Une fois les 2 Critiques traités, la tranche <code>.claude/</code> + doc-set est déjà <code>mergeable</code> et les Important sont arbitrables.</p>
+<h3 id="action-plan-suggere">Action plan suggéré<a class="headerlink" href="#action-plan-suggere" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Patcher les 2 Critiques immédiatement</strong> (10 min) :</li>
+<li><code>GlobalExceptionHandler.kt:39</code> — body 503 → « Données momentanément indisponibles ».</li>
+<li><code>configuration.ts:288, :323</code> — ajouter <code>.subscribe()</code> aux deux callsites, durcir le test pour pin la valeur du signal après refresh.</li>
+<li><strong>Arbitrer les 9 Important</strong> :</li>
+<li>Backend (<code>Clock</code> seam, asymétrie 404 Ollama, <code>@Suppress</code> watchlist) — soit patch maintenant (15 min total), soit file en backlog. Le 1er (Clock) est le plus mérite d'un patch immédiat (commentaire d'invariant 2 lignes).</li>
+<li>Frontend (KDoc contrainte injection, spec <code>snapshot.repository.ts</code> dédié, mocks Promise→Observable) — patch dans la foulée recommandé, surtout le 3ᵉ qui a directement causé le Critique frontend.</li>
+<li>Doc-set (architecture.md cache 🟡 → 🟢, spring-boot/SKILL.md « Phase 4 », README row <code>Sources de données</code>) — ~10 min total, à patcher avant le tag pour cohérence.</li>
+<li><strong>Filer les Mineurs en backlog</strong> : la plupart relèvent de la dette « Coutures Phase 3 » (helper dupliqué, etc.) ou de polish à faire à l'occasion.</li>
+<li><strong>Une fois les patches faits</strong> : update du backlog si une feature change de statut + entrée CHANGELOG 2026-05-16 sous-bloc « Pass 4 — pré-tag v0.5.1 patches » + tag annoté <code>v0.5.1</code>.</li>
+</ol>
+<h3 id="decisions-retenues-du-dry-run-code-reviewer-avant-audit">Décisions retenues du dry-run code-reviewer (avant audit)<a class="headerlink" href="#decisions-retenues-du-dry-run-code-reviewer-avant-audit" title="Permanent link">&para;</a></h3>
+<p>Pour mémoire : ce rapport a aussi été nourri par les conventions agentes définies ce matin dans <code>.claude/agents/code-reviewer.md</code>, en particulier (a) le contrat « les <code>journal-livraisons.md</code> + <code>audits/*</code> historiques sont des snapshots datés », (b) le contrat « les <code>.claude/skills/*</code> sont des fichiers vivants à patcher si périmés », (c) la frontière « le code-reviewer ne couvre pas le drift rédactionnel pur du doc-set (périmètre <code>doc-maintainer</code>) ». Ces 3 contrats ont guidé les arbitrages « Important vs Mineur » pendant cet audit.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../2026-05-14-fin-phase-3/" class="md-footer__link md-footer__link--next" aria-label="Next: 2026-05-14 — Revue globale fin Phase 3">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                2026-05-14 — Revue globale fin Phase 3
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

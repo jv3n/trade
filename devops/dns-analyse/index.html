@@ -1,0 +1,2125 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/devops/dns-analyse/">
+      
+      
+        <link rel="prev" href="../secret-rotation/">
+      
+      
+        <link rel="next" href="../decision-ollama-deploiement/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Analyse DNS (choix nom de domaine) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#analyse-dns-choix-du-nom-de-domaine-prod" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Analyse DNS (choix nom de domaine)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#contraintes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contraintes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#brainstorm-noms-candidats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Brainstorm noms candidats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tld-comparaison-prix-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TLD — comparaison prix + image
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registrar-comparaison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registrar — comparaison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reco-finale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reco finale
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reco finale">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choix-1-tickerstoryorg-chez-cloudflare-registrar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choix #1 — tickerstory.org chez Cloudflare Registrar
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plan-b-tickerstorydev-chez-cloudflare" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plan B — tickerstory.dev chez Cloudflare
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plan-c-tickerstoryca-chez-cloudflare" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plan C — tickerstory.ca chez Cloudflare
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plan-d-cascade-nom-alternatif-sur-org" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plan D — cascade nom alternatif sur .org
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pourquoi-pas-us-malgre-le-prix-650" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pourquoi pas .us malgré le prix ($6.50)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verifications-avant-achat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vérifications avant achat
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#etapes-suivantes-hors-scope-ce-doc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Étapes suivantes (hors-scope ce doc)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="analyse-dns-choix-du-nom-de-domaine-prod">Analyse DNS — choix du nom de domaine prod<a class="headerlink" href="#analyse-dns-choix-du-nom-de-domaine-prod" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Reco finale</strong> : <code>tickerstory.org</code> via <strong>Cloudflare Registrar</strong>, ~<strong>$7.50/an</strong> (renouvellement au même prix, at-cost). Plan B : <code>tickerstory.dev</code> à $10.18/an si <code>.org</code> indisponible. Vérifier la dispo réelle sur <a href="https://domains.cloudflare.com/">domains.cloudflare.com</a> avant l'achat — l'état change quotidiennement.</p>
+<p>Document produit le 2026-05-22 pour débloquer le ticket Cloudflare proxy/cache de Phase 5 (cf. <a href="../../projet/backlog/#phase-5--déploiement"><code>backlog.md &gt; Phase 5</code></a>). Hors-scope ici : achat + transfert DNS — c'est le ticket suivant qui les fait. <strong>Historique de pivot</strong> : reco initiale <code>tickerstory.app</code> ($14.20), abandonnée le 2026-05-22 après que le nom soit constaté pris en <code>.app</code> ; <code>.us</code> à $6.50 envisagée puis écartée pour la US Nexus Requirement (cf. tableau TLD ci-dessous) ; <code>.org</code> à $7.50 retenu — universel, sans condition d'éligibilité, et $6.70/an moins cher que la reco d'origine.</p>
+</blockquote>
+<hr />
+<h2 id="contraintes">Contraintes<a class="headerlink" href="#contraintes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Contrainte</th>
+<th>Valeur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Budget annuel max</td>
+<td><strong>15 USD</strong> (cohérent avec discipline $0/mo Phase 5)</td>
+</tr>
+<tr>
+<td>Positionnement brand</td>
+<td>« Narrateur de marché, pas devin » — le nom doit évoquer écriture / lecture / journal, pas signal / prédiction</td>
+</tr>
+<tr>
+<td>Localisation</td>
+<td>Montréal (compute Cloud Run <code>northamerica-northeast1</code>), audience FR + EN</td>
+</tr>
+<tr>
+<td>Registrar DNS cible</td>
+<td>Cloudflare (pour le proxy + cache + bypass egress du ticket suivant)</td>
+</tr>
+<tr>
+<td>TLD compatible Cloudflare DNS gratuit</td>
+<td>Tous les TLDs courants — non bloquant</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="brainstorm-noms-candidats">Brainstorm noms candidats<a class="headerlink" href="#brainstorm-noms-candidats" title="Permanent link">&para;</a></h2>
+<p>10 alternatives autour du positionnement narrateur, ordonnées par préférence subjective (clarté + facilité de prononciation + scan visuel) :</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Nom</th>
+<th>Pourquoi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>tickerstory</strong></td>
+<td>Métaphore narrateur directe — story = narrative ; court, scan-friendly, ASCII pur</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>marketscribe</strong></td>
+<td>Scribe = écrivain factuel, pas oracle ; distinctif, peu d'occurrences existantes</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>ledgerlens</strong></td>
+<td>Alliération, ledger (livre comptable) + lens (perspective) — élégant mais un peu abstrait</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>tickernote</strong></td>
+<td>Concis, vibe carnet d'analyse ; risque de confusion avec apps de notes génériques</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>stockscribe</strong></td>
+<td>Variante #2 plus financière ; « stock » est plus lourd que « market » à l'oral</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>dossierticker</strong></td>
+<td>Clin d'œil FR/Montréal ; long, et « dossier » est moins universel en EN</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>tickertale</strong></td>
+<td>Variant de #1, légèrement plus rétro</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>stocknarrator</strong></td>
+<td>Explicite mais lourd à taper (13 chars)</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>equitynote</strong></td>
+<td>Minimaliste financial ; « equity » a une connotation institutionnelle</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>portfolioai</strong></td>
+<td>Naming actuel du projet — backup si tout le reste est pris ou trop cher</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Tous les candidats ASCII-only, pas d'IDN, pas de tiret — la dispo doit être checkée TLD par TLD, certains noms courants peuvent être squattés en <code>.com</code> même si libres en <code>.app</code> / <code>.dev</code>.</p>
+</blockquote>
+<hr />
+<h2 id="tld-comparaison-prix-image">TLD — comparaison prix + image<a class="headerlink" href="#tld-comparaison-prix-image" title="Permanent link">&para;</a></h2>
+<p>Prix Cloudflare Registrar relevés le 2026-05-22 sur <a href="https://cfdomainpricing.com/">cfdomainpricing.com</a> (Cloudflare publie at-cost = prix coûtant registre, sans markup). Tous les TLDs listés sont sous le cap 15 USD.</p>
+<table>
+<thead>
+<tr>
+<th>TLD</th>
+<th>Cloudflare (reg / renouv.)</th>
+<th>Image</th>
+<th>Bonus / Risque</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>.org</strong> ★ <strong>reco actuelle</strong></td>
+<td><strong>$7.50 / $7.50</strong></td>
+<td>Universelle, trust-y (Wikipedia, Mozilla, Apache)</td>
+<td>✅ Aucune condition d'éligibilité, registry Public Interest Registry (ICANN-supervisé, stable). Vibe légèrement « non-profit / projet community » — aligné au positionnement narrateur perso (pas de prétention SaaS commercial). Pas de HSTS preload mais TLS reste standard de facto en 2026</td>
+</tr>
+<tr>
+<td><strong>.us</strong></td>
+<td><strong>$6.50 / $6.50</strong></td>
+<td>Géographique US</td>
+<td>❌ <strong>US Nexus Requirement</strong> : le registrant doit certifier être citoyen/résident US, entité incorporée aux US, OU entité étrangère avec « bona fide US presence » (activité commerciale régulière aux US). Pour un résident Montréal sans activité US, aucune des 3 catégories ne s'applique honnêtement. Risque concret : le registry peut <strong>challenger et suspendre</strong> le domaine. Enforcement laxiste en pratique, mais incompatible avec une identité brand long terme. <strong>Écarté malgré le prix le plus bas</strong></td>
+</tr>
+<tr>
+<td><strong>.dev</strong></td>
+<td><strong>$10.18 / $10.18</strong></td>
+<td>Tech, dev-tool, Google-owned</td>
+<td>✅ <strong>HSTS preload list forcée</strong> = TLS obligatoire au browser sans config. Risque mineur : « dev » peut être perçu comme outil de dev plutôt que produit</td>
+</tr>
+<tr>
+<td><strong>.com</strong></td>
+<td><strong>$10.46 / $10.46</strong></td>
+<td>Classique, neutre, recognizable</td>
+<td>Squat fréquent — souvent indisponible sur les noms courts. Pas de bonus particulier</td>
+</tr>
+<tr>
+<td><strong>.ca</strong></td>
+<td><strong>$9.19 / $9.19</strong></td>
+<td>Canadien, local Montréal</td>
+<td>✅ Pertinent si on cible une audience CA-only ; pas de condition d'éligibilité bloquante pour un résident CA. Risque : audience hors-CA percevra le TLD comme géo-restreint</td>
+</tr>
+<tr>
+<td><strong>.app</strong></td>
+<td><strong>$14.20 / $14.20</strong></td>
+<td>Moderne, vibe webapp, Google-owned</td>
+<td>✅ HSTS preload list forcée (même bonus que <code>.dev</code>) — le plus cher de la liste, justifié seulement si le bonus webapp prime sur le prix</td>
+</tr>
+<tr>
+<td><strong>.xyz</strong></td>
+<td><strong>$12.30 / $11.20</strong></td>
+<td>Moderne, cheap</td>
+<td>Image moins pro (~connotation startup jetable) ; renouv. plus cher que reg</td>
+</tr>
+<tr>
+<td>.fr</td>
+<td>—</td>
+<td>Français</td>
+<td>❌ <strong>Pas dispo sur Cloudflare Registrar.</strong> Il faudrait OVH (~$8) ou Gandi (~$15) en registrar séparé puis pointer les nameservers vers Cloudflare. Friction supplémentaire</td>
+</tr>
+</tbody>
+</table>
+<p><strong>TLDs écartés</strong> : <code>.io</code> (~$30/an), <code>.ai</code> (~$80-200/an + complexité géopolitique Anguilla) — au-dessus du budget.</p>
+<hr />
+<h2 id="registrar-comparaison">Registrar — comparaison<a class="headerlink" href="#registrar-comparaison" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Registrar</th>
+<th>Modèle prix</th>
+<th>WHOIS privacy</th>
+<th>Pourquoi (ou pas)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cloudflare Registrar</strong> ★ reco</td>
+<td><strong>At-cost, zéro markup</strong></td>
+<td>Gratuit, activé par défaut</td>
+<td>Reg + renouv. au prix coûtant registre, jamais d'upsell. Intégration native avec le proxy/cache Cloudflare du ticket suivant (1 seul compte, 1 seule UI). TLDs limités (~400) mais couvre tous nos candidats hors <code>.fr</code>. <strong>Aucun markup → coût total à long terme le plus bas</strong></td>
+</tr>
+<tr>
+<td>Porkbun</td>
+<td>Markup léger ~$0.50-1</td>
+<td>Gratuit, activé par défaut</td>
+<td>UX propre, auto-renew sain, support honnête. ~5-25 % plus cher que Cloudflare sur tous les TLDs ici (e.g. .app à $14.93 vs $14.20). Pertinent uniquement si on veut un TLD non supporté par Cloudflare</td>
+</tr>
+<tr>
+<td>Namecheap</td>
+<td>Markup ~$1-3</td>
+<td>Inclus 1ère année, payant après</td>
+<td>UX correcte, populaire. Plus cher que Porkbun et Cloudflare, WHOIS privacy payant en renouvellement = piège</td>
+</tr>
+<tr>
+<td>OVH</td>
+<td>Variable, FR-friendly</td>
+<td>Inclus</td>
+<td>Pertinent uniquement pour <code>.fr</code> (un de nos écartés). Registrar français, UX en FR, mais markup et UX inférieurs à Cloudflare sur les TLDs internationaux</td>
+</tr>
+<tr>
+<td>GoDaddy</td>
+<td>Markup élevé + upsells aggressifs</td>
+<td>Payant</td>
+<td>❌ Évité — UX pollutive, prix volatils, mauvaise réputation dans la communauté dev</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="reco-finale">Reco finale<a class="headerlink" href="#reco-finale" title="Permanent link">&para;</a></h2>
+<h3 id="choix-1-tickerstoryorg-chez-cloudflare-registrar">Choix #1 — <code>tickerstory.org</code> chez Cloudflare Registrar<a class="headerlink" href="#choix-1-tickerstoryorg-chez-cloudflare-registrar" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Coût</strong> : $7.50/an reg + $7.50/an renouvellement (jamais de hike post-1ère année — Cloudflare est at-cost). Le <strong>2e moins cher</strong> des TLDs viables après <code>.us</code> (écarté pour nexus).</li>
+<li><strong>Aucune condition d'éligibilité</strong> — Public Interest Registry (PIR) sous supervision ICANN ; registrant peut être n'importe qui n'importe où, contrairement à <code>.us</code> (US nexus required) ou <code>.ca</code> (CIRA Canadian Presence requirement, applicable ici mais inutile à se rajouter).</li>
+<li><strong>Image</strong> : universelle, trust-y, association historique avec projets sérieux open-source / non-profits / communauté tech (Wikipedia, Mozilla, Apache, Linux Foundation). Pour un projet perso de narratif de marché en discipline « narrateur, pas vendeur », la vibe community/utility est même un alignement net.</li>
+<li><strong>Branding</strong> : narrative directe (story = histoire = narrateur), prononciation EN/FR sans piège, 12 caractères (tient sur carte de visite, logo, URL bar mobile).</li>
+<li><strong>Trade-off accepté</strong> : pas de HSTS preload (contrairement à <code>.app</code>/<code>.dev</code>). Impact mineur en 2026 — TLS est de facto obligatoire (warnings browsers sur HTTP, Let's Encrypt automatisé, Cloudflare ajoute le strict-transport-security header côté reverse proxy en 1 clic). Le bonus HSTS preload TLD-level n'est qu'une ceinture-bretelle.</li>
+<li><strong>Lien d'achat</strong> : <a href="https://domains.cloudflare.com/">domains.cloudflare.com</a> → search <code>tickerstory.org</code></li>
+</ul>
+<h3 id="plan-b-tickerstorydev-chez-cloudflare">Plan B — <code>tickerstory.dev</code> chez Cloudflare<a class="headerlink" href="#plan-b-tickerstorydev-chez-cloudflare" title="Permanent link">&para;</a></h3>
+<p>Si <code>.org</code> indisponible (peu probable, mais possible — <code>.org</code> reste largement ouvert sur les noms courts) : <code>.dev</code> à <strong>$10.18/an</strong>, bonus HSTS preload, même registrar. Risque : « dev » peut être perçu comme « outil de dev » plutôt que « produit fini ».</p>
+<h3 id="plan-c-tickerstoryca-chez-cloudflare">Plan C — <code>tickerstory.ca</code> chez Cloudflare<a class="headerlink" href="#plan-c-tickerstoryca-chez-cloudflare" title="Permanent link">&para;</a></h3>
+<p>Si les deux précédents indisponibles : <code>.ca</code> à <strong>$9.19/an</strong>, légitimité automatique pour un résident Montréal, ancrage local fort. Risque : audience hors-CA percevra le TLD comme géo-restreint.</p>
+<h3 id="plan-d-cascade-nom-alternatif-sur-org">Plan D — cascade nom alternatif sur <code>.org</code><a class="headerlink" href="#plan-d-cascade-nom-alternatif-sur-org" title="Permanent link">&para;</a></h3>
+<p>Si <code>tickerstory.*</code> complètement pris (improbable), itérer sur la shortlist dans l'ordre : <code>marketscribe</code> → <code>ledgerlens</code> → <code>tickernote</code> → <code>dossierticker</code>. Tester d'abord <code>.org</code> (le plus permissif côté éligibilité + le moins cher hors <code>.us</code>).</p>
+<h3 id="pourquoi-pas-us-malgre-le-prix-650">Pourquoi pas <code>.us</code> malgré le prix ($6.50)<a class="headerlink" href="#pourquoi-pas-us-malgre-le-prix-650" title="Permanent link">&para;</a></h3>
+<p>Le moins cher du tableau, mais le registry exige une <strong>US Nexus Requirement</strong> (catégorie de registrant : citoyen/résident US, entité incorporée US, ou entité étrangère avec activité commerciale US substantielle). Pour un résident Montréal sans business US, aucune des 3 catégories ne tient honnêtement. Risque concret : challenge du registry → suspension du domaine. Enforcement est laxiste en pratique (beaucoup de non-US ont des <code>.us</code>), mais c'est un risque latent incompatible avec une identité brand stable long terme. $1 d'économie par an vs <code>.org</code> ne le justifie pas. Documenté pour éviter de retomber dans le piège à la prochaine lecture.</p>
+<hr />
+<h2 id="verifications-avant-achat">Vérifications avant achat<a class="headerlink" href="#verifications-avant-achat" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Dispo réelle</strong> — checker sur <a href="https://domains.cloudflare.com/">domains.cloudflare.com</a> au moment de l'achat. L'état change quotidiennement (drops + squats). WHOIS via <code>whois tickerstory.app</code> en CLI donne aussi une indication.</li>
+<li><strong>WHOIS privacy</strong> — confirmer qu'elle est activée par défaut (Cloudflare l'inclut sans demande explicite). Sans ça, ton email + adresse seraient publics.</li>
+<li><strong>Account 2FA</strong> — activer la 2FA sur le compte Cloudflare avant le 1er achat de domaine. Un domaine perdu se récupère mal.</li>
+<li><strong>Auto-renew</strong> — activé par défaut chez Cloudflare. Garder activé sauf décision contraire — l'oubli de renouvellement = perte du domaine + parking pendant 30 jours puis re-vente.</li>
+<li><strong>Email registrant</strong> — utiliser un email que tu lis (les notifications de renouvellement + abuse y arrivent). Pas un alias qu'on oublie.</li>
+</ol>
+<hr />
+<h2 id="etapes-suivantes-hors-scope-ce-doc">Étapes suivantes (hors-scope ce doc)<a class="headerlink" href="#etapes-suivantes-hors-scope-ce-doc" title="Permanent link">&para;</a></h2>
+<p>Une fois le domaine acheté, le ticket <a href="../../projet/backlog/#phase-5--déploiement">Cloudflare devant Cloud Run</a> prend le relais : transfert DNS chez Cloudflare (déjà fait par défaut si registrar Cloudflare), CNAME proxifié vers le service Cloud Run, custom domain mapping, cache rules sur les assets statiques, redirect URI Google OAuth mise à jour. ~1-2 h estimées.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../secret-rotation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Rotation des secrets prod">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Rotation des secrets prod
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../decision-ollama-deploiement/" class="md-footer__link md-footer__link--next" aria-label="Next: Décision : déploiement Ollama">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Décision : déploiement Ollama
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

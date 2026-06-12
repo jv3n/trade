@@ -1,0 +1,1955 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/archive/backlog-pre-pivot/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Backlog — archive pré-pivot (phases 0 → 7) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#backlog-archive-pre-pivot-phases-0-7" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Backlog — archive pré-pivot (phases 0 → 7)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="backlog-archive-pre-pivot-phases-0-7">Backlog — archive pré-pivot (phases 0 → 7)<a class="headerlink" href="#backlog-archive-pre-pivot-phases-0-7" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>📦 <strong>Archive.</strong> Backlog de l'app <strong>avant le pivot</strong> vers le journal de trading (juin 2026) — ticker, narratif, observabilité, radar, vision long terme. Sorti de la nav mkdocs. Le backlog <strong>courant</strong> (1.0 journal) vit dans <a href="../../backlog/"><code>../backlog.md</code></a>. Les liens internes vers le journal des livraisons pointent désormais vers <a href="../journal-livraisons/"><code>./journal-livraisons.md</code></a> (même dossier archive).</p>
+</blockquote>
+<p>Suivi des features par phase. Mis à jour à chaque session de développement.</p>
+<p><strong>Statuts :</strong> ⏳ À faire · 🚧 En cours · 🧊 Gelé · ❌ Décommissionné — les <code>✅ Fait</code> vivent dans <a href="../journal-livraisons/"><code>journal-livraisons.md</code></a>, pas ici.</p>
+<blockquote>
+<p>Ce fichier ne liste que <strong>ce qui reste à faire</strong> et l'<strong>état courant</strong> des modules gelés / décommissionnés. Pour le journal des features livrées (Phase 0 → Phase 2.5 et dette technique close), voir <a href="../journal-livraisons/"><code>journal-livraisons.md</code></a> — format reverse-chronological, lecture comme un changelog Keep-a-Changelog.</p>
+</blockquote>
+<hr />
+<h2 id="phase-0-fondation-terminee-tag-v010">Phase 0 — Fondation (terminée, tag <code>v0.1.0</code>)<a class="headerlink" href="#phase-0-fondation-terminee-tag-v010" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Le détail des features livrées (et celles qui sont conservées en flow vs décommissionnées) est consigné dans <a href="../journal-livraisons/#phase-0--fondation-terminée-tag-v010--partiellement-décommissionnée-en-phase-25--v6"><code>journal-livraisons.md &gt; Phase 0</code></a>.</p>
+</blockquote>
+<h3 id="decommissionne-code-supprime-en-phase-25">❌ Décommissionné — code supprimé en Phase 2.5<a class="headerlink" href="#decommissionne-code-supprime-en-phase-25" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>❌ Ingestion RSS</td>
+<td>Module <code>ingestion/</code> (Rome, scheduler 15 min, déduplication par <code>guid</code>, parsing robuste DOCTYPE / <code>&amp;</code> nus, 25 sources seedées) <strong>supprimé</strong> en Phase 2.5. Tables <code>feed_source</code> + <code>feed_article</code> droppées (V6)</td>
+</tr>
+<tr>
+<td>❌ Pipeline analyse portfolio LLM</td>
+<td><code>AnalysisExecutor</code>, <code>AnalysisContextLoader</code>, <code>ArticleRelevanceScorer</code>, <code>LlmResponseParser</code>, <code>RecommendationValidator</code>, <code>RecommendationPersister</code> <strong>supprimés</strong> en Phase 2.5. Tables <code>recommendation*</code> + <code>analysis_job</code> droppées (V6). Replacement Phase 7 = <code>PortfolioAggregation</code> au-dessus des snapshots ticker</td>
+</tr>
+<tr>
+<td>❌ Pages Recommendations / History</td>
+<td><code>features/recommendations/</code> + <code>features/history/</code> <strong>supprimées</strong> en Phase 2.5 (PR2 frontend). Repository <code>AnalysisRepository</code> + adapter retirés, navbar <code>/history</code> retirée</td>
+</tr>
+<tr>
+<td>🧊 Bascule Mistral local + timeouts 400 s</td>
+<td><code>OllamaClient</code> configuré initialement pour <code>mistral</code> (7B Instruct Q4), timeouts alignés sur 400 s. Le défaut local a depuis basculé sur <code>qwen2.5:3b</code> (Mistral trop lent sur M1, 30-60 s/narratif → timeouts répétés). Le timeout 400 s est aujourd'hui éditable au runtime via le slider <code>llm.timeout-seconds</code> (Phase 2.5 v1.5). Reste activable via <code>llm.provider: ollama</code> mais Claude est le défaut Phase 1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="phase-1-pivot-ticker-terminee-tag-v020-du-2026-05-02">Phase 1 — Pivot ticker (terminée, tag <code>v0.2.0</code> du 2026-05-02)<a class="headerlink" href="#phase-1-pivot-ticker-terminee-tag-v020-du-2026-05-02" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Phase clôturée — le détail des features livrées (module <code>market/</code>, pipeline narratif, dossier ticker, settings adaptés Phase 1, tests prioritaires) est consigné dans <a href="../journal-livraisons/#phase-1--pivot-ticker-clôturée-2026-05-02-tag-v020"><code>journal-livraisons.md &gt; Phase 1</code></a>.</p>
+</blockquote>
+<hr />
+<h2 id="phase-2-profondeur-ticker-cloturee-2026-05-06-tag-v030">Phase 2 — Profondeur ticker (clôturée 2026-05-06, tag <code>v0.3.0</code>)<a class="headerlink" href="#phase-2-profondeur-ticker-cloturee-2026-05-06-tag-v030" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Phase clôturée — le détail des features livrées (Twelve Data, settings runtime, multi-timeframe + axes + crosshair, watchlist v1+v2, news, chart analyse v1+v2+v3, news inline, earnings, recommandations analystes, benchmark v1+v2 + sector/custom, sidenav outils chart) est consigné dans <a href="../journal-livraisons/#phase-2--profondeur-ticker-clôturée-2026-05-06-tag-v030"><code>journal-livraisons.md &gt; Phase 2</code></a>.</p>
+<p>Note : tous les items ticker sont livrés. Les sujets restants vivent en Phase 2.5 (stabilisation, outils, dette technique) et Phase 3 (observabilité narrative).</p>
+</blockquote>
+<hr />
+<h2 id="phase-25-stabilisation-et-outils-cloturee-2026-05-10-tag-v040">Phase 2.5 — Stabilisation et outils (clôturée 2026-05-10, tag <code>v0.4.0</code>)<a class="headerlink" href="#phase-25-stabilisation-et-outils-cloturee-2026-05-10-tag-v040" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Phase intermédiaire entre la profondeur ticker (Phase 2) et l'observabilité narrative (Phase 3) — accumule l'outillage runtime et les améliorations UX dashboard qui n'ont pas leur place dans une roadmap « ticker-only » ni « narrative-only ». Pas de scope produit nouveau ; on stabilise et on outille. La phase est dense : config runtime v1+v1.5, décommissionnement Phase 0, <code>CacheTtlListener</code> AFTER_COMMIT, type d'instrument chip 3/3, persistence <code>instrumentType</code> BDD V7 (drop du lazy-lookup burst Twelve Data), sidenav outils chart, exposition <code>analyst.provider</code> / <code>earnings.provider</code>, hint Sector benchmark, lifecycle position OPEN/CLOSED, <code>.env</code> ports configurables stack locale, Swagger UI en profile <code>local</code>, panneau État Ollama + bouton éject VRAM + bouton Pull modèle, clé Anthropic en SECRET runtime, drag-drop portfolios sidebar, décision Ollama option 3 statu quo, Server-Sent Events per-phase pour le narratif (4 PR : backend SSE / frontend bascule / reattach pending / UX phase visible), <code>./gradlew test</code> + frontend dev-server proxy lisent automatiquement <code>.env</code>, retour audit fin Phase 2.5 (4 findings clôturés en un seul commit avant le tag : boot fragile sans <code>ANTHROPIC_API_KEY</code>, validation jobId/symbol sur le SSE narratif, <code>WatchlistService.add</code> hors <code>@Transactional</code>, sweep <code>LlmTimeoutService</code> dead code). Toutes les notes d'implémentation détaillées sont dans <a href="../journal-livraisons/#phase-25--stabilisation-et-outils"><code>journal-livraisons.md &gt; Phase 2.5</code></a>.</p>
+<p>Note : tous les items Phase 2.5 sont livrés. Les sujets restants vivent en Phase 4 (Authentification), Phase 5 (Déploiement), Phase 7 (DAG unifié + Réintégration Phase 0 + Vision long terme) et dette technique.</p>
+</blockquote>
+<hr />
+<h2 id="phase-3-observabilite-narrative-cloturee-2026-05-14">Phase 3 — Observabilité narrative (clôturée 2026-05-14)<a class="headerlink" href="#phase-3-observabilite-narrative-cloturee-2026-05-14" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Phase clôturée — détail des livraisons dans <a href="../journal-livraisons/#phase-3--observabilité-narrative"><code>journal-livraisons.md &gt; Phase 3</code></a>. 4 livraisons en 5 jours : foundation prompt management + scoring (2026-05-10), page observabilité narrative timeline + index (2026-05-13), score de cohérence cross-runs (2026-05-14), détection de biais (2026-05-14). Le ticket #4 « Page Jobs DAG » initialement projeté ici a été déplacé en Phase 7 — il dépend du DAG unifié et son contenu est intrinsèquement lié à l'archi long terme, donc filed avec ses prérequis. Boucle d'audit narrative complète disponible (inspection / cohérence vs précédent / timeline / agrégats corpus). Tag candidat : <code>v0.5.0</code>.</p>
+</blockquote>
+<hr />
+<h2 id="phase-4-authentification-cloturee-2026-05-17">Phase 4 — Authentification (clôturée 2026-05-17)<a class="headerlink" href="#phase-4-authentification-cloturee-2026-05-17" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Phase entièrement livrée. Détails d'implémentation dans <a href="../journal-livraisons/#phase-4--authentification"><code>journal-livraisons.md &gt; Phase 4</code></a> : auth foundation backend + frontend <code>/login</code> + interceptor + guards + navbar gating + Google OIDC + CSRF cookie-based SPA + page <code>/error</code> + secrets refactor <code>.env</code> + DevX toggle <code>BACKEND_AUTH_MODE</code> + migration multi-tenant <code>user_id</code> FK + provider gating UI + logs redaction (convention <code>userId</code> UUID) + Flyway squash V1→V10 en un seul <code>V1__init.sql</code>. Les deux tickets restants liés (GitHub Secrets vault, Hardening secret-management OAuth prod) sont passés en début de Phase 5 parce qu'ils dépendent du choix d'hébergement.</p>
+</blockquote>
+<hr />
+<h2 id="phase-5-deploiement">Phase 5 — Déploiement<a class="headerlink" href="#phase-5-deploiement" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Aujourd'hui l'app vit uniquement en local via <code>tilt up</code> sur le poste de l'utilisateur — aucun accès depuis un autre appareil, aucun moyen d'autoriser quelqu'un d'autre à l'utiliser. Phase 5 ouvre l'app au-delà du localhost. <strong>Provider retenu 2026-05-18</strong> (post-révision après clarification « pas d'Ollama en prod ») : <strong>Google Cloud Run + Supabase Postgres</strong>, $0/mo durable dans le free tier, région compute Montréal native (<code>northamerica-northeast1</code>), DB Supabase US-East. Fly.io ($10/mo) et Oracle A1 Ampere ($0 + sysadmin léger) restent documentés en fallbacks. <strong>Pré-requis bloquant déjà livré</strong> : Phase 4 Authentification (OAuth2 Google OIDC + multi-tenant <code>user_id</code> FK). Détail de l'analyse fournisseur, plan phasé, pipeline GitOps Workload Identity Federation et plan de migration sortie : <a href="../devops/deploiement.md"><code>docs/devops/deploiement.md</code></a>. <strong>Discipline non-négociable</strong> dès le 1er deploy : zéro SDK Supabase dans le code (juste <code>DATABASE_URL</code> JDBC), backup <code>pg_dump</code> nocturne vers Cloudflare R2, Cloudflare devant Cloud Run pour bypass egress quota.</p>
+<p><strong>Phase 5 entièrement livrée 2026-05-23.</strong> Tous les tickets sont passés en ✅ dans <a href="../journal-livraisons/#phase-5--déploiement-clôturée-2026-05-23"><code>journal-livraisons.md &gt; Phase 5</code></a>. Le ticket résiduel « Persister préfs user backend » a été déplacé en Phase 7 Hors-vague (11).</p>
+<p>Reste hors-backlog v1 mais déclenchable Phase 5c si trigger : (a) <strong>Migration Supabase → Neon free</strong> si Supabase serre (effort ~30 min <code>pg_dump | pg_restore</code>), (b) <strong>upgrade Supabase Pro $25/mo</strong> si Neon ne tient pas, (c) <strong>bascule globale Fly Phase 5a $10/mo</strong> comme plan C ultime — tous documentés dans <a href="../devops/deploiement.md"><code>docs/devops/deploiement.md &gt; §5 Phase 5c</code></a>.</p>
+</blockquote>
+<hr />
+<h2 id="phase-6-radar-danomalies-de-marche">Phase 6 — Radar d'anomalies de marché<a class="headerlink" href="#phase-6-radar-danomalies-de-marche" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Repérer en temps quasi-réel les tickers mid-cap du Nasdaq Composite (~3500 listings) qui montrent un mouvement anormal à l'ouverture des marchés US — typiquement le pattern précurseur d'un pump-and-dump (gap haussier important + volume disproportionné par rapport à la moyenne 30j). <strong>Objectif</strong> : surfacer un signal d'investigation, pas une recommandation d'achat. <strong>Reste aligné au positionnement « narrateur, pas devin »</strong> : le radar liste les tickers candidats avec leurs métriques (gap %, volume relative, market cap, exchange), et le pipeline narratif Phase 1 existant produit le narratif technique du ticker quand l'utilisateur clique. Le LLM ne dit jamais « pump suspect » — il décrit ce que les indicateurs montrent (RSI surchauffé, écart MA200 extrême, volume vs moyenne) et l'utilisateur décide.</p>
+</blockquote>
+<p><strong>Décisions actées Sprints 1-4</strong> (résumées ici pour contexte, détail dans <code>journal-livraisons.md &gt; Phase 6</code>) :
+- <strong>Univers</strong> : Nasdaq mid-cap hardcodé (<code>ScreenerUniverse.NASDAQ_MID_CAP</code>, cap $2B-$10B, exchange NASDAQ) — appliqué adapter-level depuis Sprint 4. Mock honore exchange + cap, FMP honore exchange (carrie le champ natively), Polygon n'honore ni l'un ni l'autre (endpoint grouped-daily limité — closing the gap via ticket (1bis)).
+- <strong>Seuil mouvement anormal</strong> : gap directionnel ≥ 10 % côté default (Sprint 4), volume ratio ≥ 3× moyenne (no-op sur FMP qui n'expose pas le volume → sentinelle <code>volumeRatio === 0</code> pass-through dans <code>applyScreenerFilter</code>).
+- <strong>Provider screener</strong> : <strong>FMP</strong> retenu comme provider live par défaut sur le free tier (250 req/jour, <code>/stable/biggest-gainers</code> + <code>/biggest-losers</code> ; les paths legacy <code>/api/v3/stock_market/*</code> ont été dépréciés août 2025). <strong>Polygon</strong> câblé en parallèle pour les users avec souscription Stocks Basic+. <strong>Mock</strong> par défaut sans clé.
+- <strong>Fréquence</strong> : refresh manuel via bouton « Rechercher » depuis Sprint 3 (snapshot persisté en BDD, <code>screener_snapshot_day</code>, lecture latest sans nouveau call). Cron pré-fetch ouverture filed en (5).
+- <strong>Stockage</strong> : <code>screener_snapshot_day(date, provider, movers JSONB, fetched_at)</code> PK composite, UPSERT par jour — un point par (jour, provider). L'historique multi-jour filed en (4) réutilisera la même table.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+<th>Priorité</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>⏳ <strong>(1bis) Enrichissement Polygon — backfill <code>name</code> / <code>exchange</code> / <code>sector</code> / <code>marketCapUsd</code> / <code>volumeAvg30d</code> via cron nightly</strong></td>
+<td>Le ticket (1) (livré 2026-05-27) a câblé Polygon en <strong>mode dégradé v0.1</strong> : le snapshot endpoint ne porte pas ces 5 champs, donc l'adapter les remplit avec <code>name=ticker, exchange="", sector=null, marketCapUsd=0L, volumeAvg30d=prevDay.v</code> (proxy single-day). Conséquences UX : filtres cap-range et sector <strong>no-op</strong> côté Polygon ; <code>volumeRatio</code> répond « aujourd'hui vs hier » plutôt qu'« aujourd'hui vs moyenne 30j » — moins robuste comme signal d'anomalie. <strong>Cible</strong> : cron nightly (<code>@Scheduled</code> Spring, 4h du matin ET) qui pré-charge (a) <code>/v3/reference/tickers?market=stocks&amp;exchange=XNAS&amp;active=true&amp;limit=1000</code> paginé (~4 pages = 4 calls = bien dans le free tier) → seed table <code>ticker_reference</code> (<code>ticker PK, name, primary_exchange, market_cap_usd, sic_description → sector, updated_at</code>) ; (b) <code>/v2/aggs/grouped/locale/us/market/stocks/{date}?adjusted=true</code> sur les 30 derniers jours ouvrés (30 calls = 6 min au rythme free tier 5/min, faisable la nuit) → compute moyenne 30j de <code>v</code> par ticker, stocker dans <code>ticker_reference.volume_avg_30d</code>. Le <code>PolygonMarketScreenerClient</code> join en mémoire avec <code>ticker_reference</code> après le fetch snapshot — coût zéro à l'appel runtime. <strong>Schéma Flyway V5</strong> : table <code>ticker_reference</code> (prochaine migration libre après V4 livrée Sprint 3). <strong>Effort</strong> : ~3-4 h (table + repository + scheduler + tests). <strong>Trigger</strong> : à attaquer dès que l'usage réel montre que les filtres cap/sector manquent ou que le volumeRatio « vs prevDay » génère trop de faux positifs. <strong>Standalone</strong> : indépendant des autres tickets Phase 6</td>
+<td>🟡 Moyenne</td>
+</tr>
+<tr>
+<td>⏳ <strong>(1ter) Cache adapter-level Polygon — TTL court par universe</strong></td>
+<td>Pas livré v0.1 — l'adapter Polygon ne cache rien, chaque tweak du panneau filtre côté radar génère un nouveau call snapshot. Polygon free tier = 5 req/min ; un user qui spamme le panneau 6 fois en une minute se prend un 429 → 503 explicite mais cassant pour l'UX. <strong>Cible</strong> : <code>@Cacheable</code> au niveau <code>PolygonMarketScreenerClient.snapshotMovers</code> avec clé <code>'polygon|' + universe.name()</code> et TTL court (60 s en heures d'ouverture). Réutiliser le pattern <code>MARKET_CHART_CACHE</code> de <code>market/MarketConfig</code> — soit ajouter un nouveau cache nommé <code>SCREENER_SNAPSHOT_CACHE</code> au <code>CaffeineCacheManager</code> avec son propre TTL, soit créer <code>ScreenerCacheConfig</code> standalone si on veut un TTL indépendant de <code>market.cache.ttl-minutes</code>. <strong>Effort</strong> : ~1 h. <strong>Trigger</strong> : observer un 429 en usage réel ; pas urgent en dev solo single-user</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ <strong>(4) Persistance des détections — historique radar</strong></td>
+<td>Table <code>market_alert</code> (<code>id, symbol, detected_at, gap_pct, volume_ratio, market_cap_usd, exchange, sector, screener_filter_snapshot JSONB</code>). Permet de rejouer après coup « qu'est-ce qui s'est déclenché ce matin et qu'est-ce qui a tenu vs s'est effondré » → boucle d'amélioration sur les seuils. Endpoint <code>GET /api/screener/history?from=...&amp;to=...</code>. Pas une priorité v1, à attaquer une fois (1)(2)(3) stabilisés</td>
+<td>🟡 Moyenne</td>
+</tr>
+<tr>
+<td>⏳ <strong>(5) Cron pré-fetch ouverture marché</strong></td>
+<td>Job programmé qui poll le screener à 9:31, 9:35, 9:45, 10:00 ET (heures d'ouverture marché US, fuseau Eastern). Cache en mémoire le snapshot le plus récent pour que la page <code>/radar</code> charge instant. Reuse du pattern Phase 7 Vague 2 #4 cron pré-chauffe quand il sera livré</td>
+<td>🟡 Moyenne</td>
+</tr>
+<tr>
+<td>⏳ <strong>(6) Intégration watchlist — ajout 1-clic depuis le radar</strong></td>
+<td>Bouton « Ajouter à la watchlist » sur chaque ligne du radar. Réutilise le module <code>watchlist/</code> Phase 2 existant. Permet de glisser un ticker repéré au radar dans le flow d'analyse normal sans saisie manuelle</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ <strong>(7) Alertes push/email sur seuils</strong></td>
+<td>Quand un ticker matche les filtres pendant N minutes consécutives, notification (mail / browser push). Dépend de la décision Phase 7 Vague 3 #6 Watchlist alertes pour le canal de notification (cohérence : un seul système d'alertes)</td>
+<td>🟢 Basse</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="phase-7-vision-long-terme">Phase 7 — Vision long terme<a class="headerlink" href="#phase-7-vision-long-terme" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Séquencement recommandé</strong> (cf. CLAUDE.md « Ordering convention » + arbitrage 2026-05-14 lors du déplacement de #4 Page Jobs depuis Phase 3) : 3 vagues de tickets dépendants entre elles, puis le R&amp;D long terme indépendant.</p>
+<ul>
+<li><strong>Vague 1 — Foundation DAG (3 tickets séquentiels)</strong> : (1) DAG unifié (fondateur, ~3 j) → (2) Réintégration Phase 0 / <code>PortfolioAggregation</code> (~1.5 j, 1er consumer parent qui valide le modèle sur cas réel et ramène la feature majeure perdue en Phase 2.5) → (3) Page Jobs DAG (~2-3 j, l'UI au-dessus, indispensable pour observer ce qu'on vient de bâtir). Les 3 se renforcent — livrer le DAG sans consumer concret = code sans vie ; livrer le consumer sans la Page Jobs = aucun moyen d'observer.</li>
+<li><strong>Vague 2 — Extensions DAG (1 ticket)</strong> : (4) Cron pré-chauffe — 2nd consumer non-UI, simple à câbler une fois DAG + Page Jobs en place.</li>
+<li><strong>Vague 3 — Surfaces dashboard (2 tickets, indépendants entre eux)</strong> : (5) Croisement portfolio × insights ticker, (6) Watchlist alertes. Pas de dépendance stricte au DAG mais bénéficient de la fraîcheur du cache (cron pré-chauffe).</li>
+<li><strong>Vague 4 — R&amp;D long terme (3 tickets, indépendants)</strong> : (7) Paper trading, (8) Multi-broker, (9) Fine-tuning. À attaquer dans l'ordre que l'usage dicte.</li>
+</ul>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>⏳ <strong>Vague 1 — (1) Pipeline d'analyse — modèle DAG unifié (job, parent/child, cache-aware leaves)</strong></td>
+<td>Ticket fondateur de l'architecture cible décrite dans <code>docs/metier/vision.md &gt; Le pipeline d'analyse</code> et <code>docs/technique/architecture.md &gt; Modèle pipeline d'analyse</code>. Aujourd'hui la seule table async est <code>ticker_narrative_job</code> (Phase 1, après le décommissionnement Phase 0 / V6). Pas de cache visible, pas de parent/enfant, pas de DAG. La vision cible : <strong>toute analyse devient un nœud d'un DAG</strong>, les feuilles sont les <code>TickerAnalysis(symbol, day)</code> et les parents sont les compositions (<code>PortfolioAggregation</code>, <code>WatchlistDigest</code>, futures). <strong>Schéma cible</strong> : table <code>job</code> unifiée — colonnes <code>id</code> UUID, <code>kind</code> VARCHAR (<code>TICKER_ANALYSIS</code> / <code>PORTFOLIO_AGGREGATION</code> / <code>MARKET_REFRESH</code> / extensible), <code>parent_id</code> UUID nullable (FK self pour le DAG), <code>status</code> VARCHAR (<code>PENDING</code> / <code>RUNNING</code> / <code>DONE</code> / <code>DONE_CACHED</code> / <code>ERROR</code> / <code>CANCELLED</code>), <code>origin</code> VARCHAR (<code>dashboard</code> / <code>cron</code> / <code>api</code> / <code>parent</code>), <code>cache_key</code> VARCHAR (clé déterministe type <code>TickerAnalysis:NVDA:2026-05-07</code>), <code>target_id</code> UUID nullable (FK vers <code>ticker_narrative_snapshot</code> ou future <code>portfolio_analysis_snapshot</code>), <code>payload</code> JSONB (input du job — symbol+date pour leaf, portfolio_id+date pour parent), <code>result_summary</code> TEXT (« cached snapshot from 09:32 » / « LLM call 8.4 s, retry 0 »), <code>error</code> TEXT, timestamps <code>created_at</code> / <code>started_at</code> / <code>ended_at</code>. <strong>Migration</strong> : V9 ou suivante, peut soit (a) créer <code>job</code> ex nihilo et migrer les données Phase 1 lignes-par-lignes (clean break), soit (b) garder <code>ticker_narrative_job</code> et créer <code>job</code> comme view union pendant une période transitoire. (a) plus propre, (b) moins risqué. <strong>Cache-aware leaves</strong> : chaque feuille <code>TickerAnalysis(symbol, day)</code> lookup d'abord <code>ticker_narrative_snapshot.findFreshFor(symbol, day)</code> — si hit, status passe direct à <code>DONE_CACHED</code> sans appel LLM. Politique de fraîcheur à arbitrer : 30 min (cohérent avec dedup actuelle Phase 1) vs même-jour calendaire vs séance de marché. <strong>Dedup déterministe</strong> : si un job <code>RUNNING</code> existe avec le même <code>cache_key</code>, le nouveau request rejoint ce job au lieu d'en créer un second (extension du dedup window actuel vers une dedup par clé). <strong>Trois origines de trigger</strong> unifiées sur le même primitif : (1) <code>dashboard</code> — ouverture manuelle de dossier ticker, ou parent kické depuis « Analyser le portefeuille », (2) <code>cron</code> — scheduler quotidien hors heures de bureau qui pré-chauffe les positions OPEN détenues, (3) <code>api</code> — endpoint REST pour scripts externes ou webhooks. <strong>Côté Spring</strong> : un <code>JobOrchestrator</code> (ou <code>JobRunner</code>, à nommer) avec un <code>ThreadPoolTaskExecutor</code> borné (e.g. 4 threads), méthodes <code>enqueueLeaf(kind, payload)</code> et <code>enqueueParent(kind, payload, childKeys)</code>. Le parent reste <code>PENDING</code> tant que tous ses enfants ne sont pas dans un état terminal — implémenté via un listener qui réveille les parents quand un enfant transit. <strong>Tests</strong> : un cas pin par état (cache hit instant, cache miss → RUNNING → DONE, error → retry depuis l'UI, dedup join existing run, parent waits all children terminal, parent runs even if some children ERROR). <strong>Pourquoi pas Temporal / Airflow</strong> : single-user, low-throughput, JVM unique — un thread pool Spring + une table <code>job</code> font 95 % du job à 5 % de la complexité. Si SaaS multi-user un jour, Temporal devient pertinent. <strong>Effort estimé</strong> : ~3 jours pour le modèle + l'orchestrateur + le rebranchement Phase 1 ticker narrative dessus + tests. <strong>Prérequis</strong> pour les tickets dépendants Vague 1 (#2 Réintégration Phase 0, #3 Page Jobs) et Vague 2 (#4 Cron pré-chauffe). <strong>Décision</strong> : prérequis bloquant — à livrer <strong>avant</strong> tous les autres tickets de la Vague 1 et Vague 2</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 1 — (2) Réintégration Phase 0 — analyse portefeuille comme parent du DAG</strong></td>
+<td>Premier consumer concret du DAG unifié (Vague 1 #1). L'ancien <code>AnalysisExecutor</code> Phase 0 (décommissionné en Phase 2.5) faisait UN appel LLM monolithique sur le portfolio entier — coût ~100 s, hallucinations sur les positions, prompt impossible à cacher granulairement (cf. timeout 400 s observé 2026-05-07 sur Ollama cold-start). La nouvelle archi inverse le modèle : l'analyse portefeuille devient un <strong>job parent <code>PORTFOLIO_AGGREGATION</code></strong> qui kicke N <strong>enfants <code>TICKER_ANALYSIS(symbol, today)</code></strong> (un par position OPEN), attend leur terminaison, puis fait UN appel LLM final court qui digère leurs N narratifs <strong>déjà persistés</strong> (et leurs analyst recos / earnings / news Phase 2). <strong>Coût LLM marginal</strong> = M appels où M = nombre de positions non encore analysées ce jour ; si l'utilisateur a ouvert ses dossiers individuels avant, M tend vers 0 et l'analyse portefeuille est quasi-gratuite. <strong>Prompt parent</strong> : court, contextuel, lit <code>ticker_narrative_snapshot.summary + sentiment + keyPoints</code> × N + agrégats portefeuille (poids, P&amp;L, secteur dominant) ; produit un narratif portefeuille structuré (sentiment global, points saillants cross-positions, alertes éventuelles type « concentration &gt; 40 % sur Tech »). <strong>Sortie</strong> : nouvelle table <code>portfolio_analysis_snapshot</code> (<code>id</code>, <code>portfolio_id</code>, <code>generated_at</code>, <code>summary</code>, <code>sentiment</code>, <code>key_points</code> JSONB, <code>model_used</code>, <code>prompt_version</code>, <code>included_ticker_snapshot_ids</code> UUID[]) — équivalent du <code>ticker_narrative_snapshot</code> Phase 1 mais à l'échelle portfolio, avec traçabilité explicite de quelles feuilles ont été agrégées. <strong>UI</strong> : bouton « Analyser le portefeuille » sur le dashboard kicke un parent ; une widget « Pipeline en cours » affiche le DAG en temps réel (cache hits instants, cache miss qui tournent, agrégation finale) avec ETA approximative. Quand le parent est <code>DONE</code>, un panneau « Synthèse du portefeuille du JJ MMM » apparaît avec le narratif. <strong>Pas de retour de</strong> : le scraping RSS (module supprimé en V6), l'agrégation top-200-articles, les 8 règles validateur legacy, les targetWeight BUY/SELL — l'app ne fait pas de reco actionnable, juste un narratif honnête au-dessus des feuilles ticker. <strong>Comparaison historique</strong> : la cohérence cross-runs Phase 3 #2 (livrée 2026-05-14) s'applique naturellement à <code>portfolio_analysis_snapshot</code> aussi — le scorer est générique, il suffit de lui passer 2 snapshots du même portfolio. <strong>Effort</strong> : ~1.5 jour (parent service + agrégateur de narratifs + nouveau snapshot + UI dashboard + tests + prompt v1). <strong>Prérequis bloquant</strong> : le ticket Vague 1 #1 « DAG unifié » doit être livré avant. <strong>Pourquoi avant la Page Jobs (#3)</strong> : valider le modèle DAG sur un cas réel utile avant de bâtir l'UI au-dessus — la Page Jobs sans <code>PortfolioAggregation</code> à observer affiche essentiellement les <code>TickerAnalysis</code> qu'on voit déjà via la SSE narrative card</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 1 — (3) Page Jobs : visualisation des pipelines async (DAG)</strong></td>
+<td>UI au-dessus du DAG unifié (Vague 1 #1). Filed initialement comme Phase 3 #4 — déplacé ici 2026-05-14 parce que son intérêt repose à 90 % sur la richesse du DAG (multi-kind, parent/child, cache-hit visible) qui n'existe pas avant Vague 1 #1. Vibe « pipelines GitLab/GitHub Actions » — page qui surface le <strong>DAG des jobs</strong> (parent / enfants / cache-aware leaves) avec timing par étape, status par nœud, et indicateur cache-hit visuel. <strong>v1 read-only</strong> : visualisation seule, suffisant pour comprendre ce qui tourne / a tourné / a planté. <strong>Modèle de vue</strong> : (a) liste des <strong>runs</strong> (= jobs racines, parent_id null) en reverse-chronological, filtrable par kind (<code>PORTFOLIO_AGGREGATION</code> / <code>TICKER_ANALYSIS</code> standalone / <code>MARKET_REFRESH</code> cron / <code>CSV_IMPORT</code>) et par origin (<code>dashboard</code> / <code>cron</code> / <code>api</code>). (b) <strong>Drilldown sur un run</strong> : vue arborescente parent → enfants, chaque nœud avec icône status (<code>⏱ running</code> / <code>⚡ cache hit DONE_CACHED</code> / <code>✅ done</code> / <code>⚠ error</code> / <code>⏸ cancelled</code>), durée, lien vers la ressource produite (snapshot narratif → page dossier ticker en lecture-seule à la date). (c) <strong>Stream live</strong> via SSE (réutilise <code>JobEventPublisher</code> livré Phase 2.5) tant qu'un nœud non-terminal existe dans le DAG affiché ; arrêt automatique quand tout est terminal. <strong>Extensions naturelles</strong> au fil des besoins : (1) <strong>Retry granulaire</strong> — bouton « Retry failed leaves only » sur un parent ERROR, qui re-PENDING uniquement les enfants ratés sans relancer ceux qui ont réussi. (2) <strong>Cancel cascade</strong> — sur un parent RUNNING, kill remonte aux enfants encore PENDING. (3) <strong>Logs structurés</strong> — capture stdout/stderr du LLM call (prompt + response truncated), pas juste un <code>error TEXT</code>. Lien vers le <code>prompt_template</code> actif au moment du run (consommateur direct du prompt-management Phase 3 livré 2026-05-10). (4) <strong>Métriques agrégées</strong> — graphes durée moyenne par kind, taux cache-hit par jour, taux d'erreur par symbol. (5) <strong>Alertes</strong> — notification (mail / push) quand un kind de job échoue N fois d'affilée. <strong>Effort estimé</strong> : ~2-3 j pour la vue arborescente + filtres + SSE wiring. <strong>Prérequis bloquants</strong> : Vague 1 #1 (DAG unifié) <strong>et</strong> Vague 1 #2 (Réintégration Phase 0) — sans <code>PortfolioAggregation</code> à observer, la page n'a pas de matière intéressante à montrer</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 2 — (4) Cron quotidien — pré-chauffe du cache des positions OPEN</strong></td>
+<td>Job scheduler hors heures de bureau (e.g. 4h du matin local) qui kicke des <code>TICKER_ANALYSIS(symbol, today)</code> pour toutes les positions OPEN de tous les portfolios. Avec <code>origin = cron</code>. Quand le user arrive le matin sur le dashboard, ouvre un dossier ou kicke une analyse portefeuille, tout est en <code>DONE_CACHED</code> instant. <strong>Coût LLM</strong> = N appels par jour où N = nombre de positions distinctes — borné, prévisible, exécuté hors flow user. <strong>Prérequis</strong> : Vague 1 #1 DAG unifié + persistence du <code>origin</code> sur la table job pour distinguer cron vs dashboard dans la Page Jobs. <strong>Trade-off</strong> : si le user n'ouvre pas son dashboard ce jour-là, on a payé N appels pour rien. Acceptable single-user (~10 positions × ~$0.005/call Claude = $0.05/jour soit ~$18/an). À reconsidérer si SaaS multi-user. <strong>Effort</strong> : ~½ jour (scheduler Spring <code>@Scheduled</code> + appel <code>enqueueLeaf</code> + tests time-shifted)</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 3 — (5) Croisement portfolio × insights ticker</strong></td>
+<td>Sur le Dashboard, afficher pour chaque position le sentiment + alerte si RSI extrême ou drawdown important. Lit les <code>ticker_narrative_snapshot</code> les plus récents par symbol. Pas de dépendance stricte au DAG, mais bénéficie largement de la pré-chauffe Vague 2 #4 (sans elle, l'ouverture du dashboard déclenche N analyses froides à la file)</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 3 — (6) Watchlist alertes</strong></td>
+<td>Seuils déclencheurs (RSI &gt; 70, MA50 cassée, drawdown &gt; 20 %) sur les tickers de la watchlist. Standalone, indépendant du DAG. Notifications via mail / push à arbitrer en même temps</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 4 — (7) Paper trading</strong></td>
+<td>Simulation d'exécution. Gros morceau, indépendant. À cadrer plus tard — décision design ouverte (book order virtuel vs simple ledger d'achats/ventes simulés)</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 4 — (8) Multi-broker</strong></td>
+<td>Ne plus dépendre du seul CSV Wealthsimple. Au minimum : 2e parser CSV (Questrade, IBKR) + abstraction <code>BrokerImporter</code>. À l'extrême : APIs broker (OAuth + REST) — coût ops élevé pour un personal project, à réserver à une bascule SaaS</td>
+</tr>
+<tr>
+<td>⏳ <strong>Vague 4 — (9) Fine-tuning</strong></td>
+<td>Entraîner un modèle sur les snapshots narratifs personnels + thumbs accumulés via prompt-management Phase 3. Pertinent une fois ~6+ mois d'usage et ~500+ snapshots scoring. R&amp;D long terme — à reconsidérer quand le corpus le justifie</td>
+</tr>
+<tr>
+<td>⏳ <strong>Hors-vague — (11) Persister les préférences utilisateur côté backend (sortir de localStorage)</strong></td>
+<td>Déplacé depuis Phase 5 le 2026-05-23 — pas critique pour Phase 5 deploy (solo dev single-device), trigger réel = arrivée d'un testeur tiers ou usage mobile. Identifié 2026-05-18. <strong>État actuel</strong> : trois services frontend persistent dans <code>localStorage</code> — (a) <code>ThemeService</code> clé <code>portfolioai.theme</code> (dark/light), (b) <code>LanguageService</code> (FR/EN), (c) <code>AnnotationRepository.local</code> adapter clés <code>portfolioai.annotation.&lt;SYMBOL&gt;</code> (un blob JSON par ticker avec les annotations user sur le dossier ticker). <strong>Limites</strong> : (1) <strong>Multi-device cassé</strong> — un user qui ouvre l'app depuis son téléphone perd theme, langue, <strong>et toutes ses annotations ticker</strong>. OK en single-user/single-device dev, bloquant dès qu'on connecte un 2e poste ou qu'on ouvre à un testeur tiers. (2) <strong>Clear browser data → perte définitive des annotations</strong> (les prefs UI se redéfinissent en 2 clics, les annotations sont du contenu non reconstructible). (3) <strong>Pas de fallback SSR</strong> — si on bascule un jour <code>provideClientHydration</code>, <code>localStorage</code> est inaccessible côté serveur, 1er render n'a pas les prefs → FOUC inévitable. <strong>Pré-requis</strong> : Phase 4 livré (<code>app_user</code> row par utilisateur authentifié + pattern <code>user_id</code> FK multi-tenant). <strong>Cible</strong> : (a) <strong>Migration Flyway V11</strong> — colonne <code>preferences JSONB</code> sur <code>app_user</code> (plus souple qu'une table <code>user_preference</code> dédiée pour 2-3 prefs UI, et un seul <code>SELECT</code> au <code>/api/me</code>). Shape : <code>{ theme: 'dark'|'light', language: 'fr'|'en', ... }</code>. (b) <strong>Nouvelle table <code>user_annotation</code></strong> (<code>id UUID PK, user_id UUID FK, symbol VARCHAR, content JSONB, created_at, updated_at</code>, index <code>(user_id, symbol)</code>) — c'est une vraie ressource user, pas une pref UI, table dédiée justifiée. (c) <strong>Backend</strong> : <code>auth/application/UserPreferencesService</code> (GET/PUT) + <code>UserPreferencesController</code> exposant <code>GET /api/me/preferences</code> + <code>PUT /api/me/preferences</code>. Annotations : repository JPA + endpoint <code>GET/POST/DELETE /api/annotations/{symbol}</code> (placement domaine à arbitrer — sous <code>analysis/</code> ou nouveau bucket <code>annotation/</code>). (d) <strong>Frontend</strong> — nouveau service <code>UserPreferencesService</code> (HTTP-backed, primé via <code>provideAppInitializer</code> au boot comme <code>LlmTimeoutService</code>). <code>ThemeService</code> + <code>LanguageService</code> basculent en <strong>write-through cache</strong> : (i) lecture <code>localStorage</code> synchrone au boot (zéro FOUC, comme aujourd'hui), (ii) hydratation avec la valeur backend au retour de <code>/api/me/preferences</code> (overwrite si différent), (iii) chaque <code>set()</code> écrit en <code>localStorage</code> <strong>ET</strong> PUT backend (debounced 300 ms pour éviter le spam si toggle rapide). (e) <strong><code>AnnotationRepository</code></strong> — bascule du port sur nouvelle adapter HTTP <code>adapters/annotation.http.ts</code>. Drop l'adapter localStorage (pas d'usage offline-first dans le scope v1). (f) <strong>Migration data</strong> : pas de migration server-side. Le user récupère ses prefs si jamais il revient sur le même device avec <code>localStorage</code> encore peuplé (write-through hydrate le backend). Côté annotations, le user perd ce qu'il n'a pas réutilisé récemment — acceptable en v0 single-user (annotations rares). Documenter le « one-way breaking change » dans <code>journal-livraisons.md</code> + <code>CHANGELOG.md</code>. (g) <strong>FOUC theme</strong> — le script inline <code>index.html</code> continue de lire <code>localStorage</code> (sync, pré-Angular). La valeur backend hydrate après boot et l'override est invisible si elle matche, brièvement visible si elle diffère (multi-device 1er login). Acceptable. Alternative anti-flash : poser un cookie <code>theme</code> HttpOnly=false depuis le backend au login pour que le script inline le lise — overkill v1. <strong>Tests</strong> : (a) backend — <code>UserPreferencesServiceTest</code> (defaults si pas de row, update via PUT, scoping <code>user_id</code> matché à <code>currentUser</code>), (b) frontend — <code>theme.service.spec</code> patché : hydratation backend overrides localStorage, write-through PUT effectué sur <code>set()</code>, (c) intégration end-to-end : login → toggle theme → logout → relogin → theme persisté côté backend, (d) annotations — CRUD complet, scoping per-user. <strong>Effort estimé</strong> : ~3-4 h (migration Flyway + entités JPA + repositories + services + controllers + endpoints REST + frontend services bascule + write-through cache logic + spec patches + smoke deploy). <strong>Trigger</strong> : avant d'ouvrir l'app à un testeur tiers ou avant le 1er usage multi-device (typiquement quand on teste sur mobile). Pas critique pour le dev solo single-device. <strong>Standalone — pas de dépendance Vague 1-4</strong> : ne dépend pas du DAG unifié, peut être attaqué isolément.</td>
+</tr>
+<tr>
+<td>⏳ <strong>Hors-vague — (10) News in-app — scraping + LLM digest pour lire sans cliquer dehors</strong></td>
+<td>Identifié 2026-05-18. <strong>Frustration actuelle</strong> : le module <code>news/</code> Phase 2 affiche les headlines Finnhub (titre + source + lien) ; cliquer ouvre un nouvel onglet sur le site source → casse le flow d'analyse du dossier ticker (perte de contexte), oblige à se taper cookies/ads/paywalls de chaque média, et chaque clic-out est un mini-deuil de la session d'analyse en cours. User feedback direct : « les news de passer par les liens c'est insupportable ». <strong>Cible</strong> : amener le contenu (ou un digest) dans l'app pour qu'une lecture rapide se fasse sans clic-out. <strong>4 approches comparables au moment d'attaquer</strong> : (a) <strong>Scrape full text + display intégral</strong> — UX la plus directe mais risque légal (copyright, ToS news sites), storage rapide (10K+ articles × ~50 KB = bloat DB), paywalls (NYT/WSJ/FT/Bloomberg bloquent), brittle (chaque site a un HTML différent). <strong>Pas recommandé</strong>. (b) <strong>Scrape + LLM digest</strong> ★ <strong>reco</strong> — fetch URL, extraction main content (lib type <code>jsoup</code> + Readability ou Mercury Parser), nouveau prompt <code>news-digest</code> qui produit <code>{ summary: 100-150 mots, key_points: 3-5 bullets, sentiment, mentions_tickers: [] }</code>. Affichage in-app : card expansible (collapsed = titre+source+date, expanded = digest LLM + petit lien « lire l'original »). <strong>Aligné au positionnement « narrateur, pas devin »</strong> — le LLM digère et raconte, comme pour le ticker narrative Phase 1. Transformative use → fair use friendly (vs republier le contenu intégral). Cache TTL ~6h (news age fast). (c) <strong>Switch news provider</strong> vers une API qui sert le full-text (Newsapi.ai, Aylien, NewsCatcher) — subscription payante (~$50+/mo), résout le scraping technique mais pas le problème UX du « cliquer pour lire » si on garde l'archi actuelle. (d) <strong>Embedded reader mode</strong> (Readability.js / Mercury côté frontend) — extrait le main content du HTML serveur-side et l'affiche en mode lecture clean. Moins ambitieux que (b), garde tout le texte original. Légalement plus risqué que (b) parce que pas de transformation. <strong>Scope si on retient (b)</strong> : <strong>Backend</strong> — extension <code>news/</code> module : (1) adapter scraping <code>WebPageFetcher</code> (HttpClient avec timeout + user-agent rotation + retry exponentiel + per-domain throttle), (2) extraction main content via <code>jsoup</code> + Readability-like (à comparer à l'attaque : <code>goose3</code> JVM port, <code>dom-distiller</code>, ou implém custom), (3) nouveau prompt template <code>news-digest</code> versionné via prompt-management Phase 3, (4) nouveau service <code>NewsDigestService</code> qui orchestre fetch → extract → LLM → persist, (5) nouvelle table <code>news_digest</code> (<code>news_id PK FK → news_item, summary TEXT, key_points JSONB, sentiment VARCHAR, mentions_tickers VARCHAR[], digested_at, model_used, prompt_version</code>), (6) endpoint <code>GET /api/news/{news_id}/digest</code> (lazy : trigger digest si pas en cache, sinon return cached), (7) <strong>fail-soft</strong> : si scrape rate &gt;5% sur un domaine, throttle ; si paywall détecté (HTTP 403 / pattern dans le HTML), fall back au lien original avec badge « paywall — ouvrir sur le site ». <strong>Frontend</strong> — remplacer le <code>news.card</code> actuel par une version expansible : collapsed (title + source + date), expanded (digest LLM en placeholder pendant le fetch async, puis summary + bullets + sentiment + petit lien « lire l'original »). Reuse du pattern SSE déjà câblé Phase 3 (<code>JobEventPublisher</code>) si on veut un live progress sur la génération. <strong>Decisions ouvertes à l'attaque</strong> : (1) <strong>Quand digester</strong> — au moment où la news arrive de Finnhub (push proactif, ~5-10 calls LLM par ticker au refresh), ou lazy à la 1re expansion par l'user (économise les digests jamais lus, mais latence visible la 1re fois) ? Reco : lazy v1, batch async (Phase 7 #4 cron) v2 si pertinent. (2) <strong>Granularité cache</strong> — TTL global 6h, ou immutable (un digest généré = stocké forever) ? La news ne change pas après publication → immutable plus sain, cache pourrait grandir mais bornable via rotation. (3) <strong>Filtrer le bruit Finnhub</strong> — Finnhub renvoie parfois 20-40 news/ticker dont la moitié sont du PR/relayé. Detection auto (LLM ranking ?) ou filtre éditorial par source (whitelist Reuters / Bloomberg / etc.) ? À cadrer après quelques semaines d'usage. (4) <strong>Coût LLM</strong> — ~5-10 news par ticker × N tickers × cache : avec Claude Haiku (~$0.001/digest 200 tokens out), c'est 10-50 cents/ticker analysé. Borné. Avec Claude Sonnet (~$0.015/digest), c'est 15× plus → ~$1-5/ticker. Prompt-management Phase 3 permet de switcher modèle facilement. <strong>Concerns à documenter</strong> dans <code>docs/technique/architecture.md &gt; Décisions notables</code> : (a) légal — transformative use vs republication, position claire écrite, (b) robustness — fail-soft sur paywall + scrape error → fallback au lien (jamais d'écran cassé), (c) provider lock-in — Finnhub donne les URLs, le pipeline scrape+digest est provider-agnostic, (d) rate-limit news sites — per-domain throttle + user-agent realistic, pas du curl-default. <strong>Effort estimé</strong> : ~5-7 h cumulé (compare libs scrape Kotlin/JVM + impl service + prompt v1 + table + endpoint + UI expansible + tests fail-soft + smoke deploy). <strong>Standalone — pas de dépendance Vague 1-4</strong> : ce ticket ne dépend pas du DAG unifié. Peut être attaqué isolément quand l'envie monte, sans bloquer ni être bloqué par les autres tickets Phase 7</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="phase-8-tests-e2e-de-non-regression-auto">Phase 8 — Tests e2e de non-régression auto<a class="headerlink" href="#phase-8-tests-e2e-de-non-regression-auto" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Filed 2026-05-24, <strong>post-renumérotation Phase 6 ↔ Phase 7</strong>. Objectif : poser un filet de sécurité automatisé sur les flows critiques de l'app pour qu'une régression visuelle ou fonctionnelle ne passe plus par le filtre du test manuel solo dev. <strong>Pas de tech retenue v1</strong> — Playwright / Cypress / Vitest browser mode / autre, à arbitrer après que le catalogue des golden paths soit posé (le choix de la stack dépend de ce qu'on veut couvrir : auth flow OAuth réel, click-tour SPA, import CSV drag-drop, etc.). Phase complète après catalogage : (1) écrire les tests, (2) brancher CI (workflow <code>e2e.yml</code>), (3) seed data + reset entre runs.</p>
+<p><strong>Cible v1</strong> : ~5-8 golden paths qui couvrent l'usage quotidien dev, pas l'exhaustivité.</p>
+<p>Statut : <strong>phase ouverte, scope à définir</strong> — le ticket de catalogage ci-dessous est le point d'entrée.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+<th>Priorité</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>⏳ <strong>(1) Cataloguer les golden paths à couvrir e2e</strong></td>
+<td><strong>Prérequis à toute écriture de test</strong>. Audit des flows critiques de l'app sous l'angle « si ça casse silencieusement, je le découvre en prod ou jamais ». Candidats à arbitrer : (a) <strong>Auth</strong> — <code>local-no-auth</code> boot + accès <code>/api/me</code> (smoke déjà partiellement couvert par <code>LocalNoAuthIntegrationTest</code> côté backend, mais pas le round-trip frontend → backend), OAuth Google flow réel hors scope v1 (trop coûteux à orchestrer en CI). (b) <strong>CSV import</strong> — drag-drop deux fichiers <code>DEMO-CELI</code> + <code>DEMO-REER</code>, vérifier que les snapshots + positions apparaissent dans l'ordre chronologique sur le dashboard. (c) <strong>Ouverture dossier ticker</strong> — clic sur une row du dashboard → chart, news, analyst, earnings tous chargés + narratif IA généré en mock (~1 s). (d) <strong>Switch provider via <code>/settings/configuration</code></strong> — flipper <code>market.provider mock → twelvedata</code> (sans clé, doit échouer en 400 propre) puis retour à <code>mock</code> sans casser le dashboard. (e) <strong>Watchlist add/remove</strong> — ajout <code>AAPL</code>, vérifier qu'il apparaît, suppression, vérifier qu'il disparaît. (f) <strong>Switch langue FR↔EN</strong> — vérifier que les 5-10 labels-clés du dashboard changent et que <code>localStorage</code> persiste. (g) <strong>Theme dark↔light</strong> — vérifier le toggle + persistance. (h) <strong>Observability timeline</strong> — naviguer vers <code>/observability/AAPL</code> après quelques narratifs générés. <strong>Sortie attendue</strong> : doc <code>docs/projet/golden-paths-e2e.md</code> listant les 5-8 retenus + pour chaque : pré-conditions data (CSV, narratifs préseed), assertions clés (sélecteurs DOM, data-testid à ajouter si manquants), durée approximative, dépendance vs lecture-seule. Ce doc devient le contrat des tickets d'implémentation à venir. <strong>Effort estimé</strong> : ~1-2 h (audit click-tour + écriture doc). <strong>Aucune ligne de code, aucun choix de tech</strong> — c'est la base à partir de laquelle (2) sera filed</td>
+<td>🔴 Haute</td>
+</tr>
+<tr>
+<td>⏳ <strong>(2) Choisir la tech + setup infra e2e</strong></td>
+<td>À filed après (1). Comparaison Playwright vs Cypress vs Vitest browser mode vs autre : (a) intégration zoneless Angular 21 (signaux), (b) parallélisation CI, (c) seed data (reset Postgres entre runs via Testcontainers re-bootstrap ou via un endpoint <code>POST /test/reset</code> côté backend ?), (d) coût maintenance long terme. Setup minimal : workflow GitHub Actions <code>e2e.yml</code> (cron quotidien + manuel) + 1er test golden path posé pour valider la chaîne</td>
+<td>🟡 Moyenne</td>
+</tr>
+<tr>
+<td>⏳ <strong>(3) Implémenter les golden paths catalogués</strong></td>
+<td>Une fois (1) + (2) livrés. ~5-8 tests, un par flow listé dans <code>golden-paths-e2e.md</code>. Effort estimé : ~½ jour par test, à étaler entre features structurelles</td>
+<td>🟡 Moyenne</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="dette-technique">Dette technique<a class="headerlink" href="#dette-technique" title="Permanent link">&para;</a></h2>
+<p>Sujets identifiés en cours de session, pas bloquants pour la phase courante mais à traiter quand l'occasion se présente. Les items livrés (cleanup jobs orphelins, ESLint, doc-maintainer, Twelve Data, refacto tests-as-documentation) sont dans <a href="../journal-livraisons/#dette-technique--items-livrés"><code>journal-livraisons.md &gt; Dette technique — items livrés</code></a>.</p>
+<blockquote>
+<p><strong>Ordre de lecture</strong> (cf. CLAUDE.md « Ordering convention ») : ⏳ À faire en priorité descendante (🔴 → 🟡 → 🟢) en haut. Reordonné le 2026-05-07 lors du split backlog ↔ journal-livraisons.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Sujet</th>
+<th>Description</th>
+<th>Priorité</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>⏳ Gestion d'erreur transverse — frontend <code>MatSnackBar</code> + logging backend + exceptions plus honnêtes</td>
+<td><strong>Trois volets à attaquer ensemble</strong> parce que la friction d'usage est la même : l'utilisateur voit aujourd'hui un message vague côté UI alors que le backend a souvent le contexte exact mais le noie dans des logs trop verbeux ou le swallow dans un <code>catch (Exception)</code> générique. <strong>Volet 1 — Frontend <code>MatSnackBar</code> centralisé</strong>. Aujourd'hui les erreurs UI sont rendues à plusieurs endroits avec des patterns différents : bandeau <code>.error-banner</code> en haut du dashboard (analyse IA, chargement portefeuille / assets), message inline <code>.watchlist-error</code> sous l'input watchlist, surface séparée encore pour le chart / narrative ticker, snackbar ad-hoc isolé sur le PATCH thumbs de la narrative card. Pas de cohérence visuelle ni de règle claire sur la persistance. <strong>Cible</strong> : service singleton <code>NotificationService</code> dans <code>core/</code> exposant <code>error(key, params?, options?)</code>, <code>info(...)</code>, <code>success(...)</code>. Les composants l'injectent et appellent <code>notify.error('dashboard.errors.loadPortfolios')</code> (clé i18n) ; le service traduit via <code>TranslateService.instant</code> et dispatche au snackbar avec durée (~5 s défaut, persistant si action requise) et <code>panelClass</code> qui colorise (<code>snack-error</code> rouge, <code>snack-success</code> vert, <code>snack-info</code> neutre — alignés sur les tokens du thème). Bonus : action « Réessayer » sur les erreurs reproductibles (chargement portefeuille / chart / narratif) via <code>Ref.onAction()</code>, action « Annuler » sur les optimistic updates qui échouent (rollback watchlist, thumbs). Migration progressive : Dashboard d'abord (le plus visible), puis Ticker dossier, puis CSV import. Watchlist à part — l'erreur inline est pertinente au moment de la saisie. <strong>Trade-off</strong> : le bandeau <code>.error-banner</code> actuel est plus visible et persistant qu'un toast — pour les erreurs <em>bloquantes</em> (« impossible de charger les portefeuilles, l'app est inutilisable »), un état dégradé inline reste plus honnête qu'un toast évanescent. Le snackbar est pour les erreurs <em>transient</em>. Coûts cachés : (1) a11y — <code>MatSnackBar</code> est <code>aria-live=polite</code> par défaut, vérifier que les screen readers annoncent ; (2) tests — <code>dashboard.spec</code>, <code>ticker.spec</code>, <code>csv-import.spec</code> asserent aujourd'hui sur le signal <code>error()</code> à reskinner en mock du service. <strong>Volet 2 — Logging backend (niveaux + structure)</strong>. Friction observée : <code>docker compose logs backend</code> est aujourd'hui trop verbeux pour debug efficacement — chaque cache hit, chaque <code>JobEventPublisher.publish</code>, chaque résolution de config, chaque appel <code>tickerService.load</code> log en <code>INFO</code> ce qui noie les vraies erreurs ; à l'inverse, certaines paths critiques (LLM call timeout, fail-soft Finnhub /price-target sur 5xx) sont en <code>DEBUG</code> ou silencieuses. <strong>Cible</strong> : (a) <strong>audit ligne-par-ligne</strong> des <code>log.info</code> / <code>log.warn</code> du backend (<code>grep -rn 'log\.\(info\|warn\|debug\)' backend/src/main</code>), reclassifier selon convention claire — <code>DEBUG</code> pour traces dev/runtime (cache hit/miss, dedup, scheduler ticks, SSE register/unregister, body parsing routine), <code>INFO</code> pour milestones business (job kick, snapshot persisté, config bumped, provider switched), <code>WARN</code> pour fail-soft (rate-limit absorbed, fallback null sur /price-target, retry parser, stale-on-switch) qui méritent un signal mais ne cassent pas le flow, <code>ERROR</code> strictement pour les paths qui retournent une erreur user-visible ou interrompent un job. (b) <strong><code>application.yml</code> <code>logging.level</code></strong> ajusté en conséquence — racine <code>INFO</code>, <code>com.portfolioai</code> <code>INFO</code>, packages tiers (<code>org.hibernate.SQL</code>, <code>org.springframework.web</code>, <code>okhttp3</code>) <code>WARN</code> ; <code>application-local.yml</code> peut surcharger en <code>DEBUG</code> pour le dev local. (c) <strong>structurer les logs critiques</strong> : aujourd'hui <code>log.info("Snapshot persisted for $symbol")</code> perd le contexte (jobId, durée, modèle utilisé). Ajouter MDC (<code>org.slf4j.MDC.put("jobId", id.toString())</code>) sur les entrées de pipeline (<code>TickerNarrativeRunner.run</code>) pour que tous les logs descendants du run portent le <code>jobId</code> — debug 10× plus facile quand on cherche pourquoi un narratif a échoué. <strong>Volet 3 — Exceptions plus honnêtes</strong>. Friction : <code>catch (Exception)</code> générique dans plusieurs adapters (<code>MockNewsClient</code>, <code>FinnhubAnalystClient.fetchPriceTargetOrNull</code>, <code>WatchlistService.lookupInstrumentType</code>) — utile en fail-soft pour ne pas casser le flow user, mais swallow tout incluant les bugs (NPE Kotlin, <code>IllegalStateException</code> de notre code) sans signal. Aujourd'hui un bug interne se déguise en « provider indisponible ». <strong>Cible</strong> : (a) <strong>resserrer les catch</strong> sur les exceptions vraiment attendues (<code>HttpClientErrorException</code>, <code>ResourceAccessException</code>, <code>UpstreamUnavailableException</code>, <code>JsonProcessingException</code>) — laisser propager les <code>RuntimeException</code> génériques pour que <code>GlobalExceptionHandler</code> les attrape et logge <code>ERROR</code> avec stacktrace. (b) <strong>enrichir <code>UpstreamUnavailableException</code></strong> d'un <code>cause</code> systématique (déjà fait sur Finnhub fail-soft logging via commit <code>36e5b60</code>, à étendre à <code>TwelveDataClient</code> qui swallow encore certains <code>JsonProcessingException</code> en fallback null). (c) <strong><code>GlobalExceptionHandler</code></strong> — passer en revue les ResponseStatusException + ApiError DTOs : actuellement on retourne un <code>503</code> générique pour toute <code>UpstreamUnavailableException</code>, sans distinguer « provider down » (5xx upstream), « rate-limited » (429 upstream), « auth-failed » (401/403 upstream). Le frontend ne peut pas afficher un message ciblé. <strong>Cible</strong> : enum <code>MarketUnavailableReason ∈ {PROVIDER_DOWN, RATE_LIMITED, AUTH_FAILED, NOT_FOUND}</code> dans le DTO d'erreur ; le frontend translate vers une i18n key spécifique (<code>errors.market.rateLimited</code> vs <code>errors.market.providerDown</code>). <strong>Trigger / coordination</strong> : ces trois volets se renforcent mutuellement — un meilleur logging back permet de diagnostiquer pourquoi un snackbar front s'allume, des exceptions plus précises alimentent des keys i18n plus utiles. À attaquer en <strong>session dédiée</strong>, dans l'ordre : (1) logging audit + niveaux + MDC (~1.5 h, pas d'UI), (2) exceptions resserrées + enum <code>MarketUnavailableReason</code> (~1.5 h, contrats DTO à coordonner), (3) <code>NotificationService</code> + migration UI Dashboard / Ticker (~2 h). Branchage cohérent ; un seul gros commit par volet, pas de séquence morcelée</td>
+<td>🟡 Moyenne</td>
+</tr>
+<tr>
+<td>⏳ Frontend — convention « Resource builders on the port » : généraliser à tous les repositories <code>core/api/</code> pour éliminer les <code>subscribe()</code> résiduels</td>
+<td><strong>Intention</strong> : supprimer tous les <code>.subscribe()</code> / <code>firstValueFrom</code> qui restent dans les composants. Aujourd'hui les ports <code>core/api/*.repository.ts</code> exposent <code>Observable&lt;T&gt;</code> à plat, et chaque composant câble son propre <code>rxResource</code> / <code>signal.set(...)</code> après un <code>firstValueFrom</code> — RxJS fuit jusqu'à l'UI alors qu'aucun consommateur n'utilise vraiment d'opérateur. Le pattern cible déplace la plomberie <code>rxResource</code> <strong>sur le port</strong> : le composant n'invoque plus que des builders qui retournent un <code>Resource&lt;T&gt;</code> (ou un <code>Signal&lt;T&gt;</code> cooked) prêt à consommer — zéro <code>subscribe</code>, zéro <code>ngOnInit</code>, zéro map-emit. <strong>Motivation</strong> : pilote livré 2026-05-16 sur le bucket <code>portfolio/</code> (<code>SnapshotRepository</code> — <code>frontend/src/app/core/api/portfolio/snapshot.repository.ts:32-58</code>). Le port expose <code>allResource()</code> et <code>positionsCache(trigger)</code> ; le composant <code>Suivi</code> consomme <code>snapshots.value()</code>, <code>loading()</code>, <code>error()</code>, <code>positions().get(id)</code> directement (<code>features/suivi/suivi.ts:21-24</code>). Bénéfice mesurable : <code>−40 lignes</code> sur <code>Suivi</code>, plus de <code>.subscribe()</code>, plus de <code>ngOnInit</code>, plus de map-emit boilerplate. <strong>Pattern à appliquer aux 13 autres repositories</strong> : (1) <strong><code>allResource()</code> builder</strong> quand le repo a une méthode <code>getAll()</code> / <code>list()</code> / <code>findActive(name)</code> que le composant veut consommer en <code>rxResource</code> simple — candidats immédiats : <code>PortfolioRepository</code>, <code>MarketRepository</code> (chart endpoint), <code>WatchlistRepository</code>, <code>NewsRepository</code>, <code>AnalystRepository</code>, <code>EarningsRepository</code>, <code>ConfigRepository</code>, <code>PromptRepository</code>, <code>NarrativeObservabilityRepository</code>, <code>NarrativeBiasRepository</code>. (2) <strong><code>xxxCache(trigger)</code> builder</strong> quand le composant accumule des résultats par id (cas <code>positionsCache</code> du pilote) — candidats : potentiellement <code>NewsRepository</code> (per-symbol), <code>AnalystRepository</code> (per-symbol), <code>EarningsRepository</code> (per-symbol), à arbitrer cas par cas selon la sémantique du consumer. <strong>Contrainte mocks</strong> : test mocks doivent passer en <code>useClass MockXxxRepository extends XxxRepository</code> (le <code>useValue</code> plat ne préserve pas les builders hérités). Migration des specs concernés à faire dans la foulée. <strong>Effort</strong> : ~3-4 h cumulé si attaqué en bloc, ~20-30 min par repo sinon. <strong>Alternative écartée</strong> : <code>rxMethod</code> de <code>@ngrx/signals/rxjs-interop</code> — non installé, et <code>effect()</code> du <code>@angular/core</code> couvre déjà le cas (signal-native, auto-cleanup, pas d'aller-retour <code>toObservable</code> → <code>pipe</code> → <code>subscribe</code>). <strong>Doc déjà câblée</strong> par le pilote : (a) <code>.claude/skills/angular-signals/SKILL.md &gt; Resource builders live on the port itself</code> pin la convention (allResource, xxxCache, useClass extends pour mocks) ; (b) <code>docs/technique/architecture.md &gt; Décisions techniques notables — Phase 1+ frontend</code> mentionne le <em>pourquoi</em> + alternatives écartées. <strong>Supersede partiel</strong> : le ticket « Frontend — aligner le type de retour des repositories : Promise vs Observable » ci-dessus devient en partie obsolète — avec ce pattern, le consommateur ne voit plus de <code>Promise&lt;T&gt;</code> ni d'<code>Observable&lt;T&gt;</code> pour les use-cases courants (juste des signals via les builders). Les méthodes abstract HTTP du port restent en <code>Observable&lt;T&gt;</code> (héritage <code>HttpClient</code>) mais ne sont plus appelées directement par les composants. À folder ou clore quand la convention sera adoptée. <strong>Pourquoi 🟢 Basse</strong> : le pilote a validé la convention end-to-end (code + tests + skills + architecture.md) ; la généralisation aux 13 autres repos n'est plus une question de design mais d'élan. Pas de bénéfice runtime, juste un cleanup d'idiome — à attaquer opportunistically quand on touche déjà un repo pour une autre raison, ou en session dédiée si on veut clore en un coup. <strong>Trigger</strong> : un repo à la fois pour limiter le diff, ou en bloc si on accepte une grosse PR</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Frontend — aligner le type de retour des repositories : Promise<T> ou Signal<T>, plus de <code>firstValueFrom</code> systématique</td>
+<td><strong>Analyse critique 2026-05-15</strong> findings #F2 + #F3. Aujourd'hui les 14 repositories du <code>core/</code> retournent <code>Observable&lt;T&gt;</code> (héritage de l'<code>HttpClient</code>). Les consommateurs <code>firstValueFrom</code>-ent immédiatement vers une <code>Promise&lt;T&gt;</code> qu'ils flat dans un <code>signal.set(...)</code> — l'<code>Observable&lt;T&gt;</code> annoncé est une <strong>fausse promesse de réactivité</strong> : aucun consommateur n'utilise les opérateurs RxJS, et l'app perd <code>toSignal()</code> qui serait l'idiome Angular 21. <strong>Deux options</strong> : (a) <strong><code>Promise&lt;T&gt;</code> au niveau repo</strong> — assumer le pattern existant, retours synchrones (<code>async list(): Promise&lt;Portfolio[]&gt;</code>), <code>firstValueFrom</code> interne aux adapters HTTP, consommateurs <code>await</code> directement. Plus simple, moins de RxJS exposé. (b) <strong><code>Observable&lt;T&gt;</code> au niveau repo + <code>toSignal()</code> côté consommateur</strong> — <code>readonly portfolios = toSignal(this.portfolio.list(), { initialValue: [] })</code> au lieu du pattern <code>signal&lt;T[]&gt;([]) + async load() { … firstValueFrom … set(...) }</code>. Plus puissant pour les flux composés (debounce sur le search dashboard), demande discipline. <strong>L'incohérence actuelle est le pire des deux mondes.</strong> Recommandation initiale : (a) parce que le projet est signal-first et qu'aucun consommateur n'a vraiment besoin de RxJS sur les repos. <strong>Pourquoi 🟢 Basse</strong> : démoté 2026-05-16 — la convention « Resource builders on the port » (ticket ci-dessus) supersède partiellement ce ticket. Avec les builders, les consommateurs ne voient plus <code>Promise&lt;T&gt;</code> ni <code>Observable&lt;T&gt;</code> du tout. Reste à trancher le type de retour des méthodes abstract HTTP (héritage <code>HttpClient</code>), mais c'est devenu un point cosmétique — pas un sujet structurant. <strong>Effort</strong> : ~2-3 h (refacto des 14 repos + tous les <code>firstValueFrom</code> call-sites, ~30-50 sites à toucher). <strong>Impact skills</strong> : <code>folders-structure-frontend</code> à clarifier (type de retour des <code>*.repository.ts</code>), <code>angular-signals</code> à patcher (promouvoir le pattern retenu, supprimer le <code>firstValueFrom</code> du « Service State Pattern »). <strong>Trigger</strong> : à attaquer en session dédiée si on veut clore en un coup, ou à clore quand la convention Resource builders aura été appliquée aux 13 autres repos</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Stratégie de cache : homogénéiser les six caches sur le pattern service-sans-préfixe</td>
+<td><strong>Audit 2026-05-06 fin Phase 2 finding #3</strong>. Option (b) « documenter explicitement les deux modèles » livrée 2026-05-14 (cf. journal-livraisons). <strong>Reste l'option (a) — homogénéisation</strong> : drop le préfixe <code>'twelvedata|'</code> côté <code>TwelveDataClient</code>, déplacer <code>@Cacheable</code> du niveau adapter vers le niveau service applicatif (mirroir de <code>NewsService</code> / <code>AnalystRecommendationService</code> / <code>EarningsService</code> / <code>SectorClassifierService</code>). Tous les six caches partageraient alors le même contrat : clé <code>symbol.toUpperCase()</code>, provider absent, staleness ~15 min post-switch acceptée. <strong>Pourquoi 🟢 Basse</strong> : démoté 2026-05-16 — cosmétique, alignement mental, pas de bug runtime. L'option (b) doc-only a déjà capturé 80 % du bénéfice. <strong>Coût</strong> : ~1-2 h dont un test d'intégration qui vérifie que le cache <code>market-chart</code> survit un toggle <code>mock → twelvedata</code> (sinon on perd silencieusement la valeur cachée du mode actuel). <strong>Trigger</strong> : à attaquer dans une session « refacto cache » dédiée — peu d'impact runtime, mais simplifie le mental model et permet d'aligner la KDoc de <code>RoutingMarketChartClient</code> sur les autres routings</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Multi-provider OAuth — ajouter GitHub OAuth comme 2e provider</td>
+<td>Si l'app s'ouvre un jour à un public qui n'a pas tous un compte Gmail, ajouter GitHub OAuth en deuxième provider. Câble : 2e registration <code>spring.security.oauth2.client.registration.github</code> + handler dans <code>CustomOAuth2UserService</code> qui mappe les claims GitHub (<code>email</code>, <code>id</code>, <code>login</code>) sur le même <code>User</code> (l'email reste la clé naturelle, donc un user qui se connecte via Google puis GitHub avec le même email récupère la même row — <code>provider</code> et <code>provider_id</code> sont juste tracés au last login). UI : 2 boutons sur <code>/login</code>. <strong>Effort estimé</strong> : ~1 h. <strong>Trigger</strong> : seulement si on identifie une cible utilisateur qui n'a pas Gmail. <strong>Hors Phase 4 + Phase 5</strong> — le user a tranché 2026-05-17 qu'on ne ferait pas ça avant. À garder filed comme option future.</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>🧊 News inline v2 — LLM-as-summarizer pour étendre le résumé Finnhub</td>
+<td><strong>Gelé 2026-05-16</strong> — aucun signal utilisateur que le résumé Finnhub brut (~150-200 chars) est trop court ; à dégeler si un comportement « user ouvre quand même l'onglet externe à chaque expand » est observé. Suite logique de la livraison <strong>News inline v1 minimaliste</strong> (Phase 2 ✅) : le body de l'accordéon affiche aujourd'hui le <code>summary</code> Finnhub brut (~150-200 chars) + un lien vers la source. Si à l'usage ce résumé se révèle trop court pour rester sur le dossier (le user ouvre quand même l'onglet externe à chaque fois), basculer sur un summarizer LLM côté backend. <strong>Cible</strong> : nouveau service <code>NewsSummarizerService</code> qui prend <code>{headline, summary Finnhub, source, publishedAt}</code> en input et génère un digest 3-5 phrases via Claude (déjà câblé pour le narratif ticker). <strong>Pourquoi pas le scraping</strong> : ToS Reuters/Bloomberg fragiles, paywalls, JS-heavy sites — trop de cas d'échec et risque légal pour un personal project. LLM-as-summarizer prend le <code>summary</code> Finnhub comme <strong>contexte</strong> (pas comme seul input) — ça réduit l'hallucination par rapport à passer juste la <code>url</code> (où le LLM devine ce que dit l'article sans l'avoir vu). <strong>Cache long</strong> : 24 h+ par couple <code>(news.id)</code> parce qu'un article ne change pas après publication ; opt-in par item via expand (le user a déjà cliqué pour l'ouvrir, donc cohérent). <strong>Coût estimé</strong> : ~$0.001 par appel Claude Haiku 4.5 sur ~200 input + 150 output tokens, donc négligeable même sans cache (~$0.01/dossier × 10 expand). <strong>Tradeoff principal</strong> : (1) hallucination — le LLM peut inventer du contexte au-delà du summary Finnhub. Mitigation : prompt explicite « stay strictly within the provided summary, do not infer ». (2) Qualité variable — l'effet « narratif IA » lecture creuse risque de se reproduire. Mitigation : tester sur ~10 dépêches en mode preview avant de wire en prod, valider qualitativement. <strong>Dépendances Phase 3</strong> : ce travail recoupe l'observabilité narrative (sait-on de quel article le LLM s'est inspiré ?) et le prompt management — à attaquer une fois Phase 3 démarrée pour profiter de l'infra A/B et scoring</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Dockerfile prod — éviter <code>COPY .git/</code> (~70 MB build context)</td>
+<td><strong>Audit pré-Phase 5 close 2026-05-24 finding A2</strong>. Le <code>devops/prod/Dockerfile</code> fait un <code>COPY .git/ ./.git/</code> dans le stage de build pour que <code>gradle-git-properties</code> puisse lire le commit SHA / tag / branch et générer <code>git.properties</code> consommé par <code>/actuator/info</code> à runtime. Coût : ~70 MB uploadés à chaque <code>docker build</code> (le build context entier transite vers Cloud Build). Sur GitHub-hosted runner ~30 MB/s → ~2-3 sec par run. <strong>Fréquence</strong> : ~quelques deploys par mois (release-triggered, pas push-triggered) → ~10-20 sec/mois de gain potentiel. <strong>Pas d'urgence aujourd'hui</strong> ; documenté volontairement comme STUB acceptable dans <code>docs/devops/deploiement.md &gt; §6.4</code>. <strong>Options si on attaque</strong> : (a) <strong>Path A</strong> — passer <code>GIT_COMMIT</code> + <code>GIT_TAG</code> + <code>GIT_BRANCH</code> comme build-args au Dockerfile, générer <code>git.properties</code> à la main via <code>echo &gt; /app/...</code> dans une RUN. By-passe <code>gradle-git-properties</code> → drift risk (deux systèmes écrivent les mêmes 6 champs, oubli de sync au prochain ajout de champ). (b) <strong>Path C — recommandé</strong> : étape CI pré-build dans <code>deploy.yml</code> qui invoque <code>./gradlew generateGitProperties</code> sur le runner, COPY le fichier <code>build/resources/main/git.properties</code> au lieu de <code>.git/</code>. Ajoute une step CI + dépend de la task gradle invocable standalone, mais évite le drift. Patch <code>.dockerignore</code> pour exclure <code>.git/</code> une fois Path C en place. <strong>Trigger d'attaque</strong> : (a) si le step <code>Build &amp; push image</code> du workflow deploy passe la barre des <strong>30 sec sur la partie upload context seule</strong> (lire les logs GitHub Actions pour mesurer), OU (b) si <code>du -sh .git</code> dépasse <strong>500 MB</strong> (le repo croît, l'upload devient lourd). Aujourd'hui <code>.git</code> fait probablement ~70 MB et reste stable. <strong>Effort estimé</strong> : ~1-2 h via Path C + tests smoke sur <code>/actuator/info</code> post-deploy (vérifier que <code>git.commit.id</code> apparaît bien dans le payload après le refacto). <strong>Risque de régression silencieuse</strong> sur l'observabilité release si on rate le câblage — d'où l'aversion à attaquer sans signal métrique clair.</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Cache Vitest en CI (à mesurer avant)</td>
+<td>Aujourd'hui la suite frontend tourne en ~30-60 s en CI dont une fraction de Vitest pur — pas mesuré précisément. Le cache Vitest (transform TS→JS) vit dans <code>node_modules/.vite/</code> par défaut, donc wipé à chaque <code>npm ci</code>. Pour le rendre cacheable il faut (1) déplacer le cache via <code>cacheDir: '.vitest-cache'</code> dans <code>vitest.config.ts</code> (ou via <code>angular.json</code> si on passe par <code>ng test</code>), (2) ajouter une 3e step <code>actions/cache@v5</code> sur ce dossier dans <code>frontend.yml</code>, key bicéphale <code>package-lock.json + vitest.config</code>. <strong>Trigger d'arbitrage</strong> : à attaquer si <code>npm test</code> en CI dépasse les 30 s sur la partie Vitest seule (mesurer via les logs du job, pas le total). Tant qu'on est en dessous, le bruit de maintenance (clé de cache à invalider, dépendance sur la config Vitest) coûte plus que le gain. <strong>Préreq avant code</strong> : ajouter une step <code>time</code> autour du <code>npm test</code> dans <code>frontend.yml</code> pour publier la durée Vitest brute sur 5-10 runs avant de décider</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Découper <code>ticker.scss</code> en sub-components quand il retape le budget Angular</td>
+<td><strong>Stopgap acté 2026-05-13</strong> : le warning <code>anyComponentStyle exceeded maximum budget. Budget 24.00 kB was not met by 2.28 kB</code> a été silencé en bumpant le budget de <code>24 kB → 32 kB</code> (warning) et <code>48 kB → 64 kB</code> (error) dans <code>angular.json</code>. <strong>À la prochaine alerte (≥ 32 kB), interdiction de re-bumper</strong> — c'est le signal pour découper. <code>ticker.scss</code> pèse aujourd'hui 1823 lignes / 26.28 kB pour la dossier ticker entière : chart + sidenav outils + indicateurs + Fondamentaux (analyst recos + earnings) + news inline + narrative card + filter bar ajoutée en 2026-05-13. <strong>Cible du split</strong> : extraire chaque section en sub-component avec sa propre feuille de styles encapsulée — candidats naturels par ordre de gain (a) <code>&lt;app-ticker-chart&gt;</code> (probable ~600 lignes : SVG, brush, overlays, annotations, measure), (b) <code>&lt;app-ticker-fundamentals&gt;</code> (analyst + earnings, ~200 lignes), (c) <code>&lt;app-ticker-narrative&gt;</code> (card narrative + thumbs + history link, ~150 lignes), (d) <code>&lt;app-ticker-news&gt;</code> (accordion + état vide, ~100 lignes). Bénéfice annexe : <code>ticker.ts</code> (2291 lignes aujourd'hui) bénéficiera du même split — la logique du chart en particulier est isolable. <strong>Effort</strong> : ~½-1 j pour chaque sub-component sorti, à étaler entre features. <strong>Trade-off du bump</strong> : on accepte de ne pas voir grossir <code>ticker.scss</code> jusqu'à 32 kB sans signal, mais on <strong>doit refacto</strong> dès qu'on touche le seuil — sinon on retape la même décision dans 3 mois et la dette s'enracine</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Sweep <code>::ng-deep</code> côté frontend</td>
+<td><code>::ng-deep</code> est officiellement déprécié par Angular depuis longtemps mais reste l'unique échappatoire stable pour styler les internes Material rendus dans le CDK overlay (panel autocomplete, form-field wrapper). Aujourd'hui utilisé à plusieurs endroits : <code>ticker.scss</code> (<code>.benchmark-autocomplete</code> pour collapser le padding du <code>mat-mdc-text-field-wrapper</code> et la hauteur du <code>mat-mdc-form-field-infix</code>), <code>styles.scss</code> (panels autocomplete <code>.watchlist-autocomplete-panel</code> + <code>.benchmark-autocomplete-panel</code>). <strong>Cible</strong> : passer à un système plus pérenne — soit <code>::part()</code> quand Material l'expose pour le composant ciblé, soit un wrap dans un <code>:host-context</code> + classe parent custom, soit un thème Material custom (<code>mat.define-typography-config</code> + density tokens) qui évite d'avoir à chirurger dans les internes. <strong>Prérequis</strong> : auditer toutes les occurrences (<code>grep -rn "::ng-deep" frontend/src</code>) et catégoriser : (a) celles qui peuvent disparaître avec un density token Material 21, (b) celles qui ont besoin d'un selector officiel mais où il existe (e.g. <code>.mat-mdc-option</code>), (c) celles qui restent inévitables. Pour les inévitables, encapsuler dans un mixin SCSS <code>@mixin material-internal($selector)</code> qui documente la dépendance dans son nom et localise la dette. <strong>Trigger</strong> : à attaquer si Angular casse <code>::ng-deep</code> dans une release majeure (peu probable à court terme — c'est officiellement supporté tant qu'il n'y a pas d'alternative pour shadow DOM piercing) ou si Material 22+ expose une API <code>density</code> plus riche. Pas urgent</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Transverse — design system maison : lib Angular Material-based via ng-packagr, baseline = dashboard</td>
+<td><strong>Filed 2026-05-29</strong>. Constat : l'app utilise Angular Material partout mais la dérive est devenue visible — chaque feature (Dashboard, Ticker, Suivi, Settings, Radar, Observability, Import CSV, Watchlist) cumule des overrides locaux (<code>*.scss</code> par composant, <code>::ng-deep</code> chirurgicaux, tokens de couleur ré-inventés au cas par cas, density tweaks ad-hoc). Le <strong>Dashboard est l'endroit où le style a été le plus poli</strong> — cartes portfolio, hiérarchie typographique, espacement, couleurs sentiment — et sert de référence implicite que les autres features n'arrivent pas à rejoindre sans copy-paste. Trois symptômes diagnostiqués 2026-05-25 : (a) le bouton « Save » de <code>/settings/configuration</code> n'a pas la même densité que celui du dashboard, (b) les cartes <code>mat-card</code> du Radar ont un padding différent des cartes Suivi, (c) les couleurs <code>gap-up</code> / <code>gap-down</code> du Radar dupliquent la logique sentiment du Dashboard sans la partager. <strong>Cible structurelle</strong> : créer une <strong>lib Angular publiable</strong> (<code>@portfolioai/ui</code> ou similaire) dans un <strong>workspace Angular</strong> dédié, packagée via <strong>ng-packagr</strong> (standard officiel pour libs Angular). Contenu : (1) <strong>thème Material custom</strong> — palette de couleurs (primary / secondary / tertiary / error / sentiment up/down/neutral), typographie (Roboto stack actuel ou alternative), density tokens (compact partout, sauf liste où on prend medium), élévation. Un seul <code>_theme.scss</code> qui surcharge <code>mat.theme()</code> v3. (2) <strong>Composants wrappers</strong> réutilisables qui imposent les conventions du design system : <code>&lt;ui-page&gt;</code> (header + actions + content), <code>&lt;ui-card&gt;</code> (padding standard + élévation 0/1), <code>&lt;ui-data-table&gt;</code> (<code>mat-table</code> pré-stylé avec tri + colonnes numériques right-align + variations sentiment), <code>&lt;ui-empty-state&gt;</code> (icône + texte + CTA optionnel), <code>&lt;ui-error-banner&gt;</code>, <code>&lt;ui-section&gt;</code> (titre + chips métadonnées + slot). (3) <strong>Mixins SCSS</strong> publics — <code>@mixin numeric-column</code>, <code>@mixin sentiment-color</code>, <code>@mixin section-spacing</code> — pour ce qui n'a pas besoin d'un composant complet. (4) <strong>Storybook-like preview app</strong> (optionnel v1, recommandé v2) — petit Angular app qui imprime la palette + chaque composant en isolation pour servir de référence visuelle. <strong>Pourquoi ng-packagr + workspace plutôt que tout dans <code>frontend/src/app/shared/</code></strong> : (a) <strong>boundary clair</strong> entre app et système — un dev qui touche le Radar ne peut pas accidentellement bidouiller un token global, il doit publier une version de la lib ; (b) <strong>réutilisable</strong> si on splitte un jour une app admin / extension navigateur / mobile ; (c) <strong>discipline forcée</strong> — pour ajouter un composant à la lib il faut justifier qu'il appartient au design system, pas juste à un feature ; (d) workspace Angular standard <code>ng new portfolioai-ws --create-application=false &amp;&amp; ng generate library ui</code> + <code>ng generate application frontend --project-root frontend</code>, ng-packagr est wired automatiquement. <strong>Baseline = Dashboard</strong> parce que (a) c'est la surface où on a le plus itéré, (b) ses choix typographie / spacing / palette sont déjà validés à l'usage, (c) on ne part pas d'une page blanche normative qu'on appliquerait après coup. Concrètement : extraire les tokens du dashboard (palette, espacements, élévations, density) en <code>_dashboard-tokens.scss</code>, les promouvoir en <code>_theme.scss</code> de la lib, puis migrer feature par feature (Radar puis Suivi puis Settings puis Ticker en dernier parce que le plus gros). <strong>Phasage suggéré</strong> : (i) audit des <code>::ng-deep</code> + des overrides <code>*.scss</code> cross-feature (recoupe le ticket « Sweep ::ng-deep » ci-dessus), (ii) bootstrap workspace + lib vide + dépendance circulaire dev de <code>frontend</code> vers <code>lib</code> via path mapping TS, (iii) extraction du thème Dashboard en <code>_theme.scss</code>, (iv) migration Radar (le plus petit + bénéfice immédiat — le ticket (8) Phase 6 va de toute façon refondre son panneau filtres), (v) migration Suivi, Settings, Ticker. <strong>Concerns / pré-requis</strong> : (a) <strong>Material 22 release timing</strong> — si une majeure expose des <code>density</code> tokens plus riches, ça peut simplifier la lib v1 et éviter d'inventer ce qui sera offert nativement. À vérifier avant de bootstrapper. (b) <strong>i18n des composants lib</strong> — si un <code>&lt;ui-empty-state&gt;</code> porte un texte par défaut, comment translate-t-il sans dépendre de <code>ngx-translate</code> côté lib (qui forcerait <code>frontend</code> à provider un TranslateService au moment d'instancier le composant) ? Décision recommandée : la lib ne porte <strong>aucun texte hard-codé</strong> — chaque composant a des <code>@Input()</code> pour ses labels, le consumer translate avant de passer la valeur. (c) <strong>versioning</strong> — semver strict sur la lib, breaking changes nécessitent un bump majeur même si le consommateur unique est <code>frontend</code>. Discipline qui paie quand le 2e consumer arrive. (d) <strong>CI</strong> — workflow <code>library.yml</code> qui build + test la lib avant de la publier dans le workspace ; <code>frontend.yml</code> consomme la version locale via path mapping. Pas de publish npm v1 (privé local). <strong>Effort estimé</strong> : ~3-5 j cumulé étalé sur plusieurs sessions — bootstrap workspace (½ j), extract thème dashboard (½ j), bootstrap 4-5 composants wrappers (1 j), migration feature par feature (1-2 j). Pas une session unique : se mélange naturellement avec les autres tickets (le ticket (8) du radar bénéficie de la lib ; le ticket « Sweep ::ng-deep » nourrit le _theme.scss). <strong>Cohabitation memory</strong> : le memo <code>project_phase_front_redesign</code> (2026-05-25) anticipait ce sujet — « dérive Material+custom assumée, piste d'une lib UI Material-based à évaluer, on ne corrige pas pendant les phases en cours ». Ce ticket est la concrétisation. <strong>Trigger d'attaque</strong> : (a) une fois la Phase 6 close (≥ ticket (8) livré, la cible produit du radar stabilisée), OU (b) au démarrage de la Phase 7 Vague 3 (croisement portfolio × insights + watchlist alertes) qui va ajouter 2 nouvelles surfaces — l'occasion de poser le design system avant de re-démultiplier le drift. Pas urgent : aucune feature ne casse aujourd'hui, c'est de l'investissement structurel</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>⏳ Documenter les choix techniques par fiche</td>
+<td>Créer <code>docs/technique/stack/</code> (ou <code>decisions/</code>) avec une fiche par technologie / choix structurant : pourquoi on l'a retenue, alternatives écartées, comment la brancher / configurer, pièges connus. Format léger (style ADR mais avec une section "configuration" en plus). <code>architecture.md</code> garde l'overview modules + schéma global et linke vers chaque fiche. <strong>Candidats v1</strong> : Caffeine (TTL, cache key, rebuild dynamique), Twelve Data (quirks API, mapping erreurs, quotas), <code>JdkClientHttpRequestFactory</code> (vs <code>SimpleClientHttpRequestFactory</code>, cookies, headers strippés), zoneless Angular (signaux + change detection), <code>ngx-translate</code> (vs Angular i18n, choix runtime), Spotless ktfmt, MockWebServer, mockito-kotlin, Flyway (<code>repair-on-migrate</code> en dev), Tilt + Docker Compose (Tiltfile). Bénéfice : éviter qu'<code>architecture.md</code> enfle à chaque ajout, et capturer le <em>pourquoi</em> + le <em>comment opérer</em> au même endroit</td>
+<td>🟢 Basse</td>
+</tr>
+<tr>
+<td>🧊 Traduction anglaise du doc-set (i18n)</td>
+<td><strong>Gelé 2026-05-16</strong> — aucun contributeur externe ne se manifeste, et la Phase 5 deploy publique reste à plusieurs mois. À dégeler si un des 3 triggers déclenche : contributeur externe, deploy publique, ou besoin de visibilité recruteur. <strong>Friction anticipée</strong> : le doc-set est aujourd'hui 100 % FR, alors que le code (commits, KDoc, TSDoc, i18n keys d'erreur) est intégralement EN. Un contributeur externe (non-francophone) qui clone le repo bute sur la barrière linguistique sans pouvoir lire <code>architecture.md</code>, <code>developper.md</code>, etc. À l'inverse, l'utilisateur principal pense en FR — basculer tout en EN unilateralement perdrait la nuance. <strong>Cible</strong> : doc bilingue via <code>mkdocs-static-i18n</code> plugin (defaults to FR, switcher EN visible en haut du site). Chaque <code>.md</code> a un voisin <code>.en.md</code> ; le plugin sert la version par défaut quand le <code>.en.md</code> manque (graceful fallback). <strong>Ordre de traduction recommandé</strong> par priorité usage externe : (1) <code>README.md</code> racine (point d'entrée GitHub), (2) <code>developper.md</code> (onboarding contributeurs), (3) <code>architecture.md</code> + <code>developpement.md</code> (référence), (4) <code>metier/vision.md</code> + <code>fonctionnalites.md</code> (compréhension produit), (5) <code>projet/backlog.md</code> + <code>journal-livraisons.md</code> (pour les contributeurs qui veulent attaquer un ticket). Audits + CHANGELOG restent FR (snapshots historiques, peu de valeur à traduire). <strong>Trade-off</strong> : maintenance doublée — chaque PR doc qui touche un <code>.md</code> doit toucher son jumeau <code>.en.md</code>. Solution partielle : un <code>doc-translator</code> subagent (à l'image du <code>doc-maintainer</code>) qui détecte les drifts FR↔EN et propose les patches EN à partir des changements FR fraîchement appliqués. <strong>Effort initial</strong> : ~1 j pour traduire les 5 docs prioritaires en EN + setup plugin + theming switcher (i18n plugin demande peu de config, ~30 min). <strong>Effort récurrent</strong> : ~5-10 min par PR doc qui touche un <code>.md</code> couvert. <strong>Trigger</strong> : à attaquer (a) si un contributeur externe potentiel se manifeste, (b) avant la Phase 5 deploy publique (le projet devient visible, EN aide la visibilité), (c) si un recruteur futur regarde le repo et la barrière FR pose problème. Pas urgent v1</td>
+<td>🟢 Basse</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

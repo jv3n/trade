@@ -1,0 +1,2072 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/devops/backup-process/">
+      
+      
+        <link rel="prev" href="../release-process/">
+      
+      
+        <link rel="next" href="../secret-rotation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Backup & restore process (Postgres → R2) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#backup-restore-process-portfolioai" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Backup & restore process (Postgres → R2)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_7" id="__nav_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick links
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#le-rituel-automatique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Le rituel automatique
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-pre-requis-one-shot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup pré-requis (one-shot)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup pré-requis (one-shot)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-cloudflare-r2-bucket-api-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Cloudflare R2 (bucket + API token)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-github-secrets-variables-5-valeurs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. GitHub Secrets + Variables (5 valeurs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-grant-secretmanagersecretaccessor-au-sa-de-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Grant secretmanager.secretAccessor au SA de deploy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-smoke-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Smoke test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restore-drill-trimestriel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restore drill (trimestriel)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#follow-ups-hors-v1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-ups (hors v1)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pieges-rencontres-au-1er-setup-2026-05-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pièges rencontrés au 1er setup (2026-05-18)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#liens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Liens
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="backup-restore-process-portfolioai">Backup &amp; restore process — PortfolioAI<a class="headerlink" href="#backup-restore-process-portfolioai" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Discipline d'exit propre</strong> indépendante de Supabase. On garde notre propre archive <code>pg_dump</code> standard, restorable sur n'importe quel Postgres (Neon, Fly Postgres, VPS, RDS…) sans dépendre du format proprio des snapshots managés Supabase. <strong>Cadence weekly</strong> + <strong>rétention 30 backups</strong> (~7 mois d'historique). Supabase free tier fait déjà des snapshots quotidiens 7j en parallèle → notre backup R2 est le filet long-terme, pas le rolling court. Workflow source : <a href="../../.github/workflows/backup-postgres.yml"><code>.github/workflows/backup-postgres.yml</code></a>.</p>
+</blockquote>
+<h2 id="quick-links">Quick links<a class="headerlink" href="#quick-links" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Quoi</th>
+<th>Où</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bucket R2 <code>portfolioai-backups</code></strong> (UI)</td>
+<td><code>https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/r2/default/buckets/portfolioai-backups</code></td>
+</tr>
+<tr>
+<td><strong>R2 dashboard global</strong></td>
+<td><a href="https://dash.cloudflare.com/?to=/:account/r2/overview">dash.cloudflare.com/.../r2/buckets</a></td>
+</tr>
+<tr>
+<td><strong>R2 API tokens</strong> (rotation)</td>
+<td><a href="https://dash.cloudflare.com/?to=/:account/r2/api-tokens">dash.cloudflare.com/.../r2/api-tokens</a></td>
+</tr>
+<tr>
+<td><strong>Workflow Actions</strong> (history + manual trigger)</td>
+<td><a href="https://github.com/jv3n/trade/actions/workflows/backup-postgres.yml">github.com/jv3n/trade/actions/workflows/backup-postgres.yml</a></td>
+</tr>
+<tr>
+<td><strong>Workflow source</strong></td>
+<td><a href="../../.github/workflows/backup-postgres.yml"><code>.github/workflows/backup-postgres.yml</code></a></td>
+</tr>
+<tr>
+<td><strong>Secret Manager <code>supabase-db-url</code></strong> (source de la DB URL)</td>
+<td><a href="https://console.cloud.google.com/security/secret-manager/secret/supabase-db-url/versions?project=trade-496613">console.cloud.google.com/.../supabase-db-url</a></td>
+</tr>
+<tr>
+<td><strong>Snapshots Supabase natifs</strong> (rétention 7j, format proprio)</td>
+<td><a href="https://supabase.com/dashboard/project/flbnnnakobutaxvshcez/database/backups">supabase.com/.../database/backups</a></td>
+</tr>
+<tr>
+<td><strong>Trigger manuel via CLI</strong></td>
+<td><code>gh workflow run backup-postgres.yml</code> puis <code>gh run watch</code></td>
+</tr>
+<tr>
+<td><strong>Lister les backups en CLI</strong></td>
+<td><code>aws s3 ls s3://portfolioai-backups/ --endpoint-url https://8f2780696b5e520f85b5fc80413c4c3f.r2.cloudflarestorage.com</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><code>8f2780696b5e520f85b5fc80413c4c3f</code> = ton Cloudflare Account ID (visible dans l'URL du dashboard R2 ou dans le GitHub Secret <code>R2_ACCOUNT_ID</code>). <strong>Pas un secret</strong> — c'est un identifiant public qui apparaît dans toute URL Cloudflare, ne donne aucun accès sans les creds R2 (<code>R2_ACCESS_KEY_ID</code> + <code>R2_SECRET_ACCESS_KEY</code>). Hardcodé volontairement ici pour les clics rapides ; à substituer manuellement la 1re fois si le repo est cloné, ou bookmark direct dans le navigateur après le 1er accès UI.</p>
+</blockquote>
+<h2 id="le-rituel-automatique">Le rituel automatique<a class="headerlink" href="#le-rituel-automatique" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Cron</strong> : <code>0 4 * * 0</code> (chaque dimanche 4 AM UTC, ≈ samedi soir minuit Eastern, creux d'activité)</li>
+<li><strong>Pipeline</strong> : WIF auth → install <code>postgresql-client-16</code> → fetch <code>supabase-db-url</code> depuis Secret Manager → <code>pg_dump | gzip &gt; backup-&lt;ISO-timestamp-UTC&gt;.sql.gz</code> → <code>aws s3 cp</code> vers R2 → prune les objets au-delà des 30 derniers</li>
+<li><strong>Échec</strong> : workflow run failed → GitHub envoie une notif mail au committer du workflow. Re-déclenchable manuellement via <code>workflow_dispatch</code>.</li>
+<li><strong>Manual spot backup</strong> : avant une opération risquée (migration schema, fix SQL manuel) ou un restore drill, déclencher à la main via UI Actions ou <code>gh workflow run backup-postgres.yml</code>. Recommandé aussi si tu sais que tu as fait du contenu critique pendant la semaine et que tu ne veux pas attendre dimanche.</li>
+</ul>
+<h2 id="setup-pre-requis-one-shot">Setup pré-requis (one-shot)<a class="headerlink" href="#setup-pre-requis-one-shot" title="Permanent link">&para;</a></h2>
+<p>À faire avant que le workflow tourne pour la 1re fois. Tous les inputs sont <strong>stables</strong> ensuite.</p>
+<h3 id="1-cloudflare-r2-bucket-api-token">1. Cloudflare R2 (bucket + API token)<a class="headerlink" href="#1-cloudflare-r2-bucket-api-token" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Compte Cloudflare</strong> : créer un compte gratuit sur <code>cloudflare.com</code> si pas déjà fait.</li>
+<li><strong>Activer R2</strong> : Dashboard Cloudflare → R2 → « Get Started ». Free tier auto-actif (10 GB storage + 10 M Class A operations + 1 M Class B / mois).</li>
+<li><strong>Créer le bucket</strong> :
+   <div class="highlight"><pre><span></span><code>wrangler<span class="w"> </span>r2<span class="w"> </span>bucket<span class="w"> </span>create<span class="w"> </span>portfolioai-backups
+<span class="c1"># OU via UI : R2 → Create bucket → name = portfolioai-backups → Standard → Create</span>
+</code></pre></div></li>
+<li><strong>Générer un API token Object Read &amp; Write</strong> :</li>
+<li>R2 → Manage R2 API Tokens → Create API token</li>
+<li>Permissions : <strong>Object Read &amp; Write</strong> (pas Admin Read &amp; Write — principe du moindre privilège)</li>
+<li>Specify bucket : <code>portfolioai-backups</code> uniquement</li>
+<li>TTL : laisser permanent (rotation manuelle si compromis)</li>
+<li>Cliquer Create → <strong>noter les 3 valeurs</strong> (visibles une seule fois) :<ul>
+<li><code>Access Key ID</code></li>
+<li><code>Secret Access Key</code></li>
+<li><code>Account ID</code> (visible dans l'URL du dashboard R2, format <code>&lt;hash&gt;.r2.cloudflarestorage.com</code>)</li>
+</ul>
+</li>
+</ol>
+<h3 id="2-github-secrets-variables-5-valeurs">2. GitHub Secrets + Variables (5 valeurs)<a class="headerlink" href="#2-github-secrets-variables-5-valeurs" title="Permanent link">&para;</a></h3>
+<p><strong>3 secrets R2</strong> comme repository secrets (pas environment secrets — le workflow backup n'est pas gated par un environnement) :</p>
+<div class="highlight"><pre><span></span><code>gh<span class="w"> </span>secret<span class="w"> </span><span class="nb">set</span><span class="w"> </span>R2_ACCOUNT_ID<span class="w"> </span>--body<span class="w"> </span><span class="s2">&quot;&lt;account-id&gt;&quot;</span>
+gh<span class="w"> </span>secret<span class="w"> </span><span class="nb">set</span><span class="w"> </span>R2_ACCESS_KEY_ID<span class="w"> </span>--body<span class="w"> </span><span class="s2">&quot;&lt;access-key-id&gt;&quot;</span>
+gh<span class="w"> </span>secret<span class="w"> </span><span class="nb">set</span><span class="w"> </span>R2_SECRET_ACCESS_KEY<span class="w"> </span>--body<span class="w"> </span><span class="s2">&quot;&lt;secret-access-key&gt;&quot;</span>
+</code></pre></div>
+<p><strong>3 variables GCP</strong> comme repository variables (pas environment-scoped) :</p>
+<div class="highlight"><pre><span></span><code>gh<span class="w"> </span>variable<span class="w"> </span><span class="nb">set</span><span class="w"> </span>GCP_PROJECT<span class="w"> </span>--body<span class="w"> </span><span class="s2">&quot;trade-496613&quot;</span>
+gh<span class="w"> </span>variable<span class="w"> </span><span class="nb">set</span><span class="w"> </span>GCP_WIF_PROVIDER<span class="w"> </span>--body<span class="w"> </span><span class="s2">&quot;projects/912181505110/locations/global/workloadIdentityPools/github/providers/github&quot;</span>
+gh<span class="w"> </span>variable<span class="w"> </span><span class="nb">set</span><span class="w"> </span>GCP_SA_EMAIL<span class="w"> </span>--body<span class="w"> </span><span class="s2">&quot;github-deploy@trade-496613.iam.gserviceaccount.com&quot;</span>
+</code></pre></div>
+<p><strong>Pourquoi repo-level pour les vars GCP plutôt que ré-utiliser le scope <code>production</code></strong> : le scope <code>production</code> a un <code>required reviewer</code> (légitime pour <code>deploy.yml</code> = acte conscient) ; un cron nightly de backup qui pause à 4h du matin en attendant qu'on clique « Approve » ne tient pas. Les 3 identifiers GCP sont publics (pas des secrets, juste des pointeurs), donc no-risk à les exposer au repo level. Les jobs qui déclarent <code>environment: production</code> (comme <code>deploy.yml</code>) continuent de lire en priorité la version env-scoped, les jobs sans environment (comme <code>backup-postgres.yml</code>) lisent la repo-level. Coexistence propre.</p>
+<p>Vérifier : <code>gh secret list</code> et <code>gh variable list</code> doivent montrer respectivement les 3 secrets et les 3 vars.</p>
+<h3 id="3-grant-secretmanagersecretaccessor-au-sa-de-deploy">3. Grant <code>secretmanager.secretAccessor</code> au SA de deploy<a class="headerlink" href="#3-grant-secretmanagersecretaccessor-au-sa-de-deploy" title="Permanent link">&para;</a></h3>
+<p>Le SA <code>github-deploy@</code> (utilisé par WIF) a <code>run.admin</code> + <code>artifactregistry.writer</code> mais <strong>pas</strong> d'accès aux secrets — seul <code>portfolioai-runtime@</code> les a. Octroyer un accès en lecture sur <code>supabase-db-url</code> au deploy SA :</p>
+<div class="highlight"><pre><span></span><code>gcloud<span class="w"> </span>secrets<span class="w"> </span>add-iam-policy-binding<span class="w"> </span>supabase-db-url<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--member<span class="o">=</span><span class="s2">&quot;serviceAccount:github-deploy@trade-496613.iam.gserviceaccount.com&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--role<span class="o">=</span><span class="s2">&quot;roles/secretmanager.secretAccessor&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--project<span class="o">=</span>trade-496613
+</code></pre></div>
+<p>Vérification :</p>
+<div class="highlight"><pre><span></span><code>gcloud<span class="w"> </span>secrets<span class="w"> </span>get-iam-policy<span class="w"> </span>supabase-db-url<span class="w"> </span>--project<span class="o">=</span>trade-496613
+<span class="c1"># doit lister les 2 SAs : portfolioai-runtime + github-deploy</span>
+</code></pre></div>
+<blockquote>
+<p>Principe du moindre privilège respecté : le binding est <strong>per-secret</strong>, pas project-level. <code>github-deploy@</code> n'a accès qu'à <code>supabase-db-url</code>, pas aux 3 autres secrets (<code>google-oauth-client-id</code>, <code>google-oauth-client-secret</code>, <code>app-admin-emails</code>) qui restent réservés au runtime SA.</p>
+</blockquote>
+<h3 id="4-smoke-test">4. Smoke test<a class="headerlink" href="#4-smoke-test" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>gh<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>backup-postgres.yml
+gh<span class="w"> </span>run<span class="w"> </span>watch
+</code></pre></div>
+<p>Attendu : run vert en ~1-2 min. Vérifier côté R2 :</p>
+<div class="highlight"><pre><span></span><code>aws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span>s3://portfolioai-backups/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--endpoint-url<span class="w"> </span><span class="s2">&quot;https://8f2780696b5e520f85b5fc80413c4c3f.r2.cloudflarestorage.com&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--profile<span class="w"> </span>portfolioai-r2
+<span class="c1"># doit lister 1 fichier backup-2026-MM-DDTHH-MM-SSZ.sql.gz</span>
+</code></pre></div>
+<p>(Le profile <code>portfolioai-r2</code> peut être configuré localement via <code>aws configure --profile portfolioai-r2</code> avec les mêmes creds R2 — pratique pour les restore drills.)</p>
+<h2 id="restore-drill-trimestriel">Restore drill (trimestriel)<a class="headerlink" href="#restore-drill-trimestriel" title="Permanent link">&para;</a></h2>
+<p>Un backup non-testé est un backup qui n'existe pas. Tous les 3 mois, valider que la chaîne <code>pg_dump → R2 → pg_restore</code> tient end-to-end.</p>
+<ol>
+<li><strong>Récupérer le dernier backup</strong> depuis R2 :
+   <div class="highlight"><pre><span></span><code><span class="nv">LATEST</span><span class="o">=</span><span class="k">$(</span>aws<span class="w"> </span>s3<span class="w"> </span>ls<span class="w"> </span>s3://portfolioai-backups/<span class="w"> </span>--endpoint-url<span class="w"> </span>...<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-1<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $4}&#39;</span><span class="k">)</span>
+aws<span class="w"> </span>s3<span class="w"> </span>cp<span class="w"> </span><span class="s2">&quot;s3://portfolioai-backups/</span><span class="nv">$LATEST</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;./</span><span class="nv">$LATEST</span><span class="s2">&quot;</span><span class="w"> </span>--endpoint-url<span class="w"> </span>...
+gunzip<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LATEST</span><span class="s2">&quot;</span>
+</code></pre></div></li>
+<li><strong>Provisionner une instance Postgres vide</strong> ailleurs :</li>
+<li>Neon free tier : <code>neon.tech</code> → New project → région East US → noter <code>DATABASE_URL</code></li>
+<li>OU local : <code>docker run --rm -d -p 5433:5432 -e POSTGRES_PASSWORD=restore -e POSTGRES_DB=portfolioai_restore postgres:16</code></li>
+<li><strong>Restore</strong> :
+   <div class="highlight"><pre><span></span><code>psql<span class="w"> </span><span class="s2">&quot;&lt;RESTORE_DATABASE_URL&gt;&quot;</span><span class="w"> </span>&lt;<span class="w"> </span>backup-2026-MM-DDTHH-MM-SSZ.sql
+</code></pre></div></li>
+<li><strong>Sanity check</strong> : ouvrir un psql sur la cible et vérifier que les tables connues existent et contiennent des rows :
+   <div class="highlight"><pre><span></span><code><span class="err">\</span><span class="n">dt</span><span class="w">                            </span><span class="c1">-- liste les tables</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">app_user</span><span class="p">;</span><span class="w"> </span><span class="c1">-- ≥ 1 (ton compte au moins)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">ticker_narrative_snapshot</span><span class="p">;</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">email</span><span class="p">,</span><span class="w"> </span><span class="k">role</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">app_user</span><span class="p">;</span>
+</code></pre></div></li>
+<li><strong>Teardown</strong> : drop la base Neon (free tier) ou stop le container Docker — pas besoin de garder le clone.</li>
+<li><strong>Noter</strong> : date du drill + outcome dans une nouvelle entrée <a href="../../projet/journal-livraisons/"><code>docs/projet/journal-livraisons.md</code></a> — <code>Restore drill &lt;date&gt;</code> → ✅ ou ❌ avec diagnostic.</li>
+</ol>
+<h2 id="follow-ups-hors-v1">Follow-ups (hors v1)<a class="headerlink" href="#follow-ups-hors-v1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Pourquoi</th>
+<th>Effort</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Alert si dernier dump &gt; 36h</strong></td>
+<td>Si le runner cron casse silencieusement (e.g. cron syntax invalidé après un edit), on ne le sait pas avant le prochain restore drill. Un 2e workflow scheduled checke <code>aws s3 ls --query 'reverse(sort_by(Contents,&amp;LastModified))[0]'</code> et <code>gh issue create</code> si trop vieux.</td>
+<td>~30 min</td>
+</tr>
+<tr>
+<td><strong>Encryption client-side</strong></td>
+<td>R2 chiffre at-rest par défaut. Mais si on ouvre un jour le repo public, les R2 creds dans GitHub Secrets restent privés, donc rien ne change. Sauf si on veut zero-trust côté Cloudflare : on <code>gpg --encrypt</code> le dump avec une passphrase qui ne touche jamais le runner. Overkill v1.</td>
+<td>~1 h</td>
+</tr>
+<tr>
+<td><strong>Cross-region replication</strong></td>
+<td>R2 a built-in availability multi-PoP, donc le bucket survit à une panne régionale Cloudflare. Mais si Cloudflare entier disparaît : copier le dernier dump nightly vers un 2e provider (e.g. Backblaze B2). Overkill v1.</td>
+<td>~1 h</td>
+</tr>
+<tr>
+<td><strong>Restore drill automatisé</strong></td>
+<td>Au lieu d'un drill manuel trimestriel, un workflow scheduled mensuel qui spin up un Neon temporaire, restore le dernier dump, run quelques <code>SELECT count(*)</code> sanity, teardown. Plus rigoureux mais demande une API Neon stable + creds.</td>
+<td>~3-4 h</td>
+</tr>
+<tr>
+<td><strong>Backup <code>app_config</code> runtime separately</strong></td>
+<td>La table <code>app_config</code> (Phase 2.5) contient les clés API runtime-editable (Anthropic, Twelve Data, Finnhub). Elles sortent dans le <code>pg_dump</code> standard, donc OK pour le restore — mais ce sont des secrets qui se retrouvent dans le backup. À garder en tête le jour où on ouvre le restore process à un tiers (e.g. infra-as-code shared).</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pieges-rencontres-au-1er-setup-2026-05-18">Pièges rencontrés au 1er setup (2026-05-18)<a class="headerlink" href="#pieges-rencontres-au-1er-setup-2026-05-18" title="Permanent link">&para;</a></h2>
+<p>Notés pour épargner du debug à l'avenir si on rejoue le setup (nouveau projet, rotation full creds, etc.).</p>
+<ol>
+<li><strong>Cloudflare R2 affiche 4 champs après la création du token, et 3 d'entre eux ne servent pas à l'auth S3</strong> :</li>
+<li><code>Token value</code> (~40 chars) → API Cloudflare directe, <strong>pas</strong> S3 — ne PAS l'utiliser</li>
+<li><code>Access Key ID</code> (32 chars hex) → <strong>c'est celui-là</strong> pour <code>R2_ACCESS_KEY_ID</code></li>
+<li><code>Secret Access Key</code> (64 chars hex) → <strong>c'est celui-là</strong> pour <code>R2_SECRET_ACCESS_KEY</code></li>
+<li><code>Endpoint URL</code> → l'Account ID = le sous-domaine, déjà capturé dans <code>R2_ACCOUNT_ID</code></li>
+</ol>
+<p>Le symptôme d'un mauvais paste : le step <code>Upload to Cloudflare R2</code> fail avec <code>InvalidArgument: Credential access key has length N, should be 32</code> côté <code>aws s3 cp</code>. Re-roll le token dans Cloudflare R2 si tu as paumé les valeurs, c'est gratuit.</p>
+<ol>
+<li><strong>Les vars <code>${{ vars.GCP_* }}</code> sont vides au runtime si le job ne déclare pas <code>environment: production</code></strong> — elles vivent dans le scope <code>production</code> historiquement, pas au repo level. Le symptôme : <code>google-github-actions/auth failed with: the GitHub Action workflow must specify exactly one of "workload_identity_provider" or "credentials_json"</code>. Fix : <code>gh variable set GCP_PROJECT/GCP_WIF_PROVIDER/GCP_SA_EMAIL --body "..."</code> au repo level (voir section 2 du Setup). Pas de risque sécu, ce sont des identifiers publics.</li>
+</ol>
+<h2 id="liens">Liens<a class="headerlink" href="#liens" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Workflow source : <a href="../../.github/workflows/backup-postgres.yml"><code>.github/workflows/backup-postgres.yml</code></a></li>
+<li>Release process (complément côté deploy) : <a href="../release-process/"><code>release-process.md</code></a></li>
+<li>Plan de déploiement complet : <a href="../deploiement/"><code>deploiement.md</code></a></li>
+<li>Plan de migration sortie : <a href="../deploiement/#7-plan-de-migration--sortir-de-cloud-run--supabase-si-besoin"><code>deploiement.md &gt; §7</code></a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../release-process/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Release process (workflow Cloud Run)">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Release process (workflow Cloud Run)
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../secret-rotation/" class="md-footer__link md-footer__link--next" aria-label="Next: Rotation des secrets prod">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Rotation des secrets prod
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
