@@ -22,6 +22,12 @@ data class TickerMoverDto(
   val marketCapUsd: Long,
   val exchange: String,
   val sector: String?,
+  /**
+   * Free-float shares. Nullable — filled by the enrichment step (see [TickerMover.floatShares]).
+   */
+  val floatShares: Long?,
+  /** Premarket session volume (shares). Nullable (see [TickerMover.premarketVolume]). */
+  val premarketVolume: Long?,
 )
 
 fun TickerMover.toDto(): TickerMoverDto =
@@ -37,4 +43,6 @@ fun TickerMover.toDto(): TickerMoverDto =
     marketCapUsd = marketCapUsd,
     exchange = exchange,
     sector = sector,
+    floatShares = floatShares,
+    premarketVolume = premarketVolume,
   )

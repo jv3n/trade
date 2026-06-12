@@ -71,7 +71,7 @@ class PolygonMarketScreenerClientTest {
     server.enqueue(jsonOk(RECENT_DAY_BODY))
     server.enqueue(jsonOk(PREVIOUS_DAY_BODY))
 
-    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val movers = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(2, movers.size)
     val nvda = movers.first { it.symbol == "NVDA" }
@@ -96,7 +96,7 @@ class PolygonMarketScreenerClientTest {
     server.enqueue(jsonOk(RECENT_DAY_BODY))
     server.enqueue(jsonOk(PREVIOUS_DAY_BODY))
 
-    client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     val recentRequest = server.takeRequest()
     val recentPath = recentRequest.path ?: ""
@@ -123,7 +123,7 @@ class PolygonMarketScreenerClientTest {
     server.enqueue(jsonOk(RECENT_DAY_BODY))
     server.enqueue(jsonOk(PREVIOUS_DAY_BODY))
 
-    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val movers = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(2, movers.size)
     // 4 requests fired : 2 empty probes + 2 successful trading-day probes.
@@ -137,7 +137,7 @@ class PolygonMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("no trading-day bars") ?: false)
   }
@@ -150,7 +150,7 @@ class PolygonMarketScreenerClientTest {
     server.enqueue(jsonOk(RECENT_WITH_NEW_LISTING_BODY))
     server.enqueue(jsonOk(PREVIOUS_DAY_BODY))
 
-    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val movers = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(1, movers.size)
     assertEquals("NVDA", movers[0].symbol)
@@ -164,7 +164,7 @@ class PolygonMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
@@ -178,7 +178,7 @@ class PolygonMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
     assertTrue(ex.message?.contains("plan") ?: false)
@@ -190,7 +190,7 @@ class PolygonMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
@@ -201,7 +201,7 @@ class PolygonMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("upstream") ?: false)
   }
@@ -219,7 +219,7 @@ class PolygonMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        noKeyClient.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        noKeyClient.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("API key") ?: false)
     assertEquals(0, server.requestCount)

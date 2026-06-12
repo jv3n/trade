@@ -1,6 +1,6 @@
 // Radar page — the container (padding + max-width + margin auto) comes from the global `.page`
-// class in `libs/ui/styles/components/_page.scss`. Only the radar-specific flex rhythm + 2-col
-// row + gap-tinted cells live here.
+// class in `libs/ui/styles/components/_page.scss`. Only the radar-specific rhythm + GUS-checklist
+// cell styling lives here. The old 2-column filter-panel grid is gone post-pivot.
 
 .radar-page {
   display: flex;
@@ -8,19 +8,10 @@
   gap: 1.5rem;
 }
 
-.radar-body {
-  display: grid;
-  // `auto 1fr` lets the filter panel size itself — full width when open, 48 px rail when
-  // collapsed. The grid responds to the panel's width transition for free.
-  grid-template-columns: auto 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
 .radar-main {
   display: flex;
   flex-direction: column;
-  min-width: 0; // let the table claim the remaining column without pushing the grid wider
+  min-width: 0;
 }
 
 .radar-last-fetched {
@@ -29,9 +20,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-// Gap-up / gap-down tints — the trading-domain semantics of an abnormal opening move. Lives
-// page-local for the same reason as `.profit-positive` / `.profit-negative` in the journal :
-// the colour encodes domain meaning, not a generic numeric column.
+// Gap tint — the table only renders gap-up GUS candidates, but the down tint stays for safety if a
+// future preset relaxes the floor.
 .gap-up {
   color: var(--color-success);
   font-weight: 600;
@@ -42,18 +32,35 @@
   font-weight: 600;
 }
 
-.symbol-link {
-  font-weight: 600;
+// Ticker rendered via the `stbChip="ticker"` directive (design-system convention — every ticker
+// goes through it) ; the chip is a router link to the ticker dossier.
+.ticker-chip--link {
+  cursor: pointer;
+}
+
+// Company name under the ticker symbol — secondary line.
+.symbol-name {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+// Outbound DilutionTracker link — text + a small « open in new » glyph.
+.dilution-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   text-decoration: none;
   color: var(--color-link);
+  font-size: 0.85rem;
 
   &:hover {
     text-decoration: underline;
   }
-}
 
-@media (max-width: 900px) {
-  .radar-body {
-    grid-template-columns: 1fr;
+  mat-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
   }
 }

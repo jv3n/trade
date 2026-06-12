@@ -3,24 +3,30 @@ package com.portfolioai.stats.infrastructure.http
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.ImportResult
 import com.portfolioai.stats.application.dto.StatEntryDto
+import com.portfolioai.stats.application.dto.StatRadarCreateRequest
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 
 @Tag(
   name = "Stats",
-  description = "Trade-stats — global `stat_entry` dataset : ADMIN-only CSV import, open CSV export",
+  description =
+    "Trade-stats `stat_entry` dataset : ADMIN CSV import (global rows), open CSV export, " +
+      "and a per-user radar « Add stat » create. Reads are scoped to global + own rows.",
 )
 @RestController
 @RequestMapping("/api/stats")
@@ -40,6 +46,17 @@ class StatEntryController(private val service: StatEntryService) {
   @GetMapping
   fun findAll(@PageableDefault(size = 50) pageable: Pageable): Page<StatEntryDto> =
     service.findAllPaged(pageable)
+
+  /**
+   * Radar « Add stat » — seeds a partial stat row from a radar pick. Open to any authenticated user
+   * (the create is **not** ADMIN-gated, unlike the CSV import) ; the row is owned by the caller and
+   * visible only to them alongside the global IMPORT rows. Only the scan-time fields are carried
+   * ([StatRadarCreateRequest]) — the setup flags and the EOD outcome are filled later.
+   */
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  fun create(@RequestBody request: StatRadarCreateRequest): StatEntryDto =
+    service.createFromRadar(request)
 
   /**
    * CSV export of the whole stats table. Readable by any authenticated user (the dataset is global

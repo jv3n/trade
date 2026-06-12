@@ -36,4 +36,18 @@ data class TickerMover(
   val exchange: String,
   /** Nullable because some adapters / symbols don't carry sector metadata. */
   val sector: String?,
+  /**
+   * Free-float shares (not total shares outstanding). The GUS entry checklist targets a 3M–50M
+   * float. Nullable: only the mock supplies it today; the live gainers endpoints (FMP / Polygon)
+   * don't carry float, so the radar's float filter passes a null row through (null = "unknown,
+   * don't reject"). Populated post-snapshot from a secondary provider call
+   * ([TickerFundamentalsClient]).
+   */
+  val floatShares: Long? = null,
+  /**
+   * Premarket session volume (shares). Nullable: the gainers endpoints don't carry it, so it's
+   * filled by the post-snapshot enrichment step when the provider exposes it, else stays null.
+   * Shown on the radar, not filtered.
+   */
+  val premarketVolume: Long? = null,
 )

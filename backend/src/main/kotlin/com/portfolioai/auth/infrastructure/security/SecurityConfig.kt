@@ -82,10 +82,12 @@ class SecurityConfig(
         it
           .requestMatchers("/api/config/**", "/api/prompts/**", "/api/narrative/observability/**")
           .hasRole("ADMIN")
-        // Trade-stats are a **global, shared** dataset : reads are open to any authenticated user
-        // (they fall through to `/api/**` below), but mutations — the CSV import — are ADMIN-only.
-        // Gated by HTTP method so a future `GET /api/stats/**` listing stays readable by everyone.
-        it.requestMatchers(HttpMethod.POST, "/api/stats/**").hasRole("ADMIN")
+        // Trade-stats : reads are open to any authenticated user (they fall through to `/api/**`
+        // below). The **CSV import** feeds the global curated dataset and stays ADMIN-only. The
+        // radar « Add stat » create (`POST /api/stats`) is open to any authenticated user — it
+        // seeds a row owned by and visible only to its creator — so it deliberately falls through
+        // to `/api/**`. Match the import path specifically (before the general `/api/**` rule).
+        it.requestMatchers(HttpMethod.POST, "/api/stats/import").hasRole("ADMIN")
         // The lexicon is likewise a global, shared dataset : the `GET` listing is readable by every
         // authenticated user (it falls through to `/api/**` below), but create / update / delete
         // are

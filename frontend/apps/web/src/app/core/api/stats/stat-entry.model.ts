@@ -4,9 +4,17 @@
  * `adapters/stats.http.ts` owns the mapping between wire and domain.
  *
  * Mirrors the backend `stat_entry` table : the manual setup + price levels plus the three derived
- * percentages (`pushPercent` / `lodPercent` / `eodPercent`, computed server-side at import). The
- * dataset is **global** — there is no per-user scoping, every authenticated user reads the same rows.
+ * percentages (`pushPercent` / `lodPercent` / `eodPercent`, computed server-side at import).
+ *
+ * Since V2 the dataset is **admin-global + per-user** : ADMIN CSV imports are the global rows every
+ * user reads ([source] `IMPORT`, `createdBy` null) ; a user's radar « Add stat » pick is a partial
+ * row owned by and visible only to them ([source] `RADAR`). Everything except the scan-time fields
+ * (`ticker` / `gapUpPercent` / `openPrice`) is therefore nullable — a radar pick carries `null` for
+ * the setup flags and the EOD outcome until the day plays out.
  */
+
+/** How a [StatEntry] entered the dataset — admin CSV import vs a user radar pick. */
+export type StatSource = 'IMPORT' | 'RADAR';
 
 /** One stats row. `tradeDate` / `createdAt` / `updatedAt` are native `Date` — adapters parse wire. */
 export interface StatEntry {
@@ -14,25 +22,38 @@ export interface StatEntry {
   tradeDate: Date;
   ticker: string;
   gapUpPercent: number;
-  floatSharesMillions: number;
-  institutionsPercent: number;
-  instOver20: boolean;
-  under1Dollar: boolean;
-  ssr: boolean;
-  entryAfter11am: boolean;
-  note: string | null;
   openPrice: number;
-  highPrice: number;
-  lodPrice: number;
-  eodPrice: number;
-  /** Derived server-side : `(high - open) / open * 100`. Can be negative. */
-  pushPercent: number;
-  /** Derived server-side : `(lod - open) / open * 100`. Can be negative. */
-  lodPercent: number;
-  /** Derived server-side : `(eod - open) / open * 100`. Can be negative. */
-  eodPercent: number;
+  floatSharesMillions: number | null;
+  institutionsPercent: number | null;
+  instOver20: boolean | null;
+  under1Dollar: boolean | null;
+  ssr: boolean | null;
+  entryAfter11am: boolean | null;
+  note: string | null;
+  highPrice: number | null;
+  lodPrice: number | null;
+  eodPrice: number | null;
+  /** Derived server-side : `(high - open) / open * 100`. Can be negative. `null` on a radar pick. */
+  pushPercent: number | null;
+  /** Derived server-side : `(lod - open) / open * 100`. Can be negative. `null` on a radar pick. */
+  lodPercent: number | null;
+  /** Derived server-side : `(eod - open) / open * 100`. Can be negative. `null` on a radar pick. */
+  eodPercent: number | null;
+  source: StatSource;
+  /** Owning user id. `null` = the admin/global curated dataset (CSV import), readable by everyone. */
+  createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * Payload of the radar « Add stat » button — only the fields a radar pick knows at scan time. The
+ * trade date defaults to today server-side, so it is not sent.
+ */
+export interface RadarStatInput {
+  ticker: string;
+  gapUpPercent: number;
+  openPrice: number;
 }
 
 /**

@@ -2,7 +2,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
-import { PageRequest, PagedResult, StatEntry } from '../stat-entry.model';
+import {
+  PageRequest,
+  PagedResult,
+  RadarStatInput,
+  StatEntry,
+  StatSource,
+} from '../stat-entry.model';
 import { ImportResult, StatsRepository } from '../stats.repository';
 
 // ---------------------------------------------------------------------------
@@ -16,20 +22,22 @@ interface StatEntryWireDto {
   tradeDate: string;
   ticker: string;
   gapUpPercent: number;
-  floatSharesMillions: number;
-  institutionsPercent: number;
-  instOver20: boolean;
-  under1Dollar: boolean;
-  ssr: boolean;
-  entryAfter11am: boolean;
-  note: string | null;
   openPrice: number;
-  highPrice: number;
-  lodPrice: number;
-  eodPrice: number;
-  pushPercent: number;
-  lodPercent: number;
-  eodPercent: number;
+  floatSharesMillions: number | null;
+  institutionsPercent: number | null;
+  instOver20: boolean | null;
+  under1Dollar: boolean | null;
+  ssr: boolean | null;
+  entryAfter11am: boolean | null;
+  note: string | null;
+  highPrice: number | null;
+  lodPrice: number | null;
+  eodPrice: number | null;
+  pushPercent: number | null;
+  lodPercent: number | null;
+  eodPercent: number | null;
+  source: StatSource;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,6 +50,7 @@ function fromWire(w: StatEntryWireDto): StatEntry {
     tradeDate: parseISO(w.tradeDate),
     ticker: w.ticker,
     gapUpPercent: w.gapUpPercent,
+    openPrice: w.openPrice,
     floatSharesMillions: w.floatSharesMillions,
     institutionsPercent: w.institutionsPercent,
     instOver20: w.instOver20,
@@ -49,13 +58,14 @@ function fromWire(w: StatEntryWireDto): StatEntry {
     ssr: w.ssr,
     entryAfter11am: w.entryAfter11am,
     note: w.note,
-    openPrice: w.openPrice,
     highPrice: w.highPrice,
     lodPrice: w.lodPrice,
     eodPrice: w.eodPrice,
     pushPercent: w.pushPercent,
     lodPercent: w.lodPercent,
     eodPercent: w.eodPercent,
+    source: w.source,
+    createdBy: w.createdBy,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };
@@ -114,6 +124,10 @@ export class HttpStatsRepository extends StatsRepository {
     const form = new FormData();
     form.append('file', file, file.name);
     return this.http.post<ImportResult>(`${this.base}/import`, form);
+  }
+
+  createFromRadar(input: RadarStatInput): Observable<StatEntry> {
+    return this.http.post<StatEntryWireDto>(this.base, input).pipe(map((w) => fromWire(w)));
   }
 
   /**

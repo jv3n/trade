@@ -34,22 +34,28 @@ object StatEntryCsvEncoder {
     return sb.toString()
   }
 
+  // The export is scoped to the curated global rows (cf. `StatEntryService.exportAllAsCsv`), which
+  // are complete — so the nullable setup / outcome columns are present in practice. The `?.` /
+  // empty
+  // fallbacks are there because the V2 entity types are nullable (radar partial rows), not because
+  // a
+  // null is expected on this path : a null simply renders as an empty cell.
   private fun rowFor(e: StatEntry): String =
     listOf(
         e.tradeDate.toString(),
         e.ticker,
         e.gapUpPercent.toPlainString(),
-        e.floatSharesMillions.toPlainString(),
-        e.institutionsPercent.toPlainString(),
-        e.instOver20.toString(),
-        e.under1Dollar.toString(),
-        e.ssr.toString(),
-        e.entryAfter11am.toString(),
+        e.floatSharesMillions?.toPlainString().orEmpty(),
+        e.institutionsPercent?.toPlainString().orEmpty(),
+        e.instOver20?.toString().orEmpty(),
+        e.under1Dollar?.toString().orEmpty(),
+        e.ssr?.toString().orEmpty(),
+        e.entryAfter11am?.toString().orEmpty(),
         e.note.orEmpty(),
         e.openPrice.toPlainString(),
-        e.highPrice.toPlainString(),
-        e.lodPrice.toPlainString(),
-        e.eodPrice.toPlainString(),
+        e.highPrice?.toPlainString().orEmpty(),
+        e.lodPrice?.toPlainString().orEmpty(),
+        e.eodPrice?.toPlainString().orEmpty(),
       )
       .joinToString(",") { escape(it) }
 

@@ -174,5 +174,7 @@ class MarketScreenerControllerTest {
       marketCapUsd = 9_800_000_000L,
       exchange = "NASDAQ",
       sector = "Communication Services",
+      floatShares = 10_000_000L,
+      premarketVolume = 500_000L,
     )
 }

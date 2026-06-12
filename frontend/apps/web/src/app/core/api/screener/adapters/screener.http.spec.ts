@@ -81,6 +81,8 @@ describe('HttpScreenerRepository', () => {
           marketCapUsd: 9_800_000_000,
           exchange: 'NASDAQ',
           sector: 'Communication Services',
+          floatShares: 12_000_000,
+          premarketVolume: 850_000,
         },
       ],
     };

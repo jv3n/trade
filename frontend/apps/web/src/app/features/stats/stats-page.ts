@@ -86,6 +86,7 @@ export class StatsPage {
   readonly columns = [
     'tradeDate',
     'ticker',
+    'source',
     'gapUpPercent',
     'floatSharesMillions',
     'institutionsPercent',

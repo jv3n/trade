@@ -4,116 +4,98 @@ import com.portfolioai.screener.domain.ScreenerUniverse
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * Tests on [MockMarketScreenerClient]. The mock is the only screener adapter wired in Sprint 1, so
- * the `/api/screener/movers` endpoint and the `/radar` page render entirely from this fixture until
- * the real Polygon (or alternative) adapter lands in Sprint 2. Two load-bearing properties are
- * checked here :
+ * Tests on [MockMarketScreenerClient] — the only screener adapter wired for local dev, so the
+ * `/radar` page renders entirely from this fixture. Post-pivot the radar hunts the GUS pattern
+ * (gap-up small-caps), so the fixture is curated around the entry checklist. Load-bearing
+ * properties checked here:
  *
- * 1. **Universe filtering happens at the adapter** — exchange + market-cap range are honoured so
- *    the service can trust the snapshot it receives is already inside the bounds.
- * 2. **Fixture contains the expected mix** — at least one ticker that clears the default thresholds
- *    (so the `/radar` page never looks empty out of the box) AND at least one ticker that fails
- *    them (so filter-logic tests upstream have something to reject).
+ * 1. **Universe filtering happens at the adapter** — exchange + cap range are honoured.
+ * 2. **The fixture exposes clean GUS candidates** (price $1–$10, gap ≥ 50 %, float 3M–50M) so the
+ *    page never lands empty, plus negative cases (gap-down, out-of-range float/price/gap) the
+ *    upstream checklist filter must be able to reject.
+ * 3. **The GUS-specific float field is carried** — `floatShares`.
  */
 class MockMarketScreenerClientTest {
 
   private val client = MockMarketScreenerClient()
+  private val snapshot = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
   @Test
   fun `restricts the snapshot to the universe exchange`() {
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-
-    assertTrue(snapshot.isNotEmpty(), "fixture should yield at least one NASDAQ mid-cap")
+    assertTrue(snapshot.isNotEmpty(), "fixture should yield at least one NASDAQ small-cap")
     assertTrue(snapshot.all { it.exchange == "NASDAQ" })
   }
 
   @Test
   fun `restricts the snapshot to the universe market-cap range`() {
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-
     assertTrue(
-      snapshot.all { it.marketCapUsd in 2_000_000_000L..10_000_000_000L },
+      snapshot.all { it.marketCapUsd in 1_000_000L..2_000_000_000L },
       "every ticker must sit inside the universe cap range",
     )
   }
 
   @Test
-  fun `drops fixture tickers outside the universe cap range`() {
-    // CHWY ($1.2B) and PLTR ($30B) live in the fixture to exercise the universe filter — neither
-    // should make it through with the default NASDAQ_MID_CAP universe.
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-    val symbols = snapshot.map { it.symbol }
-
-    assertFalse("CHWY" in symbols, "CHWY ($1.2B) is below the $2B floor and must be filtered")
-    assertFalse("PLTR" in symbols, "PLTR ($30B) is above the $10B ceiling and must be filtered")
+  fun `drops the fixture ticker above the cap ceiling`() {
+    // BIGZ ($2.4B) lives in the fixture to exercise the cap gate — it must not surface.
+    assertFalse("BIGZ" in snapshot.map { it.symbol }, "BIGZ ($2.4B) is above the $2B ceiling")
   }
 
   @Test
   fun `drops fixture tickers from another exchange`() {
-    // F (Ford) lives on NYSE in the fixture — the NASDAQ-only universe must drop it.
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-
-    assertFalse("F" in snapshot.map { it.symbol }, "Ford is NYSE-listed and must not surface")
+    // XYZN is NYSE-listed in the fixture — the NASDAQ-only universe must drop it.
+    assertFalse("XYZN" in snapshot.map { it.symbol }, "XYZN is NYSE-listed and must not surface")
   }
 
   @Test
   fun `is deterministic across calls`() {
-    // The fixture is hard-coded so two calls return the same rows — important because the `/radar`
-    // page refreshes on user action and the table shouldn't shuffle without a real data change.
-    val a = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-    val b = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-
+    val a = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
+    val b = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
     assertEquals(a, b)
   }
 
   @Test
-  fun `contains at least one ticker matching the default thresholds`() {
-    // Phase 6 kick-off defaults : gap >= 5%, volume >= 3x avg. If the fixture has no such ticker
-    // the v1 `/radar` page lands empty on first load — bad first-time UX.
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-    val matches = snapshot.filter {
-      it.gapPct >= BigDecimal("5.0") && it.volumeRatio >= BigDecimal("3.0")
+  fun `exposes at least 3 clean GUS candidates`() {
+    // Clears every auto checklist criterion : price $1–$10, gap >= 50 %, float 3M–50M, no split.
+    val candidates = snapshot.filter {
+      it.price in BigDecimal("1.00")..BigDecimal("10.00") &&
+        it.gapPct >= BigDecimal("50.0") &&
+        it.floatShares in 3_000_000L..50_000_000L
     }
-
     assertTrue(
-      matches.size >= 3,
-      "fixture should expose at least 3 strong movers, got ${matches.size}",
+      candidates.size >= 3,
+      "fixture should expose >= 3 clean GUS candidates, got ${candidates.size}",
     )
   }
 
   @Test
   fun `precomputes gapPct as a signed percentage`() {
-    // The mock builds gapPct from price + previousClose using the documented formula. A regression
-    // here would silently break the radar sort order, so we verify on a known fixture row.
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-    val rddt = snapshot.first { it.symbol == "RDDT" }
-
-    // (78.40 - 67.20) / 67.20 * 100 ≈ 16.67
-    assertEquals(BigDecimal("16.67"), rddt.gapPct)
+    val gns = snapshot.first { it.symbol == "GNS" }
+    // (2.40 - 1.20) / 1.20 * 100 = 100.00
+    assertEquals(BigDecimal("100.00"), gns.gapPct)
   }
 
   @Test
   fun `precomputes volumeRatio as volume divided by 30-day average`() {
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-    val rddt = snapshot.first { it.symbol == "RDDT" }
+    val gns = snapshot.first { it.symbol == "GNS" }
+    // 9_000_000 / 1_500_000 = 6.00
+    assertEquals(BigDecimal("6.00"), gns.volumeRatio)
+  }
 
-    // 24_500_000 / 6_000_000 ≈ 4.08
-    assertEquals(BigDecimal("4.08"), rddt.volumeRatio)
+  @Test
+  fun `carries the GUS float field`() {
+    val gns = snapshot.first { it.symbol == "GNS" }
+    assertEquals(12_000_000L, gns.floatShares)
   }
 
   @Test
   fun `keeps gap-down candidates with a negative gapPct`() {
-    // LCID in the fixture has a negative gap (-10.87%). Even though the v1 default filter is
-    // gap-up focused, the adapter must surface the row — filtering on direction is the service's
-    // job, not the adapter's.
-    val snapshot = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
-    val lcid = snapshot.firstOrNull { it.symbol == "LCID" }
-
-    assertTrue(lcid != null, "LCID gap-down fixture should be in the NASDAQ mid-cap universe")
-    assertTrue(lcid!!.gapPct < BigDecimal.ZERO, "LCID is a gap-down fixture")
+    val muln = snapshot.firstOrNull { it.symbol == "MULN" }
+    assertNotNull(muln, "MULN gap-down fixture should be in the small-cap universe")
+    assertTrue(muln!!.gapPct < BigDecimal.ZERO, "MULN is a gap-down fixture")
   }
 }

@@ -2,9 +2,11 @@ package com.portfolioai.stats
 
 import com.portfolioai.stats.application.StatEntryCsvDecoder
 import com.portfolioai.stats.application.StatEntryService
+import com.portfolioai.stats.domain.StatSource
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -58,10 +60,13 @@ class StatsImportIntegrationTest {
     assertEquals("BAC", saved.ticker, "ticker normalised on import")
     assertEquals(0, saved.gapUpPercent.compareTo(BigDecimal("52.0")))
     assertEquals(false, saved.ssr)
-    // The derived columns — the whole point of the feature.
-    assertEquals(0, saved.pushPercent.compareTo(BigDecimal("5.95")), "push=${saved.pushPercent}")
-    assertEquals(0, saved.lodPercent.compareTo(BigDecimal("-27.38")), "lod=${saved.lodPercent}")
-    assertEquals(0, saved.eodPercent.compareTo(BigDecimal("-26.19")), "eod=${saved.eodPercent}")
+    // CSV import = the curated global dataset : IMPORT-sourced, owned by nobody (readable by all).
+    assertEquals(StatSource.IMPORT, saved.source)
+    assertNull(saved.createdBy)
+    // The derived columns — computed at insert, non-null for a complete CSV row.
+    assertEquals(0, saved.pushPercent!!.compareTo(BigDecimal("5.95")), "push=${saved.pushPercent}")
+    assertEquals(0, saved.lodPercent!!.compareTo(BigDecimal("-27.38")), "lod=${saved.lodPercent}")
+    assertEquals(0, saved.eodPercent!!.compareTo(BigDecimal("-26.19")), "eod=${saved.eodPercent}")
   }
 
   @Test

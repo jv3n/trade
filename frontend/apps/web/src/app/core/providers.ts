@@ -37,8 +37,6 @@ import { HttpWatchlistRepository } from './api/watchlist/adapters/watchlist.http
 import { WatchlistRepository } from './api/watchlist/watchlist.repository';
 import { LocalStorageAnnotationRepository } from './local/annotation/adapters/annotation.local';
 import { AnnotationRepository } from './local/annotation/annotation.repository';
-import { LocalStorageScreenerFilterRepository } from './local/screener-filter/adapters/screener-filter.local';
-import { ScreenerFilterRepository } from './local/screener-filter/screener-filter.repository';
 
 /**
  * Wires every port (`*.repository.ts`) to its default adapter. Aligned on the
@@ -56,7 +54,6 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: AnnotationRepository, useClass: LocalStorageAnnotationRepository },
     { provide: AnalystRepository, useClass: HttpAnalystRepository },
     { provide: ScreenerRepository, useClass: HttpScreenerRepository },
-    { provide: ScreenerFilterRepository, useClass: LocalStorageScreenerFilterRepository },
     { provide: EarningsRepository, useClass: HttpEarningsRepository },
     { provide: OllamaStatusRepository, useClass: HttpOllamaStatusRepository },
     { provide: PromptRepository, useClass: HttpPromptRepository },

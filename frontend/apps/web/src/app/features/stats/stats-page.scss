@@ -5,6 +5,17 @@
   cursor: pointer;
 }
 
+// Provenance chip — neutral for the admin/global IMPORT rows, accent-tinted for a user's own RADAR
+// pick so it stands out as "added by me from the radar".
+.source-chip {
+  font-size: 0.72rem;
+}
+
+.source-chip--radar {
+  --mat-chip-elevated-container-color: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+}
+
 // `.stat-positive` / `.stat-negative` colour the derived `%push` / `%LOD` / `%EOD` cells by sign,
 // mirroring the journal's `.profit-positive` / `.profit-negative` (kept page-local — it's a
 // trading-domain read aid, not a generic table column type).
