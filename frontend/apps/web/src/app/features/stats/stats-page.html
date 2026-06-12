@@ -59,6 +59,23 @@
           </td>
         </ng-container>
 
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header="source">
+            {{ 'stats.fields.source' | translate }}
+          </th>
+          <td mat-cell *matCellDef="let e">
+            <mat-chip-set>
+              <mat-chip
+                disableRipple
+                class="source-chip"
+                [class.source-chip--radar]="e.source === 'RADAR'"
+              >
+                {{ 'stats.source.' + e.source | translate }}
+              </mat-chip>
+            </mat-chip-set>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="gapUpPercent">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="gapUpPercent" stbCol="numeric">
             {{ 'stats.fields.gapUpPercent' | translate }}
@@ -78,7 +95,11 @@
             {{ 'stats.fields.floatSharesMillions' | translate }}
           </th>
           <td mat-cell *matCellDef="let e" stbCol="numeric">
-            {{ e.floatSharesMillions | number: '1.2-2' }} M
+            @if (e.floatSharesMillions !== null) {
+              {{ e.floatSharesMillions | number: '1.2-2' }} M
+            } @else {
+              —
+            }
           </td>
         </ng-container>
 
@@ -92,7 +113,11 @@
             {{ 'stats.fields.institutionsPercent' | translate }}
           </th>
           <td mat-cell *matCellDef="let e" stbCol="numeric">
-            {{ e.institutionsPercent | number: '1.2-2' }} %
+            @if (e.institutionsPercent !== null) {
+              {{ e.institutionsPercent | number: '1.2-2' }} %
+            } @else {
+              —
+            }
           </td>
         </ng-container>
 
@@ -101,9 +126,13 @@
             {{ 'stats.fields.instOver20' | translate }}
           </th>
           <td mat-cell *matCellDef="let e" stbCol="numeric">
-            <mat-icon class="bool-flag" [class.bool-flag--on]="e.instOver20">
-              {{ e.instOver20 ? 'check_circle' : 'remove' }}
-            </mat-icon>
+            @if (e.instOver20 !== null) {
+              <mat-icon class="bool-flag" [class.bool-flag--on]="e.instOver20">
+                {{ e.instOver20 ? 'check_circle' : 'remove' }}
+              </mat-icon>
+            } @else {
+              —
+            }
           </td>
         </ng-container>
 
@@ -112,9 +141,13 @@
             {{ 'stats.fields.under1Dollar' | translate }}
           </th>
           <td mat-cell *matCellDef="let e" stbCol="numeric">
-            <mat-icon class="bool-flag" [class.bool-flag--on]="e.under1Dollar">
-              {{ e.under1Dollar ? 'check_circle' : 'remove' }}
-            </mat-icon>
+            @if (e.under1Dollar !== null) {
+              <mat-icon class="bool-flag" [class.bool-flag--on]="e.under1Dollar">
+                {{ e.under1Dollar ? 'check_circle' : 'remove' }}
+              </mat-icon>
+            } @else {
+              —
+            }
           </td>
         </ng-container>
 
@@ -123,9 +156,13 @@
             {{ 'stats.fields.ssr' | translate }}
           </th>
           <td mat-cell *matCellDef="let e" stbCol="numeric">
-            <mat-icon class="bool-flag" [class.bool-flag--on]="e.ssr">
-              {{ e.ssr ? 'check_circle' : 'remove' }}
-            </mat-icon>
+            @if (e.ssr !== null) {
+              <mat-icon class="bool-flag" [class.bool-flag--on]="e.ssr">
+                {{ e.ssr ? 'check_circle' : 'remove' }}
+              </mat-icon>
+            } @else {
+              —
+            }
           </td>
         </ng-container>
 
@@ -134,9 +171,13 @@
             {{ 'stats.fields.entryAfter11am' | translate }}
           </th>
           <td mat-cell *matCellDef="let e" stbCol="numeric">
-            <mat-icon class="bool-flag" [class.bool-flag--on]="e.entryAfter11am">
-              {{ e.entryAfter11am ? 'check_circle' : 'remove' }}
-            </mat-icon>
+            @if (e.entryAfter11am !== null) {
+              <mat-icon class="bool-flag" [class.bool-flag--on]="e.entryAfter11am">
+                {{ e.entryAfter11am ? 'check_circle' : 'remove' }}
+              </mat-icon>
+            } @else {
+              —
+            }
           </td>
         </ng-container>
 
@@ -151,21 +192,27 @@
           <th mat-header-cell *matHeaderCellDef mat-sort-header="highPrice" stbCol="numeric">
             {{ 'stats.fields.highPrice' | translate }}
           </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">{{ e.highPrice | number: '1.2-4' }}</td>
+          <td mat-cell *matCellDef="let e" stbCol="numeric">
+            {{ e.highPrice !== null ? (e.highPrice | number: '1.2-4') : '—' }}
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="lodPrice">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="lodPrice" stbCol="numeric">
             {{ 'stats.fields.lodPrice' | translate }}
           </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">{{ e.lodPrice | number: '1.2-4' }}</td>
+          <td mat-cell *matCellDef="let e" stbCol="numeric">
+            {{ e.lodPrice !== null ? (e.lodPrice | number: '1.2-4') : '—' }}
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="eodPrice">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="eodPrice" stbCol="numeric">
             {{ 'stats.fields.eodPrice' | translate }}
           </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">{{ e.eodPrice | number: '1.2-4' }}</td>
+          <td mat-cell *matCellDef="let e" stbCol="numeric">
+            {{ e.eodPrice !== null ? (e.eodPrice | number: '1.2-4') : '—' }}
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="pushPercent">
@@ -176,10 +223,10 @@
             mat-cell
             *matCellDef="let e"
             stbCol="numeric"
-            [class.stat-positive]="e.pushPercent > 0"
-            [class.stat-negative]="e.pushPercent < 0"
+            [class.stat-positive]="e.pushPercent !== null && e.pushPercent > 0"
+            [class.stat-negative]="e.pushPercent !== null && e.pushPercent < 0"
           >
-            {{ e.pushPercent | number: '1.2-2' }} %
+            {{ e.pushPercent !== null ? (e.pushPercent | number: '1.2-2') + ' %' : '—' }}
           </td>
         </ng-container>
 
@@ -191,10 +238,10 @@
             mat-cell
             *matCellDef="let e"
             stbCol="numeric"
-            [class.stat-positive]="e.lodPercent > 0"
-            [class.stat-negative]="e.lodPercent < 0"
+            [class.stat-positive]="e.lodPercent !== null && e.lodPercent > 0"
+            [class.stat-negative]="e.lodPercent !== null && e.lodPercent < 0"
           >
-            {{ e.lodPercent | number: '1.2-2' }} %
+            {{ e.lodPercent !== null ? (e.lodPercent | number: '1.2-2') + ' %' : '—' }}
           </td>
         </ng-container>
 
@@ -206,10 +253,10 @@
             mat-cell
             *matCellDef="let e"
             stbCol="numeric"
-            [class.stat-positive]="e.eodPercent > 0"
-            [class.stat-negative]="e.eodPercent < 0"
+            [class.stat-positive]="e.eodPercent !== null && e.eodPercent > 0"
+            [class.stat-negative]="e.eodPercent !== null && e.eodPercent < 0"
           >
-            {{ e.eodPercent | number: '1.2-2' }} %
+            {{ e.eodPercent !== null ? (e.eodPercent | number: '1.2-2') + ' %' : '—' }}
           </td>
         </ng-container>
 

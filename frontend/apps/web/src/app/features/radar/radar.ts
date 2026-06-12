@@ -1,58 +1,60 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
+  StbChipsModule,
   StbIconModule,
   StbProgressSpinnerModule,
   StbTableModule,
 } from '@portfolioai/ui';
-import { catchError, of } from 'rxjs';
+import { catchError, filter, of, switchMap } from 'rxjs';
 import {
-  DEFAULT_SCREENER_FILTER,
-  ScreenerFilter,
   ScreenerRepository,
   ScreenerSnapshotResponse,
   TickerMover,
-  applyScreenerFilter,
+  applyGusChecklist,
 } from '../../core/api/screener/screener.repository';
-import { ScreenerFilterRepository } from '../../core/local/screener-filter/screener-filter.repository';
-import { RadarFilterPanel } from './radar-filter-panel';
+import { StatsRepository } from '../../core/api/stats/stats.repository';
+import {
+  ConfirmAddStatData,
+  ConfirmAddStatDialog,
+} from './confirm-add-stat-dialog/confirm-add-stat-dialog';
+
+/** DilutionTracker deep-link base — the radar links out per ticker for the human float/dilution read. */
+const DILUTION_TRACKER_BASE = 'https://dilutiontracker.com/app/search';
 
 /**
- * Market radar page after Phase 6 ticket (9) — snapshot persistance + in-process filtering.
+ * Market radar page — post-pivot rework around the **GUS entry checklist** (gap-up short on a
+ * small-cap, cf. `docs/TTD/analyse-company/check-company.md`).
+ *
+ * The old tweakable filter sidenav is gone : pressing « Rechercher » fetches a fresh snapshot and
+ * the table renders the tickers that clear the **fixed**, machine-checkable subset of the checklist
+ * ([applyGusChecklist] — price $1–$10, gap ≥ +50 %), sorted by gap desc. Float was dropped (the only
+ * free source is stale) so each row instead links out to DilutionTracker for the human float/dilution
+ * read, and an « Add stat » button seeds a stat row from the pick.
  *
  * **State model** :
- * - `filter` (signal) — the active filter, hydrated from `localStorage` on construction with a
- *   fallback to [DEFAULT_SCREENER_FILTER]. Mutated by the panel ; **does not** trigger an HTTP
- *   call.
- * - `entries` (signal) — raw movers list from the last persisted snapshot. Mutated only by
- *   [refresh] or the initial [loadSnapshot] on init. The filter tweaks the **derived** view, not
- *   this list.
- * - `filtered` (computed) — `applyScreenerFilter(entries(), filter())`, sorted by gap desc. This
- *   is what the table renders.
- * - `fetchedAt` (signal) — ISO timestamp of the persisted snapshot. `null` when no snapshot is
- *   persisted yet (first visit) — drives the "press Rechercher" hint.
- * - `loading` / `refreshing` / `error` (signals) — `loading` covers the initial GET ; `refreshing`
- *   covers the explicit POST so the « Rechercher » button can show its own spinner without
- *   blanking the table.
- *
- * **Why this split** : the previous v0.3 flow re-hit the provider on every panel tweak — quota
- * was burned in seconds on FMP (250 req/jour). v0.4 isolates the live fetch behind the explicit
- * « Rechercher » button ; subsequent filter tweaks are zero-HTTP and instant. The frontend filter
- * predicate mirrors the backend's old `MarketScreenerService.matches()` 1:1 so a future move back
- * to server-side filtering wouldn't shift behaviour.
+ * - `entries` (signal) — raw movers from the last persisted snapshot. Mutated only by [refresh] or
+ *   the initial [loadSnapshot].
+ * - `filtered` (computed) — `applyGusChecklist(entries())`. What the table renders.
+ * - `fetchedAt` / `loading` / `refreshing` / `error` — envelope-driven UX (cold-start hint, error
+ *   banner, button spinner).
+ * - `addingSymbol` (signal) — the ticker whose « Add stat » create is in flight (disables that row's
+ *   button to avoid a double-submit).
  */
 @Component({
   selector: 'app-radar',
   imports: [
     DatePipe,
     DecimalPipe,
-    RadarFilterPanel,
     RouterLink,
     StbButtonModule,
+    StbChipsModule,
     StbIconModule,
     StbProgressSpinnerModule,
     StbTableModule,
@@ -63,50 +65,35 @@ import { RadarFilterPanel } from './radar-filter-panel';
 })
 export class RadarPage implements OnInit {
   private readonly screener = inject(ScreenerRepository);
-  private readonly filterStorage = inject(ScreenerFilterRepository);
+  private readonly stats = inject(StatsRepository);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly filter = signal<ScreenerFilter>(this.filterStorage.load() ?? DEFAULT_SCREENER_FILTER);
   readonly entries = signal<TickerMover[]>([]);
   readonly fetchedAt = signal<string | null>(null);
   readonly loading = signal(false);
   readonly refreshing = signal(false);
   readonly error = signal<string | null>(null);
+  /** Ticker whose « Add stat » create is in flight — disables that row's button. */
+  readonly addingSymbol = signal<string | null>(null);
 
-  readonly displayedColumns = [
-    'symbol',
-    'name',
-    'price',
-    'gapPct',
-    'volumeRatio',
-    'marketCapUsd',
-    'sector',
-  ];
+  readonly displayedColumns = ['symbol', 'price', 'gapPct', 'dilution', 'addStat'];
 
-  /** What the table renders — raw entries filtered + sorted in-process. */
-  readonly filtered = computed(() => applyScreenerFilter(this.entries(), this.filter()));
+  /** What the table renders — raw entries passed through the GUS checklist, sorted by gap desc. */
+  readonly filtered = computed(() => applyGusChecklist(this.entries()));
 
   /** No snapshot persisted yet — user has never pressed « Rechercher ». */
   readonly notYetFetched = computed(() => this.fetchedAt() === null);
 
-  /** Snapshot exists but the active filter matches nothing — show the "loosen filters" hint. */
+  /** Snapshot exists but no ticker clears the checklist — show the "no candidate" hint. */
   readonly emptyAfterFilter = computed(
     () => !this.notYetFetched() && this.filtered().length === 0 && !this.loading() && !this.error(),
   );
 
   ngOnInit(): void {
     this.loadInitial();
-  }
-
-  onFilterChanged(next: ScreenerFilter): void {
-    this.filter.set(next);
-    this.filterStorage.save(next);
-  }
-
-  onResetRequested(): void {
-    this.filter.set(DEFAULT_SCREENER_FILTER);
-    this.filterStorage.save(DEFAULT_SCREENER_FILTER);
   }
 
   onRefreshRequested(): void {
@@ -127,6 +114,62 @@ export class RadarPage implements OnInit {
         }
         this.refreshing.set(false);
       });
+  }
+
+  /** DilutionTracker deep-link for a ticker — opened in a new tab for the human float/dilution read. */
+  dilutionUrl(symbol: string): string {
+    return `${DILUTION_TRACKER_BASE}/${symbol}`;
+  }
+
+  /**
+   * « Add stat » — confirms, then seeds a stats row from the radar pick (ticker / gap / price). The
+   * row is owned by the current user and shows up in `/stats` with `source = RADAR`. Best-effort UX :
+   * a success/error toast, and the row's button is disabled while the create is in flight.
+   */
+  onAddStat(row: TickerMover): void {
+    if (this.addingSymbol() !== null) return;
+    const data: ConfirmAddStatData = { ticker: row.symbol, gapPct: row.gapPct, price: row.price };
+    this.dialog
+      .open<ConfirmAddStatDialog, ConfirmAddStatData, boolean>(ConfirmAddStatDialog, {
+        data,
+        width: '420px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+      })
+      .afterClosed()
+      .pipe(
+        filter((confirmed): confirmed is true => confirmed === true),
+        switchMap(() => {
+          this.addingSymbol.set(row.symbol);
+          return this.stats
+            .createFromRadar({
+              ticker: row.symbol,
+              gapUpPercent: row.gapPct,
+              openPrice: row.price,
+            })
+            .pipe(
+              catchError(() => {
+                this.toast('radar.addStat.error', 'error', { ticker: row.symbol });
+                this.addingSymbol.set(null);
+                return of(null);
+              }),
+            );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((created) => {
+        if (created) {
+          this.toast('radar.addStat.success', 'success', { ticker: row.symbol });
+        }
+        this.addingSymbol.set(null);
+      });
+  }
+
+  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
+    this.snackBar.open(this.translate.instant(key, params), undefined, {
+      duration: variant === 'success' ? 3000 : 5000,
+      panelClass: `stb-snack-bar--${variant}`,
+    });
   }
 
   private loadInitial(): void {

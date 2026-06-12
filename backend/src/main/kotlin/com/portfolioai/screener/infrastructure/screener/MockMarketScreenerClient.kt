@@ -9,27 +9,20 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
- * In-memory market screener for local dev — returns a deterministic fixture of mid-cap-ish US
- * tickers so the `/radar` page can be exercised end-to-end without a Polygon (or Finnhub / FMP /
- * Alpaca) key.
+ * In-memory market screener for local dev — returns a deterministic fixture of GUS-pattern
+ * candidates (gap-up small-caps) so the `/radar` page can be exercised end-to-end without a Polygon
+ * / FMP key.
  *
- * Activation : the only [MarketScreenerClient] bean registered in Sprint 1. Sprint 2 introduces the
- * real adapter behind a `RoutingMarketScreenerClient` keyed on `screener.provider`.
+ * Fixture design — hand-curated to exercise the GUS entry checklist (price $1–$10, gap ≥ 50 %,
+ * float 3M–50M, no reverse split) applied client-side:
+ * - **4 clean GUS candidates** that clear every auto criterion → the radar table renders them.
+ * - **Negative cases** that each KO one criterion: float too high (> 50M), float too low (< 3M,
+ *   squeezable), price too high (> $10), gap too low (< 50 %), and a gap-down. They land in the raw
+ *   snapshot but the checklist filter rejects them.
+ * - **2 universe rejects** — one NYSE ticker, one above the $2B cap ceiling — to exercise the
+ *   adapter-level universe pre-filter.
  *
- * Fixture design — hand-curated, **not** seeded random :
- * - **3 strong movers** that clear the default thresholds (gap ≥ 5 % AND volume ≥ 3× avg) so the
- *   page never looks empty out of the box.
- * - **2 borderline cases** that match one axis but not the other — surface bugs in filter logic
- *   that AND-combine the criteria incorrectly.
- * - **1 gap-down** — radar's primary use case is gap-up, but the [TickerMover.gapPct] field is
- *   signed and a future « gap-down » preset reuses the same row shape.
- * - **A few boring tickers** under threshold on both axes — noise the filter must reject.
- * - **2 tickers outside the universe** — one too small ($1B), one too large ($30B) — to exercise
- *   the universe-level cap filter (NASDAQ_MID_CAP is $2B–$10B).
- * - **1 NYSE ticker** — exercises the universe exchange filter.
- *
- * Symbol selection is plausible (real mid-caps, real sectors) so the UI screenshots aren't
- * uncanny-valley. Numbers are fabricated — none of this reflects live market state.
+ * Symbols are plausible small-cap shapes; numbers are fabricated and reflect no live market state.
  */
 @Component
 class MockMarketScreenerClient : MarketScreenerClient {
@@ -51,152 +44,144 @@ class MockMarketScreenerClient : MarketScreenerClient {
   companion object {
     private val FIXTURES: List<TickerMover> =
       listOf(
-        // --- 3 strong movers (clear both default thresholds) ---
+        // --- 4 clean GUS candidates (clear every auto criterion) ---
         mover(
-          symbol = "RDDT",
-          name = "Reddit Inc.",
-          price = "78.40",
-          previousClose = "67.20",
-          volume = 24_500_000L,
-          volumeAvg30d = 6_000_000L,
-          marketCapUsd = 9_800_000_000L,
-          sector = "Communication Services",
+          "GNS",
+          "Genius Group Ltd",
+          "2.40",
+          "1.20",
+          9_000_000L,
+          1_500_000L,
+          29_000_000L,
+          12_000_000L,
+          "Technology",
         ),
         mover(
-          symbol = "SOFI",
-          name = "SoFi Technologies Inc.",
-          price = "12.85",
-          previousClose = "11.50",
-          volume = 88_000_000L,
-          volumeAvg30d = 22_000_000L,
-          marketCapUsd = 7_500_000_000L,
-          sector = "Financial Services",
+          "BBLG",
+          "Bone Biologics Corp",
+          "4.50",
+          "2.80",
+          6_000_000L,
+          1_000_000L,
+          36_000_000L,
+          8_000_000L,
+          "Healthcare",
         ),
         mover(
-          symbol = "AFRM",
-          name = "Affirm Holdings Inc.",
-          price = "52.10",
-          previousClose = "47.00",
-          volume = 18_000_000L,
-          volumeAvg30d = 4_500_000L,
-          marketCapUsd = 6_200_000_000L,
-          sector = "Financial Services",
-        ),
-        // --- 2 borderline (matches one axis only) ---
-        // Gap OK (+8.1%) but volume only 2× avg → fails default volume floor
-        mover(
-          symbol = "WBD",
-          name = "Warner Bros. Discovery Inc.",
-          price = "9.20",
-          previousClose = "8.51",
-          volume = 60_000_000L,
-          volumeAvg30d = 30_000_000L,
-          marketCapUsd = 8_900_000_000L,
-          sector = "Communication Services",
-        ),
-        // Volume OK (4× avg) but gap only +2.5% → fails default gap floor
-        mover(
-          symbol = "PARA",
-          name = "Paramount Global",
-          price = "12.30",
-          previousClose = "12.00",
-          volume = 40_000_000L,
-          volumeAvg30d = 10_000_000L,
-          marketCapUsd = 7_900_000_000L,
-          sector = "Communication Services",
-        ),
-        // --- 1 gap-down (negative gap, high volume) ---
-        mover(
-          symbol = "LCID",
-          name = "Lucid Group Inc.",
-          price = "2.05",
-          previousClose = "2.30",
-          volume = 95_000_000L,
-          volumeAvg30d = 25_000_000L,
-          marketCapUsd = 4_800_000_000L,
-          sector = "Consumer Cyclical",
-        ),
-        // --- Boring tickers under threshold on both axes ---
-        mover(
-          symbol = "ROKU",
-          name = "Roku Inc.",
-          price = "61.00",
-          previousClose = "60.40",
-          volume = 5_200_000L,
-          volumeAvg30d = 4_800_000L,
-          marketCapUsd = 8_700_000_000L,
-          sector = "Communication Services",
+          "TOPS",
+          "TOP Ships Inc.",
+          "1.85",
+          "1.05",
+          14_000_000L,
+          2_200_000L,
+          46_000_000L,
+          25_000_000L,
+          "Industrials",
         ),
         mover(
-          symbol = "PINS",
-          name = "Pinterest Inc.",
-          price = "32.10",
-          previousClose = "31.95",
-          volume = 9_000_000L,
-          volumeAvg30d = 8_500_000L,
-          marketCapUsd = 9_500_000_000L,
-          sector = "Communication Services",
+          "CETX",
+          "Cemtrex Inc.",
+          "6.20",
+          "3.90",
+          4_000_000L,
+          700_000L,
+          31_000_000L,
+          5_000_000L,
+          "Technology",
         ),
+        // --- Negative cases (each KOs one checklist criterion) ---
+        // Float too high (120M > 50M cap)
         mover(
-          symbol = "Z",
-          name = "Zillow Group Inc.",
-          price = "55.20",
-          previousClose = "54.80",
-          volume = 2_900_000L,
-          volumeAvg30d = 2_700_000L,
-          marketCapUsd = 6_400_000_000L,
-          sector = "Real Estate",
+          "AREB",
+          "American Rebel Holdings",
+          "3.10",
+          "1.85",
+          35_000_000L,
+          6_000_000L,
+          372_000_000L,
+          120_000_000L,
+          "Consumer Cyclical",
         ),
+        // Float too low (1.5M < 3M — squeezable)
         mover(
-          symbol = "TWLO",
-          name = "Twilio Inc.",
-          price = "67.30",
-          previousClose = "66.50",
-          volume = 4_100_000L,
-          volumeAvg30d = 3_800_000L,
-          marketCapUsd = 9_900_000_000L,
-          sector = "Technology",
+          "GMEX",
+          "Graphex Group Ltd",
+          "2.50",
+          "1.40",
+          6_000_000L,
+          900_000L,
+          3_750_000L,
+          1_500_000L,
+          "Basic Materials",
         ),
-        // --- 2 tickers outside the cap range (universe filter exercise) ---
-        // Too small — $1.2B, below the $2B floor
+        // Price too high ($13.50 > $10)
         mover(
-          symbol = "CHWY",
-          name = "Chewy Inc.",
-          price = "18.40",
-          previousClose = "16.20",
-          volume = 30_000_000L,
-          volumeAvg30d = 8_000_000L,
-          marketCapUsd = 1_200_000_000L,
-          sector = "Consumer Cyclical",
+          "HUBC",
+          "Hub Cyber Security",
+          "13.50",
+          "8.40",
+          8_000_000L,
+          1_400_000L,
+          243_000_000L,
+          18_000_000L,
+          "Technology",
         ),
-        // Too large — $30B, above the $10B ceiling
+        // Gap too low (+11.5% < 50%)
         mover(
-          symbol = "PLTR",
-          name = "Palantir Technologies Inc.",
-          price = "29.50",
-          previousClose = "26.00",
-          volume = 110_000_000L,
-          volumeAvg30d = 28_000_000L,
-          marketCapUsd = 30_000_000_000L,
-          sector = "Technology",
+          "BTAI",
+          "BioXcel Therapeutics",
+          "3.40",
+          "3.05",
+          5_000_000L,
+          1_100_000L,
+          47_600_000L,
+          14_000_000L,
+          "Healthcare",
         ),
-        // --- 1 NYSE ticker (universe exchange filter exercise) ---
+        // Gap-down (negative gap — checklist is gap-up only)
         mover(
-          symbol = "F",
-          name = "Ford Motor Company",
-          price = "11.20",
-          previousClose = "10.10",
-          volume = 200_000_000L,
-          volumeAvg30d = 55_000_000L,
-          marketCapUsd = 5_500_000_000L,
+          "MULN",
+          "Mullen Automotive",
+          "1.10",
+          "1.95",
+          40_000_000L,
+          8_000_000L,
+          22_000_000L,
+          20_000_000L,
+          "Consumer Cyclical",
+        ),
+        // --- 2 universe rejects ---
+        // NYSE — excluded by the adapter exchange gate
+        mover(
+          "XYZN",
+          "Xerion Industries",
+          "3.00",
+          "1.80",
+          10_000_000L,
+          2_000_000L,
+          30_000_000L,
+          10_000_000L,
+          "Industrials",
           exchange = "NYSE",
-          sector = "Consumer Cyclical",
+        ),
+        // Above the $2B cap ceiling — excluded by the adapter cap gate
+        mover(
+          "BIGZ",
+          "BigBear Holdings",
+          "4.00",
+          "2.50",
+          50_000_000L,
+          9_000_000L,
+          2_400_000_000L,
+          600_000_000L,
+          "Technology",
         ),
       )
 
-    @Suppress("LongParameterList") // Private fixture builder — each param maps 1-1 to a column in
-    // the synthetic snapshot table above ; grouping into a sub-record would only obscure the
-    // per-ticker literal block at the call sites.
+    @Suppress(
+      "LongParameterList"
+    ) // Private fixture builder — each param maps 1-1 to a column in the
+    // synthetic snapshot table above; grouping into a sub-record would only obscure the call sites.
     private fun mover(
       symbol: String,
       name: String,
@@ -205,6 +190,7 @@ class MockMarketScreenerClient : MarketScreenerClient {
       volume: Long,
       volumeAvg30d: Long,
       marketCapUsd: Long,
+      floatShares: Long,
       sector: String,
       exchange: String = "NASDAQ",
     ): TickerMover {
@@ -229,6 +215,7 @@ class MockMarketScreenerClient : MarketScreenerClient {
         marketCapUsd = marketCapUsd,
         exchange = exchange,
         sector = sector,
+        floatShares = floatShares,
       )
     }
   }

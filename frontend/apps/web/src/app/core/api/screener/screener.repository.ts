@@ -25,32 +25,25 @@ export interface TickerMover {
   marketCapUsd: number;
   exchange: string;
   sector: string | null;
+  /** Free-float shares (3M–50M is the GUS target). `null` when the provider doesn't expose it. */
+  floatShares: number | null;
+  /** Premarket session volume (shares). `null` when the provider doesn't expose it. */
+  premarketVolume: number | null;
 }
 
 /**
- * Dynamic, user-editable thresholds applied client-side to the persisted snapshot. Two axes since
- * Phase 6 ticket (8) v0.5 simplified the panel : exchange + market-cap range are now enforced at
- * the backend universe level ([ScreenerUniverse.NASDAQ_MID_CAP]) and sector was no-op on every
- * live provider (FMP / Polygon don't carry it).
- *
- * `gapPctMin` is **directional** — positive value filters gap-up only, negative value lets
- * gap-down rows through. v1 stays positive ; the field is signed so a future preset can flip it.
- * `volumeRatioMin` is no-op on FMP (volume not exposed by the gainers/losers endpoint) but used on
- * Mock + Polygon ; the user can drop it to 0 when running with FMP.
+ * The GUS entry checklist as machine-checkable thresholds (cf. `docs/TTD/analyse-company/
+ * check-company.md`). **Price + gap only** — price $1–$10, gap ≥ +50 %. The float axis was dropped :
+ * the only free source (FMP `shares-float`) is stale on the dilution-heavy small-caps the radar
+ * targets (e.g. GELS read 3.6M vs 5.62M on DilutionTracker), so showing/filtering on it was
+ * misleading. Float, chart trend, company quality and reverse-split detection are evaluated
+ * externally by the user (the radar links out to DilutionTracker per row).
  */
-export interface ScreenerFilter {
-  gapPctMin: number;
-  volumeRatioMin: number;
-}
-
-/**
- * Default thresholds — `gapPctMin = 10` matches the Phase 6 ticket (8) re-targeting (focus on
- * **truly** abnormal moves, drop the 5 % noise floor inherited from Sprint 1).
- */
-export const DEFAULT_SCREENER_FILTER: ScreenerFilter = {
-  gapPctMin: 10,
-  volumeRatioMin: 3,
-};
+export const GUS_CRITERIA = {
+  priceMin: 1,
+  priceMax: 10,
+  gapPctMin: 50,
+} as const;
 
 /**
  * Envelope returned by both `POST /api/screener/refresh` and `GET /api/screener/movers`. The
@@ -86,23 +79,17 @@ export abstract class ScreenerRepository {
 }
 
 /**
- * Pure client-side filter — gap floor + volume ratio floor + sort by `gapPct` descending. Lives
- * next to the port so the contract and the predicate stay in sync. `gapPctMin` is directional (cf.
- * [TickerMover.gapPct] doc).
- *
- * **`volumeRatio === 0` is treated as a sentinel meaning "provider doesn't expose volume"** and
- * passes through regardless of [ScreenerFilter.volumeRatioMin]. Without this, FMP-sourced movers
- * (which all carry `volumeRatio = 0` because the gainers/losers endpoint doesn't expose volume)
- * would be silently filtered out by any positive volume floor — the radar would render empty even
- * though the snapshot has data. Mock + Polygon compute a real volumeRatio so the floor still
- * applies to them.
+ * GUS checklist filter — keeps only the tickers that clear the machine-checkable entry criteria
+ * (price $1–$10, gap ≥ +50 %), sorted by gap descending. Lives next to the port so the contract and
+ * the predicate stay in sync. Float is no longer part of the filter (see [GUS_CRITERIA]).
  */
-export function applyScreenerFilter(rows: TickerMover[], filter: ScreenerFilter): TickerMover[] {
+export function applyGusChecklist(rows: TickerMover[]): TickerMover[] {
   return rows
     .filter(
       (row) =>
-        row.gapPct >= filter.gapPctMin &&
-        (row.volumeRatio === 0 || row.volumeRatio >= filter.volumeRatioMin),
+        row.price >= GUS_CRITERIA.priceMin &&
+        row.price <= GUS_CRITERIA.priceMax &&
+        row.gapPct >= GUS_CRITERIA.gapPctMin,
     )
     .sort((a, b) => b.gapPct - a.gapPct);
 }

@@ -63,7 +63,7 @@ class FmpMarketScreenerClientTest {
     server.enqueue(jsonOk(GAINERS_BODY))
     server.enqueue(jsonOk(LOSERS_BODY))
 
-    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val movers = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(2, movers.size)
     val nvda = movers.first { it.symbol == "NVDA" }
@@ -92,7 +92,7 @@ class FmpMarketScreenerClientTest {
     server.enqueue(jsonOk(GAINERS_BODY))
     server.enqueue(jsonOk(LOSERS_BODY))
 
-    client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     val gainersRequest = server.takeRequest()
     val gainersPath = gainersRequest.path ?: ""
@@ -110,7 +110,7 @@ class FmpMarketScreenerClientTest {
     server.enqueue(jsonOk("[]"))
     server.enqueue(jsonOk("[]"))
 
-    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val movers = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertTrue(movers.isEmpty())
   }
@@ -118,12 +118,12 @@ class FmpMarketScreenerClientTest {
   @Test
   fun `filters out entries whose exchange does not match the universe`() {
     // Phase 6 ticket (8) v0.5 — the FMP payload carries `exchange` per entry, so the universe's
-    // exchange bound (NASDAQ for NASDAQ_MID_CAP) is enforced at the adapter level. A mover on
+    // exchange bound (NASDAQ for US_SMALL_CAP_GAPPERS) is enforced at the adapter level. A mover on
     // NYSE / AMEX / OTC is dropped before the snapshot lands in the radar.
     server.enqueue(jsonOk(MIXED_EXCHANGE_GAINERS_BODY))
     server.enqueue(jsonOk("[]"))
 
-    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val movers = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(1, movers.size)
     assertEquals("NASDAQONLY", movers.first().symbol)
@@ -136,7 +136,7 @@ class FmpMarketScreenerClientTest {
     server.enqueue(jsonOk(GAINERS_WITH_PARTIAL_ENTRIES_BODY))
     server.enqueue(jsonOk("[]"))
 
-    val movers = client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val movers = client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     // Only OKAY passes — SKIP_NO_SYMBOL (missing symbol), SKIP_NO_PRICE (zero price),
     // SKIP_NO_CHANGE (missing change), SKIP_NO_PCT (missing changesPercentage) all dropped.
@@ -152,7 +152,7 @@ class FmpMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
   }
@@ -163,7 +163,7 @@ class FmpMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("auth-failed") ?: false)
     assertTrue(ex.message?.contains("plan") ?: false)
@@ -175,7 +175,7 @@ class FmpMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("rate-limited") ?: false)
   }
@@ -186,7 +186,7 @@ class FmpMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        client.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        client.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("upstream") ?: false)
   }
@@ -204,7 +204,7 @@ class FmpMarketScreenerClientTest {
 
     val ex =
       assertThrows<UpstreamUnavailableException> {
-        noKeyClient.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        noKeyClient.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("API key") ?: false)
     assertEquals(0, server.requestCount)

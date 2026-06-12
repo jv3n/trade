@@ -191,6 +191,22 @@ class MarketScreenerServiceTest {
     assertEquals(fixedInstant, response.fetchedAt)
   }
 
+  @Test
+  fun `refresh persists movers raw without float-premarket enrichment`() {
+    // Post-pivot the radar only shows price + gap : the float / premarket enrichment was dropped
+    // (FMP's float is stale on the dilution-heavy small-caps the radar targets — misleading data).
+    // A mover that would once have been enriched now lands in the snapshot exactly as the adapter
+    // returned it — float / premarket stay whatever the adapter set (null here).
+    val candidate =
+      sampleMover("GNS").copy(price = BigDecimal("5.00"), gapPct = BigDecimal("60.00"))
+    val service = serviceWith(client = StubScreenerClient(listOf(candidate)))
+
+    val response = service.refresh()
+
+    assertNull(response.movers.first().floatShares)
+    assertNull(response.movers.first().premarketVolume)
+  }
+
   // --- Helpers
   // ------------------------------------------------------------------------------------
 

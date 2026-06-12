@@ -67,11 +67,12 @@ class MarketScreenerService(
    */
   @Transactional
   fun refresh(
-    universe: ScreenerUniverse = ScreenerUniverse.NASDAQ_MID_CAP
+    universe: ScreenerUniverse = ScreenerUniverse.US_SMALL_CAP_GAPPERS
   ): ScreenerSnapshotResponse {
     val provider = appConfig.getString(ConfigKeys.SCREENER_PROVIDER)
     log.info("Screener refresh start provider={} universe={}", provider, universe)
-    val moversDto = client.snapshotMovers(universe).map { it.toDto() }
+    val movers = client.snapshotMovers(universe)
+    val moversDto = movers.map { it.toDto() }
     val today = LocalDate.now(MARKET_ZONE)
     val json = jsonMapper.writeValueAsString(moversDto)
     val saved =

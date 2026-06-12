@@ -139,6 +139,7 @@
     "fields": {
       "tradeDate": "Date",
       "ticker": "Ticker",
+      "source": "Source",
       "gapUpPercent": "Gap up",
       "floatSharesMillions": "Float",
       "institutionsPercent": "Inst. %",
@@ -154,6 +155,10 @@
       "lodPercent": "% LOD",
       "eodPercent": "% EOD",
       "note": "Notes"
+    },
+    "source": {
+      "IMPORT": "Import",
+      "RADAR": "Radar"
     }
   },
   "lexicon": {
@@ -1061,37 +1066,34 @@
   },
   "radar": {
     "title": "Radar de marché",
-    "subtitle": "Tickers mid-cap Nasdaq qui montrent un mouvement anormal — gap d'ouverture et volume inhabituels. Signal d'investigation, pas une recommandation.",
+    "subtitle": "Small-caps en gap-up passées au crible des critères GUS automatisables (prix 1–10 $, gap ≥ +50 %). Float et dilution à vérifier sur DilutionTracker. Signal d'investigation, pas une recommandation.",
     "refresh": "Rechercher",
     "lastFetched": "Dernière recherche :",
     "notYetFetched": "Aucun snapshot pour l'instant. Cliquez sur « Rechercher » pour interroger le fournisseur.",
-    "empty": "Aucun mouvement anormal détecté avec ces filtres.",
+    "empty": "Aucun ticker ne valide la checklist GUS dans le dernier snapshot.",
     "errors": {
       "fetch": "Impossible de charger le snapshot du radar. Réessayez.",
       "refresh": "Le fournisseur a rejeté la requête. Il est peut-être indisponible ou rate-limited — réessayez."
     },
     "columns": {
       "symbol": "Symbole",
-      "name": "Nom",
       "price": "Prix",
       "gapPct": "Gap %",
-      "volumeRatio": "Volume / moy. 30j",
-      "marketCap": "Capitalisation",
-      "sector": "Secteur"
+      "dilution": "Dilution",
+      "dilutionLabel": "DilutionTracker",
+      "dilutionAria": "Ouvrir {{ticker}} sur DilutionTracker (nouvel onglet)",
+      "addStat": "Stat"
     },
-    "filter": {
-      "title": "Filtres",
-      "universeHint": "Univers : NASDAQ mid-cap, 2 G$–10 G$ (appliqué côté serveur).",
-      "gapPctMin": "Gap minimum",
-      "volumeRatioMin": "Volume × minimum",
-      "reset": "Réinitialiser",
-      "sidenav": {
-        "expand": "Déplier les filtres",
-        "collapse": "Replier les filtres"
-      },
-      "sections": {
-        "gap": "Gap",
-        "volume": "Volume"
+    "addStat": {
+      "button": "Add stat",
+      "success": "{{ticker}} ajouté aux stats.",
+      "error": "Impossible d'ajouter {{ticker}} aux stats. Réessayez.",
+      "dialog": {
+        "title": "Ajouter aux stats ?",
+        "message": "Créer une ligne de stats pour {{ticker}} (gap {{gap}} %, open {{price}} $).",
+        "hint": "Float, institutions et niveaux high/LOD/EOD restent vides — à compléter en fin de journée.",
+        "confirm": "Ajouter",
+        "cancel": "Annuler"
       }
     }
   },

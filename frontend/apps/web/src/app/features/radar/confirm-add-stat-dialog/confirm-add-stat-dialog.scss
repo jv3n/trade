@@ -1,0 +1,7 @@
+// Confirmation modal for the radar « Add stat » button — only the hint line needs styling, the
+// dialog chrome comes from StbDialogModule's M3 token overrides.
+.confirm-hint {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}

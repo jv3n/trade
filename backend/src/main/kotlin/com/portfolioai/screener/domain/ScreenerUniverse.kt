@@ -1,37 +1,29 @@
 package com.portfolioai.screener.domain
 
 /**
- * Broad bounds passed to the adapter to define which slice of the market to snapshot — the *static*
- * pre-filter the provider sees (exchange + a generous market-cap range bounding the cost of the
- * call). The user-tweakable axes (gap %, volume ratio) are applied client-side after the snapshot
- * lands ; the universe is what the adapter itself enforces, the filter is what the UI plays with.
+ * Broad bounds passed to the adapter to define which slice of the market to snapshot — the static
+ * pre-filter the provider sees (exchange + a market-cap range bounding the call). The GUS entry
+ * checklist (price $1–$10, float 3M–50M, gap ≥ 50 %, no reverse split) runs client-side after the
+ * snapshot lands ; the universe is the coarse gate the adapter itself enforces.
  *
- * **Honored heterogeneously per adapter** (Phase 6 ticket (8) v0.5 — degraded mode) :
- * - [com.portfolioai.screener.infrastructure.screener.MockMarketScreenerClient] honors both
- *   `exchange` and the `marketCapMin..marketCapMax` range (its fixtures carry both fields).
- * - [com.portfolioai.screener.infrastructure.screener.FmpMarketScreenerClient] honors `exchange`
- *   only — FMP's gainers/losers payload doesn't expose `marketCapUsd`.
- * - [com.portfolioai.screener.infrastructure.screener.PolygonMarketScreenerClient] honors neither
- *   on the grouped-daily endpoint — neither `exchange` nor `marketCapUsd` is carried.
+ * Honored heterogeneously per adapter: the mock honors `exchange` + the cap range; FMP honors
+ * `exchange` only; Polygon's grouped-daily endpoint honors neither (see each adapter's KDoc).
  *
- * Closing the gap on Polygon / FMP requires the [com.portfolioai.screener] follow-up ticket (1bis)
- * — a nightly cron seeds a `ticker_reference` table with `exchange` + `market_cap_usd` from Polygon
- * `/v3/reference/tickers`, joined in-memory at snapshot time. v0.5 ships the universe pre-filter
- * **at the adapter level** so the contract is uniform even when only Mock can fully enforce it.
- *
- * The default [NASDAQ_MID_CAP] reflects the Phase 6 v1 target — mid-cap Nasdaq Composite — and is
- * deliberately captured as a constant rather than a config key. v1 doesn't need to flip universes
- * at runtime ; if a future surface (small-cap radar, NYSE radar) emerges we add a sibling constant
- * and parameterise the controller.
+ * [US_SMALL_CAP_GAPPERS] is the post-pivot target — the radar now hunts the GUS pattern (gap-up
+ * small-caps), not the old mid-cap surface. Captured as a constant rather than a config key; v1
+ * doesn't flip universes at runtime.
  */
 data class ScreenerUniverse(val exchange: String, val marketCapMin: Long, val marketCapMax: Long) {
   companion object {
-    /** Phase 6 v1 default — mid-cap Nasdaq Composite, $2B–$10B market cap. */
-    val NASDAQ_MID_CAP =
+    /**
+     * GUS target — NASDAQ small-caps. The cap range ($1M–$2B) is a coarse gate; the real selection
+     * (price $1–$10, float 3M–50M, gap ≥ 50 %) runs in the GUS checklist filter, not here.
+     */
+    val US_SMALL_CAP_GAPPERS =
       ScreenerUniverse(
         exchange = "NASDAQ",
-        marketCapMin = 2_000_000_000L,
-        marketCapMax = 10_000_000_000L,
+        marketCapMin = 1_000_000L,
+        marketCapMax = 2_000_000_000L,
       )
   }
 }

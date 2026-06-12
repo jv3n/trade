@@ -2,6 +2,8 @@ package com.portfolioai.stats.domain
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.math.BigDecimal
@@ -12,16 +14,21 @@ import java.util.UUID
 /**
  * One trade-stats row — the pre-trade setup context plus the day's price levels. Distinct from
  * [com.portfolioai.journal.domain.TradeEntry] (the execution journal) : this table is all numeric /
- * boolean and is fed by a CSV import rather than per-trade CRUD.
+ * boolean and is fed either by a CSV import or by a radar « Add stat » pick.
  *
- * **Global dataset** — unlike `TradeEntry`, stats are NOT multi-tenant : there is no `user_id`. The
- * rows are a single shared dataset readable by every authenticated user ; only ADMINs may mutate it
- * (the CSV import is gated by `hasRole("ADMIN")` on the stats POST routes in `SecurityConfig`).
+ * **Two provenance paths since V2** ([source]) :
+ * - [StatSource.IMPORT] — ADMIN CSV import. Complete rows ([createdBy] = null) ; the global, shared
+ *   dataset readable by every authenticated user.
+ * - [StatSource.RADAR] — a user pressed « Add stat ». A **partial** row owned by [createdBy] and
+ *   visible only to them (plus the global IMPORT rows). Only [tradeDate], [ticker], [gapUpPercent]
+ *   and [openPrice] are known at scan time ; the setup flags + the EOD outcome stay null.
  *
- * The setup + level columns are entered by hand in the source CSV. The three percentage columns
- * ([pushPercent], [lodPercent], [eodPercent]) are **derived at insert time** by [StatMetrics] —
- * never read off the CSV. They use value ×100 encoding with 2 decimals, matching the Postgres
- * `NUMERIC(8,2)` columns, and can be negative when the price fell below the open.
+ * **Nullability** — everything except identity ([tradeDate], [ticker]) and the always-known scan
+ * fields ([gapUpPercent], [openPrice]) is nullable so a radar pick stores NULL rather than a
+ * misleading 0. The setup + level columns are entered by hand in the import CSV ; the three
+ * percentage columns ([pushPercent], [lodPercent], [eodPercent]) are **derived at insert time** by
+ * [StatMetrics] from the levels — never read off the CSV — so they are null exactly when the levels
+ * they derive from are.
  */
 @Entity
 @Table(name = "stat_entry")
@@ -32,34 +39,39 @@ class StatEntry(
   @Column(name = "trade_date", nullable = false) var tradeDate: LocalDate,
   @Column(nullable = false, length = 20) var ticker: String,
 
-  // ---- Setup (manually entered) — percentages in value encoding (52.00 = 52%) ----
+  // ---- Always known at creation (radar + CSV) — percentages in value encoding (52.00 = 52%) ----
   @Column(name = "gap_up_percent", nullable = false, precision = 8, scale = 2)
   var gapUpPercent: BigDecimal,
-  @Column(name = "float_shares_millions", nullable = false, precision = 12, scale = 2)
-  var floatSharesMillions: BigDecimal,
-  @Column(name = "institutions_percent", nullable = false, precision = 5, scale = 2)
-  var institutionsPercent: BigDecimal,
-  @Column(name = "inst_over_20", nullable = false) var instOver20: Boolean,
-  @Column(name = "under_1_dollar", nullable = false) var under1Dollar: Boolean,
-  @Column(nullable = false) var ssr: Boolean,
-  @Column(name = "entry_after_11am", nullable = false) var entryAfter11am: Boolean,
-  @Column(length = 2000) var note: String? = null,
-
-  // ---- Price levels (manually entered) ----
   @Column(name = "open_price", nullable = false, precision = 18, scale = 4)
   var openPrice: BigDecimal,
-  @Column(name = "high_price", nullable = false, precision = 18, scale = 4)
-  var highPrice: BigDecimal,
-  @Column(name = "lod_price", nullable = false, precision = 18, scale = 4) var lodPrice: BigDecimal,
-  @Column(name = "eod_price", nullable = false, precision = 18, scale = 4) var eodPrice: BigDecimal,
 
-  // ---- Derived at insert (StatMetrics) — value ×100, 2 decimals, can be negative ----
-  @Column(name = "push_percent", nullable = false, precision = 8, scale = 2)
-  var pushPercent: BigDecimal,
-  @Column(name = "lod_percent", nullable = false, precision = 8, scale = 2)
-  var lodPercent: BigDecimal,
-  @Column(name = "eod_percent", nullable = false, precision = 8, scale = 2)
-  var eodPercent: BigDecimal,
+  // ---- Setup (manually entered via CSV) — null on a radar pick ----
+  @Column(name = "float_shares_millions", precision = 12, scale = 2)
+  var floatSharesMillions: BigDecimal? = null,
+  @Column(name = "institutions_percent", precision = 5, scale = 2)
+  var institutionsPercent: BigDecimal? = null,
+  @Column(name = "inst_over_20") var instOver20: Boolean? = null,
+  @Column(name = "under_1_dollar") var under1Dollar: Boolean? = null,
+  @Column var ssr: Boolean? = null,
+  @Column(name = "entry_after_11am") var entryAfter11am: Boolean? = null,
+  @Column(length = 2000) var note: String? = null,
+
+  // ---- Price levels (EOD outcome, manually entered via CSV) — null on a radar pick ----
+  @Column(name = "high_price", precision = 18, scale = 4) var highPrice: BigDecimal? = null,
+  @Column(name = "lod_price", precision = 18, scale = 4) var lodPrice: BigDecimal? = null,
+  @Column(name = "eod_price", precision = 18, scale = 4) var eodPrice: BigDecimal? = null,
+
+  // ---- Derived at insert (StatMetrics) — value ×100, 2 decimals, null when the levels are ----
+  @Column(name = "push_percent", precision = 8, scale = 2) var pushPercent: BigDecimal? = null,
+  @Column(name = "lod_percent", precision = 8, scale = 2) var lodPercent: BigDecimal? = null,
+  @Column(name = "eod_percent", precision = 8, scale = 2) var eodPercent: BigDecimal? = null,
+
+  // ---- Provenance + ownership (V2) ----
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 16)
+  var source: StatSource = StatSource.IMPORT,
+  /** Owning user. Null = the admin/global curated dataset (CSV import), readable by everyone. */
+  @Column(name = "created_by") var createdBy: UUID? = null,
 
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)

@@ -54,13 +54,13 @@ class RoutingMarketScreenerClientTest {
   @Test
   fun `dispatches to the mock adapter when provider is mock`() {
     whenever(appConfig.getString(ConfigKeys.SCREENER_PROVIDER)).doReturn(ConfigKeys.PROVIDER_MOCK)
-    whenever(mock.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)).doReturn(sample)
+    whenever(mock.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)).doReturn(sample)
 
     val router = RoutingMarketScreenerClient(mock, polygon, fmp, appConfig)
-    val result = router.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val result = router.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(sample, result)
-    verify(mock).snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    verify(mock).snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
     verify(polygon, never()).snapshotMovers(any())
     verify(fmp, never()).snapshotMovers(any())
   }
@@ -69,13 +69,13 @@ class RoutingMarketScreenerClientTest {
   fun `dispatches to the polygon adapter when provider is polygon`() {
     whenever(appConfig.getString(ConfigKeys.SCREENER_PROVIDER))
       .doReturn(ConfigKeys.PROVIDER_POLYGON)
-    whenever(polygon.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)).doReturn(sample)
+    whenever(polygon.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)).doReturn(sample)
 
     val router = RoutingMarketScreenerClient(mock, polygon, fmp, appConfig)
-    val result = router.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val result = router.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(sample, result)
-    verify(polygon).snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    verify(polygon).snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
     verify(mock, never()).snapshotMovers(any())
     verify(fmp, never()).snapshotMovers(any())
   }
@@ -83,13 +83,13 @@ class RoutingMarketScreenerClientTest {
   @Test
   fun `dispatches to the fmp adapter when provider is fmp`() {
     whenever(appConfig.getString(ConfigKeys.SCREENER_PROVIDER)).doReturn(ConfigKeys.PROVIDER_FMP)
-    whenever(fmp.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)).doReturn(sample)
+    whenever(fmp.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)).doReturn(sample)
 
     val router = RoutingMarketScreenerClient(mock, polygon, fmp, appConfig)
-    val result = router.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    val result = router.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
 
     assertEquals(sample, result)
-    verify(fmp).snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+    verify(fmp).snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
     verify(mock, never()).snapshotMovers(any())
     verify(polygon, never()).snapshotMovers(any())
   }
@@ -102,7 +102,7 @@ class RoutingMarketScreenerClientTest {
 
     val ex =
       assertThrows<IllegalArgumentException> {
-        router.snapshotMovers(ScreenerUniverse.NASDAQ_MID_CAP)
+        router.snapshotMovers(ScreenerUniverse.US_SMALL_CAP_GAPPERS)
       }
     assertTrue(ex.message?.contains("typo-provider") ?: false)
   }

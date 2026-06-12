@@ -139,6 +139,7 @@
     "fields": {
       "tradeDate": "Date",
       "ticker": "Ticker",
+      "source": "Source",
       "gapUpPercent": "Gap up",
       "floatSharesMillions": "Float",
       "institutionsPercent": "Inst. %",
@@ -154,6 +155,10 @@
       "lodPercent": "% LOD",
       "eodPercent": "% EOD",
       "note": "Notes"
+    },
+    "source": {
+      "IMPORT": "Import",
+      "RADAR": "Radar"
     }
   },
   "lexicon": {
@@ -1061,37 +1066,34 @@
   },
   "radar": {
     "title": "Market radar",
-    "subtitle": "Mid-cap Nasdaq tickers showing an abnormal move — unusual opening gap and volume. An investigation signal, not a recommendation.",
+    "subtitle": "Gap-up small-caps screened against the machine-checkable GUS criteria (price $1–$10, gap ≥ +50 %). Float and dilution to be checked on DilutionTracker. An investigation signal, not a recommendation.",
     "refresh": "Search",
     "lastFetched": "Last search:",
     "notYetFetched": "No snapshot yet. Press « Search » to query the provider.",
-    "empty": "No abnormal move detected with these filters.",
+    "empty": "No ticker clears the GUS checklist in the latest snapshot.",
     "errors": {
       "fetch": "Could not load the radar snapshot. Please retry.",
       "refresh": "The provider rejected the refresh. It may be rate-limited or down — please retry."
     },
     "columns": {
       "symbol": "Symbol",
-      "name": "Name",
       "price": "Price",
       "gapPct": "Gap %",
-      "volumeRatio": "Volume / 30d avg",
-      "marketCap": "Market cap",
-      "sector": "Sector"
+      "dilution": "Dilution",
+      "dilutionLabel": "DilutionTracker",
+      "dilutionAria": "Open {{ticker}} on DilutionTracker (new tab)",
+      "addStat": "Stat"
     },
-    "filter": {
-      "title": "Filters",
-      "universeHint": "Universe: NASDAQ mid-cap, $2B–$10B (enforced server-side).",
-      "gapPctMin": "Min gap",
-      "volumeRatioMin": "Min volume ×",
-      "reset": "Reset",
-      "sidenav": {
-        "expand": "Expand filters",
-        "collapse": "Collapse filters"
-      },
-      "sections": {
-        "gap": "Gap",
-        "volume": "Volume"
+    "addStat": {
+      "button": "Add stat",
+      "success": "{{ticker}} added to stats.",
+      "error": "Couldn't add {{ticker}} to stats. Please retry.",
+      "dialog": {
+        "title": "Add to stats?",
+        "message": "Create a stats row for {{ticker}} (gap {{gap}} %, open ${{price}}).",
+        "hint": "Float, institutions and the high/LOD/EOD levels stay empty — fill them in at end of day.",
+        "confirm": "Add",
+        "cancel": "Cancel"
       }
     }
   },

@@ -106,6 +106,51 @@ describe('HttpStatsRepository', () => {
         ]),
       );
   });
+
+  it('maps a RADAR partial row — source + null setup/outcome columns pass through as null', () => {
+    repo.findAll().subscribe((result) => {
+      const e = result.content[0];
+      expect(e.source).toBe('RADAR');
+      expect(e.createdBy).toBe('user-42');
+      expect(e.floatSharesMillions).toBeNull();
+      expect(e.highPrice).toBeNull();
+      expect(e.pushPercent).toBeNull();
+      expect(e.ssr).toBeNull();
+    });
+    http.expectOne('/api/stats').flush(
+      wirePageFixture([
+        wireFixture({
+          source: 'RADAR',
+          createdBy: 'user-42',
+          floatSharesMillions: null,
+          institutionsPercent: null,
+          instOver20: null,
+          under1Dollar: null,
+          ssr: null,
+          entryAfter11am: null,
+          highPrice: null,
+          lodPrice: null,
+          eodPrice: null,
+          pushPercent: null,
+          lodPercent: null,
+          eodPercent: null,
+        }),
+      ]),
+    );
+  });
+
+  it('createFromRadar POSTs the scan-time fields to /api/stats and maps the created row', () => {
+    repo
+      .createFromRadar({ ticker: 'GELS', gapUpPercent: 72, openPrice: 3.5 })
+      .subscribe((created) => {
+        expect(created.ticker).toBe('GELS');
+        expect(created.source).toBe('RADAR');
+      });
+    const req = http.expectOne('/api/stats');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ ticker: 'GELS', gapUpPercent: 72, openPrice: 3.5 });
+    req.flush(wireFixture({ ticker: 'GELS', source: 'RADAR', createdBy: 'user-42' }));
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -118,6 +163,7 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     tradeDate: '2026-06-04',
     ticker: 'BAC',
     gapUpPercent: 52.0,
+    openPrice: 4.2,
     floatSharesMillions: 12.5,
     institutionsPercent: 8.3,
     instOver20: false,
@@ -125,13 +171,14 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     ssr: false,
     entryAfter11am: false,
     note: null,
-    openPrice: 4.2,
     highPrice: 4.45,
     lodPrice: 3.05,
     eodPrice: 3.1,
     pushPercent: 5.95,
     lodPercent: -27.38,
     eodPercent: -26.19,
+    source: 'IMPORT',
+    createdBy: null,
     createdAt: '2026-06-04T15:30:00Z',
     updatedAt: '2026-06-04T15:30:00Z',
     ...overrides,

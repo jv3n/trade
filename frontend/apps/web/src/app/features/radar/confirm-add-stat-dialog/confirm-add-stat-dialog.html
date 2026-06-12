@@ -1,0 +1,26 @@
+<h2 mat-dialog-title>{{ 'radar.addStat.dialog.title' | translate }}</h2>
+
+<mat-dialog-content>
+  <p>
+    {{
+      'radar.addStat.dialog.message'
+        | translate
+          : {
+              ticker: data.ticker,
+              gap: (data.gapPct | number: '1.2-2'),
+              price: (data.price | number: '1.2-2'),
+            }
+    }}
+  </p>
+  <p class="confirm-hint">{{ 'radar.addStat.dialog.hint' | translate }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="cancel()">
+    {{ 'radar.addStat.dialog.cancel' | translate }}
+  </button>
+  <button mat-flat-button type="button" (click)="confirm()">
+    <mat-icon>add_chart</mat-icon>
+    <span>{{ 'radar.addStat.dialog.confirm' | translate }}</span>
+  </button>
+</mat-dialog-actions>
