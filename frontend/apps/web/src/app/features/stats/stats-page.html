@@ -1,288 +1,472 @@
-<div class="page page--full">
-  <header class="content-header">
-    <div class="header-row">
-      <div>
-        <h2>{{ 'stats.title' | translate }}</h2>
-        <p>{{ 'stats.subtitle' | translate }}</p>
-      </div>
-    </div>
-  </header>
+<mat-sidenav-container class="stats-shell" autosize>
+  <mat-sidenav-content>
+    <div class="page page--full">
+      <header class="content-header">
+        <div class="header-row">
+          <div>
+            <h2>{{ 'stats.title' | translate }}</h2>
+            <p>{{ 'stats.subtitle' | translate }}</p>
+          </div>
+          <div class="header-actions">
+            <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                type="text"
+                [value]="searchValue()"
+                (input)="onSearchInput($any($event.target).value)"
+                [placeholder]="'stats.searchPlaceholder' | translate"
+              />
+              @if (searchValue()) {
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="clearSearch()"
+                  [matTooltip]="'stats.clearSearch' | translate"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </mat-form-field>
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="toggleDrawer()"
+              [matTooltip]="'stats.toggleFilters' | translate"
+            >
+              <mat-icon>filter_list</mat-icon>
+              <span>{{ 'stats.filters' | translate }}</span>
+              @if (activeFilterCount() > 0) {
+                <span class="filter-count">{{ activeFilterCount() }}</span>
+              }
+            </button>
+            <button mat-flat-button type="button" (click)="openCreate()">
+              <mat-icon>add</mat-icon>
+              <span>{{ 'stats.addStat' | translate }}</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
-  @if (error(); as msg) {
-    <div class="error-banner">
-      <mat-icon>error_outline</mat-icon>
-      <span>{{ msg }}</span>
-    </div>
-  }
+      @if (error(); as msg) {
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ msg }}</span>
+        </div>
+      }
 
-  @if (loading()) {
-    <div class="loading-state">
-      <mat-spinner diameter="20" />
-      <span>{{ 'stats.loading' | translate }}</span>
-    </div>
-  } @else if (entries().length === 0) {
-    <div class="empty-state">
-      <mat-icon>insights</mat-icon>
-      <p>{{ 'stats.empty' | translate }}</p>
-    </div>
-  } @else {
-    <div stbTable>
-      <table
-        mat-table
-        [dataSource]="entries()"
-        matSort
-        [matSortActive]="sort().columnName"
-        [matSortDirection]="sort().isAscending ? 'asc' : 'desc'"
-        (matSortChange)="onSortChange($event)"
-      >
-        <ng-container matColumnDef="tradeDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeDate">
-            {{ 'stats.fields.tradeDate' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e">{{ e.tradeDate | date: 'mediumDate' }}</td>
-        </ng-container>
+      @if (loading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="20" />
+          <span>{{ 'stats.loading' | translate }}</span>
+        </div>
+      } @else if (entries().length === 0) {
+        <div class="empty-state">
+          <mat-icon>insights</mat-icon>
+          <p>{{ 'stats.empty' | translate }}</p>
+        </div>
+      } @else {
+        <div stbTable>
+          <table
+            mat-table
+            [dataSource]="entries()"
+            matSort
+            [matSortActive]="sort().columnName"
+            [matSortDirection]="sort().isAscending ? 'asc' : 'desc'"
+            (matSortChange)="onSortChange($event)"
+          >
+            <ng-container matColumnDef="tradeDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeDate">
+                {{ 'stats.fields.tradeDate' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e">{{ e.tradeDate | date: 'mediumDate' }}</td>
+            </ng-container>
 
-        <ng-container matColumnDef="ticker">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="ticker">
-            {{ 'stats.fields.ticker' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e">
-            <mat-chip-set>
-              <mat-chip
-                stbChip="ticker"
-                disableRipple
-                class="ticker-chip--link"
-                [routerLink]="['/ticker', e.ticker]"
-                >{{ e.ticker }}</mat-chip
+            <ng-container matColumnDef="ticker">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="ticker">
+                {{ 'stats.fields.ticker' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e">
+                <mat-chip-set>
+                  <mat-chip
+                    stbChip="ticker"
+                    disableRipple
+                    class="ticker-chip--link"
+                    [routerLink]="['/ticker', e.ticker]"
+                    >{{ e.ticker }}</mat-chip
+                  >
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="source">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="source">
+                {{ 'stats.fields.source' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e">
+                <mat-chip-set>
+                  <mat-chip
+                    disableRipple
+                    class="source-chip"
+                    [class.source-chip--radar]="e.source === 'RADAR'"
+                    [class.source-chip--manual]="e.source === 'MANUAL'"
+                  >
+                    {{ 'stats.source.' + e.source | translate }}
+                  </mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="gapUpPercent">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="gapUpPercent" stbCol="numeric">
+                {{ 'stats.fields.gapUpPercent' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                {{ e.gapUpPercent | number: '1.2-2' }} %
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="floatSharesMillions">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="floatSharesMillions"
+                stbCol="numeric"
               >
-            </mat-chip-set>
-          </td>
-        </ng-container>
+                {{ 'stats.fields.floatSharesMillions' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                @if (e.floatSharesMillions !== null) {
+                  {{ e.floatSharesMillions | number: '1.2-2' }} M
+                } @else {
+                  —
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="source">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="source">
-            {{ 'stats.fields.source' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e">
-            <mat-chip-set>
-              <mat-chip
-                disableRipple
-                class="source-chip"
-                [class.source-chip--radar]="e.source === 'RADAR'"
+            <ng-container matColumnDef="institutionsPercent">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="institutionsPercent"
+                stbCol="numeric"
               >
-                {{ 'stats.source.' + e.source | translate }}
-              </mat-chip>
-            </mat-chip-set>
-          </td>
-        </ng-container>
+                {{ 'stats.fields.institutionsPercent' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                @if (e.institutionsPercent !== null) {
+                  {{ e.institutionsPercent | number: '1.2-2' }} %
+                } @else {
+                  —
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="gapUpPercent">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="gapUpPercent" stbCol="numeric">
-            {{ 'stats.fields.gapUpPercent' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            {{ e.gapUpPercent | number: '1.2-2' }} %
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="instOver20">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="instOver20" stbCol="numeric">
+                {{ 'stats.fields.instOver20' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                @if (e.instOver20 !== null) {
+                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.instOver20">
+                    {{ e.instOver20 ? 'check_circle' : 'remove' }}
+                  </mat-icon>
+                } @else {
+                  —
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="floatSharesMillions">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            mat-sort-header="floatSharesMillions"
-            stbCol="numeric"
-          >
-            {{ 'stats.fields.floatSharesMillions' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            @if (e.floatSharesMillions !== null) {
-              {{ e.floatSharesMillions | number: '1.2-2' }} M
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="under1Dollar">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="under1Dollar" stbCol="numeric">
+                {{ 'stats.fields.under1Dollar' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                @if (e.under1Dollar !== null) {
+                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.under1Dollar">
+                    {{ e.under1Dollar ? 'check_circle' : 'remove' }}
+                  </mat-icon>
+                } @else {
+                  —
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="institutionsPercent">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            mat-sort-header="institutionsPercent"
-            stbCol="numeric"
-          >
-            {{ 'stats.fields.institutionsPercent' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            @if (e.institutionsPercent !== null) {
-              {{ e.institutionsPercent | number: '1.2-2' }} %
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="ssr">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="ssr" stbCol="numeric">
+                {{ 'stats.fields.ssr' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                @if (e.ssr !== null) {
+                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.ssr">
+                    {{ e.ssr ? 'check_circle' : 'remove' }}
+                  </mat-icon>
+                } @else {
+                  —
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="instOver20">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="instOver20" stbCol="numeric">
-            {{ 'stats.fields.instOver20' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            @if (e.instOver20 !== null) {
-              <mat-icon class="bool-flag" [class.bool-flag--on]="e.instOver20">
-                {{ e.instOver20 ? 'check_circle' : 'remove' }}
-              </mat-icon>
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="entryAfter11am">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="entryAfter11am"
+                stbCol="numeric"
+              >
+                {{ 'stats.fields.entryAfter11am' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                @if (e.entryAfter11am !== null) {
+                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.entryAfter11am">
+                    {{ e.entryAfter11am ? 'check_circle' : 'remove' }}
+                  </mat-icon>
+                } @else {
+                  —
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="under1Dollar">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="under1Dollar" stbCol="numeric">
-            {{ 'stats.fields.under1Dollar' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            @if (e.under1Dollar !== null) {
-              <mat-icon class="bool-flag" [class.bool-flag--on]="e.under1Dollar">
-                {{ e.under1Dollar ? 'check_circle' : 'remove' }}
-              </mat-icon>
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="openPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="openPrice" stbCol="numeric">
+                {{ 'stats.fields.openPrice' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                {{ e.openPrice | number: '1.2-4' }}
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="ssr">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="ssr" stbCol="numeric">
-            {{ 'stats.fields.ssr' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            @if (e.ssr !== null) {
-              <mat-icon class="bool-flag" [class.bool-flag--on]="e.ssr">
-                {{ e.ssr ? 'check_circle' : 'remove' }}
-              </mat-icon>
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="highPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="highPrice" stbCol="numeric">
+                {{ 'stats.fields.highPrice' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                {{ e.highPrice !== null ? (e.highPrice | number: '1.2-4') : '—' }}
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="entryAfter11am">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="entryAfter11am" stbCol="numeric">
-            {{ 'stats.fields.entryAfter11am' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            @if (e.entryAfter11am !== null) {
-              <mat-icon class="bool-flag" [class.bool-flag--on]="e.entryAfter11am">
-                {{ e.entryAfter11am ? 'check_circle' : 'remove' }}
-              </mat-icon>
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="lodPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="lodPrice" stbCol="numeric">
+                {{ 'stats.fields.lodPrice' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                {{ e.lodPrice !== null ? (e.lodPrice | number: '1.2-4') : '—' }}
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="openPrice">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="openPrice" stbCol="numeric">
-            {{ 'stats.fields.openPrice' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">{{ e.openPrice | number: '1.2-4' }}</td>
-        </ng-container>
+            <ng-container matColumnDef="eodPrice">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="eodPrice" stbCol="numeric">
+                {{ 'stats.fields.eodPrice' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let e" stbCol="numeric">
+                {{ e.eodPrice !== null ? (e.eodPrice | number: '1.2-4') : '—' }}
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="highPrice">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="highPrice" stbCol="numeric">
-            {{ 'stats.fields.highPrice' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            {{ e.highPrice !== null ? (e.highPrice | number: '1.2-4') : '—' }}
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="pushPercent">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="pushPercent" stbCol="numeric">
+                {{ 'stats.fields.pushPercent' | translate }}
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let e"
+                stbCol="numeric"
+                [class.stat-positive]="e.pushPercent !== null && e.pushPercent > 0"
+                [class.stat-negative]="e.pushPercent !== null && e.pushPercent < 0"
+              >
+                {{ e.pushPercent !== null ? (e.pushPercent | number: '1.2-2') + ' %' : '—' }}
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="lodPrice">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="lodPrice" stbCol="numeric">
-            {{ 'stats.fields.lodPrice' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            {{ e.lodPrice !== null ? (e.lodPrice | number: '1.2-4') : '—' }}
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="lodPercent">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="lodPercent" stbCol="numeric">
+                {{ 'stats.fields.lodPercent' | translate }}
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let e"
+                stbCol="numeric"
+                [class.stat-positive]="e.lodPercent !== null && e.lodPercent > 0"
+                [class.stat-negative]="e.lodPercent !== null && e.lodPercent < 0"
+              >
+                {{ e.lodPercent !== null ? (e.lodPercent | number: '1.2-2') + ' %' : '—' }}
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="eodPrice">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="eodPrice" stbCol="numeric">
-            {{ 'stats.fields.eodPrice' | translate }}
-          </th>
-          <td mat-cell *matCellDef="let e" stbCol="numeric">
-            {{ e.eodPrice !== null ? (e.eodPrice | number: '1.2-4') : '—' }}
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="eodPercent">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="eodPercent" stbCol="numeric">
+                {{ 'stats.fields.eodPercent' | translate }}
+              </th>
+              <td
+                mat-cell
+                *matCellDef="let e"
+                stbCol="numeric"
+                [class.stat-positive]="e.eodPercent !== null && e.eodPercent > 0"
+                [class.stat-negative]="e.eodPercent !== null && e.eodPercent < 0"
+              >
+                {{ e.eodPercent !== null ? (e.eodPercent | number: '1.2-2') + ' %' : '—' }}
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="pushPercent">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="pushPercent" stbCol="numeric">
-            {{ 'stats.fields.pushPercent' | translate }}
-          </th>
-          <td
-            mat-cell
-            *matCellDef="let e"
-            stbCol="numeric"
-            [class.stat-positive]="e.pushPercent !== null && e.pushPercent > 0"
-            [class.stat-negative]="e.pushPercent !== null && e.pushPercent < 0"
-          >
-            {{ e.pushPercent !== null ? (e.pushPercent | number: '1.2-2') + ' %' : '—' }}
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="note">
+              <th mat-header-cell *matHeaderCellDef>{{ 'stats.fields.note' | translate }}</th>
+              <td mat-cell *matCellDef="let e" class="note-cell">
+                @if (e.note) {
+                  <span [matTooltip]="e.note">{{ e.note }}</span>
+                } @else {
+                  —
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="lodPercent">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="lodPercent" stbCol="numeric">
-            {{ 'stats.fields.lodPercent' | translate }}
-          </th>
-          <td
-            mat-cell
-            *matCellDef="let e"
-            stbCol="numeric"
-            [class.stat-positive]="e.lodPercent !== null && e.lodPercent > 0"
-            [class.stat-negative]="e.lodPercent !== null && e.lodPercent < 0"
-          >
-            {{ e.lodPercent !== null ? (e.lodPercent | number: '1.2-2') + ' %' : '—' }}
-          </td>
-        </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
+              <td mat-cell *matCellDef="let e" stbCol="actions">
+                @if (isOwned(e)) {
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="openEdit(e)"
+                    [matTooltip]="'stats.actions.edit' | translate"
+                    aria-label="Edit"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="delete(e)"
+                    [matTooltip]="'stats.actions.delete' | translate"
+                    aria-label="Delete"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
 
-        <ng-container matColumnDef="eodPercent">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header="eodPercent" stbCol="numeric">
-            {{ 'stats.fields.eodPercent' | translate }}
-          </th>
-          <td
-            mat-cell
-            *matCellDef="let e"
-            stbCol="numeric"
-            [class.stat-positive]="e.eodPercent !== null && e.eodPercent > 0"
-            [class.stat-negative]="e.eodPercent !== null && e.eodPercent < 0"
-          >
-            {{ e.eodPercent !== null ? (e.eodPercent | number: '1.2-2') + ' %' : '—' }}
-          </td>
-        </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns"></tr>
+          </table>
+        </div>
 
-        <ng-container matColumnDef="note">
-          <th mat-header-cell *matHeaderCellDef>{{ 'stats.fields.note' | translate }}</th>
-          <td mat-cell *matCellDef="let e" class="note-cell">
-            @if (e.note) {
-              <span [matTooltip]="e.note">{{ e.note }}</span>
-            } @else {
-              —
-            }
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
-      </table>
+        <mat-paginator
+          [length]="totalElements()"
+          [pageSize]="pageSize()"
+          [pageIndex]="pageIndex()"
+          [pageSizeOptions]="pageSizeOptions"
+          showFirstLastButtons
+          (page)="onPage($event)"
+        />
+      }
     </div>
+  </mat-sidenav-content>
 
-    <mat-paginator
-      [length]="totalElements()"
-      [pageSize]="pageSize()"
-      [pageIndex]="pageIndex()"
-      [pageSizeOptions]="pageSizeOptions"
-      showFirstLastButtons
-      (page)="onPage($event)"
-    />
-  }
-</div>
+  <!-- Filter drawer — right-side sidenav (mode="over"), closed by default ; toggled from the header. -->
+  <mat-sidenav #filterDrawer position="end" mode="over" class="filter-drawer">
+    <div class="filter-drawer-content">
+      <header class="filter-header">
+        <h3>{{ 'stats.filters' | translate }}</h3>
+        <button mat-icon-button type="button" (click)="toggleDrawer()" aria-label="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <mat-divider />
+
+      <section class="filter-section">
+        <h4>{{ 'stats.filterPanel.period' | translate }}</h4>
+        <div class="date-range">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.filterPanel.dateFrom' | translate }}</mat-label>
+            <input
+              matInput
+              readonly
+              [matDatepicker]="fromPicker"
+              [value]="filterModel().dateFrom"
+              (dateChange)="setDateFrom($event.value)"
+              (click)="fromPicker.open()"
+            />
+            <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+            <mat-datepicker #fromPicker />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.filterPanel.dateTo' | translate }}</mat-label>
+            <input
+              matInput
+              readonly
+              [matDatepicker]="toPicker"
+              [value]="filterModel().dateTo"
+              (dateChange)="setDateTo($event.value)"
+              (click)="toPicker.open()"
+            />
+            <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+            <mat-datepicker #toPicker />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="filter-section">
+        <h4>{{ 'stats.fields.source' | translate }}</h4>
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <mat-select [value]="filterModel().source" (selectionChange)="setSource($event.value)">
+            <mat-option [value]="null">{{ 'stats.filterPanel.sourceAll' | translate }}</mat-option>
+            @for (s of sourceOptions; track s) {
+              <mat-option [value]="s">{{ 'stats.source.' + s | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </section>
+
+      <mat-divider />
+
+      <section class="filter-section">
+        <h4>{{ 'stats.filterPanel.gapRange' | translate }}</h4>
+        <div class="date-range">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.filterPanel.gapMin' | translate }}</mat-label>
+            <input
+              matInput
+              appNumberMask
+              [decimals]="2"
+              [allowNegative]="true"
+              [value]="filterModel().gapMin"
+              (numberChange)="setGapMin($event)"
+              inputmode="decimal"
+            />
+            <span matTextSuffix>%</span>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.filterPanel.gapMax' | translate }}</mat-label>
+            <input
+              matInput
+              appNumberMask
+              [decimals]="2"
+              [allowNegative]="true"
+              [value]="filterModel().gapMax"
+              (numberChange)="setGapMax($event)"
+              inputmode="decimal"
+            />
+            <span matTextSuffix>%</span>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <footer class="filter-actions">
+        <button mat-stroked-button type="button" (click)="resetFilters()">
+          {{ 'stats.filterPanel.reset' | translate }}
+        </button>
+        <button mat-flat-button type="button" (click)="applyFilters()">
+          {{ 'stats.filterPanel.apply' | translate }}
+        </button>
+      </footer>
+    </div>
+  </mat-sidenav>
+</mat-sidenav-container>

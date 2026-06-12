@@ -131,10 +131,50 @@
   "stats": {
     "title": "Stats trades",
     "subtitle": "Dataset des shorts gap-up — contexte du setup, niveaux de prix du jour et mouvements push / LOD / EOD dérivés.",
+    "searchPlaceholder": "Rechercher par ticker…",
+    "clearSearch": "Effacer la recherche",
+    "toggleFilters": "Filtres",
+    "filters": "Filtres",
+    "addStat": "Ajouter",
     "loading": "Chargement des stats…",
-    "empty": "Aucune stat pour l'instant. Un admin peut importer le dataset depuis Paramètres → Import stats.",
+    "empty": "Aucune stat pour l'instant. Ajoute une analyse, fais « Add stat » depuis le radar, ou un admin peut importer le dataset communauté.",
     "errors": {
       "load": "Impossible de charger les stats. Réessaie."
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "confirmDelete": "Supprimer l'analyse de {{ticker}} ?",
+    "snackbar": {
+      "createSuccess": "Analyse de {{ticker}} ajoutée.",
+      "createError": "Impossible d'ajouter l'analyse. Réessaie.",
+      "updateSuccess": "Analyse de {{ticker}} mise à jour.",
+      "updateError": "Impossible de mettre à jour l'analyse. Réessaie.",
+      "deleteSuccess": "Analyse de {{ticker}} supprimée.",
+      "deleteError": "Impossible de supprimer l'analyse. Réessaie.",
+      "duplicate": "Tu as déjà une analyse pour ce ticker ce jour-là."
+    },
+    "dialog": {
+      "createTitle": "Ajouter une analyse",
+      "editTitle": "Modifier l'analyse",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "sections": {
+        "setup": "Setup",
+        "outcome": "Résultat (fin de journée)"
+      }
+    },
+    "filterPanel": {
+      "period": "Période",
+      "dateFrom": "Du",
+      "dateTo": "Au",
+      "sourceAll": "Toutes",
+      "gapRange": "Plage de gap",
+      "gapMin": "Gap min",
+      "gapMax": "Gap max",
+      "reset": "Réinitialiser",
+      "apply": "Appliquer"
     },
     "fields": {
       "tradeDate": "Date",
@@ -158,7 +198,8 @@
     },
     "source": {
       "IMPORT": "Import",
-      "RADAR": "Radar"
+      "RADAR": "Radar",
+      "MANUAL": "Manuel"
     }
   },
   "lexicon": {

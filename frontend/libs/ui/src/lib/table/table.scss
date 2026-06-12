@@ -127,12 +127,15 @@
   padding-right: 0.5rem !important;
 }
 
-// Cell side only — switch the `<td>` to flex so icon-button siblings sit side-by-side with a
-// tight gap, regardless of how narrow the column gets. The `<th>` keeps table-cell semantics
-// so the header label (if any) stays aligned with the rest of the row of headers.
+// Cell side — keep the trailing icon buttons right-aligned (inherited `text-align: right`) and on
+// the row's vertical centre. We deliberately do NOT set `display: flex` on the `<td>` : a flex
+// table-cell drops out of the table's `vertical-align: middle`, which floats the icon buttons
+// off-centre from the `—` / numbers in the same row (the misalignment reported on the wide tables).
+// Inline-block buttons + the cell's default cell vertical-align keep everything on one centre line.
 td.stb-col--actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.25rem;
+  white-space: nowrap;
+
+  .mat-mdc-icon-button {
+    vertical-align: middle;
+  }
 }

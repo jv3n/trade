@@ -1,32 +1,47 @@
 package com.portfolioai.stats.infrastructure.persistence
 
 import com.portfolioai.stats.domain.StatEntry
+import java.time.LocalDate
 import java.util.UUID
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 
 /**
- * Since V2 the dataset is **admin-global + per-user**, not fully global :
- * - ADMIN CSV imports land as `created_by = null` (the shared, curated rows everyone reads).
- * - A user's radar « Add stat » picks land as `created_by = <them>` (visible only to that user).
+ * Dataset is **admin-global + per-user** since V2 :
+ * - ADMIN CSV imports land as `created_by = null` (the shared community rows everyone reads).
+ * - A user's radar / manual analyses land as `created_by = <them>` (visible only to that user).
  *
- * [findVisible] enforces that split on the read path ; [findByCreatedByIsNull] scopes the CSV
- * export to the curated global set, keeping the export roundtrip-safe (radar partial rows never
- * leave through the CSV).
+ * The listing goes through [JpaSpecificationExecutor] + [StatEntrySpecifications] (visibility +
+ * filters). [findByCreatedByIsNull] scopes the CSV export to the curated global set
+ * (roundtrip-safe). The three [findByTradeDateAndTickerAndCreatedBy] / [findByIdAndCreatedBy] /
+ * [deleteByIdAndCreatedBy] back the upsert + ownership-scoped edit / delete (a row the caller
+ * doesn't own — incl. every IMPORT row, `created_by = null` — never matches, so it can't be
+ * touched).
  */
-interface StatEntryRepository : JpaRepository<StatEntry, UUID> {
-
-  /**
-   * Rows a user is allowed to see : the global/admin curated set (`created_by IS NULL`) plus their
-   * own radar picks. Paginated for the listing table.
-   */
-  @Query("SELECT s FROM StatEntry s WHERE s.createdBy IS NULL OR s.createdBy = :userId")
-  fun findVisible(@Param("userId") userId: UUID, pageable: Pageable): Page<StatEntry>
+interface StatEntryRepository :
+  JpaRepository<StatEntry, UUID>, JpaSpecificationExecutor<StatEntry> {
 
   /** Admin/global curated rows only — the CSV export set (complete, roundtrip-safe). */
   fun findByCreatedByIsNull(sort: Sort): List<StatEntry>
+
+  /** Upsert lookup — the caller's existing analysis for a (day, ticker), if any. */
+  fun findByTradeDateAndTickerAndCreatedBy(
+    tradeDate: LocalDate,
+    ticker: String,
+    createdBy: UUID,
+  ): StatEntry?
+
+  /**
+   * Upsert lookup for the CSV import — the global/community analysis for a (day, ticker), if any.
+   */
+  fun findByTradeDateAndTickerAndCreatedByIsNull(tradeDate: LocalDate, ticker: String): StatEntry?
+
+  /** Ownership-scoped fetch for edit — null when the row isn't the caller's (incl. IMPORT rows). */
+  fun findByIdAndCreatedBy(id: UUID, createdBy: UUID): StatEntry?
+
+  /**
+   * Ownership-scoped delete — returns the number of rows removed (0 when not owned by the caller).
+   */
+  fun deleteByIdAndCreatedBy(id: UUID, createdBy: UUID): Long
 }

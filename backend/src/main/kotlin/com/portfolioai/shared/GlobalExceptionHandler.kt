@@ -1,5 +1,6 @@
 package com.portfolioai.shared
 
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -11,6 +12,23 @@ class GlobalExceptionHandler {
   @ExceptionHandler(NoSuchElementException::class)
   fun handleNotFound(ex: NoSuchElementException): ResponseEntity<Map<String, String>> =
     ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to (ex.message ?: "Not found")))
+
+  /**
+   * A DB unique / FK constraint was violated — surfaced as HTTP 409 so the front can show a precise
+   * message rather than a generic 500. The motivating case : editing a stat row onto a (day,
+   * ticker) the caller already owns collides with `ux_stat_entry_day_ticker_owner` (one analysis
+   * per day / ticker / owner). The `detail` carries the constraint hint for debugging, not for the
+   * end user.
+   */
+  @ExceptionHandler(DataIntegrityViolationException::class)
+  fun handleConflict(ex: DataIntegrityViolationException): ResponseEntity<Map<String, String>> =
+    ResponseEntity.status(HttpStatus.CONFLICT)
+      .body(
+        mapOf(
+          "error" to "Conflit : ressource déjà existante",
+          "detail" to (ex.mostSpecificCause.message ?: "constraint violation"),
+        )
+      )
 
   /**
    * User-supplied parameter is invalid (e.g. unknown `timeframe` code on the chart endpoint).

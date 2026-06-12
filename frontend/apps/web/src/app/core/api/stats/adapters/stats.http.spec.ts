@@ -41,16 +41,45 @@ describe('HttpStatsRepository', () => {
   });
 
   it('findAll forwards page + size when a PageRequest is passed', () => {
-    repo.findAll({ pageIndex: 2, pageSize: 50 }).subscribe();
+    repo.findAll(undefined, { pageIndex: 2, pageSize: 50 }).subscribe();
     const req = http.expectOne((r) => r.url === '/api/stats');
     expect(req.request.params.get('page')).toBe('2');
     expect(req.request.params.get('size')).toBe('50');
     req.flush(wirePageFixture([]));
   });
 
+  it('findAll forwards the filter axes as query params', () => {
+    repo
+      .findAll(
+        {
+          query: 'gels',
+          dateFrom: new Date(2026, 5, 1),
+          dateTo: new Date(2026, 5, 30),
+          source: 'RADAR',
+          gapMin: 50,
+          gapMax: 90,
+        },
+        { pageIndex: 0, pageSize: 25 },
+      )
+      .subscribe();
+    const req = http.expectOne((r) => r.url === '/api/stats');
+    expect(req.request.params.get('q')).toBe('gels');
+    expect(req.request.params.get('dateFrom')).toBe('2026-06-01');
+    expect(req.request.params.get('dateTo')).toBe('2026-06-30');
+    expect(req.request.params.get('source')).toBe('RADAR');
+    expect(req.request.params.get('gapMin')).toBe('50');
+    expect(req.request.params.get('gapMax')).toBe('90');
+    req.flush(wirePageFixture([]));
+  });
+
   it('findAll appends a createdAt,desc tie-breaker after the user sort', () => {
     repo
-      .findAll({ pageIndex: 0, pageSize: 25, sortField: 'pushPercent', sortDirection: 'desc' })
+      .findAll(undefined, {
+        pageIndex: 0,
+        pageSize: 25,
+        sortField: 'pushPercent',
+        sortDirection: 'desc',
+      })
       .subscribe();
     const req = http.expectOne((r) => r.url === '/api/stats');
     expect(req.request.params.getAll('sort')).toEqual(['pushPercent,desc', 'createdAt,desc']);
@@ -58,14 +87,14 @@ describe('HttpStatsRepository', () => {
   });
 
   it('findAll skips the sort param when sortField or sortDirection is missing', () => {
-    repo.findAll({ pageIndex: 0, pageSize: 25, sortField: 'pushPercent' }).subscribe();
+    repo.findAll(undefined, { pageIndex: 0, pageSize: 25, sortField: 'pushPercent' }).subscribe();
     const req = http.expectOne((r) => r.url === '/api/stats');
     expect(req.request.params.has('sort')).toBe(false);
     req.flush(wirePageFixture([]));
   });
 
   it('findAll renames Spring `number` to `pageIndex` on the way back', () => {
-    repo.findAll({ pageIndex: 1, pageSize: 25 }).subscribe((result) => {
+    repo.findAll(undefined, { pageIndex: 1, pageSize: 25 }).subscribe((result) => {
       expect(result.pageIndex).toBe(1);
       expect(result.pageSize).toBe(25);
       expect(result.totalElements).toBe(80);
@@ -139,7 +168,7 @@ describe('HttpStatsRepository', () => {
     );
   });
 
-  it('createFromRadar POSTs the scan-time fields to /api/stats and maps the created row', () => {
+  it('createFromRadar POSTs the scan-time fields + source RADAR to /api/stats', () => {
     repo
       .createFromRadar({ ticker: 'GELS', gapUpPercent: 72, openPrice: 3.5 })
       .subscribe((created) => {
@@ -148,10 +177,65 @@ describe('HttpStatsRepository', () => {
       });
     const req = http.expectOne('/api/stats');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ ticker: 'GELS', gapUpPercent: 72, openPrice: 3.5 });
+    expect(req.request.body).toEqual({
+      ticker: 'GELS',
+      gapUpPercent: 72,
+      openPrice: 3.5,
+      source: 'RADAR',
+    });
     req.flush(wireFixture({ ticker: 'GELS', source: 'RADAR', createdBy: 'user-42' }));
   });
+
+  it('create POSTs the manual form (date as YYYY-MM-DD, source MANUAL)', () => {
+    repo.create(manualInput()).subscribe((created) => expect(created.ticker).toBe('BAC'));
+    const req = http.expectOne('/api/stats');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toMatchObject({
+      ticker: 'GELS',
+      tradeDate: '2026-06-11',
+      source: 'MANUAL',
+      highPrice: 4.5,
+      note: 'clean fade',
+    });
+    req.flush(wireFixture());
+  });
+
+  it('update PUTs to /api/stats/{id}', () => {
+    repo.update('row-1', manualInput()).subscribe();
+    const req = http.expectOne('/api/stats/row-1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toMatchObject({ ticker: 'GELS', source: 'MANUAL' });
+    req.flush(wireFixture());
+  });
+
+  it('delete DELETEs /api/stats/{id}', () => {
+    repo.delete('row-1').subscribe();
+    const req = http.expectOne('/api/stats/row-1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
 });
+
+/** Domain [StatEntryInput] for the manual create/edit path. */
+function manualInput() {
+  return {
+    tradeDate: new Date(2026, 5, 11),
+    ticker: 'gels',
+    gapUpPercent: 72,
+    openPrice: 3.5,
+    floatSharesMillions: 4.2,
+    institutionsPercent: null,
+    instOver20: false,
+    under1Dollar: true,
+    ssr: false,
+    entryAfter11am: false,
+    highPrice: 4.5,
+    lodPrice: null,
+    eodPrice: null,
+    note: 'clean fade',
+    source: 'MANUAL' as const,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Fixtures

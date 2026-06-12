@@ -1,73 +1,130 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 
+import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
+import { MatSidenav } from '@angular/material/sidenav';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Sort } from '@angular/material/sort';
 import { RouterLink } from '@angular/router';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
+  StbButtonModule,
   StbChipsModule,
+  StbDatePickerModule,
+  StbDividerModule,
+  StbFormFieldModule,
   StbIconModule,
+  StbInputModule,
   StbPaginatorModule,
   StbProgressSpinnerModule,
+  StbSelectModule,
+  StbSidenavModule,
   StbSortHeaderModule,
   StbTableModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import {
+  EMPTY,
+  Subject,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  switchMap,
+  tap,
+} from 'rxjs';
 
-import { PageRequest, StatEntry } from '../../core/api/stats/stat-entry.model';
+import {
+  PageRequest,
+  StatEntry,
+  StatEntryFilter,
+  StatEntryInput,
+  StatSource,
+} from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
+import { AddStatDialog, AddStatDialogData } from './add-stat-dialog/add-stat-dialog';
 
 /**
- * Sort state for the stats table — same controlled-component shape as the journal :
- *   - `columnName` empty → no user sort, backend falls back to its DEFAULT_SORT.
- *   - `columnName` set   → sort by this column ; `isAscending` picks the direction.
- *
- * Bound back into MatSort via `[matSortActive]` + `[matSortDirection]` so the arrow always tracks
- * the sort applied server-side.
+ * Sort state for the stats table — controlled-component shape (empty `columnName` = no user sort,
+ * backend falls back to its DEFAULT_SORT). Bound into MatSort via `[matSortActive]` /
+ * `[matSortDirection]`.
  */
 interface SortRequest {
   columnName: string;
   isAscending: boolean;
 }
 
+interface FilterFormModel {
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  source: StatSource | null;
+  gapMin: number | null;
+  gapMax: number | null;
+}
+
+const EMPTY_FILTER: FilterFormModel = {
+  dateFrom: null,
+  dateTo: null,
+  source: null,
+  gapMin: null,
+  gapMax: null,
+};
+
+/** The user-owned origins (editable / deletable). IMPORT rows are read-only. */
+const OWNED_SOURCES: readonly StatSource[] = ['RADAR', 'MANUAL'];
+
+/** Origins offered in the filter drawer's source select. */
+const SOURCE_OPTIONS: readonly StatSource[] = ['RADAR', 'MANUAL', 'IMPORT'];
+
 const DEFAULT_PAGE_SIZE = 25;
 
 /**
- * Read-only stats table — the global `stat_entry` dataset (gap-up shorts setup context + the day's
- * price levels + the three derived percentages). No CRUD, no filters : the dataset is fed by the
- * ADMIN CSV import (`/settings/stats-import`) and this page just browses it page by page.
+ * Stats page — table of the stats the current user may see (their own radar / manual analyses + the
+ * global community IMPORT rows), at parity with the journal :
+ *   - **Search** : ticker LIKE %q% via `?q=…` (debounced 250 ms).
+ *   - **Filters** : right-side drawer — date range, source (radar / manual / import), gap range.
+ *   - **Server-side sort + pagination** : MatSort → `?sort=field,direction` ; `<mat-paginator>`.
+ *   - **CRUD** : add / edit via the [AddStatDialog], delete via confirm(). Edit / delete are exposed
+ *     **only on owned rows** (`source !== IMPORT`) — the server enforces ownership regardless.
  *
- *   - **Server-side sort** : MatSort emits `(active, direction)` → forwarded as Spring's
- *     `?sort=field,direction`. Sorting always queries page 0 so we don't strand the user on a page
- *     index that doesn't exist for the new sort.
- *   - **Pagination** : `<mat-paginator>` below the table, default 25 rows per page.
- *
- * One effect watches (`sort`, `pageIndex`, `pageSize`) and refetches when any of them changes.
- * Charts / aggregates land in phase 2.
+ * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`, `refetchTrigger`)
+ * and refetches when any changes.
  */
 @Component({
   selector: 'app-stats-page',
   imports: [
     DatePipe,
     DecimalPipe,
+    NumberMaskDirective,
+    RouterLink,
+    StbButtonModule,
     StbChipsModule,
+    StbDatePickerModule,
+    StbDividerModule,
+    StbFormFieldModule,
     StbIconModule,
+    StbInputModule,
     StbPaginatorModule,
     StbProgressSpinnerModule,
+    StbSelectModule,
+    StbSidenavModule,
     StbSortHeaderModule,
     StbTableModule,
     StbTooltipModule,
     TranslatePipe,
-    RouterLink,
   ],
   templateUrl: './stats-page.html',
   styleUrl: './stats-page.scss',
 })
 export class StatsPage {
   private readonly repo = inject(StatsRepository);
+  private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
+  private readonly snackBar = inject(MatSnackBar);
 
   // ---- Data state ----
   readonly loading = signal(true);
@@ -80,8 +137,34 @@ export class StatsPage {
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly pageSizeOptions = [10, 25, 50, 100];
 
-  // ---- Sort (server-side, controlled-component pattern) ----
+  // ---- Refetch nudge (CRUD ops bump it to re-fire the fetch effect, à la journal) ----
+  private readonly refetchTrigger = signal(0);
+
+  // ---- Search (debounced 250 ms) ----
+  private readonly searchInput$ = new Subject<string>();
+  readonly searchTerm = toSignal(
+    this.searchInput$.pipe(debounceTime(250), distinctUntilChanged()),
+    { initialValue: '' },
+  );
+  readonly searchValue = signal('');
+
+  // ---- Filter drawer ----
+  readonly drawer = viewChild.required<MatSidenav>('filterDrawer');
+  readonly filterModel = signal<FilterFormModel>(EMPTY_FILTER);
+  readonly appliedFilter = signal<FilterFormModel>(EMPTY_FILTER);
+  readonly activeFilterCount = computed(() => {
+    const f = this.appliedFilter();
+    let n = 0;
+    if (f.dateFrom || f.dateTo) n += 1;
+    if (f.source) n += 1;
+    if (f.gapMin != null || f.gapMax != null) n += 1;
+    return n;
+  });
+
+  // ---- Sort (server-side, controlled-component) ----
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
+
+  readonly sourceOptions = SOURCE_OPTIONS;
 
   readonly columns = [
     'tradeDate',
@@ -102,25 +185,92 @@ export class StatsPage {
     'lodPercent',
     'eodPercent',
     'note',
+    'actions',
   ] as const;
 
   constructor() {
     effect(() => {
+      const q = this.searchTerm();
+      const f = this.appliedFilter();
       const sort = this.sort();
       const pageIndex = this.pageIndex();
       const pageSize = this.pageSize();
-      this.fetch({
-        pageIndex,
-        pageSize,
-        sortField: sort.columnName || undefined,
-        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
-      });
+      this.refetchTrigger();
+      this.fetch(
+        {
+          query: q || null,
+          dateFrom: f.dateFrom,
+          dateTo: f.dateTo,
+          source: f.source,
+          gapMin: f.gapMin,
+          gapMax: f.gapMax,
+        },
+        {
+          pageIndex,
+          pageSize,
+          sortField: sort.columnName || undefined,
+          sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
+        },
+      );
     });
   }
 
-  // ---- Sort handler ----
-  // An empty direction (3rd click, cleared) maps to an empty columnName so the effect knows "no
-  // user sort" and the backend falls back to its DEFAULT_SORT.
+  /** Owned rows (radar / manual) are editable + deletable ; IMPORT rows are read-only. */
+  isOwned(entry: StatEntry): boolean {
+    return OWNED_SOURCES.includes(entry.source);
+  }
+
+  // ---- Search handlers ----
+  onSearchInput(value: string): void {
+    this.searchValue.set(value);
+    this.searchInput$.next(value);
+    this.pageIndex.set(0);
+  }
+
+  clearSearch(): void {
+    this.searchValue.set('');
+    this.searchInput$.next('');
+    this.pageIndex.set(0);
+  }
+
+  // ---- Drawer + filter handlers ----
+  toggleDrawer(): void {
+    void this.drawer().toggle();
+  }
+
+  applyFilters(): void {
+    this.appliedFilter.set({ ...this.filterModel() });
+    this.pageIndex.set(0);
+    void this.drawer().close();
+  }
+
+  resetFilters(): void {
+    this.filterModel.set({ ...EMPTY_FILTER });
+    this.appliedFilter.set({ ...EMPTY_FILTER });
+    this.pageIndex.set(0);
+  }
+
+  setDateFrom(d: Date | null): void {
+    this.filterModel.update((m) => ({ ...m, dateFrom: d }));
+  }
+
+  setDateTo(d: Date | null): void {
+    this.filterModel.update((m) => ({ ...m, dateTo: d }));
+  }
+
+  setSource(s: StatSource | null): void {
+    this.filterModel.update((m) => ({ ...m, source: s }));
+  }
+
+  setGapMin(n: number | null): void {
+    this.filterModel.update((m) => ({ ...m, gapMin: n }));
+  }
+
+  setGapMax(n: number | null): void {
+    this.filterModel.update((m) => ({ ...m, gapMax: n }));
+  }
+
+  // ---- Sort + pagination ----
   onSortChange(s: Sort): void {
     this.sort.set({
       columnName: s.direction !== '' ? s.active : '',
@@ -129,16 +279,53 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
-  // ---- Pagination handler ----
   onPage(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
   }
 
-  private fetch(page: PageRequest): void {
+  // ---- CRUD ----
+  openCreate(): void {
+    this.openDialog(null);
+  }
+
+  openEdit(entry: StatEntry): void {
+    this.openDialog(entry);
+  }
+
+  delete(entry: StatEntry): void {
+    const confirmMsg = this.translate.instant('stats.confirmDelete', { ticker: entry.ticker });
+    if (!confirm(confirmMsg)) return;
+
+    const willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
+
+    this.repo
+      .delete(entry.id)
+      .pipe(
+        tap(() => {
+          this.toast('stats.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
+          if (willEmptyPage) {
+            this.pageIndex.update((n) => n - 1);
+          } else {
+            this.refetch();
+          }
+        }),
+        catchError(() => {
+          this.toast('stats.snackbar.deleteError', 'error');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
+
+  private refetch(): void {
+    this.refetchTrigger.update((n) => n + 1);
+  }
+
+  private fetch(filter: StatEntryFilter, page: PageRequest): void {
     this.loading.set(true);
     this.error.set(null);
-    this.repo.findAll(page).subscribe({
+    this.repo.findAll(filter, page).subscribe({
       next: (result) => {
         this.entries.set(result.content);
         this.totalElements.set(result.totalElements);
@@ -148,6 +335,53 @@ export class StatsPage {
         this.error.set(this.translate.instant('stats.errors.load'));
         this.loading.set(false);
       },
+    });
+  }
+
+  /**
+   * Dialog → save pipeline. `afterClosed()` emits the form result ; `switchMap` chains into create
+   * (new) or update (edit). A 409 (day/ticker collision) surfaces a dedicated toast.
+   */
+  private openDialog(entry: StatEntry | null): void {
+    const isUpdate = entry !== null;
+    const data: AddStatDialogData = { entry };
+    const ref = this.dialog.open<AddStatDialog, AddStatDialogData, StatEntryInput | undefined>(
+      AddStatDialog,
+      { data, width: '760px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
+    );
+    ref
+      .afterClosed()
+      .pipe(
+        filter((input): input is StatEntryInput => !!input),
+        switchMap((input) =>
+          (isUpdate ? this.repo.update(entry!.id, input) : this.repo.create(input)).pipe(
+            tap((saved) => {
+              const key = isUpdate
+                ? 'stats.snackbar.updateSuccess'
+                : 'stats.snackbar.createSuccess';
+              this.toast(key, 'success', { ticker: saved.ticker });
+              this.refetch();
+            }),
+            catchError((err: { status?: number }) => {
+              const key =
+                err?.status === 409
+                  ? 'stats.snackbar.duplicate'
+                  : isUpdate
+                    ? 'stats.snackbar.updateError'
+                    : 'stats.snackbar.createError';
+              this.toast(key, 'error');
+              return EMPTY;
+            }),
+          ),
+        ),
+      )
+      .subscribe();
+  }
+
+  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
+    this.snackBar.open(this.translate.instant(key, params), undefined, {
+      duration: variant === 'success' ? 3000 : 5000,
+      panelClass: `stb-snack-bar--${variant}`,
     });
   }
 }

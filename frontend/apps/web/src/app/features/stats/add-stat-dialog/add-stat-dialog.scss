@@ -1,0 +1,49 @@
+// Form layout — two sections (setup + EOD outcome) separated by `mat-divider`. Same rhythm as the
+// journal's add-trade dialog : a 2-column grid on wide dialogs, single column on narrow viewports.
+
+.add-stat-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 720px;
+  max-width: 100%;
+
+  @media (max-width: 800px) {
+    min-width: auto;
+  }
+}
+
+.form-section {
+  padding: 1rem 0;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.checklist {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}

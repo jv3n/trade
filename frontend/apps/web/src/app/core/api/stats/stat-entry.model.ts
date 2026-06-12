@@ -13,8 +13,12 @@
  * the setup flags and the EOD outcome until the day plays out.
  */
 
-/** How a [StatEntry] entered the dataset — admin CSV import vs a user radar pick. */
-export type StatSource = 'IMPORT' | 'RADAR';
+/**
+ * How a [StatEntry] entered the dataset : `IMPORT` (admin CSV, community/global), `RADAR` (one-click
+ * from the radar), `MANUAL` (typed in the stats « Add » dialog). RADAR + MANUAL are owned by the
+ * current user and are the only rows they may edit / delete.
+ */
+export type StatSource = 'IMPORT' | 'RADAR' | 'MANUAL';
 
 /** One stats row. `tradeDate` / `createdAt` / `updatedAt` are native `Date` — adapters parse wire. */
 export interface StatEntry {
@@ -54,6 +58,44 @@ export interface RadarStatInput {
   ticker: string;
   gapUpPercent: number;
   openPrice: number;
+}
+
+/**
+ * Form payload for creating / editing a **user-owned** stat (the « Add » dialog). Mirrors the backend
+ * `StatEntryFormRequest` in domain terms (native `Date`). `tradeDate` / `ticker` / `gapUpPercent` /
+ * `openPrice` are required ; the rest are the optional setup flags + EOD outcome (null until known).
+ * The derived `%push` / `%LOD` / `%EOD` are computed server-side, never sent. [source] is `MANUAL`
+ * for the dialog (the radar uses [RadarStatInput] instead).
+ */
+export interface StatEntryInput {
+  tradeDate: Date;
+  ticker: string;
+  gapUpPercent: number;
+  openPrice: number;
+  floatSharesMillions: number | null;
+  institutionsPercent: number | null;
+  instOver20: boolean | null;
+  under1Dollar: boolean | null;
+  ssr: boolean | null;
+  entryAfter11am: boolean | null;
+  highPrice: number | null;
+  lodPrice: number | null;
+  eodPrice: number | null;
+  note: string | null;
+  source: StatSource;
+}
+
+/**
+ * Filter criteria for the stats listing — mirrors the backend `StatEntryFilter`. All optional ;
+ * omitted axes = no filter. `source` narrows to one origin ; `gapMin` / `gapMax` bound the gap-up %.
+ */
+export interface StatEntryFilter {
+  query?: string | null;
+  dateFrom?: Date | null;
+  dateTo?: Date | null;
+  source?: StatSource | null;
+  gapMin?: number | null;
+  gapMax?: number | null;
 }
 
 /**

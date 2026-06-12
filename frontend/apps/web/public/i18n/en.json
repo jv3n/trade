@@ -131,10 +131,50 @@
   "stats": {
     "title": "Trade stats",
     "subtitle": "Gap-up shorts dataset — setup context, the day's price levels and the derived push / LOD / EOD moves.",
+    "searchPlaceholder": "Search by ticker…",
+    "clearSearch": "Clear search",
+    "toggleFilters": "Filters",
+    "filters": "Filters",
+    "addStat": "Add",
     "loading": "Loading stats…",
-    "empty": "No stats yet. An admin can import the dataset from Settings → Stats import.",
+    "empty": "No stats yet. Add an analysis, use « Add stat » from the radar, or an admin can import the community dataset.",
     "errors": {
       "load": "Couldn't load the stats. Please retry."
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "confirmDelete": "Delete the analysis for {{ticker}}?",
+    "snackbar": {
+      "createSuccess": "Analysis for {{ticker}} added.",
+      "createError": "Couldn't add the analysis. Please retry.",
+      "updateSuccess": "Analysis for {{ticker}} updated.",
+      "updateError": "Couldn't update the analysis. Please retry.",
+      "deleteSuccess": "Analysis for {{ticker}} deleted.",
+      "deleteError": "Couldn't delete the analysis. Please retry.",
+      "duplicate": "You already have an analysis for this ticker on that day."
+    },
+    "dialog": {
+      "createTitle": "Add an analysis",
+      "editTitle": "Edit the analysis",
+      "save": "Save",
+      "cancel": "Cancel",
+      "sections": {
+        "setup": "Setup",
+        "outcome": "Outcome (end of day)"
+      }
+    },
+    "filterPanel": {
+      "period": "Period",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "sourceAll": "All",
+      "gapRange": "Gap range",
+      "gapMin": "Gap min",
+      "gapMax": "Gap max",
+      "reset": "Reset",
+      "apply": "Apply"
     },
     "fields": {
       "tradeDate": "Date",
@@ -158,7 +198,8 @@
     },
     "source": {
       "IMPORT": "Import",
-      "RADAR": "Radar"
+      "RADAR": "Radar",
+      "MANUAL": "Manual"
     }
   },
   "lexicon": {

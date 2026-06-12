@@ -1,0 +1,176 @@
+<h2 mat-dialog-title>
+  {{ (isEdit() ? 'stats.dialog.editTitle' : 'stats.dialog.createTitle') | translate }}
+</h2>
+
+<!--
+  Signal Forms is the single source of truth — no HTML validation attrs on `[formField]` inputs.
+  The datepicker + `appNumberMask` inputs are pushed into the model imperatively (their CVAs clash
+  with `[formField]`), same pattern as the journal's add-trade dialog.
+-->
+<form (submit)="$event.preventDefault(); submit()" class="add-stat-form">
+  <mat-dialog-content>
+    <!-- Section 1 : Setup (date / ticker / gap / open required ; rest optional) -->
+    <section class="form-section">
+      <h3>{{ 'stats.dialog.sections.setup' | translate }}</h3>
+      <div class="grid-2">
+        <mat-form-field appearance="outline" class="date-field" (click)="picker.open()">
+          <mat-label>{{ 'stats.fields.tradeDate' | translate }}</mat-label>
+          <input
+            matInput
+            readonly
+            [matDatepicker]="picker"
+            [value]="model().tradeDate"
+            (dateChange)="setTradeDate($event.value)"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" />
+          <mat-datepicker #picker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.ticker' | translate }}</mat-label>
+          <input matInput [formField]="statForm.ticker" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.gapUpPercent' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [allowNegative]="true"
+            [value]="model().gapUpPercent"
+            (numberChange)="setGapUpPercent($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>%</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.openPrice' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().openPrice"
+            (numberChange)="setOpenPrice($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>$</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.floatSharesMillions' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="model().floatSharesMillions"
+            (numberChange)="setFloatSharesMillions($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>M</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.institutionsPercent' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="model().institutionsPercent"
+            (numberChange)="setInstitutionsPercent($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>%</span>
+        </mat-form-field>
+      </div>
+
+      <div class="checklist">
+        <mat-checkbox [formField]="statForm.instOver20">
+          {{ 'stats.fields.instOver20' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="statForm.under1Dollar">
+          {{ 'stats.fields.under1Dollar' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="statForm.ssr">
+          {{ 'stats.fields.ssr' | translate }}
+        </mat-checkbox>
+        <mat-checkbox [formField]="statForm.entryAfter11am">
+          {{ 'stats.fields.entryAfter11am' | translate }}
+        </mat-checkbox>
+      </div>
+    </section>
+
+    <mat-divider />
+
+    <!-- Section 2 : EOD outcome (filled at end of day) -->
+    <section class="form-section">
+      <h3>{{ 'stats.dialog.sections.outcome' | translate }}</h3>
+      <div class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.highPrice' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().highPrice"
+            (numberChange)="setHighPrice($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>$</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.lodPrice' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().lodPrice"
+            (numberChange)="setLodPrice($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>$</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'stats.fields.eodPrice' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().eodPrice"
+            (numberChange)="setEodPrice($event)"
+            inputmode="decimal"
+          />
+          <span matTextSuffix>$</span>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'stats.fields.note' | translate }}</mat-label>
+        <textarea matInput [formField]="statForm.note" rows="2"></textarea>
+      </mat-form-field>
+    </section>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancel()" [disabled]="submitting()">
+      {{ 'stats.dialog.cancel' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="submitting()">
+      @if (submitting()) {
+        <mat-spinner diameter="16" />
+      } @else {
+        <mat-icon>save</mat-icon>
+      }
+      <span>{{ 'stats.dialog.save' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>
