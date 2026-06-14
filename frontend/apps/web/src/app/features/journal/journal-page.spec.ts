@@ -224,6 +224,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     shortOnResistance: null,
     exitStrategy: null,
     errorNote: null,
+    statEntryId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

@@ -35,15 +35,21 @@ export interface TradeEntryFilter {
   status?: TradeStatus | null;
 }
 
-/** One trade in the journal. Dates / instants are native `Date` — adapters parse from wire. */
+/**
+ * One trade in the journal. Dates / instants are native `Date` — adapters parse from wire.
+ *
+ * Only `tradeDate` + `ticker` are mandatory ; `play` / `pattern` / `size` / `openPrice` are
+ * nullable (backend V4) so a trade can be jotted down fast and completed later. `statEntryId`
+ * links to an imported stat row ; `null` = an "orphan" trade with no stat attached.
+ */
 export interface TradeEntry {
   id: string;
   tradeDate: Date;
   ticker: string;
-  play: TradePlay;
-  pattern: TradePattern;
-  size: number;
-  openPrice: number;
+  play: TradePlay | null;
+  pattern: TradePattern | null;
+  size: number | null;
+  openPrice: number | null;
   exitPrice: number | null;
   profitDollars: number | null;
   gainPercent: number | null;
@@ -57,6 +63,7 @@ export interface TradeEntry {
   shortOnResistance: boolean | null;
   exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
+  statEntryId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -69,10 +76,10 @@ export interface TradeEntry {
 export interface TradeEntryInput {
   tradeDate: Date;
   ticker: string;
-  play: TradePlay;
-  pattern: TradePattern;
-  size: number;
-  openPrice: number;
+  play: TradePlay | null;
+  pattern: TradePattern | null;
+  size: number | null;
+  openPrice: number | null;
   exitPrice: number | null;
   profitDollars: number | null;
   gainPercent: number | null;
@@ -86,4 +93,5 @@ export interface TradeEntryInput {
   shortOnResistance: boolean | null;
   exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
+  statEntryId: string | null;
 }

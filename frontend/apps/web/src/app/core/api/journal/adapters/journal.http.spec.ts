@@ -259,6 +259,7 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     shortOnResistance: null,
     exitStrategy: null,
     errorNote: null,
+    statEntryId: null,
     createdAt: '2026-06-04T15:30:00Z',
     updatedAt: '2026-06-04T15:30:00Z',
     ...overrides,
@@ -300,6 +301,7 @@ function inputFixture(overrides: Partial<TradeEntryInput> = {}): TradeEntryInput
     shortOnResistance: null,
     exitStrategy: null,
     errorNote: null,
+    statEntryId: null,
     ...overrides,
   };
 }

@@ -86,7 +86,15 @@
       "openSide": "Entrée sur",
       "shortOnResistance": "Short sur résistance",
       "exitStrategy": "Stratégie de sortie",
-      "errorNote": "Erreur / leçon"
+      "errorNote": "Erreur / leçon",
+      "statLink": "Stat"
+    },
+    "statLink": {
+      "linked": "Liée",
+      "orphan": "Orpheline",
+      "field": "Stat liée",
+      "none": "— Aucune (orpheline)",
+      "noCandidates": "Aucune stat pour ce ticker à cette date."
     },
     "enums": {
       "openSide": {
@@ -116,7 +124,8 @@
       "sections": {
         "execution": "Exécution",
         "exit": "Sortie",
-        "preparation": "Checklist de préparation"
+        "preparation": "Checklist de préparation",
+        "statLink": "Lien stat"
       }
     },
     "snackbar": {
@@ -1141,6 +1150,7 @@
   "journalIo": {
     "title": "Import / Export",
     "subtitle": "Sors et remets ton journal au format CSV.",
+    "backToJournal": "Retour au journal",
     "export": {
       "title": "Export",
       "subtitle": "Télécharge tous tes trades",
@@ -1168,7 +1178,8 @@
       "failed": "{{ count }} erreur(s) trouvée(s) — aucun trade n'a été créé.",
       "errorLine": "ligne {{ line }}",
       "errorNetwork": "Erreur réseau. Réessaie.",
-      "again": "Importer un autre fichier"
+      "again": "Importer un autre fichier",
+      "viewJournal": "Voir le journal"
     }
   }
 }

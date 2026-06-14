@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -30,7 +31,14 @@ type ImportStep = 'idle' | 'uploading' | 'success' | 'failed';
 @Component({
   selector: 'app-journal-io-page',
 
-  imports: [StbButtonModule, StbCardModule, StbIconModule, StbProgressSpinnerModule, TranslatePipe],
+  imports: [
+    RouterLink,
+    StbButtonModule,
+    StbCardModule,
+    StbIconModule,
+    StbProgressSpinnerModule,
+    TranslatePipe,
+  ],
   templateUrl: './journal-io-page.html',
   styleUrl: './journal-io-page.scss',
 })

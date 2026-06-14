@@ -25,10 +25,10 @@ interface TradeEntryWireDto {
   id: string;
   tradeDate: string;
   ticker: string;
-  play: TradePlay;
-  pattern: TradePattern;
-  size: number;
-  openPrice: number;
+  play: TradePlay | null;
+  pattern: TradePattern | null;
+  size: number | null;
+  openPrice: number | null;
   exitPrice: number | null;
   profitDollars: number | null;
   gainPercent: number | null;
@@ -42,6 +42,7 @@ interface TradeEntryWireDto {
   shortOnResistance: boolean | null;
   exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
+  statEntryId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,10 +50,10 @@ interface TradeEntryWireDto {
 interface TradeEntryWireRequest {
   tradeDate: string;
   ticker: string;
-  play: TradePlay;
-  pattern: TradePattern;
-  size: number;
-  openPrice: number;
+  play: TradePlay | null;
+  pattern: TradePattern | null;
+  size: number | null;
+  openPrice: number | null;
   exitPrice: number | null;
   profitDollars: number | null;
   gainPercent: number | null;
@@ -66,6 +67,7 @@ interface TradeEntryWireRequest {
   shortOnResistance: boolean | null;
   exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
+  statEntryId: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +103,7 @@ function fromWire(w: TradeEntryWireDto): TradeEntry {
     shortOnResistance: w.shortOnResistance,
     exitStrategy: w.exitStrategy,
     errorNote: w.errorNote,
+    statEntryId: w.statEntryId,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };
@@ -127,6 +130,7 @@ function toWire(input: TradeEntryInput): TradeEntryWireRequest {
     shortOnResistance: input.shortOnResistance,
     exitStrategy: input.exitStrategy,
     errorNote: input.errorNote?.trim() || null,
+    statEntryId: input.statEntryId,
   };
 }
 

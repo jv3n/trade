@@ -125,16 +125,16 @@ object TradeEntryCsvDecoder {
     return TradeEntryRequest(
       tradeDate = requireDate(cells[0], "tradeDate"),
       ticker = requireNonBlank(cells[1], "ticker").trim().uppercase(),
-      play = requireEnum(cells[2], "play", TradePlay::valueOf, TradePlay.entries.map { it.name }),
+      play = optionalEnum(cells[2], "play", TradePlay::valueOf, TradePlay.entries.map { it.name }),
       pattern =
-        requireEnum(
+        optionalEnum(
           cells[3],
           "pattern",
           TradePattern::valueOf,
           TradePattern.entries.map { it.name },
         ),
-      size = requirePositiveInt(cells[4], "size"),
-      openPrice = requirePositiveDecimal(cells[5], "openPrice"),
+      size = optionalPositiveInt(cells[4], "size"),
+      openPrice = optionalPositiveDecimal(cells[5], "openPrice"),
       exitPrice = optionalDecimal(cells[6], "exitPrice"),
       profitDollars = optionalDecimal(cells[7], "profitDollars"),
       gainPercent = optionalDecimal(cells[8], "gainPercent"),
@@ -175,16 +175,18 @@ object TradeEntryCsvDecoder {
     }
   }
 
-  private fun requirePositiveInt(raw: String, field: String): Int {
-    val trimmed = requireNonBlank(raw, field)
+  private fun optionalPositiveInt(raw: String, field: String): Int? {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty()) return null
     val n =
       trimmed.toIntOrNull() ?: throw DecodeException("$field must be an integer, got '$trimmed'")
     if (n <= 0) throw DecodeException("$field must be positive, got $n")
     return n
   }
 
-  private fun requirePositiveDecimal(raw: String, field: String): BigDecimal {
-    val trimmed = requireNonBlank(raw, field)
+  private fun optionalPositiveDecimal(raw: String, field: String): BigDecimal? {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty()) return null
     val n =
       trimmed.toBigDecimalOrNull()
         ?: throw DecodeException("$field must be a decimal, got '$trimmed'")
@@ -211,21 +213,6 @@ object TradeEntryCsvDecoder {
   }
 
   private fun optionalString(raw: String): String? = raw.trim().ifBlank { null }
-
-  private fun <T : Enum<T>> requireEnum(
-    raw: String,
-    field: String,
-    valueOf: (String) -> T,
-    allowed: List<String>,
-  ): T {
-    val trimmed = requireNonBlank(raw, field).uppercase()
-    return runCatching { valueOf(trimmed) }
-      .getOrElse {
-        throw DecodeException(
-          "$field must be one of ${allowed.joinToString(" / ")}, got '$trimmed'"
-        )
-      }
-  }
 
   private fun <T : Enum<T>> optionalEnum(
     raw: String,

@@ -15,15 +15,16 @@ import {
  * and use this instead.
  *
  * Behaviour at the keystroke :
- *   - Only `0-9`, `.`, `,` are allowed. A typed comma is normalised to a point.
- *   - At most one decimal separator. Extra dots are dropped.
+ *   - Only `0-9`, `.`, `,` are allowed. Both `.` and `,` act as the decimal separator on input.
+ *   - At most one decimal separator. Extra ones are dropped.
  *   - Decimals beyond `[decimals]` are truncated (default 2).
  *   - Optional `[allowNegative]` lets a leading `-` through.
  *
  * Formatting :
- *   - **Thousand separators** are inserted live (`1234` → `1,234`) on the integer part. The
- *     cursor is preserved across the reformat — caret positions are tracked by digit index,
- *     so inserting / removing a separator doesn't bounce the user back to the start.
+ *   - **Comma decimal separator, no thousand grouping** (`3,21`, `1234,56`). French-style — the
+ *     app is FR-first and the monetary fields read more naturally with a comma. The internal
+ *     numeric value is always a plain JS number ; only the *display* uses the comma. The caret is
+ *     preserved across the reformat (tracked by digit / separator index).
  *
  * Wiring :
  *   - `[appNumberMask]` doesn't pretend to be a `ControlValueAccessor` — Signal Forms native
@@ -94,11 +95,15 @@ export class NumberMaskDirective {
     const cleaned = sanitize(raw, decimals, allowNeg);
     const num = parseNumber(cleaned);
 
-    const formatted = num === null ? cleaned : formatNumber(num, decimals);
+    // Display the cleaned value with a comma decimal separator. We keep exactly what the user
+    // typed (no `toLocaleString` round-trip) so trailing zeros survive while typing — e.g.
+    // "12,50" stays "12,50" instead of collapsing to "12,5" mid-entry. Blur does the canonical
+    // reformat.
+    const formatted = cleaned.replace('.', ',');
     el.value = formatted;
 
-    // Restore caret — find the position in `formatted` that comes after `caretDigits` digits
-    // (and the optional leading minus sign).
+    // Restore caret — find the position in `formatted` that comes after `caretDigits` positions
+    // (digits + decimal separator, and the optional leading minus sign).
     const newCaret = caretIndexAfterDigits(formatted, caretDigits);
     el.setSelectionRange(newCaret, newCaret);
 
@@ -151,39 +156,53 @@ export function sanitize(raw: string, decimals: number, allowNegative: boolean):
   return isNegative ? '-' + s : s;
 }
 
-/** Parses a cleaned string to a number. Returns `null` for blank / lone `-` / lone `.`. */
+/**
+ * Parses a string to a number. Tolerates either decimal separator (`.` or `,`) so it works both
+ * on the canonical cleaned form (dot) and on the displayed value (comma). Returns `null` for
+ * blank / lone `-` / lone separator.
+ */
 export function parseNumber(s: string): number | null {
-  if (!s || s === '-' || s === '.' || s === '-.') return null;
-  const n = Number(s);
+  const normalized = s.replace(/,/g, '.');
+  if (!normalized || normalized === '-' || normalized === '.' || normalized === '-.') return null;
+  const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
 }
 
-/** Formats a number with thousand separators (US locale, `,` thousand / `.` decimal). */
+/**
+ * Formats a number with a comma decimal separator and no thousand grouping (`1234,56`). Manual /
+ * locale-independent so the display is deterministic across environments. `decimals` caps the
+ * fractional digits (max, not min — no zero-padding).
+ */
 export function formatNumber(n: number, decimals: number): string {
-  return n.toLocaleString('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-    useGrouping: true,
-  });
+  const negative = n < 0;
+  // Round to `decimals` then drop trailing zeros via Number's own toString (dot decimal, no
+  // grouping). Values here are small monetary numbers — no exponential-notation risk.
+  const rounded = Number(Math.abs(n).toFixed(decimals));
+  const s = rounded.toString().replace('.', ',');
+  return negative ? '-' + s : s;
 }
 
-/** Counts decimal digits between the start of `s` and `index` (excludes separators / sign). */
+/**
+ * Counts positions (digits + the decimal separator) between the start of `s` and `index`. Either
+ * separator counts so caret tracking works on both the typed (`,` or `.`) and displayed (`,`)
+ * forms.
+ */
 export function countDigitsBefore(s: string, index: number): number {
   let n = 0;
   for (let i = 0; i < Math.min(index, s.length); i++) {
     const c = s.charAt(i);
     if (c >= '0' && c <= '9') n++;
-    else if (c === '.') n++; // keep the decimal as a "digit position" for caret tracking
+    else if (c === '.' || c === ',') n++; // decimal separator is a "position" for caret tracking
   }
   return n;
 }
 
-/** Returns the index in `formatted` that sits **after** the first `n` digits + decimal. */
+/** Returns the index in `formatted` that sits **after** the first `n` positions (digits + sep). */
 export function caretIndexAfterDigits(formatted: string, n: number): number {
   let count = 0;
   for (let i = 0; i < formatted.length; i++) {
     const c = formatted.charAt(i);
-    if ((c >= '0' && c <= '9') || c === '.') count++;
+    if ((c >= '0' && c <= '9') || c === '.' || c === ',') count++;
     if (count >= n) return i + 1;
   }
   return formatted.length;

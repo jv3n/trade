@@ -1,5 +1,7 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormField, form, maxLength, min, required } from '@angular/forms/signals';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -14,6 +16,7 @@ import {
   StbProgressSpinnerModule,
   StbSelectModule,
 } from '@portfolioai/ui';
+import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import {
   TRADE_EXIT_STRATEGIES,
   TRADE_OPEN_SIDES,
@@ -26,6 +29,8 @@ import {
   TradePattern,
   TradePlay,
 } from '../../../core/api/journal/trade-entry.model';
+import { StatEntry } from '../../../core/api/stats/stat-entry.model';
+import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 
 /** Data passed to the dialog — `entry` non-null = edit mode, null = create mode. */
@@ -41,8 +46,8 @@ export interface AddTradeDialogData {
 interface TradeFormModel {
   tradeDate: Date;
   ticker: string;
-  play: TradePlay;
-  pattern: TradePattern;
+  play: TradePlay | null;
+  pattern: TradePattern | null;
   size: number | null;
   openPrice: number | null;
   exitPrice: number | null;
@@ -68,14 +73,17 @@ interface TradeFormModel {
  * no HTML validation attrs (Signal Forms forbids them on `[formField]` elements ; the schema
  * is the single source of truth).
  *
- * Three sections : execution (required fields), exit (nullable until close), preparation
- * checklist (all nullable). Returns the **domain** [TradeEntryInput] on close — the
- * HTTP adapter handles the wire serialisation (Date → `YYYY-MM-DD`, empty string → null).
+ * Three sections : execution, exit (nullable until close), preparation checklist (all nullable).
+ * Only `tradeDate` + `ticker` are required — `play` / `pattern` / `size` / `openPrice` are optional
+ * so a trade can be jotted down fast and completed later. Returns the **domain** [TradeEntryInput]
+ * on close — the HTTP adapter handles the wire serialisation (Date → `YYYY-MM-DD`, empty → null).
+ * The stat link (`statEntryId`) is carried through unchanged on edit ; it's assigned elsewhere.
  */
 @Component({
   selector: 'app-add-trade-dialog',
 
   imports: [
+    DecimalPipe,
     FormField,
     StbButtonModule,
     StbCheckboxModule,
@@ -97,6 +105,7 @@ export class AddTradeDialog {
   private readonly dialogRef =
     inject<MatDialogRef<AddTradeDialog, TradeEntryInput | undefined>>(MatDialogRef);
   private readonly data = inject<AddTradeDialogData>(MAT_DIALOG_DATA);
+  private readonly statsRepo = inject(StatsRepository);
 
   readonly isEdit = computed(() => this.data.entry !== null);
   readonly submitting = signal(false);
@@ -111,15 +120,51 @@ export class AddTradeDialog {
   // Signal Forms tree. Validators are declared via a schema callback that receives the path
   // for each field — typed and refactor-safe.
   readonly tradeForm = form(this.model, (path) => {
+    required(path.tradeDate);
     required(path.ticker);
     maxLength(path.ticker, 20);
-    required(path.play);
-    required(path.pattern);
-    required(path.size);
-    min(path.size, 1);
-    required(path.openPrice);
-    min(path.openPrice, 0.0001);
   });
+
+  // ---- Stat link (orphan ↔ linked) -------------------------------------------------------------
+  // Not a form field — it's a relation assigned via a combobox, carried as its own signal and
+  // emitted on submit. Defaults to the trade's existing link (null = orphan).
+  readonly statEntryId = signal<string | null>(this.data.entry?.statEntryId ?? null);
+
+  // The combobox proposes only the strict candidates : same ticker AND same date as the trade.
+  // Multiple can coexist (the global IMPORT row + the user's own MANUAL/RADAR row for that day).
+  private readonly statQuery = computed(() => {
+    const m = this.model();
+    return {
+      ticker: m.ticker.trim().toUpperCase(),
+      date: m.tradeDate,
+      dateMs: m.tradeDate.getTime(),
+    };
+  });
+
+  readonly statCandidates = toSignal(
+    toObservable(this.statQuery).pipe(
+      debounceTime(200),
+      distinctUntilChanged((a, b) => a.ticker === b.ticker && a.dateMs === b.dateMs),
+      switchMap((q) => {
+        if (!q.ticker) return of<StatEntry[]>([]);
+        return this.statsRepo
+          .findAll(
+            { query: q.ticker, dateFrom: q.date, dateTo: q.date },
+            { pageIndex: 0, pageSize: 50 },
+          )
+          .pipe(
+            // The backend `query` is a substring match — keep only the exact ticker.
+            map((res) => res.content.filter((s) => s.ticker.toUpperCase() === q.ticker)),
+            catchError(() => of<StatEntry[]>([])),
+          );
+      }),
+    ),
+    { initialValue: [] as StatEntry[] },
+  );
+
+  setStatEntryId(id: string | null): void {
+    this.statEntryId.set(id);
+  }
 
   submit(): void {
     if (!this.tradeForm().valid()) {
@@ -132,8 +177,8 @@ export class AddTradeDialog {
       ticker: v.ticker,
       play: v.play,
       pattern: v.pattern,
-      size: v.size!,
-      openPrice: v.openPrice!,
+      size: v.size,
+      openPrice: v.openPrice,
       exitPrice: v.exitPrice,
       profitDollars: v.profitDollars,
       gainPercent: v.gainPercent,
@@ -147,6 +192,7 @@ export class AddTradeDialog {
       shortOnResistance: v.shortOnResistance,
       exitStrategy: v.exitStrategy,
       errorNote: v.errorNote || null,
+      statEntryId: this.statEntryId(),
     };
     this.dialogRef.close(input);
   }
@@ -192,8 +238,8 @@ export class AddTradeDialog {
       return {
         tradeDate: new Date(),
         ticker: '',
-        play: 'A',
-        pattern: 'GUS',
+        play: null,
+        pattern: null,
         size: null,
         openPrice: null,
         exitPrice: null,

@@ -5,7 +5,6 @@ import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { ImportResult, JournalRepository } from '../../core/api/journal/journal.repository';
 import { JournalIoPage } from './journal-io-page';
 
@@ -35,12 +34,17 @@ describe('JournalIoPage', () => {
     snackBarOpen = vi.fn();
 
     // The download trick (`URL.createObjectURL` + anchor click) isn't implemented by jsdom.
-    // Stub both so the `tap` body doesn't throw on a successful export.
-    vi.stubGlobal('URL', {
-      ...URL,
-      createObjectURL: vi.fn(() => 'blob:mock-url'),
-      revokeObjectURL: vi.fn(),
-    });
+    // Stub both — but keep `URL` **constructable** : the router needs `new URL(...)` during
+    // navigation setup now that the page template carries a `routerLink`, and a plain-object
+    // stub would break it ("URL is not a constructor"). We delegate construction to the real URL.
+    const RealURL = globalThis.URL;
+    const urlStub = function (...args: ConstructorParameters<typeof URL>) {
+      return new RealURL(...args);
+    } as unknown as typeof URL;
+    urlStub.prototype = RealURL.prototype;
+    urlStub.createObjectURL = vi.fn(() => 'blob:mock-url') as unknown as typeof URL.createObjectURL;
+    urlStub.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+    vi.stubGlobal('URL', urlStub);
 
     await TestBed.configureTestingModule({
       imports: [JournalIoPage],

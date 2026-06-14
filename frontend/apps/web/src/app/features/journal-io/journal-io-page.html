@@ -1,4 +1,11 @@
 <div class="page page--full">
+  <a routerLink="/journal" class="back-link">
+    <mat-icon>arrow_back</mat-icon>
+    {{ 'journalIo.backToJournal' | translate }}
+  </a>
+
+  <hr class="back-separator" />
+
   <header class="content-header">
     <h2>{{ 'journalIo.title' | translate }}</h2>
     <p>{{ 'journalIo.subtitle' | translate }}</p>
@@ -111,6 +118,12 @@
             <mat-icon>refresh</mat-icon>
             <span>{{ 'journalIo.import.again' | translate }}</span>
           </button>
+          @if (importStep() === 'success') {
+            <a mat-flat-button routerLink="/journal">
+              <mat-icon>book</mat-icon>
+              <span>{{ 'journalIo.import.viewJournal' | translate }}</span>
+            </a>
+          }
         </mat-card-actions>
       }
     </mat-card>

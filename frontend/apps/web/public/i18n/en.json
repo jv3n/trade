@@ -86,7 +86,15 @@
       "openSide": "Open on",
       "shortOnResistance": "Short on resistance",
       "exitStrategy": "Exit strategy",
-      "errorNote": "Mistake / lesson"
+      "errorNote": "Mistake / lesson",
+      "statLink": "Stat"
+    },
+    "statLink": {
+      "linked": "Linked",
+      "orphan": "Orphan",
+      "field": "Linked stat",
+      "none": "— None (orphan)",
+      "noCandidates": "No stat for this ticker on this date."
     },
     "enums": {
       "openSide": {
@@ -116,7 +124,8 @@
       "sections": {
         "execution": "Execution",
         "exit": "Exit",
-        "preparation": "Preparation checklist"
+        "preparation": "Preparation checklist",
+        "statLink": "Stat link"
       }
     },
     "snackbar": {
@@ -1141,6 +1150,7 @@
   "journalIo": {
     "title": "Import / Export",
     "subtitle": "Move your journal in and out as CSV.",
+    "backToJournal": "Back to journal",
     "export": {
       "title": "Export",
       "subtitle": "Download every trade",
@@ -1168,7 +1178,8 @@
       "failed": "{{ count }} error(s) found — nothing was imported.",
       "errorLine": "line {{ line }}",
       "errorNetwork": "Network error. Please retry.",
-      "again": "Import another file"
+      "again": "Import another file",
+      "viewJournal": "View journal"
     }
   }
 }

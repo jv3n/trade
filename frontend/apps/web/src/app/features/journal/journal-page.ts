@@ -111,8 +111,10 @@ const DEFAULT_PAGE_SIZE = 10;
   imports: [
     DatePipe,
     DecimalPipe,
+    RouterLink,
     StbButtonModule,
     StbChipsModule,
+    StbDatePickerModule,
     StbDividerModule,
     StbFormFieldModule,
     StbIconModule,
@@ -122,11 +124,9 @@ const DEFAULT_PAGE_SIZE = 10;
     StbSelectModule,
     StbSidenavModule,
     StbSortHeaderModule,
-    StbDatePickerModule,
     StbTableModule,
     StbTooltipModule,
     TranslatePipe,
-    RouterLink,
   ],
   templateUrl: './journal-page.html',
   styleUrl: './journal-page.scss',
@@ -203,6 +203,7 @@ export class JournalPage {
     'exitPrice',
     'profitDollars',
     'gainPercent',
+    'link',
     'actions',
   ] as const;
 

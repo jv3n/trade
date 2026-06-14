@@ -139,6 +139,7 @@ class TradeEntryService(
           shortOnResistance = request.shortOnResistance,
           exitStrategy = request.exitStrategy,
           errorNote = request.errorNote,
+          statEntryId = request.statEntryId,
         )
       repo.save(entry)
     }
@@ -174,6 +175,7 @@ class TradeEntryService(
         shortOnResistance = request.shortOnResistance,
         exitStrategy = request.exitStrategy,
         errorNote = request.errorNote,
+        statEntryId = request.statEntryId,
       )
     return repo.save(entry).toDto()
   }
@@ -200,6 +202,7 @@ class TradeEntryService(
     entry.shortOnResistance = request.shortOnResistance
     entry.exitStrategy = request.exitStrategy
     entry.errorNote = request.errorNote
+    entry.statEntryId = request.statEntryId
     entry.updatedAt = Instant.now()
     return repo.save(entry).toDto()
   }

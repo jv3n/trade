@@ -139,3 +139,27 @@
   --mat-chip-with-icon-icon-color: var(--color-success);
   --mat-chip-with-icon-selected-icon-color: var(--color-success);
 }
+
+// `linked` — info-blue status chip : the row is attached to something (a journal trade linked
+// to an imported stat row). Reads as a calm, neutral-positive affordance.
+.stb-chip--linked {
+  --mat-chip-label-text-color: var(--color-info);
+  --mat-chip-label-text-weight: 600;
+  --mat-chip-outline-color: var(--color-info-soft);
+  --mat-chip-focus-outline-color: var(--color-info);
+  --mat-chip-hover-state-layer-color: var(--color-info);
+  --mat-chip-focus-state-layer-color: var(--color-info);
+  --mat-chip-with-icon-icon-color: var(--color-info);
+}
+
+// `orphan` — warning-amber status chip : the row stands alone with no link yet (a journal trade
+// with no stat attached). Reads as "needs attention", not an error.
+.stb-chip--orphan {
+  --mat-chip-label-text-color: var(--color-warning);
+  --mat-chip-label-text-weight: 600;
+  --mat-chip-outline-color: var(--color-warning-soft);
+  --mat-chip-focus-outline-color: var(--color-warning);
+  --mat-chip-hover-state-layer-color: var(--color-warning);
+  --mat-chip-focus-state-layer-color: var(--color-warning);
+  --mat-chip-with-icon-icon-color: var(--color-warning);
+}

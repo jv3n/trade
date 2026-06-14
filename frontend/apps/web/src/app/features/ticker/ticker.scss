@@ -315,7 +315,6 @@ $sidenav-width-collapsed: 48px;
   font-size: 0.85rem;
   color: var(--color-text-dim);
   text-decoration: none;
-  margin-bottom: 1.5rem;
   transition: color 0.15s;
 
   mat-icon {
@@ -327,6 +326,13 @@ $sidenav-width-collapsed: 48px;
   &:hover {
     color: var(--color-accent);
   }
+}
+
+// Thin separator between the back link and the page header.
+.back-separator {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 0.75rem 0 1.5rem;
 }
 
 // ---- Header ----

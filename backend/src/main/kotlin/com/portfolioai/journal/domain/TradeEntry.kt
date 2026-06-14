@@ -21,11 +21,15 @@ import org.hibernate.type.SqlTypes
  * Categorical fields ([play], [pattern], [openSide], [exitStrategy]) map to Postgres ENUM types via
  * `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` — Hibernate 6 reads the Postgres enum cast directly without
  * going through a STRING converter. Kotlin enum names must match the Postgres enum values exactly
- * (cf. V5__trade_entry.sql).
+ * (cf. V1__init.sql).
  *
- * Exit-side fields ([exitPrice], [profitDollars], [gainPercent]) are nullable while the position is
- * open. Preparation-checklist fields are nullable so a backfilled entry doesn't have to tick every
- * box.
+ * Only [tradeDate] and [ticker] are mandatory (V4 relaxed [play] / [pattern] / [size] / [openPrice]
+ * to nullable so a trade can be jotted down fast and completed later). Exit-side fields
+ * ([exitPrice], [profitDollars], [gainPercent]) are nullable while the position is open.
+ * Preparation-checklist fields are nullable so a backfilled entry doesn't have to tick every box.
+ *
+ * [statEntryId] is a nullable link to the matching imported stat row (`stat_entry.id`). NULL = an
+ * "orphan" trade with no stat attached yet ; the link is assigned later from the UI.
  */
 @Entity
 @Table(name = "trade_entry")
@@ -39,12 +43,11 @@ class TradeEntry(
   @Column(name = "trade_date", nullable = false) var tradeDate: LocalDate,
   @Column(nullable = false, length = 20) var ticker: String,
 
-  // ---- Execution ----
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(nullable = false) var play: TradePlay,
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(nullable = false) var pattern: TradePattern,
-  @Column(nullable = false) var size: Int,
-  @Column(name = "open_price", nullable = false, precision = 18, scale = 4)
-  var openPrice: BigDecimal,
+  // ---- Execution (optional since V4 — only trade_date + ticker are mandatory) ----
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var play: TradePlay? = null,
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var pattern: TradePattern? = null,
+  @Column var size: Int? = null,
+  @Column(name = "open_price", precision = 18, scale = 4) var openPrice: BigDecimal? = null,
   @Column(name = "exit_price", precision = 18, scale = 4) var exitPrice: BigDecimal? = null,
   @Column(name = "profit_dollars", precision = 18, scale = 2) var profitDollars: BigDecimal? = null,
   @Column(name = "gain_percent", precision = 8, scale = 4) var gainPercent: BigDecimal? = null,
@@ -64,6 +67,9 @@ class TradeEntry(
   @Column(name = "exit_strategy")
   var exitStrategy: TradeExitStrategy? = null,
   @Column(name = "error_note", length = 2000) var errorNote: String? = null,
+
+  // ---- Stat link (NULL = orphan trade, no stat attached) ----
+  @Column(name = "stat_entry_id") var statEntryId: UUID? = null,
 
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)

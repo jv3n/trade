@@ -158,7 +158,7 @@ Always write files with **LF** line endings, never CRLF — even when editing fr
 
 ### Builds and tests
 
-Run `./gradlew test` / `npm run test` when it tightens the feedback loop (refactor, runtime debug, validating a fix). To inspect the running stack, prefer Tilt logs (UI at http://localhost:10350/, or `docker compose logs backend`) over a full rebuild. CI is still authoritative for the full matrix.
+Run `./gradlew test` / `npm run test` when it tightens the feedback loop — **but never run build or test commands autonomously** (`./gradlew build/test`, `npm run build/test`, `vitest`, etc.). The user runs them. Ask first, and only run one yourself when the user explicitly asks in the current turn ; otherwise just state what is worth running and let the user drive it. To inspect the running stack, prefer Tilt logs (UI at http://localhost:10350/, or `docker compose logs backend`) over a full rebuild. CI is still authoritative for the full matrix.
 
 ### Tests as documentation
 

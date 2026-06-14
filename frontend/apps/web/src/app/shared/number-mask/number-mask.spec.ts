@@ -68,34 +68,37 @@ describe('NumberMaskDirective helpers', () => {
   });
 
   describe('formatNumber', () => {
-    it('adds thousand separators on the integer part', () => {
-      expect(formatNumber(1234, 2)).toBe('1,234');
-      expect(formatNumber(1234567.89, 2)).toBe('1,234,567.89');
+    it('uses a comma decimal separator and no thousand grouping', () => {
+      expect(formatNumber(1234, 2)).toBe('1234');
+      expect(formatNumber(1234567.89, 2)).toBe('1234567,89');
+      expect(formatNumber(3.21, 4)).toBe('3,21');
     });
 
     it('respects the decimals cap (max, not min)', () => {
       // 3 has no fractional digits, format must NOT pad with zeros.
       expect(formatNumber(3, 2)).toBe('3');
-      // 3.5 displays its actual digits up to the cap.
-      expect(formatNumber(3.5, 2)).toBe('3.5');
+      // 3.5 displays its actual digits up to the cap, with a comma.
+      expect(formatNumber(3.5, 2)).toBe('3,5');
+      // Rounds to the cap.
+      expect(formatNumber(3.149, 2)).toBe('3,15');
     });
 
     it('handles negative numbers', () => {
-      expect(formatNumber(-1234.5, 2)).toBe('-1,234.5');
+      expect(formatNumber(-1234.5, 2)).toBe('-1234,5');
     });
   });
 
   describe('caret tracking', () => {
-    it('countDigitsBefore counts digits + decimal up to the index', () => {
-      expect(countDigitsBefore('1,234.56', 5)).toBe(4); // "1,234" → 4 digits
-      expect(countDigitsBefore('1,234.56', 7)).toBe(6); // "1,234.5" → 5 digits + 1 dot
+    it('countDigitsBefore counts digits + decimal separator up to the index', () => {
+      expect(countDigitsBefore('1234,56', 4)).toBe(4); // "1234" → 4 digits
+      expect(countDigitsBefore('1234,56', 6)).toBe(6); // "1234,5" → 4 digits + comma + 1 digit
     });
 
-    it('caretIndexAfterDigits places the caret after N digits in the formatted string', () => {
-      // After 3 digits in "1,234" → caret should be at index 4 (after "1,23").
-      expect(caretIndexAfterDigits('1,234', 3)).toBe(4);
-      // After all digits → end of string.
-      expect(caretIndexAfterDigits('1,234', 99)).toBe(5);
+    it('caretIndexAfterDigits places the caret after N positions in the formatted string', () => {
+      // After 3 positions in "1234,5" → caret should be at index 3 (after "123").
+      expect(caretIndexAfterDigits('1234,5', 3)).toBe(3);
+      // After all positions → end of string.
+      expect(caretIndexAfterDigits('1234,5', 99)).toBe(6);
     });
   });
 });

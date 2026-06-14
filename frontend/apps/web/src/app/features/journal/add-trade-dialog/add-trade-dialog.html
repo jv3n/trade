@@ -17,6 +17,29 @@
 -->
 <form (submit)="$event.preventDefault(); submit()" class="add-trade-form">
   <mat-dialog-content>
+    <!-- Stat link — assign (or clear) the imported stat for this trade. Candidates are strictly the
+         same ticker + same date ; null = orphan. Kept at the top so the link is the first decision. -->
+    <section class="form-section">
+      <h3>{{ 'journal.dialog.sections.statLink' | translate }}</h3>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'journal.statLink.field' | translate }}</mat-label>
+        <mat-select [value]="statEntryId()" (selectionChange)="setStatEntryId($event.value)">
+          <mat-option [value]="null">{{ 'journal.statLink.none' | translate }}</mat-option>
+          @for (c of statCandidates(); track c.id) {
+            <mat-option [value]="c.id">
+              {{ c.source }} · {{ c.gapUpPercent | number: '1.0-2' }} % ·
+              {{ c.openPrice | number: '1.2-4' }} $
+            </mat-option>
+          }
+        </mat-select>
+        @if (statCandidates().length === 0) {
+          <mat-hint>{{ 'journal.statLink.noCandidates' | translate }}</mat-hint>
+        }
+      </mat-form-field>
+    </section>
+
+    <mat-divider />
+
     <!-- Section 1 : Execution (required fields — see schema in `add-trade-dialog.ts`) -->
     <section class="form-section">
       <h3>{{ 'journal.dialog.sections.execution' | translate }}</h3>
@@ -51,6 +74,7 @@
         <mat-form-field appearance="outline">
           <mat-label>{{ 'journal.fields.play' | translate }}</mat-label>
           <mat-select [formField]="tradeForm.play">
+            <mat-option [value]="null">—</mat-option>
             @for (p of plays; track p) {
               <mat-option [value]="p">{{ p }}</mat-option>
             }
@@ -60,6 +84,7 @@
         <mat-form-field appearance="outline">
           <mat-label>{{ 'journal.fields.pattern' | translate }}</mat-label>
           <mat-select [formField]="tradeForm.pattern">
+            <mat-option [value]="null">—</mat-option>
             @for (p of patterns; track p) {
               <mat-option [value]="p">{{ p }}</mat-option>
             }

@@ -9,8 +9,12 @@ import { Directive, computed, input } from '@angular/core';
  *  - `ticker` → label rendered in the success-green palette, matching the trading-domain
  *    convention used for ticker symbols (BAC, AAPL, NVDA…). Selected ticker chips swap to
  *    the success-soft container.
+ *  - `linked` → info-blue status chip — the row is attached to something (e.g. a journal trade
+ *    linked to an imported stat row).
+ *  - `orphan` → warning-amber status chip — the row stands alone with no link yet (e.g. a
+ *    journal trade with no stat attached).
  */
-export type StbChipVariant = 'ticker';
+export type StbChipVariant = 'ticker' | 'linked' | 'orphan';
 
 @Directive({
   selector: 'mat-chip[stbChip], mat-chip-option[stbChip], mat-chip-row[stbChip]',

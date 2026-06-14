@@ -13,6 +13,8 @@ import com.portfolioai.journal.domain.TradePattern
 import com.portfolioai.journal.domain.TradePlay
 import com.portfolioai.journal.domain.TradeStatus
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
+import com.portfolioai.stats.domain.StatEntry
+import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -55,6 +57,7 @@ class JournalIntegrationTest {
 
   @Autowired private lateinit var service: TradeEntryService
   @Autowired private lateinit var repo: TradeEntryRepository
+  @Autowired private lateinit var statRepo: StatEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
 
   // Override the AuthService bean — the real one reads SecurityContextHolder which is empty
@@ -69,6 +72,9 @@ class JournalIntegrationTest {
     // Wipe the journal table between tests — we share the Testcontainers Postgres across the
     // whole suite, so isolating per-class data is the test's responsibility.
     repo.deleteAll()
+    // IMPORT stat rows carry a null created_by, so the app_user cascade below won't reach them —
+    // wipe them explicitly to keep the (date, ticker) uniqueness clean across tests.
+    statRepo.deleteAll()
 
     // The two users are recreated each time : `deleteAll()` on `app_user` cascades to
     // trade_entry, so test independence is guaranteed even if a previous failure left rows.
@@ -112,9 +118,50 @@ class JournalIntegrationTest {
     assertEquals(TradeOpenSide.FRONT, dto.openSide)
     assertEquals(TradeExitStrategy.SWING_20, dto.exitStrategy)
     assertEquals(100, dto.size)
-    assertEquals(0, dto.openPrice.compareTo(BigDecimal("3.2100")))
+    assertEquals(0, dto.openPrice!!.compareTo(BigDecimal("3.2100")))
     assertNotNull(dto.createdAt)
     assertNotNull(dto.updatedAt)
+  }
+
+  @Test
+  fun `create accepts a bare trade with only date and ticker — execution fields stay null`() {
+    // Post-pivot relaxation (V4) : a trade can be jotted down fast and fleshed out later, so
+    // play / pattern / size / open_price are all optional. Only date + ticker are mandatory.
+    val dto =
+      service.create(TradeEntryRequest(tradeDate = LocalDate.of(2026, 6, 4), ticker = "bac"))
+
+    assertEquals("BAC", dto.ticker)
+    assertNull(dto.play)
+    assertNull(dto.pattern)
+    assertNull(dto.size)
+    assertNull(dto.openPrice)
+    // No stat attached yet — a fresh trade is an "orphan".
+    assertNull(dto.statEntryId, "a fresh trade should be orphan (no stat link)")
+  }
+
+  @Test
+  fun `update can attach an imported stat — statEntryId round-trips through the FK`() {
+    val stat = statRepo.save(sampleStat(ticker = "AAPL"))
+    val created = service.create(sampleRequest(ticker = "AAPL"))
+    assertNull(created.statEntryId, "starts orphan")
+
+    val linked = service.update(created.id, sampleRequest(ticker = "AAPL", statEntryId = stat.id))
+
+    assertEquals(stat.id, linked.statEntryId, "the stat link should persist")
+  }
+
+  @Test
+  fun `deleting the linked stat re-orphans the trade (ON DELETE SET NULL)`() {
+    val stat = statRepo.save(sampleStat(ticker = "AAPL"))
+    val created = service.create(sampleRequest(ticker = "AAPL", statEntryId = stat.id))
+    assertEquals(stat.id, created.statEntryId)
+
+    statRepo.delete(stat)
+
+    assertNull(
+      service.findById(created.id).statEntryId,
+      "deleting the stat must re-orphan, not cascade",
+    )
   }
 
   @Test
@@ -342,6 +389,7 @@ class JournalIntegrationTest {
     exitPrice: BigDecimal? = null,
     profitDollars: BigDecimal? = null,
     gainPercent: BigDecimal? = null,
+    statEntryId: UUID? = null,
   ) =
     TradeEntryRequest(
       tradeDate = tradeDate,
@@ -363,6 +411,15 @@ class JournalIntegrationTest {
       shortOnResistance = false,
       exitStrategy = TradeExitStrategy.SWING_20,
       errorNote = null,
+      statEntryId = statEntryId,
+    )
+
+  private fun sampleStat(ticker: String = "AAPL", tradeDate: LocalDate = LocalDate.of(2026, 6, 4)) =
+    StatEntry(
+      tradeDate = tradeDate,
+      ticker = ticker,
+      gapUpPercent = BigDecimal("52.00"),
+      openPrice = BigDecimal("3.2100"),
     )
 
   private fun sampleEntity(
