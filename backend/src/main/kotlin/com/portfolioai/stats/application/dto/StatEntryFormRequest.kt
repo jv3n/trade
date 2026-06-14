@@ -9,8 +9,10 @@ import java.time.LocalDate
  * row — used by both the radar one-click « Add stat » (a subset : ticker / gap / open) and the
  * manual « Add » dialog (the full form).
  *
- * - [ticker], [gapUpPercent], [openPrice] — always required (known at scan time + the form's core).
- * - [tradeDate] — optional ; null means "today" (resolved against the ET market day server-side).
+ * - [ticker] — always required. [tradeDate] — optional ; null means "today" (resolved against the
+ *   ET market day server-side). Together they are the only mandatory fields of the manual form.
+ * - [gapUpPercent], [openPrice] — optional since V5 (the manual form may omit them) ; still always
+ *   set by the radar pick and the CSV import.
  * - [source] — optional ; [StatSource.RADAR] for the radar button, [StatSource.MANUAL] (default)
  *   for the dialog. [StatSource.IMPORT] is rejected — only the ADMIN CSV import path can create it.
  * - Everything else — optional setup flags + EOD outcome ; absent (null) on a radar pick, filled on
@@ -19,8 +21,8 @@ import java.time.LocalDate
  */
 data class StatEntryFormRequest(
   val ticker: String,
-  val gapUpPercent: BigDecimal,
-  val openPrice: BigDecimal,
+  val gapUpPercent: BigDecimal? = null,
+  val openPrice: BigDecimal? = null,
   val tradeDate: LocalDate? = null,
   val source: StatSource? = null,
   val floatSharesMillions: BigDecimal? = null,

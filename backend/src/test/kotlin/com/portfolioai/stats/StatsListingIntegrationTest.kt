@@ -181,7 +181,11 @@ class StatsListingIntegrationTest {
 
     val mine = service.findAllPaged(StatEntryFilter(query = "gels"), PageRequest.of(0, 50)).content
     assertEquals(1, mine.size, "upsert — one row, not two")
-    assertEquals(0, second.gapUpPercent.compareTo(BigDecimal("80.0")), "row carries the latest gap")
+    assertEquals(
+      0,
+      second.gapUpPercent!!.compareTo(BigDecimal("80.0")),
+      "row carries the latest gap",
+    )
   }
 
   @Test
@@ -215,7 +219,7 @@ class StatsListingIntegrationTest {
     val edited =
       service.update(created.id, manualForm("GELS", gap = "99.0", open = "3.50", high = "4.00"))
 
-    assertEquals(0, edited.gapUpPercent.compareTo(BigDecimal("99.0")))
+    assertEquals(0, edited.gapUpPercent!!.compareTo(BigDecimal("99.0")))
     assertEquals(StatSource.RADAR, edited.source, "update keeps the row's original origin")
     assertEquals(
       0,
@@ -259,7 +263,7 @@ class StatsListingIntegrationTest {
 
     val aldx = service.findAllPaged(StatEntryFilter(query = "aldx"), PageRequest.of(0, 50)).content
     assertEquals(1, aldx.size, "re-import upserts, no duplicate community row")
-    assertEquals(0, aldx.first().gapUpPercent.compareTo(BigDecimal("99.0")))
+    assertEquals(0, aldx.first().gapUpPercent!!.compareTo(BigDecimal("99.0")))
   }
 
   // ---- Helpers ------------------------------------------------------------------------------

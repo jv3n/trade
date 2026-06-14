@@ -44,7 +44,7 @@ object StatEntryCsvEncoder {
     listOf(
         e.tradeDate.toString(),
         e.ticker,
-        e.gapUpPercent.toPlainString(),
+        e.gapUpPercent?.toPlainString().orEmpty(),
         e.floatSharesMillions?.toPlainString().orEmpty(),
         e.institutionsPercent?.toPlainString().orEmpty(),
         e.instOver20?.toString().orEmpty(),
@@ -52,7 +52,7 @@ object StatEntryCsvEncoder {
         e.ssr?.toString().orEmpty(),
         e.entryAfter11am?.toString().orEmpty(),
         e.note.orEmpty(),
-        e.openPrice.toPlainString(),
+        e.openPrice?.toPlainString().orEmpty(),
         e.highPrice?.toPlainString().orEmpty(),
         e.lodPrice?.toPlainString().orEmpty(),
         e.eodPrice?.toPlainString().orEmpty(),

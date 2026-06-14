@@ -23,8 +23,8 @@ interface StatEntryWireDto {
   id: string;
   tradeDate: string;
   ticker: string;
-  gapUpPercent: number;
-  openPrice: number;
+  gapUpPercent: number | null;
+  openPrice: number | null;
   floatSharesMillions: number | null;
   institutionsPercent: number | null;
   instOver20: boolean | null;
@@ -47,8 +47,8 @@ interface StatEntryWireDto {
 /** Body of `POST /api/stats` (create) and `PUT /api/stats/{id}` (edit) — backend `StatEntryFormRequest`. */
 interface StatEntryWireRequest {
   ticker: string;
-  gapUpPercent: number;
-  openPrice: number;
+  gapUpPercent: number | null;
+  openPrice: number | null;
   tradeDate: string;
   source: StatSource;
   floatSharesMillions: number | null;

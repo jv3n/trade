@@ -51,8 +51,12 @@ import {
   TradePlay,
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
+import {
+  PERIOD_PRESETS,
+  PeriodPresetKey,
+  computePeriodRange,
+} from '../../shared/period-preset/period-preset';
 import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog/add-trade-dialog';
-import { PERIOD_PRESETS, PeriodPresetKey, computePeriodRange } from './period-preset';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :

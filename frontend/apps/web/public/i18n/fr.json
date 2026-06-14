@@ -183,7 +183,17 @@
       "gapMin": "Gap min",
       "gapMax": "Gap max",
       "reset": "Réinitialiser",
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "periodPresets": {
+        "all": "Toutes périodes",
+        "custom": "Plage personnalisée",
+        "thisMonth": "Ce mois",
+        "lastMonth": "Mois dernier",
+        "thisQuarter": "Ce trimestre",
+        "lastQuarter": "Trimestre dernier",
+        "thisYear": "Cette année",
+        "lastYear": "Année dernière"
+      }
     },
     "fields": {
       "tradeDate": "Date",

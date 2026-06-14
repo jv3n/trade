@@ -4,7 +4,7 @@ import { computePeriodRange } from './period-preset';
 /**
  * Pure-function tests on the period preset helper — each preset must resolve to the right
  * `(dateFrom, dateTo)` pair relative to a fixed "now". A regression here would silently shift
- * the filter range and the journal page would show the wrong slice of trades.
+ * the filter range and the list pages (journal / stats) would show the wrong slice.
  *
  * `now` is anchored at 2026-06-15 (mid-month, mid-quarter Q2, mid-year) so every preset
  * exercises a non-trivial computation : `thisMonth` doesn't land on a month boundary,

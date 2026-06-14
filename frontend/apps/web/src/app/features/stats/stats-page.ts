@@ -46,6 +46,11 @@ import {
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
+import {
+  PERIOD_PRESETS,
+  PeriodPresetKey,
+  computePeriodRange,
+} from '../../shared/period-preset/period-preset';
 import { AddStatDialog, AddStatDialogData } from './add-stat-dialog/add-stat-dialog';
 
 /**
@@ -59,6 +64,7 @@ interface SortRequest {
 }
 
 interface FilterFormModel {
+  period: PeriodPresetKey;
   dateFrom: Date | null;
   dateTo: Date | null;
   source: StatSource | null;
@@ -67,6 +73,7 @@ interface FilterFormModel {
 }
 
 const EMPTY_FILTER: FilterFormModel = {
+  period: 'all',
   dateFrom: null,
   dateTo: null,
   source: null,
@@ -80,7 +87,7 @@ const OWNED_SOURCES: readonly StatSource[] = ['RADAR', 'MANUAL'];
 /** Origins offered in the filter drawer's source select. */
 const SOURCE_OPTIONS: readonly StatSource[] = ['RADAR', 'MANUAL', 'IMPORT'];
 
-const DEFAULT_PAGE_SIZE = 25;
+const DEFAULT_PAGE_SIZE = 10;
 
 /**
  * Stats page — table of the stats the current user may see (their own radar / manual analyses + the
@@ -164,6 +171,7 @@ export class StatsPage {
   // ---- Sort (server-side, controlled-component) ----
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
+  readonly periods = PERIOD_PRESETS;
   readonly sourceOptions = SOURCE_OPTIONS;
 
   readonly columns = [
@@ -250,12 +258,27 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
+  /** Picking a preset populates dateFrom / dateTo via `date-fns` helpers (same as the journal). */
+  onPeriodChange(key: PeriodPresetKey): void {
+    if (key === 'custom') {
+      this.filterModel.update((m) => ({ ...m, period: 'custom' }));
+      return;
+    }
+    const range = computePeriodRange(key);
+    this.filterModel.update((m) => ({
+      ...m,
+      period: key,
+      dateFrom: range.dateFrom,
+      dateTo: range.dateTo,
+    }));
+  }
+
   setDateFrom(d: Date | null): void {
-    this.filterModel.update((m) => ({ ...m, dateFrom: d }));
+    this.filterModel.update((m) => ({ ...m, period: 'custom', dateFrom: d }));
   }
 
   setDateTo(d: Date | null): void {
-    this.filterModel.update((m) => ({ ...m, dateTo: d }));
+    this.filterModel.update((m) => ({ ...m, period: 'custom', dateTo: d }));
   }
 
   setSource(s: StatSource | null): void {

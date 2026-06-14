@@ -155,9 +155,11 @@ class StatEntryService(
     entry.highPrice = form.highPrice
     entry.lodPrice = form.lodPrice
     entry.eodPrice = form.eodPrice
-    entry.pushPercent = form.highPrice?.let { StatMetrics.pushPercent(form.openPrice, it) }
-    entry.lodPercent = form.lodPrice?.let { StatMetrics.lodPercent(form.openPrice, it) }
-    entry.eodPercent = form.eodPrice?.let { StatMetrics.eodPercent(form.openPrice, it) }
+    // The derived percentages need the open price ; without it (form omitted it) they stay null.
+    val open = form.openPrice
+    entry.pushPercent = open?.let { o -> form.highPrice?.let { StatMetrics.pushPercent(o, it) } }
+    entry.lodPercent = open?.let { o -> form.lodPrice?.let { StatMetrics.lodPercent(o, it) } }
+    entry.eodPercent = open?.let { o -> form.eodPrice?.let { StatMetrics.eodPercent(o, it) } }
   }
 
   // ---- CSV import / export -------------------------------------------------------------------

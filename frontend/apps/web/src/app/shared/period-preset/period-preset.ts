@@ -11,9 +11,9 @@ import {
 } from 'date-fns';
 
 /**
- * Period shortcuts for the journal filter. Each preset resolves to a `{ dateFrom, dateTo }`
- * pair that the filter uses to populate the date range. `custom` and `all` are special :
- * `custom` lets the user type dates manually, `all` clears the range (no filter).
+ * Period shortcuts for the list filters (journal + stats). Each preset resolves to a
+ * `{ dateFrom, dateTo }` pair that the filter uses to populate the date range. `custom` and `all`
+ * are special : `custom` lets the user type dates manually, `all` clears the range (no filter).
  */
 export type PeriodPresetKey =
   | 'all'

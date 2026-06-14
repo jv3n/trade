@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormField, form, maxLength, min, required } from '@angular/forms/signals';
+import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -83,11 +83,9 @@ export class AddStatDialog {
   readonly model = signal<StatFormModel>(this.initialModel());
 
   readonly statForm = form(this.model, (path) => {
+    required(path.tradeDate);
     required(path.ticker);
     maxLength(path.ticker, 20);
-    required(path.gapUpPercent);
-    required(path.openPrice);
-    min(path.openPrice, 0.0001);
   });
 
   submit(): void {
@@ -99,8 +97,8 @@ export class AddStatDialog {
     const input: StatEntryInput = {
       tradeDate: v.tradeDate,
       ticker: v.ticker,
-      gapUpPercent: v.gapUpPercent!,
-      openPrice: v.openPrice!,
+      gapUpPercent: v.gapUpPercent,
+      openPrice: v.openPrice,
       floatSharesMillions: v.floatSharesMillions,
       institutionsPercent: v.institutionsPercent,
       instOver20: v.instOver20,

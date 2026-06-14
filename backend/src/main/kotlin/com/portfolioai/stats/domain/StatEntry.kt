@@ -39,11 +39,11 @@ class StatEntry(
   @Column(name = "trade_date", nullable = false) var tradeDate: LocalDate,
   @Column(nullable = false, length = 20) var ticker: String,
 
-  // ---- Always known at creation (radar + CSV) — percentages in value encoding (52.00 = 52%) ----
-  @Column(name = "gap_up_percent", nullable = false, precision = 8, scale = 2)
-  var gapUpPercent: BigDecimal,
-  @Column(name = "open_price", nullable = false, precision = 18, scale = 4)
-  var openPrice: BigDecimal,
+  // ---- Scan-time fields — optional since V5 (the manual form only requires date + ticker) ;
+  //      percentages in value encoding (52.00 = 52%). Still always set on radar picks + CSV import.
+  // --
+  @Column(name = "gap_up_percent", precision = 8, scale = 2) var gapUpPercent: BigDecimal? = null,
+  @Column(name = "open_price", precision = 18, scale = 4) var openPrice: BigDecimal? = null,
 
   // ---- Setup (manually entered via CSV) — null on a radar pick ----
   @Column(name = "float_shares_millions", precision = 12, scale = 2)

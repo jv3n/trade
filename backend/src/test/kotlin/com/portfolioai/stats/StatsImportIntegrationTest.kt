@@ -58,7 +58,7 @@ class StatsImportIntegrationTest {
 
     val saved = repo.findAll().single()
     assertEquals("BAC", saved.ticker, "ticker normalised on import")
-    assertEquals(0, saved.gapUpPercent.compareTo(BigDecimal("52.0")))
+    assertEquals(0, saved.gapUpPercent!!.compareTo(BigDecimal("52.0")))
     assertEquals(false, saved.ssr)
     // CSV import = the curated global dataset : IMPORT-sourced, owned by nobody (readable by all).
     assertEquals(StatSource.IMPORT, saved.source)

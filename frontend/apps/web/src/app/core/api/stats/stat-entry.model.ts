@@ -25,8 +25,8 @@ export interface StatEntry {
   id: string;
   tradeDate: Date;
   ticker: string;
-  gapUpPercent: number;
-  openPrice: number;
+  gapUpPercent: number | null;
+  openPrice: number | null;
   floatSharesMillions: number | null;
   institutionsPercent: number | null;
   instOver20: boolean | null;
@@ -70,8 +70,8 @@ export interface RadarStatInput {
 export interface StatEntryInput {
   tradeDate: Date;
   ticker: string;
-  gapUpPercent: number;
-  openPrice: number;
+  gapUpPercent: number | null;
+  openPrice: number | null;
   floatSharesMillions: number | null;
   institutionsPercent: number | null;
   instOver20: boolean | null;
