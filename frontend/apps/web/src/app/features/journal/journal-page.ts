@@ -7,12 +7,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Sort } from '@angular/material/sort';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { StbDatePickerModule } from '@portfolioai/ui';
+import { parseISO } from 'date-fns';
 import {
   EMPTY,
   Subject,
@@ -56,7 +57,11 @@ import {
   PeriodPresetKey,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
-import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog/add-trade-dialog';
+import {
+  AddTradeDialog,
+  AddTradeDialogData,
+  AddTradeSeed,
+} from './add-trade-dialog/add-trade-dialog';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
@@ -140,6 +145,8 @@ export class JournalPage {
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   // ---- Data state ----
   readonly loading = signal(true);
@@ -236,6 +243,34 @@ export class JournalPage {
         },
       );
     });
+
+    this.handleCreateFromStat();
+  }
+
+  /**
+   * Deep-link from the stats page : `?ticker=…&date=YYYY-MM-DD&statId=…` opens the add-trade
+   * dialog pre-filled (ticker + date) and pre-linked to the stat (`statId` → `statEntryId`). The
+   * params are stripped right away (replaceUrl) so a refresh / back-nav doesn't reopen the dialog.
+   */
+  private handleCreateFromStat(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const ticker = params.get('ticker');
+    if (!ticker) return;
+
+    const date = params.get('date');
+    const seed: AddTradeSeed = {
+      ticker,
+      tradeDate: date ? parseISO(date) : new Date(),
+      statEntryId: params.get('statId'),
+    };
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true,
+    });
+
+    this.openDialog(null, seed);
   }
 
   // ---- Search handlers ----
@@ -400,9 +435,9 @@ export class JournalPage {
    * snackbar + refetches ; `catchError` swallows the error after the user-facing toast so the
    * outer subscription completes cleanly.
    */
-  private openDialog(entry: TradeEntry | null): void {
+  private openDialog(entry: TradeEntry | null, seed?: AddTradeSeed): void {
     const isUpdate = entry !== null;
-    const data: AddTradeDialogData = { entry };
+    const data: AddTradeDialogData = { entry, seed };
     const ref = this.dialog.open<AddTradeDialog, AddTradeDialogData, TradeEntryInput | undefined>(
       AddTradeDialog,
       { data, width: '880px', maxWidth: '95vw', autoFocus: 'first-tabbable' },

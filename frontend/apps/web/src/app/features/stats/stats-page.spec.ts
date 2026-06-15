@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,6 +26,8 @@ import { StatsPage } from './stats-page';
  *    and `confirm()` cancel short-circuits the repository call.
  *  - **Create dialog → 409** — a day/ticker collision (HTTP 409) surfaces the dedicated "duplicate"
  *    toast rather than the generic create-error one.
+ *  - **Create trade from a stat** — the third action deep-links to the journal with the stat's ticker,
+ *    its date as `yyyy-MM-dd`, and its id as `statId` (the future trade's `statEntryId` FK).
  */
 describe('StatsPage', () => {
   let nextPage: PagedResult<StatEntry>;
@@ -146,6 +148,23 @@ describe('StatsPage', () => {
       undefined,
       expect.objectContaining({ panelClass: 'stb-snack-bar--success' }),
     );
+  });
+
+  it('createTrade deep-links to the journal with ticker, yyyy-MM-dd date and statId', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const fixture = TestBed.createComponent(StatsPage);
+    fixture.detectChanges();
+
+    // June 4 2026 must serialise to the local calendar day, not a UTC-shifted one.
+    fixture.componentInstance.createTrade(
+      makeStat({ id: 'stat-42', ticker: 'GUS', tradeDate: new Date(2026, 5, 4) }),
+    );
+
+    expect(navigate).toHaveBeenCalledWith(['/journal'], {
+      queryParams: { ticker: 'GUS', date: '2026-06-04', statId: 'stat-42' },
+    });
   });
 
   it('create dialog 409 surfaces the duplicate error toast', () => {

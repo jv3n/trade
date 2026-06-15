@@ -152,7 +152,8 @@
     },
     "actions": {
       "edit": "Modifier",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "createTrade": "Créer un trade dans le journal"
     },
     "confirmDelete": "Supprimer l'analyse de {{ticker}} ?",
     "snackbar": {

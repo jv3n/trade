@@ -33,9 +33,21 @@ import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 
+/**
+ * Seed for create mode — pre-fills a brand-new trade (e.g. opened from a stat row). Ignored
+ * when `entry` is set (edit mode reads from the entry).
+ */
+export interface AddTradeSeed {
+  ticker: string;
+  tradeDate: Date;
+  statEntryId: string | null;
+}
+
 /** Data passed to the dialog — `entry` non-null = edit mode, null = create mode. */
 export interface AddTradeDialogData {
   entry: TradeEntry | null;
+  /** Optional pre-fill for create mode (ticker / date / stat link). */
+  seed?: AddTradeSeed;
 }
 
 /**
@@ -128,7 +140,9 @@ export class AddTradeDialog {
   // ---- Stat link (orphan ↔ linked) -------------------------------------------------------------
   // Not a form field — it's a relation assigned via a combobox, carried as its own signal and
   // emitted on submit. Defaults to the trade's existing link (null = orphan).
-  readonly statEntryId = signal<string | null>(this.data.entry?.statEntryId ?? null);
+  readonly statEntryId = signal<string | null>(
+    this.data.entry?.statEntryId ?? this.data.seed?.statEntryId ?? null,
+  );
 
   // The combobox proposes only the strict candidates : same ticker AND same date as the trade.
   // Multiple can coexist (the global IMPORT row + the user's own MANUAL/RADAR row for that day).
@@ -235,9 +249,10 @@ export class AddTradeDialog {
   private initialModel(): TradeFormModel {
     const entry = this.data.entry;
     if (!entry) {
+      const seed = this.data.seed;
       return {
-        tradeDate: new Date(),
-        ticker: '',
+        tradeDate: seed?.tradeDate ?? new Date(),
+        ticker: seed?.ticker ?? '',
         play: null,
         pattern: null,
         size: null,

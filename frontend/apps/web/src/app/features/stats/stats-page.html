@@ -163,71 +163,6 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="instOver20">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header="instOver20" stbCol="numeric">
-                {{ 'stats.fields.instOver20' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let e" stbCol="numeric">
-                @if (e.instOver20 !== null) {
-                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.instOver20">
-                    {{ e.instOver20 ? 'check_circle' : 'remove' }}
-                  </mat-icon>
-                } @else {
-                  —
-                }
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="under1Dollar">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header="under1Dollar" stbCol="numeric">
-                {{ 'stats.fields.under1Dollar' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let e" stbCol="numeric">
-                @if (e.under1Dollar !== null) {
-                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.under1Dollar">
-                    {{ e.under1Dollar ? 'check_circle' : 'remove' }}
-                  </mat-icon>
-                } @else {
-                  —
-                }
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="ssr">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header="ssr" stbCol="numeric">
-                {{ 'stats.fields.ssr' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let e" stbCol="numeric">
-                @if (e.ssr !== null) {
-                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.ssr">
-                    {{ e.ssr ? 'check_circle' : 'remove' }}
-                  </mat-icon>
-                } @else {
-                  —
-                }
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="entryAfter11am">
-              <th
-                mat-header-cell
-                *matHeaderCellDef
-                mat-sort-header="entryAfter11am"
-                stbCol="numeric"
-              >
-                {{ 'stats.fields.entryAfter11am' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let e" stbCol="numeric">
-                @if (e.entryAfter11am !== null) {
-                  <mat-icon class="bool-flag" [class.bool-flag--on]="e.entryAfter11am">
-                    {{ e.entryAfter11am ? 'check_circle' : 'remove' }}
-                  </mat-icon>
-                } @else {
-                  —
-                }
-              </td>
-            </ng-container>
-
             <ng-container matColumnDef="openPrice">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="openPrice" stbCol="numeric">
                 {{ 'stats.fields.openPrice' | translate }}
@@ -323,6 +258,15 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
               <td mat-cell *matCellDef="let e" stbCol="actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="createTrade(e)"
+                  [matTooltip]="'stats.actions.createTrade' | translate"
+                  aria-label="Create trade"
+                >
+                  <mat-icon>post_add</mat-icon>
+                </button>
                 @if (isOwned(e)) {
                   <button
                     mat-icon-button

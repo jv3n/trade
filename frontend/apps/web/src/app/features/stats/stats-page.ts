@@ -7,7 +7,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Sort } from '@angular/material/sort';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -26,6 +26,7 @@ import {
   StbTableModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { format } from 'date-fns';
 import {
   EMPTY,
   Subject,
@@ -132,6 +133,7 @@ export class StatsPage {
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly router = inject(Router);
 
   // ---- Data state ----
   readonly loading = signal(true);
@@ -181,10 +183,6 @@ export class StatsPage {
     'gapUpPercent',
     'floatSharesMillions',
     'institutionsPercent',
-    'instOver20',
-    'under1Dollar',
-    'ssr',
-    'entryAfter11am',
     'openPrice',
     'highPrice',
     'lodPrice',
@@ -314,6 +312,22 @@ export class StatsPage {
 
   openEdit(entry: StatEntry): void {
     this.openDialog(entry);
+  }
+
+  /**
+   * Jumps to the journal and pre-fills a new trade from this stat row : ticker + date are seeded
+   * and the trade is pre-linked to this stat (`statId` → the trade's `statEntryId` FK). The journal
+   * page reads these query params, opens the add-trade dialog pre-filled, then strips the params.
+   * Available on every row (including global IMPORT ones), not just owned ones.
+   */
+  createTrade(entry: StatEntry): void {
+    void this.router.navigate(['/journal'], {
+      queryParams: {
+        ticker: entry.ticker,
+        date: format(entry.tradeDate, 'yyyy-MM-dd'),
+        statId: entry.id,
+      },
+    });
   }
 
   delete(entry: StatEntry): void {
