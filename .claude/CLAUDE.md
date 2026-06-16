@@ -6,7 +6,7 @@ Source of truth for project conventions and Claude-specific configuration. Read 
 >
 > The app pivoted in June 2026 from a per-ticker dossier app with LLM narratives → toward a **trading journal**. The user logs their trades each day ; charts / Excel export come in phase 2 (a shared stats dataset and a bilingual lexicon already shipped).
 >
-> **Live modules** : `journal/`, `stats/`, `lexicon/` (backend) + `features/journal/`, `features/journal-io/`, `features/stats/`, `features/lexicon/` (frontend). Dormant pre-pivot modules (`market/`, `analysis/`, `news/`, `analyst/`, `earnings/`, `screener/`, `watchlist/`, plus the frontend features `ticker`, `radar`, `observability`) remain in the tree until phase 2 decides what gets re-wired vs. deleted. `portfolio/` and the `dashboard` / `import` / `suivi` frontend features were **deleted** at the pivot (2026-06-10).
+> **Live modules** : `account/`, `journal/`, `stats/`, `lexicon/` (backend) + `features/account/`, `features/journal/`, `features/journal-io/`, `features/stats/`, `features/lexicon/` (frontend ; `account` first in the sidenav). The `account` module is the broker cash account — a derived-balance ledger fed by the journal's realized P&L via a domain event. Dormant pre-pivot modules (`market/`, `analysis/`, `news/`, `analyst/`, `earnings/`, `screener/`, `watchlist/`, plus the frontend features `ticker`, `radar`, `observability`) remain in the tree until phase 2 decides what gets re-wired vs. deleted. `portfolio/` and the `dashboard` / `import` / `suivi` frontend features were **deleted** at the pivot (2026-06-10).
 >
 > Treat `docs/projet/roadmap.md` as authoritative for in/out scope when this file and the roadmap disagree.
 
@@ -40,7 +40,7 @@ trade/
 │   │       │              # app-state/ (UI signal services), http/ (interceptors),
 │   │       │              # router/ (guards), providers.ts
 │   │       ├── shared/    # cross-cutting helpers (no state, no DI)
-│   │       └── features/  # journal, journal-io, stats, lexicon, settings, login, error
+│   │       └── features/  # account, journal, journal-io, stats, lexicon, settings, login, error
 │   │                      # (+ dormant pre-pivot features: ticker, radar,
 │   │                      #  observability)
 │   ├── libs/ui/                                    # @portfolioai/ui design-system lib
@@ -53,6 +53,7 @@ trade/
 ├── backend/src/main/kotlin/com/portfolioai/
 │   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles + local-no-auth profile
 │   ├── journal/     # Trade journal — primary post-pivot module (CRUD + CSV io + Pageable)
+│   ├── account/     # Broker cash account — movements + derived balance, fed by journal P&L (event)
 │   ├── stats/, lexicon/  # Live post-pivot — shared datasets (stats CSV import/export, bilingual lexicon)
 │   ├── config/      # Runtime-editable settings + routing clients
 │   ├── market/, analysis/, news/, analyst/, earnings/, screener/, watchlist/

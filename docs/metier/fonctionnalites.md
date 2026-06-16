@@ -1,6 +1,6 @@
 # Fonctionnalités
 
-> **L'app a pivoté en juin 2026** d'un outil d'analyse de marché par ticker (narratif IA) vers un **journal de trading**. La seule surface produit **live** est le module journal ci-dessous. Tout le reste (dossiers ticker, narratifs LLM, radar, portefeuille) reste dans le code en **sommeil** — décrit en bas sous « Surface pré-pivot (dormante) ». L'infrastructure auth (Phase 4) et déploiement (Phase 5) reste active. Voir la [roadmap](../projet/roadmap.md) pour le périmètre in / out.
+> **L'app a pivoté en juin 2026** d'un outil d'analyse de marché par ticker (narratif IA) vers un **journal de trading**. Les surfaces produit **live** sont le **compte broker**, le **journal**, les **stats** et le **lexique** ci-dessous. Tout le reste (dossiers ticker, narratifs LLM, radar, portefeuille) reste dans le code en **sommeil** — décrit en bas sous « Surface pré-pivot (dormante) ». L'infrastructure auth (Phase 4) et déploiement (Phase 5) reste active. Voir la [roadmap](../projet/roadmap.md) pour le périmètre in / out.
 
 ## Journal de trading — live
 
@@ -34,6 +34,28 @@ Page dédiée (`journal-io`) :
 ### Backend
 
 Module `journal/` (hexagonal) : `TradeEntry` (19 champs) + 4 enums Postgres natifs (`trade_play`, `trade_pattern`, `trade_open_side`, `trade_exit_strategy`), `TradeEntryService`, `TradeEntryRepository` (+ `TradeEntrySpecifications` pour les filtres dynamiques), `TradeEntryController`. **7 endpoints** sous `/api/journal/trades` (list paginée, get, create, update, delete, export, import). Multi-tenant : chaque opération est scopée au `user_id` courant (404 sur un ID étranger, jamais 403, pour ne pas leaker l'existence d'une ligne). Schéma : table `trade_entry` fondée dans `V1__init.sql` (champs optionnels relâchés en V4). Détail technique : [`architecture.md`](../technique/architecture.md).
+
+---
+
+## Compte broker — live
+
+La valeur du compte broker, **saisie à la main** (aucune connexion au broker) — première entrée du sidenav. L'app est la source de vérité côté soft, réconciliée manuellement avec le broker.
+
+### Solde & graphe
+
+- **Hero solde courant** + **variation sur la période** (montant + %, sélecteur 1S / 1M / 3M / YTD / Tout).
+- **Graphe d'évolution** de la balance (`StbAreaChart`, SVG maison, tooltip au survol) — série cumulée end-of-day, fenêtrage + variation calculés côté front.
+
+### Mouvements
+
+- **Registre groupé par date** avec **sous-total quotidien** ; ajout de **dépôts / retraits**, **correction de balance** (on saisit la valeur réelle du broker → un mouvement de correction enregistre l'écart : frais, financement, slippage non captés ailleurs).
+- **Balance dérivée** : `dépôts − retraits + P&L trades ± corrections` (jamais stockée, somme du registre).
+- **Trades du journal** : le P&L réalisé alimente le solde en mouvement `TRADE` **read-only** (poussé automatiquement à la clôture, ticker en chip + lien vers le journal). Édition / suppression réservées aux mouvements manuels.
+- **Panneau résumé** : total déposé, total retiré, net injecté, P&L trades, corrections, nb de mouvements.
+
+### Backend
+
+Module `account/` (hexagonal) : `AccountMovement` + enum Postgres `account_movement_type`, `AccountService` (balance dérivée, correction = delta signé, série cumulée end-of-day), `AccountController` (`/api/account` : `movements` paginé, `summary`, `balance-series`, `corrections`, CRUD mouvements). Multi-tenant scopé `user_id` (404 sur ID étranger). Sync journal → compte par event (`TradeChangedEvent` → `TRADE` read-only, cascade DB sur suppression). Schéma : table `account_movement` (migration **V6**). Mono-compte, USD. Détail : [`architecture.md`](../technique/architecture.md).
 
 ---
 

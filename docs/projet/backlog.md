@@ -14,12 +14,6 @@ Le cœur du produit (table des trades + saisie + filtres + export/import CSV rou
 
 ---
 
-## Compte broker (nouvelle surface)
-
-| Item | Description | Priorité |
-|------|-------------|----------|
-| ⏳ **Page Compte** | Valeur du compte broker (saisie manuelle, sans connexion broker) : hero balance + variation, graphe d'évolution, registre de mouvements (dépôts / retraits / corrections) groupé par date, panneau résumé. Les **trades du journal alimentent le solde** (P&L réalisé en mouvement `TRADE` read-only). Nav en première position. Module backend `account/` + `account_movement` (Flyway). Cadrage tranché : [`us/compte-broker.md`](./us/compte-broker.md). | 🔴 Haute |
-
 ## Phase 2 — stats & analytics
 
 | Item | Description | Priorité |

@@ -155,7 +155,7 @@ trade/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
 │       ├── core/              # split sur 5 sous-dossiers — api/ (HTTP) + local/ (browser) + app-state/ (UI services) + http/ (interceptors, Phase 4) + router/ (guards, Phase 4)
-│       │   ├── api/<bucket>/          # 13 buckets : journal/ + stats/ + lexicon/ (★ LIVE pivot) + market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/ (dormants/conservés)
+│       │   ├── api/<bucket>/          # 14 buckets : account/ + journal/ + stats/ + lexicon/ (★ LIVE pivot) + market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/ (dormants/conservés)
 │       │   │   ├── *.repository.ts            # ports (abstract class) à la racine du bucket
 │       │   │   ├── *.service.ts               # services bucket-locaux (ex. analysis/ollama-status.service.ts, analysis/job-stream.service.ts SSE, analysis/llm-timeout.service.ts)
 │       │   │   └── adapters/*.http.ts         # HttpXxxRepository (défaut)
@@ -163,8 +163,9 @@ trade/
 │       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts, auth.service.ts), sans port/adapter
 │       │   ├── http/                  # HTTP interceptors (Phase 4 — auth.interceptor.ts catch 401 → /login)
 │       │   ├── router/                # Route guards (Phase 4 — authGuard, adminGuard)
-│       │   └── providers.ts           # `provideRepositories()` — wires les 19 ports (api/ + local/) → adapters
+│       │   └── providers.ts           # `provideRepositories()` — wires les 20 ports (api/ + local/) → adapters
 │       └── features/          # Pages UI (primary adapters)
+│           ├── account/               # ★ LIVE (pivot) — compte broker : solde + mouvements + correction + graphe
 │           ├── journal/               # ★ LIVE (pivot) — table trades + dialog add/edit + filtres
 │           ├── journal-io/            # ★ LIVE (pivot) — export / import CSV
 │           ├── stats/                 # ★ LIVE (pivot) — table stats read-only + tri / pagination serveur
@@ -175,6 +176,7 @@ trade/
 │           └── settings/              # Sidenav : préférences / configuration runtime / prompts / stats-import / lexicon (admin) / access-control
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
+│       ├── account/           # ★ LIVE (pivot) — compte broker (mouvements + balance dérivée + sync journal)
 │       ├── journal/           # ★ LIVE (pivot) — trade entries (CRUD + CSV io + Pageable)
 │       ├── stats/             # ★ LIVE (pivot) — dataset stats partagé (import/export CSV admin + list paginée)
 │       ├── lexicon/           # ★ LIVE (pivot) — glossaire bilingue (findAll + CRUD admin)

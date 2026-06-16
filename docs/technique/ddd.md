@@ -7,10 +7,11 @@ Chaque contexte est autonome et possède ses propres couches.
 
 ## Bounded Contexts
 
-> **Pivot juin 2026** — `journal` (le produit), `stats` et `lexicon` (datasets partagés du pivot) et `auth` (dont le journal dépend pour le multi-tenant) sont **live**. Les contextes `market` / `analysis` / `news` / `analyst` / `earnings` / `watchlist` / `screener` / `config` restent dans l'arbre en **sommeil / conservés** (`portfolio` a été supprimé au pivot ; providers conservés pour un éventuel enrichissement Phase 2).
+> **Pivot juin 2026** — `account`, `journal` (le produit), `stats` et `lexicon` (datasets partagés du pivot) et `auth` (dont le journal dépend pour le multi-tenant) sont **live**. Les contextes `market` / `analysis` / `news` / `analyst` / `earnings` / `watchlist` / `screener` / `config` restent dans l'arbre en **sommeil / conservés** (`portfolio` a été supprimé au pivot ; providers conservés pour un éventuel enrichissement Phase 2).
 
 | Contexte | Responsabilité | Statut |
 |----------|----------------|--------|
+| `account` | **Compte broker cash** (multi-tenant `user_id`, mono-compte v1) — registre de mouvements signés (DEPOSIT / WITHDRAWAL / TRADE / ADJUSTMENT), **balance dérivée** (`Σ amount`), correction de balance, série cumulée. Le P&L des trades y est poussé par event depuis `journal` (mouvement `TRADE` read-only) | ✅ **Pivot (live)** |
 | `journal` | **Journal de trading** — trade entries (CRUD + CSV io roundtrip + pagination / tri / filtres serveur), multi-tenant `user_id`. 4 enums Postgres natifs (play A/B, pattern GUS/FRD, open side FRONT/BACK, exit strategy SWING_20/EOD) | ✅ **Pivot v1.0 (live)** |
 | `stats` | **Dataset stats partagé** (sans `user_id`) — contexte setup + niveaux de prix + `%` dérivés, import/export CSV admin, provenance IMPORT / RADAR / MANUAL | ✅ **Pivot (live)** |
 | `lexicon` | **Glossaire bilingue** des termes de trading (FR/EN, sans `user_id`) — lecture pour tous, CRUD admin | ✅ **Pivot (live)** |
@@ -132,9 +133,14 @@ watchlist.domain → auth.domain                              ✓ (Phase 4 — @
 watchlist.application → auth.application                    ✓ (Phase 4 — AuthService.getCurrentUser pour scoper les reads)
 journal.domain → auth.domain                                ✓ (pivot — @ManyToOne User sur TradeEntry)
 journal.application → auth.application                       ✓ (pivot — AuthService.getCurrentUser pour scoper les trades)
+account.domain → auth.domain                                ✓ (pivot — @ManyToOne User sur AccountMovement)
+account.application → auth.application                       ✓ (pivot — AuthService.getCurrentUser pour scoper le compte)
+account.infrastructure → journal.application (event)        ✓ (pivot — écoute TradeChangedEvent, même pattern que CacheTtlListener → ConfigChangedEvent)
 ```
 
-> **Note Phase 4** : la référence à `auth.domain.User` depuis `portfolio/` et `watchlist/` au niveau **entity JPA** (`@ManyToOne`) est une exception consciente à la règle « contexts share via ID » du DDD strict. Rationale détaillée dans `architecture.md > Décisions techniques notables > Phase 4 > Multi-tenant FK`. Limite de la tolérance : seules les *entities JPA* peuvent traverser un bounded context de cette façon — les *ports* outbound restent strictement isolés dans leur context.
+> **Sync event-driven `journal → account`** : `journal` ne connaît pas `account`. Il publie un `TradeChangedEvent` (application) ; `account` l'écoute via `TradeMovementSyncListener` (`@EventListener` synchrone, même transaction) et upsert/supprime le mouvement `TRADE`. Le sens de la dépendance est donc `account → journal` (le consommateur dépend du type d'event du producteur), miroir de `market → config` (`CacheTtlListener`). La suppression d'un trade est gérée par le `ON DELETE CASCADE` BDD (`account_movement.trade_entry_id`), pas par un event.
+
+> **Note Phase 4** : la référence à `auth.domain.User` depuis `journal/`, `account/` et `watchlist/` au niveau **entity JPA** (`@ManyToOne`) est une exception consciente à la règle « contexts share via ID » du DDD strict. Rationale détaillée dans `architecture.md > Décisions techniques notables > Phase 4 > Multi-tenant FK`. Limite de la tolérance : seules les *entities JPA* peuvent traverser un bounded context de cette façon — les *ports* outbound restent strictement isolés dans leur context.
 
 ## Conventions de nommage
 
