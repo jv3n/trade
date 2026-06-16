@@ -46,6 +46,7 @@ Les arbitrages de cadrage (ordre des passes, périmètre exact du trade entry, l
 
 | Item | Description |
 |------|-------------|
+| ⏳ Validation des écritures live + mapping 409 | Backend chemin write live : (1) ajouter une validation (Bean Validation `@field:NotBlank` / `@Size` / `@Positive` + `@Valid`, ou manuelle façon `lexicon/`) sur `TradeEntryRequest` / `StatEntryFormRequest` — aujourd'hui un `ticker` blanc se stocke en chaîne vide ; (2) restreindre le 409 de `GlobalExceptionHandler` aux seules violations d'unicité — les violations de CHECK (`size > 0`, `open_price > 0`) remontent un « Conflit : ressource déjà existante » faux ; ajouter un handler `MethodArgumentNotValidException` → 400. Bundle cohérent (la validation amont règle l'essentiel du mapping). Cf. [`audits/2026-06-15-revue-globale.md`](./audits/2026-06-15-revue-globale.md) Importants 1+2. |
 | ⏳ `WildcardImport.excludeImports` allowlist | Shrinker progressivement, ne pas ajouter de nouvelle entrée (cf. CLAUDE.md). |
 | ⏳ Parcours onboarding `developper.md` | Réécrire le walkthrough autour du journal — il décrit encore le flow ticker pré-pivot dormant (import Wealthsimple → dossier ticker → narratif LLM). |
 | ⏳ Repos front portfolio orphelins | `core/api/portfolio/` (`PortfolioRepository`, `SnapshotRepository`) + bindings `providers.ts` + i18n `dashboard` / `import` / `suivi` morts depuis le drop backend portfolio (2026-06-10) — nettoyage de code mort en cascade. |
