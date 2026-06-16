@@ -11,6 +11,7 @@ import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
 import java.time.Instant
 import java.util.UUID
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -33,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException
 class TradeEntryService(
   private val repo: TradeEntryRepository,
   private val authService: AuthService,
+  private val events: ApplicationEventPublisher,
 ) {
 
   @Transactional(readOnly = true)
@@ -141,7 +143,7 @@ class TradeEntryService(
           errorNote = request.errorNote,
           statEntryId = request.statEntryId,
         )
-      repo.save(entry)
+      publishChange(repo.saveAndFlush(entry))
     }
     return ImportResult(
       parsed = decoded.rows.size,
@@ -177,7 +179,9 @@ class TradeEntryService(
         errorNote = request.errorNote,
         statEntryId = request.statEntryId,
       )
-    return repo.save(entry).toDto()
+    val saved = repo.saveAndFlush(entry)
+    publishChange(saved)
+    return saved.toDto()
   }
 
   @Transactional
@@ -204,7 +208,9 @@ class TradeEntryService(
     entry.errorNote = request.errorNote
     entry.statEntryId = request.statEntryId
     entry.updatedAt = Instant.now()
-    return repo.save(entry).toDto()
+    val saved = repo.saveAndFlush(entry)
+    publishChange(saved)
+    return saved.toDto()
   }
 
   @Transactional
@@ -214,6 +220,23 @@ class TradeEntryService(
     if (removed == 0L) {
       throw ResponseStatusException(HttpStatus.NOT_FOUND, "Trade entry $id not found")
     }
+  }
+
+  /**
+   * Notifies the `account` context so it can sync the trade's realized P&L as a read-only `TRADE`
+   * movement. Fired on create / update / import ; deletion is handled by the DB `ON DELETE
+   * CASCADE`.
+   */
+  private fun publishChange(entry: TradeEntry) {
+    events.publishEvent(
+      TradeChangedEvent(
+        tradeId = entry.id,
+        userId = entry.user.id,
+        ticker = entry.ticker,
+        tradeDate = entry.tradeDate,
+        profitDollars = entry.profitDollars,
+      )
+    )
   }
 
   private fun loadOwned(id: UUID): TradeEntry {
