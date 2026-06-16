@@ -1,0 +1,25 @@
+.correction-form {
+  display: flex;
+  flex-direction: column;
+
+  .full-width {
+    width: 100%;
+  }
+
+  .hint {
+    margin: 0 0 1rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .field-error {
+    margin: -0.5rem 0 0.75rem;
+    color: var(--mat-sys-error);
+    font-size: 0.8rem;
+  }
+
+  .date-field {
+    cursor: pointer;
+  }
+}

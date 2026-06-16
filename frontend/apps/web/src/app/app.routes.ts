@@ -28,6 +28,11 @@ export const routes: Routes = [
   },
   { path: '', redirectTo: 'journal', pathMatch: 'full' },
   {
+    path: 'account',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/account/account-page').then((m) => m.AccountPage),
+  },
+  {
     path: 'journal',
     canActivate: [authGuard],
     loadComponent: () => import('./features/journal/journal-page').then((m) => m.JournalPage),

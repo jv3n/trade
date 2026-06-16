@@ -3,6 +3,7 @@ package com.portfolioai.account.infrastructure.http
 import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.AccountMovementDto
 import com.portfolioai.account.application.dto.AccountSummaryDto
+import com.portfolioai.account.application.dto.BalancePointDto
 import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -43,6 +44,10 @@ class AccountController(private val service: AccountService) {
    * Current balance + breakdown (deposits / withdrawals / net injected / trades P&L / adjustments).
    */
   @GetMapping("/summary") fun summary(): AccountSummaryDto = service.summary()
+
+  /** Cumulative end-of-day balance series (ascending) for the evolution chart. */
+  @GetMapping("/balance-series")
+  fun balanceSeries(): List<BalancePointDto> = service.balanceSeries()
 
   /** Adds a manual cash movement — DEPOSIT or WITHDRAWAL only (else 400). */
   @PostMapping("/movements")

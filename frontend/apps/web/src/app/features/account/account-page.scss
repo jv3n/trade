@@ -1,0 +1,248 @@
+.account-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+  }
+
+  .description {
+    margin: 0.25rem 0 0;
+    color: var(--color-text-muted);
+    max-width: 60ch;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem 1.5rem;
+
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .hero-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .hero-balance {
+    font-size: 2.2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    &.neg {
+      color: var(--color-danger);
+    }
+  }
+
+  .hero-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+
+    mat-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .change-label {
+      color: var(--color-text-muted);
+      margin-left: 0.25rem;
+    }
+  }
+
+  .chart-empty {
+    margin: 0.5rem 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.movements-card,
+.summary-card {
+  padding: 1.25rem;
+}
+
+.loading-state,
+.empty-state {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+  color: var(--color-text-muted);
+}
+
+.empty-state {
+  flex-direction: column;
+  text-align: center;
+}
+
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.25rem;
+  margin-top: 0.5rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.day-subtotal {
+  font-variant-numeric: tabular-nums;
+}
+
+.movement-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.25rem;
+  border-bottom: 1px solid var(--color-border-soft);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+
+    &[data-type='DEPOSIT'] {
+      color: var(--color-success);
+    }
+
+    &[data-type='WITHDRAWAL'] {
+      color: var(--color-danger);
+    }
+
+    &[data-type='TRADE'] {
+      color: var(--color-accent);
+    }
+
+    &[data-type='ADJUSTMENT'] {
+      color: var(--color-warning);
+    }
+  }
+
+  .label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    min-width: 0;
+
+    .type-label {
+      font-weight: 600;
+    }
+
+    .note {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+  }
+
+  .amt {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+}
+
+.pos {
+  color: var(--color-success);
+}
+
+.neg {
+  color: var(--color-danger);
+}
+
+.row-actions {
+  display: flex;
+}
+
+.summary-card {
+  .sum-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 0;
+    font-size: 0.9rem;
+
+    .k {
+      color: var(--color-text-muted);
+    }
+
+    .v {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}

@@ -66,6 +66,18 @@
         <mat-nav-list class="sidenav-list">
           <a
             mat-list-item
+            routerLink="/account"
+            routerLinkActive="sidenav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [matTooltip]="'nav.account' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+            <span matListItemTitle>{{ 'nav.account' | translate }}</span>
+          </a>
+          <a
+            mat-list-item
             routerLink="/journal"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"

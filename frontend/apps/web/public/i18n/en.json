@@ -17,6 +17,7 @@
     }
   },
   "nav": {
+    "account": "Account",
     "journal": "Journal",
     "stats": "Stats",
     "lexicon": "Lexicon",
@@ -29,6 +30,77 @@
     "expand": "Expand sidebar",
     "importExport": "Import / Export",
     "ticker": "Ticker"
+  },
+  "account": {
+    "title": "Account",
+    "subtitle": "Your broker cash account — balance, movements and corrections. Entered by hand, no broker connection.",
+    "currentBalance": "Current balance",
+    "addMovement": "Add movement",
+    "correctBalance": "Correct balance",
+    "change": "{{period}} change",
+    "chartEmpty": "Not enough movements to draw the balance curve.",
+    "period": {
+      "1W": "1W",
+      "1M": "1M",
+      "3M": "3M",
+      "YTD": "YTD",
+      "ALL": "All"
+    },
+    "loading": "Loading account…",
+    "empty": "No movement yet. Add a deposit to get started.",
+    "errors": {
+      "load": "Couldn't load the account. Please retry."
+    },
+    "movements": "Movements",
+    "viewInJournal": "View in the journal",
+    "dailySubtotal": "Daily total",
+    "type": {
+      "DEPOSIT": "Deposit",
+      "WITHDRAWAL": "Withdrawal",
+      "TRADE": "Trade",
+      "ADJUSTMENT": "Correction"
+    },
+    "summary": {
+      "title": "Summary",
+      "totalDeposits": "Total deposited",
+      "totalWithdrawals": "Total withdrawn",
+      "netInjected": "Net injected",
+      "tradesPnl": "Trades P&L",
+      "adjustments": "Corrections / fees",
+      "movementCount": "Movements"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "confirmDelete": "Delete this movement? This can't be undone.",
+    "fields": {
+      "type": "Type",
+      "amount": "Amount",
+      "valueDate": "Date",
+      "note": "Note",
+      "targetBalance": "Real broker balance"
+    },
+    "dialog": {
+      "addTitle": "Add a movement",
+      "editTitle": "Edit movement",
+      "correctTitle": "Correct the balance",
+      "correctHint": "Enter the real balance shown by your broker. The difference is recorded as a correction — it absorbs fees, financing and slippage the journal didn't capture.",
+      "amountRequired": "Enter an amount greater than zero.",
+      "targetRequired": "Enter the real broker balance.",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "snackbar": {
+      "createSuccess": "Movement added.",
+      "createError": "Couldn't add the movement. Please retry.",
+      "updateSuccess": "Movement updated.",
+      "updateError": "Couldn't update the movement. Please retry.",
+      "deleteSuccess": "Movement deleted.",
+      "deleteError": "Couldn't delete the movement. Please retry.",
+      "correctSuccess": "Balance corrected.",
+      "correctError": "Couldn't correct the balance. Please retry."
+    }
   },
   "journal": {
     "title": "Trading journal",

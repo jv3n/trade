@@ -2,6 +2,7 @@ package com.portfolioai.account.application
 
 import com.portfolioai.account.application.dto.AccountMovementDto
 import com.portfolioai.account.application.dto.AccountSummaryDto
+import com.portfolioai.account.application.dto.BalancePointDto
 import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.application.dto.toDto
@@ -11,6 +12,7 @@ import com.portfolioai.account.infrastructure.persistence.AccountMovementReposit
 import com.portfolioai.auth.application.AuthService
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -71,6 +73,26 @@ class AccountService(
       adjustments = adjustments,
       movementCount = movements.size.toLong(),
     )
+  }
+
+  /**
+   * Cumulative balance series — one end-of-day point per distinct movement date, ascending. The
+   * running sum is taken over every movement (deposits / withdrawals / trades / adjustments)
+   * ordered by `valueDate` then `createdAt`. Pure function of the data : period windowing + the
+   * change KPI are computed client-side, so this stays date-independent and trivially testable.
+   */
+  @Transactional(readOnly = true)
+  fun balanceSeries(): List<BalancePointDto> {
+    val userId = authService.getCurrentUser().id
+    val movements =
+      repo.findByUserId(userId).sortedWith(compareBy({ it.valueDate }, { it.createdAt }))
+    var running = BigDecimal.ZERO
+    val byDate = LinkedHashMap<LocalDate, BigDecimal>()
+    for (m in movements) {
+      running += m.amount
+      byDate[m.valueDate] = running // last write per date = end-of-day cumulative
+    }
+    return byDate.map { (date, balance) -> BalancePointDto(date, balance) }
   }
 
   /** Adds a manual cash movement. DEPOSIT / WITHDRAWAL only — everything else is a 400. */

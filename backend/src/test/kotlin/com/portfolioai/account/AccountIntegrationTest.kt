@@ -270,6 +270,31 @@ class AccountIntegrationTest {
   // Helpers
   // ---------------------------------------------------------------------------
 
+  @Test
+  fun `balanceSeries returns one ascending end-of-day cumulative point per date`() {
+    service.addMovement(movement(AccountMovementType.DEPOSIT, "5000.00", LocalDate.of(2026, 6, 1)))
+    service.addMovement(
+      movement(AccountMovementType.WITHDRAWAL, "1000.00", LocalDate.of(2026, 6, 1))
+    )
+    service.addMovement(movement(AccountMovementType.DEPOSIT, "200.00", LocalDate.of(2026, 6, 5)))
+
+    val series = service.balanceSeries()
+
+    assertEquals(2, series.size, "one point per distinct date")
+    assertEquals(LocalDate.of(2026, 6, 1), series[0].date)
+    assertEquals(
+      0,
+      BigDecimal("4000.00").compareTo(series[0].balance),
+      "5000 − 1000 at end of day 1",
+    )
+    assertEquals(LocalDate.of(2026, 6, 5), series[1].date)
+    assertEquals(
+      0,
+      BigDecimal("4200.00").compareTo(series[1].balance),
+      "running cumulative carries over",
+    )
+  }
+
   private fun makeUser(prefix: String) =
     User(
       email = "$prefix-${UUID.randomUUID()}@test.local",

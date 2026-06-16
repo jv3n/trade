@@ -6,6 +6,7 @@
 // import the wrapper (e.g. `StbDatePickerModule`) so the lib stays the single point of
 // configuration for that surface.
 
+export * from './lib/area-chart';
 export * from './lib/autocomplete';
 export * from './lib/button';
 export * from './lib/button-toggle';

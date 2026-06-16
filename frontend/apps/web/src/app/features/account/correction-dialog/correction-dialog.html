@@ -1,0 +1,52 @@
+<h2 mat-dialog-title>{{ 'account.dialog.correctTitle' | translate }}</h2>
+
+<form (submit)="$event.preventDefault(); submit()" class="correction-form">
+  <mat-dialog-content>
+    <p class="hint">{{ 'account.dialog.correctHint' | translate }}</p>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'account.fields.targetBalance' | translate }}</mat-label>
+      <input
+        matInput
+        appNumberMask
+        [decimals]="2"
+        [allowNegative]="true"
+        [value]="model().targetBalance"
+        (numberChange)="setTargetBalance($event)"
+        inputmode="decimal"
+      />
+      <span matTextSuffix>$</span>
+    </mat-form-field>
+    @if (targetInvalid()) {
+      <p class="field-error">{{ 'account.dialog.targetRequired' | translate }}</p>
+    }
+
+    <mat-form-field appearance="outline" class="full-width date-field" (click)="picker.open()">
+      <mat-label>{{ 'account.fields.valueDate' | translate }}</mat-label>
+      <input
+        matInput
+        readonly
+        [matDatepicker]="picker"
+        [value]="model().valueDate"
+        (dateChange)="setValueDate($event.value)"
+      />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'account.fields.note' | translate }}</mat-label>
+      <input matInput [formField]="correctionForm.note" />
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancel()">
+      {{ 'account.dialog.cancel' | translate }}
+    </button>
+    <button mat-flat-button type="submit">
+      <mat-icon>save</mat-icon>
+      <span>{{ 'account.dialog.save' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

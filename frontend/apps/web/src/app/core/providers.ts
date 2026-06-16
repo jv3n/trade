@@ -1,4 +1,6 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
+import { AccountRepository } from './api/account/account.repository';
+import { HttpAccountRepository } from './api/account/adapters/account.http';
 import { HttpNarrativeBiasRepository } from './api/analysis/adapters/narrative-bias.http';
 import { HttpNarrativeFeedbackRepository } from './api/analysis/adapters/narrative-feedback.http';
 import { HttpNarrativeObservabilityRepository } from './api/analysis/adapters/narrative-observability.http';
@@ -45,6 +47,7 @@ import { AnnotationRepository } from './local/annotation/annotation.repository';
  */
 export function provideRepositories(): EnvironmentProviders {
   return makeEnvironmentProviders([
+    { provide: AccountRepository, useClass: HttpAccountRepository },
     { provide: PortfolioRepository, useClass: HttpPortfolioRepository },
     { provide: SnapshotRepository, useClass: HttpSnapshotRepository },
     { provide: MarketRepository, useClass: HttpMarketRepository },

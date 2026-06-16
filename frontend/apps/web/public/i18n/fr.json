@@ -17,6 +17,7 @@
     }
   },
   "nav": {
+    "account": "Compte",
     "journal": "Journal",
     "stats": "Stats",
     "lexicon": "Lexique",
@@ -29,6 +30,77 @@
     "expand": "Déployer la sidebar",
     "importExport": "Import / Export",
     "ticker": "Ticker"
+  },
+  "account": {
+    "title": "Compte",
+    "subtitle": "Ton compte broker — solde, mouvements et corrections. Saisi à la main, sans connexion au broker.",
+    "currentBalance": "Solde courant",
+    "addMovement": "Ajouter un mouvement",
+    "correctBalance": "Corriger la balance",
+    "change": "Variation {{period}}",
+    "chartEmpty": "Pas assez de mouvements pour tracer la courbe du solde.",
+    "period": {
+      "1W": "1S",
+      "1M": "1M",
+      "3M": "3M",
+      "YTD": "YTD",
+      "ALL": "Tout"
+    },
+    "loading": "Chargement du compte…",
+    "empty": "Aucun mouvement pour l'instant. Ajoute un dépôt pour commencer.",
+    "errors": {
+      "load": "Impossible de charger le compte. Réessaie."
+    },
+    "movements": "Mouvements",
+    "viewInJournal": "Voir dans le journal",
+    "dailySubtotal": "Total du jour",
+    "type": {
+      "DEPOSIT": "Dépôt",
+      "WITHDRAWAL": "Retrait",
+      "TRADE": "Trade",
+      "ADJUSTMENT": "Correction"
+    },
+    "summary": {
+      "title": "Résumé",
+      "totalDeposits": "Total déposé",
+      "totalWithdrawals": "Total retiré",
+      "netInjected": "Net injecté",
+      "tradesPnl": "P&L trades",
+      "adjustments": "Corrections / frais",
+      "movementCount": "Mouvements"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "confirmDelete": "Supprimer ce mouvement ? Action irréversible.",
+    "fields": {
+      "type": "Type",
+      "amount": "Montant",
+      "valueDate": "Date",
+      "note": "Note",
+      "targetBalance": "Solde réel chez le broker"
+    },
+    "dialog": {
+      "addTitle": "Ajouter un mouvement",
+      "editTitle": "Modifier le mouvement",
+      "correctTitle": "Corriger la balance",
+      "correctHint": "Saisis le solde réel affiché par ton broker. L'écart est enregistré comme une correction — il absorbe les frais, le financement et le slippage que le journal n'a pas captés.",
+      "amountRequired": "Saisis un montant supérieur à zéro.",
+      "targetRequired": "Saisis le solde réel du broker.",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "snackbar": {
+      "createSuccess": "Mouvement ajouté.",
+      "createError": "Impossible d'ajouter le mouvement. Réessaie.",
+      "updateSuccess": "Mouvement mis à jour.",
+      "updateError": "Impossible de mettre à jour le mouvement. Réessaie.",
+      "deleteSuccess": "Mouvement supprimé.",
+      "deleteError": "Impossible de supprimer le mouvement. Réessaie.",
+      "correctSuccess": "Balance corrigée.",
+      "correctError": "Impossible de corriger la balance. Réessaie."
+    }
   },
   "journal": {
     "title": "Journal de trading",
