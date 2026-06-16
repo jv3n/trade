@@ -36,17 +36,20 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 |-------|-----------|
 | `backend` | Backend Kotlin / Spring Boot (global) |
 | `frontend` | Frontend Angular (global) |
-| `market` | Module market (Twelve Data + mock + indicateurs) |
-| `analysis` | Module d'appel LLM (Claude / Ollama, narratif ticker) |
-| `portfolio` | Module portefeuille (CSV, snapshots) |
-| `watchlist` | Module watchlist (Phase 2) |
-| `news` | Module news (Finnhub + mock, Phase 2) |
-| `analyst` | Module analyst (Finnhub + mock, recos analystes Phase 2) |
-| `earnings` | Module earnings (Finnhub + mock, EPS trimestriels + next-date Phase 2) |
-| `ticker` | Page Dossier ticker (frontend) |
-| `dashboard` | Page Dashboard (frontend, sidebar incluse) |
+| `journal` | Module + feature journal de trading (pivot, live) |
+| `stats` | Module + feature stats — dataset partagé (live) |
+| `lexicon` | Module + feature lexique bilingue (live) |
+| `account` | Page Compte broker (à venir — cf. `docs/projet/us/compte-broker.md`) |
 | `settings` | Page Settings (back-office, configuration runtime, gestion des prompts) |
-| `observability` | Module scoring / traçabilité (Phase 3) |
+| `market` | Module market (Twelve Data + mock + indicateurs) — pré-pivot |
+| `analysis` | Module d'appel LLM (Claude / Ollama, narratif ticker) — pré-pivot |
+| `watchlist` | Module watchlist (Phase 2) — pré-pivot |
+| `news` | Module news (Finnhub + mock, Phase 2) — pré-pivot |
+| `analyst` | Module analyst (Finnhub + mock, recos analystes Phase 2) — pré-pivot |
+| `earnings` | Module earnings (Finnhub + mock, EPS trimestriels + next-date Phase 2) — pré-pivot |
+| `screener` | Module radar / screener (Phase 6) — pré-pivot conservé |
+| `ticker` | Page Dossier ticker (frontend) — pré-pivot |
+| `observability` | Module scoring / traçabilité (Phase 3) — pré-pivot |
 | `db` | Migrations Flyway |
 | `ci` | GitHub Actions |
 | `tilt` | Tiltfile / environnement local |
@@ -67,9 +70,9 @@ chore(tilt): add db:reset one-click resource
 
 docs: add commit conventions
 
-refactor(portfolio): extract asset mapper to dedicated class
+refactor(journal): extract trade mapper to dedicated class
 
-test(ingestion): add integration test for RssFetcherService
+test(stats): add integration test for StatEntryCsvDecoder
 
 audit: add 2026-05-02 global code review report
 ```

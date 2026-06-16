@@ -19,7 +19,7 @@
 
 ## Documentation
 
-Site complet : **<a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blank" rel="noopener">portfolioAI</a>**
+Site complet : **<a href="https://jv3n.github.io/trade/" target="_blank" rel="noopener">portfolioAI</a>**
 
 | Rubrique | Pour qui / quand |
 |---|---|
@@ -42,6 +42,7 @@ Site complet : **<a href="https://jv3n.github.io/trade/CHANGELOG/" target="_blan
 | <a href="https://jv3n.github.io/trade/projet/roadmap/" target="_blank" rel="noopener">Roadmap (pivot v1.0)</a> | Le périmètre in / out du pivot — ce qui est gardé, dormant, ou décommissionné |
 | <a href="https://jv3n.github.io/trade/projet/testeur/" target="_blank" rel="noopener">Onboarding testeur</a> | Pour qui veut juste cliquer dans l'app — Docker Desktop + Java + Node + Tilt, tout en mock par défaut |
 | <a href="https://jv3n.github.io/trade/projet/backlog/" target="_blank" rel="noopener">Backlog</a> | Travail ouvert : ⏳/🚧/🧊/❌ + dette technique (le shipped est dans le journal) |
+| <a href="https://jv3n.github.io/trade/projet/us/compte-broker/" target="_blank" rel="noopener">US — Compte broker</a> | Spécification de la page Compte (valeur broker, mouvements, intégration journal) — cadrage tranché |
 | <a href="https://jv3n.github.io/trade/projet/journal-livraisons/" target="_blank" rel="noopener">Journal des livraisons</a> | Historique reverse-chronologique des livraisons (1.0 journal ; les phases 1-6 pré-pivot sont archivées) |
 | <a href="https://jv3n.github.io/trade/projet/sources/" target="_blank" rel="noopener">Sources de données</a> | Twelve Data, Finnhub — endpoints, quotas, mocks |
 | <a href="https://jv3n.github.io/trade/projet/commit-conventions/" target="_blank" rel="noopener">Conventions de commit</a> | Conventional Commits en anglais, exemples |

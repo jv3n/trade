@@ -9,6 +9,8 @@ nav:
   - Projet:
       - Roadmap (pivot v1.0): projet/roadmap.md
       - Backlog: projet/backlog.md
+      - Spécifications (US):
+          - Compte broker: projet/us/compte-broker.md
       - Onboarding testeur: projet/testeur.md
       - Journal des livraisons: projet/journal-livraisons.md
       - Sources de données: projet/sources.md

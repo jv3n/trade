@@ -54,11 +54,11 @@ Le `.env` est gitignored — tes ports locaux ne sortent pas du repo. Le `docker
 | **Mode → OAuth** (sur le panel `backend`, Phase 4) | Édite `.env` pour mettre `BACKEND_AUTH_MODE=oauth` + touche `application.yml` → backend redémarre en mode auth réel (Spring Security + OAuth Google). Pré-requis : `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}` + `APP_ADMIN_EMAILS` dans `.env`, redirect URI `http://localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google` enregistrée dans Google Cloud Console |
 | **Mode → no-auth** (sur le panel `backend`, Phase 4) | Édite `.env` pour mettre `BACKEND_AUTH_MODE=no-auth` + touche `application.yml` → backend redémarre avec Spring Security bypassed, user fake ADMIN (`dev@local.test`) seedé au boot. Mode par défaut pour le dev solo |
 
-Pour alimenter un portefeuille démo, importer un CSV Wealthsimple depuis l'onglet **Import** (le portefeuille est read-only, il n'y a pas de seed SQL).
+Pour des données de démo, importer le CSV `docs/data-input/journal-demo.csv` depuis la page **Journal I/O** (`/journal-io`) — il n'y a pas de seed SQL applicatif.
 
 ### Swagger UI — explorer la surface REST
 
-Le panel `backend` dans Tilt expose un lien **Swagger UI** vers `http://localhost:8080/swagger-ui.html` (ou le port défini par `BACKEND_HOST_PORT`). L'UI est auto-générée par `springdoc-openapi` à partir des controllers Spring + DTO Jackson, regroupée par tag (`Market`, `News`, `Analyst`, `Earnings`, `Watchlist`, `Portfolio`, `Snapshot`, `CSV Import`, `Ticker Narrative`, `Symbol Search`, `Config`). Le bouton **Try it out** envoie de vrais appels au backend local — pratique pour tester un endpoint sans `curl`.
+Le panel `backend` dans Tilt expose un lien **Swagger UI** vers `http://localhost:8080/swagger-ui.html` (ou le port défini par `BACKEND_HOST_PORT`). L'UI est auto-générée par `springdoc-openapi` à partir des controllers Spring + DTO Jackson, regroupée par controller. La surface **live** est `Journal` / `Stats` / `Lexicon` (+ `Auth`) ; les controllers pré-pivot conservés (`Market`, `News`, `Screener`, `Analyst`, `Earnings`, `Watchlist`, `Config`, narratif ticker, symbol search) restent exposés tant qu'ils sont routés. Le bouton **Try it out** envoie de vrais appels au backend local — pratique pour tester un endpoint sans `curl`.
 
 L'UI et le schéma JSON (`/v3/api-docs`) sont **désactivés par défaut** dans `application.yml` et activés uniquement via le profil `local` (`application-local.yml`). Aucun environnement qui n'opte pas in explicitement n'expose la surface.
 
@@ -155,31 +155,34 @@ trade/
 │   │   └── i18n/              # Fichiers de traduction `<lang>.json` (FR + EN)
 │   └── src/app/
 │       ├── core/              # split sur 5 sous-dossiers — api/ (HTTP) + local/ (browser) + app-state/ (UI services) + http/ (interceptors, Phase 4) + router/ (guards, Phase 4)
-│       │   ├── api/<bucket>/          # 11 buckets : journal/ (★ LIVE pivot) + market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/ (dormants)
+│       │   ├── api/<bucket>/          # 13 buckets : journal/ + stats/ + lexicon/ (★ LIVE pivot) + market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/ (dormants/conservés)
 │       │   │   ├── *.repository.ts            # ports (abstract class) à la racine du bucket
 │       │   │   ├── *.service.ts               # services bucket-locaux (ex. analysis/ollama-status.service.ts, analysis/job-stream.service.ts SSE, analysis/llm-timeout.service.ts)
 │       │   │   └── adapters/*.http.ts         # HttpXxxRepository (défaut)
-│       │   ├── local/<bucket>/        # ports persistés navigateur (annotation/ + screener-filter/) + adapters/*.local.ts
+│       │   ├── local/<bucket>/        # ports persistés navigateur (annotation/) + adapters/*.local.ts
 │       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts, auth.service.ts), sans port/adapter
 │       │   ├── http/                  # HTTP interceptors (Phase 4 — auth.interceptor.ts catch 401 → /login)
 │       │   ├── router/                # Route guards (Phase 4 — authGuard, adminGuard)
-│       │   └── providers.ts           # `provideRepositories()` — wires les 18 ports (api/ + local/) → adapters
+│       │   └── providers.ts           # `provideRepositories()` — wires les 19 ports (api/ + local/) → adapters
 │       └── features/          # Pages UI (primary adapters)
 │           ├── journal/               # ★ LIVE (pivot) — table trades + dialog add/edit + filtres
 │           ├── journal-io/            # ★ LIVE (pivot) — export / import CSV
-│           ├── dashboard/             # 💤 dormant (pré-pivot) — Portefeuille + lien dossiers ticker
-│           ├── ticker/                # Dossier par symbole (graphe, indicateurs, narratif IA + thumbs)
-│           ├── import/                # Drag & drop CSV Wealthsimple
-│           ├── suivi/                 # Timeline snapshots
-│           ├── observability/         # Phase 3 — index symbols, timeline narratif vs prix par ticker (#1) + chip cohérence (#2), bias dashboard (#3)
-│           └── settings/              # Sidenav : configuration runtime / prompts (liste + éditeur) / prompts/:id/stats (Phase 3) / access-control (Phase 5, whitelist ADMIN-only)
+│           ├── stats/                 # ★ LIVE (pivot) — table stats read-only + tri / pagination serveur
+│           ├── lexicon/               # ★ LIVE (pivot) — glossaire bilingue, recherche client-side
+│           ├── ticker/                # pré-pivot (conservé, encore routé) — dossier par symbole (graphe, indicateurs, narratif IA)
+│           ├── radar/                 # pré-pivot (conservé, encore routé) — screener gap-up small-caps
+│           ├── observability/         # 💤 dormant (pré-pivot, Phase 3) — timeline narratif vs prix, bias dashboard
+│           └── settings/              # Sidenav : préférences / configuration runtime / prompts / stats-import / lexicon (admin) / access-control
 ├── backend/                   # Kotlin + Spring Boot
 │   └── src/main/kotlin/com/portfolioai/
+│       ├── journal/           # ★ LIVE (pivot) — trade entries (CRUD + CSV io + Pageable)
+│       ├── stats/             # ★ LIVE (pivot) — dataset stats partagé (import/export CSV admin + list paginée)
+│       ├── lexicon/           # ★ LIVE (pivot) — glossaire bilingue (findAll + CRUD admin)
 │       ├── auth/              # Phase 4 — OAuth2 Google OIDC + ADMIN/USER + profile dev local-no-auth
-│       ├── market/            # TwelveData client + mock + indicateurs
-│       ├── analysis/          # Phase 1 narratif ticker + LLM dispatch (Routing/Claude/Ollama)
-│       ├── portfolio/         # Import CSV, snapshots, lecture (multi-tenant via user_id FK depuis Phase 4)
-│       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille (multi-tenant via user_id FK depuis Phase 4)
+│       ├── market/            # TwelveData client + mock + indicateurs (pré-pivot conservé)
+│       ├── analysis/          # Phase 1 narratif ticker + LLM dispatch (Routing/Claude/Ollama) (pré-pivot)
+│       ├── screener/          # Phase 6 — screener radar (screener_snapshot_day, conservé)
+│       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille (multi-tenant via user_id FK) (pré-pivot)
 │       ├── news/              # Phase 2 — Finnhub + mock, news par ticker
 │       ├── analyst/           # Phase 2 — Finnhub + mock, recommandations analystes
 │       ├── earnings/          # Phase 2 — Finnhub + mock, earnings trimestriels + next-date

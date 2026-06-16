@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maquette — Page Compte (broker)</title>
+    <!--
+      Maquette UX (NON UI) de l'US docs/projet/us/compte-broker.md.
+      But : valider le LAYOUT et les INTERACTIONS, pas le thème visuel.
+      L'UI finale passe par le design-system @portfolioai/ui (Material M3),
+      pas par ce CSS jetable. Ouvrir ce fichier directement dans un navigateur.
+    -->
+    <style>
+      :root {
+        --bg: #f5f6f8;
+        --surface: #ffffff;
+        --line: #e4e7ec;
+        --ink: #1c2430;
+        --muted: #6b7480;
+        --faint: #9aa3af;
+        --accent: #1f9d72; /* vert ticker — cohérent domaine trading */
+        --accent-soft: rgba(31, 157, 114, 0.12);
+        --in: #1f9d72;
+        --out: #d1495b;
+        --adj: #c98a1a;
+        --primary: #2f6df0;
+        --radius: 14px;
+        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--ink); }
+
+      /* ---- App shell : sidenav + contenu ---- */
+      .shell { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+      .sidenav {
+        background: #11161d; color: #c4ccd6; padding: 18px 12px;
+        display: flex; flex-direction: column; gap: 4px;
+      }
+      .brand { display: flex; align-items: center; gap: 10px; padding: 6px 10px 18px; font-weight: 700; color: #fff; }
+      .brand .dot { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; font-size: 14px; }
+      .nav-item {
+        display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px;
+        color: #c4ccd6; text-decoration: none; font-size: 14px; cursor: pointer;
+      }
+      .nav-item .ic { width: 20px; text-align: center; opacity: .85; }
+      .nav-item:hover { background: rgba(255,255,255,.06); }
+      .nav-item.active { background: var(--accent-soft); color: #eafff6; }
+      .nav-item.active .ic { color: var(--accent); opacity: 1; }
+      .nav-badge { margin-left: auto; font-size: 10px; background: var(--accent); color: #04130d; border-radius: 6px; padding: 1px 6px; font-weight: 700; }
+      .nav-spacer { flex: 1; }
+      .nav-footer { border-top: 1px solid rgba(255,255,255,.08); padding-top: 8px; }
+
+      .content { padding: 22px 26px 40px; max-width: 1320px; }
+
+      /* ---- Topbar / breadcrumb ---- */
+      .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+      .crumbs { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+      .crumbs a { color: var(--primary); text-decoration: none; }
+      .crumbs .sep { color: var(--faint); }
+      .crumbs .here { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+      .crumbs .acct-ic { width: 22px; height: 22px; border-radius: 6px; background: #11161d; color: #fff; display: grid; place-items: center; font-size: 12px; }
+      .topbar-actions { display: flex; gap: 10px; }
+      .btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 14px; border-radius: 9px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+      .btn:hover { border-color: #cfd5dd; }
+      .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+      .btn-primary:hover { filter: brightness(1.05); }
+
+      .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+
+      /* ---- Hero + chart ---- */
+      .hero { padding: 22px 24px 8px; margin-bottom: 18px; }
+      .hero-top { display: flex; align-items: flex-start; justify-content: space-between; }
+      .hero-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+      .hero-balance { font-size: 38px; font-weight: 700; margin: 6px 0 4px; letter-spacing: -.5px; }
+      .hero-change { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+      .chg-neg { color: var(--out); font-weight: 600; }
+      .chg-pos { color: var(--in); font-weight: 600; }
+      .period { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; display: flex; }
+      .period button { border: 0; background: transparent; padding: 7px 12px; font-size: 12px; color: var(--muted); cursor: pointer; }
+      .period button.on { background: var(--ink); color: #fff; }
+
+      .chart-wrap { position: relative; margin-top: 10px; }
+      svg { display: block; width: 100%; height: 230px; }
+      .tooltip {
+        position: absolute; pointer-events: none; background: #11161d; color: #fff; border-radius: 9px;
+        padding: 8px 11px; font-size: 12px; transform: translate(-50%, -120%); white-space: nowrap;
+        box-shadow: 0 6px 20px rgba(0,0,0,.25); opacity: 0; transition: opacity .08s;
+      }
+      .tooltip .tt-date { color: #9aa3af; margin-bottom: 3px; }
+      .tooltip .tt-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px; }
+
+      /* ---- Bottom : transactions + summary ---- */
+      .grid { display: grid; grid-template-columns: 1fr 320px; gap: 18px; align-items: start; }
+      .tx-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+      .tx-head h2 { margin: 0; font-size: 18px; }
+      .tx-actions { display: flex; gap: 10px; align-items: center; }
+
+      .day-head { display: flex; justify-content: space-between; padding: 10px 20px; background: #fafbfc; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+      .day-sub.pos { color: var(--in); }
+      .day-sub.neg { color: var(--out); }
+      .row { display: grid; grid-template-columns: 36px 1fr auto 22px; gap: 12px; align-items: center; padding: 13px 20px; border-bottom: 1px solid var(--line); }
+      .row:last-child { border-bottom: 0; }
+      .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; }
+      .av-in { background: rgba(31,157,114,.12); color: var(--in); }
+      .av-out { background: rgba(209,73,91,.12); color: var(--out); }
+      .av-adj { background: rgba(201,138,26,.14); color: var(--adj); }
+      .row .label { font-weight: 600; font-size: 14px; }
+      .row .note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+      .row .amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+      .amt.pos { color: var(--in); }
+      .amt.neg { color: var(--out); }
+      .row .chev { color: var(--faint); text-align: right; }
+      .tag { font-size: 10px; padding: 1px 7px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
+      .tag-adj { background: rgba(201,138,26,.14); color: var(--adj); }
+      .av-trade { background: rgba(47,109,240,.10); color: var(--primary); }
+      /* Chip ticker — vert domaine trading (cf. CLAUDE.md : ticker = stbChip="ticker") */
+      .chip { display: inline-block; background: rgba(31,157,114,.14); color: var(--accent); border-radius: 7px; padding: 2px 9px; font-weight: 700; font-size: 12px; font-family: "SF Mono", ui-monospace, monospace; }
+      .chip--link { cursor: pointer; }
+      .chip--link:hover { text-decoration: underline; }
+      .row .note a { color: var(--primary); text-decoration: none; }
+      .row .note a:hover { text-decoration: underline; }
+
+      /* ---- Summary ---- */
+      .summary { padding: 20px; }
+      .summary h2 { margin: 0 0 16px; font-size: 18px; }
+      .sum-balance { font-size: 12px; color: var(--muted); }
+      .sum-bar { height: 8px; border-radius: 5px; background: #eef0f3; overflow: hidden; margin: 8px 0 4px; }
+      .sum-bar > span { display: block; height: 100%; background: var(--accent); }
+      .sum-row { display: flex; justify-content: space-between; padding: 11px 0; border-top: 1px solid var(--line); font-size: 14px; }
+      .sum-row .k { color: var(--muted); }
+      .sum-row .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+      .sum-row .v.pos { color: var(--in); }
+      .sum-row .v.neg { color: var(--out); }
+      .sum-row .v.link { color: var(--primary); }
+      .note-cb { margin-top: 16px; font-size: 12px; color: var(--faint); line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <!-- ===== Sidenav : "Compte" en PREMIER (exigence US) ===== -->
+      <nav class="sidenav">
+        <div class="brand"><span class="dot">P</span> PortfolioAI</div>
+        <a class="nav-item active"><span class="ic">💼</span> Compte <span class="nav-badge">NEW</span></a>
+        <a class="nav-item"><span class="ic">📓</span> Journal</a>
+        <a class="nav-item"><span class="ic">📈</span> Stats</a>
+        <a class="nav-item"><span class="ic">🔍</span> Ticker</a>
+        <a class="nav-item"><span class="ic">📡</span> Radar</a>
+        <div class="nav-spacer"></div>
+        <div class="nav-footer">
+          <a class="nav-item"><span class="ic">📖</span> Lexique</a>
+        </div>
+      </nav>
+
+      <!-- ===== Contenu ===== -->
+      <main class="content">
+        <!-- Topbar / breadcrumb (le "Comptes >" suggère le multi-comptes — question ouverte n°3) -->
+        <div class="topbar">
+          <div class="crumbs">
+            <a href="#">Comptes</a><span class="sep">›</span>
+            <span class="here"><span class="acct-ic">W</span> Compte trading</span>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn">✎ Corriger la balance</button>
+            <button class="btn">⚙ Éditer</button>
+          </div>
+        </div>
+
+        <!-- Hero balance + variation période + sélecteur de période + graphe -->
+        <section class="card hero">
+          <div class="hero-top">
+            <div>
+              <div class="hero-label">Solde courant</div>
+              <div class="hero-balance">12 450,32&nbsp;$</div>
+              <div class="hero-change">
+                <span class="chg-neg">↓ −210,64&nbsp;$ (−1,7&nbsp;%)</span> variation 1 mois
+              </div>
+            </div>
+            <div class="period">
+              <button>1S</button>
+              <button class="on">1M</button>
+              <button>3M</button>
+              <button>YTD</button>
+              <button>Tout</button>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <svg id="chart" viewBox="0 0 1000 230" preserveAspectRatio="none"></svg>
+            <div class="tooltip" id="tooltip"></div>
+          </div>
+        </section>
+
+        <!-- Transactions (groupées par date + sous-total) | Résumé -->
+        <div class="grid">
+          <section class="card">
+            <div class="tx-head">
+              <h2>Mouvements</h2>
+              <div class="tx-actions">
+                <button class="btn">☑ Éditer plusieurs</button>
+                <button class="btn btn-primary">＋ Ajouter un mouvement</button>
+              </div>
+            </div>
+
+            <!-- 15 juin : 2 trades (journal) + 1 correction -->
+            <div class="day-head"><span>15 juin 2026</span><span class="day-sub pos">+194,80&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">BAC</span> Short gap-up</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt pos">+420,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">GUS</span> Short</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt neg">−180,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+            <div class="row">
+              <div class="avatar av-adj">⚖</div>
+              <div><div class="label">Correction de balance <span class="tag tag-adj">AJUSTEMENT</span></div><div class="note">Frais de financement short overnight</div></div>
+              <div class="amt neg">−45,20&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+
+            <!-- 14 juin -->
+            <div class="day-head"><span>14 juin 2026</span><span class="day-sub pos">+2 000,00&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-in">↘</div>
+              <div><div class="label">Dépôt</div><div class="note">Virement entrant — banque</div></div>
+              <div class="amt pos">+2 000,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+
+            <!-- 12 juin : trade -->
+            <div class="day-head"><span>12 juin 2026</span><span class="day-sub pos">+1 875,00&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">SOBR</span> Short squeeze fade</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt pos">+1 875,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+
+            <!-- 10 juin : trade + retrait -->
+            <div class="day-head"><span>10 juin 2026</span><span class="day-sub neg">−150,00&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">NUKK</span> Short gap-up</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt pos">+1 350,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+            <div class="row">
+              <div class="avatar av-out">↗</div>
+              <div><div class="label">Retrait</div><div class="note">Sortie vers compte bancaire</div></div>
+              <div class="amt neg">−1 500,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+
+            <!-- 6 juin : 2 trades -->
+            <div class="day-head"><span>6 juin 2026</span><span class="day-sub pos">+1 650,52&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">AMC</span> Short gap-up</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt pos">+2 130,52&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">MULN</span> Short</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt neg">−480,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+
+            <!-- 2 juin : correction -->
+            <div class="day-head"><span>2 juin 2026</span><span class="day-sub neg">−120,00&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-adj">⚖</div>
+              <div><div class="label">Correction de balance <span class="tag tag-adj">AJUSTEMENT</span></div><div class="note">Frais &amp; commissions mai (calage sur broker)</div></div>
+              <div class="amt neg">−120,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+
+            <!-- 30 mai : 2 trades -->
+            <div class="day-head"><span>30 mai 2026</span><span class="day-sub pos">+2 000,00&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">FFIE</span> Short gap-up</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt pos">+820,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+            <div class="row">
+              <div class="avatar av-trade">📊</div>
+              <div><div class="label"><span class="chip chip--link">BBIG</span> Short</div><div class="note">Trade clôturé · <a href="#">voir dans le journal ›</a></div></div>
+              <div class="amt pos">+1 180,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+
+            <!-- 28 mai : dépôt initial -->
+            <div class="day-head"><span>28 mai 2026</span><span class="day-sub pos">+5 000,00&nbsp;$</span></div>
+            <div class="row">
+              <div class="avatar av-in">↘</div>
+              <div><div class="label">Dépôt</div><div class="note">Alimentation initiale du compte</div></div>
+              <div class="amt pos">+5 000,00&nbsp;$</div>
+              <div class="chev">›</div>
+            </div>
+          </section>
+
+          <!-- Panneau résumé — sémantique compte de trading cash (pas carte de crédit) -->
+          <aside class="card summary">
+            <h2>Résumé</h2>
+            <div class="sum-balance">Solde courant</div>
+            <div class="sum-bar"><span style="width: 72%"></span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-variant-numeric:tabular-nums;">
+              <span>12 450,32&nbsp;$</span><span style="color:var(--muted)">net injecté 5 700,00&nbsp;$</span>
+            </div>
+
+            <div class="sum-row"><span class="k">Institution</span><span class="v link">Wealthsimple (CA)</span></div>
+            <div class="sum-row"><span class="k">Type de compte</span><span class="v">Marge (short)</span></div>
+            <div class="sum-row"><span class="k">Total déposé</span><span class="v pos">+7 000,00&nbsp;$</span></div>
+            <div class="sum-row"><span class="k">Total retiré</span><span class="v neg">−1 500,00&nbsp;$</span></div>
+            <div class="sum-row"><span class="k">Net injecté</span><span class="v">5 500,00&nbsp;$</span></div>
+            <div class="sum-row"><span class="k">P&amp;L trades (journal)</span><span class="v pos">+7 115,52&nbsp;$</span></div>
+            <div class="sum-row"><span class="k">Corrections / frais cumulés</span><span class="v neg">−165,20&nbsp;$</span></div>
+            <div class="sum-row"><span class="k">Nb de mouvements</span><span class="v">13</span></div>
+
+            <p class="note-cb">
+              Maquette UX, pas UI. Balance = net injecté + P&amp;L trades + corrections, saisie/entretenue
+              à la main (aucune connexion broker). Les lignes <b>trades</b> viennent du journal (read-only,
+              ticker en chip, lien vers le trade). « Corriger la balance » crée un mouvement d'ajustement
+              = écart résiduel (frais, financement) entre la valeur réelle broker et le solde calculé.
+            </p>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Série de balance (cumul des mouvements) — données factices pour la maquette.
+      // 15 mai → 15 juin 2026. Reproduit l'allure de la réf (dépôts/retraits = marches).
+      const series = [
+        { d: '15 mai', v: 5000 }, { d: '17 mai', v: 5120 }, { d: '19 mai', v: 4980 },
+        { d: '21 mai', v: 5240 }, { d: '23 mai', v: 5180 }, { d: '25 mai', v: 5360 },
+        { d: '28 mai', v: 10360 }, { d: '30 mai', v: 11020 }, { d: '2 juin', v: 10780 },
+        { d: '4 juin', v: 12940 }, { d: '6 juin', v: 12180 }, { d: '8 juin', v: 11760 },
+        { d: '10 juin', v: 10495 }, { d: '12 juin', v: 11320 }, { d: '14 juin', v: 12495 },
+        { d: '15 juin', v: 12450 },
+      ];
+
+      const W = 1000, H = 230, padL = 8, padR = 8, padT = 14, padB = 26;
+      const min = Math.min(...series.map((p) => p.v)) * 0.9;
+      const max = Math.max(...series.map((p) => p.v)) * 1.04;
+      const x = (i) => padL + (i * (W - padL - padR)) / (series.length - 1);
+      const y = (v) => padT + (H - padT - padB) * (1 - (v - min) / (max - min));
+
+      const pts = series.map((p, i) => [x(i), y(p.v)]);
+      const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+      const area = line + ` L ${x(series.length - 1).toFixed(1)} ${H - padB} L ${padL} ${H - padB} Z`;
+
+      const gridY = [0, 0.33, 0.66, 1].map((t) => {
+        const yy = padT + (H - padT - padB) * t;
+        const val = Math.round((max - (max - min) * t) / 100) * 100;
+        return `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" stroke="#eef0f3" stroke-width="1"/>
+                <text x="${padL}" y="${yy - 4}" fill="#9aa3af" font-size="11">${val.toLocaleString('fr-CA')} $</text>`;
+      }).join('');
+
+      const xlabels = series.map((p, i) =>
+        i % 3 === 0 ? `<text x="${x(i)}" y="${H - 6}" fill="#9aa3af" font-size="11" text-anchor="middle">${p.d}</text>` : ''
+      ).join('');
+
+      document.getElementById('chart').innerHTML = `
+        <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(31,157,114,.22)"/>
+          <stop offset="100%" stop-color="rgba(31,157,114,0)"/>
+        </linearGradient></defs>
+        ${gridY}
+        <path d="${area}" fill="url(#g)"/>
+        <path d="${line}" fill="none" stroke="#1f9d72" stroke-width="2.5"/>
+        ${xlabels}
+        <circle id="cursor" r="5" fill="#fff" stroke="#1f9d72" stroke-width="2.5" opacity="0"/>
+      `;
+
+      // Tooltip au survol — démontre l'interaction "date + balance ce jour-là".
+      const svg = document.getElementById('chart');
+      const tip = document.getElementById('tooltip');
+      const cursor = document.getElementById('cursor');
+      const wrap = svg.parentElement;
+      svg.addEventListener('mousemove', (e) => {
+        const rect = svg.getBoundingClientRect();
+        const i = Math.round(((e.clientX - rect.left) / rect.width) * (series.length - 1));
+        const p = series[Math.max(0, Math.min(series.length - 1, i))];
+        const px = (x(i) / W) * rect.width;
+        const py = (y(p.v) / H) * rect.height;
+        cursor.setAttribute('opacity', '1');
+        cursor.setAttribute('cx', x(i));
+        cursor.setAttribute('cy', y(p.v));
+        tip.style.opacity = '1';
+        tip.style.left = px + 'px';
+        tip.style.top = py + 'px';
+        tip.innerHTML = `<div class="tt-date">${p.d} 2026</div><div><span class="tt-dot"></span>Balance : <b>${p.v.toLocaleString('fr-CA')},00 $</b></div>`;
+      });
+      svg.addEventListener('mouseleave', () => { tip.style.opacity = '0'; cursor.setAttribute('opacity', '0'); });
+    </script>
+  </body>
+</html>

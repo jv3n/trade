@@ -201,6 +201,7 @@ Détails ruleset + commandes dans [`ops.md`](./ops.md) section ESLint.
 |---|---|
 | Pourquoi le projet existe, ce qu'on essaie de prouver | [`metier/vision.md`](../metier/vision.md) |
 | Le découpage des phases et les features à venir | [`metier/fonctionnalites.md`](../metier/fonctionnalites.md), [`projet/backlog.md`](../projet/backlog.md) (`⏳`/`🚧` uniquement) |
+| La spec détaillée d'une feature en cours de cadrage | [`projet/us/`](../projet/us/) — ex. [`compte-broker.md`](../projet/us/compte-broker.md) |
 | Le journal des features déjà livrées (par phase, reverse-chronological) | [`projet/journal-livraisons.md`](../projet/journal-livraisons.md) |
 | L'architecture (modules, schéma BDD, décisions techniques) | [`architecture.md`](./architecture.md) |
 | Les conventions de code, commandes Gradle/npm, structure complète | [`developpement.md`](./developpement.md) |

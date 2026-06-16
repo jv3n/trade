@@ -7,13 +7,15 @@ Chaque contexte est autonome et possède ses propres couches.
 
 ## Bounded Contexts
 
-> **Pivot juin 2026** — seuls `journal` (le produit) et `auth` (dont le journal dépend pour le multi-tenant) sont **live**. Les contextes `market` / `analysis` / `portfolio` / `news` / `analyst` / `earnings` / `watchlist` / `config` restent dans l'arbre en **sommeil** (providers conservés pour un éventuel enrichissement Phase 2).
+> **Pivot juin 2026** — `journal` (le produit), `stats` et `lexicon` (datasets partagés du pivot) et `auth` (dont le journal dépend pour le multi-tenant) sont **live**. Les contextes `market` / `analysis` / `news` / `analyst` / `earnings` / `watchlist` / `screener` / `config` restent dans l'arbre en **sommeil / conservés** (`portfolio` a été supprimé au pivot ; providers conservés pour un éventuel enrichissement Phase 2).
 
 | Contexte | Responsabilité | Statut |
 |----------|----------------|--------|
 | `journal` | **Journal de trading** — trade entries (CRUD + CSV io roundtrip + pagination / tri / filtres serveur), multi-tenant `user_id`. 4 enums Postgres natifs (play A/B, pattern GUS/FRD, open side FRONT/BACK, exit strategy SWING_20/EOD) | ✅ **Pivot v1.0 (live)** |
-| `auth` | OAuth2 Google OIDC + rôles ADMIN/USER + profile dev `local-no-auth`. Source de vérité du `user_id` consommé par `journal` (et `portfolio`/`watchlist` dormants) | ✅ Phase 4 (live) |
-| `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | 💤 Dormant (pré-pivot) |
+| `stats` | **Dataset stats partagé** (sans `user_id`) — contexte setup + niveaux de prix + `%` dérivés, import/export CSV admin, provenance IMPORT / RADAR / MANUAL | ✅ **Pivot (live)** |
+| `lexicon` | **Glossaire bilingue** des termes de trading (FR/EN, sans `user_id`) — lecture pour tous, CRUD admin | ✅ **Pivot (live)** |
+| `auth` | OAuth2 Google OIDC + rôles ADMIN/USER + profile dev `local-no-auth`. Source de vérité du `user_id` consommé par `journal` (et `watchlist` dormant) | ✅ Phase 4 (live) |
+| `portfolio` | Portefeuilles, actifs, import CSV, snapshots historiques | ❌ Supprimé au pivot (2026-06-10) |
 | `market` | Données ticker (Twelve Data + mock) + indicateurs techniques calculés | ✅ Phase 1 |
 | `analysis` | Narratifs ticker (LLM rédacteur, pas décideur) + gestion des prompts narratifs en BDD avec scoring continu (latence / retry / parse-validator failed / thumbs user, Phase 3) | ✅ Phase 1 — étendu Phase 3 |
 | `watchlist` | Liste plate de tickers suivis hors portefeuille (scopée user_id depuis Phase 4, UNIQUE `(user_id, symbol)`) | ✅ Phase 2 — multi-tenant Phase 4 |
@@ -126,11 +128,8 @@ Les services d'`analysis` (Phase 1 narratif) peuvent dépendre du repository et 
 
 ```
 analysis.application → market.application                   ✓ (Phase 1)
-analysis.application → portfolio.infrastructure.persistence ✓ (récupérer la liste des tickers détenus)
-portfolio.domain → auth.domain                              ✓ (Phase 4 — @ManyToOne User sur Portfolio)
 watchlist.domain → auth.domain                              ✓ (Phase 4 — @ManyToOne User sur WatchlistEntry)
-portfolio.application → auth.application                    ✓ (Phase 4 — AuthService.getCurrentUser pour scoper les reads)
-watchlist.application → auth.application                    ✓ (Phase 4 — idem)
+watchlist.application → auth.application                    ✓ (Phase 4 — AuthService.getCurrentUser pour scoper les reads)
 journal.domain → auth.domain                                ✓ (pivot — @ManyToOne User sur TradeEntry)
 journal.application → auth.application                       ✓ (pivot — AuthService.getCurrentUser pour scoper les trades)
 ```
@@ -141,7 +140,7 @@ journal.application → auth.application                       ✓ (pivot — Au
 
 | Type | Convention | Exemples |
 |------|-----------|---------|
-| Service query-only | `{Context}QueryService` | `PortfolioQueryService` |
+| Service query-only | `{Context}QueryService` | _(pattern de nommage — aucun en service live actuellement)_ |
 | Service avec write | `{Action}Service` | `CsvImportService`, `TickerNarrativeService` |
 | Calculator pur | `{Domain}Calculator` | `IndicatorCalculator` |
 | Client externe | `{Provider}Client` | `TwelveDataClient`, `ClaudeClient` |

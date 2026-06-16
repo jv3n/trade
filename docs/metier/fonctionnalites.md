@@ -33,7 +33,7 @@ Page dédiée (`journal-io`) :
 
 ### Backend
 
-Module `journal/` (hexagonal) : `TradeEntry` (19 champs) + 4 enums Postgres natifs (`trade_play`, `trade_pattern`, `trade_open_side`, `trade_exit_strategy`), `TradeEntryService`, `TradeEntryRepository` (+ `TradeEntrySpecifications` pour les filtres dynamiques), `TradeEntryController`. **7 endpoints** sous `/api/journal/trades` (list paginée, get, create, update, delete, export, import). Multi-tenant : chaque opération est scopée au `user_id` courant (404 sur un ID étranger, jamais 403, pour ne pas leaker l'existence d'une ligne). Schéma : migration Flyway **V5** (`trade_entry`). Détail technique : [`architecture.md`](../technique/architecture.md).
+Module `journal/` (hexagonal) : `TradeEntry` (19 champs) + 4 enums Postgres natifs (`trade_play`, `trade_pattern`, `trade_open_side`, `trade_exit_strategy`), `TradeEntryService`, `TradeEntryRepository` (+ `TradeEntrySpecifications` pour les filtres dynamiques), `TradeEntryController`. **7 endpoints** sous `/api/journal/trades` (list paginée, get, create, update, delete, export, import). Multi-tenant : chaque opération est scopée au `user_id` courant (404 sur un ID étranger, jamais 403, pour ne pas leaker l'existence d'une ligne). Schéma : table `trade_entry` fondée dans `V1__init.sql` (champs optionnels relâchés en V4). Détail technique : [`architecture.md`](../technique/architecture.md).
 
 ---
 
@@ -52,7 +52,7 @@ Dataset **global, partagé** (pas multi-tenant) : le contexte de setup des short
 
 ### Backend
 
-Module `stats/` (hexagonal, distinct de `journal/`) : `StatEntry` (table `stat_entry`, **sans `user_id`**), `StatMetrics` (calcul pur des 3 `%`), `StatEntryService` (`importCsv` atomique + `findAllPaged` + `exportAllAsCsv`), `StatEntryController` (`GET /api/stats` lecture pour tous, `POST /api/stats/import` ADMIN-only, `GET /api/stats/export`). Schéma : migration Flyway **V6**. Détail technique : [`architecture.md`](../technique/architecture.md).
+Module `stats/` (hexagonal, distinct de `journal/`) : `StatEntry` (table `stat_entry`, **sans `user_id`**), `StatMetrics` (calcul pur des 3 `%`), `StatEntryService` (`importCsv` atomique + `findAllPaged` + `exportAllAsCsv`), `StatEntryController` (`GET /api/stats` lecture pour tous, `POST /api/stats/import` ADMIN-only, `GET /api/stats/export`). Schéma : table `stat_entry` fondée dans `V1__init.sql` (étendue en V2 / V3 / V5). Détail technique : [`architecture.md`](../technique/architecture.md).
 
 ---
 
@@ -71,7 +71,7 @@ Glossaire **partagé** des termes de trading (label EN + définition **FR et EN*
 
 ### Backend
 
-Module `lexicon/` (hexagonal, distinct) : `LexiconEntry` (table `lexicon_entry`, `definition_fr` + `definition_en`, **sans `user_id`**), `LexiconEntryService` (`findAll` non paginé trié + CRUD, unicité casse-insensible → 409, champs vides → 400), `LexiconEntryController` (`/api/lexicon` : `GET` lecture pour tous, `POST` / `PUT` / `DELETE` **ADMIN-only**). Schéma : migration Flyway **V8** (`lexicon_entry` bilingue + seed FR/EN des 117 termes). Détail technique : [`architecture.md`](../technique/architecture.md).
+Module `lexicon/` (hexagonal, distinct) : `LexiconEntry` (table `lexicon_entry`, `definition_fr` + `definition_en`, **sans `user_id`**), `LexiconEntryService` (`findAll` non paginé trié + CRUD, unicité casse-insensible → 409, champs vides → 400), `LexiconEntryController` (`/api/lexicon` : `GET` lecture pour tous, `POST` / `PUT` / `DELETE` **ADMIN-only**). Schéma : table `lexicon_entry` (bilingue) fondée dans `V1__init.sql`, avec le seed FR/EN des 117 termes. Détail technique : [`architecture.md`](../technique/architecture.md).
 
 ---
 
