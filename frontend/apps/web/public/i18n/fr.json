@@ -35,6 +35,12 @@
     "title": "Compte",
     "subtitle": "Ton compte broker — solde, mouvements et corrections. Saisi à la main, sans connexion au broker.",
     "currentBalance": "Solde courant",
+    "currency": {
+      "USD": "USD",
+      "CAD": "CAD"
+    },
+    "fxRate": "1 {{base}} = {{rate}} {{quote}} · taux BCE, {{date}}",
+    "fxUnavailable": "Taux de change indisponible pour le moment.",
     "addMovement": "Ajouter un mouvement",
     "correctBalance": "Corriger la balance",
     "change": "Variation {{period}}",

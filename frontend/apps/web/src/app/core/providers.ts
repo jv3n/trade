@@ -19,6 +19,8 @@ import { HttpConfigRepository } from './api/config/adapters/config.http';
 import { ConfigRepository } from './api/config/config.repository';
 import { HttpEarningsRepository } from './api/earnings/adapters/earnings.http';
 import { EarningsRepository } from './api/earnings/earnings.repository';
+import { HttpForexRepository } from './api/forex/adapters/forex.http';
+import { ForexRepository } from './api/forex/forex.repository';
 import { HttpJournalRepository } from './api/journal/adapters/journal.http';
 import { JournalRepository } from './api/journal/journal.repository';
 import { HttpLexiconRepository } from './api/lexicon/adapters/lexicon.http';
@@ -48,6 +50,7 @@ import { AnnotationRepository } from './local/annotation/annotation.repository';
 export function provideRepositories(): EnvironmentProviders {
   return makeEnvironmentProviders([
     { provide: AccountRepository, useClass: HttpAccountRepository },
+    { provide: ForexRepository, useClass: HttpForexRepository },
     { provide: PortfolioRepository, useClass: HttpPortfolioRepository },
     { provide: SnapshotRepository, useClass: HttpSnapshotRepository },
     { provide: MarketRepository, useClass: HttpMarketRepository },

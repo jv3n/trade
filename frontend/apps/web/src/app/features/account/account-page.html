@@ -29,12 +29,12 @@
         <div class="hero-left">
           <span class="hero-label">{{ 'account.currentBalance' | translate }}</span>
           <span class="hero-balance" [class.neg]="s.balance < 0">
-            {{ s.balance | number: '1.2-2' }} $
+            {{ convert(s.balance) | number: '1.2-2' }} $
           </span>
           @if (periodChange(); as c) {
             <span class="hero-change" [class.pos]="c.amount > 0" [class.neg]="c.amount < 0">
               <mat-icon>{{ c.amount >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              {{ c.amount > 0 ? '+' : '' }}{{ c.amount | number: '1.2-2' }} $
+              {{ c.amount > 0 ? '+' : '' }}{{ convert(c.amount) | number: '1.2-2' }} $
               @if (c.percent !== null) {
                 ({{ c.percent > 0 ? '+' : '' }}{{ c.percent | number: '1.1-1' }} %)
               }
@@ -43,20 +43,53 @@
               </span>
             </span>
           }
+          @if (currency() === 'CAD' && rate(); as r) {
+            <span class="rate-caption">
+              {{
+                'account.fxRate'
+                  | translate
+                    : {
+                        base: r.base,
+                        quote: r.quote,
+                        rate: r.rate | number: '1.4-4',
+                        date: r.asOf | date: 'longDate',
+                      }
+              }}
+            </span>
+          }
         </div>
 
-        <mat-button-toggle-group
-          class="period-toggle"
-          [value]="period()"
-          (change)="setPeriod($event.value)"
-          [hideSingleSelectionIndicator]="true"
-        >
-          @for (p of periods; track p) {
-            <mat-button-toggle [value]="p">{{
-              'account.period.' + p | translate
-            }}</mat-button-toggle>
-          }
-        </mat-button-toggle-group>
+        <div class="hero-right">
+          <mat-button-toggle-group
+            class="currency-toggle"
+            [value]="currency()"
+            (change)="setCurrency($event.value)"
+            [hideSingleSelectionIndicator]="true"
+          >
+            @for (c of currencies; track c) {
+              <mat-button-toggle
+                [value]="c"
+                [disabled]="c === 'CAD' && !rate()"
+                [matTooltip]="c === 'CAD' && !rate() ? ('account.fxUnavailable' | translate) : ''"
+              >
+                {{ 'account.currency.' + c | translate }}
+              </mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+
+          <mat-button-toggle-group
+            class="period-toggle"
+            [value]="period()"
+            (change)="setPeriod($event.value)"
+            [hideSingleSelectionIndicator]="true"
+          >
+            @for (p of periods; track p) {
+              <mat-button-toggle [value]="p">{{
+                'account.period.' + p | translate
+              }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+        </div>
       </div>
 
       @if (chartPoints().length >= 2) {

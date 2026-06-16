@@ -28,6 +28,8 @@ import {
   CorrectionInput,
 } from '../../core/api/account/account.model';
 import { AccountRepository } from '../../core/api/account/account.repository';
+import { ForexRate } from '../../core/api/forex/forex.model';
+import { ForexRepository } from '../../core/api/forex/forex.repository';
 import { CorrectionDialog } from './correction-dialog/correction-dialog';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
 
@@ -42,6 +44,15 @@ interface DayGroup {
 /** Window presets for the balance chart + the hero change KPI. */
 type Period = '1W' | '1M' | '3M' | 'YTD' | 'ALL';
 const PERIODS: readonly Period[] = ['1W', '1M', '3M', 'YTD', 'ALL'];
+
+/**
+ * Display currency for the hero balance. The account is USD-denominated ; CAD is a cosmetic
+ * conversion of the **hero balance only** (movements, summary and chart stay in USD) using the live
+ * ECB reference rate. The toggle resets to USD on each visit — it's a presentation preference, not
+ * stored state.
+ */
+type Currency = 'USD' | 'CAD';
+const CURRENCIES: readonly Currency[] = ['USD', 'CAD'];
 
 /**
  * Broker cash-account page. Hero balance + summary panel (from `/summary`) and the movement history
@@ -75,6 +86,7 @@ const PERIODS: readonly Period[] = ['1W', '1M', '3M', 'YTD', 'ALL'];
 })
 export class AccountPage {
   private readonly repo = inject(AccountRepository);
+  private readonly forex = inject(ForexRepository);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
@@ -90,6 +102,11 @@ export class AccountPage {
   readonly series = signal<BalancePoint[]>([]);
   readonly periods = PERIODS;
   readonly period = signal<Period>('1M');
+
+  /** USD→other-currency rate for the hero toggle ; null until loaded (or if the lookup failed). */
+  readonly rate = signal<ForexRate | null>(null);
+  readonly currencies = CURRENCIES;
+  readonly currency = signal<Currency>('USD');
 
   /** Series filtered to the selected window, mapped for the chart (x = epoch ms, label = date). */
   readonly chartPoints = computed<AreaChartPoint[]>(() => {
@@ -140,6 +157,7 @@ export class AccountPage {
 
   constructor() {
     this.fetch();
+    this.fetchRate();
   }
 
   openAdd(): void {
@@ -208,6 +226,20 @@ export class AccountPage {
 
   setPeriod(period: Period): void {
     this.period.set(period);
+  }
+
+  setCurrency(currency: Currency): void {
+    this.currency.set(currency);
+  }
+
+  /**
+   * Converts a USD hero amount for display : as-is in USD mode, or × the live rate in CAD mode. Used
+   * for the hero balance and its change KPI only — the rest of the page stays in USD by design. A
+   * null rate (lookup failed) can't be reached here : the CAD toggle is disabled until the rate loads.
+   */
+  convert(amountUsd: number): number {
+    const r = this.rate();
+    return this.currency() === 'CAD' && r ? amountUsd * r.rate : amountUsd;
   }
 
   /** Start of the selected window from "now" ; null = no lower bound (the ALL preset). */
@@ -285,6 +317,18 @@ export class AccountPage {
       error: () => this.error.set(this.translate.instant('account.errors.load')),
     });
     this.fetchMovements();
+  }
+
+  /**
+   * One-shot USD→CAD rate fetch (the figure is cached ~6 h backend-side, so we don't refetch on each
+   * mutation like summary/movements). A failure is non-blocking : `rate` stays null, the CAD toggle
+   * stays disabled and the balance keeps showing USD — no error banner for a cosmetic feature.
+   */
+  private fetchRate(): void {
+    this.forex.latestRate().subscribe({
+      next: (r) => this.rate.set(r),
+      error: () => this.rate.set(null),
+    });
   }
 
   private fetchMovements(): void {

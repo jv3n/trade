@@ -188,6 +188,13 @@ market:
     base-url: https://finnhub.io/api/v1
     api-key: ${FINNHUB_API_KEY:}
 
+# Taux de change — alimente le toggle de devise de la page Compte (solde USD affiché en CAD).
+# Frankfurter : taux de référence BCE, publiés une fois par jour ouvré, API publique sans clé ni
+# quota. Pas de routing mock/réel : un seul provider keyless suffit pour une conversion cosmétique.
+forex:
+  frankfurter:
+    base-url: https://api.frankfurter.dev/v1
+
 # News provider — separate switch from `market.provider` because news (Finnhub) and chart data
 # (Twelve Data) are different vendors. Defaults to `mock` so an onboarding clone or the CI runs
 # without a Finnhub key. The actual `market.finnhub.api-key` lives under `market.*` above

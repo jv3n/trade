@@ -35,6 +35,12 @@
     "title": "Account",
     "subtitle": "Your broker cash account — balance, movements and corrections. Entered by hand, no broker connection.",
     "currentBalance": "Current balance",
+    "currency": {
+      "USD": "USD",
+      "CAD": "CAD"
+    },
+    "fxRate": "1 {{base}} = {{rate}} {{quote}} · ECB rate, {{date}}",
+    "fxUnavailable": "Exchange rate unavailable right now.",
     "addMovement": "Add movement",
     "correctBalance": "Correct balance",
     "change": "{{period}} change",
