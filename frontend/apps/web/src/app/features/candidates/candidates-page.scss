@@ -1,0 +1,235 @@
+:host {
+  display: block;
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    margin: 0.25rem 0 0;
+    color: var(--mat-sys-on-surface-variant, #5f6368);
+    max-width: 60ch;
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  .day-select {
+    min-width: 16rem;
+  }
+
+  .empty-hint {
+    color: var(--mat-sys-on-surface-variant, #5f6368);
+    font-style: italic;
+  }
+
+  &__spacer {
+    flex: 1 1 auto;
+  }
+
+  .danger {
+    color: var(--mat-sys-error, #b3261e);
+  }
+
+  // The form-field reserves space for a hint/error line we don't use in the toolbar.
+  .day-select {
+    margin-bottom: -1.25rem;
+  }
+}
+
+.cockpit {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  // Calculators card sits next to params/context which are taller — let it shrink.
+  &.card--calc {
+    align-self: start;
+  }
+}
+
+.span-all {
+  grid-column: 1 / -1;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+
+  .span-2 {
+    grid-column: 1 / -1;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.risk-budget {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.75rem 1rem 0.25rem;
+
+  &__label {
+    color: var(--mat-sys-on-surface-variant, #5f6368);
+  }
+
+  &__value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.calc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  &__label {
+    font-weight: 600;
+  }
+
+  &__value {
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__hint {
+    font-size: 0.75rem;
+    color: var(--mat-sys-on-surface-variant, #5f6368);
+  }
+}
+
+.hint {
+  color: var(--mat-sys-on-surface-variant, #5f6368);
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
+.ladder {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.35rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant, #5f6368);
+    font-weight: 600;
+  }
+
+  .num {
+    text-align: right;
+  }
+
+  tbody tr.is-open {
+    font-weight: 600;
+    background: var(--mat-sys-surface-container-high, #f1f1f1);
+  }
+
+  tbody tr.is-profit {
+    color: var(--mat-sys-on-surface-variant, #8a8a8a);
+  }
+
+  tfoot tr.totals {
+    font-weight: 600;
+
+    td {
+      border-top: 2px solid var(--mat-sys-outline, #bdbdbd);
+      border-bottom: none;
+    }
+  }
+
+  .shares-cell input {
+    width: 6rem;
+    text-align: right;
+    border: 1px solid var(--mat-sys-outline-variant, #d0d0d0);
+    border-radius: 4px;
+    padding: 0.25rem 0.4rem;
+    background: var(--mat-sys-surface, #fff);
+    color: inherit;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gain {
+    color: var(--trade-positive, #1b873f);
+  }
+
+  .loss {
+    color: var(--mat-sys-error, #b3261e);
+  }
+
+  .over-budget {
+    color: var(--mat-sys-error, #b3261e);
+  }
+}
+
+.execution-kpis {
+  display: flex;
+  gap: 2rem;
+  margin-top: 0.75rem;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+
+  &__label {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant, #5f6368);
+  }
+
+  &__value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+
+    &.over-budget {
+      color: var(--mat-sys-error, #b3261e);
+    }
+  }
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

@@ -110,7 +110,7 @@ Champs d'un mouvement (esquisse) :
 ## Critères d'acceptation
 
 - [ ] Une entrée **« Compte »** apparaît dans le sidenav, **en première position**, avec une icône (`account_balance_wallet`), libellé i18n (`nav.account`, FR + EN), tooltip en mode collapsed comme les autres items.
-- [ ] La route par défaut (`''`) **reste `/journal`** *ou* bascule sur `/account` — **à trancher** (cf. questions ouvertes). Par défaut on garde `/journal` comme landing.
+- [x] La route par défaut (`''`) redirige vers **`/account`** (tranché le 2026-06-19 — cf. décision n°1).
 - [ ] La page affiche le **hero balance** : balance courante formatée (devise + séparateurs, via `DecimalPipe`/`CurrencyPipe`) + variation sur la période (montant + %, ↑/↓).
 - [ ] Un **sélecteur de période** (semaine / mois / 3 mois / YTD / tout) recalcule hero + graphe.
 - [ ] Un **graphe d'évolution de la balance** s'affiche avec tooltip au survol (date + balance), série = cumul des mouvements.
@@ -153,7 +153,7 @@ Calqué sur `journal/` (hexagonal + DDD léger) :
 
 Toutes tranchées. Chaque point garde le *pourquoi* — c'est la mémoire de l'arbitrage.
 
-1. **Landing par défaut → reste `/journal`.** L'item Compte passe **en premier dans le nav** (visibilité), mais la route `''` continue de rediriger vers `/journal`. *Pourquoi : le workflow quotidien reste la saisie des trades ; le compte est un tableau de bord qu'on consulte, pas le point d'entrée de la journée.*
+1. **Landing par défaut → `/account`** (révisé le 2026-06-19 ; à l'origine `/journal`). L'item Compte est **premier dans le nav** et la route `''` (+ le fallback `**`) redirige désormais vers `/account`. *Pourquoi : le compte est devenu le tableau de bord d'entrée de la journée ; on regarde le capital disponible avant de préparer les candidats / saisir les trades.* Ordre du sidenav : Compte → Candidats → Stats → Journal → Ticker → Radar.
 2. **Modèle → ledger auditable** (registre de mouvements + balance dérivée), pas de balance écrasable. *Pourquoi : on garde le « pourquoi » de chaque variation, ça rejoint l'esprit roundtrip/auditable du journal et ça donne le graphe d'évolution gratuitement (cumul). Cf. section Modèle.*
 3. **Mono-compte en v1.** Un seul compte par utilisateur — `account_movement` scopé par `user_id`, **pas d'entité `account` ni de FK `account_id`**. Le fil d'ariane `Comptes › …` reste cosmétique (un seul compte). *Pourquoi : pas de besoin multi-comptes formulé ; on évite la complexité prématurée. Multi-comptes = évolution future (ajout d'une table `account` + `account_id` via migration), non pré-construite.*
 4. **Devise → mono-devise USD.** Montants en `DECIMAL`, affichage `$ US`, **pas de FX**. *Pourquoi : focus small-caps US, le broker de référence est en USD ; le multi-devises + conversion serait un chantier à part sans valeur v1.*

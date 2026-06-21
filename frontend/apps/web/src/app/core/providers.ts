@@ -15,6 +15,8 @@ import { HttpAnalystRepository } from './api/analyst/adapters/analyst.http';
 import { AnalystRepository } from './api/analyst/analyst.repository';
 import { HttpAuthRepository } from './api/auth/adapters/auth.http';
 import { AuthRepository } from './api/auth/auth.repository';
+import { HttpCandidatesRepository } from './api/candidates/adapters/candidates.http';
+import { CandidatesRepository } from './api/candidates/candidates.repository';
 import { HttpConfigRepository } from './api/config/adapters/config.http';
 import { ConfigRepository } from './api/config/config.repository';
 import { HttpEarningsRepository } from './api/earnings/adapters/earnings.http';
@@ -71,6 +73,7 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: NarrativeBiasRepository, useClass: HttpNarrativeBiasRepository },
     { provide: AuthRepository, useClass: HttpAuthRepository },
     { provide: JournalRepository, useClass: HttpJournalRepository },
+    { provide: CandidatesRepository, useClass: HttpCandidatesRepository },
     { provide: StatsRepository, useClass: HttpStatsRepository },
     { provide: LexiconRepository, useClass: HttpLexiconRepository },
   ]);

@@ -16,9 +16,22 @@ import {
 import { StatEntry, StatEntryInput } from '../../../core/api/stats/stat-entry.model';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 
+/**
+ * Seed for create mode — pre-fills a brand-new stat (e.g. created from a candidate). Ignored when
+ * `entry` is set (edit mode reads from the entry).
+ */
+export interface AddStatSeed {
+  tradeDate?: Date;
+  ticker?: string;
+  gapUpPercent?: number | null;
+  openPrice?: number | null;
+}
+
 /** Data passed to the dialog — `entry` non-null = edit mode, null = create mode. */
 export interface AddStatDialogData {
   entry: StatEntry | null;
+  /** Optional pre-fill for create mode (e.g. promoting a candidate). */
+  seed?: AddStatSeed;
 }
 
 /**
@@ -155,11 +168,12 @@ export class AddStatDialog {
   private initialModel(): StatFormModel {
     const e = this.data.entry;
     if (!e) {
+      const seed = this.data.seed;
       return {
-        tradeDate: new Date(),
-        ticker: '',
-        gapUpPercent: null,
-        openPrice: null,
+        tradeDate: seed?.tradeDate ?? new Date(),
+        ticker: seed?.ticker ?? '',
+        gapUpPercent: seed?.gapUpPercent ?? null,
+        openPrice: seed?.openPrice ?? null,
         floatSharesMillions: null,
         institutionsPercent: null,
         instOver20: false,

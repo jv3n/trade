@@ -112,14 +112,23 @@ dc_resource(
     links = [link("http://{}:{}".format(host, ollama_port), "Ollama API")],
 )
 
-# "Purge" button attached to the `postgres` panel — drop the schema + restart the backend
-# (which replays Flyway from scratch against the empty schema).
+# "Purge" button attached to the `postgres` panel — drop the schema + wipe stale compiled
+# migrations + restart the backend (which replays Flyway from scratch against the empty schema).
 #
 # The restart goes through `tilt trigger backend`, NOT a `touch application.yml`. Reason: on
 # WSL2 the repo sits on a `/mnt/c` (9p) mount where inotify does not propagate reliably — Tilt
 # never sees the `touch` and never re-runs the `serve_cmd`. Outcome (already lived): schema
 # dropped but backend still up on its old connections → missing tables, `/actuator/health` KO.
 # `tilt trigger` forces the resource update independently of file-watch → 100% reliable.
+#
+# The `rm -rf build/resources/main/db/migration` is the second lesson learned: Gradle's
+# `processResources` is a `Copy` task, which updates/adds files but NEVER deletes ones removed
+# from `src`. A deleted/renamed migration therefore lingers in `build/` and Flyway replays it
+# from the classpath — e.g. a merged-away `V8` re-running `ADD COLUMN entries` → "already exists",
+# backend down. Wiping the compiled migration dir forces `processResources` (a dependency of
+# `bootRun`) to detect the tampered output and recopy migrations fresh from `src` on restart.
+# Targeted on purpose: a full `./gradlew clean` would add a ~50 s recompile to every purge and
+# would race the still-live `bootRun` daemon.
 cmd_button(
     name = "db-purge",
     resource = "postgres",
@@ -128,7 +137,7 @@ cmd_button(
     argv = [
         "sh",
         "-c",
-        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && tilt trigger backend",
+        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && rm -rf backend/build/resources/main/db/migration && tilt trigger backend",
     ],
 )
 

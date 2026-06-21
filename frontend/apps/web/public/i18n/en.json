@@ -19,6 +19,7 @@
   "nav": {
     "account": "Account",
     "journal": "Journal",
+    "candidates": "Candidates",
     "stats": "Stats",
     "lexicon": "Lexicon",
     "dashboard": "Dashboard",
@@ -30,6 +31,96 @@
     "expand": "Expand sidebar",
     "importExport": "Import / Export",
     "ticker": "Ticker"
+  },
+  "candidates": {
+    "title": "Candidates",
+    "subtitle": "Prepare your morning shorts — risk-based sizing, execution tracking and a cover ladder, per ticker. Entered by hand.",
+    "select": "Today's candidate",
+    "selectPlaceholder": "Select a candidate…",
+    "emptyDay": "No candidate for this date.",
+    "new": "New",
+    "save": "Save",
+    "delete": "Delete",
+    "createStat": "Create a stat",
+    "sections": {
+      "params": "Parameters",
+      "context": "Today's data",
+      "entryLadder": "Entry ladder",
+      "execution": "Execution tracking",
+      "entries": "Actual entries",
+      "cover": "Cover ladder",
+      "calculators": "Calculators"
+    },
+    "fields": {
+      "tradingDate": "Session date",
+      "ticker": "Ticker",
+      "totalCapital": "Total capital",
+      "pctCapitalAtRisk": "% capital at risk",
+      "dollarAtRisk": "$ at risk",
+      "openPrice": "Open price",
+      "stopPct": "Stop (%)",
+      "previousClose": "Previous close",
+      "float": "Float",
+      "volume": "Volume",
+      "morningPush": "Morning push ($)",
+      "borrowCostPerShare": "Borrow cost / share",
+      "note": "Note"
+    },
+    "ladder": {
+      "entry": "Entry",
+      "price": "Price",
+      "maxShares": "Max shares",
+      "investment": "Investment",
+      "riskPerShare": "Risk $",
+      "sharesInPlay": "Shares in play",
+      "currentRisk": "Current risk",
+      "remaining": "Remaining",
+      "totals": "Totals",
+      "residual": "Residual",
+      "averagePosition": "Average position",
+      "hint": "Enter the open price, the stop and the risk budget to compute the ladder."
+    },
+    "entries": {
+      "entryPrice": "Entry price",
+      "entryPct": "Entry %",
+      "sharesInPlay": "Shares in play",
+      "currentRisk": "Current risk",
+      "riskPct": "Risk %",
+      "investment": "Investment",
+      "averagePosition": "Average position",
+      "averagePct": "Average %",
+      "averageRiskPct": "Average risk %",
+      "add": "Add an entry",
+      "remove": "Remove",
+      "empty": "No entry filled yet."
+    },
+    "cover": {
+      "exitPrice": "Exit price",
+      "sharesCovered": "Shares covered",
+      "pctGainLoss": "% gain/loss",
+      "dollarGainLoss": "$ gain/loss",
+      "add": "Add an exit",
+      "remove": "Remove",
+      "averageTp": "Average TP",
+      "empty": "No exit planned yet.",
+      "hint": "The average position is required (fill the actual entries) to score exits."
+    },
+    "calc": {
+      "gus": "GUS %",
+      "gusHint": "(open − prev close) / prev close",
+      "borrow": "Borrow fee %",
+      "borrowHint": "cost / share ÷ open price"
+    },
+    "snackbar": {
+      "createSuccess": "Candidate saved.",
+      "updateSuccess": "Candidate updated.",
+      "deleteSuccess": "Candidate deleted.",
+      "loadError": "Couldn't load candidates. Please retry.",
+      "saveError": "Couldn't save the candidate. Please retry.",
+      "deleteError": "Couldn't delete the candidate. Please retry.",
+      "statCreated": "Stat created.",
+      "statError": "Couldn't create the stat. Please retry."
+    }
   },
   "account": {
     "title": "Account",

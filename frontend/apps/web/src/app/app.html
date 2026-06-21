@@ -78,15 +78,15 @@
           </a>
           <a
             mat-list-item
-            routerLink="/journal"
+            routerLink="/candidates"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.journal' | translate"
+            [matTooltip]="'nav.candidates' | translate"
             [matTooltipDisabled]="!sidenavCollapse.collapsed()"
             matTooltipPosition="right"
           >
-            <mat-icon matListItemIcon>book</mat-icon>
-            <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
+            <mat-icon matListItemIcon>fact_check</mat-icon>
+            <span matListItemTitle>{{ 'nav.candidates' | translate }}</span>
           </a>
           <a
             mat-list-item
@@ -99,6 +99,18 @@
           >
             <mat-icon matListItemIcon>insights</mat-icon>
             <span matListItemTitle>{{ 'nav.stats' | translate }}</span>
+          </a>
+          <a
+            mat-list-item
+            routerLink="/journal"
+            routerLinkActive="sidenav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [matTooltip]="'nav.journal' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>book</mat-icon>
+            <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
           </a>
           <a
             mat-list-item

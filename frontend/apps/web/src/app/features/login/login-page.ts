@@ -17,7 +17,7 @@ import { AuthService } from '../../core/app-state/auth.service';
  * the new session, and the user lands on the dashboard.
  *
  * If [AuthService.isAuthenticated] is already true when the page mounts, we redirect to
- * `/journal` immediately (the v1.0 landing page post-pivot) — typically happens when the user
+ * `/account` immediately (the v1.0 landing page post-pivot) — typically happens when the user
  * bookmarks `/login` or hits Back after logging in. Done via an `effect()` so the redirect runs
  * after the signal is primed by the boot initializer.
  */
@@ -59,7 +59,7 @@ export class LoginPage {
   constructor() {
     effect(() => {
       if (this.auth.isAuthenticated()) {
-        void this.router.navigate(['/journal']);
+        void this.router.navigate(['/account']);
       }
     });
   }

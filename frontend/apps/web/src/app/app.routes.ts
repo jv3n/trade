@@ -26,11 +26,22 @@ export const routes: Routes = [
     path: 'error',
     loadComponent: () => import('./features/error/error-page').then((m) => m.ErrorPage),
   },
-  { path: '', redirectTo: 'journal', pathMatch: 'full' },
+  { path: '', redirectTo: 'account', pathMatch: 'full' },
   {
     path: 'account',
     canActivate: [authGuard],
     loadComponent: () => import('./features/account/account-page').then((m) => m.AccountPage),
+  },
+  {
+    path: 'candidates',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/candidates/candidates-page').then((m) => m.CandidatesPage),
+  },
+  {
+    path: 'stats',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/stats/stats-page').then((m) => m.StatsPage),
   },
   {
     path: 'journal',
@@ -42,11 +53,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/journal-io/journal-io-page').then((m) => m.JournalIoPage),
-  },
-  {
-    path: 'stats',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/stats/stats-page').then((m) => m.StatsPage),
   },
   {
     path: 'lexicon',
@@ -122,8 +128,8 @@ export const routes: Routes = [
       },
     ],
   },
-  // 404 fallback — any unknown URL routes to `/journal`. The authGuard will catch
-  // unauthenticated users on the next hop and bounce them to `/login`, so the redirect target
+  // 404 fallback — any unknown URL routes to `/account` (the default landing). The authGuard will
+  // catch unauthenticated users on the next hop and bounce them to `/login`, so the redirect target
   // works whether the user is logged in or not.
-  { path: '**', redirectTo: 'journal' },
+  { path: '**', redirectTo: 'account' },
 ];

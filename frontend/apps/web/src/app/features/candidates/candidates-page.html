@@ -1,0 +1,552 @@
+<section class="candidates-page">
+  <header class="page-header">
+    <div class="page-header__titles">
+      <h1>{{ 'candidates.title' | translate }}</h1>
+      <p class="subtitle">{{ 'candidates.subtitle' | translate }}</p>
+    </div>
+    @if (tickerLabel()) {
+      <mat-chip-set>
+        <mat-chip stbChip="ticker" disableRipple>{{ tickerLabel() }}</mat-chip>
+      </mat-chip-set>
+    }
+  </header>
+
+  <!-- Toolbar : the day's candidates (dropdown) + actions. The dropdown is fed by the date-driven
+       listing, so only the current session's candidates show — older ones stay saved but hidden. -->
+  <div class="toolbar">
+    <mat-form-field appearance="outline" class="day-select">
+      <mat-label>{{ 'candidates.select' | translate }}</mat-label>
+      <mat-select
+        [value]="selectedId()"
+        (selectionChange)="onSelect($event.value)"
+        [placeholder]="'candidates.selectPlaceholder' | translate"
+      >
+        @for (c of candidatesOfDay(); track c.id) {
+          <mat-option [value]="c.id">{{ c.ticker }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (!candidatesOfDay().length) {
+      <span class="empty-hint">{{ 'candidates.emptyDay' | translate }}</span>
+    }
+
+    <span class="toolbar__spacer"></span>
+
+    <button mat-stroked-button type="button" (click)="newCandidate()">
+      <mat-icon>add</mat-icon>
+      {{ 'candidates.new' | translate }}
+    </button>
+    @if (tickerLabel()) {
+      <button mat-stroked-button type="button" (click)="createStat()">
+        <mat-icon>add_chart</mat-icon>
+        {{ 'candidates.createStat' | translate }}
+      </button>
+    }
+    @if (selectedId()) {
+      <button mat-button type="button" class="danger" (click)="remove()">
+        <mat-icon>delete</mat-icon>
+        {{ 'candidates.delete' | translate }}
+      </button>
+    }
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="saving() || !canSave()"
+      (click)="save()"
+    >
+      @if (saving()) {
+        <mat-spinner diameter="18" />
+      } @else {
+        <mat-icon>save</mat-icon>
+      }
+      {{ 'candidates.save' | translate }}
+    </button>
+  </div>
+
+  <div class="cockpit">
+    <!-- Parameters -->
+    <mat-card class="card card--params">
+      <mat-card-header
+        ><mat-card-title>{{
+          'candidates.sections.params' | translate
+        }}</mat-card-title></mat-card-header
+      >
+      <mat-card-content class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.tradingDate' | translate }}</mat-label>
+          <input
+            matInput
+            readonly
+            [matDatepicker]="picker"
+            [value]="model().tradingDate"
+            (dateChange)="setTradingDate($event.value)"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" />
+          <mat-datepicker #picker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.ticker' | translate }}</mat-label>
+          <input matInput [formField]="candidateForm.ticker" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.totalCapital' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="model().totalCapital"
+            (numberChange)="setTotalCapital($event)"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.pctCapitalAtRisk' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [max]="100"
+            [value]="model().pctCapitalAtRisk"
+            (numberChange)="setPctCapitalAtRisk($event)"
+          />
+          <span matTextSuffix>%</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.openPrice' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().openPrice"
+            (numberChange)="setOpenPrice($event)"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.stopPct' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="model().stopPct"
+            (numberChange)="setStopPct($event)"
+          />
+          <span matTextSuffix>%</span>
+        </mat-form-field>
+      </mat-card-content>
+      <mat-divider />
+      <div class="risk-budget">
+        <span class="risk-budget__label">{{ 'candidates.fields.dollarAtRisk' | translate }}</span>
+        <span class="risk-budget__value">{{
+          riskBudget() === null ? '—' : (riskBudget() | number: '1.2-2')
+        }}</span>
+      </div>
+    </mat-card>
+
+    <!-- Today's data (manual) -->
+    <mat-card class="card card--context">
+      <mat-card-header
+        ><mat-card-title>{{
+          'candidates.sections.context' | translate
+        }}</mat-card-title></mat-card-header
+      >
+      <mat-card-content class="grid-2">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.previousClose' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().previousClose"
+            (numberChange)="setPreviousClose($event)"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.float' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="model().floatShares"
+            (numberChange)="setFloatShares($event)"
+          />
+          <span matTextSuffix>M</span>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.volume' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="model().volume"
+            (numberChange)="setVolume($event)"
+          />
+          <span matTextSuffix>M</span>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.morningPush' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [value]="model().morningPush"
+            (numberChange)="setMorningPush($event)"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'candidates.fields.borrowCostPerShare' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="model().borrowCostPerShare"
+            (numberChange)="setBorrowCostPerShare($event)"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>{{ 'candidates.fields.note' | translate }}</mat-label>
+          <textarea matInput rows="2" [formField]="candidateForm.note"></textarea>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Calculators (absorbed from the shelved standalone calculators) -->
+    <mat-card class="card card--calc">
+      <mat-card-header
+        ><mat-card-title>{{
+          'candidates.sections.calculators' | translate
+        }}</mat-card-title></mat-card-header
+      >
+      <mat-card-content class="calc-grid">
+        <div class="calc">
+          <span class="calc__label">{{ 'candidates.calc.gus' | translate }}</span>
+          <span class="calc__value">{{
+            gus() === null ? '—' : (gus()!.percent | number: '1.2-2') + ' %'
+          }}</span>
+          <span class="calc__hint">{{ 'candidates.calc.gusHint' | translate }}</span>
+        </div>
+        <div class="calc">
+          <span class="calc__label">{{ 'candidates.calc.borrow' | translate }}</span>
+          <span class="calc__value">{{
+            borrow() === null ? '—' : (borrow() | number: '1.2-2') + ' %'
+          }}</span>
+          <span class="calc__hint">{{ 'candidates.calc.borrowHint' | translate }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Entry ladder -->
+    <mat-expansion-panel class="card card--ladder span-all" [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ 'candidates.sections.entryLadder' | translate }}</mat-panel-title>
+      </mat-expansion-panel-header>
+      @if (!ladder().length) {
+        <p class="hint">{{ 'candidates.ladder.hint' | translate }}</p>
+      } @else {
+        <table class="ladder">
+          <thead>
+            <tr>
+              <th>{{ 'candidates.ladder.entry' | translate }}</th>
+              <th class="num">{{ 'candidates.ladder.price' | translate }}</th>
+              <th class="num">{{ 'candidates.ladder.maxShares' | translate }}</th>
+              <th class="num">{{ 'candidates.ladder.investment' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of ladder(); track r.step) {
+              <tr [class.is-open]="r.step === 0" [class.is-profit]="r.step < 0">
+                <td>{{ stepPercent(r.step) | number: '1.0-0' }} %</td>
+                <td class="num">{{ r.price | number: '1.2-4' }}</td>
+                <td class="num">
+                  {{ r.maxShares === null ? '—' : (r.maxShares | number: '1.0-0') }}
+                </td>
+                <td class="num">
+                  {{ r.totalInvestment === null ? '—' : (r.totalInvestment | number: '1.2-2') }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </mat-expansion-panel>
+
+    <!-- Execution tracker -->
+    <mat-expansion-panel class="card card--execution span-all" [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ 'candidates.sections.execution' | translate }}</mat-panel-title>
+      </mat-expansion-panel-header>
+      <table class="ladder">
+        <thead>
+          <tr>
+            <th>{{ 'candidates.ladder.entry' | translate }}</th>
+            <th class="num">{{ 'candidates.ladder.riskPerShare' | translate }}</th>
+            <th class="num">{{ 'candidates.ladder.sharesInPlay' | translate }}</th>
+            <th class="num">{{ 'candidates.ladder.currentRisk' | translate }}</th>
+            <th class="num">{{ 'candidates.ladder.remaining' | translate }}</th>
+            <th class="num">{{ 'candidates.ladder.investment' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of executionRungs(); track r.step) {
+            <tr>
+              <td>{{ stepPercent(r.step) | number: '1.0-0' }} %</td>
+              <td class="num">
+                {{ r.riskPerShare === null ? '—' : (r.riskPerShare | number: '1.2-4') }}
+              </td>
+              <td class="num shares-cell">
+                <input
+                  appNumberMask
+                  [decimals]="0"
+                  [min]="0"
+                  [value]="r.sharesInPlay || null"
+                  (numberChange)="setFill(r.step, $event)"
+                  aria-label="shares in play"
+                />
+              </td>
+              <td class="num">
+                {{ r.currentRisk === null ? '—' : (r.currentRisk | number: '1.2-2') }}
+              </td>
+              <td class="num">
+                {{ r.remaining === null ? '—' : (r.remaining | number: '1.0-0') }}
+              </td>
+              <td class="num">{{ r.investment | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr class="totals">
+            <td>{{ 'candidates.ladder.totals' | translate }}</td>
+            <td class="num"></td>
+            <td class="num">{{ execution().totalShares | number: '1.0-0' }}</td>
+            <td class="num" [class.over-budget]="(execution().residual ?? 0) < 0">
+              {{ execution().totalCurrentRisk | number: '1.2-2' }}
+            </td>
+            <td class="num"></td>
+            <td class="num">{{ execution().totalInvestment | number: '1.2-2' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="execution-kpis">
+        <div class="kpi">
+          <span class="kpi__label">{{ 'candidates.ladder.residual' | translate }}</span>
+          <span class="kpi__value" [class.over-budget]="(execution().residual ?? 0) < 0">{{
+            execution().residual === null ? '—' : (execution().residual | number: '1.2-2')
+          }}</span>
+        </div>
+      </div>
+    </mat-expansion-panel>
+
+    <!-- Actual entries (free-form legs → average short position feeding the cover ladder) -->
+    <mat-expansion-panel class="card card--entries span-all" [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ 'candidates.sections.entries' | translate }}</mat-panel-title>
+        <mat-panel-description>
+          <button mat-stroked-button type="button" (click)="$event.stopPropagation(); addEntry()">
+            <mat-icon>add</mat-icon>
+            {{ 'candidates.entries.add' | translate }}
+          </button>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      @if (!entryTable().rows.length) {
+        <p class="hint">{{ 'candidates.entries.empty' | translate }}</p>
+      } @else {
+        <table class="ladder">
+          <thead>
+            <tr>
+              <th class="num">{{ 'candidates.entries.entryPrice' | translate }}</th>
+              <th class="num">{{ 'candidates.entries.entryPct' | translate }}</th>
+              <th class="num">{{ 'candidates.entries.sharesInPlay' | translate }}</th>
+              <th class="num">{{ 'candidates.entries.currentRisk' | translate }}</th>
+              <th class="num">{{ 'candidates.entries.riskPct' | translate }}</th>
+              <th class="num">{{ 'candidates.entries.investment' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of entryTable().rows; track $index) {
+              <tr>
+                <td class="num shares-cell">
+                  <input
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [value]="row.entryPrice || null"
+                    (numberChange)="setEntryPrice($index, $event)"
+                    aria-label="entry price"
+                  />
+                </td>
+                <td class="num">
+                  {{ row.entryPct === null ? '—' : (row.entryPct | number: '1.2-2') + ' %' }}
+                </td>
+                <td class="num shares-cell">
+                  <input
+                    appNumberMask
+                    [decimals]="0"
+                    [min]="0"
+                    [value]="row.sharesInPlay || null"
+                    (numberChange)="setEntryShares($index, $event)"
+                    aria-label="shares in play"
+                  />
+                </td>
+                <td class="num">
+                  {{ row.currentRisk === null ? '—' : (row.currentRisk | number: '1.2-2') }}
+                </td>
+                <td class="num">
+                  {{ row.riskPct === null ? '—' : (row.riskPct | number: '1.2-2') + ' %' }}
+                </td>
+                <td class="num">{{ row.investment | number: '1.2-2' }}</td>
+                <td class="num">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="removeEntry($index)"
+                    [attr.aria-label]="'candidates.entries.remove' | translate"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="totals">
+              <td class="num">
+                {{
+                  entryTable().averagePosition === null
+                    ? '—'
+                    : (entryTable().averagePosition | number: '1.2-4')
+                }}
+              </td>
+              <td class="num">
+                {{
+                  entryTable().averagePct === null
+                    ? '—'
+                    : (entryTable().averagePct | number: '1.2-2') + ' %'
+                }}
+              </td>
+              <td class="num">{{ entryTable().totalShares | number: '1.0-0' }}</td>
+              <td class="num">{{ entryTable().totalCurrentRisk | number: '1.2-2' }}</td>
+              <td class="num">
+                {{
+                  entryTable().averageRiskPct === null
+                    ? '—'
+                    : (entryTable().averageRiskPct | number: '1.2-2') + ' %'
+                }}
+              </td>
+              <td class="num">{{ entryTable().totalInvestment | number: '1.2-2' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      }
+    </mat-expansion-panel>
+
+    <!-- Cover ladder -->
+    <mat-expansion-panel class="card card--cover span-all" [expanded]="true">
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ 'candidates.sections.cover' | translate }}</mat-panel-title>
+        <mat-panel-description>
+          <button mat-stroked-button type="button" (click)="$event.stopPropagation(); addExit()">
+            <mat-icon>add</mat-icon>
+            {{ 'candidates.cover.add' | translate }}
+          </button>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      @if (!cover().rows.length) {
+        <p class="hint">{{ 'candidates.cover.empty' | translate }}</p>
+      } @else {
+        @if (entryTable().averagePosition === null) {
+          <p class="hint">{{ 'candidates.cover.hint' | translate }}</p>
+        }
+        <table class="ladder">
+          <thead>
+            <tr>
+              <th class="num">{{ 'candidates.cover.exitPrice' | translate }}</th>
+              <th class="num">{{ 'candidates.cover.pctGainLoss' | translate }}</th>
+              <th class="num">{{ 'candidates.cover.dollarGainLoss' | translate }}</th>
+              <th class="num">{{ 'candidates.cover.sharesCovered' | translate }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of cover().rows; track $index) {
+              <tr>
+                <td class="num shares-cell">
+                  <input
+                    appNumberMask
+                    [decimals]="4"
+                    [min]="0"
+                    [value]="row.exitPrice || null"
+                    (numberChange)="setExitPrice($index, $event)"
+                    aria-label="exit price"
+                  />
+                </td>
+                <td
+                  class="num"
+                  [class.gain]="(row.pctGainLoss ?? 0) > 0"
+                  [class.loss]="(row.pctGainLoss ?? 0) < 0"
+                >
+                  {{ row.pctGainLoss === null ? '—' : (row.pctGainLoss | number: '1.2-2') + ' %' }}
+                </td>
+                <td
+                  class="num"
+                  [class.gain]="(row.dollarGainLoss ?? 0) > 0"
+                  [class.loss]="(row.dollarGainLoss ?? 0) < 0"
+                >
+                  {{ row.dollarGainLoss === null ? '—' : (row.dollarGainLoss | number: '1.2-2') }}
+                </td>
+                <td class="num shares-cell">
+                  <input
+                    appNumberMask
+                    [decimals]="0"
+                    [min]="0"
+                    [value]="row.sharesCovered || null"
+                    (numberChange)="setExitShares($index, $event)"
+                    aria-label="shares covered"
+                  />
+                </td>
+                <td class="num">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="removeExit($index)"
+                    [attr.aria-label]="'candidates.cover.remove' | translate"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="totals">
+              <td class="num">
+                {{ cover().averageTp === null ? '—' : (cover().averageTp | number: '1.2-4') }}
+              </td>
+              <td class="num">
+                {{
+                  cover().averagePct === null ? '—' : (cover().averagePct | number: '1.2-2') + ' %'
+                }}
+              </td>
+              <td class="num">{{ cover().totalDollarGainLoss | number: '1.2-2' }}</td>
+              <td class="num">{{ cover().totalShares | number: '1.0-0' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      }
+    </mat-expansion-panel>
+  </div>
+</section>

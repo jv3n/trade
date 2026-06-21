@@ -59,6 +59,30 @@ Module `account/` (hexagonal) : `AccountMovement` + enum Postgres `account_movem
 
 ---
 
+## Candidats — live
+
+Le **cockpit de préparation d'un short** : chaque matin, on prépare les tickers qu'on envisage de shorter avec leur plan de trade complet. Une page **upsert + dropdown** — on enregistre un candidat, un sélecteur liste ceux **du jour**, on en choisit un pour le ré-éditer. Absorbe les anciennes calculettes (GUS, borrow).
+
+### Préparation & sizing
+
+- **Paramètres** : capital total, % capital à risque (→ $ à risque dérivé), prix d'open, stop %.
+- **Échelle d'entrée au risque** : par palier (% de l'open), prix, **shares max** (`$ risque / ((stop − palier) × open)`) et investissement — le max shortable pour qu'un stop coûte pile le budget risque.
+- **Suivi d'exécution** (paliers fixes) : on saisit les shares remplies par palier → risque courant, **résidu** de budget, totaux. **Sizing uniquement** (la position moyenne est portée par les entrées réelles ci-dessous).
+- **Entrées réelles** (saisie libre) : un leg par entrée (prix + shares saisis, non contraint aux paliers) → entrée %, risque $, risque %, investissement et la **position moyenne pondérée** — c'est elle qui alimente le cover.
+- **Échelle de sortie / cover** : prix de sortie + shares couvertes → % et $ gain/perte vs position moyenne, TP moyen.
+- **Données du jour** (saisies) : clôture veille, float, volume, push, coût borrow — avec les calculs **GUS %** et **frais borrow %** intégrés (le **% push** reste hors scope v1 : `morningPush` est saisi mais pas calculé).
+- **Créer une stat** : un bouton ouvre l'`add-stat-dialog` pré-rempli (date, ticker, gap % issu du GUS, open) → enregistré dans le module **stats** (pas de promotion directe vers un trade du journal).
+
+### Cycle de vie
+
+Piloté par la **date de séance** : la dropdown ne montre que les candidats du jour ; les antérieurs restent en base mais sortent du picker (pas de statut explicite).
+
+### Backend
+
+Module `candidates/` (hexagonal) : `Candidate` (paramètres + données + legs `fills`/`entries`/`exits` en JSONB), `CandidateService` (upsert, `listForDate`, validation in-service, legs (dé)sérialisés via `ObjectMapper`), `CandidateController` (`/api/candidates` : `GET ?date=`, `GET /{id}`, `POST`, `PUT`, `DELETE`). Multi-tenant scopé `user_id` (404 sur ID étranger). Toutes les valeurs dérivées sont recalculées **côté front** (`candidates.math.ts`, fonctions pures). Schéma : table `candidate` (migration **V7**). Détail : [`architecture.md`](../technique/architecture.md).
+
+---
+
 ## Stats trades — live
 
 Dataset **global, partagé** (pas multi-tenant) : le contexte de setup des shorts gap-up + les niveaux de prix du jour + les mouvements dérivés `%push` / `%LOD` / `%EOD`. Alimenté par un **import CSV admin**, lisible par tout utilisateur authentifié.

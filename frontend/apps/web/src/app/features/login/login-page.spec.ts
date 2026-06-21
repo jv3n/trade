@@ -92,7 +92,7 @@ describe('LoginPage', () => {
     expect(window.location.href).toBe('/oauth2/authorization/google');
   });
 
-  it('redirects already-authenticated users to /journal on mount', async () => {
+  it('redirects already-authenticated users to /account on mount', async () => {
     setup({ email: 'admin@example.com', displayName: 'Admin', role: 'ADMIN' });
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate');
@@ -103,7 +103,7 @@ describe('LoginPage', () => {
     // let the constructor's effect() run its first iteration.
     await fixture.whenStable();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/journal']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/account']);
   });
 
   it('renders the title, tagline, feature copy and disclaimer i18n keys when not authenticated', () => {
