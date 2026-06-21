@@ -164,6 +164,7 @@
       "netInjected": "Net injected",
       "tradesPnl": "Trades P&L",
       "adjustments": "Corrections / fees",
+      "return": "Return",
       "movementCount": "Movements"
     },
     "actions": {

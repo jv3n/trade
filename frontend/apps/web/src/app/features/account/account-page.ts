@@ -136,6 +136,19 @@ export class AccountPage {
   });
 
   /**
+   * Account return — what the account has earned over the cash actually injected :
+   * `balance − netInjected` ( = tradesPnl + adjustments ), and as a % of `netInjected`. `percent` is
+   * null when nothing was injected (`netInjected ≤ 0`, no meaningful base). Distinct from
+   * [periodChange], which is windowed against the chart series.
+   */
+  readonly accountReturn = computed<{ amount: number; percent: number | null } | null>(() => {
+    const s = this.summary();
+    if (!s) return null;
+    const amount = s.balance - s.netInjected;
+    return { amount, percent: s.netInjected > 0 ? (amount / s.netInjected) * 100 : null };
+  });
+
+  /**
    * Groups the current page's movements by value date, preserving the server order (value_date
    * desc, created_at desc) — so same-date rows are contiguous and a group's subtotal is its sum.
    */

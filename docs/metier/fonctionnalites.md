@@ -51,7 +51,7 @@ La valeur du compte broker, **saisie à la main** (aucune connexion au broker) �
 - **Registre groupé par date** avec **sous-total quotidien** ; ajout de **dépôts / retraits**, **correction de balance** (on saisit la valeur réelle du broker → un mouvement de correction enregistre l'écart : frais, financement, slippage non captés ailleurs).
 - **Balance dérivée** : `dépôts − retraits + P&L trades ± corrections` (jamais stockée, somme du registre).
 - **Trades du journal** : le P&L réalisé alimente le solde en mouvement `TRADE` **read-only** (poussé automatiquement à la clôture, ticker en chip + lien vers le journal). Édition / suppression réservées aux mouvements manuels.
-- **Panneau résumé** : total déposé, total retiré, net injecté, P&L trades, corrections, nb de mouvements.
+- **Panneau résumé** : total déposé, total retiré, net injecté, P&L trades, corrections, **rendement** (`solde − net injecté`, en $ et en % du net injecté — dérivé côté front), nb de mouvements.
 
 ### Backend
 

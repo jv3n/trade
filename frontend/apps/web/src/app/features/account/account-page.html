@@ -234,6 +234,19 @@
             {{ s.adjustments > 0 ? '+' : '' }}{{ s.adjustments | number: '1.2-2' }} $
           </span>
         </div>
+        @if (accountReturn(); as r) {
+          <div class="sum-row sum-row--return">
+            <span class="k">{{ 'account.summary.return' | translate }}</span>
+            <span class="v" [class.pos]="r.amount > 0" [class.neg]="r.amount < 0">
+              {{ r.amount > 0 ? '+' : '' }}{{ r.amount | number: '1.2-2' }} $
+              @if (r.percent !== null) {
+                <span class="pct"
+                  >({{ r.percent > 0 ? '+' : '' }}{{ r.percent | number: '1.1-1' }} %)</span
+                >
+              }
+            </span>
+          </div>
+        }
         <mat-divider />
         <div class="sum-row">
           <span class="k">{{ 'account.summary.movementCount' | translate }}</span>

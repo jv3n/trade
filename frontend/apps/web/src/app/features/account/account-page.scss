@@ -259,4 +259,21 @@
       font-variant-numeric: tabular-nums;
     }
   }
+
+  // The "return" line is the bottom-line result of the P&L block — give it a touch more weight and
+  // keep the % paired with the $ in the same (coloured) value cell.
+  .sum-row--return {
+    .k {
+      font-weight: 600;
+    }
+
+    .v {
+      font-weight: 700;
+
+      .pct {
+        margin-left: 0.25rem;
+        font-size: 0.85em;
+      }
+    }
+  }
 }
