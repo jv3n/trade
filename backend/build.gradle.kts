@@ -35,6 +35,20 @@ version =
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
+// ----------------------------------------------------------------------------- build dir (WSL)
+//
+// When `GRADLE_BUILD_DIR` is set, redirect Gradle's entire build output there instead of the
+// in-tree `build/`. The Tiltfile sets it **only on WSL2**, where the repo lives on a `/mnt/c`
+// (DrvFs) mount: Windows file semantics forbid deleting a file still held open by another process,
+// so a lingering `bootRun` JVM keeping `.class` files open makes the next `compileKotlin` fail with
+// `java.io.IOException: Could not delete .../build/classes/kotlin/main/com`. Pointing the output at
+// the native ext4 filesystem (where POSIX `unlink` succeeds on open files) removes the whole
+// failure class. Unset in CI and the prod Docker build — the repo already sits on ext4 there, so
+// the default in-tree `build/` is used and nothing changes.
+System.getenv("GRADLE_BUILD_DIR")
+  ?.takeIf { it.isNotBlank() }
+  ?.let { dir -> layout.buildDirectory.set(file(dir)) }
+
 repositories { mavenCentral() }
 
 dependencies {

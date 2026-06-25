@@ -78,6 +78,21 @@ java_major = java_spec.replace("openjdk-", "").replace("temurin-", "").split("."
 
 uname = str(local("uname -s", quiet = True, echo_off = True)).strip()
 
+# WSL2 detection — the repo lives on a `/mnt/c` (DrvFs) mount there, which forbids deleting a file
+# still held open by another process. A lingering `bootRun` JVM keeping `.class` files open then
+# makes Gradle's `compileKotlin` fail with `Could not delete build/classes/kotlin/main/com`. We
+# dodge it by relocating the Gradle build dir to the native ext4 fs on WSL only (`backend_build_dir`
+# below). `uname -r` carries "microsoft" on WSL2; native Linux / macOS don't.
+is_wsl = uname == "Linux" and "microsoft" in str(local("uname -r", quiet = True, echo_off = True)).lower()
+
+# Backend Gradle build directory. On WSL → the native ext4 fs (`~/.cache`) to dodge the DrvFs
+# delete-while-open failure described above; elsewhere → the default in-tree `backend/build`. The
+# value is consumed in two places: exported as `GRADLE_BUILD_DIR` to the backend `serve_cmd` (read
+# by `build.gradle.kts`), and in the db-purge button's `rm -rf` of the compiled migrations. `$HOME`
+# stays unexpanded here on purpose — it is resolved by the `sh -c` that actually runs each command.
+backend_build_dir = "$HOME/.cache/portfolioai/backend-build" if is_wsl else "backend/build"
+build_dir_export = ('export GRADLE_BUILD_DIR="' + backend_build_dir + '" ; \\\n  ') if is_wsl else ""
+
 if uname == "Darwin":
     java_resolver = "JAVA_HOME=$(/usr/libexec/java_home -v " + java_major + ")"
     # `sh -c` doesn't source ~/.zshrc, so nvm is off PATH — source nvm.sh and pin the version
@@ -121,7 +136,7 @@ dc_resource(
 # dropped but backend still up on its old connections → missing tables, `/actuator/health` KO.
 # `tilt trigger` forces the resource update independently of file-watch → 100% reliable.
 #
-# The `rm -rf build/resources/main/db/migration` is the second lesson learned: Gradle's
+# The `rm -rf <buildDir>/resources/main/db/migration` is the second lesson learned: Gradle's
 # `processResources` is a `Copy` task, which updates/adds files but NEVER deletes ones removed
 # from `src`. A deleted/renamed migration therefore lingers in `build/` and Flyway replays it
 # from the classpath — e.g. a merged-away `V8` re-running `ADD COLUMN entries` → "already exists",
@@ -137,7 +152,7 @@ cmd_button(
     argv = [
         "sh",
         "-c",
-        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && rm -rf backend/build/resources/main/db/migration && tilt trigger backend",
+        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && rm -rf \"" + backend_build_dir + "/resources/main/db/migration\" && tilt trigger backend",
     ],
 )
 
@@ -162,7 +177,7 @@ cmd_button(
 #       → `SecurityConfig` kicks in, real Google OAuth flow (creds via env vars sourced from
 #         `.env` → `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}`).
 backend_cmd = """cd backend && \\
-  if [ -f ../.env ]; then set -a ; . ../.env ; set +a ; fi ; \\
+  """ + build_dir_export + """if [ -f ../.env ]; then set -a ; . ../.env ; set +a ; fi ; \\
   AUTH_MODE=${BACKEND_AUTH_MODE:-no-auth} ; \\
   if [ \"$AUTH_MODE\" = \"oauth\" ]; then PROFILES=\"local\"; else PROFILES=\"local,local-no-auth\"; fi ; \\
   echo \"[Tilt] backend launching with --spring.profiles.active=$PROFILES (BACKEND_AUTH_MODE=$AUTH_MODE)\" ; \\
@@ -271,6 +286,49 @@ local_resource(
     trigger_mode = TRIGGER_MODE_MANUAL,
     labels = ["app"],
     links = [link("http://{}:{}".format(host, storybook_port), "Storybook")],
+)
+
+# ────────────────────────────────────────────────
+# Misc — housekeeping (Docker + Gradle cleanup)
+# ────────────────────────────────────────────────
+#
+# A manual, non-auto-init resource grouped under its own `misc` label so the cleanup tooling lives
+# in a dedicated Tilt tab, away from infra/app. Triggering the resource just prints Docker disk
+# usage (`docker system df`) ; the actions are the two buttons below. Nothing here runs on
+# `tilt up`.
+local_resource(
+    name = "docker-housekeeping",
+    cmd = "docker system df",
+    auto_init = False,
+    trigger_mode = TRIGGER_MODE_MANUAL,
+    labels = ["misc"],
+)
+
+# One button to reclaim everything unused — stopped containers, unused images, build cache AND
+# unused volumes (`docker system prune -af --volumes`). The everyday clean-slate button, handy
+# before/after a dependency or base-image upgrade to avoid stale-layer / stale-cache surprises.
+#
+# Volume safety: `--volumes` only removes volumes referenced by NO container. While the compose
+# containers exist (the normal `tilt up` state), `portfolioai-postgres`'s `postgres_data` volume
+# stays referenced and is never touched — the local DB survives. It would only be dropped if the
+# postgres container had already been removed (e.g. after `docker compose down`).
+cmd_button(
+    name = "docker-prune-all",
+    resource = "docker-housekeeping",
+    text = "Docker — clean all unused (images + volumes + cache)",
+    icon_name = "cleaning_services",
+    argv = ["sh", "-c", "docker system prune -af --volumes ; echo '--- disk usage after ---' ; docker system df"],
+)
+
+# Gradle reset — stop the daemons and wipe the backend build dir (relocated off /mnt/c on WSL, see
+# `backend_build_dir`). Clears the "Could not delete build/classes" lock class and any stale
+# compiled output after a dependency/toolchain bump. Trigger the backend afterwards to recompile.
+cmd_button(
+    name = "gradle-reset",
+    resource = "docker-housekeeping",
+    text = "Gradle — stop daemons + wipe build dir",
+    icon_name = "restart_alt",
+    argv = ["sh", "-c", "(cd backend && " + java_resolver + " ./gradlew --stop) ; rm -rf \"" + backend_build_dir + "\" ; echo 'Gradle daemons stopped + build dir wiped. Trigger the backend to recompile.'"],
 )
 
 # Print useful links
