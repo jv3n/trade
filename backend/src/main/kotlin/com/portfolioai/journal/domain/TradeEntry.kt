@@ -85,6 +85,13 @@ class TradeEntry(
   // ---- Stat link (NULL = orphan trade, no stat attached) ----
   @Column(name = "stat_entry_id") var statEntryId: UUID? = null,
 
+  /**
+   * Denormalized presence flag for the single optional screenshot (issue #110). Maintained by the
+   * service on attach/delete so the DTO exposes it without joining `trade_attachment` — the image
+   * bytes never load on the listing.
+   */
+  @Column(name = "has_screenshot", nullable = false) var hasScreenshot: Boolean = false,
+
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),

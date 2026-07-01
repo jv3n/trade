@@ -21,6 +21,14 @@ spring:
   application:
     name: portfolioai-backend
 
+  # Upload multipart — relève le défaut Spring (1 Mo) pour accepter une capture d'écran de trade
+  # (issue #110). La vraie garde (type d'image + taille) est appliquée côté service → 400 ; cette
+  # limite n'est qu'un garde-fou de transport.
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
   # **Profile activation pilotée par Tilt** — le Tiltfile lit `BACKEND_AUTH_MODE` dans `.env` à
   # l'exécution du `serve_cmd` :
   #   - `BACKEND_AUTH_MODE=no-auth` (défaut) → lance avec `--spring.profiles.active=local,local-no-auth`

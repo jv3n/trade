@@ -40,6 +40,7 @@ data class TradeEntryDto(
   val exitStrategy: TradeExitStrategy?,
   val errorNote: String?,
   val statEntryId: UUID?,
+  val hasScreenshot: Boolean,
   val createdAt: Instant,
   val updatedAt: Instant,
 )
@@ -69,6 +70,7 @@ fun TradeEntry.toDto() =
     exitStrategy = exitStrategy,
     errorNote = errorNote,
     statEntryId = statEntryId,
+    hasScreenshot = hasScreenshot,
     createdAt = createdAt,
     updatedAt = updatedAt,
   )

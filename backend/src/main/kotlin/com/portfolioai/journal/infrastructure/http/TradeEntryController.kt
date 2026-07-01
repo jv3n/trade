@@ -122,4 +122,32 @@ class TradeEntryController(private val service: TradeEntryService) {
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun delete(@PathVariable id: UUID) = service.delete(id)
+
+  // ---- Screenshot attachment (issue #110) — single optional image per trade, out of the CSV flow.
+
+  /**
+   * Attaches (or replaces) the trade's screenshot from a `multipart/form-data` upload with a `file`
+   * part. Type / size are validated in the service (→ 400). Returns the refreshed trade so the
+   * client picks up `hasScreenshot` without a re-fetch.
+   */
+  @PostMapping("/{id}/screenshot", consumes = ["multipart/form-data"])
+  fun uploadScreenshot(
+    @PathVariable id: UUID,
+    @RequestParam("file") file: MultipartFile,
+  ): TradeEntryDto =
+    service.attachScreenshot(id, file.bytes, file.contentType, file.originalFilename)
+
+  /** Serves the screenshot bytes inline with their stored content type (404 if none). */
+  @GetMapping("/{id}/screenshot")
+  fun getScreenshot(@PathVariable id: UUID): ResponseEntity<ByteArray> {
+    val screenshot = service.getScreenshot(id)
+    return ResponseEntity.ok()
+      .contentType(MediaType.parseMediaType(screenshot.contentType))
+      .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+      .body(screenshot.bytes)
+  }
+
+  /** Removes the trade's screenshot. Returns the refreshed trade (`hasScreenshot = false`). */
+  @DeleteMapping("/{id}/screenshot")
+  fun deleteScreenshot(@PathVariable id: UUID): TradeEntryDto = service.deleteScreenshot(id)
 }

@@ -156,5 +156,94 @@
       <h3>{{ 'journal.detail.postMortem' | translate }}</h3>
       <p class="note-block">{{ e.errorNote || ('journal.detail.noNote' | translate) }}</p>
     </section>
+
+    <mat-divider />
+
+    <!-- Screenshot — single optional image, managed here once the trade exists (issue #110). -->
+    <section class="detail-section">
+      <h3>{{ 'journal.detail.screenshot.title' | translate }}</h3>
+      @if (e.hasScreenshot) {
+        <div class="screenshot-view">
+          @if (screenshotUrl(); as url) {
+            <button
+              type="button"
+              class="screenshot-img-button"
+              [title]="'journal.detail.screenshot.zoom' | translate"
+              [attr.aria-label]="'journal.detail.screenshot.zoom' | translate"
+              (click)="openLightbox()"
+            >
+              <img [src]="url" alt="" class="screenshot-img" />
+            </button>
+          } @else {
+            <div class="screenshot-loading"><mat-spinner diameter="20" /></div>
+          }
+          <div class="screenshot-actions">
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="fileInput.click()"
+              [disabled]="screenshotUploading()"
+            >
+              <mat-icon>swap_horiz</mat-icon>
+              <span>{{ 'journal.detail.screenshot.replace' | translate }}</span>
+            </button>
+            <button mat-stroked-button type="button" (click)="removeScreenshot()">
+              <mat-icon>delete</mat-icon>
+              <span>{{ 'journal.detail.screenshot.remove' | translate }}</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <!-- Drag-drop surface (drag events only — the click affordance is the Browse button, so
+             we don't put a click handler on the div and trip the a11y lint, like journal-io). -->
+        <div
+          class="screenshot-drop"
+          [class.dragging]="dragging()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onScreenshotDrop($event)"
+        >
+          @if (screenshotUploading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <mat-icon>add_photo_alternate</mat-icon>
+            <p>{{ 'journal.detail.screenshot.dropHint' | translate }}</p>
+            <button mat-stroked-button type="button" (click)="fileInput.click()">
+              <mat-icon>upload</mat-icon>
+              <span>{{ 'journal.detail.screenshot.browse' | translate }}</span>
+            </button>
+          }
+        </div>
+      }
+      <input
+        #fileInput
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        (change)="onScreenshotFile($event)"
+        hidden
+      />
+    </section>
+  }
+
+  <!-- Fullscreen preview — the backdrop is a button (click / Enter / Space close), Escape closes via
+       the host listener. The close button is a sibling to avoid nesting interactive elements. -->
+  @if (lightboxOpen() && screenshotUrl(); as url) {
+    <button
+      type="button"
+      class="lightbox"
+      [attr.aria-label]="'journal.detail.screenshot.close' | translate"
+      (click)="closeLightbox()"
+    >
+      <img [src]="url" alt="" class="lightbox-img" />
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      class="lightbox-close"
+      (click)="closeLightbox()"
+      [attr.aria-label]="'journal.detail.screenshot.close' | translate"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
   }
 </div>

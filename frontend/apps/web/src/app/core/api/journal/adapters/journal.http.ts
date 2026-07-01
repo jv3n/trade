@@ -61,6 +61,7 @@ interface TradeEntryWireDto {
   exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
   statEntryId: string | null;
+  hasScreenshot: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -125,6 +126,7 @@ function fromWire(w: TradeEntryWireDto): TradeEntry {
     exitStrategy: w.exitStrategy,
     errorNote: w.errorNote,
     statEntryId: w.statEntryId,
+    hasScreenshot: w.hasScreenshot,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };
@@ -277,5 +279,21 @@ export class HttpJournalRepository extends JournalRepository {
     const form = new FormData();
     form.append('file', file, file.name);
     return this.http.post<ImportResult>(`${this.base}/import`, form);
+  }
+
+  uploadScreenshot(id: string, file: File): Observable<TradeEntry> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http
+      .post<TradeEntryWireDto>(`${this.base}/${id}/screenshot`, form)
+      .pipe(map(fromWire));
+  }
+
+  getScreenshotBlob(id: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${id}/screenshot`, { responseType: 'blob' });
+  }
+
+  deleteScreenshot(id: string): Observable<TradeEntry> {
+    return this.http.delete<TradeEntryWireDto>(`${this.base}/${id}/screenshot`).pipe(map(fromWire));
   }
 }

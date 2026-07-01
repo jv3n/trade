@@ -18,9 +18,11 @@ import { JournalDetailPage } from './journal-detail-page';
 describe('JournalDetailPage', () => {
   let findById: ReturnType<typeof vi.fn>;
   let deleteSubject: Subject<void>;
+  let deleteScreenshot: ReturnType<typeof vi.fn>;
 
   function setup() {
     deleteSubject = new Subject<void>();
+    deleteScreenshot = vi.fn(() => of(makeTrade({ hasScreenshot: false })));
     TestBed.configureTestingModule({
       imports: [JournalDetailPage],
       providers: [
@@ -33,6 +35,9 @@ describe('JournalDetailPage', () => {
             findById,
             update: () => of(makeTrade()),
             delete: () => deleteSubject.asObservable(),
+            uploadScreenshot: () => of(makeTrade({ hasScreenshot: true })),
+            getScreenshotBlob: () => of(new Blob()),
+            deleteScreenshot,
           } as unknown as JournalRepository,
         },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
@@ -85,6 +90,19 @@ describe('JournalDetailPage', () => {
 
     expect(navigate).toHaveBeenCalledWith(['/journal']);
   });
+
+  it('removeScreenshot calls the repository and clears the flag on the entry', () => {
+    // Start without a screenshot so load() doesn't reach for a blob (jsdom has no
+    // URL.createObjectURL) — we're pinning the delete wiring, not the object-URL preview.
+    findById = vi.fn(() => of(makeTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+
+    fixture.componentInstance.removeScreenshot();
+
+    expect(deleteScreenshot).toHaveBeenCalledWith('abc-123');
+    expect(fixture.componentInstance.entry()?.hasScreenshot).toBe(false);
+  });
 });
 
 function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
@@ -112,6 +130,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     exitStrategy: null,
     errorNote: null,
     statEntryId: null,
+    hasScreenshot: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

@@ -313,7 +313,20 @@
       "preparation": "Checklist de préparation",
       "notes": "Notes",
       "postMortem": "Débrief",
-      "noNote": "—"
+      "noNote": "—",
+      "screenshot": {
+        "title": "Capture d'écran",
+        "dropHint": "Glisse une image ici, ou :",
+        "browse": "Parcourir",
+        "zoom": "Agrandir",
+        "close": "Fermer",
+        "replace": "Remplacer",
+        "remove": "Supprimer",
+        "uploadSuccess": "Capture enregistrée.",
+        "uploadError": "Échec de l'envoi de la capture. Réessaie.",
+        "deleteSuccess": "Capture supprimée.",
+        "deleteError": "Échec de la suppression de la capture. Réessaie."
+      }
     },
     "dialog": {
       "createTitle": "Saisir un trade",

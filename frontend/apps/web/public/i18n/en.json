@@ -313,7 +313,20 @@
       "preparation": "Preparation checklist",
       "notes": "Notes",
       "postMortem": "Debrief",
-      "noNote": "—"
+      "noNote": "—",
+      "screenshot": {
+        "title": "Screenshot",
+        "dropHint": "Drop an image here, or:",
+        "browse": "Browse",
+        "zoom": "Zoom",
+        "close": "Close",
+        "replace": "Replace",
+        "remove": "Remove",
+        "uploadSuccess": "Screenshot saved.",
+        "uploadError": "Couldn't upload the screenshot. Try again.",
+        "deleteSuccess": "Screenshot removed.",
+        "deleteError": "Couldn't remove the screenshot. Try again."
+      }
     },
     "dialog": {
       "createTitle": "Log a trade",

@@ -97,6 +97,8 @@ export interface TradeEntry {
   exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
   statEntryId: string | null;
+  /** Whether a screenshot is attached (issue #110). The bytes are served on a dedicated endpoint. */
+  hasScreenshot: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

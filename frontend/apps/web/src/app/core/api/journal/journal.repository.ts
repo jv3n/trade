@@ -33,6 +33,16 @@ export abstract class JournalRepository {
    * in `errors`).
    */
   abstract importCsv(file: File): Observable<ImportResult>;
+
+  /**
+   * Attaches (or replaces) the trade's single screenshot. Returns the refreshed trade so the caller
+   * picks up `hasScreenshot`. Type / size are validated server-side (→ 400 on violation).
+   */
+  abstract uploadScreenshot(id: string, file: File): Observable<TradeEntry>;
+  /** Streams the trade's screenshot as an image blob (for an object-URL preview). 404 if none. */
+  abstract getScreenshotBlob(id: string): Observable<Blob>;
+  /** Removes the trade's screenshot. Returns the refreshed trade (`hasScreenshot = false`). */
+  abstract deleteScreenshot(id: string): Observable<TradeEntry>;
 }
 
 /**

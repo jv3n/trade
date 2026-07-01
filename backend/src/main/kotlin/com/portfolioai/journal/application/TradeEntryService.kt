@@ -2,12 +2,15 @@ package com.portfolioai.journal.application
 
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.journal.application.dto.ImportResult
+import com.portfolioai.journal.application.dto.ScreenshotContent
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.application.dto.toDto
+import com.portfolioai.journal.domain.TradeAttachment
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradePositionCalculator
+import com.portfolioai.journal.infrastructure.persistence.TradeAttachmentRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
 import java.math.BigDecimal
@@ -35,6 +38,7 @@ import org.springframework.web.server.ResponseStatusException
 @Service
 class TradeEntryService(
   private val repo: TradeEntryRepository,
+  private val attachmentRepo: TradeAttachmentRepository,
   private val authService: AuthService,
   private val events: ApplicationEventPublisher,
 ) {
@@ -84,6 +88,10 @@ class TradeEntryService(
     /** Used as the implicit sort when the client doesn't send any `sort` URL param. */
     private val DEFAULT_SORT: Sort =
       Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
+
+    /** Screenshot upload guardrails (issue #110) — enforced in-service (→ 400) before the DB. */
+    private val ALLOWED_IMAGE_TYPES = setOf("image/png", "image/jpeg", "image/webp")
+    private const val MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024 // 5 MB
   }
 
   @Transactional(readOnly = true) fun findById(id: UUID): TradeEntryDto = loadOwned(id).toDto()
@@ -210,6 +218,77 @@ class TradeEntryService(
     if (removed == 0L) {
       throw ResponseStatusException(HttpStatus.NOT_FOUND, "Trade entry $id not found")
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Screenshot attachment (issue #110) — one optional image per trade, stored as bytea in
+  // `trade_attachment`. Out of the CSV flow ; managed from the detail view once the trade exists.
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Attaches (or replaces) the trade's single screenshot. Validates the content type against
+   * [ALLOWED_IMAGE_TYPES] and the size against [MAX_SCREENSHOT_BYTES] → HTTP 400 on violation. Sets
+   * the denormalized [TradeEntry.hasScreenshot] flag so the listing DTO reflects presence without a
+   * join.
+   */
+  @Transactional
+  fun attachScreenshot(
+    id: UUID,
+    bytes: ByteArray,
+    contentType: String?,
+    filename: String?,
+  ): TradeEntryDto {
+    require(bytes.isNotEmpty()) { "Screenshot file is empty" }
+    require(bytes.size <= MAX_SCREENSHOT_BYTES) {
+      "Screenshot exceeds the ${MAX_SCREENSHOT_BYTES / (1024 * 1024)} MB limit"
+    }
+    val normalizedType = contentType?.lowercase()
+    require(normalizedType in ALLOWED_IMAGE_TYPES) {
+      "Unsupported image type '$contentType' — allowed: ${ALLOWED_IMAGE_TYPES.joinToString(", ")}"
+    }
+
+    val entry = loadOwned(id)
+    val existing = attachmentRepo.findByTradeEntryId(entry.id)
+    if (existing != null) {
+      existing.content = bytes
+      existing.contentType = normalizedType!!
+      existing.filename = filename
+      existing.sizeBytes = bytes.size
+      attachmentRepo.save(existing)
+    } else {
+      attachmentRepo.save(
+        TradeAttachment(
+          tradeEntry = entry,
+          content = bytes,
+          contentType = normalizedType!!,
+          filename = filename,
+          sizeBytes = bytes.size,
+        )
+      )
+    }
+    entry.hasScreenshot = true
+    entry.updatedAt = Instant.now()
+    return repo.saveAndFlush(entry).toDto()
+  }
+
+  /** Returns the trade's screenshot bytes + content type, or 404 if none (or trade not owned). */
+  @Transactional(readOnly = true)
+  fun getScreenshot(id: UUID): ScreenshotContent {
+    val entry = loadOwned(id)
+    val attachment =
+      attachmentRepo.findByTradeEntryId(entry.id)
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No screenshot for trade $id")
+    return ScreenshotContent(bytes = attachment.content, contentType = attachment.contentType)
+  }
+
+  /** Removes the trade's screenshot (no-op-safe) and clears the [TradeEntry.hasScreenshot] flag. */
+  @Transactional
+  fun deleteScreenshot(id: UUID): TradeEntryDto {
+    val entry = loadOwned(id)
+    attachmentRepo.deleteByTradeEntryId(entry.id)
+    entry.hasScreenshot = false
+    entry.updatedAt = Instant.now()
+    return repo.saveAndFlush(entry).toDto()
   }
 
   /**

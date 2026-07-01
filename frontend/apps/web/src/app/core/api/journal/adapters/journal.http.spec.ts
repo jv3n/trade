@@ -246,6 +246,38 @@ describe('HttpJournalRepository', () => {
     req.flush(wireFixture({ id: 'abc-123' }));
   });
 
+  // ---------------------------------------------------------------------------
+  // screenshot — multipart upload / blob download / delete (issue #110)
+  // ---------------------------------------------------------------------------
+
+  it('uploadScreenshot POSTs multipart to /:id/screenshot and maps the refreshed trade', () => {
+    const file = new File([new Uint8Array([1, 2, 3])], 'shot.png', { type: 'image/png' });
+    repo.uploadScreenshot('abc-123', file).subscribe((entry) => {
+      expect(entry.hasScreenshot).toBe(true);
+    });
+    const req = http.expectOne('/api/journal/trades/abc-123/screenshot');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush(wireFixture({ id: 'abc-123', hasScreenshot: true }));
+  });
+
+  it('getScreenshotBlob GETs /:id/screenshot as a blob', () => {
+    repo.getScreenshotBlob('abc-123').subscribe();
+    const req = http.expectOne('/api/journal/trades/abc-123/screenshot');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob());
+  });
+
+  it('deleteScreenshot DELETEs /:id/screenshot and maps the refreshed trade', () => {
+    repo.deleteScreenshot('abc-123').subscribe((entry) => {
+      expect(entry.hasScreenshot).toBe(false);
+    });
+    const req = http.expectOne('/api/journal/trades/abc-123/screenshot');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(wireFixture({ id: 'abc-123', hasScreenshot: false }));
+  });
+
   it('delete sends DELETE /:id with no body', () => {
     repo.delete('abc-123').subscribe();
     const req = http.expectOne('/api/journal/trades/abc-123');
@@ -291,6 +323,7 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     exitStrategy: null,
     errorNote: null,
     statEntryId: null,
+    hasScreenshot: false,
     createdAt: '2026-06-04T15:30:00Z',
     updatedAt: '2026-06-04T15:30:00Z',
     ...overrides,

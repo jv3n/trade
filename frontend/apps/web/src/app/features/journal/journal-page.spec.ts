@@ -227,6 +227,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     exitStrategy: null,
     errorNote: null,
     statEntryId: null,
+    hasScreenshot: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

@@ -445,7 +445,7 @@ export class JournalPage {
     const data: AddTradeDialogData = { entry, seed };
     const ref = this.dialog.open<AddTradeDialog, AddTradeDialogData, TradeEntryInput | undefined>(
       AddTradeDialog,
-      { data, width: '880px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
+      { data, width: '1040px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
     );
     ref
       .afterClosed()

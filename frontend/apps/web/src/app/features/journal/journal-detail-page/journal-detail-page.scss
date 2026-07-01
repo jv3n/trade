@@ -117,3 +117,93 @@
   white-space: pre-wrap;
   color: var(--color-text);
 }
+
+// Screenshot — thumbnail + actions when present, drop-zone otherwise.
+.screenshot-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.screenshot-img {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-soft, rgba(0, 0, 0, 0.12));
+}
+
+// Focusable, keyboard-activatable wrapper around the thumbnail (a11y) — visually just the image.
+.screenshot-img-button {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+}
+
+// Fullscreen preview overlay — a full-viewport button (backdrop) that closes on activation.
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: none;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+
+.lightbox-img {
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+  border-radius: 0.25rem;
+}
+
+.lightbox-close {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  color: #fff;
+}
+
+.screenshot-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12rem;
+  height: 8rem;
+}
+
+.screenshot-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.screenshot-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  border: 2px dashed var(--color-border-soft, rgba(0, 0, 0, 0.2));
+  border-radius: 0.5rem;
+  color: var(--color-text-muted, #777);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &.dragging {
+    border-color: var(--color-primary, #3f51b5);
+    background: var(--color-surface-variant, rgba(0, 0, 0, 0.03));
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+}
