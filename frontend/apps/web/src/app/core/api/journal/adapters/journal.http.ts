@@ -4,9 +4,12 @@ import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
 import { ImportResult, JournalRepository, PageRequest, PagedResult } from '../journal.repository';
 import {
+  ExecutionKind,
+  TradeDirection,
   TradeEntry,
   TradeEntryFilter,
   TradeEntryInput,
+  TradeExecution,
   TradeExitStrategy,
   TradeOpenSide,
   TradePattern,
@@ -21,10 +24,25 @@ import {
 // `LocalDate` as `YYYY-MM-DD` and `Instant` as ISO-8601 with `Z`.
 // ---------------------------------------------------------------------------
 
+interface ExecutionWireDto {
+  seq: number;
+  kind: ExecutionKind;
+  shares: number;
+  price: number;
+}
+
+interface ExecutionWireRequest {
+  kind: ExecutionKind;
+  shares: number;
+  price: number;
+}
+
 interface TradeEntryWireDto {
   id: string;
   tradeDate: string;
   ticker: string;
+  direction: TradeDirection | null;
+  executions: ExecutionWireDto[];
   play: TradePlay | null;
   pattern: TradePattern | null;
   size: number | null;
@@ -50,13 +68,10 @@ interface TradeEntryWireDto {
 interface TradeEntryWireRequest {
   tradeDate: string;
   ticker: string;
+  direction: TradeDirection | null;
+  executions: ExecutionWireRequest[];
   play: TradePlay | null;
   pattern: TradePattern | null;
-  size: number | null;
-  openPrice: number | null;
-  exitPrice: number | null;
-  profitDollars: number | null;
-  gainPercent: number | null;
   note: string | null;
   pre935To10h: boolean | null;
   preGapUp50: boolean | null;
@@ -81,11 +96,17 @@ interface TradeEntryWireRequest {
 // `format(d, 'yyyy-MM-dd')` uses the local Y/M/D — same intent as `parseISO` of the same
 // shape, so a round-trip preserves the user's day.
 
+function executionFromWire(w: ExecutionWireDto): TradeExecution {
+  return { seq: w.seq, kind: w.kind, shares: w.shares, price: w.price };
+}
+
 function fromWire(w: TradeEntryWireDto): TradeEntry {
   return {
     id: w.id,
     tradeDate: parseISO(w.tradeDate),
     ticker: w.ticker,
+    direction: w.direction,
+    executions: (w.executions ?? []).map(executionFromWire),
     play: w.play,
     pattern: w.pattern,
     size: w.size,
@@ -113,13 +134,14 @@ function toWire(input: TradeEntryInput): TradeEntryWireRequest {
   return {
     tradeDate: format(input.tradeDate, 'yyyy-MM-dd'),
     ticker: input.ticker.trim().toUpperCase(),
+    direction: input.direction,
+    executions: input.executions.map((e) => ({
+      kind: e.kind,
+      shares: e.shares,
+      price: e.price,
+    })),
     play: input.play,
     pattern: input.pattern,
-    size: input.size,
-    openPrice: input.openPrice,
-    exitPrice: input.exitPrice,
-    profitDollars: input.profitDollars,
-    gainPercent: input.gainPercent,
     note: input.note?.trim() || null,
     pre935To10h: input.pre935To10h,
     preGapUp50: input.preGapUp50,

@@ -49,6 +49,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/journal/journal-page').then((m) => m.JournalPage),
   },
   {
+    path: 'journal/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/journal/journal-detail-page/journal-detail-page').then(
+        (m) => m.JournalDetailPage,
+      ),
+  },
+  {
     path: 'journal-io',
     canActivate: [authGuard],
     loadComponent: () =>

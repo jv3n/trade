@@ -1,17 +1,21 @@
 package com.portfolioai.journal.domain
 
 import com.portfolioai.auth.domain.User
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
+import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 
@@ -30,6 +34,13 @@ import org.hibernate.type.SqlTypes
  *
  * [statEntryId] is a nullable link to the matching imported stat row (`stat_entry.id`). NULL = an
  * "orphan" trade with no stat attached yet ; the link is assigned later from the UI.
+ *
+ * Since the multi-execution model (issue #93), the position is built from an ordered list of
+ * [executions] and a [direction]. The flat columns [size], [openPrice], [exitPrice],
+ * [profitDollars], [gainPercent] are no longer user-supplied : they are **derived aggregates**
+ * recomputed from the executions by [TradePositionCalculator] on every write (see
+ * `TradeEntryService`). They stay as columns so the listing's sort/filter/pagination, the CSV
+ * export and the account event keep reading flat values without a join.
  */
 @Entity
 @Table(name = "trade_entry")
@@ -43,7 +54,10 @@ class TradeEntry(
   @Column(name = "trade_date", nullable = false) var tradeDate: LocalDate,
   @Column(nullable = false, length = 20) var ticker: String,
 
-  // ---- Execution (optional since V4 — only trade_date + ticker are mandatory) ----
+  /** Position direction. NULL until the first execution is recorded (issue #93). */
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var direction: TradeDirection? = null,
+
+  // ---- Derived aggregates (computed from `executions` by TradePositionCalculator) ----
   @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var play: TradePlay? = null,
   @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var pattern: TradePattern? = null,
   @Column var size: Int? = null,
@@ -75,4 +89,62 @@ class TradeEntry(
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
   @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),
-)
+) {
+
+  /**
+   * Source-of-truth executions, ordered by [TradeExecution.seq]. Cascade-all + orphan-removal so
+   * the child rows live and die with the parent — [replaceExecutions] rewrites the whole list on
+   * update.
+   */
+  @OneToMany(mappedBy = "tradeEntry", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OrderBy("seq ASC")
+  // Batch-load the collections for a page of trades in one IN query instead of N+1 — the listing
+  // serializes executions on every row.
+  @BatchSize(size = 50)
+  var executions: MutableList<TradeExecution> = mutableListOf()
+
+  /**
+   * Rewrites the execution list from the given (kind, shares, price) legs, re-sequencing them
+   * 0-based in order.
+   *
+   * **Reuse in place, don't clear + re-add** : a `clear()` + re-add makes Hibernate INSERT the new
+   * `seq` values before it DELETEs the old ones during a full-replace update, which transiently
+   * violates the unique `(trade_entry_id, seq)` constraint and blows up with a
+   * `DataIntegrityViolationException`. By mutating the surviving rows positionally, each `seq` is
+   * only ever held by one row at a time. The surplus tail is removed (orphan-removal deletes it).
+   */
+  fun replaceExecutions(legs: List<TradePositionCalculator.Leg>) {
+    for (i in legs.indices) {
+      val leg = legs[i]
+      if (i < executions.size) {
+        val exec = executions[i]
+        exec.seq = i
+        exec.kind = leg.kind
+        exec.shares = leg.shares
+        exec.price = leg.price
+      } else {
+        executions.add(
+          TradeExecution(
+            tradeEntry = this,
+            seq = i,
+            kind = leg.kind,
+            shares = leg.shares,
+            price = leg.price,
+          )
+        )
+      }
+    }
+    while (executions.size > legs.size) {
+      executions.removeAt(executions.size - 1)
+    }
+  }
+
+  /** Copies the derived aggregates from [TradePositionCalculator] onto the flat columns. */
+  fun applyAggregates(aggregates: TradePositionCalculator.Aggregates) {
+    size = aggregates.size
+    openPrice = aggregates.avgEntry
+    exitPrice = aggregates.avgExit
+    profitDollars = aggregates.profitDollars
+    gainPercent = aggregates.gainPercent
+  }
+}

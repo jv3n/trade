@@ -7,8 +7,10 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.application.dto.toDto
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
+import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
@@ -126,11 +128,6 @@ class TradeEntryService(
           ticker = request.ticker,
           play = request.play,
           pattern = request.pattern,
-          size = request.size,
-          openPrice = request.openPrice,
-          exitPrice = request.exitPrice,
-          profitDollars = request.profitDollars,
-          gainPercent = request.gainPercent,
           note = request.note,
           pre935To10h = request.pre935To10h,
           preGapUp50 = request.preGapUp50,
@@ -143,6 +140,7 @@ class TradeEntryService(
           errorNote = request.errorNote,
           statEntryId = request.statEntryId,
         )
+      applyExecutions(entry, request)
       publishChange(repo.saveAndFlush(entry))
     }
     return ImportResult(
@@ -162,11 +160,6 @@ class TradeEntryService(
         ticker = request.ticker.trim().uppercase(),
         play = request.play,
         pattern = request.pattern,
-        size = request.size,
-        openPrice = request.openPrice,
-        exitPrice = request.exitPrice,
-        profitDollars = request.profitDollars,
-        gainPercent = request.gainPercent,
         note = request.note,
         pre935To10h = request.pre935To10h,
         preGapUp50 = request.preGapUp50,
@@ -179,6 +172,7 @@ class TradeEntryService(
         errorNote = request.errorNote,
         statEntryId = request.statEntryId,
       )
+    applyExecutions(entry, request)
     val saved = repo.saveAndFlush(entry)
     publishChange(saved)
     return saved.toDto()
@@ -191,11 +185,6 @@ class TradeEntryService(
     entry.ticker = request.ticker.trim().uppercase()
     entry.play = request.play
     entry.pattern = request.pattern
-    entry.size = request.size
-    entry.openPrice = request.openPrice
-    entry.exitPrice = request.exitPrice
-    entry.profitDollars = request.profitDollars
-    entry.gainPercent = request.gainPercent
     entry.note = request.note
     entry.pre935To10h = request.pre935To10h
     entry.preGapUp50 = request.preGapUp50
@@ -207,6 +196,7 @@ class TradeEntryService(
     entry.exitStrategy = request.exitStrategy
     entry.errorNote = request.errorNote
     entry.statEntryId = request.statEntryId
+    applyExecutions(entry, request)
     entry.updatedAt = Instant.now()
     val saved = repo.saveAndFlush(entry)
     publishChange(saved)
@@ -220,6 +210,26 @@ class TradeEntryService(
     if (removed == 0L) {
       throw ResponseStatusException(HttpStatus.NOT_FOUND, "Trade entry $id not found")
     }
+  }
+
+  /**
+   * Rewrites the [entry]'s executions + direction from the [request] and recomputes the derived
+   * aggregates (size, avg prices, realized P&L, gain%) via [TradePositionCalculator] — the single
+   * place where the "calculs auto à l'insert" happen. Per-leg positivity is validated here (→ HTTP
+   * 400) so a bad input never reaches the DB CHECK constraints (which would surface as a 409).
+   */
+  private fun applyExecutions(entry: TradeEntry, request: TradeEntryRequest) {
+    val legs =
+      request.executions.map { exec ->
+        require(exec.shares > 0) { "Execution shares must be positive, got ${exec.shares}" }
+        require(exec.price > BigDecimal.ZERO) {
+          "Execution price must be positive, got ${exec.price.toPlainString()}"
+        }
+        TradePositionCalculator.Leg(kind = exec.kind, shares = exec.shares, price = exec.price)
+      }
+    entry.direction = request.direction
+    entry.replaceExecutions(legs)
+    entry.applyAggregates(TradePositionCalculator.compute(request.direction, legs))
   }
 
   /**

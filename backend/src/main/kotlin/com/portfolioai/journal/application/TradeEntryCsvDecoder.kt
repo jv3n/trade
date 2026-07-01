@@ -1,11 +1,14 @@
 package com.portfolioai.journal.application
 
+import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.ImportError
 import com.portfolioai.journal.application.dto.TradeEntryRequest
+import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeExitStrategy
 import com.portfolioai.journal.domain.TradeOpenSide
 import com.portfolioai.journal.domain.TradePattern
 import com.portfolioai.journal.domain.TradePlay
+import com.portfolioai.journal.domain.TradePositionCalculator
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -122,9 +125,34 @@ object TradeEntryCsvDecoder {
   // (validated above).
   // ============================================================================
   private fun toRequest(cells: List<String>, lineNo: Int): TradeEntryRequest {
+    // The CSV layout is frozen on the legacy flat columns (issue #93 — the multi-exec CSV format is
+    // a dedicated future ticket). We reconstruct a *simple* position from them : one ENTRY leg
+    // (size @ openPrice) and, when the trade was closed, one EXIT leg (size @ exitPrice). The
+    // direction is inferred short-biased, and profitDollars / gainPercent (cells 7-8) are ignored
+    // on
+    // import — they are recomputed from the executions by the service.
+    val size = optionalPositiveInt(cells[4], "size")
+    val openPrice = optionalPositiveDecimal(cells[5], "openPrice")
+    val exitPrice = optionalDecimal(cells[6], "exitPrice")
+
+    val executions = mutableListOf<ExecutionRequest>()
+    if (size != null && openPrice != null) {
+      executions.add(ExecutionRequest(kind = ExecutionKind.ENTRY, shares = size, price = openPrice))
+      if (exitPrice != null) {
+        executions.add(
+          ExecutionRequest(kind = ExecutionKind.EXIT, shares = size, price = exitPrice)
+        )
+      }
+    }
+    val direction =
+      if (executions.isEmpty()) null
+      else TradePositionCalculator.inferDirection(openPrice, exitPrice)
+
     return TradeEntryRequest(
       tradeDate = requireDate(cells[0], "tradeDate"),
       ticker = requireNonBlank(cells[1], "ticker").trim().uppercase(),
+      direction = direction,
+      executions = executions,
       play = optionalEnum(cells[2], "play", TradePlay::valueOf, TradePlay.entries.map { it.name }),
       pattern =
         optionalEnum(
@@ -133,11 +161,6 @@ object TradeEntryCsvDecoder {
           TradePattern::valueOf,
           TradePattern.entries.map { it.name },
         ),
-      size = optionalPositiveInt(cells[4], "size"),
-      openPrice = optionalPositiveDecimal(cells[5], "openPrice"),
-      exitPrice = optionalDecimal(cells[6], "exitPrice"),
-      profitDollars = optionalDecimal(cells[7], "profitDollars"),
-      gainPercent = optionalDecimal(cells[8], "gainPercent"),
       note = optionalString(cells[9]),
       pre935To10h = optionalBoolean(cells[10], "pre935To10h"),
       preGapUp50 = optionalBoolean(cells[11], "preGapUp50"),

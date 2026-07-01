@@ -5,7 +5,10 @@ import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.journal.application.TradeEntryService
+import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
+import com.portfolioai.journal.domain.ExecutionKind
+import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradeExitStrategy
 import com.portfolioai.journal.domain.TradeOpenSide
@@ -140,6 +143,53 @@ class JournalIntegrationTest {
   }
 
   @Test
+  fun `create with multiple executions persists the legs and derives the aggregates`() {
+    // SHORT 200 shares scaled in (100 @ 6, 100 @ 4 → avg 5), fully covered 200 @ 4.5.
+    // Realized P&L (short) = (5 - 4.5) * 200 = 100 ; gain = 100 / (5 * 200) * 100 = 10 %.
+    val request =
+      TradeEntryRequest(
+        tradeDate = LocalDate.of(2026, 6, 4),
+        ticker = "bac",
+        direction = TradeDirection.SHORT,
+        executions =
+          listOf(
+            ExecutionRequest(ExecutionKind.ENTRY, 100, BigDecimal("6")),
+            ExecutionRequest(ExecutionKind.ENTRY, 100, BigDecimal("4")),
+            ExecutionRequest(ExecutionKind.EXIT, 200, BigDecimal("4.5")),
+          ),
+      )
+
+    val dto = service.create(request)
+
+    assertEquals(TradeDirection.SHORT, dto.direction)
+    assertEquals(3, dto.executions.size, "all three legs persist")
+    assertEquals(
+      listOf(0, 1, 2),
+      dto.executions.map { it.seq },
+      "legs are 0-based sequenced in order",
+    )
+    assertEquals(200, dto.size)
+    assertEquals(0, dto.openPrice!!.compareTo(BigDecimal("5.0000")))
+    assertEquals(0, dto.exitPrice!!.compareTo(BigDecimal("4.5000")))
+    assertEquals(0, dto.profitDollars!!.compareTo(BigDecimal("100.00")))
+    assertEquals(0, dto.gainPercent!!.compareTo(BigDecimal("10.0000")))
+  }
+
+  @Test
+  fun `editing executions recomputes the aggregates and orphan-removes the old legs`() {
+    val created = service.create(sampleRequest(ticker = "AAPL")) // open: 1 ENTRY leg
+    assertEquals(1, created.executions.size)
+    assertNull(created.profitDollars, "still open")
+
+    // Close it with a different two-leg shape.
+    val closed =
+      service.update(created.id, sampleRequest(ticker = "AAPL", exitPrice = BigDecimal("2.0000")))
+
+    assertEquals(2, closed.executions.size, "the entry + exit legs replace the single open leg")
+    assertNotNull(closed.profitDollars, "now realized")
+  }
+
+  @Test
   fun `update can attach an imported stat — statEntryId round-trips through the FK`() {
     val stat = statRepo.save(sampleStat(ticker = "AAPL"))
     val created = service.create(sampleRequest(ticker = "AAPL"))
@@ -185,17 +235,12 @@ class JournalIntegrationTest {
     val updated =
       service.update(
         created.id,
-        sampleRequest(
-          ticker = "TSLA",
-          play = TradePlay.B,
-          exitPrice = BigDecimal("4.5000"),
-          profitDollars = BigDecimal("129.00"),
-          gainPercent = BigDecimal("40.19"),
-        ),
+        sampleRequest(ticker = "TSLA", play = TradePlay.B, exitPrice = BigDecimal("4.5000")),
       )
 
     assertEquals("TSLA", updated.ticker)
     assertEquals(TradePlay.B, updated.play)
+    // exit_price is the derived weighted-average exit — here a single EXIT leg at 4.50.
     assertEquals(0, updated.exitPrice!!.compareTo(BigDecimal("4.5000")))
     assertTrue(
       updated.updatedAt.isAfter(originalUpdatedAt),
@@ -384,23 +429,27 @@ class JournalIntegrationTest {
     ticker: String = "AAPL",
     play: TradePlay = TradePlay.A,
     pattern: TradePattern = TradePattern.GUS,
+    direction: TradeDirection = TradeDirection.SHORT,
     size: Int = 100,
     openPrice: BigDecimal = BigDecimal("3.2100"),
     exitPrice: BigDecimal? = null,
-    profitDollars: BigDecimal? = null,
-    gainPercent: BigDecimal? = null,
     statEntryId: UUID? = null,
   ) =
     TradeEntryRequest(
       tradeDate = tradeDate,
       ticker = ticker,
+      // The flat aggregates (size / openPrice / exitPrice / profit / gain) are now derived from the
+      // executions — a single ENTRY leg, plus an EXIT leg when the test wants a closed position.
+      direction = direction,
+      executions =
+        buildList {
+          add(ExecutionRequest(kind = ExecutionKind.ENTRY, shares = size, price = openPrice))
+          if (exitPrice != null) {
+            add(ExecutionRequest(kind = ExecutionKind.EXIT, shares = size, price = exitPrice))
+          }
+        },
       play = play,
       pattern = pattern,
-      size = size,
-      openPrice = openPrice,
-      exitPrice = exitPrice,
-      profitDollars = profitDollars,
-      gainPercent = gainPercent,
       note = null,
       pre935To10h = true,
       preGapUp50 = true,

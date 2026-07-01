@@ -201,6 +201,35 @@ describe('HttpJournalRepository', () => {
     req.flush(wireFixture());
   });
 
+  it('create serialises direction + executions on the wire', () => {
+    repo
+      .create(
+        inputFixture({
+          direction: 'SHORT',
+          executions: [
+            { kind: 'ENTRY', shares: 100, price: 5 },
+            { kind: 'EXIT', shares: 100, price: 4 },
+          ],
+        }),
+      )
+      .subscribe();
+    const req = http.expectOne('/api/journal/trades');
+    expect(req.request.body.direction).toBe('SHORT');
+    expect(req.request.body.executions).toEqual([
+      { kind: 'ENTRY', shares: 100, price: 5 },
+      { kind: 'EXIT', shares: 100, price: 4 },
+    ]);
+    req.flush(wireFixture());
+  });
+
+  it('parses executions from the wire into domain TradeExecution[]', () => {
+    repo.findById('abc-123').subscribe((entry) => {
+      expect(entry.direction).toBe('SHORT');
+      expect(entry.executions).toEqual([{ seq: 0, kind: 'ENTRY', shares: 100, price: 3.21 }]);
+    });
+    http.expectOne('/api/journal/trades/abc-123').flush(wireFixture({ id: 'abc-123' }));
+  });
+
   it('create maps blank note / errorNote to null on the wire', () => {
     repo.create(inputFixture({ note: '   ', errorNote: '' })).subscribe();
     const req = http.expectOne('/api/journal/trades');
@@ -242,6 +271,8 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     id: 'fixture-id',
     tradeDate: '2026-06-04',
     ticker: 'AAPL',
+    direction: 'SHORT',
+    executions: [{ seq: 0, kind: 'ENTRY', shares: 100, price: 3.21 }],
     play: 'A',
     pattern: 'GUS',
     size: 100,
@@ -284,13 +315,10 @@ function inputFixture(overrides: Partial<TradeEntryInput> = {}): TradeEntryInput
   return {
     tradeDate: new Date(2026, 5, 4),
     ticker: 'AAPL',
+    direction: 'SHORT',
+    executions: [{ kind: 'ENTRY', shares: 100, price: 3.21 }],
     play: 'A',
     pattern: 'GUS',
-    size: 100,
-    openPrice: 3.21,
-    exitPrice: null,
-    profitDollars: null,
-    gainPercent: null,
     note: null,
     pre935To10h: null,
     preGapUp50: null,

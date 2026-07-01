@@ -240,13 +240,17 @@
     "fields": {
       "tradeDate": "Date",
       "ticker": "Ticker",
+      "direction": "Sens",
       "play": "Play",
       "pattern": "Pattern",
       "size": "Taille (actions)",
-      "openPrice": "Prix d'entrée",
-      "exitPrice": "Prix de sortie",
+      "openPrice": "Prix d'entrée moyen",
+      "exitPrice": "Prix de sortie moyen",
       "profitDollars": "Profit ($)",
       "gainPercent": "Gain (%)",
+      "executionKind": "Type",
+      "shares": "Actions",
+      "price": "Prix",
       "note": "Notes",
       "pre935To10h": "9h35 → 10h",
       "preGapUp50": "Gap up 50 %",
@@ -280,11 +284,36 @@
         "CLOSED": "Fermé",
         "PROFITABLE": "Gagnant",
         "LOSING": "Perdant"
+      },
+      "direction": {
+        "BUY": "Long (buy)",
+        "SHORT": "Short"
+      },
+      "executionKind": {
+        "ENTRY": "Entrée",
+        "EXIT": "Sortie"
+      },
+      "positionStatus": {
+        "OPEN": "Ouverte",
+        "PARTIAL": "Partielle",
+        "CLOSED": "Clôturée"
       }
     },
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer"
+    },
+    "detail": {
+      "back": "Retour au journal",
+      "loading": "Chargement du trade…",
+      "loadError": "Impossible de charger le trade. Réessaie.",
+      "executions": "Exécutions",
+      "noExecutions": "Aucune exécution enregistrée.",
+      "aggregates": "Position calculée",
+      "preparation": "Checklist de préparation",
+      "notes": "Notes",
+      "postMortem": "Débrief",
+      "noNote": "—"
     },
     "dialog": {
       "createTitle": "Saisir un trade",
@@ -292,10 +321,25 @@
       "save": "Enregistrer",
       "cancel": "Annuler",
       "sections": {
-        "execution": "Exécution",
+        "execution": "Identité",
+        "executions": "Exécutions",
         "exit": "Sortie",
         "preparation": "Checklist de préparation",
         "statLink": "Lien stat"
+      },
+      "executions": {
+        "addEntry": "Ajouter une entrée",
+        "addExit": "Ajouter une sortie",
+        "remove": "Supprimer l'exécution",
+        "invalid": "Exécutions incohérentes : les actions sorties dépassent les actions entrées."
+      },
+      "preview": {
+        "size": "Taille",
+        "avgEntry": "Prix d'entrée moyen",
+        "avgExit": "Prix de sortie moyen",
+        "profit": "Profit",
+        "gain": "Gain",
+        "status": "Statut"
       }
     },
     "snackbar": {

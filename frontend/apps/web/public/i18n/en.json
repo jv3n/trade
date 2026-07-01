@@ -240,13 +240,17 @@
     "fields": {
       "tradeDate": "Date",
       "ticker": "Ticker",
+      "direction": "Direction",
       "play": "Play",
       "pattern": "Pattern",
       "size": "Size (shares)",
-      "openPrice": "Open price",
-      "exitPrice": "Exit price",
+      "openPrice": "Avg entry price",
+      "exitPrice": "Avg exit price",
       "profitDollars": "Profit ($)",
       "gainPercent": "Gain (%)",
+      "executionKind": "Type",
+      "shares": "Shares",
+      "price": "Price",
       "note": "Notes",
       "pre935To10h": "9h35 → 10h",
       "preGapUp50": "Gap up 50 %",
@@ -280,11 +284,36 @@
         "CLOSED": "Closed",
         "PROFITABLE": "Profitable",
         "LOSING": "Losing"
+      },
+      "direction": {
+        "BUY": "Long (buy)",
+        "SHORT": "Short"
+      },
+      "executionKind": {
+        "ENTRY": "Entry",
+        "EXIT": "Exit"
+      },
+      "positionStatus": {
+        "OPEN": "Open",
+        "PARTIAL": "Partial",
+        "CLOSED": "Closed"
       }
     },
     "actions": {
       "edit": "Edit",
       "delete": "Delete"
+    },
+    "detail": {
+      "back": "Back to journal",
+      "loading": "Loading trade…",
+      "loadError": "Couldn't load the trade. Try again.",
+      "executions": "Executions",
+      "noExecutions": "No execution recorded.",
+      "aggregates": "Computed position",
+      "preparation": "Preparation checklist",
+      "notes": "Notes",
+      "postMortem": "Debrief",
+      "noNote": "—"
     },
     "dialog": {
       "createTitle": "Log a trade",
@@ -292,10 +321,25 @@
       "save": "Save",
       "cancel": "Cancel",
       "sections": {
-        "execution": "Execution",
+        "execution": "Identity",
+        "executions": "Executions",
         "exit": "Exit",
         "preparation": "Preparation checklist",
         "statLink": "Stat link"
+      },
+      "executions": {
+        "addEntry": "Add entry",
+        "addExit": "Add exit",
+        "remove": "Remove execution",
+        "invalid": "Inconsistent executions: exited shares exceed entered shares."
+      },
+      "preview": {
+        "size": "Size",
+        "avgEntry": "Avg entry price",
+        "avgExit": "Avg exit price",
+        "profit": "Profit",
+        "gain": "Gain",
+        "status": "Status"
       }
     },
     "snackbar": {

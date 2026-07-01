@@ -125,3 +125,8 @@
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--color-border-soft);
 }
+
+// Rows navigate to the detail view on click (ticker chip + action buttons stop propagation).
+.journal-row {
+  cursor: pointer;
+}

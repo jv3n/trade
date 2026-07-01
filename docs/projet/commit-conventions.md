@@ -5,7 +5,7 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 ## Format
 
 ```
-<type>(<scope>): <description courte>
+<type>(<issue>/<scope>): <description courte>
 
 [corps optionnel]
 
@@ -13,8 +13,9 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 ```
 
 - **type** : obligatoire
-- **scope** : optionnel, entre parenthèses — précise le module concerné
-- **description** : impératif, minuscule, sans point final, max ~72 caractères
+- **issue** : numéro de l'issue GitHub liée, en **préfixe du scope**, séparé par `/` (`93/journal`). Rattache le commit à son ticket. **Omis** quand le commit n'est lié à aucune issue (bump de dépendance, chore isolé, hotfix trivial) → on retombe sur `<type>(<scope>)`.
+- **scope** : entre parenthèses — précise le module concerné (cf. table ci-dessous). Optionnel seulement en l'absence d'issue **et** de module clair (ex. `docs:`).
+- **description** : impératif, minuscule, sans point final, max ~72 caractères (numéro d'issue inclus dans le décompte)
 
 ## Types
 
@@ -31,6 +32,8 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 | `revert` | Annulation d'un commit précédent |
 
 ## Scopes courants
+
+Le scope est préfixé du numéro d'issue quand il y en a une : `feat(93/journal): …`. Sans issue, on garde le scope seul : `chore(ci): …`.
 
 | Scope | Périmètre |
 |-------|-----------|
@@ -57,11 +60,21 @@ Basé sur [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
 
 ## Exemples
 
+Avec issue liée (numéro en préfixe du scope) :
+
 ```
-feat(market): add TwelveDataClient with quote and time_series endpoints
+feat(93/journal): multi-execution positions with derived P&L
 
-fix(frontend): add provideRouter to app.spec to resolve NG0201
+fix(112/account): keep TRADE movement in sync on partial close
 
+refactor(88/journal): extract trade mapper to dedicated class
+
+test(93/journal): add TradePositionCalculator unit tests
+```
+
+Sans issue (bump, chore isolé, docs transverses) :
+
+```
 chore(config): migrate application.properties to YAML
 
 chore(ci): add backend and frontend GitHub Actions workflows
@@ -70,19 +83,16 @@ chore(tilt): add db:reset one-click resource
 
 docs: add commit conventions
 
-refactor(journal): extract trade mapper to dedicated class
-
-test(stats): add integration test for StatEntryCsvDecoder
-
 audit: add 2026-05-02 global code review report
 ```
 
 ## Règles
 
 - **Langue : anglais obligatoire** — type, scope, description et corps du commit en anglais
+- **Numéro d'issue en préfixe du scope** dès qu'un commit est rattaché à une issue GitHub (`feat(93/journal): …`) ; omis sinon
 - Un commit = une intention claire
 - Ne pas mélanger feat et fix dans le même commit
-- Les migrations Flyway ont leur propre commit avec le scope `db`
+- Les migrations Flyway ont leur propre commit avec le scope `db` (préfixé de l'issue si applicable : `feat(93/db): …`)
 - Le CLAUDE.md se met à jour dans le même commit que la feature concernée
 
 ## Versioning

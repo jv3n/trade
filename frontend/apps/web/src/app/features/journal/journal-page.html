@@ -95,7 +95,7 @@
               <th mat-header-cell *matHeaderCellDef mat-sort-header="ticker">
                 {{ 'journal.fields.ticker' | translate }}
               </th>
-              <td mat-cell *matCellDef="let e">
+              <td mat-cell *matCellDef="let e" (click)="$event.stopPropagation()">
                 <mat-chip-set>
                   <mat-chip
                     stbChip="ticker"
@@ -203,7 +203,7 @@
 
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
-              <td mat-cell *matCellDef="let e" stbCol="actions">
+              <td mat-cell *matCellDef="let e" stbCol="actions" (click)="$event.stopPropagation()">
                 <button
                   mat-icon-button
                   type="button"
@@ -226,7 +226,12 @@
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
-            <tr mat-row *matRowDef="let row; columns: columns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: columns"
+              class="journal-row"
+              (click)="openDetail(row)"
+            ></tr>
           </table>
         </div>
 

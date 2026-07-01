@@ -207,6 +207,8 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     id: 'id-1',
     tradeDate: new Date(2026, 5, 4),
     ticker: 'BAC',
+    direction: 'SHORT',
+    executions: [{ seq: 0, kind: 'ENTRY', shares: 100, price: 3.21 }],
     play: 'A',
     pattern: 'GUS',
     size: 100,

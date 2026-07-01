@@ -1,0 +1,160 @@
+<div class="page page--full journal-detail">
+  <a mat-stroked-button routerLink="/journal" class="back-link">
+    <mat-icon>arrow_back</mat-icon>
+    <span>{{ 'journal.detail.back' | translate }}</span>
+  </a>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="20" />
+      <span>{{ 'journal.detail.loading' | translate }}</span>
+    </div>
+  } @else if (error() || entry() === null) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ 'journal.detail.loadError' | translate }}</span>
+    </div>
+  } @else if (entry(); as e) {
+    <header class="content-header">
+      <div class="header-row">
+        <div class="title-block">
+          <mat-chip-set>
+            <mat-chip
+              stbChip="ticker"
+              disableRipple
+              class="ticker-chip--link"
+              [routerLink]="['/ticker', e.ticker]"
+              >{{ e.ticker }}</mat-chip
+            >
+          </mat-chip-set>
+          <span class="trade-date">{{ e.tradeDate | date: 'fullDate' }}</span>
+          @if (e.direction) {
+            <span class="direction-tag">
+              {{ 'journal.enums.direction.' + e.direction | translate }}
+            </span>
+          }
+          @if (status(); as s) {
+            <span class="status-tag">{{ 'journal.enums.positionStatus.' + s | translate }}</span>
+          }
+        </div>
+        <div class="header-actions">
+          <button mat-stroked-button type="button" (click)="edit()">
+            <mat-icon>edit</mat-icon>
+            <span>{{ 'journal.actions.edit' | translate }}</span>
+          </button>
+          <button mat-stroked-button type="button" (click)="delete()">
+            <mat-icon>delete</mat-icon>
+            <span>{{ 'journal.actions.delete' | translate }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Executions — the atomic source-of-truth rows the position is derived from. -->
+    <section class="detail-section">
+      <h3>{{ 'journal.detail.executions' | translate }}</h3>
+      @if (e.executions.length === 0) {
+        <p class="muted">{{ 'journal.detail.noExecutions' | translate }}</p>
+      } @else {
+        <div stbTable>
+          <table mat-table [dataSource]="e.executions">
+            <ng-container matColumnDef="seq">
+              <th mat-header-cell *matHeaderCellDef>#</th>
+              <td mat-cell *matCellDef="let x">{{ x.seq + 1 }}</td>
+            </ng-container>
+            <ng-container matColumnDef="kind">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ 'journal.fields.executionKind' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let x">
+                {{ 'journal.enums.executionKind.' + x.kind | translate }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="shares">
+              <th mat-header-cell *matHeaderCellDef stbCol="numeric">
+                {{ 'journal.fields.shares' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let x" stbCol="numeric">{{ x.shares }}</td>
+            </ng-container>
+            <ng-container matColumnDef="price">
+              <th mat-header-cell *matHeaderCellDef stbCol="numeric">
+                {{ 'journal.fields.price' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let x" stbCol="numeric">
+                {{ x.price | number: '1.2-4' }} $
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="executionColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: executionColumns"></tr>
+          </table>
+        </div>
+      }
+    </section>
+
+    <mat-divider />
+
+    <!-- Derived aggregates — recomputed server-side from the executions. -->
+    <section class="detail-section">
+      <h3>{{ 'journal.detail.aggregates' | translate }}</h3>
+      <dl class="aggregates">
+        <dt>{{ 'journal.fields.size' | translate }}</dt>
+        <dd>{{ e.size ?? '—' }}</dd>
+        <dt>{{ 'journal.fields.openPrice' | translate }}</dt>
+        <dd>{{ e.openPrice !== null ? (e.openPrice | number: '1.2-4') + ' $' : '—' }}</dd>
+        <dt>{{ 'journal.fields.exitPrice' | translate }}</dt>
+        <dd>{{ e.exitPrice !== null ? (e.exitPrice | number: '1.2-4') + ' $' : '—' }}</dd>
+        <dt>{{ 'journal.fields.profitDollars' | translate }}</dt>
+        <dd
+          [class.profit-positive]="(e.profitDollars ?? 0) > 0"
+          [class.profit-negative]="(e.profitDollars ?? 0) < 0"
+        >
+          {{ e.profitDollars !== null ? (e.profitDollars | number: '1.2-2') + ' $' : '—' }}
+        </dd>
+        <dt>{{ 'journal.fields.gainPercent' | translate }}</dt>
+        <dd
+          [class.profit-positive]="(e.gainPercent ?? 0) > 0"
+          [class.profit-negative]="(e.gainPercent ?? 0) < 0"
+        >
+          {{ e.gainPercent !== null ? (e.gainPercent | number: '1.2-2') + ' %' : '—' }}
+        </dd>
+        <dt>{{ 'journal.fields.play' | translate }}</dt>
+        <dd>{{ e.play ?? '—' }}</dd>
+        <dt>{{ 'journal.fields.pattern' | translate }}</dt>
+        <dd>{{ e.pattern ?? '—' }}</dd>
+      </dl>
+    </section>
+
+    <mat-divider />
+
+    <!-- Preparation checklist — read-only ticks. -->
+    <section class="detail-section">
+      <h3>{{ 'journal.detail.preparation' | translate }}</h3>
+      <ul class="checklist-view">
+        @for (item of checklist(); track item.key) {
+          <li [class.checked]="item.value">
+            <mat-icon>{{ item.value ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+            <span>{{ 'journal.fields.' + item.key | translate }}</span>
+          </li>
+        }
+      </ul>
+      <dl class="aggregates">
+        <dt>{{ 'journal.fields.openSide' | translate }}</dt>
+        <dd>{{ e.openSide ? ('journal.enums.openSide.' + e.openSide | translate) : '—' }}</dd>
+        <dt>{{ 'journal.fields.exitStrategy' | translate }}</dt>
+        <dd>
+          {{ e.exitStrategy ? ('journal.enums.exitStrategy.' + e.exitStrategy | translate) : '—' }}
+        </dd>
+      </dl>
+    </section>
+
+    <mat-divider />
+
+    <!-- Notes + debrief. -->
+    <section class="detail-section">
+      <h3>{{ 'journal.detail.notes' | translate }}</h3>
+      <p class="note-block">{{ e.note || ('journal.detail.noNote' | translate) }}</p>
+      <h3>{{ 'journal.detail.postMortem' | translate }}</h3>
+      <p class="note-block">{{ e.errorNote || ('journal.detail.noNote' | translate) }}</p>
+    </section>
+  }
+</div>

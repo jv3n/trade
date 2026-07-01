@@ -8,7 +8,10 @@ import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.journal.application.TradeEntryService
+import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
+import com.portfolioai.journal.domain.ExecutionKind
+import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -148,13 +151,24 @@ class AccountTradeSyncIntegrationTest {
   private fun tradeMovements() =
     accountRepo.findByUserId(testUser.id).filter { it.type == AccountMovementType.TRADE }
 
-  private fun closedTrade(ticker: String, pnl: String) =
-    TradeEntryRequest(
+  // Builds a SHORT 100-share position whose **derived** realized P&L equals `pnl` exactly :
+  // profit = (entry - exit) * 100, with entry fixed at 10.00 and exit = 10 - pnl/100. The P&L is no
+  // longer a user-supplied field (issue #93) — it falls out of the executions.
+  private fun closedTrade(ticker: String, pnl: String): TradeEntryRequest {
+    val shares = 100
+    val entryPrice = BigDecimal("10.00")
+    val exitPrice = entryPrice.subtract(BigDecimal(pnl).divide(BigDecimal(shares)))
+    return TradeEntryRequest(
       tradeDate = TRADE_DATE,
       ticker = ticker,
-      exitPrice = BigDecimal("4.5000"),
-      profitDollars = BigDecimal(pnl),
+      direction = TradeDirection.SHORT,
+      executions =
+        listOf(
+          ExecutionRequest(ExecutionKind.ENTRY, shares, entryPrice),
+          ExecutionRequest(ExecutionKind.EXIT, shares, exitPrice),
+        ),
     )
+  }
 
   private companion object {
     val TRADE_DATE: LocalDate = LocalDate.of(2026, 6, 15)

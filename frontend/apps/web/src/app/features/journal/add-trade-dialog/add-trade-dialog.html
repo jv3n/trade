@@ -40,7 +40,7 @@
 
     <mat-divider />
 
-    <!-- Section 1 : Execution (required fields — see schema in `add-trade-dialog.ts`) -->
+    <!-- Section 1 : Identity (date / ticker / direction / play / pattern) -->
     <section class="form-section">
       <h3>{{ 'journal.dialog.sections.execution' | translate }}</h3>
       <div class="grid-2">
@@ -48,8 +48,7 @@
           `[formField]` + `[matDatepicker]` on the same input fight over the value accessor —
           Signal Forms binds via NG_VALUE_ACCESSOR, and `MatDatepickerInput` is itself a CVA,
           so one of them ends up writing nulls. We skip `[formField]` and push the picked date
-          into the model imperatively via `setTradeDate` (same pattern as the number-mask
-          inputs below).
+          into the model imperatively via `setTradeDate`.
           The whole `<mat-form-field>` is wired to `picker.open()` so clicking anywhere on the
           field — not just the icon — opens the calendar.
         -->
@@ -72,6 +71,15 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
+          <mat-label>{{ 'journal.fields.direction' | translate }}</mat-label>
+          <mat-select [value]="model().direction" (selectionChange)="setDirection($event.value)">
+            @for (d of directions; track d) {
+              <mat-option [value]="d">{{ 'journal.enums.direction.' + d | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
           <mat-label>{{ 'journal.fields.play' | translate }}</mat-label>
           <mat-select [formField]="tradeForm.play">
             <mat-option [value]="null">—</mat-option>
@@ -90,83 +98,116 @@
             }
           </mat-select>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.size' | translate }}</mat-label>
-          <input
-            matInput
-            appNumberMask
-            [decimals]="0"
-            [min]="1"
-            [value]="model().size"
-            (numberChange)="setSize($event)"
-            inputmode="numeric"
-          />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.openPrice' | translate }}</mat-label>
-          <input
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [value]="model().openPrice"
-            (numberChange)="setOpenPrice($event)"
-            inputmode="decimal"
-          />
-          <span matTextSuffix>$</span>
-        </mat-form-field>
       </div>
     </section>
 
     <mat-divider />
 
-    <!-- Section 2 : Exit (optional until the position is closed) -->
+    <!-- Section 2 : Executions — the atomic entries/exits the position is derived from -->
     <section class="form-section">
-      <h3>{{ 'journal.dialog.sections.exit' | translate }}</h3>
-      <div class="grid-2">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.exitPrice' | translate }}</mat-label>
-          <input
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [value]="model().exitPrice"
-            (numberChange)="setExitPrice($event)"
-            inputmode="decimal"
-          />
-          <span matTextSuffix>$</span>
-        </mat-form-field>
+      <h3>{{ 'journal.dialog.sections.executions' | translate }}</h3>
 
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.profitDollars' | translate }}</mat-label>
-          <input
-            matInput
-            appNumberMask
-            [decimals]="2"
-            [allowNegative]="true"
-            [value]="model().profitDollars"
-            (numberChange)="setProfitDollars($event)"
-            inputmode="decimal"
-          />
-          <span matTextSuffix>$</span>
-        </mat-form-field>
+      @for (exec of executions(); track $index) {
+        <div class="execution-row">
+          <mat-form-field appearance="outline" class="execution-kind">
+            <mat-label>{{ 'journal.fields.executionKind' | translate }}</mat-label>
+            <mat-select
+              [value]="exec.kind"
+              (selectionChange)="setExecutionKind($index, $event.value)"
+            >
+              <mat-option value="ENTRY">{{
+                'journal.enums.executionKind.ENTRY' | translate
+              }}</mat-option>
+              <mat-option value="EXIT">{{
+                'journal.enums.executionKind.EXIT' | translate
+              }}</mat-option>
+            </mat-select>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.gainPercent' | translate }}</mat-label>
-          <input
-            matInput
-            appNumberMask
-            [decimals]="2"
-            [allowNegative]="true"
-            [value]="model().gainPercent"
-            (numberChange)="setGainPercent($event)"
-            inputmode="decimal"
-          />
-          <span matTextSuffix>%</span>
-        </mat-form-field>
+          <mat-form-field appearance="outline" class="execution-shares">
+            <mat-label>{{ 'journal.fields.shares' | translate }}</mat-label>
+            <input
+              matInput
+              appNumberMask
+              [decimals]="0"
+              [min]="1"
+              [value]="exec.shares"
+              (numberChange)="setExecutionShares($index, $event)"
+              inputmode="numeric"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="execution-price">
+            <mat-label>{{ 'journal.fields.price' | translate }}</mat-label>
+            <input
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [value]="exec.price"
+              (numberChange)="setExecutionPrice($index, $event)"
+              inputmode="decimal"
+            />
+            <span matTextSuffix>$</span>
+          </mat-form-field>
+
+          <button
+            mat-icon-button
+            type="button"
+            class="execution-remove"
+            [attr.aria-label]="'journal.dialog.executions.remove' | translate"
+            (click)="removeExecution($index)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+
+      <div class="execution-actions">
+        <button mat-stroked-button type="button" (click)="addExecution('ENTRY')">
+          <mat-icon>add</mat-icon>
+          <span>{{ 'journal.dialog.executions.addEntry' | translate }}</span>
+        </button>
+        <button mat-stroked-button type="button" (click)="addExecution('EXIT')">
+          <mat-icon>add</mat-icon>
+          <span>{{ 'journal.dialog.executions.addExit' | translate }}</span>
+        </button>
+      </div>
+
+      @if (executionInvalid()) {
+        <p class="execution-invalid">{{ 'journal.dialog.executions.invalid' | translate }}</p>
+      }
+
+      <!-- Live preview — mirrors the backend calculator ; recomputed on every edit. -->
+      <div class="preview">
+        <span class="preview-label">{{ 'journal.dialog.preview.size' | translate }}</span>
+        <span class="preview-value">{{ preview().size ?? '—' }}</span>
+        <span class="preview-label">{{ 'journal.dialog.preview.avgEntry' | translate }}</span>
+        <span class="preview-value">
+          {{ preview().avgEntry !== null ? (preview().avgEntry | number: '1.2-4') + ' $' : '—' }}
+        </span>
+        <span class="preview-label">{{ 'journal.dialog.preview.avgExit' | translate }}</span>
+        <span class="preview-value">
+          {{ preview().avgExit !== null ? (preview().avgExit | number: '1.2-4') + ' $' : '—' }}
+        </span>
+        <span class="preview-label">{{ 'journal.dialog.preview.profit' | translate }}</span>
+        <span class="preview-value">
+          {{
+            preview().profitDollars !== null
+              ? (preview().profitDollars | number: '1.2-2') + ' $'
+              : '—'
+          }}
+        </span>
+        <span class="preview-label">{{ 'journal.dialog.preview.gain' | translate }}</span>
+        <span class="preview-value">
+          {{
+            preview().gainPercent !== null ? (preview().gainPercent | number: '1.2-2') + ' %' : '—'
+          }}
+        </span>
+        <span class="preview-label">{{ 'journal.dialog.preview.status' | translate }}</span>
+        <span class="preview-value">
+          {{ 'journal.enums.positionStatus.' + preview().status | translate }}
+        </span>
       </div>
 
       <mat-form-field appearance="outline" class="full-width">

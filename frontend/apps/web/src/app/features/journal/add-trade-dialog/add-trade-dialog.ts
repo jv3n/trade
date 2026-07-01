@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { FormField, form, maxLength, required } from '@angular/forms/signals';
+import { form, FormField, maxLength, required } from '@angular/forms/signals';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -18,12 +18,20 @@ import {
 } from '@portfolioai/ui';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import {
+  computePositionAggregates,
+  PositionAggregates,
+} from '../../../core/api/journal/position-aggregates';
+import {
+  ExecutionKind,
+  TRADE_DIRECTIONS,
   TRADE_EXIT_STRATEGIES,
   TRADE_OPEN_SIDES,
   TRADE_PATTERNS,
   TRADE_PLAYS,
+  TradeDirection,
   TradeEntry,
   TradeEntryInput,
+  TradeExecutionInput,
   TradeExitStrategy,
   TradeOpenSide,
   TradePattern,
@@ -32,6 +40,16 @@ import {
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
+
+/**
+ * Editing buffer for one execution row — `shares` / `price` are nullable while the user types
+ * (empty input). Cleaned to a [TradeExecutionInput] on submit (rows with shares > 0 && price > 0).
+ */
+interface ExecRow {
+  kind: ExecutionKind;
+  shares: number | null;
+  price: number | null;
+}
 
 /**
  * Seed for create mode — pre-fills a brand-new trade (e.g. opened from a stat row). Ignored
@@ -58,13 +76,9 @@ export interface AddTradeDialogData {
 interface TradeFormModel {
   tradeDate: Date;
   ticker: string;
+  direction: TradeDirection;
   play: TradePlay | null;
   pattern: TradePattern | null;
-  size: number | null;
-  openPrice: number | null;
-  exitPrice: number | null;
-  profitDollars: number | null;
-  gainPercent: number | null;
   note: string;
   pre935To10h: boolean;
   preGapUp50: boolean;
@@ -85,11 +99,14 @@ interface TradeFormModel {
  * no HTML validation attrs (Signal Forms forbids them on `[formField]` elements ; the schema
  * is the single source of truth).
  *
- * Three sections : execution, exit (nullable until close), preparation checklist (all nullable).
- * Only `tradeDate` + `ticker` are required — `play` / `pattern` / `size` / `openPrice` are optional
- * so a trade can be jotted down fast and completed later. Returns the **domain** [TradeEntryInput]
- * on close — the HTTP adapter handles the wire serialisation (Date → `YYYY-MM-DD`, empty → null).
- * The stat link (`statEntryId`) is carried through unchanged on edit ; it's assigned elsewhere.
+ * Since the multi-execution model (issue #93) the execution data is a **direction** + a dynamic list
+ * of **executions** (entry/exit legs, each with shares + price). These live outside the Signal Forms
+ * tree (in the [executions] signal) because they're a variable-length array. The flat aggregates
+ * (avg price, P&L, gain%) are **not** entered — a live [preview] mirrors the backend calculator for
+ * instant feedback, and the backend recomputes them on persist. Only `tradeDate` + `ticker` are
+ * required ; a trade can be jotted down with no executions yet. Returns the **domain**
+ * [TradeEntryInput] on close — the HTTP adapter handles the wire serialisation. The stat link
+ * (`statEntryId`) is carried through unchanged on edit ; it's assigned elsewhere.
  */
 @Component({
   selector: 'app-add-trade-dialog',
@@ -126,6 +143,7 @@ export class AddTradeDialog {
   readonly patterns = TRADE_PATTERNS;
   readonly openSides = TRADE_OPEN_SIDES;
   readonly exitStrategies = TRADE_EXIT_STRATEGIES;
+  readonly directions = TRADE_DIRECTIONS;
 
   readonly model = signal<TradeFormModel>(this.initialModel());
 
@@ -136,6 +154,50 @@ export class AddTradeDialog {
     required(path.ticker);
     maxLength(path.ticker, 20);
   });
+
+  // ---- Executions — a variable-length array kept outside the Signal Forms tree -----------------
+  readonly executions = signal<ExecRow[]>(this.initialExecutions());
+
+  /** Rows that carry a usable share count + price — the input the calculator / backend consume. */
+  private readonly cleanExecutions = computed<TradeExecutionInput[]>(() =>
+    this.executions()
+      .filter((e) => e.shares !== null && e.shares > 0 && e.price !== null && e.price > 0)
+      .map((e) => ({ kind: e.kind, shares: e.shares as number, price: e.price as number })),
+  );
+
+  /** Live aggregates mirroring the backend `TradePositionCalculator` — for instant preview. */
+  readonly preview = computed<PositionAggregates>(() =>
+    computePositionAggregates(this.model().direction, this.cleanExecutions()),
+  );
+
+  /** True when the executions are inconsistent (e.g. exited > entered) — blocks submit. */
+  readonly executionInvalid = computed(
+    () => this.cleanExecutions().length > 0 && !this.preview().valid,
+  );
+
+  addExecution(kind: ExecutionKind): void {
+    this.executions.update((rows) => [...rows, { kind, shares: null, price: null }]);
+  }
+
+  removeExecution(index: number): void {
+    this.executions.update((rows) => rows.filter((_, i) => i !== index));
+  }
+
+  setExecutionKind(index: number, kind: ExecutionKind): void {
+    this.executions.update((rows) => rows.map((r, i) => (i === index ? { ...r, kind } : r)));
+  }
+
+  setExecutionShares(index: number, shares: number | null): void {
+    this.executions.update((rows) => rows.map((r, i) => (i === index ? { ...r, shares } : r)));
+  }
+
+  setExecutionPrice(index: number, price: number | null): void {
+    this.executions.update((rows) => rows.map((r, i) => (i === index ? { ...r, price } : r)));
+  }
+
+  setDirection(direction: TradeDirection): void {
+    this.model.update((m) => ({ ...m, direction }));
+  }
 
   // ---- Stat link (orphan ↔ linked) -------------------------------------------------------------
   // Not a form field — it's a relation assigned via a combobox, carried as its own signal and
@@ -181,21 +243,21 @@ export class AddTradeDialog {
   }
 
   submit(): void {
-    if (!this.tradeForm().valid()) {
+    if (!this.tradeForm().valid() || this.executionInvalid()) {
       this.tradeForm().markAsTouched();
       return;
     }
     const v = this.model();
+    const executions = this.cleanExecutions();
     const input: TradeEntryInput = {
       tradeDate: v.tradeDate,
       ticker: v.ticker,
+      // Only attach a direction when there's actually a position — a blank jotted trade stays
+      // direction-less (matches the backend nullable column).
+      direction: executions.length > 0 ? v.direction : null,
+      executions,
       play: v.play,
       pattern: v.pattern,
-      size: v.size,
-      openPrice: v.openPrice,
-      exitPrice: v.exitPrice,
-      profitDollars: v.profitDollars,
-      gainPercent: v.gainPercent,
       note: v.note || null,
       pre935To10h: v.pre935To10h,
       preGapUp50: v.preGapUp50,
@@ -215,35 +277,14 @@ export class AddTradeDialog {
     this.dialogRef.close(undefined);
   }
 
-  // ---- Imperative setters — wired to `(dateChange)` / `(numberChange)` because Signal
-  //      Forms' `[formField]` clashes with Material's CVA-based `MatDatepickerInput` and with
-  //      our `appNumberMask` directive. We push values through `model.update(...)` so Signal
-  //      Forms still picks up the change for validation. ----------------------------------
+  // ---- Imperative setter — wired to `(dateChange)` because Signal Forms' `[formField]` clashes
+  //      with Material's CVA-based `MatDatepickerInput`. We push the value through
+  //      `model.update(...)` so Signal Forms still picks up the change for validation. ----------
 
   setTradeDate(d: Date | null): void {
     // Material's datepicker emits `null` when the field is cleared — coerce to "today"
     // since a trade journal entry without a date is meaningless.
     this.model.update((m) => ({ ...m, tradeDate: d ?? new Date() }));
-  }
-
-  setSize(n: number | null): void {
-    this.model.update((m) => ({ ...m, size: n }));
-  }
-
-  setOpenPrice(n: number | null): void {
-    this.model.update((m) => ({ ...m, openPrice: n }));
-  }
-
-  setExitPrice(n: number | null): void {
-    this.model.update((m) => ({ ...m, exitPrice: n }));
-  }
-
-  setProfitDollars(n: number | null): void {
-    this.model.update((m) => ({ ...m, profitDollars: n }));
-  }
-
-  setGainPercent(n: number | null): void {
-    this.model.update((m) => ({ ...m, gainPercent: n }));
   }
 
   private initialModel(): TradeFormModel {
@@ -253,13 +294,10 @@ export class AddTradeDialog {
       return {
         tradeDate: seed?.tradeDate ?? new Date(),
         ticker: seed?.ticker ?? '',
+        // Short-biased default — the bread-and-butter of this journal.
+        direction: 'SHORT',
         play: null,
         pattern: null,
-        size: null,
-        openPrice: null,
-        exitPrice: null,
-        profitDollars: null,
-        gainPercent: null,
         note: '',
         pre935To10h: false,
         preGapUp50: false,
@@ -275,13 +313,9 @@ export class AddTradeDialog {
     return {
       tradeDate: entry.tradeDate,
       ticker: entry.ticker,
+      direction: entry.direction ?? 'SHORT',
       play: entry.play,
       pattern: entry.pattern,
-      size: entry.size,
-      openPrice: entry.openPrice,
-      exitPrice: entry.exitPrice,
-      profitDollars: entry.profitDollars,
-      gainPercent: entry.gainPercent,
       note: entry.note ?? '',
       pre935To10h: entry.pre935To10h ?? false,
       preGapUp50: entry.preGapUp50 ?? false,
@@ -293,5 +327,17 @@ export class AddTradeDialog {
       exitStrategy: entry.exitStrategy,
       errorNote: entry.errorNote ?? '',
     };
+  }
+
+  /** Edit mode preloads the existing legs ; create mode starts with a single empty ENTRY row. */
+  private initialExecutions(): ExecRow[] {
+    const entry = this.data.entry;
+    if (!entry || entry.executions.length === 0) {
+      return [{ kind: 'ENTRY', shares: null, price: null }];
+    }
+    return entry.executions
+      .slice()
+      .sort((a, b) => a.seq - b.seq)
+      .map((e) => ({ kind: e.kind, shares: e.shares, price: e.price }));
   }
 }

@@ -1,0 +1,119 @@
+.journal-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.back-link {
+  align-self: flex-start;
+}
+
+.title-block {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  .trade-date {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .direction-tag,
+  .status-tag {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.4rem;
+    background: var(--color-surface-variant, rgba(0, 0, 0, 0.06));
+    color: var(--color-text-muted, #555);
+  }
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.detail-section {
+  padding: 0.75rem 0;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.muted {
+  color: var(--color-text-muted, #777);
+}
+
+// Label / value grid for the derived aggregates + strategy fields.
+.aggregates {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+
+  dt {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #666);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .profit-positive {
+    color: var(--color-gain, #1e8e3e);
+  }
+
+  .profit-negative {
+    color: var(--color-loss, #c0392b);
+  }
+}
+
+.checklist-view {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem 1rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #777);
+
+    &.checked {
+      color: var(--color-text);
+    }
+  }
+}
+
+.note-block {
+  margin: 0 0 1rem;
+  white-space: pre-wrap;
+  color: var(--color-text);
+}

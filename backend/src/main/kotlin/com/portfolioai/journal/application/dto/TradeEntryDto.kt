@@ -1,5 +1,6 @@
 package com.portfolioai.journal.application.dto
 
+import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeExitStrategy
 import com.portfolioai.journal.domain.TradeOpenSide
@@ -10,11 +11,17 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
-/** Response shape for a single [TradeEntry]. Flat — no nested objects, no entity references. */
+/**
+ * Response shape for a single [TradeEntry]. The execution legs are nested in [executions] ; the
+ * flat [size] / [openPrice] / [exitPrice] / [profitDollars] / [gainPercent] are the derived
+ * aggregates (read-only — recomputed from the executions on every write).
+ */
 data class TradeEntryDto(
   val id: UUID,
   val tradeDate: LocalDate,
   val ticker: String,
+  val direction: TradeDirection?,
+  val executions: List<ExecutionDto>,
   val play: TradePlay?,
   val pattern: TradePattern?,
   val size: Int?,
@@ -42,6 +49,8 @@ fun TradeEntry.toDto() =
     id = id,
     tradeDate = tradeDate,
     ticker = ticker,
+    direction = direction,
+    executions = executions.map { it.toDto() },
     play = play,
     pattern = pattern,
     size = size,

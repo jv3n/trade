@@ -371,6 +371,11 @@ export class JournalPage {
     this.openDialog(entry);
   }
 
+  /** Row click → dedicated detail view. The ticker chip + action buttons stop propagation. */
+  openDetail(entry: TradeEntry): void {
+    void this.router.navigate(['/journal', entry.id]);
+  }
+
   delete(entry: TradeEntry): void {
     const confirmMsg = this.translate.instant('journal.confirmDelete', { ticker: entry.ticker });
     if (!confirm(confirmMsg)) return;

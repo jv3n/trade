@@ -48,3 +48,55 @@
     grid-template-columns: 1fr;
   }
 }
+
+// One execution leg : kind / shares / price inline + a remove button. The fields share the row
+// width so adding many legs stays compact.
+.execution-row {
+  display: grid;
+  grid-template-columns: 8rem 1fr 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.execution-remove {
+  align-self: center;
+}
+
+.execution-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.execution-invalid {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-loss, #c0392b);
+}
+
+// Derived aggregates preview — a compact label/value grid mirroring the backend calculator.
+.preview {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface-variant, rgba(0, 0, 0, 0.04));
+
+  .preview-label {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #666);
+  }
+
+  .preview-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: right;
+  }
+}

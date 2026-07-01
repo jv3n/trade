@@ -1,88 +1,90 @@
 # Roadmap — pivot v1.0 « journal de trading »
 
-> Posée 2026-06-03 suite au pivot acté dans [`docs/TTD/changement direction`](../TTD/changement%20direction). Sert de référence aux prochaines sessions — chaque session pourra cocher / amender les sections concernées.
+> Posée 2026-06-03 suite au pivot acté dans [`docs/TTD/changement direction`](../TTD/changement%20direction).
+> **Révisée 2026-06-28** — le cœur du pivot est livré ; cette page reflète désormais l'état réel et pointe vers les [GitHub Issues](https://github.com/jv3n/trade/issues) pour le travail ouvert.
 
 ---
 
 ## Le pivot en une phrase
 
-L'app cesse d'être un dossier d'analyse per-ticker avec narratif LLM → devient un **journal de trading** où l'utilisateur logue ses trades du jour. Stats / charts / export Excel = phase 2.
+L'app cesse d'être un dossier d'analyse per-ticker avec narratif LLM → devient un **journal de trading** où l'utilisateur logue ses trades du jour. Les agrégats / charts / export Excel restent en phase 2.
 
 ---
 
-## Roadmap haut niveau
+## État au 2026-06-28 — le pivot est livré
 
-1. **Refacto CSS** — passe de nettoyage avant tout (ordre à confirmer, cf. questions ouvertes).
-2. **Décommissionnement** des modules qui ne servent plus.
-3. **Conservation des providers** — réutilisés à terme pour enrichir les trades du journal en chart data.
-4. **Backlog 1.0** — nouveau backlog construit ici à neuf, l'ancien `backlog.md` + `journal-livraisons.md` restent en archive.
+Le MVP et plusieurs modules au-delà sont en production. Détail dans [`journal-livraisons.md`](./journal-livraisons.md).
 
----
+| Module livré | Contenu |
+|--------------|---------|
+| **`journal/`** (MVP) | `trade_entry` (19 champs : exécution + checklist pré-trade + post-mortem), CRUD scopé `user_id`, **pagination + tri serveur**, **export / import CSV roundtrip-safe**. |
+| **`account/`** | Compte broker : ledger de mouvements, **solde dérivé**, **sync auto du P&L journal via `TradeChangedEvent`**, graphe d'évolution (`StbAreaChart`). |
+| **`stats/`** | Dataset partagé : import / export CSV, listing paginé, **CRUD éditable par propriétaire** (`IMPORT` admin / `RADAR` / `MANUAL`), 3 colonnes `%` dérivées à l'insert. |
+| **`lexicon/`** | Glossaire **bilingue FR/EN** (~117 termes), lecture pour tous / CRUD admin. |
+| **`candidates/`** | Cockpit de préparation d'un short : sizing au risque + suivi d'exécution + cover, calculettes GUS / borrow, création de stat depuis le candidat. |
+| **`forex/`** | Toggle **USD / CAD** sur le solde compte (provider keyless Frankfurter, conversion présentationnelle). |
+| Préférences UI | Thème + langue **persistés sur le user** (`/api/me/preferences`), plus en localStorage. |
 
-## Périmètre — In / Out
-
-### Sort (décommissionnement probable, à confirmer ticket par ticket)
-
-| Module / Feature | Note |
-|------------------|------|
-| `analysis/` (pipeline narratif LLM, prompts, observabilité, bias) | Toute la Phase 1 + Phase 3 |
-| `portfolio/` (imports CSV Wealthsimple, snapshots, dashboard portefeuille) | Le portefeuille était read-only, hors scope d'un journal de trade actif |
-| `news/`, `analyst/`, `earnings/` (sections fondamentaux du dossier ticker) | Phase 2 — plus de dossier per-ticker |
-| `screener/` côté UI + service | Phase 6 — à confirmer (cf. question 6) |
-| Front : `features/dashboard/`, `ticker/`, `suivi/`, `observability/`, `settings/prompts/`, `radar/`, `import/` | Surface produit Phase 1 → 6 |
-| BDD : `ticker_narrative_snapshot/job`, `prompt_template/score`, `screener_snapshot_day`, `portfolio_snapshot/snapshot_position`, `asset`, `portfolio` | Migrations à lister proprement avant suppression |
-
-### Reste
-
-| Module / Feature | Pourquoi on garde |
-|------------------|-------------------|
-| `MarketChartClient` + adapters TwelveData / mock | Réutilisé pour enrichir un trade du journal (graphe du symbol au moment du trade) |
-| `MarketScreenerClient` + adapters FMP / Polygon / mock | Providers conservés même si la UI radar dégage |
-| `SymbolSearchClient`, `SectorClassifier` | Réutilisés pour le formulaire trade (autocomplete symbole, tag secteur) |
-| `auth/` (OAuth Google + multi-tenant `user_id` FK) | À confirmer (cf. question 4) |
-| `config/` (runtime config UI + `AppConfigService`) | Rotation des clés provider sans reboot |
-| `shared/` (GlobalExceptionHandler, UpstreamUnavailable) | Cross-cutting, neutre au pivot |
-| Infra Phase 5 (Cloud Run + Supabase + Cloudflare + WIF + Sentry) | Le déploiement ne change pas |
-
-### Nouveau à construire
-
-| Artefact | Description |
-|----------|-------------|
-| Table BDD `trade_entry` | symbol, date, side long/short, entry price, exit price, qty, P&L, notes (champs exacts à définir cf. question 2) |
-| Module backend `journal/` | domain + service + repository + controller (`POST /add`, `GET /list`, `PATCH /update`, `DELETE`) |
-| Front `features/journal/` | Table principale + bouton « Add » + formulaire trade (inline ou modal à trancher) |
-| Migration Flyway V5 | Création `trade_entry`, drop des tables décommissionnées dans une migration suivante (V6) après validation |
+> **Migrations** : les 9 migrations initiales ont été **squashées en un seul `V1__init`** (2026-06-10) ; les modules livrés depuis repartent de ce socle.
 
 ---
 
-## Impact docs (rédactionnel)
+## Périmètre — In / Out (état réel)
 
-| Fichier | Action |
-|---------|--------|
-| `docs/metier/vision.md` | **Réécriture complète** — l'atomic unit devient le trade entry, plus le dossier ticker |
-| `docs/metier/fonctionnalites.md` | Garde header + Phase 4 + Phase 5. Phases 1/2/2.5/3/6 marquées DEPRECATED ou déplacées en archive |
-| `docs/technique/architecture.md` | Surgery sur sections « Modules backend », « Modules frontend », « Schéma de base de données ». Ajout module `journal/` |
-| `docs/projet/backlog.md` | Nouveau backlog 1.0 trading journal ; l'ancien contenu archivé à part |
-| `docs/projet/journal-livraisons.md` | Reste tel quel — historique des phases 1 → 6 |
-| `CLAUDE.md` racine | Intro « per-ticker dossier = atomic unit » à reformuler en « trade entry = atomic unit » |
+### Décommissionné
 
----
+| Module / Feature | Statut |
+|------------------|--------|
+| `portfolio/` (backend) + front `dashboard/`, `import/`, `suivi/` + repos `core/api/portfolio/` | **Supprimé** 2026-06-10. Repos front orphelins restants → [issue #104](https://github.com/jv3n/trade/issues/104). |
 
-## Questions ouvertes (à trancher en début de prochaine session)
+### Conservé en sommeil (encore atteignable, pas décommissionné)
 
-1. **Ordre de la passe** — refacto CSS d'abord (sur l'app actuelle qui va beaucoup changer) ou décommissionnement d'abord puis CSS sur le périmètre cible restreint ? La 2e voie évite de styler ce qui dégagera.
-2. **Périmètre v1.0 trade entry** — champs minimums (symbole, side, prix, qty, P&L, date) ou aussi : screenshots du chart, tags (`gap-up short`, `breakout`), check des red flags / pattern matchés depuis les fiches TTD ?
-3. **Lien avec les fiches TTD** — le journal référence-t-il `pattern.md` / `red_flags.md` (case « pattern joué » + « red flags présents au moment du trade ») ? Boucle l'apprentissage avec l'outil.
-4. **Multi-user** — on garde la couche auth Phase 4 (OAuth + `user_id` FK) ou solo single-user (et on retire toute la complexité OAuth) ?
-5. **LLM** — vraiment zéro LLM ou usage futur genre « écris-moi un résumé de mes 50 derniers trades » à garder en tête ?
-6. **Radar Phase 6** — décommissionnement complet (UI + service + BDD `screener_snapshot_day`) ou garder un mode dégradé qui alimenterait le journal (« voici les setups du jour, clique pour journaliser ton entrée ») ?
-7. **Refacto CSS — portée** — design refresh complet (nouvelle DA, palette, typo) ou juste nettoyage des résidus ? Partir d'un layout neuf pour le journal ou réutiliser le shell existant (toolbar / sidenav settings) ?
+| Module / Feature | Pourquoi |
+|------------------|----------|
+| `market/`, `news/`, `analyst/`, `earnings/`, `watchlist/` + narratif `analysis/` | Consommés par la page **`ticker`** (liée depuis journal / stats / nav). |
+| `screener/` + front **`radar`** | **Fiabilisé** (filtre prix $1–$10 + gap ≥ +50 %) et **alimente `stats/`** via « Add stat ». Pas décommissionné. |
+| `observability` (front), `settings/prompts`, slice observability d'`analysis/` | Conservés ; le drop de la slice observability reste à trancher → [issue #98](https://github.com/jv3n/trade/issues/98). |
+| Providers (`MarketChartClient`, `MarketScreenerClient`, `SymbolSearchClient`, `SectorClassifier`) | Gardés pour l'enrichissement phase 2 (graphe d'un trade → [issue #97](https://github.com/jv3n/trade/issues/97)). |
+
+### Socle actif
+
+`auth/` (OAuth Google + `user_id` FK — le journal en dépend), `config/` (rotation des clés provider), `shared/`, infra Phase 5 (Cloud Run + Supabase + Cloudflare + WIF + Sentry). Inchangés par le pivot.
 
 ---
 
-## Workflow conseillé
+## Phase 2 — travail ouvert (→ GitHub Issues)
 
-1. Trancher **question 7 (ordre)** en début de prochaine session.
-2. Trancher **question 2 (périmètre trade entry)** pour pouvoir poser la table `trade_entry` et le module `journal/`.
-3. Les autres questions peuvent se débloquer en route au fur et à mesure des sessions.
-4. À chaque session, **mettre à jour cette roadmap** : cocher ce qui est fait, déplacer en archive ce qui est tranché, ajouter des questions qui émergent.
+Le backlog vit dans les [Issues](https://github.com/jv3n/trade/issues) (migré 2026-06-28). Principaux chantiers phase 2 :
+
+- **Stats du journal** — taux de réussite, P&L cumulé, perf par play / pattern / open side → [#94](https://github.com/jv3n/trade/issues/94) `prio:P1`
+- **Charts** — equity curve, distributions, heatmap → [#95](https://github.com/jv3n/trade/issues/95)
+- **Export Excel `.xlsx`** → [#96](https://github.com/jv3n/trade/issues/96)
+- **Enrichissement chart d'un trade** (providers conservés) → [#97](https://github.com/jv3n/trade/issues/97)
+- **Améliorer le journal** — page détail, positions multi-exécutions (entrées/sorties), screenshot, calculs auto → [#93](https://github.com/jv3n/trade/issues/93)
+
+Dette technique & arbitrages : [`label:tech-debt`](https://github.com/jv3n/trade/issues?q=is%3Aissue+is%3Aopen+label%3Atech-debt) · [`label:question`](https://github.com/jv3n/trade/issues?q=is%3Aissue+is%3Aopen+label%3Aquestion).
+
+---
+
+## Questions de cadrage — bilan
+
+| # | Question d'origine | Tranchée ? |
+|---|--------------------|-----------|
+| 1 / 7 | Ordre & portée de la refacto CSS | ✅ Résolu — nettoyage **incrémental** (container `.page` global + portage du sidenav radar), shell existant réutilisé, pas de design refresh complet. |
+| 2 | Périmètre du trade entry | ✅ Résolu — **19 champs** (exécution + checklist pré-trade + post-mortem). Le screenshot reste à ajouter ([#93](https://github.com/jv3n/trade/issues/93)). |
+| 3 | Lien avec les fiches TTD | 🟡 Partiel — enums `play` (A/B) / `pattern` (GUS/FRD), booléens red-flags côté stats, calculettes GUS du candidat. Pas de référence directe aux fiches `pattern.md` / `red_flags.md`. |
+| 4 | Multi-user vs solo single-user | ⏳ **Ouvert** → [issue #99](https://github.com/jv3n/trade/issues/99). `auth/` reste actif en attendant. |
+| 5 | LLM (zéro vs usage futur) | ⏳ Différé — **zéro LLM dans le chemin live** aujourd'hui ; piste « résumé de mes N derniers trades » gardée en tête pour phase 2. |
+| 6 | Radar phase 6 | ✅ Résolu — radar **conservé en mode fiabilisé** et **branché sur le journal des stats** (pas décommissionné). |
+
+---
+
+## Impact docs — fait
+
+`vision.md` réécrit (trade entry = unité atomique), `architecture.md` mis à jour (modules `journal/`, `account/`, `stats/`, `lexicon/`, `candidates/`), `CLAUDE.md` racine reformulé, `backlog.md` devenu pointeur vers les Issues. `journal-livraisons.md` reste le **log vivant** des livraisons depuis le pivot (et non une archive).
+
+---
+
+## Workflow
+
+À chaque session : créer / mettre à jour les **issues** (labels `prio:` / `module:` / `type`), et à la livraison d'une feature → **clore l'issue** + ajouter l'entrée dans [`journal-livraisons.md`](./journal-livraisons.md). Cette roadmap reste la vue d'ensemble du pivot ; les détails vivent dans les issues et le journal des livraisons.

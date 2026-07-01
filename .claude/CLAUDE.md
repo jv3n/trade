@@ -137,6 +137,7 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 ### Commits
 
 - Conventional Commits in **English** — see `docs/projet/commit-conventions.md`.
+- **Issue number in the scope** — when a commit is tied to a GitHub issue, prefix the scope with it: `feat(93/journal): …`. No issue → plain scope: `chore(ci): …`.
 - **Default = suggest, don't execute** — never run `git add/commit/push/branch/tag/rebase` or `gh pr/issue` autonomously. `master` is protected. Narrow exception: the user explicitly asks *in the current turn* ("commit it", "go ahead and push"). Authorization does not carry forward to later turns.
 - When a commit message is requested = **one line**, Conventional Commits format, <72 chars, no body, no bullet list, no rationale. The user pastes the line as-is. If a body is really needed, raise that before writing one.
 
@@ -175,18 +176,16 @@ Tests serve as a top-to-bottom-readable spec. Concretely:
 
 ### Backlog
 
-Two files:
+The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues)** (migrated 2026-06-28). `docs/projet/backlog.md` is now just a pointer + label legend — don't add items there.
 
-- **`docs/projet/backlog.md`** — open items only: `⏳ À faire`, `🚧 En cours`, `🧊 Gelé`, `❌ Décommissionné`, plus the **Dette technique** section.
-- **`docs/projet/journal-livraisons.md`** — history of shipped (✅) features, grouped by phase, reverse-chronological within each phase. Implementation notes live here, not in the backlog.
+- **GitHub Issues** — open work. Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:account` / `module:journal` / `module:stats` / `module:lexicon`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
+- **`docs/projet/journal-livraisons.md`** — history of shipped (✅) features, grouped by phase, reverse-chronological within each phase. Implementation notes live here.
 
 **After implementing a feature**:
 
 1. Add the entry to `journal-livraisons.md` at the top of the relevant phase, with a `Livré YYYY-MM-DD` lead.
-2. Remove the matching `⏳` line from `backlog.md` (or narrow its scope if only partially delivered).
-3. No duplication between the two files.
-
-**Ordering in `backlog.md`** — reorder only the section you're editing: `⏳` by priority descending 🔴 → 🟡 → 🟢 ; `🚧` right after the `🔴` items when present. Don't shuffle entries you didn't touch.
+2. Close the matching GitHub issue (or narrow its scope / edit it if only partially delivered).
+3. Never run `gh issue close` / label edits autonomously — same rule as git: suggest, the user confirms in the current turn.
 
 ### Documentation
 
@@ -198,7 +197,7 @@ Two files:
 | `docs/technique/developpement.md`   | Local config changes, a Tilt command is added                                |
 | `docs/technique/developper.md`      | Newcomer onboarding flow changes (prerequisite, install step, failure mode)  |
 | `docs/projet/sources.md`            | A data source is added or removed                                            |
-| `docs/projet/backlog.md`            | New ticket, priority shift, feature freeze/decommission                      |
+| GitHub Issues                       | New ticket, priority shift, feature freeze/decommission (the backlog now lives in Issues) |
 | `docs/projet/journal-livraisons.md` | Feature shipped (✅) — the detailed entry that used to live in the backlog   |
 | `docs/projet/audits/`               | A code review is performed — archive `YYYY-MM-DD-titre.md` + add a line to `index.md`. No auto-promotion to the backlog (the user decides). |
 | `docs/CHANGELOG.md`                 | End of every `/doc-maintainer` patch session — dated entry summarising the files modified. Format in `.claude/skills/doc-maintainer/SKILL.md`. |
