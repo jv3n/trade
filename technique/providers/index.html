@@ -1,0 +1,2273 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/technique/providers/">
+      
+      
+        <link rel="prev" href="../developpement/">
+      
+      
+        <link rel="next" href="../ops/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Providers externes - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#providers-externes" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Providers externes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#twelve-data-donnees-de-marche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Twelve Data — données de marché
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#finnhub-news-par-ticker-recommandations-analystes-earnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finnhub — news par ticker + recommandations analystes + earnings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#polygon-massive-radar-de-marche-phase-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Polygon / Massive — radar de marché (Phase 6)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Polygon / Massive — radar de marché (Phase 6)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pivot-endpoint-v01-v02-2026-05-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pivot endpoint v0.1 → v0.2 (2026-05-27)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fmp-financial-modeling-prep-radar-de-marche-phase-6-v03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FMP (Financial Modeling Prep) — radar de marché (Phase 6 v0.3)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anthropic-claude-narratif-llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anthropic Claude — narratif LLM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ollama-llm-local-offline-sans-cle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama — LLM local (offline / sans clé)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recapitulatif-config-locale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Récapitulatif config locale
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="providers-externes">Providers externes<a class="headerlink" href="#providers-externes" title="Permanent link">&para;</a></h1>
+<p>Référence opérationnelle des services externes utilisés par PortfolioAI : où s'inscrire, où trouver sa clé, quotas, et comment ils sont câblés dans le code. Mis à jour à chaque ajout / changement de provider.</p>
+<blockquote>
+<p><strong>TL;DR pour onboarder rapidement</strong> : tu as besoin d'une clé Twelve Data, d'une clé Finnhub, d'une clé Anthropic Claude (optionnel — Ollama local couvre offline). Toutes sont en free tier suffisant pour un usage perso. Liste complète et liens d'inscription ci-dessous.</p>
+</blockquote>
+<hr />
+<h2 id="twelve-data-donnees-de-marche">Twelve Data — données de marché<a class="headerlink" href="#twelve-data-donnees-de-marche" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Site</strong></td>
+<td><a href="https://twelvedata.com">https://twelvedata.com</a></td>
+</tr>
+<tr>
+<td><strong>Inscription</strong></td>
+<td><a href="https://twelvedata.com/register">https://twelvedata.com/register</a> (email + mot de passe, pas de carte requise pour le free tier)</td>
+</tr>
+<tr>
+<td><strong>Dashboard / clé</strong></td>
+<td><a href="https://twelvedata.com/account/api-keys">https://twelvedata.com/account/api-keys</a></td>
+</tr>
+<tr>
+<td><strong>Free tier</strong></td>
+<td>800 credits/jour · 8 calls/min · couverture US, TSX (XTSE), grandes places EU et Asie</td>
+</tr>
+<tr>
+<td><strong>Endpoints utilisés</strong></td>
+<td><code>/time_series</code> (OHLC), <code>/quote</code> (nom + 52w + close), <code>/symbol_search</code> (autocomplete watchlist v2). <strong>Note</strong> : <code>/profile</code> (sector GICS) n'est plus utilisé — paid-tier only, remplacé par Finnhub <code>/stock/profile2</code> côté <code>FinnhubSectorClassifier</code></td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>market.twelvedata.api-key</code> (env <code>TWELVEDATA_API_KEY</code>)</td>
+</tr>
+<tr>
+<td><strong>Adapter</strong></td>
+<td><code>TwelveDataClient</code> + <code>TwelveDataSymbolSearchClient</code> (tous deux sélectionnés par <code>market.provider: twelvedata</code>)</td>
+</tr>
+<tr>
+<td><strong>Cache</strong></td>
+<td>Caffeine <code>market-chart</code> (chart), <code>symbol-search</code> (autocomplete). TTL 15 min partagé via <code>market.cache.ttl-minutes</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Quirks à connaître</strong> : numériques retournés en string JSON (<code>"open": "180.00"</code>), erreurs en HTTP 200 avec <code>status: error</code> dans le body. Le client absorbe les deux. Voir <a href="../architecture/"><code>architecture.md</code></a> section "Twelve Data — quirks à absorber".</p>
+<hr />
+<h2 id="finnhub-news-par-ticker-recommandations-analystes-earnings">Finnhub — news par ticker + recommandations analystes + earnings<a class="headerlink" href="#finnhub-news-par-ticker-recommandations-analystes-earnings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Site</strong></td>
+<td><a href="https://finnhub.io">https://finnhub.io</a></td>
+</tr>
+<tr>
+<td><strong>Inscription</strong></td>
+<td><a href="https://finnhub.io/register">https://finnhub.io/register</a> (email + mot de passe, pas de carte requise)</td>
+</tr>
+<tr>
+<td><strong>Dashboard / clé</strong></td>
+<td><a href="https://finnhub.io/dashboard">https://finnhub.io/dashboard</a></td>
+</tr>
+<tr>
+<td><strong>Free tier</strong></td>
+<td>60 calls/min · pas de cap quotidien · large agrégation de sources presse financière (Reuters, Bloomberg, CNBC…) + breakdown analystes monthly + earnings 4 derniers Q</td>
+</tr>
+<tr>
+<td><strong>Endpoints utilisés</strong></td>
+<td><code>/company-news?symbol=...&amp;from=...&amp;to=...</code> (Phase 2 news), <code>/stock/recommendation?symbol=...</code> (Phase 2 analyst — breakdown monthly), <code>/stock/price-target?symbol=...</code> (Phase 2 analyst — price target 12 mois, fail-soft à <code>null</code> sur 401/403 paid tier), <code>/stock/earnings?symbol=...</code> (Phase 2 earnings — historique 4 derniers Q EPS estimate/actual/surprise), <code>/calendar/earnings?from=...&amp;to=...&amp;symbol=...</code> (Phase 2 earnings — prochaine annonce sur fenêtre 90 j, fail-soft à <code>null</code> sur 401/403 paid tier), <code>/stock/profile2?symbol=...</code> (Phase 2 benchmark v2 — <code>finnhubIndustry</code> → SPDR ETF mapping via <code>SpdrSectorEtfs</code>. Remplace Twelve Data <code>/profile</code> paid-tier)</td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>news.provider: finnhub</code> (news) + <code>analyst.provider: finnhub</code> (recos analystes) + <code>earnings.provider: finnhub</code> (earnings) + <code>market.finnhub.api-key</code> (env <code>FINNHUB_API_KEY</code>) — clé partagée. Le sector benchmark utilise aussi Finnhub mais via le toggle <code>market.provider</code> (pas de <code>sector.provider</code> dédié) — détail caché derrière <code>RoutingSectorClassifier</code></td>
+</tr>
+<tr>
+<td><strong>Adapter</strong></td>
+<td><code>FinnhubClient</code> (sélectionné par <code>news.provider: finnhub</code>) + <code>FinnhubAnalystClient</code> (sélectionné par <code>analyst.provider: finnhub</code>) + <code>FinnhubEarningsClient</code> (sélectionné par <code>earnings.provider: finnhub</code>) + <code>FinnhubSectorClassifier</code> (sélectionné par <code>market.provider: twelvedata</code> — le routage sector route en réalité vers Finnhub car Twelve Data <code>/profile</code> est paid-tier only)</td>
+</tr>
+<tr>
+<td><strong>Mock alternative</strong></td>
+<td><code>MockNewsClient</code> (sélectionné par <code>news.provider: mock</code>, défaut) — feed synthétique déterministe par symbole, ~10 % de tickers "quiet" qui retournent une liste vide pour exercer l'empty-state UI. <code>MockAnalystClient</code> (sélectionné par <code>analyst.provider: mock</code>, défaut) — breakdown synthétique déterministe (~50 % bullish / ~30 % mixed / ~20 % bearish, drift mois-sur-mois), symboles réservés <code>UNKNOWN</code> (404), <code>RATELIMIT</code> (503), <code>NOTARGET</code> (priceTarget=null). <code>MockEarningsClient</code> (sélectionné par <code>earnings.provider: mock</code>, défaut) — EPS bande $0.30–$3.50 + surprise ±15 % + next-date 1–60 j, symboles réservés <code>UNKNOWN</code> (404), <code>RATELIMIT</code> (503), <code>NOCALENDAR</code> (nextEarningsDate=null)</td>
+</tr>
+<tr>
+<td><strong>Cache</strong></td>
+<td>Caffeine <code>news-by-symbol</code> (TTL 15 min, key <code>{symbol}\|{limit}</code>) + <code>analyst-recommendations</code> (TTL 15 min, key <code>{symbol}</code>) + <code>earnings</code> (TTL 15 min, key <code>{symbol}</code>) + <code>sector-by-symbol</code> (TTL 15 min, key <code>{symbol}</code>) — TTL partagé via <code>market.cache.ttl-minutes</code></td>
+</tr>
+</tbody>
+</table>
+<p>Pourquoi Finnhub plutôt que Twelve Data pour les news : Twelve Data n'expose pas d'endpoint news public (testé en live, retourne 404). Finnhub couvre ce besoin avec un free tier plus généreux que d'autres concurrents (Alpha Vantage 25/jour, Polygon 5/min EOD only). Idem côté analyst recommendations et earnings : <code>/stock/recommendation</code> et <code>/stock/earnings</code> sont en free tier sans paywall, ce qui n'est pas le cas chez la plupart des concurrents.</p>
+<p><strong>Économiser les credits en itération</strong> : les trois mocks sont le défaut sur <code>application.yml</code> justement pour qu'un onboarding clone tourne sans clé Finnhub, et que le développement quotidien ne fasse pas chauffer le compteur. Bascule sur <code>news.provider: finnhub</code>, <code>analyst.provider: finnhub</code> et/ou <code>earnings.provider: finnhub</code> dans <code>application-local.yml</code> (ou via <code>/settings/configuration</code>) quand tu veux tester un vrai feed — chacun se flippe indépendamment.</p>
+<hr />
+<h2 id="polygon-massive-radar-de-marche-phase-6">Polygon / Massive — radar de marché (Phase 6)<a class="headerlink" href="#polygon-massive-radar-de-marche-phase-6" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Site</strong></td>
+<td><a href="https://massive.com">https://massive.com</a> (ex-<code>polygon.io</code>, rebrand 2026 ; <code>polygon.io</code> redirige 301 vers <code>massive.com</code>)</td>
+</tr>
+<tr>
+<td><strong>Inscription</strong></td>
+<td><a href="https://massive.com/signup">https://massive.com/signup</a> (email + password, pas de carte requise sur le free Basic)</td>
+</tr>
+<tr>
+<td><strong>Dashboard / clé</strong></td>
+<td><a href="https://massive.com/dashboard/keys">https://massive.com/dashboard/keys</a></td>
+</tr>
+<tr>
+<td><strong>Free tier</strong></td>
+<td>Stocks Basic : 5 req/min · pas de cap quotidien · <strong>EOD only</strong> (pas de snapshot real-time) · data adjusted pour splits</td>
+</tr>
+<tr>
+<td><strong>Endpoints utilisés</strong></td>
+<td><code>/v2/aggs/grouped/locale/us/market/stocks/{date}?adjusted=true</code> (Phase 6 radar v0.2 — OHLCV pour tous les US stocks sur une date donnée. 2 calls par refresh : jour le plus récent + précédent, join in-memory par symbole), <code>/v3/reference/tickers?limit=1</code> (probe <code>testPolygon</code> — cheap ~200 bytes)</td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>screener.provider: polygon</code> + <code>screener.polygon.api-key</code> (env <code>POLYGON_API_KEY</code>) — <strong>les deux éditables au runtime</strong> depuis <code>/settings/configuration &gt; Providers de données</code> (carte « Provider du radar de marché » + carte « Polygon (Massive) — clé API » avec bouton Tester)</td>
+</tr>
+<tr>
+<td><strong>Adapter</strong></td>
+<td><code>PolygonMarketScreenerClient</code> (sélectionné par <code>screener.provider: polygon</code> via <code>RoutingMarketScreenerClient @Primary</code>) — base URL <code>https://api.massive.com</code> (overridable via <code>screener.polygon.base-url</code>), calendar walk-back jusqu'à 6 jours pour absorber weekends + jours fériés</td>
+</tr>
+<tr>
+<td><strong>Mock alternative</strong></td>
+<td><code>MockMarketScreenerClient</code> (sélectionné par <code>screener.provider: mock</code>, défaut) — snapshot synthétique 13 tickers (<code>RDDT</code>, <code>SOFI</code>, <code>AFRM</code>, <code>WBD</code>, <code>PARA</code>, <code>LCID</code>, <code>ROKU</code>, <code>PINS</code>, <code>Z</code>, <code>TWLO</code>, <code>CHWY</code>, <code>PLTR</code>, <code>F</code>) avec dispersion gap %/volume/cap/sector pour exercer tous les filtres</td>
+</tr>
+<tr>
+<td><strong>Cache</strong></td>
+<td>Aucun v0.2 — 2 calls par refresh (worst-case 12 sur long weekend). Cache adapter-level (TTL ~5-15 min, EOD ne change pas dans la journée) filed en follow-up Phase 6 (1ter) — particulièrement pertinent depuis le pivot grouped-daily</td>
+</tr>
+<tr>
+<td><strong>Probe</strong></td>
+<td><code>POST /api/config/test/polygon</code> accepte une clé candidate non sauvée, round-trip <code>/v3/reference/tickers?limit=1</code> — utilisé par le bouton « Tester » de la card Settings</td>
+</tr>
+<tr>
+<td><strong>Latence</strong></td>
+<td>~200-500 ms par call grouped-daily (~500 kB-1 MB selon le jour)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pivot-endpoint-v01-v02-2026-05-27">Pivot endpoint v0.1 → v0.2 (2026-05-27)<a class="headerlink" href="#pivot-endpoint-v01-v02-2026-05-27" title="Permanent link">&para;</a></h3>
+<p>Cible initiale Phase 6 Sprint 2 : <code>GET /v2/snapshot/locale/us/markets/stocks/tickers</code> (1 call, real-time, <code>todaysChangePerc</code> pré-calculé). Testé live avec une clé Basic free → retour <code>403 Polygon plan does not allow this endpoint</code>. L'endpoint snapshot requiert <strong>Polygon Stocks Starter (~$29/mo)</strong> — n'est pas dans le free Basic.</p>
+<p>Pivot même jour sur <code>GET /v2/aggs/grouped/locale/us/market/stocks/{date}</code> qui <strong>est inclus dans le free Basic</strong>. Algorithme adapter :
+1. Walk-back depuis « today » (US/Eastern) jusqu'à 6 jours pour trouver le jour de trading le plus récent avec des bars non vides (<code>t1</code>).
+2. Walk-back depuis <code>t1 - 1 jour</code> jusqu'à 6 jours pour le jour précédent (<code>t0</code>).
+3. Join des deux payloads par <code>T</code> (symbole), compute <code>gapPct = (t1.c - t0.c) / t0.c * 100</code>, <code>volumeRatio = t1.v / t0.v</code>.
+4. Skip les tickers absents de <code>t0</code> (IPO récents).</p>
+<p><strong>Conséquence UX</strong> : le radar surface « ce qui a beaucoup bougé hier » plutôt que « ce qui bouge live à l'open ». Pour un pump precursor qui fade dans la journée, c'est moins actionnable, mais c'est le signal honnête disponible en free tier. Upgrade Starter $29/mo unlock real-time snapshot — swap touche uniquement <code>PolygonMarketScreenerClient</code> (le port <code>MarketScreenerClient</code> reste stable).</p>
+<p><strong>Dégradation enrichissement carry-over</strong> : le grouped-daily endpoint (comme le snapshot) ne porte ni <code>name</code>, ni <code>exchange</code>, ni <code>sector</code>, ni <code>marketCapUsd</code>, ni <code>volumeAvg30d</code>. L'adapter fill avec sentinelles honnêtes (<code>name = T</code>, <code>exchange = ""</code>, <code>sector = null</code>, <code>marketCapUsd = 0L</code>, <code>volumeAvg30d = t0.v</code> proxy single-day). Conséquences UX : filtres cap-range et sector <strong>no-op</strong> côté Polygon ; <code>volumeRatio</code> répond « aujourd'hui vs hier » plutôt qu'« aujourd'hui vs moyenne 30j ». Enrichissement complet via cron nightly (<code>/v3/reference/tickers</code> pour name/exchange/sector/cap + <code>/v2/aggs/grouped</code> sur 30j pour la vraie moyenne) filed en follow-up Phase 6 (1bis).</p>
+<p><strong>Pourquoi Polygon plutôt que Finnhub / FMP / Alpaca pour le radar</strong> : seul Polygon expose un endpoint free-tier qui retourne des bars pour tous les US stocks en 1 call. Les 3 autres demandent une boucle per-ticker (Finnhub <code>/quote</code> × N, FMP <code>/v3/stock/{symbol}</code> × N, Alpaca <code>/v2/stocks/snapshots/{symbol}</code> × N) incompatible avec un radar à l'ouverture — un scan de 3500 tickers × 60 ms = 3.5 min par cycle, et le quota free tier vide en une session.</p>
+<p><strong>Rebrand Polygon → Massive</strong> : le slug <code>polygon</code> est gardé partout dans le code (config keys <code>screener.polygon.api-key</code>, classes <code>PolygonMarketScreenerClient</code>, beans <code>polygonRestClient</code>) pour rester grep-friendly. Seule la base URL est en <code>api.massive.com</code>.</p>
+<hr />
+<h2 id="fmp-financial-modeling-prep-radar-de-marche-phase-6-v03">FMP (Financial Modeling Prep) — radar de marché (Phase 6 v0.3)<a class="headerlink" href="#fmp-financial-modeling-prep-radar-de-marche-phase-6-v03" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Site</strong></td>
+<td><a href="https://site.financialmodelingprep.com">https://site.financialmodelingprep.com</a></td>
+</tr>
+<tr>
+<td><strong>Inscription</strong></td>
+<td><a href="https://site.financialmodelingprep.com/register">https://site.financialmodelingprep.com/register</a> (email + password, pas de carte)</td>
+</tr>
+<tr>
+<td><strong>Dashboard / clé</strong></td>
+<td><a href="https://site.financialmodelingprep.com/developer/docs/dashboard">https://site.financialmodelingprep.com/developer/docs/dashboard</a></td>
+</tr>
+<tr>
+<td><strong>Free tier</strong></td>
+<td>250 req/jour · pas de cap par minute · données EOD-ish (refreshées par FMP côté serveur) · ~50 entries par appel gainers/losers</td>
+</tr>
+<tr>
+<td><strong>Endpoints utilisés</strong></td>
+<td><code>/stable/biggest-gainers?apikey=…</code> + <code>/stable/biggest-losers?apikey=…</code> (Phase 6 radar v0.3 — 2 calls par refresh fusionnés ~100 movers). <strong>Gotcha</strong> : les paths legacy <code>/api/v3/stock_market/gainers</code> + <code>/losers</code> retournent un 403 « Legacy Endpoint » pour toute souscription post-août 2025 ; le namespace <code>/stable/*</code> est le replacement post-migration et sert exactement la même shape JSON</td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>screener.provider: fmp</code> + <code>screener.fmp.api-key</code> (env <code>FMP_API_KEY</code>) — <strong>les deux éditables au runtime</strong> depuis <code>/settings/configuration &gt; Providers de données</code> (carte « FMP — clé API »)</td>
+</tr>
+<tr>
+<td><strong>Adapter</strong></td>
+<td><code>FmpMarketScreenerClient</code> (sélectionné par <code>screener.provider: fmp</code> via <code>RoutingMarketScreenerClient @Primary</code>) — base URL <code>https://financialmodelingprep.com</code> (overridable via <code>screener.fmp.base-url</code>)</td>
+</tr>
+<tr>
+<td><strong>Cache</strong></td>
+<td>Aucun v0.3 (filed en follow-up Phase 6 (1ter))</td>
+</tr>
+<tr>
+<td><strong>Probe</strong></td>
+<td><code>POST /api/config/test/fmp</code> accepte une clé candidate non sauvée, round-trip <code>/stable/biggest-gainers?apikey=…</code> — pas de cheap reference endpoint dédié chez FMP, on probe directement l'endpoint réel du radar (1 call sur le quota 250/jour par test)</td>
+</tr>
+<tr>
+<td><strong>Latence</strong></td>
+<td>~150-300 ms par call gainers/losers (~5-10 kB de JSON)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Limites assumées</strong> :
+- <strong>Pas de signal volume</strong> sur les endpoints gainers/losers — l'adapter fill <code>volume = 0L</code>, <code>volumeAvg30d = 0L</code>, <code>volumeRatio = BigDecimal.ZERO</code>. Le filtre <code>volumeRatioMin</code> du radar devient <strong>no-op</strong> quand FMP est le provider actif ; un hint dans <code>screenerProvider.description</code> invite l'utilisateur à descendre le filtre à 0 dans le panneau.
+- <strong>Univers borné top 50 par direction</strong> — un ticker qui gappe +5 % mais n'est pas dans le top 50 ne sera pas surfacé. Pas un blocker pour un radar « pump precursor » qui par construction cherche les extrêmes.
+- <strong>Pas de <code>marketCapUsd</code>, <code>sector</code></strong> — mêmes sentinels que pour Polygon (cap-range et sector filters no-op).</p>
+<p><strong>Ce que FMP fait mieux que Polygon free</strong> :
+- <code>name</code> et <code>exchange</code> sont <strong>populés natively</strong> → pas besoin d'un call enrichment séparé pour afficher « NVIDIA Corporation · NASDAQ » dans la table radar.
+- Free tier 250 req/jour sans paywall sur l'endpoint principal — Polygon free tier 2026 a verrouillé tous ses endpoints market data.</p>
+<p><strong>Pourquoi FMP plutôt que Polygon free post-rebrand</strong> : depuis le rebrand Polygon → Massive 2026, le free Basic tier de Polygon ne couvre plus que <code>/v3/reference/...</code> (le snapshot et le grouped-daily renvoient 403 « plan does not allow »). FMP free reste la seule option <strong>à $0</strong> qui retourne des données de mouvement de marché actionnable. L'adapter Polygon reste wired en code mais inactif tant que l'user n'upgrade pas en Stocks Basic+ payant.</p>
+<hr />
+<h2 id="anthropic-claude-narratif-llm">Anthropic Claude — narratif LLM<a class="headerlink" href="#anthropic-claude-narratif-llm" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Site</strong></td>
+<td><a href="https://www.anthropic.com">https://www.anthropic.com</a></td>
+</tr>
+<tr>
+<td><strong>Inscription</strong></td>
+<td><a href="https://console.anthropic.com">https://console.anthropic.com</a></td>
+</tr>
+<tr>
+<td><strong>Dashboard / clé</strong></td>
+<td><a href="https://console.anthropic.com/settings/keys">https://console.anthropic.com/settings/keys</a></td>
+</tr>
+<tr>
+<td><strong>Billing</strong></td>
+<td><a href="https://console.anthropic.com/settings/billing">https://console.anthropic.com/settings/billing</a> — pay-as-you-go, ~5 € pour ~hundreds de narratifs</td>
+</tr>
+<tr>
+<td><strong>Modèle utilisé</strong></td>
+<td><code>claude-opus-4-6</code> (default YAML), peut basculer sur <code>claude-sonnet-4-6</code> (~5× moins cher, qualité narrative très correcte)</td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>anthropic.api.key</code> (env <code>ANTHROPIC_API_KEY</code>), <code>anthropic.api.model</code> — <strong>les deux éditables au runtime</strong> depuis <code>/settings/configuration &gt; LLM</code> (clé masquée + bouton Tester depuis 2026-05-08, modèle en autocomplete libre)</td>
+</tr>
+<tr>
+<td><strong>Client</strong></td>
+<td><code>ClaudeClient</code> (sélectionné par <code>llm.provider: claude</code>) — clé et modèle lus per-call via <code>AppConfigService</code>, rotation immédiate sans reboot</td>
+</tr>
+<tr>
+<td><strong>Probe</strong></td>
+<td><code>POST /api/config/test/anthropic</code> accepte une clé candidate non sauvée, round-trip Claude avec le modèle courant et le prompt fixe « Reply with exactly the word OK. » — utilisé par le bouton « Tester » de la card Settings</td>
+</tr>
+<tr>
+<td><strong>Latence</strong></td>
+<td>1-3 s par narratif sur Opus, légèrement moins sur Sonnet</td>
+</tr>
+</tbody>
+</table>
+<p>Si le bouton "Buy credits" est grisé : ajouter une carte au compte d'abord, et <strong>vider le champ <code>Business tax ID</code></strong> (Anthropic essaie de valider un BN canadien et tape sur <code>$--</code> pour la tax si la valeur est invalide).</p>
+<hr />
+<h2 id="ollama-llm-local-offline-sans-cle">Ollama — LLM local (offline / sans clé)<a class="headerlink" href="#ollama-llm-local-offline-sans-cle" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Site</strong></td>
+<td><a href="https://ollama.com">https://ollama.com</a></td>
+</tr>
+<tr>
+<td><strong>Installation</strong></td>
+<td>Lancée automatiquement par <code>tilt up</code> via <code>docker-compose.yml</code></td>
+</tr>
+<tr>
+<td><strong>Modèle par défaut</strong></td>
+<td><code>qwen2.5:3b</code> (~2 Go, ~5-10 s par narratif sur M1) — pull depuis <code>/settings/configuration &gt; LLM &gt; Pull…</code> (panneau État Ollama, suggestions hardcodées + tag libre)</td>
+</tr>
+<tr>
+<td><strong>Modèles testés</strong></td>
+<td><code>qwen2.5:3b</code> ✅ (défaut), <code>qwen2.5:7b</code> (15-30 s, qualité +), <code>mistral</code> 7B ❌ (30-60 s, timeouts sur M1)</td>
+</tr>
+<tr>
+<td><strong>Config</strong></td>
+<td><code>ollama.base-url</code>, <code>ollama.model</code></td>
+</tr>
+<tr>
+<td><strong>Client</strong></td>
+<td><code>OllamaClient</code> (sélectionné par <code>llm.provider: ollama</code>)</td>
+</tr>
+<tr>
+<td><strong>API</strong></td>
+<td><a href="http://localhost:11434">http://localhost:11434</a> (UI Tilt expose le link)</td>
+</tr>
+</tbody>
+</table>
+<p>Ollama tourne en local — <strong>aucune clé, aucun crédit</strong>, mais qualité narrative inférieure à Claude. Utile pour dev offline ou éviter de cramer des credits Anthropic en itération.</p>
+<hr />
+<h2 id="recapitulatif-config-locale">Récapitulatif config locale<a class="headerlink" href="#recapitulatif-config-locale" title="Permanent link">&para;</a></h2>
+<p>Depuis 2026-05-18, <code>application-local.yml</code> est <strong>committé</strong> mais doit <strong>rester strictement secret-free</strong> — il ne carrie que les overrides de comportement dev (<code>llm.provider</code>, <code>springdoc</code>, <code>flyway.repair-on-migrate</code>, etc.). Les clés API vivent dans deux slots distincts :</p>
+<ol>
+<li><strong><code>.env</code> à la racine du repo (gitignored)</strong> — pour les credentials boot-time (OAuth, <code>APP_ADMIN_EMAILS</code>, <code>APP_FRONTEND_URL</code>). Lu par le <code>serve_cmd</code> Tilt qui les exporte au sous-process Gradle → Spring les pickè up via relaxed binding (<code>${ANTHROPIC_API_KEY:}</code>, <code>${TWELVEDATA_API_KEY:}</code>, <code>${FINNHUB_API_KEY:}</code>, <code>${POLYGON_API_KEY:}</code> dans <code>application.yml</code>). Cf. <a href="../../.env.example"><code>.env.example</code></a> pour la liste complète.</li>
+<li><strong><code>/settings/configuration</code> UI (runtime-editable, sans reboot)</strong> — pour les clés API qu'on veut rotater ou activer sans toucher au filesystem. Backend persiste l'override dans la table <code>app_config</code> (clés <code>market.twelvedata.api-key</code>, <code>market.finnhub.api-key</code>, <code>screener.polygon.api-key</code>, <code>anthropic.api.key</code>). C'est la voie recommandée pour <code>anthropic.api.key</code> parce que la rotation est fréquente. Détails dans <a href="../developpement/"><code>developpement.md &gt; Alternative runtime — édition sans reboot</code></a>.</li>
+</ol>
+<p>Exemple <code>.env</code> minimal pour un dev qui veut Claude + Twelve Data + Finnhub + Polygon :</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># OAuth (boot-time) — uniquement si BACKEND_AUTH_MODE=oauth, optionnel en mode no-auth</span>
+<span class="nv">SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID</span><span class="o">=</span>...
+<span class="nv">SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET</span><span class="o">=</span>...
+<span class="nv">APP_ADMIN_EMAILS</span><span class="o">=</span>ton.email@gmail.com
+
+<span class="c1"># API keys (boot-time alternative à l&#39;UI runtime)</span>
+<span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span>sk-ant-api03-...<span class="w">        </span><span class="c1"># https://console.anthropic.com/settings/keys</span>
+<span class="nv">TWELVEDATA_API_KEY</span><span class="o">=</span>...<span class="w">                    </span><span class="c1"># https://twelvedata.com/account/api-keys</span>
+<span class="nv">FINNHUB_API_KEY</span><span class="o">=</span>...<span class="w">                       </span><span class="c1"># https://finnhub.io/dashboard</span>
+<span class="nv">POLYGON_API_KEY</span><span class="o">=</span>...<span class="w">                       </span><span class="c1"># https://massive.com/dashboard/keys (Stocks Basic+ required for the radar endpoint)</span>
+<span class="nv">FMP_API_KEY</span><span class="o">=</span>...<span class="w">                           </span><span class="c1"># https://site.financialmodelingprep.com/developer/docs/dashboard (free tier 250 req/day)</span>
+</code></pre></div>
+<p>Et <code>application-local.yml</code> ressemble à (voir le fichier réel sur disque) :</p>
+<div class="highlight"><pre><span></span><code><span class="nt">llm</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">claude</span><span class="w">               </span><span class="c1"># ou `ollama` pour offline (défaut historique)</span>
+
+<span class="nt">ollama</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qwen2.5:3b</span><span class="w">              </span><span class="c1"># pull depuis /settings/configuration &gt; LLM &gt; Pull…</span>
+
+<span class="c1"># `market.provider`, `news.provider`, `analyst.provider`, `earnings.provider` restent en `mock`</span>
+<span class="c1"># par défaut côté application.yml — basculer en `twelvedata` / `finnhub` via l&#39;UI runtime,</span>
+<span class="c1"># pas en YAML committé (la valeur committée serait visible dans `git log`).</span>
+</code></pre></div>
+<p><strong>Sécurité</strong> : ne jamais coller de clé API ni de credentials OAuth directement dans <code>application-local.yml</code> ni dans <code>application.yml</code> — les deux fichiers sont committés. Les <code>.env</code> (gitignored) + <code>app_config</code> runtime (BDD locale) sont les <strong>seuls</strong> dépôts de secrets en dev. En CI / fresh clone, les env vars restent vides et l'onboarding marche en mode mock sans clés — c'est volontaire.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../developpement/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Guide de développement">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Guide de développement
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../ops/" class="md-footer__link md-footer__link--next" aria-label="Next: Ops (CI / CD / tooling)">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Ops (CI / CD / tooling)
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

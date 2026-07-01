@@ -1,0 +1,2174 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/us/candidats/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>US — Page « Candidats » (analyse & sizing d'un short avant trade) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#us-page-candidats-analyse-sizing-dun-short-avant-trade" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              US — Page « Candidats » (analyse &amp; sizing d'un short avant trade)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="us-page-candidats-analyse-sizing-dun-short-avant-trade">US — Page « Candidats » (analyse &amp; sizing d'un short avant trade)<a class="headerlink" href="#us-page-candidats-analyse-sizing-dun-short-avant-trade" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Statut : ⏳ À cadrer · Créée 2026-06-19 · Phase : v1.0 journal (nouvelle surface)
+Référence périmètre : <a href="../../roadmap/"><code>roadmap.md</code></a> · Backlog : <a href="../../backlog/"><code>backlog.md</code></a></p>
+</blockquote>
+<hr />
+<h2 id="pitch">Pitch<a class="headerlink" href="#pitch" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>En tant que</strong> trader short small-caps qui prépare sa séance,
+<strong>je veux</strong> une page où je rentre un ticker candidat avec ses données du jour (open, prev close, float, volume…) et qui me sort tout le plan de trade — échelle d'entrée au risque, suivi d'exécution, échelle de sortie, plus les calculs GUS / borrow / push,
+<strong>afin de</strong> décider chaque matin quoi shorter et à quelle taille, sans refaire les calculs à la main dans un tableur.</p>
+</blockquote>
+<p>C'est le rapatriement, dans <strong>une seule surface persistée</strong>, du tableur « Trading Desk » que l'utilisateur tient aujourd'hui à la main. Les calculettes isolées (GUS, borrow fee, % push) — sorties puis <strong>shelvées</strong> — sont <strong>absorbées</strong> ici : un candidat est le contexte unique qui alimente tous les calculs.</p>
+<hr />
+<h2 id="contexte">Contexte<a class="headerlink" href="#contexte" title="Permanent link">&para;</a></h2>
+<ul>
+<li>L'app est un <strong>journal de trading</strong> post-pivot (cf. <a href="../../../metier/vision/"><code>vision.md</code></a>) : focus short small-caps gap-up, range $1–$10. L'atomic unit livré est le <code>trade_entry</code>. Mais <strong>rien ne couvre la phase amont</strong> : la préparation du matin (quoi shorter, à quelle taille, quel stop).</li>
+<li>L'utilisateur travaille aujourd'hui dans un <strong>tableur</strong> (captures fournies) qui combine : sizing au risque sur une échelle de paliers, suivi des fills réels, échelle de cover, et trois petites calculettes (GUS %, borrow fee %, % push).</li>
+<li>Des <strong>calculettes isolées</strong> avaient été amorcées côté front (<code>gus-calculator</code>, <code>borrow-fee-calculator</code>) puis <strong>shelvées</strong> : la décision est de <strong>ne pas les garder en pages séparées</strong> mais de les <strong>intégrer à la fiche candidat</strong>, où elles ont leur contexte (open price, prev close, entry price…).</li>
+<li><strong>Pas de provider câblé en v1</strong> : conformément à l'esprit post-pivot (saisie manuelle, cf. CLAUDE.md), les données de marché (float, volume, push) sont <strong>saisies à la main</strong>. Les clients dormants (TwelveData/FMP/Polygon/Finnhub) restent pour un enrichissement Phase 2, non câblés ici.</li>
+</ul>
+<hr />
+<h2 id="reference-ux-captures-screenshot-2026-06-19">Référence UX (captures <code>Screenshot 2026-06-19 *</code>)<a class="headerlink" href="#reference-ux-captures-screenshot-2026-06-19" title="Permanent link">&para;</a></h2>
+<p>Tableur « The Trading Desk » fourni comme <strong>référence métier / de calcul</strong>, pas d'UI (on reste sur le design-system <code>@portfolioai/ui</code> / M3, thème clair). Les blocs à reprendre :</p>
+<table>
+<thead>
+<tr>
+<th>Bloc</th>
+<th>Ce qu'on garde</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Paramètres</strong></td>
+<td>Encadré : ticker, total capital, % capital at risk → $ at risk (dérivé), open price, stop %</td>
+</tr>
+<tr>
+<td><strong>Données du jour</strong></td>
+<td>Prev close, <strong>float</strong>, <strong>gap up (GUS %)</strong>, <strong>volume</strong>, morning push — contexte de décision</td>
+</tr>
+<tr>
+<td><strong>Échelle d'entrée</strong></td>
+<td>Tableau par palier (% vs open) : prix, max shares à shorter, investissement total</td>
+</tr>
+<tr>
+<td><strong>Suivi d'exécution</strong></td>
+<td>Saisie des shares réellement remplies par palier → risque courant, remaining, résidu, <strong>position moyenne</strong></td>
+</tr>
+<tr>
+<td><strong>Échelle de sortie / cover</strong></td>
+<td>Prix de sortie, shares couvertes, % et $ gain/loss vs position moyenne, TP moyen</td>
+</tr>
+<tr>
+<td><strong>Calculettes</strong></td>
+<td>GUS %, borrow fee % — alimentées par les champs du candidat. <em>(% push : hors scope v1, reporté Phase 2.)</em></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="perimetre">Périmètre<a class="headerlink" href="#perimetre" title="Permanent link">&para;</a></h2>
+<h3 id="in">In<a class="headerlink" href="#in" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Nouvelle page « Candidats »</strong>, accessible depuis le sidenav.</li>
+<li><strong>Création / édition d'un candidat (upsert)</strong> : un formulaire unique qui saisit ticker + paramètres + données du jour.</li>
+<li><strong>Sélecteur (dropdown) de candidat</strong> : liste les candidats <strong>du jour</strong> ; en sélectionner un <strong>remplit la fiche</strong> ; on peut <strong>ré-enregistrer</strong> (upsert) — pas de tableau-liste, c'est une fiche pilotée par un picker.</li>
+<li><strong>Scope par date de séance</strong> : la dropdown ne montre que les candidats dont la date = aujourd'hui. Les candidats d'une date antérieure sont <strong>implicitement clos</strong> (conservés en base, <strong>sortis du picker</strong>).</li>
+<li><strong>Échelle d'entrée au risque</strong> (calcul automatique, paliers fixes en % de l'open).</li>
+<li><strong>Suivi d'exécution</strong> : saisie des <code>shares in play</code> par palier (paliers fixes) → risque courant, shares restantes, résidu de budget risque, totaux. <strong>Sizing uniquement</strong> depuis 2026-06-21.</li>
+<li><strong>Entrées réelles (saisie libre)</strong> : tableau symétrique du cover où le trader saisit le <strong>prix d'entrée réel + shares</strong> par leg (non contraint aux paliers) → entrée %, risque $, risque %, investissement, et la <strong>position moyenne pondérée</strong> qui alimente le cover. <em>(Ajouté 2026-06-21.)</em></li>
+<li><strong>Échelle de sortie / cover</strong> : saisie des sorties → % / $ gain-loss vs position moyenne, TP moyen, totaux.</li>
+<li><strong>Calculettes intégrées</strong> : GUS %, borrow fee %, alimentées par les champs du candidat (absorption des calculettes shelvées). <em>(Le % push est </em><em>hors scope v1</em><em> — cf. Décisions de cadrage.)</em></li>
+<li><strong>Création d'une stat depuis le candidat</strong> : depuis un candidat, ouvrir l'<code>add-stat-dialog</code> <strong>pré-rempli</strong> (date, ticker, gap % issu du GUS, open) → enregistré dans le module stats. <em>(Révisé 2026-06-19 : à l'origine « promotion → trade_entry ».)</em></li>
+<li>Toutes chaînes via <code>ngx-translate</code> (FR + EN), données scopées <code>userId</code>.</li>
+</ol>
+<h3 id="out-hors-scope-de-cette-us">Out (hors scope de cette US)<a class="headerlink" href="#out-hors-scope-de-cette-us" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Aucune connexion / fetch automatique de données marché (float/volume/gap saisis main).</li>
+<li>Pas de re-trading des candidats clos depuis l'UI v1 (ils restent en base ; un écran d'historique/archive est une évolution future).</li>
+<li>Pas de multi-comptes ni de devise multiple (mono-USD, cohérent avec <a href="../compte-broker/"><code>compte-broker</code></a>).</li>
+<li>Pas de graphes (distribution, heatmap) — Phase 2.</li>
+</ul>
+<hr />
+<h2 id="modele-propose-a-valider">Modèle proposé (à valider)<a class="headerlink" href="#modele-propose-a-valider" title="Permanent link">&para;</a></h2>
+<h3 id="entite-candidate">Entité <code>candidate</code><a class="headerlink" href="#entite-candidate" title="Permanent link">&para;</a></h3>
+<p>Un enregistrement par ticker préparé, scopé <code>userId</code> + daté.</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Type</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code>, <code>userId</code></td>
+<td></td>
+<td>scope multi-user</td>
+</tr>
+<tr>
+<td><code>tradingDate</code></td>
+<td>DATE</td>
+<td>date de séance — pilote la visibilité dans la dropdown</td>
+</tr>
+<tr>
+<td><code>ticker</code></td>
+<td>TEXT</td>
+<td>rendu en chip (<code>stbChip="ticker"</code>) partout</td>
+</tr>
+<tr>
+<td><code>totalCapital</code></td>
+<td>DECIMAL</td>
+<td>capital total</td>
+</tr>
+<tr>
+<td><code>pctCapitalAtRisk</code></td>
+<td>DECIMAL</td>
+<td>ex. 5.00 (%)</td>
+</tr>
+<tr>
+<td><code>openPrice</code></td>
+<td>DECIMAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>prevClose</code></td>
+<td>DECIMAL</td>
+<td>pour le GUS %</td>
+</tr>
+<tr>
+<td><code>stopPct</code></td>
+<td>DECIMAL</td>
+<td>ex. 40.00 (% au-dessus de l'open)</td>
+</tr>
+<tr>
+<td><code>float</code>, <code>volume</code></td>
+<td>DECIMAL / BIGINT</td>
+<td>données du jour (saisies)</td>
+</tr>
+<tr>
+<td><code>morningPush</code></td>
+<td>DECIMAL</td>
+<td><strong>saisi et stocké</strong>, mais aucun calcul <code>% push</code> en v1 (reporté Phase 2)</td>
+</tr>
+<tr>
+<td><code>borrowCostPerShare</code></td>
+<td>DECIMAL</td>
+<td>pour le borrow fee %</td>
+</tr>
+<tr>
+<td><code>fills</code></td>
+<td>JSON (<code>jsonb</code>)</td>
+<td>shares in play par palier fixe (suivi d'exécution — sizing)</td>
+</tr>
+<tr>
+<td><code>entries</code></td>
+<td>JSON (<code>jsonb</code>)</td>
+<td>legs d'entrée en saisie libre (prix + shares) → position moyenne</td>
+</tr>
+<tr>
+<td><code>exits</code></td>
+<td>JSON (<code>jsonb</code>)</td>
+<td>échelle de cover saisie</td>
+</tr>
+<tr>
+<td><code>createdAt</code>, <code>updatedAt</code></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Tranché (implémenté)</strong> : <code>fills</code> / <code>entries</code> / <code>exits</code> sont des colonnes <strong><code>jsonb</code></strong> sur <code>candidate</code> (marshalling typé dans le service, Hibernate les voit comme <code>String</code> via <code>@JdbcTypeCode(JSON)</code>), pas de tables filles — le candidat est un agrégat éphémère (durée de vie = la séance), pas de requêtage relationnel sur les legs.</p>
+</blockquote>
+<h3 id="derives-jamais-persistes-recalcules">Dérivés (jamais persistés — recalculés)<a class="headerlink" href="#derives-jamais-persistes-recalcules" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>dollarAtRisk = totalCapital × pctCapitalAtRisk / 100</code></li>
+</ul>
+<h3 id="cycle-de-vie-pilote-par-la-date">Cycle de vie = piloté par la date<a class="headerlink" href="#cycle-de-vie-pilote-par-la-date" title="Permanent link">&para;</a></h3>
+<p>Pas de machine à états explicite : le statut <strong>dérive de <code>tradingDate</code></strong>.</p>
+<ul>
+<li><code>tradingDate = aujourd'hui</code> → <strong>actif</strong>, visible dans la dropdown, éditable.</li>
+<li><code>tradingDate &lt; aujourd'hui</code> → <strong>clos</strong>, hors dropdown (conservé en base).</li>
+</ul>
+<p><em>Pourquoi : zéro saisie de statut, ça colle au geste réel (« les candidats du jour ») et ça garde l'historique sans le polluer l'écran de travail.</em></p>
+<hr />
+<h2 id="calculs-source-de-verite-metier">Calculs (source de vérité métier)<a class="headerlink" href="#calculs-source-de-verite-metier" title="Permanent link">&para;</a></h2>
+<p><code>p</code> = palier en fraction de l'open (ex. +0.35) ; paliers fixes : <code>+0.40 (= stop), +0.35, +0.30, +0.25, +0.20, +0.15, +0.10, +0.07, +0.05, 0, −0.10 … −0.40</code>.</p>
+<h3 id="echelle-dentree-paliers-entre-0-et-le-stop">Échelle d'entrée (paliers entre 0 et le stop)<a class="headerlink" href="#echelle-dentree-paliers-entre-0-et-le-stop" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Colonne affichée</th>
+<th>Formule</th>
+<th>Vérif. screen (open 12.04, stop 0.40, $risk 365)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>price</code></td>
+<td><code>openPrice × (1 + p)</code></td>
+<td>p=0.35 → 16.25 ✓</td>
+</tr>
+<tr>
+<td><code>maxShares</code></td>
+<td><code>round(dollarAtRisk / riskPerShare)</code>, avec <code>riskPerShare = (stopPct − p) × openPrice</code> (intermédiaire de calcul, <strong>non affiché</strong>)</td>
+<td>p=0.35 → 365 / (0.05 × 12.04) = 365 / 0.602 = <strong>606</strong> ✓ ; p=0.30 → <strong>303</strong> ✓</td>
+</tr>
+<tr>
+<td><code>totalInvestment</code></td>
+<td><code>maxShares × price</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Le <code>riskPerShare</code> reste calculé dans <code>candidates.math.ts</code> (il alimente <code>maxShares</code> ici et <code>currentRisk</code> dans le suivi d'exécution) mais n'est <strong>plus une colonne</strong> du tableau — décision UX 2026-06-21 : la colonne « Risque / action » alourdissait la lecture sans guider la décision de sizing (c'est <code>maxShares</code> qui pilote).</p>
+</blockquote>
+<p>Les paliers négatifs (−10 → −40 %) sont la <strong>zone de profit</strong> : affichés (prix cible) mais sans sizing.</p>
+<h3 id="suivi-dexecution-par-palier-sharesinplay-saisis">Suivi d'exécution (par palier, <code>sharesInPlay</code> saisis)<a class="headerlink" href="#suivi-dexecution-par-palier-sharesinplay-saisis" title="Permanent link">&para;</a></h3>
+<p>Colonnes affichées : <strong>Entrée · Risque $ · Shares en jeu · Risque courant · Restant · Investissement</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Sortie</th>
+<th>Formule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Risque $</code> (<code>riskPerShare</code>)</td>
+<td><code>prix du stop − prix du palier</code> = <code>(stopPct − p) × openPrice</code> — risque par share jusqu'au stop</td>
+</tr>
+<tr>
+<td><code>currentRisk</code></td>
+<td><code>sharesInPlay × riskPerShare</code></td>
+</tr>
+<tr>
+<td><code>remaining</code></td>
+<td><code>maxShares − sharesInPlay</code> (<code>maxShares</code> reste calculé en interne, non affiché dans ce tableau)</td>
+</tr>
+<tr>
+<td><code>investment</code></td>
+<td><code>sharesInPlay × price</code></td>
+</tr>
+<tr>
+<td><code>Σ totaux</code></td>
+<td>sommes des colonnes</td>
+</tr>
+<tr>
+<td><code>residual</code></td>
+<td><code>dollarAtRisk − Σ currentRisk</code> (négatif = au-dessus du budget risque)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Tri par défaut</strong> : du palier le plus bas au plus haut (<strong>+5 % d'abord</strong>, puis 7/10/15/20/25/30/35), à l'inverse de l'échelle d'entrée (stop → profit). On saisit l'exécution dans l'ordre où le short se construit (petit gap d'abord). Décision UX 2026-06-21 : ici on affiche <strong>Risque $</strong> (= <code>riskPerShare</code>, soit <code>prix du stop − prix du palier</code>) plutôt que <code>maxShares</code>, déjà donné par l'échelle d'entrée.</p>
+<p><strong>Sizing uniquement (2026-06-21)</strong> : la <strong>position moyenne</strong> n'est plus calculée ni affichée ici — elle est portée par le tableau <strong>Entrées réelles</strong> ci-dessous (saisie libre), source unique de la moyenne qui alimente le cover. Ce tableau ne sert plus qu'au dimensionnement (risque par palier + résidu).</p>
+</blockquote>
+<h3 id="entrees-reelles-saisie-libre-entries-saisis">Entrées réelles (saisie libre — <code>entries</code> saisis)<a class="headerlink" href="#entrees-reelles-saisie-libre-entries-saisis" title="Permanent link">&para;</a></h3>
+<p>Tableau symétrique du cover : un leg par entrée réelle, prix + shares <strong>saisis</strong> (non contraint aux paliers). Colonnes affichées : <strong>Prix d'entrée · Entrée % · Shares en jeu · Risque courant · Risque % · Investissement · ⌫</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Sortie</th>
+<th>Formule</th>
+<th>Vérif. screen (open 5.00, stop 40 % → stop 7.00 ; leg 200 @ 3.21)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>entryPct</code></td>
+<td><code>(entryPrice − openPrice) / openPrice</code></td>
+<td>(3.21 − 5)/5 = <strong>−35.80 %</strong> ✓</td>
+</tr>
+<tr>
+<td><code>riskPerShare</code></td>
+<td><code>stopPrice − entryPrice</code> = <code>openPrice × (1 + stopPct) − entryPrice</code></td>
+<td>7.00 − 3.21 = 3.79</td>
+</tr>
+<tr>
+<td><code>currentRisk</code></td>
+<td><code>sharesInPlay × riskPerShare</code></td>
+<td>200 × 3.79 = <strong>$758</strong> ✓</td>
+</tr>
+<tr>
+<td><code>riskPct</code></td>
+<td><code>riskPerShare / entryPrice</code></td>
+<td>3.79 / 3.21 = <strong>118.07 %</strong> ✓</td>
+</tr>
+<tr>
+<td><code>investment</code></td>
+<td><code>sharesInPlay × entryPrice</code></td>
+<td>200 × 3.21 = <strong>$642</strong> ✓</td>
+</tr>
+<tr>
+<td><code>averagePosition</code></td>
+<td><code>Σ(entryPrice × shares) / Σ shares</code></td>
+<td>prix de short moyen pondéré (→ cover)</td>
+</tr>
+<tr>
+<td><code>averagePct</code></td>
+<td><code>(averagePosition − openPrice) / openPrice</code></td>
+<td>distance moyenne à l'open</td>
+</tr>
+<tr>
+<td><code>averageRiskPct</code></td>
+<td><code>(stopPrice − averagePosition) / averagePosition</code></td>
+<td>risque % sur la position moyenne</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>La <strong>position moyenne</strong> de ce tableau est l'<strong>unique</strong> entrée du cover (le suivi à paliers ne la calcule plus). Toutes les sorties dérivées restent <code>null</code> (jamais <code>NaN</code>) tant qu'open / stop manquent.</p>
+</blockquote>
+<h3 id="echelle-de-sortie-cover-position-short-on-rachete">Échelle de sortie / cover (position short → on rachète)<a class="headerlink" href="#echelle-de-sortie-cover-position-short-on-rachete" title="Permanent link">&para;</a></h3>
+<p>Colonnes affichées : <strong>Prix de sortie · % G/P · $ G/P · Shares couvertes · ⌫</strong> (la saisie <code>sharesCovered</code> est placée <strong>après</strong> le bloc gain/perte — décision UX 2026-06-21).</p>
+<table>
+<thead>
+<tr>
+<th>Sortie</th>
+<th>Formule</th>
+<th>Vérif. screen (avg ≈ 3.78)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pctGainLoss</code></td>
+<td><code>(averagePosition − exitPrice) / averagePosition</code></td>
+<td>exit 3.00 → 20.6 % ✓ (gain quand exit &lt; entrée)</td>
+</tr>
+<tr>
+<td><code>dollarGainLoss</code></td>
+<td><code>(averagePosition − exitPrice) × sharesCovered</code></td>
+<td>(3.78−3.00)×200 ≈ 155 ✓</td>
+</tr>
+<tr>
+<td><code>averageTP</code></td>
+<td><code>Σ(exitPrice × sharesCovered) / Σ sharesCovered</code></td>
+<td></td>
+</tr>
+<tr>
+<td>totaux</td>
+<td><code>Σ sharesCovered</code>, <code>Σ dollarGainLoss</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><code>averagePosition</code> = la position moyenne du tableau <strong>Entrées réelles</strong> (plus celle du suivi à paliers, depuis 2026-06-21).</p>
+</blockquote>
+<h3 id="calculettes-integrees">Calculettes intégrées<a class="headerlink" href="#calculettes-integrees" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Calcul</th>
+<th>Formule</th>
+<th>Vérif. screen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GUS %</strong></td>
+<td><code>(openPrice − prevClose) / prevClose</code></td>
+<td>(12.04 − 3.9)/3.9 = <strong>208.7 %</strong> ✓</td>
+</tr>
+<tr>
+<td><strong>Borrow fee %</strong></td>
+<td><code>borrowCostPerShare / openPrice</code></td>
+<td>0.10 / 12.04 ≈ <strong>0.83 %</strong> ✓</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>% Push : hors scope v1.</strong> <code>morningPush</code> est saisi et persisté mais aucune calculette ne le consomme — la formule n'a jamais été tranchée (le code shelvé reste la référence). Reporté Phase 2 (cf. Décisions de cadrage).</p>
+</blockquote>
+<hr />
+<h2 id="criteres-dacceptation">Critères d'acceptation<a class="headerlink" href="#criteres-dacceptation" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Une entrée <strong>« Candidats »</strong> apparaît dans le sidenav (libellé i18n <code>nav.candidates</code>, FR + EN, icône, tooltip collapsed comme les autres items).</li>
+<li>[ ] La page affiche un <strong>dropdown de sélection</strong> listant uniquement les candidats <strong>du jour</strong> (date = aujourd'hui) ; sélectionner un candidat <strong>remplit la fiche</strong>.</li>
+<li>[ ] Un <strong>formulaire upsert</strong> permet de créer un nouveau candidat ou de <strong>ré-enregistrer</strong> le candidat affiché (ticker, capital, % risque, open, prev close, stop %, float, volume, push, borrow cost/share).</li>
+<li>[ ] <code>$ at risk</code> est <strong>recalculé</strong> et affiché (capital × %), jamais saisi.</li>
+<li>[ ] L'<strong>échelle d'entrée</strong> se calcule automatiquement (prix / max shares / investissement par palier) dès que open + stop + $ risque sont renseignés.</li>
+<li>[ ] Le <strong>suivi d'exécution</strong> permet de saisir les shares in play par palier et affiche risque courant, remaining, <strong>résidu</strong> et totaux (sizing — plus de position moyenne ici).</li>
+<li>[ ] Les <strong>entrées réelles (saisie libre)</strong> permettent d'ajouter des legs (prix + shares) et affichent entrée %, risque courant, risque %, investissement + <strong>position moyenne</strong> / moyenne % / risque moyen % ; cette position moyenne alimente le cover.</li>
+<li>[ ] L'<strong>échelle de sortie</strong> permet de saisir les sorties et affiche % / $ gain-loss vs position moyenne + TP moyen + totaux.</li>
+<li>[ ] Les <strong>calculettes GUS % / borrow fee %</strong> s'affichent, alimentées par les champs du candidat. <em>(% push : hors scope v1.)</em></li>
+<li>[ ] Le <strong>ticker est rendu en chip</strong> (<code>&lt;mat-chip stbChip="ticker"&gt;</code>, cf. CLAUDE.md) là où il apparaît.</li>
+<li>[ ] Un bouton <strong>« Créer une stat »</strong> ouvre l'<code>add-stat-dialog</code> <strong>pré-rempli</strong> (date, ticker, gap % issu du GUS, open) et l'enregistre via le module stats.</li>
+<li>[ ] Les candidats d'une <strong>date antérieure</strong> ne figurent <strong>plus</strong> dans la dropdown (mais restent en base).</li>
+<li>[ ] Feedback CRUD via snackbar (<code>stb-snack-bar--success</code> / <code>--error</code>, cf. CLAUDE.md).</li>
+<li>[ ] Toutes les chaînes via <code>ngx-translate</code> (FR + EN), aucune en dur. Données scopées <code>userId</code>, jamais de PII en log.</li>
+</ul>
+<hr />
+<h2 id="impact-technique-esquisse">Impact technique (esquisse)<a class="headerlink" href="#impact-technique-esquisse" title="Permanent link">&para;</a></h2>
+<h3 id="backend-nouveau-module-candidates">Backend — nouveau module <code>candidates/</code><a class="headerlink" href="#backend-nouveau-module-candidates" title="Permanent link">&para;</a></h3>
+<p>Calqué sur <code>journal/</code> (hexagonal + DDD léger) :</p>
+<ul>
+<li><code>domain/</code> : <code>Candidate</code> (agrégat), value objects pour fills / entries / exits (legs JSON <code>jsonb</code>).</li>
+<li><code>application/</code> : <code>CandidateService</code> (upsert, lecture des candidats du jour, suppression), DTOs. <strong>Les calculs dérivés (échelle, totaux) peuvent vivre côté front</strong> (pas de persistance) — le backend ne stocke que les saisies.</li>
+<li><code>infrastructure/http/</code> : <code>CandidateController</code> (<code>POST/PUT /candidates</code> upsert, <code>GET /candidates?date=today</code>, <code>DELETE</code>).</li>
+<li><code>infrastructure/persistence/</code> : <code>CandidateRepository</code> + migration Flyway <code>candidate</code> (<code>V7</code> — FK <code>user_id</code>, <code>trading_date</code> indexé, colonnes JSON <code>fills</code> / <code>entries</code> / <code>exits</code>).</li>
+</ul>
+<h3 id="frontend-nouvelle-feature-featurescandidates">Frontend — nouvelle feature <code>features/candidates/</code><a class="headerlink" href="#frontend-nouvelle-feature-featurescandidates" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>candidates-page.{ts,html,scss,spec}</code> + formulaire upsert.</li>
+<li><strong>Lib de math <code>candidates.math.ts</code></strong> (fonctions pures : échelle d'entrée, suivi à paliers, <strong>entrées réelles (<code>entrySummary</code>)</strong>, cover, GUS/borrow/push) + spec — <strong>récupère la math des calculettes shelvées</strong> au lieu de la jeter.</li>
+<li>Port + adapter <code>core/api/candidates/candidates.repository.ts</code> (+ binding <code>providers.ts</code>).</li>
+<li>Route <code>/candidates</code> (<code>canActivate: [authGuard]</code>) dans <code>app.routes.ts</code> + item sidenav dans <code>app.html</code>.</li>
+<li>Dropdown via <code>StbSelectModule</code> ; chips ticker via <code>StbChipsModule</code>.</li>
+<li>i18n <code>nav.candidates</code> + clés de page dans <code>public/i18n/{fr,en}.json</code>.</li>
+<li><strong>Création d'une stat</strong> : réutilise le dialog <code>add-stat-dialog</code> du module stats avec des valeurs pré-remplies (seed).</li>
+</ul>
+<hr />
+<h2 id="decisions-de-cadrage">Décisions de cadrage<a class="headerlink" href="#decisions-de-cadrage" title="Permanent link">&para;</a></h2>
+<p>Tranchées avec l'utilisateur (chaque point garde le <em>pourquoi</em>).</p>
+<ol>
+<li><strong>Surface unique, calculettes absorbées — code shelvé non re-commité.</strong> Les calculettes <code>gus-calculator</code> / <code>borrow-fee-calculator</code> / <code>% push</code> shelvées <strong>ne reviennent pas en pages/routes séparées et ne sont pas re-commitées telles quelles</strong> : on <strong>récupère uniquement leur logique de calcul</strong> (migrée dans <code>candidates.math.ts</code>) et elles deviennent des sous-blocs de la fiche candidat. <em>Pourquoi : elles n'ont de sens qu'avec un contexte (open, prev close, entry) que le candidat porte déjà ; une page isolée duplique la saisie. Le candidat est désormais le seul propriétaire de ces calculs.</em></li>
+<li><strong>Persistance = upsert + dropdown, pas de tableau-liste.</strong> Une fiche éditable unique pilotée par un sélecteur. <em>Pourquoi : le geste du matin est « je choisis/édite le candidat sur lequel je bosse », pas « je parcours une grille ».</em></li>
+<li><strong>Cycle de vie piloté par la date.</strong> Le statut dérive de <code>tradingDate</code> : seuls les candidats du jour sont dans la dropdown ; les antérieurs sont clos et masqués (conservés en base). <em>Pourquoi : zéro saisie de statut, colle au geste réel, garde l'historique sans encombrer l'écran.</em></li>
+<li><strong>Données marché saisies à la main (v1).</strong> Float / volume / gap / push renseignés par l'utilisateur ; le GUS % est calculé (prev close + open). <strong>Pas de provider câblé.</strong> <em>Pourquoi : cohérent avec l'esprit post-pivot (manuel) ; le câblage provider est un chantier Phase 2 (enrichment) sans valeur bloquante ici.</em></li>
+<li><strong>Création d'une stat depuis le candidat</strong> (révisé 2026-06-19 ; à l'origine « promotion → trade »). Le bouton « Créer une stat » ouvre l'<code>add-stat-dialog</code> pré-rempli (date, ticker, gap GUS, open) et l'enregistre dans le module stats. <em>Pourquoi : le candidat préparé le matin alimente d'abord le dataset stats (le suivi du setup), pas directement le journal d'exécution ; on évite la double saisie côté stats.</em></li>
+<li><strong>% push hors scope v1</strong> (tranché 2026-06-21). Seules <strong>GUS %</strong> et <strong>borrow fee %</strong> sont livrées comme calculettes. <code>morningPush</code> reste un champ saisi/persisté mais aucun calcul ne le consomme. <em>Pourquoi : la formule exacte du « % push » n'a jamais été reconfirmée sur le code shelvé ; on ne livre pas une calculette dont la sémantique n'est pas tranchée. Le câblage est un chantier Phase 2, sans valeur bloquante pour le sizing du matin.</em></li>
+</ol>
+<h3 id="questions-ouvertes">Questions ouvertes<a class="headerlink" href="#questions-ouvertes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Stockage des fills/exits</strong> : JSON sur <code>candidate</code> (recommandé v1) vs tables filles — à confirmer.</li>
+<li><strong>Formule exacte du % push</strong> : <em>tranché — hors scope v1</em> (cf. Décisions de cadrage #6). <code>morningPush</code> reste saisi/stocké pour Phase 2.</li>
+<li><strong>Sens des paliers positifs</strong> : le tableur ajoute au short quand ça monte (pyramidage contre soi) ; confirmer que les paliers fixes (<code>40/35/30/25/20/15/10/7/5</code>) sont figés ou paramétrables.</li>
+</ul>
+<hr />
+<h2 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Module backend <code>candidates/</code> + migration Flyway <code>candidate</code> + tests d'intégration (Testcontainers, vrai PostgreSQL).</li>
+<li>Feature front <code>features/candidates/</code> + <code>candidates.math.ts</code> (fonctions pures testées Vitest) + tests page/form.</li>
+<li>Création d'une stat depuis le candidat fonctionnelle (<code>add-stat-dialog</code> pré-rempli → <code>StatsRepository</code>).</li>
+<li>i18n FR + EN complets.</li>
+<li>Docs mises à jour : <code>fonctionnalites.md</code> (nouvelle feature), <code>architecture.md</code> (module <code>candidates/</code> + table + absorption des calculettes), entrée <code>journal-livraisons.md</code>, ligne backlog.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

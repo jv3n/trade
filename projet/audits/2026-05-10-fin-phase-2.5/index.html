@@ -1,0 +1,2167 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/audits/2026-05-10-fin-phase-2.5/">
+      
+      
+        <link rel="prev" href="../2026-05-14-fin-phase-3/">
+      
+      
+        <link rel="next" href="../2026-05-06-fin-phase-2/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2026-05-10 — Revue globale fin Phase 2.5 - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#revue-de-code-globale-fin-phase-25-2026-05-10" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-05-10 — Revue globale fin Phase 2.5
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critique" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Critique
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Important
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moderee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modérée
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mineure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recapitulatif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Récapitulatif
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../roadmap/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Projet
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Audits
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="revue-de-code-globale-fin-phase-25-2026-05-10">Revue de code globale — fin Phase 2.5 (2026-05-10)<a class="headerlink" href="#revue-de-code-globale-fin-phase-25-2026-05-10" title="Permanent link">&para;</a></h1>
+<p><strong>Scope</strong> : audit de la Phase 2.5 (entre <code>v0.3.0</code> et HEAD), 36 commits, 186 fichiers modifiés (+9 844 / −5 450 lignes). Les gros morceaux : décommissionnement Phase 0 (V6 + suppression des modules <code>ingestion/</code> + <code>analysis/</code> legacy + pages frontend <code>recommendations/</code> / <code>history/</code> / <code>sources/</code> / <code>test-sources/</code>), runtime config v1 + v1.5 (12 clés, 5 routers <code>@Primary</code>, slider <code>llm.timeout-seconds</code>), Server-Sent Events sur le narratif (4 PR : backend <code>JobEventPublisher</code> + frontend <code>JobStreamService</code> + reattach pending + UX phase visible), clé Anthropic en SECRET runtime, panneau État Ollama avec eject VRAM + pull/delete model dialogs, <code>instrumentType</code> end-to-end (chip dossier + watchlist sidebar + persist BDD V7), drag-drop portfolios, lifecycle position OPEN/CLOSED, <code>.env</code> ports configurables, Swagger UI sur le profil <code>local</code>, refactor <code>provideRepositories()</code>, ThemeService / LanguageService SSR-safe, journal split. Modules Phase 0 décommissionnés hors scope sauf résidus.</p>
+<p><strong>Méthode</strong> : revue par agent automatisé, read-only, briefée sur les conventions ground truth (<code>CLAUDE.md</code>, <code>architecture.md</code>, <code>ddd.md</code>, <code>fonctionnalites.md</code>) et sur les findings des audits 2026-05-02 et 2026-05-06. Lecture commit par commit du diff Phase 2.5, croisement avec les nouveaux tests, vérification des résiduels des findings précédents. Findings classés par sévérité avec référence <code>fichier:ligne</code>.</p>
+<p><strong>État du commit au moment de la revue</strong> : branche <code>master</code>, dernier commit <code>a608967 fix(watchlist): persist instrumentType on POST add</code>. 12 clés runtime, 5 routers <code>@Primary</code> (Market / News / Analyst / Earnings / LLM), 6 caches Caffeine, 10 repositories frontend + 3 services dédiés (<code>JobStreamService</code>, <code>LlmTimeoutService</code>, <code>OllamaStatusService</code>). 50 fichiers de test backend, 21 specs frontend. Migrations Flyway V1→V7. Phase 0 entièrement supprimée du checkout. La majorité des findings critiques de l'audit fin Phase 2 sont fixés (#1 Settings expose les 7 toggles, #2 <code>FinnhubAnalystClientTest</code> ajouté, #4 hint Sector→Finnhub sur la card Twelve Data, #5 <code>@TransactionalEventListener(AFTER_COMMIT)</code> sur <code>CacheTtlListener</code>, #6 fail-open watchlist testé). #3 (stratégie de cache) et #21 (drift doc cache prefix) restent en dette technique 🟡.</p>
+<hr />
+<h2 id="resume-executif">Résumé exécutif<a class="headerlink" href="#resume-executif" title="Permanent link">&para;</a></h2>
+<p>App globalement saine pour un tag <code>v0.4.0</code>. La Phase 2.5 a livré beaucoup de plomberie et a mieux documenté les rationales (notes implémentation longues sur <code>journal-livraisons.md</code>). Les patterns de Phase 2 ont tenu : ports/adapters cohérents, fail-soft sur les endpoints paid-tier, SSE livré avec un test seam propre (<code>internal open fun createEmitter()</code>) qui évite la reflection / les mocks fragiles sur <code>SseEmitter</code>. La discipline frontend reste très bonne : signal-based 100 %, zoneless, i18n complète FR/EN, <code>provideRepositories()</code> extrait proprement des providers Angular natifs.</p>
+<p><strong>Principaux risques identifiés</strong> : (1) <strong>Boot fragile sans <code>ANTHROPIC_API_KEY</code></strong> — <code>application.yml:43</code> lit <code>key: ${ANTHROPIC_API_KEY}</code> sans default, alors que toute la philosophie Phase 2.5 est que la clé soit éditable runtime via <code>app_config</code>. Un fresh clone sans env var crashe à <code>@Value</code> injection. (2) <strong><code>WatchlistService.add</code> fait un appel network (<code>tickerService.load</code>) à l'intérieur d'un <code>@Transactional</code></strong> — viole le pattern « LLM call hors transaction » documenté en <code>architecture.md</code> (« le slow LLM call must not hold a DB connection »). Même problème ici sur Twelve Data (1-3 s typique en cache miss). Single-user le rend invisible mais c'est exactement la classe de bug que Phase 1 cherchait à éviter. (3) <strong><code>LlmTimeoutService</code> partiellement mort</strong> — le service est primé au boot via <code>provideAppInitializer</code> et <code>refresh()</code> est appelé sur save du slider, mais <code>millis()</code> n'est appelé nulle part dans la base de code (le seul consommateur historique, le poller, a été supprimé en PR2 SSE). La docstring mentionne encore <code>AnalysisJobStore</code> (décommissionné en V6) et <code>narrative job</code> polling (remplacé par SSE), et <code>configuration.ts:282</code> parle de « next poll tick » qui n'existe plus. Le code marche par accident. (4) <strong>Le SSE <code>streamJob</code> ne valide pas que <code>jobId</code> appartient bien à <code>symbol</code></strong> — n'importe quel client avec un jobId peut sniffer les events de n'importe quel ticker. Pas un problème en single-user no-auth, à câbler avant Phase 5 OAuth2.</p>
+<p><strong>Forces</strong> : (a) tests-as-documentation très bien tenus sur <code>JobEventPublisherTest</code> (12 scenarii narratifs incluant emitter cassé, replay-on-reconnect, multi-emitters, terminal-job late connect), <code>OllamaStatusServiceTest</code> (19 tests avec MockWebServer, fail-soft sur tout), <code>WatchlistServiceTest</code> (le fail-open posture documenté ET testé maintenant) ; (b) <code>ConfigController</code> masque proprement les 3 SECRETs et le test <code>GET config returns the twelve known keys with secrets masked</code> le pin en clair ; (c) la décommission Phase 0 est sans résidus visibles dans le code main (vérifié par <code>grep -rn "AnalysisJobStore\|FeedSource\|AnalysisExecutor\|RssFetcher" backend/src/main</code> qui ne retourne rien) ; (d) le SSE wire-format est testé des deux côtés (backend <code>JobEventPublisherTest</code> + frontend <code>JobStreamService.spec.ts</code> avec <code>MockEventSource</code>).</p>
+<hr />
+<h2 id="critique">Critique<a class="headerlink" href="#critique" title="Permanent link">&para;</a></h2>
+<p>(blocker ou risque sévère — corruption data, sécurité, contrat cassé)</p>
+<p><strong>1. Boot fragile sans <code>ANTHROPIC_API_KEY</code> env var</strong></p>
+<ul>
+<li><code>backend/src/main/resources/application.yml:43</code> : <code>key: ${ANTHROPIC_API_KEY}</code> <strong>sans default</strong> (pas de <code>:</code>), contrairement à <code>${TWELVEDATA_API_KEY:}</code> ligne 61 et <code>${FINNHUB_API_KEY:}</code> ligne 67.</li>
+<li><code>AppConfigService.kt:38</code> : <code>@Value("\${anthropic.api.key:}")</code> a un fallback vide, mais Spring résout <code>${ANTHROPIC_API_KEY}</code> en placeholder property <strong>avant</strong> d'arriver au constructeur — un env var manquant lève <code>IllegalArgumentException: Could not resolve placeholder 'ANTHROPIC_API_KEY' in value "${ANTHROPIC_API_KEY}"</code>.</li>
+<li>Toute la philosophie Phase 2.5 v2 (commit <code>f5ba075</code>) est que la clé Anthropic devienne SECRET runtime éditable via <code>/settings/configuration</code> sans reboot. Un user qui clone à froid sans env var ne peut pas booter pour ouvrir la page Settings et la rentrer.</li>
+<li>Symétrique manqué : Twelve Data et Finnhub ont leur fallback <code>:</code> ; le default empty string fait fail-fast au premier appel avec un message clair (<code>requireApiKey()</code> côté <code>TwelveDataClient</code> / <code>FinnhubClient</code>). C'est aussi ce que <code>ClaudeClient.requireApiKey()</code> ligne 67-74 fait. Le YAML doit suivre la même convention.</li>
+</ul>
+<p>→ Patcher <code>application.yml:43</code> en <code>key: ${ANTHROPIC_API_KEY:}</code>. Test à ajouter : un boot avec <code>unsetenv ANTHROPIC_API_KEY</code> réussit, puis <code>ConfigController.GET /api/config</code> retourne <code>hasValue: false</code> sur la clé Anthropic.</p>
+<hr />
+<h2 id="important">Important<a class="headerlink" href="#important" title="Permanent link">&para;</a></h2>
+<p>(à traiter en priorité)</p>
+<p><strong>2. <code>WatchlistService.add</code> fait un appel network sous <code>@Transactional</code></strong></p>
+<ul>
+<li><code>backend/.../watchlist/application/WatchlistService.kt:60-74</code> : <code>@Transactional fun add(symbol)</code> valide via <code>symbolSearch.validate(...)</code> (peut hit Twelve Data <code>/symbol_search</code>) <strong>puis</strong> <code>lookupInstrumentType(...)</code> (hit <code>tickerService.load</code> qui appelle <code>chartClient.fetchChart</code> → Twelve Data <code>/time_series</code> + <code>/quote</code>).</li>
+<li>Le pattern documenté dans <code>architecture.md</code> (« LLM call hors transaction — l'appel LLM ne doit pas tenir de connexion Hikari ») est explicitement violé : un cache miss sur le chart fetch tient une connexion 1-3 s pour une salve réseau, plus longtemps en cas de timeout Twelve Data. Le scenario du commit <code>a608967</code> (rate-limit upstream sur le mount d'un dashboard avec watchlist froide) déplace le burst des reads vers les writes — c'est mieux qu'avant, mais ce n'est pas pareil que l'éliminer.</li>
+<li>Cache hit Caffeine évite le coût en cas de re-add mais Phase 2 a documenté qu'<code>instrumentType</code> n'a justement pas de cache préfixé par adapter (audit #3 toujours en dette).</li>
+<li>Single-user low-concurrency masque l'impact aujourd'hui. Phase 5 multi-user le rendra visible.</li>
+</ul>
+<p>→ Sortir <code>lookupInstrumentType()</code> (et idéalement <code>isKnownSymbol()</code>) de la portée transactionnelle. Patron : un <code>add(symbol): WatchlistEntry</code> non-transactionnel qui fait les 2 appels réseau, puis appelle un <code>persistAdd(normalisedSymbol, instrumentType)</code> privé <code>@Transactional</code> qui lit <code>findBySymbol</code> + save. Le test <code>WatchlistServiceTest</code> couvre déjà la sémantique ; il faudrait y ajouter un assert que <code>tickerService.load</code> est appelé avant le <code>repository.save</code> mais hors transaction (instrumentation Mockito).</p>
+<p><strong>3. <code>LlmTimeoutService.millis()</code> est dead code, docstring stale</strong></p>
+<ul>
+<li><code>frontend/src/app/core/llm-timeout.service.ts:7-8</code> : la docstring affirme <code>« Backend mirror : OllamaClient.readTimeout et les deux JobStore.DEDUP_WINDOW_SECONDS (both AnalysisJobStore for portfolio analysis and TickerNarrativeJobStore for ticker narratives) »</code>. <code>AnalysisJobStore</code> a été supprimé en V6 (Phase 0 décommissionné). Le mirror backend exact est <code>OllamaClient.buildClient(timeoutMs)</code> + <code>TickerNarrativeJobStore.pendingFor</code> qui lit <code>appConfig.getInt(LLM_TIMEOUT_SECONDS)</code>.</li>
+<li><code>llm-timeout.service.ts:30</code> <code>millis()</code>: aucun consommateur dans la base de code (<code>grep -rn "timeoutService.millis\|LlmTimeoutService.*millis" frontend/src</code> retourne 0). Le legacy poll-abort qui le consommait a été retiré en PR2 SSE (<code>market.http.ts</code> ne contient plus <code>pollNarrativeJob</code>).</li>
+<li><code>configuration.ts:281-284</code> commentaire : « Saving the LLM timeout flips a value that the polling adapters read from [LlmTimeoutService] — refresh it so the next poll tick (portfolio analysis or narrative job) picks up the new abort window without a page reload. » — le poll tick portfolio analysis n'existe plus (Phase 0), le narrative job poll non plus (PR2). Le <code>refresh()</code> ne sert qu'à mettre à jour le label « estimation max » sur la card LLM, ce que <code>architecture.md</code> documente correctement mais le code lui-même contredit.</li>
+</ul>
+<p>→ Soit (a) garder le service uniquement pour le label, supprimer <code>millis()</code>, réécrire la docstring pour pointer la card LLM seule ; soit (b) si on veut garder le hook pour Phase 4 cron / job orchestration, marquer explicitement « unused-but-kept-for-Phase-4 ». Et patcher le commentaire ligne 281-284 dans tous les cas.</p>
+<p><strong>4. <code>streamJob</code> SSE endpoint n'authentifie pas le <code>jobId</code> contre le <code>symbol</code> du path</strong></p>
+<ul>
+<li><code>backend/.../analysis/infrastructure/http/TickerNarrativeController.kt:79-81</code> : le contrôleur enregistre simplement <code>jobEventPublisher.register(jobId)</code> sans valider que le <code>jobId</code> correspond bien à <code>symbol</code>.</li>
+<li>Une URL <code>/api/market/ticker/AAPL/narrative/jobs/{jobIdDeNVDA}/stream</code> retourne avec succès les events de <code>NVDA</code>. Le <code>symbol</code> du path est ignoré.</li>
+<li>Conséquence en single-user no-auth : aucune. Conséquence en Phase 5 multi-user (ticket OAuth2 backlog) : un user A peut sniffer les events d'un job d'un user B juste en intuitionnant son jobId UUID. Pas exploitable en pratique (UUIDv4) mais discipline.</li>
+<li>Le pattern correct serait : valider que <code>jobStore.get(jobId)?.symbol == symbol.uppercase()</code>, sinon 404. Le test <code>TickerNarrativePendingJobControllerTest</code> et le contrôleur lui-même ont déjà cette discipline ailleurs (<code>/jobs/pending</code> lit <code>service.pendingFor(symbol)</code> qui filtre par symbol).</li>
+</ul>
+<p>→ Avant Phase 5 OAuth2, ajouter le check :
+<div class="highlight"><pre><span></span><code><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">&quot;/jobs/{jobId}/stream&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">produces</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="n">MediaType</span><span class="p">.</span><span class="na">TEXT_EVENT_STREAM_VALUE</span><span class="o">]</span><span class="p">)</span>
+<span class="kd">fun</span><span class="w"> </span><span class="nf">streamJob</span><span class="p">(</span><span class="nd">@PathVariable</span><span class="w"> </span><span class="n">symbol</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="p">,</span><span class="w"> </span><span class="nd">@PathVariable</span><span class="w"> </span><span class="n">jobId</span><span class="p">:</span><span class="w"> </span><span class="n">UUID</span><span class="p">):</span><span class="w"> </span><span class="n">SseEmitter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="nv">job</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jobStore</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span><span class="w"> </span><span class="o">?:</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="n">NoSuchElementException</span><span class="p">(</span><span class="s">&quot;Job </span><span class="si">$</span><span class="n">jobId</span><span class="s"> not found&quot;</span><span class="p">)</span>
+<span class="w">  </span><span class="n">require</span><span class="p">(</span><span class="n">job</span><span class="p">.</span><span class="na">symbol</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">symbol</span><span class="p">.</span><span class="na">uppercase</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">&quot;Job </span><span class="si">$</span><span class="n">jobId</span><span class="s"> does not belong to </span><span class="si">$</span><span class="n">symbol</span><span class="s">&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">jobEventPublisher</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">jobId</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+Au minimum, filer le ticket en dette <code>🟡 Moyenne</code> avec le tag « prérequis multi-user ».</p>
+<p><strong>5. <code>LlmTimeoutService</code> n'a pas de spec dédié alors que ses voisins en ont</strong></p>
+<ul>
+<li><code>frontend/src/app/core/</code>: <code>theme.service.spec.ts</code> (88 lignes), <code>language.service.spec.ts</code> (109 lignes), <code>ollama-status.service.spec.ts</code> (279 lignes), <code>job-stream.service.spec.ts</code> (230 lignes). <code>llm-timeout.service.ts</code> : 0 spec.</li>
+<li>Les conventions du projet (<code>tests as documentation</code>) sont strictement appliquées partout sauf ici. Le service est petit mais surface non-triviale : prime au boot, refresh sur save, fallback sur exception, signal exposé.</li>
+<li>Acceptable v0 mais incohérent avec le ton de la phase.</li>
+</ul>
+<p>→ Ajouter <code>llm-timeout.service.spec.ts</code> mirror de <code>ollama-status.service.spec.ts</code> : (a) prime au constructeur retourne le default 400 quand <code>repo.list</code> n'a pas encore résolu ; (b) refresh sur retour du backend met le signal à jour ; (c) refresh sur erreur backend keep le default ; (d) refresh sur retour avec <code>currentValue</code> non-numeric keep le default.</p>
+<hr />
+<h2 id="moderee">Modérée<a class="headerlink" href="#moderee" title="Permanent link">&para;</a></h2>
+<p>(à filer en dette technique)</p>
+<p><strong>6. <code>OllamaClient.complete</code> recrée un RestClient par appel</strong></p>
+<ul>
+<li><code>backend/.../analysis/infrastructure/llm/OllamaClient.kt:51</code> : <code>buildClient(timeoutMs).post()...</code>. Construction d'un <code>SimpleClientHttpRequestFactory</code> neuf à chaque narratif.</li>
+<li>Acceptable parce que le coût est microsecondes face aux 5-180 s de l'appel Ollama. La docstring documente le trade-off (« cost is microseconds — acceptable on a path that already takes seconds »).</li>
+<li>Mais : aucun cache du <code>RestClient</code> quand <code>timeoutMs</code> n'a pas changé entre deux appels. Pattern alternatif : un <code>volatile</code> field qui mémoïse le dernier (timeoutMs, restClient) et invalide quand le timeout bouge, ce qui devient l'écrasante majorité des cas (le slider bouge rarement). Cosmétique.</li>
+</ul>
+<p>→ À noter en passing si on retouche <code>OllamaClient</code>. Pas urgent.</p>
+<p><strong>7. <code>OllamaStatusService.pullModel</code> envoie <code>name</code> plutôt que <code>model</code> dans le body</strong></p>
+<ul>
+<li><code>backend/.../analysis/infrastructure/llm/OllamaStatusService.kt:163</code> : <code>body(mapOf("name" to name, "stream" to false))</code>.</li>
+<li>L'API Ollama documente actuellement <code>model</code> (cf. https://github.com/ollama/ollama/blob/main/docs/api.md#pull-a-model) et marque <code>name</code> comme deprecated mais toujours accepté. Le test <code>OllamaStatusServiceTest:273</code> pin explicitement le wire format <code>"name":"mistral:7b"</code>.</li>
+<li>Risque : un upgrade futur d'Ollama qui drop <code>name</code> casse silencieusement le pull. Le test ne lève pas l'alerte (il pin le statu quo, pas la conformité à la dernière version d'Ollama).</li>
+<li><code>unloadModel</code> (ligne 117) utilise <code>model</code> (correct). <code>deleteModel</code> (ligne 198) utilise <code>name</code>. Inconsistance interne.</li>
+</ul>
+<p>→ Aligner <code>pullModel</code> et <code>deleteModel</code> sur <code>model</code>, ré-aligner les tests sur la nouvelle wire.</p>
+<p><strong>8. <code>OllamaPullDialog</code> fallback hardcodés en anglais hors i18n</strong></p>
+<ul>
+<li><code>frontend/src/app/features/settings/configuration/ollama-pull-dialog.ts:119, 126, 147</code> : <code>'pull failed'</code>, <code>'delete failed'</code> sont des fallback string hardcodées sur le path <code>err instanceof Error ? err.message : 'pull failed'</code>.</li>
+<li>Ce path se déclenche quand l'erreur est non-<code>Error</code> (browser exotique) ou quand <code>err.message</code> est vide. Édge mais visible en français à un user FR.</li>
+<li>La convention du projet est de tout passer par <code>TranslateService.instant</code>. Toutes les autres erreurs UI suivent la règle.</li>
+</ul>
+<p>→ Remplacer par <code>this.translate.instant('settings.configurationPage.pullDialog.errors.pullFailed')</code> (et ajouter les keys FR/EN).</p>
+<p><strong>9. <code>OllamaStatusService.pullModel</code> bloque le request thread Spring 1-3 min sur <code>stream: false</code></strong></p>
+<ul>
+<li><code>OllamaStatusService.kt:156-177</code> : <code>stream: false</code> en pull → la requête HTTP backend reste sur le thread Tomcat le temps qu'Ollama termine le download (~1-3 min sur un modèle 4 GB).</li>
+<li>Documenté dans la KDoc (« Acceptable single-user »). Tomcat default <code>max-threads = 200</code> donc 200 pulls concurrents avant saturation, en pratique le user ne lance qu'un pull à la fois.</li>
+<li>En revanche : aucun cancel côté backend si le user ferme le dialog (le backend continue le pull, le snapshot revient mais personne ne le consomme). Acceptable — le download Ollama est utile même si le client est parti.</li>
+</ul>
+<p>→ À reconsidérer Phase 5 si SaaS multi-user : SSE streaming des progress events (Ollama supporte <code>stream: true</code> qui pousse une ligne JSON par % de download). Filer en dette.</p>
+<p><strong>10. <code>OllamaStatusService.pullModel</code> et <code>deleteModel</code> ne désérialisent pas la réponse upstream</strong></p>
+<ul>
+<li><code>OllamaStatusService.kt:165</code> : <code>.body(Map::class.java)</code> pour parser la réponse, mais on n'inspecte pas le body. Si Ollama retourne <code>{status: "error", error: "..."}</code> avec un HTTP 200 (cas rare mais documenté pour certaines situations transitoires), on considère le pull OK et on re-probe. Le re-probe verra effectivement que le modèle n'a pas atterri et le snapshot sera honnête à la fin. Pas un bug, juste une tolérance qu'il faut tracer.</li>
+</ul>
+<p>→ Ajouter un test « pull retourne 200 avec status: error → fail-soft snapshot conforme au comportement actuel » pour pin le rationale.</p>
+<p><strong>11. <code>JobEventPublisher.pruneStale</code> n'a pas de test direct</strong></p>
+<ul>
+<li><code>JobEventPublisher.kt:134-141</code> : la méthode prune les buckets &gt; 60 s post-terminal. Appelée à chaque <code>publish()</code> et <code>register()</code>.</li>
+<li>Le test <code>JobEventPublisherTest</code> couvre 12 scenarii mais aucun ne vérifie que (a) un bucket terminal est effectivement évincé après TTL, (b) un register sur un jobId évincé renvoie un emitter idle plutôt que de replay des events disparus.</li>
+<li>L'invariant testé indirectement (« register sur unknown jobId returns non-null idle emitter ») couvre le cas après éviction, mais sans avancer le clock.</li>
+<li>Acceptable v1 : <code>pruneStale</code> est très défensif et un leak 60 s ne casse rien. Mais à filer pour si un jour on bumpe <code>TERMINAL_RETENTION</code> à 5 min, on aura un test prêt.</li>
+</ul>
+<p>→ Ajouter un test avec un <code>Clock</code> injectable ou un sleep contrôlé (pénible en JUnit synchrone). Optionnel.</p>
+<p><strong>12. <code>ConfigTestClient.probeOllama</code> mentionne le bouton Tilt qui n'existe plus</strong></p>
+<ul>
+<li><code>ConfigTestClient.kt:225</code> : message d'erreur <code>« — try \</code>ollama pull $model` (or the matching Tilt button) »` retourné en plain à l'utilisateur via le banner « Tester ».</li>
+<li>Le <code>local_resource("llm:ensure-model")</code> du <code>Tiltfile</code> a été supprimé dans la livraison <code>de7714c</code> (Phase 2.5, en faveur du dialog Pull UI).</li>
+<li>Doc drift dans un message user-visible.</li>
+</ul>
+<p>→ Remplacer par <code>« — open /settings/configuration &gt; LLM &gt; Pull… to download it »</code>.</p>
+<hr />
+<h2 id="mineure">Mineure<a class="headerlink" href="#mineure" title="Permanent link">&para;</a></h2>
+<p>(nits, polish, cohérence)</p>
+<p><strong>13. <code>Configuration.reset()</code> ne préserve pas le typing des secrets</strong></p>
+<ul>
+<li><code>frontend/src/app/features/settings/configuration/configuration.ts:262-292</code> (<code>save</code>) clear l'edit pour les SECRETs après save. Bien.</li>
+<li>Mais <code>reset()</code> (ligne 295-332) clear aussi l'edit (« delete next[key] »). Si un user a tapé une nouvelle clé puis cliqué Reset par erreur, le typing est perdu. C'est probablement le comportement voulu (Reset retourne au défaut) mais il n'y a pas de confirm dialog côté secrets.</li>
+<li>Mineur. Cosmétique.</li>
+</ul>
+<p><strong>14. <code>AppConfigService</code> accepte des nombres flottants stockés en BDD via <code>getInt</code></strong></p>
+<ul>
+<li><code>AppConfigService.kt:61</code> : <code>fun getInt(key: String): Int = getString(key).toInt()</code>. Si la valeur stockée en BDD vaut <code>"15.0"</code> (cas pathologique d'écriture manuelle), <code>"15.0".toInt()</code> lève <code>NumberFormatException</code> au runtime.</li>
+<li>La validation sur <code>set</code> rejette via <code>value.toIntOrNull() ?: throw</code>, donc le flow normal ne peut pas écrire ça. Mais une migration manuelle SQL pourrait. Défensif.</li>
+</ul>
+<p><strong>15. <code>OllamaPullDialog.suggestions</code> dupliqué de <code>Configuration.OLLAMA_MODEL_SUGGESTIONS</code></strong></p>
+<ul>
+<li><code>ollama-pull-dialog.ts:19-26</code> re-déclare la même liste de 6 suggestions. La docstring documente le choix volontaire (« deliberately duplicated rather than extracted to a shared module — the two surfaces are unlikely to diverge often »). Cosmétique acceptable mais dette future.</li>
+</ul>
+<p><strong>16. <code>ConfigController</code> tests pin par index positionnel</strong></p>
+<ul>
+<li><code>ConfigController.kt:57</code> : <code>ConfigKeys.KNOWN_KEYS.sorted().map { entryFor(it) }</code>. Les tests pinnent les indexes <code>[0]..[11]</code> en dur.</li>
+<li>Si une nouvelle clé est ajoutée et tombe alphabétiquement au milieu (ex. <code>auth.…</code>), tous les indexes test glissent et le test casse. La discipline de re-numéroter à chaque ajout est documentée nulle part.</li>
+</ul>
+<p>→ Optionnel : passer les tests à des <code>jsonPath("$[?(@.key == 'anthropic.api.key')].type")</code> plutôt que des indexes positionnels. Refacto cosmétique 30 min.</p>
+<p><strong>17. <code>OllamaStatusService</code> cohabite avec <code>ConfigTestClient.probeOllama</code> — duplication subtile</strong></p>
+<ul>
+<li>Les deux classes hit le daemon Ollama via leur propre RestClient. <code>OllamaStatusService</code> pour le panneau live, <code>ConfigTestClient</code> pour le bouton « Tester ». Deux RestClients distincts, deux timeouts différents (3 s probe / 120 s test / 300 s pull).</li>
+<li>C'est intentionnel (les 3 surfaces ont des contracts différents) mais 250 lignes de plomberie similaire. À reconsidérer en factor commun si un 4e cas apparaît.</li>
+</ul>
+<hr />
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<p>(drift doc → code)</p>
+<p><strong>18. <code>architecture.md</code> — claim cache prefix toujours faux</strong></p>
+<ul>
+<li>Audit fin Phase 2 finding #21 toujours ouvert. <code>architecture.md</code> affirme toujours <code>« Cache key préfixée par adapter (twelvedata|, mock|) ⇒ pas de collision »</code>. Vrai uniquement pour <code>MARKET_CHART_CACHE</code> côté <code>TwelveDataClient</code>. Le <code>MockMarketChartClient</code> n'a pas de <code>@Cacheable</code> du tout, et les 4 autres caches (<code>news-by-symbol</code>, <code>analyst-recommendations</code>, <code>earnings</code>, <code>sector-by-symbol</code>) cachent au niveau service applicatif sans préfixe provider — un toggle <code>mock → finnhub</code> continue à servir la valeur cachée du provider précédent jusqu'à expiration.</li>
+<li>Le ticket dette technique 🟡 « Stratégie de cache : trancher entre key-prefix par adapter et service-cache sans préfixe » est filed (cf. <code>backlog.md</code>). Pas un nouveau finding, juste un résiduel.</li>
+</ul>
+<p><strong>19. <code>LlmTimeoutService</code> docstring stale (cf. finding #3)</strong></p>
+<ul>
+<li>Référence <code>AnalysisJobStore for portfolio analysis and TickerNarrativeJobStore for ticker narratives</code> — le premier est décommissionné en V6, le second n'utilise plus le timeout pour un poll mais pour un dedup window backend.</li>
+</ul>
+<p><strong>20. <code>developper.md</code> mention cleanup orphelins comme « prévu »</strong></p>
+<ul>
+<li><code>developper.md:195</code> : « Cleanup automatique au boot prévu en dette technique (cf. <code>backlog.md</code>). »</li>
+<li><code>OrphanedJobCleanupListener.kt</code> est en place depuis Phase 1 et a été touché en Phase 2.5 (commit <code>984c43c</code>). Le cleanup automatique est déjà là.</li>
+<li>Doc drift à corriger.</li>
+</ul>
+<p><strong>21. <code>architecture.md &gt; Modèle pipeline d'analyse</code> — vision en avance</strong></p>
+<ul>
+<li>La section « Modèle pipeline d'analyse » (DAG cible Phase 4) est très détaillée, riche en design notes. Bien.</li>
+<li>Mais elle référence des artefacts qui n'existent pas encore (<code>PortfolioAggregation</code>, <code>MARKET_REFRESH</code>, table <code>job</code> unifiée…). Le statut « design cible, non encore implémenté » est explicite. Acceptable.</li>
+<li>Risque : un nouveau lecteur peut prendre cette section pour une description de l'existant. Le wording « <strong>Statut</strong> : design cible » règle le sujet.</li>
+</ul>
+<p>→ Pas un finding actionnable, juste un signal qualitatif. La section est bien framée.</p>
+<hr />
+<h2 id="recapitulatif">Récapitulatif<a class="headerlink" href="#recapitulatif" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Niveau</th>
+<th>Count</th>
+<th>Exemples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critique</td>
+<td>1</td>
+<td>Boot fragile sans <code>ANTHROPIC_API_KEY</code> env (#1)</td>
+</tr>
+<tr>
+<td>Important</td>
+<td>4</td>
+<td>network call sous <code>@Transactional</code> watchlist (#2), <code>LlmTimeoutService</code> partiellement mort (#3), SSE jobId pas authentifié contre symbol (#4), spec manquante <code>LlmTimeoutService</code> (#5)</td>
+</tr>
+<tr>
+<td>Modérée</td>
+<td>7</td>
+<td>RestClient recréé par appel Ollama (#6), wire <code>name</code> vs <code>model</code> Ollama pull (#7), i18n manquant dans pull dialog fallback (#8), pull bloque thread Tomcat (#9), réponse upstream pas inspectée (#10), <code>pruneStale</code> pas testé (#11), <code>ConfigTestClient</code> mention Tilt obsolète (#12)</td>
+</tr>
+<tr>
+<td>Mineure</td>
+<td>5</td>
+<td>reset secrets sans confirm (#13), flottants dans <code>getInt</code> (#14), suggestions dupliquées (#15), test indexes positionnels (#16), duplication RestClient Ollama (#17)</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td>4</td>
+<td>cache prefix claim faux (#18), <code>LlmTimeoutService</code> docstring stale (#19), <code>developper.md</code> cleanup orphelins déjà livré (#20), section pipeline DAG en avance — non-actionnable (#21)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reco de priorisation</strong> :</p>
+<ol>
+<li><strong>Patcher <code>application.yml:43</code> en <code>${ANTHROPIC_API_KEY:}</code></strong> (5 min) — un fresh clone doit booter sans env var. C'est aussi la convention déjà adoptée pour les 2 autres clés.</li>
+<li><strong>Refacto <code>WatchlistService.add</code> pour sortir les appels network de la transaction</strong> (30-60 min) — le pattern « LLM/network call hors transaction » est un invariant documenté du projet, le re-violer après l'avoir explicitement écrit dans <code>architecture.md</code> est mauvais signal architectural.</li>
+<li><strong>Sweep <code>LlmTimeoutService</code> : décider entre supprimer <code>millis()</code> + retoucher la docstring + retoucher le commentaire <code>configuration.ts:282</code>, ou garder pour Phase 4 et marquer explicitement</strong> (15 min) — le drift code/doc/usage actuel est gênant à lire.</li>
+<li><strong>Ajouter le check <code>job.symbol == symbol.uppercase()</code> sur le SSE controller <code>streamJob</code></strong> (10 min) — discipline avant Phase 5 OAuth2, et c'est un test qu'il sera pénible de rétrofiter plus tard.</li>
+<li><strong>Aligner <code>OllamaStatusService.pullModel</code> sur <code>model</code> plutôt que <code>name</code></strong> (15 min, test inclus) — anticipe une rupture future d'Ollama, harmonise avec <code>unloadModel</code>.</li>
+<li>Le reste des findings (i18n pull dialog, doc drifts, stale comments, spec <code>LlmTimeoutService</code>) en cleanup commit dédié, ou groupés avec la prochaine feature dans la même surface.</li>
+</ol>
+<p>Le tag <code>v0.4.0</code> peut être posé après #1 et #4. #2 et #3 idéalement avant pour clore la Phase 2.5 sur une cohérence architecturale propre, mais ne sont pas bloquants pour la release.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../2026-05-14-fin-phase-3/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 2026-05-14 — Revue globale fin Phase 3">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                2026-05-14 — Revue globale fin Phase 3
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../2026-05-06-fin-phase-2/" class="md-footer__link md-footer__link--next" aria-label="Next: 2026-05-06 — Revue globale fin Phase 2">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                2026-05-06 — Revue globale fin Phase 2
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2052 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/devops/secret-rotation/">
+      
+      
+        <link rel="prev" href="../backup-process/">
+      
+      
+        <link rel="next" href="../dns-analyse/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Rotation des secrets prod - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#rotation-des-secrets-prod" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Rotation des secrets prod
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#inventaire-des-5-secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventaire des 5 secrets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pattern-de-rotation-6-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern de rotation — 6 steps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pattern de rotation — 6 steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-generer-la-nouvelle-valeur-cote-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — Générer la nouvelle valeur (côté provider)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-pousser-la-nouvelle-valeur-dans-secret-manager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — Pousser la nouvelle valeur dans Secret Manager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-redeployer-pour-que-cloud-run-re-lise-le-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Redéployer pour que Cloud Run re-lise le secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-smoke-test-la-nouvelle-revision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4 — Smoke test la nouvelle révision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-destroy-lancienne-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5 — Destroy l'ancienne version
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-documenter-dans-journal-livraisonsmd-ou-changelogmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6 — Documenter dans journal-livraisons.md (ou CHANGELOG.md)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cas-special-frontend-dsn-glitchtip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cas spécial — Frontend DSN GlitchTip
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failure-modes-connus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure modes connus
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="rotation-des-secrets-prod">Rotation des secrets prod<a class="headerlink" href="#rotation-des-secrets-prod" title="Permanent link">&para;</a></h1>
+<p>Procédure step-by-step pour rotater un secret prod (e.g. <code>google-oauth-client-secret</code> compromis, ou rotation préventive régulière). Couvre les 5 secrets Secret Manager actifs ; le pattern est identique pour chacun, seul le step « générer une nouvelle valeur » diffère selon le secret.</p>
+<blockquote>
+<p><strong>Quand rotater</strong> : (a) <strong>compromis confirmé ou soupçonné</strong> (clé fuite git history, screenshot leaked, employé qui quitte, etc.) — rotation immédiate ; (b) <strong>rotation préventive</strong> trimestrielle ou semestrielle pour les secrets long-lived (Postgres password, OAuth client secret) ; (c) <strong>après un audit qui révèle un secret affiché en clair quelque part</strong> — vérifier d'abord si la fuite est réelle, puis rotation par précaution.</p>
+</blockquote>
+<h2 id="inventaire-des-5-secrets">Inventaire des 5 secrets<a class="headerlink" href="#inventaire-des-5-secrets" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Secret Manager name</th>
+<th>Source de génération</th>
+<th>Cible runtime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>google-oauth-client-id</code></td>
+<td><a href="https://console.cloud.google.com/apis/credentials?project=trade-496613">GCP Console → APIs &amp; Services → Credentials</a></td>
+<td><code>SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID</code></td>
+</tr>
+<tr>
+<td><code>google-oauth-client-secret</code></td>
+<td>Même page, bouton <strong>Reset secret</strong> sur le Client ID</td>
+<td><code>SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET</code></td>
+</tr>
+<tr>
+<td><code>app-admin-emails</code></td>
+<td>Édition manuelle (liste emails admin séparés virgule)</td>
+<td><code>APP_ADMIN_EMAILS</code></td>
+</tr>
+<tr>
+<td><code>supabase-db-url</code></td>
+<td><a href="https://supabase.com/dashboard/project/flbnnnakobutaxvshcez/settings/database">Supabase Dashboard → Database settings → Connection string</a> (Session pooler) + Reset DB password à côté</td>
+<td><code>SPRING_DATASOURCE_URL</code></td>
+</tr>
+<tr>
+<td><code>sentry-dsn-backend</code></td>
+<td><a href="https://app.glitchtip.com/portfolioai/portfolioai-backend">GlitchTip → projet <code>portfolioai-backend</code> → Settings → Client Keys (DSN)</a></td>
+<td><code>SENTRY_DSN</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="pattern-de-rotation-6-steps">Pattern de rotation — 6 steps<a class="headerlink" href="#pattern-de-rotation-6-steps" title="Permanent link">&para;</a></h2>
+<p>Applicable à n'importe lequel des 5 secrets. Le pattern garde <strong>zéro downtime</strong> : la nouvelle version coexiste avec l'ancienne le temps de la validation, l'ancienne est détruite après confirmation que la nouvelle marche.</p>
+<h3 id="step-1-generer-la-nouvelle-valeur-cote-provider">Step 1 — Générer la nouvelle valeur (côté provider)<a class="headerlink" href="#step-1-generer-la-nouvelle-valeur-cote-provider" title="Permanent link">&para;</a></h3>
+<p>Va sur la source du secret (cf. table ci-dessus) et génère/copie la nouvelle valeur.</p>
+<p><strong>Cas particuliers</strong> :
+- <strong><code>google-oauth-client-secret</code></strong> : <code>Reset client secret</code> invalide instantanément l'ancien côté Google. Donc tu as une fenêtre de <strong>downtime potentiel</strong> entre le reset et le redeploy si les revisions Cloud Run actives utilisent encore l'ancien — à faire en <strong>fenêtre de maintenance</strong> ou hors heures de pointe. Alternative : créer un <strong>2e OAuth Client ID</strong> côté GCP Console, utiliser ses creds, puis supprimer le 1er Client une fois le redeploy validé (zéro downtime mais double client le temps de la rotation).
+- <strong><code>supabase-db-url</code></strong> : si tu reset le password Postgres côté Supabase, <strong>les sessions JDBC actives du container Cloud Run actuel sont fermées immédiatement</strong> — coupe les requêtes en cours. Fenêtre de maintenance obligatoire. Idem alternative : créer un user Postgres secondaire avec un autre password, swap, drop l'ancien après.</p>
+<h3 id="step-2-pousser-la-nouvelle-valeur-dans-secret-manager">Step 2 — Pousser la nouvelle valeur dans Secret Manager<a class="headerlink" href="#step-2-pousser-la-nouvelle-valeur-dans-secret-manager" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;&lt;NOUVELLE_VALEUR&gt;&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>gcloud<span class="w"> </span>secrets<span class="w"> </span>versions<span class="w"> </span>add<span class="w"> </span>&lt;secret-name&gt;<span class="w"> </span>--data-file<span class="o">=</span>-<span class="w"> </span>--project<span class="o">=</span>trade-496613
+</code></pre></div>
+<p>L'utilisation de <code>stdin</code> (et pas <code>--data="..."</code>) évite que la valeur apparaisse comme argument de <code>gcloud</code> → <strong>invisible dans <code>ps aux</code></strong> aux autres users sur la machine. La valeur reste visible dans l'history shell du <code>echo</code> lui-même : sur un Mac perso single-user c'est négligeable, sur une machine partagée préférer <code>gcloud secrets versions add NAME --data-file=- --project=...</code> seul puis paste + Ctrl+D, ou pré-loader la valeur dans un fichier temp <code>gcloud ... --data-file=/tmp/secret.txt &amp;&amp; rm /tmp/secret.txt</code>. Secret Manager garde toutes les versions historiques par défaut — la nouvelle devient <code>latest</code> automatiquement, l'ancienne reste accessible par numéro de version pour rollback.</p>
+<p><strong>Vérification immédiate</strong> :
+<div class="highlight"><pre><span></span><code>gcloud<span class="w"> </span>secrets<span class="w"> </span>versions<span class="w"> </span>access<span class="w"> </span>latest<span class="w"> </span>--secret<span class="o">=</span>&lt;secret-name&gt;<span class="w"> </span>--project<span class="o">=</span>trade-496613
+<span class="c1"># → doit echo la nouvelle valeur. Si erreur &quot;permission denied&quot;, revoir grant IAM ci-dessous.</span>
+</code></pre></div></p>
+<h3 id="step-3-redeployer-pour-que-cloud-run-re-lise-le-secret">Step 3 — Redéployer pour que Cloud Run re-lise le secret<a class="headerlink" href="#step-3-redeployer-pour-que-cloud-run-re-lise-le-secret" title="Permanent link">&para;</a></h3>
+<p>Cloud Run lit les secrets au <strong>boot de la révision</strong>, jamais en runtime — il faut donc créer une nouvelle révision pour que la nouvelle valeur soit injectée. Deux options :</p>
+<p><strong>Option A — Release tag (chemin propre)</strong> :
+<div class="highlight"><pre><span></span><code><span class="c1"># Crée une release patch — workflow deploy.yml redeploy avec la nouvelle valeur secret.</span>
+gh<span class="w"> </span>release<span class="w"> </span>create<span class="w"> </span>vX.Y.Z+1<span class="w"> </span>--target<span class="w"> </span>master<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;vX.Y.Z+1 — secret rotation&quot;</span><span class="w"> </span>--notes<span class="w"> </span><span class="s2">&quot;Rotate &lt;secret-name&gt;&quot;</span>
+</code></pre></div></p>
+<p><strong>Option B — No-op service update (urgence sans nouveau tag)</strong> :
+<div class="highlight"><pre><span></span><code><span class="c1"># Touch le service pour forcer une nouvelle révision sans re-build d&#39;image.</span>
+gcloud<span class="w"> </span>run<span class="w"> </span>services<span class="w"> </span>update<span class="w"> </span>portfolioai<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--region<span class="o">=</span>northamerica-northeast1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--project<span class="o">=</span>trade-496613<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--update-secrets<span class="o">=</span>&lt;ENV_VAR_NAME&gt;<span class="o">=</span>&lt;secret-name&gt;:latest
+
+<span class="c1"># Le re-`--update-secrets` sur le même secret crée une nouvelle révision qui re-lit `latest`.</span>
+</code></pre></div></p>
+<p>Option B est plus rapide (~1 min vs ~3-5 min build) mais sort du release-process documenté — à réserver aux urgences (compromis actif, exploit en cours).</p>
+<h3 id="step-4-smoke-test-la-nouvelle-revision">Step 4 — Smoke test la nouvelle révision<a class="headerlink" href="#step-4-smoke-test-la-nouvelle-revision" title="Permanent link">&para;</a></h3>
+<p>Une fois la nouvelle révision active sur Cloud Run :
+1. Vérifier le boot dans les logs :
+   <div class="highlight"><pre><span></span><code>gcloud<span class="w"> </span>run<span class="w"> </span>services<span class="w"> </span>logs<span class="w"> </span><span class="nb">read</span><span class="w"> </span>portfolioai<span class="w"> </span>--region<span class="o">=</span>northamerica-northeast1<span class="w"> </span>--project<span class="o">=</span>trade-496613<span class="w"> </span>--limit<span class="o">=</span><span class="m">100</span>
+</code></pre></div>
+   Pas de <code>BindException</code>, pas de <code>Failed to bind properties under 'spring.security.oauth2.client...'</code>, pas de <code>Connection refused</code> Postgres.
+2. <strong>Smoke</strong> via le path qui consomme le secret :
+   - <code>google-oauth-client-*</code> → login Google sur <code>https://tickerstory.org</code> → arrive sur <code>/dashboard</code>
+   - <code>app-admin-emails</code> → login admin → accès <code>/settings/access-control</code> (route ADMIN-only)
+   - <code>supabase-db-url</code> → ouvrir un dossier ticker → narratif persiste dans <code>ticker_narrative_snapshot</code>
+   - <code>sentry-dsn-backend</code> → trigger une exception backend → event arrive dans GlitchTip dashboard</p>
+<h3 id="step-5-destroy-lancienne-version">Step 5 — Destroy l'ancienne version<a class="headerlink" href="#step-5-destroy-lancienne-version" title="Permanent link">&para;</a></h3>
+<p>Une fois la nouvelle version validée en prod (~15-30 min de safety buffer recommandé pour laisser le temps d'observer en cas de régression), supprime l'ancienne version pour éviter tout rollback accidentel sur une valeur compromise :</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Liste les versions actives</span>
+gcloud<span class="w"> </span>secrets<span class="w"> </span>versions<span class="w"> </span>list<span class="w"> </span>&lt;secret-name&gt;<span class="w"> </span>--project<span class="o">=</span>trade-496613
+
+<span class="c1"># Destroy la version compromise (irréversible — la valeur cleartext disparaît, seuls l&#39;ID + le checksum restent en audit log)</span>
+gcloud<span class="w"> </span>secrets<span class="w"> </span>versions<span class="w"> </span>destroy<span class="w"> </span>&lt;ancien-version-number&gt;<span class="w"> </span>--secret<span class="o">=</span>&lt;secret-name&gt;<span class="w"> </span>--project<span class="o">=</span>trade-496613
+</code></pre></div>
+<p><strong>Note</strong> : <code>destroy</code> ne supprime pas l'enregistrement (version numérotée reste visible en <code>state: DESTROYED</code>), juste le payload. Le numéro de version n'est pas réutilisé. Si l'ancienne valeur est en plus accidentellement encore valide côté provider (cas Google OAuth si on n'a pas cliqué "Reset"), il faut <strong>aussi</strong> la révoquer côté provider.</p>
+<h3 id="step-6-documenter-dans-journal-livraisonsmd-ou-changelogmd">Step 6 — Documenter dans <code>journal-livraisons.md</code> (ou <code>CHANGELOG.md</code>)<a class="headerlink" href="#step-6-documenter-dans-journal-livraisonsmd-ou-changelogmd" title="Permanent link">&para;</a></h3>
+<p>Toute rotation prod = une entrée historique. Format minimal :
+<div class="highlight"><pre><span></span><code>| ✅ Rotation <span class="sb">`google-oauth-client-secret`</span> — préventive trimestrielle | Livré YYYY-MM-DD. Ancien secret destroyed (version N), nouveau en version N+1. Trigger : &lt;raison&gt;. Smoke OK : login Google sur prod redirige correctement post-rotation. |
+</code></pre></div></p>
+<p>L'audit log GCP Secret Manager conserve aussi l'historique automatiquement (<a href="https://console.cloud.google.com/security/secret-manager?project=trade-496613">console</a>), mais une ligne dans le journal projet rend l'historique grep-able sans accès GCP.</p>
+<h2 id="cas-special-frontend-dsn-glitchtip">Cas spécial — Frontend DSN GlitchTip<a class="headerlink" href="#cas-special-frontend-dsn-glitchtip" title="Permanent link">&para;</a></h2>
+<p>Le DSN frontend dans <code>main.ts</code> est <strong>hardcodé</strong>, pas dans Secret Manager. Rotation = ouvrir GlitchTip → régénérer le DSN → patcher la constante <code>GLITCHTIP_DSN</code> dans <code>frontend/src/main.ts</code> → commit + tag release → deploy. Plus lourd qu'une rotation Secret Manager (rebuild + redeploy d'image), mais le DSN frontend est <strong>public par design</strong> (visible dans tous les browsers au load) donc la compromission n'a pas le même impact qu'un secret backend : la rotation est rare et planifiée, pas une réponse à un compromis. Si jamais on doit retirer un projet GlitchTip pollué par du noise et créer un nouveau projet <code>portfolioai-frontend-v2</code>, la procédure est : (a) créer le nouveau projet GlitchTip, (b) patch DSN dans <code>main.ts</code>, (c) tag release. Pas besoin de toucher Secret Manager.</p>
+<h2 id="failure-modes-connus">Failure modes connus<a class="headerlink" href="#failure-modes-connus" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Permission denied après <code>gcloud secrets versions add</code></strong> — le caller n'a pas <code>roles/secretmanager.admin</code> sur le projet. Fix : ajouter le binding au compte humain admin via <code>gcloud projects add-iam-policy-binding trade-496613 --member="user:venet.julien@gmail.com" --role="roles/secretmanager.admin"</code>.</li>
+<li><strong>Nouvelle révision Cloud Run crash au boot avec <code>Could not resolve placeholder 'X'</code></strong> — la nouvelle version du secret est vide ou mal formatée (e.g. trailing newline). Reset la version : <code>gcloud secrets versions destroy &lt;new&gt;</code> + retry avec <code>echo -n</code> (sans newline) ou <code>printf "%s" "$VAL"</code>.</li>
+<li><strong>L'ancien client OAuth Google continue à accepter des logins</strong> — c'est normal tant qu'on ne clique pas "Reset client secret" dans GCP Console. Côté Google, l'ancien secret reste valide jusqu'au reset explicit. À ne pas oublier après la rotation Secret Manager si l'objectif est la révocation totale.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../backup-process/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Backup &amp; restore process (Postgres → R2)">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Backup & restore process (Postgres → R2)
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../dns-analyse/" class="md-footer__link md-footer__link--next" aria-label="Next: Analyse DNS (choix nom de domaine)">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Analyse DNS (choix nom de domaine)
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

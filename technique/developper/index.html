@@ -1,0 +1,2428 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/technique/developper/">
+      
+      
+        <link rel="prev" href="../../metier/fonctionnalites/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Onboarding développeur - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#onboarding-developpeur" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Onboarding développeur
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ce-que-fait-lapp-en-60-secondes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ce que fait l'app, en 60 secondes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-en-5-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation en 5 minutes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation en 5 minutes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prérequis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#premier-lancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Premier lancement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configurer-le-llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configurer le LLM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#premier-test-de-lapp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Premier test de l'app
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Premier test de l&#39;app">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-importer-un-portefeuille-demo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Importer un portefeuille démo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-voir-le-portefeuille-agrege" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Voir le portefeuille agrégé
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-ouvrir-un-dossier-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Ouvrir un dossier ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-switcher-la-langue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Switcher la langue
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-generer-un-narratif-llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Générer un narratif LLM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#switcher-les-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switcher les providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Switcher les providers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#llm-llmprovider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM — llm.provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#donnees-de-marche-marketprovider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Données de marché — market.provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#news-par-ticker-newsprovider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        News par ticker — news.provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommandations-analystes-analystprovider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommandations analystes — analyst.provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#earnings-earningsprovider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Earnings — earnings.provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quand-ca-merde" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quand ça merde
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quand ça merde">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#donnees-de-marche-momentanement-indisponibles-sur-un-dossier-ticker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Données de marché momentanément indisponibles" sur un dossier ticker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#un-job-narratif-reste-bloque-pending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Un job narratif reste bloqué PENDING
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration-flyway-echoue-au-boot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Flyway échoue au boot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#le-frontend-affiche-une-page-blanche" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Le frontend affiche une page blanche
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#les-tests-vitest-ne-reconnaissent-pas-describe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Les tests Vitest ne reconnaissent pas describe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#npm-run-lint-pete-sur-des-regles-a11y-inject-array-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        npm run lint pète sur des règles a11y / inject / array-type
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pour-aller-plus-loin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pour aller plus loin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ce-qui-te-manque-encore-apres-cet-onboarding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ce qui te manque encore après cet onboarding
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="onboarding-developpeur">Onboarding développeur<a class="headerlink" href="#onboarding-developpeur" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>⚠️ <strong>Pivot juin 2026</strong> — l'app est désormais un <strong>journal de trading</strong> ; la surface produit live est le module journal (<code>features/journal/</code>). Le parcours guidé ci-dessous décrit encore le <strong>flow pré-pivot dormant</strong> (import Wealthsimple → dossier ticker → narratif LLM) et reste à réécrire autour du journal. Le setup environnement (Docker / WSL / <code>mise</code> / Tilt / <code>application-local.yml</code>) et le « quand ça merde » restent valables.</p>
+</blockquote>
+<p>Bienvenue. Ce document est conçu pour qu'un nouvel arrivant soit <strong>productif sur PortfolioAI en moins d'une heure</strong>. Si tu cherches un détail technique précis (commandes, structure, conventions), va plutôt dans <a href="../developpement/"><code>developpement.md</code></a>. Ici on raconte une histoire, pas une référence.</p>
+<hr />
+<h2 id="ce-que-fait-lapp-en-60-secondes">Ce que fait l'app, en 60 secondes<a class="headerlink" href="#ce-que-fait-lapp-en-60-secondes" title="Permanent link">&para;</a></h2>
+<p>PortfolioAI est un <strong>outil d'intelligence de marché par ticker</strong>. Pour chaque action / ETF / crypto que tu détiens (importé depuis Wealthsimple) ou que tu surveilles, le backend :</p>
+<ol>
+<li><strong>Récupère les données de marché</strong> chez Twelve Data (quote courante + 1 an d'historique OHLC).</li>
+<li><strong>Calcule les indicateurs techniques</strong> côté serveur, en Kotlin pur, testé unit (RSI, MA50/MA200, momentum, drawdown 52w, etc.).</li>
+<li><strong>Demande au LLM</strong> (Claude par défaut) de <strong>rédiger un court narratif</strong> à partir de ces indicateurs : <code>{summary, sentiment, keyPoints[3..5]}</code>. Le LLM est un <strong>rédacteur</strong>, pas un décideur — il décrit ce que les chiffres montrent, il ne prédit pas et ne donne pas d'ordre d'achat / vente.</li>
+<li><strong>Persiste un snapshot</strong> du résultat (prix + indicateurs + narratif + modèle utilisé) pour pouvoir relire dans 6 mois ce que disait l'IA en regardant quoi.</li>
+</ol>
+<p>Le portefeuille est <strong>lecture seule</strong> dans l'UI : la seule façon de l'alimenter est l'import d'un CSV Wealthsimple.</p>
+<hr />
+<h2 id="installation-en-5-minutes">Installation en 5 minutes<a class="headerlink" href="#installation-en-5-minutes" title="Permanent link">&para;</a></h2>
+<h3 id="prerequis">Prérequis<a class="headerlink" href="#prerequis" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Docker Desktop (running)</li>
+<li>Java 21 (Temurin recommandé, on utilise 21.0.x)</li>
+<li>Node 24 + npm</li>
+<li>Tilt — <code>brew install tilt</code> sur macOS, voir <a href="https://tilt.dev">tilt.dev</a> pour Linux/Windows</li>
+</ul>
+<h3 id="premier-lancement">Premier lancement<a class="headerlink" href="#premier-lancement" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>&lt;repo-url&gt;
+<span class="nb">cd</span><span class="w"> </span>trade
+tilt<span class="w"> </span>up
+</code></pre></div>
+<p>Tilt ouvre son UI sur <a href="http://localhost:10350/">http://localhost:10350/</a> et démarre quatre services :</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Rôle</th>
+<th>URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>postgres</code></td>
+<td>BDD principale (Flyway applique les migrations au boot du backend)</td>
+<td><code>localhost:5432</code></td>
+</tr>
+<tr>
+<td><code>ollama</code></td>
+<td>LLM local (backup, optionnel)</td>
+<td><a href="http://localhost:11434">http://localhost:11434</a></td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td>Spring Boot, profil <code>local</code></td>
+<td><a href="http://localhost:8080">http://localhost:8080</a></td>
+</tr>
+<tr>
+<td><code>frontend</code></td>
+<td>Angular dev server</td>
+<td><a href="http://localhost:4200">http://localhost:4200</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Le premier démarrage prend 2-3 minutes</strong> : Gradle télécharge les dépendances et <code>npm install</code> s'exécute. Les démarrages suivants sont quasi instantanés grâce au hot-reload de Tilt.</p>
+<p><strong>Auth en dev (Phase 4)</strong> : par défaut, le backend démarre en mode <code>local-no-auth</code> — un user fake ADMIN (<code>dev@local.test</code>) est seedé au boot, et Spring Security est bypassed. Tu peux directement ouvrir le frontend et tout est accessible. Pour tester le vrai flow OAuth Google contre localhost (rare en onboarding), voir <a href="../developpement/#modes-dauthentification-phase-4"><code>developpement.md &gt; Modes d'authentification</code></a> — il faut un OAuth Client ID Google Cloud Console + quelques variables <code>.env</code>. Pas nécessaire pour démarrer.</p>
+<h4 id="conflit-de-port-avec-un-autre-service-local">Conflit de port avec un autre service local<a class="headerlink" href="#conflit-de-port-avec-un-autre-service-local" title="Permanent link">&para;</a></h4>
+<p>Si <code>tilt up</code> échoue sur « port already allocated » (le plus courant : un Postgres déjà installé localement occupe le <code>5432</code>), la procédure <code>.env</code> qui surcharge un seul port est documentée dans <a href="../developpement/"><code>developpement.md</code></a> (section <em>Conflit de port</em>) — table des 4 variables, sources qui les lisent, comportement par défaut.</p>
+<h3 id="configurer-le-llm">Configurer le LLM<a class="headerlink" href="#configurer-le-llm" title="Permanent link">&para;</a></h3>
+<p>Le backend a besoin d'un LLM pour générer les narratifs. Le fichier <code>backend/src/main/resources/application-local.yml</code> <strong>existe déjà</strong> (committé depuis 2026-05-18, sans secrets — juste les overrides de comportement dev). Le défaut est <code>llm.provider: ollama</code>. Deux paths pour customiser :</p>
+<p><strong>Option A — Claude (recommandé)</strong> : qualité narrative supérieure, latence 1-3 s, requiert une clé Anthropic.</p>
+<ol>
+<li>Récupère ta clé sur <a href="https://console.anthropic.com/">console.anthropic.com</a>.</li>
+<li><strong>Path A.1 — Runtime via UI (recommandé)</strong> : démarre Tilt, ouvre <code>/settings/configuration &gt; LLM</code>, colle la clé dans le slot SECRET <code>anthropic.api.key</code>, bascule <code>llm.provider</code> sur <code>claude</code>. <strong>Aucun reboot</strong>, stocké en BDD (<code>app_config</code>), survit aux restarts du backend.</li>
+<li><strong>Path A.2 — Boot-time via <code>.env</code></strong> : ajoute <code>ANTHROPIC_API_KEY=sk-ant-...</code> dans le <code>.env</code> à la racine (gitignored). Spring lit la var via relaxed binding (<code>ANTHROPIC_API_KEY</code> → <code>anthropic.api.key</code>). Optionnel : bascule <code>llm.provider: claude</code> dans <code>application-local.yml</code> si tu veux Claude par défaut au boot.</li>
+</ol>
+<blockquote>
+<p><strong>Important</strong> : ne jamais coller la clé Anthropic directement dans <code>application-local.yml</code> — le fichier est committé, ça serait un leak public. La clé vit en <code>.env</code> (gitignored) ou en BDD via UI.</p>
+</blockquote>
+<p><strong>Option B — Ollama (local, sans clé)</strong> : tourne offline, gratuit. C'est le défaut actuel d'<code>application-local.yml</code>. Le modèle <code>qwen2.5:3b</code> répond en 5-10 s sur M1 — qualité narrative en retrait par rapport à Claude mais largement OK pour itérer. <strong>Rien à configurer</strong>, <code>tilt up</code> suffit.</p>
+<p>Pense à télécharger un modèle au premier lancement : ouvre <code>/settings/configuration &gt; LLM</code>, le panneau <strong>État Ollama</strong> affiche les modèles déjà pull localement et un bouton <strong>Pull…</strong> ouvre un dialog avec suggestions (<code>qwen2.5:3b</code> ~2 GB est le bon compromis sur M1, ou <code>qwen2.5:7b</code> / <code>llama3.2:3b</code> / <code>phi4-mini</code> si tu veux pousser la qualité). Mistral 7B était le défaut historique mais 30-60 s par appel sur M1 → timeouts fréquents.</p>
+<p>Tu peux switcher de l'un à l'autre à tout moment soit en éditant <code>application-local.yml</code> (Tilt redémarre le backend au save), soit — plus pratique — depuis <code>/settings/configuration &gt; LLM</code> qui édite la même clé en BDD sans reboot.</p>
+<hr />
+<h2 id="premier-test-de-lapp">Premier test de l'app<a class="headerlink" href="#premier-test-de-lapp" title="Permanent link">&para;</a></h2>
+<h3 id="1-importer-un-portefeuille-demo">1. Importer un portefeuille démo<a class="headerlink" href="#1-importer-un-portefeuille-demo" title="Permanent link">&para;</a></h3>
+<p>Le repo contient deux CSV factices dans <code>docs/data-input/</code> (DEMO-CELI + DEMO-REER avec 6-7 positions chacun). Va sur <a href="http://localhost:4200/import">http://localhost:4200/import</a>, drag &amp; drop <strong>les deux fichiers ensemble</strong>. L'app détecte automatiquement les dates dans le nom de fichier (<code>holdings-report-2026-04-15.csv</code> etc.), trie par ordre chronologique, et applique chaque import comme un snapshot.</p>
+<blockquote>
+<p>Pour tes vrais exports Wealthsimple, mets-les dans <code>docs/data-input-local/</code> (gitignoré) — jamais dans <code>data-input/</code> qui est versionné.</p>
+</blockquote>
+<h3 id="2-voir-le-portefeuille-agrege">2. Voir le portefeuille agrégé<a class="headerlink" href="#2-voir-le-portefeuille-agrege" title="Permanent link">&para;</a></h3>
+<p>Le <strong>Dashboard</strong> (<code>/</code>) affiche les positions consolidées : ticker, quantité, prix d'achat moyen, valeur de marché, P&amp;L par devise. Chaque ticker est cliquable.</p>
+<h3 id="3-ouvrir-un-dossier-ticker">3. Ouvrir un dossier ticker<a class="headerlink" href="#3-ouvrir-un-dossier-ticker" title="Permanent link">&para;</a></h3>
+<p>Clique sur <strong>AAPL</strong> (ou n'importe quel ticker du portefeuille démo). La page <strong>Dossier ticker</strong> (<code>/ticker/AAPL</code>) charge :</p>
+<ul>
+<li>En-tête avec le prix, la plage 52 semaines, le nom de l'instrument</li>
+<li>Une courbe SVG inline du prix sur 1 an</li>
+<li>10 chips d'indicateurs avec color-coding (RSI, MA50/MA200, momentum 30j/90j, perfs, drawdown, distance vs MA, volume relatif)</li>
+</ul>
+<h3 id="4-switcher-la-langue">4. Switcher la langue<a class="headerlink" href="#4-switcher-la-langue" title="Permanent link">&para;</a></h3>
+<p>Dans le header en haut à droite, l'icône drapeau ouvre un menu <strong>FR / EN</strong>. Le choix est persisté dans <code>localStorage</code> et appliqué à toute l'UI (l'attribut <code>&lt;html lang&gt;</code> est aussi mis à jour pour l'accessibilité). Si ton navigateur est en français, l'app démarre en FR par défaut, sinon en EN.</p>
+<p>Les fichiers de traduction sont dans <code>frontend/public/i18n/&lt;lang&gt;.json</code>. Toute string utilisateur passe par une clé — rien n'est en dur dans les composants.</p>
+<h3 id="5-generer-un-narratif-llm">5. Générer un narratif LLM<a class="headerlink" href="#5-generer-un-narratif-llm" title="Permanent link">&para;</a></h3>
+<p>Le narratif est généré à la demande (cher en Claude, lent en Ollama). Clique sur <strong>Générer / Régénérer</strong> — le frontend POST <code>/api/market/ticker/AAPL/narrative</code>, reçoit un job <code>PENDING</code>, et ouvre un <code>EventSource</code> sur <code>/api/market/ticker/AAPL/narrative/jobs/{id}/stream</code>. Le backend pousse une transition de phase à chaque étape du pipeline (<code>LOADING_CONTEXT</code> → <code>CALLING_LLM</code> → <code>RECEIVED_RAW</code> → <code>PARSING</code> → <code>VALIDATING</code> → <code>PERSISTING</code> → <code>DONE</code>) ; le bandeau de progression sous le titre affiche la phase courante avec un compteur de secondes. Une fois <code>DONE</code> reçu, le frontend recharge le snapshot — résumé technique détaillé (typiquement 5-12 phrases, walk-through de chaque indicateur disponible), badge <code>BULLISH</code> / <code>NEUTRAL</code> / <code>BEARISH</code>, et 3 à 5 bullet points factuels.</p>
+<blockquote>
+<p>Si tu cliques deux fois en moins de 30 minutes sur le même ticker, le 2e clic réutilise le snapshot existant (cache 30 min côté service). Pas de re-prompt LLM, pas de coût supplémentaire.</p>
+</blockquote>
+<hr />
+<h2 id="switcher-les-providers">Switcher les providers<a class="headerlink" href="#switcher-les-providers" title="Permanent link">&para;</a></h2>
+<p>Le projet a cinq providers configurables, chacun avec une vraie implémentation et (sauf Claude) un mock pour dev offline / sans clé.</p>
+<h3 id="llm-llmprovider">LLM — <code>llm.provider</code><a class="headerlink" href="#llm-llmprovider" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Valeur</th>
+<th>Quand l'utiliser</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>claude</code></td>
+<td>Défaut Phase 1. Qualité narrative nettement supérieure, latence 1-3 s, requiert une clé <code>ANTHROPIC_API_KEY</code>.</td>
+</tr>
+<tr>
+<td><code>ollama</code></td>
+<td>Dev offline, sans clé. Défaut local : <code>qwen2.5:3b</code> (3B Instruct, ~2 GB), 5-10 s par narratif sur M1, JSON structuré fiable. Pull depuis <code>/settings/configuration &gt; LLM &gt; Pull…</code> au premier lancement. Pour pousser la qualité au prix de la vitesse : <code>qwen2.5:7b</code>, <code>llama3.2:3b</code> ou <code>phi4-mini</code>. Mistral 7B (ancien défaut) timeout sur M1 — éviter.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="donnees-de-marche-marketprovider">Données de marché — <code>market.provider</code><a class="headerlink" href="#donnees-de-marche-marketprovider" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Valeur</th>
+<th>Quand l'utiliser</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mock</code></td>
+<td>Défaut, sans clé requise. <code>MockMarketChartClient</code> génère 260 bars OHLC déterministes par symbole (seed = <code>symbol.hashCode()</code>). Tous les indicateurs se calculent. Symboles réservés : <code>UNKNOWN</code> (404) et <code>RATELIMIT</code> (503) pour exercer les chemins d'erreur UI.</td>
+</tr>
+<tr>
+<td><code>twelvedata</code></td>
+<td>Vraie data, défaut prod. REST documenté + apikey, free tier 800 credits/jour, TSX natif. Requiert <code>market.twelvedata.api-key</code>. <strong>Crée un compte gratuit</strong> sur <a href="https://twelvedata.com/">twelvedata.com</a> puis récupère ta clé sur <a href="https://twelvedata.com/account/api-keys">https://twelvedata.com/account/api-keys</a>. Deux paths pour la poser : (a) <strong>UI runtime</strong> <code>/settings/configuration &gt; Providers de données</code> (slot SECRET, bouton Tester, persisté en BDD) — recommandé ; (b) <strong>Boot-time</strong> <code>TWELVEDATA_API_KEY=...</code> dans <code>.env</code> (Spring lit via relaxed binding). <strong>Ne jamais coller la clé dans <code>application-local.yml</code></strong> — le fichier est committé.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="news-par-ticker-newsprovider">News par ticker — <code>news.provider</code><a class="headerlink" href="#news-par-ticker-newsprovider" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Valeur</th>
+<th>Quand l'utiliser</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mock</code></td>
+<td>Défaut, sans clé requise. <code>MockNewsClient</code> génère 4-10 headlines synthétiques déterministes par symbole (templates variés, sources rotation Reuters/Bloomberg/CNBC, ~10 % de symboles "quiet" pour exercer l'empty-state UI). Idéal en itération pour ne pas faire chauffer le quota Finnhub.</td>
+</tr>
+<tr>
+<td><code>finnhub</code></td>
+<td>Vraie data. REST + apikey, free tier 60 calls/min sans cap quotidien. Requiert <code>market.finnhub.api-key</code>. <strong>Crée un compte gratuit</strong> sur <a href="https://finnhub.io/register">finnhub.io/register</a> puis récupère ta clé sur <a href="https://finnhub.io/dashboard">finnhub.io/dashboard</a>. Deux paths pour la poser : (a) <strong>UI runtime</strong> <code>/settings/configuration &gt; Providers de données</code> (slot SECRET, bouton Tester) — recommandé ; (b) <strong>Boot-time</strong> <code>FINNHUB_API_KEY=...</code> dans <code>.env</code>. <strong>Ne jamais coller la clé dans <code>application-local.yml</code></strong> — le fichier est committé.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="recommandations-analystes-analystprovider">Recommandations analystes — <code>analyst.provider</code><a class="headerlink" href="#recommandations-analystes-analystprovider" title="Permanent link">&para;</a></h3>
+<p>Toggle séparé de <code>news.provider</code> pour pouvoir flipper indépendamment (live news + mock recos pendant l'itération, par exemple). Partage la même clé Finnhub que <code>news.provider</code> quand tu bascules en <code>finnhub</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Valeur</th>
+<th>Quand l'utiliser</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mock</code></td>
+<td>Défaut, sans clé requise. <code>MockAnalystClient</code> génère un breakdown synthétique déterministe par symbole (~50 % bullish / ~30 % mixed / ~20 % bearish, drift mois-sur-mois pour une trend line non plate, history sur 6 mois). Symboles réservés : <code>UNKNOWN</code> (404 → empty state), <code>RATELIMIT</code> (503 → inline error), <code>NOTARGET</code> (snapshot avec <code>priceTarget = null</code> pour reproduire la dégradation Finnhub sans flipper de provider).</td>
+</tr>
+<tr>
+<td><code>finnhub</code></td>
+<td>Vraie data — <code>/stock/recommendation</code> (breakdown monthly, requis) + <code>/stock/price-target</code> (consensus 12 mois, optionnel — fail-soft à <code>null</code> sur 401/403/5xx parce que sur certains comptes l'endpoint est derrière un paid tier). Partage la même <code>market.finnhub.api-key</code> que <code>news.provider</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="earnings-earningsprovider">Earnings — <code>earnings.provider</code><a class="headerlink" href="#earnings-earningsprovider" title="Permanent link">&para;</a></h3>
+<p>Toggle séparé de <code>news.provider</code> et <code>analyst.provider</code>. Partage la même clé Finnhub quand tu bascules en <code>finnhub</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Valeur</th>
+<th>Quand l'utiliser</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mock</code></td>
+<td>Défaut, sans clé requise. <code>MockEarningsClient</code> génère 4 trimestres synthétiques déterministes par symbole (EPS dans la bande $0.30–$3.50, surprise ±15 % autour de l'estimé, drift ±8 % d'un trimestre à l'autre) + une next-date 1–60 j en avant. Symboles réservés : <code>UNKNOWN</code> (404 → empty state), <code>RATELIMIT</code> (503 → inline error), <code>NOCALENDAR</code> (snapshot avec <code>nextEarningsDate = null</code> pour reproduire la dégradation Finnhub sans flipper de provider).</td>
+</tr>
+<tr>
+<td><code>finnhub</code></td>
+<td>Vraie data — <code>/stock/earnings</code> (4 derniers Q estimate / actual / surprise %, requis) + <code>/calendar/earnings</code> (prochaine annonce sur fenêtre 90 j en avant, optionnel — fail-soft à <code>null</code> sur 401/403/5xx parce que sur certains comptes l'endpoint est derrière un paid tier). Partage la même <code>market.finnhub.api-key</code> que les autres providers Finnhub.</td>
+</tr>
+</tbody>
+</table>
+<p>Deux chemins pour modifier ces réglages :</p>
+<ol>
+<li><strong><code>application-local.yml</code></strong> — défaut au boot, recharge au save Tilt. Pertinent pour figer la config d'un environnement.</li>
+<li><strong>Page <code>/settings/configuration</code></strong> (icône <code>tune</code> dans le sidenav <code>/settings</code>) — édite en direct les clés API Twelve Data et Finnhub (avec bouton "Tester" qui sonde la clé candidate avant la sauve), le TTL cache Caffeine, et bascule <code>market.provider</code> / <code>news.provider</code> / <code>analyst.provider</code> / <code>earnings.provider</code> mock ↔ live à la volée. Aucune édition YAML, aucun reboot, le prochain dossier ouvert hit le nouveau adapter. Les overrides vivent en BDD (<code>app_config</code>, V4) et prennent le pas sur les défauts YAML.</li>
+</ol>
+<p>Pour la liste complète des providers (URLs d'inscription, dashboards, quotas, points d'intégration code) voir <a href="../providers/"><code>providers.md</code></a>.</p>
+<hr />
+<h2 id="quand-ca-merde">Quand ça merde<a class="headerlink" href="#quand-ca-merde" title="Permanent link">&para;</a></h2>
+<h3 id="donnees-de-marche-momentanement-indisponibles-sur-un-dossier-ticker">"Données de marché momentanément indisponibles" sur un dossier ticker<a class="headerlink" href="#donnees-de-marche-momentanement-indisponibles-sur-un-dossier-ticker" title="Permanent link">&para;</a></h3>
+<p>Le provider sélectionné refuse la requête. Diagnostic selon <code>market.provider</code> :</p>
+<ol>
+<li><strong><code>twelvedata</code></strong> — clé manquante (<code>market.twelvedata.api-key</code> vide → message explicite dans les logs) ou quota 800 credits/jour épuisé. Vérifier avec <code>tilt logs backend | grep -i "twelve data"</code>. Si quota explosé, bascule temporairement sur <code>mock</code>.</li>
+<li><strong><code>mock</code></strong> — ne devrait jamais arriver sauf si tu testes les symboles réservés <code>RATELIMIT</code> ou <code>UNKNOWN</code>.</li>
+</ol>
+<h3 id="un-job-narratif-reste-bloque-pending">Un job narratif reste bloqué <code>PENDING</code><a class="headerlink" href="#un-job-narratif-reste-bloque-pending" title="Permanent link">&para;</a></h3>
+<p>Le backend a probablement crash ou été hot-reloaded en plein appel LLM. Solution simple : régénère un nouveau job (clic "Régénérer"). Le job mort sera ignoré, un nouveau job DONE écrasera l'affichage. Le backend corrige aussi automatiquement au boot via <code>OrphanedJobCleanupListener</code> (<code>@EventListener(ApplicationReadyEvent)</code>) — tout <code>ticker_narrative_job</code> resté en <code>PENDING</code> au démarrage est flippé en <code>ERROR</code> avec un marqueur explicite, donc un redémarrage suffit à débloquer l'UI sans intervention manuelle.</p>
+<h3 id="migration-flyway-echoue-au-boot">Migration Flyway échoue au boot<a class="headerlink" href="#migration-flyway-echoue-au-boot" title="Permanent link">&para;</a></h3>
+<p>Probablement un checksum désynchronisé après un édit local d'un fichier <code>V*__*.sql</code> déjà appliqué. En dev, le bouton <strong><code>db:reset</code></strong> dans l'UI Tilt drop le schéma puis Flyway rejoue toutes les migrations from scratch. Tu perds tes données locales — recharge les CSV démo après.</p>
+<h3 id="le-frontend-affiche-une-page-blanche">Le frontend affiche une page blanche<a class="headerlink" href="#le-frontend-affiche-une-page-blanche" title="Permanent link">&para;</a></h3>
+<p>Vérifie que le backend est <code>Ready</code> dans Tilt (le frontend se contente d'afficher la dernière réponse cache si l'API tombe). Logs : <code>tilt logs backend | tail -50</code>.</p>
+<h3 id="les-tests-vitest-ne-reconnaissent-pas-describe">Les tests Vitest ne reconnaissent pas <code>describe</code><a class="headerlink" href="#les-tests-vitest-ne-reconnaissent-pas-describe" title="Permanent link">&para;</a></h3>
+<p>Le projet utilise <strong>Vitest</strong> (pas Karma — <code>ng test</code> invoque le builder Angular et rate la config). Toujours passer par <code>npm run test</code> (full suite watch) ou <code>npx vitest run src/path/to/file.spec.ts</code> (un seul fichier en CI mode).</p>
+<h3 id="npm-run-lint-pete-sur-des-regles-a11y-inject-array-type"><code>npm run lint</code> pète sur des règles a11y / inject / array-type<a class="headerlink" href="#npm-run-lint-pete-sur-des-regles-a11y-inject-array-type" title="Permanent link">&para;</a></h3>
+<p>ESLint flat config (<code>frontend/eslint.config.js</code>) est configuré sur Angular ESLint 21 + a11y des templates. Premier réflexe : <code>npm run lint -- --fix</code> auto-corrige les violations triviales (formatage, <code>Array&lt;T&gt;</code> → <code>T[]</code>, etc.). Pour le reste, les patterns à connaître :
+- <strong><code>prefer-inject</code></strong> : remplace <code>constructor(private foo: Foo)</code> par <code>private readonly foo = inject(Foo)</code> (le pattern dominant du projet).
+- <strong><code>click-events-have-key-events</code> + <code>interactive-supports-focus</code></strong> : un <code>&lt;div&gt;</code> ou <code>&lt;li&gt;</code> avec <code>(click)</code> doit avoir <code>role="button" tabindex="0" (keydown.enter)</code>. Convertir en <code>&lt;button&gt;</code> est aussi acceptable mais souvent casse le styling.
+- <strong><code>label-has-associated-control</code></strong> : un <code>&lt;label&gt;</code> doit cibler un input via <code>for=</code> ; si c'est juste un titre de section, utiliser <code>&lt;span class="label"&gt;</code>.</p>
+<p>Détails ruleset + commandes dans <a href="../ops/"><code>ops.md</code></a> section ESLint.</p>
+<hr />
+<h2 id="pour-aller-plus-loin">Pour aller plus loin<a class="headerlink" href="#pour-aller-plus-loin" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tu veux comprendre…</th>
+<th>Va voir</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pourquoi le projet existe, ce qu'on essaie de prouver</td>
+<td><a href="../../metier/vision/"><code>metier/vision.md</code></a></td>
+</tr>
+<tr>
+<td>Le découpage des phases et les features à venir</td>
+<td><a href="../../metier/fonctionnalites/"><code>metier/fonctionnalites.md</code></a>, <a href="../../projet/backlog/"><code>projet/backlog.md</code></a> (<code>⏳</code>/<code>🚧</code> uniquement)</td>
+</tr>
+<tr>
+<td>La spec détaillée d'une feature en cours de cadrage</td>
+<td><a href="../projet/us/"><code>projet/us/</code></a> — ex. <a href="../../projet/us/compte-broker/"><code>compte-broker.md</code></a></td>
+</tr>
+<tr>
+<td>Le journal des features déjà livrées (par phase, reverse-chronological)</td>
+<td><a href="../../projet/journal-livraisons/"><code>projet/journal-livraisons.md</code></a></td>
+</tr>
+<tr>
+<td>L'architecture (modules, schéma BDD, décisions techniques)</td>
+<td><a href="../architecture/"><code>architecture.md</code></a></td>
+</tr>
+<tr>
+<td>Les conventions de code, commandes Gradle/npm, structure complète</td>
+<td><a href="../developpement/"><code>developpement.md</code></a></td>
+</tr>
+<tr>
+<td>Providers externes (Twelve Data, Finnhub, Anthropic, Ollama) — clés, quotas, dashboards</td>
+<td><a href="../providers/"><code>providers.md</code></a></td>
+</tr>
+<tr>
+<td>CI / CD, caching, Detekt, Dependabot, Code Scanning</td>
+<td><a href="../ops/"><code>ops.md</code></a></td>
+</tr>
+<tr>
+<td>Conventional Commits + exemples</td>
+<td><a href="../../projet/commit-conventions/"><code>projet/commit-conventions.md</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ce-qui-te-manque-encore-apres-cet-onboarding">Ce qui te manque encore après cet onboarding<a class="headerlink" href="#ce-qui-te-manque-encore-apres-cet-onboarding" title="Permanent link">&para;</a></h2>
+<p>C'est volontaire — le but est de faire tourner l'app, pas de devenir expert. Les points suivants viendront naturellement quand tu attaqueras une feature :</p>
+<ul>
+<li>Les <strong>conventions hexagonales</strong> côté front, groupées sous <code>core/</code> en 5 sous-dossiers : <code>core/api/&lt;bucket&gt;/&lt;name&gt;.repository.ts</code> = port HTTP (un bucket par module backend), <code>core/api/&lt;bucket&gt;/adapters/&lt;name&gt;.http.ts</code> = adapter HTTP ; <code>core/local/&lt;bucket&gt;/</code> = port persisté navigateur ; <code>core/app-state/</code> = services UI signal sans port (theme, language, auth) ; <code>core/http/</code> et <code>core/router/</code> = interceptors et guards (Phase 4 auth). Cf. <a href="../architecture/"><code>architecture.md</code></a>.</li>
+<li>Le <strong>pipeline async</strong> narratif (<code>Service</code> → <code>Runner @Async</code> → <code>Executor</code>). Cf. <a href="../architecture/"><code>architecture.md</code></a> section <em>analysis/</em>.</li>
+<li>La <strong>règle "tests as documentation"</strong> : un fichier de test doit se lire comme une histoire. Cf. <code>.claude/CLAUDE.md</code>.</li>
+<li>Le <strong>flow de commit</strong> : un seul auteur (toi), Conventional Commits en anglais, message d'une ligne sans body. Cf. <a href="../../projet/commit-conventions/"><code>projet/commit-conventions.md</code></a>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../metier/fonctionnalites/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fonctionnalités">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Fonctionnalités
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../architecture/" class="md-footer__link md-footer__link--next" aria-label="Next: Architecture">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Architecture
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

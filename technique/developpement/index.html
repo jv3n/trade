@@ -1,0 +1,2295 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/technique/developpement/">
+      
+      
+        <link rel="prev" href="../ddd/">
+      
+      
+        <link rel="next" href="../providers/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Guide de développement - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#guide-de-developpement" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Guide de développement
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#demarrage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Démarrage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Démarrage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#conflit-de-port-tilt-up-echoue-sur-port-already-allocated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conflit de port (tilt up échoue sur « port already allocated »)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commandes-tilt-utiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commandes Tilt utiles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commandes Tilt utiles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#swagger-ui-explorer-la-surface-rest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Swagger UI — explorer la surface REST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-locale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration locale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes-dauthentification-phase-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes d'authentification (Phase 4)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modes d&#39;authentification (Phase 4)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mode-no-auth-defaut-dev-solo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode no-auth (défaut, dev solo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mode-oauth-test-du-vrai-flow-google-contre-localhost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode oauth (test du vrai flow Google contre localhost)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conventions-de-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conventions de commit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure-du-projet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure du projet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#theme-et-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thème et UI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lint-et-formatage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lint et formatage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#intellij-idea-interpreteur-node-sous-wsl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IntelliJ IDEA — interpréteur Node sous WSL
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="guide-de-developpement">Guide de développement<a class="headerlink" href="#guide-de-developpement" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Référence quotidienne pour qui développe sur PortfolioAI au jour le jour. Si tu débarques sur le repo et veux faire tourner l'app pour la première fois, lis plutôt <a href="../developper/"><code>developper.md</code></a> — onboarding narratif qui couvre les prérequis, la première configuration <code>application-local.yml</code> (Claude vs Ollama), le premier test guidé, et le « quand ça merde ». Ce fichier-ci suppose que tu as déjà installé Docker / Java 21 / Node 24 / Tilt et que ton <code>application-local.yml</code> existe.</p>
+</blockquote>
+<h2 id="demarrage">Démarrage<a class="headerlink" href="#demarrage" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>tilt<span class="w"> </span>up
+</code></pre></div>
+<p>Tilt démarre tout : PostgreSQL, Ollama (backup local), backend Spring Boot, frontend Angular.</p>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>http://localhost:4200</code></td>
+<td>Frontend Angular</td>
+</tr>
+<tr>
+<td><code>http://localhost:8080</code></td>
+<td>Backend API</td>
+</tr>
+<tr>
+<td><code>http://localhost:8080/actuator/health</code></td>
+<td>Health check</td>
+</tr>
+<tr>
+<td><code>http://localhost:11434</code></td>
+<td>Ollama (LLM local, backup)</td>
+</tr>
+</tbody>
+</table>
+<p>Pour exposer sur le réseau local (accès depuis un autre appareil) :</p>
+<div class="highlight"><pre><span></span><code>tilt<span class="w"> </span>up<span class="w"> </span>--<span class="w"> </span>--host<span class="o">=</span>&lt;ton-ip-locale&gt;
+</code></pre></div>
+<h3 id="conflit-de-port-tilt-up-echoue-sur-port-already-allocated">Conflit de port (<code>tilt up</code> échoue sur « port already allocated »)<a class="headerlink" href="#conflit-de-port-tilt-up-echoue-sur-port-already-allocated" title="Permanent link">&para;</a></h3>
+<p>Les quatre ports hôte sont configurables via un fichier <code>.env</code> à la racine du repo. Procédure :</p>
+<div class="highlight"><pre><span></span><code>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<span class="c1"># Édite uniquement le port qui pose problème (p.ex. POSTGRES_HOST_PORT=5433)</span>
+tilt<span class="w"> </span>up
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Défaut</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POSTGRES_HOST_PORT</code></td>
+<td><code>5432</code></td>
+<td>Conflit le plus courant (Postgres déjà installé localement)</td>
+</tr>
+<tr>
+<td><code>OLLAMA_HOST_PORT</code></td>
+<td><code>11434</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>BACKEND_HOST_PORT</code></td>
+<td><code>8080</code></td>
+<td>Spring Boot natif (pas en container)</td>
+</tr>
+<tr>
+<td><code>FRONTEND_HOST_PORT</code></td>
+<td><code>4200</code></td>
+<td>Angular dev server</td>
+</tr>
+</tbody>
+</table>
+<p>Le <code>.env</code> est gitignored — tes ports locaux ne sortent pas du repo. Le <code>docker-compose.yml</code>, le <code>Tiltfile</code>, <code>application.yml</code> et <code>frontend/proxy.conf.js</code> retombent sur les défauts si la variable n'est pas définie. Seul le port côté <strong>hôte</strong> change ; les services dans les containers (Postgres, Ollama) gardent leur port natif en interne, et le backend Spring est automatiquement reconfiguré pour s'y connecter via les env vars injectées dans le <code>serve_cmd</code> du Tiltfile.</p>
+<blockquote>
+<p><strong><code>./gradlew test</code> ne dépend plus de Tilt ni de <code>.env</code></strong> (refacto 2026-05-24) — les tests d'intégration <code>@SpringBootTest</code> bootent leur <strong>propre</strong> Postgres via Testcontainers (<code>backend/src/test/kotlin/com/portfolioai/testsupport/PostgresContainer.kt</code>). Docker reste le seul prérequis hôte (déjà requis pour Tilt). Le container est partagé via un <code>LauncherSessionListener</code> JUnit Platform — un seul boot par run, JDBC coordinates publiées en system properties avant que Spring ne lise <code>application.yml</code>. <strong>Activer le reuse global</strong> (optionnel, gain ~5 s/run) : <code>echo "testcontainers.reuse.enable=true" &gt;&gt; ~/.testcontainers.properties</code> — sans cette opt-in Testcontainers spin un container neuf à chaque run.</p>
+<p><strong>Le proxy frontend (<code>/api</code> → backend) lit aussi <code>.env</code></strong> — <code>frontend/proxy.conf.js</code> (en remplacement du <code>.json</code> historique) mirroir le même parser et résout <code>BACKEND_HOST_PORT</code> dans cet ordre : <code>process.env</code> (Tilt-injecté) &gt; fichier <code>.env</code> &gt; défaut <code>8080</code>. Si tu changes <code>BACKEND_HOST_PORT=8081</code> dans <code>.env</code>, l'Angular dev server proxy <code>/api/**</code> vers <code>localhost:8081</code> automatiquement, sans toucher à <code>angular.json</code>.</p>
+</blockquote>
+<h2 id="commandes-tilt-utiles">Commandes Tilt utiles<a class="headerlink" href="#commandes-tilt-utiles" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Bouton Tilt</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Purge</strong> (sur le panel <code>postgres</code>)</td>
+<td>Drop schema + redémarrage backend (Flyway rejoue toutes les migrations). Bouton attaché au panel <code>postgres</code> via <code>cmd_button</code></td>
+</tr>
+<tr>
+<td><strong>Mode → OAuth</strong> (sur le panel <code>backend</code>, Phase 4)</td>
+<td>Édite <code>.env</code> pour mettre <code>BACKEND_AUTH_MODE=oauth</code> + touche <code>application.yml</code> → backend redémarre en mode auth réel (Spring Security + OAuth Google). Pré-requis : <code>SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}</code> + <code>APP_ADMIN_EMAILS</code> dans <code>.env</code>, redirect URI <code>http://localhost:&lt;FRONTEND_HOST_PORT&gt;/login/oauth2/code/google</code> enregistrée dans Google Cloud Console</td>
+</tr>
+<tr>
+<td><strong>Mode → no-auth</strong> (sur le panel <code>backend</code>, Phase 4)</td>
+<td>Édite <code>.env</code> pour mettre <code>BACKEND_AUTH_MODE=no-auth</code> + touche <code>application.yml</code> → backend redémarre avec Spring Security bypassed, user fake ADMIN (<code>dev@local.test</code>) seedé au boot. Mode par défaut pour le dev solo</td>
+</tr>
+</tbody>
+</table>
+<p>Pour des données de démo, importer le CSV <code>docs/data-input/journal-demo.csv</code> depuis la page <strong>Journal I/O</strong> (<code>/journal-io</code>) — il n'y a pas de seed SQL applicatif.</p>
+<h3 id="swagger-ui-explorer-la-surface-rest">Swagger UI — explorer la surface REST<a class="headerlink" href="#swagger-ui-explorer-la-surface-rest" title="Permanent link">&para;</a></h3>
+<p>Le panel <code>backend</code> dans Tilt expose un lien <strong>Swagger UI</strong> vers <code>http://localhost:8080/swagger-ui.html</code> (ou le port défini par <code>BACKEND_HOST_PORT</code>). L'UI est auto-générée par <code>springdoc-openapi</code> à partir des controllers Spring + DTO Jackson, regroupée par controller. La surface <strong>live</strong> est <code>Journal</code> / <code>Stats</code> / <code>Lexicon</code> (+ <code>Auth</code>) ; les controllers pré-pivot conservés (<code>Market</code>, <code>News</code>, <code>Screener</code>, <code>Analyst</code>, <code>Earnings</code>, <code>Watchlist</code>, <code>Config</code>, narratif ticker, symbol search) restent exposés tant qu'ils sont routés. Le bouton <strong>Try it out</strong> envoie de vrais appels au backend local — pratique pour tester un endpoint sans <code>curl</code>.</p>
+<p>L'UI et le schéma JSON (<code>/v3/api-docs</code>) sont <strong>désactivés par défaut</strong> dans <code>application.yml</code> et activés uniquement via le profil <code>local</code> (<code>application-local.yml</code>). Aucun environnement qui n'opte pas in explicitement n'expose la surface.</p>
+<h2 id="configuration-locale">Configuration locale<a class="headerlink" href="#configuration-locale" title="Permanent link">&para;</a></h2>
+<p>Le fichier <code>application-local.yml</code> (committé depuis 2026-05-18, sans secrets) contient les <strong>overrides de comportement dev</strong> (JPA verbose, <code>llm.provider=ollama</code>, providers en <code>mock</code> par défaut, <code>springdoc</code> activé, <code>flyway.repair-on-migrate=true</code>). Le <strong>setup initial</strong> (création du fichier, choix Claude vs Ollama, exemples YAML) est documenté dans <a href="../developper/#configurer-le-llm"><code>developper.md &gt; Configurer le LLM</code></a> — single-source pour éviter le drift. Cette section couvre uniquement les usages courants après ce setup.</p>
+<p><strong>Aucun secret en YAML.</strong> Tous les credentials boot-time (creds OAuth Google, <code>APP_ADMIN_EMAILS</code>, <code>APP_FRONTEND_URL</code>) vivent dans <code>.env</code> à la racine du repo (gitignored). Le Tiltfile source <code>.env</code> dans le <code>serve_cmd</code> du backend → exporte au sous-process gradle → Spring lit via relaxed binding (<code>SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID</code> mappe vers la property correspondante). Voir <code>.env.example</code> pour la liste complète + la doc inline. Les clés API runtime-editable (Anthropic, Twelve Data, Finnhub) <strong>ne sont pas</strong> dans <code>.env</code> — elles passent par l'UI runtime config (voir paragraphe « Alternative runtime » ci-dessous).</p>
+<blockquote>
+<p><strong>Performance Ollama sur Mac</strong> — Ollama tourne <strong>dans un container Docker Desktop</strong>, qui est lui-même une VM Linux virtualisée par macOS. Apple n'expose pas Metal dans cette VM, donc l'inférence est en <strong>CPU pur</strong> : un narratif <code>qwen2.5:3b</code> peut saturer 9 cores ~918 % <code>docker stats</code> pendant 60–180 s, là où le même modèle sur Ollama natif (Metal activé) répond en 5-10 s. <strong>Décision projet</strong> (cf. <a href="../../devops/decision-ollama-deploiement/"><code>docs/devops/decision-ollama-deploiement.md</code></a>, tranchée 2026-05-09) : statu quo Claude-first, Ollama containerisé reste utilisable comme outil de dev/backup mais n'est pas le chemin quotidien. Si tu vois ton fan hurler, c'est attendu — bascule sur Claude (<code>/settings/configuration &gt; LLM &gt; Provider = claude</code>) ou laisse mouliner. Re-trigger : machine dédiée, usage Ollama &gt; 20 % des sessions, ou distribution du repo.</p>
+</blockquote>
+<p>Ne jamais committer <code>.env</code> (contient les vrais OAuth + URLs de dev). <code>application-local.yml</code> est désormais committé mais doit <strong>rester strictement secret-free</strong> — aucune clé API, aucun OAuth secret. Ne jamais mettre de clé API dans <code>application.yml</code> non plus.</p>
+<blockquote>
+<p><strong>Alternative runtime — édition sans reboot</strong> : la page <code>/settings/configuration</code> (icône <code>tune</code> dans le sidenav <code>/settings</code>) édite en direct <strong>douze clés</strong> sans reboot, réparties sur deux sub-sections (Providers de données / LLM) : (1) <strong>secrets</strong> — <code>market.twelvedata.api-key</code>, <code>market.finnhub.api-key</code>, <code>anthropic.api.key</code> (masqués + bouton Tester) ; (2) <strong>toggles</strong> — <code>market.provider</code>, <code>news.provider</code>, <code>analyst.provider</code>, <code>earnings.provider</code> (mock ↔ live), <code>llm.provider</code> (claude ↔ ollama) ; (3) <strong>strings</strong> — <code>ollama.model</code>, <code>anthropic.api.model</code> (autocomplete suggestions, valeurs libres) ; (4) <strong>slider INT</strong> — <code>market.cache.ttl-minutes</code> (5–60 min) et <code>llm.timeout-seconds</code> (60–900 s). Les overrides BDD prennent le pas sur les défauts YAML — pratique pour rotater une clé ou switcher de provider sans toucher à <code>application-local.yml</code>. <strong>Note Phase 4</strong> : la page <code>/settings/configuration</code> est gated ADMIN ; en mode <code>BACKEND_AUTH_MODE=no-auth</code> le dev user (<code>dev@local.test</code>) est ADMIN par défaut, l'accès est trivial. En mode <code>oauth</code>, ton email doit être dans <code>APP_ADMIN_EMAILS</code> au premier login pour atterrir en role ADMIN.</p>
+</blockquote>
+<h2 id="modes-dauthentification-phase-4">Modes d'authentification (Phase 4)<a class="headerlink" href="#modes-dauthentification-phase-4" title="Permanent link">&para;</a></h2>
+<p>Le backend supporte deux modes d'auth, switchables sans toucher au code :</p>
+<h3 id="mode-no-auth-defaut-dev-solo">Mode <code>no-auth</code> (défaut, dev solo)<a class="headerlink" href="#mode-no-auth-defaut-dev-solo" title="Permanent link">&para;</a></h3>
+<p>Spring Security bypassed via le profile <code>local-no-auth</code>. Au boot, <code>LocalNoAuthUserInitializer</code> seed un user <code>dev@local.test</code> ADMIN ; à chaque request, <code>LocalNoAuthFilter</code> injecte ce user dans le <code>SecurityContext</code>. Aucun OAuth dance, aucun login flow. <code>tilt up</code> 0-friction.</p>
+<ul>
+<li><strong>Activation</strong> : valeur par défaut dans <code>.env</code> (<code>BACKEND_AUTH_MODE=no-auth</code>, ou variable absente) ou bouton Tilt <strong>« Mode → no-auth »</strong> sur la ressource <code>backend</code>.</li>
+<li><strong>Profile actif</strong> : <code>--spring.profiles.active=local,local-no-auth</code> (calculé dans le <code>serve_cmd</code> shell).</li>
+<li><strong>Behavior</strong> : la SPA voit toujours un user authentifié ADMIN, toutes les routes accessibles, la navbar montre user menu + logout (qui no-op effectivement — le filtre re-injecte le user au prochain request).</li>
+</ul>
+<h3 id="mode-oauth-test-du-vrai-flow-google-contre-localhost">Mode <code>oauth</code> (test du vrai flow Google contre localhost)<a class="headerlink" href="#mode-oauth-test-du-vrai-flow-google-contre-localhost" title="Permanent link">&para;</a></h3>
+<p>Spring Security actif, OAuth2 Login Google OIDC, sessions backed par cookie <code>JSESSIONID</code>. Le SPA passe par la page <code>/login</code>, déclenche le redirect dance Google, et atterrit sur <code>/dashboard</code> une fois la session établie.</p>
+<p><strong>Pré-requis</strong> (à faire une fois) :</p>
+<ol>
+<li><strong>Google Cloud Console</strong> → APIs &amp; Services → Credentials → Create OAuth Client ID → Web application.</li>
+<li><strong>Authorized redirect URIs</strong> : ajouter exactement <code>http://localhost:&lt;FRONTEND_HOST_PORT&gt;/login/oauth2/code/google</code> (le <strong>port front</strong>, pas backend — grâce à <code>xfwd</code> + <code>forward-headers-strategy: framework</code>, Spring construit son <code>redirect_uri</code> sur le port SPA).</li>
+<li><strong><code>.env</code> à la racine</strong> :
+   <div class="highlight"><pre><span></span><code>SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
+SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
+APP_ADMIN_EMAILS=ton.email@gmail.com    # ton email pour atterrir en ADMIN au 1er login
+APP_FRONTEND_URL=http://localhost:4200/  # cible du redirect post-OAuth, match FRONTEND_HOST_PORT
+</code></pre></div></li>
+<li><strong>Activation</strong> : bouton Tilt <strong>« Mode → OAuth »</strong> sur la ressource <code>backend</code>, <strong>ou</strong> mettre <code>BACKEND_AUTH_MODE=oauth</code> dans <code>.env</code> manuellement.</li>
+<li><strong>OAuth consent screen</strong> dans Google Cloud Console : en mode <code>Testing</code>, ajouter ton email comme test user. Sinon Google bloque le login (« Access blocked »).</li>
+</ol>
+<p>Le flow complet :</p>
+<div class="highlight"><pre><span></span><code>SPA `/login` → bouton « Sign in with Google »
+  → window.location = `/oauth2/authorization/google`
+  → proxy CLI forward au backend avec X-Forwarded-Host: localhost:&lt;FRONTEND_HOST_PORT&gt;
+  → Spring 302 → Google (avec redirect_uri = localhost:&lt;FRONTEND_HOST_PORT&gt;/login/oauth2/code/google)
+  → tu autorises
+  → Google 302 → localhost:&lt;FRONTEND_HOST_PORT&gt;/login/oauth2/code/google
+  → proxy forward au backend, Spring exchange le code, crée la session
+  → Spring 302 → APP_FRONTEND_URL (= `http://localhost:4200/`)
+  → SPA reload, AuthService.refresh() call `/api/me`, user résolu, dashboard rendu
+</code></pre></div>
+<p><strong>Pour basculer en cours de session</strong> : clique le bouton Tilt <strong>« Mode → ... »</strong> opposé sur la ressource <code>backend</code>. Le bouton édite <code>.env</code>, touche <code>application.yml</code>, le backend redémarre dans le nouveau mode. Aucun restart Tilt complet n'est nécessaire.</p>
+<h2 id="conventions-de-commit">Conventions de commit<a class="headerlink" href="#conventions-de-commit" title="Permanent link">&para;</a></h2>
+<p>Conventional Commits en anglais. Format : <code>type(scope): description</code></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>feat</code></td>
+<td>Nouvelle fonctionnalité</td>
+</tr>
+<tr>
+<td><code>fix</code></td>
+<td>Correction de bug</td>
+</tr>
+<tr>
+<td><code>chore</code></td>
+<td>Tâche technique sans impact fonctionnel (config, deps, CI)</td>
+</tr>
+<tr>
+<td><code>refactor</code></td>
+<td>Refactoring sans changement de comportement</td>
+</tr>
+<tr>
+<td><code>docs</code></td>
+<td>Documentation uniquement</td>
+</tr>
+<tr>
+<td><code>test</code></td>
+<td>Ajout ou modification de tests</td>
+</tr>
+<tr>
+<td><code>perf</code></td>
+<td>Amélioration de performance</td>
+</tr>
+<tr>
+<td><code>audit</code></td>
+<td>Archive d'une revue de code dans <code>docs/projet/audits/</code></td>
+</tr>
+<tr>
+<td><code>revert</code></td>
+<td>Annulation d'un commit précédent</td>
+</tr>
+</tbody>
+</table>
+<p>Exemples :</p>
+<div class="highlight"><pre><span></span><code>feat(market): add TwelveDataClient with quote and time_series endpoints
+fix(indicators): correct RSI computation on flat series
+chore(docs): refresh roadmap for Phase 1 ticker pivot
+</code></pre></div>
+<p>Voir le détail dans <a href="../../projet/commit-conventions/"><code>commit-conventions.md</code></a>.</p>
+<h2 id="structure-du-projet">Structure du projet<a class="headerlink" href="#structure-du-projet" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>trade/
+├── frontend/                  # Angular 22 (single app, standalone, zoneless)
+│   ├── public/
+│   │   └── i18n/              # Fichiers de traduction `&lt;lang&gt;.json` (FR + EN)
+│   └── src/app/
+│       ├── core/              # split sur 5 sous-dossiers — api/ (HTTP) + local/ (browser) + app-state/ (UI services) + http/ (interceptors, Phase 4) + router/ (guards, Phase 4)
+│       │   ├── api/&lt;bucket&gt;/          # 14 buckets : account/ + journal/ + stats/ + lexicon/ (★ LIVE pivot) + market/, portfolio/, watchlist/, news/, analyst/, earnings/, config/, analysis/, auth/, screener/ (dormants/conservés)
+│       │   │   ├── *.repository.ts            # ports (abstract class) à la racine du bucket
+│       │   │   ├── *.service.ts               # services bucket-locaux (ex. analysis/ollama-status.service.ts, analysis/job-stream.service.ts SSE, analysis/llm-timeout.service.ts)
+│       │   │   └── adapters/*.http.ts         # HttpXxxRepository (défaut)
+│       │   ├── local/&lt;bucket&gt;/        # ports persistés navigateur (annotation/) + adapters/*.local.ts
+│       │   ├── app-state/             # services UI signal cross-cutting (theme.service.ts, language.service.ts, auth.service.ts), sans port/adapter
+│       │   ├── http/                  # HTTP interceptors (Phase 4 — auth.interceptor.ts catch 401 → /login)
+│       │   ├── router/                # Route guards (Phase 4 — authGuard, adminGuard)
+│       │   └── providers.ts           # `provideRepositories()` — wires les 20 ports (api/ + local/) → adapters
+│       └── features/          # Pages UI (primary adapters)
+│           ├── account/               # ★ LIVE (pivot) — compte broker : solde + mouvements + correction + graphe
+│           ├── journal/               # ★ LIVE (pivot) — table trades + dialog add/edit + filtres
+│           ├── journal-io/            # ★ LIVE (pivot) — export / import CSV
+│           ├── stats/                 # ★ LIVE (pivot) — table stats read-only + tri / pagination serveur
+│           ├── lexicon/               # ★ LIVE (pivot) — glossaire bilingue, recherche client-side
+│           ├── ticker/                # pré-pivot (conservé, encore routé) — dossier par symbole (graphe, indicateurs, narratif IA)
+│           ├── radar/                 # pré-pivot (conservé, encore routé) — screener gap-up small-caps
+│           ├── observability/         # 💤 dormant (pré-pivot, Phase 3) — timeline narratif vs prix, bias dashboard
+│           └── settings/              # Sidenav : préférences / configuration runtime / prompts / stats-import / lexicon (admin) / access-control
+├── backend/                   # Kotlin + Spring Boot
+│   └── src/main/kotlin/com/portfolioai/
+│       ├── account/           # ★ LIVE (pivot) — compte broker (mouvements + balance dérivée + sync journal)
+│       ├── journal/           # ★ LIVE (pivot) — trade entries (CRUD + CSV io + Pageable)
+│       ├── stats/             # ★ LIVE (pivot) — dataset stats partagé (import/export CSV admin + list paginée)
+│       ├── lexicon/           # ★ LIVE (pivot) — glossaire bilingue (findAll + CRUD admin)
+│       ├── auth/              # Phase 4 — OAuth2 Google OIDC + ADMIN/USER + profile dev local-no-auth
+│       ├── market/            # TwelveData client + mock + indicateurs (pré-pivot conservé)
+│       ├── analysis/          # Phase 1 narratif ticker + LLM dispatch (Routing/Claude/Ollama) (pré-pivot)
+│       ├── screener/          # Phase 6 — screener radar (screener_snapshot_day, conservé)
+│       ├── watchlist/         # Phase 2 — tickers suivis hors portefeuille (multi-tenant via user_id FK) (pré-pivot)
+│       ├── news/              # Phase 2 — Finnhub + mock, news par ticker
+│       ├── analyst/           # Phase 2 — Finnhub + mock, recommandations analystes
+│       ├── earnings/          # Phase 2 — Finnhub + mock, earnings trimestriels + next-date
+│       ├── config/            # Phase 2 — runtime-editable settings (app_config)
+│       └── shared/            # Utilitaires transverses
+├── docs/                      # Documentation (mkdocs-material)
+├── .claude/                   # Skills, hooks et instructions Claude Code
+├── .github/workflows/         # CI backend + frontend + CodeQL + docs (cf. technique/ops.md) + WIF smoke test
+├── devops/
+│   └── prod/                  # Dockerfile + service.yaml + README check-list (Phase 5 deploy)
+├── Tiltfile                   # local infra — boot Postgres + Ollama + backend + frontend
+└── docker-compose.yml         # services Docker managés par Tilt
+</code></pre></div>
+<h2 id="theme-et-ui">Thème et UI<a class="headerlink" href="#theme-et-ui" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Tokens CSS dans <code>frontend/src/styles.scss</code> (<code>:root</code> = sombre, <code>[data-theme='light']</code> = override clair)</li>
+<li><code>ThemeService</code> (<code>frontend/src/app/core/app-state/theme.service.ts</code>) — signal, persist localStorage, applique <code>data-theme</code> sur <code>documentElement</code></li>
+<li>Anti-FOUC : script inline dans <code>frontend/src/index.html</code> qui lit <code>localStorage</code> et pose <code>data-theme</code> avant le bootstrap Angular</li>
+<li>Composants : <code>class="btn-primary"</code>, <code>.error-banner</code>, <code>.content-header</code>, <code>.empty-state</code>, <code>.confidence-badge</code>, <code>.action-badge</code>, etc. — patterns globaux dans <code>styles.scss</code>, à utiliser plutôt que de redéfinir localement</li>
+</ul>
+<h2 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Backend : JUnit 5 + Spring Boot Test. Intégration sur <strong>vrai PostgreSQL</strong> via <strong>Testcontainers</strong> (Docker requis, plus de dépendance à Tilt ni au container <code>docker-compose</code> du dev) — détails workflow + cache dans <a href="../ops/"><code>ops.md</code></a>. <code>./gradlew test</code></li>
+<li>Frontend : <strong>Vitest</strong> + TestBed. Tests <code>*.spec.ts</code> co-localisés avec la source. <code>npm run test</code></li>
+<li>Lancer un seul test Vitest : <code>cd frontend &amp;&amp; npx vitest run src/path/to/file.spec.ts</code></li>
+</ul>
+<h2 id="lint-et-formatage">Lint et formatage<a class="headerlink" href="#lint-et-formatage" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Backend : <strong>Spotless ktfmt</strong> (Google style) — <code>./gradlew spotlessApply</code> reformate, <code>./gradlew spotlessCheck</code> vérifie. Spotless porte aussi un custom step <code>no-wildcard-imports</code> qui casse le build sur tout import en <code>package.*</code> hors allowlist (14 packages tolérés temporairement, à shrinker progressivement — cf. dette technique <code>backlog.md</code>). Le <code>.editorconfig</code> racine bloque IntelliJ d'introduire des wildcards via "Optimize Imports" — défense en profondeur côté éditeur + côté pipeline. <strong>Detekt</strong> pour le reste de l'analyse statique Kotlin (<code>./gradlew detekt</code>, rapport HTML + SARIF — voir <a href="../ops/"><code>ops.md</code></a> section Detekt).</li>
+<li>Frontend : <strong>ESLint flat config</strong> (<code>frontend/eslint.config.js</code>, Angular ESLint 21) pour l'analyse statique TS + a11y des templates. <strong>Prettier</strong> reste seul responsable du formatage (<code>eslint-config-prettier</code> désactive les règles formatage qui chevauchent). <code>npm run lint</code> en local et en CI (avant le build) ; <code>npm run lint -- --fix</code> pour auto-fixer les violations triviales. Détails ruleset dans <a href="../ops/"><code>ops.md</code></a> section ESLint. Pour lancer <code>npm run format</code> / <code>lint</code> / <code>test</code> <strong>depuis IntelliJ</strong> quand Node tourne sous WSL, voir la section suivante.</li>
+</ul>
+<h2 id="intellij-idea-interpreteur-node-sous-wsl">IntelliJ IDEA — interpréteur Node sous WSL<a class="headerlink" href="#intellij-idea-interpreteur-node-sous-wsl" title="Permanent link">&para;</a></h2>
+<p>Quand le repo vit sur le filesystem Windows (<code>C:\…\trade</code>) mais que la toolchain tourne sous <strong>WSL via <code>mise</code></strong> (le <code>Tiltfile</code> résout <code>node</code>/<code>java</code> avec <code>mise</code>, versions épinglées dans <code>.tool-versions</code> à la racine — pas de Node natif Windows), IntelliJ doit pointer sur le <strong>Node de WSL</strong> pour exécuter les scripts npm (<code>format</code>, <code>lint</code>, <code>test</code>) depuis l'IDE.</p>
+<p><code>mise</code> n'installe pas Node dans un emplacement standard et ne l'expose pas sur le PATH non-interactif. Il faut donc générer les <strong>shims <code>mise</code></strong> — un shim relit <code>.tool-versions</code> à chaque appel, donc la config IDE survit à un bump de version Node sans rien retoucher :</p>
+<div class="highlight"><pre><span></span><code>mise<span class="w"> </span>reshim<span class="w">   </span><span class="c1"># crée ~/.local/share/mise/shims/{node,npm,npx}</span>
+</code></pre></div>
+<p>Puis dans IntelliJ — <code>Settings → Languages &amp; Frameworks → Node.js</code> :</p>
+<ol>
+<li><em>Node interpreter</em> → <code>Add…</code> → <strong>Add WSL Node Interpreter…</strong> → distribution <strong>Ubuntu</strong>.</li>
+<li><em>Node interpreter path</em> (chemin Linux — pas de <code>~</code>, expanser <code>$HOME</code>) :
+   <div class="highlight"><pre><span></span><code>$HOME/.local/share/mise/shims/node     # p.ex. /home/&lt;user&gt;/.local/share/mise/shims/node
+</code></pre></div>
+   (équivalent UNC pour parcourir depuis l'explorateur : <code>\\wsl.localhost\Ubuntu\home\&lt;user&gt;\.local\share\mise\shims\node</code>)</li>
+<li><em>Package manager</em> : <code>npm</code> (auto-détecté à côté du shim).</li>
+</ol>
+<p>Lancer un script : clique le ▶ dans la gouttière à côté de l'entrée dans <code>frontend/package.json</code>, ou via la fenêtre d'outils <strong>npm</strong>. Tout s'exécute sous le Node WSL.</p>
+<blockquote>
+<p><strong>Pourquoi pas le chemin concret <code>…/installs/node/&lt;version&gt;/bin/node</code> ?</strong> Il marche aussi, mais il fige la version (p.ex. <code>24.15.0</code>) : au prochain bump de <code>.tool-versions</code>, IntelliJ pointe sur un install supprimé et il faut corriger le chemin à la main. Le shim évite ça.</p>
+<p><strong>Prettier natif (optionnel)</strong> — pour <em>Reformat Code</em> / format-on-save sans passer par le script npm : <code>Settings → Languages &amp; Frameworks → JavaScript → Prettier</code>, <em>Prettier package</em> = <code>…\frontend\node_modules\prettier</code> (le <code>node_modules</code> du frontend, installé par le npm WSL → binaires Linux), coche <em>On 'Reformat Code' action</em> / <em>On save</em>. Prettier tourne alors avec l'interpréteur WSL configuré ci-dessus.</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../ddd/" class="md-footer__link md-footer__link--prev" aria-label="Previous: DDD — Bounded Contexts">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                DDD — Bounded Contexts
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../providers/" class="md-footer__link md-footer__link--next" aria-label="Next: Providers externes">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Providers externes
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

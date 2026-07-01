@@ -1,0 +1,2106 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/devops/decision-ollama-deploiement/">
+      
+      
+        <link rel="prev" href="../dns-analyse/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Décision : déploiement Ollama - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#decision-deploiement-ollama-dev-local-mac-vs-cible-serveur" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Décision : déploiement Ollama
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#decision-retenue-option-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décision retenue — option 3
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trace-historique-analyse-des-3-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace historique — analyse des 3 options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contexte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contexte
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-sortir-ollama-du-docker-composeyml-completement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1 — Sortir Ollama du docker-compose.yml complètement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-garder-ollama-dans-compose-pour-cible-linux-future-override-local-mac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2 — Garder Ollama dans Compose pour cible Linux future, override local Mac
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-stick-avec-claude-par-defaut-ollama-optionnel-statu-quo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3 — Stick avec Claude par défaut, Ollama optionnel (statu quo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommandation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommandation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-conditionnelle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Décision conditionnelle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sous-questions-ouvertes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sous-questions ouvertes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#doc-a-mettre-a-jour-selon-la-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Doc à mettre à jour selon la décision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="decision-deploiement-ollama-dev-local-mac-vs-cible-serveur">Décision — déploiement Ollama (dev local Mac vs cible serveur)<a class="headerlink" href="#decision-deploiement-ollama-dev-local-mac-vs-cible-serveur" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Statut</strong> : ✅ Tranchée le <strong>2026-05-09</strong> — <strong>Option 3 retenue (statu quo Claude-first, Ollama containerisé en CPU dégradé sur Mac)</strong>. La trace ci-dessous garde l'analyse des 3 options pour qu'un futur arbitrage (machine dédiée, contributeurs externes, multi-user) puisse réévaluer sans repartir de zéro.</p>
+</blockquote>
+<h2 id="decision-retenue-option-3">Décision retenue — option 3<a class="headerlink" href="#decision-retenue-option-3" title="Permanent link">&para;</a></h2>
+<p><strong>Rationale</strong> : la prochaine étape est l'achat d'une clé Anthropic, ce qui va naturellement tirer 95 %+ de l'usage vers Claude (latence 2-5 s vs 60-180 s, qualité narrative supérieure, coût négligeable à l'échelle perso). Ollama redevient un outil de dev — utile pour exercer le pipeline (parsing, validation, retry, futur SSE) sans cramer des appels Claude à chaque itération, et pour tester le runtime config switch <code>llm.provider: claude → ollama</code>. Pour ces deux cas, la lenteur CPU sur Mac est acceptable (2-3 narratifs par session de dev, pas une rafale).</p>
+<p><strong>Pourquoi pas option 1 (sortie de Compose + install natif)</strong> : aurait débloqué Metal et rendu Ollama « vraiment utilisable », mais aurait cassé le « clone + <code>tilt up</code> = tout marche » qu'on vient de polir avec le panneau État Ollama et l'eject from VRAM. Le coût onboarding ne se justifie pas tant qu'Ollama n'est pas le chemin principal. Philosophie utilisateur : pas envie de sortir des services hors Docker tant qu'on n'y est pas obligé.</p>
+<p><strong>Pourquoi pas option 2 (override Compose)</strong> : over-engineering pour une cible Linux GPU hypothétique — le ticket Phase 5 « Analyse hébergement » 🔴 candidate sur OVH / Hetzner / Scaleway / Lightsail dans la fourchette 5-15 €/mois, aucun GPU à ce prix. Maintenir deux setups parallèles paie une dette qui n'arrivera peut-être jamais.</p>
+<p><strong>Re-trigger pour réévaluer</strong> :
+- Achat d'une <strong>machine dédiée</strong> (Linux + GPU, ou Mac Studio destiné à servir l'app à plusieurs) → option 1 ou 2 redeviennent intéressantes.
+- Usage Ollama qui dépasse <strong>20 % des sessions</strong> sur 2-3 semaines consécutives → option 1 vaut ses 30 min d'implémentation.
+- Distribution du repo à des <strong>contributeurs externes</strong> (Linux + Windows + Mac mélangés) → option 2 redevient pertinente pour rester inclusif.</p>
+<p><strong>Implémentation collatérale</strong> (faite dans la même session, ~20 min) :
+- <code>docs/technique/developpement.md</code> — paragraphe « Performance Ollama sur Mac » qui documente la limite Metal-via-Docker et redirige vers Claude pour le quotidien.
+- <code>docs/devops/commandes-pratiques.md</code> — diagnostic enrichi (<code>docker stats portfolioai-ollama</code>) pour reconnaître la saturation CPU et la traiter comme un trait connu.
+- <code>docs/technique/architecture.md &gt; Décisions techniques notables</code> — entrée courte qui formalise le statu quo.</p>
+<hr />
+<h2 id="trace-historique-analyse-des-3-options">Trace historique — analyse des 3 options<a class="headerlink" href="#trace-historique-analyse-des-3-options" title="Permanent link">&para;</a></h2>
+<h2 id="contexte">Contexte<a class="headerlink" href="#contexte" title="Permanent link">&para;</a></h2>
+<p>Le 2026-05-07, une analyse narrative sur <code>qwen2.5:3b</code> a saturé 9 cores CPU (~918 % <code>docker stats</code>) pendant 60–180 s. Cause racine identifiée :</p>
+<ul>
+<li><strong>Docker Desktop sur Mac = Linux VM virtualisée</strong>.</li>
+<li>Apple n'expose pas Metal dans la VM → Ollama tourne en <strong>CPU pur</strong> dans le container, là où un Mac M-series natif accélère <code>qwen2.5:3b</code> 10–20× via Metal.</li>
+</ul>
+<p>La philosophie du projet « tout containeriser » (cohérente pour Postgres, le backend Spring, le frontend nginx) <strong>casse</strong> sur Ollama en dev local Mac, sauf à accepter des temps de réponse 10× plus lents et un fan qui hurle.</p>
+<p>Trois questions sous-jacentes à clarifier avant de trancher :</p>
+<ol>
+<li><strong>Cible Phase 5 ?</strong> Si VPS Linux modeste sans GPU, Ollama y sera CPU aussi → la question Mac vs Linux disparaît, le sujet devient « est-ce qu'on garde Ollama du tout en prod ». Si serveur GPU (AWS p3, OVH avec carte), Ollama containerisé tourne natif et la question est purement dev-local.</li>
+<li><strong>Quel % de l'usage projet en mode offline ?</strong> Si 5 % (« je teste sans clé Anthropic une fois par mois »), tolérer la lenteur Mac est acceptable. Si 80 % (« je préfère ne pas dépendre d'une API »), le compromis devient inacceptable.</li>
+<li><strong>Single-user / single-Mac longtemps ?</strong> Si oui, optimiser pour le poste personnel. Si on prévoit de distribuer le repo (Linux + Windows + Mac), une option plus inclusive s'impose.</li>
+</ol>
+<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h3 id="option-1-sortir-ollama-du-docker-composeyml-completement">Option 1 — Sortir Ollama du <code>docker-compose.yml</code> complètement<a class="headerlink" href="#option-1-sortir-ollama-du-docker-composeyml-completement" title="Permanent link">&para;</a></h3>
+<p>Installer Ollama en natif macOS (<code>brew install ollama &amp;&amp; brew services start ollama</code>), pointer <code>ollama.base-url</code> sur <code>http://localhost:11434</code> (le daemon natif).</p>
+<table>
+<thead>
+<tr>
+<th>Avantages</th>
+<th>Inconvénients</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metal GPU activé → vitesse normale (10–20× perf actuelle)</td>
+<td>Un service de plus à gérer hors Tilt</td>
+</tr>
+<tr>
+<td>Zéro friction perçue côté UX en mode offline</td>
+<td>Perd la reproductibilité « clone repo, <code>tilt up</code>, tout marche »</td>
+</tr>
+<tr>
+<td>Aucune dette d'infra</td>
+<td>Si on distribue le repo, chaque dev doit installer Ollama natif (sur Linux c'est bien, sur Windows c'est moins clean)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Coût implémentation</strong> : ~30 min (retrait Compose + ajustement <code>ollama.base-url</code> selon profil).</p>
+<h3 id="option-2-garder-ollama-dans-compose-pour-cible-linux-future-override-local-mac">Option 2 — Garder Ollama dans Compose pour cible Linux future, override local Mac<a class="headerlink" href="#option-2-garder-ollama-dans-compose-pour-cible-linux-future-override-local-mac" title="Permanent link">&para;</a></h3>
+<p>Garder <code>ollama:</code> dans le <code>docker-compose.yml</code> (où NVIDIA Container Toolkit + <code>--gpus all</code> font le job sur serveur GPU) <strong>mais</strong> ajouter un Compose override (ou profil Tilt) qui le sort sur Mac.</p>
+<table>
+<thead>
+<tr>
+<th>Avantages</th>
+<th>Inconvénients</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Un seul <code>docker-compose.yml</code> qui marche en prod Linux + Mac dev</td>
+<td>Complexité de config Tilt + override file à maintenir</td>
+</tr>
+<tr>
+<td>Plus inclusif si on distribue le repo</td>
+<td>Risque de drift entre les deux setups (debug d'un bug uniquement sur Mac, etc.)</td>
+</tr>
+<tr>
+<td></td>
+<td>La cible Linux GPU est hypothétique tant que Phase 5 n'a pas tranché l'hébergement</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Coût implémentation</strong> : ~1 h (override + Tilt resource conditionnel + doc des deux modes).</p>
+<h3 id="option-3-stick-avec-claude-par-defaut-ollama-optionnel-statu-quo">Option 3 — Stick avec Claude par défaut, Ollama optionnel (statu quo)<a class="headerlink" href="#option-3-stick-avec-claude-par-defaut-ollama-optionnel-statu-quo" title="Permanent link">&para;</a></h3>
+<p>Aucun changement. C'est déjà la philo Phase 1 (<code>llm.provider: claude</code> dans <code>application.yml</code>). Si Ollama est juste un fallback offline « si je veux tester sans réseau », tolérer 60–180 s en CPU sur Mac n'est pas dramatique.</p>
+<table>
+<thead>
+<tr>
+<th>Avantages</th>
+<th>Inconvénients</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zéro changement</td>
+<td>Les modèles locaux ne sont pas vraiment utilisables en mode quotidien sur Mac dev</td>
+</tr>
+<tr>
+<td>Alignement avec la décision déjà prise</td>
+<td>La friction « Ollama saturé 60-180 s » revient à chaque test offline</td>
+</tr>
+<tr>
+<td>Simplicité de doc / onboarding</td>
+<td>Pas honnête sur les limites du setup actuel — un nouveau dev qui essaye Ollama bute</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Coût implémentation</strong> : 0. <strong>Coût intellectuel</strong> : reconnaître publiquement que le setup Ollama-in-Docker sur Mac est dégradé (1 paragraphe dans <code>developpement.md</code> + un troubleshooting dans <code>commandes-pratiques.md</code>).</p>
+<h2 id="recommandation">Recommandation<a class="headerlink" href="#recommandation" title="Permanent link">&para;</a></h2>
+<p><strong>Option 3 par défaut, à reconsidérer si tu confirmes utiliser Ollama au-delà de 20 % de tes sessions.</strong></p>
+<p>Rationale :</p>
+<ol>
+<li><strong>Phase 1 est explicitement Claude-first</strong> depuis le début (<code>llm.provider: claude</code> est le défaut YAML). La décision « Claude principal, Ollama backup » a déjà été prise et tient toujours — Claude répond en 1–3 s avec une qualité narrative supérieure à <code>qwen2.5:3b</code>.</li>
+<li><strong>L'incident du 2026-05-07 est un test ponctuel, pas un usage récurrent</strong>. Tu as switché à Ollama pour valider le runtime config v2 (toggle <code>llm.provider</code>), pas pour produire des narratifs en série. Optimiser pour ce cas serait sur-investir.</li>
+<li><strong>Cibles serveur Phase 5 indécises</strong>. Avant de containeriser pour Linux GPU (option 2), il faut savoir où on déploie. Le ticket Phase 5 « Analyse hébergement » n'a pas encore été tranché — investir maintenant dans une stratégie cross-platform serait précoce.</li>
+<li><strong>Single-user single-Mac est l'horizon prévisible</strong>. Si l'app reste perso, l'option la plus pragmatique est le natif (option 1). Mais option 1 a un coût onboarding qui ne se justifie pas tant qu'Ollama n'est pas utilisé tous les jours.</li>
+<li><strong>Le coût de l'inaction est borné</strong>. La saturation CPU n'est pas une régression — c'est un trait connu et documenté du setup. Tant qu'on l'écrit clairement quelque part (« Ollama est en CPU mode dans le container Mac, attendre 60-180 s pour un narratif est normal »), un dev qui essaye n'est pas surpris.</li>
+</ol>
+<h2 id="decision-conditionnelle">Décision conditionnelle<a class="headerlink" href="#decision-conditionnelle" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Si tu confirmes que <strong>Ollama est ton chemin principal en dev</strong> (≥ 50 % des sessions), bascule en <strong>option 1</strong> : sortie de Compose + install natif + 1 h d'implémentation. Documenter en parallèle dans <code>developpement.md</code> que Ollama tourne hors Tilt sur Mac et qu'il faut le démarrer séparément.</p>
+<p>Si tu confirmes <strong>Claude principal + Ollama occasionnel</strong> (&lt; 20 %), reste en <strong>option 3</strong> (statu quo) avec :
+- 1 paragraphe ajouté dans <code>docs/technique/developpement.md</code> sous une section « Performance Ollama sur Mac » qui documente la limitation Metal-via-Docker.
+- 1 entrée dans <code>docs/devops/commandes-pratiques.md</code> sur le diagnostic (<code>docker stats portfolioai-ollama</code> quand le narratif rame).</p>
+</blockquote>
+<h2 id="sous-questions-ouvertes">Sous-questions ouvertes<a class="headerlink" href="#sous-questions-ouvertes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <strong>Quel pourcentage de tes sessions tu lances Ollama</strong> (vs Claude) ? Approximation suffit.</li>
+<li>[ ] <strong>As-tu une cible serveur en tête pour Phase 5</strong> ? OVH GPU / VPS sans GPU / autre ?</li>
+<li>[ ] <strong>Est-ce que tu prévois de distribuer le repo à d'autres devs</strong> (collègue, contrib externe, démo publique) dans les 6 prochains mois ?</li>
+</ul>
+<p>Une fois ces 3 questions répondues, l'arbitrage entre options 1 / 2 / 3 devient mécanique.</p>
+<h2 id="doc-a-mettre-a-jour-selon-la-decision">Doc à mettre à jour selon la décision<a class="headerlink" href="#doc-a-mettre-a-jour-selon-la-decision" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Décision</th>
+<th>Fichiers à éditer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Option 1</strong></td>
+<td><code>docker-compose.yml</code> (drop service <code>ollama</code>), <code>docs/technique/developpement.md</code> (instructions install Ollama natif via <code>brew</code>), <code>docs/technique/ops.md</code> (cible déploiement), <code>docs/devops/commandes-pratiques.md</code> (les commandes <code>docker compose ... ollama</code> deviennent <code>brew services</code> ou équivalent), <code>Tiltfile</code> (potentiellement un <code>local_resource</code> qui surveille <code>ollama serve</code>), <code>docs/technique/architecture.md &gt; Décisions techniques notables</code> (entrée courte rappelant le pourquoi).</td>
+</tr>
+<tr>
+<td><strong>Option 2</strong></td>
+<td><code>docker-compose.yml</code> (garder service <code>ollama</code> pour Linux), nouveau <code>docker-compose.override.local.yml</code> (sortie Mac), <code>Tiltfile</code> (resource conditionnel), <code>docs/technique/developpement.md</code> (deux modes documentés), <code>docs/technique/architecture.md &gt; Décisions techniques notables</code> (idem).</td>
+</tr>
+<tr>
+<td><strong>Option 3</strong></td>
+<td><code>docs/technique/developpement.md</code> (paragraphe « Performance Ollama sur Mac »), <code>docs/devops/commandes-pratiques.md</code> (diagnostic <code>docker stats</code>), <code>docs/technique/architecture.md &gt; Décisions techniques notables</code> (statu quo formalisé).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="trigger">Trigger<a class="headerlink" href="#trigger" title="Permanent link">&para;</a></h2>
+<p>Décision à prendre quand tu réponds aux 3 sous-questions ci-dessus. Tant que la décision n'est pas prise, le statu quo est option 3 par défaut (l'app marche, Ollama est lent en dev Mac mais utilisable comme backup).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../dns-analyse/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Analyse DNS (choix nom de domaine)">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Analyse DNS (choix nom de domaine)
+              </div>
+            </div>
+          </a>
+        
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

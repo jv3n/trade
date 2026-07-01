@@ -1,0 +1,2234 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/metier/fonctionnalites/">
+      
+      
+        <link rel="prev" href="../vision/">
+      
+      
+        <link rel="next" href="../../technique/developper/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Fonctionnalités - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fonctionnalites" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Fonctionnalités
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#journal-de-trading-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Journal de trading — live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Journal de trading — live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#saisie-dun-trade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Saisie d'un trade
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#table-relecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table &amp; relecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-import-csv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export / import CSV
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compte-broker-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compte broker — live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compte broker — live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solde-graphe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solde &amp; graphe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mouvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mouvements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#candidats-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Candidats — live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Candidats — live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#preparation-sizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Préparation &amp; sizing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cycle-de-vie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cycle de vie
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stats-trades-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stats trades — live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stats trades — live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#affichage-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Affichage (/stats)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#import-export-csv-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import / export CSV (admin)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lexique-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lexique — live
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lexique — live">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consultation-lexicon-tous" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consultation (/lexicon, tous)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gestion-settingslexicon-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gestion (/settings/lexicon, admin)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backend_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentification-multi-tenant-toujours-actif-phase-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentification &amp; multi-tenant — toujours actif (Phase 4)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploiement-toujours-actif-phase-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Déploiement — toujours actif (Phase 5)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#surface-pre-pivot-dormante" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface pré-pivot (dormante)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="fonctionnalites">Fonctionnalités<a class="headerlink" href="#fonctionnalites" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>L'app a pivoté en juin 2026</strong> d'un outil d'analyse de marché par ticker (narratif IA) vers un <strong>journal de trading</strong>. Les surfaces produit <strong>live</strong> sont le <strong>compte broker</strong>, le <strong>journal</strong>, les <strong>stats</strong> et le <strong>lexique</strong> ci-dessous. Tout le reste (dossiers ticker, narratifs LLM, radar, portefeuille) reste dans le code en <strong>sommeil</strong> — décrit en bas sous « Surface pré-pivot (dormante) ». L'infrastructure auth (Phase 4) et déploiement (Phase 5) reste active. Voir la <a href="../../projet/roadmap/">roadmap</a> pour le périmètre in / out.</p>
+</blockquote>
+<h2 id="journal-de-trading-live">Journal de trading — live<a class="headerlink" href="#journal-de-trading-live" title="Permanent link">&para;</a></h2>
+<p>Le cœur du produit. L'utilisateur logue chaque trade ; la table est l'unité atomique.</p>
+<h3 id="saisie-dun-trade">Saisie d'un trade<a class="headerlink" href="#saisie-dun-trade" title="Permanent link">&para;</a></h3>
+<p>Dialog « Add trade » (création / édition) structuré en trois blocs :</p>
+<ul>
+<li><strong>Exécution</strong> (requis) — date, ticker (≤ 20 car., majuscule), <em>play</em> (A / B), <em>pattern</em> (GUS / FRD), taille (&gt; 0), prix d'entrée (&gt; 0).</li>
+<li><strong>Sortie</strong> (optionnel) — prix de sortie, P&amp;L en dollars, gain % — <strong>fournis par l'utilisateur</strong> ; le backend ne calcule pas le P&amp;L, il stocke ce qui est saisi.</li>
+<li><strong>Checklist pré-trade &amp; post-mortem</strong> (optionnel) — fenêtre 9h35–10h, gap up ≥ 50 %, prix $1–$10, float 3–50M, attente du push, <em>open side</em> (front / back), short sur résistance, <em>exit strategy</em> (swing +20 % / EOD), note, note d'erreur.</li>
+</ul>
+<p>Formulaire en Signal Forms ; validation inline ; les champs optionnels laissés vides deviennent <code>null</code>.</p>
+<h3 id="table-relecture">Table &amp; relecture<a class="headerlink" href="#table-relecture" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Colonnes</strong> : date, ticker, play, pattern, taille, prix entrée, prix sortie, P&amp;L $, gain %, actions (éditer / supprimer).</li>
+<li><strong>Tri serveur</strong> sur chaque colonne (pattern controlled-component <code>[matSortActive]</code> / <code>[matSortDirection]</code>) ; défaut <code>tradeDate DESC, createdAt DESC</code>.</li>
+<li><strong>Pagination serveur</strong> (<code>Page&lt;T&gt;</code> Spring) — tailles de page 10 / 25 / 50 / 100.</li>
+<li><strong>Filtres</strong> (drawer) : preset de période (ce mois / mois dernier / trimestre / année…), date range custom, plays (multi), patterns (multi), statut (ouvert / clos / gagnant / perdant), recherche ticker (debounce 250 ms).</li>
+<li><strong>CRUD</strong> avec snackbars de feedback succès (3 s) / erreur (5 s) ; suppression confirmée.</li>
+</ul>
+<h3 id="export-import-csv">Export / import CSV<a class="headerlink" href="#export-import-csv" title="Permanent link">&para;</a></h3>
+<p>Page dédiée (<code>journal-io</code>) :</p>
+<ul>
+<li><strong>Export</strong> — télécharge tout le journal en CSV (<code>journal-export-YYYY-MM-DD.csv</code>), UTF-8 BOM, CRLF, RFC 4180, 19 colonnes.</li>
+<li><strong>Import</strong> — drag-drop ou file picker ; <strong>batch atomique</strong> : si une ligne échoue, <strong>rien</strong> n'est persisté, et les erreurs sont rendues ligne par ligne (<code>{line, message}</code>). Export → import est <strong>roundtrip-safe</strong>.</li>
+</ul>
+<h3 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h3>
+<p>Module <code>journal/</code> (hexagonal) : <code>TradeEntry</code> (19 champs) + 4 enums Postgres natifs (<code>trade_play</code>, <code>trade_pattern</code>, <code>trade_open_side</code>, <code>trade_exit_strategy</code>), <code>TradeEntryService</code>, <code>TradeEntryRepository</code> (+ <code>TradeEntrySpecifications</code> pour les filtres dynamiques), <code>TradeEntryController</code>. <strong>7 endpoints</strong> sous <code>/api/journal/trades</code> (list paginée, get, create, update, delete, export, import). Multi-tenant : chaque opération est scopée au <code>user_id</code> courant (404 sur un ID étranger, jamais 403, pour ne pas leaker l'existence d'une ligne). Schéma : table <code>trade_entry</code> fondée dans <code>V1__init.sql</code> (champs optionnels relâchés en V4). Détail technique : <a href="../../technique/architecture/"><code>architecture.md</code></a>.</p>
+<hr />
+<h2 id="compte-broker-live">Compte broker — live<a class="headerlink" href="#compte-broker-live" title="Permanent link">&para;</a></h2>
+<p>La valeur du compte broker, <strong>saisie à la main</strong> (aucune connexion au broker) — première entrée du sidenav. L'app est la source de vérité côté soft, réconciliée manuellement avec le broker.</p>
+<h3 id="solde-graphe">Solde &amp; graphe<a class="headerlink" href="#solde-graphe" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Hero solde courant</strong> + <strong>variation sur la période</strong> (montant + %, sélecteur 1S / 1M / 3M / YTD / Tout).</li>
+<li><strong>Graphe d'évolution</strong> de la balance (<code>StbAreaChart</code>, SVG maison, tooltip au survol) — série cumulée end-of-day, fenêtrage + variation calculés côté front.</li>
+</ul>
+<h3 id="mouvements">Mouvements<a class="headerlink" href="#mouvements" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Registre groupé par date</strong> avec <strong>sous-total quotidien</strong> ; ajout de <strong>dépôts / retraits</strong>, <strong>correction de balance</strong> (on saisit la valeur réelle du broker → un mouvement de correction enregistre l'écart : frais, financement, slippage non captés ailleurs).</li>
+<li><strong>Balance dérivée</strong> : <code>dépôts − retraits + P&amp;L trades ± corrections</code> (jamais stockée, somme du registre).</li>
+<li><strong>Trades du journal</strong> : le P&amp;L réalisé alimente le solde en mouvement <code>TRADE</code> <strong>read-only</strong> (poussé automatiquement à la clôture, ticker en chip + lien vers le journal). Édition / suppression réservées aux mouvements manuels.</li>
+<li><strong>Panneau résumé</strong> : total déposé, total retiré, net injecté, P&amp;L trades, corrections, <strong>rendement</strong> (<code>solde − net injecté</code>, en $ et en % du net injecté — dérivé côté front), nb de mouvements.</li>
+</ul>
+<h3 id="backend_1">Backend<a class="headerlink" href="#backend_1" title="Permanent link">&para;</a></h3>
+<p>Module <code>account/</code> (hexagonal) : <code>AccountMovement</code> + enum Postgres <code>account_movement_type</code>, <code>AccountService</code> (balance dérivée, correction = delta signé, série cumulée end-of-day), <code>AccountController</code> (<code>/api/account</code> : <code>movements</code> paginé, <code>summary</code>, <code>balance-series</code>, <code>corrections</code>, CRUD mouvements). Multi-tenant scopé <code>user_id</code> (404 sur ID étranger). Sync journal → compte par event (<code>TradeChangedEvent</code> → <code>TRADE</code> read-only, cascade DB sur suppression). Schéma : table <code>account_movement</code> (migration <strong>V6</strong>). Mono-compte, USD. Détail : <a href="../../technique/architecture/"><code>architecture.md</code></a>.</p>
+<hr />
+<h2 id="candidats-live">Candidats — live<a class="headerlink" href="#candidats-live" title="Permanent link">&para;</a></h2>
+<p>Le <strong>cockpit de préparation d'un short</strong> : chaque matin, on prépare les tickers qu'on envisage de shorter avec leur plan de trade complet. Une page <strong>upsert + dropdown</strong> — on enregistre un candidat, un sélecteur liste ceux <strong>du jour</strong>, on en choisit un pour le ré-éditer. Absorbe les anciennes calculettes (GUS, borrow).</p>
+<h3 id="preparation-sizing">Préparation &amp; sizing<a class="headerlink" href="#preparation-sizing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Paramètres</strong> : capital total, % capital à risque (→ $ à risque dérivé), prix d'open, stop %.</li>
+<li><strong>Échelle d'entrée au risque</strong> : par palier (% de l'open), prix, <strong>shares max</strong> (<code>$ risque / ((stop − palier) × open)</code>) et investissement — le max shortable pour qu'un stop coûte pile le budget risque.</li>
+<li><strong>Suivi d'exécution</strong> (paliers fixes) : on saisit les shares remplies par palier → risque courant, <strong>résidu</strong> de budget, totaux. <strong>Sizing uniquement</strong> (la position moyenne est portée par les entrées réelles ci-dessous).</li>
+<li><strong>Entrées réelles</strong> (saisie libre) : un leg par entrée (prix + shares saisis, non contraint aux paliers) → entrée %, risque $, risque %, investissement et la <strong>position moyenne pondérée</strong> — c'est elle qui alimente le cover.</li>
+<li><strong>Échelle de sortie / cover</strong> : prix de sortie + shares couvertes → % et $ gain/perte vs position moyenne, TP moyen.</li>
+<li><strong>Données du jour</strong> (saisies) : clôture veille, float, volume, push, coût borrow — avec les calculs <strong>GUS %</strong> et <strong>frais borrow %</strong> intégrés (le <strong>% push</strong> reste hors scope v1 : <code>morningPush</code> est saisi mais pas calculé).</li>
+<li><strong>Créer une stat</strong> : un bouton ouvre l'<code>add-stat-dialog</code> pré-rempli (date, ticker, gap % issu du GUS, open) → enregistré dans le module <strong>stats</strong> (pas de promotion directe vers un trade du journal).</li>
+</ul>
+<h3 id="cycle-de-vie">Cycle de vie<a class="headerlink" href="#cycle-de-vie" title="Permanent link">&para;</a></h3>
+<p>Piloté par la <strong>date de séance</strong> : la dropdown ne montre que les candidats du jour ; les antérieurs restent en base mais sortent du picker (pas de statut explicite).</p>
+<h3 id="backend_2">Backend<a class="headerlink" href="#backend_2" title="Permanent link">&para;</a></h3>
+<p>Module <code>candidates/</code> (hexagonal) : <code>Candidate</code> (paramètres + données + legs <code>fills</code>/<code>entries</code>/<code>exits</code> en JSONB), <code>CandidateService</code> (upsert, <code>listForDate</code>, validation in-service, legs (dé)sérialisés via <code>ObjectMapper</code>), <code>CandidateController</code> (<code>/api/candidates</code> : <code>GET ?date=</code>, <code>GET /{id}</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>). Multi-tenant scopé <code>user_id</code> (404 sur ID étranger). Toutes les valeurs dérivées sont recalculées <strong>côté front</strong> (<code>candidates.math.ts</code>, fonctions pures). Schéma : table <code>candidate</code> (migration <strong>V7</strong>). Détail : <a href="../../technique/architecture/"><code>architecture.md</code></a>.</p>
+<hr />
+<h2 id="stats-trades-live">Stats trades — live<a class="headerlink" href="#stats-trades-live" title="Permanent link">&para;</a></h2>
+<p>Dataset <strong>global, partagé</strong> (pas multi-tenant) : le contexte de setup des shorts gap-up + les niveaux de prix du jour + les mouvements dérivés <code>%push</code> / <code>%LOD</code> / <code>%EOD</code>. Alimenté par un <strong>import CSV admin</strong>, lisible par tout utilisateur authentifié.</p>
+<h3 id="affichage-stats">Affichage (<code>/stats</code>)<a class="headerlink" href="#affichage-stats" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Table read-only</strong> des 17 colonnes (date, ticker, gap, float, % institutions, flags <code>&gt;20% inst</code> / <code>&lt;$1</code> / <code>SSR</code> / <code>entrée &gt; 11h</code>, niveaux open/high/lod/eod, <code>%push</code>/<code>%LOD</code>/<code>%EOD</code>, notes). Flags booléens en icônes, <code>%</code> colorés par signe.</li>
+<li><strong>Tri + pagination serveur</strong> (<code>Page&lt;T&gt;</code> Spring, tri par défaut date décroissante, tailles 10 / 25 / 50 / 100). Pas de CRUD ni filtres : le dataset est alimenté par l'import.</li>
+</ul>
+<h3 id="import-export-csv-admin">Import / export CSV (admin)<a class="headerlink" href="#import-export-csv-admin" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Page <strong>admin-only</strong> <code>/settings/stats-import</code> (drag-drop ou file picker). <strong>Batch atomique</strong> ; export → import <strong>roundtrip-safe</strong> (14 colonnes, les <code>%</code> recalculées à l'insertion sont omises). Le CSV source est produit hors-app par l'outil Go <code>scripts/stats</code>.</li>
+</ul>
+<h3 id="backend_3">Backend<a class="headerlink" href="#backend_3" title="Permanent link">&para;</a></h3>
+<p>Module <code>stats/</code> (hexagonal, distinct de <code>journal/</code>) : <code>StatEntry</code> (table <code>stat_entry</code>, <strong>sans <code>user_id</code></strong>), <code>StatMetrics</code> (calcul pur des 3 <code>%</code>), <code>StatEntryService</code> (<code>importCsv</code> atomique + <code>findAllPaged</code> + <code>exportAllAsCsv</code>), <code>StatEntryController</code> (<code>GET /api/stats</code> lecture pour tous, <code>POST /api/stats/import</code> ADMIN-only, <code>GET /api/stats/export</code>). Schéma : table <code>stat_entry</code> fondée dans <code>V1__init.sql</code> (étendue en V2 / V3 / V5). Détail technique : <a href="../../technique/architecture/"><code>architecture.md</code></a>.</p>
+<hr />
+<h2 id="lexique-live">Lexique — live<a class="headerlink" href="#lexique-live" title="Permanent link">&para;</a></h2>
+<p>Glossaire <strong>partagé</strong> des termes de trading (label EN + définition <strong>FR et EN</strong>, les deux obligatoires). Dataset global (pas multi-tenant) : <strong>lecture pour tous, édition réservée à l'admin</strong>. <strong>Pas d'import/export.</strong></p>
+<h3 id="consultation-lexicon-tous">Consultation (<code>/lexicon</code>, tous)<a class="headerlink" href="#consultation-lexicon-tous" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Accessible depuis le <strong>bas de la sidenav</strong> (icône <code>menu_book</code>, séparée de la navigation principale).</li>
+<li><strong>Table en lecture seule</strong> (terme / définition <strong>dans la langue de l'utilisateur</strong>) avec <strong>recherche client-side sur le terme + les deux définitions</strong> : le glossaire est chargé d'un coup et filtré en direct, sans round-trip backend.</li>
+</ul>
+<h3 id="gestion-settingslexicon-admin">Gestion (<code>/settings/lexicon</code>, admin)<a class="headerlink" href="#gestion-settingslexicon-admin" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Même table en <strong>mode CRUD</strong> : ajout / édition via dialog (2 champs), suppression confirmée, snackbars de feedback. Terme <strong>unique</strong> (insensible à la casse).</li>
+</ul>
+<h3 id="backend_4">Backend<a class="headerlink" href="#backend_4" title="Permanent link">&para;</a></h3>
+<p>Module <code>lexicon/</code> (hexagonal, distinct) : <code>LexiconEntry</code> (table <code>lexicon_entry</code>, <code>definition_fr</code> + <code>definition_en</code>, <strong>sans <code>user_id</code></strong>), <code>LexiconEntryService</code> (<code>findAll</code> non paginé trié + CRUD, unicité casse-insensible → 409, champs vides → 400), <code>LexiconEntryController</code> (<code>/api/lexicon</code> : <code>GET</code> lecture pour tous, <code>POST</code> / <code>PUT</code> / <code>DELETE</code> <strong>ADMIN-only</strong>). Schéma : table <code>lexicon_entry</code> (bilingue) fondée dans <code>V1__init.sql</code>, avec le seed FR/EN des 117 termes. Détail technique : <a href="../../technique/architecture/"><code>architecture.md</code></a>.</p>
+<hr />
+<h2 id="authentification-multi-tenant-toujours-actif-phase-4">Authentification &amp; multi-tenant — toujours actif (Phase 4)<a class="headerlink" href="#authentification-multi-tenant-toujours-actif-phase-4" title="Permanent link">&para;</a></h2>
+<p>OAuth2 Google OIDC + Spring Security, rôles ADMIN / USER via whitelist email, profile dev <code>local-no-auth</code> (bypass Spring Security + ADMIN fake <code>dev@local.test</code>). <strong>Le journal en dépend</strong> : <code>trade_entry.user_id</code> est une FK vers <code>app_user</code>. Toggle <code>BACKEND_AUTH_MODE</code> (no-auth ↔ oauth) dans <code>.env</code> + boutons Tilt. Détail : <a href="../../technique/developpement/#modes-dauthentification-phase-4"><code>developpement.md &gt; Modes d'authentification</code></a>.</p>
+<h2 id="deploiement-toujours-actif-phase-5">Déploiement — toujours actif (Phase 5)<a class="headerlink" href="#deploiement-toujours-actif-phase-5" title="Permanent link">&para;</a></h2>
+<p>Cloud Run + Supabase Postgres (région Montréal <code>ca-central-1</code>), pipeline GitOps release-triggered (Workload Identity Federation, zéro clé JSON), 5 secrets runtime via GCP Secret Manager, backup hebdo <code>pg_dump → R2</code> (rétention 30 j), domaine Cloudflare, Sentry errors-only. Détail : <a href="../../devops/deploiement/"><code>docs/devops/</code></a>.</p>
+<hr />
+<h2 id="surface-pre-pivot-dormante">Surface pré-pivot (dormante)<a class="headerlink" href="#surface-pre-pivot-dormante" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Le code ci-dessous <strong>existe toujours dans l'arbre</strong>, conservé pour un éventuel enrichissement Phase 2 (les clients providers notamment — graphe du symbole au moment d'un trade). Nuance : une partie reste <strong>routée et atteignable</strong> — les pages <code>ticker</code> (liens depuis le journal / stats / nav) et <code>radar</code> tirent sur <code>market</code> / <code>news</code> / <code>analyst</code> / <code>earnings</code> / <code>watchlist</code> / <code>screener</code> + le narratif d'<code>analysis</code>. Le module <strong><code>portfolio/</code> a été décommissionné</strong> (2026-06-10). L'historique détaillé des livraisons phases 0 → 6 vit dans <a href="../../projet/archive/journal-livraisons/"><code>archive/journal-livraisons.md</code></a>.</p>
+</blockquote>
+<ul>
+<li><strong>Phase 1 — dossier ticker</strong> : <code>market/</code> (Twelve Data + mock, <code>IndicatorCalculator</code> : RSI / MA / momentum / drawdown), <code>analysis/</code> (narratif LLM par ticker + snapshots persistés), page <code>ticker/</code>. Ports <code>MarketChartClient</code> / <code>SymbolSearchClient</code> / <code>SectorClassifier</code> conservés.</li>
+<li><strong>Phase 2 / 2.5 — profondeur ticker</strong> : <code>news/</code>, <code>analyst/</code>, <code>earnings/</code> (Finnhub + mock), <code>watchlist/</code>, chart multi-timeframe + overlays + annotations, config runtime (<code>config/</code>), streaming SSE du pipeline narratif.</li>
+<li><strong>Phase 3 — observabilité narrative</strong> : prompt management + scoring, timeline reverse-chronologique, score de cohérence cross-runs, détection de biais corpus-wide.</li>
+<li><strong>Phase 6 — radar d'anomalies</strong> : <code>screener/</code> (Polygon + FMP + mock), détection gap + volume sur les mid-caps NASDAQ. Providers conservés.</li>
+<li><strong>Portefeuille</strong> : <code>portfolio/</code> (import CSV Wealthsimple, snapshots) — <strong>décommissionné le 2026-06-10</strong> (module backend + features front <code>dashboard</code> / <code>import</code> / <code>suivi</code> + 4 tables supprimés ; hors scope d'un journal de trade actif).</li>
+</ul>
+<p>Le module <code>config/</code> (rotation des clés provider à chaud, sans reboot) reste utile le jour où la Phase 2 réveille un provider pour enrichir les trades.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../vision/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Vision">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Vision
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../technique/developper/" class="md-footer__link md-footer__link--next" aria-label="Next: Onboarding développeur">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Onboarding développeur
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

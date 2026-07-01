@@ -1,0 +1,2155 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/audits/2026-05-24-pre-phase5-close/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../2026-05-17-pre-v0.6.0-phase4/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>2026-05-24 — Revue globale pré-clôture Phase 5 - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#revue-de-code-globale-pre-cloture-phase-5-2026-05-24" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2026-05-24 — Revue globale pré-clôture Phase 5
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#resume-executif" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Résumé exécutif
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forces
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#punch-list-detaillee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Punch-list détaillée
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Punch-list détaillée">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bloquants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bloquants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-discuter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        À discuter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mineurs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mineurs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faux-positifs-filtres" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Faux positifs filtrés
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Référence
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../roadmap/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Projet
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Audits
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="revue-de-code-globale-pre-cloture-phase-5-2026-05-24">Revue de code globale — pré-clôture Phase 5 (2026-05-24)<a class="headerlink" href="#revue-de-code-globale-pre-cloture-phase-5-2026-05-24" title="Permanent link">&para;</a></h1>
+<p><strong>Scope</strong> : audit de la delta <code>v0.6.0..HEAD</code> (44 commits, 138 fichiers, ~+6 971 / −4 962 lignes). Couvre la <strong>Phase 5 entière</strong> (Cloud Run + Supabase Postgres deploy, Workload Identity Federation, GitHub Secrets vault, secret rotation, deploy workflow + release process, backup pipeline Postgres → R2, Sentry/GlitchTip wiring backend + frontend, custom domain Cloudflare <code>tickerstory.org</code>, <code>/actuator/info</code> app version) <strong>et la session polish du 2026-05-24</strong> : migration Testcontainers (tests d'intégration backend autosuffisants, fin couplage Tilt), gating Ollama en prod (<code>app.ollama.enabled</code> flag), closure formelle Provider gating + fix bug stale-rendering <code>save SECRET</code>, renumérotation Phase 6 ↔ Phase 7 + ajout Phase 8 (e2e non-régression), bumps CI (CodeQL v3→v4, google-github-actions v2→v3), 3 polish bundles dette technique (Bundle A — 5 Important pré-v0.5.1, Bundle B — Phase 3 résidus #3 #4, Bundle C — analyst residuals #2 #3 #4), onboarding <code>testeur.md</code>, extraction <code>shared/filter-window/</code>.</p>
+<p><strong>Méthode</strong> : 3 subagents <code>code-reviewer</code> lancés <strong>en parallèle</strong> sur trois lentilles complémentaires — <strong>sécurité &amp; opérabilité</strong> (Cloud Run secrets, WIF, forward-headers, Sentry/GlitchTip, custom domain, Ollama prod gating, backup pipeline), <strong>qualité backend</strong> (Kotlin idioms, Spring conventions, hexagonal DDD, Testcontainers pattern, refacto <code>AppConfigService</code>, tests-as-documentation, KDoc accuracy), <strong>qualité frontend</strong> (Angular 21 signals + zoneless, <code>assertInInjectionContext</code> pattern, configuration.spec après refacto save SECRET, snapshot.repository.spec dédié, <code>shared/filter-window</code> extraction, testeur.md). Chacun briefé sur les conventions ground truth (<code>CLAUDE.md</code>, <code>architecture.md</code>, <code>ddd.md</code>, skills <code>kotlin-idioms</code>, <code>spring-boot</code>, <code>hexagonal-ddd</code>, <code>folders-structure-backend</code>, <code>angular-component</code>, <code>angular-di</code>, <code>angular-signals</code>, <code>angular-testing</code>, <code>folders-structure-frontend</code>) et sur l'audit précédent (<code>2026-05-17-pre-v0.6.0-phase4.md</code>) comme format de référence. Sortie : punch-list structurée Bloquants / À discuter / Mineurs avec extrait + suggestion + verdict per-tranche. Synthèse + dédup par le main thread.</p>
+<p><strong>État du commit au moment de la revue</strong> : branche <code>master</code>, dernier commit committé <code>5ce49fd chore(analyst): polish residuals (enum contract + SCSS phantoms + KDoc honesty)</code>. Working tree clean. La revue couvre l'ensemble du delta depuis le tag <code>v0.6.0</code> (Phase 4 close), incluant les 44 commits qui forment l'arc Phase 5 + session polish.</p>
+<hr />
+<h2 id="resume-executif">Résumé exécutif<a class="headerlink" href="#resume-executif" title="Permanent link">&para;</a></h2>
+<p>Phase 5 livre proprement l'arc deploy : Cloud Run + Supabase free tier $0/mo durable (région <code>northamerica-northeast1</code>), Workload Identity Federation <strong>sans</strong> SA key (<code>attribute_condition repository_owner == 'jv3n'</code> + binding <code>principalSet://.../attribute.repository/jv3n/trade</code>), secret management Secret Manager avec mount <code>--update-secrets</code> au runtime, GitOps strict via <code>on: release: published</code> (pas de push auto), backup hebdomadaire <code>pg_dump → R2</code> (30 jours rétention, restore drill documenté), Sentry/GlitchTip avec <code>traces-sample-rate: 0.0</code> (errors only, $0 ingestion) et redaction stricte (log pattern <code>[%X{userId:-}]</code>, jamais l'email), custom domain Cloudflare avec Cache Rules + Worker SPA fallback. La session polish du 2026-05-24 a fermé 8+ tickets en cumul : migration Testcontainers (zéro dépendance Tilt sur les tests d'intégration backend), gating Ollama en prod (DTO field + flag + prune au boot pour les overrides stale d'un éventuel DB clone local→prod), audit du Provider gating qui s'est révélé déjà 95 % livré (bug stale-rendering trouvé + patché en passant), 3 polish bundles défensifs sur la dette technique, et phase 8 « Tests e2e non-régression auto » filed avec une décision tech différée volontairement.</p>
+<p><strong>3 Bloquants identifiés — patches courts, à appliquer avant tag Phase 5 close</strong> :</p>
+<ol>
+<li>
+<p><strong>Contradiction doc IAM <code>secretmanager.secretAccessor</code></strong> — <code>docs/devops/deploiement.md §6.1 step 3</code> prescrit un grant <strong>project-level</strong> au SA <code>github-deploy@</code>, tandis que <code>docs/devops/backup-process.md §3</code> documente le pattern <strong>per-secret</strong> (moindre privilège). Si le setup a suivi <code>deploiement.md</code>, <code>github-deploy@</code> a actuellement accès aux 4 secrets dont <code>google-oauth-client-secret</code> et <code>app-admin-emails</code> qui devraient être réservés au SA runtime. À vérifier dans GCP Console + corriger la doc principale pour aligner sur le pattern per-secret.</p>
+</li>
+<li>
+<p><strong>Commentaire trompeur dans <code>SecurityConfig.kt:97-99</code> sur la protection actuator</strong> — le commentaire affirme que les endpoints actuator non-health sont protégés par « l'auth Spring Boot par défaut », mais le code suivant (<code>anyRequest().permitAll()</code> ligne 99) les laisse tous publics. Le fait que <code>/actuator/info</code> soit public est intentionnel et documenté dans <code>deploiement.md §6.4</code>, mais le commentaire dit le contraire et constitue une bombe à retard pour un futur dev qui activerait <code>/actuator/env</code> dans <code>application-prod.yml</code> sans réaliser qu'il l'expose.</p>
+</li>
+<li>
+<p><strong><code>AnalysisConfig.kt</code> placé à la racine du bounded context</strong> (<code>com.portfolioai.analysis</code>) au lieu de <code>analysis/infrastructure/</code> — diverge de la convention <code>folders-structure-backend</code> qui place les <code>@Configuration</code> beans dans <code>infrastructure/</code>. Pas de risque runtime (Spring discover via component scan), mais établit une nouvelle convention de placement non documentée. Soit déplacer en <code>analysis/infrastructure/AnalysisConfig.kt</code>, soit documenter l'exception « root-level <code>@Configuration</code> quand le bean est partagé cross-layer » dans le skill.</p>
+</li>
+</ol>
+<p><strong>Verdict global</strong> : <code>needs-fix</code>. Les trois Bloquants sont des patches de quelques minutes chacun, sans risque.</p>
+<p><strong>11 À discuter</strong> : 4 sécurité (logging <code>set()</code> ne log que la clé — clean today mais préventif ; Dockerfile copie <code>.git/</code> ~70 MB en build context ; <code>PostgresContainer</code> pas de <code>launcherSessionClosed()</code> ; <code>/actuator/metrics</code> public en profil non-prod), 4 backend (<code>Sentry.configureScope</code> deprecated v8 → v9 migration à anticiper ; mock de <code>AppConfigService</code> concret via kotlin-allopen dans <code>CustomOAuth2UserServiceTest</code> — pattern question ; V2 Flyway sans test d'intégration assertif sur l'état post-migration ; <code>PostgresContainer.bootstrap()</code> re-set des system properties à chaque appel — harmless mais non-idempotent au sens strict), 3 frontend (<code>provideZonelessChangeDetection()</code> absent de plusieurs specs settings — project-wide gap pré-existant ; <code>testeur.md</code> mentionne « Analyser » au lieu du label réel « Générer le narratif » ; <code>testeur.md</code> <code>&lt;repo-url&gt;</code> placeholder non résolu).</p>
+<p><strong>8 Mineurs</strong> : Cloudflare Account ID hardcodé dans <code>backup-process.md</code> (low risk, public par construction), GlitchTip DSN frontend hardcodé en clair dans <code>main.ts</code> (idiome Sentry standard, public par design), <code>service.yaml</code> documentaire désaligné de <code>deploy.yml</code> sur <code>sentry-dsn-backend</code>, <code>backup-postgres.yml</code> convention lowercase <code>$file</code> inhabituelle, commentaire test rounding <code>5999/9999</code> correct mais qui pourrait être plus explicite sur la dérivation du dénominateur, doublon commits <code>c13484c</code> et <code>f210bde</code> (rebase off-limits, archéologie pure), 2 SCSS/test cleanup (snapshot.repository.spec.ts idle test sans commentaire <code>no await</code>, filter-window.spec.ts redondance promptId).</p>
+<p><strong>Faux positifs / non actionnables filtrés</strong> : 8 — (a) <code>forward-headers-strategy: framework</code> en profil base (couvert par les commentaires + safety net dev), (b) <code>Sentry.configureScope</code> deprecation v8 (fonctionne, pas removed avant v9), (c) <code>kotlin-allopen</code> mock de <code>AppConfigService</code> (intentionnel + commenté), (d) <code>PostgresContainer.bootstrap()</code> re-set system properties (harmless, container fournit valeurs stables post-<code>start()</code>), (e) <code>app.allowed.emails</code> mode laxiste fresh deploy (décision documentée backward-compat), (f) <code>effect()</code> dans <code>positionsCache</code> (référence implémentation skill <code>angular-signals</code>), (g) <code>useValue: repo</code> dans access-control.spec.ts (<code>ConfigRepository</code> n'a pas de concrete builders à hériter), (h) GlitchTip DSN frontend public par design.</p>
+<hr />
+<h2 id="forces">Forces<a class="headerlink" href="#forces" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>Workload Identity Federation propre, sans SA key</strong> — <code>attribute_condition assertion.repository_owner == 'jv3n'</code> rejette tout OIDC token d'un autre owner. Binding <code>roles/iam.workloadIdentityUser</code> sur <code>github-deploy@</code> scopé via <code>principalSet://.../attribute.repository/jv3n/trade</code> (repo-scope, pas owner-scope). Aucune clé JSON émise ou stockée, conformément aux best practices Google 2024+. Smoke test <code>smoke-wif.yml</code> exercise les permissions <code>run.admin</code> + <code>artifactregistry.writer</code> au moindre privilège.</p>
+</li>
+<li>
+<p><strong>Secret Management end-to-end mounté via Cloud Run <code>--update-secrets</code></strong> — 5 secrets (<code>google-oauth-client-id</code>, <code>google-oauth-client-secret</code>, <code>app-admin-emails</code>, <code>supabase-db-url</code>, <code>sentry-dsn-backend</code>) résolus runtime par Cloud Run depuis GCP Secret Manager, exposés comme env vars au container. Pas de secret en clair dans le repo, pas de SA key, pas de manifest YAML committed avec des valeurs. <code>secret-rotation.md</code> documente la procédure rotation par secret avec smoke après deploy.</p>
+</li>
+<li>
+<p><strong>Sentry/GlitchTip wiring défensif</strong> — <code>dsn: ${SENTRY_DSN:}</code> avec fallback empty → SDK no-op silencieusement si le secret est absent (pas de crash boot). <code>traces-sample-rate: 0.0</code> (errors-only, optimise le quota free tier GlitchTip 5K events/mo). <code>in-app-includes: com.portfolioai</code> (les frames Spring/Hibernate apparaissent en gris collapsable). <code>release: ${SENTRY_RELEASE:}</code> propagé via <code>deploy.yml --set-env-vars=SENTRY_RELEASE=${tag}</code> permet de filter le dashboard par tag de release. Frontend DSN public par design (idiome Sentry standard, no auth credentials).</p>
+</li>
+<li>
+<p><strong>Backup pipeline robuste</strong> — <code>pg_dump --no-owner --no-acl --format=plain | gzip &gt; backup-&lt;ISO-timestamp&gt;.sql.gz</code> weekly cron <code>0 4 * * 0</code> + <code>workflow_dispatch</code> manuel, upload R2 (S3-compatible, free tier 10 GB), prune les objets au-delà des 30 plus récents. Restore drill trimestriel documenté avec procédure pas-à-pas (download → gunzip → psql sur Neon free temporaire). PostgreSQL 16 client (forward-compat avec PG 15 Supabase, +1 majeur de buffer). WIF auth avec grant per-secret <code>secretmanager.secretAccessor</code> sur <code>supabase-db-url</code>.</p>
+</li>
+<li>
+<p><strong>Testcontainers migration propre</strong> — <code>testsupport/PostgresContainer.kt</code> singleton <code>object</code> héritant <code>PostgreSQLContainer&lt;postgres:16&gt;</code> avec <code>withReuse(true)</code>. <code>bootstrap()</code> idempotent (<code>if (!isRunning) start()</code>) publie les coordinates en system properties qui outrank <code>application.yml</code>. SPI auto-discovery via <code>TestcontainersBootstrap</code> (<code>LauncherSessionListener</code> dans <code>META-INF/services/</code>) — zéro annotation sur les 3 tests <code>@SpringBootTest</code> existants. La promotion <code>junit-platform-launcher</code> de <code>testRuntimeOnly</code> à <code>testImplementation</code> est nécessaire et correcte (le SPI nécessite l'API visible au compile).</p>
+</li>
+<li>
+<p><strong>Ollama gating en prod défense en profondeur</strong> — flag <code>app.ollama.enabled</code> injecté via <code>@Value</code> dans <code>AppConfigService</code> ; méthodes <code>isOllamaEnabled()</code> + <code>listedKeys()</code> (drop OLLAMA_MODEL quand off) + <code>allowedValuesFor(key)</code> (drop ollama de <code>LLM_PROVIDER.allowedValues</code> quand off). <code>validate()</code> rejette <code>set(LLM_PROVIDER, ollama)</code> ET <code>set(OLLAMA_MODEL, ...)</code> avec messages clairs. <code>pruneStaleOllamaOverrides()</code> au <code>@PostConstruct</code> couvre le cas DB clone local→prod en supprimant l'override stale <strong>en mémoire</strong> (DB row laissée intacte pour archéologie). <code>ConfigController.list()</code> itère <code>service.listedKeys()</code> et <code>entryFor()</code> lit <code>service.allowedValuesFor(key)</code> — zéro contournement. 8 tests backend + 1 test frontend pinnent le contrat dans les deux directions (flag on / off).</p>
+</li>
+<li>
+<p><strong>Provider gating closure post-mortem</strong> — audit révèle que le ticket dette était déjà délivré à 95 % pendant la Phase 4 secrets refacto (backend <code>ConfigKeys.PROVIDER_REQUIRED_KEY</code> + <code>AllowedValueDto.disabledReason</code> + <code>ConfigController.annotateAllowedValue</code> + frontend <code>[disabled]</code> + <code>matTooltip</code> + i18n key + 3 tests backend, sans clôture du backlog). Le vrai travail du jour était un <strong>bug de rendering stale</strong> signalé par le user en cours de session : <code>save()</code> patchait uniquement l'entry sauvée, laissant les <code>disabledReason</code> des entries dépendantes (e.g. 3 toggles provider qui dépendent de la finnhub key) stuck en <code>disabled</code> jusqu'à un refresh manuel. Fix : branche dédiée pour le path SECRET qui refetch la liste complète (mirror du pattern <code>reset()</code> qui faisait déjà la refetch). 3 tests ajoutés dont la régression du bug + le pattern défensif « non-SECRET ne refetch pas » + le rendering disabled via <code>.mat-button-toggle-disabled</code> (robuste vs traduction i18n du label).</p>
+</li>
+<li>
+<p><strong><code>assertInInjectionContext</code> guard sur les Resource builders</strong> — <code>snapshot.repository.ts</code> <code>allResource()</code> et <code>positionsCache(trigger)</code> ouvrent par <code>assertInInjectionContext(this.allResource)</code> / <code>assertInInjectionContext(this.positionsCache)</code>. Fail-fast au runtime si appelé hors DI context (le <code>effect()</code> + <code>rxResource</code> capturent le <code>DestroyRef</code> du caller — un call hors injection context leakerait silencieusement). KDoc des deux builders étendue pour expliciter la mécanique. Section <code>angular-signals/SKILL.md &gt; Resource builders</code> étend d'un paragraphe « <code>assertInInjectionContext</code> guard » pour pin l'invariant avant la généralisation aux 13 autres repos.</p>
+</li>
+<li>
+<p><strong><code>snapshot.repository.spec.ts</code> dédié</strong> — nouveau fichier 165 lignes, 7 tests pinent le contrat des builders contre une <code>FakeSnapshotRepository extends SnapshotRepository</code> (pas un <code>useValue</code> plat qui perdrait les builders hérités). Tests : (a) <code>allResource</code> subscribe + surface via <code>value()</code>, (b) <code>allResource</code> throw hors DI, (c) <code>positionsCache</code> idle quand trigger undefined, (d) <code>positionsCache</code> populate map sur emit, (e) <code>positionsCache</code> accumule sur ids distincts, (f) pas de re-fetch sur même valeur trigger (rxResource params equality), (g) <code>positionsCache</code> throw hors DI. Pattern d'async signal-based testing rodé après itération (passage à <code>await TestBed.inject(ApplicationRef).whenStable()</code> au lieu du <code>TestBed.tick()</code> initial qui ne flushait pas correctement les effects).</p>
+</li>
+<li>
+<p><strong>Polish bundles dette technique systématiques</strong> — Bundle A (5 Important pré-v0.5.1) ferme entièrement le ticket parent : <code>@Bean Clock</code> explicite dans <code>AnalysisConfig</code> (défense in depth contre un futur 2e <code>@Bean Clock</code>), <code>OllamaStatusService.pullModel</code> branche 404 défensive (forward-compat upstream API) + 1 test, <code>WatchlistService.lookupInstrumentType</code> TODO inline pointant vers la dette « Gestion d'erreur transverse Volet 3 », <code>assertInInjectionContext</code> sur <code>SnapshotRepository</code>, spec dédié. Bundle B (Phase 3 résidus #3 #4) — test rounding HALF_UP scale 4 sur boundary fractionnaire <code>5999/9999</code>, sous-item #4 obsolète (V8 squashée pendant Phase 4 V1→V10 fusion). Bundle C (analyst residuals) — enum contract test <code>AnalystConsensus.entries.map { it.name }.toSet() == setOf("BUY","HOLD","SELL","MIXED")</code>, TODO inline Clock sur <code>MockAnalystClient</code>, KDoc honesty sur <code>fetchPriceTargetOrNull</code> (les 3 catches logguent distinctement, gap UI est v2), SCSS <code>[hidden]</code> sur les 5 segments + <code>border-radius</code> tokenisé.</p>
+</li>
+<li>
+<p><strong>Renumérotation Phase 6 ↔ Phase 7 + ajout Phase 8</strong> propre — 3-step token swap pour éviter collisions textuelles dans backlog.md (<code>Phase 6 → PHASE_TMP_SWAP → Phase 6 ← Phase 7 ← PHASE_TMP_SWAP</code>), reorder physique des blocs, ajout Phase 8 stub e2e avec scope explicitement différé (1er ticket = cataloguer les golden paths, choix tech après). Renaming du fichier memory <code>project_phase7_radar.md</code> → <code>project_phase6_radar.md</code> + content updaté, patches <code>vision.md</code> + <code>fonctionnalites.md</code> + <code>architecture.md</code> + <code>sources.md</code> (4 fichiers forward-looking, replace_all). Historical docs intacts (CHANGELOG, journal-livraisons antérieur, audits) — convention « les phases closes gardent leur numéro forever » posée dans le journal.</p>
+</li>
+<li>
+<p><strong>Bumps CI préventifs</strong> — CodeQL v3 → v4 (deadline déc 2026), <code>google-github-actions/auth</code> + <code>setup-gcloud</code> v2 → v3 (Node 20 default-disabled le 2 juin 2026, à 9 jours). Patches forwards-compat sur 3-4 workflows, doc actualisée.</p>
+</li>
+<li>
+<p><strong>Tests-as-documentation respecté</strong> — nouveaux specs <code>snapshot.repository.spec.ts</code> (class-level docstring + scenarios full sentences), <code>NarrativeBiasServiceTest &gt; bias flag fires on a fractional ratio that rounds UP...</code>, <code>AnalystSnapshotTest &gt; enum surface stays exactly the four values...</code>, <code>PostgresContainer.kt</code> KDoc 12+ lignes expliquant le mécanisme, <code>TestcontainersBootstrap.kt</code> KDoc qui justifie le choix <code>LauncherSessionListener</code> vs <code>BeforeAllCallback</code>.</p>
+</li>
+</ul>
+<hr />
+<h2 id="punch-list-detaillee">Punch-list détaillée<a class="headerlink" href="#punch-list-detaillee" title="Permanent link">&para;</a></h2>
+<h3 id="bloquants">Bloquants<a class="headerlink" href="#bloquants" title="Permanent link">&para;</a></h3>
+<p><strong>B1. Contradiction doc IAM <code>secretmanager.secretAccessor</code> — <code>deploiement.md</code> vs <code>backup-process.md</code></strong> <em>(Lens A)</em></p>
+<p><code>docs/devops/deploiement.md §6.1 step 3</code> prescrit d'ajouter <code>roles/secretmanager.secretAccessor</code> <strong>au niveau projet</strong> au SA <code>github-deploy@</code> :</p>
+<div class="highlight"><pre><span></span><code>3. Créer un service account `github-deploy@...` avec rôles `roles/run.admin` +
+   `roles/iam.serviceAccountUser` + `roles/artifactregistry.writer` +
+   `roles/secretmanager.secretAccessor`.
+</code></pre></div>
+<p><code>docs/devops/backup-process.md §3</code> affirme, en revanche, le pattern per-secret (moindre privilège) :</p>
+<div class="highlight"><pre><span></span><code>Principe du moindre privilège respecté : le binding est **per-secret**, pas
+project-level. `github-deploy@` n&#39;a accès qu&#39;à `supabase-db-url`, pas aux 3 autres
+secrets (google-oauth-client-id, google-oauth-client-secret, app-admin-emails).
+</code></pre></div>
+<p>Si le setup a suivi <code>deploiement.md step 3</code>, le SA <code>github-deploy@</code> dispose actuellement d'un accès project-wide en lecture sur tous les secrets — y compris <code>google-oauth-client-secret</code> et <code>app-admin-emails</code> qui sont censés être réservés au SA runtime <code>portfolioai-runtime@</code>. Si le setup a suivi <code>backup-process.md §3</code>, le doc principal est trompeur pour toute future rotation / reproductibilité.</p>
+<p><strong>Suggestion</strong> : (a) vérifier dans GCP Console l'IAM réel de <code>github-deploy@</code> sur Secret Manager. (b) Si le binding est project-wide, le rétrécir per-secret (<code>gcloud secrets add-iam-policy-binding supabase-db-url --member=serviceAccount:github-deploy@... --role=roles/secretmanager.secretAccessor</code>). (c) Corriger <code>deploiement.md §6.1 step 3</code> pour indiquer le binding per-secret + référencer <code>backup-process.md §3</code> comme contrat de moindre privilège.</p>
+<p><strong>B2. <code>SecurityConfig.kt:97-99</code> — commentaire trompeur sur la protection de <code>/actuator/info</code></strong> <em>(Lens A)</em></p>
+<p>Le commentaire lignes 97-98 affirme que les endpoints actuator (autres que <code>/actuator/health</code>) sont protégés par « l'auth Spring Boot par défaut ». Ce n'est pas ce que fait le code : la règle <code>anyRequest().permitAll()</code> à la ligne 99 est la règle de dernier recours qui s'applique à toute requête non interceptée par les matchers précédents — incluant <code>/actuator/info</code>, <code>/actuator/metrics</code> (exposé en local par <code>application.yml</code>), <code>/actuator/env</code> si jamais activé accidentellement.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">it</span><span class="p">.</span><span class="na">requestMatchers</span><span class="p">(</span><span class="s">&quot;/actuator/health&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/login/**&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;/oauth2/**&quot;</span><span class="p">).</span><span class="na">permitAll</span><span class="p">()</span>
+<span class="c1">// ...</span>
+<span class="nb">it</span><span class="p">.</span><span class="na">requestMatchers</span><span class="p">(</span><span class="s">&quot;/api/**&quot;</span><span class="p">).</span><span class="na">authenticated</span><span class="p">()</span>
+<span class="c1">// Aucun matcher pour /actuator/** ici</span>
+<span class="nb">it</span><span class="p">.</span><span class="na">anyRequest</span><span class="p">().</span><span class="na">permitAll</span><span class="p">()</span><span class="w">   </span><span class="c1">// ← couvre /actuator/info, /actuator/metrics, etc.</span>
+</code></pre></div>
+<p><code>/actuator/info</code> est public <strong>par design</strong> (documenté dans <code>deploiement.md §6.4</code>, contient seulement build version + git commit). La situation actuelle est acceptable mais le commentaire claim le contraire. Bombe à retard pour un futur dev qui activerait <code>/actuator/env</code> dans <code>application-prod.yml</code> sans réaliser qu'il l'expose.</p>
+<p><strong>Suggestion</strong> : remplacer les lignes 97-99 par :</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Tout le reste — incluant les routes Angular (SPA) et /actuator/info (public by design,</span>
+<span class="c1">// cf. deploiement.md §6.4) — est permitAll. /actuator/env et /actuator/configprops ne sont</span>
+<span class="c1">// pas exposés en prod (application-prod.yml include: health, info) ; si jamais activés,</span>
+<span class="c1">// ajouter un requestMatchers(&quot;/actuator/**&quot;).authenticated() avant cette règle.</span>
+<span class="nb">it</span><span class="p">.</span><span class="na">anyRequest</span><span class="p">().</span><span class="na">permitAll</span><span class="p">()</span>
+</code></pre></div>
+<p><strong>B3. <code>AnalysisConfig.kt:1</code> placé à la racine du bounded context au lieu de <code>infrastructure/</code></strong> <em>(Lens B)</em></p>
+<div class="highlight"><pre><span></span><code><span class="k">package</span><span class="w"> </span><span class="nn">com.portfolioai.analysis</span>
+<span class="c1">// …</span>
+<span class="nd">@Configuration</span>
+<span class="kd">class</span><span class="w"> </span><span class="nc">AnalysisConfig</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nd">@Bean</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">clock</span><span class="p">():</span><span class="w"> </span><span class="n">Clock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Clock</span><span class="p">.</span><span class="na">systemUTC</span><span class="p">()</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>Le skill <code>folders-structure-backend/SKILL.md</code> place les <code>@Configuration</code> beans dans <code>&lt;context&gt;/infrastructure/</code>. Les 3 <code>@Configuration</code> existants (<code>MarketConfig</code>, <code>TwelveDataHttpConfig</code>, <code>FinnhubHttpConfig</code>) suivent ce pattern. Dropper <code>AnalysisConfig</code> au niveau <code>com.portfolioai.analysis</code> (à côté de <code>domain/</code>, <code>application/</code>, <code>infrastructure/</code>) introduit une convention non documentée. Pas de risque runtime (Spring discover via component scan), mais drift de convention.</p>
+<p><strong>Suggestion</strong> : déplacer vers <code>backend/src/main/kotlin/com/portfolioai/analysis/infrastructure/AnalysisConfig.kt</code>. Aucun import à mettre à jour (<code>JobEventPublisher</code> reste dans <code>analysis/application/</code>, le bean est résolu par type). Ou alternative : documenter l'exception « root-level <code>@Configuration</code> quand le bean est partagé cross-layer » dans <code>folders-structure-backend/SKILL.md</code> et <code>spring-boot/SKILL.md</code> (qui liste les <code>@Configuration</code> files — <code>AnalysisConfig</code> est le 4ᵉ, doc gap aussi).</p>
+<hr />
+<h3 id="a-discuter">À discuter<a class="headerlink" href="#a-discuter" title="Permanent link">&para;</a></h3>
+<p><strong>A1. <code>application.yml:104</code> + <code>application-prod.yml:91-92</code> — <code>metrics</code> exposé en profil non-prod</strong> <em>(Lens A)</em></p>
+<p>Le profil base expose <code>health, info, metrics</code>. Le profil prod surcharge à <code>health, info</code> seulement (correct). En local dev, <code>/actuator/metrics</code> est public via <code>anyRequest().permitAll()</code>. Acceptable pour un solo dev sur localhost, mais risque de surface si un day un tunnel ngrok ou similaire partage la session.</p>
+<p><strong>Suggestion</strong> : pas pré-tag. Ajouter un commentaire dans <code>application.yml</code> qui explicite que <code>metrics</code> est dev-only et <strong>devrait</strong> être protégé si on partage la session via tunnel.</p>
+<p><strong>A2. <code>devops/prod/Dockerfile</code> — <code>COPY .git/ ./.git/</code> ~70 MB de build context</strong> <em>(Lens A)</em></p>
+<p>Documenté dans <code>deploiement.md &gt; §6.4 Notes pratiques</code>. La justification est correcte : <code>gradle-git-properties</code> a besoin du <code>.git</code>. Acceptable tant que le repo reste petit. Alternative si le build devient lent : <code>git clone --filter=blob:none --depth 1</code> (partial clone) ou passer <code>git.commit.id</code> directement comme build-arg plutôt que copier <code>.git/</code>. Pas pré-tag.</p>
+<p><strong>A3. <code>testsupport/PostgresContainer.kt</code> — pas de <code>launcherSessionClosed()</code> dans <code>TestcontainersBootstrap</code></strong> <em>(Lens A + Lens B partagés)</em></p>
+<p><code>withReuse(true)</code> délègue le cleanup à Ryuk. Si le reuse n'est pas opt-in (<code>testcontainers.reuse.enable=false</code>, défaut), un nouveau container est créé à chaque run ; l'ancien reste vivant jusqu'à ce que Ryuk le tue (~10 s post-JVM exit). Sur un CI runner éphémère pas de problème. En dev local sans reuse opt-in, des containers s'accumulent si on lance les tests rapidement en boucle.</p>
+<p><strong>Suggestion</strong> : implémenter <code>override fun launcherSessionClosed(session: LauncherSession) { if (!PostgresContainer.isReuseEnabled) PostgresContainer.stop() }</code> dans <code>TestcontainersBootstrap</code>. Pas urgent — Ryuk gère le cas standard. Cosmétique.</p>
+<p><strong>A4. <code>AppConfigService</code> logs <code>set()</code> ne log que la clé</strong> <em>(Lens A — préventif)</em></p>
+<p>Aujourd'hui <code>log.info("Config override set : key={}", key)</code> est clean : aucune valeur loggée. La clé <code>ALLOWED_EMAILS</code> passe par <code>set()</code> ; si un futur dev ajoute <code>value={}</code> pour debug, la liste d'emails finirait dans les logs Cloud Logging GCP.</p>
+<p><strong>Suggestion</strong> : ajouter un commentaire au-dessus du <code>log.info</code> qui justifie l'absence intentionnelle du <code>value=</code> placeholder + référence à la convention <code>CLAUDE.md &gt; Backend &gt; Never log user emails</code>.</p>
+<p><strong>A5. <code>SentryUserContextFilter.kt:43</code> — <code>Sentry.configureScope</code> deprecated dans SDK v8</strong> <em>(Lens B)</em></p>
+<div class="highlight"><pre><span></span><code><span class="n">Sentry</span><span class="p">.</span><span class="na">configureScope</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">scope</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">scope</span><span class="p">.</span><span class="na">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">User</span><span class="p">().</span><span class="na">apply</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">userId</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="c1">// …</span>
+<span class="n">Sentry</span><span class="p">.</span><span class="na">configureScope</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">it</span><span class="p">.</span><span class="na">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>Le projet ship <code>io.sentry:sentry-spring-boot-starter-jakarta:8.10.0</code>. <code>Sentry.configureScope(callback)</code> est <code>@Deprecated</code> dans v8, replacement = <code>Sentry.withScope { scope -&gt; … }</code> ou <code>getCurrentHub().configureScope()</code>. Le pattern actuel (mutation scope + reset en <code>finally</code>) est correct ; le deprecation n'est pas removal jusqu'à v9.</p>
+<p><strong>Suggestion</strong> : pas pré-tag. À grouper avec un futur bump SDK v9.</p>
+<p><strong>A6. <code>CustomOAuth2UserServiceTest</code> mocks <code>AppConfigService</code> via <code>kotlin-allopen</code></strong> <em>(Lens B)</em></p>
+<p>Le test commente lui-même la fragilité : « if the allopen scope is ever narrowed, this mock() call will fail ». Le test n'a besoin que de <code>getAllowedEmails()</code>. Question de pattern : doit-on institutionnaliser le mock de <code>@Service</code> concrets via allopen, ou refacto vers un stub hand-rolled qui implémente l'interface réduite ?</p>
+<p><strong>Suggestion</strong> : pas pré-tag. À arbitrer si un autre test similaire émerge.</p>
+<p><strong>A7. <code>V2__reset_narrative_prompt_to_body.sql</code> — pas de test d'intégration assertif sur l'état post-migration</strong> <em>(Lens B)</em></p>
+<p>Le skill <code>spring-boot/SKILL.md</code> dit « A new <code>V&lt;N&gt;__*.sql</code> deserves at minimum an integration test that boots Flyway ». <code>BackendApplicationTests.contextLoads()</code> couvre le boot, pas l'état (e.g. <code>version = 'v3-body-only'</code> sur la row active).</p>
+<p><strong>Suggestion</strong> : ajouter un <code>@SpringBootTest</code> qui query <code>prompt_template</code> post-migration et asserte sur les invariants attendus. À filer dans le backlog si non patché pré-tag.</p>
+<p><strong>A8. <code>provideZonelessChangeDetection()</code> absent de <code>access-control.spec.ts</code> + <code>configuration.spec.ts</code></strong> <em>(Lens C)</em></p>
+<p>L'app utilise zoneless (<code>app.config.ts:46</code>). <code>snapshot.repository.spec.ts</code> ajoute <code>provideZonelessChangeDetection()</code> parce que le <code>whenStable()</code> zoneless a une sémantique différente du zone-based. Les 2 specs settings utilisent <code>fixture.detectChanges()</code> + <code>of()</code> mocks sync, donc passent aujourd'hui — mais une scenario async ajouté plus tard pourrait silencieusement diverger.</p>
+<p><strong>Suggestion</strong> : ajouter <code>provideZonelessChangeDetection()</code> aux 2 TestBed concernés. C'est un project-wide gap pré-existant (la majorité des specs n'en ont pas), pas une régression Phase 5.</p>
+<p><strong>A9. <code>testeur.md:54</code> — label « Analyser » au lieu de « Générer le narratif »</strong> <em>(Lens C)</em></p>
+<p>Le doc instruit de cliquer sur le « bouton <strong>Analyser</strong> » alors que la clé i18n <code>ticker.narrative.generate</code> résout sur « Générer le narratif » (<code>fr.json:249</code>). Drift doc↔code qui confondrait un testeur novice.</p>
+<p><strong>Suggestion</strong> : remplacer « <strong>Analyser</strong> » par « <strong>Générer le narratif</strong> » ligne 54 (ou aligner le label UI si on veut changer).</p>
+<p><strong>A10. <code>testeur.md:37</code> — placeholder <code>&lt;repo-url&gt;</code> non résolu</strong> <em>(Lens C)</em></p>
+<div class="highlight"><pre><span></span><code>git clone &lt;repo-url&gt;
+</code></pre></div>
+<p>Un testeur non-dev ne saura pas quoi substituer. Si le repo est public ou sharable, remplacer par l'URL réelle ; sinon ajouter une note « URL fournie via invitation ».</p>
+<p><strong>A11. <code>configuration.spec.ts:312</code> — test « save on a secret key clears the typed input » under-décrit après le refacto</strong> <em>(Lens C)</em></p>
+<p>Après le refacto <code>save()</code> SECRET refetch list, le test ligne 312 fait <code>component.save('market.twelvedata.api-key')</code> puis asserte uniquement que l'input est vidé. Le test ligne 322 (<code>saving a SECRET refetches the list...</code>) couvre le nouveau comportement, mais le test ligne 312 ne reflète plus la totalité de ce que <code>save()</code> fait.</p>
+<p><strong>Suggestion</strong> : soit ajouter <code>expect(repo.list).toHaveBeenCalledTimes(2);</code> au test ligne 312, soit renommer en « save on a secret key refetches the list and clears the typed input ». État actuel n'est pas faux — juste under-described.</p>
+<hr />
+<h3 id="mineurs">Mineurs<a class="headerlink" href="#mineurs" title="Permanent link">&para;</a></h3>
+<p><strong>M1. <code>backup-process.md:9,17</code> — Cloudflare Account ID hardcodé dans les URLs</strong> <em>(Lens A)</em></p>
+<p>L'Account ID <code>8f2780696b5e520f85b5fc80413c4c3f</code> est public (la note ligne 19 le confirme) mais permet l'enumeration de patterns d'attaque (bucket, Worker introspection). Considérer un placeholder + référence à <code>vars.CLOUDFLARE_ACCOUNT_ID</code>. Niveau cosmétique pour un usage solo.</p>
+<p><strong>M2. <code>devops/prod/service.yaml</code> documentaire désaligné de <code>deploy.yml</code></strong> <em>(Lens A)</em></p>
+<p><code>service.yaml</code> est marqué <code>STUB</code> mais ne liste pas <code>sentry-dsn-backend</code> dans <code>spec.containers.env</code>. Un <code>gcloud run services replace service.yaml</code> omettrait ce secret. Ajouter une note <code># NOTE: sentry-dsn-backend not listed here — injected by deploy.yml --update-secrets</code> éviterait la confusion.</p>
+<p><strong>M3. <code>backup-postgres.yml:104</code> — convention lowercase <code>$file</code> inhabituelle</strong> <em>(Lens A)</em></p>
+<p><code>echo "file=$FILE" &gt;&gt; "$GITHUB_ENV"</code> (uppercase RHS) puis usage <code>$file</code> lowercase. Fonctionne (GitHub Actions injecte en lowercase), mais inhabituel à lire. Préférer <code>BACKUP_FILE</code> partout.</p>
+<p><strong>M4. <code>NarrativeBiasServiceTest.kt:110</code> — comment rounding test pourrait être plus explicite</strong> <em>(Lens B)</em></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Concretely : 5999 / 9999 = 0.59995999... → HALF_UP at scale 4 → 0.6000</span>
+<span class="p">.</span><span class="na">willReturn</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="n">SentimentCountRow</span><span class="p">(</span><span class="s">&quot;BULLISH&quot;</span><span class="p">,</span><span class="w"> </span><span class="m">5999L</span><span class="p">),</span><span class="w"> </span><span class="n">SentimentCountRow</span><span class="p">(</span><span class="s">&quot;NEUTRAL&quot;</span><span class="p">,</span><span class="w"> </span><span class="m">4000L</span><span class="p">)))</span>
+</code></pre></div>
+<p>Le total est <code>5999 + 4000 = 9999</code>, le math est correct. Mais le commentaire ne fait pas explicite la dérivation du dénominateur. Préférer « <code>5999 / (5999 + 4000) = 5999 / 9999 = 0.59995999…</code> » pour le prochain lecteur.</p>
+<p><strong>M5. <code>spring-boot/SKILL.md</code> — liste <code>@Configuration</code> files désynchronisée</strong> <em>(Lens B)</em></p>
+<p>Le skill section « Stereotypes » dit « Three exist: <code>MarketConfig</code>, <code>TwelveDataHttpConfig</code>, <code>FinnhubHttpConfig</code> ». <code>AnalysisConfig</code> est le 4ᵉ. Doc gap qui s'ajoute à B3.</p>
+<p><strong>M6. Doublon commits <code>c13484c</code> + <code>f210bde</code></strong> <em>(Lens B)</em></p>
+<p>Même message « feat: Phase 5a wrap — Cloud Run + Supabase live + SPA fallback + doc sync ». Artefact rebase / double-push, dans <code>master</code> donc no action (rebase off-limits).</p>
+<p><strong>M7. <code>snapshot.repository.spec.ts:108</code> — idle test sans commentaire « no await »</strong> <em>(Lens C)</em></p>
+<p>Le test « stays idle while the trigger is undefined » asserte sans <code>await TestBed.inject(ApplicationRef).whenStable()</code>. C'est correct (rxResource ne fire pas si trigger undefined), mais un futur lecteur pourrait réflexivement ajouter un <code>whenStable()</code> redondant. Ajouter <code>// no await — trigger is undefined, rxResource never subscribes</code>.</p>
+<p><strong>M8. <code>filter-window.spec.ts:52</code> — test « collapses empty promptId » redondant avec ligne 25</strong> <em>(Lens C)</em></p>
+<p>Les deux tests appellent <code>buildFilterWindow('2026-04-03', '', '')</code> avec exactement la même signature et asserent <code>result?.promptId === undefined</code>. 7 unique scenarios suffisent au lieu de 8.</p>
+<hr />
+<h2 id="faux-positifs-filtres">Faux positifs filtrés<a class="headerlink" href="#faux-positifs-filtres" title="Permanent link">&para;</a></h2>
+<p>8 suggestions des subagents écartées après vérification :</p>
+<ol>
+<li><strong><code>forward-headers-strategy: framework</code></strong> en profil base — risque de spoofing nul tant que le backend n'est pas exposé directement à internet sans proxy devant. Invariant tenu en prod (Cloud Run + Cloudflare devant), en local pas exposé.</li>
+<li><strong><code>Sentry.configureScope</code> deprecation v8</strong> — fonctionne, pas removed. Migration à anticiper sur v9. Documentée en A5 comme follow-up.</li>
+<li><strong><code>kotlin-allopen</code> mock de <code>AppConfigService</code></strong> — intentionnel, commenté explicitement dans le test, idiome du projet pour mocker les <code>@Service</code> concrets quand le besoin est ponctuel. Documenté en A6 comme question de pattern.</li>
+<li><strong><code>PostgresContainer.bootstrap()</code> re-set system properties à chaque appel</strong> — harmless (container fournit valeurs stables post-<code>start()</code>, propriétés réécrites avec les mêmes valeurs). Pas un bug.</li>
+<li><strong><code>app.allowed.emails</code> mode laxiste fresh deploy</strong> — décision documentée backward-compat (window vulnérabilité minimale, l'admin pose la liste dans les minutes suivant le deploy). <code>app.admin.emails</code> reste un secret boot-time protecteur.</li>
+<li><strong><code>effect()</code> dans <code>positionsCache</code></strong> — c'est la référence implémentation du pattern « réagir à un signal qu'on ne possède pas » documentée dans skill <code>angular-signals</code>. Pas une violation.</li>
+<li><strong><code>useValue: repo</code> dans <code>access-control.spec.ts</code></strong> — <code>ConfigRepository</code> n'a pas de concrete builders à hériter, <code>useValue</code> reste valide. La forward-référence à <code>useClass</code> migration dans le commentaire du spec est correcte.</li>
+<li><strong>GlitchTip DSN frontend hardcodé</strong> — standard Sentry pattern, public par design (visible DevTools à chaque pageload), pas un secret. Documentation rotation dans <code>secret-rotation.md</code>.</li>
+</ol>
+<hr />
+<h2 id="reference">Référence<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Audit précédent : <a href="../2026-05-17-pre-v0.6.0-phase4/"><code>2026-05-17-pre-v0.6.0-phase4.md</code></a> (delta Phase 4 Authentification + multi-tenant + Flyway V1 squash).</li>
+<li>Méthode : 3 subagents <code>code-reviewer</code> en parallèle, lentilles <strong>Sécurité &amp; opérabilité</strong> + <strong>Backend Kotlin/Spring</strong> + <strong>Frontend Angular 21</strong>. Output : 1 verdict per-tranche (<code>needs-fix</code> + <code>needs-fix</code> + <code>mergeable</code>), synthèse + dédup main thread. Verdict global : <code>needs-fix</code> (3 Bloquants courts).</li>
+<li>Patches post-audit attendus : à arbitrer item par item avec l'utilisateur. Les 3 Bloquants (B1 IAM doc, B2 SecurityConfig commentaire, B3 AnalysisConfig placement) sont des patches de quelques minutes chacun, sans risque. Les 11 À discuter et 8 Mineurs sont du polish à filer en backlog dette technique ou patcher dans le même pass selon arbitrage.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Vue d&#39;ensemble">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Vue d'ensemble
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-footer__link md-footer__link--next" aria-label="Next: 2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

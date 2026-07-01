@@ -1,0 +1,1809 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/projet/audits/2026-06-15-revue-globale/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Revue de code globale — repo complet (2026-06-15) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#revue-de-code-globale-repo-complet-2026-06-15" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Revue de code globale — repo complet (2026-06-15)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../devops/commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../devops/decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="revue-de-code-globale-repo-complet-2026-06-15">Revue de code globale — repo complet (2026-06-15)<a class="headerlink" href="#revue-de-code-globale-repo-complet-2026-06-15" title="Permanent link">&para;</a></h1>
+<p><strong>Scope</strong> : audit global du codebase à <code>HEAD</code> (<code>125d611</code>), périmètre <strong>tout le repo</strong> (live post-pivot + dormant pré-pivot), demandé hors contexte d'un delta de feature. Le working tree porte des modifications <strong>docs-only</strong> de la session du jour (US compte-broker, maquette, passe doc-maintainer) — aucun changement de code applicatif, donc le code sous revue = <code>HEAD</code>.</p>
+<p><strong>Méthode</strong> : revue <strong>solo en une passe</strong> par le main thread (pas de fan-out multi-agents), combinant (a) des <strong>greps systémiques</strong> sur l'ensemble du repo pour les invariants de convention et de sécurité (wildcard imports, <code>CommonModule</code>, <code>Mat*Module</code> bruts, logging PII, <code>console.*</code>, validation Jakarta, chip ticker, TODO/FIXME), et (b) des <strong>lectures ciblées en profondeur</strong> des modules backend live (<code>journal/</code>, <code>stats/</code>, <code>lexicon/</code>, <code>auth/security</code>, <code>config/</code>, <code>shared/</code>) + leurs DTO/controllers, plus la <code>SecurityConfig</code>. Ground truth : <code>CLAUDE.md</code>, <code>architecture.md</code>, <code>ddd.md</code>, skills backend/frontend.</p>
+<p><strong>Couverture honnête (pas de cap silencieux)</strong> :</p>
+<ul>
+<li><strong>Profond</strong> : sécurité (<code>SecurityConfig</code>, exposition actuator, CSRF), <code>journal/</code> (service + controller + DTO), <code>stats/</code> (service + controller), <code>lexicon/</code> (service), <code>config/</code> (controller + DTO secrets), <code>shared/GlobalExceptionHandler</code>.</li>
+<li><strong>Systémique (grep)</strong> : conventions Kotlin (imports), conventions frontend (design-system, zoneless, control-flow), logging PII, validation, chip ticker — sur <strong>tout</strong> le repo.</li>
+<li><strong>Spot-check seulement</strong> : internals des ~11 modules dormants (controllers confirmés exposés, logique métier non relue ligne à ligne), composants frontend (conventions vérifiées + fichiers clés, <strong>pas</strong> une relecture exhaustive des signals/effects/templates), config build (<code>build.gradle.kts</code>, workflows CI) <strong>non relue</strong> cette passe.</li>
+</ul>
+<p><strong>État du commit</strong> : branche <code>master</code>, dernier commit committé <code>125d611 feat(stats): create-trade action linking to journal, drop bool columns</code>. Working tree non-clean (édits docs de la session, non commités).</p>
+<hr />
+<h2 id="resume-executif">Résumé exécutif<a class="headerlink" href="#resume-executif" title="Permanent link">&para;</a></h2>
+<p>Le <strong>chemin live du journal de trading</strong> est de très bonne facture : isolation multi-tenant en défense-en-profondeur (prédicat <code>userId</code> au niveau service <strong>et</strong> repository), contrat 404-pas-403 systématique pour ne pas leaker l'existence d'une ligne, tri serveur dont le défaut est possédé par le service (pattern documenté), import CSV atomique. La couche sécurité est soignée (401-pas-302 pour les XHR, CSRF cookie-SPA, gating ADMIN par route + méthode HTTP, exposition actuator maîtrisée par profil, secrets jamais ré-émis). Les conventions transverses sont <strong>respectées sans exception détectée</strong> : zéro wildcard import Kotlin, zéro <code>CommonModule</code> / <code>Mat*Module</code> brut côté frontend, zéro <code>console.log</code> parasite, PII jamais loggée, chip ticker partout. Couverture de tests solide (intégration Testcontainers pour journal / stats / lexicon / auth / config + unitaires nombreux).</p>
+<p><strong>0 Bloquant.</strong> Aucun bug de sécurité ou de correction qui empêcherait un usage / une livraison.</p>
+<p><strong>3 À discuter (Important)</strong> :</p>
+<ol>
+<li>
+<p><strong>Pas de Bean Validation sur les DTO d'écriture live</strong> — <code>TradeEntryRequest</code> / <code>StatEntryFormRequest</code> n'ont aucune annotation <code>jakarta.validation</code> et les controllers n'ont pas de <code>@Valid</code>. Un seul fichier du backend utilise la validation Jakarta (<code>TickerNarrativePromptService</code>, <strong>dormant</strong>). Conséquence : un <code>ticker</code> blanc passe (<code>"".trim().uppercase()</code> → chaîne vide stockée), et les bornes (<code>size &gt; 0</code>, <code>open_price &gt; 0</code>, <code>note</code> ≤ 2000) ne sont attrapées que par la BDD → exception remontée tardivement (cf. point 2). Le <code>lexicon/</code> valide à la main proprement (400 sur blanc) — l'incohérence est que journal / stats ne le font pas. <strong>Reco</strong> : soit Bean Validation + <code>@Valid</code> sur les 2 controllers, soit valider à la main façon lexicon, mais uniformément.</p>
+</li>
+<li>
+<p><strong><code>GlobalExceptionHandler</code> mappe <em>toute</em> <code>DataIntegrityViolationException</code> → 409 « ressource déjà existante »</strong> — le handler suppose une violation d'unicité, mais il intercepte aussi les violations de <strong>CHECK</strong> (<code>size &gt; 0</code>, <code>open_price &gt; 0</code>, <code>exit_price &gt; 0</code>), de <strong>NOT NULL</strong> et de <strong>longueur</strong>. Une taille négative ou un prix ≤ 0 (non bloqués faute de validation, point 1) renverrait donc « Conflit : ressource déjà existante » — message faux pour l'utilisateur et trompeur au debug. <strong>Reco</strong> : distinguer la cause (inspecter <code>mostSpecificCause</code> / le nom de contrainte) pour ne renvoyer 409 que sur l'unicité, sinon 400 ; ou (mieux) ajouter la validation amont (point 1) pour que ces cas ne touchent jamais la BDD. Penser à ajouter un handler <code>MethodArgumentNotValidException</code> en même temps que <code>@Valid</code>.</p>
+</li>
+<li>
+<p><strong>Le code « dormant » n'est pas inerte — il est câblé et exposé</strong> — ~11 <code>@RestController</code> pré-pivot (<code>TickerNarrative</code>, <code>Prompt</code>, <code>NarrativeThumbs</code>, <code>NarrativeObservability</code>, <code>Market</code>, <code>SymbolSearch</code>, <code>MarketScreener</code>, <code>News</code>, <code>Analyst</code>, <code>Earnings</code>, <code>Watchlist</code>) restent mappés et servis sous <code>/api/**</code> (authentifié), avec leurs services et les clients providers (Finnhub / Twelve Data / FMP / Polygon / Claude / Ollama). C'est de la <strong>surface d'attaque + dette de maintenance + poids de dépendances</strong> pour du code qu'aucune UI live ne consomme (hors <code>radar</code> / <code>ticker</code> encore routés). La décision de décommission est 🧊 au backlog — l'enjeu est le <strong>coût du report indéfini</strong>, pas un bug. <strong>Reco</strong> : trancher le périmètre de drop (au moins <code>analysis/</code> narratif + <code>news</code>/<code>analyst</code>/<code>earnings</code> si la Phase 2 ne les re-câble pas) pour réduire la surface.</p>
+</li>
+</ol>
+<p><strong>5 Mineurs</strong> : (4) normalisation ticker incohérente entre saisie manuelle (<code>.trim().uppercase()</code>) et imports CSV (journal + stats stockent le ticker brut du decoder) → risque de doublon de casse <code>aapl</code>/<code>AAPL</code> ; (5) import CSV lu intégralement en mémoire (<code>String(file.bytes)</code>) sans cap multipart explicite vérifié (<code>spring.servlet.multipart.max-file-size</code>) — risque faible en single-user ; (6) 2 SCSS design-system (<code>_banners.scss</code>, <code>_badges.scss</code>) marqués <code>//TODO: legacy a supprimer</code> — CSS mort à retirer ; (7) <code>StatEntryService.create</code> / <code>applyForm</code> re-assignent <code>gapUpPercent</code> / <code>openPrice</code> deux à trois fois — redondance inoffensive ; (8) 2 TODO inline restants (<code>WatchlistService</code> volet-3 gestion d'erreur, <code>MockAnalystClient</code> couplage <code>LocalDate.now()</code>) — modules dormants, déjà tracés.</p>
+<p><strong>Verdict global</strong> : <code>solid / minor-fixes</code>. Aucun bloquant ; le chemin live est robuste et conforme. Les 2 premiers Importants forment un duo cohérent (validation amont + mapping d'erreur) qui vaut une petite passe ; le 3ᵉ est une <strong>décision produit</strong> (décommission) plus qu'un correctif.</p>
+<hr />
+<h2 id="forces">Forces<a class="headerlink" href="#forces" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>Multi-tenant en défense-en-profondeur</strong> — <code>TradeEntryService</code> et <code>StatEntryService</code> scopent chaque lecture/écriture par <code>authService.getCurrentUser().id</code>, <strong>et</strong> les méthodes repo portent le prédicat <code>userId</code> (<code>findByIdAndUserId</code>, <code>deleteByIdAndUserId</code>, <code>findByIdAndCreatedBy</code>). Un controller bugué ou un test ne peut pas leaker cross-tenant. Le 404-pas-403 est appliqué et documenté (pas de leak d'existence). Le modèle stats admin-global (<code>created_by NULL</code>) + privé (<code>created_by = me</code>) est cohérent et l'export CSV est scopé <code>created_by IS NULL</code> (roundtrip intact, lignes privées jamais exportées).</p>
+</li>
+<li>
+<p><strong><code>SecurityConfig</code> réfléchie</strong> — 401 (pas 302 vers Google) pour que l'interceptor SPA décide, CSRF cookie non-HttpOnly + <code>CsrfTokenRequestAttributeHandler</code> plain (compatible read-and-forward Angular) + <code>CsrfTokenResponseFilter</code> pour forcer l'écriture du cookie, gating ADMIN par route <strong>et</strong> méthode (<code>POST /api/stats/import</code>, <code>POST/PUT/DELETE /api/lexicon</code>), <code>oauth2Login</code> conditionnel à la présence du <code>ClientRegistrationRepository</code> (contexte bootable sans OAuth en CI), failure handler → redirect propre <code>/login?error=…</code>. Exposition actuator maîtrisée par profil (commentaire explicite sur le risque d'activer <code>/actuator/env</code>).</p>
+</li>
+<li>
+<p><strong>Secrets jamais ré-émis</strong> — <code>ConfigEntryDto.currentValue</code> et <code>defaultValue</code> sont <code>null</code> pour les clés <code>SECRET</code> ; l'UI n'apprend que <code>hasValue</code>. Bonne hygiène (pas de clé en clair dans une réponse ni une capture d'écran).</p>
+</li>
+<li>
+<p><strong>Conventions transverses respectées</strong> — zéro wildcard import Kotlin (allowlist <code>detekt</code> non élargie), zéro <code>CommonModule</code> et zéro <code>Mat*Module</code> brut dans <code>apps/web</code> (wrappers <code>Stb*</code> partout, imports <code>@angular/material/*</code> limités aux tokens d'injection type <code>MatDialogRef</code>), zéro <code>console.log</code> parasite (seuls les error handlers <code>main.ts</code> / <code>app.config.ts</code>), PII jamais loggée (email / displayName / providerId n'apparaissent que dans DTO / entité / commentaires), chip ticker <code>stbChip</code> utilisée dans journal / stats / radar.</p>
+</li>
+<li>
+<p><strong>Tests comme documentation</strong> — suite d'intégration Testcontainers (vrai PostgreSQL) pour journal / stats / lexicon / auth / config, plus une large couverture unitaire par module. Noms de tests en phrases, fixtures réalistes.</p>
+</li>
+<li>
+<p><strong>Hexagonal appliqué uniformément</strong> — <code>domain/</code> (ports + entités) → <code>application/</code> (services + DTO) → <code>infrastructure/</code> (adapters http / persistence / clients) sur tous les modules, live comme dormants. <code>GlobalExceptionHandler</code> centralise le mapping erreur→HTTP, <code>UpstreamUnavailableException</code> → 503 fail-soft pour les providers.</p>
+</li>
+</ul>
+<hr />
+<h2 id="detail-des-findings">Détail des findings<a class="headerlink" href="#detail-des-findings" title="Permanent link">&para;</a></h2>
+<h3 id="a-discuter">À discuter<a class="headerlink" href="#a-discuter" title="Permanent link">&para;</a></h3>
+<p><strong>[Important] 1 — Bean Validation absente des écritures live.</strong> Cf. résumé. <code>TradeEntryRequest</code> (<code>journal/application/dto</code>) : <code>ticker: String</code> non-null mais sans <code>@field:NotBlank</code> / <code>@field:Size(max=20)</code> ; <code>size</code>, <code>openPrice</code>… sans <code>@field:Positive</code>. <code>StatEntryFormRequest</code> : même profil (<code>create</code> fait <code>form.ticker.trim().uppercase()</code> sans garde blanc). Aucun <code>@Valid</code> sur <code>TradeEntryController</code> / <code>StatEntryController</code>. Le seul usage Jakarta du backend est dans <code>analysis/</code> (dormant). Le <code>lexicon/</code> montre le pattern manuel propre (<code>cleanTerm</code> / <code>cleanDefinition</code> → 400) à généraliser si on ne veut pas d'annotations.</p>
+<p><strong>[Important] 2 — Mapping 409 trop large.</strong> <code>GlobalExceptionHandler.handleConflict</code> renvoie systématiquement « Conflit : ressource déjà existante » sur <code>DataIntegrityViolationException</code>, qui couvre aussi CHECK / NOT NULL / longueur. Combiné au point 1, une entrée invalide (taille ≤ 0, prix ≤ 0, note &gt; 2000) renvoie un 409 au libellé faux. Distinguer la contrainte ou — préférable — valider en amont. Ajouter <code>MethodArgumentNotValidException</code> → 400 au moment d'introduire <code>@Valid</code>.</p>
+<p><strong>[Important] 3 — Surface du code dormant.</strong> Cf. résumé. ~11 controllers + services + clients providers exposés sous <code>/api/**</code>. Ce n'est pas un bug (auth requise, providers en <code>mock</code> par défaut) mais une dette structurelle et une surface qui grandit le risque à chaque dépendance bumpée. À arbitrer dans la passe de décommission (déjà 🧊 au backlog).</p>
+<h3 id="mineurs">Mineurs<a class="headerlink" href="#mineurs" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>4 — Normalisation ticker incohérente.</strong> <code>create</code> / <code>update</code> (journal + stats) normalisent (<code>.trim().uppercase()</code>) ; les chemins d'import CSV stockent <code>request.ticker</code> brut du decoder. Vérifier que le decoder normalise, sinon aligner pour éviter un doublon de casse.</li>
+<li><strong>5 — Import CSV en mémoire pleine.</strong> <code>String(file.bytes, UTF_8)</code> charge tout le fichier ; confirmer un cap <code>spring.servlet.multipart.max-file-size</code> raisonnable. Risque faible en single-user.</li>
+<li><strong>6 — SCSS legacy mort.</strong> <code>libs/ui/styles/components/_banners.scss</code> + <code>_badges.scss</code> portent <code>//TODO: legacy a supprimer</code> — à retirer.</li>
+<li><strong>7 — Redondance <code>StatEntryService</code>.</strong> <code>gapUpPercent</code> / <code>openPrice</code> réassignés dans le constructeur, dans <code>create</code>/<code>update</code> puis dans <code>applyForm</code>. Inoffensif, à dédupliquer si on touche au fichier.</li>
+<li><strong>8 — TODO inline dormants.</strong> <code>WatchlistService</code> (gestion d'erreur transverse volet-3) et <code>MockAnalystClient</code> (<code>LocalDate.now()</code> couplé) — déjà tracés, modules dormants.</li>
+</ul>
+<hr />
+<h2 id="non-verifie-hors-passe-a-relire-si-besoin">Non vérifié / hors passe (à relire si besoin)<a class="headerlink" href="#non-verifie-hors-passe-a-relire-si-besoin" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Logique des composants frontend</strong> (signals / <code>effect</code> / templates) — conventions vérifiées par grep + fichiers clés lus, mais pas une relecture exhaustive composant par composant.</li>
+<li><strong>Internals des modules dormants</strong> — controllers confirmés exposés ; logique métier (LLM dispatch, scoring, clients providers) non relue cette passe.</li>
+<li><strong>Config build &amp; CI</strong> — <code>build.gradle.kts</code>, <code>detekt.yml</code>, workflows <code>.github/</code>, <code>application*.yml</code> non audités ici (couverts par les audits Phase 5 antérieurs).</li>
+<li><strong>Migrations Flyway</strong> — relues côté schéma lors de la passe doc-maintainer du jour (V1→V5 réels), pas re-auditées ici sur le plan correction.</li>
+</ul>
+<hr />
+<h2 id="suite">Suite<a class="headerlink" href="#suite" title="Permanent link">&para;</a></h2>
+<p>Aucune action auto-promue au backlog (convention <code>docs/projet/audits/</code>). Candidats naturels si on décide d'en faire des tickets : les Importants 1 + 2 (un petit bundle « validation + mapping d'erreur » sur le chemin write live), et l'Important 3 (alimenter la décision de décommission déjà 🧊).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2549 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Optimiseur de portefeuille boursier alimenté par l'IA">
+      
+      
+      
+        <link rel="canonical" href="https://jv3n.github.io/trade/devops/deploiement/">
+      
+      
+        <link rel="prev" href="../liens-utiles/">
+      
+      
+        <link rel="next" href="../release-process/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Déploiement (choix d'hébergement Phase 5) - PortfolioAI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deploiement-choix-dhebergement-phase-5" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="PortfolioAI" class="md-header__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PortfolioAI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Déploiement (choix d'hébergement Phase 5)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../projet/roadmap/" class="md-tabs__link">
+          
+  
+  
+  Projet
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../CHANGELOG/" class="md-tabs__link">
+          
+  
+  
+  Accueil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../metier/vision/" class="md-tabs__link">
+          
+  
+  
+  Métier
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../technique/developper/" class="md-tabs__link">
+          
+  
+  
+  Technique
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../commandes-pratiques/" class="md-tabs__link">
+          
+  
+  
+  Devops
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="PortfolioAI" class="md-nav__button md-logo" aria-label="PortfolioAI" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    PortfolioAI
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projet
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Projet
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap (pivot v1.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_3" id="__nav_1_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spécifications (US)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Spécifications (US)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/us/compte-broker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compte broker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/testeur/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding testeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/journal-livraisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Journal des livraisons
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/sources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources de données
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/commit-conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions de commit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_1_8" id="__nav_1_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audits
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Audits
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vue d'ensemble
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-24-pre-phase5-close/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-24 — Revue globale pré-clôture Phase 5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-17-pre-v0.6.0-phase4/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-17 — Revue globale pré-v0.6.0 (Phase 4)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-16-pre-v0.5.1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-16 — Revue globale pré-v0.5.1
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-14-fin-phase-3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-14 — Revue globale fin Phase 3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-10-fin-phase-2.5/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-10 — Revue globale fin Phase 2.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-06-fin-phase-2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-06 — Revue globale fin Phase 2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../projet/audits/2026-05-02-revue-globale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026-05-02 — Revue globale
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accueil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Accueil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog doc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Métier
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Métier
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/vision/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metier/fonctionnalites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fonctionnalités
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Technique
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Technique
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding développeur
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ddd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DDD — Bounded Contexts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/developpement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide de développement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/providers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Providers externes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technique/ops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops (CI / CD / tooling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Devops
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Devops
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commandes-pratiques/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commandes pratiques
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../liens-utiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Liens utiles (consoles & dashboards)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Déploiement (choix d'hébergement Phase 5)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-contexte-et-contraintes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Contexte et contraintes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-short-list-candidats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Short-list candidats
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-tableau-de-comparaison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Tableau de comparaison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-recommandation-cloud-run-supabase-postgres" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Recommandation — Cloud Run + Supabase Postgres
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-plan-phase-du-bootstrap-a-la-prod-stable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Plan phasé — du bootstrap à la prod stable
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Plan phasé — du bootstrap à la prod stable">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-5a-bootstrap-0mo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5a — Bootstrap ($0/mo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5b-hardening-prod-0mo-encore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5b — Hardening prod ($0/mo encore)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5c-si-free-tier-serre-25-30mo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5c — Si free tier serre (~$25-30/mo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-pipeline-gitops-github-actions-cloud-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Pipeline GitOps — GitHub Actions → Cloud Run
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Pipeline GitOps — GitHub Actions → Cloud Run">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-setup-initial-one-shot-2-h" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Setup initial (one-shot, ~2 h)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-workflow-githubworkflowsdeployyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Workflow .github/workflows/deploy.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-workflow-backup-weekly-githubworkflowsbackup-postgresyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Workflow backup weekly .github/workflows/backup-postgres.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-surface-de-version-actuatorinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Surface de version — /actuator/info
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-plan-de-migration-sortir-de-cloud-run-supabase-si-besoin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Plan de migration — sortir de Cloud Run + Supabase si besoin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-risques-et-trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Risques et trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-tickets-dependants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Tickets dépendants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-decisions-cles-resume" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Décisions clés — résumé
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release process (workflow Cloud Run)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backup-process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup & restore process (Postgres → R2)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../secret-rotation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotation des secrets prod
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dns-analyse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analyse DNS (choix nom de domaine)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decision-ollama-deploiement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Décision : déploiement Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="deploiement-choix-dhebergement-phase-5">Déploiement — choix d'hébergement Phase 5<a class="headerlink" href="#deploiement-choix-dhebergement-phase-5" title="Permanent link">&para;</a></h1>
+<p>Analyse fournisseur et plan de mise en prod pour PortfolioAI, écrite à l'amorce de la Phase 5 (mai 2026), <strong>révisée 2026-05-18</strong> suite à deux clarifications utilisateur (constraint #4 « tout l'état infra dans le repo » + LLM prod = Mock + Claude uniquement, pas d'Ollama). Référence opérationnelle pour le ticket suivant « Provisionner et déployer v1 ». Ce document n'engage pas la stack à 5 ans — il fixe le choix v1 et trace les sorties de secours.</p>
+<p>Voisin des autres docs devops :</p>
+<ul>
+<li><a href="../commandes-pratiques/"><code>commandes-pratiques.md</code></a> — commandes Docker / Tilt / Postgres / Ollama au quotidien</li>
+<li><a href="../decision-ollama-deploiement/"><code>decision-ollama-deploiement.md</code></a> — pourquoi Ollama reste en CPU dégradé sur Mac</li>
+<li><strong><code>deploiement.md</code></strong> <em>(ce fichier)</em> — choix d'hébergement Phase 5 + plan migration</li>
+</ul>
+<p>Et liens transverses :</p>
+<ul>
+<li><a href="../../technique/architecture/"><code>../technique/architecture.md</code></a> — modules, schéma BDD, décisions techniques</li>
+<li><a href="../../technique/ops/"><code>../technique/ops.md</code></a> — CI / CD, caching, sécurité, tooling</li>
+<li><a href="../../technique/providers/"><code>../technique/providers.md</code></a> — providers externes (Twelve Data, Finnhub, Anthropic, Ollama)</li>
+</ul>
+<h2 id="1-contexte-et-contraintes">1. Contexte et contraintes<a class="headerlink" href="#1-contexte-et-contraintes" title="Permanent link">&para;</a></h2>
+<p>Aujourd'hui l'app vit uniquement en local via <code>tilt up</code> sur le poste de l'utilisateur principal — aucun accès depuis un autre appareil, aucun moyen d'autoriser quelqu'un d'autre à l'utiliser. La Phase 4 Authentification (Google OIDC + rôles ADMIN/USER + multi-tenant <code>user_id</code> FK) a livré le pré-requis bloquant pour un deploy public. Reste à choisir où et comment exposer.</p>
+<p><strong>Contraintes utilisateur</strong> (arbitrées 2026-05-18) :</p>
+<ol>
+<li><strong>Le moins cher possible</strong> — personal project, idéalement $0/mo durable, sans s'interdire un palier supérieur si la valeur ops est claire.</li>
+<li><strong>Migration facile</strong> — pas de lock-in fort. La stack doit pouvoir bouger vers un autre provider en ~½ journée si le choix v1 déçoit. Concrètement : Dockerfile standard, Postgres standard, <strong>pas de SDK propriétaire dans le code applicatif</strong> (en particulier : pas de <code>supabase-kt</code>, juste <code>DATABASE_URL</code> Postgres via JDBC).</li>
+<li><strong>GitOps strict</strong> — toutes les opérations critiques se font depuis le repo : deploy via pipeline GitHub Actions, releases via GitHub Releases, secrets via GitHub Environments. Aucune action manuelle sur un dashboard tiers (création de service, ajout d'add-on, scaling) ne doit être nécessaire après le bootstrap. Auditabilité = le <code>git log</code> est la source de vérité de l'état de la prod.</li>
+<li><strong>Tout l'état infra dans le repo</strong> — Dockerfile, fichiers de config provider (Cloud Run YAML / <code>fly.toml</code> / Terraform), tout est commité et review-able via <code>git log</code>. <strong>PaaS / serverless est <em>préféré</em></strong> pour la charge ops minimale (TLS auto, OS patches gérés, alerting natif), mais une stack VPS + IaC reste éligible si l'écart coût justifie la charge ops. Ce qui est exclu : provisioning manuel via dashboards, scripts shell non-déclaratifs.</li>
+<li><strong>LLM provider en prod = Mock + Claude API uniquement</strong> (décision 2026-05-18) — <strong>Ollama est exclu de la prod</strong>. Il reste utilisable en dev local via <code>tilt up</code> ; le toggle UI <code>/settings/configuration &gt; LLM</code> continue d'exposer l'option mais elle retourne 503 en prod (panneau État Ollama « daemon non joignable »). <strong>Implication majeure</strong> : la stack passe de ~6 GB RAM (avec Ollama qwen2.5:3b) à ~2 GB (backend + Postgres seuls), ce qui réouvre des options serverless type Cloud Run qui ne peuvent pas accueillir Ollama.</li>
+</ol>
+<p><strong>Profil de charge attendu</strong> : single-user au lancement, puis 1-5 utilisateurs autorisés via whitelist email (<code>APP_ADMIN_EMAILS</code>). Pas de SaaS ouvert. Pas de trafic continu — l'utilisateur ouvre l'app quelques fois par jour aux heures de marché.</p>
+<h2 id="2-short-list-candidats">2. Short-list candidats<a class="headerlink" href="#2-short-list-candidats" title="Permanent link">&para;</a></h2>
+<p><strong>Critères éliminatoires</strong> — appliqués avant comparaison fine :</p>
+<ul>
+<li><strong>Pas de free tier durable</strong> → écarté : AWS, Azure (free tier 12 mois seulement puis payant). Pas une option long-terme pour un perso.</li>
+<li><strong>GitOps natif faible</strong> → écarté : Heroku (prix prohibitifs en 2026, ~$25/mo pour Eco dyno + Postgres) ; AWS Lightsail (interface web obligatoire pour beaucoup d'opérations, contrainte #3 violée).</li>
+<li><strong>Pas de région Eastern Canada / US-East proche</strong> → pénalisé mais non éliminatoire : la latence Montréal → Europe (~80-100 ms) reste acceptable pour cet usage, mais Toronto / Virginia (~5-30 ms) est préférable.</li>
+</ul>
+<p><strong>Quatre candidats survivent</strong> :</p>
+<ul>
+<li><strong>Google Cloud Run + Supabase Postgres</strong> — serverless managé total, $0/mo durable, région Montréal native côté compute, Supabase Toronto (<code>ca-central-1</code>) côté DB.</li>
+<li><strong>Fly.io Phase 5a</strong> — PaaS Docker-first single-vendor, ~$10/mo, région <code>yyz</code> Toronto.</li>
+<li><strong>Oracle Cloud A1 Ampere</strong> — VM ARM 4 OCPU/24 GB Always Free, région <code>ca-montreal-1</code>, sysadmin léger récurrent.</li>
+<li><strong>Railway / Render</strong> — alternatives PaaS US-East, $5-13/mo, latence pénalisée vs Cloud Run et Fly.</li>
+</ul>
+<h2 id="3-tableau-de-comparaison">3. Tableau de comparaison<a class="headerlink" href="#3-tableau-de-comparaison" title="Permanent link">&para;</a></h2>
+<p>Prix relevés 2026-05-18. Vérifier les pages officielles avant provisioning — ils bougent régulièrement.</p>
+<table>
+<thead>
+<tr>
+<th>Critère</th>
+<th><strong>Cloud Run + Supabase</strong></th>
+<th>Fly.io Phase 5a</th>
+<th>Oracle A1 Ampere</th>
+<th>Railway / Render</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Coût mensuel</strong></td>
+<td><strong>$0</strong> (durable dans free tier)</td>
+<td>~$10 (backend $5.7 + Postgres unmanaged $7.20)</td>
+<td><strong>$0</strong> (Always Free)</td>
+<td>$5-13</td>
+</tr>
+<tr>
+<td><strong>Région la plus proche de Montréal</strong></td>
+<td><code>northamerica-northeast1</code> (Montréal natif) ~5 ms compute, Supabase DB Toronto (<code>ca-central-1</code>) ~5-10 ms</td>
+<td><code>yyz</code> (Toronto) ~5 ms</td>
+<td><code>ca-montreal-1</code> ~5 ms</td>
+<td>US-East ~25 ms</td>
+</tr>
+<tr>
+<td><strong>Quota backend</strong></td>
+<td>2M req/mo + 360K GB-s + 180K vCPU-s + 1 GB egress N. America/mo</td>
+<td>shared-cpu-1x@1GB scale-to-zero</td>
+<td>4 OCPU ARM + 24 GB RAM + 200 GB block + 10 TB egress</td>
+<td>Métré</td>
+</tr>
+<tr>
+<td><strong>Postgres</strong></td>
+<td><strong>Supabase free</strong> 500 MB DB + 50K MAU + 2 GB transfer + auto-pause après 7j inactivité</td>
+<td>Fly Postgres unmanaged 1 GB + 10 GB volume</td>
+<td>Self-hosted dans la VM (gratuit illimité)</td>
+<td>Inclus tier</td>
+</tr>
+<tr>
+<td><strong>Scale-to-zero</strong></td>
+<td>✅ natif (cold-start 1-3 s)</td>
+<td>✅ <code>auto_stop_machines = "stop"</code></td>
+<td>❌ VM toujours-on (reclamation 7j idle si pas PAYG)</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>GitOps + Releases</strong></td>
+<td>✅ <code>google-github-actions/auth@v3</code> + Workload Identity Federation (pas de key long-lived) + <code>gcloud run deploy</code></td>
+<td>✅ <code>superfly/flyctl-actions@v1.5</code> + <code>FLY_API_TOKEN</code></td>
+<td>✅ Terraform OCI + ssh deploy via cloud-init</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>TLS + custom domain</strong></td>
+<td>Via Cloudflare devant (gratuit) ou Cloud Run custom domain mapping (gratuit)</td>
+<td><code>flyctl certs add</code> + CNAME, Let's Encrypt auto</td>
+<td>Caddy containerisé + Let's Encrypt (à câbler)</td>
+<td>Inclus</td>
+</tr>
+<tr>
+<td><strong>Sysadmin récurrent</strong></td>
+<td><strong>Aucun</strong> (full managed)</td>
+<td>Aucun (PaaS)</td>
+<td>~30 min/mois (<code>unattended-upgrades</code>, monitoring, restore drill)</td>
+<td>Aucun</td>
+</tr>
+<tr>
+<td><strong>Risque free tier shrink (2-3 ans)</strong></td>
+<td>Modéré côté Supabase (VC startup), faible côté Google (Cloud Run GA stable depuis 2019)</td>
+<td>Faible (mais c'est déjà payant)</td>
+<td>Modéré (terms évolués 2× depuis 2021)</td>
+<td>Modéré</td>
+</tr>
+<tr>
+<td><strong>Lock-in</strong></td>
+<td>Faible — Postgres standard + Dockerfile + Cloud Run service.yaml ~30 lignes (mais discipline « zéro SDK Supabase » à tenir)</td>
+<td>Faible — Dockerfile + <code>fly.toml</code> ~30 lignes</td>
+<td>Faible — Dockerfile + docker-compose + module Terraform OCI ~80 lignes</td>
+<td>Faible</td>
+</tr>
+<tr>
+<td><strong>Migration sortie estimée</strong></td>
+<td>~2-3 h vers Fly / Neon / Oracle / VPS</td>
+<td>~3-4 h</td>
+<td>~3-4 h</td>
+<td>~3-4 h</td>
+</tr>
+</tbody>
+</table>
+<p>Sources brutes :
+- Google Cloud Run — <a href="https://cloud.google.com/run/pricing">pricing</a> + <a href="https://cloud.google.com/free">free tier</a> + <a href="https://github.com/google-github-actions/auth">GitHub Actions auth</a>
+- Supabase — <a href="https://supabase.com/pricing">pricing</a> + <a href="https://supabase.com/docs/guides/platform/billing-on-supabase#how-does-the-free-plan-work">auto-pause policy</a>
+- Fly.io — <a href="https://fly.io/docs/about/pricing/">pricing</a> + <a href="https://fly.io/docs/postgres/">Fly Postgres unmanaged</a> + <a href="https://fly.io/docs/launch/continuous-deployment-with-github-actions/">continuous deployment</a>
+- Oracle — <a href="https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm">Always Free Resources</a> + <a href="https://github.com/hitrov/oci-arm-host-capacity">hitrov/oci-arm-host-capacity</a>
+- Cloudflare — <a href="https://developers.cloudflare.com/r2/pricing/">R2 free tier</a> (10 GB storage) + custom domain proxy gratuit</p>
+<h2 id="4-recommandation-cloud-run-supabase-postgres">4. Recommandation — Cloud Run + Supabase Postgres<a class="headerlink" href="#4-recommandation-cloud-run-supabase-postgres" title="Permanent link">&para;</a></h2>
+<p><strong>Choix retenu : Google Cloud Run (compute) + Supabase Postgres (DB)</strong>. Quatre arguments décisifs :</p>
+<ol>
+<li><strong>$0/mo durable</strong> — Cloud Run free tier (2M req + 360K GB-s + 180K vCPU-s + 1 GB egress N. America) couvre un usage single-user 1000× ; Supabase free (500 MB DB + 50K MAU) couvre tout le modèle PortfolioAI single-user (~50 MB de données prévisibles). Pas un free trial 12 mois — un free tier qui tient depuis 2019 (Cloud Run) et qui a globalement <strong>augmenté</strong> 2020-2026 (Supabase).</li>
+<li><strong>Région Montréal native côté compute</strong> — Google a un datacenter physique à Montréal (<code>northamerica-northeast1</code>). Latence TTL ~5 ms. La DB Supabase est en Toronto (<code>ca-central-1</code>, Session pooler IPv4), ~5-10 ms RTT par requête, invisible à l'usage single-user.</li>
+<li><strong>Charge ops récurrente = zéro</strong> — Cloud Run gère scale-to-zero, OS patches, TLS Cloud Run, alerting natif. Supabase gère backups Postgres quotidiens (rétention 7j en free), patches PG, monitoring. Aucun cron à câbler pour la maintenance routinière (on en câble UN, pour le backup d'exit cf. §5).</li>
+<li><strong>Lock-in cosmétique</strong> — code applicatif n'a aucune dépendance Supabase-specific (uniquement <code>DATABASE_URL</code> JDBC standard) ni Cloud Run-specific (Dockerfile multi-stage classique). Migration sortie = <code>pg_dump | pg_restore</code> vers Neon free + redeploy ailleurs = ~2-3 h.</li>
+</ol>
+<p><strong>Concessions assumées</strong> :</p>
+<ul>
+<li><strong>Latence DB cross-région minime</strong> — Supabase région Toronto (<code>ca-central-1</code>) retenue au provisioning au lieu de US-East (default Supabase) parce que disponible en free tier et proche de Cloud Run Montréal. ~5-10 ms RTT par requête (vs ~25 ms si on était resté US-East), négligeable même cumulé. Le mode <strong>Session pooler</strong> <code>aws-1-ca-central-1.pooler.supabase.com:5432</code> est retenu vs Direct (IPv6-only, incompatible Cloud Run) vs Transaction pooler (port 6543, casse les advisory locks Flyway au boot).</li>
+<li><strong>Cold-start Cloud Run ~1-3 s</strong> — scale-to-zero forcé en free tier. La 1ère requête après ~15 min d'inactivité paye un cold-start. Acceptable single-user qui ouvre l'app quelques fois par jour.</li>
+<li><strong>Supabase auto-pause après 7j inactivité</strong> — re-réveille à la 1ère requête (~10-20 s). Invisible quotidien, sensible après vacances. Mitigation = cron ping (5 lignes de GitHub Actions schedule) si jamais.</li>
+<li><strong>Multi-vendor stack</strong> — 2 dashboards (GCP Console + Supabase) à regarder si quelque chose pète. Mitigé par scope clair : Cloud Run = compute, Supabase = data. Acceptable pour les $120/an économisés vs Fly.</li>
+</ul>
+<p><strong>Pourquoi pas Fly Phase 5a ($10/mo)</strong> : single-vendor + DX excellent mais $120/an pour exactement les mêmes capacités qu'un setup $0/mo bien câblé. La consolidation single-vendor n'est plus une plus-value décisive maintenant qu'Ollama est hors prod (le scenario Phase 5b qui justifiait $35/mo Fly disparaît). Reste un <strong>fallback légitime</strong> si Cloud Run + Supabase déçoit.</p>
+<p><strong>Pourquoi pas Oracle A1 Ampere ($0)</strong> : sans Ollama, les 24 GB ARM deviennent massivement overkill (~2 GB utilisés sur 24). Et c'est exactement ce qui déclenche la reclamation 7j idle (CPU &lt; 20 % 95p) — mitigeable par upgrade PAYG mais on garde la sysadmin légère récurrente. Reste un fallback si l'écart $0 vs $120/yr vaut la sysadmin (et si tu veux garder l'option Ollama future sans re-migrer).</p>
+<p><strong>Pourquoi pas VPS + Terraform (Hetzner CX22 ~$5/mo)</strong> : éligible depuis la clarification contrainte #4 mais sans Ollama, l'avantage RAM/coût ne joue plus, et la latence Falkenstein ~100 ms reste pénalisante. Sortirait si on voulait apprendre les Linux ops.</p>
+<h2 id="5-plan-phase-du-bootstrap-a-la-prod-stable">5. Plan phasé — du bootstrap à la prod stable<a class="headerlink" href="#5-plan-phase-du-bootstrap-a-la-prod-stable" title="Permanent link">&para;</a></h2>
+<h3 id="phase-5a-bootstrap-0mo">Phase 5a — Bootstrap ($0/mo)<a class="headerlink" href="#phase-5a-bootstrap-0mo" title="Permanent link">&para;</a></h3>
+<p><strong>Objectif</strong> : exposer l'app sur internet avec auth Google fonctionnelle, sans Ollama, sans monitoring sophistiqué. Premier deploy testable depuis un autre appareil.</p>
+<table>
+<thead>
+<tr>
+<th>Composant</th>
+<th>Setup</th>
+<th>Coût</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend Spring Boot + Angular static</td>
+<td>1 Cloud Run service <code>portfolioai</code> région <code>northamerica-northeast1</code>, image Docker <code>linux/amd64</code> poussée sur Artifact Registry, scale-to-zero</td>
+<td>$0 (sous free tier)</td>
+</tr>
+<tr>
+<td>Postgres</td>
+<td>Projet Supabase <code>portfolioai-prod</code> (free tier, région <code>ca-central-1</code> Toronto, Session pooler IPv4)</td>
+<td>$0 (sous free tier)</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>Build Angular embarqué dans le jar Spring Boot (<code>static/</code>) — pas de service séparé</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>Google OIDC déjà câblé Phase 4 (juste re-enregistrer la redirect URI <code>https://portfolioai-*.run.app/login/oauth2/code/google</code> côté Google Cloud Console)</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>Secrets runtime</td>
+<td>GCP Secret Manager — 5 secrets en prod : <code>google-oauth-client-id</code>, <code>google-oauth-client-secret</code>, <code>app-admin-emails</code>, <code>supabase-db-url</code>, <code>sentry-dsn-backend</code> (ajouté Phase 5b). Montés au runtime via <code>--update-secrets</code> du <code>gcloud run deploy</code>. <strong>La clé Anthropic n'est PAS un secret Secret Manager</strong> — elle vit dans la table <code>app_config</code> (DB runtime, settable via <code>/settings/configuration</code> UI)</td>
+<td>$0 (sous free tier Secret Manager)</td>
+</tr>
+<tr>
+<td>Backup weekly</td>
+<td>Workflow <code>.github/workflows/backup-postgres.yml</code> <code>cron '0 4 * * 0'</code> (dimanche 4 AM UTC) qui exécute <code>pg_dump $SUPABASE_DATABASE_URL</code> et upload vers Cloudflare R2 bucket <code>portfolioai-backups</code> (free tier 10 GB). Rétention 30 backups (~7 mois d'historique). Détail dans <a href="../backup-process/"><code>backup-process.md</code></a>.</td>
+<td>$0</td>
+</tr>
+<tr>
+<td><strong>Total Phase 5a</strong></td>
+<td></td>
+<td><strong>$0/mo</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Provider LLM en 5a</strong> : <code>mock</code> par défaut au boot (assure que l'app boote même sans clé Anthropic). Basculable vers <code>claude</code> via <code>/settings/configuration</code> UI dès que la clé est posée dans le slot SECRET runtime (table <code>app_config</code>). Pattern différent des 5 secrets boot-time : la clé Anthropic est éditable runtime sans redéploiement (cohérence avec les clés Twelve Data / Finnhub aussi runtime-editable). <strong>Ollama indisponible en prod</strong> : la UI affiche l'option mais la sélection retourne 503.</p>
+<h3 id="phase-5b-hardening-prod-0mo-encore">Phase 5b — Hardening prod ($0/mo encore)<a class="headerlink" href="#phase-5b-hardening-prod-0mo-encore" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger</strong> : après que la Phase 5a soit stable ~1 semaine.</p>
+<table>
+<thead>
+<tr>
+<th>Composant additionnel</th>
+<th>Setup</th>
+<th>Coût</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Domain + TLS</td>
+<td><strong>Domaine <code>tickerstory.org</code></strong> via Cloudflare Registrar (~$7.50/an at-cost). <strong>Worker Cloudflare</strong> <code>tickerstory-proxy</code> devant Cloud Run (le native domain mapping Cloud Run n'est pas dispo en <code>northamerica-northeast1</code> → pivot Worker). TLS Cloudflare auto (pas Let's Encrypt — Cloudflare émet via sa propre CA). Cf. <a href="../dns-analyse/"><code>dns-analyse.md</code></a> pour le choix du nom + TLD, et <code>architecture.md &gt; Décisions Phase 5 &gt; Worker Cloudflare</code> pour le wiring complet</td>
+<td>~$7.50/an domaine + $0 Worker/TLS</td>
+</tr>
+<tr>
+<td>Cache + bypass egress</td>
+<td>2 Cache Rules Cloudflare : <code>Bypass cache for API</code> (<code>/api/*</code>) + <code>Cache static assets aggressively</code> (<code>URI File Extension is in {js, css, woff…}</code> + Edge/Browser TTL 1 year). Les hits cache ne comptent pas dans le quota egress Cloud Run free 1 GB/mo</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>Monitoring uptime</td>
+<td><strong>UptimeRobot free tier</strong> — HTTP polling externe toutes les 5 min sur <code>/actuator/health</code>. Pivot Healthchecks.io → UptimeRobot parce que Healthchecks.io free est dead-man's-switch (l'app ping, alerte si manquant) incompatible avec Cloud Run scale-to-zero</td>
+<td>$0</td>
+</tr>
+<tr>
+<td>Error tracking</td>
+<td><strong>GlitchTip SaaS free tier</strong> (5K events/mo) — serveur d'ingestion Sentry-API-compatible. Pivot Sentry → GlitchTip parce que le free Developer plan Sentry est caché derrière un trial Business $89/mo. Backend <code>io.sentry:sentry-spring-boot-starter-jakarta:8.10.0</code>, frontend <code>@sentry/browser</code> (le package <code>@sentry/angular</code> cape à Angular 19, incompatible avec notre Angular 21). DSN backend dans Secret Manager (<code>sentry-dsn-backend</code>), DSN frontend hardcodé <code>main.ts</code> (public par design)</td>
+<td>$0</td>
+</tr>
+<tr>
+<td><strong>Total Phase 5b</strong></td>
+<td></td>
+<td><strong>~$7.50/an</strong> (domaine)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-5c-si-free-tier-serre-25-30mo">Phase 5c — Si free tier serre (~$25-30/mo)<a class="headerlink" href="#phase-5c-si-free-tier-serre-25-30mo" title="Permanent link">&para;</a></h3>
+<p><strong>Trigger</strong> : Supabase pause/restrict OU Cloud Run egress dépassé OU multi-user authentifié devient une réalité.</p>
+<p>Trois sorties propres dans l'ordre de préférence :</p>
+<ol>
+<li><strong>Migrer Supabase → Neon free</strong> (<code>pg_dump | pg_restore</code>, ~30 min) — reste $0/mo si Cloud Run tient. Plan A.</li>
+<li><strong>Upgrade Supabase Pro $25/mo</strong> — backups 30j, no auto-pause, 8 GB DB. Plan B si Neon ne tient pas non plus.</li>
+<li><strong>Bascule globale vers Fly Phase 5a $10/mo</strong> — si Cloud Run + Supabase deviennent instables ensemble. Plan C, dernier recours.</li>
+</ol>
+<p>À filer en backlog Phase 5+ une fois 5a/5b stables.</p>
+<h2 id="6-pipeline-gitops-github-actions-cloud-run">6. Pipeline GitOps — GitHub Actions → Cloud Run<a class="headerlink" href="#6-pipeline-gitops-github-actions-cloud-run" title="Permanent link">&para;</a></h2>
+<p><strong>Principe</strong> : <code>git push --tags</code> + créer une GitHub Release = le seul geste manuel acceptable. Tout le reste tourne en CI. Aucun click sur <code>console.cloud.google.com</code>. Aucun <code>gcloud run deploy</code> depuis un poste local en prod (le dev local utilise <code>gcloud</code> la première fois pour bootstrap, mais après c'est CI-only).</p>
+<h3 id="61-setup-initial-one-shot-2-h">6.1 Setup initial (one-shot, ~2 h)<a class="headerlink" href="#61-setup-initial-one-shot-2-h" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Créer un projet GCP <code>portfolioai</code> (geste manuel inévitable). Activer les APIs : Cloud Run, Artifact Registry, Secret Manager, IAM Service Account Credentials.</li>
+<li>Créer un repo Artifact Registry Docker <code>northamerica-northeast1-docker.pkg.dev/portfolioai/backend</code>.</li>
+<li>Créer un service account <code>github-deploy@portfolioai.iam.gserviceaccount.com</code> avec rôles <strong>project-level</strong> <code>roles/run.admin</code> + <code>roles/iam.serviceAccountUser</code> + <code>roles/artifactregistry.writer</code>. <strong>Pas</strong> de <code>roles/secretmanager.secretAccessor</code> au project level — le binding sur ce rôle est <strong>per-secret</strong> (moindre privilège, cf. <a href="../backup-process/"><code>backup-process.md</code></a> §3). Aujourd'hui seul <code>supabase-db-url</code> est granté à <code>github-deploy@</code> (pour le pipeline backup) ; les 4 autres secrets (<code>google-oauth-client-id</code>, <code>google-oauth-client-secret</code>, <code>app-admin-emails</code>, <code>sentry-dsn-backend</code>) sont réservés au SA runtime <code>portfolioai-runtime@</code>. La commande type : <code>gcloud secrets add-iam-policy-binding &lt;SECRET&gt; --member=serviceAccount:github-deploy@... --role=roles/secretmanager.secretAccessor --project=trade-496613</code> — à exécuter uniquement sur les secrets que <code>github-deploy@</code> a besoin de lire (donc aujourd'hui seulement <code>supabase-db-url</code>).</li>
+<li>Configurer <strong>Workload Identity Federation</strong> GitHub OIDC ↔ GCP (suit la procédure officielle <a href="https://github.com/google-github-actions/auth#setting-up-workload-identity-federation">google-github-actions/auth#setting-up-workload-identity-federation</a>). Sortie : <code>projects/&lt;num&gt;/locations/global/workloadIdentityPools/github/providers/github</code>. <strong>Pas de service account JSON key</strong> à manipuler — Workload Identity échange un OIDC token court-terme par run.</li>
+<li>Pousser les 5 secrets runtime dans Secret Manager via stdin (jamais en clair dans <code>--data="..."</code>) : <code>google-oauth-client-id</code>, <code>google-oauth-client-secret</code>, <code>app-admin-emails</code>, <code>supabase-db-url</code>, <code>sentry-dsn-backend</code>. Pattern : <code>echo -n "&lt;valeur&gt;" | gcloud secrets create &lt;nom&gt; --data-file=- --project=trade-496613</code> puis grant per-secret au runtime SA <code>portfolioai-runtime@</code> (one-shot, ~5 min). Détail + procédure de rotation dans <a href="../secret-rotation/"><code>secret-rotation.md</code></a>.</li>
+<li>Côté Supabase : créer le projet <code>portfolioai-prod</code>, exécuter le V1 Flyway via le SQL Editor (ou laisser Spring Boot le faire au 1er boot via Flyway <code>baseline-on-migrate: true</code>), récupérer la <code>DATABASE_URL</code> et la pousser dans GCP Secret Manager comme <code>supabase-db-url</code>.</li>
+<li>Côté GitHub : créer l'environment <code>production</code> avec <code>required reviewers</code> + 3 variables environment-scoped <code>GCP_PROJECT=portfolioai</code>, <code>GCP_WIF_PROVIDER=projects/.../providers/github</code>, <code>GCP_SA_EMAIL=github-deploy@...</code>. <strong>Dupliquer aussi ces 3 vars au repo level</strong> (<code>gh variable set GCP_PROJECT --body ...</code>, idem pour les 2 autres) — le workflow <code>backup-postgres.yml</code> ne déclare PAS <code>environment: production</code> (un cron à 4h du matin qui attendrait un required-reviewer approval ne tient pas), il lit donc les vars repo-level. Les jobs déploy continuent de lire en priorité les versions env-scoped quand ils déclarent <code>environment: production</code>. Coexistence propre des deux scopes.</li>
+</ol>
+<h3 id="62-workflow-githubworkflowsdeployyml">6.2 Workflow <code>.github/workflows/deploy.yml</code><a class="headerlink" href="#62-workflow-githubworkflowsdeployyml" title="Permanent link">&para;</a></h3>
+<p><strong>Livré 2026-05-18.</strong> Source : <a href="../../.github/workflows/deploy.yml"><code>.github/workflows/deploy.yml</code></a>. Rituel d'utilisation (tag → Draft Release → Publish → approve environment → smoke) détaillé dans <a href="../release-process/"><code>release-process.md</code></a>.</p>
+<p><strong>Décisions ancrées</strong> (figées au moment de la livraison) :
+- <strong>Trigger sur <code>release: published</code>, pas <code>push</code> master</strong> → la release est l'acte conscient ; les pushes master continuent de bouger CI mais ne deploient pas. Évite les deploys accidentels sur un commit cassé.
+- <strong><code>environment: production</code></strong> → permet de configurer <code>required reviewers</code> côté GitHub (= l'utilisateur s'auto-approve, mais c'est documenté et auditable).
+- <strong>Workload Identity Federation</strong> (<code>id-token: write</code> permission) → pas de service account JSON key dans GitHub Secrets. Chaque run échange un OIDC token court-terme.
+- <strong><code>--update-secrets</code></strong> → Cloud Run mount les 5 secrets depuis Secret Manager au runtime comme env vars. Pas de secret en clair dans le manifest.
+- <strong><code>linux/amd64</code> seulement</strong> → Cloud Run tourne sur x86, pas besoin de multi-arch (économise l'overhead QEMU emulation côté GitHub runner).
+- <strong><code>--allow-unauthenticated</code></strong> → Cloud Run laisse passer toutes les requêtes ; l'auth Spring Security côté app gère les 401. (Alternative : <code>--no-allow-unauthenticated</code> + IAM users — overkill pour single-user.)</p>
+<h3 id="63-workflow-backup-weekly-githubworkflowsbackup-postgresyml">6.3 Workflow backup weekly <code>.github/workflows/backup-postgres.yml</code><a class="headerlink" href="#63-workflow-backup-weekly-githubworkflowsbackup-postgresyml" title="Permanent link">&para;</a></h3>
+<p><strong>Livré 2026-05-18.</strong> Source : <a href="../../.github/workflows/backup-postgres.yml"><code>.github/workflows/backup-postgres.yml</code></a>. Setup pré-requis (R2 bucket + 3 GH secrets + 3 GH vars repo-level + grant <strong>per-secret</strong> <code>secretmanager.secretAccessor</code> au SA deploy sur <strong><code>supabase-db-url</code> uniquement</strong>) + rituel + restore drill trimestriel : <a href="../backup-process/"><code>backup-process.md</code></a>.</p>
+<p><strong>Pourquoi backup weekly explicite alors que Supabase fait des backups quotidiens en free</strong> : (a) <strong>Discipline d'exit</strong> — si Supabase serre/disparaît, on a un <code>.sql.gz</code> à restorer ailleurs sans dépendre de leur API. (b) <strong>Format <code>pg_dump</code> standard</strong>, restorable n'importe où (Neon, Fly Postgres, VPS) vs format Supabase-proprio des snapshots managés. (c) <strong>Cadence weekly retenue</strong> (vs daily envisagé initialement) — Supabase fait déjà du quotidien 7j en parallèle (filet court), notre R2 est le filet long-terme (30 backups = ~7 mois d'historique). Worst-case data loss : 7j. Mitigation : <code>gh workflow run backup-postgres.yml</code> à la demande avant une opération risquée (migration schema, fix SQL).</p>
+<h3 id="64-surface-de-version-actuatorinfo">6.4 Surface de version — <code>/actuator/info</code><a class="headerlink" href="#64-surface-de-version-actuatorinfo" title="Permanent link">&para;</a></h3>
+<p><strong>Livré 2026-05-23, post-clôture Phase 5.</strong> Décision et trade-offs dans <a href="../../technique/architecture/#phase-5--déploiement"><code>architecture.md &gt; Décisions Phase 5 &gt; Version surface</code></a>. Cette section documente le pipeline et le payload pour debug en prod.</p>
+<p><strong>Endpoint</strong> : <code>GET https://tickerstory.org/actuator/info</code> (public, non-authentifié — pas de PII, info purement build/git). Exposé via <code>management.endpoints.web.exposure.include: health, info</code> dans <code>application-prod.yml</code>.</p>
+<p><strong>Payload type post-deploy</strong> :
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;artifact&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;backend&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;backend&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;group&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;com.portfolioai&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;v0.8.0-rc1&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-23T14:32:11.000Z&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;git&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;branch&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;master&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fcd0b5c7e9a1b2c3d4e5f6789abcdef0123456789&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;id.abbrev&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fcd0b5c&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-23T13:55:00Z&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;short&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;docs: align doc-set after Phase 5 closure (audit punch-list)&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;v0.8.0-rc1&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Pipeline</strong> :</p>
+<ol>
+<li><strong>Build tooling</strong> (<code>backend/build.gradle.kts</code>) — deux plugins coordonnés :</li>
+<li><code>springBoot { buildInfo() }</code> → génère <code>META-INF/build-info.properties</code> (consommé par <code>BuildInfoContributor</code>).</li>
+<li>Plugin <code>com.gorylenko.gradle-git-properties:2.4.2</code> → génère <code>META-INF/git.properties</code> (consommé par <code>GitInfoContributor</code>). <code>dotGitDirectory.set(file("../.git"))</code> parce que le projet Gradle vit dans <code>backend/</code>. <code>failOnNoGitDirectory = false</code> pour ne pas casser un build hors-git. <code>keys = ["git.branch", "git.commit.id", "git.commit.id.abbrev", "git.commit.time", "git.commit.message.short", "git.tags"]</code>.</li>
+<li>
+<p><code>management.info.git.mode: full</code> dans <code>application.yml</code> (sinon Spring n'expose que branch + commit.id + commit.time même si le fichier en contient plus).</p>
+</li>
+<li>
+<p><strong>Version</strong> (<code>build.gradle.kts</code> ligne <code>version = …</code>) — lue depuis la property gradle <code>version</code> avec fallback <code>0.0.0-SNAPSHOT</code> :
+   <div class="highlight"><pre><span></span><code><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">project</span><span class="p">.</span><span class="na">findProperty</span><span class="p">(</span><span class="s">&quot;version&quot;</span><span class="p">)</span><span class="w"> </span><span class="k">as?</span><span class="w"> </span><span class="kt">String</span><span class="p">)</span>
+<span class="w">  </span><span class="o">?.</span><span class="na">takeIf</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">it</span><span class="p">.</span><span class="na">isNotBlank</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">it</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">&quot;unspecified&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">?:</span><span class="w"> </span><span class="s">&quot;0.0.0-SNAPSHOT&quot;</span>
+</code></pre></div>
+   Le CI passe <code>-Pversion=$APP_VERSION</code> au gradle build dans le Dockerfile.</p>
+</li>
+<li>
+<p><strong>Dockerfile</strong> (<code>devops/prod/Dockerfile</code>) — deux ajouts dans le stage <code>backend-builder</code> :</p>
+</li>
+<li><code>ARG APP_VERSION=0.0.0-SNAPSHOT</code> (recevoir le build-arg du CI).</li>
+<li><code>COPY .git/ ./.git/</code> (sinon <code>gradle-git-properties</code> ne trouve pas le repo et la section <code>info.git</code> reste vide).</li>
+<li>
+<p><code>RUN cd backend &amp;&amp; ./gradlew --no-daemon bootJar -x test -Pversion=$APP_VERSION</code> (propager la version).</p>
+</li>
+<li>
+<p><strong>CI workflow</strong> (<code>.github/workflows/deploy.yml</code>) — deux ajouts :</p>
+</li>
+<li><code>actions/checkout@v4</code> avec <code>fetch-depth: 0</code> (le défaut shallow <code>depth: 1</code> n'expose ni les tags annotés ni l'historique → <code>git.tags</code> serait vide).</li>
+<li><code>docker/build-push-action@v6</code> avec <code>build-args: APP_VERSION=${{ github.event.release.tag_name }}</code>.</li>
+</ol>
+<p><strong>Source de vérité unique</strong> : le tag GitHub Release (<code>v0.7.0</code>, <code>v0.7.0-rc1</code>) propage simultanément à 5 surfaces :</p>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Provenance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Image Docker Artifact Registry</td>
+<td><code>tags: …/portfolioai:${{ github.event.release.tag_name }}</code></td>
+</tr>
+<tr>
+<td>Label OCI <code>image.version</code></td>
+<td><code>labels: org.opencontainers.image.version=…</code></td>
+</tr>
+<tr>
+<td>Env var <code>SENTRY_RELEASE</code> (events GlitchTip)</td>
+<td><code>--set-env-vars=SENTRY_RELEASE=${{ github.event.release.tag_name }}</code></td>
+</tr>
+<tr>
+<td><code>/actuator/info &gt; build.version</code></td>
+<td><code>build-args: APP_VERSION=…</code> → <code>-Pversion=…</code> → <code>build-info.properties</code></td>
+</tr>
+<tr>
+<td><code>/actuator/info &gt; git.tags</code></td>
+<td><code>gradle-git-properties</code> lit le tag courant via <code>git describe --tags</code></td>
+</tr>
+</tbody>
+</table>
+<p>Un changement de tag = 5 surfaces synchronisées sans aucune saisie manuelle.</p>
+<p><strong>Notes pratiques</strong> :
+- Le <code>v</code> initial du tag (<code>v0.7.0</code> plutôt que <code>0.7.0</code>) est conservé tel quel dans <code>build.version</code> pour cohérence cross-surface. Si tu veux dropper le <code>v</code>, ajoute un <code>sed 's/^v//'</code> au workflow avant de propager <code>APP_VERSION</code>.
+- Build local sans <code>-Pversion</code> (Tilt dev) → <code>build.version = "0.0.0-SNAPSHOT"</code>, <code>git.*</code> rempli normalement parce que <code>.git</code> est présent au workspace.
+- <code>COPY .git/</code> coûte ~70 MB de build context local. Sur CI le shallow clone d'origine est étendu via <code>fetch-depth: 0</code> (~quelques MB pour ce repo solo). À reconsidérer si le repo grossit beaucoup et que les builds Docker ralentissent notablement.</p>
+<h2 id="7-plan-de-migration-sortir-de-cloud-run-supabase-si-besoin">7. Plan de migration — sortir de Cloud Run + Supabase si besoin<a class="headerlink" href="#7-plan-de-migration-sortir-de-cloud-run-supabase-si-besoin" title="Permanent link">&para;</a></h2>
+<p>Lock-in à inventorier précisément pour respecter la contrainte #2 :</p>
+<table>
+<thead>
+<tr>
+<th>Composant</th>
+<th>Cloud Run / Supabase specific ?</th>
+<th>Effort migration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Code applicatif Kotlin + Spring</td>
+<td>Aucun</td>
+<td>$0</td>
+</tr>
+<tr>
+<td><code>Dockerfile</code></td>
+<td>Standard multi-stage Eclipse Temurin + Gradle</td>
+<td>$0</td>
+</tr>
+<tr>
+<td><code>service.yaml</code> Cloud Run (généré par <code>gcloud run deploy --format yaml</code>)</td>
+<td>Oui — ~30 lignes (image, env vars, secrets, scaling)</td>
+<td>~1 h à traduire vers <code>fly.toml</code> / <code>railway.toml</code> / <code>docker-compose.prod.yml</code></td>
+</tr>
+<tr>
+<td>Postgres Supabase</td>
+<td><strong>Standard PG 15, aucune extension Supabase-specific</strong></td>
+<td><code>pg_dump | pg_restore</code> vers Neon / Fly Postgres / RDS — ~30 min</td>
+</tr>
+<tr>
+<td>Auth Google OAuth</td>
+<td>Spring Security via JDBC standard</td>
+<td>Aucun changement code ; juste mettre à jour la redirect URI Google Cloud Console</td>
+</tr>
+<tr>
+<td>Secrets Cloud Run</td>
+<td>GCP Secret Manager via <code>--update-secrets</code></td>
+<td>Re-pusher dans <code>flyctl secrets</code> / Railway env vars — ~30 min</td>
+</tr>
+<tr>
+<td>TLS + custom domain</td>
+<td>Cloudflare CNAME (provider-agnostic)</td>
+<td>rien à migrer</td>
+</tr>
+<tr>
+<td>Backups</td>
+<td>GitHub Actions cron → R2 (provider-agnostic)</td>
+<td>rien à migrer</td>
+</tr>
+<tr>
+<td>Monitoring (si Sentry câblé)</td>
+<td>Provider-agnostic</td>
+<td>rien à migrer</td>
+</tr>
+<tr>
+<td><strong>Total migration</strong></td>
+<td></td>
+<td><strong>~2-3 h</strong> pour bouger vers Fly / Railway / Oracle</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Discipline non-négociable</strong> pour préserver la migrabilité :
+- <strong>Zéro SDK Supabase</strong> dans le code applicatif (<code>build.gradle.kts</code> ne contient aucune dépendance <code>supabase-*</code>). Uniquement <code>DATABASE_URL</code> JDBC standard.
+- <strong>Zéro SDK Cloud Run-specific</strong> côté code (pas de <code>@google-cloud/run</code> ni d'usage de <code>K_SERVICE</code> / <code>K_REVISION</code> env vars sauf logging).
+- <strong>Backup nocturne actif dès le 1er deploy</strong>, pas dans 6 mois.</p>
+<p><strong>Trigger migration</strong> : (a) facture Supabase Pro forcée &gt; $25/mo, (b) Cloud Run egress dépassé répétitivement (signal qu'on a vraiment du trafic), (c) instabilité free tier répétée (&gt;2 pauses inopinées/an).</p>
+<h2 id="8-risques-et-trade-offs">8. Risques et trade-offs<a class="headerlink" href="#8-risques-et-trade-offs" title="Permanent link">&para;</a></h2>
+<p><strong>Supabase free tier shrinks à 2-3 ans</strong> — risque modéré (VC startup needs monetization). Historique 2020-2026 plutôt favorable (le free tier a globalement augmenté). Worst case : DB passe à 250 MB ou auto-pause à 3j. Mitigation = backup nocturne + migration vers Neon free en 30 min.</p>
+<p><strong>Cloud Run egress 1 GB/mo N. America</strong> — borné par le trafic single-user (~90 MB/mo estimé). À surveiller si on ouvre à plus d'users. <strong>Mitigation = Cloudflare devant</strong> dès Phase 5b (cache statique + assets servis depuis Cloudflare edge, bypass du quota Cloud Run).</p>
+<p><strong>Supabase auto-pause après 7j inactivité</strong> — invisible single-user qui ouvre l'app quotidiennement ; sensible après vacances (la 1ère requête au retour peut prendre ~10-20 s pour réveiller la DB). Mitigation simple si gênant = un cron GitHub Actions <code>schedule: '0 12 * * 0'</code> qui ping <code>SELECT 1</code> chaque dimanche pour garder vivant.</p>
+<p><strong>Multi-vendor stack = 2 dashboards à observer</strong> — Cloud Run + Supabase au lieu d'un seul Fly. Atténué par scope clair (compute vs data) et par incidents rares à cette échelle. Le prix à payer pour les $120/an économisés.</p>
+<p><strong>Latence DB cross-région minime (~5-10 ms RTT)</strong> — Supabase région Toronto (<code>ca-central-1</code>) en Session pooler IPv4. ~5-10 ms RTT par requête, négligeable même cumulé. Le risque initial estimé à 2026-05-18 (~25 ms US-East par défaut) ne s'est pas matérialisé parce qu'on a choisi <code>ca-central-1</code> au provisioning.</p>
+<p><strong>Cold-start Cloud Run ~1-3 s</strong> — la 1ère requête après ~15 min d'inactivité paye le cold-start. Acceptable single-user, frustrant si beaucoup d'utilisateurs occasionnels.</p>
+<p><strong>Workload Identity Federation setup non-trivial</strong> — la 1ère config GCP est ~30 min (créer Workload Identity Pool + Provider + binding au service account). Bien documenté mais pas as-simple-as <code>FLY_API_TOKEN</code>. Cf. ticket GitHub Secrets vault qui couvrait déjà cette approche en théorie.</p>
+<h2 id="9-tickets-dependants">9. Tickets dépendants<a class="headerlink" href="#9-tickets-dependants" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Note 2026-05-23</strong> : Phase 5 entièrement clôturée. Tous les tickets ci-dessous sont livrés, l'historique d'exécution (pivots, gotchas, effort réel) vit dans <a href="../../projet/archive/journal-livraisons/#phase-5--déploiement-clôturée-2026-05-23"><code>archive/journal-livraisons.md &gt; Phase 5</code></a>. Liste gardée ici comme <strong>trace du plan initial</strong> vs la réalisation.</p>
+</blockquote>
+<ol>
+<li><strong>Provisionner et déployer v1 (Phase 5a)</strong> ✅ — créer projet GCP, configurer Workload Identity Federation, créer projet Supabase, écrire <code>Dockerfile</code> multi-stage backend, faire le 1er deploy manuel via <code>gcloud run deploy</code>, valider end-to-end (login Google OAuth + dashboard + ouverture dossier ticker avec Mock LLM). Livré 2026-05-18 en 5 itérations Docker.</li>
+<li><strong>Câbler le workflow GitHub Actions deploy</strong> ✅ — décrit en §6.2 ci-dessus. Livré 2026-05-18 (<code>v0.7.0-rc1</code> smoke).</li>
+<li><strong>Backup Postgres weekly → Cloudflare R2</strong> ✅ — workflow + R2 bucket + premier restore drill. Livré 2026-05-18.</li>
+<li><strong>Cloudflare devant Cloud Run</strong> ✅ — custom domain <code>tickerstory.org</code> + TLS + cache + bypass egress. Livré 2026-05-22 (custom domain) → 2026-05-23 (Cache Rules + smoke). 3 pivots vécus (Cloud Run regional domain-mapping indispo Montréal, Origin Rules Enterprise-only, X-Forwarded-Host strip).</li>
+<li><strong>Monitoring uptime + Sentry</strong> ✅ — UptimeRobot HTTP polling + GlitchTip SaaS (pivot Sentry → GlitchTip + pivot <code>@sentry/angular</code> → <code>@sentry/browser</code>). Livré 2026-05-23 sous tag <code>v0.8.0-rc1</code>.</li>
+</ol>
+<p>Les tickets <em>hardening</em> (OAuth secret management + <code>server.forward-headers-strategy</code>) ✅ livrés 2026-05-23 par documentation explicite : <code>architecture.md &gt; Décisions Phase 5 &gt; Forward-headers strategy</code> + <code>&gt; Secret management</code> + nouveau <a href="../secret-rotation/"><code>secret-rotation.md</code></a>. Le ticket « GitHub Secrets + Environments vault » ✅ livré 2026-05-18 avec le pipeline Workload Identity Federation décrit en §6.</p>
+<h2 id="10-decisions-cles-resume">10. Décisions clés — résumé<a class="headerlink" href="#10-decisions-cles-resume" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Décision</th>
+<th>Choix</th>
+<th>Pourquoi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Compute</strong></td>
+<td><strong>Google Cloud Run</strong> région <code>northamerica-northeast1</code></td>
+<td>Serverless managé, scale-to-zero natif, Montréal native, $0/mo durable</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td><strong>Supabase Postgres</strong> free tier (région Toronto <code>ca-central-1</code>, Session pooler IPv4)</td>
+<td>$0/mo durable, Postgres standard (pas de SDK Supabase)</td>
+</tr>
+<tr>
+<td><strong>Frontend</strong></td>
+<td>Servi par le backend (build Angular embarqué dans le jar)</td>
+<td>Économise 1 service, simplifie CORS + cookies session</td>
+</tr>
+<tr>
+<td><strong>TLS + DNS</strong></td>
+<td>Cloudflare gratuit devant Cloud Run</td>
+<td>Custom domain + cache + bypass egress quota Cloud Run free</td>
+</tr>
+<tr>
+<td><strong>LLM provider</strong></td>
+<td>Mock + Claude API uniquement</td>
+<td>Ollama exclu prod (décision user 2026-05-18)</td>
+</tr>
+<tr>
+<td><strong>Backups Postgres</strong></td>
+<td>Cron GitHub Actions nocturne <code>pg_dump</code> → Cloudflare R2 (free 10 GB)</td>
+<td>Discipline d'exit propre indépendante de Supabase</td>
+</tr>
+<tr>
+<td><strong>Secrets runtime</strong></td>
+<td>GCP Secret Manager + Workload Identity Federation</td>
+<td>Pas de service account key long-lived dans GitHub</td>
+</tr>
+<tr>
+<td><strong>Multi-arch Docker</strong></td>
+<td><code>linux/amd64</code> only</td>
+<td>Cloud Run x86, ARM Ampere écarté avec Oracle</td>
+</tr>
+<tr>
+<td><strong>GitOps</strong></td>
+<td><code>on: release: published</code> → <code>gcloud run deploy</code></td>
+<td>Acte conscient via GitHub Release, jamais sur push master</td>
+</tr>
+<tr>
+<td><strong>Migration sortie</strong></td>
+<td>Dockerfile standard + Postgres standard</td>
+<td>~2-3 h vers Fly / Neon / Oracle / VPS</td>
+</tr>
+<tr>
+<td><strong>Fallback documenté</strong></td>
+<td>Fly Phase 5a ($10/mo) ou Oracle A1 ($0 + sysadmin léger)</td>
+<td>Triggers : Supabase pause répétitif, ou Cloud Run egress dépassé soutenu</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../liens-utiles/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Liens utiles (consoles &amp; dashboards)">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Liens utiles (consoles & dashboards)
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../release-process/" class="md-footer__link md-footer__link--next" aria-label="Next: Release process (workflow Cloud Run)">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Release process (workflow Cloud Run)
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.path", "navigation.instant", "navigation.tracking", "navigation.footer", "navigation.top", "toc.integrate", "search.highlight", "search.suggest", "search.share", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
