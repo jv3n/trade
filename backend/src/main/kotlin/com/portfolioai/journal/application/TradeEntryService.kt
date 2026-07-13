@@ -213,11 +213,24 @@ class TradeEntryService(
 
   @Transactional
   fun delete(id: UUID) {
-    val userId = authService.getCurrentUser().id
-    val removed = repo.deleteByIdAndUserId(id, userId)
-    if (removed == 0L) {
-      throw ResponseStatusException(HttpStatus.NOT_FOUND, "Trade entry $id not found")
-    }
+    val entry = loadOwned(id)
+    // Announce the removal (profitDollars = null) *before* deleting the trade so the account
+    // context
+    // drops the linked TRADE movement and re-floats the latest balance correction — a deletion
+    // moves
+    // the balance just like an edit. The movement goes first (child FK), so the DB ON DELETE
+    // CASCADE
+    // on trade_entry_id is left only as a safety net. Same synchronous, same-transaction contract.
+    events.publishEvent(
+      TradeChangedEvent(
+        tradeId = entry.id,
+        userId = entry.user.id,
+        ticker = entry.ticker,
+        tradeDate = entry.tradeDate,
+        profitDollars = null,
+      )
+    )
+    repo.delete(entry)
   }
 
   // ---------------------------------------------------------------------------

@@ -6,11 +6,7 @@ import { moduleMetadata, type Meta, type StoryObj } from '@storybook/angular';
 import { StbSize, StbSpinnerEnd, type StbButtonSize } from './button.directives';
 
 type Variant =
-  | 'mat-button'
-  | 'mat-flat-button'
-  | 'mat-stroked-button'
-  | 'mat-raised-button'
-  | 'mat-icon-button';
+  'mat-button' | 'mat-flat-button' | 'mat-stroked-button' | 'mat-raised-button' | 'mat-icon-button';
 
 interface ButtonArgs {
   variant: Variant;

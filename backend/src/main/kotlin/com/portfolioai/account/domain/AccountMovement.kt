@@ -43,6 +43,15 @@ class AccountMovement(
   @Column(name = "value_date", nullable = false) var valueDate: LocalDate,
   @Column(length = 2000) var note: String? = null,
 
+  /**
+   * The reconciled balance a correction targets. Non-null **only** for `ADJUSTMENT` rows created
+   * via `correctBalance` — the account re-floats the latest such row (`amount = targetBalance − Σ
+   * others`) whenever another line is edited or deleted, so the derived balance stays at the
+   * target. Null for deposits / withdrawals / trades and for legacy adjustments (which stay
+   * frozen).
+   */
+  @Column(name = "target_balance", precision = 18, scale = 2) var targetBalance: BigDecimal? = null,
+
   /** Set only for TRADE movements (journal link). Null for manual movements. */
   @Column(name = "trade_entry_id") val tradeEntryId: UUID? = null,
 

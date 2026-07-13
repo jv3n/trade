@@ -1,6 +1,7 @@
 package com.portfolioai.account
 
 import com.portfolioai.account.application.AccountService
+import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.auth.application.AuthService
@@ -143,6 +144,55 @@ class AccountTradeSyncIntegrationTest {
       0,
       BigDecimal("820.00").compareTo(summary.balance),
       "balance reflects the trade P&L",
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Floating correction × trade lifecycle
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `editing a trade P&L re-floats the latest correction onto its target`() {
+    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00")) // balance 300
+    accountService.correctBalance(
+      CorrectionRequest(BigDecimal("250.00"), TRADE_DATE)
+    ) // adj −50 → 250
+
+    tradeService.update(trade.id, closedTrade(ticker = "BAC", pnl = "500.00"))
+
+    assertEquals(
+      0,
+      BigDecimal("250.00").compareTo(accountService.summary().balance),
+      "the correction absorbs the P&L change so the balance stays on target",
+    )
+  }
+
+  @Test
+  fun `deleting a trade re-floats the latest correction onto its target`() {
+    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00")) // balance 300
+    accountService.correctBalance(
+      CorrectionRequest(BigDecimal("250.00"), TRADE_DATE)
+    ) // adj −50 → 250
+
+    tradeService.delete(trade.id)
+
+    // Before the removal event, the frozen −50 left the balance at −50 ; now it re-floats to 250.
+    assertEquals(0, BigDecimal("250.00").compareTo(accountService.summary().balance))
+  }
+
+  @Test
+  fun `a brand-new trade after a correction still moves the balance`() {
+    tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00")) // balance 300
+    accountService.correctBalance(
+      CorrectionRequest(BigDecimal("250.00"), TRADE_DATE)
+    ) // adj −50 → 250
+
+    tradeService.create(closedTrade(ticker = "GUS", pnl = "100.00")) // fresh P&L, not a mistake
+
+    assertEquals(
+      0,
+      BigDecimal("350.00").compareTo(accountService.summary().balance),
+      "250 + 100 — a new trade is a real move, not absorbed by the correction",
     )
   }
 

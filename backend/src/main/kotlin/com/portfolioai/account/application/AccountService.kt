@@ -42,6 +42,7 @@ import org.springframework.web.server.ResponseStatusException
 class AccountService(
   private val repo: AccountMovementRepository,
   private val authService: AuthService,
+  private val reconciler: AccountReconciler,
 ) {
 
   @Transactional(readOnly = true)
@@ -134,6 +135,10 @@ class AccountService(
         amount = delta,
         valueDate = request.valueDate,
         note = request.note.cleanNote(),
+        // Remember the reconciled target so the reconciler can re-float this row (keep the balance
+        // at
+        // `target`) when another line is edited or deleted later.
+        targetBalance = request.targetBalance,
       )
     return repo.save(movement).toDto()
   }
@@ -152,7 +157,15 @@ class AccountService(
     movement.valueDate = request.valueDate
     movement.note = request.note.cleanNote()
     movement.updatedAt = Instant.now()
-    return repo.save(movement).toDto()
+    val saved = repo.save(movement)
+    // Editing a real line (deposit / withdrawal) shifts the balance → re-float the latest
+    // correction
+    // so it stays on its target. Editing an adjustment itself must not re-float it onto its own
+    // edit.
+    if (movement.type != AccountMovementType.ADJUSTMENT) {
+      reconciler.reconcile(movement.user.id)
+    }
+    return saved.toDto()
   }
 
   /**
@@ -165,6 +178,9 @@ class AccountService(
       throw badRequest("TRADE movements are removed by deleting their trade in the journal")
     }
     repo.delete(movement)
+    // Removing a line shifts the balance → re-float the latest remaining correction. If the row we
+    // just deleted *was* the latest correction, this floats the previous one back onto its target.
+    reconciler.reconcile(movement.user.id)
   }
 
   private fun loadOwned(id: UUID): AccountMovement {

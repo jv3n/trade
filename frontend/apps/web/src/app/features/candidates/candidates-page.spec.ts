@@ -49,8 +49,8 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
 class MockCandidatesRepository extends CandidatesRepository {
   listForDate = vi.fn((): Observable<Candidate[]> => of([]));
   get = vi.fn((): Observable<Candidate> => of(makeCandidate()));
-  create = vi.fn(
-    (_input: CandidateInput): Observable<Candidate> => of(makeCandidate({ id: 'new' })),
+  create = vi.fn((_input: CandidateInput): Observable<Candidate> =>
+    of(makeCandidate({ id: 'new' })),
   );
   update = vi.fn((): Observable<Candidate> => of(makeCandidate()));
   delete = vi.fn((): Observable<void> => of(undefined));
