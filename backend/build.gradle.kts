@@ -13,7 +13,7 @@ plugins {
   // `test` task automatically; reports are generated on demand via `koverHtmlReport` /
   // `koverXmlReport`. See the `kover { … }` block below for the excludes configuration (entry
   // point, DTOs, etc. that carry no testable logic).
-  id("org.jetbrains.kotlinx.kover") version "0.9.8"
+  id("org.jetbrains.kotlinx.kover") version "0.9.9"
   // gradle-git-properties — generates `git.properties` in the jar at build time, consumed by
   // Spring Boot Actuator to populate `/actuator/info > git` (commit SHA, branch, build time).
   // Combined with `springBoot { buildInfo() }` below, the endpoint returns version + commit + time
