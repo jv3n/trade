@@ -1,9 +1,9 @@
 plugins {
-  kotlin("jvm") version "2.1.21"
+  kotlin("jvm") version "2.3.21"
   kotlin("plugin.spring") version "2.3.21"
   id("org.springframework.boot") version "3.5.16"
   id("io.spring.dependency-management") version "1.1.7"
-  kotlin("plugin.jpa") version "2.1.21"
+  kotlin("plugin.jpa") version "2.3.21"
   id("com.diffplug.spotless") version "6.25.0"
   // Detekt — Kotlin static analysis (cyclomatic complexity, magic numbers, long methods,
   // potential bugs). Complements Spotless, which only handles formatting. See the `detekt { … }`
@@ -287,9 +287,9 @@ kover {
 
 // Detekt 1.23.x ships an embedded Kotlin compiler (2.0.21 in 1.23.8). With Kotlin 2.1 on the
 // project side, the runtime classpath ends up with an incompatible stdlib and Detekt refuses to
-// load ("detekt was compiled with Kotlin 2.0.21 but is currently running with 2.1.21"). We isolate
+// load ("detekt was compiled with Kotlin 2.0.21 but is currently running with 2.3.21"). We isolate
 // the `detekt` classpath on the Kotlin version it expects — this affects neither `compileKotlin`
-// nor `compileTestKotlin`, which stay on 2.1.21. Remove this the day Detekt 2.0 ships stable with
+// nor `compileTestKotlin`, which stay on 2.3.21. Remove this the day Detekt 2.0 ships stable with
 // native Kotlin 2.1+ support. Important: the pinned version must track the one expected by the
 // active Detekt version — a Detekt patch bump can shift the embedded Kotlin version
 // (1.23.7 → 2.0.10, 1.23.8 → 2.0.21).
