@@ -93,6 +93,18 @@ is_wsl = uname == "Linux" and "microsoft" in str(local("uname -r", quiet = True,
 backend_build_dir = "$HOME/.cache/portfolioai/backend-build" if is_wsl else "backend/build"
 build_dir_export = ('export GRADLE_BUILD_DIR="' + backend_build_dir + '" ; \\\n  ') if is_wsl else ""
 
+# Dedicated Gradle *project cache* for Tilt's `bootRun`. The default project cache is `backend/.gradle`
+# — on WSL that sits on the `/mnt/c` (9p) mount whose fragile file locking bit us: a `bootRun` daemon
+# left over across a Kotlin-plugin bump kept `backend/.gradle/<ver>/fileHashes` locked, so the next,
+# version-incompatible `bootRun` daemon could not acquire it → "Cannot lock file hash cache … already
+# locked". Giving Tilt its own project cache (a) moves the lock file to native ext4 and (b) stops
+# IntelliJ / a terminal Gradle run from ever contending on the same lock. Paired with `--no-daemon`
+# in `backend_cmd` so the build JVM dies with the serve_cmd on every restart — no daemon survives a
+# toolchain change to keep the lock held. WSL-only (the DrvFs fragility is the driver); elsewhere the
+# in-tree default is fine. `$HOME` stays unexpanded — resolved by the `sh -c` that runs the command.
+tilt_project_cache = "$HOME/.cache/portfolioai/tilt-project-cache" if is_wsl else "backend/.gradle"
+project_cache_arg = (' --project-cache-dir="' + tilt_project_cache + '"') if is_wsl else ""
+
 if uname == "Darwin":
     java_resolver = "JAVA_HOME=$(/usr/libexec/java_home -v " + java_major + ")"
     # `sh -c` doesn't source ~/.zshrc, so nvm is off PATH — source nvm.sh and pin the version
@@ -182,7 +194,7 @@ backend_cmd = """cd backend && \\
   if [ \"$AUTH_MODE\" = \"oauth\" ]; then PROFILES=\"local\"; else PROFILES=\"local,local-no-auth\"; fi ; \\
   echo \"[Tilt] backend launching with --spring.profiles.active=$PROFILES (BACKEND_AUTH_MODE=$AUTH_MODE)\" ; \\
   """ + java_resolver + """ \\
-    ./gradlew bootRun --configuration-cache --args=\"--spring.profiles.active=$PROFILES\""""
+    ./gradlew --no-daemon bootRun --configuration-cache""" + project_cache_arg + """ --args=\"--spring.profiles.active=$PROFILES\""""
 
 local_resource(
     name = "backend",
@@ -320,15 +332,16 @@ cmd_button(
     argv = ["sh", "-c", "docker system prune -af --volumes ; echo '--- disk usage after ---' ; docker system df"],
 )
 
-# Gradle reset — stop the daemons and wipe the backend build dir (relocated off /mnt/c on WSL, see
-# `backend_build_dir`). Clears the "Could not delete build/classes" lock class and any stale
-# compiled output after a dependency/toolchain bump. Trigger the backend afterwards to recompile.
+# Gradle reset — stop the daemons and wipe both the backend build dir and Tilt's dedicated project
+# cache (both relocated off /mnt/c on WSL, see `backend_build_dir` / `tilt_project_cache`). Clears the
+# "Could not delete build/classes" lock class, a stale `fileHashes` lock, and any stale compiled
+# output or configuration-cache after a dependency/toolchain bump. Trigger the backend to recompile.
 cmd_button(
     name = "gradle-reset",
     resource = "docker-housekeeping",
-    text = "Gradle — stop daemons + wipe build dir",
+    text = "Gradle — stop daemons + wipe build/project cache",
     icon_name = "restart_alt",
-    argv = ["sh", "-c", "(cd backend && " + java_resolver + " ./gradlew --stop) ; rm -rf \"" + backend_build_dir + "\" ; echo 'Gradle daemons stopped + build dir wiped. Trigger the backend to recompile.'"],
+    argv = ["sh", "-c", "(cd backend && " + java_resolver + " ./gradlew --stop) ; rm -rf \"" + backend_build_dir + "\" \"" + tilt_project_cache + "\" ; echo 'Gradle daemons stopped + build dir & project cache wiped. Trigger the backend to recompile.'"],
 )
 
 # Print useful links
