@@ -7,14 +7,19 @@
 #   catch-all `dependency-name: '*'`. Un major peut embarquer des breaking changes silencieux
 #   (ex : springdoc 3.x cible Spring Boot 4, Kotlin 2.1 → 2.3 casse le `resolutionStrategy`
 #   Detekt qui pin Kotlin 2.0.10) — on les traite manuellement quand le contexte est prêt.
-# - Les **groupes** bundle les packages liés (Angular, Spring Boot, ngx-translate) sur leurs
-#   patches — peer-deps ou plugins solidaires d'un même bump. `update-types: [patch]` dans un
-#   groupe filtre uniquement ce qui est groupé ensemble (pas ce que Dependabot ouvre, d'où le
-#   filtre `ignore` ci-dessus).
+# - **Un seul groupe catch-all par écosystème**, sur `patch` + `minor` : une PR par écosystème
+#   au lieu d'une PR par dépendance. Les groupes par famille (Angular, Spring Boot,
+#   ngx-translate) sont subsumés — leur raison d'être était la solidarité des peer-deps et des
+#   plugins d'un même bump, que le catch-all garantit par construction. Contrepartie assumée :
+#   quand la CI casse, le bump coupable se bisecte à la main dans la PR.
 # - Les **`ignore`** spécifiques bloquent en plus les bumps qu'on sait perdants d'avance
 #   (peer dep d'Angular sur TS, bridge Kotlin chez Detekt). Dependabot rouvre automatiquement
 #   quand le contexte change.
-# - `open-pull-requests-limit: 10` — large mais borne le bruit en cas de gros backlog.
+# - `open-pull-requests-limit` reste large : le groupage borne déjà le volume, la limite ne sert
+#   plus que de garde-fou.
+#
+# Note : toute modification de ce fichier relance immédiatement une passe sur les écosystèmes
+# concernés — pas besoin d'attendre 06:00 ni du bouton « Check for updates ».
 
 version: 2
 
@@ -28,17 +33,14 @@ updates:
       timezone: America/Toronto
     open-pull-requests-limit: 10
     groups:
-      # Spring Boot : starter + plugin + dependency-management bougent solidaires sur leurs patches.
-      spring-boot:
+      # Catch-all patch + minor. Couvre la solidarité Spring Boot (starter + plugin +
+      # dependency-management bougent ensemble sur un même bump).
+      all:
         patterns:
-          - 'org.springframework.boot*'
-          - 'io.spring.dependency-management'
+          - '*'
         update-types:
           - patch
-      # Catch-all patch sur tout le reste.
-      patch:
-        update-types:
-          - patch
+          - minor
     ignore:
       # Catch-all : pas de major. Cf. en-tête du fichier (springdoc 3.x → Spring Boot 4, etc.).
       # Cette règle subsume les blocs major-only par dépendance (Detekt 2.0 qui demanderait de
@@ -57,26 +59,15 @@ updates:
       timezone: America/Toronto
     open-pull-requests-limit: 10
     groups:
-      # Angular : tous les `@angular/*` et `@angular-*/*` doivent bumper en même temps, sinon
-      # peer-deps internes incohérentes (un `@angular/build` qui exige le même major que
-      # `@angular/compiler-cli` etc.). Une seule PR Angular patch → review en bloc.
-      angular:
+      # Catch-all patch + minor. Couvre la solidarité `@angular/*` / `@angular-*/*` /
+      # `@ngtools/*` (peer-deps internes : `@angular/build` exige le même major que
+      # `@angular/compiler-cli`) et celle de `@ngx-translate/*` (core + http-loader).
+      all:
         patterns:
-          - '@angular/*'
-          - '@angular-*/*'
-          - '@ngtools/*'
+          - '*'
         update-types:
           - patch
-      # ngx-translate : core + http-loader bougent ensemble.
-      ngx-translate:
-        patterns:
-          - '@ngx-translate/*'
-        update-types:
-          - patch
-      # Catch-all patch sur tout le reste.
-      patch:
-        update-types:
-          - patch
+          - minor
     ignore:
       # Catch-all : pas de major. Cf. en-tête du fichier. Subsume notamment le major TypeScript
       # (borné par la peer dep d'Angular `>=5.9 <6.0` pour Angular 21 — Dependabot rouvrira la
@@ -97,10 +88,13 @@ updates:
       timezone: America/Toronto
     open-pull-requests-limit: 5
     groups:
-      # Pas de sous-groupe — les actions GitHub sont peu nombreuses, le `patch` suffit.
-      patch:
+      # Catch-all patch + minor — les actions GitHub sont peu nombreuses, une PR suffit.
+      all:
+        patterns:
+          - '*'
         update-types:
           - patch
+          - minor
     ignore:
       # Catch-all : pas de major. Cf. en-tête du fichier.
       - dependency-name: '*'
