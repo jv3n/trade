@@ -51,7 +51,7 @@ jobs:
       # per run). Read-only on PRs to avoid concurrent writers thrashing the cache key ; writeable
       # on master where the cache is the source-of-truth for downstream branches.
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6.2.0
+        uses: gradle/actions/setup-gradle@v6.3.0
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
@@ -82,7 +82,7 @@ jobs:
       # failure and confuse the CI summary.
       - name: Upload Detekt SARIF to Code Scanning
         if: always() && hashFiles('backend/build/reports/detekt/detekt.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4.37.4
+        uses: github/codeql-action/upload-sarif@v4.37.9
         with:
           sarif_file: backend/build/reports/detekt/detekt.sarif
           category: detekt
