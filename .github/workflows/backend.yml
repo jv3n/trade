@@ -58,13 +58,6 @@ jobs:
       - name: Build & test
         working-directory: backend
         run: ./gradlew build --build-cache
-        env:
-          # `SPRING_DATASOURCE_*` are no longer injected here — Testcontainers boots a per-run
-          # Postgres in Docker and publishes the JDBC coordinates as system properties at JUnit
-          # launcher-session open (cf. `testsupport/TestcontainersBootstrap.kt`).
-          # `ANTHROPIC_API_KEY` stays as a defensive placeholder so any future test that wires
-          # the LLM client without `@TestPropertySource` doesn't crash on an empty `@Value`.
-          ANTHROPIC_API_KEY: local-placeholder
 
       # Coverage reports — Kover is wired in `build.gradle.kts`. Runs after `build` (which executes
       # `test` and produces the binary `.bin` Kover instruments) so this step just renders. `if:

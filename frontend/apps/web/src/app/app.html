@@ -112,29 +112,6 @@
             <mat-icon matListItemIcon>book</mat-icon>
             <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
           </a>
-          <a
-            mat-list-item
-            routerLink="/ticker/AAPL"
-            routerLinkActive="sidenav-active"
-            [matTooltip]="'nav.ticker' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
-          >
-            <mat-icon matListItemIcon>show_chart</mat-icon>
-            <span matListItemTitle>{{ 'nav.ticker' | translate }}</span>
-          </a>
-          <a
-            mat-list-item
-            routerLink="/radar"
-            routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.radar' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
-          >
-            <mat-icon matListItemIcon>radar</mat-icon>
-            <span matListItemTitle>{{ 'nav.radar' | translate }}</span>
-          </a>
         </mat-nav-list>
         <!-- Pinned to the bottom of the sidenav (above the collapse toggle) — the lexicon is a
              reference/help surface, not a primary workflow, so it sits apart from the main list. -->

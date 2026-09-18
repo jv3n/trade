@@ -51,30 +51,6 @@
         </a>
         <a
           mat-list-item
-          routerLink="/settings/configuration"
-          routerLinkActive="sidenav-active"
-          [routerLinkActiveOptions]="{ exact: false }"
-          [matTooltip]="'settings.configuration' | translate"
-          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-          matTooltipPosition="right"
-        >
-          <mat-icon matListItemIcon>tune</mat-icon>
-          <span matListItemTitle>{{ 'settings.configuration' | translate }}</span>
-        </a>
-        <a
-          mat-list-item
-          routerLink="/settings/prompts"
-          routerLinkActive="sidenav-active"
-          [routerLinkActiveOptions]="{ exact: false }"
-          [matTooltip]="'settings.prompts' | translate"
-          [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-          matTooltipPosition="right"
-        >
-          <mat-icon matListItemIcon>auto_awesome</mat-icon>
-          <span matListItemTitle>{{ 'settings.prompts' | translate }}</span>
-        </a>
-        <a
-          mat-list-item
           routerLink="/settings/access-control"
           routerLinkActive="sidenav-active"
           [routerLinkActiveOptions]="{ exact: false }"

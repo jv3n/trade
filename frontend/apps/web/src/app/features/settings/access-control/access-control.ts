@@ -29,7 +29,7 @@ const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
  * **Why a signal mutated locally then explicit Save** instead of write-on-each-change : an admin
  * editing the list typically adds several entries before they're done. A live save would mean
  * 1 PUT per add — noisy in logs, slow on a connection that's not on localhost. Explicit Save
- * matches the rhythm of the existing /settings/configuration page (same Save / Reset pattern).
+ * follows the usual Save / Reset pattern.
  *
  * **Open mode communication** — when the effective list is empty, the page renders an `openModeNote`
  * banner telling the admin that gating is OFF and that posting the first email activates it. This

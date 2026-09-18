@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.TestPropertySource
 
 /**
  * End-to-end integration test on [StatEntryService.importCsv] + JPA → Postgres (Testcontainers via
@@ -29,7 +28,6 @@ import org.springframework.test.context.TestPropertySource
  * the HTTP layer, not in the service.
  */
 @SpringBootTest
-@TestPropertySource(properties = ["anthropic.api.key=test-key-ci-only"])
 class StatsImportIntegrationTest {
 
   @Autowired private lateinit var service: StatEntryService

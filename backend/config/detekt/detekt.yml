@@ -218,9 +218,6 @@ exceptions:
     # fallback) or to surface a generic error to the user (controllers). Scoping the rule here
     # keeps it useful for the rest of the codebase without flagging deliberate adapter behaviour.
     excludes:
-      - '**/infrastructure/market/**'
-      - '**/infrastructure/llm/**'
-      - '**/analysis/application/**'
       - '**/CsvImportController.kt'
       - '**/CsvImportService.kt'
       - '**/RssFetcherService.kt'

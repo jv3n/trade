@@ -267,16 +267,6 @@ kover {
         // Spring Boot application entry point — `runApplication<App>(*args)` has no useful testable
         // surface; the context-startup instrumentation covers it indirectly.
         classes("com.portfolioai.BackendApplication", "com.portfolioai.BackendApplicationKt")
-        // Vendor wire-format models: Jackson data classes whose testable value lives in the
-        // neighbouring mappers (tested via `MockWebServer`). Including the data classes themselves
-        // double-counts the coverage already gained through the mappers.
-        classes(
-          "com.portfolioai.market.infrastructure.market.TwelveData*",
-          "com.portfolioai.market.infrastructure.market.Finnhub*Models*",
-          "com.portfolioai.news.infrastructure.news.Finnhub*Models*",
-          "com.portfolioai.analyst.infrastructure.analyst.Finnhub*Response*",
-          "com.portfolioai.earnings.infrastructure.earnings.Finnhub*Response*",
-        )
         // Application DTOs (REST surface) — the controllers exercise them end-to-end via the
         // `@WebMvcTest` tests. Indirect but sufficient coverage.
         packages("com.portfolioai.*.application.dto")

@@ -7,7 +7,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Sort } from '@angular/material/sort';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -108,7 +108,6 @@ const DEFAULT_PAGE_SIZE = 10;
     DatePipe,
     DecimalPipe,
     NumberMaskDirective,
-    RouterLink,
     StbButtonModule,
     StbChipsModule,
     StbDatePickerModule,

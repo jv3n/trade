@@ -19,13 +19,7 @@
       <div class="header-row">
         <div class="title-block">
           <mat-chip-set>
-            <mat-chip
-              stbChip="ticker"
-              disableRipple
-              class="ticker-chip--link"
-              [routerLink]="['/ticker', e.ticker]"
-              >{{ e.ticker }}</mat-chip
-            >
+            <mat-chip stbChip="ticker" disableRipple>{{ e.ticker }}</mat-chip>
           </mat-chip-set>
           <span class="trade-date">{{ e.tradeDate | date: 'fullDate' }}</span>
           @if (e.direction) {

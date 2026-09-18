@@ -2,17 +2,17 @@
 
 Source of truth for project conventions and Claude-specific configuration. Read this first when working on PortfolioAI.
 
-> ## Post-pivot focus
+> ## Rework in progress (since 2026-09-18)
 >
-> The app pivoted in June 2026 from a per-ticker dossier app with LLM narratives → toward a **trading journal**. The user logs their trades each day ; charts / Excel export come in phase 2 (a shared stats dataset and a bilingual lexicon already shipped).
+> The app is being redefined from scratch as **the user's personal trading tracker — nothing else**. The scope is being re-specified with the user ; the internals of every kept module will be revisited.
 >
-> **Live modules** : `account/`, `journal/`, `stats/`, `lexicon/` (backend) + `features/account/`, `features/journal/`, `features/journal-io/`, `features/stats/`, `features/lexicon/` (frontend ; `account` first in the sidenav). The `account` module is the broker cash account — a derived-balance ledger fed by the journal's realized P&L via a domain event. Dormant pre-pivot modules (`market/`, `analysis/`, `news/`, `analyst/`, `earnings/`, `screener/`, `watchlist/`, plus the frontend features `ticker`, `radar`, `observability`) remain in the tree until phase 2 decides what gets re-wired vs. deleted. `portfolio/` and the `dashboard` / `import` / `suivi` frontend features were **deleted** at the pivot (2026-06-10).
+> **Kept modules** : `account/`, `journal/`, `stats/`, `candidates/`, `lexicon/` (backend, plus the support modules `auth/`, `config/` — login whitelist only —, `forex/` — CAD display on the account page —, `shared/`) + `features/account/`, `features/journal/`, `features/journal-io/`, `features/stats/`, `features/candidates/`, `features/lexicon/`, `features/settings/`, `features/login/`, `features/error/` (frontend).
 >
-> Treat `docs/projet/roadmap.md` as authoritative for in/out scope when this file and the roadmap disagree.
+> **Removed on 2026-09-18** : the whole `docs/` doc set (except `docs/TTD/` and the data folders), the LLM stack (Ollama, Claude, prompts, narratives, observability), the ticker dossier, the radar, and the pre-pivot backend modules that fed them (`market/`, `analysis/`, `news/`, `analyst/`, `earnings/`, `screener/`, `watchlist/`). Their tables are dropped by `V11__drop_pre_pivot_tables.sql`. Don't reintroduce them without the user asking.
 
 ## Project
 
-Trading journal app — short small-caps focused (gap-up shorts, $1-$10 price range). The user logs each trade with execution + pre-trade checklist + post-mortem fields ; the table is the atomic unit and the export/import is roundtrip-safe CSV. No LLM in the live path today ; the provider clients (TwelveData, FMP, Polygon, Finnhub) are kept for phase 2 enrichment but not wired to any UI route.
+Personal trading tracker — short small-caps focused (gap-up shorts, $1-$10 price range). The user logs each trade (execution + pre-trade checklist + post-mortem), keeps a stats sheet of gap-up setups, candidate sheets, a broker account ledger and a bilingual lexicon. No LLM, no external market-data provider.
 
 ## Stack
 
@@ -36,13 +36,12 @@ trade/
 │   ├── apps/web/                                   # The consumer app
 │   │   └── src/app/
 │   │       ├── app.{ts,html,scss,config,routes}.ts
-│   │       ├── core/      # api/<bucket> (HTTP ports + adapters), local/<bucket>,
+│   │       ├── core/      # api/<bucket> (HTTP ports + adapters),
 │   │       │              # app-state/ (UI signal services), http/ (interceptors),
 │   │       │              # router/ (guards), providers.ts
 │   │       ├── shared/    # cross-cutting helpers (no state, no DI)
-│   │       └── features/  # account, journal, journal-io, stats, lexicon, settings, login, error
-│   │                      # (+ dormant pre-pivot features: ticker, radar,
-│   │                      #  observability)
+│   │       └── features/  # account, journal, journal-io, stats, candidates, lexicon,
+│   │                      # settings, login, error
 │   ├── libs/ui/                                    # @portfolioai/ui design-system lib
 │   │   ├── src/lib/<component>/                    # Stb*Module wrappers + scss overrides
 │   │   ├── styles/                                 # global tokens, base, shell, scrollbars
@@ -52,29 +51,28 @@ trade/
 │   └── angular.json                                # 2 projects : web, ui
 ├── backend/src/main/kotlin/com/portfolioai/
 │   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles + local-no-auth profile
-│   ├── journal/     # Trade journal — primary post-pivot module (CRUD + CSV io + Pageable)
+│   ├── journal/     # Trade journal (CRUD + CSV io + Pageable + executions + attachments)
 │   ├── account/     # Broker cash account — movements + derived balance, fed by journal P&L (event)
-│   ├── stats/, lexicon/  # Live post-pivot — shared datasets (stats CSV import/export, bilingual lexicon)
-│   ├── config/      # Runtime-editable settings + routing clients
-│   ├── market/, analysis/, news/, analyst/, earnings/, screener/, watchlist/
-│   │                # Pre-pivot — dormant, provider clients kept for phase 2 enrichment
+│   ├── stats/       # Stats sheet (CSV import/export + per-user rows)
+│   ├── candidates/  # Candidate sheets
+│   ├── lexicon/     # Bilingual trading lexicon
+│   ├── config/      # Runtime-editable settings (login whitelist only)
+│   ├── forex/       # Frankfurter FX rate (account page CAD display)
 │   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
 ├── docs/
-│   ├── metier/, technique/, devops/                # Product + ops docs (FR)
-│   ├── projet/                                     # backlog.md, journal-livraisons.md, audits/
 │   ├── TTD/                                        # Trading-domain references (patterns, sizing, level2, red flags)
 │   ├── data-input/                                 # synthetic CSVs (versioned)
 │   └── data-input-local/                           # real Wealthsimple exports (gitignored)
-├── devops/prod/                                    # Dockerfile + service.yaml (Phase 5 deploy)
-├── .github/workflows/                              # backend.yml, frontend.yml, codeql.yml, docs.yml, smoke-wif.yml
+├── devops/prod/                                    # Dockerfile + service.yaml (Cloud Run deploy)
+├── .github/workflows/                              # backend.yml, frontend.yml, codeql.yml, deploy.yml, …
 ├── Tiltfile                                        # local infra — Postgres + backend + frontend
 ├── docker-compose.yml                              # services managed by Tilt
 └── .claude/                                        # CLAUDE.md, agents/, skills/
 ```
 
-> The `docs/` tree stays in French (project-wide convention for product and technical documentation). The `.claude/` tree is normalized to English.
+> The `docs/` tree stays in French. The `.claude/` tree is normalized to English.
 
-**Per-module detail** : see `docs/technique/architecture.md` (sections "Modules backend", "Modules frontend", "Schéma de base de données", "Décisions techniques notables"). Always reason in terms of ports (`*.repository.ts` on the frontend, `*Client` port on the backend) + adapters.
+Always reason in terms of ports (`*.repository.ts` on the frontend, `*Client` port on the backend) + adapters.
 
 ## Cross-cutting patterns
 
@@ -87,8 +85,7 @@ trade/
 
 ## Local Development
 
-`tilt up` boots everything (PostgreSQL, backend, frontend). Tilt UI: http://localhost:10350/. Backend on the `local` profile (`application-local.yml`, committed — no secrets, only behavior overrides ; cf. `Data & secrets` below). Detail in `docs/technique/developpement.md`.
-
+`tilt up` boots everything (PostgreSQL, backend, frontend). Tilt UI: http://localhost:10350/. Backend on the `local` profile (`application-local.yml`, committed — no secrets, only behavior overrides ; cf. `Data & secrets` below).
 ## Commands
 
 ```bash
@@ -123,7 +120,7 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 - Standalone components, **zoneless** (`provideZonelessChangeDetection()`, no `zone.js`). State is signal-based, no need for `OnPush` everywhere.
 - **No `CommonModule`** — standalone components import only what they actually use. Pipes come from their dedicated entry points : `import { DatePipe, DecimalPipe } from '@angular/common'`, then list them in `imports: [...]`. Control flow is the `@if` / `@for` / `@else` syntax, not `*ngIf` / `*ngFor` (so `NgIf` / `NgForOf` are never needed either). Pulling `CommonModule` in drags the whole legacy directive set for no payoff.
 - **Angular Material 22** wrapped through `@portfolioai/ui` (`libs/ui/`). Consumer code imports `Stb<Name>Module`, never `Mat<Name>Module` directly.
-- **Ticker display always goes through the chip directive** — whenever a ticker symbol is rendered (radar, stats, journal, future surfaces), it MUST be a `<mat-chip stbChip="ticker">` (from `StbChipsModule`), never a bare `<a>`/`<span>`/text. When the ticker links to its dossier, add `class="ticker-chip--link"` + `[routerLink]="['/ticker', symbol]"`. This keeps the trading-domain green ticker styling consistent everywhere — one directive, one source of truth.
+- **Ticker display always goes through the chip directive** — whenever a ticker symbol is rendered (stats, journal, candidates, future surfaces), it MUST be a `<mat-chip stbChip="ticker">` (from `StbChipsModule`), never a bare `<a>`/`<span>`/text. This keeps the trading-domain green ticker styling consistent everywhere — one directive, one source of truth.
 - **Workspace** — `apps/web` is the consumer app, `libs/ui` is the design system (ng-packagr build, Storybook 10.4 playground). TypeScript alias `@portfolioai/ui` → `libs/ui/src/public-api.ts`.
 - **i18n via `ngx-translate`** — translation files in `apps/web/public/i18n/<lang>.json` (FR + EN), templates use `'key' | translate`, TS uses `TranslateService.instant('key', { params })`. Active locale lives in `LanguageService` (signal). **Never hard-code a user-facing string** — always route through a key.
 - **ESLint flat config** (`eslint.config.js`, Angular ESLint 22) — `npm run lint` blocks CI. Two selector-prefix rule sets : `apps/web/**` uses `app`, `libs/ui/**` uses `['ui', 'stb']`. Prettier remains the only formatter (`eslint-config-prettier` applied last).
@@ -131,12 +128,12 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 
 ### Data & secrets
 
-- `application-local.yml` + `application-prod.yml` are **committed** (no secrets — only behavior overrides like `spring.flyway.repair-on-migrate`, `springdoc.api-docs.enabled`). The dangerous-in-prod settings are isolated to the `local` profile by construction. **Never commit API keys / OAuth secrets / DB passwords** — those live in `.env` (local, gitignored) and GCP Secret Manager (prod, cf. `docs/devops/deploiement.md`).
+- `application-local.yml` + `application-prod.yml` are **committed** (no secrets — only behavior overrides like `spring.flyway.repair-on-migrate`, `springdoc.api-docs.enabled`). The dangerous-in-prod settings are isolated to the `local` profile by construction. **Never commit API keys / OAuth secrets / DB passwords** — those live in `.env` (local, gitignored) and GCP Secret Manager (prod).
 - `docs/data-input/` holds synthetic CSVs (versioned, used for CI / demo + the journal-import demo file `journal-demo.csv`). Real exports go to `docs/data-input-local/` (gitignored). Never mix them.
 
 ### Commits
 
-- Conventional Commits in **English** — see `docs/projet/commit-conventions.md`.
+- Conventional Commits in **English** (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`, …).
 - **Issue number in the scope** — when a commit is tied to a GitHub issue, prefix the scope with it: `feat(93/journal): …`. No issue → plain scope: `chore(ci): …`.
 - **Default = suggest, don't execute** — never run `git add/commit/push/branch/tag/rebase` or `gh pr/issue` autonomously. `master` is protected. Narrow exception: the user explicitly asks *in the current turn* ("commit it", "go ahead and push"). Authorization does not carry forward to later turns.
 - When a commit message is requested = **one line**, Conventional Commits format, <72 chars, no body, no bullet list, no rationale. The user pastes the line as-is. If a body is really needed, raise that before writing one.
@@ -176,32 +173,11 @@ Tests serve as a top-to-bottom-readable spec. Concretely:
 
 ### Backlog
 
-The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues)** (migrated 2026-06-28). `docs/projet/backlog.md` is now just a pointer + label legend — don't add items there.
+The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues)**.
 
-- **GitHub Issues** — open work. Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:account` / `module:journal` / `module:stats` / `module:lexicon`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
-- **`docs/projet/journal-livraisons.md`** — history of shipped (✅) features, grouped by phase, reverse-chronological within each phase. Implementation notes live here.
-
-**After implementing a feature**:
-
-1. Add the entry to `journal-livraisons.md` at the top of the relevant phase, with a `Livré YYYY-MM-DD` lead.
-2. Close the matching GitHub issue (or narrow its scope / edit it if only partially delivered).
-3. Never run `gh issue close` / label edits autonomously — same rule as git: suggest, the user confirms in the current turn.
+- Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:account` / `module:journal` / `module:stats` / `module:lexicon`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
+- After implementing a feature, suggest closing (or narrowing) the matching issue. Never run `gh issue close` / label edits autonomously — same rule as git: suggest, the user confirms in the current turn.
 
 ### Documentation
 
-| File                                | Update when…                                                                 |
-| ----------------------------------- | ---------------------------------------------------------------------------- |
-| `docs/metier/vision.md`             | Product framing changes (post-pivot scope shift, new MVP guardrails)         |
-| `docs/metier/fonctionnalites.md`    | A feature changes status, or a phase advances                                |
-| `docs/technique/architecture.md`    | New module, notable technical decision, new pattern                          |
-| `docs/technique/developpement.md`   | Local config changes, a Tilt command is added                                |
-| `docs/technique/developper.md`      | Newcomer onboarding flow changes (prerequisite, install step, failure mode)  |
-| `docs/projet/sources.md`            | A data source is added or removed                                            |
-| GitHub Issues                       | New ticket, priority shift, feature freeze/decommission (the backlog now lives in Issues) |
-| `docs/projet/journal-livraisons.md` | Feature shipped (✅) — the detailed entry that used to live in the backlog   |
-| `docs/projet/audits/`               | A code review is performed — archive `YYYY-MM-DD-titre.md` + add a line to `index.md`. No auto-promotion to the backlog (the user decides). |
-| `docs/CHANGELOG.md`                 | End of every `/doc-maintainer` patch session — dated entry summarising the files modified. Format in `.claude/skills/doc-maintainer/SKILL.md`. |
-
-### Technical decisions
-
-Every technical decision (lib choice, dropped approach, architectural fix) goes to `docs/technique/architecture.md > Décisions techniques notables`. That file is the memory of the *why*, not just the *what*.
+The former `docs/` doc set was deleted on 2026-09-18 while the app is being redefined. Don't recreate doc files unless the user asks — the new documentation structure will be decided with them.

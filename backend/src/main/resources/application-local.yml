@@ -3,16 +3,13 @@
 # **Pas de secrets ici.** Toutes les clés API + credentials OAuth Google + emails admin + URL
 # frontend vivent dans `.env` à la racine du repo (gitignored). Le Tiltfile `source` ce `.env`
 # dans le `serve_cmd` du backend, qui exporte les vars au sous-process gradle, et Spring Boot
-# les pickè up via son relaxed binding (`ANTHROPIC_API_KEY` → `anthropic.api.key`,
-# `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID` → la property correspondante).
-# Ce fichier ne contient donc que les overrides de **comportement** dev — providers en mock par
-# défaut, Ollama wiring, SQL verbeux, Swagger activé.
+# les pickè up via son relaxed binding (`SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
+# → la property correspondante). Ce fichier ne contient donc que les overrides de **comportement**
+# dev — SQL verbeux, Swagger activé.
 
 spring:
-  # Lazy initialization — les beans ne sont créés qu'au premier usage, pas au boot. Gros gain de
-  # démarrage en dev : les modules dormants post-pivot (analysis, portfolio, news, analyst,
-  # earnings, screener) + les clients providers (TwelveData, FMP, Polygon, Finnhub) ne sont
-  # instanciés que s'ils sont sollicités — ce qui n'arrive jamais sur le path journal aujourd'hui.
+  # Lazy initialization — les beans ne sont créés qu'au premier usage, pas au boot. Gain de
+  # démarrage en dev.
   # Contrepartie acceptée en dev solo : une erreur de wiring n'apparaît qu'au 1ᵉʳ appel du bean
   # concerné (pas au boot), et la 1ʳᵉ requête sur un module froid est un peu plus lente. **Local
   # uniquement** — la prod (`application-prod.yml`) garde l'eager init pour fail-fast au déploiement.
@@ -32,26 +29,6 @@ spring:
 
   flyway:
     repair-on-migrate: true  # Répare automatiquement les checksums en dev
-
-llm:
-  provider: ollama
-
-ollama:
-  # Le port Ollama côté hôte est configurable via `OLLAMA_HOST_PORT` dans `.env` à la racine
-  # du repo en cas de conflit local (le container reste en 11434 en interne).
-  base-url: http://localhost:${OLLAMA_HOST_PORT:11434}
-  model: qwen2.5:3b    # 3B params, ~2 GB. ~5-10 s par narratif sur M1, fiable sur le JSON
-                       # structuré. Pull via Tilt button `llm:pull-qwen`. Mistral 7B était le
-                       # défaut historique mais 30-60 s par appel sur M1 → timeouts.
-
-market:
-  # provider: mock (synthetic) | twelvedata (real, requires api-key in .env)
-  provider: mock
-
-# News : `mock` par défaut pour économiser les credits Finnhub en itération sur l'UI. Bascule
-# sur `finnhub` quand tu veux tester un vrai feed sur un ticker concret.
-news:
-  provider: mock
 
 # springdoc-openapi — activé en local seulement (le défaut côté `application.yml` est `false`).
 # Swagger UI : http://localhost:${BACKEND_HOST_PORT}/swagger-ui.html

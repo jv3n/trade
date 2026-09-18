@@ -21,11 +21,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
-import {
-  ConfigEntry,
-  ConfigRepository,
-  TestConfigResult,
-} from '../../../core/api/config/config.repository';
+import { ConfigEntry, ConfigRepository } from '../../../core/api/config/config.repository';
 import { AccessControlPage } from './access-control';
 
 const ALLOWED_EMAILS_KEY = 'app.allowed.emails';
@@ -52,25 +48,6 @@ class StubConfigRepository implements ConfigRepository {
     if (this.resetShouldError) return throwError(() => new Error('boom'));
     return of(undefined);
   }
-
-  testTwelveData(): Observable<TestConfigResult> {
-    return of({ ok: true, message: '' });
-  }
-  testFinnhub(): Observable<TestConfigResult> {
-    return of({ ok: true, message: '' });
-  }
-  testPolygon(): Observable<TestConfigResult> {
-    return of({ ok: true, message: '' });
-  }
-  testFmp(): Observable<TestConfigResult> {
-    return of({ ok: true, message: '' });
-  }
-  testAnthropic(): Observable<TestConfigResult> {
-    return of({ ok: true, message: '' });
-  }
-  testLlm(): Observable<TestConfigResult> {
-    return of({ ok: true, message: '' });
-  }
 }
 
 function emailsEntry(currentValue: string): ConfigEntry {
@@ -85,7 +62,6 @@ function emailsEntry(currentValue: string): ConfigEntry {
     defaultValue: '',
     hasValue: currentValue.length > 0,
     isOverridden: currentValue.length > 0,
-    allowedValues: null,
   };
 }
 

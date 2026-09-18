@@ -11,8 +11,7 @@ server:
   # En prod derrière un reverse proxy (nginx, traefik, ALB), même besoin : trust the forwarded
   # headers pour générer les URLs publiques correctes. Risque de spoofing : nul tant que le
   # backend n'est pas exposé directement à internet sans proxy devant — invariant tenu en prod
-  # par le Google Front End Cloud Run + Cloudflare Worker, cf. `docs/technique/architecture.md
-  # > Décisions techniques notables > Phase 5 > Forward-headers strategy`. Sur VPS self-managed
+  # par le Google Front End Cloud Run + Cloudflare Worker. Sur VPS self-managed
   # (Hetzner, Oracle, etc.), basculer ici sur `NATIVE` + `server.tomcat.remoteip.internal-proxies`
   # pinné sur l'IP du reverse proxy local (e.g. `127\.0\.0\.1|::1` pour nginx/Caddy sidecar).
   forward-headers-strategy: framework
@@ -144,15 +143,6 @@ management:
 # dans `application-local.yml` avec l'URL complète du SPA — sinon le user atterrit sur le backend
 # (Whitelabel 404 après login).
 app:
-  # Whether Ollama-related runtime configuration is exposed in this environment. Default `true`
-  # (local dev runs Ollama in docker-compose alongside the backend) ; overridden to `false` in
-  # `application-prod.yml` because the Phase 5 deploy decision (Cloud Run + Supabase) excludes
-  # Ollama from prod — no daemon to reach. When `false`, the `llm.provider` toggle in
-  # `/settings/configuration` hides the `ollama` option, the `ollama.model` entry is omitted from
-  # the listing endpoint, and `AppConfigService.validate()` rejects any `set(llm.provider, ollama)`
-  # or `set(ollama.model, …)` write that would land the runtime config in a stuck state.
-  ollama:
-    enabled: ${APP_OLLAMA_ENABLED:true}
   admin:
     emails: ${APP_ADMIN_EMAILS:}
   # Whitelist of emails authorised to complete the OAuth login. Empty = open mode (backward-compat
@@ -164,100 +154,12 @@ app:
     emails: ${APP_ALLOWED_EMAILS:}
   frontend-url: ${APP_FRONTEND_URL:/}
 
-anthropic:
-  api:
-    # Empty default mirrors the convention used for `market.twelvedata.api-key` and
-    # `market.finnhub.api-key` below : a fresh clone must boot without the env var so the user can
-    # open `/settings/configuration` and rent the key in the SECRET runtime slot. `ClaudeClient`
-    # already raises a clear error at the first call if the key is empty.
-    key: ${ANTHROPIC_API_KEY:}
-    model: claude-opus-4-6
-
-llm:
-  provider: claude
-
-market:
-  # provider:
-  #   mock        — deterministic synthetic data (default, no network needed)
-  #   twelvedata  — real REST API, free tier 800 credits/day (requires market.twelvedata.api-key)
-  provider: mock
-  # Caffeine TTL for the `market-chart` and `news-by-symbol` caches (shared spec). Editable at
-  # runtime from /settings/configuration — the value here is the boot-time default and the fallback
-  # when no DB override is set.
-  cache:
-    ttl-minutes: 15
-  twelvedata:
-    base-url: https://api.twelvedata.com
-    api-key: ${TWELVEDATA_API_KEY:}
-  # Finnhub powers the news section on the ticker dossier — separate provider from the chart
-  # data because Twelve Data does not surface a news endpoint on its public API. Free tier :
-  # 60 calls / minute, no daily cap. Sign-up : https://finnhub.io/register
-  finnhub:
-    base-url: https://finnhub.io/api/v1
-    api-key: ${FINNHUB_API_KEY:}
-
 # Taux de change — alimente le toggle de devise de la page Compte (solde USD affiché en CAD).
 # Frankfurter : taux de référence BCE, publiés une fois par jour ouvré, API publique sans clé ni
 # quota. Pas de routing mock/réel : un seul provider keyless suffit pour une conversion cosmétique.
 forex:
   frankfurter:
     base-url: https://api.frankfurter.dev/v1
-
-# News provider — separate switch from `market.provider` because news (Finnhub) and chart data
-# (Twelve Data) are different vendors. Defaults to `mock` so an onboarding clone or the CI runs
-# without a Finnhub key. The actual `market.finnhub.api-key` lives under `market.*` above
-# because the keys are co-located by vendor (Finnhub may surface other endpoints later).
-news:
-  # provider:
-  #   mock     — deterministic synthetic headlines (default, no network needed)
-  #   finnhub  — real REST API (requires market.finnhub.api-key)
-  provider: mock
-
-# Analyst recommendations provider — separate switch from `news.provider` so the user can flip
-# them independently (e.g. live Finnhub news with mock analyst recs while iterating). Both
-# Finnhub-backed today and share `market.finnhub.api-key`.
-analyst:
-  # provider:
-  #   mock     — deterministic synthetic recommendations (default, no network needed)
-  #   finnhub  — real REST `/stock/recommendation` + `/stock/price-target` (requires market.finnhub.api-key)
-  provider: mock
-
-# Earnings provider — separate switch from `news.provider` and `analyst.provider` so the user can
-# flip them independently. Finnhub-backed today and shares `market.finnhub.api-key`.
-earnings:
-  # provider:
-  #   mock     — deterministic synthetic earnings (default, no network needed)
-  #   finnhub  — real REST `/stock/earnings` + `/calendar/earnings` (requires market.finnhub.api-key)
-  provider: mock
-
-# Market radar provider (Phase 6) — separate vendor from market/news/analyst/earnings.
-# Phase 6 cycles through 3 live providers + the mock :
-#   - Polygon (rebrand Massive 2026) snapshot endpoint → paid Stocks Starter only (403 on Basic)
-#   - Polygon grouped-daily → 403 on the rebranded free tier too (was advertised free pre-2026)
-#   - FMP `/stable/biggest-gainers+losers` → free tier 250 req/jour, retained as the live
-#     provider that actually works on $0 (no volume signal — documented limitation, the radar
-#     filter on volumeRatio becomes no-op when fmp is the active provider). The legacy
-#     `/api/v3/stock_market/*` paths were deprecated by FMP in August 2025 (403 "Legacy
-#     Endpoint" for any subscription started post-cutoff) — `/stable/*` is the replacement and
-#     serves the same JSON shape.
-# `polygon` remains wired for the day the user upgrades to Stocks Basic+. Sign-ups :
-# https://massive.com for Polygon, https://site.financialmodelingprep.com for FMP.
-screener:
-  # provider:
-  #   mock     — deterministic synthetic snapshot (default, no network needed)
-  #   polygon  — real REST `/v2/aggs/grouped/locale/us/market/stocks/{date}` (2 calls per refresh
-  #              to join recent + previous trading day ; requires screener.polygon.api-key AND a
-  #              paid Stocks Basic+ Polygon subscription — the 2026 rebrand 403'd the historically
-  #              free tier)
-  #   fmp      — real REST `/stable/biggest-gainers` + `/biggest-losers` (top 50 movers in 1 call
-  #              each ; requires screener.fmp.api-key, free tier 250 req/jour, no volume signal)
-  provider: mock
-  polygon:
-    base-url: https://api.massive.com
-    api-key: ${POLYGON_API_KEY:}
-  fmp:
-    base-url: https://financialmodelingprep.com
-    api-key: ${FMP_API_KEY:}
 
 # Sentry — error tracking. **Disabled by default** so dev local and CI don't ship events.
 # `application-prod.yml` flips this to true and provides the DSN (sourced from Secret Manager) +

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ConfigEntry, ConfigRepository, TestConfigResult } from '../config.repository';
+import { ConfigEntry, ConfigRepository } from '../config.repository';
 
 @Injectable()
 export class HttpConfigRepository extends ConfigRepository {
@@ -18,29 +18,5 @@ export class HttpConfigRepository extends ConfigRepository {
 
   reset(key: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${encodeURIComponent(key)}`);
-  }
-
-  testTwelveData(value: string): Observable<TestConfigResult> {
-    return this.http.post<TestConfigResult>(`${this.base}/test/twelvedata`, { value });
-  }
-
-  testFinnhub(value: string): Observable<TestConfigResult> {
-    return this.http.post<TestConfigResult>(`${this.base}/test/finnhub`, { value });
-  }
-
-  testPolygon(value: string): Observable<TestConfigResult> {
-    return this.http.post<TestConfigResult>(`${this.base}/test/polygon`, { value });
-  }
-
-  testFmp(value: string): Observable<TestConfigResult> {
-    return this.http.post<TestConfigResult>(`${this.base}/test/fmp`, { value });
-  }
-
-  testAnthropic(value: string): Observable<TestConfigResult> {
-    return this.http.post<TestConfigResult>(`${this.base}/test/anthropic`, { value });
-  }
-
-  testLlm(provider: string, model: string): Observable<TestConfigResult> {
-    return this.http.post<TestConfigResult>(`${this.base}/test/llm`, { provider, model });
   }
 }
