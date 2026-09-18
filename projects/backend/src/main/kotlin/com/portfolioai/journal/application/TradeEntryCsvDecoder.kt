@@ -29,6 +29,30 @@ object TradeEntryCsvDecoder {
   /** Order-locked column layout shared with [TradeEntryCsvEncoder]. */
   private val HEADERS = TradeEntryCsvEncoder.HEADERS
 
+  /**
+   * Cell index of each column in [HEADERS]. `profitDollars` (7) and `gainPercent` (8) have no
+   * constant on purpose : they are recomputed from the executions, never read on import.
+   */
+  private object Col {
+    const val TRADE_DATE = 0
+    const val TICKER = 1
+    const val PLAY = 2
+    const val PATTERN = 3
+    const val SIZE = 4
+    const val OPEN_PRICE = 5
+    const val EXIT_PRICE = 6
+    const val NOTE = 9
+    const val PRE_935_TO_10H = 10
+    const val PRE_GAP_UP_50 = 11
+    const val PRE_PRICE_1_TO_10 = 12
+    const val PRE_FLOAT_3_TO_50M = 13
+    const val PRE_WAIT_PUSH = 14
+    const val OPEN_SIDE = 15
+    const val SHORT_ON_RESISTANCE = 16
+    const val EXIT_STRATEGY = 17
+    const val ERROR_NOTE = 18
+  }
+
   data class DecodeResult(val rows: List<TradeEntryRequest>, val errors: List<ImportError>)
 
   fun decode(csv: String): DecodeResult {
@@ -75,7 +99,7 @@ object TradeEntryCsvDecoder {
           )
           continue
         }
-        rows.add(toRequest(cells, lineNo))
+        rows.add(toRequest(cells))
       } catch (e: DecodeException) {
         errors.add(ImportError(line = lineNo, message = e.message ?: "Unknown decode error"))
       }
@@ -124,16 +148,16 @@ object TradeEntryCsvDecoder {
   // Cell-by-cell typed mapping. The order of `cells` matches HEADERS by construction
   // (validated above).
   // ============================================================================
-  private fun toRequest(cells: List<String>, lineNo: Int): TradeEntryRequest {
+  private fun toRequest(cells: List<String>): TradeEntryRequest {
     // The CSV layout is frozen on the legacy flat columns (issue #93 — the multi-exec CSV format is
     // a dedicated future ticket). We reconstruct a *simple* position from them : one ENTRY leg
     // (size @ openPrice) and, when the trade was closed, one EXIT leg (size @ exitPrice). The
     // direction is inferred short-biased, and profitDollars / gainPercent (cells 7-8) are ignored
     // on
     // import — they are recomputed from the executions by the service.
-    val size = optionalPositiveInt(cells[4], "size")
-    val openPrice = optionalPositiveDecimal(cells[5], "openPrice")
-    val exitPrice = optionalDecimal(cells[6], "exitPrice")
+    val size = optionalPositiveInt(cells[Col.SIZE], "size")
+    val openPrice = optionalPositiveDecimal(cells[Col.OPEN_PRICE], "openPrice")
+    val exitPrice = optionalDecimal(cells[Col.EXIT_PRICE], "exitPrice")
 
     val executions = mutableListOf<ExecutionRequest>()
     if (size != null && openPrice != null) {
@@ -149,40 +173,46 @@ object TradeEntryCsvDecoder {
       else TradePositionCalculator.inferDirection(openPrice, exitPrice)
 
     return TradeEntryRequest(
-      tradeDate = requireDate(cells[0], "tradeDate"),
-      ticker = requireNonBlank(cells[1], "ticker").trim().uppercase(),
+      tradeDate = requireDate(cells[Col.TRADE_DATE], "tradeDate"),
+      ticker = requireNonBlank(cells[Col.TICKER], "ticker").trim().uppercase(),
       direction = direction,
       executions = executions,
-      play = optionalEnum(cells[2], "play", TradePlay::valueOf, TradePlay.entries.map { it.name }),
+      play =
+        optionalEnum(
+          cells[Col.PLAY],
+          "play",
+          TradePlay::valueOf,
+          TradePlay.entries.map { it.name },
+        ),
       pattern =
         optionalEnum(
-          cells[3],
+          cells[Col.PATTERN],
           "pattern",
           TradePattern::valueOf,
           TradePattern.entries.map { it.name },
         ),
-      note = optionalString(cells[9]),
-      pre935To10h = optionalBoolean(cells[10], "pre935To10h"),
-      preGapUp50 = optionalBoolean(cells[11], "preGapUp50"),
-      prePrice1To10 = optionalBoolean(cells[12], "prePrice1To10"),
-      preFloat3To50m = optionalBoolean(cells[13], "preFloat3To50m"),
-      preWaitPush = optionalBoolean(cells[14], "preWaitPush"),
+      note = optionalString(cells[Col.NOTE]),
+      pre935To10h = optionalBoolean(cells[Col.PRE_935_TO_10H], "pre935To10h"),
+      preGapUp50 = optionalBoolean(cells[Col.PRE_GAP_UP_50], "preGapUp50"),
+      prePrice1To10 = optionalBoolean(cells[Col.PRE_PRICE_1_TO_10], "prePrice1To10"),
+      preFloat3To50m = optionalBoolean(cells[Col.PRE_FLOAT_3_TO_50M], "preFloat3To50m"),
+      preWaitPush = optionalBoolean(cells[Col.PRE_WAIT_PUSH], "preWaitPush"),
       openSide =
         optionalEnum(
-          cells[15],
+          cells[Col.OPEN_SIDE],
           "openSide",
           TradeOpenSide::valueOf,
           TradeOpenSide.entries.map { it.name },
         ),
-      shortOnResistance = optionalBoolean(cells[16], "shortOnResistance"),
+      shortOnResistance = optionalBoolean(cells[Col.SHORT_ON_RESISTANCE], "shortOnResistance"),
       exitStrategy =
         optionalEnum(
-          cells[17],
+          cells[Col.EXIT_STRATEGY],
           "exitStrategy",
           TradeExitStrategy::valueOf,
           TradeExitStrategy.entries.map { it.name },
         ),
-      errorNote = optionalString(cells[18]),
+      errorNote = optionalString(cells[Col.ERROR_NOTE]),
     )
   }
 

@@ -91,7 +91,8 @@ class TradeEntryService(
 
     /** Screenshot upload guardrails (issue #110) — enforced in-service (→ 400) before the DB. */
     private val ALLOWED_IMAGE_TYPES = setOf("image/png", "image/jpeg", "image/webp")
-    private const val MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024 // 5 MB
+    private const val BYTES_PER_MB = 1024 * 1024
+    private const val MAX_SCREENSHOT_BYTES = 5 * BYTES_PER_MB
   }
 
   @Transactional(readOnly = true) fun findById(id: UUID): TradeEntryDto = loadOwned(id).toDto()
@@ -253,7 +254,7 @@ class TradeEntryService(
   ): TradeEntryDto {
     require(bytes.isNotEmpty()) { "Screenshot file is empty" }
     require(bytes.size <= MAX_SCREENSHOT_BYTES) {
-      "Screenshot exceeds the ${MAX_SCREENSHOT_BYTES / (1024 * 1024)} MB limit"
+      "Screenshot exceeds the ${MAX_SCREENSHOT_BYTES / BYTES_PER_MB} MB limit"
     }
     val normalizedType = contentType?.lowercase()
     require(normalizedType in ALLOWED_IMAGE_TYPES) {

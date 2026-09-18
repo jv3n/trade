@@ -43,6 +43,24 @@ object StatEntryCsvDecoder {
       "EOD (End of Day)",
     )
 
+  /** Cell index of each column in [HEADERS]. */
+  private object Col {
+    const val DATE = 0
+    const val TICKER = 1
+    const val GAP_UP = 2
+    const val FLOAT = 3
+    const val INSTITUTIONS = 4
+    const val INST_OVER_20 = 5
+    const val UNDER_1_DOLLAR = 6
+    const val SSR = 7
+    const val ENTRY_AFTER_11AM = 8
+    const val NOTES = 9
+    const val OPEN = 10
+    const val HIGH = 11
+    const val LOD = 12
+    const val EOD = 13
+  }
+
   data class DecodeResult(val rows: List<StatEntryRequest>, val errors: List<ImportError>)
 
   fun decode(csv: String): DecodeResult {
@@ -136,20 +154,20 @@ object StatEntryCsvDecoder {
   // ============================================================================
   private fun toRequest(cells: List<String>): StatEntryRequest =
     StatEntryRequest(
-      tradeDate = requireDate(cells[0], "Date"),
-      ticker = requireNonBlank(cells[1], "Ticker").uppercase(),
-      gapUpPercent = requireDecimal(cells[2], "Gap Up"),
-      floatSharesMillions = requirePositiveDecimal(cells[3], "Float"),
-      institutionsPercent = requireNonNegativeDecimal(cells[4], "Institutions %"),
-      instOver20 = requireBoolean(cells[5], ">20% Inst?"),
-      under1Dollar = requireBoolean(cells[6], "<\$1 stock?"),
-      ssr = requireBoolean(cells[7], "SSR?"),
-      entryAfter11am = requireBoolean(cells[8], "Entry after 11AM?"),
-      note = optionalString(cells[9]),
-      openPrice = requirePositiveDecimal(cells[10], "Open"),
-      highPrice = requirePositiveDecimal(cells[11], "High"),
-      lodPrice = requirePositiveDecimal(cells[12], "LOD (Low of Day)"),
-      eodPrice = requirePositiveDecimal(cells[13], "EOD (End of Day)"),
+      tradeDate = requireDate(cells[Col.DATE], "Date"),
+      ticker = requireNonBlank(cells[Col.TICKER], "Ticker").uppercase(),
+      gapUpPercent = requireDecimal(cells[Col.GAP_UP], "Gap Up"),
+      floatSharesMillions = requirePositiveDecimal(cells[Col.FLOAT], "Float"),
+      institutionsPercent = requireNonNegativeDecimal(cells[Col.INSTITUTIONS], "Institutions %"),
+      instOver20 = requireBoolean(cells[Col.INST_OVER_20], ">20% Inst?"),
+      under1Dollar = requireBoolean(cells[Col.UNDER_1_DOLLAR], "<\$1 stock?"),
+      ssr = requireBoolean(cells[Col.SSR], "SSR?"),
+      entryAfter11am = requireBoolean(cells[Col.ENTRY_AFTER_11AM], "Entry after 11AM?"),
+      note = optionalString(cells[Col.NOTES]),
+      openPrice = requirePositiveDecimal(cells[Col.OPEN], "Open"),
+      highPrice = requirePositiveDecimal(cells[Col.HIGH], "High"),
+      lodPrice = requirePositiveDecimal(cells[Col.LOD], "LOD (Low of Day)"),
+      eodPrice = requirePositiveDecimal(cells[Col.EOD], "EOD (End of Day)"),
     )
 
   private fun requireNonBlank(raw: String, field: String): String =
