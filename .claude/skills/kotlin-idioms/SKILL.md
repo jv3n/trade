@@ -31,7 +31,7 @@ Spotless has a `no-wildcard-imports` check that throws on **any** wildcard — n
 class NewsService(private val client: NewsClient) { /* … */ }
 ```
 
-No `@Autowired` on fields. No `lateinit var` on dependencies. `grep -rn 'lateinit var' backend/src/main/` returns zero hits ; keep it that way. `lateinit var` is occasionally legitimate in tests (`@BeforeEach` initialising a `MockWebServer`).
+No `@Autowired` on fields. No `lateinit var` on dependencies. `grep -rn 'lateinit var' projects/backend/src/main/` returns zero hits ; keep it that way. `lateinit var` is occasionally legitimate in tests (`@BeforeEach` initialising a `MockWebServer`).
 
 ## Validation — `require` for input, `error` for impossibilities
 

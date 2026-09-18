@@ -1,6 +1,6 @@
 ---
 name: folders-structure-frontend
-description: Folder conventions for the PortfolioAI frontend (Angular 22 CLI workspace with `apps/web` consumer app + `libs/ui` design-system lib under `frontend/`). Use when creating new modules, services, components, lib wrappers, or design-system directives — or when reviewing where new files should live.
+description: Folder conventions for the PortfolioAI frontend (Angular 22 CLI workspace with `apps/web` consumer app + `libs/ui` design-system lib under `projects/frontend/`). Use when creating new modules, services, components, lib wrappers, or design-system directives — or when reviewing where new files should live.
 ---
 
 # Frontend Folder Structure
@@ -13,7 +13,7 @@ The frontend is an **Angular CLI workspace** with two projects :
 TypeScript path mapping (`@portfolioai/ui` → `libs/ui/src/public-api.ts`) lets the app import the lib without relative paths.
 
 ```
-frontend/
+projects/frontend/
 ├── angular.json                              # 2 projects : web, ui
 ├── eslint.config.js                          # flat config, selector prefixes per project
 ├── package.json                              # workspace scripts

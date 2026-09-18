@@ -1,6 +1,6 @@
 ---
 name: folders-structure-backend
-description: Folder conventions for the PortfolioAI backend (Kotlin + Spring Boot under `backend/`). Use when creating a new module, port, adapter, controller, repository, or DTO — or when reviewing where a new backend file should live.
+description: Folder conventions for the PortfolioAI backend (Kotlin + Spring Boot under `projects/backend/`). Use when creating a new module, port, adapter, controller, repository, or DTO — or when reviewing where a new backend file should live.
 ---
 
 # Backend Folder Structure
@@ -12,7 +12,7 @@ A **single Spring Boot module** organised by **bounded context**. Each top-level
 **Post-pivot live contexts** : `journal/` (the main module — CRUD over trade entries + CSV export/import + Pageable listing) + `auth/` (always-live). **Dormant pre-pivot contexts** kept in the tree until phase 2 enrichment kicks in : `market/`, `analysis/`, `portfolio/`, `news/`, `analyst/`, `earnings/`, `screener/`, `watchlist/`, `config/`. They still compile and pass their tests ; nothing routes to them from the live UI today.
 
 ```
-backend/
+projects/backend/
 ├── build.gradle.kts
 ├── src/main/
 │   ├── resources/

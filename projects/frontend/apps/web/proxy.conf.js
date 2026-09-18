@@ -15,7 +15,7 @@
 //
 // The backend port is configurable via .env at the repo root (POSTGRES_HOST_PORT,
 // BACKEND_HOST_PORT, etc. — cf. .env.example). This file mirrors the same .env-reading pattern
-// used by the Tiltfile (Starlark load_env_file) and backend/build.gradle.kts (Kotlin DSL) so
+// used by the Tiltfile (Starlark load_env_file) and projects/backend/build.gradle.kts (Kotlin DSL) so
 // `npm start` Just Works whether you launch it under Tilt or directly. We hand-roll a tiny
 // parser instead of pulling the `dotenv` npm package — the file format is dead-simple
 // (KEY=value, optional surrounding quotes, # comments, no escapes).
@@ -37,8 +37,8 @@ function loadDotenv(filePath) {
   return out;
 }
 
-// `__dirname` = frontend/apps/web/ ; remonte de 3 niveaux pour atteindre le repo root où vit `.env`.
-const dotenv = loadDotenv(path.join(__dirname, '..', '..', '..', '.env'));
+// `__dirname` = projects/frontend/apps/web/ ; remonte de 4 niveaux pour atteindre le repo root où vit `.env`.
+const dotenv = loadDotenv(path.join(__dirname, '..', '..', '..', '..', '.env'));
 const backendPort = process.env.BACKEND_HOST_PORT || dotenv.BACKEND_HOST_PORT || '8080';
 
 const backendProxy = {

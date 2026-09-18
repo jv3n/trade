@@ -32,7 +32,7 @@ Personal trading tracker — short small-caps focused (gap-up shorts, $1-$10 pri
 
 ```
 trade/
-├── frontend/                                       # Angular CLI workspace
+├── projects/frontend/                                       # Angular CLI workspace
 │   ├── apps/web/                                   # The consumer app
 │   │   └── src/app/
 │   │       ├── app.{ts,html,scss,config,routes}.ts
@@ -49,7 +49,7 @@ trade/
 │   ├── public/i18n/<lang>.json                     # ngx-translate
 │   ├── eslint.config.js                            # flat config — `ui` + `stb` selector prefixes
 │   └── angular.json                                # 2 projects : web, ui
-├── backend/src/main/kotlin/com/portfolioai/
+├── projects/backend/src/main/kotlin/com/portfolioai/
 │   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles + local-no-auth profile
 │   ├── journal/     # Trade journal (CRUD + CSV io + Pageable + executions + attachments)
 │   ├── account/     # Broker cash account — movements + derived balance, fed by journal P&L (event)
@@ -89,7 +89,7 @@ Always reason in terms of ports (`*.repository.ts` on the frontend, `*Client` po
 ## Commands
 
 ```bash
-# Frontend (from frontend/)
+# Frontend (from projects/frontend/)
 npm run start                                       # ng serve web
 npm run build                                       # ng build web
 npm run test                                        # ng test web (Vitest)
@@ -99,7 +99,7 @@ npm run storybook                                   # ng run ui:storybook (lib p
 npm run storybook:build                             # ng run ui:build-storybook
 npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 
-# Backend (from backend/)
+# Backend (from projects/backend/)
 ./gradlew bootRun | test | spotlessApply
 ```
 
@@ -144,7 +144,7 @@ Every file under `.claude/` (CLAUDE.md, `agents/*.md`, `skills/**/*.md`) is writ
 
 ## Build & infra tooling — comment language
 
-Comments in the build and local-infra orchestration config are written in **English**: `backend/build.gradle.kts`, `backend/settings.gradle.kts`, `backend/gradle.properties`, `Tiltfile`, `docker-compose.yml`. Same spirit as the `.claude/` rule — this is developer-tooling plumbing, not product/runtime documentation. The Spring runtime config (`application*.yml`) is **out of scope** and keeps its French comments (it documents product/runtime behaviour, in the `docs/`-French spirit).
+Comments in the build and local-infra orchestration config are written in **English**: `projects/backend/build.gradle.kts`, `projects/backend/settings.gradle.kts`, `projects/backend/gradle.properties`, `Tiltfile`, `docker-compose.yml`. Same spirit as the `.claude/` rule — this is developer-tooling plumbing, not product/runtime documentation. The Spring runtime config (`application*.yml`) is **out of scope** and keeps its French comments (it documents product/runtime behaviour, in the `docs/`-French spirit).
 
 ## Instructions for Claude
 

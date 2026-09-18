@@ -34,7 +34,7 @@ npm run ui:build            # ng-packagr build → dist/ui (no-op while lib is C
 npm run ui:lint             # eslint
 ```
 
-The app consumes the lib via `frontend/apps/web/src/styles.scss`:
+The app consumes the lib via `projects/frontend/apps/web/src/styles.scss`:
 
 ```scss
 @use '../../../libs/ui/styles';

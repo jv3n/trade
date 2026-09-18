@@ -5,7 +5,7 @@ description: Create modern Angular standalone components following v21+ best pra
 
 # Angular Component
 
-Standalone components for Angular v21+ (the version used in `frontend/`). Components are standalone by default — do NOT set `standalone: true`. **Change detection**: PortfolioAI runs `provideZonelessChangeDetection()`, so `ChangeDetectionStrategy.OnPush` is **not required** — signals drive change detection. Adding `OnPush` is a no-op functionally and adds noise. Leave the default strategy on new components.
+Standalone components for Angular v21+ (the version used in `projects/frontend/`). Components are standalone by default — do NOT set `standalone: true`. **Change detection**: PortfolioAI runs `provideZonelessChangeDetection()`, so `ChangeDetectionStrategy.OnPush` is **not required** — signals drive change detection. Adding `OnPush` is a no-op functionally and adds noise. Leave the default strategy on new components.
 
 ## Component structure
 

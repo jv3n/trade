@@ -4,11 +4,11 @@ on:
   push:
     branches: [master]
     paths:
-      - 'backend/**'
+      - 'projects/backend/**'
       - '.github/workflows/backend.yml'
   pull_request:
     paths:
-      - 'backend/**'
+      - 'projects/backend/**'
       - '.github/workflows/backend.yml'
 
 # Workflow-level baseline — every job inherits `contents: read`. Linters (Sonar / CodeQL
@@ -34,7 +34,7 @@ jobs:
       pull-requests: write
 
     # No `services:` block — integration tests boot their own Postgres via Testcontainers
-    # (`backend/src/test/kotlin/com/portfolioai/testsupport/PostgresContainer.kt`). Docker is
+    # (`projects/backend/src/test/kotlin/com/portfolioai/testsupport/PostgresContainer.kt`). Docker is
     # already available on `ubuntu-latest` runners, no extra setup needed.
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
       - name: Build & test
-        working-directory: backend
+        working-directory: projects/backend
         run: ./gradlew build --build-cache
 
       # Coverage reports — Kover is wired in `build.gradle.kts`. Runs after `build` (which executes
@@ -65,7 +65,7 @@ jobs:
       # diagnosing a flake is easier with the coverage view at hand.
       - name: Generate coverage reports
         if: always()
-        working-directory: backend
+        working-directory: projects/backend
         run: ./gradlew koverHtmlReport koverXmlReport --build-cache
 
       # Surface Detekt findings into GitHub Code Scanning (Security tab). `if: always()` so a
@@ -74,10 +74,10 @@ jobs:
       # report — otherwise we'd stack a false "SARIF missing" error on top of the real Detekt
       # failure and confuse the CI summary.
       - name: Upload Detekt SARIF to Code Scanning
-        if: always() && hashFiles('backend/build/reports/detekt/detekt.sarif') != ''
+        if: always() && hashFiles('projects/backend/build/reports/detekt/detekt.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4.37.9
         with:
-          sarif_file: backend/build/reports/detekt/detekt.sarif
+          sarif_file: projects/backend/build/reports/detekt/detekt.sarif
           category: detekt
 
       # HTML report as a downloadable artifact for offline review (linked from the Actions run).
@@ -86,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: detekt-report
-          path: backend/build/reports/detekt/detekt.html
+          path: projects/backend/build/reports/detekt/detekt.html
           if-no-files-found: ignore
 
       # Kover HTML browseable locally — download the artifact, unzip, open `index.html` to
@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage-report
-          path: backend/build/reports/kover/
+          path: projects/backend/build/reports/kover/
           if-no-files-found: ignore
 
       # At-a-glance summary on the run page — parses the Kover XML report (JaCoCo-compatible
@@ -105,11 +105,11 @@ jobs:
       # No external action ; pure Python (pre-installed on `ubuntu-latest`). The trailing
       # `<counter>` elements at the root scope hold the cumulative project totals.
       - name: Coverage summary
-        if: always() && hashFiles('backend/build/reports/kover/report.xml') != ''
+        if: always() && hashFiles('projects/backend/build/reports/kover/report.xml') != ''
         run: |
           python3 <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import xml.etree.ElementTree as ET
-          tree = ET.parse('backend/build/reports/kover/report.xml')
+          tree = ET.parse('projects/backend/build/reports/kover/report.xml')
           root = tree.getroot()
           # Root-level <counter> elements (direct children of <report>) hold the totals.
           counters = [c for c in root if c.tag == 'counter']
@@ -147,10 +147,10 @@ jobs:
         if: |
           always()
           && github.event_name == 'pull_request'
-          && hashFiles('backend/build/reports/kover/report.xml') != ''
+          && hashFiles('projects/backend/build/reports/kover/report.xml') != ''
         uses: madrapps/jacoco-report@v1.8.0
         with:
-          paths: backend/build/reports/kover/report.xml
+          paths: projects/backend/build/reports/kover/report.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           title: Backend coverage
           update-comment: true
