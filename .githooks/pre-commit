@@ -53,16 +53,16 @@ mapfile -d '' -t staged < <(git diff --cached --name-only --diff-filter=ACMR -z)
 front=()
 for f in "${staged[@]}"; do
   case "$f" in
-    frontend/apps/*.ts | frontend/apps/*.html | frontend/apps/*.scss | \
-      frontend/libs/*.ts | frontend/libs/*.html | frontend/libs/*.scss) front+=("$f") ;;
+    projects/frontend/apps/*.ts | projects/frontend/apps/*.html | projects/frontend/apps/*.scss | \
+      projects/frontend/libs/*.ts | projects/frontend/libs/*.html | projects/frontend/libs/*.scss) front+=("$f") ;;
   esac
 done
 if [ "${#front[@]}" -gt 0 ]; then
   echo "[pre-commit] prettier → ${#front[@]} file(s)"
-  # prettier runs from frontend/, so feed it paths relative to that dir.
+  # prettier runs from projects/frontend/, so feed it paths relative to that dir.
   rel=()
-  for f in "${front[@]}"; do rel+=("${f#frontend/}"); done
-  (cd frontend && run npx prettier --write "${rel[@]}")
+  for f in "${front[@]}"; do rel+=("${f#projects/frontend/}"); done
+  (cd projects/frontend && run npx prettier --write "${rel[@]}")
   git add -- "${front[@]}"
 fi
 
@@ -70,7 +70,7 @@ fi
 kt=()
 for f in "${staged[@]}"; do
   case "$f" in
-    backend/*.kt | backend/*.kts) kt+=("$f") ;;
+    projects/backend/*.kt | projects/backend/*.kts) kt+=("$f") ;;
   esac
 done
 if [ "${#kt[@]}" -gt 0 ]; then
@@ -78,7 +78,7 @@ if [ "${#kt[@]}" -gt 0 ]; then
   # `--project-cache-dir` outside the repo's `.gradle` so this invocation doesn't fight the file-hash
   # lock held by a running `bootRun` (the Tilt dev backend) — otherwise every commit-with-kotlin
   # while the stack is up would die on "currently in use by another Gradle instance".
-  (cd backend &&
+  (cd projects/backend &&
     JAVA_HOME="$JAVA_HOME_RESOLVED" \
       ./gradlew --quiet --project-cache-dir "$HOME/.cache/trade-precommit-gradle" spotlessApply)
   git add -- "${kt[@]}"

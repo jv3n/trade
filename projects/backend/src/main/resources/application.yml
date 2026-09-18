@@ -3,7 +3,7 @@ server:
   # du repo en cas de conflit avec un autre service local (cf. `.env.example`).
   port: ${BACKEND_HOST_PORT:8080}
   # En dev, le SPA Angular tourne sur un port distinct (4200/4201) et le proxy CLI forward
-  # `/api/**`, `/oauth2/**`, `/logout`, `/login/oauth2/**` vers ce backend (cf. `frontend/proxy.conf.js`).
+  # `/api/**`, `/oauth2/**`, `/logout`, `/login/oauth2/**` vers ce backend (cf. `projects/frontend/apps/web/proxy.conf.js`).
   # `xfwd: true` du proxy ajoute les headers `X-Forwarded-Host/Port/Proto`. `framework` fait que
   # Spring les lit via `ForwardedHeaderFilter` pour construire ses URLs absolues (notamment le
   # `redirect_uri` OAuth envoyé à Google) sur le host du SPA — sinon Google reçoit

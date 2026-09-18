@@ -137,10 +137,11 @@ springBoot { buildInfo() }
 // gradle-git-properties — explicit configuration of the fields exposed via `/actuator/info > git`.
 // By default the plugin only generates `git.branch + git.commit.id + git.commit.time`; we add
 // `git.commit.message.short` and `git.tags`, which are useful to correlate a Cloud Run revision to
-// a release tag without grepping the commit SHA. `dotGitDirectory` points to `../.git` because the
-// Gradle project lives in `backend/` but the `.git` is at the repo root.
+// a release tag without grepping the commit SHA. `dotGitDirectory` points to `../../.git` because
+// the
+// Gradle project lives in `projects/backend/` but the `.git` is at the repo root.
 gitProperties {
-  dotGitDirectory.set(file("../.git"))
+  dotGitDirectory.set(file("../../.git"))
   keys =
     listOf(
       "git.branch",
@@ -259,7 +260,7 @@ tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configure
 // inflates the denominator.
 //
 // To browse locally after `./gradlew test koverHtmlReport`: open
-// `backend/build/reports/kover/html/index.html`.
+// `projects/backend/build/reports/kover/html/index.html`.
 kover {
   reports {
     filters {

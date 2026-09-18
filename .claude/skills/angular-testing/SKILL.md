@@ -9,7 +9,7 @@ Test with **Vitest** (`@angular/build:unit-test` builder, jsdom environment), fo
 
 ## Commands
 
-From `frontend/`:
+From `projects/frontend/`:
 
 ```bash
 npm run test                                                    # full suite (ng test web)

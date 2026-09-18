@@ -24,13 +24,13 @@ WORKDIR /app/frontend
 # Cache layer for npm install — only invalidated when package.json/lock/.npmrc changes.
 # `.npmrc` carries `legacy-peer-deps=true` (Storybook 10.x vs Angular 22 peer-dep shim) and MUST
 # be present before `npm ci`, otherwise the install fails with ERESOLVE inside the Docker build
-# (the later `COPY frontend/ ./` brings it in too late). Drop the `.npmrc` from this COPY the day
+# (the later `COPY projects/frontend/ ./` brings it in too late). Drop the `.npmrc` from this COPY the day
 # Storybook ships native Angular 22 support and the shim is removed.
-COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
+COPY projects/frontend/package.json projects/frontend/package-lock.json projects/frontend/.npmrc ./
 RUN npm ci --no-audit --no-fund --prefer-offline
 
 # Source + build
-COPY frontend/ ./
+COPY projects/frontend/ ./
 RUN npm run build
 
 # Angular 17+ output layout: dist/<app-name>/browser/
@@ -50,12 +50,12 @@ ARG APP_VERSION=0.0.0-SNAPSHOT
 WORKDIR /app
 
 # Cache the gradle wrapper + dependency resolution before copying source
-COPY backend/gradle/ ./backend/gradle/
-COPY backend/gradlew backend/build.gradle.kts backend/settings.gradle.kts backend/gradle.properties ./backend/
-RUN cd backend && ./gradlew --no-daemon dependencies > /dev/null 2>&1 || true
+COPY projects/backend/gradle/ ./projects/backend/gradle/
+COPY projects/backend/gradlew projects/backend/build.gradle.kts projects/backend/settings.gradle.kts projects/backend/gradle.properties ./projects/backend/
+RUN cd projects/backend && ./gradlew --no-daemon dependencies > /dev/null 2>&1 || true
 
 # Copy backend source
-COPY backend/ ./backend/
+COPY projects/backend/ ./projects/backend/
 
 # Copy `.git/` so `gradle-git-properties` peut générer `META-INF/git.properties` (commit SHA,
 # branche, tag) → exposé sur `/actuator/info > git`. Le workflow CI doit faire un `fetch-depth: 0`
@@ -65,16 +65,16 @@ COPY .git/ ./.git/
 
 # Embed the Angular build into Spring Boot's static resources directory
 # (Spring Boot serves files under `static/` automatically at the application root)
-COPY --from=frontend-builder /app/frontend/dist/ ./backend/src/main/resources/static-frontend/
-RUN mkdir -p ./backend/src/main/resources/static/ \
- && cp -r ./backend/src/main/resources/static-frontend/*/browser/* ./backend/src/main/resources/static/ \
- && rm -rf ./backend/src/main/resources/static-frontend/
+COPY --from=frontend-builder /app/frontend/dist/ ./projects/backend/src/main/resources/static-frontend/
+RUN mkdir -p ./projects/backend/src/main/resources/static/ \
+ && cp -r ./projects/backend/src/main/resources/static-frontend/*/browser/* ./projects/backend/src/main/resources/static/ \
+ && rm -rf ./projects/backend/src/main/resources/static-frontend/
 
 # Build the fat jar — `-Pversion=$APP_VERSION` propage le tag de release au gradle `version`
 # property (cf. `build.gradle.kts` ligne `version = …`). Le `v` initial du tag GitHub
 # (`v0.7.0`) est conservé tel quel dans `build.version` — cohérent avec le tag Cloud Run /
 # Docker image / SENTRY_RELEASE.
-RUN cd backend && ./gradlew --no-daemon bootJar -x test -Pversion=$APP_VERSION
+RUN cd projects/backend && ./gradlew --no-daemon bootJar -x test -Pversion=$APP_VERSION
 
 # ---------------------------------------------------------------------------
 # Stage 3 — Minimal runtime image
@@ -86,7 +86,7 @@ RUN groupadd --system spring && useradd --system --gid spring --no-create-home s
 USER spring
 
 WORKDIR /app
-COPY --from=backend-builder --chown=spring:spring /app/backend/build/libs/*.jar /app/app.jar
+COPY --from=backend-builder --chown=spring:spring /app/projects/backend/build/libs/*.jar /app/app.jar
 
 # Cloud Run injects PORT (defaults to 8080). Spring Boot honors it via server.port=${PORT:8080}
 # defined in application-prod.yml.

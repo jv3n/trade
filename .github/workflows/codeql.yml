@@ -83,7 +83,7 @@ jobs:
       # par symétrie — on ne veut pas qu'un task soit FROM-CACHE et zappe l'extraction.
       - name: Compile Kotlin (no tests, no DB)
         if: matrix.language == 'java-kotlin'
-        working-directory: backend
+        working-directory: projects/backend
         run: ./gradlew compileKotlin compileTestKotlin -x test --rerun-tasks
 
       - name: Perform CodeQL Analysis

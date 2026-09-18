@@ -166,7 +166,7 @@ Env injection: `${ENV_VAR:default}`. `@Profile("local")` annotations are rare â€
 
 ## Flyway
 
-- `backend/src/main/resources/db/migration/V<N>__<short_snake_case>.sql`.
+- `projects/backend/src/main/resources/db/migration/V<N>__<short_snake_case>.sql`.
 - **Append-only**. Never rewrite a shipped V*. A typo in `V5__foo.sql` post-ship â†’ fix in `V6__foo_fixup.sql`. Flyway refuses to start on checksum mismatch.
 - One numbered file per logical schema change. Don't batch unrelated changes.
 - `spring.flyway.repair-on-migrate: true` lives **only** in `application-local.yml`. Never in `application.yml`; in prod, a checksum mismatch should be a hard failure.

@@ -134,7 +134,7 @@ export class ThemeService {
 3. **Test pain** — asserting an `effect()` ran requires `TestBed.tick()` or microtask awaiting. Set-site runs synchronously.
 4. **Implicit dependency tracking** — every signal read inside `effect()` re-fires it. Easy to leak an unintended dependency.
 
-The codebase enforces this in `ThemeService`, `LanguageService`, `Dashboard` sidebar. **No `effect()` in `frontend/src/app/` main code today.**
+The codebase enforces this in `ThemeService`, `LanguageService`, `Dashboard` sidebar. **No `effect()` in `projects/frontend/src/app/` main code today.**
 
 ### When `effect()` *is* justified
 

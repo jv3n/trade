@@ -77,7 +77,7 @@ Universal rules independent of the module touched:
 - **Integration tests on the real DB**: no `@MockitoBean` on `DataSource` / `JdbcTemplate` / a JPA repository. `@SpringBootTest` tests must hit the real local Postgres (see `developpement.md`).
 - **SpEL cache keys are Java, not Kotlin**: `'#symbol.trim().toUpperCase()'` (Java method) and not `'#symbol.trim().uppercase()'` (Kotlin method) — SpEL speaks Java, not Kotlin.
 - **i18n**: no hardcoded user-facing string. Components import `TranslatePipe`, TS strings go through `TranslateService.instant('key', { params })`.
-- **Flyway migrations**: the next V is `V<max+1>__<snake_case>.sql`. Read `backend/src/main/resources/db/migration/` for the current counter. A new `V<N>__*.sql` deserves at minimum an integration test that boots Flyway.
+- **Flyway migrations**: the next V is `V<max+1>__<snake_case>.sql`. Read `projects/backend/src/main/resources/db/migration/` for the current counter. A new `V<N>__*.sql` deserves at minimum an integration test that boots Flyway.
 - **Doc trigger**: if a feature changes status (`⏳` → `✅`), `backlog.md` must be cleaned up and `journal-livraisons.md` extended in the same pass. If you see shipped code without backlog updates, flag it.
 
 ### 3. Regression and blind spots

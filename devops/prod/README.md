@@ -1,6 +1,6 @@
 # Production deployment manifests — PortfolioAI
 
-Ce dossier contient les **manifests de production** pour le déploiement sur Google Cloud Run + Supabase Postgres. À l'amorce de la Phase 5, c'est un **skeleton** : `Dockerfile` fonctionnel + `service.yaml` shape posés, mais **aucun deploy n'a encore été fait**. La config Spring `application-prod.yml` vit avec ses cousins à `backend/src/main/resources/` (committée, sans secrets — convention Spring native, pas de gymnastics `--spring.config.additional-location`). Le ticket `Provisionner v1 Cloud Run + Supabase` (backlog Phase 5 🔴) attend.
+Ce dossier contient les **manifests de production** pour le déploiement sur Google Cloud Run + Supabase Postgres. À l'amorce de la Phase 5, c'est un **skeleton** : `Dockerfile` fonctionnel + `service.yaml` shape posés, mais **aucun deploy n'a encore été fait**. La config Spring `application-prod.yml` vit avec ses cousins à `projects/backend/src/main/resources/` (committée, sans secrets — convention Spring native, pas de gymnastics `--spring.config.additional-location`). Le ticket `Provisionner v1 Cloud Run + Supabase` (backlog Phase 5 🔴) attend.
 
 ## Plan d'analyse complet
 
@@ -51,4 +51,4 @@ Livré dans le ticket `GitHub Secrets + Environments vault` (clôturé 2026-05-1
 | `service.yaml` | ⏳ Stub | Cloud Run service descriptor — documente le shape complet (annotations scaling, healthchecks, env vars, secretKeyRef). À utiliser quand on passera à un deploy déclaratif `gcloud run services replace --file service.yaml`. Pour le 1er deploy on reste sur le pattern imperatif `gcloud run deploy` côté workflow. Tags `TODO_TAG` et `TODO_URL` à remplir. |
 | `README.md` | This file | Check-list of state + remaining steps. |
 
-> **Côté Spring config** : `application-prod.yml` ne vit pas ici — il vit à `backend/src/main/resources/application-prod.yml` (committé, sans secrets, chargé automatiquement par Spring quand `SPRING_PROFILES_ACTIVE=prod` est posé par Cloud Run via `service.yaml > env`). Convention Spring native respectée, pas de `--spring.config.additional-location` à câbler.
+> **Côté Spring config** : `application-prod.yml` ne vit pas ici — il vit à `projects/backend/src/main/resources/application-prod.yml` (committé, sans secrets, chargé automatiquement par Spring quand `SPRING_PROFILES_ACTIVE=prod` est posé par Cloud Run via `service.yaml > env`). Convention Spring native respectée, pas de `--spring.config.additional-location` à câbler.

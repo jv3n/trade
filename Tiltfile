@@ -85,23 +85,23 @@ uname = str(local("uname -s", quiet = True, echo_off = True)).strip()
 is_wsl = uname == "Linux" and "microsoft" in str(local("uname -r", quiet = True, echo_off = True)).lower()
 
 # Backend Gradle build directory. On WSL → the native ext4 fs (`~/.cache`) to dodge the DrvFs
-# delete-while-open failure described above; elsewhere → the default in-tree `backend/build`. The
+# delete-while-open failure described above; elsewhere → the default in-tree `projects/backend/build`. The
 # value is consumed in two places: exported as `GRADLE_BUILD_DIR` to the backend `serve_cmd` (read
 # by `build.gradle.kts`), and in the db-purge button's `rm -rf` of the compiled migrations. `$HOME`
 # stays unexpanded here on purpose — it is resolved by the `sh -c` that actually runs each command.
-backend_build_dir = "$HOME/.cache/portfolioai/backend-build" if is_wsl else "backend/build"
+backend_build_dir = "$HOME/.cache/portfolioai/backend-build" if is_wsl else "projects/backend/build"
 build_dir_export = ('export GRADLE_BUILD_DIR="' + backend_build_dir + '" ; \\\n  ') if is_wsl else ""
 
-# Dedicated Gradle *project cache* for Tilt's `bootRun`. The default project cache is `backend/.gradle`
+# Dedicated Gradle *project cache* for Tilt's `bootRun`. The default project cache is `projects/backend/.gradle`
 # — on WSL that sits on the `/mnt/c` (9p) mount whose fragile file locking bit us: a `bootRun` daemon
-# left over across a Kotlin-plugin bump kept `backend/.gradle/<ver>/fileHashes` locked, so the next,
+# left over across a Kotlin-plugin bump kept `projects/backend/.gradle/<ver>/fileHashes` locked, so the next,
 # version-incompatible `bootRun` daemon could not acquire it → "Cannot lock file hash cache … already
 # locked". Giving Tilt its own project cache (a) moves the lock file to native ext4 and (b) stops
 # IntelliJ / a terminal Gradle run from ever contending on the same lock. Paired with `--no-daemon`
 # in `backend_cmd` so the build JVM dies with the serve_cmd on every restart — no daemon survives a
 # toolchain change to keep the lock held. WSL-only (the DrvFs fragility is the driver); elsewhere the
 # in-tree default is fine. `$HOME` stays unexpanded — resolved by the `sh -c` that runs the command.
-tilt_project_cache = "$HOME/.cache/portfolioai/tilt-project-cache" if is_wsl else "backend/.gradle"
+tilt_project_cache = "$HOME/.cache/portfolioai/tilt-project-cache" if is_wsl else "projects/backend/.gradle"
 project_cache_arg = (' --project-cache-dir="' + tilt_project_cache + '"') if is_wsl else ""
 
 if uname == "Darwin":
@@ -159,7 +159,7 @@ cmd_button(
 # App — Backend Spring Boot & Frontend Angular
 # ────────────────────────────────────────────────
 
-# The `serve_cmd` sources `.env` at the repo root (`set -a` + `. ../.env`) to export **all**
+# The `serve_cmd` sources `.env` at the repo root (`set -a` + `. ../../.env`) to export **all**
 # its variables to the gradle sub-process. Spring Boot then reads them via its relaxed
 # binding — `POSTGRES_HOST_PORT` → `${POSTGRES_HOST_PORT}` in application.yml,
 # `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
@@ -175,8 +175,8 @@ cmd_button(
 #   - oauth             → --spring.profiles.active=local
 #       → `SecurityConfig` kicks in, real Google OAuth flow (creds via env vars sourced from
 #         `.env` → `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}`).
-backend_cmd = """cd backend && \\
-  """ + build_dir_export + """if [ -f ../.env ]; then set -a ; . ../.env ; set +a ; fi ; \\
+backend_cmd = """cd projects/backend && \\
+  """ + build_dir_export + """if [ -f ../../.env ]; then set -a ; . ../../.env ; set +a ; fi ; \\
   AUTH_MODE=${BACKEND_AUTH_MODE:-no-auth} ; \\
   if [ \"$AUTH_MODE\" = \"oauth\" ]; then PROFILES=\"local\"; else PROFILES=\"local,local-no-auth\"; fi ; \\
   echo \"[Tilt] backend launching with --spring.profiles.active=$PROFILES (BACKEND_AUTH_MODE=$AUTH_MODE)\" ; \\
@@ -187,9 +187,9 @@ local_resource(
     name = "backend",
     serve_cmd = backend_cmd,
     deps = [
-        "backend/src",
-        "backend/build.gradle.kts",
-        "backend/settings.gradle.kts",
+        "projects/backend/src",
+        "projects/backend/build.gradle.kts",
+        "projects/backend/settings.gradle.kts",
     ],
     resource_deps = ["postgres"],
     readiness_probe = probe(
@@ -245,7 +245,7 @@ cmd_button(
 # on Windows). Without polling those edits never trigger a rebuild and the dev server looks stuck
 # even though the code on disk is correct. The 2 s interval is a CPU/latency compromise. On macOS
 # it costs ~nothing — native fsevents would work but the option is harmless to leave on.
-frontend_cmd = """cd frontend && \\
+frontend_cmd = """cd projects/frontend && \\
   """ + node_init + """ ; \\
   """ + npm_run + """ start -- --host 0.0.0.0 --port {} --poll 2000""".format(frontend_port)
 
@@ -253,17 +253,17 @@ local_resource(
     name = "frontend",
     serve_cmd = frontend_cmd,
     deps = [
-        "frontend/apps/web/src",
-        "frontend/libs/ui/src",
-        "frontend/angular.json",
-        "frontend/package.json",
+        "projects/frontend/apps/web/src",
+        "projects/frontend/libs/ui/src",
+        "projects/frontend/angular.json",
+        "projects/frontend/package.json",
         # `proxy.conf.js` is only read by `ng serve` at startup — no native hot-reload.
         # Listing it in `deps` makes Tilt re-run the `serve_cmd` (= restart the dev server) on
         # every save of that file, which avoids the silent trap: you edit the proxy, Tilt says
         # "no changes", and you stay on the old config (e.g. the `/oauth2/**`, `/logout`,
         # `/login/oauth2/**` routes or the `xfwd: true` flag added in Phase 4 would have been
         # ignored without this deps entry).
-        "frontend/apps/web/proxy.conf.js",
+        "projects/frontend/apps/web/proxy.conf.js",
     ],
     labels = ["app"],
     links = [link("http://{}:{}".format(host, frontend_port), "App")],
@@ -274,7 +274,7 @@ local_resource(
 # session: trigger it manually from the Tilt UI when working on the lib ("play" button on
 # the `storybook` panel). HMR is handled by Storybook itself, so no `deps` that would force
 # Tilt to restart the server on every story edit.
-storybook_cmd = """cd frontend && \\
+storybook_cmd = """cd projects/frontend && \\
   """ + node_init + """ ; \\
   """ + npm_run + """ run storybook -- --host 0.0.0.0 --port {} --no-open""".format(storybook_port)
 
@@ -328,7 +328,7 @@ cmd_button(
     resource = "docker-housekeeping",
     text = "Gradle — stop daemons + wipe build/project cache",
     icon_name = "restart_alt",
-    argv = ["sh", "-c", "(cd backend && " + java_resolver + " ./gradlew --stop) ; rm -rf \"" + backend_build_dir + "\" \"" + tilt_project_cache + "\" ; echo 'Gradle daemons stopped + build dir & project cache wiped. Trigger the backend to recompile.'"],
+    argv = ["sh", "-c", "(cd projects/backend && " + java_resolver + " ./gradlew --stop) ; rm -rf \"" + backend_build_dir + "\" \"" + tilt_project_cache + "\" ; echo 'Gradle daemons stopped + build dir & project cache wiped. Trigger the backend to recompile.'"],
 )
 
 # Print useful links
