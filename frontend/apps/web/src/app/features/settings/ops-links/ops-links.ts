@@ -28,9 +28,7 @@ interface OpsLinkSection {
 }
 
 /**
- * Static catalog of external ops dashboards, billing pages, and admin consoles. Seeded from
- * `docs/devops/liens-utiles.md` (2026-05-24) and enriched with billing pages that the doc was
- * sparse on. Account / project IDs are embedded in the URLs — all of them are public-by-design
+ * Static catalog of external ops dashboards, billing pages, and admin consoles. Account / project IDs are embedded in the URLs — all of them are public-by-design
  * identifiers (they appear in any Cloudflare / GCP dashboard URL once logged in, they don't
  * give access without the matching credentials). Keeping the page ADMIN-only is the layer that
  * prevents a USER from harvesting the surface map of our infra.
@@ -68,11 +66,6 @@ const OPS_LINKS_SECTIONS: OpsLinkSection[] = [
         label: 'Cloudflare — billing (R2 + Registrar + Workers)',
         url: 'https://dash.cloudflare.com/8f2780696b5e520f85b5fc80413c4c3f/billing',
         descriptionKey: 'settings.opsLinksPage.links.cloudflareBilling',
-      },
-      {
-        label: 'Anthropic — billing & usage',
-        url: 'https://console.anthropic.com/settings/billing',
-        descriptionKey: 'settings.opsLinksPage.links.anthropicBilling',
       },
     ],
   },
@@ -228,38 +221,6 @@ const OPS_LINKS_SECTIONS: OpsLinkSection[] = [
     ],
   },
   {
-    titleKey: 'settings.opsLinksPage.sections.externalApis.title',
-    descriptionKey: 'settings.opsLinksPage.sections.externalApis.description',
-    icon: 'api',
-    links: [
-      {
-        label: 'Anthropic Console (Claude API)',
-        url: 'https://console.anthropic.com/',
-        descriptionKey: 'settings.opsLinksPage.links.anthropicConsole',
-      },
-      {
-        label: 'Anthropic — API keys (rotation)',
-        url: 'https://console.anthropic.com/settings/keys',
-      },
-      {
-        label: 'Twelve Data — API keys & credits (free 800/day)',
-        url: 'https://twelvedata.com/account/api-keys',
-      },
-      {
-        label: 'Finnhub — dashboard & rate limit',
-        url: 'https://finnhub.io/dashboard',
-      },
-      {
-        label: 'Polygon (Massive) — API keys & free tier (5 req/min, EOD-only on Basic)',
-        url: 'https://massive.com/dashboard/keys',
-      },
-      {
-        label: 'FMP (Financial Modeling Prep) — dashboard & free tier (250 req/day, top movers)',
-        url: 'https://site.financialmodelingprep.com/developer/docs/dashboard',
-      },
-    ],
-  },
-  {
     titleKey: 'settings.opsLinksPage.sections.github.title',
     descriptionKey: 'settings.opsLinksPage.sections.github.description',
     icon: 'code',
@@ -312,9 +273,8 @@ const OPS_LINKS_SECTIONS: OpsLinkSection[] = [
  * security pair (prevents the destination from accessing `window.opener` and strips the
  * referer header).
  *
- * **Source de vérité** : seeded from `docs/devops/liens-utiles.md` (2026-05-24). When an infra
- * change adds / removes a destination, edit [OPS_LINKS_SECTIONS] in the same diff that changes
- * the infra ; the doc on the site can keep its own catalog or shrink to a pointer.
+ * **Source of truth** : [OPS_LINKS_SECTIONS]. When an infra change adds / removes a destination,
+ * edit it in the same diff that changes the infra.
  */
 @Component({
   selector: 'app-ops-links',

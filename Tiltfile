@@ -12,7 +12,7 @@ host = cfg.get("host", "localhost")
 # ────────────────────────────────────────────────
 #
 # If a `.env` file exists at the repo root, we read it to pick up port overrides
-# (POSTGRES_HOST_PORT / OLLAMA_HOST_PORT / BACKEND_HOST_PORT / FRONTEND_HOST_PORT).
+# (POSTGRES_HOST_PORT / BACKEND_HOST_PORT / FRONTEND_HOST_PORT).
 # Otherwise we fall back to the defaults. See `.env.example` for the template.
 #
 # Docker Compose reads `.env` automatically for its own `${VAR:-default}` substitutions ;
@@ -39,7 +39,6 @@ def load_env_file(path):
 env = load_env_file(".env")
 
 postgres_port = env.get("POSTGRES_HOST_PORT", "5432")
-ollama_port = env.get("OLLAMA_HOST_PORT", "11434")
 backend_port = env.get("BACKEND_HOST_PORT", "8080")
 frontend_port = env.get("FRONTEND_HOST_PORT", "4200")
 storybook_port = env.get("STORYBOOK_HOST_PORT", "6006")
@@ -121,23 +120,11 @@ else:
     npm_run = "mise exec -- npm"
 
 # ────────────────────────────────────────────────
-# Infra — Docker services (PostgreSQL, Ollama)
+# Infra — Docker services (PostgreSQL)
 # ────────────────────────────────────────────────
 
 docker_compose("docker-compose.yml")
 dc_resource("postgres", labels = ["infra"])
-
-# Ollama — manual start (`auto_init=False`): post-pivot there is no LLM in the live path (cf.
-# CLAUDE.md / roadmap), so booting this large image on every `tilt up` only slows startup down for
-# nothing. Trigger it manually from the Tilt UI if a phase 2 iteration needs it. The backend no
-# longer depends on Ollama either (cf. the backend's `resource_deps` below).
-dc_resource(
-    "ollama",
-    labels = ["infra"],
-    auto_init = False,
-    trigger_mode = TRIGGER_MODE_MANUAL,
-    links = [link("http://{}:{}".format(host, ollama_port), "Ollama API")],
-)
 
 # "Purge" button attached to the `postgres` panel — drop the schema + wipe stale compiled
 # migrations + restart the backend (which replays Flyway from scratch against the empty schema).
@@ -175,7 +162,7 @@ cmd_button(
 # The `serve_cmd` sources `.env` at the repo root (`set -a` + `. ../.env`) to export **all**
 # its variables to the gradle sub-process. Spring Boot then reads them via its relaxed
 # binding — `POSTGRES_HOST_PORT` → `${POSTGRES_HOST_PORT}` in application.yml,
-# `ANTHROPIC_API_KEY` → `anthropic.api.key`, `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
+# `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
 # → the matching property, etc. No more per-var hardcoding here: the single source of truth
 # is `.env`. If `.env` does not exist (fresh clone), gradle starts without any var and Spring
 # falls back to the application.yml defaults — expected behaviour.

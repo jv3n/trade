@@ -24,7 +24,6 @@ import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.PageRequest
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
@@ -47,7 +46,6 @@ import org.springframework.web.server.ResponseStatusException
  * seeds a fixed `testUser` and configures the mock to return it. A second user verifies isolation.
  */
 @SpringBootTest
-@TestPropertySource(properties = ["anthropic.api.key=test-key-ci-only"])
 class AccountIntegrationTest {
 
   @Autowired private lateinit var service: AccountService

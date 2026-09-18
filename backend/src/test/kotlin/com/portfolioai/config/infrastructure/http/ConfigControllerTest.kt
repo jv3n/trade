@@ -1,19 +1,12 @@
 package com.portfolioai.config.infrastructure.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.portfolioai.analysis.application.dto.LoadedModelDto
-import com.portfolioai.analysis.application.dto.OllamaStatusDto
-import com.portfolioai.analysis.infrastructure.llm.OllamaStatusService
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
-import com.portfolioai.config.application.dto.TestConfigResult
-import com.portfolioai.config.infrastructure.ConfigTestClient
 import com.portfolioai.shared.GlobalExceptionHandler
-import java.time.Instant
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
-import org.mockito.kotlin.any
+import org.mockito.BDDMockito.willThrow
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -23,24 +16,18 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 /**
  * `@WebMvcTest` slice for [ConfigController]. The runtime config endpoints are simple CRUD on top
- * of [AppConfigService] — every test in this file pins one user-visible behaviour :
- * - **GET masks secret values** so a refresh of the page or a screenshot doesn't leak the API key.
- * - **GET reports overridden state** — the UI uses this to render "Reset to default" only when an
- *   override actually exists.
- * - **PUT trims the value** so a copy-paste with trailing whitespace doesn't store a broken key.
- * - **PUT rejects a blank value** with 400 — clearing a value goes through DELETE, the two paths
- *   stay distinct so the audit log is unambiguous.
- * - **DELETE returns 204** even if the override didn't exist (idempotent reset — no need for the
- *   front to check first).
- * - **POST /test/{provider}** delegates to [ConfigTestClient] and surfaces its `(ok, message)`
- *   shape unchanged.
+ * of [AppConfigService] — every test pins one user-visible behaviour :
+ * - **GET lists the login whitelist** typed as `EMAILS` with its overridden state.
+ * - **PUT trims the value** so a copy-paste with trailing whitespace doesn't store a broken list.
+ * - **PUT rejects a blank value** with 400 — clearing goes through DELETE, the two paths stay
+ *   distinct.
+ * - **DELETE returns 204** even if the override didn't exist (idempotent reset).
  */
 @WebMvcTest(ConfigController::class, GlobalExceptionHandler::class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -49,378 +36,46 @@ class ConfigControllerTest {
   @Autowired private lateinit var mvc: MockMvc
   @Autowired private lateinit var json: ObjectMapper
   @MockitoBean private lateinit var service: AppConfigService
-  @MockitoBean private lateinit var testClient: ConfigTestClient
-  @MockitoBean private lateinit var ollamaStatusService: OllamaStatusService
-
-  @BeforeEach
-  fun setUp() {
-    // Default mock behavior — every test starts in an env where ollama is enabled (mirrors the
-    // local dev profile). The ollama-disabled tests below override these stubs explicitly to
-    // exercise the prod branch (no `ollama.model` entry, no `ollama` in llm.provider
-    // allowedValues).
-    given(service.listedKeys()).willReturn(ConfigKeys.KNOWN_KEYS)
-    given(service.allowedValuesFor(any())).willAnswer { invocation ->
-      ConfigKeys.ENUM_KEYS[invocation.arguments[0] as String]
-    }
-  }
-
-  // ---------------------------------------------------------------------- list
 
   @Test
-  fun `GET config returns the sixteen known keys with secrets masked and enums carrying allowedValues`() {
-    // Order is alphabetical on key. Phase 6 (2026-05-27) added 3 keys for the market radar :
-    // `screener.fmp.api-key`, `screener.polygon.api-key`, `screener.provider`. They sort at the
-    // end alphabetically so the earlier indices [0]..[12] match the pre-Phase-6 layout.
-    // [0]  analyst.provider          ENUM
-    // [1]  anthropic.api.key         SECRET
-    // [2]  anthropic.api.model       STRING
-    // [3]  app.allowed.emails        EMAILS
-    // [4]  earnings.provider         ENUM
-    // [5]  llm.provider              ENUM
-    // [6]  llm.timeout-seconds       INT
-    // [7]  market.cache.ttl-min      INT
-    // [8]  market.finnhub.api-key    SECRET
-    // [9]  market.provider           ENUM
-    // [10] market.twelvedata.api-key SECRET
-    // [11] news.provider             ENUM
-    // [12] ollama.model              STRING
-    // [13] screener.fmp.api-key      SECRET   (Phase 6)
-    // [14] screener.polygon.api-key  SECRET   (Phase 6)
-    // [15] screener.provider         ENUM     (Phase 6, mock / polygon / fmp)
-    given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant-real")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
-    given(service.getString(ConfigKeys.ALLOWED_EMAILS))
-      .willReturn("alice@example.com,bob@example.com")
-    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("ollama")
-    given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("600")
-    given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("30")
-    given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("twelvedata")
-    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("real-key")
-    given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
-    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
-    given(service.defaultFor(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
-    given(service.defaultFor(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("env-anthropic")
-    given(service.defaultFor(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
+  fun `GET config lists the allowed emails entry typed as EMAILS`() {
+    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("alice@example.com")
     given(service.defaultFor(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
-    given(service.defaultFor(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
-    given(service.defaultFor(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
-    given(service.defaultFor(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
-    given(service.defaultFor(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
-    given(service.defaultFor(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
-    given(service.defaultFor(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
-    given(service.defaultFor(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("env-default")
-    given(service.defaultFor(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
-    given(service.defaultFor(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
-    given(service.defaultFor(ConfigKeys.FMP_API_KEY)).willReturn("")
-    given(service.defaultFor(ConfigKeys.POLYGON_API_KEY)).willReturn("")
-    given(service.defaultFor(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
-    given(service.isOverridden(ConfigKeys.ANALYST_PROVIDER)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.ANTHROPIC_API_KEY)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn(false)
     given(service.isOverridden(ConfigKeys.ALLOWED_EMAILS)).willReturn(true)
-    given(service.isOverridden(ConfigKeys.EARNINGS_PROVIDER)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.LLM_PROVIDER)).willReturn(true)
-    given(service.isOverridden(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn(true)
-    given(service.isOverridden(ConfigKeys.CACHE_TTL_MINUTES)).willReturn(true)
-    given(service.isOverridden(ConfigKeys.FINNHUB_API_KEY)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.MARKET_PROVIDER)).willReturn(true)
-    given(service.isOverridden(ConfigKeys.TWELVEDATA_API_KEY)).willReturn(true)
-    given(service.isOverridden(ConfigKeys.NEWS_PROVIDER)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.OLLAMA_MODEL)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.FMP_API_KEY)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.POLYGON_API_KEY)).willReturn(false)
-    given(service.isOverridden(ConfigKeys.SCREENER_PROVIDER)).willReturn(false)
 
     mvc
       .perform(get("/api/config"))
       .andExpect(status().isOk)
-      .andExpect(jsonPath("$.length()").value(16))
-      // Analyst provider : ENUM, allowedValues drives the toggle group.
-      .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
-      .andExpect(jsonPath("$[0].type").value("ENUM"))
-      .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
-      // Anthropic key : SECRET — value masked even though the YAML default has one.
-      .andExpect(jsonPath("$[1].key").value(ConfigKeys.ANTHROPIC_API_KEY))
-      .andExpect(jsonPath("$[1].type").value("SECRET"))
-      .andExpect(jsonPath("$[1].currentValue").doesNotExist())
-      .andExpect(jsonPath("$[1].defaultValue").doesNotExist())
-      .andExpect(jsonPath("$[1].hasValue").value(true))
-      .andExpect(jsonPath("$[1].isOverridden").value(false))
-      // Anthropic model : STRING — free-form (the front renders an autocomplete).
-      .andExpect(jsonPath("$[2].key").value(ConfigKeys.ANTHROPIC_API_MODEL))
-      .andExpect(jsonPath("$[2].type").value("STRING"))
-      .andExpect(jsonPath("$[2].currentValue").value("claude-opus-4-6"))
-      .andExpect(jsonPath("$[2].defaultValue").value("claude-opus-4-6"))
-      .andExpect(jsonPath("$[2].isOverridden").value(false))
-      // Allowed emails : EMAILS — not masked, the admin needs to see the current CSV to edit it.
-      // Phase 5 whitelist gating (cf. `CustomOAuth2UserService.assertAuthorized`).
-      .andExpect(jsonPath("$[3].key").value(ConfigKeys.ALLOWED_EMAILS))
-      .andExpect(jsonPath("$[3].type").value("EMAILS"))
-      .andExpect(jsonPath("$[3].currentValue").value("alice@example.com,bob@example.com"))
-      .andExpect(jsonPath("$[3].defaultValue").value(""))
-      .andExpect(jsonPath("$[3].hasValue").value(true))
-      .andExpect(jsonPath("$[3].isOverridden").value(true))
-      .andExpect(jsonPath("$[3].allowedValues").doesNotExist())
-      // Earnings provider : ENUM.
-      .andExpect(jsonPath("$[4].key").value(ConfigKeys.EARNINGS_PROVIDER))
-      .andExpect(jsonPath("$[4].type").value("ENUM"))
-      // LLM provider : ENUM with mock / claude / ollama, currently overridden to ollama. The
-      // `mock` value was added 2026-05-15 with MockLlmClient so the app runs without API key —
-      // ordering pinned here matches `ConfigKeys.ENUM_KEYS[LLM_PROVIDER]` (mock first because the
-      // front renders the toggle group in that order and "no-key onboarding" is the leftmost
-      // affordance).
-      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_PROVIDER))
-      .andExpect(jsonPath("$[5].type").value("ENUM"))
-      .andExpect(jsonPath("$[5].currentValue").value("ollama"))
-      .andExpect(jsonPath("$[5].defaultValue").value("claude"))
-      .andExpect(jsonPath("$[5].isOverridden").value(true))
-      .andExpect(jsonPath("$[5].allowedValues.length()").value(3))
-      .andExpect(jsonPath("$[5].allowedValues[0].value").value("mock"))
-      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
-      .andExpect(jsonPath("$[5].allowedValues[2].value").value("ollama"))
-      // LLM timeout : INT slider, default 400, overridden to 600 here.
-      .andExpect(jsonPath("$[6].key").value(ConfigKeys.LLM_TIMEOUT_SECONDS))
-      .andExpect(jsonPath("$[6].type").value("INT"))
-      .andExpect(jsonPath("$[6].currentValue").value("600"))
-      .andExpect(jsonPath("$[6].defaultValue").value("400"))
-      .andExpect(jsonPath("$[6].isOverridden").value(true))
-      // Cache TTL : INT key, value exposed as-is.
-      .andExpect(jsonPath("$[7].key").value(ConfigKeys.CACHE_TTL_MINUTES))
-      .andExpect(jsonPath("$[7].type").value("INT"))
-      .andExpect(jsonPath("$[7].currentValue").value("30"))
-      .andExpect(jsonPath("$[7].defaultValue").value("15"))
-      // Finnhub key : SECRET, no value set.
-      .andExpect(jsonPath("$[8].key").value(ConfigKeys.FINNHUB_API_KEY))
-      .andExpect(jsonPath("$[8].type").value("SECRET"))
-      .andExpect(jsonPath("$[8].hasValue").value(false))
-      // Market provider : ENUM, currently overridden to twelvedata.
-      .andExpect(jsonPath("$[9].key").value(ConfigKeys.MARKET_PROVIDER))
-      .andExpect(jsonPath("$[9].type").value("ENUM"))
-      .andExpect(jsonPath("$[9].currentValue").value("twelvedata"))
-      // Twelve Data key : SECRET with a value — masked.
-      .andExpect(jsonPath("$[10].key").value(ConfigKeys.TWELVEDATA_API_KEY))
-      .andExpect(jsonPath("$[10].type").value("SECRET"))
-      .andExpect(jsonPath("$[10].currentValue").doesNotExist())
-      .andExpect(jsonPath("$[10].hasValue").value(true))
-      .andExpect(jsonPath("$[10].isOverridden").value(true))
-      // News provider : ENUM.
-      .andExpect(jsonPath("$[11].key").value(ConfigKeys.NEWS_PROVIDER))
-      .andExpect(jsonPath("$[11].type").value("ENUM"))
-      // Ollama model : STRING — free-form (the Ollama ecosystem changes too fast to whitelist).
-      .andExpect(jsonPath("$[12].key").value(ConfigKeys.OLLAMA_MODEL))
-      .andExpect(jsonPath("$[12].type").value("STRING"))
-      .andExpect(jsonPath("$[12].currentValue").value("qwen2.5:3b"))
-      .andExpect(jsonPath("$[12].defaultValue").value("qwen2.5:3b"))
-      .andExpect(jsonPath("$[12].allowedValues").doesNotExist())
-      // FMP key : SECRET, no value set.
-      .andExpect(jsonPath("$[13].key").value(ConfigKeys.FMP_API_KEY))
-      .andExpect(jsonPath("$[13].type").value("SECRET"))
-      .andExpect(jsonPath("$[13].hasValue").value(false))
-      // Polygon (Massive) key : SECRET, no value set.
-      .andExpect(jsonPath("$[14].key").value(ConfigKeys.POLYGON_API_KEY))
-      .andExpect(jsonPath("$[14].type").value("SECRET"))
-      .andExpect(jsonPath("$[14].hasValue").value(false))
-      // Screener provider : ENUM (mock / polygon / fmp), default mock.
-      .andExpect(jsonPath("$[15].key").value(ConfigKeys.SCREENER_PROVIDER))
-      .andExpect(jsonPath("$[15].type").value("ENUM"))
-      .andExpect(jsonPath("$[15].currentValue").value("mock"))
-      .andExpect(jsonPath("$[15].allowedValues.length()").value(3))
-      .andExpect(jsonPath("$[15].allowedValues[0].value").value("mock"))
-      .andExpect(jsonPath("$[15].allowedValues[1].value").value("polygon"))
-      .andExpect(jsonPath("$[15].allowedValues[2].value").value("fmp"))
+      .andExpect(jsonPath("$.length()").value(1))
+      .andExpect(jsonPath("$[0].key").value(ConfigKeys.ALLOWED_EMAILS))
+      .andExpect(jsonPath("$[0].type").value("EMAILS"))
+      .andExpect(jsonPath("$[0].currentValue").value("alice@example.com"))
+      .andExpect(jsonPath("$[0].hasValue").value(true))
+      .andExpect(jsonPath("$[0].isOverridden").value(true))
   }
-
-  @Test
-  fun `GET config annotates allowedValues with disabledReason when the required secret is blank`() {
-    // Provider gating contract : when a live provider needs a SECRET key that isn't set, the
-    // backend tags that allowed-value with a non-null `disabledReason` carrying the property path
-    // of the missing key (e.g. `market.twelvedata.api-key`). The frontend reads that field to
-    // render the toggle in a disabled state with an i18n'd tooltip, and we cover it server-side
-    // so a future refactor of `ConfigController.annotateAllowedValue` doesn't silently drop the
-    // annotation. The `mock` option never carries a `disabledReason` — no API key required, it
-    // must always be selectable so a fresh clone stays usable.
-    //
-    // Fixture : all keys empty / on default ; only the values needed to exercise the four gated
-    // toggles are stubbed (the big GET test covers the full 12-key roundtrip independently).
-    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
-    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
-    given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
-    given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
-    given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
-    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
-
-    mvc
-      .perform(get("/api/config"))
-      .andExpect(status().isOk)
-      // analyst.provider — [0]=mock (no key), [1]=finnhub (needs market.finnhub.api-key, blank).
-      .andExpect(jsonPath("$[0].key").value(ConfigKeys.ANALYST_PROVIDER))
-      .andExpect(jsonPath("$[0].allowedValues[0].value").value("mock"))
-      .andExpect(jsonPath("$[0].allowedValues[0].disabledReason").doesNotExist())
-      .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
-      .andExpect(jsonPath("$[0].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY))
-      // earnings.provider — same shape, same FINNHUB_API_KEY dependency. Position shifted from
-      // [3] to [4] when ALLOWED_EMAILS landed at [3] alphabetically (cf. layout map in the first
-      // GET test).
-      .andExpect(jsonPath("$[4].key").value(ConfigKeys.EARNINGS_PROVIDER))
-      .andExpect(jsonPath("$[4].allowedValues[1].value").value("finnhub"))
-      .andExpect(jsonPath("$[4].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY))
-      // llm.provider — [0]=mock, [1]=claude (needs anthropic.api.key), [2]=ollama (no key needed,
-      // daemon reachability is a different failure mode → never disabled here).
-      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_PROVIDER))
-      .andExpect(jsonPath("$[5].allowedValues[0].disabledReason").doesNotExist())
-      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
-      .andExpect(
-        jsonPath("$[5].allowedValues[1].disabledReason").value(ConfigKeys.ANTHROPIC_API_KEY)
-      )
-      .andExpect(jsonPath("$[5].allowedValues[2].value").value("ollama"))
-      .andExpect(jsonPath("$[5].allowedValues[2].disabledReason").doesNotExist())
-      // market.provider — twelvedata gated on market.twelvedata.api-key.
-      .andExpect(jsonPath("$[9].key").value(ConfigKeys.MARKET_PROVIDER))
-      .andExpect(jsonPath("$[9].allowedValues[1].value").value("twelvedata"))
-      .andExpect(
-        jsonPath("$[9].allowedValues[1].disabledReason").value(ConfigKeys.TWELVEDATA_API_KEY)
-      )
-      // news.provider — finnhub gated on market.finnhub.api-key.
-      .andExpect(jsonPath("$[11].key").value(ConfigKeys.NEWS_PROVIDER))
-      .andExpect(jsonPath("$[11].allowedValues[1].value").value("finnhub"))
-      .andExpect(
-        jsonPath("$[11].allowedValues[1].disabledReason").value(ConfigKeys.FINNHUB_API_KEY)
-      )
-      // screener.provider (Phase 6) — polygon gated on screener.polygon.api-key, fmp gated on
-      // screener.fmp.api-key. Pins the gating contract added when the radar shipped.
-      .andExpect(jsonPath("$[15].key").value(ConfigKeys.SCREENER_PROVIDER))
-      .andExpect(jsonPath("$[15].allowedValues[0].value").value("mock"))
-      .andExpect(jsonPath("$[15].allowedValues[0].disabledReason").doesNotExist())
-      .andExpect(jsonPath("$[15].allowedValues[1].value").value("polygon"))
-      .andExpect(
-        jsonPath("$[15].allowedValues[1].disabledReason").value(ConfigKeys.POLYGON_API_KEY)
-      )
-      .andExpect(jsonPath("$[15].allowedValues[2].value").value("fmp"))
-      .andExpect(jsonPath("$[15].allowedValues[2].disabledReason").value(ConfigKeys.FMP_API_KEY))
-  }
-
-  @Test
-  fun `GET config leaves disabledReason null when the required secret is present`() {
-    // Mirror of the test above with the SECRET keys populated — every live option in the toggle
-    // group must come back selectable. Pins the negative branch of `annotateAllowedValue` so a
-    // future change can't make the disabled state sticky once the user enters their key.
-    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("real-key")
-    given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("real-key")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant-real")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
-    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
-    given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
-    given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
-    given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
-    given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("twelvedata")
-    given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("finnhub")
-    given(service.getString(ConfigKeys.OLLAMA_MODEL)).willReturn("qwen2.5:3b")
-    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("polygon-real-key")
-    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("fmp-real-key")
-    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("fmp")
-
-    mvc
-      .perform(get("/api/config"))
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$[0].allowedValues[1].value").value("finnhub"))
-      .andExpect(jsonPath("$[0].allowedValues[1].disabledReason").doesNotExist())
-      // llm.provider — shifted from [4] to [5] when ALLOWED_EMAILS landed at [3] alphabetically.
-      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
-      .andExpect(jsonPath("$[5].allowedValues[1].disabledReason").doesNotExist())
-      // market.provider — shifted from [8] to [9] for the same reason.
-      .andExpect(jsonPath("$[9].allowedValues[1].value").value("twelvedata"))
-      .andExpect(jsonPath("$[9].allowedValues[1].disabledReason").doesNotExist())
-  }
-
-  @Test
-  fun `GET config omits ollama model and ollama option when app ollama enabled is false`() {
-    // Prod-side branch — `app.ollama.enabled=false` in application-prod.yml drops the
-    // `ollama.model` entry from the listing and removes `ollama` from `llm.provider.allowedValues`.
-    // The frontend then renders neither the Ollama Model card (`@if (ollamaModel(); as entry)`) nor
-    // the Ollama Status Panel (gated by `llmProvider().currentValue === 'ollama'` which can't
-    // happen if the option isn't selectable).
-    given(service.listedKeys()).willReturn(ConfigKeys.KNOWN_KEYS - ConfigKeys.OLLAMA_MODEL)
-    given(service.allowedValuesFor(any())).willAnswer { invocation ->
-      val key = invocation.arguments[0] as String
-      val raw = ConfigKeys.ENUM_KEYS[key] ?: return@willAnswer null
-      if (key == ConfigKeys.LLM_PROVIDER) raw - ConfigKeys.PROVIDER_OLLAMA else raw
-    }
-    given(service.getString(ConfigKeys.ANALYST_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_KEY)).willReturn("sk-ant")
-    given(service.getString(ConfigKeys.ANTHROPIC_API_MODEL)).willReturn("claude-opus-4-6")
-    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
-    given(service.getString(ConfigKeys.EARNINGS_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.LLM_PROVIDER)).willReturn("claude")
-    given(service.getString(ConfigKeys.LLM_TIMEOUT_SECONDS)).willReturn("400")
-    given(service.getString(ConfigKeys.CACHE_TTL_MINUTES)).willReturn("15")
-    given(service.getString(ConfigKeys.FINNHUB_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.MARKET_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.NEWS_PROVIDER)).willReturn("mock")
-    given(service.getString(ConfigKeys.POLYGON_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.FMP_API_KEY)).willReturn("")
-    given(service.getString(ConfigKeys.SCREENER_PROVIDER)).willReturn("mock")
-
-    mvc
-      .perform(get("/api/config"))
-      .andExpect(status().isOk)
-      // 15 entries instead of 16 — `ollama.model` is gone (Phase 6 added 3 screener entries, so
-      // KNOWN_KEYS.size = 16, minus ollama.model = 15).
-      .andExpect(jsonPath("$.length()").value(15))
-      // llm.provider — index [5], allowedValues should be exactly [mock, claude] without ollama.
-      .andExpect(jsonPath("$[5].key").value(ConfigKeys.LLM_PROVIDER))
-      .andExpect(jsonPath("$[5].allowedValues.length()").value(2))
-      .andExpect(jsonPath("$[5].allowedValues[0].value").value("mock"))
-      .andExpect(jsonPath("$[5].allowedValues[1].value").value("claude"))
-      // No entry whose key is `ollama.model` anywhere in the response.
-      .andExpect(jsonPath("$[?(@.key == 'ollama.model')]").isEmpty)
-  }
-
-  // ---------------------------------------------------------------------- set
 
   @Test
   fun `PUT config trims whitespace before storing`() {
-    given(service.getString(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("typed-key")
-    given(service.defaultFor(ConfigKeys.TWELVEDATA_API_KEY)).willReturn("")
-    given(service.isOverridden(ConfigKeys.TWELVEDATA_API_KEY)).willReturn(true)
+    given(service.getString(ConfigKeys.ALLOWED_EMAILS)).willReturn("alice@example.com")
+    given(service.defaultFor(ConfigKeys.ALLOWED_EMAILS)).willReturn("")
+    given(service.isOverridden(ConfigKeys.ALLOWED_EMAILS)).willReturn(true)
 
     mvc
       .perform(
-        put("/api/config/{key}", ConfigKeys.TWELVEDATA_API_KEY)
+        put("/api/config/{key}", ConfigKeys.ALLOWED_EMAILS)
           .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("value" to "  typed-key  ")))
+          .content(json.writeValueAsString(mapOf("value" to "  alice@example.com  ")))
       )
       .andExpect(status().isOk)
 
-    // Value passed to the service must be trimmed — copy-paste with trailing newline is a common
-    // source of "key works in curl but not in the app" headaches.
-    verify(service).set(ConfigKeys.TWELVEDATA_API_KEY, "typed-key")
+    verify(service).set(ConfigKeys.ALLOWED_EMAILS, "alice@example.com")
   }
 
   @Test
   fun `PUT config returns 400 on a blank value`() {
-    // Blank goes through DELETE explicitly. Surfacing 400 here keeps the two intentions distinct.
     mvc
       .perform(
-        put("/api/config/{key}", ConfigKeys.CACHE_TTL_MINUTES)
+        put("/api/config/{key}", ConfigKeys.ALLOWED_EMAILS)
           .contentType(MediaType.APPLICATION_JSON)
           .content(json.writeValueAsString(mapOf("value" to "   ")))
       )
@@ -430,290 +85,26 @@ class ConfigControllerTest {
 
   @Test
   fun `PUT config returns 400 when the service rejects the value`() {
-    // Out-of-range TTL or non-integer are caught in AppConfigService.validate ; the controller
-    // doesn't pre-validate (single source of truth for the validation rules). We assert the 400
-    // surface rather than the validation logic itself — that's covered in AppConfigServiceTest.
-    org.mockito.BDDMockito.willThrow(IllegalArgumentException("must be between 5 and 60"))
+    // Validation lives in AppConfigService ; the controller only surfaces the 400.
+    willThrow(IllegalArgumentException("malformed entry"))
       .given(service)
-      .set(ConfigKeys.CACHE_TTL_MINUTES, "120")
+      .set(ConfigKeys.ALLOWED_EMAILS, "not-an-email")
 
     mvc
       .perform(
-        put("/api/config/{key}", ConfigKeys.CACHE_TTL_MINUTES)
+        put("/api/config/{key}", ConfigKeys.ALLOWED_EMAILS)
           .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("value" to "120")))
+          .content(json.writeValueAsString(mapOf("value" to "not-an-email")))
       )
       .andExpect(status().isBadRequest)
   }
 
-  // ---------------------------------------------------------------------- reset
-
   @Test
   fun `DELETE config returns 204`() {
     mvc
-      .perform(delete("/api/config/{key}", ConfigKeys.TWELVEDATA_API_KEY))
+      .perform(delete("/api/config/{key}", ConfigKeys.ALLOWED_EMAILS))
       .andExpect(status().isNoContent)
 
-    verify(service).reset(ConfigKeys.TWELVEDATA_API_KEY)
-  }
-
-  // ---------------------------------------------------------------------- test endpoints
-
-  @Test
-  fun `POST test twelvedata returns the result from the test client`() {
-    given(testClient.testTwelveData("candidate-key"))
-      .willReturn(TestConfigResult(true, "OK — Twelve Data accepted the key"))
-
-    mvc
-      .perform(
-        post("/api/config/test/twelvedata")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("value" to "candidate-key")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.ok").value(true))
-      .andExpect(jsonPath("$.message").value("OK — Twelve Data accepted the key"))
-  }
-
-  @Test
-  fun `POST test finnhub returns the result from the test client`() {
-    given(testClient.testFinnhub("candidate-key"))
-      .willReturn(TestConfigResult(false, "Invalid Finnhub API key"))
-
-    mvc
-      .perform(
-        post("/api/config/test/finnhub")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("value" to "candidate-key")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.ok").value(false))
-      .andExpect(jsonPath("$.message").value("Invalid Finnhub API key"))
-  }
-
-  @Test
-  fun `POST test polygon returns the result from the test client`() {
-    given(testClient.testPolygon("polygon-candidate"))
-      .willReturn(TestConfigResult(true, "OK — Polygon accepted the key"))
-
-    mvc
-      .perform(
-        post("/api/config/test/polygon")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("value" to "polygon-candidate")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.ok").value(true))
-      .andExpect(jsonPath("$.message").value("OK — Polygon accepted the key"))
-  }
-
-  @Test
-  fun `POST test fmp returns the result from the test client`() {
-    given(testClient.testFmp("fmp-candidate"))
-      .willReturn(TestConfigResult(false, "Invalid FMP API key"))
-
-    mvc
-      .perform(
-        post("/api/config/test/fmp")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("value" to "fmp-candidate")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.ok").value(false))
-      .andExpect(jsonPath("$.message").value("Invalid FMP API key"))
-  }
-
-  @Test
-  fun `POST test anthropic returns the result from the test client`() {
-    // Mirror of `/test/twelvedata` and `/test/finnhub` — the candidate Anthropic key is round-
-    // tripped to Claude with the currently configured model. See
-    // [ConfigTestClient.testAnthropicKey].
-    given(testClient.testAnthropicKey("sk-ant-candidate"))
-      .willReturn(TestConfigResult(true, "OK — Claude (claude-opus-4-6) replied in 1.4s"))
-
-    mvc
-      .perform(
-        post("/api/config/test/anthropic")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("value" to "sk-ant-candidate")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.ok").value(true))
-      .andExpect(jsonPath("$.message").value("OK — Claude (claude-opus-4-6) replied in 1.4s"))
-  }
-
-  @Test
-  fun `POST test llm forwards provider plus model and surfaces the result`() {
-    // The LLM probe takes both fields — the controller trims them and hands them off to the test
-    // client. Whitespace from copy-paste should not break a probe ; we verify the trim once here
-    // (the equivalent path for API keys is covered by the trim test above).
-    given(testClient.testLlm("ollama", "qwen2.5:3b"))
-      .willReturn(TestConfigResult(true, "OK — Ollama (qwen2.5:3b) replied in 1.2s"))
-
-    mvc
-      .perform(
-        post("/api/config/test/llm")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(
-            json.writeValueAsString(mapOf("provider" to "  ollama  ", "model" to "  qwen2.5:3b  "))
-          )
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.ok").value(true))
-      .andExpect(jsonPath("$.message").value("OK — Ollama (qwen2.5:3b) replied in 1.2s"))
-
-    verify(testClient).testLlm("ollama", "qwen2.5:3b")
-  }
-
-  // ---------------------------------------------------------------------- llm status
-
-  @Test
-  fun `GET llm status forwards the daemon snapshot to the front`() {
-    // The endpoint is a thin proxy over OllamaStatusService.probe — verify the JSON shape (panel
-    // contract) and that fail-soft snapshots round-trip with the right HTTP code (200, never 503,
-    // because the panel polls and a 503 would put the whole settings page in error state).
-    given(ollamaStatusService.probe())
-      .willReturn(
-        OllamaStatusDto(
-          daemonReachable = true,
-          baseUrl = "http://localhost:11434",
-          latencyMs = 12,
-          loadedModels =
-            listOf(
-              LoadedModelDto(
-                name = "qwen2.5:3b",
-                expiresAt = Instant.parse("2026-05-08T15:30:00Z"),
-                sizeVramBytes = 2_008_000_000L,
-              )
-            ),
-          availableModels = listOf("llama3.2:3b", "qwen2.5:3b"),
-          errorMessage = null,
-        )
-      )
-
-    mvc
-      .perform(get("/api/config/llm/status"))
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.daemonReachable").value(true))
-      .andExpect(jsonPath("$.baseUrl").value("http://localhost:11434"))
-      .andExpect(jsonPath("$.latencyMs").value(12))
-      .andExpect(jsonPath("$.availableModels.length()").value(2))
-      .andExpect(jsonPath("$.availableModels[0]").value("llama3.2:3b"))
-      .andExpect(jsonPath("$.loadedModels.length()").value(1))
-      .andExpect(jsonPath("$.loadedModels[0].name").value("qwen2.5:3b"))
-      .andExpect(jsonPath("$.loadedModels[0].sizeVramBytes").value(2_008_000_000L))
-  }
-
-  @Test
-  fun `GET llm status surfaces fail-soft snapshots with HTTP 200 and daemonReachable=false`() {
-    given(ollamaStatusService.probe())
-      .willReturn(
-        OllamaStatusDto(
-          daemonReachable = false,
-          baseUrl = "http://localhost:11434",
-          latencyMs = null,
-          loadedModels = emptyList(),
-          availableModels = emptyList(),
-          errorMessage = "Unreachable : Connection refused",
-        )
-      )
-
-    mvc
-      .perform(get("/api/config/llm/status"))
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.daemonReachable").value(false))
-      .andExpect(jsonPath("$.errorMessage").value("Unreachable : Connection refused"))
-  }
-
-  @Test
-  fun `POST llm unload-model trims and forwards the model and surfaces the fresh snapshot`() {
-    // The endpoint is a thin wrapper over OllamaStatusService.unloadModel — verify the trim,
-    // the forward, and the wire shape (the panel re-renders directly from the response, so the
-    // round-trip must carry the post-unload daemon state).
-    given(ollamaStatusService.unloadModel("qwen2.5:3b"))
-      .willReturn(
-        OllamaStatusDto(
-          daemonReachable = true,
-          baseUrl = "http://localhost:11434",
-          latencyMs = 9,
-          loadedModels = emptyList(), // VRAM now empty after the unload took effect
-          availableModels = listOf("qwen2.5:3b"),
-          errorMessage = null,
-        )
-      )
-
-    mvc
-      .perform(
-        post("/api/config/llm/unload-model")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("model" to "  qwen2.5:3b  ")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.daemonReachable").value(true))
-      .andExpect(jsonPath("$.loadedModels.length()").value(0))
-      .andExpect(jsonPath("$.availableModels[0]").value("qwen2.5:3b"))
-
-    verify(ollamaStatusService).unloadModel("qwen2.5:3b")
-  }
-
-  @Test
-  fun `POST llm pull-model trims and forwards the model name and surfaces the fresh snapshot`() {
-    // Mirror of unload-model — pull blocks the request thread for 1-3 min in real usage with
-    // `stream: false`, but the controller is a pure forward so we just assert the wiring and
-    // the response shape. The new model landing in `availableModels` is what the dialog uses
-    // to render success.
-    given(ollamaStatusService.pullModel("mistral:7b"))
-      .willReturn(
-        OllamaStatusDto(
-          daemonReachable = true,
-          baseUrl = "http://localhost:11434",
-          latencyMs = 14,
-          loadedModels = emptyList(),
-          availableModels = listOf("mistral:7b", "qwen2.5:3b"),
-          errorMessage = null,
-        )
-      )
-
-    mvc
-      .perform(
-        post("/api/config/llm/pull-model")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("model" to "  mistral:7b  ")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.daemonReachable").value(true))
-      .andExpect(jsonPath("$.availableModels.length()").value(2))
-      .andExpect(jsonPath("$.availableModels[0]").value("mistral:7b"))
-
-    verify(ollamaStatusService).pullModel("mistral:7b")
-  }
-
-  @Test
-  fun `POST llm delete-model trims and forwards the model name and surfaces the fresh snapshot`() {
-    given(ollamaStatusService.deleteModel("mistral:7b"))
-      .willReturn(
-        OllamaStatusDto(
-          daemonReachable = true,
-          baseUrl = "http://localhost:11434",
-          latencyMs = 11,
-          loadedModels = emptyList(),
-          // The deleted model is gone from available — the dialog re-renders without its chip.
-          availableModels = listOf("qwen2.5:3b"),
-          errorMessage = null,
-        )
-      )
-
-    mvc
-      .perform(
-        post("/api/config/llm/delete-model")
-          .contentType(MediaType.APPLICATION_JSON)
-          .content(json.writeValueAsString(mapOf("model" to "  mistral:7b  ")))
-      )
-      .andExpect(status().isOk)
-      .andExpect(jsonPath("$.daemonReachable").value(true))
-      .andExpect(jsonPath("$.availableModels.length()").value(1))
-      .andExpect(jsonPath("$.availableModels[0]").value("qwen2.5:3b"))
-
-    verify(ollamaStatusService).deleteModel("mistral:7b")
+    verify(service).reset(ConfigKeys.ALLOWED_EMAILS)
   }
 }

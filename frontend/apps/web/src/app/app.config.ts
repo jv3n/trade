@@ -17,7 +17,6 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import * as Sentry from '@sentry/browser';
 
 import { routes } from './app.routes';
-import { LlmTimeoutService } from './core/api/analysis/llm-timeout.service';
 import { AuthService } from './core/app-state/auth.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { provideRepositories } from './core/providers';
@@ -79,14 +78,6 @@ export const appConfig: ApplicationConfig = {
     // logged-out state for a tick even on a valid session, and route guards would race against
     // the auth lookup.
     provideAppInitializer(() => inject(AuthService).refresh()),
-    // Prime the LLM timeout from `/api/config` before the first poll fires. Without this, the
-    // first portfolio analysis or narrative request would use the in-memory default (400 s) even
-    // if the user has set a different value via /settings/configuration — the override would only
-    // kick in after the first manual page reload of /settings. We don't gate this on auth because
-    // `/api/config` is admin-only and a USER won't reach it — the 401 is caught by the
-    // interceptor and the timeout falls back to the default, which is the same shape as a
-    // first-clone fresh boot.
-    provideAppInitializer(() => inject(LlmTimeoutService).refresh()),
     // Register the PortfolioAI brand mark so any template can use `<mat-icon svgIcon="portfolioai">`.
     // Loaded once at boot ; MatIconRegistry caches the SVG so subsequent uses don't re-fetch.
     provideAppInitializer(() => {

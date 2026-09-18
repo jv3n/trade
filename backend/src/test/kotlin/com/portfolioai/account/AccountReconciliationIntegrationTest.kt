@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
@@ -41,7 +40,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
  * `AuthService` is mocked so the user-scope is deterministic (mirrors [AccountIntegrationTest]).
  */
 @SpringBootTest
-@TestPropertySource(properties = ["anthropic.api.key=test-key-ci-only"])
 class AccountReconciliationIntegrationTest {
 
   @Autowired private lateinit var service: AccountService

@@ -2,16 +2,11 @@ import { Routes } from '@angular/router';
 import { adminGuard, authGuard } from './core/router/auth.guards';
 
 /**
- * v1.0 pivot — pre-pivot feature routes (dashboard, ticker, suivi, radar, observability, import)
- * are intentionally removed here while the corresponding feature folders stay in `features/`
- * untouched. `/settings/*` is **kept** because (a) the providers configuration UI is on the
- * keep-list per `docs/projet/roadmap.md` (runtime rotation of API keys / providers stays useful
- * for the journal feature too), (b) prompts / access-control sub-routes ride along until we
- * trim them explicitly. Old features will be either rewired or deleted in upcoming sessions.
+ * Trading-tracking app : account, journal (+ CSV io), stats sheet, candidates, lexicon, settings.
  *
- * **Admin gating** is per sub-route now, not on `/settings` itself, so USER role can reach
+ * **Admin gating** is per sub-route, not on `/settings` itself, so USER role can reach
  * `/settings/preferences` (theme + language) while ADMIN-only sub-routes (ops-links,
- * configuration, prompts, access-control) keep their `adminGuard`.
+ * access-control, stats-import, lexicon) keep their `adminGuard`.
  */
 export const routes: Routes = [
   // `/login` and `/error` are the two routes exempt from `authGuard`. `/login` is the OAuth entry
@@ -68,16 +63,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/lexicon/lexicon-page').then((m) => m.LexiconPage),
   },
   {
-    path: 'ticker/:symbol',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/ticker/ticker').then((m) => m.TickerPage),
-  },
-  {
-    path: 'radar',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/radar/radar').then((m) => m.RadarPage),
-  },
-  {
     path: 'settings',
     canActivate: [authGuard],
     loadComponent: () => import('./features/settings/settings').then((m) => m.Settings),
@@ -93,26 +78,6 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/settings/ops-links/ops-links').then((m) => m.OpsLinksPage),
-      },
-      {
-        path: 'configuration',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/settings/configuration/configuration').then((m) => m.Configuration),
-      },
-      {
-        path: 'prompts',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/settings/prompts/prompts').then((m) => m.PromptsPage),
-      },
-      {
-        path: 'prompts/:id/stats',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('./features/settings/prompts/prompt-stats/prompt-stats').then(
-            (m) => m.PromptStatsPage,
-          ),
       },
       {
         path: 'access-control',

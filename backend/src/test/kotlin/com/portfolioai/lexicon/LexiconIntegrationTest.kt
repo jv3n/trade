@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
-import org.springframework.test.context.TestPropertySource
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 
@@ -29,7 +28,6 @@ import org.springframework.web.server.ResponseStatusException
  * mock.
  */
 @SpringBootTest
-@TestPropertySource(properties = ["anthropic.api.key=test-key-ci-only"])
 @Transactional
 class LexiconIntegrationTest {
 
