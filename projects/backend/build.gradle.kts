@@ -1,9 +1,9 @@
 plugins {
-  kotlin("jvm") version "2.4.10"
-  kotlin("plugin.spring") version "2.4.10"
+  kotlin("jvm") version "2.4.20"
+  kotlin("plugin.spring") version "2.4.20"
   id("org.springframework.boot") version "3.5.16"
   id("io.spring.dependency-management") version "1.1.7"
-  kotlin("plugin.jpa") version "2.4.10"
+  kotlin("plugin.jpa") version "2.4.20"
   id("com.diffplug.spotless") version "6.25.0"
   // Detekt — Kotlin static analysis (cyclomatic complexity, magic numbers, long methods,
   // potential bugs). Complements Spotless, which only handles formatting. See the `detekt { … }`
@@ -65,7 +65,7 @@ dependencies {
   // application-local.yml) ; the root application.yml keeps both `springdoc.api-docs.enabled` and
   // `springdoc.swagger-ui.enabled` to false so no env reachable from the outside ever exposes the
   // schema. Surfaced in Tilt as a link on the `backend` resource for one-click access during dev.
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.9.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.9.1")
   implementation("org.flywaydb:flyway-core")
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -76,7 +76,7 @@ dependencies {
   // appender so MDC values (notably `userId`) become event extras automatically. The `-jakarta`
   // variant targets Spring Boot 3 (Jakarta EE) — picking `sentry-spring-boot-starter` (no suffix)
   // would silently link the javax-namespaced classes and the bean wiring would crash at boot.
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.53.0")
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.56.0")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
