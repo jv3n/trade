@@ -152,7 +152,16 @@ La page d'accueil suit la journée type : chaque étape avec son état (**faite*
 
 **Ce que l'app calcule** : push à l'open %, HOD %, LOD %, EOD %, tous **vs l'open** — ex. push à l'open (4,62 − 4,20) ÷ 4,20 = +10,0 %.
 
-**Retiré** de l'ancienne feuille : institutionnels % et « > 20 % institutionnels ». C'est une condition du GUS filtrée en amont : un ticker à forte détention institutionnelle ne devient jamais candidat, donc la donnée n'apporte rien dans la stat.
+**Retiré** de l'ancienne feuille : institutionnels % et « > 20 % institutionnels ». C'est une condition du GUS filtrée en amont : un ticker à forte détention institutionnelle ne devient jamais candidat, donc la donnée n'apporte rien dans la stat. Retiré aussi : l'origine RADAR / MANUEL / IMPORT et le jeu de stats partagé entre utilisateurs — une stat appartient toujours à son utilisateur.
+
+**Décidé** :
+
+- Une seule stat par jour et par ticker (comme les candidats) ; une deuxième est refusée.
+- La stat est « à compléter » tant que les cinq prix de séance ne sont pas tous saisis ; les flags valent non par défaut.
+- Aucun pourcentage n'est stocké : tout se recalcule à partir des prix.
+- Les KPI du haut (complétées, push à l'open moyen, LOD moyen, fade) portent sur **tout le filtre**, pas sur la page affichée.
+- Pas d'import CSV pour les stats : une stat naît d'un candidat. Il reste un **export** CSV (bloc premarket, bloc séance, flags), avec les prix de séance vides pour une stat à compléter.
+- Filtre « tradées / non tradées » : reporté avec le lien vers le trade (#193).
 
 **Écran** : [`stats.html`](stats.html) — encart « Compléter la séance » pour les stats en attente (aperçu des % en direct), tableau avec les données premarket (reprises du candidat) et de séance, flags, bouton « → Trade » ou lien vers le trade existant.
 
@@ -180,7 +189,7 @@ Accessible depuis le bas du menu (sous Lexique). Un menu secondaire à gauche, q
 |---------|----------|---------|
 | Préférences | Tout le monde | Profil + déconnexion, **thème** (système / clair / sombre), langue (FR / EN), devise d'affichage du solde (USD / CAD) |
 | Accès | Admin | Emails autorisés à se connecter (liste modifiable) ; administrateurs (lecture seule, définis au déploiement) |
-| Données | Admin | Export / import CSV du journal et des stats |
+| Données | Admin | Export / import CSV du journal, export CSV des stats |
 | Lexique | Admin | Tableau des termes (terme, définition FR, définition EN) : ajouter, modifier, supprimer (avec confirmation) |
 | Liens ops | Admin | Consoles et tableaux de bord (facturation, production, base, supervision, GitHub) |
 

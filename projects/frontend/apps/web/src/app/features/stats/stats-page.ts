@@ -1,32 +1,25 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-
-import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
-import { MatSidenav } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Sort } from '@angular/material/sort';
-import { Router } from '@angular/router';
-
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
+  StbButtonToggleModule,
+  StbCheckboxModule,
   StbChipsModule,
-  StbDatePickerModule,
-  StbDividerModule,
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
   StbPaginatorModule,
   StbProgressSpinnerModule,
   StbSelectModule,
-  StbSidenavModule,
   StbSortHeaderModule,
   StbTableModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
-import { format } from 'date-fns';
 import {
   EMPTY,
   Subject,
@@ -34,16 +27,17 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
+  finalize,
   switchMap,
   tap,
 } from 'rxjs';
-
+import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
 import {
-  PageRequest,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
-  StatSource,
+  StatStatus,
+  StatSummary,
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
@@ -53,55 +47,81 @@ import {
   PeriodPresetKey,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
-import { AddStatDialog, AddStatDialogData } from './add-stat-dialog/add-stat-dialog';
+import { gapPercent, percentVsOpen, pmPushPercent } from './stats.math';
 
-/**
- * Sort state for the stats table — controlled-component shape (empty `columnName` = no user sort,
- * backend falls back to its DEFAULT_SORT). Bound into MatSort via `[matSortActive]` /
- * `[matSortDirection]`.
- */
+/** Sort state — controlled-component shape (empty `columnName` = the backend's DEFAULT_SORT). */
 interface SortRequest {
   columnName: string;
   isAscending: boolean;
 }
 
-interface FilterFormModel {
-  period: PeriodPresetKey;
-  dateFrom: Date | null;
-  dateTo: Date | null;
-  source: StatSource | null;
-  gapMin: number | null;
-  gapMax: number | null;
+/** The session block being typed in the completion panel. Numbers are null until typed. */
+interface SessionModel {
+  openPrice: number | null;
+  pushOpenPrice: number | null;
+  hodPrice: number | null;
+  lodPrice: number | null;
+  eodPrice: number | null;
+  ssr: boolean;
+  under1Dollar: boolean;
+  entryAfter11am: boolean;
 }
 
-const EMPTY_FILTER: FilterFormModel = {
-  period: 'all',
-  dateFrom: null,
-  dateTo: null,
-  source: null,
-  gapMin: null,
-  gapMax: null,
+/** A listed stat with its derived percentages (never stored — recomputed from the prices). */
+export interface StatRow extends StatEntry {
+  gap: number | null;
+  pmPush: number | null;
+  pushOpenPercent: number | null;
+  hodPercent: number | null;
+  lodPercent: number | null;
+  eodPercent: number | null;
+}
+
+/** Status tabs of the mockup : all / to complete / completed. */
+const STATUS_TABS: readonly (StatStatus | null)[] = [null, 'TO_COMPLETE', 'COMPLETED'];
+
+const DEFAULT_PAGE_SIZE = 25;
+
+/** Empty session block — what the panel shows before a stat is picked. */
+const BLANK_SESSION: SessionModel = {
+  openPrice: null,
+  pushOpenPrice: null,
+  hodPrice: null,
+  lodPrice: null,
+  eodPrice: null,
+  ssr: false,
+  under1Dollar: false,
+  entryAfter11am: false,
 };
 
-/** The user-owned origins (editable / deletable). IMPORT rows are read-only. */
-const OWNED_SOURCES: readonly StatSource[] = ['RADAR', 'MANUAL'];
-
-/** Origins offered in the filter drawer's source select. */
-const SOURCE_OPTIONS: readonly StatSource[] = ['RADAR', 'MANUAL', 'IMPORT'];
-
-const DEFAULT_PAGE_SIZE = 10;
+function sessionOf(entry: StatEntry): SessionModel {
+  return {
+    openPrice: entry.openPrice,
+    pushOpenPrice: entry.pushOpenPrice,
+    hodPrice: entry.hodPrice,
+    lodPrice: entry.lodPrice,
+    eodPrice: entry.eodPrice,
+    ssr: entry.ssr,
+    under1Dollar: entry.under1Dollar,
+    entryAfter11am: entry.entryAfter11am,
+  };
+}
 
 /**
- * Stats page — table of the stats the current user may see (their own radar / manual analyses + the
- * global community IMPORT rows), at parity with the journal :
- *   - **Search** : ticker LIKE %q% via `?q=…` (debounced 250 ms).
- *   - **Filters** : right-side drawer — date range, source (radar / manual / import), gap range.
- *   - **Server-side sort + pagination** : MatSort → `?sort=field,direction` ; `<mat-paginator>`.
- *   - **CRUD** : add / edit via the [AddStatDialog], delete via the confirmation modal. Edit / delete are exposed
- *     **only on owned rows** (`source !== IMPORT`) — the server enforces ownership regardless.
+ * Stats page — the sheet completed after the 4 pm close (cf. `mockup/stats.html` and
+ * `mockup/PARCOURS.md`, step 5) :
  *
- * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`, `refetchTrigger`)
- * and refetches when any changes.
+ * - **KPIs** over the filtered set (not the current page) : stats completed / to complete, average
+ *   push at open, average LOD, fade at the close. They come from `GET /api/stats/summary`.
+ * - **Completion panel** for a pending stat : the premarket recap on top, then the session prices
+ *   with their live % vs the open, the three flags, and Save / Later. It opens on the first pending
+ *   stat of the page and on the « Complete » button of any pending row.
+ * - **Table** in two column groups — Premarket (copied from the candidate) and Session (price + %
+ *   vs the open) — then the flags. Every column is kept ; horizontal scrolling is fine.
+ * - **Filters** : search, period preset, pattern, status ; server-side sort + pagination.
+ *
+ * Stats are created by promoting a candidate (#189) — this page never creates one. The « → Trade »
+ * column lands with the stat → trade flow (#193).
  */
 @Component({
   selector: 'app-stats-page',
@@ -110,16 +130,15 @@ const DEFAULT_PAGE_SIZE = 10;
     DecimalPipe,
     NumberMaskDirective,
     StbButtonModule,
+    StbButtonToggleModule,
+    StbCheckboxModule,
     StbChipsModule,
-    StbDatePickerModule,
-    StbDividerModule,
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
     StbPaginatorModule,
     StbProgressSpinnerModule,
     StbSelectModule,
-    StbSidenavModule,
     StbSortHeaderModule,
     StbTableModule,
     StbTooltipModule,
@@ -130,104 +149,142 @@ const DEFAULT_PAGE_SIZE = 10;
 })
 export class StatsPage {
   private readonly repo = inject(StatsRepository);
-  private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
-  private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   // ---- Data state ----
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly entries = signal<StatEntry[]>([]);
   readonly totalElements = signal(0);
+  readonly summary = signal<StatSummary | null>(null);
 
   // ---- Pagination ----
   readonly pageIndex = signal(0);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly pageSizeOptions = [10, 25, 50, 100];
 
-  // ---- Refetch nudge (CRUD ops bump it to re-fire the fetch effect, à la journal) ----
+  // ---- Refetch nudge (a save / delete bumps it to re-fire the fetch effect) ----
   private readonly refetchTrigger = signal(0);
 
   // ---- Search (debounced 250 ms) ----
   private readonly searchInput$ = new Subject<string>();
   readonly searchTerm = toSignal(
     this.searchInput$.pipe(debounceTime(250), distinctUntilChanged()),
-    { initialValue: '' },
+    {
+      initialValue: '',
+    },
   );
   readonly searchValue = signal('');
 
-  // ---- Filter drawer ----
-  readonly drawer = viewChild.required<MatSidenav>('filterDrawer');
-  readonly filterModel = signal<FilterFormModel>(EMPTY_FILTER);
-  readonly appliedFilter = signal<FilterFormModel>(EMPTY_FILTER);
-  readonly activeFilterCount = computed(() => {
-    const f = this.appliedFilter();
-    let n = 0;
-    if (f.dateFrom || f.dateTo) n += 1;
-    if (f.source) n += 1;
-    if (f.gapMin != null || f.gapMax != null) n += 1;
-    return n;
-  });
-
-  // ---- Sort (server-side, controlled-component) ----
-  readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
-
+  // ---- Filters ----
   readonly periods = PERIOD_PRESETS;
-  readonly sourceOptions = SOURCE_OPTIONS;
+  readonly period = signal<PeriodPresetKey>('all');
+  readonly patterns = PATTERNS;
+  readonly pattern = signal<Pattern | null>(null);
+  readonly statusTabs = STATUS_TABS;
+  readonly status = signal<StatStatus | null>(null);
+
+  // ---- Sort ----
+  readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
   readonly columns = [
     'tradeDate',
     'ticker',
-    'source',
-    'gapUpPercent',
-    'floatSharesMillions',
-    'institutionsPercent',
+    'pattern',
+    'gap',
+    'pmPush',
+    'float',
+    'volume',
+    'locate',
     'openPrice',
-    'highPrice',
-    'lodPrice',
-    'eodPrice',
-    'pushPercent',
-    'lodPercent',
-    'eodPercent',
-    'note',
+    'pushOpen',
+    'hod',
+    'lod',
+    'eod',
+    'flags',
     'actions',
   ] as const;
 
+  /** The day's rows with their derived percentages. */
+  readonly rows = computed<StatRow[]>(() =>
+    this.entries().map((e) => ({
+      ...e,
+      gap: gapPercent(e.previousClose, e.pmOpen),
+      pmPush: pmPushPercent(e.pmOpen, e.pmHigh),
+      pushOpenPercent: percentVsOpen(e.openPrice, e.pushOpenPrice),
+      hodPercent: percentVsOpen(e.openPrice, e.hodPrice),
+      lodPercent: percentVsOpen(e.openPrice, e.lodPrice),
+      eodPercent: percentVsOpen(e.openPrice, e.eodPrice),
+    })),
+  );
+
+  // ---- Completion panel ----
+  /** The stat being completed — null = the panel is closed. */
+  readonly completing = signal<StatEntry | null>(null);
+  readonly saving = signal(false);
+  readonly session = signal<SessionModel>(BLANK_SESSION);
+  /** Rows the user dismissed with « Later » — they stop auto-opening the panel for this visit. */
+  private readonly dismissed = signal<ReadonlySet<string>>(new Set());
+
+  /** Premarket recap shown above the session inputs. */
+  readonly completingRecap = computed(() => {
+    const s = this.completing();
+    if (!s) return null;
+    return {
+      gap: gapPercent(s.previousClose, s.pmOpen),
+      pmPush: pmPushPercent(s.pmOpen, s.pmHigh),
+    };
+  });
+
+  /** Live % vs the open for each session input, as the user types. */
+  readonly sessionPercents = computed(() => {
+    const m = this.session();
+    return {
+      pushOpen: percentVsOpen(m.openPrice, m.pushOpenPrice),
+      hod: percentVsOpen(m.openPrice, m.hodPrice),
+      lod: percentVsOpen(m.openPrice, m.lodPrice),
+      eod: percentVsOpen(m.openPrice, m.eodPrice),
+    };
+  });
+
+  readonly hodBelowLod = computed(() => {
+    const { hodPrice, lodPrice } = this.session();
+    return hodPrice !== null && lodPrice !== null && hodPrice < lodPrice;
+  });
+
+  /** Saving needs the whole session block — a half-filled panel stays "to complete". */
+  readonly canSave = computed(() => {
+    const m = this.session();
+    return (
+      isPositive(m.openPrice) &&
+      isPositive(m.pushOpenPrice) &&
+      isPositive(m.hodPrice) &&
+      isPositive(m.lodPrice) &&
+      isPositive(m.eodPrice) &&
+      !this.hodBelowLod()
+    );
+  });
+
   constructor() {
     effect(() => {
-      const q = this.searchTerm();
-      const f = this.appliedFilter();
+      const filterValue = this.currentFilter();
       const sort = this.sort();
       const pageIndex = this.pageIndex();
       const pageSize = this.pageSize();
       this.refetchTrigger();
-      this.fetch(
-        {
-          query: q || null,
-          dateFrom: f.dateFrom,
-          dateTo: f.dateTo,
-          source: f.source,
-          gapMin: f.gapMin,
-          gapMax: f.gapMax,
-        },
-        {
-          pageIndex,
-          pageSize,
-          sortField: sort.columnName || undefined,
-          sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
-        },
-      );
+      this.fetch(filterValue, {
+        pageIndex,
+        pageSize,
+        sortField: sort.columnName || undefined,
+        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
+      });
     });
   }
 
-  /** Owned rows (radar / manual) are editable + deletable ; IMPORT rows are read-only. */
-  isOwned(entry: StatEntry): boolean {
-    return OWNED_SOURCES.includes(entry.source);
-  }
+  // ---- Filter handlers ----
 
-  // ---- Search handlers ----
   onSearchInput(value: string): void {
     this.searchValue.set(value);
     this.searchInput$.next(value);
@@ -240,63 +297,25 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
-  // ---- Drawer + filter handlers ----
-  toggleDrawer(): void {
-    void this.drawer().toggle();
-  }
-
-  applyFilters(): void {
-    this.appliedFilter.set({ ...this.filterModel() });
-    this.pageIndex.set(0);
-    void this.drawer().close();
-  }
-
-  resetFilters(): void {
-    this.filterModel.set({ ...EMPTY_FILTER });
-    this.appliedFilter.set({ ...EMPTY_FILTER });
+  setPeriod(period: PeriodPresetKey): void {
+    this.period.set(period);
     this.pageIndex.set(0);
   }
 
-  /** Picking a preset populates dateFrom / dateTo via `date-fns` helpers (same as the journal). */
-  onPeriodChange(key: PeriodPresetKey): void {
-    if (key === 'custom') {
-      this.filterModel.update((m) => ({ ...m, period: 'custom' }));
-      return;
-    }
-    const range = computePeriodRange(key);
-    this.filterModel.update((m) => ({
-      ...m,
-      period: key,
-      dateFrom: range.dateFrom,
-      dateTo: range.dateTo,
-    }));
+  setPattern(pattern: Pattern | null): void {
+    this.pattern.set(pattern);
+    this.pageIndex.set(0);
   }
 
-  setDateFrom(d: Date | null): void {
-    this.filterModel.update((m) => ({ ...m, period: 'custom', dateFrom: d }));
+  setStatus(status: StatStatus | null): void {
+    this.status.set(status);
+    this.pageIndex.set(0);
   }
 
-  setDateTo(d: Date | null): void {
-    this.filterModel.update((m) => ({ ...m, period: 'custom', dateTo: d }));
-  }
-
-  setSource(s: StatSource | null): void {
-    this.filterModel.update((m) => ({ ...m, source: s }));
-  }
-
-  setGapMin(n: number | null): void {
-    this.filterModel.update((m) => ({ ...m, gapMin: n }));
-  }
-
-  setGapMax(n: number | null): void {
-    this.filterModel.update((m) => ({ ...m, gapMax: n }));
-  }
-
-  // ---- Sort + pagination ----
-  onSortChange(s: Sort): void {
+  onSortChange(sort: Sort): void {
     this.sort.set({
-      columnName: s.direction !== '' ? s.active : '',
-      isAscending: s.direction === 'asc',
+      columnName: sort.direction ? sort.active : '',
+      isAscending: sort.direction === 'asc',
     });
     this.pageIndex.set(0);
   }
@@ -306,45 +325,66 @@ export class StatsPage {
     this.pageSize.set(event.pageSize);
   }
 
-  // ---- CRUD ----
-  openCreate(): void {
-    this.openDialog(null);
+  // ---- Completion panel ----
+
+  complete(entry: StatEntry): void {
+    this.completing.set(entry);
+    this.session.set(sessionOf(entry));
   }
 
-  openEdit(entry: StatEntry): void {
-    this.openDialog(entry);
+  setSessionPrice(field: keyof SessionModel, value: number | null): void {
+    this.session.update((m) => ({ ...m, [field]: value }));
   }
 
-  /**
-   * Jumps to the journal and pre-fills a new trade from this stat row : ticker + date are seeded
-   * and the trade is pre-linked to this stat (`statId` → the trade's `statEntryId` FK). The journal
-   * page reads these query params, opens the add-trade dialog pre-filled, then strips the params.
-   * Available on every row (including global IMPORT ones), not just owned ones.
-   */
-  createTrade(entry: StatEntry): void {
-    void this.router.navigate(['/journal'], {
-      queryParams: {
-        ticker: entry.ticker,
-        date: format(entry.tradeDate, 'yyyy-MM-dd'),
-        statId: entry.id,
-      },
-    });
+  toggleFlag(field: 'ssr' | 'under1Dollar' | 'entryAfter11am', value: boolean): void {
+    this.session.update((m) => ({ ...m, [field]: value }));
   }
+
+  /** « Later » — closes the panel without saving and stops it re-opening on this stat. */
+  later(): void {
+    const current = this.completing();
+    if (current) {
+      this.dismissed.update((set) => new Set(set).add(current.id));
+    }
+    this.completing.set(null);
+  }
+
+  save(): void {
+    const entry = this.completing();
+    if (!entry || !this.canSave() || this.saving()) return;
+    const input = this.toInput(entry, this.session());
+
+    this.saving.set(true);
+    this.repo
+      .update(entry.id, input)
+      .pipe(
+        tap((saved) => {
+          this.toast('stats.snackbar.completeSuccess', 'success', { ticker: saved.ticker });
+          this.completing.set(null);
+          this.refetch();
+        }),
+        catchError(() => {
+          this.toast('stats.snackbar.completeError', 'error');
+          return EMPTY;
+        }),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe();
+  }
+
+  // ---- Row actions ----
 
   delete(entry: StatEntry): void {
-    let willEmptyPage = false;
-
     this.confirm
       .ask('stats.confirmDelete', { params: { ticker: entry.ticker }, variant: 'danger' })
       .pipe(
         filter(Boolean),
-        switchMap(() => {
-          willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
-          return this.repo.delete(entry.id);
-        }),
+        switchMap(() => this.repo.delete(entry.id)),
         tap(() => {
           this.toast('stats.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
-          if (willEmptyPage) {
+          if (this.completing()?.id === entry.id) this.completing.set(null);
+          // Deleting the last row of a non-zero page would strand the user on an empty page.
+          if (this.entries().length === 1 && this.pageIndex() > 0) {
             this.pageIndex.update((n) => n - 1);
           } else {
             this.refetch();
@@ -358,64 +398,78 @@ export class StatsPage {
       .subscribe();
   }
 
-  private refetch(): void {
-    this.refetchTrigger.update((n) => n + 1);
+  // ---- Internals ----
+
+  private currentFilter(): StatEntryFilter {
+    const range = computePeriodRange(this.period());
+    return {
+      query: this.searchTerm() || null,
+      dateFrom: range.dateFrom,
+      dateTo: range.dateTo,
+      pattern: this.pattern(),
+      status: this.status(),
+    };
   }
 
-  private fetch(filter: StatEntryFilter, page: PageRequest): void {
+  private fetch(
+    filterValue: StatEntryFilter,
+    page: {
+      pageIndex: number;
+      pageSize: number;
+      sortField?: string;
+      sortDirection?: 'asc' | 'desc';
+    },
+  ): void {
     this.loading.set(true);
     this.error.set(null);
-    this.repo.findAll(filter, page).subscribe({
+    this.repo.findAll(filterValue, page).subscribe({
       next: (result) => {
         this.entries.set(result.content);
         this.totalElements.set(result.totalElements);
         this.loading.set(false);
+        this.autoOpenPending(result.content);
       },
       error: () => {
+        this.entries.set([]);
         this.error.set(this.translate.instant('stats.errors.load'));
         this.loading.set(false);
       },
     });
+    this.repo.summary(filterValue).subscribe({
+      next: (summary) => this.summary.set(summary),
+      error: () => this.summary.set(null),
+    });
   }
 
   /**
-   * Dialog → save pipeline. `afterClosed()` emits the form result ; `switchMap` chains into create
-   * (new) or update (edit). A 409 (day/ticker collision) surfaces a dedicated toast.
+   * Opens the completion panel on the first pending stat of the page — the page's job at 4 pm is to
+   * complete them. Stats dismissed with « Later » are skipped, and an open panel is never replaced.
    */
-  private openDialog(entry: StatEntry | null): void {
-    const isUpdate = entry !== null;
-    const data: AddStatDialogData = { entry };
-    const ref = this.dialog.open<AddStatDialog, AddStatDialogData, StatEntryInput | undefined>(
-      AddStatDialog,
-      { data, width: '760px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
-    );
-    ref
-      .afterClosed()
-      .pipe(
-        filter((input): input is StatEntryInput => !!input),
-        switchMap((input) =>
-          (isUpdate ? this.repo.update(entry!.id, input) : this.repo.create(input)).pipe(
-            tap((saved) => {
-              const key = isUpdate
-                ? 'stats.snackbar.updateSuccess'
-                : 'stats.snackbar.createSuccess';
-              this.toast(key, 'success', { ticker: saved.ticker });
-              this.refetch();
-            }),
-            catchError((err: { status?: number }) => {
-              const key =
-                err?.status === 409
-                  ? 'stats.snackbar.duplicate'
-                  : isUpdate
-                    ? 'stats.snackbar.updateError'
-                    : 'stats.snackbar.createError';
-              this.toast(key, 'error');
-              return EMPTY;
-            }),
-          ),
-        ),
-      )
-      .subscribe();
+  private autoOpenPending(rows: StatEntry[]): void {
+    if (this.completing()) return;
+    const pending = rows.find((s) => !s.completed && !this.dismissed().has(s.id));
+    if (pending) this.complete(pending);
+  }
+
+  private refetch(): void {
+    this.refetchTrigger.update((n) => n + 1);
+  }
+
+  /** The completion panel sends the whole row back — premarket untouched, session + flags updated. */
+  private toInput(entry: StatEntry, session: SessionModel): StatEntryInput {
+    return {
+      tradeDate: entry.tradeDate,
+      pattern: entry.pattern,
+      ticker: entry.ticker,
+      previousClose: entry.previousClose,
+      pmOpen: entry.pmOpen,
+      pmHigh: entry.pmHigh,
+      floatMillions: entry.floatMillions,
+      volumeMillions: entry.volumeMillions,
+      locatePerShare: entry.locatePerShare,
+      note: entry.note,
+      ...session,
+    };
   }
 
   private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
@@ -424,4 +478,8 @@ export class StatsPage {
       panelClass: `stb-snack-bar--${variant}`,
     });
   }
+}
+
+function isPositive(n: number | null): boolean {
+  return n !== null && n > 0;
 }

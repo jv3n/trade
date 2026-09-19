@@ -2,91 +2,61 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
+import { Pattern } from '../../shared/pattern.model';
 import {
   PageRequest,
   PagedResult,
-  RadarStatInput,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
-  StatSource,
+  StatSummary,
 } from '../stat-entry.model';
-import { ImportResult, StatsRepository } from '../stats.repository';
+import { StatsRepository } from '../stats.repository';
 
 // ---------------------------------------------------------------------------
 // Wire DTOs — the shape Spring Boot serialises on `/api/stats`. Kept private : consumers only ever
 // see the domain [StatEntry] / [StatEntryInput]. Spring emits `LocalDate` as `YYYY-MM-DD` and
-// `Instant` as ISO-8601 with `Z` ; the form request sends `LocalDate` strings back the same way.
+// `Instant` as ISO-8601 with `Z` ; the request sends `LocalDate` strings back the same way.
 // ---------------------------------------------------------------------------
 
 interface StatEntryWireDto {
   id: string;
+  candidateId: string | null;
   tradeDate: string;
+  pattern: Pattern;
   ticker: string;
-  gapUpPercent: number | null;
-  openPrice: number | null;
-  floatSharesMillions: number | null;
-  institutionsPercent: number | null;
-  instOver20: boolean | null;
-  under1Dollar: boolean | null;
-  ssr: boolean | null;
-  entryAfter11am: boolean | null;
+  previousClose: number;
+  pmOpen: number;
+  pmHigh: number;
+  floatMillions: number | null;
+  volumeMillions: number | null;
+  locatePerShare: number | null;
   note: string | null;
-  highPrice: number | null;
+  openPrice: number | null;
+  pushOpenPrice: number | null;
+  hodPrice: number | null;
   lodPrice: number | null;
   eodPrice: number | null;
-  pushPercent: number | null;
-  lodPercent: number | null;
-  eodPercent: number | null;
-  source: StatSource;
-  createdBy: string | null;
+  ssr: boolean;
+  under1Dollar: boolean;
+  entryAfter11am: boolean;
+  completed: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-/** Body of `POST /api/stats` (create) and `PUT /api/stats/{id}` (edit) — backend `StatEntryFormRequest`. */
-interface StatEntryWireRequest {
-  ticker: string;
-  gapUpPercent: number | null;
-  openPrice: number | null;
-  tradeDate: string;
-  source: StatSource;
-  floatSharesMillions: number | null;
-  institutionsPercent: number | null;
-  instOver20: boolean | null;
-  under1Dollar: boolean | null;
-  ssr: boolean | null;
-  entryAfter11am: boolean | null;
-  highPrice: number | null;
-  lodPrice: number | null;
-  eodPrice: number | null;
-  note: string | null;
-}
+/** Body of `PUT /api/stats/{id}` — the backend `StatEntryRequest`. */
+type StatEntryWireRequest = Omit<
+  StatEntryWireDto,
+  'id' | 'candidateId' | 'completed' | 'createdAt' | 'updatedAt'
+>;
 
 // `parseISO('2026-06-04')` → midnight LOCAL (no UTC shift) ; `parseISO('…Z')` → instant. Same
 // convention as the journal adapter.
 function fromWire(w: StatEntryWireDto): StatEntry {
   return {
-    id: w.id,
+    ...w,
     tradeDate: parseISO(w.tradeDate),
-    ticker: w.ticker,
-    gapUpPercent: w.gapUpPercent,
-    openPrice: w.openPrice,
-    floatSharesMillions: w.floatSharesMillions,
-    institutionsPercent: w.institutionsPercent,
-    instOver20: w.instOver20,
-    under1Dollar: w.under1Dollar,
-    ssr: w.ssr,
-    entryAfter11am: w.entryAfter11am,
-    note: w.note,
-    highPrice: w.highPrice,
-    lodPrice: w.lodPrice,
-    eodPrice: w.eodPrice,
-    pushPercent: w.pushPercent,
-    lodPercent: w.lodPercent,
-    eodPercent: w.eodPercent,
-    source: w.source,
-    createdBy: w.createdBy,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };
@@ -94,20 +64,9 @@ function fromWire(w: StatEntryWireDto): StatEntry {
 
 function toWire(input: StatEntryInput): StatEntryWireRequest {
   return {
-    ticker: input.ticker.trim().toUpperCase(),
-    gapUpPercent: input.gapUpPercent,
-    openPrice: input.openPrice,
+    ...input,
     tradeDate: format(input.tradeDate, 'yyyy-MM-dd'),
-    source: input.source,
-    floatSharesMillions: input.floatSharesMillions,
-    institutionsPercent: input.institutionsPercent,
-    instOver20: input.instOver20,
-    under1Dollar: input.under1Dollar,
-    ssr: input.ssr,
-    entryAfter11am: input.entryAfter11am,
-    highPrice: input.highPrice,
-    lodPrice: input.lodPrice,
-    eodPrice: input.eodPrice,
+    ticker: input.ticker.trim().toUpperCase(),
     note: input.note?.trim() || null,
   };
 }
@@ -140,16 +99,15 @@ function buildFilterParams(filter?: StatEntryFilter): HttpParams {
   if (filter.query?.trim()) params = params.set('q', filter.query.trim());
   if (filter.dateFrom) params = params.set('dateFrom', format(filter.dateFrom, 'yyyy-MM-dd'));
   if (filter.dateTo) params = params.set('dateTo', format(filter.dateTo, 'yyyy-MM-dd'));
-  if (filter.source) params = params.set('source', filter.source);
-  if (filter.gapMin != null) params = params.set('gapMin', String(filter.gapMin));
-  if (filter.gapMax != null) params = params.set('gapMax', String(filter.gapMax));
+  if (filter.pattern) params = params.set('pattern', filter.pattern);
+  if (filter.status) params = params.set('status', filter.status);
   return params;
 }
 
 /**
  * Default adapter for [StatsRepository]. [findAll] reads the filtered, paginated `Page<StatEntry>`
- * from `GET /api/stats`. CRUD goes through `POST` / `PUT` / `DELETE /api/stats` (owner-scoped on the
- * server). [importCsv] / [exportCsv] keep the multipart / blob legs.
+ * from `GET /api/stats` and [summary] the KPIs of the same filter ; [update] / [delete] are
+ * user-scoped on the server. [exportCsv] keeps the blob leg.
  */
 @Injectable()
 export class HttpStatsRepository extends StatsRepository {
@@ -173,19 +131,10 @@ export class HttpStatsRepository extends StatsRepository {
       .pipe(map((p) => fromPageWire(p)));
   }
 
-  createFromRadar(input: RadarStatInput): Observable<StatEntry> {
-    return this.http
-      .post<StatEntryWireDto>(this.base, {
-        ticker: input.ticker,
-        gapUpPercent: input.gapUpPercent,
-        openPrice: input.openPrice,
-        source: 'RADAR' satisfies StatSource,
-      })
-      .pipe(map(fromWire));
-  }
-
-  create(input: StatEntryInput): Observable<StatEntry> {
-    return this.http.post<StatEntryWireDto>(this.base, toWire(input)).pipe(map(fromWire));
+  summary(filter?: StatEntryFilter): Observable<StatSummary> {
+    return this.http.get<StatSummary>(`${this.base}/summary`, {
+      params: buildFilterParams(filter),
+    });
   }
 
   update(id: string, input: StatEntryInput): Observable<StatEntry> {
@@ -194,12 +143,6 @@ export class HttpStatsRepository extends StatsRepository {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
-  }
-
-  importCsv(file: File): Observable<ImportResult> {
-    const form = new FormData();
-    form.append('file', file, file.name);
-    return this.http.post<ImportResult>(`${this.base}/import`, form);
   }
 
   /**

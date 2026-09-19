@@ -1,28 +1,38 @@
 package com.portfolioai.stats.application.dto
 
+import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
- * Decoded representation of one CSV data row, before the derived percentage columns are computed.
+ * Full payload of a stat — premarket block, session block and flags. Used by `PUT /api/stats/{id}`
+ * — what the completion panel sends back after the 4 pm close.
  *
- * Every field here is read straight off the import CSV. Required fields are non-nullable ; only
- * [note] is optional. The percentages ([com.portfolioai.stats.domain.StatEntry.pushPercent] etc.)
- * are NOT part of this request — they are computed at insert time from the price levels.
+ * The premarket prices are required and positive, with [pmHigh] >= [pmOpen] ; the session prices
+ * are optional (all absent = the stat stays "to complete") but each one must be positive, and
+ * [hodPrice] >= [lodPrice] when both are in. Percentages are never sent : they are derived from the
+ * prices. Validation is done in-service (a clean 400, not a DB CHECK hit).
  */
 data class StatEntryRequest(
   val tradeDate: LocalDate,
+  val pattern: Pattern = Pattern.GUS,
   val ticker: String,
-  val gapUpPercent: BigDecimal,
-  val floatSharesMillions: BigDecimal,
-  val institutionsPercent: BigDecimal,
-  val instOver20: Boolean,
-  val under1Dollar: Boolean,
-  val ssr: Boolean,
-  val entryAfter11am: Boolean,
+  // ---- Premarket ----
+  val previousClose: BigDecimal,
+  val pmOpen: BigDecimal,
+  val pmHigh: BigDecimal,
+  val floatMillions: BigDecimal? = null,
+  val volumeMillions: BigDecimal? = null,
+  val locatePerShare: BigDecimal? = null,
   val note: String? = null,
-  val openPrice: BigDecimal,
-  val highPrice: BigDecimal,
-  val lodPrice: BigDecimal,
-  val eodPrice: BigDecimal,
+  // ---- Session ----
+  val openPrice: BigDecimal? = null,
+  val pushOpenPrice: BigDecimal? = null,
+  val hodPrice: BigDecimal? = null,
+  val lodPrice: BigDecimal? = null,
+  val eodPrice: BigDecimal? = null,
+  // ---- Flags ----
+  val ssr: Boolean = false,
+  val under1Dollar: Boolean = false,
+  val entryAfter11am: Boolean = false,
 )

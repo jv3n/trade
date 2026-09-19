@@ -338,22 +338,81 @@
     }
   },
   "stats": {
-    "title": "Stats trades",
-    "subtitle": "Dataset des shorts gap-up — contexte du setup, niveaux de prix du jour et mouvements push / LOD / EOD dérivés.",
-    "searchPlaceholder": "Rechercher par ticker…",
+    "title": "Stats",
+    "subtitle": "Une ligne par candidat passé en stats — données du matin en premarket, données de séance saisies après la clôture de 16h.",
+    "searchPlaceholder": "Rechercher un ticker…",
     "clearSearch": "Effacer la recherche",
-    "toggleFilters": "Filtres",
-    "filters": "Filtres",
-    "addStat": "Ajouter",
     "loading": "Chargement des stats…",
-    "empty": "Aucune stat pour l'instant. Ajoute une analyse, fais « Add stat » depuis le radar, ou un admin peut importer le dataset communauté.",
+    "empty": "Aucune stat ici. Passe un candidat en stat depuis la page Candidats.",
     "errors": {
       "load": "Impossible de charger les stats. Réessaie."
     },
+    "kpi": {
+      "completed": "Stats complétées",
+      "toComplete": "{{count}} à compléter",
+      "allDone": "Rien à compléter",
+      "averagePushOpen": "Push à l'open moyen",
+      "averageLod": "LOD moyen",
+      "vsOpen": "vs open",
+      "fade": "Fade à la clôture",
+      "fadeSub": "EOD sous l'open · moyenne {{average}}"
+    },
+    "complete": {
+      "title": "Compléter la séance —",
+      "hint": "à saisir après la clôture de 16h · les % se calculent vs l'open",
+      "percentBase": "base des %",
+      "hodBelowLod": "Le HOD est sous le LOD",
+      "later": "Plus tard",
+      "save": "Enregistrer"
+    },
+    "filters": {
+      "period": "Période",
+      "pattern": "Pattern",
+      "allPatterns": "Tous les patterns"
+    },
+    "periods": {
+      "all": "Tout l'historique",
+      "custom": "Période personnalisée",
+      "thisMonth": "Ce mois-ci",
+      "lastMonth": "Le mois dernier",
+      "thisQuarter": "Ce trimestre",
+      "lastQuarter": "Le trimestre dernier",
+      "thisYear": "Cette année",
+      "lastYear": "L'an dernier"
+    },
+    "status": {
+      "ALL": "Toutes",
+      "TO_COMPLETE": "À compléter",
+      "COMPLETED": "Complétées"
+    },
+    "fields": {
+      "tradeDate": "Date",
+      "ticker": "Ticker",
+      "pattern": "Pattern",
+      "previousClose": "Clôture veille",
+      "pmOpen": "Open PM",
+      "pmHigh": "High PM",
+      "gap": "Gap",
+      "pmPush": "Push PM",
+      "float": "Float",
+      "volume": "Volume",
+      "locate": "Locate",
+      "note": "Note",
+      "openPrice": "Open ($)",
+      "openPriceShort": "Open",
+      "pushOpen": "Push open",
+      "hod": "HOD",
+      "lod": "LOD",
+      "eod": "EOD",
+      "flags": "Flags",
+      "ssr": "SSR",
+      "under1Dollar": "Prix < 1 $",
+      "entryAfter11am": "Entrée après 11h"
+    },
     "actions": {
-      "edit": "Modifier",
-      "delete": "Supprimer",
-      "createTrade": "Créer un trade dans le journal"
+      "complete": "Compléter",
+      "edit": "Modifier la séance",
+      "delete": "Supprimer"
     },
     "confirmDelete": {
       "title": "Supprimer la stat {{ticker}} ?",
@@ -361,69 +420,10 @@
       "confirm": "Supprimer"
     },
     "snackbar": {
-      "createSuccess": "Analyse de {{ticker}} ajoutée.",
-      "createError": "Impossible d'ajouter l'analyse. Réessaie.",
-      "updateSuccess": "Analyse de {{ticker}} mise à jour.",
-      "updateError": "Impossible de mettre à jour l'analyse. Réessaie.",
-      "deleteSuccess": "Analyse de {{ticker}} supprimée.",
-      "deleteError": "Impossible de supprimer l'analyse. Réessaie.",
-      "duplicate": "Tu as déjà une analyse pour ce ticker ce jour-là."
-    },
-    "dialog": {
-      "createTitle": "Ajouter une analyse",
-      "editTitle": "Modifier l'analyse",
-      "save": "Enregistrer",
-      "cancel": "Annuler",
-      "sections": {
-        "setup": "Setup",
-        "outcome": "Résultat (fin de journée)"
-      }
-    },
-    "filterPanel": {
-      "period": "Période",
-      "dateFrom": "Du",
-      "dateTo": "Au",
-      "sourceAll": "Toutes",
-      "gapRange": "Plage de gap",
-      "gapMin": "Gap min",
-      "gapMax": "Gap max",
-      "reset": "Réinitialiser",
-      "apply": "Appliquer",
-      "periodPresets": {
-        "all": "Toutes périodes",
-        "custom": "Plage personnalisée",
-        "thisMonth": "Ce mois",
-        "lastMonth": "Mois dernier",
-        "thisQuarter": "Ce trimestre",
-        "lastQuarter": "Trimestre dernier",
-        "thisYear": "Cette année",
-        "lastYear": "Année dernière"
-      }
-    },
-    "fields": {
-      "tradeDate": "Date",
-      "ticker": "Ticker",
-      "source": "Source",
-      "gapUpPercent": "Gap up",
-      "floatSharesMillions": "Float",
-      "institutionsPercent": "Inst. %",
-      "instOver20": "> 20 % inst.",
-      "under1Dollar": "< 1 $",
-      "ssr": "SSR",
-      "entryAfter11am": "Entrée > 11 h",
-      "openPrice": "Open",
-      "highPrice": "High",
-      "lodPrice": "LOD",
-      "eodPrice": "EOD",
-      "pushPercent": "% Push",
-      "lodPercent": "% LOD",
-      "eodPercent": "% EOD",
-      "note": "Notes"
-    },
-    "source": {
-      "IMPORT": "Import",
-      "RADAR": "Radar",
-      "MANUAL": "Manuel"
+      "completeSuccess": "Séance de {{ticker}} enregistrée.",
+      "completeError": "Impossible d'enregistrer la séance. Réessaie.",
+      "deleteSuccess": "Stat {{ticker}} supprimée.",
+      "deleteError": "Impossible de supprimer la stat. Réessaie."
     }
   },
   "lexicon": {
@@ -524,48 +524,28 @@
     "preferences": "Préférences",
     "opsLinks": "Liens ops",
     "accessControl": "Contrôle d'accès",
-    "statsImport": "Import des stats",
+    "statsExport": "Export des stats",
     "lexicon": "Lexique",
     "lexiconPage": {
       "title": "Lexique",
       "description": "Réservé à l'admin — gère le glossaire trading partagé (ajout, édition, suppression des termes). La vue en lecture seule est accessible à tous via « Lexique » dans la navigation principale."
     },
-    "statsImportPage": {
-      "title": "Import des stats",
-      "description": "Admin uniquement — injecte le jeu de stats de trade (généré par scripts/stats) en base via CSV, ou réexporte toute la table.",
+    "statsExportPage": {
+      "title": "Export des stats",
+      "description": "Télécharge ta feuille de stats en CSV, pour la relire dans un tableur. Pas d'import : une stat se crée en passant un candidat en stat.",
       "export": {
         "title": "Export",
-        "subtitle": "Télécharger toute la table",
-        "description": "Télécharge toutes les lignes de stats en CSV, dans le même format que l'import.",
+        "subtitle": "Télécharger les stats en CSV",
+        "description": "Une ligne par stat, de la plus récente à la plus ancienne.",
         "format": {
           "encoding": "UTF-8 avec BOM, RFC 4180 — s'ouvre proprement dans Excel.",
-          "columns": "14 colonnes — identique à l'import (calculées %push / %LOD / %EOD omises).",
-          "roundtrip": "Roundtrip-safe — le fichier exporté se réimporte tel quel."
+          "columns": "18 colonnes — bloc premarket, bloc séance et flags. Aucun pourcentage : ils se calculent à partir des prix.",
+          "pending": "Une stat à compléter sort avec ses cinq cases de séance vides."
         },
         "button": "Exporter en CSV",
         "exporting": "Export en cours…",
         "success": "Export téléchargé.",
         "error": "Échec de l'export. Réessaie."
-      },
-      "import": {
-        "title": "Import",
-        "subtitle": "Injecter le CSV de stats",
-        "description": "Dépose le stats-data-prod.csv produit par scripts/stats (ou tout fichier au même format de colonnes). Lot atomique — si une ligne est invalide, rien n'est enregistré et tu obtiens un rapport d'erreurs par ligne ci-dessous.",
-        "format": {
-          "source": "Généré par scripts/stats depuis la feuille de stats de trade.",
-          "columns": "14 colonnes — %push / %LOD / %EOD sont calculés côté serveur.",
-          "atomic": "Lot atomique — une seule ligne invalide rejette tout le fichier."
-        },
-        "dropLabel": "Glisse ton CSV ici",
-        "or": "ou",
-        "browse": "Parcourir",
-        "hint": ".csv uniquement — un seul fichier.",
-        "uploading": "Envoi et validation…",
-        "success": "{{ count }} ligne(s) de stats importée(s).",
-        "failed": "{{ count }} erreur(s) trouvée(s) — rien n'a été importé.",
-        "errorLine": "ligne {{ line }}",
-        "errorNetwork": "Erreur réseau. Réessaie.",
-        "again": "Importer un autre fichier"
       }
     },
     "preferencesPage": {

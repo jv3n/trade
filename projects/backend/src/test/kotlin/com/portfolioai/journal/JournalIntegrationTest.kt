@@ -77,8 +77,8 @@ class JournalIntegrationTest {
     // Wipe the journal table between tests — we share the Testcontainers Postgres across the
     // whole suite, so isolating per-class data is the test's responsibility.
     repo.deleteAll()
-    // IMPORT stat rows carry a null created_by, so the app_user cascade below won't reach them —
-    // wipe them explicitly to keep the (date, ticker) uniqueness clean across tests.
+    // Stats are wiped before the users : `trade_entry.stat_entry_id` is ON DELETE SET NULL, so a
+    // leftover stat would survive the cascade below and break the (user, date, ticker) uniqueness.
     statRepo.deleteAll()
 
     // The two users are recreated each time : `deleteAll()` on `app_user` cascades to
@@ -549,12 +549,19 @@ class JournalIntegrationTest {
       statEntryId = statEntryId,
     )
 
+  /**
+   * A stat of [testUser] — since #187 a stat always belongs to a user, so the FK tested here hangs
+   * off the caller's own sheet. Only the premarket block is required ; the session block is what
+   * the stats module completes at the 4 pm close and plays no part in the journal link.
+   */
   private fun sampleStat(ticker: String = "AAPL", tradeDate: LocalDate = LocalDate.of(2026, 6, 4)) =
     StatEntry(
+      user = testUser,
       tradeDate = tradeDate,
       ticker = ticker,
-      gapUpPercent = BigDecimal("52.00"),
-      openPrice = BigDecimal("3.2100"),
+      previousClose = BigDecimal("2.6500"),
+      pmOpen = BigDecimal("3.2100"),
+      pmHigh = BigDecimal("3.6000"),
     )
 
   private fun sampleEntity(

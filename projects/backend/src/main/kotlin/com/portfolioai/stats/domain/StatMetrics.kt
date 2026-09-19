@@ -4,28 +4,32 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 /**
- * Pure percentage metrics derived from a stat row's price levels, all relative to the open.
+ * Percentages derived from a stat's prices — **never stored**. Used server-side for the listing
+ * KPIs ; the front recomputes the same formulas for the table and the live completion preview
+ * (`features/stats/stats.math.ts`).
  *
- * Encoding matches the rest of the stats model : **value ×100**, 2 decimals, `HALF_UP` rounding (so
- * `5.95` means 5.95 %, consistent with `gapUpPercent`). A negative result means the level sat below
- * the open — favourable for a short.
- *
- * Computed at insert time by [com.portfolioai.stats.application.StatEntryService] and persisted
- * into the `*_percent` columns ; never read from the import CSV.
+ * Encoding : whole-number percentage, 2 decimals, `HALF_UP` (`52.83` = +52.83 %). A session
+ * percentage below zero means the level sat under the open — favourable for a short.
  */
 object StatMetrics {
   private const val SCALE = 2
   private val HUNDRED = BigDecimal("100")
 
-  /** `(high - open) / open * 100`. */
-  fun pushPercent(open: BigDecimal, high: BigDecimal): BigDecimal = relativeToOpen(open, high)
+  /** Gap % = (PM open − previous close) / previous close. */
+  fun gapPercent(previousClose: BigDecimal, pmOpen: BigDecimal): BigDecimal? =
+    change(previousClose, pmOpen)
 
-  /** `(lod - open) / open * 100`. */
-  fun lodPercent(open: BigDecimal, lod: BigDecimal): BigDecimal = relativeToOpen(open, lod)
+  /** Premarket push % = (PM high − PM open) / PM open. */
+  fun pmPushPercent(pmOpen: BigDecimal, pmHigh: BigDecimal): BigDecimal? = change(pmOpen, pmHigh)
 
-  /** `(eod - open) / open * 100`. */
-  fun eodPercent(open: BigDecimal, eod: BigDecimal): BigDecimal = relativeToOpen(open, eod)
+  /** Any session level against the session open — push at open, HOD, LOD, EOD. */
+  fun percentVsOpen(open: BigDecimal?, level: BigDecimal?): BigDecimal? {
+    if (open == null || level == null) return null
+    return change(open, level)
+  }
 
-  private fun relativeToOpen(open: BigDecimal, value: BigDecimal): BigDecimal =
-    value.subtract(open).multiply(HUNDRED).divide(open, SCALE, RoundingMode.HALF_UP)
+  private fun change(base: BigDecimal, value: BigDecimal): BigDecimal? {
+    if (base.signum() <= 0) return null
+    return value.subtract(base).multiply(HUNDRED).divide(base, SCALE, RoundingMode.HALF_UP)
+  }
 }

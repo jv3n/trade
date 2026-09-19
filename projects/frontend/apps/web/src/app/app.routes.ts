@@ -6,7 +6,7 @@ import { adminGuard, authGuard } from './core/router/auth.guards';
  *
  * **Admin gating** is per sub-route, not on `/settings` itself, so USER role can reach
  * `/settings/preferences` (theme + language) while ADMIN-only sub-routes (ops-links,
- * access-control, stats-import, lexicon) keep their `adminGuard`.
+ * access-control, stats-export, lexicon) keep their `adminGuard`.
  */
 export const routes: Routes = [
   // `/login` and `/error` are the two routes exempt from `authGuard`. `/login` is the OAuth entry
@@ -88,10 +88,10 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'stats-import',
+        path: 'stats-export',
         canActivate: [adminGuard],
         loadComponent: () =>
-          import('./features/settings/stats-import/stats-import').then((m) => m.StatsImportPage),
+          import('./features/settings/stats-export/stats-export').then((m) => m.StatsExportPage),
       },
       {
         path: 'lexicon',
