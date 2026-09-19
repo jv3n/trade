@@ -28,8 +28,7 @@ import org.hibernate.type.SqlTypes
  * tables : [fillsJson] is a `List<CandidateFill>` (shares actually short per rung), [entriesJson] a
  * `List<CandidateEntry>` (free-form short entry legs feeding the average position) and [exitsJson]
  * a `List<CandidateExit>` (planned / executed cover legs). All map to Postgres `jsonb` as a String
- * via `@JdbcTypeCode(SqlTypes.JSON)` — marshalling to/from typed objects is the service's job, same
- * convention as `ScreenerSnapshotDay.moversJson` / `TickerNarrativeSnapshot`.
+ * via `@JdbcTypeCode(SqlTypes.JSON)` — marshalling to/from typed objects is the service's job.
  *
  * Percentages are stored as whole numbers (`5.00` = 5 %, `40.00` = 40 %) ; the front converts to a
  * fraction where the math needs it. Derived figures (ladder, totals, residual, gains) are never

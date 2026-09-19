@@ -33,10 +33,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
  *
  * Drives the **real** [TradeEntryService] (create / update / delete) and asserts on the resulting
  * `account_movement` rows — exercising `TradeEntryService`'s `TradeChangedEvent` publication, the
- * `@TransactionalEventListener(AFTER_COMMIT)` bridge, `AccountTradeSyncService`'s upsert, and the
- * DB `ON DELETE CASCADE` on `trade_entry_id`, end to end against real Postgres.
+ * synchronous `@EventListener` bridge, `AccountTradeSyncService`'s upsert, and the DB `ON DELETE
+ * CASCADE` on `trade_entry_id`, end to end against real Postgres.
  *
- * The AFTER_COMMIT listener runs synchronously as the service transaction commits, so by the time a
+ * The listener runs synchronously inside the service transaction, so by the time a
  * `service.create/update/delete` call returns the movement is already reconciled — no polling.
  *
  * `AuthService` is mocked so the user-scope is deterministic.

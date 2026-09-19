@@ -28,11 +28,11 @@ import org.springframework.web.client.RestClient
  *
  * **Caching** — Frankfurter republishes once per business day (~16:00 CET). A 6 h in-memory
  * Caffeine TTL keeps the figure same-day fresh while sparing the (unmetered, but
- * courteous-to-spare) API. A tiny standalone cache rather than the shared Caffeine `CacheManager` :
- * forex lives in its own module and a second unqualified `CacheManager` bean would make the
- * `market/` `@Cacheable` resolution ambiguous.
+ * courteous-to-spare) API. A small cache owned by the adapter, not a Spring `CacheManager` : this
+ * is the only cached call in the app, and keeping the cache next to the HTTP call it protects makes
+ * its keying and TTL obvious.
  *
- * **Fail-soft** — a 4xx/5xx, an unreachable host, an empty body, or a missing quote all raise
+ * **Fails loudly** — a 4xx/5xx, an unreachable host, an empty body, or a missing quote all raise
  * [UpstreamUnavailableException] (mapped to HTTP 503 globally). Nothing is cached on failure, so
  * the next call retries ; the front-end keeps the balance in USD meanwhile.
  */
