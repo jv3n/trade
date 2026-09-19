@@ -11,7 +11,8 @@ Every Angular Material primitive used by `apps/web` is wrapped under `libs/ui/sr
 
 - **Single point of configuration** — `mat.<name>-overrides(...)` mixin called once, `:root`-scoped. Dark / light theme swap via `[data-theme='light']` cascades automatically through the `var(--color-…)` references.
 - **Exhaustive documentation by code** — every M3 token (per `_m3-<name>.scss > get-tokens()`) is listed in the override file, with applied tokens carrying a value and deferred tokens commented in. Future contributors see at a glance what's still on the table without re-reading the Material source.
-- **Theme + density consistency** — the lib owns the radius (6 px), spacing, type scale, and accent recipe (`--color-accent-soft` selected pill, `--color-accent-strong` selected text). No per-feature Material customisation drift.
+- **Theme + density consistency** — the lib owns the design tokens (`styles/_tokens.scss` : OKLCH palette, `-soft` variants derived with `color-mix()`, radii 6 / 8 / 12 px, Geist fonts), the Material theme (`styles/_theme.scss` : `mat.theme()` with the system colours `--mat-sys-*` mapped onto the `--color-*` tokens, so even non-overridden components follow the palette), and density (form fields at `form-field-density(-4)`). No per-feature Material customisation drift.
+- **Colour rule** — green / red (`--color-success` / `--color-danger`) only for outcomes, amber (`--color-warning`) for warnings, indigo (`--color-accent`) for status / categories, neutral for the rest (the `ticker` chip variant is neutral on purpose).
 - **Variant extension without forking** — domain-specific variants ride on standalone directives (`StbSize`, `StbChip`…) that post a class on the host. The Material primitive stays untouched ; the variant CSS scopes via the `.stb-<name>--<variant>` selector.
 
 ## Folder layout

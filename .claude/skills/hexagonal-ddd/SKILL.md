@@ -1,169 +1,114 @@
 ---
 name: hexagonal-ddd
-description: Hexagonal + DDD-tactical conventions for the PortfolioAI backend. Use when wiring a new external provider, introducing a port and its adapters, adding an `@Primary` routing client, designing fail-soft error handling, or deciding what belongs in `domain/` vs `application/` vs `infrastructure/`.
+description: Hexagonal + DDD-tactical conventions for the PortfolioAI backend. Use when introducing a port and its adapter, calling an external API, designing upstream error handling (fail-hard vs fail-soft), wiring a cross-context dependency through a domain event, or deciding what belongs in `domain/` vs `application/` vs `infrastructure/`.
 ---
 
 # Hexagonal + DDD Conventions
 
-A practical flavour of hexagonal — bounded contexts at the top, three layers inside, and opinionated patterns for talking to external providers.
+A practical flavour of hexagonal — bounded contexts at the top, three layers inside, a port only where the outside world is involved.
 
 Pair with [`folders-structure-backend`](../folders-structure-backend/SKILL.md) for *where* files go; this skill is about *why* the structure works.
 
 ## Glossary
 
-Use these terms exactly. Drift into "service" / "provider" / "client" interchangeably and the architecture loses its shape.
+Use these terms exactly.
 
-- **Bounded context** — a top-level package under `com.portfolioai/` (`market/`, `news/`, `analyst/`, …). One product capability.
-- **Domain** — pure Kotlin under `<context>/domain/`. No Spring, no Jackson, no JPA. Compilable without a Spring context. Includes aggregates, value objects, enums, and **outbound ports**. Domain exceptions live next to the aggregate that raises them; cross-context exceptions like `UpstreamUnavailableException` live in `shared/`.
-- **Application service** — `@Service` under `<context>/application/` orchestrating one use case. Depends on ports + other application services. Where caching and `@Async` live.
-- **Port** — `interface` declaring what a capability needs from the outside. All current ports are *outbound* and live in `<context>/domain/` — the domain owns the contract it depends on.
-- **Adapter** — concrete `@Component` under `<context>/infrastructure/<capability>/`. Three flavours: **real** (`FinnhubClient`, `TwelveDataClient`), **mock** (`MockNewsClient`, deterministic synthetic data, default when no API key), **routing** (`RoutingNewsClient`, `@Primary`, delegates per-call).
-- **Wire model** — Jackson-bound DTOs mirroring an external provider's JSON exactly. Lives in `<Provider>Models.kt` alongside its adapter. Never crosses into `domain/`.
-- **Routing** — the `@Primary` adapter that selects which real/mock adapter to delegate to at every call, based on the runtime config key.
-- **Fail-soft** — degrading a non-critical external dependency to `null` instead of failing the whole request. Distinct from **fail-hard**: required dependency, errors propagate via `UpstreamUnavailableException` → HTTP 503.
+- **Bounded context** — a top-level package under `com.portfolioai/` (`journal/`, `account/`, `stats/`, `candidates/`, `lexicon/`, `forex/`, plus the support contexts `auth/`, `config/`). One product capability.
+- **Domain** — Kotlin under `<context>/domain/`: aggregates, value objects, enums, domain calculators (`TradePositionCalculator`) and **outbound ports**. No Spring, no Jackson. JPA `@Entity` is tolerated on plain aggregates (`TradeEntry`, `AccountMovement`) — see `folders-structure-backend`. Cross-context exceptions like `UpstreamUnavailableException` live in `shared/`.
+- **Application service** — `@Service` under `<context>/application/` orchestrating one use case (`TradeEntryService`, `AccountService`, `ForexService`). Owns transactions, default sorts, event publishing.
+- **Port** — an `interface` declaring what a capability needs from the outside. Outbound, lives in `<context>/domain/` — the domain owns the contract it depends on. Today there is exactly one: `forex.domain.ForexRateClient`.
+- **Adapter** — the concrete `@Component` realising a port, under `<context>/infrastructure/…` (`FrankfurterForexClient`).
+- **Wire model** — the Jackson-bound DTO mirroring the provider's JSON (`FrankfurterLatestResponse`, `private` in the adapter file). Never crosses into `domain/`.
+- **Fail-hard / fail-soft** — see below.
 
 ## The canonical port + adapter group
 
 ```
-news/
+forex/
 ├── domain/
-│   ├── NewsItem.kt          # domain value object
-│   └── NewsClient.kt        # PORT — interface, ~10 lines, KDoc what callers expect
+│   ├── ForexRate.kt                  # value object — 1 base = rate quote, asOf
+│   └── ForexRateClient.kt            # PORT — pure interface, KDoc on what callers expect
 ├── application/
-│   └── NewsService.kt       # imports NewsClient from domain
-└── infrastructure/
-    └── news/
-        ├── MockNewsClient.kt        # ADAPTER — deterministic, default when no key
-        ├── FinnhubClient.kt         # ADAPTER — real provider
-        ├── FinnhubModels.kt         # wire DTOs (Jackson-bound)
-        ├── FinnhubMappers.kt        # wire → domain (Foo.toDomain())
-        └── RoutingNewsClient.kt     # @Primary, dispatches per call
+│   ├── ForexService.kt               # depends on ForexRateClient, never on the adapter
+│   └── dto/ForexRateDto.kt
+└── infrastructure/http/
+    ├── ForexController.kt            # GET /api/forex/rate
+    ├── ForexHttpConfig.kt            # @Bean forexRestClient (timeouts)
+    └── FrankfurterForexClient.kt     # ADAPTER + private wire model
 ```
 
 ```kotlin
-@Service
-class NewsService(private val client: NewsClient) {   // gets RoutingNewsClient injected (@Primary)
-  @Cacheable(NEWS_CACHE, key = "#symbol.toUpperCase() + '|' + #limit")
-  fun forSymbol(symbol: String, limit: Int = 10): List<NewsItem> = client.fetchNews(symbol, limit)
+// domain/ForexRateClient.kt
+interface ForexRateClient {
+  fun latest(base: String, quote: String): ForexRate
 }
-```
 
-Naming is **verbatim across contexts** — don't rename `Client` to `Provider` or `Service` because "it reads better" in one place. The grep-ability of `Routing*Client` is the point.
-
-**Why ports live in `domain/`** — strict hexagonal: the domain owns the contracts it depends on; infrastructure realises them. Dependencies point inward (`infrastructure/news/` *imports* `domain/NewsClient`, never the reverse). Keep the port file pure: no Spring, no Jackson, no annotations. If a "port" needs `@Component`, it's an adapter.
-
-> Historical note (B1 refactor) — until early 2026, ports lived in `<context>/infrastructure/<capability>/`. The B1 dette pass moved them to `domain/`. JPA repository interfaces (`*Repository extends JpaRepository`) are **not** ports of the same kind and stay in `infrastructure/persistence/` — framework-tied by design.
-
-## The routing pattern — three rules
-
-### 1. Always instantiate every adapter
-
-```kotlin
-@Component class MockNewsClient : NewsClient { /* … */ }
-@Component class FinnhubClient(/* … */) : NewsClient { /* … */ }
-```
-
-**No `@ConditionalOnProperty`.** Both beans always wired so a runtime config switch lands on the *next call*, not after reboot.
-
-### 2. The router is `@Primary` and reads config per call
-
-```kotlin
-@Component
-@Primary
-class RoutingNewsClient(
-  @Qualifier("mockNewsClient") private val mock: NewsClient,
-  @Qualifier("finnhubClient") private val finnhub: NewsClient,
-  private val appConfig: AppConfigService,
-) : NewsClient {
-  override fun fetchNews(symbol: String, limit: Int): List<NewsItem> {
-    val provider = appConfig.getString(ConfigKeys.NEWS_PROVIDER)
-    return when (provider) {
-      ConfigKeys.PROVIDER_MOCK -> mock.fetchNews(symbol, limit)
-      ConfigKeys.PROVIDER_FINNHUB -> finnhub.fetchNews(symbol, limit)
-      else -> throw IllegalArgumentException("Unknown news provider: '$provider'")
-    }
+// application/ForexService.kt
+@Service
+class ForexService(private val client: ForexRateClient) {
+  fun latest(base: String, quote: String): ForexRateDto {
+    val rate = client.latest(base.uppercase(), quote.uppercase())
+    return ForexRateDto(base = rate.base, quote = rate.quote, rate = rate.rate, asOf = rate.asOf)
   }
 }
 ```
 
-Read config per call, not at construction. Caching the value once at construction defeats the design.
+Naming: port `<Capability>Client`, adapter `<Provider><Capability>Client`. Keep `Client` — don't rename it `Provider` / `Gateway` in one place.
 
-### 3. Delegate by `when`, not by name lookup
+**Why ports live in `domain/`** — dependencies point inward: `infrastructure/http/FrankfurterForexClient` imports `domain/ForexRateClient`, never the reverse. Keep the port file pure: no Spring, no annotations. If a "port" needs `@Component`, it's an adapter.
 
-The `when` is explicit; unknown-provider throws `IllegalArgumentException` (→ HTTP 400). Don't build a map-by-name — every new adapter is a code change anyway, and the explicit `when` makes the supported set discoverable.
-
-## Fail-soft vs fail-hard
-
-Pick once per call site, document the choice.
-
-### Fail-hard — the call is required
-
-Wrap upstream errors in `UpstreamUnavailableException` (defined in `shared/` because the same 503 contract applies to every external integration). Let it propagate.
-
-```kotlin
-try {
-  rest.get().uri("/stock/recommendation?symbol=$symbol&token=$token").retrieve().body(...)
-} catch (e: HttpClientErrorException.Unauthorized, e: HttpClientErrorException.Forbidden) {
-  throw UpstreamUnavailableException("auth-failed", e)
-} catch (e: HttpClientErrorException.TooManyRequests) {
-  throw UpstreamUnavailableException("rate-limited", e)
-} catch (e: ResourceAccessException) {
-  throw UpstreamUnavailableException("unreachable", e)
-}
-```
-
-`GlobalExceptionHandler` maps `UpstreamUnavailableException` → HTTP 503 with body `"Données momentanément indisponibles"`. `NoSuchElementException` → 404 for "symbol not covered by the provider".
-
-### Fail-soft — the call is optional enrichment
-
-A secondary endpoint that may legitimately be unavailable (e.g. Finnhub's `/stock/price-target` 401s on free-tier). Catch *specifically* the expected errors, return `null` or skip the field, **log `warn`** for debugging:
-
-```kotlin
-private fun fetchPriceTargetOrNull(symbol: String, token: String): PriceTarget? = try {
-  rest.get().uri("/stock/price-target?symbol=$symbol&token=$token").retrieve().body(...)
-} catch (e: HttpClientErrorException) {
-  log.warn("price-target unavailable for {} ({})", symbol, e.statusCode)
-  null
-}
-```
-
-Two rules:
-1. Fail-soft is opt-in per call site, **not** a generic try/catch around the whole adapter — a bare `catch (Exception)` swallows your own bugs and disguises them as "provider unavailable".
-2. Fail-soft is for **enrichment**, never for the primary capability. If the user-visible feature breaks without this call, it's fail-hard.
-
-## Cache placement
-
-`@Cacheable` lives on the **application service**, not on the adapter.
-
-```kotlin
-@Service
-class NewsService(private val client: NewsClient) {
-  @Cacheable(NEWS_CACHE, key = "#symbol.toUpperCase() + '|' + #limit")
-  fun forSymbol(symbol: String, limit: Int = 10) = client.fetchNews(symbol, limit)
-}
-```
-
-Three reasons:
-1. **Provider switch invalidation** — the key excludes the provider name. When the user flips `news.provider`, the next call hits the router fresh. Adapter-level caching would mix stale `mock` data after switching.
-2. **One cache per capability**, not one per adapter.
-3. **`@Cacheable` runs through Spring AOP** — the proxy must wrap the bean at the call site. Service-level wrapping is clean.
-
-Use `#symbol.toUpperCase()` (Java method) in SpEL, not `.uppercase()` (Kotlin extension — invisible to SpEL).
-
-Known exception: `market/`'s historical `TwelveDataClient` caches at the adapter with a `'twelvedata|'` key prefix. Dette technique ticket tracks homogenising.
+JPA repositories (`*Repository : JpaRepository`) are **not** ports of this kind: they stay in `infrastructure/persistence/`, framework-tied by design, and application services inject them directly.
 
 ## When to introduce a port — the deletion test
 
 *Would deleting this port concentrate complexity, or just move it?*
 
-A port earns its keep when **two or more adapters exist** (mock + real, or two real providers). One adapter is a hypothetical seam — interface tax for a switch nobody flips. Wait for the second adapter. Two adapters almost always means mock + real here, because the mock path is what makes the app demoable without API keys. If you can't picture the mock, you don't need the port yet.
+Introduce a port for an **external system** (a third-party HTTP API): the domain shouldn't know about URLs, JSON shapes or HTTP errors, and tests can target the adapter in isolation. `ForexRateClient` passes because it hides Frankfurter's wire format and failure modes, and a different rate provider could replace the adapter without touching `ForexService`.
+
+Don't introduce one for in-process collaborators (another `@Service`, a CSV encoder, a JPA repository) — that's interface tax for a seam nobody swaps. One adapter per port is the norm here: no router, no mock adapter, no provider switch. If a second provider is ever needed, add it then.
+
+## Fail-hard vs fail-soft
+
+Pick once per call site, document the choice in KDoc.
+
+### Fail-hard — the call is required
+
+Translate every upstream failure into `UpstreamUnavailableException` (`shared/`), and let it propagate. `GlobalExceptionHandler` maps it to **HTTP 503** (`{"error": …, "detail": ex.message}`); `NoSuchElementException` maps to 404. This is what `FrankfurterForexClient` does:
+
+```kotlin
+try {
+  rest.get().uri("$baseUrl/latest?base={base}&symbols={quote}", base, quote).retrieve()
+    .body(FrankfurterLatestResponse::class.java)
+} catch (e: HttpClientErrorException) {
+  throw UpstreamUnavailableException("client error ${e.statusCode}", e)
+} catch (e: HttpServerErrorException) {
+  throw UpstreamUnavailableException("upstream ${e.statusCode}", e)
+} catch (e: ResourceAccessException) {
+  throw UpstreamUnavailableException("unreachable", e)
+} ?: throw UpstreamUnavailableException("Frankfurter returned an empty body for $base->$quote")
+```
+
+Never return a stale or invented value to mask the outage — for forex, a wrong CAD figure is worse than none. The **degradation happens at the consumer**: the front-end keeps the balance in USD on a 503. (The forex KDoc calls this "fail-soft" from the page's point of view; on the backend it is fail-hard.)
+
+### Fail-soft — the call is optional enrichment
+
+When a secondary call enriches an otherwise complete response, catch the *specific* expected exception, log `warn`, and return `null` / skip the field. Two rules:
+
+1. Opt-in per call site, never a blanket `catch (e: Exception)` around the adapter — that swallows your own bugs as "provider unavailable".
+2. Enrichment only. If the user-visible feature breaks without the call, it's fail-hard.
+
+No call site in the codebase currently needs fail-soft.
+
+## Caching an external call
+
+`FrankfurterForexClient` caches in the adapter with a standalone Caffeine cache (6 h TTL, key `"$base|$quote"`) — not the shared `CacheManager`. Failures throw out of the loader so nothing is cached and the next call retries. Rule of thumb: cache where the upstream cost is, never cache an error, and key on normalised inputs (`ForexService` upper-cases the codes before calling the port).
 
 ## Cross-context dependencies
 
-Bounded contexts call each other through **application services**. Never inject another context's adapter directly; never reach into another context's `domain/` from an adapter.
+Contexts talk through **application-layer types** — services or events — never through another context's adapter or wire model.
 
-- `analysis/` consumes `market/`, `news/`, `analyst/`, `earnings/` via their `*Service` beans (not `*Client` ports).
-- `portfolio/` reads market quotes via `market.application.TickerService`.
-- `UpstreamUnavailableException` is the one accepted shared symbol — crosses contexts intentionally because the 503 mapping must stay uniform. Lives in `shared/` so importing it doesn't create an implicit cross-context dep.
+- **Domain events for write-side side effects.** `journal` publishes `journal.application.TradeChangedEvent` from `TradeEntryService` (create / update / import / delete) via `ApplicationEventPublisher`; `account` consumes it with `account.infrastructure.TradeMovementSyncListener` (`@EventListener`, synchronous, **same transaction**) which delegates to the `@Transactional` `AccountTradeSyncService`. Trade and ledger movement commit or roll back together, and `journal` doesn't know `account` exists. Prefer this over injecting the consumer's service into the producer.
+- **`auth/` is the shared identity context.** Other contexts inject `AuthService` (current user) and reference `auth.domain.User` on their aggregates. Known exception: `AccountTradeSyncService` injects `auth.infrastructure.persistence.UserRepository` — don't copy that; go through `AuthService` in new code.
+- **`shared/`** holds the few symbols every context may import: `GlobalExceptionHandler`, `UpstreamUnavailableException`, `SpaFallbackConfig`.
 
-If a new cross-context dep would force importing an adapter or wire model, that's a smell — promote what you need into the consumer's application service, or move the shared concept to `shared/`.
+If a new cross-context dependency would force importing an adapter or wire model, that's a smell — publish an event, expose what you need through the owning application service, or move the shared concept to `shared/`.
