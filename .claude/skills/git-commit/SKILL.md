@@ -13,14 +13,11 @@ Create standardized, semantic git commits using the Conventional Commits specifi
 ## Conventional Commit Format
 
 ```
-<type>(<optional scope>): <description>
-
-[optional body]
-
-[optional footer(s)]
+<type>(<issue>/<scope>): <description>
 ```
 
-PortfolioAI does not use a ticket-prefix convention. Scope is the affected module / area only.
+- **Title only** — no body, no footer, no `Co-Authored-By` trailer, no mention of Claude / AI.
+- **Every commit is linked to a GitHub issue** — the issue number prefixes the scope (`feat(93/journal): …`). If no issue exists for the work, ask the user which one to use before committing — unless they waived it (large foundation commits), in which case use a plain scope (`chore(mockup): …`).
 
 ## Commit Types
 
@@ -40,14 +37,10 @@ PortfolioAI does not use a ticket-prefix convention. Scope is the affected modul
 
 ## Breaking Changes
 
+Flag a breaking change with `!` after the scope — never with a `BREAKING CHANGE:` footer (no footers allowed):
+
 ```
-# Exclamation mark after type/scope
-feat!: remove deprecated endpoint
-
-# BREAKING CHANGE footer
-feat: allow config to extend other configs
-
-BREAKING CHANGE: `extends` key behavior changed
+feat(93/journal)!: remove deprecated endpoint
 ```
 
 ## Workflow
@@ -88,28 +81,19 @@ git add -p
 Analyze the diff to determine:
 
 - **Type**: What kind of change is this?
+- **Issue**: Which GitHub issue does this work belong to? (required — ask the user if unknown)
 - **Scope**: What module / area is affected?
-  - Backend: `analysis`, `ingestion`, `portfolio`, `recommendations`, `shared`
-  - Frontend: `dashboard`, `import`, `history`, `settings`, `suivi`, `core`
-  - Cross-cutting: `claude`, `docs`, `ci`, `infra`
+  - Domain: `account`, `candidates`, `journal`, `stats`, `lexicon`, `auth`, `config`
+  - Cross-cutting: `core`, `ui`, `claude`, `docs`, `mockup`, `ci`, `infra`
 - **Description**: One-line summary of what changed (present tense, imperative mood, < 72 chars, **English**)
 
 ### 4. Execute Commit
 
 ```bash
-# Single line
-git commit -m "<type>(<scope>): <description>"
-
-# Multi-line with body/footer
-git commit -m "$(cat <<'EOF'
-<type>(<scope>): <description>
-
-<optional body>
-
-<optional footer>
-EOF
-)"
+git commit -m "<type>(<issue>/<scope>): <description>"
 ```
+
+A single `-m` with the title only — never a second `-m`, a heredoc body, or an attribution trailer.
 
 The repo's pre-commit hook runs Spotless (ktfmt) on Kotlin and Prettier on the frontend. Let it format your changes — do not bypass with `--no-verify`.
 

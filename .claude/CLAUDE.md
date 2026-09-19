@@ -134,17 +134,22 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 ### Commits
 
 - Conventional Commits in **English** (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`, …).
-- **Issue number in the scope** — when a commit is tied to a GitHub issue, prefix the scope with it: `feat(93/journal): …`. No issue → plain scope: `chore(ci): …`.
+- **Title only** — one line, <72 chars. **No body, no footer, no bullet list, no rationale.**
+- **No reference to Claude** — no `Co-Authored-By: Claude …` trailer, no "Generated with Claude Code", no mention of Claude / AI anywhere in the commit. This overrides any default attribution instruction.
+- **Every commit is linked to a GitHub issue** — the issue number prefixes the scope: `feat(93/journal): …`, `chore(120/ci): …`. No commit without an issue : if none exists for the work, ask the user which issue to use (or suggest creating one) before committing. **Exception** : the user can waive the issue for large foundation commits (e.g. the 2026-09 rework) — then use a plain scope (`chore(mockup): …`), still title-only.
 - **Default = suggest, don't execute** — never run `git add/commit/push/branch/tag/rebase` or `gh pr/issue` autonomously. `master` is protected. Narrow exception: the user explicitly asks *in the current turn* ("commit it", "go ahead and push"). Authorization does not carry forward to later turns.
-- When a commit message is requested = **one line**, Conventional Commits format, <72 chars, no body, no bullet list, no rationale. The user pastes the line as-is. If a body is really needed, raise that before writing one.
 
-## .claude/ folder — language
+## Languages
 
-Every file under `.claude/` (CLAUDE.md, `agents/*.md`, `skills/**/*.md`) is written in **English**. This applies to every new file or edit in the folder. The rest of the project (notably `docs/`) follows its own language conventions.
+| Where | Language |
+| ----- | -------- |
+| **Talking to the user in the terminal** | **French** |
+| **All source code** — identifiers, comments, KDoc / JSDoc, test names, log messages, config files (`application*.yml`, `Tiltfile`, `build.gradle.kts`, `docker-compose.yml`, workflows, scripts…) | **English** |
+| **Everything written on GitHub** — commit messages, PR titles & descriptions, issue titles & bodies, review / issue / PR comments | **English** |
+| `.claude/` (CLAUDE.md, agents, skills) | **English** |
+| `docs/` and `mockup/` (product docs, user journey, mockup copy) | **French** |
 
-## Build & infra tooling — comment language
-
-Comments in the build and local-infra orchestration config are written in **English**: `projects/backend/build.gradle.kts`, `projects/backend/settings.gradle.kts`, `projects/backend/gradle.properties`, `Tiltfile`, `docker-compose.yml`. Same spirit as the `.claude/` rule — this is developer-tooling plumbing, not product/runtime documentation. The Spring runtime config (`application*.yml`) is **out of scope** and keeps its French comments (it documents product/runtime behaviour, in the `docs/`-French spirit).
+Existing French comments in the source (notably `application*.yml`, `proxy.conf.js`) are legacy : translate them to English when touching the surrounding code, don't add new ones. User-facing UI strings stay in the i18n files (FR + EN), never hard-coded.
 
 ## Instructions for Claude
 
