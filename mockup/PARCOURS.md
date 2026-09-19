@@ -87,6 +87,10 @@ La page d'accueil suit la journée type : chaque étape avec son état (**faite*
 
 - Pas de cases à cocher pour les critères qualitatifs du GUS (chart, société, reverse split).
 - Rien sur le sizing (capital, risque, stop, échelle d'entrée, fills, covers) : ce n'est pas connu au moment de la capture.
+- Un seul candidat par jour et par ticker : une deuxième saisie du même ticker le même jour est refusée.
+- Clôture veille, open PM et high PM sont obligatoires (high PM ≥ open PM) ; float, volume, locate et note sont facultatifs.
+- Locate / prix en ambre au-delà de 5 % (coût d'emprunt lourd).
+- Les jours passés sont en lecture seule (historique).
 
 **Écran** : [`candidat.html`](candidat.html) — saisie rapide en haut (aperçu gap / push en direct), liste des candidats du jour triée par gap, bouton « → Stat » par ligne et « Tout passer en stats », navigation jour par jour.
 

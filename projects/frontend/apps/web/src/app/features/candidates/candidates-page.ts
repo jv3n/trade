@@ -1,439 +1,346 @@
-import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
-import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
-  StbCardModule,
   StbChipsModule,
   StbDatePickerModule,
-  StbDividerModule,
-  StbExpansionModule,
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
   StbProgressSpinnerModule,
   StbSelectModule,
+  StbTableModule,
+  StbTooltipModule,
 } from '@portfolioai/ui';
-import { EMPTY, catchError, filter, finalize, switchMap, tap } from 'rxjs';
-import {
-  Candidate,
-  CandidateEntry,
-  CandidateExit,
-  CandidateInput,
-} from '../../core/api/candidates/candidates.model';
+import { addDays, isBefore, isSameDay, startOfDay } from 'date-fns';
+import { EMPTY, Observable, catchError, filter, finalize, switchMap, tap } from 'rxjs';
+import { Candidate, CandidateInput } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
-import { StatEntryInput } from '../../core/api/stats/stat-entry.model';
-import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
-import { AddStatDialog, AddStatDialogData } from '../stats/add-stat-dialog/add-stat-dialog';
 import {
-  borrowFeePercent,
-  coverSummary,
-  dollarAtRisk,
-  entryLadder,
-  entrySummary,
-  executionSummary,
-  gusPercent,
+  EXPENSIVE_LOCATE_PERCENT,
+  gapPercent,
+  locatePercent,
+  pushPercent,
 } from './candidates.math';
 
-/**
- * Form model — the Signal Forms tree's source of truth for a candidate's saved inputs. Numbers are
- * `null` until typed ; the ladders (`fills` / `entries` / `exits`) live in their own signals because
- * they're edited row-by-row, not as plain form fields. Percentages are whole numbers (`5` = 5 %, `40` = 40 %).
- */
-interface CandidateFormModel {
-  tradingDate: Date;
+/** The capture form — numbers are `null` until typed. Float and volume in millions. */
+interface CaptureModel {
+  pattern: Pattern;
   ticker: string;
-  totalCapital: number | null;
-  pctCapitalAtRisk: number | null;
-  openPrice: number | null;
-  stopPct: number | null;
   previousClose: number | null;
-  floatShares: number | null;
-  volume: number | null;
-  morningPush: number | null;
-  borrowCostPerShare: number | null;
+  pmOpen: number | null;
+  pmHigh: number | null;
+  floatMillions: number | null;
+  volumeMillions: number | null;
+  locatePerShare: number | null;
   note: string;
 }
 
+/** A listed candidate with its derived figures (never stored — recomputed from the capture). */
+export interface CandidateRow extends Candidate {
+  gap: number | null;
+  push: number | null;
+  locatePct: number | null;
+}
+
+type NumericField = Exclude<keyof CaptureModel, 'pattern' | 'ticker' | 'note'>;
+
+function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
+  return {
+    pattern,
+    ticker: '',
+    previousClose: null,
+    pmOpen: null,
+    pmHigh: null,
+    floatMillions: null,
+    volumeMillions: null,
+    locatePerShare: null,
+    note: '',
+  };
+}
+
 /**
- * Candidates cockpit — prepares a short trade for the session : risk-based entry ladder, fixed-rung
- * execution tracker (sizing only), free-form actual-entries table (the source of the average short
- * position), cover ladder, plus the GUS / borrow helpers (absorbed from the shelved calculators). All
- * arithmetic is delegated to the pure `candidates.math` functions and surfaced via `computed` signals,
- * so the tables re-derive on every keystroke with no manual wiring.
+ * Candidates page — the **morning capture** (cf. `mockup/PARCOURS.md › Étape 1` and
+ * `mockup/candidat.html`) : a quick-entry form on top, the day's list below, browsed day by day.
  *
- * Persistence is **upsert + dropdown** : the dropdown lists the day's candidates (date-driven —
- * older ones are hidden), selecting one fills the form, and *Save* creates (no id yet) or re-saves
- * (id held). A candidate can seed a **stats** row via *Create a stat* — opening the `add-stat-dialog`
- * pre-filled with the date, ticker, gap % (from the GUS calc) and open price.
+ * - **Quick entry** — Enter validates, the form resets (keeping the pattern) and the focus goes back
+ *   to the ticker, so a whole radar scan is typed in one go. Gap % and push % preview live.
+ * - **Edit** — a row's edit button loads it into the same form, which then saves an update.
+ * - **List** — sorted by gap (largest first), with push, locate / price (amber when expensive) and
+ *   the note. Delete goes through the confirmation modal.
+ * - **Day navigation** — past days are read-only history : no form, no row actions.
+ *
+ * One candidate per (day, ticker) : the backend answers 409 on a duplicate, surfaced as a dedicated
+ * toast. The derived figures come from the pure `candidates.math` helpers.
  */
 @Component({
   selector: 'app-candidates-page',
   imports: [
+    DatePipe,
     DecimalPipe,
     FormField,
-    TranslatePipe,
     NumberMaskDirective,
     StbButtonModule,
-    StbCardModule,
     StbChipsModule,
     StbDatePickerModule,
-    StbDividerModule,
-    StbExpansionModule,
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
     StbProgressSpinnerModule,
     StbSelectModule,
+    StbTableModule,
+    StbTooltipModule,
+    TranslatePipe,
   ],
   templateUrl: './candidates-page.html',
   styleUrl: './candidates-page.scss',
 })
 export class CandidatesPage {
   private readonly repo = inject(CandidatesRepository);
-  private readonly statsRepo = inject(StatsRepository);
-  private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
 
-  /** Id of the loaded candidate — `null` = a fresh, unsaved one. Drives create-vs-update on save. */
-  readonly selectedId = signal<string | null>(null);
+  private readonly tickerInput = viewChild<ElementRef<HTMLInputElement>>('tickerInput');
+
+  readonly patterns = PATTERNS;
+  readonly expensiveLocate = EXPENSIVE_LOCATE_PERCENT;
+  readonly columns = [
+    'ticker',
+    'pattern',
+    'previousClose',
+    'pmOpen',
+    'pmHigh',
+    'gap',
+    'push',
+    'float',
+    'volume',
+    'locate',
+    'locatePct',
+    'note',
+    'actions',
+  ] as const;
+
+  // ---- Day ----
+  readonly day = signal(startOfDay(new Date()));
+  readonly isToday = computed(() => isSameDay(this.day(), new Date()));
+  /** Past days are history : read-only. */
+  readonly readOnly = computed(() => isBefore(this.day(), startOfDay(new Date())));
+
+  // ---- List ----
+  readonly loading = signal(true);
+  readonly loadError = signal(false);
+  readonly candidates = signal<Candidate[]>([]);
+  /** The day's candidates with their derived figures, largest gap first (no gap → last). */
+  readonly rows = computed<CandidateRow[]>(() =>
+    this.candidates()
+      .map((c) => ({
+        ...c,
+        gap: gapPercent(c.previousClose, c.pmOpen),
+        push: pushPercent(c.pmOpen, c.pmHigh),
+        locatePct: locatePercent(c.locatePerShare, c.pmOpen),
+      }))
+      .sort((a, b) => (b.gap ?? -Infinity) - (a.gap ?? -Infinity)),
+  );
+
+  // ---- Capture form ----
+  /** Id of the candidate loaded for edit — `null` = the form captures a new one. */
+  readonly editingId = signal<string | null>(null);
   readonly saving = signal(false);
-
-  readonly model = signal<CandidateFormModel>(blankModel());
-
-  /** Shares actually short per rung (step → shares). Edited inline in the execution table. */
-  readonly fills = signal<ReadonlyMap<number, number>>(new Map());
-  /** Free-form short entry legs (price + shares). The source of the average short position. */
-  readonly entries = signal<CandidateEntry[]>([]);
-  /** Planned / executed cover legs. Edited inline in the cover table. */
-  readonly exits = signal<CandidateExit[]>([]);
-
-  /** The day's candidates feeding the dropdown (reloaded when the session date changes). */
-  readonly candidatesOfDay = signal<Candidate[]>([]);
-
-  readonly candidateForm = form(this.model, (path) => {
+  readonly model = signal<CaptureModel>(blankCapture());
+  readonly captureForm = form(this.model, (path) => {
     required(path.ticker);
     maxLength(path.ticker, 20);
+    maxLength(path.note, 2000);
   });
 
-  /** The numeric inputs the backend requires positive — guarded here for a clean local block. */
+  readonly gapPreview = computed(() => gapPercent(this.model().previousClose, this.model().pmOpen));
+  readonly pushPreview = computed(() => pushPercent(this.model().pmOpen, this.model().pmHigh));
+  /** PM high typed below the PM open — flagged on the field, blocks the save. */
+  readonly pmHighBelowOpen = computed(() => {
+    const { pmOpen, pmHigh } = this.model();
+    return pmOpen !== null && pmHigh !== null && pmHigh < pmOpen;
+  });
   readonly canSave = computed(() => {
     const m = this.model();
     return (
-      this.candidateForm().valid() &&
-      isPositive(m.totalCapital) &&
-      isPositive(m.pctCapitalAtRisk) &&
-      isPositive(m.openPrice)
+      this.captureForm().valid() &&
+      isPositive(m.previousClose) &&
+      isPositive(m.pmOpen) &&
+      isPositive(m.pmHigh) &&
+      !this.pmHighBelowOpen()
     );
   });
 
-  // ---- Derived cockpit (pure math) -------------------------------------------------------------
-  readonly riskBudget = computed(() =>
-    dollarAtRisk(this.model().totalCapital, this.model().pctCapitalAtRisk),
-  );
-  private readonly stopFraction = computed(() => {
-    const s = this.model().stopPct;
-    return s !== null ? s / 100 : null;
-  });
-  readonly ladder = computed(() =>
-    entryLadder(this.model().openPrice, this.stopFraction(), this.riskBudget()),
-  );
-  readonly execution = computed(() =>
-    executionSummary(this.ladder(), this.fills(), this.riskBudget()),
-  );
-  /**
-   * Sizing-zone rungs for the execution table, ordered low → high (5 % first). The planned ladder
-   * runs stop → profit (35 % first) ; execution is entered the way the trade builds — smallest gap
-   * first — so we reverse the sizing-zone slice for display. Totals are order-independent.
-   */
-  readonly executionRungs = computed(() =>
-    this.execution()
-      .rungs.filter((r) => r.maxShares !== null)
-      .reverse(),
-  );
-  /**
-   * Free-form entry table — the trader logs actual fill price + shares. Its weighted average is the
-   * **average short position** the cover ladder scores against (the fixed-rung tracker above is now
-   * the sizing reference only).
-   */
-  readonly entryTable = computed(() =>
-    entrySummary(this.entries(), this.model().openPrice, this.stopFraction()),
-  );
-  readonly cover = computed(() => coverSummary(this.exits(), this.entryTable().averagePosition));
-  readonly gus = computed(() => gusPercent(this.model().previousClose, this.model().openPrice));
-  readonly borrow = computed(() =>
-    borrowFeePercent(this.model().openPrice, this.model().borrowCostPerShare),
-  );
-
-  readonly tickerLabel = computed(() => this.model().ticker.trim().toUpperCase());
-
   constructor() {
-    this.loadDay();
+    this.load();
   }
 
-  /** A rung step (fraction of the open) as a whole-number percentage for display. */
-  stepPercent(step: number): number {
-    return step * 100;
+  // ---- Day navigation ----
+
+  previousDay(): void {
+    this.goTo(addDays(this.day(), -1));
   }
 
-  // ---- Selection / lifecycle -------------------------------------------------------------------
-
-  onSelect(id: string): void {
-    this.repo
-      .get(id)
-      .pipe(catchError(() => this.fail('candidates.snackbar.loadError')))
-      .subscribe((c) => this.loadCandidate(c));
+  nextDay(): void {
+    this.goTo(addDays(this.day(), 1));
   }
 
-  newCandidate(): void {
-    const tradingDate = this.model().tradingDate; // keep the session in focus
-    this.model.set({ ...blankModel(), tradingDate });
-    this.fills.set(new Map());
-    this.entries.set([]);
-    this.exits.set([]);
-    this.selectedId.set(null);
+  today(): void {
+    this.goTo(new Date());
   }
 
-  // ---- Imperative setters (number-mask / datepicker push through model.update) -----------------
-
-  setTradingDate(d: Date | null): void {
-    this.model.update((m) => ({ ...m, tradingDate: d ?? new Date() }));
-    this.loadDay();
-  }
-  setTotalCapital(n: number | null): void {
-    this.model.update((m) => ({ ...m, totalCapital: n }));
-  }
-  setPctCapitalAtRisk(n: number | null): void {
-    this.model.update((m) => ({ ...m, pctCapitalAtRisk: n }));
-  }
-  setOpenPrice(n: number | null): void {
-    this.model.update((m) => ({ ...m, openPrice: n }));
-  }
-  setStopPct(n: number | null): void {
-    this.model.update((m) => ({ ...m, stopPct: n }));
-  }
-  setPreviousClose(n: number | null): void {
-    this.model.update((m) => ({ ...m, previousClose: n }));
-  }
-  setFloatShares(n: number | null): void {
-    this.model.update((m) => ({ ...m, floatShares: n }));
-  }
-  setVolume(n: number | null): void {
-    this.model.update((m) => ({ ...m, volume: n }));
-  }
-  setMorningPush(n: number | null): void {
-    this.model.update((m) => ({ ...m, morningPush: n }));
-  }
-  setBorrowCostPerShare(n: number | null): void {
-    this.model.update((m) => ({ ...m, borrowCostPerShare: n }));
+  goTo(date: Date | null): void {
+    if (!date) return;
+    this.day.set(startOfDay(date));
+    this.resetForm();
+    this.load();
   }
 
-  // ---- Execution + cover editing ---------------------------------------------------------------
+  // ---- Capture form ----
 
-  setFill(step: number, shares: number | null): void {
-    const next = new Map(this.fills());
-    if (shares !== null && shares > 0) next.set(step, shares);
-    else next.delete(step);
-    this.fills.set(next);
+  setPattern(pattern: Pattern): void {
+    this.model.update((m) => ({ ...m, pattern }));
   }
 
-  addEntry(): void {
-    this.entries.update((e) => [...e, { entryPrice: 0, sharesInPlay: 0 }]);
-  }
-  removeEntry(index: number): void {
-    this.entries.update((e) => e.filter((_, i) => i !== index));
-  }
-  setEntryPrice(index: number, n: number | null): void {
-    this.entries.update((e) => e.map((x, i) => (i === index ? { ...x, entryPrice: n ?? 0 } : x)));
-  }
-  setEntryShares(index: number, n: number | null): void {
-    this.entries.update((e) => e.map((x, i) => (i === index ? { ...x, sharesInPlay: n ?? 0 } : x)));
+  setNumber(field: NumericField, value: number | null): void {
+    this.model.update((m) => ({ ...m, [field]: value }));
   }
 
-  addExit(): void {
-    this.exits.update((e) => [...e, { exitPrice: 0, sharesCovered: 0 }]);
-  }
-  removeExit(index: number): void {
-    this.exits.update((e) => e.filter((_, i) => i !== index));
-  }
-  setExitPrice(index: number, n: number | null): void {
-    this.exits.update((e) => e.map((x, i) => (i === index ? { ...x, exitPrice: n ?? 0 } : x)));
-  }
-  setExitShares(index: number, n: number | null): void {
-    this.exits.update((e) => e.map((x, i) => (i === index ? { ...x, sharesCovered: n ?? 0 } : x)));
-  }
+  submit(): void {
+    if (!this.canSave() || this.saving()) return;
+    const input = this.toInput();
+    const id = this.editingId();
+    const request$: Observable<Candidate> = id
+      ? this.repo.update(id, input)
+      : this.repo.create(input);
 
-  // ---- Persistence -----------------------------------------------------------------------------
-
-  save(): void {
-    if (!this.canSave()) {
-      this.candidateForm().markAsTouched();
-      return;
-    }
-    const m = this.model();
-    const input: CandidateInput = {
-      tradingDate: m.tradingDate,
-      ticker: m.ticker,
-      totalCapital: m.totalCapital!,
-      pctCapitalAtRisk: m.pctCapitalAtRisk!,
-      openPrice: m.openPrice!,
-      stopPct: m.stopPct,
-      previousClose: m.previousClose,
-      floatShares: m.floatShares,
-      volume: m.volume,
-      morningPush: m.morningPush,
-      borrowCostPerShare: m.borrowCostPerShare,
-      fills: [...this.fills()].map(([step, sharesInPlay]) => ({ step, sharesInPlay })),
-      entries: this.entries(),
-      exits: this.exits(),
-      note: m.note || null,
-    };
-    // Upsert keyed on (session date, ticker) — the backend updates the matching row or creates one.
-    // Changing the ticker therefore targets a *different* candidate rather than overwriting the
-    // loaded one. We know it's an update only if a candidate for that date+ticker already exists.
-    const isUpdate = this.candidatesOfDay().some((c) => c.ticker === m.ticker.trim().toUpperCase());
     this.saving.set(true);
-    this.repo
-      .create(input)
+    request$
       .pipe(
         tap((saved) => {
-          this.selectedId.set(saved.id);
           this.toast(
-            isUpdate ? 'candidates.snackbar.updateSuccess' : 'candidates.snackbar.createSuccess',
+            id ? 'candidates.snackbar.updateSuccess' : 'candidates.snackbar.createSuccess',
             'success',
+            { ticker: saved.ticker },
           );
-          this.loadDay();
+          this.resetForm();
+          this.load();
         }),
-        catchError(() => this.fail('candidates.snackbar.saveError')),
+        catchError((err: unknown) => {
+          const duplicate = err instanceof HttpErrorResponse && err.status === 409;
+          this.toast(
+            duplicate ? 'candidates.snackbar.duplicate' : 'candidates.snackbar.saveError',
+            'error',
+            { ticker: input.ticker.trim().toUpperCase() },
+          );
+          return EMPTY;
+        }),
         finalize(() => this.saving.set(false)),
       )
       .subscribe();
   }
 
-  remove(): void {
-    const id = this.selectedId();
-    if (!id) return;
+  edit(candidate: Candidate): void {
+    this.editingId.set(candidate.id);
+    this.model.set({
+      pattern: candidate.pattern,
+      ticker: candidate.ticker,
+      previousClose: candidate.previousClose,
+      pmOpen: candidate.pmOpen,
+      pmHigh: candidate.pmHigh,
+      floatMillions: candidate.floatMillions,
+      volumeMillions: candidate.volumeMillions,
+      locatePerShare: candidate.locatePerShare,
+      note: candidate.note ?? '',
+    });
+    this.focusTicker();
+  }
+
+  cancelEdit(): void {
+    this.resetForm();
+  }
+
+  delete(candidate: Candidate): void {
     this.confirm
-      .ask('candidates.confirmDelete', {
-        params: { ticker: this.tickerLabel() },
-        variant: 'danger',
-      })
+      .ask('candidates.confirmDelete', { params: { ticker: candidate.ticker }, variant: 'danger' })
       .pipe(
         filter(Boolean),
-        switchMap(() => this.repo.delete(id)),
+        switchMap(() => this.repo.delete(candidate.id)),
         tap(() => {
-          this.toast('candidates.snackbar.deleteSuccess', 'success');
-          this.newCandidate();
-          this.loadDay();
+          this.toast('candidates.snackbar.deleteSuccess', 'success', { ticker: candidate.ticker });
+          if (this.editingId() === candidate.id) this.resetForm();
+          this.load();
         }),
-        catchError(() => this.fail('candidates.snackbar.deleteError')),
+        catchError(() => {
+          this.toast('candidates.snackbar.deleteError', 'error');
+          return EMPTY;
+        }),
       )
       .subscribe();
   }
 
-  /**
-   * Create a stat from this candidate — opens the stats `AddStatDialog` pre-filled (date, ticker,
-   * gap % from the GUS calc, open price) and, on submit, saves it via the stats repository. Same
-   * dialog + create flow as the stats page ; the candidate is just the seed.
-   */
-  createStat(): void {
-    const m = this.model();
-    const data: AddStatDialogData = {
-      entry: null,
-      seed: {
-        tradeDate: m.tradingDate,
-        ticker: this.tickerLabel(),
-        gapUpPercent: this.gus()?.percent ?? null,
-        openPrice: m.openPrice,
-      },
-    };
-    this.dialog
-      .open<AddStatDialog, AddStatDialogData, StatEntryInput | undefined>(AddStatDialog, {
-        data,
-        width: '760px',
-        maxWidth: '95vw',
-        autoFocus: 'first-tabbable',
-      })
-      .afterClosed()
-      .pipe(
-        filter((input): input is StatEntryInput => !!input),
-        switchMap((input) =>
-          this.statsRepo.create(input).pipe(
-            tap(() => this.toast('candidates.snackbar.statCreated', 'success')),
-            catchError(() => this.fail('candidates.snackbar.statError')),
-          ),
-        ),
-      )
-      .subscribe();
-  }
+  // ---- Internals ----
 
-  // ---- Internals -------------------------------------------------------------------------------
-
-  private loadDay(): void {
+  private load(): void {
+    this.loading.set(true);
+    this.loadError.set(false);
     this.repo
-      .listForDate(this.model().tradingDate)
-      .pipe(catchError(() => this.fail('candidates.snackbar.loadError')))
-      .subscribe((rows) => this.candidatesOfDay.set(rows));
+      .listForDate(this.day())
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: (list) => this.candidates.set(list),
+        error: () => {
+          this.candidates.set([]);
+          this.loadError.set(true);
+        },
+      });
   }
 
-  private loadCandidate(c: Candidate): void {
-    this.model.set({
-      tradingDate: c.tradingDate,
-      ticker: c.ticker,
-      totalCapital: c.totalCapital,
-      pctCapitalAtRisk: c.pctCapitalAtRisk,
-      openPrice: c.openPrice,
-      stopPct: c.stopPct,
-      previousClose: c.previousClose,
-      floatShares: c.floatShares,
-      volume: c.volume,
-      morningPush: c.morningPush,
-      borrowCostPerShare: c.borrowCostPerShare,
-      note: c.note ?? '',
-    });
-    this.fills.set(new Map(c.fills.map((f) => [f.step, f.sharesInPlay] as [number, number])));
-    this.entries.set([...c.entries]);
-    this.exits.set([...c.exits]);
-    this.selectedId.set(c.id);
+  /** Clears the form for the next capture — keeps the pattern (a scan is usually one pattern). */
+  private resetForm(): void {
+    this.editingId.set(null);
+    this.model.set(blankCapture(this.model().pattern));
+    this.captureForm().reset();
+    this.focusTicker();
   }
 
-  private toast(key: string, variant: 'success' | 'error'): void {
-    this.snackBar.open(this.translate.instant(key), undefined, {
+  private focusTicker(): void {
+    this.tickerInput()?.nativeElement.focus();
+  }
+
+  private toInput(): CandidateInput {
+    const m = this.model();
+    return {
+      tradingDate: this.day(),
+      pattern: m.pattern,
+      ticker: m.ticker,
+      // Guarded non-null by `canSave`.
+      previousClose: m.previousClose!,
+      pmOpen: m.pmOpen!,
+      pmHigh: m.pmHigh!,
+      floatMillions: m.floatMillions,
+      volumeMillions: m.volumeMillions,
+      locatePerShare: m.locatePerShare,
+      note: m.note,
+    };
+  }
+
+  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
+    this.snackBar.open(this.translate.instant(key, params), undefined, {
       duration: variant === 'success' ? 3000 : 5000,
       panelClass: `stb-snack-bar--${variant}`,
     });
-  }
-
-  private fail(key: string) {
-    this.toast(key, 'error');
-    return EMPTY;
   }
 }
 
 function isPositive(n: number | null): boolean {
   return n !== null && n > 0;
-}
-
-function blankModel(): CandidateFormModel {
-  return {
-    tradingDate: new Date(),
-    ticker: '',
-    totalCapital: null,
-    pctCapitalAtRisk: 5, // sensible default risk budget — the trader overrides as needed
-    openPrice: null,
-    stopPct: 40, // canonical stop = the top ladder rung
-    previousClose: null,
-    floatShares: null,
-    volume: null,
-    morningPush: null,
-    borrowCostPerShare: null,
-    note: '',
-  };
 }

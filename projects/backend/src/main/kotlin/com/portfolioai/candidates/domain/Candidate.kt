@@ -1,6 +1,7 @@
 package com.portfolioai.candidates.domain
 
 import com.portfolioai.auth.domain.User
+import com.portfolioai.shared.Pattern
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -16,23 +17,13 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 
 /**
- * One short-trade candidate prepared for a session — the persisted backing of the candidates
- * cockpit (risk-based entry ladder + live execution tracker + cover ladder + GUS / borrow context).
- * One row per ticker the trader sets up ; scoped by [user] (`ON DELETE CASCADE`).
+ * A ticker spotted on the radar in the morning, captured with what is known in **premarket** only
+ * (cf. `mockup/PARCOURS.md › Étape 1`). Scoped by [user] (`ON DELETE CASCADE`) ; one candidate per
+ * (user, [tradingDate], [ticker]) — enforced by `ux_candidate_user_day_ticker`.
  *
- * The **lifecycle is date-driven** : [tradingDate] decides visibility — the cockpit's dropdown only
- * lists the current day's candidates, older ones are implicitly closed (kept for history, off the
- * picker). There is no status column by design.
- *
- * The ladders are low-cardinality, candidate-local arrays so they ride as JSON rather than child
- * tables : [fillsJson] is a `List<CandidateFill>` (shares actually short per rung), [entriesJson] a
- * `List<CandidateEntry>` (free-form short entry legs feeding the average position) and [exitsJson]
- * a `List<CandidateExit>` (planned / executed cover legs). All map to Postgres `jsonb` as a String
- * via `@JdbcTypeCode(SqlTypes.JSON)` — marshalling to/from typed objects is the service's job.
- *
- * Percentages are stored as whole numbers (`5.00` = 5 %, `40.00` = 40 %) ; the front converts to a
- * fraction where the math needs it. Derived figures (ladder, totals, residual, gains) are never
- * stored — they are recomputed client-side from these saved inputs.
+ * Nothing about sizing lives here (capital, risk, stop, ladders) : it isn't known at capture time.
+ * The derived figures — gap %, push %, locate / price — are never stored ; the front computes them
+ * from [previousClose], [pmOpen], [pmHigh] and [locatePerShare].
  */
 @Entity
 @Table(name = "candidate")
@@ -42,37 +33,27 @@ class Candidate(
   /** Owner. Multi-tenant scope key — every read path filters on `user.id`. */
   @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) val user: User,
 
-  /** Session date — drives dropdown visibility (today = active, past = closed). */
+  /** Session the candidate was captured for — the list is browsed day by day. */
   @Column(name = "trading_date", nullable = false) var tradingDate: LocalDate,
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(nullable = false) var pattern: Pattern = Pattern.GUS,
   @Column(nullable = false, length = 20) var ticker: String,
 
-  // ---- Risk parameters ----
-  @Column(name = "total_capital", nullable = false, precision = 18, scale = 2)
-  var totalCapital: BigDecimal,
-  @Column(name = "pct_capital_at_risk", nullable = false, precision = 6, scale = 2)
-  var pctCapitalAtRisk: BigDecimal,
-  @Column(name = "open_price", nullable = false, precision = 18, scale = 4)
-  var openPrice: BigDecimal,
-  @Column(name = "stop_pct", precision = 6, scale = 2) var stopPct: BigDecimal? = null,
+  // ---- Premarket prices ----
+  /** Previous session's close (daily candle). */
+  @Column(name = "previous_close", nullable = false, precision = 18, scale = 4)
+  var previousClose: BigDecimal,
+  /** First premarket print, at 4:00 am. */
+  @Column(name = "pm_open", nullable = false, precision = 18, scale = 4) var pmOpen: BigDecimal,
+  @Column(name = "pm_high", nullable = false, precision = 18, scale = 4) var pmHigh: BigDecimal,
 
-  // ---- Market context (entered by hand — no provider in v1) ----
-  @Column(name = "previous_close", precision = 18, scale = 4) var previousClose: BigDecimal? = null,
-  @Column(name = "float_shares", precision = 18, scale = 2) var floatShares: BigDecimal? = null,
-  @Column(precision = 18, scale = 2) var volume: BigDecimal? = null,
-  @Column(name = "morning_push", precision = 18, scale = 4) var morningPush: BigDecimal? = null,
-  @Column(name = "borrow_cost_per_share", precision = 18, scale = 4)
-  var borrowCostPerShare: BigDecimal? = null,
-
-  // ---- Ladders (JSON — marshalled in the application layer) ----
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "fills", nullable = false, columnDefinition = "jsonb")
-  var fillsJson: String = "[]",
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "entries", nullable = false, columnDefinition = "jsonb")
-  var entriesJson: String = "[]",
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "exits", nullable = false, columnDefinition = "jsonb")
-  var exitsJson: String = "[]",
+  // ---- Context (millions of shares, locate in $ / share) ----
+  @Column(name = "float_millions", precision = 12, scale = 2) var floatMillions: BigDecimal? = null,
+  /** TradeZero volume **at capture time** — a rough read of the interest, not the day's volume. */
+  @Column(name = "volume_millions", precision = 12, scale = 2)
+  var volumeMillions: BigDecimal? = null,
+  /** Cost to borrow one share to short. */
+  @Column(name = "locate_per_share", precision = 10, scale = 4)
+  var locatePerShare: BigDecimal? = null,
   @Column(length = 2000) var note: String? = null,
 
   // ---- Audit ----

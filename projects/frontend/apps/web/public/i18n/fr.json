@@ -28,82 +28,49 @@
   },
   "candidates": {
     "title": "Candidats",
-    "subtitle": "Prépare tes shorts du matin — sizing au risque, suivi d'exécution et échelle de sortie, pour chaque ticker. Saisi à la main.",
-    "select": "Candidat du jour",
-    "selectPlaceholder": "Sélectionner un candidat…",
-    "emptyDay": "Aucun candidat pour cette date.",
-    "new": "Nouveau",
-    "save": "Enregistrer",
-    "delete": "Supprimer",
-    "createStat": "Créer une stat",
-    "sections": {
-      "params": "Paramètres",
-      "context": "Données du jour",
-      "entryLadder": "Échelle d'entrée",
-      "execution": "Suivi d'exécution",
-      "entries": "Entrées réelles",
-      "cover": "Échelle de sortie",
-      "calculators": "Calculs"
+    "subtitle": "Les tickers repérés au radar ce matin, avec ce qu'on connaît en premarket.",
+    "day": {
+      "previous": "Jour précédent",
+      "next": "Jour suivant",
+      "today": "Aujourd'hui",
+      "pick": "Jour",
+      "readOnly": "Jour passé — les candidats sont gardés en historique et ne se modifient plus."
+    },
+    "form": {
+      "title": "Nouveau candidat",
+      "editTitle": "Modifier le candidat",
+      "hint": "Entrée pour valider · gap et push se calculent tout seuls",
+      "add": "Ajouter",
+      "save": "Enregistrer",
+      "pmHighBelowOpen": "Sous l'open PM"
     },
     "fields": {
-      "tradingDate": "Date de séance",
+      "pattern": "Pattern",
       "ticker": "Ticker",
-      "totalCapital": "Capital total",
-      "pctCapitalAtRisk": "% capital à risque",
-      "dollarAtRisk": "$ à risque",
-      "openPrice": "Prix d'open",
-      "stopPct": "Stop (%)",
-      "previousClose": "Clôture veille",
+      "previousClose": "Clôture veille ($)",
+      "previousCloseShort": "Clôture veille",
+      "pmOpen": "Open PM 4h00 ($)",
+      "pmOpenShort": "Open PM",
+      "pmHigh": "High PM ($)",
+      "pmHighShort": "High PM",
       "float": "Float",
+      "floatShort": "Float",
       "volume": "Volume",
-      "morningPush": "Push matinal ($)",
-      "borrowCostPerShare": "Coût borrow / action",
+      "volumeShort": "Volume",
+      "locate": "Locate ($ / action)",
+      "locateShort": "Locate",
+      "locatePercent": "Locate / prix",
+      "gap": "Gap",
+      "push": "Push",
       "note": "Note"
     },
-    "ladder": {
-      "entry": "Entrée",
-      "price": "Prix",
-      "maxShares": "Shares max",
-      "investment": "Investissement",
-      "riskPerShare": "Risque $",
-      "sharesInPlay": "Shares en jeu",
-      "currentRisk": "Risque courant",
-      "remaining": "Restant",
-      "totals": "Totaux",
-      "residual": "Résidu",
-      "averagePosition": "Position moyenne",
-      "hint": "Renseigne le prix d'open, le stop et le budget risque pour calculer l'échelle."
+    "list": {
+      "count": "{{count}} candidat(s) · triés par gap",
+      "empty": "Aucun candidat ce jour-là."
     },
-    "entries": {
-      "entryPrice": "Prix d'entrée",
-      "entryPct": "Entrée %",
-      "sharesInPlay": "Shares en jeu",
-      "currentRisk": "Risque courant",
-      "riskPct": "Risque %",
-      "investment": "Investissement",
-      "averagePosition": "Position moyenne",
-      "averagePct": "Moyenne %",
-      "averageRiskPct": "Risque moyen %",
-      "add": "Ajouter une entrée",
-      "remove": "Retirer",
-      "empty": "Aucune entrée saisie."
-    },
-    "cover": {
-      "exitPrice": "Prix de sortie",
-      "sharesCovered": "Shares couvertes",
-      "pctGainLoss": "% gain/perte",
-      "dollarGainLoss": "$ gain/perte",
-      "add": "Ajouter une sortie",
-      "remove": "Retirer",
-      "averageTp": "TP moyen",
-      "empty": "Aucune sortie planifiée.",
-      "hint": "La position moyenne est requise (renseigne les entrées réelles) pour chiffrer les sorties."
-    },
-    "calc": {
-      "gus": "GUS %",
-      "gusHint": "(open − clôture veille) / clôture veille",
-      "borrow": "Frais borrow %",
-      "borrowHint": "coût / action ÷ prix d'open"
+    "actions": {
+      "edit": "Modifier",
+      "delete": "Supprimer"
     },
     "confirmDelete": {
       "title": "Supprimer le candidat {{ticker}} ?",
@@ -111,14 +78,13 @@
       "confirm": "Supprimer"
     },
     "snackbar": {
-      "createSuccess": "Candidat enregistré.",
-      "updateSuccess": "Candidat mis à jour.",
-      "deleteSuccess": "Candidat supprimé.",
+      "createSuccess": "{{ticker}} ajouté.",
+      "updateSuccess": "{{ticker}} mis à jour.",
+      "deleteSuccess": "{{ticker}} supprimé.",
+      "duplicate": "{{ticker}} est déjà saisi ce jour-là.",
       "loadError": "Impossible de charger les candidats. Réessaie.",
       "saveError": "Impossible d'enregistrer le candidat. Réessaie.",
-      "deleteError": "Impossible de supprimer le candidat. Réessaie.",
-      "statCreated": "Stat créée.",
-      "statError": "Impossible de créer la stat. Réessaie."
+      "deleteError": "Impossible de supprimer le candidat. Réessaie."
     }
   },
   "account": {
