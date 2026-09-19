@@ -65,7 +65,6 @@ gh pr create \
 - [ ] <how to validate locally>
 - [ ] <regression check>
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```
@@ -77,7 +76,8 @@ After creation, return the PR URL so the user can open it.
 - One-line, < 72 characters
 - Conventional Commits format: `<type>(<scope>): <description>`
 - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
-- Common scopes for this repo: `analysis`, `ingestion`, `portfolio`, `dashboard`, `import`, `history`, `settings`, `core`, `claude`, `docs`, `ci`
+- Scopes: domain (`account`, `candidates`, `journal`, `stats`, `lexicon`, `auth`, `config`) or cross-cutting (`core`, `ui`, `claude`, `docs`, `mockup`, `ci`, `infra`), prefixed with the issue number when there is one (`feat(93/journal): …`)
+- **No reference to Claude / AI** in the title or the body (no "Generated with Claude Code" line)
 
 ## Safety
 
