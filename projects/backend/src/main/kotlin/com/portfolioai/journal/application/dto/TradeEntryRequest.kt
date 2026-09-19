@@ -3,8 +3,8 @@ package com.portfolioai.journal.application.dto
 import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeExitStrategy
 import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePattern
 import com.portfolioai.journal.domain.TradePlay
+import com.portfolioai.shared.Pattern
 import java.time.LocalDate
 import java.util.UUID
 
@@ -25,7 +25,7 @@ data class TradeEntryRequest(
   val direction: TradeDirection? = null,
   val executions: List<ExecutionRequest> = emptyList(),
   val play: TradePlay? = null,
-  val pattern: TradePattern? = null,
+  val pattern: Pattern? = null,
   val note: String? = null,
   val pre935To10h: Boolean? = null,
   val preGapUp50: Boolean? = null,

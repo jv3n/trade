@@ -42,16 +42,15 @@ import {
 } from '@portfolioai/ui';
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
 import {
-  TRADE_PATTERNS,
   TRADE_PLAYS,
   TRADE_STATUSES,
   TradeEntry,
   TradeEntryFilter,
   TradeEntryInput,
-  TradePattern,
   TradePlay,
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
+import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
 import {
   PERIOD_PRESETS,
   PeriodPresetKey,
@@ -81,7 +80,7 @@ interface FilterFormModel {
   dateFrom: Date | null;
   dateTo: Date | null;
   plays: TradePlay[];
-  patterns: TradePattern[];
+  patterns: Pattern[];
   status: TradeStatus | null;
 }
 
@@ -201,7 +200,7 @@ export class JournalPage {
   // ---- Constants for the template ----
   readonly periods = PERIOD_PRESETS;
   readonly plays = TRADE_PLAYS;
-  readonly patterns = TRADE_PATTERNS;
+  readonly patterns = PATTERNS;
   readonly statuses = TRADE_STATUSES;
 
   readonly columns = [
@@ -325,7 +324,7 @@ export class JournalPage {
     }));
   }
 
-  togglePattern(p: TradePattern, checked: boolean): void {
+  togglePattern(p: Pattern, checked: boolean): void {
     this.filterModel.update((m) => ({
       ...m,
       patterns: checked ? [...m.patterns, p] : m.patterns.filter((x) => x !== p),

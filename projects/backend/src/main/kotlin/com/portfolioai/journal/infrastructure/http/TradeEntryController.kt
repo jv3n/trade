@@ -5,9 +5,9 @@ import com.portfolioai.journal.application.dto.ImportResult
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.TradeEntryFilter
-import com.portfolioai.journal.domain.TradePattern
 import com.portfolioai.journal.domain.TradePlay
 import com.portfolioai.journal.domain.TradeStatus
+import com.portfolioai.shared.Pattern
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
 import java.util.UUID
@@ -63,7 +63,7 @@ class TradeEntryController(private val service: TradeEntryService) {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     dateTo: LocalDate? = null,
     @RequestParam(required = false) play: List<TradePlay>? = null,
-    @RequestParam(required = false) pattern: List<TradePattern>? = null,
+    @RequestParam(required = false) pattern: List<Pattern>? = null,
     @RequestParam(required = false) status: TradeStatus? = null,
     // No `sort` default here — the service applies its own fallback when the URL has no `sort`
     // param, so we get a single source of truth and avoid the `@PageableDefault` quirk that was

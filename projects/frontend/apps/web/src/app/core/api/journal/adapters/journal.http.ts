@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
+import { Pattern } from '../../shared/pattern.model';
 import { ImportResult, JournalRepository, PageRequest, PagedResult } from '../journal.repository';
 import {
   ExecutionKind,
@@ -12,7 +13,6 @@ import {
   TradeExecution,
   TradeExitStrategy,
   TradeOpenSide,
-  TradePattern,
   TradePlay,
 } from '../trade-entry.model';
 
@@ -44,7 +44,7 @@ interface TradeEntryWireDto {
   direction: TradeDirection | null;
   executions: ExecutionWireDto[];
   play: TradePlay | null;
-  pattern: TradePattern | null;
+  pattern: Pattern;
   size: number | null;
   openPrice: number | null;
   exitPrice: number | null;
@@ -72,7 +72,7 @@ interface TradeEntryWireRequest {
   direction: TradeDirection | null;
   executions: ExecutionWireRequest[];
   play: TradePlay | null;
-  pattern: TradePattern | null;
+  pattern: Pattern | null;
   note: string | null;
   pre935To10h: boolean | null;
   preGapUp50: boolean | null;

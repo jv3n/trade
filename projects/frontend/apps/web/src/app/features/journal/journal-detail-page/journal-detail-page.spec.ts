@@ -113,7 +113,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     direction: 'SHORT',
     executions: [{ seq: 0, kind: 'ENTRY', shares: 100, price: 5 }],
     play: null,
-    pattern: null,
+    pattern: 'GUS',
     size: 100,
     openPrice: 5,
     exitPrice: null,

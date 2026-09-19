@@ -1,5 +1,6 @@
 package com.portfolioai.journal.domain
 
+import com.portfolioai.shared.Pattern
 import java.time.LocalDate
 
 /**
@@ -12,7 +13,7 @@ data class TradeEntryFilter(
   val dateFrom: LocalDate? = null,
   val dateTo: LocalDate? = null,
   val plays: List<TradePlay>? = null,
-  val patterns: List<TradePattern>? = null,
+  val patterns: List<Pattern>? = null,
   val status: TradeStatus? = null,
 )
 

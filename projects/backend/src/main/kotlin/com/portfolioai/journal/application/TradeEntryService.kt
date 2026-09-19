@@ -13,6 +13,7 @@ import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.journal.infrastructure.persistence.TradeAttachmentRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
+import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
@@ -136,7 +137,7 @@ class TradeEntryService(
           tradeDate = request.tradeDate,
           ticker = request.ticker,
           play = request.play,
-          pattern = request.pattern,
+          pattern = request.pattern ?: Pattern.GUS,
           note = request.note,
           pre935To10h = request.pre935To10h,
           preGapUp50 = request.preGapUp50,
@@ -168,7 +169,7 @@ class TradeEntryService(
         tradeDate = request.tradeDate,
         ticker = request.ticker.trim().uppercase(),
         play = request.play,
-        pattern = request.pattern,
+        pattern = request.pattern ?: Pattern.GUS,
         note = request.note,
         pre935To10h = request.pre935To10h,
         preGapUp50 = request.preGapUp50,
@@ -193,7 +194,7 @@ class TradeEntryService(
     entry.tradeDate = request.tradeDate
     entry.ticker = request.ticker.trim().uppercase()
     entry.play = request.play
-    entry.pattern = request.pattern
+    entry.pattern = request.pattern ?: Pattern.GUS
     entry.note = request.note
     entry.pre935To10h = request.pre935To10h
     entry.preGapUp50 = request.preGapUp50

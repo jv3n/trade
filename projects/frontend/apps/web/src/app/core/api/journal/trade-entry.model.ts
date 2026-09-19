@@ -1,14 +1,15 @@
+import { Pattern } from '../shared/pattern.model';
+
 /**
  * Trading-journal **domain** types — consumed by feature components and by the repository
  * port. The wire-format (ISO date strings, ISO instant strings) is **not** exposed here ; the
  * HTTP adapter in `adapters/journal.http.ts` owns the mapping between wire and domain.
  *
- * The four string-literal types match the Postgres ENUMs and the Kotlin enums on the backend
+ * The string-literal types match the Postgres ENUMs and the Kotlin enums on the backend
  * — they're the shared vocabulary that crosses the wire unchanged.
  */
 
 export type TradePlay = 'A' | 'B';
-export type TradePattern = 'GUS' | 'FRD';
 export type TradeOpenSide = 'FRONT' | 'BACK';
 export type TradeExitStrategy = 'SWING_20' | 'EOD';
 
@@ -23,7 +24,6 @@ export type PositionStatus = 'OPEN' | 'PARTIAL' | 'CLOSED';
 export type TradeStatus = 'OPEN' | 'CLOSED' | 'PROFITABLE' | 'LOSING';
 
 export const TRADE_PLAYS: readonly TradePlay[] = ['A', 'B'];
-export const TRADE_PATTERNS: readonly TradePattern[] = ['GUS', 'FRD'];
 export const TRADE_OPEN_SIDES: readonly TradeOpenSide[] = ['FRONT', 'BACK'];
 export const TRADE_EXIT_STRATEGIES: readonly TradeExitStrategy[] = ['SWING_20', 'EOD'];
 export const TRADE_STATUSES: readonly TradeStatus[] = ['OPEN', 'CLOSED', 'PROFITABLE', 'LOSING'];
@@ -59,7 +59,7 @@ export interface TradeEntryFilter {
   dateFrom?: Date | null;
   dateTo?: Date | null;
   plays?: TradePlay[] | null;
-  patterns?: TradePattern[] | null;
+  patterns?: Pattern[] | null;
   status?: TradeStatus | null;
 }
 
@@ -80,7 +80,7 @@ export interface TradeEntry {
   direction: TradeDirection | null;
   executions: TradeExecution[];
   play: TradePlay | null;
-  pattern: TradePattern | null;
+  pattern: Pattern;
   size: number | null;
   openPrice: number | null;
   exitPrice: number | null;
@@ -114,7 +114,7 @@ export interface TradeEntryInput {
   direction: TradeDirection | null;
   executions: TradeExecutionInput[];
   play: TradePlay | null;
-  pattern: TradePattern | null;
+  pattern: Pattern | null;
   note: string | null;
   pre935To10h: boolean | null;
   preGapUp50: boolean | null;

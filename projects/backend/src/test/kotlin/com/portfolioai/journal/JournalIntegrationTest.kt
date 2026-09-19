@@ -12,11 +12,11 @@ import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradeExitStrategy
 import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePattern
 import com.portfolioai.journal.domain.TradePlay
 import com.portfolioai.journal.domain.TradeStatus
 import com.portfolioai.journal.infrastructure.persistence.TradeAttachmentRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
+import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
@@ -119,7 +119,7 @@ class JournalIntegrationTest {
     // Ticker normalisation : the request had lowercase, the persisted row must be uppercase.
     assertEquals("AAPL", dto.ticker, "ticker should be uppercased on create")
     assertEquals(TradePlay.A, dto.play)
-    assertEquals(TradePattern.GUS, dto.pattern)
+    assertEquals(Pattern.GUS, dto.pattern)
     assertEquals(TradeOpenSide.FRONT, dto.openSide)
     assertEquals(TradeExitStrategy.SWING_20, dto.exitStrategy)
     assertEquals(100, dto.size)
@@ -131,13 +131,14 @@ class JournalIntegrationTest {
   @Test
   fun `create accepts a bare trade with only date and ticker — execution fields stay null`() {
     // Post-pivot relaxation (V4) : a trade can be jotted down fast and fleshed out later, so
-    // play / pattern / size / open_price are all optional. Only date + ticker are mandatory.
+    // play / size / open_price are optional. Only date + ticker are mandatory ; a missing pattern
+    // falls back to the default GUS (V12, #184).
     val dto =
       service.create(TradeEntryRequest(tradeDate = LocalDate.of(2026, 6, 4), ticker = "bac"))
 
     assertEquals("BAC", dto.ticker)
     assertNull(dto.play)
-    assertNull(dto.pattern)
+    assertEquals(Pattern.GUS, dto.pattern, "a trade created without a pattern defaults to GUS")
     assertNull(dto.size)
     assertNull(dto.openPrice)
     // No stat attached yet — a fresh trade is an "orphan".
@@ -319,12 +320,12 @@ class JournalIntegrationTest {
 
   @Test
   fun `filter by patterns — IN list semantics`() {
-    repo.save(sampleEntity(user = testUser, pattern = TradePattern.GUS))
-    repo.save(sampleEntity(user = testUser, pattern = TradePattern.FRD))
+    repo.save(sampleEntity(user = testUser, pattern = Pattern.GUS))
+    repo.save(sampleEntity(user = testUser, pattern = Pattern.DT))
 
-    val gus = service.findAll(TradeEntryFilter(patterns = listOf(TradePattern.GUS)))
+    val gus = service.findAll(TradeEntryFilter(patterns = listOf(Pattern.GUS)))
     assertEquals(1, gus.size)
-    assertEquals(TradePattern.GUS, gus.first().pattern)
+    assertEquals(Pattern.GUS, gus.first().pattern)
   }
 
   @Test
@@ -513,7 +514,7 @@ class JournalIntegrationTest {
     tradeDate: LocalDate = LocalDate.of(2026, 6, 4),
     ticker: String = "AAPL",
     play: TradePlay = TradePlay.A,
-    pattern: TradePattern = TradePattern.GUS,
+    pattern: Pattern = Pattern.GUS,
     direction: TradeDirection = TradeDirection.SHORT,
     size: Int = 100,
     openPrice: BigDecimal = BigDecimal("3.2100"),
@@ -561,7 +562,7 @@ class JournalIntegrationTest {
     ticker: String = "AAPL",
     tradeDate: LocalDate = LocalDate.of(2026, 6, 4),
     play: TradePlay = TradePlay.A,
-    pattern: TradePattern = TradePattern.GUS,
+    pattern: Pattern = Pattern.GUS,
     exitPrice: BigDecimal? = null,
     profitDollars: BigDecimal? = null,
   ) =

@@ -6,9 +6,9 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeExitStrategy
 import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePattern
 import com.portfolioai.journal.domain.TradePlay
 import com.portfolioai.journal.domain.TradePositionCalculator
+import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -188,8 +188,8 @@ object TradeEntryCsvDecoder {
         optionalEnum(
           cells[Col.PATTERN],
           "pattern",
-          TradePattern::valueOf,
-          TradePattern.entries.map { it.name },
+          Pattern::valueOf,
+          Pattern.entries.map { it.name },
         ),
       note = optionalString(cells[Col.NOTE]),
       pre935To10h = optionalBoolean(cells[Col.PRE_935_TO_10H], "pre935To10h"),

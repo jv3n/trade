@@ -1,6 +1,7 @@
 package com.portfolioai.journal.domain
 
 import com.portfolioai.auth.domain.User
+import com.portfolioai.shared.Pattern
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -27,10 +28,11 @@ import org.hibernate.type.SqlTypes
  * going through a STRING converter. Kotlin enum names must match the Postgres enum values exactly
  * (cf. V1__init.sql).
  *
- * Only [tradeDate] and [ticker] are mandatory (V4 relaxed [play] / [pattern] / [size] / [openPrice]
- * to nullable so a trade can be jotted down fast and completed later). Exit-side fields
- * ([exitPrice], [profitDollars], [gainPercent]) are nullable while the position is open.
- * Preparation-checklist fields are nullable so a backfilled entry doesn't have to tick every box.
+ * Only [tradeDate] and [ticker] are mandatory (V4 relaxed [play] / [size] / [openPrice] to nullable
+ * so a trade can be jotted down fast and completed later). [pattern] always has a value : the
+ * shared [Pattern], [Pattern.GUS] by default (V12). Exit-side fields ([exitPrice], [profitDollars],
+ * [gainPercent]) are nullable while the position is open. Preparation-checklist fields are nullable
+ * so a backfilled entry doesn't have to tick every box.
  *
  * [statEntryId] is a nullable link to the matching imported stat row (`stat_entry.id`). NULL = an
  * "orphan" trade with no stat attached yet ; the link is assigned later from the UI.
@@ -59,7 +61,7 @@ class TradeEntry(
 
   // ---- Derived aggregates (computed from `executions` by TradePositionCalculator) ----
   @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var play: TradePlay? = null,
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var pattern: TradePattern? = null,
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var pattern: Pattern = Pattern.GUS,
   @Column var size: Int? = null,
   @Column(name = "open_price", precision = 18, scale = 4) var openPrice: BigDecimal? = null,
   @Column(name = "exit_price", precision = 18, scale = 4) var exitPrice: BigDecimal? = null,

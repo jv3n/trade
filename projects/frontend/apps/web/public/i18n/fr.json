@@ -700,5 +700,17 @@
       "again": "Importer un autre fichier",
       "viewJournal": "Voir le journal"
     }
+  },
+  "patterns": {
+    "short": {
+      "GUS": "GUS",
+      "DT": "DT",
+      "DISCRETIONARY": "Discrétionnaire"
+    },
+    "long": {
+      "GUS": "GUS — Gap Up Short",
+      "DT": "DT — Double Top",
+      "DISCRETIONARY": "Discrétionnaire"
+    }
   }
 }
