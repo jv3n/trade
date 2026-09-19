@@ -27,8 +27,8 @@
           <mat-option [value]="null">{{ 'journal.statLink.none' | translate }}</mat-option>
           @for (c of statCandidates(); track c.id) {
             <mat-option [value]="c.id">
-              {{ c.source }} · {{ c.gapUpPercent | number: '1.0-2' }} % ·
-              {{ c.openPrice | number: '1.2-4' }} $
+              {{ 'patterns.short.' + c.pattern | translate }} ·
+              {{ 'stats.fields.pmOpen' | translate }} {{ c.pmOpen | number: '1.2-4' }} $
             </mat-option>
           }
         </mat-select>

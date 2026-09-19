@@ -1,0 +1,44 @@
+// Stats-export page — a single card with the CSV download.
+
+.page-header {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0 0 0.25rem;
+  }
+
+  .description {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+}
+
+.io-card {
+  max-width: 640px;
+
+  & + & {
+    margin-top: 1rem;
+  }
+
+  // Round icon container in the card header — accent-soft tint so it reads as a chip affordance.
+  .card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
+    border-radius: var(--radius-pill);
+    font-size: 1.25rem;
+  }
+
+  .format-list {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+
+    li + li {
+      margin-top: 0.25rem;
+    }
+  }
+}

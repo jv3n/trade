@@ -3,24 +3,42 @@ package com.portfolioai.stats.application
 import com.portfolioai.stats.domain.StatEntry
 
 /**
- * Encodes a list of [StatEntry] into a RFC 4180 CSV string — the whole-table export.
+ * Encodes a list of [StatEntry] into a RFC 4180 CSV string — the stats export.
  *
- * Format choices mirror `TradeEntryCsvEncoder` (the journal exporter) : • UTF-8 with BOM (`﻿`) so
- * Excel detects the encoding. • CRLF line endings (same Excel reason). • Quoting only when a value
- * contains `,`, `"`, `\r` or `\n` ; inner `"` doubled. • Booleans rendered `true` / `false`. •
- * Dates ISO `yyyy-MM-dd`. • Numbers via [java.math.BigDecimal.toPlainString] (no scientific
- * notation).
+ * Format choices mirror `TradeEntryCsvEncoder` (the journal exporter) : UTF-8 with BOM so Excel
+ * detects the encoding, CRLF line endings, quoting only when a value contains `,`, `"`, `\r` or
+ * `\n` (inner `"` doubled), booleans as `true` / `false`, dates ISO `yyyy-MM-dd`, numbers via
+ * [java.math.BigDecimal.toPlainString] (no scientific notation).
  *
- * **Roundtrip-safe with the import.** The layout is exactly [StatEntryCsvDecoder.HEADERS] — the
- * same 14 columns the importer expects, in the same order — so a file produced here re-imports
- * as-is. The three derived columns ([StatEntry.pushPercent] / [lodPercent] / [eodPercent]) are
- * intentionally **omitted** : they are recomputed at insert time, so emitting them would only break
- * the roundtrip (the decoder validates its 14-column header verbatim) for redundant data.
+ * Export only — there is no stats CSV import : a stat is born from a candidate. The file is a
+ * spreadsheet-friendly copy of the sheet, with a stat still to complete coming out with its five
+ * session cells empty. No derived percentage is emitted : gap, premarket push and the session
+ * percentages are recomputed from the prices wherever they are displayed.
  */
 object StatEntryCsvEncoder {
 
-  /** Import layout, order-locked — shared with the decoder so export ⇄ import stay in lockstep. */
-  val HEADERS: List<String> = StatEntryCsvDecoder.HEADERS
+  /** Export layout, order-locked : premarket block, session block, then the flags. */
+  val HEADERS: List<String> =
+    listOf(
+      "Date",
+      "Pattern",
+      "Ticker",
+      "Previous close",
+      "PM open",
+      "PM high",
+      "Float (M)",
+      "Volume (M)",
+      "Locate",
+      "Notes",
+      "Open",
+      "Push open",
+      "HOD",
+      "LOD",
+      "EOD",
+      "SSR?",
+      "<\$1 stock?",
+      "Entry after 11AM?",
+    )
 
   fun encode(entries: List<StatEntry>): String {
     val sb = StringBuilder()
@@ -34,36 +52,33 @@ object StatEntryCsvEncoder {
     return sb.toString()
   }
 
-  // The export is scoped to the curated global rows (cf. `StatEntryService.exportAllAsCsv`), which
-  // are complete — so the nullable setup / outcome columns are present in practice. The `?.` /
-  // empty
-  // fallbacks are there because the V2 entity types are nullable (radar partial rows), not because
-  // a
-  // null is expected on this path : a null simply renders as an empty cell.
   private fun rowFor(e: StatEntry): String =
     listOf(
         e.tradeDate.toString(),
+        e.pattern.name,
         e.ticker,
-        e.gapUpPercent?.toPlainString().orEmpty(),
-        e.floatSharesMillions?.toPlainString().orEmpty(),
-        e.institutionsPercent?.toPlainString().orEmpty(),
-        e.instOver20?.toString().orEmpty(),
-        e.under1Dollar?.toString().orEmpty(),
-        e.ssr?.toString().orEmpty(),
-        e.entryAfter11am?.toString().orEmpty(),
+        e.previousClose.toPlainString(),
+        e.pmOpen.toPlainString(),
+        e.pmHigh.toPlainString(),
+        e.floatMillions?.toPlainString().orEmpty(),
+        e.volumeMillions?.toPlainString().orEmpty(),
+        e.locatePerShare?.toPlainString().orEmpty(),
         e.note.orEmpty(),
         e.openPrice?.toPlainString().orEmpty(),
-        e.highPrice?.toPlainString().orEmpty(),
+        e.pushOpenPrice?.toPlainString().orEmpty(),
+        e.hodPrice?.toPlainString().orEmpty(),
         e.lodPrice?.toPlainString().orEmpty(),
         e.eodPrice?.toPlainString().orEmpty(),
+        e.ssr.toString(),
+        e.under1Dollar.toString(),
+        e.entryAfter11am.toString(),
       )
       .joinToString(",") { escape(it) }
 
-  /** RFC 4180 quoting — only wrap when the field contains `,`, `"`, `\r` or `\n`. */
-  private fun escape(value: String): String {
-    val needsQuoting = value.any { it == ',' || it == '"' || it == '\r' || it == '\n' }
-    if (!needsQuoting) return value
-    val escapedInner = value.replace("\"", "\"\"")
-    return "\"$escapedInner\""
-  }
+  private fun escape(value: String): String =
+    if (value.any { it == ',' || it == '"' || it == '\r' || it == '\n' }) {
+      "\"" + value.replace("\"", "\"\"") + "\""
+    } else {
+      value
+    }
 }

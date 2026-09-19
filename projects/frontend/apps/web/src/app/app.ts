@@ -108,7 +108,7 @@ export class App {
 
   /**
    * True when the current URL is under `/settings`. Settings provides its **own** left sidenav
-   * with its sub-routes (preferences / ops-links / access-control / stats-import / lexicon),
+   * with its sub-routes (preferences / ops-links / access-control / stats-export / lexicon),
    * so the global app sidenav is hidden to avoid stacking two nav columns side-by-side. The
    * toolbar stays visible so the user menu stays reachable.
    */

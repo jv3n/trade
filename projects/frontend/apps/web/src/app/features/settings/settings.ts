@@ -22,7 +22,7 @@ import { SidenavCollapseService } from '../../core/app-state/sidenav-collapse.se
  *
  * The route is reachable by **any authenticated user** (`authGuard` only on `/settings`), so
  * this component reads `auth.isAdmin()` to gate the admin-only entries (ops-links,
- * access-control, stats-import, lexicon). The `adminGuard` sits on each admin sub-route as a
+ * access-control, stats-export, lexicon). The `adminGuard` sits on each admin sub-route as a
  * second line of defence — if a USER types the URL manually, the guard redirects to `/journal`.
  */
 @Component({

@@ -338,22 +338,81 @@
     }
   },
   "stats": {
-    "title": "Trade stats",
-    "subtitle": "Gap-up shorts dataset — setup context, the day's price levels and the derived push / LOD / EOD moves.",
+    "title": "Stats",
+    "subtitle": "One line per candidate promoted to the sheet — premarket data from the morning, session data entered after the 4 pm close.",
     "searchPlaceholder": "Search by ticker…",
     "clearSearch": "Clear search",
-    "toggleFilters": "Filters",
-    "filters": "Filters",
-    "addStat": "Add",
     "loading": "Loading stats…",
-    "empty": "No stats yet. Add an analysis, use « Add stat » from the radar, or an admin can import the community dataset.",
+    "empty": "No stat here. Promote a candidate from the Candidates page.",
     "errors": {
       "load": "Couldn't load the stats. Please retry."
     },
+    "kpi": {
+      "completed": "Completed stats",
+      "toComplete": "{{count}} to complete",
+      "allDone": "Nothing left to complete",
+      "averagePushOpen": "Average push at open",
+      "averageLod": "Average LOD",
+      "vsOpen": "vs open",
+      "fade": "Fade at the close",
+      "fadeSub": "EOD below the open · average {{average}}"
+    },
+    "complete": {
+      "title": "Complete the session —",
+      "hint": "to enter after the 4 pm close · the percentages compute vs the open",
+      "percentBase": "base of the percentages",
+      "hodBelowLod": "HOD is below the LOD",
+      "later": "Later",
+      "save": "Save"
+    },
+    "filters": {
+      "period": "Period",
+      "pattern": "Pattern",
+      "allPatterns": "All patterns"
+    },
+    "periods": {
+      "all": "All time",
+      "custom": "Custom range",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "thisQuarter": "This quarter",
+      "lastQuarter": "Last quarter",
+      "thisYear": "This year",
+      "lastYear": "Last year"
+    },
+    "status": {
+      "ALL": "All",
+      "TO_COMPLETE": "To complete",
+      "COMPLETED": "Completed"
+    },
+    "fields": {
+      "tradeDate": "Date",
+      "ticker": "Ticker",
+      "pattern": "Pattern",
+      "previousClose": "Previous close",
+      "pmOpen": "PM open",
+      "pmHigh": "PM high",
+      "gap": "Gap",
+      "pmPush": "PM push",
+      "float": "Float",
+      "volume": "Volume",
+      "locate": "Locate",
+      "note": "Note",
+      "openPrice": "Open ($)",
+      "openPriceShort": "Open",
+      "pushOpen": "Push open",
+      "hod": "HOD",
+      "lod": "LOD",
+      "eod": "EOD",
+      "flags": "Flags",
+      "ssr": "SSR",
+      "under1Dollar": "Under $1",
+      "entryAfter11am": "Entry after 11 am"
+    },
     "actions": {
-      "edit": "Edit",
-      "delete": "Delete",
-      "createTrade": "Create a trade in the journal"
+      "complete": "Complete",
+      "edit": "Edit the session",
+      "delete": "Delete"
     },
     "confirmDelete": {
       "title": "Delete the {{ticker}} stat?",
@@ -361,69 +420,10 @@
       "confirm": "Delete"
     },
     "snackbar": {
-      "createSuccess": "Analysis for {{ticker}} added.",
-      "createError": "Couldn't add the analysis. Please retry.",
-      "updateSuccess": "Analysis for {{ticker}} updated.",
-      "updateError": "Couldn't update the analysis. Please retry.",
-      "deleteSuccess": "Analysis for {{ticker}} deleted.",
-      "deleteError": "Couldn't delete the analysis. Please retry.",
-      "duplicate": "You already have an analysis for this ticker on that day."
-    },
-    "dialog": {
-      "createTitle": "Add an analysis",
-      "editTitle": "Edit the analysis",
-      "save": "Save",
-      "cancel": "Cancel",
-      "sections": {
-        "setup": "Setup",
-        "outcome": "Outcome (end of day)"
-      }
-    },
-    "filterPanel": {
-      "period": "Period",
-      "dateFrom": "From",
-      "dateTo": "To",
-      "sourceAll": "All",
-      "gapRange": "Gap range",
-      "gapMin": "Gap min",
-      "gapMax": "Gap max",
-      "reset": "Reset",
-      "apply": "Apply",
-      "periodPresets": {
-        "all": "All time",
-        "custom": "Custom range",
-        "thisMonth": "This month",
-        "lastMonth": "Last month",
-        "thisQuarter": "This quarter",
-        "lastQuarter": "Last quarter",
-        "thisYear": "This year",
-        "lastYear": "Last year"
-      }
-    },
-    "fields": {
-      "tradeDate": "Date",
-      "ticker": "Ticker",
-      "source": "Source",
-      "gapUpPercent": "Gap up",
-      "floatSharesMillions": "Float",
-      "institutionsPercent": "Inst. %",
-      "instOver20": "> 20 % inst.",
-      "under1Dollar": "< $1",
-      "ssr": "SSR",
-      "entryAfter11am": "Entry > 11 AM",
-      "openPrice": "Open",
-      "highPrice": "High",
-      "lodPrice": "LOD",
-      "eodPrice": "EOD",
-      "pushPercent": "% Push",
-      "lodPercent": "% LOD",
-      "eodPercent": "% EOD",
-      "note": "Notes"
-    },
-    "source": {
-      "IMPORT": "Import",
-      "RADAR": "Radar",
-      "MANUAL": "Manual"
+      "completeSuccess": "Session of {{ticker}} saved.",
+      "completeError": "Couldn't save the session. Please retry.",
+      "deleteSuccess": "Stat {{ticker}} deleted.",
+      "deleteError": "Couldn't delete the stat. Please retry."
     }
   },
   "lexicon": {
@@ -524,48 +524,28 @@
     "preferences": "Preferences",
     "opsLinks": "Ops links",
     "accessControl": "Access control",
-    "statsImport": "Stats import",
+    "statsExport": "Stats export",
     "lexicon": "Lexicon",
     "lexiconPage": {
       "title": "Lexicon",
       "description": "Admin-only — manage the shared trading glossary (add, edit, delete terms). The read-only view is available to everyone under « Lexicon » in the main navigation."
     },
-    "statsImportPage": {
-      "title": "Stats import",
-      "description": "Admin-only — push the trade-stats dataset (generated by scripts/stats) into the database via CSV, or export the whole table back out.",
+    "statsExportPage": {
+      "title": "Stats export",
+      "description": "Download your stats sheet as a CSV — a spreadsheet-friendly copy. There is no import : a stat is created by promoting a candidate.",
       "export": {
         "title": "Export",
-        "subtitle": "Download the whole table",
-        "description": "Download every stat row as a CSV, in the exact same layout as the import.",
+        "subtitle": "Download the stats as a CSV",
+        "description": "One line per stat, newest first.",
         "format": {
           "encoding": "UTF-8 with BOM, RFC 4180 — opens cleanly in Excel.",
-          "columns": "14 columns — identical to the import (computed %push / %LOD / %EOD omitted).",
-          "roundtrip": "Roundtrip-safe — the exported file re-imports as-is."
+          "columns": "18 columns — premarket block, session block and flags. No percentage : they are derived from the prices.",
+          "pending": "A stat still to complete comes out with its five session cells empty."
         },
         "button": "Export CSV",
         "exporting": "Exporting…",
         "success": "Export downloaded.",
         "error": "Export failed. Please retry."
-      },
-      "import": {
-        "title": "Import",
-        "subtitle": "Inject the stats CSV",
-        "description": "Drop the stats-data-prod.csv produced by scripts/stats (or any file with the same column layout). Atomic batch — if any row is invalid, nothing is persisted and you get a per-line error report below.",
-        "format": {
-          "source": "Generated by scripts/stats from the trade-stats sheet.",
-          "columns": "14 columns — %push / %LOD / %EOD are computed server-side.",
-          "atomic": "Atomic batch — one bad row rejects the whole file."
-        },
-        "dropLabel": "Drag your CSV here",
-        "or": "or",
-        "browse": "Browse",
-        "hint": ".csv only — single file.",
-        "uploading": "Uploading and validating…",
-        "success": "{{ count }} stat row(s) imported.",
-        "failed": "{{ count }} error(s) found — nothing was imported.",
-        "errorLine": "line {{ line }}",
-        "errorNetwork": "Network error. Please retry.",
-        "again": "Import another file"
       }
     },
     "preferencesPage": {

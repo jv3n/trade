@@ -1,101 +1,85 @@
-/**
- * Trade-stats **domain** types — consumed by the stats feature page and by the [StatsRepository]
- * port. The wire format (ISO date / instant strings) is **not** exposed here ; the HTTP adapter in
- * `adapters/stats.http.ts` owns the mapping between wire and domain.
- *
- * Mirrors the backend `stat_entry` table : the manual setup + price levels plus the three derived
- * percentages (`pushPercent` / `lodPercent` / `eodPercent`, computed server-side at import).
- *
- * Since V2 the dataset is **admin-global + per-user** : ADMIN CSV imports are the global rows every
- * user reads ([source] `IMPORT`, `createdBy` null) ; a user's radar « Add stat » pick is a partial
- * row owned by and visible only to them ([source] `RADAR`). Everything except the scan-time fields
- * (`ticker` / `gapUpPercent` / `openPrice`) is therefore nullable — a radar pick carries `null` for
- * the setup flags and the EOD outcome until the day plays out.
- */
+import { Pattern } from '../shared/pattern.model';
 
 /**
- * How a [StatEntry] entered the dataset : `IMPORT` (admin CSV, community/global), `RADAR` (one-click
- * from the radar), `MANUAL` (typed in the stats « Add » dialog). RADAR + MANUAL are owned by the
- * current user and are the only rows they may edit / delete.
+ * Stats **domain** types — a candidate promoted to the stats sheet, completed after the 4 pm close
+ * (cf. `mockup/PARCOURS.md`, steps 2 and 5). The wire format (ISO date / instant strings) is not
+ * exposed here ; the HTTP adapter in `adapters/stats.http.ts` owns the mapping.
+ *
+ * Two blocks : the **premarket** one is copied from the candidate at promotion time, the **session**
+ * one is entered at the close and is null until then (`completed` says which). No percentage is
+ * stored : gap, premarket push and the session percentages are derived by `features/stats/stats.math`.
  */
-export type StatSource = 'IMPORT' | 'RADAR' | 'MANUAL';
-
-/** One stats row. `tradeDate` / `createdAt` / `updatedAt` are native `Date` — adapters parse wire. */
 export interface StatEntry {
   id: string;
+  /** The candidate this stat came from — null once that candidate is deleted. */
+  candidateId: string | null;
   tradeDate: Date;
+  pattern: Pattern;
   ticker: string;
-  gapUpPercent: number | null;
-  openPrice: number | null;
-  floatSharesMillions: number | null;
-  institutionsPercent: number | null;
-  instOver20: boolean | null;
-  under1Dollar: boolean | null;
-  ssr: boolean | null;
-  entryAfter11am: boolean | null;
+
+  // ---- Premarket (copied from the candidate) ----
+  previousClose: number;
+  pmOpen: number;
+  pmHigh: number;
+  floatMillions: number | null;
+  volumeMillions: number | null;
+  locatePerShare: number | null;
   note: string | null;
-  highPrice: number | null;
+
+  // ---- Session (null while the stat is to complete) ----
+  /** Session open — the base of every session percentage. */
+  openPrice: number | null;
+  /** Price reached by the push that follows the open. */
+  pushOpenPrice: number | null;
+  hodPrice: number | null;
   lodPrice: number | null;
   eodPrice: number | null;
-  /** Derived server-side : `(high - open) / open * 100`. Can be negative. `null` on a radar pick. */
-  pushPercent: number | null;
-  /** Derived server-side : `(lod - open) / open * 100`. Can be negative. `null` on a radar pick. */
-  lodPercent: number | null;
-  /** Derived server-side : `(eod - open) / open * 100`. Can be negative. `null` on a radar pick. */
-  eodPercent: number | null;
-  source: StatSource;
-  /** Owning user id. `null` = the admin/global curated dataset (CSV import), readable by everyone. */
-  createdBy: string | null;
+
+  // ---- Flags ----
+  ssr: boolean;
+  under1Dollar: boolean;
+  entryAfter11am: boolean;
+  /** Derived server-side : the whole session block is in. */
+  completed: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
-/**
- * Payload of the radar « Add stat » button — only the fields a radar pick knows at scan time. The
- * trade date defaults to today server-side, so it is not sent.
- */
-export interface RadarStatInput {
-  ticker: string;
-  gapUpPercent: number;
-  openPrice: number;
-}
+/** Update payload — the completion panel sends the whole row back (premarket + session + flags). */
+export type StatEntryInput = Omit<
+  StatEntry,
+  'id' | 'candidateId' | 'completed' | 'createdAt' | 'updatedAt'
+>;
 
-/**
- * Form payload for creating / editing a **user-owned** stat (the « Add » dialog). Mirrors the backend
- * `StatEntryFormRequest` in domain terms (native `Date`). `tradeDate` / `ticker` / `gapUpPercent` /
- * `openPrice` are required ; the rest are the optional setup flags + EOD outcome (null until known).
- * The derived `%push` / `%LOD` / `%EOD` are computed server-side, never sent. [source] is `MANUAL`
- * for the dialog (the radar uses [RadarStatInput] instead).
- */
-export interface StatEntryInput {
-  tradeDate: Date;
-  ticker: string;
-  gapUpPercent: number | null;
-  openPrice: number | null;
-  floatSharesMillions: number | null;
-  institutionsPercent: number | null;
-  instOver20: boolean | null;
-  under1Dollar: boolean | null;
-  ssr: boolean | null;
-  entryAfter11am: boolean | null;
-  highPrice: number | null;
-  lodPrice: number | null;
-  eodPrice: number | null;
-  note: string | null;
-  source: StatSource;
-}
+/** Completion status a listing can be narrowed to. Mirrors the backend `StatStatus`. */
+export type StatStatus = 'TO_COMPLETE' | 'COMPLETED';
 
 /**
  * Filter criteria for the stats listing — mirrors the backend `StatEntryFilter`. All optional ;
- * omitted axes = no filter. `source` narrows to one origin ; `gapMin` / `gapMax` bound the gap-up %.
+ * omitted axes = no filter. The « traded / not traded » axis lands with the stat → trade flow (#193).
  */
 export interface StatEntryFilter {
   query?: string | null;
   dateFrom?: Date | null;
   dateTo?: Date | null;
-  source?: StatSource | null;
-  gapMin?: number | null;
-  gapMax?: number | null;
+  pattern?: Pattern | null;
+  status?: StatStatus | null;
+}
+
+/**
+ * KPIs of the stats page, computed by the backend over the **filtered set** (not the current page).
+ * Averages cover the completed stats only and are percentages vs the session open ; they are null
+ * when no completed stat matches.
+ */
+export interface StatSummary {
+  completed: number;
+  toComplete: number;
+  averagePushOpenPercent: number | null;
+  averageLodPercent: number | null;
+  /** Completed stats whose EOD closed below the open — the GUS thesis playing out. */
+  fadeCount: number;
+  averageEodPercent: number | null;
 }
 
 /**

@@ -1,20 +1,19 @@
 package com.portfolioai.stats.application
 
 import com.portfolioai.auth.application.AuthService
-import com.portfolioai.stats.application.dto.ImportResult
+import com.portfolioai.auth.domain.User
 import com.portfolioai.stats.application.dto.StatEntryDto
-import com.portfolioai.stats.application.dto.StatEntryFormRequest
 import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.application.dto.StatSummaryDto
 import com.portfolioai.stats.application.dto.toDto
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatMetrics
-import com.portfolioai.stats.domain.StatSource
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import com.portfolioai.stats.infrastructure.persistence.StatEntrySpecifications
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -26,18 +25,18 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 
 /**
- * Stats import / export / CRUD service.
+ * Stats service — the sheet completed after the 4 pm close (cf. `mockup/PARCOURS.md`, step 5).
  *
- * Since V2 the dataset is **admin-global + per-user** : the ADMIN CSV import feeds the shared
- * community rows ([StatSource.IMPORT], `createdBy = null`), while any authenticated user owns their
- * radar / manual analyses ([StatSource.RADAR] / [StatSource.MANUAL]). Reads are scoped — a user
- * sees the global rows + their own (cf. [StatEntrySpecifications.matching]). CRUD is
- * **ownership-scoped** : a user can only edit / delete their own rows ; IMPORT rows (and other
- * users') return 404.
+ * Every stat **belongs to a user** since #187 : there is no shared community dataset and no RADAR /
+ * MANUAL / IMPORT source any more. Reads, edits and deletes are user-scoped and a
+ * missing-or-foreign id returns 404 (never 403) so we don't leak existence — same contract as the
+ * journal / candidates / account.
  *
- * **Uniqueness is per owner** — one analysis per (day, ticker, owner). Creating for a (day, ticker)
- * the caller already has **upserts** (overwrites) the existing row ; the DB unique index
- * (`ux_stat_entry_day_ticker_owner`) is the race-safe backstop.
+ * **One stat per (user, day, ticker)** — creating a second one is a 409 ; the DB unique constraint
+ * `ux_stat_entry_user_day_ticker` is the race-safe backstop.
+ *
+ * Creating a stat is a copy of a candidate (the promotion action, #189) : this service exposes
+ * [create], the HTTP layer has no create endpoint. The CSV leg is **export only**.
  */
 @Service
 class StatEntryService(
@@ -48,9 +47,9 @@ class StatEntryService(
   // ---- Listing -------------------------------------------------------------------------------
 
   /**
-   * Paginated listing, scoped to what the current user may see (global rows + their own) and
-   * narrowed by [filter]. Sort default owned here (not `@PageableDefault`) so a URL `sort` is
-   * always honoured — same pattern as `TradeEntryService.findAllPaged`.
+   * Paginated listing, scoped to the caller and narrowed by [filter]. The sort default lives here
+   * (not in `@PageableDefault`) so a URL `sort` is always honoured — same pattern as
+   * `TradeEntryService.findAllPaged`.
    */
   @Transactional(readOnly = true)
   fun findAllPaged(filter: StatEntryFilter, pageable: Pageable): Page<StatEntryDto> {
@@ -63,179 +62,157 @@ class StatEntryService(
     return repo.findAll(spec, effective).map { it.toDto() }
   }
 
-  // ---- CRUD (owner-scoped) -------------------------------------------------------------------
+  /**
+   * KPIs over the **whole filtered set**, not the current page : how many stats are completed / to
+   * complete, the average push at open, LOD and EOD, and how many faded at the close. Percentages
+   * are recomputed from the prices ([StatMetrics]) — none of them is stored.
+   */
+  @Transactional(readOnly = true)
+  fun summarise(filter: StatEntryFilter): StatSummaryDto {
+    val userId = authService.getCurrentUser().id
+    val rows = repo.findAll(StatEntrySpecifications.matching(userId, filter))
+    val completed = rows.filter { it.isCompleted }
+    return StatSummaryDto(
+      completed = completed.size,
+      toComplete = rows.size - completed.size,
+      averagePushOpenPercent =
+        completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) },
+      averageLodPercent =
+        completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
+      fadeCount = completed.count { it.eodPrice!! < it.openPrice!! },
+      averageEodPercent =
+        completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
+    )
+  }
+
+  // ---- CRUD (user-scoped) --------------------------------------------------------------------
+
+  @Transactional(readOnly = true) fun findById(id: UUID): StatEntryDto = loadOwned(id).toDto()
 
   /**
-   * Creates a user-owned stat from the radar button ([StatSource.RADAR]) or the manual dialog
-   * ([StatSource.MANUAL], the default). Upserts on (day, ticker, caller) — a second create for the
-   * same day/ticker overwrites the caller's existing row rather than erroring. [StatSource.IMPORT]
-   * is rejected (only the CSV import path may create it).
+   * Creates a stat for the caller — the promotion of a candidate (#189) is its only caller.
+   * [candidateId] keeps the trace of the source candidate. A (day, ticker) already in the sheet is
+   * a 409.
    */
   @Transactional
-  fun create(form: StatEntryFormRequest): StatEntryDto {
-    val source = form.source ?: StatSource.MANUAL
-    if (source == StatSource.IMPORT) {
-      throw ResponseStatusException(
-        HttpStatus.BAD_REQUEST,
-        "source IMPORT is reserved for the CSV import",
-      )
-    }
-    val userId = authService.getCurrentUser().id
-    val tradeDate = form.tradeDate ?: LocalDate.now(MARKET_ZONE)
-    val ticker = form.ticker.trim().uppercase()
-    val existing = repo.findByTradeDateAndTickerAndCreatedBy(tradeDate, ticker, userId)
-    val entry =
-      existing
-        ?: StatEntry(
-          tradeDate = tradeDate,
-          ticker = ticker,
-          gapUpPercent = form.gapUpPercent,
-          openPrice = form.openPrice,
-        )
-    applyForm(entry, form, tradeDate, ticker)
-    entry.source = source
-    entry.createdBy = userId
-    if (existing != null) entry.updatedAt = Instant.now()
+  fun create(request: StatEntryRequest, candidateId: UUID? = null): StatEntryDto {
+    val user = authService.getCurrentUser()
+    val ticker = request.cleanTicker()
+    requireFree(user.id, request, ticker, ownId = null)
+    val entry = newEntry(user, request, ticker, candidateId)
+    entry.apply(request, ticker)
     return repo.save(entry).toDto()
   }
 
   /**
-   * Edits one of the caller's own rows. Ownership-scoped : a row the caller doesn't own (incl.
-   * every IMPORT row, `created_by = null`) returns 404 — never 403, so we don't leak existence. A
-   * unique collision (editing date/ticker onto another of the caller's rows) surfaces as a
-   * `DataIntegrityViolationException` → 409 via `GlobalExceptionHandler`.
+   * Overwrites a stat — the completion panel sends the whole row back (premarket recap + session
+   * prices + flags). Renaming onto a (day, ticker) the caller already has is a 409.
    */
   @Transactional
-  fun update(id: UUID, form: StatEntryFormRequest): StatEntryDto {
-    val userId = authService.getCurrentUser().id
-    val entry =
-      repo.findByIdAndCreatedBy(id, userId)
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Stat entry $id not found")
-    val tradeDate = form.tradeDate ?: entry.tradeDate
-    val ticker = form.ticker.trim().uppercase()
-    entry.gapUpPercent = form.gapUpPercent
-    entry.openPrice = form.openPrice
-    applyForm(entry, form, tradeDate, ticker)
+  fun update(id: UUID, request: StatEntryRequest): StatEntryDto {
+    val entry = loadOwned(id)
+    val ticker = request.cleanTicker()
+    requireFree(entry.user.id, request, ticker, ownId = entry.id)
+    entry.apply(request, ticker)
     entry.updatedAt = Instant.now()
     return repo.save(entry).toDto()
   }
 
-  /** Deletes one of the caller's own rows. Not-owned (IMPORT or someone else's) → 404. */
-  @Transactional
-  fun delete(id: UUID) {
-    val userId = authService.getCurrentUser().id
-    val removed = repo.deleteByIdAndCreatedBy(id, userId)
-    if (removed == 0L) {
-      throw ResponseStatusException(HttpStatus.NOT_FOUND, "Stat entry $id not found")
-    }
-  }
+  @Transactional fun delete(id: UUID) = repo.delete(loadOwned(id))
 
-  /**
-   * Copies the form fields onto [entry] and (re)computes the derived `%push` / `%LOD` / `%EOD` —
-   * only when the levels they need are present, else null (a radar pick has no EOD outcome yet).
-   * [tradeDate] / [ticker] are passed in already normalised.
-   */
-  private fun applyForm(
-    entry: StatEntry,
-    form: StatEntryFormRequest,
-    tradeDate: LocalDate,
-    ticker: String,
-  ) {
-    entry.tradeDate = tradeDate
-    entry.ticker = ticker
-    entry.gapUpPercent = form.gapUpPercent
-    entry.openPrice = form.openPrice
-    entry.floatSharesMillions = form.floatSharesMillions
-    entry.institutionsPercent = form.institutionsPercent
-    entry.instOver20 = form.instOver20
-    entry.under1Dollar = form.under1Dollar
-    entry.ssr = form.ssr
-    entry.entryAfter11am = form.entryAfter11am
-    entry.note = form.note?.takeIf { it.isNotBlank() }
-    entry.highPrice = form.highPrice
-    entry.lodPrice = form.lodPrice
-    entry.eodPrice = form.eodPrice
-    // The derived percentages need the open price ; without it (form omitted it) they stay null.
-    val open = form.openPrice
-    entry.pushPercent = open?.let { o -> form.highPrice?.let { StatMetrics.pushPercent(o, it) } }
-    entry.lodPercent = open?.let { o -> form.lodPrice?.let { StatMetrics.lodPercent(o, it) } }
-    entry.eodPercent = open?.let { o -> form.eodPrice?.let { StatMetrics.eodPercent(o, it) } }
-  }
+  // ---- CSV export ----------------------------------------------------------------------------
 
-  // ---- CSV import / export -------------------------------------------------------------------
-
-  /**
-   * Imports a stats CSV (cf. `docs/data-input/stats-demo.csv`). ADMIN-gated at the HTTP layer.
-   *
-   * **Atomic batch** — any per-row decode error → nothing persisted. Each clean row **upserts** the
-   * global community slot (day, ticker, `created_by = null`) : a re-import overwrites the prior
-   * community analysis rather than colliding on the unique index. Imported rows are
-   * [StatSource.IMPORT]. Derived `%push` / `%LOD` / `%EOD` computed from the levels.
-   */
-  @Transactional
-  fun importCsv(csv: String): ImportResult {
-    val decoded = StatEntryCsvDecoder.decode(csv)
-    if (decoded.errors.isNotEmpty()) {
-      return ImportResult(parsed = decoded.rows.size, created = 0, errors = decoded.errors)
-    }
-    for (request in decoded.rows) {
-      val existing =
-        repo.findByTradeDateAndTickerAndCreatedByIsNull(request.tradeDate, request.ticker)
-      val entry =
-        existing
-          ?: StatEntry(
-            tradeDate = request.tradeDate,
-            ticker = request.ticker,
-            gapUpPercent = request.gapUpPercent,
-            openPrice = request.openPrice,
-          )
-      applyImport(entry, request)
-      if (existing != null) entry.updatedAt = Instant.now()
-      repo.save(entry)
-    }
-    return ImportResult(
-      parsed = decoded.rows.size,
-      created = decoded.rows.size,
-      errors = emptyList(),
-    )
-  }
-
-  /**
-   * Exports the **global/admin community** rows as a CSV string (cf. [StatEntryCsvEncoder]),
-   * newest-first. Scoped to `created_by IS NULL` so the export stays roundtrip-safe : the community
-   * rows are complete, while the per-user radar/manual rows never leave through the CSV.
-   */
+  /** Exports the caller's stats as a CSV string (cf. [StatEntryCsvEncoder]), newest-first. */
   @Transactional(readOnly = true)
-  fun exportAllAsCsv(): String =
-    StatEntryCsvEncoder.encode(repo.findByCreatedByIsNull(DEFAULT_SORT))
+  fun exportAllAsCsv(): String {
+    val userId = authService.getCurrentUser().id
+    return StatEntryCsvEncoder.encode(repo.findByUserId(userId, DEFAULT_SORT))
+  }
 
-  private fun applyImport(entry: StatEntry, r: StatEntryRequest) {
-    entry.tradeDate = r.tradeDate
-    entry.ticker = r.ticker
-    entry.gapUpPercent = r.gapUpPercent
-    entry.floatSharesMillions = r.floatSharesMillions
-    entry.institutionsPercent = r.institutionsPercent
-    entry.instOver20 = r.instOver20
-    entry.under1Dollar = r.under1Dollar
-    entry.ssr = r.ssr
-    entry.entryAfter11am = r.entryAfter11am
-    entry.note = r.note
-    entry.openPrice = r.openPrice
-    entry.highPrice = r.highPrice
-    entry.lodPrice = r.lodPrice
-    entry.eodPrice = r.eodPrice
-    entry.pushPercent = StatMetrics.pushPercent(r.openPrice, r.highPrice)
-    entry.lodPercent = StatMetrics.lodPercent(r.openPrice, r.lodPrice)
-    entry.eodPercent = StatMetrics.eodPercent(r.openPrice, r.eodPrice)
-    entry.source = StatSource.IMPORT
-    entry.createdBy = null
+  // ---- Internals -----------------------------------------------------------------------------
+
+  private fun loadOwned(id: UUID): StatEntry {
+    val userId = authService.getCurrentUser().id
+    return repo.findByIdAndUserId(id, userId)
+      ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Stat entry $id not found")
+  }
+
+  /** 409 when another stat of the same user already holds (day, ticker). */
+  private fun requireFree(userId: UUID, request: StatEntryRequest, ticker: String, ownId: UUID?) {
+    val existing = repo.findByUserIdAndTradeDateAndTicker(userId, request.tradeDate, ticker)
+    if (existing != null && existing.id != ownId) {
+      throw ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "Stat $ticker already exists on ${request.tradeDate}",
+      )
+    }
+  }
+
+  /** A blank shell — [apply] does the validation and fills every field right after. */
+  private fun newEntry(user: User, request: StatEntryRequest, ticker: String, candidateId: UUID?) =
+    StatEntry(
+      user = user,
+      candidateId = candidateId,
+      tradeDate = request.tradeDate,
+      ticker = ticker,
+      previousClose = request.previousClose,
+      pmOpen = request.pmOpen,
+      pmHigh = request.pmHigh,
+    )
+
+  /** Validates [request] and copies it onto this stat (ticker already cleaned). */
+  private fun StatEntry.apply(request: StatEntryRequest, cleanTicker: String) {
+    val pmOpen = request.pmOpen.requirePositive("PM open")
+    val pmHigh = request.pmHigh.requirePositive("PM high")
+    if (pmHigh < pmOpen) throw badRequest("PM high must not be below the PM open")
+    val hod = request.hodPrice?.requirePositive("HOD")
+    val lod = request.lodPrice?.requirePositive("LOD")
+    if (hod != null && lod != null && hod < lod) throw badRequest("HOD must not be below the LOD")
+
+    tradeDate = request.tradeDate
+    pattern = request.pattern
+    ticker = cleanTicker
+    previousClose = request.previousClose.requirePositive("Previous close")
+    this.pmOpen = pmOpen
+    this.pmHigh = pmHigh
+    floatMillions = request.floatMillions?.requireNonNegative("Float")
+    volumeMillions = request.volumeMillions?.requireNonNegative("Volume")
+    locatePerShare = request.locatePerShare?.requireNonNegative("Locate")
+    note = request.note?.trim()?.ifEmpty { null }
+
+    openPrice = request.openPrice?.requirePositive("Open")
+    pushOpenPrice = request.pushOpenPrice?.requirePositive("Push at open")
+    hodPrice = hod
+    lodPrice = lod
+    eodPrice = request.eodPrice?.requirePositive("EOD")
+
+    ssr = request.ssr
+    under1Dollar = request.under1Dollar
+    entryAfter11am = request.entryAfter11am
+  }
+
+  private fun StatEntryRequest.cleanTicker(): String =
+    ticker.trim().uppercase().ifEmpty { throw badRequest("Ticker must not be blank") }
+
+  private fun BigDecimal.requirePositive(label: String): BigDecimal = also {
+    if (it.signum() <= 0) throw badRequest("$label must be greater than zero")
+  }
+
+  private fun BigDecimal.requireNonNegative(label: String): BigDecimal = also {
+    if (it.signum() < 0) throw badRequest("$label must not be negative")
+  }
+
+  private fun badRequest(message: String) = ResponseStatusException(HttpStatus.BAD_REQUEST, message)
+
+  /** Average of a derived percentage over the rows that yield one ; null when none does. */
+  private fun List<StatEntry>.averageOf(metric: (StatEntry) -> BigDecimal?): BigDecimal? {
+    val values = mapNotNull(metric)
+    if (values.isEmpty()) return null
+    return values.reduce(BigDecimal::add).divide(BigDecimal(values.size), 2, RoundingMode.HALF_UP)
   }
 
   private companion object {
     /** Newest-first, `createdAt` tiebreaker. Export order + implicit listing sort. */
     val DEFAULT_SORT: Sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
-
-    /** ET market day — so "today" on a create matches the Nasdaq session the gap belongs to. */
-    val MARKET_ZONE: ZoneId = ZoneId.of("America/New_York")
   }
 }

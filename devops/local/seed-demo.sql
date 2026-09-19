@@ -8,7 +8,7 @@
 -- The script aborts if that user already has data, so it never overwrites anything : use Tilt's
 -- "Purge" first to start from an empty database.
 --
--- Matches the schema up to V13. When a model changes (redesign issues #186, #187, #192…), update
+-- Matches the schema up to V14. When a model changes (redesign issues #186, #187, #192…), update
 -- this file in the same PR.
 
 DO $$
@@ -21,7 +21,7 @@ DECLARE
 BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'no user in app_user — log in once first'; END IF;
   IF EXISTS (SELECT 1 FROM trade_entry WHERE user_id = uid)
-     OR EXISTS (SELECT 1 FROM stat_entry WHERE created_by = uid)
+     OR EXISTS (SELECT 1 FROM stat_entry WHERE user_id = uid)
      OR EXISTS (SELECT 1 FROM candidate WHERE user_id = uid)
      OR EXISTS (SELECT 1 FROM account_movement WHERE user_id = uid) THEN
     RAISE EXCEPTION 'the user already has data — seed skipped';
@@ -41,32 +41,46 @@ BEGIN
     (uid, '2026-09-17', 'GUS', 'KTTA', 2.65, 4.05, 4.65,  8.2, 3.1, 0.03, 'Résistance 4,65 — high PM, pas de news');
 
   -- ------------------------------------------------------------------ stats
-  -- Session values; percentages computed vs the open (current model : push = HOD vs open).
+  -- V14 model : the premarket block is a copy of the candidate (previous close, PM open, PM high,
+  -- float / volume in M, locate in $ / share) and the session block (open, push at open, HOD, LOD,
+  -- EOD) is entered after the 4 pm close. No percentage is stored — gap, PM push and the session
+  -- percentages are all derived from these prices. `candidate_id` is filled when a candidate exists
+  -- for the same (day, ticker) : only SGBX 18/09 and KTTA 17/09 here, the older days predate the
+  -- candidates captured above.
   FOR s IN
     SELECT * FROM (VALUES
-      ('2026-09-17'::date, 'KTTA', 52.8,  8.2, 4.20, 4.62, 3.41, 3.52, false, false, false, 'Push rejeté sous 4,65'),
-      ('2026-09-16'::date, 'BNZI', 61.8,  4.5, 2.90, 3.05, 2.44, 2.58, false, true,  false, NULL),
-      ('2026-09-15'::date, 'SNTG', 54.4, 12.0, 6.00, 7.14, 5.80, 6.95, false, false, false, 'Squeeze en fin de matinée'),
-      ('2026-09-12'::date, 'NUWE', 56.4,  6.7, 3.20, 3.38, 2.52, 2.61, false, false, false, NULL),
-      ('2026-09-11'::date, 'HOTH', 54.3, 18.3, 7.30, 7.82, 6.90, 7.05, false, false, true,  NULL),
-      ('2026-09-11'::date, 'ZVSA', 54.5,  5.1, 3.55, 4.40, 3.30, 4.12, false, false, false, 'Pas tradé — push trop fort'),
-      ('2026-09-10'::date, 'AEHL', 78.2,  3.4, 1.90, 2.48, 1.85, 2.31, false, false, false, NULL),
-      ('2026-09-10'::date, 'MULN', 63.5, 22.0, 0.88, 0.95, 0.71, 0.74, true,  false, false, 'Sous 1 $ — pas tradé'),
-      ('2026-09-09'::date, 'CRKN', 58.1,  9.9, 5.00, 5.21, 3.85, 3.95, false, false, false, NULL),
-      ('2026-09-08'::date, 'TOP',  48.7, 32.0, 8.50, 8.95, 7.95, 8.10, false, false, false, NULL)
-    ) AS v(d, ticker, gap, flt, o, h, l, e, u1, ssr, a11, note)
+      ('2026-09-17'::date, 'KTTA', 2.65, 4.05, 4.65,  8.2,  3.1, 0.03, 4.20, 4.62, 4.62, 3.41, 3.52, false, false, false, 'Push rejeté sous 4,65'),
+      ('2026-09-16'::date, 'BNZI', 1.85, 2.99, 3.37,  4.5,  6.2, 0.06, 2.90, 3.05, 3.05, 2.44, 2.58, true,  false, false, NULL),
+      ('2026-09-15'::date, 'SNTG', 3.95, 6.10, 6.60, 12.0,  2.4, 0.05, 6.00, 6.55, 7.14, 5.80, 6.95, false, false, false, 'Squeeze en fin de matinée'),
+      ('2026-09-12'::date, 'NUWE', 2.10, 3.28, 3.66,  6.7,  3.8, 0.04, 3.20, 3.38, 3.38, 2.52, 2.61, false, false, false, NULL),
+      ('2026-09-11'::date, 'HOTH', 4.80, 7.41, 8.08, 18.3,  1.9, 0.07, 7.30, 7.60, 7.82, 6.90, 7.05, false, false, true,  NULL),
+      ('2026-09-11'::date, 'ZVSA', 2.35, 3.63, 4.22,  5.1,  7.0, 0.10, 3.55, 4.10, 4.40, 3.30, 4.12, false, false, false, 'Pas tradé — push trop fort'),
+      ('2026-09-10'::date, 'AEHL', 1.05, 1.87, 2.13,  3.4, 11.5, 0.09, 1.90, 2.48, 2.48, 1.85, 2.31, false, false, false, NULL),
+      ('2026-09-10'::date, 'MULN', 0.55, 0.90, 1.03, 22.0, 15.3, 0.01, 0.88, 0.95, 0.95, 0.71, 0.74, false, true,  false, 'Sous 1 $ — pas tradé'),
+      ('2026-09-09'::date, 'CRKN', 3.20, 5.06, 5.48,  9.9,  4.4, 0.03, 5.00, 5.21, 5.21, 3.85, 3.95, false, false, false, NULL),
+      ('2026-09-08'::date, 'TOP',  5.70, 8.48, 9.18, 32.0,  1.2, 0.02, 8.50, 8.80, 8.95, 7.95, 8.10, false, false, false, NULL)
+    ) AS v(d, ticker, prev, pmo, pmh, flt, vol, loc, o, po, h, l, e, ssr, u1, a11, note)
   LOOP
-    INSERT INTO stat_entry (trade_date, ticker, gap_up_percent, float_shares_millions, under_1_dollar, ssr,
-                            entry_after_11am, note, open_price, high_price, lod_price, eod_price,
-                            push_percent, lod_percent, eod_percent, source, created_by)
-    VALUES (s.d, s.ticker, s.gap, s.flt, s.u1, s.ssr, s.a11, s.note, s.o, s.h, s.l, s.e,
-            round((s.h - s.o) / s.o * 100, 2), round((s.l - s.o) / s.o * 100, 2),
-            round((s.e - s.o) / s.o * 100, 2), 'MANUAL', uid);
+    INSERT INTO stat_entry (user_id, candidate_id, trade_date, pattern, ticker,
+                            previous_close, pm_open, pm_high, float_millions, volume_millions,
+                            locate_per_share, note,
+                            open_price, push_open_price, hod_price, lod_price, eod_price,
+                            ssr, under_1_dollar, entry_after_11am)
+    VALUES (uid,
+            (SELECT id FROM candidate WHERE user_id = uid AND trading_date = s.d AND ticker = s.ticker),
+            s.d, 'GUS', s.ticker, s.prev, s.pmo, s.pmh, s.flt, s.vol, s.loc, s.note,
+            s.o, s.po, s.h, s.l, s.e, s.ssr, s.u1, s.a11);
   END LOOP;
 
-  -- Today's stat, still to complete after the 4 pm close.
-  INSERT INTO stat_entry (trade_date, ticker, gap_up_percent, float_shares_millions, note, source, created_by)
-  VALUES ('2026-09-18', 'SGBX', 65.2, 3.9, 'Locate cher, float serré — attention au squeeze', 'MANUAL', uid);
+  -- Today's stat, still to complete after the 4 pm close : the premarket block is in, the five
+  -- session prices stay null.
+  INSERT INTO stat_entry (user_id, candidate_id, trade_date, pattern, ticker,
+                          previous_close, pm_open, pm_high, float_millions, volume_millions,
+                          locate_per_share, note)
+  VALUES (uid,
+          (SELECT id FROM candidate WHERE user_id = uid AND trading_date = '2026-09-18' AND ticker = 'SGBX'),
+          '2026-09-18', 'GUS', 'SGBX', 1.12, 1.85, 2.46, 3.9, 9.7, 0.12,
+          'Locate cher, float serré — attention au squeeze');
 
   -- ------------------------------------------------------------------ trades (+ executions, account movements)
   FOR t IN
@@ -81,7 +95,7 @@ BEGIN
       ('2026-09-08'::date, 'TOP',  150, 8.60, 8.12,   72.00,  5.5814, 'Petit fade, gros float.', NULL)
     ) AS v(d, ticker, size, avg_in, avg_out, pnl, gain, note, err)
   LOOP
-    SELECT id INTO sid FROM stat_entry WHERE created_by = uid AND trade_date = t.d AND ticker = t.ticker;
+    SELECT id INTO sid FROM stat_entry WHERE user_id = uid AND trade_date = t.d AND ticker = t.ticker;
     INSERT INTO trade_entry (user_id, trade_date, ticker, direction, pattern, size, open_price, exit_price,
                              profit_dollars, gain_percent, note, error_note, stat_entry_id)
     VALUES (uid, t.d, t.ticker, 'SHORT', 'GUS', t.size, t.avg_in, t.avg_out, t.pnl, t.gain, t.note, t.err, sid)

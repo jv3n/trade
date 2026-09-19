@@ -1,44 +1,45 @@
 package com.portfolioai.stats.application.dto
 
+import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.domain.StatEntry
-import com.portfolioai.stats.domain.StatSource
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
 /**
- * Response shape for a single [StatEntry] row. Flat — no nested objects, no entity references.
+ * Response shape for a single [StatEntry]. Flat — no nested objects, no entity references.
  *
- * Unlike the CSV export (which omits the derived columns to stay roundtrip-safe), the listing DTO
- * **carries** `%push` / `%LOD` / `%EOD` : the table view's whole point is to read those outcomes
- * alongside the setup, and there is no re-import concern on this read path.
- *
- * Most fields are nullable since V2 : a [StatSource.RADAR] pick only carries the scan-time fields
- * (ticker / gap / open price) — the setup flags and the EOD outcome stay null until the day plays
- * out. [source] tells the UI how the row was created so it can label radar picks distinctly.
+ * Carries the **raw prices only** : gap, premarket push, push at open, HOD / LOD / EOD percentages
+ * are derived by the front (`features/stats/stats.math.ts`) from these, exactly like the live
+ * preview of the completion panel. [completed] is the "to complete" status, derived server-side
+ * from the session block.
  */
 data class StatEntryDto(
   val id: UUID,
+  val candidateId: UUID?,
   val tradeDate: LocalDate,
+  val pattern: Pattern,
   val ticker: String,
-  val gapUpPercent: BigDecimal?,
-  val openPrice: BigDecimal?,
-  val floatSharesMillions: BigDecimal?,
-  val institutionsPercent: BigDecimal?,
-  val instOver20: Boolean?,
-  val under1Dollar: Boolean?,
-  val ssr: Boolean?,
-  val entryAfter11am: Boolean?,
+  // ---- Premarket (copied from the candidate) ----
+  val previousClose: BigDecimal,
+  val pmOpen: BigDecimal,
+  val pmHigh: BigDecimal,
+  val floatMillions: BigDecimal?,
+  val volumeMillions: BigDecimal?,
+  val locatePerShare: BigDecimal?,
   val note: String?,
-  val highPrice: BigDecimal?,
+  // ---- Session (null while the stat is to complete) ----
+  val openPrice: BigDecimal?,
+  val pushOpenPrice: BigDecimal?,
+  val hodPrice: BigDecimal?,
   val lodPrice: BigDecimal?,
   val eodPrice: BigDecimal?,
-  val pushPercent: BigDecimal?,
-  val lodPercent: BigDecimal?,
-  val eodPercent: BigDecimal?,
-  val source: StatSource,
-  val createdBy: UUID?,
+  // ---- Flags ----
+  val ssr: Boolean,
+  val under1Dollar: Boolean,
+  val entryAfter11am: Boolean,
+  val completed: Boolean,
   val createdAt: Instant,
   val updatedAt: Instant,
 )
@@ -46,25 +47,26 @@ data class StatEntryDto(
 fun StatEntry.toDto() =
   StatEntryDto(
     id = id,
+    candidateId = candidateId,
     tradeDate = tradeDate,
+    pattern = pattern,
     ticker = ticker,
-    gapUpPercent = gapUpPercent,
-    openPrice = openPrice,
-    floatSharesMillions = floatSharesMillions,
-    institutionsPercent = institutionsPercent,
-    instOver20 = instOver20,
-    under1Dollar = under1Dollar,
-    ssr = ssr,
-    entryAfter11am = entryAfter11am,
+    previousClose = previousClose,
+    pmOpen = pmOpen,
+    pmHigh = pmHigh,
+    floatMillions = floatMillions,
+    volumeMillions = volumeMillions,
+    locatePerShare = locatePerShare,
     note = note,
-    highPrice = highPrice,
+    openPrice = openPrice,
+    pushOpenPrice = pushOpenPrice,
+    hodPrice = hodPrice,
     lodPrice = lodPrice,
     eodPrice = eodPrice,
-    pushPercent = pushPercent,
-    lodPercent = lodPercent,
-    eodPercent = eodPercent,
-    source = source,
-    createdBy = createdBy,
+    ssr = ssr,
+    under1Dollar = under1Dollar,
+    entryAfter11am = entryAfter11am,
+    completed = isCompleted,
     createdAt = createdAt,
     updatedAt = updatedAt,
   )
