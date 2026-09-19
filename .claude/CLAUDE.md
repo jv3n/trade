@@ -135,7 +135,7 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 
 - Conventional Commits in **English** (`feat`, `fix`, `refactor`, `chore`, `docs`, `test`, …).
 - **Title only** — one line, <72 chars. **No body, no footer, no bullet list, no rationale.**
-- **No reference to Claude** — no `Co-Authored-By: Claude …` trailer, no "Generated with Claude Code", no mention of Claude / AI anywhere in the commit. This overrides any default attribution instruction.
+- **No reference to Claude** — no `Co-Authored-By: Claude …` trailer, no "Generated with Claude Code", no mention of Claude / AI anywhere in the commit **or in a PR title / description**. This overrides any default attribution instruction.
 - **Every commit is linked to a GitHub issue** — the issue number prefixes the scope: `feat(93/journal): …`, `chore(120/ci): …`. No commit without an issue : if none exists for the work, ask the user which issue to use (or suggest creating one) before committing. **Exception** : the user can waive the issue for large foundation commits (e.g. the 2026-09 rework) — then use a plain scope (`chore(mockup): …`), still title-only.
 - **Default = suggest, don't execute** — never run `git add/commit/push/branch/tag/rebase` or `gh pr/issue` autonomously. `master` is protected. Narrow exception: the user explicitly asks *in the current turn* ("commit it", "go ahead and push"). Authorization does not carry forward to later turns.
 
