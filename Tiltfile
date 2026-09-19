@@ -155,6 +155,21 @@ cmd_button(
     ],
 )
 
+# "Seed" button — loads the demo data mirroring the mockups (`devops/local/seed-demo.sql`) for the
+# first user. Typical cycle : Purge → wait for the backend to replay Flyway → log in → Seed. The
+# script refuses to run if the user already has data, so a stray click never overwrites anything.
+cmd_button(
+    name = "db-seed",
+    resource = "postgres",
+    text = "Seed — load the demo data",
+    icon_name = "dataset",
+    argv = [
+        "sh",
+        "-c",
+        "docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/local/seed-demo.sql",
+    ],
+)
+
 # ────────────────────────────────────────────────
 # App — Backend Spring Boot & Frontend Angular
 # ────────────────────────────────────────────────
