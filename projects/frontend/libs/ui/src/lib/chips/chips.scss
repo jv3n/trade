@@ -122,22 +122,25 @@
 // ============================================================================
 
 // `ticker` — trading-domain variant for chips that wrap a ticker symbol (BAC, AAPL, NVDA…).
-// Label rendered in success-green to match the rest of the PnL / buy-side palette
-// (`--color-action-buy` is `var(--color-success)`). Selected state swaps to the success-soft
-// container surface for visual coherence with the rest of the success affordances.
+// Deliberately **neutral** : monospace label on a raised grey surface. Green / red are reserved
+// for outcomes (P&L, amounts, gaps) — a green ticker would read as "this one made money".
 .stb-chip--ticker {
-  --mat-chip-label-text-color: var(--color-success);
+  --mat-chip-label-text-color: var(--color-text);
+  --mat-chip-label-text-font: var(--font-mono);
   --mat-chip-label-text-weight: 600;
-  --mat-chip-outline-color: var(--color-success-soft);
-  --mat-chip-focus-outline-color: var(--color-success);
-  --mat-chip-hover-state-layer-color: var(--color-success);
-  --mat-chip-focus-state-layer-color: var(--color-success);
-  --mat-chip-selected-label-text-color: var(--color-success);
-  --mat-chip-elevated-selected-container-color: var(--color-success-soft);
-  --mat-chip-selected-focus-state-layer-color: var(--color-success);
-  --mat-chip-selected-hover-state-layer-color: var(--color-success);
-  --mat-chip-with-icon-icon-color: var(--color-success);
-  --mat-chip-with-icon-selected-icon-color: var(--color-success);
+  --mat-chip-label-text-size: 12px;
+  --mat-chip-container-shape-radius: var(--radius-sm);
+  --mat-chip-elevated-container-color: var(--color-surface-2);
+  --mat-chip-outline-color: var(--color-border-strong);
+  --mat-chip-focus-outline-color: var(--color-accent);
+  --mat-chip-hover-state-layer-color: var(--color-text);
+  --mat-chip-focus-state-layer-color: var(--color-text);
+  --mat-chip-selected-label-text-color: var(--color-text);
+  --mat-chip-elevated-selected-container-color: var(--color-surface-2);
+  --mat-chip-selected-focus-state-layer-color: var(--color-text);
+  --mat-chip-selected-hover-state-layer-color: var(--color-text);
+  --mat-chip-with-icon-icon-color: var(--color-text-muted);
+  --mat-chip-with-icon-selected-icon-color: var(--color-text-muted);
 }
 
 // `linked` — info-blue status chip : the row is attached to something (a journal trade linked

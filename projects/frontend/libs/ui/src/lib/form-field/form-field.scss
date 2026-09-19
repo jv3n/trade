@@ -155,10 +155,8 @@
       // vertical-padding + filled-label-display + the two filled-with-label paddings as a
       // set. Editing one without the others breaks the visual rhythm.
       //
-      // For now we stick to the M3 default (density 0 — 56 px container height). The journal
-      // search field handles its own per-instance density via a local override ; if we lean
-      // toward dense fields globally, switch to `mat.form-field-density(-2)` (= 48 px) at the
-      // theme entrypoint rather than touching the tokens here.
+      // Density is applied as a set via `mat.form-field-density(-4)` right after this block
+      // (40 px container instead of M3's 56 px) — denser forms, closer to the mockup's inputs.
       //
       // container-height: 56px,
       // container-vertical-padding: 16px,
@@ -167,4 +165,7 @@
        // filled-with-label-container-padding-bottom: 8px,
     )
   );
+
+  // Dense fields (40 px) — applied as a coordinated set (height, paddings, label display).
+  @include mat.form-field-density(-4);
 }

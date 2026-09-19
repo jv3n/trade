@@ -16,8 +16,10 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   // Tabular numerals globally — keeps prices, P/L, percentages aligned in tables without
-  // forcing `font-variant-numeric` on every cell. Inter ships this feature natively.
+  // forcing `font-variant-numeric` on every cell. Geist ships this feature natively ; `ss01`
+  // enables its more open alternates.
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'ss01';
   // Sharper rendering on macOS / iOS WebKit — small but visible win on dark theme.
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -43,6 +45,25 @@ h4 {
     color 0.2s;
 }
 
+::selection {
+  background: var(--color-accent-soft);
+}
+
+// Keyboard focus — visible accent ring for plain elements (links, native controls). Material
+// components are excluded : they render their own focus indicator (state layer / outline), and
+// stacking a second ring on them reads as a stray bubble.
+:focus-visible:not([class*='mat-']):not([class*='mdc-']) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
 // Form controls don't inherit font-family by default in all browsers.
 button,
 input,
@@ -58,14 +79,12 @@ textarea {
   // Subtle bottom border so the toolbar separates from the content area regardless of theme.
   // Without it the white-on-white light theme had no visible boundary between header and body.
   border-bottom: s.$border-width solid var(--color-border);
-  // Force the toolbar onto our `--color-bg` instead of Material 3's `--mat-sys-surface`, which
-  // is derived from the violet primary palette and carries a faint lavender tint in light mode.
+  // The toolbar sits on the page background (`--color-bg`), not on the card surface.
   --mat-toolbar-container-background-color: var(--color-bg);
   --mat-toolbar-container-text-color: var(--color-text);
 }
 
-// Same dance for the sidenav content panel — Material 3 derives its bg from the primary palette
-// which leaks a violet tint into the main content area on light theme.
+// Same for the sidenav content panel — the main reading area is the page background.
 .mat-drawer-content {
   --mat-sidenav-content-background-color: var(--color-bg);
   --mat-sidenav-content-text-color: var(--color-text);

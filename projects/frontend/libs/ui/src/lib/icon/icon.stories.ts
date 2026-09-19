@@ -29,7 +29,7 @@ const meta: Meta<Demo> = {
     docs: {
       description: {
         component:
-          'Material font icon. The app uses the `material-icons` package (loaded in `angular.json> styles`). Colour follows `currentColor`.',
+          'Material font icon — Material Symbols Rounded (loaded by `styles/_fonts.scss`, registered as the default font set on `MatIconRegistry`). Names from https://fonts.google.com/icons. Colour follows `currentColor`.',
       },
     },
   },

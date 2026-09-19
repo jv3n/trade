@@ -1,4 +1,6 @@
-import { provideZonelessChangeDetection } from '@angular/core';
+import { inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
+import { MAT_RIPPLE_GLOBAL_OPTIONS } from '@angular/material/core';
+import { MatIconRegistry } from '@angular/material/icon';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { applicationConfig, type Decorator, type Preview } from '@storybook/angular';
 
@@ -54,7 +56,19 @@ const preview: Preview = {
   },
   decorators: [
     applicationConfig({
-      providers: [provideZonelessChangeDetection(), provideAnimations()],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideAnimations(),
+        // Same as the app : no click ripples.
+        { provide: MAT_RIPPLE_GLOBAL_OPTIONS, useValue: { disabled: true } },
+        // Same icon font as the app (Material Symbols Rounded, loaded by `styles/_fonts.scss`).
+        provideAppInitializer(() =>
+          inject(MatIconRegistry).setDefaultFontSetClass(
+            'material-symbols-rounded',
+            'mat-ligature-font',
+          ),
+        ),
+      ],
     }),
     withDataTheme,
   ],
