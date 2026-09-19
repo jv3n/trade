@@ -22,15 +22,14 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(
   name = "Candidates",
   description =
-    "Short-trade preparation cockpit — risk-based entry ladder, execution tracking and cover ladder " +
-      "per ticker, scoped to the current user. Date-driven : the dropdown lists a single session's " +
-      "candidates ; older ones stay in the DB but off the picker.",
+    "Morning capture of the tickers spotted on the radar — premarket prices, float, volume, locate " +
+      "and a note, scoped to the current user. Browsed day by day ; one candidate per day and ticker.",
 )
 @RestController
 @RequestMapping("/api/candidates")
 class CandidateController(private val service: CandidateService) {
 
-  /** The day's candidates for the dropdown — defaults to today when `date` is omitted. */
+  /** A day's candidates — defaults to today when `date` is omitted. */
   @GetMapping
   fun list(
     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?
@@ -39,12 +38,12 @@ class CandidateController(private val service: CandidateService) {
   /** Fetch a single candidate by id (404 if foreign / missing). */
   @GetMapping("/{id}") fun get(@PathVariable id: UUID): CandidateDto = service.findById(id)
 
-  /** Saves a new candidate. */
+  /** Captures a new candidate. Same day + ticker already captured → 409. */
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   fun create(@RequestBody request: CandidateRequest): CandidateDto = service.create(request)
 
-  /** Re-saves (upserts) an existing candidate. Foreign id → 404. */
+  /** Updates a candidate. Foreign id → 404 ; renaming onto a captured ticker → 409. */
   @PutMapping("/{id}")
   fun update(@PathVariable id: UUID, @RequestBody request: CandidateRequest): CandidateDto =
     service.update(id, request)

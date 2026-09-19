@@ -8,7 +8,7 @@
 -- The script aborts if that user already has data, so it never overwrites anything : use Tilt's
 -- "Purge" first to start from an empty database.
 --
--- Matches the schema up to V12. When a model changes (redesign issues #186, #187, #192…), update
+-- Matches the schema up to V13. When a model changes (redesign issues #186, #187, #192…), update
 -- this file in the same PR.
 
 DO $$
@@ -28,16 +28,17 @@ BEGIN
   END IF;
 
   -- ------------------------------------------------------------------ candidates
-  -- Morning capture. total_capital / pct_capital_at_risk are still mandatory in the current schema.
-  INSERT INTO candidate (user_id, trading_date, ticker, total_capital, pct_capital_at_risk, open_price,
-                         previous_close, float_shares, volume, morning_push, borrow_cost_per_share, note)
+  -- Morning capture (V13 model) : previous close, PM open (4:00 am), PM high, float and volume in M,
+  -- locate in $ / share.
+  INSERT INTO candidate (user_id, trading_date, pattern, ticker, previous_close, pm_open, pm_high,
+                         float_millions, volume_millions, locate_per_share, note)
   VALUES
-    (uid, '2026-09-18', 'SGBX', 25000, 2, 1.85, 1.12,  3.9, 9.7, 2.46, 0.12, 'Locate cher, float serré — attention au squeeze'),
-    (uid, '2026-09-18', 'BNRG', 25000, 2, 5.40, 3.30, 11.2, 2.1, 5.94, 0.08, 'Offering possible, surveiller les filings'),
-    (uid, '2026-09-18', 'MLGO', 25000, 2, 3.10, 1.95,  6.4, 4.8, 3.72, 0.04, 'Résistance 3,75'),
-    (uid, '2026-09-18', 'ATXG', 25000, 2, 0.92, 0.58, 25.0, 1.3, 1.08, 0.01, NULL),
-    (uid, '2026-09-18', 'VERB', 25000, 2, 7.80, 5.10, 58.0, 0.9, 8.35, 0.05, 'Gros float, sans doute à écarter'),
-    (uid, '2026-09-17', 'KTTA', 25000, 2, 4.05, 2.65,  8.2, 3.1, 4.65, 0.03, 'Résistance 4,65 — high PM, pas de news');
+    (uid, '2026-09-18', 'GUS', 'SGBX', 1.12, 1.85, 2.46,  3.9, 9.7, 0.12, 'Locate cher, float serré — attention au squeeze'),
+    (uid, '2026-09-18', 'GUS', 'BNRG', 3.30, 5.40, 5.94, 11.2, 2.1, 0.08, 'Offering possible, surveiller les filings'),
+    (uid, '2026-09-18', 'GUS', 'MLGO', 1.95, 3.10, 3.72,  6.4, 4.8, 0.04, 'Résistance 3,75'),
+    (uid, '2026-09-18', 'GUS', 'ATXG', 0.58, 0.92, 1.08, 25.0, 1.3, 0.01, NULL),
+    (uid, '2026-09-18', 'GUS', 'VERB', 5.10, 7.80, 8.35, 58.0, 0.9, 0.05, 'Gros float, sans doute à écarter'),
+    (uid, '2026-09-17', 'GUS', 'KTTA', 2.65, 4.05, 4.65,  8.2, 3.1, 0.03, 'Résistance 4,65 — high PM, pas de news');
 
   -- ------------------------------------------------------------------ stats
   -- Session values; percentages computed vs the open (current model : push = HOD vs open).

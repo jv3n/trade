@@ -5,12 +5,10 @@ import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.candidates.application.CandidateService
-import com.portfolioai.candidates.application.dto.CandidateEntry
-import com.portfolioai.candidates.application.dto.CandidateExit
-import com.portfolioai.candidates.application.dto.CandidateFill
 import com.portfolioai.candidates.application.dto.CandidateRequest
 import com.portfolioai.candidates.domain.Candidate
 import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
+import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -28,18 +26,17 @@ import org.springframework.web.server.ResponseStatusException
 
 /**
  * End-to-end integration test on [CandidateService] + JPA → Postgres (Testcontainers via the
- * launcher-session bootstrap, no per-class plumbing).
+ * launcher-session bootstrap, no per-class plumbing) for the **morning capture** model (#186).
  *
  * What it pins :
- * - **Save round-trip** — the ticker is normalised, the params persist, and the `fills` / `entries`
- *   / `exits` JSON ladders survive the Postgres `jsonb` round-trip as typed objects (catches a
- *   regression in the `@JdbcTypeCode(JSON)` ↔ ObjectMapper marshalling).
- * - **In-service validation** — a non-positive open price / capital and an out-of-range risk %
- *   return a clean 400, not a DB CHECK violation.
- * - **Date-driven lifecycle** — the dropdown query returns only the requested session's candidates
- *   ; a past-date candidate is invisible without being deleted.
- * - **Multi-tenant scope** — a foreign / missing id → 404 (never 403), and listing never reaches
- *   across tenants.
+ * - **Save round-trip** — the ticker is normalised, every premarket field and the pattern (Postgres
+ *   `pattern` ENUM) persist, a blank note is stored as null, and the pattern defaults to GUS.
+ * - **One candidate per (day, ticker)** — a second capture, or renaming onto a captured ticker, is
+ *   a 409 ; the same ticker on another day or another user is fine.
+ * - **In-service validation** — non-positive prices, a PM high below the PM open, a negative float
+ *   / volume / locate and a blank ticker return a clean 400, not a DB CHECK violation.
+ * - **Day listing** — only the requested day's candidates come back.
+ * - **Multi-tenant scope** — a foreign / missing id → 404 (never 403).
  *
  * `AuthService` is overridden with `@MockitoBean` so the user-scope is deterministic.
  */
@@ -69,50 +66,96 @@ class CandidateIntegrationTest {
   // ---------------------------------------------------------------------------
 
   @Test
-  fun `create normalises the ticker, persists the params and round-trips the ladders`() {
+  fun `create normalises the ticker and persists every premarket field`() {
     val saved =
       service.create(
         request(
-          ticker = " casst ",
-          fills =
-            listOf(CandidateFill(BigDecimal("0.10"), 200), CandidateFill(BigDecimal("0.20"), 400)),
-          entries = listOf(CandidateEntry(BigDecimal("3.21"), 200)),
-          exits = listOf(CandidateExit(BigDecimal("3.00"), 200)),
+          ticker = " ktta ",
+          pattern = Pattern.DT,
+          floatMillions = BigDecimal("8.2"),
+          volumeMillions = BigDecimal("3.1"),
+          locatePerShare = BigDecimal("0.03"),
+          note = "  Résistance 4,65 — high PM, pas de news  ",
         )
       )
 
-    assertEquals("CASST", saved.ticker, "ticker is trimmed + upper-cased")
-    assertEquals(0, BigDecimal("12.0400").compareTo(saved.openPrice))
-
-    // The JSON ladders survive the jsonb round-trip as typed objects.
     val reloaded = service.findById(saved.id)
-    assertEquals(2, reloaded.fills.size)
-    assertEquals(0, BigDecimal("0.10").compareTo(reloaded.fills[0].step))
-    assertEquals(200, reloaded.fills[0].sharesInPlay)
-    assertEquals(1, reloaded.entries.size)
-    assertEquals(0, BigDecimal("3.21").compareTo(reloaded.entries[0].entryPrice))
-    assertEquals(200, reloaded.entries[0].sharesInPlay)
-    assertEquals(1, reloaded.exits.size)
-    assertEquals(200, reloaded.exits[0].sharesCovered)
+    assertEquals("KTTA", reloaded.ticker, "ticker is trimmed + upper-cased")
+    assertEquals(Pattern.DT, reloaded.pattern, "the pattern survives the Postgres ENUM round-trip")
+    assertEquals(0, BigDecimal("2.65").compareTo(reloaded.previousClose))
+    assertEquals(0, BigDecimal("4.05").compareTo(reloaded.pmOpen))
+    assertEquals(0, BigDecimal("4.65").compareTo(reloaded.pmHigh))
+    assertEquals(0, BigDecimal("8.2").compareTo(reloaded.floatMillions))
+    assertEquals(0, BigDecimal("3.1").compareTo(reloaded.volumeMillions))
+    assertEquals(0, BigDecimal("0.03").compareTo(reloaded.locatePerShare))
+    assertEquals("Résistance 4,65 — high PM, pas de news", reloaded.note, "note is trimmed")
   }
 
   @Test
-  fun `saving the same date and ticker upserts in place instead of duplicating`() {
-    val first = service.create(request(ticker = "CASST", openPrice = BigDecimal("12.04")))
-    // Same session + ticker (case-insensitive) with a new open price → updates the same row.
-    val second = service.create(request(ticker = "casst", openPrice = BigDecimal("13.00")))
+  fun `the pattern defaults to GUS and the optional context stays null`() {
+    val saved =
+      service.create(
+        CandidateRequest(
+          tradingDate = DAY,
+          ticker = "KTTA",
+          previousClose = BigDecimal("2.65"),
+          pmOpen = BigDecimal("4.05"),
+          pmHigh = BigDecimal("4.65"),
+          note = "   ",
+        )
+      )
 
-    assertEquals(first.id, second.id, "same (date, ticker) → updated in place")
-    assertEquals(0, BigDecimal("13.0000").compareTo(second.openPrice))
-    assertEquals(1, service.listForDate(LocalDate.of(2026, 6, 19)).size, "no duplicate row")
+    assertEquals(Pattern.GUS, saved.pattern)
+    assertNull(saved.floatMillions)
+    assertNull(saved.volumeMillions)
+    assertNull(saved.locatePerShare)
+    assertNull(saved.note, "a blank note is stored as null")
+  }
+
+  // ---------------------------------------------------------------------------
+  // One candidate per (day, ticker)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `capturing the same ticker twice on the same day is a 409`() {
+    service.create(request(ticker = "KTTA"))
+
+    // Case-insensitive : the ticker is normalised before the check.
+    val ex =
+      assertThrows(ResponseStatusException::class.java) { service.create(request(ticker = "ktta")) }
+    assertEquals(409, ex.statusCode.value())
+    assertEquals(1, service.listForDate(DAY).size, "no duplicate row")
   }
 
   @Test
-  fun `a different ticker on the same date creates a separate candidate`() {
-    service.create(request(ticker = "AAA"))
-    service.create(request(ticker = "BBB"))
+  fun `the same ticker on another day or for another user is a separate candidate`() {
+    service.create(request(ticker = "KTTA", tradingDate = DAY))
+    service.create(request(ticker = "KTTA", tradingDate = DAY.minusDays(1)))
+    repo.save(makeCandidate(otherUser, "KTTA"))
 
-    assertEquals(2, service.listForDate(LocalDate.of(2026, 6, 19)).size)
+    assertEquals(1, service.listForDate(DAY).size)
+    assertEquals(1, service.listForDate(DAY.minusDays(1)).size)
+  }
+
+  @Test
+  fun `renaming a candidate onto a ticker already captured that day is a 409`() {
+    service.create(request(ticker = "KTTA"))
+    val other = service.create(request(ticker = "SGBX"))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.update(other.id, request(ticker = "KTTA"))
+      }
+    assertEquals(409, ex.statusCode.value())
+  }
+
+  @Test
+  fun `updating a candidate without changing its ticker is not a conflict with itself`() {
+    val created = service.create(request(ticker = "KTTA"))
+
+    val updated = service.update(created.id, request(ticker = "KTTA", pmHigh = BigDecimal("4.90")))
+
+    assertEquals(0, BigDecimal("4.90").compareTo(updated.pmHigh))
   }
 
   // ---------------------------------------------------------------------------
@@ -120,27 +163,38 @@ class CandidateIntegrationTest {
   // ---------------------------------------------------------------------------
 
   @Test
-  fun `a non-positive open price is a 400`() {
+  fun `a non-positive previous close, PM open or PM high is a 400`() {
+    listOf(
+        request(previousClose = BigDecimal.ZERO),
+        request(pmOpen = BigDecimal("-1")),
+        request(pmHigh = BigDecimal.ZERO),
+      )
+      .forEach { invalid ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.create(invalid) }
+        assertEquals(400, ex.statusCode.value())
+      }
+  }
+
+  @Test
+  fun `a PM high below the PM open is a 400`() {
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.create(request(openPrice = BigDecimal.ZERO))
+        service.create(request(pmOpen = BigDecimal("4.05"), pmHigh = BigDecimal("3.90")))
       }
     assertEquals(400, ex.statusCode.value())
   }
 
   @Test
-  fun `a capital-at-risk percent of zero or above 100 is a 400`() {
-    val tooHigh =
-      assertThrows(ResponseStatusException::class.java) {
-        service.create(request(pctCapitalAtRisk = BigDecimal("150")))
+  fun `a negative float, volume or locate is a 400`() {
+    listOf(
+        request(floatMillions = BigDecimal("-1")),
+        request(volumeMillions = BigDecimal("-0.5")),
+        request(locatePerShare = BigDecimal("-0.01")),
+      )
+      .forEach { invalid ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.create(invalid) }
+        assertEquals(400, ex.statusCode.value())
       }
-    assertEquals(400, tooHigh.statusCode.value())
-
-    val zero =
-      assertThrows(ResponseStatusException::class.java) {
-        service.create(request(pctCapitalAtRisk = BigDecimal.ZERO))
-      }
-    assertEquals(400, zero.statusCode.value())
   }
 
   @Test
@@ -151,21 +205,18 @@ class CandidateIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
-  // Date-driven lifecycle
+  // Day listing
   // ---------------------------------------------------------------------------
 
   @Test
-  fun `listForDate returns only the requested session's candidates`() {
-    val today = LocalDate.of(2026, 6, 19)
-    val yesterday = today.minusDays(1)
-    service.create(request(ticker = "AAA", tradingDate = today))
-    service.create(request(ticker = "BBB", tradingDate = today))
-    service.create(request(ticker = "OLD", tradingDate = yesterday)) // closed — off the picker
+  fun `listForDate returns only the requested day's candidates, ticker-ascending`() {
+    service.create(request(ticker = "SGBX", tradingDate = DAY))
+    service.create(request(ticker = "BNRG", tradingDate = DAY))
+    service.create(request(ticker = "KTTA", tradingDate = DAY.minusDays(1)))
 
-    val day = service.listForDate(today)
+    val day = service.listForDate(DAY)
 
-    assertEquals(2, day.size, "only today's candidates feed the dropdown")
-    assertEquals(listOf("AAA", "BBB"), day.map { it.ticker }, "ticker-ascending")
+    assertEquals(listOf("BNRG", "SGBX"), day.map { it.ticker })
   }
 
   // ---------------------------------------------------------------------------
@@ -174,30 +225,24 @@ class CandidateIntegrationTest {
 
   @Test
   fun `update overwrites fields and bumps updatedAt`() {
-    val created = service.create(request(ticker = "AAA"))
+    val created = service.create(request(ticker = "KTTA"))
     Thread.sleep(10) // let the next now() fall on a later instant
 
     val updated =
-      service.update(created.id, request(ticker = "ZZZ", openPrice = BigDecimal("15.00")))
+      service.update(
+        created.id,
+        request(ticker = "SGBX", pattern = Pattern.DISCRETIONARY, pmOpen = BigDecimal("4.20")),
+      )
 
-    assertEquals("ZZZ", updated.ticker)
-    assertEquals(0, BigDecimal("15.0000").compareTo(updated.openPrice))
+    assertEquals("SGBX", updated.ticker)
+    assertEquals(Pattern.DISCRETIONARY, updated.pattern)
+    assertEquals(0, BigDecimal("4.20").compareTo(updated.pmOpen))
     assertTrue(updated.updatedAt.isAfter(created.updatedAt))
   }
 
   @Test
   fun `fetching or editing a foreign candidate returns 404, not 403`() {
-    val foreign =
-      repo.save(
-        Candidate(
-          user = otherUser,
-          tradingDate = LocalDate.of(2026, 6, 19),
-          ticker = "TSLA",
-          totalCapital = BigDecimal("7300.00"),
-          pctCapitalAtRisk = BigDecimal("5.00"),
-          openPrice = BigDecimal("12.0400"),
-        )
-      )
+    val foreign = repo.save(makeCandidate(otherUser, "TSLA"))
 
     val get = assertThrows(ResponseStatusException::class.java) { service.findById(foreign.id) }
     assertEquals(404, get.statusCode.value(), "must not leak existence — 404, never 403")
@@ -211,7 +256,7 @@ class CandidateIntegrationTest {
 
   @Test
   fun `delete removes a candidate and a second delete is a 404`() {
-    val created = service.create(request(ticker = "AAA"))
+    val created = service.create(request(ticker = "KTTA"))
 
     service.delete(created.id)
     assertNull(repo.findByIdAndUserId(created.id, testUser.id))
@@ -233,27 +278,43 @@ class CandidateIntegrationTest {
       role = Role.USER,
     )
 
+  private fun makeCandidate(owner: User, ticker: String) =
+    Candidate(
+      user = owner,
+      tradingDate = DAY,
+      ticker = ticker,
+      previousClose = BigDecimal("2.65"),
+      pmOpen = BigDecimal("4.05"),
+      pmHigh = BigDecimal("4.65"),
+    )
+
+  /** KTTA on 09/17 — the example of `mockup/PARCOURS.md › Étape 1` (gap +52.8 %, push +14.8 %). */
   private fun request(
-    ticker: String = "CASST",
-    tradingDate: LocalDate = LocalDate.of(2026, 6, 19),
-    totalCapital: BigDecimal = BigDecimal("7300.00"),
-    pctCapitalAtRisk: BigDecimal = BigDecimal("5.00"),
-    openPrice: BigDecimal = BigDecimal("12.04"),
-    stopPct: BigDecimal? = BigDecimal("40.00"),
-    fills: List<CandidateFill> = emptyList(),
-    entries: List<CandidateEntry> = emptyList(),
-    exits: List<CandidateExit> = emptyList(),
+    ticker: String = "KTTA",
+    tradingDate: LocalDate = DAY,
+    pattern: Pattern = Pattern.GUS,
+    previousClose: BigDecimal = BigDecimal("2.65"),
+    pmOpen: BigDecimal = BigDecimal("4.05"),
+    pmHigh: BigDecimal = BigDecimal("4.65"),
+    floatMillions: BigDecimal? = null,
+    volumeMillions: BigDecimal? = null,
+    locatePerShare: BigDecimal? = null,
+    note: String? = null,
   ) =
     CandidateRequest(
       tradingDate = tradingDate,
+      pattern = pattern,
       ticker = ticker,
-      totalCapital = totalCapital,
-      pctCapitalAtRisk = pctCapitalAtRisk,
-      openPrice = openPrice,
-      stopPct = stopPct,
-      previousClose = BigDecimal("3.90"),
-      fills = fills,
-      entries = entries,
-      exits = exits,
+      previousClose = previousClose,
+      pmOpen = pmOpen,
+      pmHigh = pmHigh,
+      floatMillions = floatMillions,
+      volumeMillions = volumeMillions,
+      locatePerShare = locatePerShare,
+      note = note,
     )
+
+  private companion object {
+    val DAY: LocalDate = LocalDate.of(2026, 9, 17)
+  }
 }

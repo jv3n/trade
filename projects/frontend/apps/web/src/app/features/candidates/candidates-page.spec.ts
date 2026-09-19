@@ -1,40 +1,46 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideTranslateService } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { addDays, startOfDay } from 'date-fns';
+import { Observable, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { Candidate, CandidateInput } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
-import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { ConfirmService } from '../../core/app-state/confirm.service';
 import { CandidatesPage } from './candidates-page';
 
 /**
- * Component spec for the candidates cockpit. The pure arithmetic is pinned in
- * `candidates.math.spec`, so here we focus on the wiring : the day's candidates load on init, the
- * derived signals react to the form model, and *Save* routes to create-vs-update correctly. The
- * repository / dialog / snackbar are stubbed so nothing touches HTTP.
+ * Component spec for the candidates page (morning capture). The formulas are pinned in
+ * `candidates.math.spec` ; here we pin the wiring :
+ *
+ * - **List** — the day's candidates load on init and are sorted by gap, largest first.
+ * - **Quick entry** — the save stays blocked until the three premarket prices are valid (PM high
+ *   below the PM open included), a submit creates the candidate for the browsed day and resets the
+ *   form while keeping the pattern, and a 409 surfaces the dedicated "duplicate" toast.
+ * - **Edit** — a row loaded into the form saves as an update.
+ * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
+ * - **Day navigation** — past days are read-only.
+ *
+ * The repository, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
  */
+
+/** KTTA — the example of `mockup/PARCOURS.md › Étape 1` (gap +52.8 %, push +14.8 %). */
 function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
-    id: 'c1',
-    tradingDate: new Date(2026, 5, 19),
-    ticker: 'CASST',
-    totalCapital: 7300,
-    pctCapitalAtRisk: 5,
-    openPrice: 12.04,
-    stopPct: 40,
-    previousClose: 3.9,
-    floatShares: null,
-    volume: null,
-    morningPush: null,
-    borrowCostPerShare: null,
-    fills: [],
-    entries: [],
-    exits: [],
-    note: null,
+    id: 'c-ktta',
+    tradingDate: startOfDay(new Date()),
+    pattern: 'GUS',
+    ticker: 'KTTA',
+    previousClose: 2.65,
+    pmOpen: 4.05,
+    pmHigh: 4.65,
+    floatMillions: 8.2,
+    volumeMillions: 3.1,
+    locatePerShare: 0.03,
+    note: 'Résistance 4,65 — high PM, pas de news',
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -42,25 +48,27 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
 }
 
 /**
- * Mock port — **extends** the abstract `CandidatesRepository` (not a plain object literal) so the
- * stub stays type-safe against the real contract and inherits any concrete base methods. Per the
- * `angular-signals` port convention : `useClass MockXxx extends XxxRepository`, never `useValue`.
+ * Mock port — **extends** the abstract `CandidatesRepository` so the stub stays type-safe against
+ * the real contract (`useClass MockXxx extends XxxRepository`, never a bare `useValue`).
  */
 class MockCandidatesRepository extends CandidatesRepository {
-  listForDate = vi.fn((): Observable<Candidate[]> => of([]));
-  get = vi.fn((): Observable<Candidate> => of(makeCandidate()));
-  create = vi.fn((_input: CandidateInput): Observable<Candidate> =>
-    of(makeCandidate({ id: 'new' })),
+  listForDate = vi.fn((_date: Date): Observable<Candidate[]> => of([]));
+  create = vi.fn((input: CandidateInput): Observable<Candidate> =>
+    of(makeCandidate({ ...input, id: 'new', ticker: input.ticker.toUpperCase() })),
   );
-  update = vi.fn((): Observable<Candidate> => of(makeCandidate()));
-  delete = vi.fn((): Observable<void> => of(undefined));
+  update = vi.fn((id: string, input: CandidateInput): Observable<Candidate> =>
+    of(makeCandidate({ ...input, id })),
+  );
+  delete = vi.fn((_id: string): Observable<void> => of(undefined));
 }
 
-function setup(): {
+function setup(options: { list?: Candidate[]; confirmed?: boolean } = {}): {
   fixture: ComponentFixture<CandidatesPage>;
   page: CandidatesPage;
   repo: MockCandidatesRepository;
+  snackBarOpen: ReturnType<typeof vi.fn>;
 } {
+  const snackBarOpen = vi.fn();
   TestBed.configureTestingModule({
     imports: [CandidatesPage],
     providers: [
@@ -68,87 +76,181 @@ function setup(): {
       provideTranslateService({ lang: 'en' }),
       provideNativeDateAdapter(),
       { provide: CandidatesRepository, useClass: MockCandidatesRepository },
-      { provide: StatsRepository, useValue: { create: vi.fn(() => of(undefined)) } },
-      { provide: MatSnackBar, useValue: { open: vi.fn() } },
-      { provide: MatDialog, useValue: { open: () => ({ afterClosed: () => of(undefined) }) } },
+      { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+      { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
     ],
   });
   const repo = TestBed.inject(CandidatesRepository) as MockCandidatesRepository;
+  repo.listForDate.mockReturnValue(of(options.list ?? []));
   const fixture = TestBed.createComponent(CandidatesPage);
   fixture.detectChanges();
-  return { fixture, page: fixture.componentInstance, repo };
+  return { fixture, page: fixture.componentInstance, repo, snackBarOpen };
+}
+
+/** Types a valid KTTA capture into the form. */
+function fillKtta(page: CandidatesPage): void {
+  page.captureForm.ticker().value.set('ktta');
+  page.setNumber('previousClose', 2.65);
+  page.setNumber('pmOpen', 4.05);
+  page.setNumber('pmHigh', 4.65);
+}
+
+function lastToastPanel(snackBarOpen: ReturnType<typeof vi.fn>): string {
+  return snackBarOpen.mock.calls.at(-1)?.[2]?.panelClass;
 }
 
 describe('CandidatesPage', () => {
-  it('loads the day’s candidates on init', () => {
+  // ---- List ----
+
+  it("loads today's candidates on init", () => {
     const { repo } = setup();
-    expect(repo.listForDate).toHaveBeenCalledTimes(1);
+
+    expect(repo.listForDate).toHaveBeenCalledWith(startOfDay(new Date()));
   });
 
-  it('derives the risk budget and the entry ladder from the form model', () => {
+  it('sorts the day by gap, largest first, with the derived figures', () => {
+    const { page } = setup({
+      list: [
+        makeCandidate({
+          id: 'verb',
+          ticker: 'VERB',
+          previousClose: 5.1,
+          pmOpen: 7.8,
+          pmHigh: 8.35,
+        }),
+        makeCandidate({
+          id: 'sgbx',
+          ticker: 'SGBX',
+          previousClose: 1.12,
+          pmOpen: 1.85,
+          pmHigh: 2.46,
+        }),
+        makeCandidate(),
+      ],
+    });
+
+    expect(page.rows().map((r) => r.ticker)).toEqual(['SGBX', 'VERB', 'KTTA']);
+    const ktta = page.rows()[2];
+    expect(ktta.gap).toBeCloseTo(52.83, 2);
+    expect(ktta.push).toBeCloseTo(14.81, 2);
+    expect(ktta.locatePct).toBeCloseTo(0.74, 2);
+  });
+
+  // ---- Quick entry ----
+
+  it('blocks the save until the ticker and the three premarket prices are set', () => {
     const { page } = setup();
-    page.setTotalCapital(7300);
-    page.setPctCapitalAtRisk(5);
-    page.setOpenPrice(12.04);
-    page.setStopPct(40);
+    expect(page.canSave()).toBe(false);
 
-    expect(page.riskBudget()).toBe(365);
-    // +35% rung sized so a stop-out at +40% costs the $365 budget → 606 shares (rounded).
-    const rung = page.ladder().find((r) => r.step === 0.35)!;
-    expect(rung.maxShares).toBe(606);
+    fillKtta(page);
+
+    expect(page.canSave()).toBe(true);
   });
 
-  it('overlays filled shares into the execution average position', () => {
+  it('blocks the save and flags the field when the PM high is below the PM open', () => {
     const { page } = setup();
-    page.setTotalCapital(7300);
-    page.setOpenPrice(12.04);
-    page.setStopPct(40);
-    page.setFill(0.1, 200);
-    page.setFill(0.2, 400);
+    fillKtta(page);
 
-    expect(page.execution().totalShares).toBe(600);
-    expect(page.execution().averagePosition).toBeCloseTo(14.05, 2);
+    page.setNumber('pmHigh', 3.9);
+
+    expect(page.pmHighBelowOpen()).toBe(true);
+    expect(page.canSave()).toBe(false);
   });
 
-  it('scores the cover against the free-form entries average, not the fixed-rung fills', () => {
-    // Decision : the average short position now comes from the actual-entries table (the rung
-    // tracker is sizing-only). One leg of 200 @ 3.21 with open 5 / stop 40 % → stop price 7.00.
+  it('previews gap and push while typing', () => {
     const { page } = setup();
-    page.setOpenPrice(5);
-    page.setStopPct(40);
-    page.addEntry();
-    page.setEntryPrice(0, 3.21);
-    page.setEntryShares(0, 200);
+    expect(page.gapPreview()).toBeNull();
 
-    expect(page.entryTable().averagePosition).toBeCloseTo(3.21, 2);
-    expect(page.entryTable().totalCurrentRisk).toBeCloseTo(758, 0); // 200 × (7 − 3.21)
+    fillKtta(page);
 
-    // Covering 100 below the 3.21 average is a gain : (3.21 − 3.00) × 100 ≈ 21.
-    page.addExit();
-    page.setExitPrice(0, 3.0);
-    page.setExitShares(0, 100);
-    expect(page.cover().rows[0].dollarGainLoss).toBeCloseTo(21, 0);
+    expect(page.gapPreview()).toBeCloseTo(52.83, 2);
+    expect(page.pushPreview()).toBeCloseTo(14.81, 2);
   });
 
-  it('creates a new candidate when no id is held', () => {
+  it('creates the candidate for the browsed day, then resets the form but keeps the pattern', () => {
+    const { page, repo, snackBarOpen } = setup();
+    page.setPattern('DT');
+    fillKtta(page);
+    page.setNumber('locatePerShare', 0.03);
+
+    page.submit();
+
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tradingDate: startOfDay(new Date()),
+        pattern: 'DT',
+        ticker: 'ktta',
+        previousClose: 2.65,
+        pmOpen: 4.05,
+        pmHigh: 4.65,
+        locatePerShare: 0.03,
+        floatMillions: null,
+      }),
+    );
+    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--success');
+    expect(page.model().ticker).toBe('');
+    expect(page.model().pmOpen).toBeNull();
+    expect(page.model().pattern).toBe('DT');
+    expect(repo.listForDate).toHaveBeenCalledTimes(2); // init + reload after the save
+  });
+
+  it('surfaces a duplicate (409) with its own toast and keeps the typed capture', () => {
+    const { page, repo, snackBarOpen } = setup();
+    repo.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+    fillKtta(page);
+
+    page.submit();
+
+    expect(snackBarOpen).toHaveBeenCalledWith(
+      'candidates.snackbar.duplicate',
+      undefined,
+      expect.objectContaining({ panelClass: 'stb-snack-bar--error' }),
+    );
+    expect(page.model().ticker).toBe('ktta');
+  });
+
+  // ---- Edit ----
+
+  it('saves a candidate loaded for edit as an update', () => {
+    const ktta = makeCandidate();
+    const { page, repo } = setup({ list: [ktta] });
+
+    page.edit(ktta);
+    page.setNumber('pmHigh', 4.9);
+    page.submit();
+
+    expect(repo.update).toHaveBeenCalledWith('c-ktta', expect.objectContaining({ pmHigh: 4.9 }));
+    expect(repo.create).not.toHaveBeenCalled();
+    expect(page.editingId()).toBeNull();
+  });
+
+  // ---- Delete ----
+
+  it('deletes a candidate once the confirmation modal is confirmed', () => {
+    const { page, repo } = setup({ list: [makeCandidate()] });
+
+    page.delete(makeCandidate());
+
+    expect(repo.delete).toHaveBeenCalledWith('c-ktta');
+  });
+
+  it('never reaches the repository when the confirmation modal is cancelled', () => {
+    const { page, repo } = setup({ list: [makeCandidate()], confirmed: false });
+
+    page.delete(makeCandidate());
+
+    expect(repo.delete).not.toHaveBeenCalled();
+  });
+
+  // ---- Day navigation ----
+
+  it('reloads the list for the previous day and makes it read-only', () => {
     const { page, repo } = setup();
-    page.model.update((m) => ({ ...m, ticker: 'CASST', totalCapital: 7300, openPrice: 12.04 }));
+    expect(page.readOnly()).toBe(false);
 
-    page.save();
+    page.previousDay();
 
-    expect(repo.create).toHaveBeenCalledTimes(1);
-    expect(repo.update).not.toHaveBeenCalled();
-    expect(page.selectedId()).toBe('new'); // id captured from the saved candidate
-  });
-
-  it('saves through the upsert create endpoint even when a candidate is loaded', () => {
-    // Save always upserts by (date, ticker) server-side — never a blind update-by-id — so changing
-    // the ticker targets a different candidate instead of overwriting the loaded one.
-    const { page, repo } = setup();
-    page.onSelect('c1'); // loads CASST → selectedId = 'c1'
-    page.save();
-
-    expect(repo.create).toHaveBeenCalledTimes(1);
-    expect(repo.update).not.toHaveBeenCalled();
+    expect(repo.listForDate).toHaveBeenLastCalledWith(addDays(startOfDay(new Date()), -1));
+    expect(page.readOnly()).toBe(true);
   });
 });

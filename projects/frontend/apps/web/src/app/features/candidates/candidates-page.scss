@@ -1,236 +1,132 @@
-:host {
-  display: block;
-  padding: 2rem 2.5rem;
-  max-width: 1360px;
-}
+// Candidates page — layout after `mockup/candidat.html` : quick-entry card, then the day's list.
 
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-
-  h1 {
-    margin: 0;
-    font-size: 1.5rem;
-  }
-
-  .subtitle {
-    margin: 0.25rem 0 0;
-    color: var(--mat-sys-on-surface-variant, #5f6368);
-    max-width: 60ch;
-  }
-}
-
-.toolbar {
+.day-nav {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
+  gap: 6px;
 
-  .day-select {
-    min-width: 16rem;
-  }
-
-  .empty-hint {
-    color: var(--mat-sys-on-surface-variant, #5f6368);
-    font-style: italic;
-  }
-
-  &__spacer {
-    flex: 1 1 auto;
-  }
-
-  .danger {
-    color: var(--mat-sys-error, #b3261e);
-  }
-
-  // The form-field reserves space for a hint/error line we don't use in the toolbar.
-  .day-select {
-    margin-bottom: -1.25rem;
-  }
-}
-
-.cockpit {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+  .day-field {
+    width: 11rem;
   }
 }
 
 .card {
-  // Calculators card sits next to params/context which are taller — let it shrink.
-  &.card--calc {
-    align-self: start;
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+
+  h3 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-faint);
   }
 }
 
-.span-all {
-  grid-column: 1 / -1;
-}
+// ---- Quick entry ----
 
-.grid-2 {
+.capture {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem 1rem;
+  grid-template-columns: 1.4fr 1fr repeat(6, 1fr);
+  gap: 10px;
+  align-items: start;
 
-  .span-2 {
-    grid-column: 1 / -1;
+  .field--note {
+    grid-column: span 5;
   }
 
-  mat-form-field {
-    width: 100%;
-  }
-}
-
-.risk-budget {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 0.75rem 1rem 0.25rem;
-
-  &__label {
-    color: var(--mat-sys-on-surface-variant, #5f6368);
+  .mono {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
   }
 
-  &__value {
-    font-size: 1.25rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
+  .warn-hint {
+    color: var(--color-warning);
   }
 }
 
-.calc-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.calc {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-
-  &__label {
-    font-weight: 600;
-  }
-
-  &__value {
-    font-size: 1.5rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__hint {
-    font-size: 0.75rem;
-    color: var(--mat-sys-on-surface-variant, #5f6368);
-  }
-}
-
-.hint {
-  color: var(--mat-sys-on-surface-variant, #5f6368);
-  font-style: italic;
-  margin: 0.5rem 0;
-}
-
-.ladder {
-  width: 100%;
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
-
-  th,
-  td {
-    padding: 0.35rem 0.6rem;
-    text-align: left;
-    border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
-    white-space: nowrap;
-  }
-
-  th {
-    font-size: 0.8rem;
-    color: var(--mat-sys-on-surface-variant, #5f6368);
-    font-weight: 600;
-  }
-
-  .num {
-    text-align: right;
-  }
-
-  tbody tr.is-open {
-    font-weight: 600;
-    background: var(--mat-sys-surface-container-high, #f1f1f1);
-  }
-
-  tbody tr.is-profit {
-    color: var(--mat-sys-on-surface-variant, #8a8a8a);
-  }
-
-  tfoot tr.totals {
-    font-weight: 600;
-
-    td {
-      border-top: 2px solid var(--mat-sys-outline, #bdbdbd);
-      border-bottom: none;
-    }
-  }
-
-  .shares-cell input {
-    width: 6rem;
-    text-align: right;
-    border: 1px solid var(--mat-sys-outline-variant, #d0d0d0);
-    border-radius: 4px;
-    padding: 0.25rem 0.4rem;
-    background: var(--mat-sys-surface, #fff);
-    color: inherit;
-    font: inherit;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .gain {
-    color: var(--trade-positive, #1b873f);
-  }
-
-  .loss {
-    color: var(--mat-sys-error, #b3261e);
-  }
-
-  .over-budget {
-    color: var(--mat-sys-error, #b3261e);
-  }
-}
-
-.execution-kpis {
-  display: flex;
-  gap: 2rem;
-  margin-top: 0.75rem;
-}
-
-.kpi {
-  display: flex;
-  flex-direction: column;
-
-  &__label {
-    font-size: 0.8rem;
-    color: var(--mat-sys-on-surface-variant, #5f6368);
-  }
-
-  &__value {
-    font-size: 1.25rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-
-    &.over-budget {
-      color: var(--mat-sys-error, #b3261e);
-    }
-  }
-}
-
-mat-card-header {
+.derived-box {
+  grid-column: span 3;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.derived {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &__label {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  &__value {
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    &.muted {
+      color: var(--color-text-faint);
+      font-weight: 400;
+    }
+  }
+}
+
+@media (max-width: 1100px) {
+  .capture {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    .field--note,
+    .derived-box {
+      grid-column: span 4;
+    }
+  }
+}
+
+// ---- List ----
+
+// Pattern = category → indigo tag (colour rule).
+.pattern-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+// Expensive locate → warning (amber).
+td.warn {
+  color: var(--color-warning);
+}
+
+td.note-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+}
+
+tr.editing td {
+  background: var(--color-accent-soft);
 }

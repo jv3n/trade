@@ -7,9 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 /**
  * Multi-tenant on `user.id` (FK to `app_user`). Every read scopes on the current user — the service
- * never queries the table without a userId filter. The cockpit's dropdown is fed by
- * [findByUserIdAndTradingDateOrderByTickerAsc] (a single session's candidates only — the
- * date-driven lifecycle hides older rows without deleting them).
+ * never queries the table without a userId filter. The page lists one day at a time
+ * ([findByUserIdAndTradingDateOrderByTickerAsc]).
  */
 interface CandidateRepository : JpaRepository<Candidate, UUID> {
 
@@ -20,7 +19,7 @@ interface CandidateRepository : JpaRepository<Candidate, UUID> {
 
   fun findByIdAndUserId(id: UUID, userId: UUID): Candidate?
 
-  /** Natural-key lookup for the save upsert : one candidate per (user, session, ticker). */
+  /** Natural-key lookup behind the 409 : one candidate per (user, day, ticker). */
   fun findByUserIdAndTradingDateAndTicker(
     userId: UUID,
     tradingDate: LocalDate,
