@@ -221,11 +221,6 @@ Le solde est **dérivé des mouvements** :
 
 ---
 
-## Impacts sur le code actuel (pour plus tard)
+## Mise en œuvre
 
-- L'enum `TradePattern` du journal vaut aujourd'hui `GUS` / `FRD` → à remplacer par `GUS` / `DT` / `DISCRETIONARY` (et décider du sort des trades existants en `FRD`), partagée par candidat, stat et trade. Comme la liste va grandir, à trancher au moment du code : enum dans le code (un ajout = un déploiement) ou table de référence éditable depuis les paramètres.
-- L'entité `TradeEntry` → retirer play, les 5 booléens de checklist, openSide, shortOnResistance, exitStrategy ; ajouter le lien vers la stat d'origine et un **P&L réel optionnel** (override du P&L calculé). Le mouvement de compte `TRADE` doit utiliser le P&L retenu.
-- Icônes : l'app utilise aujourd'hui le paquet `material-icons` (Material Icons classiques). Les maquettes sont faites en **Material Symbols Rounded** → passer au paquet `material-symbols` et déclarer la classe par défaut sur `MatIconRegistry` (`setDefaultFontSetClass('material-symbols-rounded')`). Correspondance des noms dans `mockup/README.md`.
-- Le compte a déjà les corrections avec solde cible (`ADJUSTMENT` + `target_balance`) : le rapprochement du matin s'appuie dessus ; à ajouter : l'horodatage d'un rapprochement sans écart (historique « 18/09 ✓ »).
-- L'entité `Candidate` porte encore tout le sizing (capital, risque, stop, fills, entries, exits) → à simplifier sur les champs de l'étape 1, plus clôture veille, volume, note et pattern.
-- L'entité `StatEntry` → ajouter les données premarket reprises du candidat, le pattern, le push à l'open, le lien vers le candidat d'origine ; retirer institutionnels % / > 20 % ; renommer high → HOD. La source `RADAR` / `MANUAL` / `IMPORT` est à repenser (une stat vient désormais d'un candidat).
+Le recodage est découpé en issues GitHub **#184 à #205** (enum pattern, modale de confirmation, candidats, stats, journal, compte, page Aujourd'hui, navigation, paramètres, icônes, couleurs…). Chaque issue décrit le périmètre, les critères d'acceptation, les maquettes de référence et ses dépendances. Décisions de mise en œuvre : pattern en **enum** dans le code, **base repartie à vide** (pas de migration de données).

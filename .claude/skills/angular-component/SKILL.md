@@ -1,11 +1,11 @@
 ---
 name: angular-component
-description: Create modern Angular standalone components following v21+ best practices for the PortfolioAI frontend. Use for building UI components with signal-based inputs/outputs, host bindings, content projection, and lifecycle hooks. Triggers on component creation, refactoring class-based inputs to signals, adding host bindings, or implementing accessible interactive components.
+description: Create modern Angular standalone components following Angular 22 best practices for the PortfolioAI frontend. Use for building UI components with signal-based inputs/outputs, host bindings, content projection, and lifecycle hooks. Triggers on component creation, refactoring class-based inputs to signals, adding host bindings, or implementing accessible interactive components.
 ---
 
 # Angular Component
 
-Standalone components for Angular v21+ (the version used in `projects/frontend/`). Components are standalone by default — do NOT set `standalone: true`. **Change detection**: PortfolioAI runs `provideZonelessChangeDetection()`, so `ChangeDetectionStrategy.OnPush` is **not required** — signals drive change detection. Adding `OnPush` is a no-op functionally and adds noise. Leave the default strategy on new components.
+Standalone components for Angular 22 (the version used in `projects/frontend/`). Components are standalone by default — do NOT set `standalone: true`. **Change detection**: PortfolioAI runs `provideZonelessChangeDetection()`, so `ChangeDetectionStrategy.OnPush` is **not required** — signals drive change detection. Adding `OnPush` is a no-op functionally and adds noise. Leave the default strategy on new components.
 
 ## Component structure
 

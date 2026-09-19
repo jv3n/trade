@@ -11,12 +11,13 @@ Tous les critères se valident **en même temps**. Un seul KO → pas de trade.
 | # | Critère | Valeur | Pourquoi |
 |---|---------|--------|----------|
 | 1 | **Price** | $1 – $10 | Zone de volatilité extrême, terrain de jeu des pumps. |
-| 2 | **Gap up** | ≥ +50 % | En dessous = bruit. Au-dessus = vraie déconnexion à corriger. |
+| 2 | **Gap up** | ≥ +50 % | Open premarket (4h00) vs clôture de la veille. En dessous = bruit. Au-dessus = vraie déconnexion à corriger. |
 | 3 | **Float** | 3M – 50M | < 3M = squeezable. > 50M = trop d'inertie. |
 | 4 | **Chart** | Flat ou downtrend | Le pump devient un *spike* dans un *downtrend* → *mean reversion*. |
-| 5 | **Company** | Mauvaise (cf. vidéo) | Pas de revenus, pas de *catalyst* → rien pour porter le cours. |
+| 5 | **Company** | Faible | Pas de revenus, pas de *catalyst* → rien pour porter le cours. |
 | 6 | **Premarket volume** | Présent mais modéré | Trop peu = personne ne joue. Trop = squeeze réel, dangereux. |
-| 7 | **Pas de reverse split** | — | Piège classique → section dédiée. |
+| 7 | **Institutionnels** | Faible détention | Une forte détention institutionnelle soutient le cours → le ticker ne devient pas candidat. |
+| 8 | **Pas de reverse split** | — | Piège classique → section dédiée. |
 
 ---
 
@@ -32,25 +33,3 @@ Quand une société cote **sous $1 trop longtemps**, le Nasdaq / NYSE menace d'u
 Le titre apparaît dans les *gainers* comme un gap up `×10` alors qu'il n'y a eu **aucun mouvement de valeur**. Si on shorte, le « gap » n'a aucune raison de se refermer → perte.
 
 **Détection** : *SEC filings*, ou un saut de cours sans volume correspondant sur le chart historique.
-
----
-
-## Mémo de poche
-
-```
-PRICE       $1 – $10
-GAP         ≥ +50 %
-FLOAT       3M – 50M
-CHART       Flat ou downtrend
-COMPANY     Mauvaise (cf. vidéo)
-VOLUME      Présent mais modéré
-TRAP        Pas de reverse split
-```
-
-**Un KO → pas de trade.**
-
----
-
-## À creuser
-
-- **Support / Resistance** — niveaux clés sur le chart avant l'entrée.

@@ -6,7 +6,7 @@ Maquettes HTML statiques pour redéfinir l'app de suivi de trading avant de la r
 - `assets/mockup.css` : tokens (thème sombre / clair) et composants partagés.
 - `assets/mockup.js` : bascule de thème, groupes segmentés (USD / CAD, FR / EN), lignes cliquables.
 - `PARCOURS.md` : le parcours utilisateur étape par étape — la référence que les maquettes suivent.
-- Données fictives mais cohérentes entre les pages : les trades du journal alimentent le compte, correspondent aux lignes de stats, et la fiche candidat KTTA devient le trade du 17/09.
+- Données fictives mais cohérentes entre les pages : les trades du journal alimentent le compte, correspondent aux lignes de stats, et le candidat KTTA devient la stat puis le trade du 17/09.
 
 ## Icônes
 

@@ -40,14 +40,14 @@ describe('Container', () => {
 
       const setTestData = ({
         loading = false,
-        positions = [{ ticker: 'AAPL' }],
-      }: { loading?: boolean; positions?: { ticker: string }[] } = {}) => {
+        trades = [{ ticker: 'KTTA' }],
+      }: { loading?: boolean; trades?: { ticker: string }[] } = {}) => {
         fixture.componentRef.setInput('loading', loading);
-        fixture.componentRef.setInput('positions', positions);
+        fixture.componentRef.setInput('trades', trades);
       };
 
-      it('shows the table when not loading AND there is at least one position', () => {
-        setTestData({ loading: false, positions: [{ ticker: 'AAPL' }] });
+      it('shows the table when not loading AND there is at least one trade', () => {
+        setTestData({ loading: false, trades: [{ ticker: 'KTTA' }] });
         fixture.detectChanges();
         expect(tableEl()).not.toBeNull();
       });
@@ -149,19 +149,23 @@ await TestBed.configureTestingModule({
 }).compileComponents();
 ```
 
-### `useClass` mock for abstract-class ports with inherited builders
+### `useClass` mock for repository ports
 
-When the port carries Resource builders (`allResource()`, `positionsCache()` etc. — see [`angular-signals > Resource builders`](../angular-signals/SKILL.md#resource-builders-live-on-the-port-itself)), `useValue` flattens the class and loses the builders. Use `useClass extends`:
+Repositories are abstract-class ports (`core/api/<bucket>/<name>.repository.ts`). Mock them with a class that **extends** the port — the stub stays type-checked against the real contract and keeps any concrete base method — and expose `vi.fn()` members so tests can assert calls. Reference: `features/candidates/candidates-page.spec.ts`.
 
 ```typescript
-class MockSnapshotRepository extends SnapshotRepository {
-  allSource = () => of<SnapshotSummary[]>([]);
-  getAll() { return this.allSource(); }
-  getPositions(id: string) { return of<SnapshotPosition[]>([]); }
+class MockCandidatesRepository extends CandidatesRepository {
+  listForDate = vi.fn((): Observable<Candidate[]> => of([]));
+  get = vi.fn((): Observable<Candidate> => of(makeCandidate()));
+  create = vi.fn((_input: CandidateInput): Observable<Candidate> => of(makeCandidate({ id: 'new' })));
+  update = vi.fn((): Observable<Candidate> => of(makeCandidate()));
+  delete = vi.fn((): Observable<void> => of(undefined));
 }
 
-providers: [{ provide: SnapshotRepository, useClass: MockSnapshotRepository }];
+providers: [{ provide: CandidatesRepository, useClass: MockCandidatesRepository }];
 ```
+
+A plain `useValue` object is fine for a collaborator the test barely touches (e.g. `{ provide: MatSnackBar, useValue: { open: vi.fn() } }`).
 
 ### Mocking signal-based services
 

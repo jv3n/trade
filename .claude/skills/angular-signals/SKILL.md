@@ -1,171 +1,106 @@
 ---
 name: angular-signals
-description: Signal-based reactive state conventions for the PortfolioAI frontend (Angular 22, zoneless). Use when adding state to a service or component, deriving values with `computed()`, wiring side effects with `effect()`, designing signal-based component I/O via `input()`/`output()`, or forcing an effect to re-fire when no dependency changed. Skips general Angular signals tutorial content.
+description: Signal-based reactive state conventions for the PortfolioAI frontend (Angular 22, zoneless). Use when adding state to a service or component, deriving values with `computed()`, wiring side effects with `effect()`, designing signal-based component I/O via `input()`/`output()`, bridging RxJS with `toSignal()`/`toObservable()`, or forcing an effect to re-fire when no dependency changed. Skips general Angular signals tutorial content.
 ---
 
 # Angular Signals
 
 The frontend is **zoneless** (`provideZonelessChangeDetection()`). No `zone.js`. Change detection is driven by signal reads in templates — components re-render when the signals their template reads change, and nothing else.
 
-That makes signals the load-bearing primitive. Every piece of UI state is a `signal()`; every derived value is a `computed()`. This skill is about the project's opinionated choices, not the API surface.
+That makes signals the load-bearing primitive. Every piece of UI state is a `signal()`; every derived value is a `computed()`. This skill is about the project's opinionated choices, not the API surface. Paths below are relative to `projects/frontend/apps/web/src/app/`.
 
 Pair with [`angular-di`](../angular-di/SKILL.md) (service wiring) and [`angular-component`](../angular-component/SKILL.md) (component shell).
 
 ## The canonical service shape
 
 ```typescript
+// core/app-state/sidenav-collapse.service.ts
 @Injectable({ providedIn: 'root' })
-export class ThemeService {
-  private readonly _theme = signal<Theme>(this.loadInitial());
-  readonly theme = this._theme.asReadonly();
+export class SidenavCollapseService {
+  private readonly _collapsed = signal<boolean>(this.loadInitial());
+  readonly collapsed = this._collapsed.asReadonly();
 
-  set(theme: Theme): void { this._theme.set(theme); }
-  toggle(): void { this._theme.update(t => t === 'dark' ? 'light' : 'dark'); }
+  toggle(): void { this.set(!this._collapsed()); }
+
+  set(value: boolean): void {
+    this._collapsed.set(value);
+    this.persist(value);
+  }
 }
 ```
 
 - `private readonly _foo = signal<T>(initial)` — underscore marks the writable handle as internal.
 - `readonly foo = this._foo.asReadonly()` — public read-only view. Consumers call `foo()`, never see `_foo`.
-- Mutations go through named methods (`set`, `toggle`, `update`) that own validation / side-effects / persistence.
+- Mutations go through named methods (`set`, `toggle`, `clear`) that own validation / side effects / persistence.
+- Derived public state is a `computed()` — `AuthService.isAuthenticated`, `AuthService.isAdmin`.
 
-Verbatim shape in `ThemeService`, `LanguageService`, `LlmTimeoutService`. Follow it for any new stateful root service.
+Same shape in `AuthService` (`_currentUser` / `currentUser`, `_lastError` / `lastError`). Follow it for any new stateful root service. **Don't expose a `WritableSignal<T>` from a service** — mutation paths stay greppable through the named methods.
 
-**Don't expose `WritableSignal<T>` to component templates.** The compiler can't tell `set()` from `update()` in a `(click)` handler, and the convention keeps mutation paths greppable.
+### Derived services — `computed()` over another service's signal
 
-## Resource builders live on the port itself
-
-For HTTP-backed `core/api/<bucket>/` ports, **don't expose `Observable<T>` raw to components**. The component would then have to wire `rxResource` + a trigger signal + an accumulator effect by hand — boilerplate easy to get wrong (a `.pipe(...)` without `.subscribe()` is silent — the bug we hit in `Suivi` before the 2026-05-16 fix).
-
-**Convention** — the abstract class port carries two flavours of concrete builders inherited by every adapter:
+When the value is owned elsewhere, don't mirror it into a local signal — derive it. `ThemeService` and `LanguageService` hold no state of their own: the theme / language is a user preference served by `/api/me`.
 
 ```typescript
-export abstract class SnapshotRepository {
-  abstract getAll(): Observable<SnapshotSummary[]>;
-  abstract getPositions(snapshotId: string): Observable<SnapshotPosition[]>;
+// core/app-state/theme.service.ts
+readonly theme = computed<Theme>(() => this.auth.currentUser()?.theme ?? DEFAULT_THEME);
 
-  // Flavour 1 — eager fetch on subscribe.
-  allResource() {
-    assertInInjectionContext(this.allResource);
-    return rxResource({ stream: () => this.getAll() });
-  }
-
-  // Flavour 2 — per-id cache. Returns a Signal<Map<id, T[]>> that grows as the trigger fires.
-  positionsCache(trigger: Signal<string | undefined>) {
-    assertInInjectionContext(this.positionsCache);
-    const cache = signal(new Map<string, SnapshotPosition[]>());
-    const resource = rxResource({
-      params: () => trigger(),
-      stream: ({ params }) =>
-        this.getPositions(params).pipe(map((positions) => ({ id: params, positions }))),
-    });
-    effect(() => {
-      const emit = resource.value();
-      if (!emit) return;
-      cache.update((m) => new Map(m).set(emit.id, emit.positions));
-    });
-    return cache.asReadonly();
-  }
+set(theme: Theme): void {
+  this.auth.updatePreferences({ theme }).subscribe(); // currentUser update re-drives `theme`
 }
 ```
 
-**`assertInInjectionContext` guard** — both builders MUST run inside an injection context (field initialiser of a component / directive / service, or wrapped in `runInInjectionContext`). `rxResource` and `effect()` tie their cleanup to the caller's `DestroyRef` ; calling the builder from a non-DI scope would leak the subscription for the lifetime of the JS heap. The guard fails loudly at runtime instead of leaking silently — copy it into every new builder when generalising the pattern to the 13 other repositories.
-
-Component side stays minimal — no `.subscribe()`, no `ngOnInit`, no manual loading/error signals.
-
-**Mock convention** — because the builders are concrete on the abstract class, doubles MUST extend the class via `useClass`, not provide a plain object via `useValue` (which loses the inherited builders):
-
-```typescript
-class MockSnapshotRepository extends SnapshotRepository {
-  allSource = () => of<SnapshotSummary[]>([]);
-  positionsSource = (id: string) => of<SnapshotPosition[]>([]);
-  getAll() { return this.allSource(); }
-  getPositions(id: string) { return this.positionsSource(id); }
-}
-```
-
-Tests swap `allSource` / `positionsSource` on the instance; inherited `allResource()` / `positionsCache()` close over the mocks naturally.
-
-**Why not `.subscribe()` in the component, or `rxMethod`?** Source and sink are both signals (`resource.value` → `Signal<Map<id, T[]>>`), so the natural primitive is `effect()` — auto-cleanup with the injection context, no RxJS round-trip. `rxMethod` is right when the source IS an observable and you want a method orchestrating a pipeline — not when both ends are signals.
-
-**Adoption status** — pilot shipped on `SnapshotRepository` (2026-05-16). The 13 other repositories are tracked in `docs/projet/backlog.md > Dette technique` (🟡 Moyenne).
+One source of truth (`AuthService.currentUser`), no local mirror to keep in sync.
 
 ## `computed()` — derived state, free updates
 
 ```typescript
-readonly filtered = computed(() => {
-  const q = this.query().toLowerCase();
-  return q ? this.portfolios().filter(p => p.name.toLowerCase().includes(q)) : this.portfolios();
+// features/journal/journal-page.ts
+readonly activeFilterCount = computed(() => {
+  const f = this.appliedFilter();
+  let n = 0;
+  if (f.dateFrom || f.dateTo) n += 1;
+  if (f.plays.length > 0) n += 1;
+  // …
+  return n;
 });
-readonly count = computed(() => this.filtered().length);
+
+// features/candidates/candidates-page.ts
+readonly gus = computed(() => gusPercent(this.model().previousClose, this.model().openPrice));
 ```
 
-Every derived value is a `computed`, not a method called from the template. The framework memoises and recomputes only when an upstream signal changes. A method `getFiltered()` re-runs on every change-detection pass.
+Every value the template reads (`{{ x() }}`, `@if (x())`, `[disabled]="!x()"`) is a `computed`, not a method — the framework memoises and recomputes only when an upstream signal changes. Methods are for actions (`(click)="save()"`). Heavy derivations delegate to pure functions (`features/candidates/candidates.math.ts`) called from the `computed`.
 
-`computed()` callbacks must be **pure** — read signals, return a value, no side effects. If a derivation needs to write somewhere, that's an `effect()`.
+`computed()` callbacks must be **pure** — read signals, return a value, no side effects.
 
-## Side effects — at the mutation site, not in an `effect()`
+## Side effects — at the mutation site first
 
-`effect()` is **the last resort**, not the first. The project's convention for "when this signal changes, do X" is to put X in the method that mutates the signal — typically `set()` — and have all other writers go through it.
+The default for "when this signal changes, do X" is to put X in the method that mutates the signal and have every writer go through it — `SidenavCollapseService.set()` writes localStorage right there, no `effect()` watching `_collapsed`.
 
-```typescript
-@Injectable({ providedIn: 'root' })
-export class ThemeService {
-  private readonly _theme = signal<Theme>(this.loadInitial());
-  readonly theme = this._theme.asReadonly();
+Why not `effect()` when you own the signal:
+1. **Redundant initial run** — `effect()` fires on construction, e.g. re-writing to localStorage the value just read from it.
+2. **No composition** — no `debounceTime` / `distinctUntilChanged`.
+3. **Test pain** — asserting an effect ran needs `TestBed.tick()`; a set-site runs synchronously.
+4. **Implicit tracking** — every signal read inside re-fires it; easy to leak a dependency.
 
-  constructor() {
-    // Initial DOM sync. No localStorage write here — the value already came from there.
-    this.applyDom(this._theme());
-  }
+### When `effect()` is justified — real usages
 
-  set(theme: Theme): void {
-    this._theme.set(theme);
-    this.applyDom(theme);
-    this.persist(theme);
-  }
+1. **Reacting to signals you don't own.** `ThemeService` / `LanguageService` apply `theme()` / `lang()` to the DOM / `TranslateService.use()` via `effect()`, because the change comes from `AuthService.currentUser`. `LoginPage` redirects to `/account` when `auth.isAuthenticated()` flips. `NumberMaskDirective` (`shared/number-mask/`) re-syncs the input text when its `value` input changes.
+2. **Coordinating several signals into one side effect** — the fetch effect of `journal-page.ts` / `stats-page.ts` (search, filter, sort, page, `refetchTrigger`), see below.
+3. **Imperative DOM / third-party bridging** — `App` and `Settings` call `MatSidenavContainer.updateContentMargins()` when `sidenavCollapse.collapsed()` flips.
 
-  toggle(): void { this.set(this._theme() === 'dark' ? 'light' : 'dark'); }
-}
-```
+Rules when you reach for it:
+- Create it in an injection context — field initialiser or `constructor()`. Never from an event handler.
+- **Read** every signal you want to track; never write a signal the effect reads (feedback loop).
+- If the effect must run before first paint, also apply once synchronously in the constructor (`this.applyDom(this.theme())` then `effect(...)` in `ThemeService`) — keep the applied write idempotent.
+- Browser-global side effects gate on `isBrowser` — see [`angular-di > SSR-safe pattern`](../angular-di/SKILL.md#ssr-safe-pattern--platform_id--isplatformbrowser).
+- Say *why* in a comment when the reason isn't obvious from the code.
 
-**Why not `effect()` here:**
-1. **Redundant initial write** — `effect()` fires on construction with the loaded value, so the service writes localStorage echoing what it just read.
-2. **No composition** — `effect()` can't `debounceTime` / `distinctUntilChanged` a stream. Set-site can call a debounced helper.
-3. **Test pain** — asserting an `effect()` ran requires `TestBed.tick()` or microtask awaiting. Set-site runs synchronously.
-4. **Implicit dependency tracking** — every signal read inside `effect()` re-fires it. Easy to leak an unintended dependency.
+## `refetchTrigger` — force the fetch effect to re-fire
 
-The codebase enforces this in `ThemeService`, `LanguageService`, `Dashboard` sidebar. **No `effect()` in `projects/frontend/src/app/` main code today.**
-
-### When `effect()` *is* justified
-
-1. **Reacting to signals you don't own** — input signals from a parent (`input.required<Foo>()`), or read-only signals from another service. You can't put the side-effect inside the upstream's `set()`.
-2. **Coordinating multiple signals** — when the side-effect depends on N signals jointly and mutation can come from any.
-3. **DOM imperative bridging** that needs to re-run on every change — focus management, third-party DOM library calls, canvas redraws.
-
-Even then, prefer `toObservable() + takeUntilDestroyed()` when you need operators:
+List pages drive their backend query from one `effect()` over every query input. After a CRUD op the data on the server moved but none of those inputs changed — bump a dedicated counter:
 
 ```typescript
-constructor() {
-  toObservable(this.sidebarState)
-    .pipe(debounceTime(200), takeUntilDestroyed())
-    .subscribe((state) => this.persist(state));
-}
-```
-
-`toObservable()` gives the full RxJS toolkit and an explicit subscription lifecycle — closer to "I subscribed, I'll be notified" than `effect()`'s magic re-firing.
-
-### Rules if you do reach for `effect()`
-
-1. **Justify it in a `// effect-because: …` comment**.
-2. Create in an injection context — field initialiser, `constructor()`, or via an explicit injector. Never from inside an event handler.
-3. **Read** every signal you want to track. Never write a signal the effect reads (feedback loop).
-4. Browser-global side effects must gate on `isBrowser` — see [`angular-di > SSR-safe pattern`](../angular-di/SKILL.md#ssr-safe-pattern--platform_id--isplatformbrowser).
-
-## `refetchTrigger` — force an `effect()` to re-fire on demand
-
-When a single `effect()` reads N signals and one path needs to re-fire the effect **without** any of those signals changing (typically : a CRUD op completed, the data on the server moved, the listing should refresh), expose a dedicated counter signal :
-
-```typescript
+// features/journal/journal-page.ts
 private readonly refetchTrigger = signal(0);
 
 constructor() {
@@ -175,8 +110,8 @@ constructor() {
     const sort = this.sort();
     const pageIndex = this.pageIndex();
     const pageSize = this.pageSize();
-    this.refetchTrigger();              // read so the effect re-fires when bumped
-    this.fetch(/* … */);
+    this.refetchTrigger(); // read so the effect re-fires when the CRUD path bumps it
+    this.fetch(/* filter + page built from the values above */);
   });
 }
 
@@ -185,61 +120,70 @@ private refetch(): void {
 }
 ```
 
-**Why a dedicated signal** rather than "push the current value into one of the other dependencies" :
+Why a dedicated signal rather than re-pushing a current value:
+- The search pipe ends with `distinctUntilChanged()` — pushing the same string back after a delete is swallowed and the table shows stale data (real bug hit on the journal CRUD).
+- `n + 1` always changes identity, so the signal always notifies.
+- Some paths don't need it: deleting the last row of a page decrements `pageIndex`, which already re-fires the effect.
 
-- Search-style pipes typically end with `distinctUntilChanged()` to dedupe debounced keystrokes. Pushing the same string back through `searchInput$.next(this.searchValue())` after a delete is **swallowed** — the `distinctUntilChanged` filters it out, the effect never re-fires, the table shows stale data. Real bug hit on the journal CRUD before the `refetchTrigger` rewrite.
-- Signal equality on a `signal({ ... })` doesn't fire if the new value is *structurally* the same. `signal(n + 1)` is the only shape guaranteed to notify on every bump (number identity always changes).
-- The trigger is **read-only from the effect's perspective** — no risk of feedback loop.
+Same pattern in `stats-page.ts`. Apply it to any page where one effect serves both "user changed a filter" and "data on the server moved".
 
-Pattern verbatim in `journal-page.ts` (`refetchTrigger` bumped from the `tap` success of every CRUD op). Apply it to any page where the same effect must serve both "user changed a filter" and "data on the server moved".
+## RxJS interop — `toSignal()` / `toObservable()`
 
-## Component-level signals — same pattern, narrower scope
-
-```typescript
-export class CsvImport {
-  step = signal<ImportStep>('idle');
-  preview = signal<CsvImportPreview | null>(null);
-  readonly canConfirm = computed(() => this.step() === 'preview' && this.preview() !== null);
-}
-```
-
-Components don't need the `private _foo / readonly foo` split — the template is the only consumer. Direct `public` signals are fine. The split matters when state crosses a public API (service exposing to many consumers).
-
-For state with 5+ fields, prefer one signal of the object over five separate signals — source-of-truth stays atomic. Update with `.update(prev => ({ ...prev, field: v }))`.
-
-## `input()` / `output()` — signal-based component I/O
+Repositories return `Observable<T>`; components subscribe for one-shot calls and `set()` the result into signals (`fetch()` in `journal-page.ts`, CRUD ops with `tap` / `catchError` → snackbar). When a stream needs operators, bridge explicitly:
 
 ```typescript
-export class TickerChart {
-  symbol = input.required<string>();
-  benchmark = input<Benchmark | null>(null);
-  readonly title = computed(() => `${this.symbol()} chart`);
-}
+// features/journal/journal-page.ts — debounced search
+private readonly searchInput$ = new Subject<string>();
+readonly searchTerm = toSignal(
+  this.searchInput$.pipe(debounceTime(250), distinctUntilChanged()),
+  { initialValue: '' },
+);
 
-export class CsvImport {
-  imported = output<void>();
-  private confirm() { /* … */ this.imported.emit(); }
-}
+// features/journal/add-trade-dialog/add-trade-dialog.ts — signal → debounced HTTP → signal
+readonly statCandidates = toSignal(
+  toObservable(this.statQuery).pipe(
+    debounceTime(200),
+    distinctUntilChanged((a, b) => a.ticker === b.ticker && a.dateMs === b.dateMs),
+    switchMap((q) => /* statsRepo.findAll(...) */),
+  ),
+  { initialValue: [] as StatEntry[] },
+);
 ```
 
-Use `input()` / `output()` for all new components — legacy `@Input()` / `@Output()` decorators are not the project convention. **`input.required<T>()`** when the parent must provide; **`input<T>(default)`** otherwise. Reads are signal calls: `this.symbol()`, not `this.symbol`.
+`toSignal` on router streams gives reactive route state: `App.currentUrl` (from `router.events`), `queryParams` in `LoginPage` / `ErrorPage` (seeded with `route.snapshot.queryParamMap`). Always pass an `initialValue` so the signal is never `undefined`.
 
-## `computed()` vs method — when to use what
+Not used today: `rxResource` / `resource()`, `linkedSignal()`, `untracked()`. If you introduce one, add a section here citing the first usage.
 
-If the template reads it (`{{ x() }}`, `@if (x())`, `[disabled]="!x()"`), it's a `computed`. Methods are for actions, not derivation.
+## Component-level signals
 
-Exception: a method called from an event handler (`(click)="save()"`) — that's an action.
+```typescript
+// features/candidates/candidates-page.ts
+readonly selectedId = signal<string | null>(null);
+readonly model = signal<CandidateFormModel>(blankModel());
+readonly entries = signal<CandidateEntry[]>([]);
+```
 
-## APIs the project doesn't use today
+Components don't need the `private _foo / readonly foo` split — the template is the only consumer; `readonly` public signals are fine.
 
-- **`linkedSignal()`** — dependent state with auto-reset on source change. Reach for it when UI state depends on a list and needs to "snap" to a sensible default when the list reloads.
-- **`toSignal()` / `toObservable()`** — RxJS interop. `toObservable()` is the recommended path for rare cases where set-site side-effects don't fit (see [Side effects](#side-effects--at-the-mutation-site-not-in-an-effect)).
-- **`untracked()`** — read a signal inside a `computed`/`effect` without subscribing. Niche; avoid until a specific case demands it.
+Forms are a **single signal of the form model** (`model` in `candidates-page.ts`, `correction-dialog.ts`, `movement-dialog.ts`, `add-trade-dialog.ts`, `lexicon-dialog.ts`, `add-stat-dialog.ts`), updated with `.update((prev) => ({ ...prev, field: v }))`, with validation and derived values as `computed()` over it (`CorrectionDialog.targetInvalid`). Source of truth stays atomic.
 
-If you reach for any of these, this skill should grow a section citing the first project usage.
+## `input()` / `output()` — signal-based I/O
+
+```typescript
+// features/lexicon/lexicon-table/lexicon-table.ts
+readonly entries = input.required<LexiconEntry[]>();
+readonly editable = input(false);
+readonly editEntry = output<LexiconEntry>();
+readonly deleteEntry = output<LexiconEntry>();
+
+// shared/number-mask/number-mask.directive.ts
+readonly decimals = input(2, { transform: numberAttribute });
+readonly numberChange = output<number | null>();
+```
+
+Use `input()` / `output()` for all components and directives — no `@Input()` / `@Output()` decorators. `input.required<T>()` when the parent must provide, `input<T>(default)` otherwise. Reads are signal calls: `this.entries()`. Lib directives follow the same rule (`StbSize.stbSize = input.required<StbButtonSize>()` + `computed` host class).
 
 ## When NOT to use signals
 
-- **Constants and module-level config** — plain consts stay plain.
-- **RxJS streams from HTTP repositories** — return `Observable<T>`; feature code typically `firstValueFrom(...)`s into a `Promise<T>` then `set()`s into a signal. Don't expose `Observable<T>` from your service signature unless the consumer benefits from operators.
-- **Form state with reactive forms** — `FormControl` / `FormGroup` already implement their own reactive model. Don't duplicate; bridge with `toSignal` if needed.
+- **Constants** — plain `readonly` fields (`readonly pageSizeOptions = [10, 25, 50, 100]`, `readonly plays = TRADE_PLAYS`).
+- **Repository signatures** — ports return `Observable<T>`; don't wrap them in signals at the port level.

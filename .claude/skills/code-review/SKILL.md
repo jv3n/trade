@@ -36,19 +36,19 @@ Scope:
 - All touched files, not a sample.
 
 Three capabilities to apply (see your system prompt for details):
-1. Project consistency — `.claude/CLAUDE.md` + `docs/technique/architecture.md` + `docs/technique/ddd.md` + skills under `.claude/skills/` (kotlin-idioms, spring-boot, hexagonal-ddd, folders-structure-backend, angular-component, angular-di, angular-signals, angular-testing, folders-structure-frontend).
-2. Cross-cutting technical invariants — security (API keys), Spring AOP (separate `@Async` bean), no wildcard imports in Kotlin, no DB mocks on integration tests, SpEL cache keys in Java, mandatory i18n keys, Flyway numbering.
-3. Regression and blind spots — missing tests on new code paths, uncovered error paths, new TODOs / `@Suppress` / `@Deprecated`, cross-bounded-context diff, backlog sync.
+1. Project consistency — `.claude/CLAUDE.md` + `mockup/PARCOURS.md` (target product) + skills under `.claude/skills/` (kotlin-idioms, spring-boot, hexagonal-ddd, folders-structure-backend, angular-component, angular-di, angular-signals, angular-testing, folders-structure-frontend, material-overrides).
+2. Cross-cutting technical invariants — security (secrets), Spring AOP self-calls, no wildcard imports in Kotlin, no DB mocks on integration tests, mandatory i18n keys, English-only code, Flyway numbering, commit conventions.
+3. Regression and blind spots — missing tests on new code paths, uncovered error paths, new TODOs / `@Suppress` / `@Deprecated`, cross-bounded-context diff, issue scope.
 
 Output: structured punch-list `Bloquants` / `À discuter` / `Mineurs` with a cited diff snippet + concrete suggestion. Overall verdict `mergeable | needs-fix | reject`. No edits, no patches applied.
 ```
 
 ## What NOT to do from this skill
 
-- **Don't review yourself in the main thread.** Same rationale as `doc-maintainer` — the whole point of the subagent is to keep the main conversation context clean and bring a fresh reader's eye. Reading every changed file in main wastes tokens AND you'd be judging code you (likely) just wrote.
+- **Don't review yourself in the main thread.** The whole point of the subagent is to keep the main conversation context clean and bring a fresh reader's eye. Reading every changed file in main wastes tokens AND you'd be judging code you (likely) just wrote.
 - **Don't auto-apply the punch-list.** Return it to the user verbatim. They decide what to patch.
 - **Don't run `git commit` / `git push` / `gh pr create` based on the review verdict.** Per CLAUDE.md "Commits" section, git write operations are user-driven, even after a green review. Suggest, don't execute.
-- **Don't promote findings to the backlog automatically.** Per CLAUDE.md ("Documentation > audits/"), the user decides which findings become future tickets.
+- **Don't promote findings to the backlog automatically.** The user decides which findings become GitHub issues.
 
 ## After the review returns
 
@@ -61,6 +61,6 @@ Relay the agent's punch-list to the user as-is (or with very light formatting). 
 
 If the verdict is `needs-fix` or `reject` and the user pushes for commit anyway, flag the verdict explicitly but defer to their judgment — they may have context the agent missed (fixing in a follow-up PR is a deliberate choice, the agent doesn't know).
 
-## Difference with `/ultrareview`
+## Difference with `/code-review ultra`
 
-`/ultrareview` is a **paid multi-agent cloud review**, user-triggered on a PR or the whole branch — high cost and depth. `/code-review` is a **local free review** on the uncommitted diff, for a quick sanity check before `git commit`. The two are complementary: `/code-review` for everyday use, `/ultrareview` at milestones (phase close, large refactor).
+`/code-review ultra` (formerly `/ultrareview`) is a **billed multi-agent cloud review**, user-triggered on the branch or a PR — high cost and depth, and only the user can launch it. This skill is a **local review** of the current diff, for a quick sanity check before `git commit`. Use this one day to day, the cloud one at milestones (large refactor, end of a redesign block).
