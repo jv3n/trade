@@ -180,7 +180,7 @@ Tests serve as a top-to-bottom-readable spec. Concretely:
 
 The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues)**.
 
-- Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:account` / `module:journal` / `module:stats` / `module:lexicon`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
+- Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:today` / `module:candidates` / `module:stats` / `module:journal` / `module:account` / `module:lexicon` / `module:settings` / `module:ui`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
 - After implementing a feature, suggest closing (or narrowing) the matching issue. Never run `gh issue close` / label edits autonomously — same rule as git: suggest, the user confirms in the current turn.
 
 ### Documentation
