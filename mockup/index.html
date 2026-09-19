@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maquettes — suivi de trading</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+    <style>
+      .hub {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 40px 24px 60px;
+      }
+
+      .pages {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+
+      .pages a.card {
+        color: var(--text);
+        display: block;
+      }
+
+      .pages a.card:hover {
+        border-color: var(--accent);
+      }
+
+      .pages h2 {
+        justify-content: flex-start;
+      }
+
+      .pages p {
+        margin: 0;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hub">
+      <header class="page-header">
+        <div>
+          <h1>Maquettes — suivi de trading</h1>
+          <p>HTML statique, données fictives mais cohérentes entre les pages (septembre 2026).</p>
+        </div>
+      </header>
+
+      <section class="pages">
+        <a class="card" href="aujourdhui.html">
+          <h2><span class="icon">today</span> Aujourd'hui</h2>
+          <p>Page d'accueil : le déroulé du jour étape par étape (rapprochement, candidats, séance, stats, trades), solde et P&amp;L.</p>
+        </a>
+        <a class="card" href="candidat.html">
+          <h2><span class="icon">radar</span> Candidats</h2>
+          <p>Capture du matin : les GUS repérés au radar avec open / high premarket, push, float, volume et locate.</p>
+        </a>
+        <a class="card" href="stats.html">
+          <h2><span class="icon">query_stats</span> Stats</h2>
+          <p>Candidats retenus, complétés à 16h : open, push à l'open, HOD, LOD, EOD (% vs open), flags, → Trade.</p>
+        </a>
+        <a class="card" href="journal.html">
+          <h2><span class="icon">menu_book</span> Journal</h2>
+          <p>Liste des trades du mois avec KPIs (réussite, profit factor, stats tradées), filtre par pattern.</p>
+        </a>
+        <a class="card" href="trade.html">
+          <h2><span class="icon">menu_book</span> Fiche trade</h2>
+          <p>Détail du trade KTTA : exécutions, contexte hérité de la stat, post-mortem, capture.</p>
+        </a>
+        <a class="card" href="compte.html">
+          <h2><span class="icon">account_balance_wallet</span> Compte</h2>
+          <p>Solde USD / CAD, P&amp;L du mois, courbe du solde, mouvements (trades, dépôts, retraits, corrections).</p>
+        </a>
+        <a class="card" href="lexique.html">
+          <h2><span class="icon">dictionary</span> Lexique</h2>
+          <p>Glossaire FR / EN du vocabulaire short small-caps.</p>
+        </a>
+        <a class="card" href="parametres.html">
+          <h2><span class="icon">settings</span> Paramètres</h2>
+          <p>Préférences (thème fonctionnel, langue, devise), et pour l'admin : accès, import / export CSV, lexique (tableau CRUD), liens ops.</p>
+        </a>
+      </section>
+    </div>
+  </body>
+</html>

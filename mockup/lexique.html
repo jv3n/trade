@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lexique — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+    <style>
+      .terms {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 14px;
+      }
+
+      .term h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .term p {
+        margin: 0;
+        color: var(--text-muted);
+      }
+
+      .letters {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      .letters a {
+        padding: 3px 8px;
+        border-radius: 6px;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 12px;
+      }
+
+      .letters a.on {
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidenav">
+        <div class="brand"><span class="brand-mark"></span>Trade</div>
+        <a class="nav-link" href="aujourdhui.html"><span class="nav-icon icon">today</span>Aujourd'hui</a>
+        <a class="nav-link" href="candidat.html"><span class="nav-icon icon">radar</span>Candidats</a>
+        <a class="nav-link" href="stats.html"><span class="nav-icon icon">query_stats</span>Stats</a>
+        <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
+        <a class="nav-link" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
+        <div class="nav-spacer"></div>
+        <a class="nav-link active" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
+        <a class="nav-link" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Lexique</h1>
+            <p>Le vocabulaire du short small-caps, en français et en anglais.</p>
+          </div>
+          <div class="actions">
+            <div class="segmented" data-group="lang">
+              <button class="active" data-value="fr">FR</button>
+              <button data-value="en">EN</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="toolbar">
+          <input class="input search" placeholder="Rechercher un terme…" />
+          <div class="letters">
+            <a class="on" href="#">Tous</a><a href="#">B</a><a href="#">C</a><a href="#">D</a><a href="#">E</a><a href="#">F</a><a href="#">G</a
+            ><a href="#">L</a><a href="#">P</a><a href="#">R</a><a href="#">S</a>
+          </div>
+        </div>
+
+        <section class="terms">
+          <article class="card term">
+            <h3>Borrow fee</h3>
+            <p data-group="lang" data-value="fr">Coût d'emprunt des actions pour pouvoir les vendre à découvert, payé par action et par jour de détention.</p>
+            <p data-group="lang" data-value="en" hidden>Cost of borrowing shares to sell them short, charged per share and per day held.</p>
+          </article>
+          <article class="card term">
+            <h3>Cover</h3>
+            <p data-group="lang" data-value="fr">Racheter les actions shortées pour fermer (tout ou partie de) la position.</p>
+            <p data-group="lang" data-value="en" hidden>Buying back shorted shares to close all or part of the position.</p>
+          </article>
+          <article class="card term">
+            <h3>DT <span class="tag">Double Top</span></h3>
+            <p data-group="lang" data-value="fr">Double sommet : le cours échoue deux fois sur la même résistance — signal de short quand il casse le creux entre les deux.</p>
+            <p data-group="lang" data-value="en" hidden>Double top: price fails twice at the same resistance — a short signal when it breaks the low between the two peaks.</p>
+          </article>
+          <article class="card term">
+            <h3>EOD <span class="tag">End of Day</span></h3>
+            <p data-group="lang" data-value="fr">Prix de clôture de la séance. Sortie « EOD » = garder la position jusqu'à la clôture.</p>
+            <p data-group="lang" data-value="en" hidden>Session closing price. An "EOD" exit means holding the position until the close.</p>
+          </article>
+          <article class="card term">
+            <h3>Float</h3>
+            <p data-group="lang" data-value="fr">Nombre d'actions réellement échangeables sur le marché. Cible GUS : entre 3 M et 50 M.</p>
+            <p data-group="lang" data-value="en" hidden>Number of shares actually available to trade. GUS target: between 3M and 50M.</p>
+          </article>
+          <article class="card term">
+            <h3>Front side / Back side</h3>
+            <p data-group="lang" data-value="fr">Front : le titre monte encore (phase de push). Back : le titre a déjà cassé et redescend.</p>
+            <p data-group="lang" data-value="en" hidden>Front: the stock is still pushing up. Back: it has already broken down and is fading.</p>
+          </article>
+          <article class="card term">
+            <h3>GUS <span class="tag">Gap Up Short</span></h3>
+            <p data-group="lang" data-value="fr">Shorter une small-cap qui ouvre en gap up sans fondamental, en pariant sur le retour du cours.</p>
+            <p data-group="lang" data-value="en" hidden>Shorting a small-cap that gaps up with no fundamental reason, betting on the price fading back.</p>
+          </article>
+          <article class="card term">
+            <h3>LOD <span class="tag">Low of Day</span></h3>
+            <p data-group="lang" data-value="fr">Plus bas de la séance — le meilleur prix de cover possible pour un short.</p>
+            <p data-group="lang" data-value="en" hidden>Lowest price of the session — the best possible cover price for a short.</p>
+          </article>
+          <article class="card term">
+            <h3>Push</h3>
+            <p data-group="lang" data-value="fr">Montée du cours après l'ouverture. On attend le push pour shorter plus haut que l'open.</p>
+            <p data-group="lang" data-value="en" hidden>Price run-up after the open. Wait for the push to short above the open.</p>
+          </article>
+          <article class="card term">
+            <h3>Reverse split</h3>
+            <p data-group="lang" data-value="fr">Regroupement d'actions qui gonfle le prix sans mouvement réel — faux gap up, piège à éviter.</p>
+            <p data-group="lang" data-value="en" hidden>Share consolidation that inflates the price with no real move — a fake gap up, a trap to avoid.</p>
+          </article>
+          <article class="card term">
+            <h3>SSR <span class="tag">Short Sale Restriction</span></h3>
+            <p data-group="lang" data-value="fr">Après une baisse de 10 %, le short n'est autorisé que sur un uptick jusqu'au lendemain.</p>
+            <p data-group="lang" data-value="en" hidden>After a 10% drop, shorting is only allowed on an uptick until the next day.</p>
+          </article>
+          <article class="card term">
+            <h3>Squeeze</h3>
+            <p data-group="lang" data-value="fr">Envolée brutale forcée par les shorts qui couvrent en urgence — le risque principal du GUS.</p>
+            <p data-group="lang" data-value="en" hidden>Violent spike driven by shorts covering in a panic — the main risk of a GUS.</p>
+          </article>
+        </section>
+
+        <p class="mockup-note">Maquette statique — page en lecture seule pour tout le monde ; l'ajout, la modification et la suppression des termes se font dans Paramètres › Lexique (admin). La bascule FR / EN est fonctionnelle.</p>
+      </main>
+    </div>
+  </body>
+</html>
