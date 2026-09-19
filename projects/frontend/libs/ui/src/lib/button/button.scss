@@ -317,3 +317,25 @@
   margin-left: auto;
   order: 99;
 }
+
+// ============================================================================
+// `[stbDanger]` — destructive filled button (deletions), design-system convention.
+//
+// The `StbDanger` directive puts `.stb-button--danger` on a `mat-flat-button`. The filled tokens
+// are re-scoped to the danger palette ; the hover rule mirrors the accent one above (darker
+// container) and wins on source order at equal specificity.
+// ============================================================================
+
+.stb-button--danger {
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--color-danger),
+      filled-label-text-color: var(--color-on-danger),
+      filled-state-layer-color: var(--color-on-danger),
+    )
+  );
+}
+
+.stb-button--danger:not(:disabled):hover {
+  background-color: color-mix(in oklch, var(--color-danger) 88%, black);
+}

@@ -7,6 +7,7 @@ import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
 
 import { LexiconEntry, LexiconEntryInput } from '../../../core/api/lexicon/lexicon.model';
 import { LexiconRepository } from '../../../core/api/lexicon/lexicon.repository';
+import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { LexiconDialog, LexiconDialogData } from '../../lexicon/lexicon-dialog/lexicon-dialog';
 import { LexiconTable } from '../../lexicon/lexicon-table/lexicon-table';
 
@@ -28,6 +29,7 @@ import { LexiconTable } from '../../lexicon/lexicon-table/lexicon-table';
 export class LexiconAdminPage {
   private readonly repo = inject(LexiconRepository);
   private readonly dialog = inject(MatDialog);
+  private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -48,12 +50,11 @@ export class LexiconAdminPage {
   }
 
   delete(entry: LexiconEntry): void {
-    const confirmMsg = this.translate.instant('lexicon.confirmDelete', { term: entry.term });
-    if (!confirm(confirmMsg)) return;
-
-    this.repo
-      .delete(entry.id)
+    this.confirm
+      .ask('lexicon.confirmDelete', { params: { term: entry.term }, variant: 'danger' })
       .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.delete(entry.id)),
         tap(() => {
           this.toast('lexicon.snackbar.deleteSuccess', 'success', { term: entry.term });
           this.fetch();

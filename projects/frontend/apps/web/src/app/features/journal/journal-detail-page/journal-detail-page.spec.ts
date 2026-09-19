@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../../core/api/journal/trade-entry.model';
+import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { JournalDetailPage } from './journal-detail-page';
 
 /**
@@ -18,10 +19,13 @@ import { JournalDetailPage } from './journal-detail-page';
 describe('JournalDetailPage', () => {
   let findById: ReturnType<typeof vi.fn>;
   let deleteSubject: Subject<void>;
+  /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
+  let confirmed: boolean;
   let deleteScreenshot: ReturnType<typeof vi.fn>;
 
   function setup() {
     deleteSubject = new Subject<void>();
+    confirmed = true;
     deleteScreenshot = vi.fn(() => of(makeTrade({ hasScreenshot: false })));
     TestBed.configureTestingModule({
       imports: [JournalDetailPage],
@@ -41,6 +45,7 @@ describe('JournalDetailPage', () => {
           } as unknown as JournalRepository,
         },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
         { provide: MatDialog, useValue: { open: () => ({ afterClosed: () => of(undefined) }) } },
         {
           provide: ActivatedRoute,
@@ -82,7 +87,6 @@ describe('JournalDetailPage', () => {
     fixture.detectChanges();
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     fixture.componentInstance.delete();
     deleteSubject.next();

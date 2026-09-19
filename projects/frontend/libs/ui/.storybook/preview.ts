@@ -62,12 +62,12 @@ const preview: Preview = {
         // Same as the app : no click ripples.
         { provide: MAT_RIPPLE_GLOBAL_OPTIONS, useValue: { disabled: true } },
         // Same icon font as the app (Material Symbols Rounded, loaded by `styles/_fonts.scss`).
-        provideAppInitializer(() =>
+        provideAppInitializer(() => {
           inject(MatIconRegistry).setDefaultFontSetClass(
             'material-symbols-rounded',
             'mat-ligature-font',
-          ),
-        ),
+          );
+        }),
       ],
     }),
     withDataTheme,

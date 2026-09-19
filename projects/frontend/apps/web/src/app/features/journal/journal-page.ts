@@ -51,6 +51,7 @@ import {
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
 import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
+import { ConfirmService } from '../../core/app-state/confirm.service';
 import {
   PERIOD_PRESETS,
   PeriodPresetKey,
@@ -106,7 +107,7 @@ const DEFAULT_PAGE_SIZE = 10;
  *     profitable / losing). Filter changes refetch from the backend.
  *   - **Pagination** : `<mat-paginator>` below the table. Default 10 rows per page. Filter /
  *     search / sort changes reset the index to 0.
- *   - **CRUD** : add / edit via Material dialog, delete via native confirm(). Every mutation
+ *   - **CRUD** : add / edit via Material dialog, delete via the confirmation modal (`ConfirmService`). Every mutation
  *     refetches the current page (a created trade may not land on the current page given the
  *     active filter + sort, so we don't try to splice the result locally).
  *
@@ -142,6 +143,7 @@ const DEFAULT_PAGE_SIZE = 10;
 export class JournalPage {
   private readonly repo = inject(JournalRepository);
   private readonly dialog = inject(MatDialog);
+  private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
@@ -376,17 +378,20 @@ export class JournalPage {
   }
 
   delete(entry: TradeEntry): void {
-    const confirmMsg = this.translate.instant('journal.confirmDelete', { ticker: entry.ticker });
-    if (!confirm(confirmMsg)) return;
-
-    // Decide BEFORE the request : if we're about to delete the **last row** of a non-zero
+    // Decided BEFORE the request : if we're about to delete the **last row** of a non-zero
     // page, we should backstep one page after the delete. Computing this from the current
-    // signals (entries + pageIndex) is safe — they reflect the state the user is staring at.
-    const willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
+    // signals (entries + pageIndex) once confirmed is safe — they reflect the state the user
+    // is staring at.
+    let willEmptyPage = false;
 
-    this.repo
-      .delete(entry.id)
+    this.confirm
+      .ask('journal.confirmDelete', { params: { ticker: entry.ticker }, variant: 'danger' })
       .pipe(
+        filter(Boolean),
+        switchMap(() => {
+          willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
+          return this.repo.delete(entry.id);
+        }),
         tap(() => {
           this.toast('journal.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
           if (willEmptyPage) {

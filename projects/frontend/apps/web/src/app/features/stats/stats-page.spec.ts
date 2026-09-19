@@ -15,6 +15,7 @@ import {
   StatSource,
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { ConfirmService } from '../../core/app-state/confirm.service';
 import { StatsPage } from './stats-page';
 
 /**
@@ -23,7 +24,7 @@ import { StatsPage } from './stats-page';
  *  - **Ownership gating** — `isOwned` is true for RADAR / MANUAL rows (editable) and false for the
  *    community IMPORT rows (read-only). The template drives the actions column off it.
  *  - **Delete pipeline** — success snackbar + refetch on a clean response, error snackbar on throw,
- *    and `confirm()` cancel short-circuits the repository call.
+ *    and cancelling the confirmation modal short-circuits the repository call.
  *  - **Create dialog → 409** — a day/ticker collision (HTTP 409) surfaces the dedicated "duplicate"
  *    toast rather than the generic create-error one.
  *  - **Create trade from a stat** — the third action deep-links to the journal with the stat's ticker,
@@ -34,6 +35,8 @@ describe('StatsPage', () => {
   let findAll: ReturnType<typeof vi.fn>;
   let createFn: ReturnType<typeof vi.fn>;
   let deleteSubject: Subject<void>;
+  /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
+  let confirmed: boolean;
   let snackBarOpen: ReturnType<typeof vi.fn>;
   let dialogResult: Subject<StatEntryInput | undefined>;
 
@@ -42,6 +45,7 @@ describe('StatsPage', () => {
     findAll = vi.fn(() => of(nextPage));
     createFn = vi.fn(() => of(makeStat()));
     deleteSubject = new Subject<void>();
+    confirmed = true;
     snackBarOpen = vi.fn();
     dialogResult = new Subject<StatEntryInput | undefined>();
 
@@ -65,6 +69,7 @@ describe('StatsPage', () => {
           } as unknown as StatsRepository,
         },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+        { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
         { provide: MatDialog, useValue: { open: () => ({ afterClosed: () => dialogResult }) } },
       ],
     }).compileComponents();
@@ -84,7 +89,6 @@ describe('StatsPage', () => {
 
   it('delete success fires a success snackbar and refetches', () => {
     nextPage = makePage([makeStat()], 5);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     const fixture = TestBed.createComponent(StatsPage);
     fixture.detectChanges();
@@ -105,7 +109,6 @@ describe('StatsPage', () => {
   });
 
   it('delete error fires an error snackbar', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const fixture = TestBed.createComponent(StatsPage);
     fixture.detectChanges();
 
@@ -120,12 +123,12 @@ describe('StatsPage', () => {
     );
   });
 
-  it('user cancelling the confirm() never reaches the repository', () => {
+  it('user cancelling the confirmation modal never reaches the repository', () => {
     const fixture = TestBed.createComponent(StatsPage);
     fixture.detectChanges();
 
     const deleteSpy = vi.spyOn(deleteSubject, 'subscribe');
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    confirmed = false;
 
     fixture.componentInstance.delete(makeStat());
 

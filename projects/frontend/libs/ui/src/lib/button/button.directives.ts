@@ -58,3 +58,21 @@ export class StbSize {
   host: { class: 'stb-spinner-end' },
 })
 export class StbSpinnerEnd {}
+
+/**
+ * Turns a filled Material button into a **destructive** CTA — red container (`--color-danger`)
+ * instead of the indigo accent. Reserved for irreversible actions (deletions), typically the
+ * confirm button of a danger `StbConfirmDialog`.
+ *
+ * ```html
+ * <button mat-flat-button stbDanger>Delete the trade</button>
+ * ```
+ *
+ * Pure marker — the colour overrides live in `button.scss` (`.stb-button--danger`).
+ */
+@Directive({
+  selector: 'button[mat-flat-button][stbDanger], a[mat-flat-button][stbDanger]',
+
+  host: { class: 'stb-button--danger' },
+})
+export class StbDanger {}

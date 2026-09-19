@@ -1,0 +1,37 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './confirm-dialog.stories';
+
+<Meta of={Stories} />
+
+# Confirm dialog
+
+Confirmation modal for every action that **creates or deletes** something (candidate → stat, stat → trade, deletions). No modal for edits. The message states the consequence : what is copied, what disappears.
+
+- `default` — accent confirm button, `help` icon.
+- `danger` — red confirm button (`stbDanger`), `delete` icon. Deletions only.
+
+Cancel, Esc and a backdrop click close without acting ; initial focus lands on Cancel. The lib has no i18n — pass translated strings (the app's `ConfirmService` does it from i18n keys).
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbConfirm } from '@portfolioai/ui';
+
+private readonly confirm = inject(StbConfirm);
+
+delete(id: string): void {
+  this.confirm
+    .open({ title, message, confirmLabel, cancelLabel, variant: 'danger' })
+    .pipe(filter(Boolean), switchMap(() => this.repo.delete(id)))
+    .subscribe();
+}`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />
+
+## Danger
+
+<Canvas of={Stories.Danger} />

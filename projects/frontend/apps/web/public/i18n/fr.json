@@ -105,6 +105,11 @@
       "borrow": "Frais borrow %",
       "borrowHint": "coût / action ÷ prix d'open"
     },
+    "confirmDelete": {
+      "title": "Supprimer le candidat {{ticker}} ?",
+      "message": "Le candidat est supprimé définitivement. Une stat déjà créée à partir de lui est conservée.",
+      "confirm": "Supprimer"
+    },
     "snackbar": {
       "createSuccess": "Candidat enregistré.",
       "updateSuccess": "Candidat mis à jour.",
@@ -165,7 +170,11 @@
       "edit": "Modifier",
       "delete": "Supprimer"
     },
-    "confirmDelete": "Supprimer ce mouvement ? Action irréversible.",
+    "confirmDelete": {
+      "title": "Supprimer ce mouvement ?",
+      "message": "Le mouvement est supprimé définitivement et le solde du compte est recalculé.",
+      "confirm": "Supprimer"
+    },
     "fields": {
       "type": "Type",
       "amount": "Montant",
@@ -225,7 +234,11 @@
     },
     "loading": "Chargement du journal…",
     "empty": "Aucun trade pour l'instant. Clique sur « Ajouter un trade » pour le premier.",
-    "confirmDelete": "Supprimer le trade sur {{ticker}} ? Action irréversible.",
+    "confirmDelete": {
+      "title": "Supprimer le trade {{ticker}} ?",
+      "message": "Définitif : les exécutions, le post-mortem et la capture sont supprimés, et le mouvement du trade disparaît du compte. La stat du jour est conservée.",
+      "confirm": "Supprimer le trade"
+    },
     "errors": {
       "load": "Impossible de charger le journal. Réessaye.",
       "save": "Impossible d'enregistrer le trade. Réessaye.",
@@ -376,7 +389,11 @@
       "delete": "Supprimer",
       "createTrade": "Créer un trade dans le journal"
     },
-    "confirmDelete": "Supprimer l'analyse de {{ticker}} ?",
+    "confirmDelete": {
+      "title": "Supprimer la stat {{ticker}} ?",
+      "message": "La stat est supprimée définitivement. Les trades déjà créés à partir d'elle sont conservés.",
+      "confirm": "Supprimer"
+    },
     "snackbar": {
       "createSuccess": "Analyse de {{ticker}} ajoutée.",
       "createError": "Impossible d'ajouter l'analyse. Réessaie.",
@@ -453,7 +470,11 @@
     "empty": "Le glossaire est vide pour l'instant.",
     "emptyAdmin": "Aucun terme pour l'instant. Clique sur « Ajouter un terme » pour créer le premier.",
     "noMatch": "Aucun terme ne correspond à « {{query}} ».",
-    "confirmDelete": "Supprimer le terme « {{term}} » ? Action irréversible.",
+    "confirmDelete": {
+      "title": "Supprimer le terme « {{term}} » ?",
+      "message": "Le terme et ses définitions française et anglaise sont supprimés définitivement.",
+      "confirm": "Supprimer"
+    },
     "errors": {
       "load": "Impossible de charger le lexique. Réessaie."
     },

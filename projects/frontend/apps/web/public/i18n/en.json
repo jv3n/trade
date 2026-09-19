@@ -105,6 +105,11 @@
       "borrow": "Borrow fee %",
       "borrowHint": "cost / share ÷ open price"
     },
+    "confirmDelete": {
+      "title": "Delete the {{ticker}} candidate?",
+      "message": "The candidate is permanently deleted. A stat already created from it is kept.",
+      "confirm": "Delete"
+    },
     "snackbar": {
       "createSuccess": "Candidate saved.",
       "updateSuccess": "Candidate updated.",
@@ -165,7 +170,11 @@
       "edit": "Edit",
       "delete": "Delete"
     },
-    "confirmDelete": "Delete this movement? This can't be undone.",
+    "confirmDelete": {
+      "title": "Delete this movement?",
+      "message": "The movement is permanently deleted and the account balance is recomputed.",
+      "confirm": "Delete"
+    },
     "fields": {
       "type": "Type",
       "amount": "Amount",
@@ -225,7 +234,11 @@
     },
     "loading": "Loading journal…",
     "empty": "No trades yet. Click « Add trade » to log your first one.",
-    "confirmDelete": "Delete the trade on {{ticker}}? This can't be undone.",
+    "confirmDelete": {
+      "title": "Delete the {{ticker}} trade?",
+      "message": "Permanent: executions, post-mortem and chart capture are deleted, and the trade's movement disappears from the account. The stat of the day is kept.",
+      "confirm": "Delete the trade"
+    },
     "errors": {
       "load": "Couldn't load the journal. Please retry.",
       "save": "Couldn't save the trade. Please retry.",
@@ -376,7 +389,11 @@
       "delete": "Delete",
       "createTrade": "Create a trade in the journal"
     },
-    "confirmDelete": "Delete the analysis for {{ticker}}?",
+    "confirmDelete": {
+      "title": "Delete the {{ticker}} stat?",
+      "message": "The stat is permanently deleted. Trades already created from it are kept.",
+      "confirm": "Delete"
+    },
     "snackbar": {
       "createSuccess": "Analysis for {{ticker}} added.",
       "createError": "Couldn't add the analysis. Please retry.",
@@ -453,7 +470,11 @@
     "empty": "The glossary is empty for now.",
     "emptyAdmin": "No terms yet. Click « Add term » to create the first one.",
     "noMatch": "No term matches « {{query}} ».",
-    "confirmDelete": "Delete the term « {{term}} »? This can't be undone.",
+    "confirmDelete": {
+      "title": "Delete the term « {{term}} »?",
+      "message": "The term and its French and English definitions are permanently deleted.",
+      "confirm": "Delete"
+    },
     "errors": {
       "load": "Couldn't load the lexicon. Please retry."
     },
