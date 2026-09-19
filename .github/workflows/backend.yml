@@ -18,6 +18,11 @@ on:
 permissions:
   contents: read
 
+# A new push on the same PR / branch cancels the run still in progress for the previous commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build & Test
@@ -55,18 +60,13 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
 
-      - name: Build & test
+      # Build, tests and coverage reports in a **single** Gradle invocation. A separate
+      # `koverHtmlReport koverXmlReport` run used to re-execute the whole `test` task (~30 s)
+      # instead of reusing the first run. `--continue` keeps going past an independent failure
+      # (e.g. Detekt or Spotless) so the tests and their coverage still report in the same run.
+      - name: Build, test & coverage
         working-directory: projects/backend
-        run: ./gradlew build --build-cache
-
-      # Coverage reports — Kover is wired in `build.gradle.kts`. Runs after `build` (which executes
-      # `test` and produces the binary `.bin` Kover instruments) so this step just renders. `if:
-      # always()` so the report is generated even if a downstream task (e.g. Detekt) failed —
-      # diagnosing a flake is easier with the coverage view at hand.
-      - name: Generate coverage reports
-        if: always()
-        working-directory: projects/backend
-        run: ./gradlew koverHtmlReport koverXmlReport --build-cache
+        run: ./gradlew build koverHtmlReport koverXmlReport --build-cache --continue
 
       # Surface Detekt findings into GitHub Code Scanning (Security tab). `if: always()` so a
       # failed test doesn't swallow the SARIF — Detekt generates it before tests run anyway.

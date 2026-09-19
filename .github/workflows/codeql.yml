@@ -1,29 +1,37 @@
 # GitHub Code Scanning — CodeQL static analysis.
-# Findings (vulnérabilités, anti-patterns) apparaissent dans l'onglet "Security → Code scanning"
-# du repo. Gratuit pour les repos publics.
+# Findings (vulnerabilities, anti-patterns) show up under "Security → Code scanning".
 #
-# Une seule passe couvre les deux faces de l'app :
-#   - `java-kotlin` (backend Kotlin/Spring) — build-mode `manual` : on compile sans tests pour
-#     éviter de devoir exposer Postgres ici (la CI métier `backend.yml` reste l'autorité tests).
-#   - `javascript-typescript` (frontend Angular) — build-mode `none` : CodeQL extrait sans build.
+# One pass covers both sides of the app :
+#   - `java-kotlin` (Kotlin / Spring backend) — build-mode `manual` : compiles without tests so
+#     no Postgres is needed here (`backend.yml` stays the authority for tests).
+#   - `javascript-typescript` (Angular frontend) — build-mode `none` : extracted without a build.
+#
+# **Not run on pull requests** : it was the slowest PR check (~3 min, the Kotlin extractor
+# recompiles the whole backend) and it blocked PRs whenever a Kotlin bump outran CodeQL's
+# supported version. It runs on every merge to master, weekly, and on demand instead ; findings
+# still land in the Security tab.
 
 name: CodeQL
 
 on:
   push:
     branches: [master]
-  pull_request:
-    branches: [master]
   schedule:
-    # Lundi 06:00 UTC — relit le code même sans PR de la semaine, attrape les nouvelles règles
-    # CodeQL et les vulnérabilités de deps qui auraient été publiées entre-temps.
+    # Monday 06:00 UTC — re-reads the code even without a merge that week, catching new CodeQL
+    # rules and newly published dependency vulnerabilities.
     - cron: '0 6 * * 1'
+  workflow_dispatch:
 
-# Workflow-level baseline — Sonar / CodeQL `actions/missing-workflow-permissions` veut le bloc
-# au niveau workflow et pas seulement job. Le job `analyze` élargit ses propres scopes (write
-# sur security-events pour publier les findings, read sur packages + actions).
+# Workflow-level baseline — CodeQL `actions/missing-workflow-permissions` wants the block at
+# workflow level, not only on the job. The `analyze` job widens its own scopes (write on
+# security-events to publish findings, read on packages + actions).
 permissions:
   contents: read
+
+# Two merges in a row : only the latest commit needs analysing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
