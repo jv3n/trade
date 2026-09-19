@@ -46,6 +46,7 @@ import {
   StatSource,
 } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import {
   PERIOD_PRESETS,
@@ -96,7 +97,7 @@ const DEFAULT_PAGE_SIZE = 10;
  *   - **Search** : ticker LIKE %q% via `?q=…` (debounced 250 ms).
  *   - **Filters** : right-side drawer — date range, source (radar / manual / import), gap range.
  *   - **Server-side sort + pagination** : MatSort → `?sort=field,direction` ; `<mat-paginator>`.
- *   - **CRUD** : add / edit via the [AddStatDialog], delete via confirm(). Edit / delete are exposed
+ *   - **CRUD** : add / edit via the [AddStatDialog], delete via the confirmation modal. Edit / delete are exposed
  *     **only on owned rows** (`source !== IMPORT`) — the server enforces ownership regardless.
  *
  * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`, `refetchTrigger`)
@@ -130,6 +131,7 @@ const DEFAULT_PAGE_SIZE = 10;
 export class StatsPage {
   private readonly repo = inject(StatsRepository);
   private readonly dialog = inject(MatDialog);
+  private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
@@ -330,14 +332,16 @@ export class StatsPage {
   }
 
   delete(entry: StatEntry): void {
-    const confirmMsg = this.translate.instant('stats.confirmDelete', { ticker: entry.ticker });
-    if (!confirm(confirmMsg)) return;
+    let willEmptyPage = false;
 
-    const willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
-
-    this.repo
-      .delete(entry.id)
+    this.confirm
+      .ask('stats.confirmDelete', { params: { ticker: entry.ticker }, variant: 'danger' })
       .pipe(
+        filter(Boolean),
+        switchMap(() => {
+          willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
+          return this.repo.delete(entry.id);
+        }),
         tap(() => {
           this.toast('stats.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
           if (willEmptyPage) {

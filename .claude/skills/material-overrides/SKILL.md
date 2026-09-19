@@ -154,6 +154,7 @@ export class StbSize {
 | --------------- | ------------------------------------------ | ------------------------------------ | --------------- |
 | `StbSize`       | `[stbSize]` on every Material button       | `.stb-size--{xs\|sm\|md\|lg}`         | `button/`       |
 | `StbSpinnerEnd` | `mat-spinner[stbSpinnerEnd]`               | `.stb-spinner-end`                    | `button/`       |
+| `StbDanger`     | `mat-flat-button[stbDanger]`               | `.stb-button--danger`                 | `button/`       |
 | `StbTable`      | `div[stbTable]`                            | `.stb-table`                          | `table/`        |
 | `StbCol`        | `th[stbCol], td[stbCol]`                   | `.stb-col--{numeric\|mono\|actions}`  | `table/`        |
 | `StbChip`       | `mat-chip[stbChip], mat-chip-option[stbChip]` | `.stb-chip--{ticker}`              | `chips/`        |

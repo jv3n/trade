@@ -32,7 +32,7 @@ projects/frontend/
 │           │   │   ├── <name>.repository.ts  # PORT : abstract class
 │           │   │   ├── <name>.model.ts       # domain types (optional)
 │           │   │   └── adapters/<name>.http.ts (+ spec)
-│           │   ├── app-state/                # signal services : auth, theme, language, sidenav-collapse
+│           │   ├── app-state/                # root UI services : auth, theme, language, sidenav-collapse, confirm
 │           │   ├── http/                     # functional interceptors (auth.interceptor.ts)
 │           │   ├── router/                   # functional guards (auth.guards.ts)
 │           │   └── providers.ts              # provideRepositories()
@@ -88,7 +88,7 @@ projects/frontend/
 
 ### `core/app-state/`
 
-`AuthService`, `ThemeService`, `LanguageService`, `SidenavCollapseService`. **No port/adapter** — concrete `providedIn: 'root'` signal services. They aren't bounded contexts; they're shared UI state. Backend access goes through a port (`AuthService` → `AuthRepository`).
+`AuthService`, `ThemeService`, `LanguageService`, `SidenavCollapseService`. **No port/adapter** — concrete `providedIn: 'root'` signal services. They aren't bounded contexts; they're shared UI state. `ConfirmService` sits here too : a stateless facade that resolves i18n texts and opens the design-system `StbConfirm` modal. Backend access goes through a port (`AuthService` → `AuthRepository`).
 
 ### Cross-axis
 
@@ -135,7 +135,7 @@ export class StbSize {
 
 Selectors in `libs/ui` **always** start with `stb` or `ui` (ESLint rule; `apps/web` uses `app`) — design-system directives use `stb`. Input bindings use the same name as the selector attribute to avoid `no-input-rename`.
 
-Existing: `StbSize` + `StbSpinnerEnd` (button), `StbTable` + `StbCol` (table), `StbChip` (chips — `stbChip="ticker"` is the mandatory ticker rendering).
+Existing: `StbSize` + `StbDanger` + `StbSpinnerEnd` (button), `StbTable` + `StbCol` (table), `StbChip` (chips — `stbChip="ticker"` is the mandatory ticker rendering).
 
 ### `styles/`
 

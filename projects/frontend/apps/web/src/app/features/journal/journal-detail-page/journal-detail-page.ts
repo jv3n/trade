@@ -17,6 +17,7 @@ import { EMPTY, catchError, filter, finalize, from, switchMap, tap } from 'rxjs'
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import { computePositionAggregates } from '../../../core/api/journal/position-aggregates';
 import { TradeEntry, TradeEntryInput } from '../../../core/api/journal/trade-entry.model';
+import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { compressImage } from '../../../shared/image/compress-image';
 import { AddTradeDialog, AddTradeDialogData } from '../add-trade-dialog/add-trade-dialog';
 
@@ -51,6 +52,7 @@ import { AddTradeDialog, AddTradeDialogData } from '../add-trade-dialog/add-trad
 export class JournalDetailPage {
   private readonly repo = inject(JournalRepository);
   private readonly dialog = inject(MatDialog);
+  private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly route = inject(ActivatedRoute);
@@ -148,12 +150,11 @@ export class JournalDetailPage {
   delete(): void {
     const entry = this.entry();
     if (!entry) return;
-    const confirmMsg = this.translate.instant('journal.confirmDelete', { ticker: entry.ticker });
-    if (!confirm(confirmMsg)) return;
-
-    this.repo
-      .delete(entry.id)
+    this.confirm
+      .ask('journal.confirmDelete', { params: { ticker: entry.ticker }, variant: 'danger' })
       .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.delete(entry.id)),
         tap(() => {
           this.toast('journal.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
           void this.router.navigate(['/journal']);

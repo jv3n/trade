@@ -30,6 +30,7 @@ import {
 import { AccountRepository } from '../../core/api/account/account.repository';
 import { ForexRate } from '../../core/api/forex/forex.model';
 import { ForexRepository } from '../../core/api/forex/forex.repository';
+import { ConfirmService } from '../../core/app-state/confirm.service';
 import { CorrectionDialog } from './correction-dialog/correction-dialog';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
 
@@ -88,6 +89,7 @@ export class AccountPage {
   private readonly repo = inject(AccountRepository);
   private readonly forex = inject(ForexRepository);
   private readonly dialog = inject(MatDialog);
+  private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -190,10 +192,11 @@ export class AccountPage {
   }
 
   delete(movement: AccountMovement): void {
-    if (!confirm(this.translate.instant('account.confirmDelete'))) return;
-    this.repo
-      .deleteMovement(movement.id)
+    this.confirm
+      .ask('account.confirmDelete', { variant: 'danger' })
       .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.deleteMovement(movement.id)),
         tap(() => {
           this.toast('account.snackbar.deleteSuccess', 'success');
           this.fetch();

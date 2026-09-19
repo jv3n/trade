@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JournalRepository, PagedResult } from '../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
+import { ConfirmService } from '../../core/app-state/confirm.service';
 import { JournalPage } from './journal-page';
 
 /**
@@ -23,8 +24,8 @@ import { JournalPage } from './journal-page';
  *    for both the page content AND the total count, no local splicing.
  *  - **Snackbar variant matches the outcome** — `success` panel on a clean response, `error`
  *    panel when the repository throws.
- *  - **`confirm()` cancel short-circuits the call** — no delete request fires when the user
- *    backs out of the native confirm dialog.
+ *  - **Cancelling the confirmation short-circuits the call** — no delete request fires when the
+ *    user backs out of the confirmation modal (`ConfirmService`, stubbed here).
  *
  * The CRUD dialog flows (create / update via `MatDialog`) are not exercised here — they
  * compose the same `tap` / `catchError` shape as `delete` but route through `MatDialog`,
@@ -35,12 +36,15 @@ describe('JournalPage', () => {
   let nextPage: PagedResult<TradeEntry>;
   let findAll: ReturnType<typeof vi.fn>;
   let deleteSubject: Subject<void>;
+  /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
+  let confirmed: boolean;
   let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     nextPage = makePage([], 0);
     findAll = vi.fn(() => of(nextPage));
     deleteSubject = new Subject<void>();
+    confirmed = true;
     snackBarOpen = vi.fn();
 
     await TestBed.configureTestingModule({
@@ -67,6 +71,7 @@ describe('JournalPage', () => {
           } as unknown as JournalRepository,
         },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+        { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
         {
           provide: MatDialog,
           useValue: { open: () => ({ afterClosed: () => of(undefined) }) },
@@ -85,7 +90,6 @@ describe('JournalPage', () => {
     // 21 trades total, 10 per page → page 2 carries the single 21st row. Deleting it would
     // leave page 2 with zero rows after a naive refetch.
     nextPage = makePage([makeTrade()], 21);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
@@ -113,7 +117,6 @@ describe('JournalPage', () => {
     // Only one trade, on page 0. The naive refetch is correct here — we don't want to bump
     // pageIndex into negative territory.
     nextPage = makePage([makeTrade()], 1);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
@@ -135,7 +138,6 @@ describe('JournalPage', () => {
 
   it('delete on a multi-row page refetches the current page (no pageIndex change)', () => {
     nextPage = makePage([makeTrade(), makeTrade({ id: 'id-2', ticker: 'AAPL' })], 12);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
@@ -159,7 +161,6 @@ describe('JournalPage', () => {
 
   it('delete error fires an error snackbar', () => {
     nextPage = makePage([makeTrade()], 1);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
@@ -180,16 +181,16 @@ describe('JournalPage', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // delete() — confirm() cancel
+  // delete() — confirmation modal cancelled
   // ---------------------------------------------------------------------------
 
-  it('user cancelling the confirm() never reaches the repository', () => {
+  it('user cancelling the confirmation modal never reaches the repository', () => {
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
     const page = fixture.componentInstance;
 
     const deleteSpy = vi.spyOn(deleteSubject, 'subscribe');
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    confirmed = false;
 
     page.delete(makeTrade());
 

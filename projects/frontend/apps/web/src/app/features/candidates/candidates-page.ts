@@ -27,6 +27,7 @@ import {
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { StatEntryInput } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { AddStatDialog, AddStatDialogData } from '../stats/add-stat-dialog/add-stat-dialog';
 import {
@@ -97,6 +98,7 @@ export class CandidatesPage {
   private readonly repo = inject(CandidatesRepository);
   private readonly statsRepo = inject(StatsRepository);
   private readonly dialog = inject(MatDialog);
+  private readonly confirm = inject(ConfirmService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
 
@@ -318,9 +320,14 @@ export class CandidatesPage {
   remove(): void {
     const id = this.selectedId();
     if (!id) return;
-    this.repo
-      .delete(id)
+    this.confirm
+      .ask('candidates.confirmDelete', {
+        params: { ticker: this.tickerLabel() },
+        variant: 'danger',
+      })
       .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.delete(id)),
         tap(() => {
           this.toast('candidates.snackbar.deleteSuccess', 'success');
           this.newCandidate();
