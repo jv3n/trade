@@ -5,9 +5,9 @@
 // here means a single source of truth and a smaller diff when the rhythm needs to change.
 //
 // **Default width = 1360 px** — the mockup's content width (`mockup/assets/mockup.css > .main`).
-// Every page, including the wide data tables, stays within it : a table wider than the page scrolls
-// horizontally inside its card rather than stretching the page across a large screen. Modifiers :
-//   • `.page--full`    → same 1360 px cap (kept for the templates that still use it)
+// Medium-content pages stay within it ; the wide data-table pages opt out with `.page--full`.
+// Modifiers :
+//   • `.page--full`    → no cap  (the wide data tables : candidates, stats, journal, journal import)
 //   • `.page--medium`  → 1200 px
 //   • `.page--narrow`  → 1100 px
 //   • `.page--form`    → 720 px  (settings forms — preferences, access-control)
@@ -38,9 +38,10 @@
   max-width: 720px;
 }
 
-// Same cap as the default since the redesign (see the header comment).
+// Full-bleed — no width cap. For the wide data tables whose many columns need every pixel of
+// horizontal real estate ; the page spans the viewport minus the side padding.
 .page--full {
-  max-width: 1360px;
+  max-width: none;
 }
 
 .page--flush {
