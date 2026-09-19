@@ -4,8 +4,8 @@ import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeExitStrategy
 import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePattern
 import com.portfolioai.journal.domain.TradePlay
+import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -23,7 +23,7 @@ data class TradeEntryDto(
   val direction: TradeDirection?,
   val executions: List<ExecutionDto>,
   val play: TradePlay?,
-  val pattern: TradePattern?,
+  val pattern: Pattern,
   val size: Int?,
   val openPrice: BigDecimal?,
   val exitPrice: BigDecimal?,

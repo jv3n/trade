@@ -13,8 +13,9 @@ import { StbSelectModule } from './select.module';
       <mat-form-field appearance="outline">
         <mat-label>Pattern</mat-label>
         <mat-select value="GUS">
-          <mat-option value="GUS">GUS — Gap Up Stuff</mat-option>
-          <mat-option value="FRD">FRD — Front-side Reversal Down</mat-option>
+          <mat-option value="GUS">GUS — Gap Up Short</mat-option>
+          <mat-option value="DT">DT — Double Top</mat-option>
+          <mat-option value="DISCRETIONARY">Discretionary</mat-option>
         </mat-select>
       </mat-form-field>
     </div>

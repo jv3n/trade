@@ -92,9 +92,8 @@
         <mat-form-field appearance="outline">
           <mat-label>{{ 'journal.fields.pattern' | translate }}</mat-label>
           <mat-select [formField]="tradeForm.pattern">
-            <mat-option [value]="null">—</mat-option>
             @for (p of patterns; track p) {
-              <mat-option [value]="p">{{ p }}</mat-option>
+              <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

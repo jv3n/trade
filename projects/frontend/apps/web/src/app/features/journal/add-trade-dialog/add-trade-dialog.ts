@@ -26,7 +26,6 @@ import {
   TRADE_DIRECTIONS,
   TRADE_EXIT_STRATEGIES,
   TRADE_OPEN_SIDES,
-  TRADE_PATTERNS,
   TRADE_PLAYS,
   TradeDirection,
   TradeEntry,
@@ -34,9 +33,9 @@ import {
   TradeExecutionInput,
   TradeExitStrategy,
   TradeOpenSide,
-  TradePattern,
   TradePlay,
 } from '../../../core/api/journal/trade-entry.model';
+import { DEFAULT_PATTERN, Pattern, PATTERNS } from '../../../core/api/shared/pattern.model';
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
@@ -78,7 +77,7 @@ interface TradeFormModel {
   ticker: string;
   direction: TradeDirection;
   play: TradePlay | null;
-  pattern: TradePattern | null;
+  pattern: Pattern;
   note: string;
   pre935To10h: boolean;
   preGapUp50: boolean;
@@ -140,7 +139,7 @@ export class AddTradeDialog {
   readonly submitting = signal(false);
 
   readonly plays = TRADE_PLAYS;
-  readonly patterns = TRADE_PATTERNS;
+  readonly patterns = PATTERNS;
   readonly openSides = TRADE_OPEN_SIDES;
   readonly exitStrategies = TRADE_EXIT_STRATEGIES;
   readonly directions = TRADE_DIRECTIONS;
@@ -297,7 +296,7 @@ export class AddTradeDialog {
         // Short-biased default — the bread-and-butter of this journal.
         direction: 'SHORT',
         play: null,
-        pattern: null,
+        pattern: DEFAULT_PATTERN,
         note: '',
         pre935To10h: false,
         preGapUp50: false,

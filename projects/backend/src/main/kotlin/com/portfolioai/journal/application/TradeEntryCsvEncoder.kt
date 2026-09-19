@@ -61,7 +61,7 @@ object TradeEntryCsvEncoder {
         e.tradeDate.toString(),
         e.ticker,
         e.play?.name.orEmpty(),
-        e.pattern?.name.orEmpty(),
+        e.pattern.name,
         e.size?.toString().orEmpty(),
         e.openPrice?.toPlainString().orEmpty(),
         e.exitPrice?.toPlainString().orEmpty(),
