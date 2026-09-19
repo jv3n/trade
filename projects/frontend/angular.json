@@ -33,7 +33,6 @@
               }
             ],
             "styles": [
-              "node_modules/material-icons/iconfont/material-icons.css",
               "apps/web/src/styles.scss"
             ]
           },
@@ -144,7 +143,6 @@
             "compodoc": false,
             "port": 6006,
             "styles": [
-              "node_modules/material-icons/iconfont/material-icons.css",
               "libs/ui/styles/main.scss",
               "libs/ui/.storybook/sb.css"
             ]
@@ -158,7 +156,6 @@
             "compodoc": false,
             "outputDir": "dist/storybook",
             "styles": [
-              "node_modules/material-icons/iconfont/material-icons.css",
               "libs/ui/styles/main.scss",
               "libs/ui/.storybook/sb.css"
             ]

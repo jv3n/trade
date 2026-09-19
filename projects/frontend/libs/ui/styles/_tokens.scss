@@ -4,69 +4,120 @@
 // script in `apps/web/src/index.html` reads `localStorage.theme` and sets `data-theme`
 // before Angular bootstraps, so the right palette is in place from the first paint.
 //
-// **Dark palette** — GitHub "Dark dimmed" inspired (warm desaturated greys instead of the
-// quasi-black blue-tinted palette we had before). Easier on the eyes for long-session work,
-// fits better with the violet accent we kept from the previous pass. Reference :
-// https://primer.style/foundations/color/overview
+// Palette (reference mockup : `mockup/assets/mockup.css`) — neutral greys with a faint cool
+// tint (Linear / Vercel direction), a single indigo accent, emerald gains, rose losses, amber
+// warnings. Colours are written in OKLCH so both themes share the same perceived lightness
+// steps, and every `-soft` variant is derived from its solid colour with `color-mix()` — change
+// a solid colour and its soft background follows in both themes.
 //
-// **Light palette** — GitHub Light inspired (cool greys on white, sharp borders, vivid
-// semantic colours).
+// Colour usage rule : green / red only for **outcomes** (P&L, amounts, gaps) ; amber for
+// **warnings** ; indigo for **status / categories** ; everything else neutral (price moves,
+// tickers).
 //
-// Violet accent stays in both (user choice).
+// The token names are unchanged from the previous palette so every component override and
+// feature stylesheet keeps working.
 
 :root {
-  // Surfaces — GH dimmed pattern : main reading area on `canvas-default` (#22272e), elevated
-  // cards / sidenav on `canvas-subtle` (#2d333b), insets / deepest chrome on `canvas-inset`
-  // (#1c2128). The previous mapping had `--color-bg` on `canvas-inset` which made the content
-  // area read as the darkest tone — too dark for long reading sessions.
-  --color-bg: #22272e;
-  --color-surface: #2d333b;
-  --color-surface-2: #373e47;
-  --color-surface-3: #1c2128;
+  // Surfaces — `bg` is the page, `surface` the cards, `surface-2` nested / hover areas,
+  // `surface-3` the deepest inset.
+  --color-bg: oklch(0.155 0.006 270);
+  --color-surface: oklch(0.195 0.007 270);
+  --color-surface-2: oklch(0.235 0.008 270);
+  --color-surface-3: oklch(0.135 0.006 270);
 
-  // Borders — three steps. `-soft` for subtle dividers (table rows), default for cards /
-  // banners, `-strong` for chrome separators where contrast matters (sidenav vs content).
-  --color-border-soft: #373e47;
-  --color-border: #444c56;
-  --color-border-strong: #636e7b;
+  // Borders — `-soft` for table rows, default for cards, `-strong` for hover / emphasis.
+  --color-border-soft: oklch(0.25 0.008 270);
+  --color-border: oklch(0.29 0.009 270);
+  --color-border-strong: oklch(0.36 0.01 270);
 
   // Text
-  --color-text: #adbac7;
-  --color-text-muted: #768390;
-  --color-text-dim: #636e7b;
-  --color-text-faint: #545d68;
+  --color-text: oklch(0.955 0.004 270);
+  --color-text-muted: oklch(0.69 0.012 270);
+  --color-text-dim: oklch(0.6 0.012 270);
+  --color-text-faint: oklch(0.54 0.012 270);
 
-  // Brand (violet — kept from the previous palette)
-  --color-accent: #7c6af7;
-  --color-accent-strong: #a78bfa;
-  --color-accent-soft: #2c2849;
-  --color-on-accent: #ffffff;
+  // Accent (indigo)
+  --color-accent: oklch(0.7 0.155 277);
+  --color-accent-strong: oklch(0.8 0.12 277);
+  --color-on-accent: oklch(0.99 0 0);
 
   // Logo (consumed by `img/logo/logo.svg` via inline MatIconRegistry — see app.config.ts)
   --logo-tile: #ffffff;
   --logo-mark: #111318;
 
-  // Semantic — calibrated against the dimmed surfaces (GH dimmed semantic palette).
-  // The `-on-*` pair is the foreground colour to use on top of the corresponding semantic
-  // surface (snack-bar variants, success / error chips, banners…). White at full contrast
-  // works against both the dark-mode and light-mode semantic backgrounds.
-  --color-success: #6cbe6e;
-  --color-success-soft: #1e2c1f;
-  --color-on-success: #ffffff;
-  --color-warning: #e3b341;
-  --color-warning-soft: #2e2a17;
-  --color-on-warning: #ffffff;
-  --color-danger: #f47067;
-  --color-danger-soft: #2d1f1f;
-  --color-on-danger: #ffffff;
-  --color-info: #588fdc;
-  --color-info-soft: #1c2a3a;
-  --color-purple: #b083f0;
-  --color-purple-soft: #251f3a;
-  --color-orange: #cc6b2f;
-  --color-orange-soft: #2e1f17;
+  // Semantic — solid colours ; the `-soft` pairs are derived below.
+  --color-success: oklch(0.76 0.15 162);
+  --color-on-success: oklch(0.99 0 0);
+  --color-warning: oklch(0.81 0.14 78);
+  --color-on-warning: oklch(0.2 0.02 78);
+  --color-danger: oklch(0.7 0.18 18);
+  --color-on-danger: oklch(0.99 0 0);
+  --color-info: oklch(0.74 0.12 245);
+  --color-purple: oklch(0.72 0.15 305);
+  --color-orange: oklch(0.72 0.15 50);
 
-  // Action mapping (recommendations) — derive from semantic so renaming one cascades.
+  // Strength of the derived `-soft` backgrounds.
+  --soft-mix: 16%;
+
+  // Shadows — dark surfaces separate with borders, so shadows stay a faint top highlight.
+  --shadow-sm: inset 0 1px 0 oklch(1 0 0 / 0.04);
+  --shadow: inset 0 1px 0 oklch(1 0 0 / 0.04), 0 8px 24px oklch(0 0 0 / 0.35);
+
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  // Surfaces — off-white page, white cards.
+  --color-bg: oklch(0.982 0.002 270);
+  --color-surface: oklch(1 0 0);
+  --color-surface-2: oklch(0.965 0.003 270);
+  --color-surface-3: oklch(0.95 0.004 270);
+
+  --color-border-soft: oklch(0.935 0.004 270);
+  --color-border: oklch(0.915 0.004 270);
+  --color-border-strong: oklch(0.85 0.006 270);
+
+  --color-text: oklch(0.21 0.012 270);
+  --color-text-muted: oklch(0.48 0.014 270);
+  --color-text-dim: oklch(0.55 0.013 270);
+  --color-text-faint: oklch(0.62 0.012 270);
+
+  --color-accent: oklch(0.52 0.19 277);
+  --color-accent-strong: oklch(0.45 0.2 277);
+  --color-on-accent: oklch(0.99 0 0);
+
+  --logo-tile: #111318;
+  --logo-mark: #e8eaf0;
+
+  --color-success: oklch(0.56 0.14 160);
+  --color-warning: oklch(0.63 0.14 68);
+  --color-on-warning: oklch(0.99 0 0);
+  --color-danger: oklch(0.57 0.2 22);
+  --color-info: oklch(0.55 0.15 245);
+  --color-purple: oklch(0.52 0.18 305);
+  --color-orange: oklch(0.6 0.16 50);
+
+  --soft-mix: 11%;
+
+  --shadow-sm: 0 1px 2px oklch(0.2 0.02 270 / 0.06), 0 1px 1px oklch(0.2 0.02 270 / 0.04);
+  --shadow: 0 1px 2px oklch(0.2 0.02 270 / 0.06), 0 12px 32px oklch(0.2 0.02 270 / 0.12);
+
+  color-scheme: light;
+}
+
+// Theme-independent tokens + derived colours. Declared on both selectors so the `color-mix()`
+// resolves against the active theme's solid colours.
+:root,
+[data-theme='light'] {
+  --color-accent-soft: color-mix(in oklch, var(--color-accent) var(--soft-mix), transparent);
+  --color-success-soft: color-mix(in oklch, var(--color-success) var(--soft-mix), transparent);
+  --color-warning-soft: color-mix(in oklch, var(--color-warning) var(--soft-mix), transparent);
+  --color-danger-soft: color-mix(in oklch, var(--color-danger) var(--soft-mix), transparent);
+  --color-info-soft: color-mix(in oklch, var(--color-info) var(--soft-mix), transparent);
+  --color-purple-soft: color-mix(in oklch, var(--color-purple) var(--soft-mix), transparent);
+  --color-orange-soft: color-mix(in oklch, var(--color-orange) var(--soft-mix), transparent);
+
+  // Action mapping — derive from semantic so renaming one cascades.
   --color-action-buy: var(--color-success);
   --color-action-buy-bg: var(--color-success-soft);
   --color-action-sell: var(--color-danger);
@@ -76,81 +127,20 @@
   --color-action-reduce: var(--color-warning);
   --color-action-reduce-bg: var(--color-warning-soft);
 
-  // Radii — tightened from 4/8/12 to 3/6/10 (Linear/Vercel/Stripe-dashboard direction).
-  // The pill stays at 999px for chips/badges.
-  --radius-sm: 3px;
-  --radius: 6px;
-  --radius-lg: 10px;
+  // Radii — 6 / 8 / 12 (inputs & tags / buttons & controls / cards & dialogs).
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
   --radius-pill: 999px;
 
-  // Shadows — layered (hairline + soft ambient) instead of a single big blur. Dimmed surfaces
-  // are close in brightness so the ambient leans heavier than on a pure-black theme.
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
-
   // Typography
-  --font-family: 'Inter', system-ui, sans-serif;
-  --font-mono: 'SF Mono', Menlo, Consolas, monospace;
+  --font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+
+  // Motion
+  --ease: cubic-bezier(0.2, 0, 0, 1);
 
   // Aliases — semantic shortcuts so consumers don't have to remember which colour to grab.
   --color-link: var(--color-accent);
   --color-primary: var(--color-accent);
-}
-
-[data-theme='light'] {
-  // Surfaces — GH light pattern : chrome / nav / cards in subtle grey, main reading area on
-  // pure white. The previous palette had both `--color-bg` and `--color-surface` at #ffffff
-  // which made the sidenav merge into the content.
-  //
-  //   --color-bg       = main content area (the surface where the user reads)
-  //   --color-surface  = chrome / sidenav / card background (slightly grey)
-  //   --color-surface-2 = nested cards on top of `surface` (a step deeper)
-  --color-bg: #ffffff;
-  --color-surface: #f6f8fa;
-  --color-surface-2: #eaeef2;
-  --color-surface-3: #eaeef2;
-
-  --color-border-soft: #d8dee4;
-  --color-border: #d0d7de;
-  --color-border-strong: #afb8c1;
-
-  --color-text: #1f2328;
-  --color-text-muted: #59636e;
-  --color-text-dim: #6e7781;
-  --color-text-faint: #8c959f;
-
-  --color-accent: #7c3aed;
-  --color-accent-strong: #6d28d9;
-  // Light theme follows GitHub Light's selected-nav pattern : **neutral grey** background for
-  // the active state, accent strictly reserved for emphasis (text colour, links, focus rings).
-  // The previous `#eef0fa` indigo tint dominated the visual weight of the sidenav — the active
-  // pill read as a lavender splash even though the surrounding `--color-surface` is neutral
-  // `#f6f8fa`. Using a neutral grey here lets the sidenav read as cleanly cool-gray.
-  --color-accent-soft: #eaeef2;
-  --color-on-accent: #ffffff;
-
-  --logo-tile: #111318;
-  --logo-mark: #e8eaf0;
-
-  // Semantic — GH light semantic.
-  --color-success: #1a7f37;
-  --color-success-soft: #dafbe1;
-  --color-on-success: #ffffff;
-  --color-warning: #9a6700;
-  --color-warning-soft: #fff8c5;
-  --color-on-warning: #ffffff;
-  --color-danger: #cf222e;
-  --color-danger-soft: #ffebe9;
-  --color-on-danger: #ffffff;
-  --color-info: #0969da;
-  --color-info-soft: #ddf4ff;
-  --color-purple: #8250df;
-  --color-purple-soft: #fbefff;
-  --color-orange: #bc4c00;
-  --color-orange-soft: #fff1e5;
-
-  // Light shadows — hairline + ambient pair, much lighter than dark. Stripe-dashboard style :
-  // the hairline gives crispness, the ambient hints at elevation without a heavy halo.
-  --shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.06);
-  --shadow: 0 1px 2px rgba(31, 35, 40, 0.06), 0 4px 12px rgba(31, 35, 40, 0.06);
 }

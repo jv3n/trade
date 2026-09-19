@@ -30,8 +30,9 @@
   // belt-and-brace this by calling `container.updateContentMargins()` from a signal effect
   // on the collapsed state — see `app.ts`.
   --mat-sidenav-container-width: #{s.$sidenav-width};
-  --mat-sidenav-container-background-color: var(--color-surface);
-  --mat-sidenav-container-divider-color: var(--color-border-strong);
+  // Sidenav on the page background, separated from the content by a hairline (mockup).
+  --mat-sidenav-container-background-color: var(--color-bg);
+  --mat-sidenav-container-divider-color: var(--color-border);
   --mat-sidenav-container-shape: 0;
 
   // Make the inner container a flex column so the nav-list can grow + the toggle can pin to
@@ -97,9 +98,25 @@
     border-radius: var(--radius);
   }
 
+  // Active entry (mockup) : neutral raised background, accent bar on the left edge, filled
+  // accent icon. The accent stays an emphasis, not a wash over the whole row.
+  //
+  // The bar is an **inset** shadow, drawn inside the item : the list item must keep its
+  // `overflow: hidden`, otherwise Material's click ripple (a circle sized to the item's diagonal)
+  // spills out as a large bubble.
   .sidenav-active {
-    background: var(--color-accent-soft);
-    color: var(--color-accent-strong);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    box-shadow: inset 3px 0 0 var(--color-accent);
+
+    .mat-icon {
+      color: var(--color-accent);
+      font-variation-settings:
+        'FILL' 1,
+        'wght' 450,
+        'GRAD' 0,
+        'opsz' 24;
+    }
   }
 }
 

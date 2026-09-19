@@ -8,7 +8,15 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideNativeDateAdapter } from '@angular/material/core';
+import {
+  MAT_RIPPLE_GLOBAL_OPTIONS,
+  provideNativeDateAdapter,
+  RippleGlobalOptions,
+} from '@angular/material/core';
+import {
+  MAT_FORM_FIELD_DEFAULT_OPTIONS,
+  MatFormFieldDefaultOptions,
+} from '@angular/material/form-field';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -59,6 +67,23 @@ export const appConfig: ApplicationConfig = {
     // (`provideDateFnsAdapter` from `@angular/material-date-fns-adapter`) if we ever need
     // locale-aware parsing / formatting beyond the browser default.
     provideNativeDateAdapter(),
+    // No click ripples anywhere : the design system (mockup) relies on flat hover / pressed
+    // backgrounds, Linear / Vercel style. Hover and focus feedback still comes from Material's
+    // state layers.
+    {
+      provide: MAT_RIPPLE_GLOBAL_OPTIONS,
+      useValue: { disabled: true } satisfies RippleGlobalOptions,
+    },
+    // Dense forms : outlined fields by default, and the hint / error line under a field only
+    // takes vertical space when there is something to show (M3 reserves it on every field
+    // otherwise). Field height itself comes from `mat.form-field-density(-4)` in the ui lib.
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: {
+        appearance: 'outline',
+        subscriptSizing: 'dynamic',
+      } satisfies MatFormFieldDefaultOptions,
+    },
     // i18n — translation files live in `public/i18n/<lang>.json` so they are served as static
     // assets at `/i18n/<lang>.json`. Active language is driven by `LanguageService`
     // (signal + localStorage). Default to French (project's primary audience) ; English fallback
@@ -81,7 +106,12 @@ export const appConfig: ApplicationConfig = {
     // Register the PortfolioAI brand mark so any template can use `<mat-icon svgIcon="portfolioai">`.
     // Loaded once at boot ; MatIconRegistry caches the SVG so subsequent uses don't re-fetch.
     provideAppInitializer(() => {
-      inject(MatIconRegistry).addSvgIcon(
+      const icons = inject(MatIconRegistry);
+      // Ligature icons render with Material Symbols Rounded (font loaded by `libs/ui/styles/_fonts.scss`).
+      // Icon names come from https://fonts.google.com/icons — mapping of the app's icons in
+      // `mockup/README.md`.
+      icons.setDefaultFontSetClass('material-symbols-rounded', 'mat-ligature-font');
+      icons.addSvgIcon(
         'portfolioai',
         inject(DomSanitizer).bypassSecurityTrustResourceUrl('img/logo/logo.svg'),
       );

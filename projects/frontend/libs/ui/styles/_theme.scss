@@ -1,43 +1,84 @@
-// Material theme setup — violet primary, cyan tertiary, Inter typography.
-// `mat.core()` ships the base Material styles; we then apply the dark theme on `:root`
-// and override colors only on `[data-theme='light']` (typography/density stay constant).
+// Material theme setup — `mat.theme()` (the system-variable API) with Geist typography, and
+// Material's system colours mapped onto the lib's design tokens.
+//
+// `mat.theme()` emits the `--mat-sys-*` variables every Material component reads. It still needs a
+// palette to generate the full set ; violet is the closest prebuilt one to our indigo accent.
+// The `$overrides` map then re-points the system colours components actually use at our
+// `--color-*` tokens. Those tokens switch with `[data-theme='light']`, so every Material
+// component — overridden in `libs/ui/src/lib/<name>/` or not — follows the palette in both themes.
+//
+// The previous setup (`mat.define-theme` + `mat.all-component-themes`) baked raw palette values
+// into each component's tokens, which is why several overrides had to fight a lavender tint.
 
 @use '@angular/material' as mat;
 
-@include mat.core();
-
-$dark-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: dark,
-      primary: mat.$violet-palette,
-      tertiary: mat.$cyan-palette,
-    ),
-    typography: (
-      brand-family: 'Inter, system-ui, sans-serif',
-      plain-family: 'Inter, system-ui, sans-serif',
-    ),
-  )
+$font: (
+  plain-family: (
+    Geist,
+    ui-sans-serif,
+    system-ui,
+    sans-serif,
+  ),
+  brand-family: (
+    Geist,
+    ui-sans-serif,
+    system-ui,
+    sans-serif,
+  ),
 );
 
-$light-theme: mat.define-theme(
-  (
-    color: (
-      theme-type: light,
-      primary: mat.$violet-palette,
-      tertiary: mat.$cyan-palette,
-    ),
-    typography: (
-      brand-family: 'Inter, system-ui, sans-serif',
-      plain-family: 'Inter, system-ui, sans-serif',
-    ),
-  )
+// System colours → design tokens. Same map for both themes : the tokens do the switching.
+$sys-overrides: (
+  primary: var(--color-accent),
+  on-primary: var(--color-on-accent),
+  primary-container: var(--color-accent-soft),
+  on-primary-container: var(--color-accent-strong),
+  secondary-container: var(--color-accent-soft),
+  on-secondary-container: var(--color-text),
+  error: var(--color-danger),
+  on-error: var(--color-on-danger),
+  error-container: var(--color-danger-soft),
+  on-error-container: var(--color-danger),
+  background: var(--color-bg),
+  on-background: var(--color-text),
+  surface: var(--color-surface),
+  on-surface: var(--color-text),
+  on-surface-variant: var(--color-text-muted),
+  surface-container-lowest: var(--color-surface-3),
+  surface-container-low: var(--color-surface),
+  surface-container: var(--color-surface),
+  surface-container-high: var(--color-surface-2),
+  surface-container-highest: var(--color-surface-2),
+  outline: var(--color-border-strong),
+  outline-variant: var(--color-border),
+  inverse-surface: var(--color-text),
+  inverse-on-surface: var(--color-bg),
 );
 
 :root {
-  @include mat.all-component-themes($dark-theme);
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$violet-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: $font,
+      density: 0,
+    ),
+    $sys-overrides
+  );
 }
 
 [data-theme='light'] {
-  @include mat.all-component-colors($light-theme);
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$violet-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+    ),
+    $sys-overrides
+  );
 }
