@@ -11,8 +11,9 @@ import org.springframework.transaction.annotation.Transactional
 
 /**
  * Reconciles a journal trade's realized P&L into the account ledger as a read-only `TRADE`
- * movement. Driven by `TradeMovementSyncListener` after the journal transaction commits. The upsert
- * is keyed on `tradeEntryId` (the DB has a partial unique index) :
+ * movement. Driven by `TradeMovementSyncListener`, synchronously and **inside** the journal's
+ * transaction : the trade and its movement commit or roll back together. The upsert is keyed on
+ * `tradeEntryId` (the DB has a partial unique index) :
  * - realized P&L present & non-zero → create or update the movement (amount = P&L) ;
  * - null or zero P&L → remove any existing movement (open / break-even / reopened / **deleted**
  *   trade — no balance impact, and `amount = 0` would violate the `account_movement` CHECK anyway).

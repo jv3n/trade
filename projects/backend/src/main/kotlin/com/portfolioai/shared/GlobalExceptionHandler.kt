@@ -41,11 +41,10 @@ class GlobalExceptionHandler {
       .body(mapOf("error" to (ex.message ?: "Bad request")))
 
   /**
-   * Any external upstream provider (Finnhub news/analyst/earnings, Twelve Data, Claude, Ollama)
-   * rate-limited, unreachable, 5xx or auth-failed. Surfaced as HTTP 503 so the UI can differentiate
-   * from a generic 500 and show "réessayez dans quelques minutes". The user-facing message stays
-   * intentionally generic — the distinction "market vs LLM vs news" lives in the `detail` field
-   * passed in from the throwing adapter.
+   * An external upstream service (today : the Frankfurter FX rate API) rate-limited, unreachable,
+   * 5xx or auth-failed. Surfaced as HTTP 503 so the UI can differentiate from a generic 500 and
+   * suggest trying again later. The user-facing message stays intentionally generic — which
+   * upstream failed lives in the `detail` field passed in from the throwing adapter.
    */
   @ExceptionHandler(UpstreamUnavailableException::class)
   fun handleUpstreamUnavailable(
