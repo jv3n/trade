@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Compte — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidenav">
+        <div class="brand"><span class="brand-mark"></span>Trade</div>
+        <a class="nav-link" href="aujourdhui.html"><span class="nav-icon icon">today</span>Aujourd'hui</a>
+        <a class="nav-link" href="candidat.html"><span class="nav-icon icon">radar</span>Candidats</a>
+        <a class="nav-link" href="stats.html"><span class="nav-icon icon">query_stats</span>Stats</a>
+        <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
+        <a class="nav-link active" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
+        <div class="nav-spacer"></div>
+        <a class="nav-link" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
+        <a class="nav-link" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Compte</h1>
+            <p>Compte courtier — le solde est dérivé des mouvements, les trades du journal y remontent automatiquement.</p>
+          </div>
+          <div class="actions">
+            <button class="btn"><span class="icon">remove</span> Retrait</button>
+            <button class="btn btn-primary"><span class="icon">add</span> Dépôt</button>
+          </div>
+        </header>
+
+        <section class="grid grid-4" style="margin-bottom: 16px">
+          <div class="card kpi kpi-hero" style="grid-column: span 2">
+            <div class="label" style="display: flex; justify-content: space-between; align-items: center">
+              Solde du compte
+              <div class="segmented" data-group="ccy">
+                <button class="active" data-value="usd">USD</button>
+                <button data-value="cad">CAD</button>
+              </div>
+            </div>
+            <div class="value" data-group="ccy" data-value="usd">27 359,95 $ US</div>
+            <div class="value" data-group="ccy" data-value="cad" hidden>37 879,85 $ CA</div>
+            <div class="sub">Taux BCE du 17/09/2026 : 1 USD = 1,3845 CAD</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">P&amp;L septembre</div>
+            <div class="value gain">+751,85 $</div>
+            <div class="sub">8 trades · 6 gagnants</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Apports nets septembre</div>
+            <div class="value">+500,00 $</div>
+            <div class="sub">+1 000 dépôt · −500 retrait</div>
+          </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 16px">
+          <h2>
+            Rapprochement du matin — ven. 18/09
+            <span class="hint">à faire chaque matin avec le solde affiché par TradeZero</span>
+          </h2>
+          <div class="grid grid-4" style="align-items: end">
+            <div class="field">
+              <label>Solde app (calculé)</label>
+              <div class="input" style="background: transparent">27 359,95</div>
+            </div>
+            <div class="field">
+              <label>Solde TradeZero</label>
+              <input class="input" id="broker-balance" value="27 359,95" />
+            </div>
+            <div class="field">
+              <label>Écart</label>
+              <div class="input gain" id="reco-gap" style="background: transparent">0,00 ✓</div>
+            </div>
+            <div class="field">
+              <button class="btn btn-primary" id="reco-btn">Valider le rapprochement</button>
+            </div>
+          </div>
+          <p class="muted" id="reco-hint" style="margin: 8px 0 0; font-size: 12px">
+            Aucun écart : le rapprochement est simplement horodaté. En cas d'écart, une ligne « Correction » est créée pour caler le solde
+            sur TradeZero.
+          </p>
+          <p class="muted" style="margin: 10px 0 0; font-size: 12px">
+            Derniers rapprochements : 18/09 ✓ · 17/09 ✓ · 16/09 ✓ · 15/09 ✓ · 12/09 <span class="loss">−12,40</span>
+          </p>
+        </section>
+
+        <section class="card" style="margin-bottom: 16px">
+          <h2>Évolution du solde <span class="hint">31/08 → 17/09</span></h2>
+          <svg viewBox="0 0 800 160" width="100%" height="160" role="img" aria-label="Courbe du solde">
+            <defs>
+              <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="var(--accent)" stop-opacity="0.35" />
+                <stop offset="1" stop-color="var(--accent)" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <!-- Points : 26120 → 25620 → 25692 → 26013 → 25839 → 25869 → 26077 → 25953 → 26953 → 27068 → 27362 -->
+            <path
+              d="M0,110 L80,128 L160,125 L240,114 L320,120 L400,119 L480,112 L560,116 L640,80 L720,76 L800,66 L800,160 L0,160 Z"
+              fill="url(#area)"
+            />
+            <polyline
+              points="0,110 80,128 160,125 240,114 320,120 400,119 480,112 560,116 640,80 720,76 800,66"
+              fill="none"
+              stroke="var(--accent)"
+              stroke-width="2.5"
+            />
+            <circle cx="800" cy="66" r="4" fill="var(--accent)" />
+          </svg>
+        </section>
+
+        <section class="card">
+          <h2>
+            Mouvements
+            <span class="actions">
+              <select class="input" style="width: auto">
+                <option>Septembre 2026</option>
+                <option>Août 2026</option>
+              </select>
+              <select class="input" style="width: auto">
+                <option>Tous les types</option>
+                <option>Trades</option>
+                <option>Dépôts / retraits</option>
+                <option>Corrections</option>
+              </select>
+            </span>
+          </h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Libellé</th>
+                  <th class="num">Montant</th>
+                  <th class="num">Solde</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>17/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">KTTA</span> <span class="muted">short 350</span></td>
+                  <td class="num gain">+291,85</td>
+                  <td class="num">27 359,95</td>
+                  <td class="num"><a href="trade.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>16/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">BNZI</span> <span class="muted">short 500</span></td>
+                  <td class="num gain">+115,00</td>
+                  <td class="num">27 068,10</td>
+                  <td class="num"><a href="journal.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>15/09</td>
+                  <td><span class="tag">Dépôt</span></td>
+                  <td>Virement Wealthsimple</td>
+                  <td class="num gain">+1 000,00</td>
+                  <td class="num">26 953,10</td>
+                  <td class="num"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button></td>
+                </tr>
+                <tr>
+                  <td>15/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">SNTG</span> <span class="muted">short 200</span></td>
+                  <td class="num loss">−124,00</td>
+                  <td class="num">25 953,10</td>
+                  <td class="num"><a href="journal.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>12/09</td>
+                  <td><span class="tag tag-warn">Correction</span></td>
+                  <td>Réconciliation relevé — frais d'emprunt <span class="muted">(cible 26 077,10)</span></td>
+                  <td class="num loss">−12,40</td>
+                  <td class="num">26 077,10</td>
+                  <td class="num"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button></td>
+                </tr>
+                <tr>
+                  <td>12/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">NUWE</span> <span class="muted">short 400</span></td>
+                  <td class="num gain">+220,00</td>
+                  <td class="num">26 089,50</td>
+                  <td class="num"><a href="journal.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>11/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">HOTH</span> <span class="muted">short 250</span></td>
+                  <td class="num gain">+30,00</td>
+                  <td class="num">25 869,50</td>
+                  <td class="num"><a href="journal.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>10/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">AEHL</span> <span class="muted">short 600</span></td>
+                  <td class="num loss">−174,00</td>
+                  <td class="num">25 839,50</td>
+                  <td class="num"><a href="journal.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>09/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">CRKN</span> <span class="muted">short 300</span></td>
+                  <td class="num gain">+321,00</td>
+                  <td class="num">26 013,50</td>
+                  <td class="num"><a href="journal.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>08/09</td>
+                  <td><span class="tag tag-accent">Trade</span></td>
+                  <td><span class="ticker">TOP</span> <span class="muted">short 150</span></td>
+                  <td class="num gain">+72,00</td>
+                  <td class="num">25 692,50</td>
+                  <td class="num"><a href="journal.html">voir <span class="icon icon-sm">arrow_forward</span></a></td>
+                </tr>
+                <tr>
+                  <td>02/09</td>
+                  <td><span class="tag">Retrait</span></td>
+                  <td>Retrait vers compte courant</td>
+                  <td class="num loss">−500,00</td>
+                  <td class="num">25 620,50</td>
+                  <td class="num"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button></td>
+                </tr>
+                <tr class="row-muted">
+                  <td>31/08</td>
+                  <td></td>
+                  <td>Solde de clôture août</td>
+                  <td class="num"></td>
+                  <td class="num">26 120,50</td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <p class="mockup-note">
+          Maquette statique — les lignes « Trade » remontent du journal avec le P&amp;L retenu (non éditables ici) ; dépôts et retraits sont saisis à la main ; les corrections naissent du rapprochement du matin. La bascule USD / CAD est fonctionnelle.
+        </p>
+
+    <script>
+      // Écart entre le solde TradeZero saisi et le solde calculé par l'app.
+      (function () {
+        const appBalance = 27359.95;
+        const input = document.getElementById('broker-balance');
+        const out = document.getElementById('reco-gap');
+        const hint = document.getElementById('reco-hint');
+        const btn = document.getElementById('reco-btn');
+        const fmt = (n) => n.toFixed(2).replace('.', ',').replace(/B(?=(d{3})+(?!d))/g, ' ');
+        input.addEventListener('input', () => {
+          const v = parseFloat(input.value.replace(/s/g, '').replace(',', '.'));
+          if (isNaN(v)) return;
+          const gap = Math.round((v - appBalance) * 100) / 100;
+          if (gap === 0) {
+            out.textContent = '0,00 ✓';
+            out.className = 'input gain';
+            btn.textContent = 'Valider le rapprochement';
+            hint.textContent = 'Aucun écart : le rapprochement est simplement horodaté.';
+          } else {
+            out.textContent = (gap > 0 ? '+' : '−') + fmt(Math.abs(gap));
+            out.className = 'input ' + (gap > 0 ? 'gain' : 'loss');
+            btn.textContent = 'Créer la correction';
+            hint.textContent = 'Une ligne « Correction » de ' + out.textContent + ' sera ajoutée pour caler le solde sur TradeZero.';
+          }
+        });
+      })();
+    </script>
+      </main>
+    </div>
+  </body>
+</html>

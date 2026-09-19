@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aujourd'hui — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+    <style>
+      .day-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .market-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        font-size: 12px;
+        font-weight: 550;
+        color: var(--text-muted);
+      }
+
+      .market-pill i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-faint);
+      }
+
+      .market-pill.pre i {
+        background: var(--warn);
+      }
+
+      /* Déroulé de la journée : une étape par ligne, reliées par un trait vertical. */
+      .steps {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 32px 1fr auto;
+        gap: 14px;
+        align-items: start;
+        padding: 14px 0;
+        position: relative;
+      }
+
+      .step + .step {
+        border-top: 1px solid var(--border);
+      }
+
+      .step::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 46px;
+        bottom: -14px;
+        width: 2px;
+        background: var(--border);
+      }
+
+      .step:last-child::before {
+        display: none;
+      }
+
+      .step-dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        border: 2px solid var(--border-strong);
+        color: var(--text-faint);
+        background: var(--surface);
+        position: relative;
+        z-index: 1;
+      }
+
+      .step.done .step-dot {
+        border-color: transparent;
+        background: var(--gain-soft);
+        color: var(--gain);
+      }
+
+      .step.current .step-dot {
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 0 0 4px var(--accent-soft);
+      }
+
+      .step-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .step-time {
+        font-size: 12px;
+        color: var(--text-faint);
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .step-body {
+        color: var(--text-muted);
+        margin-top: 3px;
+      }
+
+      .step.done .step-title,
+      .step.upcoming .step-title {
+        color: var(--text-muted);
+      }
+
+      .step-action {
+        padding-top: 3px;
+      }
+
+      /* Rapprochement intégré à l'étape en cours. */
+      .inline-reco {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+        gap: 10px;
+        align-items: end;
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+      }
+
+      .mini-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+      }
+
+      .mini-row + .mini-row {
+        border-top: 1px solid var(--border);
+      }
+
+      .mini-row .num {
+        margin-left: auto;
+      }
+
+      .empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 18px 8px;
+        text-align: center;
+        color: var(--text-faint);
+      }
+
+      @media (max-width: 1100px) {
+        .day-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .inline-reco {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidenav">
+        <div class="brand"><span class="brand-mark"></span>Trade</div>
+        <a class="nav-link active" href="aujourdhui.html"><span class="nav-icon icon">today</span>Aujourd'hui</a>
+        <a class="nav-link" href="candidat.html"><span class="nav-icon icon">radar</span>Candidats</a>
+        <a class="nav-link" href="stats.html"><span class="nav-icon icon">query_stats</span>Stats</a>
+        <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
+        <a class="nav-link" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
+        <div class="nav-spacer"></div>
+        <a class="nav-link" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
+        <a class="nav-link" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Vendredi 18 septembre</h1>
+            <p>Ta journée de trading, étape par étape.</p>
+          </div>
+          <div class="header-right">
+            <span class="market-pill pre" data-group="moment" data-value="matin"><i></i>Premarket · 08:20 (heure de New York)</span>
+            <span class="market-pill" data-group="moment" data-value="soir" hidden><i></i>Marché fermé · 16:15 (heure de New York)</span>
+            <div class="segmented" data-group="moment" title="Maquette : voir la page à deux moments de la journée">
+              <button class="active" data-value="matin">8h00</button>
+              <button data-value="soir">16h15</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="day-layout">
+          <section class="card">
+            <!-- ============================================================ 8h00 -->
+            <div data-group="moment" data-value="matin">
+              <h2>Déroulé du jour <span class="hint">0 étape faite sur 5</span></h2>
+              <ol class="steps">
+                <li class="step current">
+                  <span class="step-dot">1</span>
+                  <div>
+                    <div class="step-title">Rapprochement du matin</div>
+                    <div class="step-body">Saisis le solde affiché par TradeZero : l'app le compare à son solde calculé.</div>
+                    <div class="inline-reco">
+                      <div class="field">
+                        <label>Solde app (calculé)</label>
+                        <div class="input" style="background: transparent">27 359,95</div>
+                      </div>
+                      <div class="field">
+                        <label>Solde TradeZero</label>
+                        <input class="input" id="broker-balance" placeholder="27 359,95" />
+                      </div>
+                      <div class="field">
+                        <label>Écart</label>
+                        <div class="input muted" id="reco-gap" style="background: transparent">—</div>
+                      </div>
+                      <button class="btn btn-primary" id="reco-btn">Valider</button>
+                    </div>
+                    <p class="muted" id="reco-hint" style="margin: 8px 0 0; font-size: 12px">
+                      Sans écart, le rapprochement est simplement horodaté. Avec un écart, une ligne « Correction » cale le solde sur
+                      TradeZero.
+                    </p>
+                  </div>
+                  <div></div>
+                </li>
+
+                <li class="step">
+                  <span class="step-dot">2</span>
+                  <div>
+                    <div class="step-title">Saisir les candidats</div>
+                    <div class="step-body">Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.</div>
+                  </div>
+                  <div class="step-action">
+                    <a class="btn btn-sm" href="candidat.html"><span class="icon">add</span> Saisir</a>
+                  </div>
+                </li>
+
+                <li class="step upcoming">
+                  <span class="step-dot">3</span>
+                  <div>
+                    <div class="step-title">Séance <span class="step-time">09:30 → 16:00</span></div>
+                    <div class="step-body">Sur TradeZero — rien à faire dans l'app.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <li class="step upcoming">
+                  <span class="step-dot">4</span>
+                  <div>
+                    <div class="step-title">Compléter les stats <span class="step-time">à partir de 16:00</span></div>
+                    <div class="step-body">Open, push à l'open, HOD, LOD, EOD de chaque stat du jour.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <li class="step upcoming">
+                  <span class="step-dot">5</span>
+                  <div>
+                    <div class="step-title">Saisir les trades du jour</div>
+                    <div class="step-body">Depuis la stat tradée : exécutions, P&amp;L réel, post-mortem, capture.</div>
+                  </div>
+                  <div></div>
+                </li>
+              </ol>
+            </div>
+
+            <!-- ============================================================ 16h15 -->
+            <div data-group="moment" data-value="soir" hidden>
+              <h2>Déroulé du jour <span class="hint">3 étapes faites sur 5</span></h2>
+              <ol class="steps">
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
+                    <div class="step-title">Rapprochement du matin <span class="step-time">08:32</span></div>
+                    <div class="step-body">Solde TradeZero 27 359,95 $ — aucun écart.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
+                    <div class="step-title">Candidats saisis <span class="step-time">08:55</span></div>
+                    <div class="step-body">5 candidats repérés au radar — SGBX, BNRG, MLGO, ATXG, VERB.</div>
+                  </div>
+                  <div class="step-action"><a class="btn btn-sm" href="candidat.html">Voir</a></div>
+                </li>
+
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
+                    <div class="step-title">Séance <span class="step-time">09:30 → 16:00</span></div>
+                    <div class="step-body">Sur TradeZero — rien à faire dans l'app.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <li class="step current">
+                  <span class="step-dot">4</span>
+                  <div>
+                    <div class="step-title">Compléter les stats <span class="tag tag-warn">1 à compléter</span></div>
+                    <div class="step-body">
+                      SGBX attend son open, push à l'open, HOD, LOD et EOD. 4 candidats ne sont pas encore passés en stats.
+                    </div>
+                  </div>
+                  <div class="step-action actions">
+                    <button class="btn btn-sm" data-confirm-title="Passer 4 candidats en stats ?" data-confirm-body="BNRG, MLGO, ATXG et VERB deviennent des stats à compléter après 16h. SGBX est déjà en stats." data-confirm-ok="Tout passer en stats"><span class="icon">keyboard_double_arrow_right</span> Passer les 4 en stats</button>
+                    <a class="btn btn-sm btn-primary" href="stats.html">Compléter SGBX</a>
+                  </div>
+                </li>
+
+                <li class="step">
+                  <span class="step-dot">5</span>
+                  <div>
+                    <div class="step-title">Saisir les trades du jour</div>
+                    <div class="step-body">Tu as tradé aujourd'hui ? Crée le trade depuis sa stat, puis ajoute exécutions et post-mortem.</div>
+                  </div>
+                  <div class="step-action"><a class="btn btn-sm" href="stats.html">Choisir une stat</a></div>
+                </li>
+              </ol>
+            </div>
+          </section>
+
+          <div class="stack">
+            <section class="card">
+              <h2>Compte <a class="hint" href="compte.html">détail <span class="icon icon-sm">arrow_forward</span></a></h2>
+              <div class="kpi">
+                <div class="label">Solde</div>
+                <div class="value">27 359,95 $</div>
+                <div class="sub" data-group="moment" data-value="matin"><span style="color: var(--warn)">à rapprocher ce matin</span></div>
+                <div class="sub" data-group="moment" data-value="soir" hidden>rapproché ce matin <span class="icon icon-sm gain">check</span></div>
+              </div>
+              <dl class="kv" style="margin-top: 14px">
+                <dt>P&amp;L du jour</dt>
+                <dd class="muted">— pas de trade</dd>
+                <dt>P&amp;L de la semaine</dt>
+                <dd class="gain">+282,85 $</dd>
+                <dt>P&amp;L de septembre</dt>
+                <dd class="gain">+751,85 $</dd>
+              </dl>
+            </section>
+
+            <section class="card">
+              <h2>Candidats du jour <a class="hint" href="candidat.html">tout voir <span class="icon icon-sm">arrow_forward</span></a></h2>
+              <div data-group="moment" data-value="matin">
+                <div class="empty">
+                  <span class="icon icon-lg">radar</span>
+                  <span>Pas encore de candidat aujourd'hui.</span>
+                  <a class="btn btn-sm" href="candidat.html"><span class="icon">add</span> Saisir les candidats</a>
+                </div>
+              </div>
+              <div data-group="moment" data-value="soir" hidden>
+                <div class="mini-row">
+                  <span class="ticker">SGBX</span> <span class="tag tag-accent">En stats</span>
+                  <span class="num muted">gap +65,2 % · push +33,0 %</span>
+                </div>
+                <div class="mini-row">
+                  <span class="ticker">BNRG</span>
+                  <span class="num muted">gap +63,6 % · push +10,0 %</span>
+                </div>
+                <div class="mini-row">
+                  <span class="ticker">MLGO</span>
+                  <span class="num muted">gap +59,0 % · push +20,0 %</span>
+                </div>
+                <div class="mini-row">
+                  <span class="ticker">ATXG</span>
+                  <span class="num muted">gap +58,6 % · push +17,4 %</span>
+                </div>
+                <div class="mini-row">
+                  <span class="ticker">VERB</span>
+                  <span class="num muted">gap +52,9 % · push +7,1 %</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <h2>Cette semaine</h2>
+              <div class="mini-row"><span class="muted">Mar. 15/09</span> <span class="ticker">SNTG</span> <span class="num loss">−124,00</span></div>
+              <div class="mini-row"><span class="muted">Mer. 16/09</span> <span class="ticker">BNZI</span> <span class="num gain">+115,00</span></div>
+              <div class="mini-row"><span class="muted">Jeu. 17/09</span> <span class="ticker">KTTA</span> <span class="num gain">+291,85</span></div>
+            </section>
+          </div>
+        </div>
+
+        <p class="mockup-note">
+          Maquette statique — page d'accueil. La bascule « 8h00 / 16h15 » n'existe que dans la maquette : elle montre la même page à deux
+          moments. Dans l'app, l'état des étapes se déduit de l'heure et des données. Le rapprochement du matin se fait directement ici
+          (l'écart se calcule en direct) ; le détail des mouvements reste dans Compte.
+        </p>
+      </main>
+    </div>
+
+    <script>
+      // Rapprochement intégré : écart entre le solde TradeZero saisi et le solde calculé par l'app.
+      (function () {
+        const appBalance = 27359.95;
+        const input = document.getElementById('broker-balance');
+        const out = document.getElementById('reco-gap');
+        const hint = document.getElementById('reco-hint');
+        const btn = document.getElementById('reco-btn');
+        const fmt = (n) => n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        input.addEventListener('input', () => {
+          const v = parseFloat(input.value.replace(/\s/g, '').replace(',', '.'));
+          if (isNaN(v)) {
+            out.textContent = '—';
+            out.className = 'input muted';
+            btn.textContent = 'Valider';
+            return;
+          }
+          const gap = Math.round((v - appBalance) * 100) / 100;
+          if (gap === 0) {
+            out.textContent = '0,00 ✓';
+            out.className = 'input gain';
+            btn.textContent = 'Valider';
+            hint.textContent = 'Aucun écart : le rapprochement sera simplement horodaté.';
+          } else {
+            out.textContent = (gap > 0 ? '+' : '−') + fmt(Math.abs(gap));
+            out.className = 'input ' + (gap > 0 ? 'gain' : 'loss');
+            btn.textContent = 'Créer la correction';
+            hint.textContent = 'Une ligne « Correction » de ' + out.textContent + ' sera ajoutée pour caler le solde sur TradeZero.';
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

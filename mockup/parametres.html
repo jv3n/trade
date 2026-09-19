@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Paramètres — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+    <style>
+      .settings-layout {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 760px);
+        gap: 28px;
+        align-items: start;
+      }
+
+      .subnav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        position: sticky;
+        top: 24px;
+      }
+
+      .subnav-title {
+        font-size: 11.5px;
+        font-weight: 550;
+        color: var(--text-faint);
+        padding: 12px 10px 6px;
+      }
+
+      .subnav button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 0;
+        background: transparent;
+        color: var(--text-muted);
+        font: inherit;
+        font-weight: 500;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        text-align: left;
+        transition:
+          background 120ms var(--ease),
+          color 120ms var(--ease);
+      }
+
+      .subnav button:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+
+      .subnav button.active {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+
+      .subnav button.active .icon {
+        color: var(--accent);
+        font-variation-settings:
+          'FILL' 1,
+          'wght' 450,
+          'opsz' 20;
+      }
+
+      .subnav .admin-tag {
+        margin-left: auto;
+      }
+
+      /* Une ligne de réglage : libellé + description à gauche, contrôle à droite. */
+      .setting {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        padding: 14px 0;
+      }
+
+      .setting + .setting {
+        border-top: 1px solid var(--border);
+      }
+
+      .setting-label {
+        font-weight: 550;
+      }
+
+      .setting-desc {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-top: 2px;
+      }
+
+      .profile {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 650;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        min-height: 44px;
+        align-items: center;
+      }
+
+      .email-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 4px 2px 10px;
+        border-radius: 999px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        font-size: 13px;
+      }
+
+      .email-chip button {
+        border: 0;
+        background: transparent;
+        color: var(--text-faint);
+        cursor: pointer;
+        display: flex;
+        padding: 2px;
+        border-radius: 50%;
+      }
+
+      .email-chip button:hover {
+        color: var(--loss);
+        background: var(--loss-soft);
+      }
+
+      .chips input {
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        font: inherit;
+        flex: 1;
+        min-width: 180px;
+        outline: none;
+        padding: 4px;
+      }
+
+      .dropzone {
+        border: 1.5px dashed var(--border-strong);
+        border-radius: var(--radius);
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-faint);
+        text-align: center;
+        background: color-mix(in oklch, var(--surface-2) 50%, transparent);
+      }
+
+      .link-group + .link-group {
+        margin-top: 18px;
+      }
+
+      .link-group h3 {
+        font-size: 12px;
+        font-weight: 550;
+        color: var(--text-faint);
+        margin: 0 0 6px;
+        letter-spacing: 0;
+      }
+
+      .link-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        border-radius: var(--radius-sm);
+        color: var(--text);
+      }
+
+      .link-row:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+
+      .link-row .desc {
+        color: var(--text-faint);
+        font-size: 12px;
+        margin-left: auto;
+      }
+
+      /* Tableau du lexique : terme en gras, définitions tronquées sur une ligne (texte complet au survol). */
+      .lexicon-table td.term {
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .lexicon-table td.def {
+        max-width: 230px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-muted);
+      }
+
+      .lexicon-table td.lex-actions {
+        white-space: nowrap;
+      }
+
+      @media (max-width: 1100px) {
+        .settings-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .subnav {
+          position: static;
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+
+        .subnav-title {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidenav">
+        <div class="brand"><span class="brand-mark"></span>Trade</div>
+        <a class="nav-link" href="aujourdhui.html"><span class="nav-icon icon">today</span>Aujourd'hui</a>
+        <a class="nav-link" href="candidat.html"><span class="nav-icon icon">radar</span>Candidats</a>
+        <a class="nav-link" href="stats.html"><span class="nav-icon icon">query_stats</span>Stats</a>
+        <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
+        <a class="nav-link" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
+        <div class="nav-spacer"></div>
+        <a class="nav-link" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
+        <a class="nav-link active" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Paramètres</h1>
+            <p>Préférences d'affichage, et pour l'administrateur : accès, données, lexique et liens d'exploitation.</p>
+          </div>
+        </header>
+
+        <div class="settings-layout">
+          <nav class="subnav segmented-like" data-group="section">
+            <span class="subnav-title">Personnel</span>
+            <button class="active" data-value="prefs"><span class="icon">tune</span>Préférences</button>
+            <span class="subnav-title">Administration</span>
+            <button data-value="access"><span class="icon">lock_person</span>Accès <span class="tag admin-tag">admin</span></button>
+            <button data-value="data"><span class="icon">import_export</span>Données <span class="tag admin-tag">admin</span></button>
+            <button data-value="lexicon"><span class="icon">dictionary</span>Lexique <span class="tag admin-tag">admin</span></button>
+            <button data-value="ops"><span class="icon">open_in_new</span>Liens ops <span class="tag admin-tag">admin</span></button>
+          </nav>
+
+          <div>
+            <!-- ============================================================ Préférences -->
+            <div class="stack" data-group="section" data-value="prefs">
+              <section class="card">
+                <div class="profile">
+                  <span class="avatar">JT</span>
+                  <div>
+                    <div style="font-weight: 600">Julien Trader</div>
+                    <div class="muted" style="font-size: 13px">trader@example.com · <span class="tag tag-accent">Admin</span></div>
+                  </div>
+                  <button class="btn" style="margin-left: auto"><span class="icon">logout</span> Se déconnecter</button>
+                </div>
+              </section>
+
+              <section class="card">
+                <h2>Affichage</h2>
+                <div class="setting">
+                  <div>
+                    <div class="setting-label">Thème</div>
+                    <div class="setting-desc">« Système » suit le réglage clair / sombre de l'ordinateur.</div>
+                  </div>
+                  <div class="segmented">
+                    <button data-theme-choice="system"><span class="icon icon-sm">contrast</span> Système</button>
+                    <button data-theme-choice="light"><span class="icon icon-sm">light_mode</span> Clair</button>
+                    <button data-theme-choice="dark"><span class="icon icon-sm">dark_mode</span> Sombre</button>
+                  </div>
+                </div>
+                <div class="setting">
+                  <div>
+                    <div class="setting-label">Langue</div>
+                    <div class="setting-desc">Langue de l'interface. Le lexique garde sa bascule FR / EN.</div>
+                  </div>
+                  <div class="segmented">
+                    <button class="active">Français</button>
+                    <button>English</button>
+                  </div>
+                </div>
+                <div class="setting">
+                  <div>
+                    <div class="setting-label">Devise d'affichage du solde</div>
+                    <div class="setting-desc">Le compte reste en USD ; la conversion CAD utilise le taux BCE du jour.</div>
+                  </div>
+                  <div class="segmented">
+                    <button class="active">USD</button>
+                    <button>CAD</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <!-- ============================================================ Accès -->
+            <div class="stack" data-group="section" data-value="access" hidden>
+              <section class="card">
+                <h2>Emails autorisés à se connecter</h2>
+                <p class="muted" style="margin: 0 0 12px">
+                  Seuls ces comptes Google peuvent se connecter. Les administrateurs sont toujours autorisés, même s'ils ne sont pas
+                  dans la liste.
+                </p>
+                <div class="chips">
+                  <span class="email-chip">associe@example.com <button title="Retirer"><span class="icon icon-sm">close</span></button></span>
+                  <span class="email-chip">testeur@example.com <button title="Retirer"><span class="icon icon-sm">close</span></button></span>
+                  <input placeholder="Ajouter un email puis Entrée…" />
+                </div>
+                <div class="actions" style="margin-top: 14px; justify-content: flex-end">
+                  <button
+                    class="btn"
+                    data-confirm-title="Vider la liste ?"
+                    data-confirm-body="Sans liste, n'importe quel compte Google pourra se connecter (mode ouvert)."
+                    data-confirm-ok="Vider la liste"
+                    data-confirm-danger
+                  >
+                    Vider la liste
+                  </button>
+                  <button class="btn btn-primary">Enregistrer</button>
+                </div>
+              </section>
+              <section class="card">
+                <h2>Administrateurs <span class="hint">définis au déploiement</span></h2>
+                <div class="setting">
+                  <div>
+                    <div class="setting-label">trader@example.com</div>
+                    <div class="setting-desc">Variable d'environnement <span class="mono">APP_ADMIN_EMAILS</span> — non modifiable ici.</div>
+                  </div>
+                  <span class="tag tag-accent">Admin</span>
+                </div>
+              </section>
+            </div>
+
+            <!-- ============================================================ Données -->
+            <div class="stack" data-group="section" data-value="data" hidden>
+              <section class="card">
+                <h2>Journal <span class="hint">CSV compatible aller-retour</span></h2>
+                <div class="setting">
+                  <div>
+                    <div class="setting-label">Exporter le journal</div>
+                    <div class="setting-desc">Tous tes trades, exécutions comprises.</div>
+                  </div>
+                  <button class="btn"><span class="icon">download</span> Exporter</button>
+                </div>
+                <div class="setting" style="display: block">
+                  <div class="setting-label" style="margin-bottom: 10px">Importer un journal</div>
+                  <div class="dropzone">
+                    <span class="icon icon-lg">upload_file</span>
+                    <span>Glisser un fichier CSV ici, ou <a href="#">parcourir</a></span>
+                    <span style="font-size: 12px">Les lignes sont vérifiées avant l'import — rien n'est écrit s'il y a une erreur.</span>
+                  </div>
+                </div>
+              </section>
+              <section class="card">
+                <h2>Stats</h2>
+                <div class="setting">
+                  <div>
+                    <div class="setting-label">Exporter les stats</div>
+                    <div class="setting-desc">Premarket + séance + flags, une ligne par stat.</div>
+                  </div>
+                  <button class="btn"><span class="icon">download</span> Exporter</button>
+                </div>
+                <div class="setting">
+                  <div>
+                    <div class="setting-label">Importer des stats</div>
+                    <div class="setting-desc">Historique tenu dans un tableur, au format de l'export.</div>
+                  </div>
+                  <button class="btn"><span class="icon">upload</span> Importer un CSV</button>
+                </div>
+              </section>
+            </div>
+
+            <!-- ============================================================ Lexique -->
+            <div class="stack" data-group="section" data-value="lexicon" hidden>
+              <section class="card">
+                <h2>
+                  Termes du lexique <span class="hint">12 termes · visibles par tous sur la page Lexique</span>
+                  <button class="btn btn-sm btn-primary"><span class="icon">add</span> Ajouter un terme</button>
+                </h2>
+                <div class="toolbar">
+                  <input class="input search" placeholder="Rechercher un terme…" />
+                </div>
+                <div class="table-wrap">
+                  <table class="lexicon-table">
+                    <thead>
+                      <tr>
+                        <th>Terme ↑</th>
+                        <th>Définition (FR)</th>
+                        <th>Définition (EN)</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="term">Borrow fee</td>
+                        <td class="def" title="Coût d'emprunt des actions pour pouvoir les vendre à découvert, payé par action et par jour de détention.">Coût d'emprunt des actions pour pouvoir les vendre à découvert, payé par action et par jour de détention.</td>
+                        <td class="def" title="Cost of borrowing shares to sell them short, charged per share and per day held.">Cost of borrowing shares to sell them short, charged per share and per day held.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">Cover</td>
+                        <td class="def" title="Racheter les actions shortées pour fermer (tout ou partie de) la position.">Racheter les actions shortées pour fermer (tout ou partie de) la position.</td>
+                        <td class="def" title="Buying back shorted shares to close all or part of the position.">Buying back shorted shares to close all or part of the position.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">DT — Double Top</td>
+                        <td class="def" title="Double sommet : le cours échoue deux fois sur la même résistance — signal de short quand il casse le creux entre les deux.">Double sommet : le cours échoue deux fois sur la même résistance — signal de short quand il casse le creux entre les deux.</td>
+                        <td class="def" title="Double top: price fails twice at the same resistance — a short signal when it breaks the low between the two peaks.">Double top: price fails twice at the same resistance — a short signal when it breaks the low between the two peaks.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">EOD — End of Day</td>
+                        <td class="def" title="Prix de clôture de la séance.">Prix de clôture de la séance.</td>
+                        <td class="def" title="Session closing price.">Session closing price.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">Float</td>
+                        <td class="def" title="Nombre d'actions réellement échangeables sur le marché. Cible GUS : entre 3 M et 50 M.">Nombre d'actions réellement échangeables sur le marché. Cible GUS : entre 3 M et 50 M.</td>
+                        <td class="def" title="Number of shares actually available to trade. GUS target: between 3M and 50M.">Number of shares actually available to trade. GUS target: between 3M and 50M.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">Front side / Back side</td>
+                        <td class="def" title="Front : le titre monte encore (phase de push). Back : le titre a déjà cassé et redescend.">Front : le titre monte encore (phase de push). Back : le titre a déjà cassé et redescend.</td>
+                        <td class="def" title="Front: the stock is still pushing up. Back: it has already broken down and is fading.">Front: the stock is still pushing up. Back: it has already broken down and is fading.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">GUS — Gap Up Short</td>
+                        <td class="def" title="Shorter une small-cap qui ouvre en gap up sans fondamental, en pariant sur le retour du cours.">Shorter une small-cap qui ouvre en gap up sans fondamental, en pariant sur le retour du cours.</td>
+                        <td class="def" title="Shorting a small-cap that gaps up with no fundamental reason, betting on the price fading back.">Shorting a small-cap that gaps up with no fundamental reason, betting on the price fading back.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">LOD — Low of Day</td>
+                        <td class="def" title="Plus bas de la séance — le meilleur prix de cover possible pour un short.">Plus bas de la séance — le meilleur prix de cover possible pour un short.</td>
+                        <td class="def" title="Lowest price of the session — the best possible cover price for a short.">Lowest price of the session — the best possible cover price for a short.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">Push</td>
+                        <td class="def" title="Montée du cours après l'ouverture. On attend le push pour shorter plus haut que l'open.">Montée du cours après l'ouverture. On attend le push pour shorter plus haut que l'open.</td>
+                        <td class="def" title="Price run-up after the open. Wait for the push to short above the open.">Price run-up after the open. Wait for the push to short above the open.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">Reverse split</td>
+                        <td class="def" title="Regroupement d'actions qui gonfle le prix sans mouvement réel — faux gap up, piège à éviter.">Regroupement d'actions qui gonfle le prix sans mouvement réel — faux gap up, piège à éviter.</td>
+                        <td class="def" title="Share consolidation that inflates the price with no real move — a fake gap up, a trap to avoid.">Share consolidation that inflates the price with no real move — a fake gap up, a trap to avoid.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">SSR — Short Sale Restriction</td>
+                        <td class="def" title="Après une baisse de 10 %, le short n'est autorisé que sur un uptick jusqu'au lendemain.">Après une baisse de 10 %, le short n'est autorisé que sur un uptick jusqu'au lendemain.</td>
+                        <td class="def" title="After a 10% drop, shorting is only allowed on an uptick until the next day.">After a 10% drop, shorting is only allowed on an uptick until the next day.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                      <tr>
+                        <td class="term">Squeeze</td>
+                        <td class="def" title="Envolée brutale forcée par les shorts qui couvrent en urgence — le risque principal du GUS.">Envolée brutale forcée par les shorts qui couvrent en urgence — le risque principal du GUS.</td>
+                        <td class="def" title="Violent spike driven by shorts covering in a panic — the main risk of a GUS.">Violent spike driven by shorts covering in a panic — the main risk of a GUS.</td>
+                        <td class="num lex-actions"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer ce terme ?" data-confirm-body="Le terme disparaît de la page Lexique pour tout le monde. Action définitive." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+
+            <!-- ============================================================ Liens ops -->
+            <div class="stack" data-group="section" data-value="ops" hidden>
+              <section class="card">
+                <div class="link-group">
+                  <h3>Facturation</h3>
+                  <a class="link-row" href="#"><span class="icon">payments</span>GCP — facturation <span class="desc">cartes et budget</span><span class="icon icon-sm muted">open_in_new</span></a>
+                  <a class="link-row" href="#"><span class="icon">payments</span>Supabase — facturation <span class="desc">quotas</span><span class="icon icon-sm muted">open_in_new</span></a>
+                  <a class="link-row" href="#"><span class="icon">payments</span>Cloudflare — facturation <span class="desc">R2, domaine</span><span class="icon icon-sm muted">open_in_new</span></a>
+                </div>
+                <div class="link-group">
+                  <h3>Production</h3>
+                  <a class="link-row" href="#"><span class="icon">public</span>Application en production <span class="desc">domaine public</span><span class="icon icon-sm muted">open_in_new</span></a>
+                  <a class="link-row" href="#"><span class="icon">cloud</span>Cloud Run — service <span class="desc">révisions, métriques</span><span class="icon icon-sm muted">open_in_new</span></a>
+                  <a class="link-row" href="#"><span class="icon">receipt_long</span>Cloud Run — logs <span class="desc"></span><span class="icon icon-sm muted">open_in_new</span></a>
+                </div>
+                <div class="link-group">
+                  <h3>Données &amp; supervision</h3>
+                  <a class="link-row" href="#"><span class="icon">database</span>Supabase — base de données <span class="desc">sauvegardes</span><span class="icon icon-sm muted">open_in_new</span></a>
+                  <a class="link-row" href="#"><span class="icon">bug_report</span>GlitchTip — erreurs <span class="desc"></span><span class="icon icon-sm muted">open_in_new</span></a>
+                  <a class="link-row" href="#"><span class="icon">monitor_heart</span>UptimeRobot — disponibilité <span class="desc"></span><span class="icon icon-sm muted">open_in_new</span></a>
+                </div>
+                <div class="link-group">
+                  <h3>Code</h3>
+                  <a class="link-row" href="#"><span class="icon">code</span>GitHub — dépôt <span class="desc">issues, PR, actions</span><span class="icon icon-sm muted">open_in_new</span></a>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <p class="mockup-note">
+          Maquette statique — les sections du menu de gauche sont cliquables et le choix du thème fonctionne. Préférences : pour tout le monde ; Accès, Données,
+          Lexique et Liens ops : réservés aux administrateurs. Les liens ops pointent vers les vraies consoles dans l'app.
+        </p>
+      </main>
+    </div>
+  </body>
+</html>

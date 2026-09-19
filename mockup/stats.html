@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stats — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+    <style>
+      .complete {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        align-items: end;
+      }
+
+      .complete .pct {
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        min-height: 16px;
+      }
+
+      .flags-row {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .flags-row label {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .recap {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        color: var(--text-muted);
+        font-size: 12px;
+        margin-bottom: 14px;
+      }
+
+      .recap b {
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      td small {
+        display: block;
+        font-size: 11px;
+      }
+
+      tr.group-head th {
+        text-align: center;
+        border-bottom: 0;
+        padding-bottom: 0;
+        color: var(--accent);
+      }
+
+      th.sep,
+      td.sep {
+        border-left: 1px solid var(--border);
+      }
+
+      tr.pending td {
+        background: var(--warn-soft);
+      }
+
+      @media (max-width: 1100px) {
+        .complete {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidenav">
+        <div class="brand"><span class="brand-mark"></span>Trade</div>
+        <a class="nav-link" href="aujourdhui.html"><span class="nav-icon icon">today</span>Aujourd'hui</a>
+        <a class="nav-link" href="candidat.html"><span class="nav-icon icon">radar</span>Candidats</a>
+        <a class="nav-link active" href="stats.html"><span class="nav-icon icon">query_stats</span>Stats</a>
+        <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
+        <a class="nav-link" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
+        <div class="nav-spacer"></div>
+        <a class="nav-link" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
+        <a class="nav-link" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Stats</h1>
+            <p>Les candidats retenus, complétés à la clôture (16h) avec le déroulé de la séance.</p>
+          </div>
+          <div class="actions">
+            <button class="btn"><span class="icon">import_export</span> Import / export CSV</button>
+          </div>
+        </header>
+
+        <section class="grid grid-4" style="margin-bottom: 16px">
+          <div class="card kpi">
+            <div class="label">Stats complétées</div>
+            <div class="value">10</div>
+            <div class="sub">septembre · <span style="color: var(--warn)">1 à compléter</span></div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Push à l'open moyen</div>
+            <div class="value">+9,6 %</div>
+            <div class="sub">vs open</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">LOD moyen</div>
+            <div class="value">−12,3 %</div>
+            <div class="sub">vs open</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Fade à la clôture</div>
+            <div class="value">7 / 10</div>
+            <div class="sub">EOD sous l'open · moyenne −3,7 %</div>
+          </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 16px; border-color: var(--warn)">
+          <h2>
+            <span>Compléter la séance — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span></span>
+            <span class="hint">à saisir après la clôture de 16h · les % se calculent vs l'open</span>
+          </h2>
+          <div class="recap">
+            <span>Clôture veille <b>1,12</b></span>
+            <span>Open PM <b>1,85</b></span>
+            <span>High PM <b>2,46</b></span>
+            <span>Gap <b>+65,2 %</b></span>
+            <span>Push PM <b>+33,0 %</b></span>
+            <span>Float <b>3,9 M</b></span>
+            <span>Volume <b>9,7 M</b></span>
+            <span>Locate <b>0,12</b></span>
+            <span>Note <b>Locate cher, float serré — attention au squeeze</b></span>
+          </div>
+          <form class="complete" onsubmit="return false">
+            <div class="field"><label>Open ($)</label><input class="input" id="c-open" placeholder="1,90" /><span class="pct muted">base des %</span></div>
+            <div class="field"><label>Push à l'open ($)</label><input class="input" data-pct placeholder="2,20" /><span class="pct muted">—</span></div>
+            <div class="field"><label>HOD ($)</label><input class="input" data-pct placeholder="2,35" /><span class="pct muted">—</span></div>
+            <div class="field"><label>LOD ($)</label><input class="input" data-pct placeholder="1,52" /><span class="pct muted">—</span></div>
+            <div class="field"><label>EOD ($)</label><input class="input" data-pct placeholder="1,61" /><span class="pct muted">—</span></div>
+          </form>
+          <div class="flags-row">
+            <label><input type="checkbox" /> SSR</label>
+            <label><input type="checkbox" /> Prix &lt; 1 $</label>
+            <label><input type="checkbox" /> Entrée après 11h</label>
+            <span style="flex: 1"></span>
+            <button class="btn">Plus tard</button>
+            <button class="btn btn-primary">Enregistrer</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="toolbar">
+            <input class="input search" placeholder="Rechercher un ticker…" />
+            <select class="input">
+              <option>Septembre 2026</option>
+              <option>Août 2026</option>
+              <option>Tout l'historique</option>
+            </select>
+            <select class="input">
+              <option>Pattern : tous</option>
+              <option>GUS</option>
+              <option>DT</option>
+              <option>Discrétionnaire</option>
+            </select>
+            <div class="segmented">
+              <button class="active">Toutes</button>
+              <button>À compléter</button>
+              <button>Tradées</button>
+              <button>Non tradées</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr class="group-head">
+                  <th colspan="3"></th>
+                  <th colspan="5" class="sep">Premarket — repris du candidat</th>
+                  <th colspan="5" class="sep">Séance — saisi à 16h (% vs open)</th>
+                  <th colspan="2" class="sep"></th>
+                </tr>
+                <tr>
+                  <th>Date ↓</th>
+                  <th>Ticker</th>
+                  <th>Pattern</th>
+                  <th class="num sep">Gap</th>
+                  <th class="num">Push PM</th>
+                  <th class="num">Float</th>
+                  <th class="num">Volume</th>
+                  <th class="num">Locate</th>
+                  <th class="num sep">Open</th>
+                  <th class="num">Push open</th>
+                  <th class="num">HOD</th>
+                  <th class="num">LOD</th>
+                  <th class="num">EOD</th>
+                  <th class="sep">Flags</th>
+                  <th>Trade</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="pending">
+                  <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="num sep muted" colspan="5" style="text-align: center">à compléter après 16h</td>
+                  <td class="sep"></td>
+                  <td><button class="btn btn-sm">Compléter</button></td>
+                </tr>
+                <tr>
+                  <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="num sep">4,20</td>
+                  <td class="num">4,62<small class="muted">+10,0 %</small></td>
+                  <td class="num">4,62<small class="muted">+10,0 %</small></td>
+                  <td class="num">3,41<small class="muted">−18,8 %</small></td>
+                  <td class="num">3,52<small class="muted">−16,2 %</small></td>
+                  <td class="sep"></td>
+                  <td><a href="trade.html" class="tag tag-gain">+292</a></td>
+                </tr>
+                <tr>
+                  <td>16/09</td><td><span class="ticker">BNZI</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+61,8 %</td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td><td class="num">0,06</td>
+                  <td class="num sep">2,90</td>
+                  <td class="num">3,05<small class="muted">+5,2 %</small></td>
+                  <td class="num">3,05<small class="muted">+5,2 %</small></td>
+                  <td class="num">2,44<small class="muted">−15,9 %</small></td>
+                  <td class="num">2,58<small class="muted">−11,0 %</small></td>
+                  <td class="sep"><span class="tag tag-warn">SSR</span></td>
+                  <td><a href="journal.html" class="tag tag-gain">+115</a></td>
+                </tr>
+                <tr>
+                  <td>15/09</td><td><span class="ticker">SNTG</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+54,4 %</td><td class="num">+8,2 %</td><td class="num">12,0 M</td><td class="num">2,4 M</td><td class="num">0,05</td>
+                  <td class="num sep">6,00</td>
+                  <td class="num">6,55<small class="muted">+9,2 %</small></td>
+                  <td class="num">7,14<small class="muted">+19,0 %</small></td>
+                  <td class="num">5,80<small class="muted">−3,3 %</small></td>
+                  <td class="num">6,95<small class="muted">+15,8 %</small></td>
+                  <td class="sep"></td>
+                  <td><a href="journal.html" class="tag tag-loss">−124</a></td>
+                </tr>
+                <tr>
+                  <td>12/09</td><td><span class="ticker">NUWE</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+56,4 %</td><td class="num">+11,5 %</td><td class="num">6,7 M</td><td class="num">3,8 M</td><td class="num">0,04</td>
+                  <td class="num sep">3,20</td>
+                  <td class="num">3,38<small class="muted">+5,6 %</small></td>
+                  <td class="num">3,38<small class="muted">+5,6 %</small></td>
+                  <td class="num">2,52<small class="muted">−21,3 %</small></td>
+                  <td class="num">2,61<small class="muted">−18,4 %</small></td>
+                  <td class="sep"></td>
+                  <td><a href="journal.html" class="tag tag-gain">+220</a></td>
+                </tr>
+                <tr>
+                  <td>11/09</td><td><span class="ticker">HOTH</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+54,3 %</td><td class="num">+9,0 %</td><td class="num">18,3 M</td><td class="num">1,9 M</td><td class="num">0,07</td>
+                  <td class="num sep">7,30</td>
+                  <td class="num">7,60<small class="muted">+4,1 %</small></td>
+                  <td class="num">7,82<small class="muted">+7,1 %</small></td>
+                  <td class="num">6,90<small class="muted">−5,5 %</small></td>
+                  <td class="num">7,05<small class="muted">−3,4 %</small></td>
+                  <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><a href="journal.html" class="tag tag-gain">+30</a></td>
+                </tr>
+                <tr>
+                  <td>11/09</td><td><span class="ticker">ZVSA</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+54,5 %</td><td class="num">+16,2 %</td><td class="num">5,1 M</td><td class="num">7,0 M</td><td class="num">0,10</td>
+                  <td class="num sep">3,55</td>
+                  <td class="num">4,10<small class="muted">+15,5 %</small></td>
+                  <td class="num">4,40<small class="muted">+23,9 %</small></td>
+                  <td class="num">3,30<small class="muted">−7,0 %</small></td>
+                  <td class="num">4,12<small class="muted">+16,1 %</small></td>
+                  <td class="sep"></td>
+                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+                <tr>
+                  <td>10/09</td><td><span class="ticker">AEHL</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+78,2 %</td><td class="num">+13,9 %</td><td class="num">3,4 M</td><td class="num">11,5 M</td><td class="num">0,09</td>
+                  <td class="num sep">1,90</td>
+                  <td class="num">2,48<small class="muted">+30,5 %</small></td>
+                  <td class="num">2,48<small class="muted">+30,5 %</small></td>
+                  <td class="num">1,85<small class="muted">−2,6 %</small></td>
+                  <td class="num">2,31<small class="muted">+21,6 %</small></td>
+                  <td class="sep"></td>
+                  <td><a href="journal.html" class="tag tag-loss">−174</a></td>
+                </tr>
+                <tr>
+                  <td>10/09</td><td><span class="ticker">MULN</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+63,5 %</td><td class="num">+14,1 %</td><td class="num">22,0 M</td><td class="num">15,3 M</td><td class="num">0,01</td>
+                  <td class="num sep">0,88</td>
+                  <td class="num">0,95<small class="muted">+8,0 %</small></td>
+                  <td class="num">0,95<small class="muted">+8,0 %</small></td>
+                  <td class="num">0,71<small class="muted">−19,3 %</small></td>
+                  <td class="num">0,74<small class="muted">−15,9 %</small></td>
+                  <td class="sep"><span class="tag tag-warn">&lt; 1 $</span></td>
+                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+                <tr>
+                  <td>09/09</td><td><span class="ticker">CRKN</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+58,1 %</td><td class="num">+8,2 %</td><td class="num">9,9 M</td><td class="num">4,4 M</td><td class="num">0,03</td>
+                  <td class="num sep">5,00</td>
+                  <td class="num">5,21<small class="muted">+4,2 %</small></td>
+                  <td class="num">5,21<small class="muted">+4,2 %</small></td>
+                  <td class="num">3,85<small class="muted">−23,0 %</small></td>
+                  <td class="num">3,95<small class="muted">−21,0 %</small></td>
+                  <td class="sep"></td>
+                  <td><a href="journal.html" class="tag tag-gain">+321</a></td>
+                </tr>
+                <tr>
+                  <td>08/09</td><td><span class="ticker">TOP</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+48,7 %</td><td class="num">+8,3 %</td><td class="num">32,0 M</td><td class="num">1,2 M</td><td class="num">0,02</td>
+                  <td class="num sep">8,50</td>
+                  <td class="num">8,80<small class="muted">+3,5 %</small></td>
+                  <td class="num">8,95<small class="muted">+5,3 %</small></td>
+                  <td class="num">7,95<small class="muted">−6,5 %</small></td>
+                  <td class="num">8,10<small class="muted">−4,7 %</small></td>
+                  <td class="sep"></td>
+                  <td><a href="journal.html" class="tag tag-gain">+72</a></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="9">Moyennes — 10 stats complétées</td>
+                  <td class="num">+9,6 %</td>
+                  <td class="num"></td>
+                  <td class="num">−12,3 %</td>
+                  <td class="num">−3,7 %</td>
+                  <td colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+
+        <p class="mockup-note">
+          Maquette statique — une stat naît d'un candidat (bouton « → Stat ») et reprend toutes ses données premarket. À 16h on saisit
+          Open, Push à l'open, HOD, LOD, EOD (en $) ; l'app calcule chaque % vs l'open. Flags : SSR, prix &lt; 1 $, entrée après 11h.
+          « → Trade » crée le trade au journal (action manuelle). Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
+        </p>
+      </main>
+    </div>
+
+    <script>
+      // Aperçu des % vs l'open dans le formulaire de complétion (accepte la virgule décimale).
+      (function () {
+        const parse = (v) => parseFloat(String(v).replace(',', '.'));
+        const open = document.getElementById('c-open');
+        const fields = document.querySelectorAll('[data-pct]');
+        function update() {
+          const o = parse(open.value);
+          fields.forEach((input) => {
+            const out = input.nextElementSibling;
+            const v = parse(input.value);
+            if (!(o > 0) || isNaN(v)) {
+              out.textContent = '—';
+              out.className = 'pct muted';
+              return;
+            }
+            const pct = ((v - o) / o) * 100;
+            out.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1).replace('.', ',') + ' %';
+            out.className = 'pct';
+          });
+        }
+        open.addEventListener('input', update);
+        fields.forEach((f) => f.addEventListener('input', update));
+      })();
+    </script>
+  </body>
+</html>
