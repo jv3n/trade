@@ -4,10 +4,12 @@
 // 720, some at 900, some at 1040, some at 1100, some at 1200, some at 1400). Centralising
 // here means a single source of truth and a smaller diff when the rhythm needs to change.
 //
-// **Default width = 1400 px** — a sensible cap for medium-content pages. Other widths use a modifier :
-//   • `.page--full`    → no cap  (the wide data-table pages : radar, stats, journal, import, ticker)
+// **Default width = 1360 px** — the mockup's content width (`mockup/assets/mockup.css > .main`).
+// Every page, including the wide data tables, stays within it : a table wider than the page scrolls
+// horizontally inside its card rather than stretching the page across a large screen. Modifiers :
+//   • `.page--full`    → same 1360 px cap (kept for the templates that still use it)
 //   • `.page--medium`  → 1200 px
-//   • `.page--narrow`  → 1100 px (e.g. settings, observability, prompts)
+//   • `.page--narrow`  → 1100 px
 //   • `.page--form`    → 720 px  (settings forms — preferences, access-control)
 //
 // **Alignment** — content is **left-aligned** (it starts right after the sidenav, like the mockup) :
@@ -20,7 +22,7 @@
 
 .page {
   padding: 2rem 2.5rem;
-  max-width: 1400px;
+  max-width: 1360px;
   margin: 0;
 }
 
@@ -36,10 +38,9 @@
   max-width: 720px;
 }
 
-// Full-bleed — no width cap. For the widest data tables (radar, stats) whose many columns need
-// every pixel of horizontal real estate ; the page spans the viewport minus the side padding.
+// Same cap as the default since the redesign (see the header comment).
 .page--full {
-  max-width: none;
+  max-width: 1360px;
 }
 
 .page--flush {
