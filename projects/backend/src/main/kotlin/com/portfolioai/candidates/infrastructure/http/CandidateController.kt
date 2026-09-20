@@ -1,8 +1,10 @@
 package com.portfolioai.candidates.infrastructure.http
 
 import com.portfolioai.candidates.application.CandidateService
+import com.portfolioai.candidates.application.dto.BulkPromotionDto
 import com.portfolioai.candidates.application.dto.CandidateDto
 import com.portfolioai.candidates.application.dto.CandidateRequest
+import com.portfolioai.stats.application.dto.StatEntryDto
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
 import java.util.UUID
@@ -47,6 +49,23 @@ class CandidateController(private val service: CandidateService) {
   @PutMapping("/{id}")
   fun update(@PathVariable id: UUID, @RequestBody request: CandidateRequest): CandidateDto =
     service.update(id, request)
+
+  /**
+   * Copies a candidate onto the stats sheet — the « → Stat » action. Returns the new stat, which
+   * starts "to complete". Foreign id → 404 ; already in the sheet → 409.
+   */
+  @PostMapping("/{id}/promote")
+  @ResponseStatus(HttpStatus.CREATED)
+  fun promote(@PathVariable id: UUID): StatEntryDto = service.promote(id)
+
+  /**
+   * Promotes every candidate of a day that isn't in the sheet yet — « Tout passer en stats ».
+   * Idempotent : the tickers it left alone come back in `skipped`. Defaults to today.
+   */
+  @PostMapping("/promote")
+  fun promoteDay(
+    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) date: LocalDate?
+  ): BulkPromotionDto = service.promoteDay(date)
 
   /** Removes a candidate. Foreign id → 404. */
   @DeleteMapping("/{id}")

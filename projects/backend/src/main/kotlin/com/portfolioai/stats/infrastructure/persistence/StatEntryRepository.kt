@@ -29,4 +29,7 @@ interface StatEntryRepository :
   ): StatEntry?
 
   fun findByIdAndUserId(id: UUID, userId: UUID): StatEntry?
+
+  /** Backs the "in stats" flag of the candidates listing — one query for a whole day. */
+  fun findByUserIdAndCandidateIdIn(userId: UUID, candidateIds: Collection<UUID>): List<StatEntry>
 }

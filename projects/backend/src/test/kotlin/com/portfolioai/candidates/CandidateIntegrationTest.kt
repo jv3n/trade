@@ -9,10 +9,14 @@ import com.portfolioai.candidates.application.dto.CandidateRequest
 import com.portfolioai.candidates.domain.Candidate
 import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
 import com.portfolioai.shared.Pattern
+import com.portfolioai.stats.application.StatEntryService
+import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -37,6 +41,11 @@ import org.springframework.web.server.ResponseStatusException
  *   / volume / locate and a blank ticker return a clean 400, not a DB CHECK violation.
  * - **Day listing** — only the requested day's candidates come back.
  * - **Multi-tenant scope** — a foreign / missing id → 404 (never 403).
+ * - **Promotion to the stats sheet (#189)** — promoting copies the whole premarket block onto a new
+ *   stat that starts "to complete" and points back at the candidate, which then reports `promoted =
+ *   true` ; promoting twice is a 409, and « Tout passer en stats » is idempotent — candidates
+ *   already in the sheet (through their promotion or through an unrelated stat holding that (day,
+ *   ticker) slot) come back in `skipped` without failing the batch.
  *
  * `AuthService` is overridden with `@MockitoBean` so the user-scope is deterministic.
  */
@@ -45,6 +54,8 @@ class CandidateIntegrationTest {
 
   @Autowired private lateinit var service: CandidateService
   @Autowired private lateinit var repo: CandidateRepository
+  @Autowired private lateinit var statService: StatEntryService
+  @Autowired private lateinit var statRepo: StatEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
 
   @MockitoBean private lateinit var authService: AuthService
@@ -54,6 +65,8 @@ class CandidateIntegrationTest {
 
   @BeforeEach
   fun setUp() {
+    // Stats first : they reference both the candidate and the user.
+    statRepo.deleteAll()
     repo.deleteAll()
     userRepository.deleteAll()
     testUser = userRepository.save(makeUser("trader"))
@@ -266,6 +279,147 @@ class CandidateIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // Promotion to the stats sheet (#189)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `promote copies the whole premarket block onto a new stat that starts to complete`() {
+    val candidate =
+      service.create(
+        request(
+          ticker = "KTTA",
+          pattern = Pattern.DT,
+          floatMillions = BigDecimal("8.2"),
+          volumeMillions = BigDecimal("3.1"),
+          locatePerShare = BigDecimal("0.03"),
+          note = "Push rejeté sous 4,65",
+        )
+      )
+
+    val stat = service.promote(candidate.id)
+
+    assertEquals(candidate.id, stat.candidateId, "the stat keeps a trace of its source candidate")
+    assertEquals(DAY, stat.tradeDate)
+    assertEquals("KTTA", stat.ticker)
+    assertEquals(Pattern.DT, stat.pattern, "the candidate's pattern follows it to the sheet")
+    assertEquals(0, BigDecimal("2.65").compareTo(stat.previousClose))
+    assertEquals(0, BigDecimal("4.05").compareTo(stat.pmOpen))
+    assertEquals(0, BigDecimal("4.65").compareTo(stat.pmHigh))
+    assertEquals(0, BigDecimal("8.2").compareTo(stat.floatMillions))
+    assertEquals(0, BigDecimal("3.1").compareTo(stat.volumeMillions))
+    assertEquals(0, BigDecimal("0.03").compareTo(stat.locatePerShare))
+    assertEquals("Push rejeté sous 4,65", stat.note)
+
+    assertFalse(stat.completed, "the session block is only filled after the 4 pm close")
+    assertNull(stat.openPrice)
+    assertNull(stat.pushOpenPrice)
+    assertNull(stat.hodPrice)
+    assertNull(stat.lodPrice)
+    assertNull(stat.eodPrice)
+  }
+
+  @Test
+  fun `a promoted candidate reports promoted in the listing and in findById`() {
+    val promotedOne = service.create(request(ticker = "KTTA"))
+    val untouched = service.create(request(ticker = "SGBX"))
+
+    service.promote(promotedOne.id)
+
+    assertFalse(promotedOne.promoted, "the capture itself is never born promoted")
+    assertTrue(service.findById(promotedOne.id).promoted)
+    assertFalse(service.findById(untouched.id).promoted)
+    assertEquals(
+      mapOf("KTTA" to true, "SGBX" to false),
+      service.listForDate(DAY).associate { it.ticker to it.promoted },
+    )
+  }
+
+  @Test
+  fun `promoting the same candidate twice is a 409`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+    service.promote(candidate.id)
+
+    val ex = assertThrows(ResponseStatusException::class.java) { service.promote(candidate.id) }
+
+    assertEquals(409, ex.statusCode.value())
+    assertEquals(1, statRepo.count(), "no duplicate stat")
+  }
+
+  @Test
+  fun `promoting a candidate whose day and ticker is already taken by another stat is a 409`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+    statService.create(statRequest(ticker = "KTTA"))
+
+    val ex = assertThrows(ResponseStatusException::class.java) { service.promote(candidate.id) }
+
+    assertEquals(409, ex.statusCode.value())
+    assertEquals(1, statRepo.count(), "the slot keeps the stat that was already there")
+  }
+
+  @Test
+  fun `promoting a foreign or missing candidate returns 404, not 403`() {
+    val foreign = repo.save(makeCandidate(otherUser, "TSLA"))
+
+    val stranger = assertThrows(ResponseStatusException::class.java) { service.promote(foreign.id) }
+    assertEquals(404, stranger.statusCode.value(), "must not leak existence — 404, never 403")
+
+    val missing =
+      assertThrows(ResponseStatusException::class.java) { service.promote(UUID.randomUUID()) }
+    assertEquals(404, missing.statusCode.value())
+    assertEquals(0, statRepo.count(), "nothing reached the sheet")
+  }
+
+  @Test
+  fun `promoteDay promotes every candidate of that day and leaves the other days alone`() {
+    service.create(request(ticker = "SGBX", tradingDate = DAY))
+    service.create(request(ticker = "BNRG", tradingDate = DAY))
+    val yesterday = service.create(request(ticker = "KTTA", tradingDate = DAY.minusDays(1)))
+
+    val outcome = service.promoteDay(DAY)
+
+    assertEquals(listOf("BNRG", "SGBX"), outcome.promoted, "ticker-ascending, like the listing")
+    assertEquals(emptyList<String>(), outcome.skipped)
+    assertEquals(2, statRepo.count())
+    assertFalse(service.findById(yesterday.id).promoted, "another day is untouched")
+  }
+
+  @Test
+  fun `promoteDay is idempotent — a second run promotes nothing and reports the day as skipped`() {
+    service.create(request(ticker = "SGBX"))
+    service.create(request(ticker = "BNRG"))
+    service.promoteDay(DAY)
+
+    val second = service.promoteDay(DAY)
+
+    assertEquals(emptyList<String>(), second.promoted)
+    assertEquals(listOf("BNRG", "SGBX"), second.skipped)
+    assertEquals(2, statRepo.count(), "the sheet did not grow")
+  }
+
+  @Test
+  fun `promoteDay skips a day-ticker held by an unrelated stat and still promotes the rest`() {
+    // Regression guard : the taken slot is checked before `create`, otherwise its 409 would mark
+    // the transaction rollback-only and take the whole batch down with it.
+    service.create(request(ticker = "SGBX"))
+    service.create(request(ticker = "BNRG"))
+    statService.create(statRequest(ticker = "SGBX"))
+
+    val outcome = service.promoteDay(DAY)
+
+    assertEquals(listOf("BNRG"), outcome.promoted)
+    assertEquals(listOf("SGBX"), outcome.skipped)
+    assertEquals(2, statRepo.count(), "the unrelated stat plus the one promotion")
+  }
+
+  @Test
+  fun `promoteDay over a day without candidates promotes nothing`() {
+    val outcome = service.promoteDay(DAY)
+
+    assertEquals(emptyList<String>(), outcome.promoted)
+    assertEquals(emptyList<String>(), outcome.skipped)
+  }
+
+  // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 
@@ -312,6 +466,20 @@ class CandidateIntegrationTest {
       volumeMillions = volumeMillions,
       locatePerShare = locatePerShare,
       note = note,
+    )
+
+  /**
+   * A stat entered straight on the sheet, with no source candidate — what an already-taken (day,
+   * ticker) slot looks like when a promotion runs into it.
+   */
+  private fun statRequest(ticker: String = "KTTA", tradeDate: LocalDate = DAY) =
+    StatEntryRequest(
+      tradeDate = tradeDate,
+      pattern = Pattern.GUS,
+      ticker = ticker,
+      previousClose = BigDecimal("2.65"),
+      pmOpen = BigDecimal("4.05"),
+      pmHigh = BigDecimal("4.65"),
     )
 
   private companion object {

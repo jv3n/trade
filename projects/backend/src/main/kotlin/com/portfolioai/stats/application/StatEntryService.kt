@@ -14,6 +14,7 @@ import com.portfolioai.stats.infrastructure.persistence.StatEntrySpecifications
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -83,6 +84,33 @@ class StatEntryService(
       averageEodPercent =
         completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
     )
+  }
+
+  /**
+   * Which of these candidates already have a stat — the "in stats" flag of the candidates listing
+   * and the guard against promoting twice (#189). Read exposed to the `candidates` context through
+   * this application service, the way cross-context reads are done here.
+   */
+  @Transactional(readOnly = true)
+  fun promotedCandidateIds(candidateIds: Collection<UUID>): Set<UUID> {
+    if (candidateIds.isEmpty()) return emptySet()
+    val userId = authService.getCurrentUser().id
+    return repo
+      .findByUserIdAndCandidateIdIn(userId, candidateIds)
+      .mapNotNull { it.candidateId }
+      .toSet()
+  }
+
+  /**
+   * Whether the caller's sheet already holds a stat for that (day, ticker). Lets `candidates` skip
+   * a taken slot **before** calling [create] : catching the 409 instead would mark the surrounding
+   * transaction rollback-only, and the bulk promotion would fail as a whole.
+   */
+  @Transactional(readOnly = true)
+  fun existsForDayAndTicker(tradeDate: LocalDate, ticker: String): Boolean {
+    val userId = authService.getCurrentUser().id
+    return repo.findByUserIdAndTradeDateAndTicker(userId, tradeDate, ticker.trim().uppercase()) !=
+      null
   }
 
   // ---- CRUD (user-scoped) --------------------------------------------------------------------

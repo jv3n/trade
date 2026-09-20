@@ -7,7 +7,11 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { addDays, startOfDay } from 'date-fns';
 import { Observable, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
-import { Candidate, CandidateInput } from '../../core/api/candidates/candidates.model';
+import {
+  BulkPromotion,
+  Candidate,
+  CandidateInput,
+} from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { CandidatesPage } from './candidates-page';
@@ -21,6 +25,8 @@ import { CandidatesPage } from './candidates-page';
  *   below the PM open included), a submit creates the candidate for the browsed day and resets the
  *   form while keeping the pattern, and a 409 surfaces the dedicated "duplicate" toast.
  * - **Edit** — a row loaded into the form saves as an update.
+ * - **Promotion** — « → Stat » and « Promote all » go through the confirmation modal, the bulk
+ *   action only targets the candidates still missing from the sheet, and both reload the day.
  * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
  * - **Day navigation** — past days are read-only.
  *
@@ -41,6 +47,7 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     volumeMillions: 3.1,
     locatePerShare: 0.03,
     note: 'Résistance 4,65 — high PM, pas de news',
+    promoted: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -60,6 +67,10 @@ class MockCandidatesRepository extends CandidatesRepository {
     of(makeCandidate({ ...input, id })),
   );
   delete = vi.fn((_id: string): Observable<void> => of(undefined));
+  promote = vi.fn((_id: string): Observable<void> => of(undefined));
+  promoteDay = vi.fn((_date: Date): Observable<BulkPromotion> =>
+    of({ promoted: ['KTTA'], skipped: [] }),
+  );
 }
 
 function setup(options: { list?: Candidate[]; confirmed?: boolean } = {}): {
@@ -222,6 +233,67 @@ describe('CandidatesPage', () => {
     expect(repo.update).toHaveBeenCalledWith('c-ktta', expect.objectContaining({ pmHigh: 4.9 }));
     expect(repo.create).not.toHaveBeenCalled();
     expect(page.editingId()).toBeNull();
+  });
+
+  // ---- Promotion ----
+
+  it('promotes a candidate once the confirmation modal is confirmed, then reloads the day', () => {
+    const { page, repo, snackBarOpen } = setup({ list: [makeCandidate()] });
+
+    page.promote(makeCandidate());
+
+    expect(repo.promote).toHaveBeenCalledWith('c-ktta');
+    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--success');
+    expect(repo.listForDate).toHaveBeenCalledTimes(2); // init + reload
+  });
+
+  it('never promotes when the confirmation modal is cancelled', () => {
+    const { page, repo } = setup({ list: [makeCandidate()], confirmed: false });
+
+    page.promote(makeCandidate());
+
+    expect(repo.promote).not.toHaveBeenCalled();
+  });
+
+  it('toasts an error when a promotion fails', () => {
+    const { page, repo, snackBarOpen } = setup({ list: [makeCandidate()] });
+    repo.promote.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+
+    page.promote(makeCandidate());
+
+    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--error');
+  });
+
+  it('counts only the candidates still missing from the sheet as promotable', () => {
+    const { page } = setup({
+      list: [
+        makeCandidate({ id: 'sgbx', ticker: 'SGBX', promoted: true }),
+        makeCandidate({ id: 'bnrg', ticker: 'BNRG' }),
+      ],
+    });
+
+    expect(page.promotable().map((c) => c.ticker)).toEqual(['BNRG']);
+  });
+
+  it('promotes the whole day in one call and reports how many landed', () => {
+    const { page, repo, snackBarOpen } = setup({ list: [makeCandidate()] });
+
+    page.promoteAll();
+
+    expect(repo.promoteDay).toHaveBeenCalledWith(startOfDay(new Date()));
+    expect(snackBarOpen).toHaveBeenCalledWith(
+      'candidates.snackbar.promoteAllSuccess',
+      undefined,
+      expect.objectContaining({ panelClass: 'stb-snack-bar--success' }),
+    );
+  });
+
+  it('does nothing when every candidate of the day is already in the sheet', () => {
+    const { page, repo } = setup({ list: [makeCandidate({ promoted: true })] });
+
+    page.promoteAll();
+
+    expect(repo.promoteDay).not.toHaveBeenCalled();
   });
 
   // ---- Delete ----

@@ -130,3 +130,23 @@ td.note-cell {
 tr.editing td {
   background: var(--color-accent-soft);
 }
+
+// « En stats » — a status, so indigo like the pattern tag (colour rule).
+.stats-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 550;
+  white-space: nowrap;
+
+  &__icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}

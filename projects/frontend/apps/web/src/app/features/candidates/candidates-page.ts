@@ -268,6 +268,62 @@ export class CandidatesPage {
     this.resetForm();
   }
 
+  // ---- Promotion to the stats sheet (#189) ----
+
+  /** Candidates of the day not yet in the stats sheet — what « Promote all » would act on. */
+  readonly promotable = computed(() => this.rows().filter((c) => !c.promoted));
+
+  /** « → Stat » on a row : copies the candidate onto the sheet, where it starts "to complete". */
+  promote(candidate: Candidate): void {
+    this.confirm
+      .ask('candidates.confirmPromote', { params: { ticker: candidate.ticker } })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.promote(candidate.id)),
+        tap(() => {
+          this.toast('candidates.snackbar.promoteSuccess', 'success', { ticker: candidate.ticker });
+          this.load();
+        }),
+        catchError(() => {
+          this.toast('candidates.snackbar.promoteError', 'error', { ticker: candidate.ticker });
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
+
+  /**
+   * « Tout passer en stats » : promotes every candidate of the day still missing from the sheet.
+   * The modal names them, and the backend stays idempotent — anything already there comes back in
+   * `skipped` rather than failing the batch.
+   */
+  promoteAll(): void {
+    const pending = this.promotable();
+    if (pending.length === 0) return;
+    this.confirm
+      .ask('candidates.confirmPromoteAll', {
+        params: {
+          count: pending.length,
+          tickers: pending.map((c) => c.ticker).join(', '),
+        },
+      })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.promoteDay(this.day())),
+        tap((result) => {
+          this.toast('candidates.snackbar.promoteAllSuccess', 'success', {
+            count: result.promoted.length,
+          });
+          this.load();
+        }),
+        catchError(() => {
+          this.toast('candidates.snackbar.promoteAllError', 'error');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
+
   delete(candidate: Candidate): void {
     this.confirm
       .ask('candidates.confirmDelete', { params: { ticker: candidate.ticker }, variant: 'danger' })
