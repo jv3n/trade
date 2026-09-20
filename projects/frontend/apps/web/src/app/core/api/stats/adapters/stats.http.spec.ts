@@ -87,6 +87,17 @@ describe('HttpStatsRepository', () => {
     req.flush(wirePageFixture([]));
   });
 
+  it('findById reads a single stat — the day context of a trade', () => {
+    repo.findById('stat-1').subscribe((stat) => {
+      expect(stat.ticker).toBe('KTTA');
+      expect(stat.tradeDate.getDate()).toBe(17);
+    });
+
+    const req = http.expectOne('/api/stats/stat-1');
+    expect(req.request.method).toBe('GET');
+    req.flush(wireStat());
+  });
+
   it('summary hits /api/stats/summary with the listing filter', () => {
     repo.summary({ status: 'COMPLETED' }).subscribe();
 

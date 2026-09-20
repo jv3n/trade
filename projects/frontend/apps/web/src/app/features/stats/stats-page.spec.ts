@@ -114,6 +114,7 @@ class MockStatsRepository extends StatsRepository {
       });
     },
   );
+  findById = vi.fn((id: string): Observable<StatEntry> => of(makeStat({ id })));
   summary = vi.fn((_filter?: StatEntryFilter): Observable<StatSummary> => of(makeSummary()));
   update = vi.fn((id: string, input: StatEntryInput): Observable<StatEntry> =>
     of(makeStat({ ...input, id, completed: true })),

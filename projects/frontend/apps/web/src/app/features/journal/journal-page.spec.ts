@@ -1,7 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -27,10 +26,8 @@ import { JournalPage } from './journal-page';
  *  - **Cancelling the confirmation short-circuits the call** — no delete request fires when the
  *    user backs out of the confirmation modal (`ConfirmService`, stubbed here).
  *
- * The CRUD dialog flows (create / update via `MatDialog`) are not exercised here — they
- * compose the same `tap` / `catchError` shape as `delete` but route through `MatDialog`,
- * which we stub to a no-op. Add a dedicated test if the dialog logic grows enough to warrant
- * pinning.
+ * Creation and edition are not journal-page concerns : a trade is born on the stats sheet (#193)
+ * and is edited on its own page (#194). What is left here is the listing, the filters and delete.
  */
 describe('JournalPage', () => {
   let nextPage: PagedResult<TradeEntry>;
@@ -72,10 +69,6 @@ describe('JournalPage', () => {
         },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
-        {
-          provide: MatDialog,
-          useValue: { open: () => ({ afterClosed: () => of(undefined) }) },
-        },
       ],
     }).compileComponents();
   });

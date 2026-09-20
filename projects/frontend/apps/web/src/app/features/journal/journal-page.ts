@@ -2,8 +2,6 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { MatDialog } from '@angular/material/dialog';
-
 import { PageEvent } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Sort } from '@angular/material/sort';
@@ -44,7 +42,6 @@ import {
   TRADE_STATUSES,
   TradeEntry,
   TradeEntryFilter,
-  TradeEntryInput,
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
 import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
@@ -54,7 +51,6 @@ import {
   PeriodPresetKey,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
-import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog/add-trade-dialog';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
@@ -98,9 +94,10 @@ const DEFAULT_PAGE_SIZE = 10;
  *     profitable / losing). Filter changes refetch from the backend.
  *   - **Pagination** : `<mat-paginator>` below the table. Default 10 rows per page. Filter /
  *     search / sort changes reset the index to 0.
- *   - **Edit / delete** : edit via Material dialog, delete via the confirmation modal
- *     (`ConfirmService`). There is no « add » here since #193 — a trade is born from a stat, on
- *     the stats sheet. Every mutation refetches the current page rather than splicing locally.
+ *   - **Open / delete** : a row opens the trade page, where everything is edited in place (#194) ;
+ *     delete goes through the confirmation modal (`ConfirmService`). There is no « add » here since
+ *     #193 — a trade is born from a stat, on the stats sheet. A delete refetches the current page
+ *     rather than splicing locally.
  *
  * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`) and
  * refetches when any of them changes.
@@ -133,7 +130,6 @@ const DEFAULT_PAGE_SIZE = 10;
 })
 export class JournalPage {
   private readonly repo = inject(JournalRepository);
-  private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
@@ -316,11 +312,8 @@ export class JournalPage {
 
   // ---- CRUD ----
   // No create here (#193) : a trade is born from a stat, through the « → Trade » action of the
-  // stats sheet. The journal only edits and deletes.
-
-  openEdit(entry: TradeEntry): void {
-    this.openDialog(entry);
-  }
+  // stats sheet. No edit either (#194) : the trade page owns the edition. The journal only opens
+  // and deletes.
 
   /** Row click → dedicated detail view. The ticker chip + action buttons stop propagation. */
   openDetail(entry: TradeEntry): void {
@@ -386,38 +379,6 @@ export class JournalPage {
         this.loading.set(false);
       },
     });
-  }
-
-  /**
-   * Dialog → save pipeline. The afterClosed() stream emits one value (the dialog result), then
-   * completes ; `switchMap` chains into the update call. `tap` posts the success snackbar +
-   * refetches ; `catchError` swallows the error after the user-facing toast so the outer
-   * subscription completes cleanly. Edit only — creation lives on the stats sheet (#193).
-   */
-  private openDialog(entry: TradeEntry): void {
-    const data: AddTradeDialogData = { entry };
-    const ref = this.dialog.open<AddTradeDialog, AddTradeDialogData, TradeEntryInput | undefined>(
-      AddTradeDialog,
-      { data, width: '1040px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
-    );
-    ref
-      .afterClosed()
-      .pipe(
-        filter((input): input is TradeEntryInput => !!input),
-        switchMap((input) =>
-          this.repo.update(entry.id, input).pipe(
-            tap((saved) => {
-              this.toast('journal.snackbar.updateSuccess', 'success', { ticker: saved.ticker });
-              this.refetch();
-            }),
-            catchError(() => {
-              this.toast('journal.snackbar.updateError', 'error');
-              return EMPTY;
-            }),
-          ),
-        ),
-      )
-      .subscribe();
   }
 
   /**
