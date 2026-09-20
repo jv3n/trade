@@ -34,6 +34,8 @@ describe('AccountPage — morning reconciliation', () => {
   let reconciliations: ReturnType<typeof vi.fn>;
   let confirmed: boolean;
   let confirmAsk: ReturnType<typeof vi.fn>;
+  /** What the history endpoint answers — set by a test **before** `setup()`. */
+  let historyRows: Reconciliation[];
 
   beforeEach(() => {
     confirmed = true;
@@ -42,7 +44,8 @@ describe('AccountPage — morning reconciliation', () => {
         makeReconciliation({ brokerBalance: input.brokerBalance, gap: input.brokerBalance - 1000 }),
       ),
     );
-    reconciliations = vi.fn(() => of<Reconciliation[]>([]));
+    historyRows = [];
+    reconciliations = vi.fn(() => of(historyRows));
     confirmAsk = vi.fn(() => of(confirmed));
 
     TestBed.configureTestingModule({
@@ -66,9 +69,8 @@ describe('AccountPage — morning reconciliation', () => {
             addMovement: () => of({} as AccountMovement),
             updateMovement: () => of({} as AccountMovement),
             deleteMovement: () => of(undefined),
-            // Indirection so a test can swap the double after the TestBed is configured.
-            reconcile: (input: ReconciliationInput) => reconcile(input),
-            reconciliations: (limit?: number) => reconciliations(limit),
+            reconcile,
+            reconciliations,
           } as unknown as AccountRepository,
         },
         { provide: ForexRepository, useValue: { latestRate: () => throwError(() => new Error()) } },
@@ -147,7 +149,7 @@ describe('AccountPage — morning reconciliation', () => {
   });
 
   it('recognises this morning as already settled', () => {
-    reconciliations = vi.fn(() => of([makeReconciliation({ valueDate: new Date() })]));
+    historyRows = [makeReconciliation({ valueDate: new Date() })];
     const page = setup();
 
     expect(page.todayReconciliation()).not.toBeNull();
@@ -156,7 +158,7 @@ describe('AccountPage — morning reconciliation', () => {
   it("yesterday's reconciliation doesn't count as this morning's", () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    reconciliations = vi.fn(() => of([makeReconciliation({ valueDate: yesterday })]));
+    historyRows = [makeReconciliation({ valueDate: yesterday })];
     const page = setup();
 
     expect(page.todayReconciliation()).toBeNull();
