@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Sort } from '@angular/material/sort';
+import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -121,7 +122,8 @@ function sessionOf(entry: StatEntry): SessionModel {
  * - **Filters** : search, period preset, pattern, status ; server-side sort + pagination.
  *
  * Stats are created by promoting a candidate (#189) — this page never creates one. The « → Trade »
- * column lands with the stat → trade flow (#193).
+ * column (#193) is the **only** way a trade comes into existence : one per stat, confirmed, and the
+ * row shows a link to that trade from then on.
  */
 @Component({
   selector: 'app-stats-page',
@@ -129,6 +131,7 @@ function sessionOf(entry: StatEntry): SessionModel {
     DatePipe,
     DecimalPipe,
     NumberMaskDirective,
+    RouterLink,
     StbButtonModule,
     StbButtonToggleModule,
     StbCheckboxModule,
@@ -152,6 +155,7 @@ export class StatsPage {
   private readonly confirm = inject(ConfirmService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
+  private readonly router = inject(Router);
 
   // ---- Data state ----
   readonly loading = signal(true);
@@ -204,6 +208,7 @@ export class StatsPage {
     'lod',
     'eod',
     'flags',
+    'trade',
     'actions',
   ] as const;
 
@@ -373,6 +378,29 @@ export class StatsPage {
   }
 
   // ---- Row actions ----
+
+  /**
+   * « → Trade » (#193) — confirmed, then the backend creates the trade and we land straight on its
+   * page : the point of the action is to go and type the executions. One trade per stat, so the
+   * button is gone from that row on the way back.
+   */
+  promoteToTrade(entry: StatEntry): void {
+    this.confirm
+      .ask('stats.confirmPromoteTrade', { params: { ticker: entry.ticker } })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.promoteToTrade(entry.id)),
+        tap((trade) => {
+          this.toast('stats.snackbar.promoteTradeSuccess', 'success', { ticker: entry.ticker });
+          void this.router.navigate(['/journal', trade.id]);
+        }),
+        catchError(() => {
+          this.toast('stats.snackbar.promoteTradeError', 'error');
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
 
   delete(entry: StatEntry): void {
     this.confirm

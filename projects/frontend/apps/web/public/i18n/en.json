@@ -408,23 +408,33 @@
       "flags": "Flags",
       "ssr": "SSR",
       "under1Dollar": "Under $1",
-      "entryAfter11am": "Entry after 11 am"
+      "entryAfter11am": "Entry after 11 am",
+      "trade": "Trade"
     },
     "actions": {
       "complete": "Complete",
       "edit": "Edit the session",
-      "delete": "Delete"
+      "delete": "Delete",
+      "toTrade": "Trade",
+      "openTrade": "Open the trade"
+    },
+    "confirmPromoteTrade": {
+      "title": "Create the {{ticker}} trade?",
+      "message": "The trade inherits the stat's pattern and context. You will then add the executions, the real P&L, the post-mortem and the chart screenshot.",
+      "confirm": "Create the trade"
     },
     "confirmDelete": {
       "title": "Delete the {{ticker}} stat?",
-      "message": "The stat is permanently deleted. Trades already created from it are kept.",
+      "message": "The stat is permanently deleted. A trade created from it must be deleted first.",
       "confirm": "Delete"
     },
     "snackbar": {
       "completeSuccess": "Session of {{ticker}} saved.",
       "completeError": "Couldn't save the session. Please retry.",
       "deleteSuccess": "Stat {{ticker}} deleted.",
-      "deleteError": "Couldn't delete the stat. Please retry."
+      "deleteError": "Couldn't delete the stat. Please retry.",
+      "promoteTradeSuccess": "Trade {{ticker}} created in the journal.",
+      "promoteTradeError": "Couldn't create the trade. Please retry."
     }
   },
   "lexicon": {

@@ -408,23 +408,33 @@
       "flags": "Flags",
       "ssr": "SSR",
       "under1Dollar": "Prix < 1 $",
-      "entryAfter11am": "Entrée après 11h"
+      "entryAfter11am": "Entrée après 11h",
+      "trade": "Trade"
     },
     "actions": {
       "complete": "Compléter",
       "edit": "Modifier la séance",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "toTrade": "Trade",
+      "openTrade": "Voir le trade"
+    },
+    "confirmPromoteTrade": {
+      "title": "Créer le trade {{ticker}} ?",
+      "message": "Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&L réel, le post-mortem et la capture du chart.",
+      "confirm": "Créer le trade"
     },
     "confirmDelete": {
       "title": "Supprimer la stat {{ticker}} ?",
-      "message": "La stat est supprimée définitivement. Les trades déjà créés à partir d'elle sont conservés.",
+      "message": "La stat est supprimée définitivement. Un trade créé à partir d'elle doit être supprimé avant.",
       "confirm": "Supprimer"
     },
     "snackbar": {
       "completeSuccess": "Séance de {{ticker}} enregistrée.",
       "completeError": "Impossible d'enregistrer la séance. Réessaie.",
       "deleteSuccess": "Stat {{ticker}} supprimée.",
-      "deleteError": "Impossible de supprimer la stat. Réessaie."
+      "deleteError": "Impossible de supprimer la stat. Réessaie.",
+      "promoteTradeSuccess": "Trade {{ticker}} créé au journal.",
+      "promoteTradeError": "Impossible de créer le trade. Réessaie."
     }
   },
   "lexicon": {

@@ -42,6 +42,12 @@ export interface StatEntry {
   /** Derived server-side : the whole session block is in. */
   completed: boolean;
 
+  // ---- Journal link (#193) ----
+  /** The trade this stat gave birth to — one at most. Null = the row offers the « → Trade » action. */
+  tradeId: string | null;
+  /** That trade's retained P&L, what the link is labelled with. Null while its position is open. */
+  tradeRetainedProfitDollars: number | null;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,7 +55,13 @@ export interface StatEntry {
 /** Update payload — the completion panel sends the whole row back (premarket + session + flags). */
 export type StatEntryInput = Omit<
   StatEntry,
-  'id' | 'candidateId' | 'completed' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'candidateId'
+  | 'completed'
+  | 'tradeId'
+  | 'tradeRetainedProfitDollars'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
 /** Completion status a listing can be narrowed to. Mirrors the backend `StatStatus`. */
@@ -57,7 +69,7 @@ export type StatStatus = 'TO_COMPLETE' | 'COMPLETED';
 
 /**
  * Filter criteria for the stats listing — mirrors the backend `StatEntryFilter`. All optional ;
- * omitted axes = no filter. The « traded / not traded » axis lands with the stat → trade flow (#193).
+ * omitted axes = no filter.
  */
 export interface StatEntryFilter {
   query?: string | null;

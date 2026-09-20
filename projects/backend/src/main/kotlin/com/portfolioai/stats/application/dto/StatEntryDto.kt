@@ -1,5 +1,6 @@
 package com.portfolioai.stats.application.dto
 
+import com.portfolioai.journal.application.dto.TradeLinkDto
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.domain.StatEntry
 import java.math.BigDecimal
@@ -14,6 +15,11 @@ import java.util.UUID
  * are derived by the front (`features/stats/stats.math.ts`) from these, exactly like the live
  * preview of the completion panel. [completed] is the "to complete" status, derived server-side
  * from the session block.
+ *
+ * [tradeId] / [tradeRetainedProfitDollars] mirror the journal side of the stat → trade link (#193)
+ * : null means the stat has no trade yet and the listing offers the « → Trade » action ; non-null
+ * means it shows a link to that trade instead, labelled by its retained P&L (itself null while the
+ * position is open).
  */
 data class StatEntryDto(
   val id: UUID,
@@ -40,11 +46,13 @@ data class StatEntryDto(
   val under1Dollar: Boolean,
   val entryAfter11am: Boolean,
   val completed: Boolean,
+  val tradeId: UUID?,
+  val tradeRetainedProfitDollars: BigDecimal?,
   val createdAt: Instant,
   val updatedAt: Instant,
 )
 
-fun StatEntry.toDto() =
+fun StatEntry.toDto(tradeLink: TradeLinkDto? = null) =
   StatEntryDto(
     id = id,
     candidateId = candidateId,
@@ -67,6 +75,8 @@ fun StatEntry.toDto() =
     under1Dollar = under1Dollar,
     entryAfter11am = entryAfter11am,
     completed = isCompleted,
+    tradeId = tradeLink?.tradeId,
+    tradeRetainedProfitDollars = tradeLink?.retainedProfitDollars,
     createdAt = createdAt,
     updatedAt = updatedAt,
   )

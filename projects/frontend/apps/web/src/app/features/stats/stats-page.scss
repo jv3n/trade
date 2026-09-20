@@ -187,3 +187,25 @@ tr.pending td {
 tr.editing td {
   background: var(--color-accent-soft);
 }
+
+// ---- Journal link (#193) ----
+// The « → Trade » column shows the retained P&L of the trade the stat gave birth to. Green / red
+// here is legitimate : it is an outcome, the one case the colour rule reserves the pair for.
+.trade-link {
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.profit-positive {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.profit-negative {
+  color: var(--color-danger);
+  font-weight: 600;
+}
