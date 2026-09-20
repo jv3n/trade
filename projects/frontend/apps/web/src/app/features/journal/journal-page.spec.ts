@@ -4,17 +4,22 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JournalRepository, PagedResult } from '../../core/api/journal/journal.repository';
-import { TradeEntry } from '../../core/api/journal/trade-entry.model';
+import {
+  JournalSummary,
+  TradeEntry,
+  TradeEntryFilter,
+} from '../../core/api/journal/trade-entry.model';
+import { StatSummary } from '../../core/api/stats/stat-entry.model';
+import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { JournalPage } from './journal-page';
 
 /**
- * Pins the delete pipeline of [JournalPage]. Four regressions this file catches that a
- * typecheck alone can't :
+ * Pins the listing behaviour of [JournalPage] — the regressions a typecheck alone can't catch :
  *
  *  - **The delete edge case** — deleting the **last** row of a non-zero page must decrement
  *    `pageIndex` instead of refetching the now-empty page. Without this, the user lands on
@@ -25,6 +30,9 @@ import { JournalPage } from './journal-page';
  *    panel when the repository throws.
  *  - **Cancelling the confirmation short-circuits the call** — no delete request fires when the
  *    user backs out of the confirmation modal (`ConfirmService`, stubbed here).
+ *  - **Filters and KPIs** (#195) — the page opens on the running month, the toolbar filters apply
+ *    on click and rewind to page 0, the two summaries follow the same period as the listing, and a
+ *    failing summary never takes the table down with it.
  *
  * Creation and edition are not journal-page concerns : a trade is born on the stats sheet (#193)
  * and is edited on its own page (#194). What is left here is the listing, the filters and delete.
@@ -36,6 +44,8 @@ describe('JournalPage', () => {
   /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
   let confirmed: boolean;
   let snackBarOpen: ReturnType<typeof vi.fn>;
+  let summary: ReturnType<typeof vi.fn>;
+  let statSummary: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     nextPage = makePage([], 0);
@@ -43,6 +53,8 @@ describe('JournalPage', () => {
     deleteSubject = new Subject<void>();
     confirmed = true;
     snackBarOpen = vi.fn();
+    summary = vi.fn((_filter?: TradeEntryFilter) => of(makeSummary()));
+    statSummary = vi.fn(() => of(makeStatSummary()));
 
     await TestBed.configureTestingModule({
       imports: [JournalPage],
@@ -50,7 +62,7 @@ describe('JournalPage', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         provideTranslateService({ lang: 'en' }),
-        // The filter drawer hosts two `<mat-datepicker>` widgets. `MatDatepickerInput` reaches
+        // The « custom » period reveals two `<mat-datepicker>` widgets. `MatDatepickerInput` reaches
         // for a `DateAdapter` at construction time ; without one the template fails to compile
         // and every test in this file ends up reporting the same "No DateAdapter" trace
         // instead of the actual delete logic regression we care about.
@@ -59,6 +71,7 @@ describe('JournalPage', () => {
           provide: JournalRepository,
           useValue: {
             findAll,
+            summary,
             findById: () => of({} as unknown),
             create: () => of({} as unknown),
             update: () => of({} as unknown),
@@ -67,6 +80,10 @@ describe('JournalPage', () => {
             importCsv: () => of({ parsed: 0, created: 0, errors: [] }),
           } as unknown as JournalRepository,
         },
+        {
+          provide: StatsRepository,
+          useValue: { summary: statSummary } as unknown as StatsRepository,
+        },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
       ],
@@ -74,6 +91,80 @@ describe('JournalPage', () => {
   });
 
   afterEach(() => vi.restoreAllMocks());
+
+  // ---------------------------------------------------------------------------
+  // Filters + KPIs (#195)
+  // ---------------------------------------------------------------------------
+
+  it('opens on the running month and asks the two summaries for that same period', () => {
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    expect(page.appliedFilter().period).toBe('thisMonth');
+    expect(page.appliedFilter().dateFrom).not.toBeNull();
+
+    const listed = findAll.mock.calls[0][0] as TradeEntryFilter;
+    const summarised = summary.mock.calls[0][0] as TradeEntryFilter;
+    expect(summarised.dateFrom).toEqual(listed.dateFrom);
+    expect(summarised.dateTo).toEqual(listed.dateTo);
+    expect(page.summary()?.retainedPnl).toBe(751.85);
+    // « 8 / 10 » — the stats count covers the same period.
+    expect(page.statCount()).toBe(10);
+  });
+
+  it('picking a pattern refetches on that single pattern and rewinds to page 0', () => {
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    page.pageIndex.set(3);
+    fixture.detectChanges();
+
+    page.setPattern('DT');
+    fixture.detectChanges();
+
+    expect(page.pageIndex()).toBe(0);
+    const last = findAll.mock.calls.at(-1)?.[0] as TradeEntryFilter;
+    expect(last.patterns).toEqual(['DT']);
+  });
+
+  it('the winners segment narrows the listing AND the KPIs to PROFITABLE', () => {
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    page.setStatus('PROFITABLE');
+    fixture.detectChanges();
+
+    expect((findAll.mock.calls.at(-1)?.[0] as TradeEntryFilter).status).toBe('PROFITABLE');
+    expect((summary.mock.calls.at(-1)?.[0] as TradeEntryFilter).status).toBe('PROFITABLE');
+  });
+
+  it('the stats KPI ignores the pattern and outcome — « traded / all » compares one period', () => {
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    page.setStatus('LOSING');
+    fixture.detectChanges();
+
+    const last = statSummary.mock.calls.at(-1)?.[0] as { status?: unknown; patterns?: unknown };
+    expect(last.status).toBeUndefined();
+    expect(last.patterns).toBeUndefined();
+  });
+
+  it('a failing summary empties its cards without taking the listing down', () => {
+    summary.mockReturnValue(throwError(() => new Error('500')));
+    nextPage = makePage([makeTrade()], 1);
+
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    expect(page.summary()).toBeNull();
+    expect(page.entries()).toHaveLength(1);
+    expect(page.error()).toBeNull();
+  });
 
   // ---------------------------------------------------------------------------
   // delete() — edge case : last row of a non-zero page
@@ -212,12 +303,41 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     profitDollars: null,
     realProfitDollars: null,
     retainedProfitDollars: null,
+    retainedGainPercent: null,
     durationMinutes: null,
     note: null,
     errorNote: null,
     hasScreenshot: false,
     createdAt: new Date(),
     updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+function makeSummary(overrides: Partial<JournalSummary> = {}): JournalSummary {
+  return {
+    tradeCount: 8,
+    retainedPnl: 751.85,
+    winCount: 6,
+    lossCount: 2,
+    winRatePercent: 75,
+    averageWin: 175,
+    averageLoss: -149,
+    profitFactor: 3.52,
+    ...overrides,
+  };
+}
+
+function makeStatSummary(overrides: Partial<StatSummary> = {}): StatSummary {
+  return {
+    completed: 10,
+    toComplete: 0,
+    averagePushOpenPercent: 9.6,
+    averageLodPercent: -12.3,
+    fadeCount: 7,
+    averageEodPercent: -3.7,
+    traded: 8,
+    untraded: 2,
     ...overrides,
   };
 }

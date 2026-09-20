@@ -161,6 +161,19 @@ class StatToTradeIntegrationTest {
   }
 
   @Test
+  fun `the summary counts how many stats of the period were traded`() {
+    // The journal's « 8 / 10 traded stats » KPI (#195) reads this pair, and links to the rest.
+    statRepo.save(sampleStat(testUser, ticker = "BNZI"))
+    statService.promoteToTrade(stat.id)
+
+    val summary = statService.summarise(StatEntryFilter())
+
+    assertEquals(2, summary.traded + summary.untraded, "both stats are in the filtered set")
+    assertEquals(1, summary.traded)
+    assertEquals(1, summary.untraded)
+  }
+
+  @Test
   fun `completing a traded stat keeps the link — the button must not come back`() {
     val trade = statService.promoteToTrade(stat.id)
 

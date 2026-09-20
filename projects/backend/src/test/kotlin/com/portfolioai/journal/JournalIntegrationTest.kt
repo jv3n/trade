@@ -33,6 +33,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
@@ -320,6 +322,126 @@ class JournalIntegrationTest {
 
     assertNull(cleared.realProfitDollars, "a null in the request erases the broker figure")
     assertEquals(0, cleared.retainedProfitDollars!!.compareTo(BigDecimal("121.00")))
+  }
+
+  @Test
+  fun `the gain percent follows the retained P&L, not the computed one`() {
+    // SHORT 100 @ 3.21 covered @ 2.00 → 121.00 on a 321.00 basis = 37.6947 %. With a broker
+    // figure of 118.45 the percentage has to shrink in the same proportion.
+    val dto =
+      service.create(
+        sampleRequest(exitPrice = BigDecimal("2.0000"), realProfitDollars = BigDecimal("118.45"))
+      )
+
+    assertEquals(0, dto.gainPercent!!.compareTo(BigDecimal("37.6947")), "computed is untouched")
+    assertEquals(0, dto.retainedGainPercent!!.compareTo(BigDecimal("36.9003")))
+  }
+
+  // ---------------------------------------------------------------------------
+  // Journal KPIs (#195)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the summary folds the retained P&L into the journal KPIs`() {
+    repo.save(sampleEntity(user = testUser, ticker = "WIN1", profitDollars = BigDecimal("200.00")))
+    repo.save(sampleEntity(user = testUser, ticker = "WIN2", profitDollars = BigDecimal("100.00")))
+    repo.save(sampleEntity(user = testUser, ticker = "LOSS", profitDollars = BigDecimal("-50.00")))
+    // Still open — it must weigh on nothing, not even the trade count.
+    repo.save(sampleEntity(user = testUser, ticker = "OPEN", profitDollars = null))
+
+    val summary = service.summarise(TradeEntryFilter())
+
+    assertEquals(3, summary.tradeCount, "the open position is not a trade to judge yet")
+    assertEquals(0, BigDecimal("250.00").compareTo(summary.retainedPnl))
+    assertEquals(2, summary.winCount)
+    assertEquals(1, summary.lossCount)
+    assertEquals(0, BigDecimal("66.67").compareTo(summary.winRatePercent!!))
+    assertEquals(0, BigDecimal("150.00").compareTo(summary.averageWin!!))
+    assertEquals(0, BigDecimal("-50.00").compareTo(summary.averageLoss!!), "losses stay negative")
+    assertEquals(0, BigDecimal("6.00").compareTo(summary.profitFactor!!), "300 won for 50 lost")
+  }
+
+  @Test
+  fun `the summary counts the broker P&L, not the computed one`() {
+    // A computed 50 $ gain the statement turns into a 2 $ loss (fees) belongs in the loss bucket.
+    repo.save(
+      sampleEntity(
+        user = testUser,
+        ticker = "FEES",
+        profitDollars = BigDecimal("50.00"),
+        realProfitDollars = BigDecimal("-2.00"),
+      )
+    )
+
+    val summary = service.summarise(TradeEntryFilter())
+
+    assertEquals(1, summary.lossCount)
+    assertEquals(0, summary.winCount)
+    assertEquals(0, BigDecimal("-2.00").compareTo(summary.retainedPnl))
+  }
+
+  @Test
+  fun `the summary honours the filter — it covers the filtered set, not the whole journal`() {
+    repo.save(
+      sampleEntity(
+        user = testUser,
+        ticker = "JUNE",
+        tradeDate = LocalDate.of(2026, 6, 4),
+        profitDollars = BigDecimal("200.00"),
+      )
+    )
+    repo.save(
+      sampleEntity(
+        user = testUser,
+        ticker = "MAY",
+        tradeDate = LocalDate.of(2026, 5, 4),
+        profitDollars = BigDecimal("999.00"),
+      )
+    )
+
+    val june =
+      service.summarise(
+        TradeEntryFilter(dateFrom = LocalDate.of(2026, 6, 1), dateTo = LocalDate.of(2026, 6, 30))
+      )
+
+    assertEquals(1, june.tradeCount)
+    assertEquals(0, BigDecimal("200.00").compareTo(june.retainedPnl))
+  }
+
+  @Test
+  fun `an empty journal summarises to zero, not to a division by zero`() {
+    val summary = service.summarise(TradeEntryFilter())
+
+    assertEquals(0, summary.tradeCount)
+    assertEquals(0, BigDecimal.ZERO.compareTo(summary.retainedPnl))
+    assertNull(summary.winRatePercent)
+    assertNull(summary.averageWin)
+    assertNull(summary.averageLoss)
+    assertNull(summary.profitFactor, "no loser : the ratio is undefined, not infinite")
+  }
+
+  @Test
+  fun `the listing sorts on the retained P&L through the generated column`() {
+    // The sort key is a derived figure : FEES must land last on a desc sort even though its
+    // computed P&L is the biggest of the three (#195).
+    repo.save(
+      sampleEntity(
+        user = testUser,
+        ticker = "FEES",
+        profitDollars = BigDecimal("500.00"),
+        realProfitDollars = BigDecimal("10.00"),
+      )
+    )
+    repo.save(sampleEntity(user = testUser, ticker = "MID", profitDollars = BigDecimal("100.00")))
+    repo.save(sampleEntity(user = testUser, ticker = "TOP", profitDollars = BigDecimal("300.00")))
+
+    val page =
+      service.findAllPaged(
+        TradeEntryFilter(),
+        PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "retainedProfitDollars")),
+      )
+
+    assertEquals(listOf("TOP", "MID", "FEES"), page.content.map { it.ticker })
   }
 
   // ---------------------------------------------------------------------------

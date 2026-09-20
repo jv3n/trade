@@ -189,20 +189,24 @@
   "journal": {
     "title": "Journal de trading",
     "subtitle": "Consigne chaque trade avec son setup, son exécution et son débrief.",
-    "addTrade": "Ajouter un trade",
+    "kpi": {
+      "pnl": "P&L de la période",
+      "trades": "{{count}} trades",
+      "winRate": "Taux de réussite",
+      "winLossCount": "{{wins}} gagnants · {{losses}} perdants",
+      "averages": "Gain moyen / perte moyenne",
+      "profitFactor": "Profit factor {{value}}",
+      "tradedStats": "Stats tradées",
+      "untraded": "{{count}} stats non tradées",
+      "allTraded": "Toutes les stats de la période ont été tradées"
+    },
     "searchPlaceholder": "Rechercher un ticker…",
     "clearSearch": "Effacer la recherche",
-    "filters": "Filtres",
-    "toggleFilters": "Afficher / masquer les filtres",
     "filterPanel": {
       "period": "Période",
       "dateFrom": "De",
       "dateTo": "À",
-      "pattern": "Pattern",
-      "status": "Statut",
       "statusAll": "Tout statut",
-      "apply": "Appliquer",
-      "reset": "Réinitialiser",
       "periodPresets": {
         "all": "Toutes périodes",
         "custom": "Plage personnalisée",
@@ -212,10 +216,11 @@
         "lastQuarter": "Trimestre dernier",
         "thisYear": "Cette année",
         "lastYear": "Année dernière"
-      }
+      },
+      "allPatterns": "Tous les patterns"
     },
     "loading": "Chargement du journal…",
-    "empty": "Aucun trade pour l'instant. Clique sur « Ajouter un trade » pour le premier.",
+    "empty": "Aucun trade sur cette période. Un trade se crée depuis une stat, sur la feuille de stats.",
     "confirmDelete": {
       "title": "Supprimer le trade {{ticker}} ?",
       "message": "Définitif : les exécutions, le post-mortem et la capture sont supprimés, et le mouvement du trade disparaît du compte. La stat du jour est conservée.",
@@ -236,7 +241,7 @@
       "exitPrice": "Prix de sortie moyen",
       "profitDollars": "Profit calculé ($)",
       "realProfitDollars": "Profit réel ($)",
-      "retainedProfitDollars": "Profit retenu ($)",
+      "retainedProfitDollars": "P&L retenu ($)",
       "gainPercent": "Gain (%)",
       "durationMinutes": "Durée",
       "executionKind": "Type",
@@ -244,15 +249,7 @@
       "shares": "Actions",
       "price": "Prix",
       "note": "Notes",
-      "errorNote": "Erreur / leçon",
-      "statLink": "Stat"
-    },
-    "statLink": {
-      "linked": "Liée",
-      "orphan": "Orpheline",
-      "field": "Stat liée",
-      "none": "— Aucune (orpheline)",
-      "noCandidates": "Aucune stat pour ce ticker à cette date."
+      "errorNote": "Erreur / leçon"
     },
     "enums": {
       "status": {

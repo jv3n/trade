@@ -87,6 +87,8 @@ export interface TradeEntry {
   profitDollars: number | null;
   realProfitDollars: number | null;
   retainedProfitDollars: number | null;
+  /** The retained P&L as a % of the same cost basis as [gainPercent]. */
+  retainedGainPercent: number | null;
   durationMinutes: number | null;
   note: string | null;
   errorNote: string | null;
@@ -94,6 +96,23 @@ export interface TradeEntry {
   hasScreenshot: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * KPIs of the journal listing, computed by the backend over the **whole filtered set** (not the
+ * current page). Every figure is built on the retained P&L, and open positions count in none of
+ * them. Nullable fields have no meaning yet : no closed trade, no winner, no loser (and with no
+ * loser the profit factor is undefined rather than infinite).
+ */
+export interface JournalSummary {
+  tradeCount: number;
+  retainedPnl: number;
+  winCount: number;
+  lossCount: number;
+  winRatePercent: number | null;
+  averageWin: number | null;
+  averageLoss: number | null;
+  profitFactor: number | null;
 }
 
 /**

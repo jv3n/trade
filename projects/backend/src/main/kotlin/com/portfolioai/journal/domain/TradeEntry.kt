@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -41,8 +42,10 @@ import org.hibernate.type.SqlTypes
  *
  * **P&L** — [profitDollars] is the one computed from the executions ; [realProfitDollars] is the
  * one read off the broker statement, entered by hand to absorb fees and rounding. [retainedProfit]
- * (real if set, else computed) is what reaches the account ; it is derived, never stored, so the
- * two sources can't drift.
+ * (real if set, else computed) is what reaches the account. It is **derived** — the Kotlin getter
+ * is the read path, and the `retained_profit_dollars` column beside it is a Postgres GENERATED
+ * column the listing sorts on (#195), recomputed by the DB from the same two fields so the two
+ * can't drift.
  */
 @Entity
 @Table(name = "trade_entry")
@@ -73,6 +76,20 @@ class TradeEntry(
   /** P&L read off the broker statement — overrides [profitDollars] when set. */
   @Column(name = "real_profit_dollars", precision = 18, scale = 2)
   var realProfitDollars: BigDecimal? = null,
+
+  /**
+   * Postgres GENERATED column : `COALESCE(real_profit_dollars, profit_dollars)`. Mapped read-only
+   * so the listing can sort on it server-side ; application code reads [retainedProfit] instead,
+   * never this field (it is stale in-session until the row is re-read).
+   */
+  @Column(
+    name = "retained_profit_dollars",
+    precision = 18,
+    scale = 2,
+    insertable = false,
+    updatable = false,
+  )
+  val retainedProfitDollars: BigDecimal? = null,
 
   // ---- Post-mortem ----
   /** "What happened" — the free-text account of the trade. */
@@ -111,6 +128,23 @@ class TradeEntry(
    */
   val retainedProfit: BigDecimal?
     get() = realProfitDollars ?: profitDollars
+
+  /**
+   * [retainedProfit] as a percentage of the same cost basis [gainPercent] uses. The computed gain %
+   * is profit ÷ basis, so the retained one is it scaled by the real / computed ratio — no need to
+   * re-derive the basis (which lives in the executions, not on the row).
+   *
+   * Null when a real P&L was typed on a break-even position : the ratio has no basis to lean on,
+   * and a percentage of nothing would be a made-up figure.
+   */
+  val retainedGainPercent: BigDecimal?
+    get() {
+      val real = realProfitDollars ?: return gainPercent
+      val computed = profitDollars ?: return null
+      if (computed.signum() == 0) return null
+      // Scale 4, like the `gain_percent` column itself.
+      return gainPercent?.multiply(real)?.divide(computed, 4, RoundingMode.HALF_UP)
+    }
 
   /**
    * Rewrites the execution list from the given legs, re-sequencing them 0-based in order.

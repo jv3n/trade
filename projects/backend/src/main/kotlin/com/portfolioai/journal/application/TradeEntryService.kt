@@ -3,6 +3,7 @@ package com.portfolioai.journal.application
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.User
 import com.portfolioai.journal.application.dto.ImportResult
+import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.application.dto.ScreenshotContent
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
@@ -18,6 +19,7 @@ import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
 import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.Instant
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
@@ -87,6 +89,42 @@ class TradeEntryService(
       else pageable
     return repo.findAll(spec, effective).map { it.toDto() }
   }
+
+  /**
+   * KPIs over the **whole filtered set**, not the current page : realized P&L, win rate, average
+   * win / loss and profit factor (#195). Loads the filtered rows and folds them in memory — a
+   * personal journal counts in the hundreds of rows a year, and the alternative (four aggregate
+   * queries) would duplicate the retained-P&L rule in SQL.
+   */
+  @Transactional(readOnly = true)
+  fun summarise(filter: TradeEntryFilter): JournalSummaryDto {
+    val userId = authService.getCurrentUser().id
+    val rows = repo.findAll(TradeEntrySpecifications.matching(userId, filter))
+    val realized = rows.mapNotNull { it.retainedProfit }
+    val wins = realized.filter { it.signum() > 0 }
+    val losses = realized.filter { it.signum() < 0 }
+    val winSum = wins.fold(BigDecimal.ZERO, BigDecimal::add)
+    val lossSum = losses.fold(BigDecimal.ZERO, BigDecimal::add)
+    return JournalSummaryDto(
+      tradeCount = realized.size,
+      retainedPnl = realized.fold(BigDecimal.ZERO, BigDecimal::add),
+      winCount = wins.size,
+      lossCount = losses.size,
+      winRatePercent = percentage(wins.size, realized.size),
+      averageWin = average(winSum, wins.size),
+      averageLoss = average(lossSum, losses.size),
+      // No loser yet : the ratio is undefined, not infinite — the front shows a dash.
+      profitFactor =
+        if (losses.isEmpty()) null else winSum.divide(lossSum.abs(), 2, RoundingMode.HALF_UP),
+    )
+  }
+
+  private fun percentage(part: Int, total: Int): BigDecimal? =
+    if (total == 0) null
+    else BigDecimal(part * 100).divide(BigDecimal(total), 2, RoundingMode.HALF_UP)
+
+  private fun average(sum: BigDecimal, count: Int): BigDecimal? =
+    if (count == 0) null else sum.divide(BigDecimal(count), 2, RoundingMode.HALF_UP)
 
   companion object {
     /** Used as the implicit sort when the client doesn't send any `sort` URL param. */

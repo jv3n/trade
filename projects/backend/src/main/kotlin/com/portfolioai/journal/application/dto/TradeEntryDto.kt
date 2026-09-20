@@ -16,7 +16,8 @@ import java.util.UUID
  *
  * The three P&L figures are all exposed so the trade page can show the gap between them (#192) :
  * [profitDollars] computed from the executions, [realProfitDollars] typed from the broker
- * statement, [retainedProfitDollars] the one that reaches the account (real if set, else computed).
+ * statement, [retainedProfitDollars] the one that reaches the account (real if set, else computed),
+ * and [retainedGainPercent] that last one as a percentage of the same cost basis.
  *
  * [durationMinutes] is derived on the fly from the execution times — null while the position is
  * open, or as soon as one end has no time.
@@ -36,6 +37,7 @@ data class TradeEntryDto(
   val profitDollars: BigDecimal?,
   val realProfitDollars: BigDecimal?,
   val retainedProfitDollars: BigDecimal?,
+  val retainedGainPercent: BigDecimal?,
   val durationMinutes: Long?,
   val note: String?,
   val errorNote: String?,
@@ -60,6 +62,7 @@ fun TradeEntry.toDto() =
     profitDollars = profitDollars,
     realProfitDollars = realProfitDollars,
     retainedProfitDollars = retainedProfit,
+    retainedGainPercent = retainedGainPercent,
     durationMinutes = TradePositionCalculator.duration(executions.map { it.toLeg() }),
     note = note,
     errorNote = errorNote,

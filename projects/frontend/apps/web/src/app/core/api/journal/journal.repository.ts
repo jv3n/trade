@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { TradeEntry, TradeEntryFilter, TradeEntryInput } from './trade-entry.model';
+import { JournalSummary, TradeEntry, TradeEntryFilter, TradeEntryInput } from './trade-entry.model';
 
 /**
  * Port — CRUD over the trading journal. The port speaks the **domain** language only :
@@ -21,6 +21,13 @@ export abstract class JournalRepository {
     page?: PageRequest,
   ): Observable<PagedResult<TradeEntry>>;
   abstract findById(id: string): Observable<TradeEntry>;
+
+  /**
+   * KPIs over the same filter as [findAll] — P&L, win rate, average win / loss, profit factor.
+   * Computed on the whole filtered set, so they don't follow the pagination (#195).
+   */
+  abstract summary(filter?: TradeEntryFilter): Observable<JournalSummary>;
+
   /**
    * No `create` on purpose (#193) : a trade is born from a stat, through
    * `StatsRepository.promoteToTrade`. The backend has no create endpoint either.

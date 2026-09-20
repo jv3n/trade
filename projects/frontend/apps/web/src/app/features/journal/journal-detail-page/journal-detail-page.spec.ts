@@ -283,6 +283,7 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     profitDollars: null,
     realProfitDollars: null,
     retainedProfitDollars: null,
+    retainedGainPercent: null,
     durationMinutes: null,
     note: null,
     errorNote: null,

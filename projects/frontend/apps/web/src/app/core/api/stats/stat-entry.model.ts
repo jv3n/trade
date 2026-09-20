@@ -92,6 +92,9 @@ export interface StatSummary {
   /** Completed stats whose EOD closed below the open — the GUS thesis playing out. */
   fadeCount: number;
   averageEodPercent: number | null;
+  /** Stats of the filtered set that gave birth to a trade — the journal reads « traded / all ». */
+  traded: number;
+  untraded: number;
 }
 
 /**

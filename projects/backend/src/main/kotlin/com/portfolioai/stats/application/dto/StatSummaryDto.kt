@@ -16,6 +16,9 @@ import java.math.BigDecimal
  * @param fadeCount Completed stats whose EOD closed **below** the open (the GUS thesis playing
  *   out).
  * @param averageEodPercent Average EOD, vs the open.
+ * @param traded Stats of the filtered set that gave birth to a trade — the journal reads this pair
+ *   as « 8 / 10 » and links to the ones left untraded (#195).
+ * @param untraded Stats of the filtered set with no trade yet.
  */
 data class StatSummaryDto(
   val completed: Int,
@@ -24,4 +27,6 @@ data class StatSummaryDto(
   val averageLodPercent: BigDecimal?,
   val fadeCount: Int,
   val averageEodPercent: BigDecimal?,
+  val traded: Int,
+  val untraded: Int,
 )
