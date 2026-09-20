@@ -61,7 +61,7 @@ class CustomOAuth2UserServiceTest {
     // contract.
     val appConfigService: AppConfigService = mock()
     given(appConfigService.getAllowedEmails()).willReturn(allowedEmails)
-    return CustomOAuth2UserService(userRepository, adminEmails, appConfigService)
+    return CustomOAuth2UserService(userRepository, adminEmails, appConfigService, mock())
   }
 
   // ---------------------------------------------------------------------- creation
