@@ -38,7 +38,7 @@ trade/
 │   │       │              # app-state/ (UI signal services), http/ (interceptors),
 │   │       │              # router/ (guards), providers.ts
 │   │       ├── shared/    # cross-cutting helpers (no state, no DI)
-│   │       └── features/  # account, journal, journal-io, stats, candidates, lexicon,
+│   │       └── features/  # account, journal, stats, candidates, lexicon,
 │   │                      # settings, login, error
 │   ├── libs/ui/                                    # @portfolioai/ui design-system lib
 │   │   ├── src/lib/<component>/                    # Stb*Module wrappers + scss overrides
@@ -49,9 +49,9 @@ trade/
 │   └── angular.json                                # 2 projects : web, ui
 ├── projects/backend/src/main/kotlin/com/portfolioai/
 │   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles + local-no-auth profile
-│   ├── journal/     # Trade journal (CRUD + CSV io + Pageable + executions + attachments)
+│   ├── journal/     # Trade journal (CRUD + CSV export + Pageable + executions + attachments)
 │   ├── account/     # Broker cash account — movements + derived balance, fed by journal P&L (event)
-│   ├── stats/       # Stats sheet (CSV import/export + per-user rows)
+│   ├── stats/       # Stats sheet (CSV export + per-user rows)
 │   ├── candidates/  # Candidate sheets
 │   ├── lexicon/     # Bilingual trading lexicon
 │   ├── config/      # Runtime-editable settings (login whitelist only)
@@ -128,7 +128,7 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 ### Data & secrets
 
 - `application-local.yml` + `application-prod.yml` are **committed** (no secrets — only behavior overrides like `spring.flyway.repair-on-migrate`, `springdoc.api-docs.enabled`). The dangerous-in-prod settings are isolated to the `local` profile by construction. **Never commit API keys / OAuth secrets / DB passwords** — those live in `.env` (local, gitignored) and GCP Secret Manager (prod).
-- `docs/data-input/` holds synthetic CSVs (versioned, used for CI / demo + the journal-import demo file `journal-demo.csv`). Real exports go to `docs/data-input-local/` (gitignored). Never mix them.
+- `docs/data-input/` holds synthetic CSVs (versioned) — `journal-export-sample.csv` documents the shape of the journal export. Real exports go to `docs/data-input-local/` (gitignored). Never mix them.
 
 ### Commits
 

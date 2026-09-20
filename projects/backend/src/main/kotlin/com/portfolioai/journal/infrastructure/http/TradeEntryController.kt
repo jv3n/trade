@@ -1,7 +1,6 @@
 package com.portfolioai.journal.infrastructure.http
 
 import com.portfolioai.journal.application.TradeEntryService
-import com.portfolioai.journal.application.dto.ImportResult
 import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
@@ -110,9 +109,9 @@ class TradeEntryController(private val service: TradeEntryService) {
   @GetMapping("/{id}") fun findById(@PathVariable id: UUID): TradeEntryDto = service.findById(id)
 
   /**
-   * CSV export of every trade for the current user. Roundtrip-safe with the future import flow —
-   * column layout owned by `TradeEntryCsvEncoder`. The response is a `text/csv` attachment with a
-   * dated filename so the browser triggers a download.
+   * CSV export of every trade for the current user — column layout owned by `TradeEntryCsvEncoder`.
+   * The response is a `text/csv` attachment with a dated filename so the browser triggers a
+   * download.
    */
   @GetMapping("/export", produces = ["text/csv"])
   fun exportCsv(): ResponseEntity<ByteArray> {
@@ -124,19 +123,8 @@ class TradeEntryController(private val service: TradeEntryService) {
       .body(csv)
   }
 
-  /**
-   * CSV import — accepts a `multipart/form-data` upload with a `file` part. Atomic batch : if the
-   * decoder surfaces any error, no trade is persisted (cf. [TradeEntryService.importCsv]). The
-   * response body always returns 200 with an [ImportResult] ; per-row errors are surfaced in
-   * `errors` rather than as a 4xx so the frontend can render them inline.
-   */
-  @PostMapping("/import", consumes = ["multipart/form-data"])
-  fun importCsv(@RequestParam("file") file: MultipartFile): ImportResult {
-    val csv = String(file.bytes, Charsets.UTF_8)
-    return service.importCsv(csv)
-  }
-
-  // No create endpoint : a trade is born from a stat, through `POST /api/stats/{id}/trade` (#193).
+  // No CSV import (#196) and no create endpoint (#193) : a trade is born from a stat, through
+  // `POST /api/stats/{id}/trade`, and everything else is typed on its page.
 
   @PutMapping("/{id}")
   fun update(@PathVariable id: UUID, @RequestBody request: TradeEntryRequest): TradeEntryDto =

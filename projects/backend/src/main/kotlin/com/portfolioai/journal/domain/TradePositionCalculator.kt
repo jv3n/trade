@@ -143,19 +143,6 @@ object TradePositionCalculator {
   }
 
   /**
-   * Best-effort direction inference for the CSV import path, where only the flat `openPrice` /
-   * `exitPrice` are known and the `direction` column was left blank. The strategy is short-biased :
-   * a cover-lower (`exit <= open`) reads as SHORT, anything else as BUY, and a missing exit price
-   * (open position) falls back to SHORT — the bread-and-butter of this journal.
-   */
-  fun inferDirection(openPrice: BigDecimal?, exitPrice: BigDecimal?): TradeDirection =
-    when {
-      openPrice == null || exitPrice == null -> TradeDirection.SHORT
-      exitPrice <= openPrice -> TradeDirection.SHORT
-      else -> TradeDirection.BUY
-    }
-
-  /**
    * Σ(shares × price) / Σ(shares), rounded to the price scale. Caller guarantees a non-empty list.
    */
   private fun weightedAverage(legs: List<Leg>): BigDecimal {

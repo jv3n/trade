@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
 import { Pattern } from '../../shared/pattern.model';
-import { ImportResult, JournalRepository, PageRequest, PagedResult } from '../journal.repository';
+import { JournalRepository, PageRequest, PagedResult } from '../journal.repository';
 import {
   ExecutionKind,
   JournalSummary,
@@ -257,17 +257,6 @@ export class HttpJournalRepository extends JournalRepository {
       responseType: 'blob',
       headers: { Accept: 'text/csv' },
     });
-  }
-
-  /**
-   * Posts the picked file as `multipart/form-data` to the import endpoint. The server always
-   * returns 200 with an [ImportResult] — per-row errors are surfaced in the body so we can
-   * render them inline without a 4xx detour.
-   */
-  importCsv(file: File): Observable<ImportResult> {
-    const form = new FormData();
-    form.append('file', file, file.name);
-    return this.http.post<ImportResult>(`${this.base}/import`, form);
   }
 
   uploadScreenshot(id: string, file: File): Observable<TradeEntry> {

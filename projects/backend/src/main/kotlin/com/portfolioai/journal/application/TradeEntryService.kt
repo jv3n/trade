@@ -2,7 +2,6 @@ package com.portfolioai.journal.application
 
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.User
-import com.portfolioai.journal.application.dto.ImportResult
 import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.application.dto.ScreenshotContent
 import com.portfolioai.journal.application.dto.TradeEntryDto
@@ -167,35 +166,6 @@ class TradeEntryService(
     val sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
     val entries: List<TradeEntry> = repo.findAll(spec, sort)
     return TradeEntryCsvEncoder.encode(entries)
-  }
-
-  /**
-   * Imports a CSV string produced by [TradeEntryCsvEncoder] (or hand-edited from an export).
-   *
-   * **Atomic batch** — if [TradeEntryCsvDecoder] surfaces any per-row error, **no** trade is
-   * persisted (`created = 0`, `errors` carries the line-level diagnostics). On a clean decode the
-   * whole batch is saved in a single transaction and `created == parsed`.
-   *
-   * The decoder accepts the same column layout the encoder emits, ignores UTF-8 BOM and tolerates
-   * CRLF / LF line endings.
-   */
-  @Transactional
-  fun importCsv(csv: String): ImportResult {
-    val decoded = TradeEntryCsvDecoder.decode(csv)
-    if (decoded.errors.isNotEmpty()) {
-      return ImportResult(parsed = decoded.rows.size, created = 0, errors = decoded.errors)
-    }
-    val user = authService.getCurrentUser()
-    for (request in decoded.rows) {
-      val entry = newEntry(user, request)
-      applyExecutions(entry, request)
-      publishChange(repo.saveAndFlush(entry))
-    }
-    return ImportResult(
-      parsed = decoded.rows.size,
-      created = decoded.rows.size,
-      errors = emptyList(),
-    )
   }
 
   /**

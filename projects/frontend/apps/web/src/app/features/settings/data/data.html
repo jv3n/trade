@@ -1,0 +1,74 @@
+<div class="data-page" data-testid="data-page">
+  <header class="page-header">
+    <h2>{{ 'settings.dataPage.title' | translate }}</h2>
+    <p class="description">{{ 'settings.dataPage.description' | translate }}</p>
+  </header>
+
+  <mat-card appearance="outlined" class="io-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar class="card-icon">menu_book</mat-icon>
+      <mat-card-title>{{ 'settings.dataPage.journal.title' | translate }}</mat-card-title>
+      <mat-card-subtitle>{{ 'settings.dataPage.journal.subtitle' | translate }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ 'settings.dataPage.journal.description' | translate }}</p>
+      <ul class="format-list">
+        <li>{{ 'settings.dataPage.journal.format.encoding' | translate }}</li>
+        <li>{{ 'settings.dataPage.journal.format.columns' | translate }}</li>
+        <li>{{ 'settings.dataPage.journal.format.executions' | translate }}</li>
+      </ul>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="exporting() !== null"
+        (click)="downloadJournal()"
+      >
+        @if (exporting() === 'journal') {
+          <mat-spinner diameter="16"></mat-spinner>
+        } @else {
+          <mat-icon>download</mat-icon>
+        }
+        <span>{{
+          (exporting() === 'journal' ? 'settings.dataPage.exporting' : 'settings.dataPage.button')
+            | translate
+        }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="io-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar class="card-icon">query_stats</mat-icon>
+      <mat-card-title>{{ 'settings.dataPage.stats.title' | translate }}</mat-card-title>
+      <mat-card-subtitle>{{ 'settings.dataPage.stats.subtitle' | translate }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ 'settings.dataPage.stats.description' | translate }}</p>
+      <ul class="format-list">
+        <li>{{ 'settings.dataPage.stats.format.encoding' | translate }}</li>
+        <li>{{ 'settings.dataPage.stats.format.columns' | translate }}</li>
+        <li>{{ 'settings.dataPage.stats.format.pending' | translate }}</li>
+      </ul>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="exporting() !== null"
+        (click)="downloadStats()"
+      >
+        @if (exporting() === 'stats') {
+          <mat-spinner diameter="16"></mat-spinner>
+        } @else {
+          <mat-icon>download</mat-icon>
+        }
+        <span>{{
+          (exporting() === 'stats' ? 'settings.dataPage.exporting' : 'settings.dataPage.button')
+            | translate
+        }}</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

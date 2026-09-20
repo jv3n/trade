@@ -23,8 +23,7 @@
     "stats": "Stats",
     "lexicon": "Lexique",
     "collapse": "Réduire la sidebar",
-    "expand": "Déployer la sidebar",
-    "importExport": "Import / Export"
+    "expand": "Déployer la sidebar"
   },
   "candidates": {
     "title": "Candidats",
@@ -543,28 +542,40 @@
     "preferences": "Préférences",
     "opsLinks": "Liens ops",
     "accessControl": "Contrôle d'accès",
-    "statsExport": "Export des stats",
+    "data": "Données",
     "lexicon": "Lexique",
     "lexiconPage": {
       "title": "Lexique",
       "description": "Réservé à l'admin — gère le glossaire trading partagé (ajout, édition, suppression des termes). La vue en lecture seule est accessible à tous via « Lexique » dans la navigation principale."
     },
-    "statsExportPage": {
-      "title": "Export des stats",
-      "description": "Télécharge ta feuille de stats en CSV, pour la relire dans un tableur. Pas d'import : une stat se crée en passant un candidat en stat.",
-      "export": {
-        "title": "Export",
-        "subtitle": "Télécharger les stats en CSV",
+    "dataPage": {
+      "title": "Données",
+      "description": "Télécharge le journal et la feuille de stats en CSV. Export uniquement : un trade naît d'une stat, une stat d'un candidat — rien n'entre par un fichier.",
+      "button": "Exporter en CSV",
+      "exporting": "Export en cours…",
+      "journal": {
+        "title": "Journal",
+        "subtitle": "Télécharger les trades en CSV",
+        "description": "Une ligne par trade, du plus récent au plus ancien.",
+        "format": {
+          "encoding": "UTF-8 avec BOM, RFC 4180 — s’ouvre proprement dans Excel.",
+          "columns": "16 colonnes — identité, position, les trois P&L (calculé, réel, retenu) et le post-mortem.",
+          "executions": "Les exécutions tiennent dans une seule cellule : heure|type|actions|prix, dans l’ordre des fills."
+        },
+        "success": "Export du journal téléchargé.",
+        "error": "L'export du journal a échoué. Réessaie."
+      },
+      "stats": {
+        "title": "Stats",
+        "subtitle": "Télécharger la feuille de stats en CSV",
         "description": "Une ligne par stat, de la plus récente à la plus ancienne.",
         "format": {
-          "encoding": "UTF-8 avec BOM, RFC 4180 — s'ouvre proprement dans Excel.",
-          "columns": "18 colonnes — bloc premarket, bloc séance et flags. Aucun pourcentage : ils se calculent à partir des prix.",
-          "pending": "Une stat à compléter sort avec ses cinq cases de séance vides."
+          "encoding": "UTF-8 avec BOM, RFC 4180 — s’ouvre proprement dans Excel.",
+          "columns": "18 colonnes — bloc premarket, bloc séance et flags. Aucun pourcentage : ils sont dérivés des prix.",
+          "pending": "Une stat à compléter sort avec ses cinq cellules de séance vides."
         },
-        "button": "Exporter en CSV",
-        "exporting": "Export en cours…",
-        "success": "Export téléchargé.",
-        "error": "Échec de l'export. Réessaie."
+        "success": "Export des stats téléchargé.",
+        "error": "L'export des stats a échoué. Réessaie."
       }
     },
     "preferencesPage": {
@@ -650,41 +661,6 @@
         "load": "Impossible de charger la liste d'accès.",
         "save": "Échec de l'enregistrement."
       }
-    }
-  },
-  "journalIo": {
-    "title": "Import / Export",
-    "subtitle": "Sors et remets ton journal au format CSV.",
-    "backToJournal": "Retour au journal",
-    "export": {
-      "title": "Export",
-      "subtitle": "Télécharge tous tes trades",
-      "description": "Récupère un instantané CSV de chaque trade du journal. Le format est compatible avec le futur import — chaque champ d'entrée d'un trade est préservé.",
-      "format": {
-        "encoding": "UTF-8 avec BOM, lisible directement dans Excel.",
-        "columns": "19 colonnes alignées sur le schéma d'un trade.",
-        "roundtrip": "Réimportable tel quel quand le flow d'import sera prêt."
-      },
-      "button": "Télécharger le CSV",
-      "exporting": "Préparation de l'export…",
-      "success": "Export prêt — regarde tes téléchargements.",
-      "error": "Échec de l'export. Réessaie dans un instant."
-    },
-    "import": {
-      "title": "Import",
-      "subtitle": "Restaurer depuis un CSV",
-      "description": "Dépose un CSV exporté depuis cette page (ou édité à la main avec la même grille de colonnes). Lot atomique — si une ligne est invalide, aucun trade n'est créé et tu reçois le détail ligne par ligne ci-dessous.",
-      "dropLabel": "Glisse ton CSV ici",
-      "or": "ou",
-      "browse": "Parcourir",
-      "hint": ".csv uniquement — un seul fichier à la fois.",
-      "uploading": "Envoi et validation…",
-      "success": "{{ count }} trade(s) importé(s).",
-      "failed": "{{ count }} erreur(s) trouvée(s) — aucun trade n'a été créé.",
-      "errorLine": "ligne {{ line }}",
-      "errorNetwork": "Erreur réseau. Réessaie.",
-      "again": "Importer un autre fichier",
-      "viewJournal": "Voir le journal"
     }
   },
   "patterns": {
