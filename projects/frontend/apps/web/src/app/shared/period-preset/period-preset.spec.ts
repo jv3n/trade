@@ -75,6 +75,28 @@ describe('computePeriodRange', () => {
     expect(r.dateTo?.getDate()).toBe(31);
   });
 
+  /**
+   * The rolling windows are what tells `last3Months` apart from `lastQuarter` : they end today and
+   * start three months back to the day, where the quarter presets snap to calendar boundaries.
+   */
+  it('last3Months rolls back from today rather than snapping to a quarter', () => {
+    const r = computePeriodRange('last3Months', NOW);
+    expect(r.dateFrom?.getFullYear()).toBe(2026);
+    expect(r.dateFrom?.getMonth()).toBe(2); // March, three months before June
+    expect(r.dateFrom?.getDate()).toBe(NOW.getDate());
+    expect(r.dateTo?.getMonth()).toBe(NOW.getMonth());
+    expect(r.dateTo?.getDate()).toBe(NOW.getDate());
+  });
+
+  it('last6Months rolls back six months and can cross into the previous year', () => {
+    const february = new Date(2026, 1, 10, 12, 0, 0);
+    const r = computePeriodRange('last6Months', february);
+    expect(r.dateFrom?.getFullYear()).toBe(2025);
+    expect(r.dateFrom?.getMonth()).toBe(7); // August 2025
+    expect(r.dateTo?.getFullYear()).toBe(2026);
+    expect(r.dateTo?.getMonth()).toBe(1);
+  });
+
   it('Q1 quarter boundary — Jan 1 still lands inside Q1', () => {
     const newYear = new Date(2026, 0, 1, 12, 0, 0);
     const r = computePeriodRange('thisQuarter', newYear);

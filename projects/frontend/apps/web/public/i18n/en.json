@@ -208,15 +208,7 @@
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · ECB rate, {{date}}",
     "fxUnavailable": "Exchange rate unavailable right now.",
     "addMovement": "Add movement",
-    "change": "{{period}} change",
     "chartEmpty": "Not enough movements to draw the balance curve.",
-    "period": {
-      "1W": "1W",
-      "1M": "1M",
-      "3M": "3M",
-      "YTD": "YTD",
-      "ALL": "All"
-    },
     "loading": "Loading account…",
     "empty": "No movement yet. Add a deposit to get started.",
     "errors": {
@@ -224,22 +216,11 @@
     },
     "movements": "Movements",
     "viewTrade": "View the trade",
-    "dailySubtotal": "Daily total",
     "type": {
       "DEPOSIT": "Deposit",
       "WITHDRAWAL": "Withdrawal",
       "TRADE": "Trade",
       "ADJUSTMENT": "Correction"
-    },
-    "summary": {
-      "title": "Summary",
-      "totalDeposits": "Total deposited",
-      "totalWithdrawals": "Total withdrawn",
-      "netInjected": "Net injected",
-      "tradesPnl": "Trades P&L",
-      "adjustments": "Corrections / fees",
-      "return": "Return",
-      "movementCount": "Movements"
     },
     "actions": {
       "edit": "Edit",
@@ -255,7 +236,9 @@
       "amount": "Amount",
       "valueDate": "Date",
       "note": "Note",
-      "targetBalance": "Real broker balance"
+      "targetBalance": "Real broker balance",
+      "label": "Label",
+      "balanceAfter": "Balance"
     },
     "dialog": {
       "addTitle": "Add a movement",
@@ -275,6 +258,41 @@
       "correctError": "Couldn't correct the balance. Please retry.",
       "reconcileSuccess": "Morning reconciled.",
       "reconcileError": "Couldn't reconcile this morning. Please retry."
+    },
+    "chartTitle": "Balance over time",
+    "kpi": {
+      "periodPnl": "P&L for the period",
+      "periodPnlSub": "{{trades}} trades · {{winners}} winners",
+      "netInjected": "Net injected for the period",
+      "netInjectedSub": "{{deposits}} deposited · {{withdrawals}} withdrawn"
+    },
+    "filter": {
+      "period": "Period",
+      "type": "Movement type",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "types": {
+        "all": "All types",
+        "trades": "Trades",
+        "cash": "Deposits / withdrawals",
+        "corrections": "Corrections"
+      },
+      "periodPresets": {
+        "all": "All time",
+        "custom": "Custom range",
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "last3Months": "Last 3 months",
+        "last6Months": "Last 6 months",
+        "thisQuarter": "This quarter",
+        "lastQuarter": "Last quarter",
+        "thisYear": "This year",
+        "lastYear": "Last year"
+      }
+    },
+    "direction": {
+      "BUY": "long",
+      "SHORT": "short"
     }
   },
   "journal": {
@@ -303,6 +321,8 @@
         "custom": "Custom range",
         "thisMonth": "This month",
         "lastMonth": "Last month",
+        "last3Months": "Last 3 months",
+        "last6Months": "Last 6 months",
         "thisQuarter": "This quarter",
         "lastQuarter": "Last quarter",
         "thisYear": "This year",

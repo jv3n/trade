@@ -208,15 +208,7 @@
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · taux BCE, {{date}}",
     "fxUnavailable": "Taux de change indisponible pour le moment.",
     "addMovement": "Ajouter un mouvement",
-    "change": "Variation {{period}}",
     "chartEmpty": "Pas assez de mouvements pour tracer la courbe du solde.",
-    "period": {
-      "1W": "1S",
-      "1M": "1M",
-      "3M": "3M",
-      "YTD": "YTD",
-      "ALL": "Tout"
-    },
     "loading": "Chargement du compte…",
     "empty": "Aucun mouvement pour l'instant. Ajoute un dépôt pour commencer.",
     "errors": {
@@ -224,22 +216,11 @@
     },
     "movements": "Mouvements",
     "viewTrade": "Voir le trade",
-    "dailySubtotal": "Total du jour",
     "type": {
       "DEPOSIT": "Dépôt",
       "WITHDRAWAL": "Retrait",
       "TRADE": "Trade",
       "ADJUSTMENT": "Correction"
-    },
-    "summary": {
-      "title": "Résumé",
-      "totalDeposits": "Total déposé",
-      "totalWithdrawals": "Total retiré",
-      "netInjected": "Net injecté",
-      "tradesPnl": "P&L trades",
-      "adjustments": "Corrections / frais",
-      "return": "Rendement",
-      "movementCount": "Mouvements"
     },
     "actions": {
       "edit": "Modifier",
@@ -255,7 +236,9 @@
       "amount": "Montant",
       "valueDate": "Date",
       "note": "Note",
-      "targetBalance": "Solde réel chez le broker"
+      "targetBalance": "Solde réel chez le broker",
+      "label": "Libellé",
+      "balanceAfter": "Solde"
     },
     "dialog": {
       "addTitle": "Ajouter un mouvement",
@@ -275,6 +258,41 @@
       "correctError": "Impossible de corriger la balance. Réessaie.",
       "reconcileSuccess": "Matin rapproché.",
       "reconcileError": "Impossible de rapprocher ce matin. Réessaie."
+    },
+    "chartTitle": "Évolution du solde",
+    "kpi": {
+      "periodPnl": "P&L de la période",
+      "periodPnlSub": "{{trades}} trades · {{winners}} gagnants",
+      "netInjected": "Apports nets de la période",
+      "netInjectedSub": "{{deposits}} dépôt · {{withdrawals}} retrait"
+    },
+    "filter": {
+      "period": "Période",
+      "type": "Type de mouvement",
+      "dateFrom": "Du",
+      "dateTo": "Au",
+      "types": {
+        "all": "Tous les types",
+        "trades": "Trades",
+        "cash": "Dépôts / retraits",
+        "corrections": "Corrections"
+      },
+      "periodPresets": {
+        "all": "Toutes périodes",
+        "custom": "Plage personnalisée",
+        "thisMonth": "Ce mois",
+        "lastMonth": "Mois dernier",
+        "last3Months": "3 derniers mois",
+        "last6Months": "6 derniers mois",
+        "thisQuarter": "Ce trimestre",
+        "lastQuarter": "Trimestre dernier",
+        "thisYear": "Cette année",
+        "lastYear": "Année dernière"
+      }
+    },
+    "direction": {
+      "BUY": "long",
+      "SHORT": "short"
     }
   },
   "journal": {
@@ -303,6 +321,8 @@
         "custom": "Plage personnalisée",
         "thisMonth": "Ce mois",
         "lastMonth": "Mois dernier",
+        "last3Months": "3 derniers mois",
+        "last6Months": "6 derniers mois",
         "thisQuarter": "Ce trimestre",
         "lastQuarter": "Trimestre dernier",
         "thisYear": "Cette année",

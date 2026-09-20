@@ -1,7 +1,7 @@
 package com.portfolioai.journal.application.dto
 
-import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.TradeDirection
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID

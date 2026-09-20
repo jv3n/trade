@@ -1,9 +1,9 @@
 package com.portfolioai.journal.application.dto
 
-import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.TradeDirection
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate

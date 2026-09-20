@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 import {
   AccountMovement,
+  AccountMovementFilter,
   AccountMovementInput,
   AccountSummary,
   BalancePoint,
@@ -15,10 +16,16 @@ import {
  * Tests can inject a stub via `useClass` / `useValue` without touching HTTP.
  */
 export abstract class AccountRepository {
-  /** Paginated movement history, newest-first. Omit `page` to get the backend default (25). */
-  abstract findMovements(page?: PageRequest): Observable<PagedResult<AccountMovement>>;
-  /** Current balance + breakdown by movement type. */
-  abstract getSummary(): Observable<AccountSummary>;
+  /**
+   * Paginated movement history, newest-first, each row carrying its `balanceAfter`. Omit `page` to
+   * get the backend default (25). No sort parameter : the order is fixed by the running balance.
+   */
+  abstract findMovements(
+    filter?: AccountMovementFilter,
+    page?: PageRequest,
+  ): Observable<PagedResult<AccountMovement>>;
+  /** Current balance + the figures of the filtered period. Same filter as [findMovements]. */
+  abstract getSummary(filter?: AccountMovementFilter): Observable<AccountSummary>;
   /** Cumulative end-of-day balance series (ascending) for the evolution chart. */
   abstract getBalanceSeries(): Observable<BalancePoint[]>;
   /** Adds a DEPOSIT or WITHDRAWAL (positive magnitude ; the backend applies the sign). */

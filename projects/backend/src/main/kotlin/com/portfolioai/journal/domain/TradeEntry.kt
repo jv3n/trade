@@ -2,6 +2,7 @@ package com.portfolioai.journal.domain
 
 import com.portfolioai.auth.domain.User
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.TradeDirection
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

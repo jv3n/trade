@@ -8,9 +8,9 @@ import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
-import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.TradeDirection
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.domain.StatEntry

@@ -3,10 +3,10 @@ package com.portfolioai.journal.application
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.journal.domain.ExecutionKind
-import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.TradeDirection
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime

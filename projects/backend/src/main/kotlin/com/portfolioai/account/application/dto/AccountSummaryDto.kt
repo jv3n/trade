@@ -3,22 +3,23 @@ package com.portfolioai.account.application.dto
 import java.math.BigDecimal
 
 /**
- * Aggregates for the account summary panel. All amounts in the account's single currency (USD v1).
+ * Figures behind the account page's KPI row (#229).
  *
- * - [balance] — current balance = deposits + withdrawals + tradesPnl + adjustments
- * - [totalDeposits] — Σ DEPOSIT (≥ 0)
- * - [totalWithdrawals] — Σ WITHDRAWAL (≤ 0, signed)
- * - [netInjected] — totalDeposits + totalWithdrawals (cash the user actually put in)
- * - [tradesPnl] — Σ TRADE (realized P&L pushed from the journal)
- * - [adjustments] — Σ ADJUSTMENT (manual corrections : fees / financing / slippage)
- * - [movementCount] — total number of movements
+ * [balance] is the **current** account balance — the sum of every movement ever, not a period
+ * figure. It is what the broker shows this morning, so windowing it would be meaningless.
+ *
+ * Everything else is scoped to the filtered period: the P&L of the trades it contains (with how
+ * many there were and how many were winners), and the cash injected over it, split into its deposit
+ * and withdrawal halves.
  */
 data class AccountSummaryDto(
   val balance: BigDecimal,
-  val totalDeposits: BigDecimal,
-  val totalWithdrawals: BigDecimal,
-  val netInjected: BigDecimal,
-  val tradesPnl: BigDecimal,
-  val adjustments: BigDecimal,
-  val movementCount: Long,
+  val periodPnl: BigDecimal,
+  val periodTradeCount: Long,
+  val periodWinningTradeCount: Long,
+  val periodDeposits: BigDecimal,
+  val periodWithdrawals: BigDecimal,
+  val periodNetInjected: BigDecimal,
+  val periodAdjustments: BigDecimal,
+  val periodMovementCount: Long,
 )

@@ -9,11 +9,15 @@ import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.application.dto.ReconciliationDto
 import com.portfolioai.account.application.dto.ReconciliationRequest
+import com.portfolioai.account.domain.AccountMovementFilter
+import com.portfolioai.account.domain.AccountMovementType
 import io.swagger.v3.oas.annotations.tags.Tag
+import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -40,17 +44,42 @@ class AccountController(
 ) {
 
   /**
-   * Paginated movement history, newest-first (`value_date` desc, `created_at` desc — fallback owned
-   * by the service so a URL `sort` is honoured). Standard Spring `Pageable` ; default 25 rows.
+   * Paginated movement history, newest-first (`value_date` desc, `created_at` desc). Each row
+   * carries the balance it left behind, computed over the whole history — so narrowing to trades
+   * does not renumber the column. A URL `sort` is ignored for that reason.
+   *
+   * dateFrom — `value_date >= dateFrom` (inclusive, yyyy-MM-dd) dateTo — `value_date <= dateTo`
+   * (inclusive, yyyy-MM-dd) type — repeated, IN (...). Same vocabulary as the journal listing : the
+   * front resolves its period presets to a date range and sends dates, never preset names.
    */
   @GetMapping("/movements")
-  fun movements(@PageableDefault(size = 25) pageable: Pageable): Page<AccountMovementDto> =
-    service.findAllPaged(pageable)
+  fun movements(
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateFrom: LocalDate? = null,
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateTo: LocalDate? = null,
+    @RequestParam(required = false) type: List<AccountMovementType>? = null,
+    @PageableDefault(size = 25) pageable: Pageable,
+  ): Page<AccountMovementDto> =
+    service.findAllPaged(AccountMovementFilter(dateFrom, dateTo, type), pageable)
 
   /**
-   * Current balance + breakdown (deposits / withdrawals / net injected / trades P&L / adjustments).
+   * Current balance (never windowed) plus the figures of the filtered period — trades P&L with its
+   * count and winners, deposits / withdrawals and the net injected. Same filter params as
+   * `/movements` so the KPI row and the table always describe the same window.
    */
-  @GetMapping("/summary") fun summary(): AccountSummaryDto = service.summary()
+  @GetMapping("/summary")
+  fun summary(
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateFrom: LocalDate? = null,
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateTo: LocalDate? = null,
+    @RequestParam(required = false) type: List<AccountMovementType>? = null,
+  ): AccountSummaryDto = service.summary(AccountMovementFilter(dateFrom, dateTo, type))
 
   /** Cumulative end-of-day balance series (ascending) for the evolution chart. */
   @GetMapping("/balance-series")

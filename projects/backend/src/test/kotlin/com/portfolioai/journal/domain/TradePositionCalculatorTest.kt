@@ -2,6 +2,7 @@ package com.portfolioai.journal.domain
 
 import com.portfolioai.journal.domain.TradePositionCalculator.Leg
 import com.portfolioai.journal.domain.TradePositionCalculator.PositionStatus
+import com.portfolioai.shared.TradeDirection
 import java.math.BigDecimal
 import java.time.LocalTime
 import org.junit.jupiter.api.Assertions.assertEquals
