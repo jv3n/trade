@@ -16,9 +16,6 @@ spring:
       max-file-size: 5MB
       max-request-size: 5MB
 
-  # No `spring.profiles.group` here on purpose : the Tiltfile picks the profiles from
-  # `BACKEND_AUTH_MODE`, which is what makes the runtime auth toggle possible.
-
   # OAuth2 client registration is deliberately **absent** : `ClientRegistration.Builder.build()`
   # asserts a non-empty client-id and crashes at boot, so a fresh clone or a CI run could not
   # start. Cloud Run and `application-local.yml` provide it through env vars.

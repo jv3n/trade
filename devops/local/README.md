@@ -8,7 +8,7 @@ Flyway migration — nothing of it reaches production.
 
 1. Tilt → `postgres` resource → **Purge** (empty database, migrations replayed when the backend
    restarts).
-2. Log in once (or start in no-auth mode) so the user row exists.
+2. Log in once so the user row exists.
 3. Tilt → `postgres` resource → **Seed**.
 
 By hand :

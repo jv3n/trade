@@ -4,11 +4,11 @@ import java.util.UUID
 
 /**
  * Marker interface implemented by every principal type our security chain produces — currently
- * `AppOAuth2User` (used under `local-no-auth` profile and for hypothetical non-OIDC OAuth2
- * providers) and `AppOidcUser` (used for Google OIDC, the production path). Both live in
- * `auth/infrastructure/security/` because their parent classes (`OAuth2User`, `DefaultOidcUser`)
- * are Spring Security types — this interface lives here in `domain/` because it carries no
- * framework dependency, only a domain concept (the DB id of the authenticated principal).
+ * `AppOAuth2User` (used for hypothetical non-OIDC OAuth2 providers) and `AppOidcUser` (used for
+ * Google OIDC, the production path). Both live in `auth/infrastructure/security/` because their
+ * parent classes (`OAuth2User`, `DefaultOidcUser`) are Spring Security types — this interface lives
+ * here in `domain/` because it carries no framework dependency, only a domain concept (the DB id of
+ * the authenticated principal).
  *
  * `AuthService.getCurrentUser` casts the principal to this interface so it doesn't have to
  * differentiate between the two — it only needs the DB id ([userId]) to look up the full [User]

@@ -23,7 +23,7 @@ projects/backend/
 │   └── kotlin/com/portfolioai/
 │       ├── BackendApplication.kt
 │       ├── shared/                           # GlobalExceptionHandler, UpstreamUnavailableException, SpaFallbackConfig
-│       ├── auth/                             # OAuth2/OIDC + roles + local-no-auth
+│       ├── auth/                             # OAuth2/OIDC + roles
 │       │   └── infrastructure/security/      # extra adapter folder (Spring Security beans)
 │       ├── journal/
 │       │   ├── domain/                       # TradeEntry, TradeExecution, TradeAttachment, enums,

@@ -35,8 +35,7 @@ import org.springframework.transaction.annotation.Transactional
  * chart, the journal filters and the stats KPIs have nothing to chew on after a database purge.
  *
  * Runs on [UserCreatedEvent] rather than at boot : a purge takes the `app_user` row with it, so
- * there is nobody to seed until the dev comes back through SSO. The profile expression also keeps
- * it away from the no-auth bypass — local development logs in for real (see #235).
+ * there is nobody to seed until the dev comes back through SSO.
  *
  * Trades go in through the real path — aggregates from [TradePositionCalculator], then a
  * [TradeChangedEvent] so the `account` module creates the linked `TRADE` movement itself. Seeded
@@ -45,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional
  * To regenerate : purge the database, log back in.
  */
 @Component
-@Profile("local & !local-no-auth")
+@Profile("local")
 class LocalDataSeeder(
   private val users: UserRepository,
   private val stats: StatEntryRepository,

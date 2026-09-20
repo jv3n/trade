@@ -11,7 +11,7 @@ Project-specific Spring choices, plus the AOP / proxy gotchas worth pinning. Pai
 
 - **`@Service`** — `application/` orchestrators (`TradeEntryService`, `AccountService`, `AccountReconciler`, `AppConfigService`, `ForexService`…). Where `@Transactional` lives.
 - **`@Component`** — everything else Spring-managed: adapters (`FrankfurterForexClient`), event listeners (`TradeMovementSyncListener`).
-- **`@Configuration`** — bean factories in `<context>/infrastructure/…`: `forex/infrastructure/http/ForexHttpConfig` (the `forexRestClient` bean), `auth/infrastructure/security/SecurityConfig` + `LocalNoAuthSecurityConfig`, `shared/SpaFallbackConfig`.
+- **`@Configuration`** — bean factories in `<context>/infrastructure/…`: `forex/infrastructure/http/ForexHttpConfig` (the `forexRestClient` bean), `auth/infrastructure/security/SecurityConfig`, `shared/SpaFallbackConfig`.
 - **`@RestController`** — under `<context>/infrastructure/http/`. Depends on application services only.
 - **`@RestControllerAdvice`** — one only (`shared/GlobalExceptionHandler`). Map new exception types there (`IllegalArgumentException` → 400, `NoSuchElementException` → 404, `DataIntegrityViolationException` → 409, `UpstreamUnavailableException` → 503).
 
@@ -120,7 +120,7 @@ Adopt this for any new paginated controller.
 - `application-prod.yml` — Cloud Run overrides, committed ; secrets come from GCP Secret Manager.
 - **No `application-test.yml`** — `testsupport/TestcontainersBootstrap.kt` (JUnit Platform listener) publishes `spring.datasource.*` as system properties before any context boots.
 
-Env injection: `${ENV_VAR:default}`. `@Profile` is used sparingly and only for wiring that genuinely differs per environment: `local-no-auth` (`LocalNoAuthSecurityConfig`, `LocalNoAuthFilter`, `LocalNoAuthUserInitializer`) vs `!local-no-auth` (`SecurityConfig`), and `prod` (`SpaFallbackConfig`). The Tiltfile picks the profile set.
+Env injection: `${ENV_VAR:default}`. `@Profile` is used sparingly and only for wiring that genuinely differs per environment: `local` (`LocalDataSeeder`) and `prod` (`SpaFallbackConfig`). The Tiltfile picks the profile set.
 
 ## Flyway
 
@@ -152,7 +152,7 @@ Include `GlobalExceptionHandler::class` whenever a test asserts an error status 
 
 ### `@SpringBootTest` — integration against real PostgreSQL
 
-The default for module behaviour that depends on JPA, specifications, DB constraints or event wiring: `JournalIntegrationTest`, `AccountIntegrationTest`, `AccountTradeSyncIntegrationTest`, `AccountReconciliationIntegrationTest`, `CandidateIntegrationTest`, `StatsImportIntegrationTest`, `StatsListingIntegrationTest`, `LexiconIntegrationTest`, plus `BackendApplicationTests` (context smoke) and `LocalNoAuthIntegrationTest` (`@ActiveProfiles("local-no-auth")` security chain).
+The default for module behaviour that depends on JPA, specifications, DB constraints or event wiring: `JournalIntegrationTest`, `AccountIntegrationTest`, `AccountTradeSyncIntegrationTest`, `AccountReconciliationIntegrationTest`, `CandidateIntegrationTest`, `StatsImportIntegrationTest`, `StatsListingIntegrationTest`, `LexiconIntegrationTest`, plus `BackendApplicationTests` (context smoke).
 
 - `AuthService` is replaced with `@MockitoBean` so the current-user scope is deterministic.
 - Postgres comes from the **Testcontainers singleton** (`testsupport/PostgresContainer.kt`, `withReuse(true)`), started once per JVM by the launcher listener. No DB mocks. Opt into reuse locally with `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`.

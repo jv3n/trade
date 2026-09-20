@@ -14,9 +14,8 @@ import org.springframework.web.server.ResponseStatusException
  * Read-side access to the currently authenticated user.
  *
  * Resolves the principal sitting in the security context (set either by Spring Security's OAuth
- * machinery after a successful Google login, or by `LocalNoAuthFilter` under the dev profile) and
- * reloads the matching [User] row from the database — so callers always get fresh fields (e.g. an
- * updated [User.role] applied via SQL).
+ * machinery after a successful Google login) and reloads the matching [User] row from the database
+ * — so callers always get fresh fields (e.g. an updated [User.role] applied via SQL).
  *
  * Throws [IllegalStateException] when no authentication is set or the principal isn't an
  * [AppOAuth2User] — both indicate a wiring bug, not a user-facing error. Unauthenticated requests

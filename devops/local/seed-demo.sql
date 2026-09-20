@@ -4,7 +4,7 @@
 -- Run it from the Tilt UI (`postgres` resource → "Seed") or by hand :
 --   docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/local/seed-demo.sql
 --
--- Everything belongs to the first user in `app_user` (log in once, or boot in no-auth mode, first).
+-- Everything belongs to the first user in `app_user` (log in once first).
 -- The script aborts if that user already has data, so it never overwrites anything : use Tilt's
 -- "Purge" first to start from an empty database.
 --
