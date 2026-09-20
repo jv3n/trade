@@ -19,4 +19,13 @@ interface AccountReconciliationRepository : JpaRepository<AccountReconciliation,
     userId: UUID,
     pageable: Pageable,
   ): List<AccountReconciliation>
+
+  fun findByIdAndUserId(id: UUID, userId: UUID): AccountReconciliation?
+
+  /**
+   * The morning a correction belongs to, if any. Deleting that `ADJUSTMENT` on its own must take
+   * the reconciliation with it (#249) : the DB's `ON DELETE SET NULL` would otherwise leave a row
+   * describing a correction that no longer exists.
+   */
+  fun findByCorrectionId(correctionId: UUID): AccountReconciliation?
 }

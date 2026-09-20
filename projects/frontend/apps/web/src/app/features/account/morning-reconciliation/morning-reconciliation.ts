@@ -72,6 +72,7 @@ export class MorningReconciliation {
   /** The balance TradeZero displays, as typed. Null until the user enters it. */
   readonly brokerBalance = signal<number | null>(null);
   readonly submitting = signal(false);
+  readonly cancelling = signal(false);
   readonly history = signal<Reconciliation[]>([]);
 
   /** Live gap between the typed broker balance and the app's — null while nothing is typed. */
@@ -93,6 +94,40 @@ export class MorningReconciliation {
 
   setBrokerBalance(value: number | null): void {
     this.brokerBalance.set(value);
+  }
+
+  /**
+   * Erases a morning typed by mistake (#249) — the reconciliation and the correction it produced go
+   * together, and the balance returns to where it stood before it. Distinct from re-posting the
+   * day, which *corrects* the morning : here the point is that it never happened.
+   *
+   * Always confirmed, danger variant : it deletes, and a clean morning is as much a record as a
+   * corrected one.
+   */
+  cancel(reconciliation: Reconciliation): void {
+    if (this.cancelling()) return;
+    this.confirm
+      .ask('account.reconciliation.confirmCancel', { variant: 'danger' })
+      .pipe(
+        filter(Boolean),
+        tap(() => this.cancelling.set(true)),
+        switchMap(() =>
+          this.repo.cancelReconciliation(reconciliation.id).pipe(
+            tap(() => {
+              this.toast('account.snackbar.cancelReconciliationSuccess', 'success');
+              this.loadHistory();
+              // The host refetches : the correction that just went moved the balance.
+              this.settled.emit(reconciliation);
+            }),
+            catchError(() => {
+              this.toast('account.snackbar.cancelReconciliationError', 'error');
+              return EMPTY;
+            }),
+            finalize(() => this.cancelling.set(false)),
+          ),
+        ),
+      )
+      .subscribe();
   }
 
   submit(): void {

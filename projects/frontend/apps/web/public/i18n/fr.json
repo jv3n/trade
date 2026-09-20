@@ -198,6 +198,12 @@
         "title": "Créer la correction ?",
         "message": "Une ligne « Correction » de {{gap}} $ est ajoutée au compte pour caler le solde sur TradeZero. Le rapprochement est horodaté avec elle.",
         "confirm": "Créer la correction"
+      },
+      "cancel": "Annuler ce rapprochement",
+      "confirmCancel": {
+        "title": "Annuler le rapprochement ?",
+        "message": "Le rapprochement du jour et la correction qu'il a produite seront supprimés, et le solde reviendra à sa valeur d'avant. À utiliser quand le montant saisi était une erreur.",
+        "confirm": "Annuler le rapprochement"
       }
     },
     "currentBalance": "Solde courant",
@@ -257,7 +263,9 @@
       "correctSuccess": "Balance corrigée.",
       "correctError": "Impossible de corriger la balance. Réessaie.",
       "reconcileSuccess": "Matin rapproché.",
-      "reconcileError": "Impossible de rapprocher ce matin. Réessaie."
+      "reconcileError": "Impossible de rapprocher ce matin. Réessaie.",
+      "cancelReconciliationSuccess": "Rapprochement annulé.",
+      "cancelReconciliationError": "Impossible d'annuler le rapprochement."
     },
     "chartTitle": "Évolution du solde",
     "kpi": {

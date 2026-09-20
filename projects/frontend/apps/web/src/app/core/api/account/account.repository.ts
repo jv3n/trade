@@ -39,6 +39,13 @@ export abstract class AccountRepository {
 
   /** The last mornings, latest first — the history line and the Today page's step 1. */
   abstract reconciliations(limit?: number): Observable<Reconciliation[]>;
+
+  /**
+   * Cancels a morning : the reconciliation **and** the correction it produced go, and the balance
+   * returns to where it stood before it (#249). Re-posting the same day corrects a morning ; this
+   * erases one typed by mistake.
+   */
+  abstract cancelReconciliation(id: string): Observable<void>;
   /** Edits a manual movement. */
   abstract updateMovement(id: string, input: AccountMovementInput): Observable<AccountMovement>;
   /** Deletes a manual movement (TRADE rows are managed from the journal). */

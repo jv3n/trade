@@ -9,6 +9,14 @@
         ) | translate: { gap: (done.gap | number: '1.2-2') }
       }}
     </span>
+    <button mat-button type="button" stbDanger [disabled]="cancelling()" (click)="cancel(done)">
+      @if (cancelling()) {
+        <mat-spinner diameter="16" />
+      } @else {
+        <mat-icon>undo</mat-icon>
+      }
+      <span>{{ 'account.reconciliation.cancel' | translate }}</span>
+    </button>
   </p>
 }
 
