@@ -26,7 +26,6 @@ fi
 PG_CONTAINER="portfolioai-postgres"
 PG_USER="portfolioai"
 PG_DB="portfolioai"
-DUMP_DIR="devops/local/dumps"
 
 GRADLE_BUILD_DIR="$(tilt_env GRADLE_BUILD_DIR projects/backend/build)"
 GRADLE_PROJECT_CACHE="$(tilt_env GRADLE_PROJECT_CACHE projects/backend/.gradle)"
