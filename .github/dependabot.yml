@@ -30,7 +30,19 @@ updates:
         update-types:
           - 'version-update:semver-major'
       # CodeQL 2.27.0's Kotlin extractor cannot compile 2.4.20 — `Analyze (java-kotlin)` fails
-      # while `Backend CI` passes. Drop this once the extractor catches up (see #243).
+      # while `Backend CI` passes. Drop these once the extractor catches up (see #243).
+      #
+      # The plugins are declared through the `kotlin("…")` accessor, so Dependabot names them
+      # after its argument — `jvm`, `plugin.spring`, `plugin.jpa` — not by plugin id. The
+      # trailing `org.jetbrains.kotlin*` covers the `id("…")` form should the build ever switch;
+      # without it the hold would silently stop matching. Each is pinned to the one bad version,
+      # so a name as generic as `jvm` cannot block anything else.
+      - dependency-name: 'jvm'
+        versions: ['2.4.20']
+      - dependency-name: 'plugin.spring'
+        versions: ['2.4.20']
+      - dependency-name: 'plugin.jpa'
+        versions: ['2.4.20']
       - dependency-name: 'org.jetbrains.kotlin*'
         versions: ['2.4.20']
 
