@@ -11,7 +11,7 @@
     </div>
   } @else if (loadError()) {
     <div class="error-banner">
-      <mat-icon aria-hidden="true">error_outline</mat-icon>
+      <mat-icon aria-hidden="true">error</mat-icon>
       <span>{{ 'settings.accessControlPage.errors.load' | translate }}</span>
     </div>
   } @else {
@@ -23,7 +23,7 @@
     }
 
     <div class="info-banner">
-      <mat-icon aria-hidden="true">info_outline</mat-icon>
+      <mat-icon aria-hidden="true">info</mat-icon>
       <span>{{ 'settings.accessControlPage.adminNote' | translate }}</span>
     </div>
 
@@ -77,7 +77,7 @@
 
     @if (invalidEmailMessage(); as msg) {
       <p class="inline-error" role="alert">
-        <mat-icon aria-hidden="true">warning_amber</mat-icon>
+        <mat-icon aria-hidden="true">warning</mat-icon>
         <span>{{ msg }}</span>
       </p>
     }
@@ -102,7 +102,7 @@
     }
     @if (saveError()) {
       <p class="inline-error" role="alert">
-        <mat-icon aria-hidden="true">error_outline</mat-icon>
+        <mat-icon aria-hidden="true">error</mat-icon>
         <span>{{ 'settings.accessControlPage.errors.save' | translate }}</span>
       </p>
     }
