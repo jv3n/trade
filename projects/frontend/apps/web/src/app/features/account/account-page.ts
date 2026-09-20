@@ -116,16 +116,22 @@ export class AccountPage {
   readonly currencies = this.balanceCurrency.supported;
   readonly currency = this.balanceCurrency.currency;
 
-  /** Series filtered to the selected window, mapped for the chart (x = epoch ms, label = date). */
+  /**
+   * Series filtered to the selected window, mapped for the chart (x = epoch ms, label = date).
+   * Converted like the hero balance : a CAD hero above a USD curve reads as a broken account.
+   */
   readonly chartPoints = computed<AreaChartPoint[]>(() => {
     const start = this.windowStart(this.period());
     const pts = start ? this.series().filter((p) => p.date >= start) : this.series();
     return pts.map((p) => ({
       x: p.date.getTime(),
-      y: p.balance,
+      y: this.convert(p.balance),
       label: format(p.date, 'd MMM yyyy'),
     }));
   });
+
+  /** Tells the two dollars apart in the tooltip — both currencies use the same sign. */
+  readonly currencySuffix = computed(() => (this.currency() === 'CAD' ? ' $ CA' : ' $ US'));
 
   /**
    * Change over the selected window : current balance vs the balance just before the window opened
