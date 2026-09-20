@@ -1,11 +1,14 @@
 package com.portfolioai.account.infrastructure.http
 
+import com.portfolioai.account.application.AccountReconciliationService
 import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.AccountMovementDto
 import com.portfolioai.account.application.dto.AccountSummaryDto
 import com.portfolioai.account.application.dto.BalancePointDto
 import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
+import com.portfolioai.account.application.dto.ReconciliationDto
+import com.portfolioai.account.application.dto.ReconciliationRequest
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.util.UUID
 import org.springframework.data.domain.Page
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -30,7 +34,10 @@ import org.springframework.web.bind.annotation.RestController
 )
 @RestController
 @RequestMapping("/api/account")
-class AccountController(private val service: AccountService) {
+class AccountController(
+  private val service: AccountService,
+  private val reconciliationService: AccountReconciliationService,
+) {
 
   /**
    * Paginated movement history, newest-first (`value_date` desc, `created_at` desc — fallback owned
@@ -69,4 +76,20 @@ class AccountController(private val service: AccountService) {
   @DeleteMapping("/movements/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun delete(@PathVariable id: UUID) = service.delete(id)
+
+  // ---- Morning reconciliation (#198) ----------------------------------------------------------
+
+  /**
+   * Settles one morning against the balance TradeZero displays : timestamps it when the two agree,
+   * records the ADJUSTMENT when they don't. Re-posting the same day overwrites that morning.
+   */
+  @PostMapping("/reconciliations")
+  @ResponseStatus(HttpStatus.CREATED)
+  fun reconcile(@RequestBody request: ReconciliationRequest): ReconciliationDto =
+    reconciliationService.reconcile(request)
+
+  /** The last mornings, latest first — the history line and the Today page's step 1. */
+  @GetMapping("/reconciliations")
+  fun reconciliations(@RequestParam(defaultValue = "10") limit: Int): List<ReconciliationDto> =
+    reconciliationService.history(limit)
 }

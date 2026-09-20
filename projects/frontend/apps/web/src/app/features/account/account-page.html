@@ -5,10 +5,6 @@
       <p class="description">{{ 'account.subtitle' | translate }}</p>
     </div>
     <div class="header-actions">
-      <button mat-stroked-button type="button" (click)="openCorrect()">
-        <mat-icon>tune</mat-icon>
-        <span>{{ 'account.correctBalance' | translate }}</span>
-      </button>
       <button mat-flat-button type="button" (click)="openAdd()">
         <mat-icon>add</mat-icon>
         <span>{{ 'account.addMovement' | translate }}</span>
@@ -99,6 +95,106 @@
       }
     </mat-card>
   }
+
+  <!-- Morning reconciliation (#198) — the app balance against the one TradeZero displays. -->
+  <mat-card class="reconciliation-card" appearance="outlined">
+    <h3 class="card-title">
+      <span>
+        {{ 'account.reconciliation.title' | translate }}
+        <span class="day">{{ today | date: 'EEEE d MMMM' }}</span>
+      </span>
+      <span class="hint">{{ 'account.reconciliation.hint' | translate }}</span>
+    </h3>
+
+    @if (todayReconciliation(); as done) {
+      <p class="reconciled" [class.pos]="done.gap === 0">
+        <mat-icon>{{ done.gap === 0 ? 'check_circle' : 'published_with_changes' }}</mat-icon>
+        <span>
+          {{
+            (done.gap === 0
+              ? 'account.reconciliation.doneClean'
+              : 'account.reconciliation.doneCorrected'
+            ) | translate: { gap: (done.gap | number: '1.2-2') }
+          }}
+        </span>
+      </p>
+    }
+
+    <div class="reconciliation-form">
+      <div class="figure">
+        <span class="figure__label">{{ 'account.reconciliation.appBalance' | translate }}</span>
+        <span class="figure__value">
+          {{ summary() ? (summary()!.balance | number: '1.2-2') + ' $' : '—' }}
+        </span>
+      </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'account.reconciliation.brokerBalance' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="2"
+          [allowNegative]="true"
+          [value]="brokerBalance()"
+          (numberChange)="setBrokerBalance($event)"
+          inputmode="decimal"
+        />
+        <span matTextSuffix>$</span>
+      </mat-form-field>
+
+      <div class="figure">
+        <span class="figure__label">{{ 'account.reconciliation.gap' | translate }}</span>
+        <span
+          class="figure__value"
+          [class.pos]="(reconciliationGap() ?? 0) > 0"
+          [class.neg]="(reconciliationGap() ?? 0) < 0"
+        >
+          {{ reconciliationGap() !== null ? (reconciliationGap() | number: '1.2-2') + ' $' : '—' }}
+        </span>
+      </div>
+
+      <button
+        mat-flat-button
+        type="button"
+        [disabled]="brokerBalance() === null || reconciling()"
+        (click)="reconcile()"
+      >
+        @if (reconciling()) {
+          <mat-spinner diameter="16" />
+        } @else {
+          <mat-icon>{{ reconciliationGap() === 0 ? 'check' : 'tune' }}</mat-icon>
+        }
+        <span>
+          {{
+            (reconciliationGap() === 0
+              ? 'account.reconciliation.validate'
+              : 'account.reconciliation.createCorrection'
+            ) | translate
+          }}
+        </span>
+      </button>
+    </div>
+
+    <p class="hint reconciliation-note">{{ 'account.reconciliation.note' | translate }}</p>
+
+    @if (reconciliations().length > 0) {
+      <p class="hint history">
+        <span>{{ 'account.reconciliation.history' | translate }}</span>
+        @for (r of reconciliations(); track r.id) {
+          <span class="history__item">
+            {{ r.valueDate | date: 'dd/MM' }}
+            @if (r.gap === 0) {
+              <span class="pos">✓</span>
+            } @else {
+              <span [class.pos]="r.gap > 0" [class.neg]="r.gap < 0">
+                {{ r.gap | number: '1.2-2' }}
+              </span>
+            }
+          </span>
+        }
+      </p>
+    }
+  </mat-card>
 
   <div class="account-grid">
     <!-- Movements -->

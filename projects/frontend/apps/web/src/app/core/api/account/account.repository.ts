@@ -4,7 +4,8 @@ import {
   AccountMovementInput,
   AccountSummary,
   BalancePoint,
-  CorrectionInput,
+  Reconciliation,
+  ReconciliationInput,
 } from './account.model';
 
 /**
@@ -22,8 +23,15 @@ export abstract class AccountRepository {
   abstract getBalanceSeries(): Observable<BalancePoint[]>;
   /** Adds a DEPOSIT or WITHDRAWAL (positive magnitude ; the backend applies the sign). */
   abstract addMovement(input: AccountMovementInput): Observable<AccountMovement>;
-  /** Records a balance correction (target → signed ADJUSTMENT delta). */
-  abstract correctBalance(input: CorrectionInput): Observable<AccountMovement>;
+
+  /**
+   * Settles one morning against the broker's balance (#198) : timestamps it when the two agree,
+   * records the correction when they don't. Re-posting the same day overwrites that morning.
+   */
+  abstract reconcile(input: ReconciliationInput): Observable<Reconciliation>;
+
+  /** The last mornings, latest first — the history line and the Today page's step 1. */
+  abstract reconciliations(limit?: number): Observable<Reconciliation[]>;
   /** Edits a manual movement. */
   abstract updateMovement(id: string, input: AccountMovementInput): Observable<AccountMovement>;
   /** Deletes a manual movement (TRADE rows are managed from the journal). */
