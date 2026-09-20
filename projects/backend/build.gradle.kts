@@ -1,10 +1,10 @@
 plugins {
-  kotlin("jvm") version "2.4.10"
-  kotlin("plugin.spring") version "2.4.10"
+  kotlin("jvm") version "2.4.20"
+  kotlin("plugin.spring") version "2.4.20"
   id("org.springframework.boot") version "3.5.16"
   id("io.spring.dependency-management") version "1.1.7"
-  kotlin("plugin.jpa") version "2.4.10"
-  id("com.diffplug.spotless") version "6.25.0"
+  kotlin("plugin.jpa") version "2.4.20"
+  id("com.diffplug.spotless") version "8.10.2"
   // Detekt — Kotlin static analysis (cyclomatic complexity, magic numbers, long methods,
   // potential bugs). Complements Spotless, which only handles formatting. See the `detekt { … }`
   // block below for the ramp-up strategy.
@@ -106,18 +106,7 @@ dependencies {
 
 kotlin {
   compilerOptions {
-    freeCompilerArgs.addAll(
-      "-Xjsr305=strict",
-      // Opt-in to the future Kotlin default for annotations on constructor parameters
-      // (KT-73255). Today they apply to the value parameter only ; the future default applies
-      // them to both the parameter and the generated backing property/field. Every Spring
-      // annotation we put on a constructor param (`@Qualifier`, `@Value`, `@Inject`, …) works
-      // fine on both targets, so adopting the future behavior now silences the deprecation
-      // warning fleet across the 18 affected files (`Routing*Client`, `*Service` ctor params,
-      // `@Value` injected configs) without breaking a single bean wiring. When the Kotlin
-      // version flips the default, this flag becomes a no-op and can be dropped.
-      "-Xannotation-default-target=param-property",
-    )
+    freeCompilerArgs.addAll("-Xjsr305=strict")
   }
 }
 
@@ -179,41 +168,19 @@ tasks.withType<org.springframework.boot.gradle.tasks.run.BootRun> {
 
 spotless {
   kotlin {
-    ktfmt("0.62").googleStyle()
+    ktfmt("0.63").googleStyle()
     target("src/**/*.kt")
-    // Forbid every wildcard import — no allowlist. Implemented as a custom check (read-only —
-    // throws on detection, never auto-fixes) rather than a ktlint step on purpose: ktlint reads
-    // `ij_kotlin_packages_to_use_import_on_demand` as IntelliJ does and would *force* wildcards on
-    // listed packages on `spotlessApply`, doing the exact opposite of what we want. A throwing
-    // custom step plays no formatter role — it just reports — so it's safe.
-    //
-    // The previous allowlist (14 entries spanning `java.util.*`, JPA, JUnit, mockito-kotlin,
-    // Spring web, MockMvc helpers, plus 7 project-internal packages) was kept as a safety net
-    // back when wildcard imports were sprinkled across the codebase. Tech-debt ticket #10
-    // (delivered 2026-05-15) verified that **zero** wildcard imports remain in any `.kt` file (grep
-    // -rEn
-    // "^import [^ ]+\\.\\*( |$)" backend/src — returns empty) and that the `.editorconfig` at the
-    // repo root pins `ij_kotlin_name_count_to_use_star_import = Int.MAX_VALUE` so IntelliJ can't
-    // reintroduce them spontaneously on Optimize Imports. The allowlist was therefore vestigial
-    // and got dropped — if a wildcard ever sneaks back in (developer with non-conformant IDE
-    // settings, copy-paste from a sample), Spotless catches it here.
-    custom("no-wildcard-imports") { content ->
-      val regex = Regex("""^import (\S+\.\*)$""")
-      val offenders =
-        content
-          .lineSequence()
-          .mapNotNull { regex.matchEntire(it.trim())?.groupValues?.get(1) }
-          .toList()
-      if (offenders.isNotEmpty()) {
-        throw GradleException(
-          "Forbidden wildcard imports (expand each one explicitly via IntelliJ Optimize Imports):" +
-            offenders.joinToString(separator = "\n  ", prefix = "\n  ")
-        )
-      }
-      content
-    }
+    // Forbid every wildcard import — no allowlist. A lint step, not a ktlint step, on purpose:
+    // ktlint reads `ij_kotlin_packages_to_use_import_on_demand` as IntelliJ does and would *force*
+    // wildcards on the listed packages on `spotlessApply`, the exact opposite of what we want.
+    // Detekt's own `WildcardImport` rule stays off for the same reason (see `config/detekt`).
+    forbidRegex(
+      "no-wildcard-imports",
+      """^import \S+\.\*$""",
+      "Forbidden wildcard import — expand it explicitly via IntelliJ Optimize Imports",
+    )
   }
-  kotlinGradle { ktfmt("0.62").googleStyle() }
+  kotlinGradle { ktfmt("0.63").googleStyle() }
 }
 
 // ----------------------------------------------------------------------------- Detekt
