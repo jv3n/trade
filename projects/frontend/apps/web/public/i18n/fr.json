@@ -605,7 +605,14 @@
       "updateError": "Échec de la mise à jour du terme. Réessaie.",
       "deleteSuccess": "Terme « {{term}} » supprimé.",
       "deleteError": "Échec de la suppression du terme. Réessaie."
-    }
+    },
+    "definitionLanguage": "Langue des définitions",
+    "languages": {
+      "fr": "FR",
+      "en": "EN"
+    },
+    "letterIndex": "Index alphabétique",
+    "allLetters": "Tous"
   },
   "header": {
     "userMenu": "Mon compte"

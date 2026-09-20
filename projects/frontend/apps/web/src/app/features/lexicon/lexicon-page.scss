@@ -1,3 +1,99 @@
-// Page layout. `.page`, `.content-header`, `.header-row`, `.error-banner`, `.loading-state`,
-// `.empty-state` come from the lib (`libs/ui/styles/`). The table + search live in the shared
-// `app-lexicon-table` component.
+// Card grid after `mockup/lexique.html` (#253). `.page`, `.content-header`, `.error-banner`,
+// `.loading-state` and `.empty-state` come from the lib (`libs/ui/styles/`) — only the lexicon's
+// own arrangement lives here.
+
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.search-field {
+  width: 280px;
+
+  // Material's outline form-field runs too tall next to the dense letter index.
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 36px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+.letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+
+  button {
+    min-width: 28px;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-2);
+      color: var(--color-text);
+    }
+
+    // Indigo for a selected category, never green or red — those are reserved for outcomes.
+    &.on {
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+      font-weight: 600;
+    }
+  }
+}
+
+.terms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.term {
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+
+  h3 {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 6px;
+    font-size: 15px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .tag {
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 400;
+  }
+}

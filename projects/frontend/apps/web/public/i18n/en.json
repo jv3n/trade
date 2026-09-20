@@ -605,7 +605,14 @@
       "updateError": "Failed to update the term. Please retry.",
       "deleteSuccess": "Term « {{term}} » deleted.",
       "deleteError": "Failed to delete the term. Please retry."
-    }
+    },
+    "definitionLanguage": "Definition language",
+    "languages": {
+      "fr": "FR",
+      "en": "EN"
+    },
+    "letterIndex": "Alphabetical index",
+    "allLetters": "All"
   },
   "header": {
     "userMenu": "My account"
