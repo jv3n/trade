@@ -9,9 +9,12 @@ import com.portfolioai.account.infrastructure.persistence.AccountMovementReposit
 import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
 import com.portfolioai.auth.application.AuthService
 import java.time.Instant
+import java.util.UUID
 import org.springframework.data.domain.PageRequest
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 
 /**
  * The morning reconciliation (#198) — the one ritual of the day that touches the account : read the
@@ -82,6 +85,33 @@ class AccountReconciliationService(
           correctionId = correctionId,
         )
     return repo.save(reconciliation).toDto()
+  }
+
+  /**
+   * Cancels a morning : the reconciliation row **and** the `ADJUSTMENT` it produced go together,
+   * and the balance goes back where it stood before it (#249).
+   *
+   * `V18` made the FK `ON DELETE SET NULL` so a correction removed on its own leaves the morning in
+   * the history — *"it happened, and the history says so"*. That reasoning holds for a morning that
+   * really was reconciled ; it does not for a mistyped figure, where the point is that the morning
+   * never happened as recorded. Hence a cancellation that removes both, rather than one that breaks
+   * the link between them.
+   *
+   * The correction goes through [AccountService.delete] rather than the repository, so the
+   * re-floating contract stays in one place : removing it shifts the balance, and the previous
+   * correction has to float back onto its own target.
+   */
+  @Transactional
+  fun cancel(id: UUID) {
+    val user = authService.getCurrentUser()
+    val reconciliation =
+      repo.findByIdAndUserId(id, user.id)
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Reconciliation not found")
+    // Deleted first : the FK would null the link out from under us on the movement delete.
+    val correctionId = reconciliation.correctionId
+    repo.delete(reconciliation)
+    repo.flush()
+    correctionId?.let { accountService.delete(it) }
   }
 
   /**

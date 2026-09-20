@@ -10,6 +10,7 @@ import com.portfolioai.account.domain.AccountMovement
 import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
+import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
 import com.portfolioai.auth.application.AuthService
 import java.math.BigDecimal
 import java.time.Instant
@@ -43,6 +44,7 @@ class AccountService(
   private val repo: AccountMovementRepository,
   private val authService: AuthService,
   private val reconciler: AccountReconciler,
+  private val reconciliations: AccountReconciliationRepository,
 ) {
 
   /**
@@ -225,6 +227,11 @@ class AccountService(
     if (movement.type == AccountMovementType.TRADE) {
       throw badRequest("TRADE movements are removed by deleting their trade in the journal")
     }
+    // A correction born of a morning reconciliation takes that morning with it (#249) : the DB's
+    // `ON DELETE SET NULL` would otherwise leave a row describing a correction that is gone, and
+    // the block would keep refusing a new entry for that day. Looked up before the delete, while
+    // the FK still points here.
+    reconciliations.findByCorrectionId(movement.id)?.let { reconciliations.delete(it) }
     repo.delete(movement)
     // Removing a line shifts the balance → re-float the latest remaining correction. If the row we
     // just deleted *was* the latest correction, this floats the previous one back onto its target.

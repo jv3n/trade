@@ -192,6 +192,10 @@ export class HttpAccountRepository extends AccountRepository {
       .pipe(map(fromWire));
   }
 
+  cancelReconciliation(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/reconciliations/${id}`);
+  }
+
   deleteMovement(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/movements/${id}`);
   }

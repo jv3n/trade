@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideTranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Reconciliation, ReconciliationInput } from '../../../core/api/account/account.model';
@@ -21,10 +21,13 @@ import { MorningReconciliation } from './morning-reconciliation';
  * - **cancelling** the modal reaches no endpoint ;
  * - the host is **told** once the morning is settled, and the input is cleared so the next
  *   keystroke starts from the new balance ;
- * - a settled morning is **recognised as today's** — and yesterday's is not.
+ * - a settled morning is **recognised as today's** — and yesterday's is not ;
+ * - **cancelling a morning** (#249) always confirms, erases it, and tells the host — a figure typed
+ *   by mistake must leave no trace, where re-posting the day only corrects it.
  */
 describe('MorningReconciliation', () => {
   let reconcile: ReturnType<typeof vi.fn>;
+  let cancelReconciliation: ReturnType<typeof vi.fn>;
   let confirmed: boolean;
   let confirmAsk: ReturnType<typeof vi.fn>;
   /** What the history endpoint answers — set by a test **before** `setup()`. */
@@ -42,6 +45,7 @@ describe('MorningReconciliation', () => {
         }),
       ),
     );
+    cancelReconciliation = vi.fn(() => of(undefined));
     confirmAsk = vi.fn(() => of(confirmed));
 
     TestBed.configureTestingModule({
@@ -53,6 +57,7 @@ describe('MorningReconciliation', () => {
           useValue: {
             reconcile,
             reconciliations: vi.fn(() => of(historyRows)),
+            cancelReconciliation,
           } as unknown as AccountRepository,
         },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
@@ -154,6 +159,58 @@ describe('MorningReconciliation', () => {
     historyRows = [makeReconciliation({ valueDate: yesterday })];
 
     expect(setup().componentInstance.today()).toBeNull();
+  });
+  // ---------------------------------------------------------------------------
+  // Cancelling a morning (#249)
+  // ---------------------------------------------------------------------------
+
+  it('always confirms before cancelling, even a clean morning', () => {
+    const today = makeReconciliation({ gap: 0, correctionId: null });
+    historyRows = [today];
+    const page = setup().componentInstance;
+
+    page.cancel(today);
+
+    expect(confirmAsk).toHaveBeenCalledWith(
+      'account.reconciliation.confirmCancel',
+      expect.objectContaining({ variant: 'danger' }),
+    );
+    expect(cancelReconciliation).toHaveBeenCalledWith(today.id);
+  });
+
+  it('reaches no endpoint when the confirmation is declined', () => {
+    const today = makeReconciliation();
+    historyRows = [today];
+    confirmed = false;
+    const page = setup().componentInstance;
+
+    page.cancel(today);
+
+    expect(cancelReconciliation).not.toHaveBeenCalled();
+  });
+
+  /** The correction that just went moved the balance — the host has to refetch. */
+  it('tells the host once the morning is cancelled', () => {
+    const today = makeReconciliation();
+    historyRows = [today];
+    const fixture = setup();
+    const settled = vi.fn();
+    fixture.componentInstance.settled.subscribe(settled);
+
+    fixture.componentInstance.cancel(today);
+
+    expect(settled).toHaveBeenCalledWith(today);
+  });
+
+  it('clears the in-flight flag when the cancellation fails', () => {
+    const today = makeReconciliation();
+    historyRows = [today];
+    cancelReconciliation.mockReturnValue(throwError(() => new Error('boom')));
+    const page = setup().componentInstance;
+
+    page.cancel(today);
+
+    expect(page.cancelling()).toBe(false);
   });
 });
 

@@ -121,4 +121,13 @@ class AccountController(
   @GetMapping("/reconciliations")
   fun reconciliations(@RequestParam(defaultValue = "10") limit: Int): List<ReconciliationDto> =
     reconciliationService.history(limit)
+
+  /**
+   * Cancels a morning — the reconciliation and the `ADJUSTMENT` it produced go together, and the
+   * balance returns to where it stood before it. For a figure typed by mistake : re-posting the
+   * same day corrects it, this erases it (#249).
+   */
+  @DeleteMapping("/reconciliations/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  fun cancelReconciliation(@PathVariable id: UUID) = reconciliationService.cancel(id)
 }

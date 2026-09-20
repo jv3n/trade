@@ -198,6 +198,12 @@
         "title": "Create the correction?",
         "message": "A « Correction » line of {{gap}} $ is added to the account so the balance matches the TradeZero figure. The reconciliation is timestamped with it.",
         "confirm": "Create the correction"
+      },
+      "cancel": "Cancel this reconciliation",
+      "confirmCancel": {
+        "title": "Cancel the reconciliation?",
+        "message": "This morning and the correction it produced will be removed, and the balance will go back to what it was before. Use it when the figure you typed was a mistake.",
+        "confirm": "Cancel the reconciliation"
       }
     },
     "currentBalance": "Current balance",
@@ -257,7 +263,9 @@
       "correctSuccess": "Balance corrected.",
       "correctError": "Couldn't correct the balance. Please retry.",
       "reconcileSuccess": "Morning reconciled.",
-      "reconcileError": "Couldn't reconcile this morning. Please retry."
+      "reconcileError": "Couldn't reconcile this morning. Please retry.",
+      "cancelReconciliationSuccess": "Reconciliation cancelled.",
+      "cancelReconciliationError": "Could not cancel the reconciliation."
     },
     "chartTitle": "Balance over time",
     "kpi": {

@@ -160,6 +160,86 @@ class MorningReconciliationIntegrationTest {
 
   // ---------------------------------------------------------------------------
 
+  // ---------------------------------------------------------------------------
+  // Cancelling a morning (#249)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The mistyped-figure path. Re-posting the same day *corrects* a morning ; cancelling *erases* it
+   * — the correction goes, and the balance returns to where it stood before that morning.
+   */
+  @Test
+  fun `cancelling a morning removes its correction and puts the balance back`() {
+    accountService.addMovement(deposit("1000.00"))
+    // A fat-fingered broker balance : 9 870 instead of 987.
+    val settled = service.reconcile(ReconciliationRequest(BigDecimal("9870.00"), MONDAY))
+    assertNotNull(settled.correctionId)
+    assertEquals(
+      0,
+      BigDecimal("9870.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
+
+    service.cancel(settled.id)
+
+    assertEquals(
+      0,
+      BigDecimal("1000.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
+    assertNull(movements.findById(settled.correctionId!!).orElse(null))
+    assertTrue(service.history(10).isEmpty())
+  }
+
+  @Test
+  fun `the same morning can be settled again right after being cancelled`() {
+    accountService.addMovement(deposit("1000.00"))
+    val mistyped = service.reconcile(ReconciliationRequest(BigDecimal("9870.00"), MONDAY))
+
+    service.cancel(mistyped.id)
+    val corrected = service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY))
+
+    assertEquals(1, service.history(10).size)
+    // The gap is measured from the untouched balance, not from the cancelled morning's figure.
+    assertEquals(0, BigDecimal("-12.40").compareTo(corrected.gap))
+    assertEquals(
+      0,
+      BigDecimal("987.60").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
+  }
+
+  /**
+   * The other half of #249 : deleting the `ADJUSTMENT` straight from the movements table used to
+   * leave the morning behind (the FK is `ON DELETE SET NULL`), and the block then refused a new
+   * entry for that day while describing a correction that no longer existed.
+   */
+  @Test
+  fun `deleting the correction on its own takes its morning with it`() {
+    accountService.addMovement(deposit("1000.00"))
+    val settled = service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY))
+
+    accountService.delete(settled.correctionId!!)
+
+    assertTrue(service.history(10).isEmpty())
+    assertEquals(
+      0,
+      BigDecimal("1000.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
+  }
+
+  @Test
+  fun `cancelling a clean morning leaves the balance alone`() {
+    accountService.addMovement(deposit("1000.00"))
+    val clean = service.reconcile(ReconciliationRequest(BigDecimal("1000.00"), MONDAY))
+    assertNull(clean.correctionId)
+
+    service.cancel(clean.id)
+
+    assertTrue(service.history(10).isEmpty())
+    assertEquals(
+      0,
+      BigDecimal("1000.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
+  }
+
   private fun saveUser(prefix: String) =
     userRepository.save(
       User(
