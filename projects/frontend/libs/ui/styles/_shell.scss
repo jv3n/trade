@@ -57,15 +57,19 @@
   // accent icon. The accent stays an emphasis, not a wash over the whole row.
   //
   // The bar is a pseudo-element inset from the top and bottom, not an inset shadow : a shadow is
-  // clipped by the item's `border-radius` and curls around both corners. It stays inside the item
-  // because Material's ripple needs `overflow: hidden` here. The 8px inset matches `--radius`
-  // exactly — below it the bar would still cross the corner arc.
-  .sidenav-active {
+  // clipped by the item's `border-radius` and curls around both corners. The 8px inset matches
+  // `--radius` — below it the bar would still cross the corner arc.
+  //
+  // `::after`, never `::before` : Material claims that one on focus
+  // (`.mdc-list-item:not(.--selected):focus::before`, a full-size box at specificity 0-3-1,
+  // injected after this sheet), so a bar drawn there vanishes the moment the item is clicked.
+  // The `.mat-mdc-list-item` in the selector is what buys the specificity to hold it.
+  .mat-mdc-list-item.sidenav-active {
     position: relative;
     background: var(--color-surface-2);
     color: var(--color-text);
 
-    &::before {
+    &::after {
       content: '';
       position: absolute;
       left: 0;
