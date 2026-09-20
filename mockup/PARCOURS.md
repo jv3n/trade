@@ -102,6 +102,12 @@ La page d'accueil suit la journée type : chaque étape avec son état (**faite*
 - La stat **reprend toutes les données du candidat** (pattern, ticker, clôture veille, open / high PM, gap, push PM, float, volume, locate, note).
 - La stat est créée « à compléter » : les données de séance arrivent à l'étape 5.
 
+**Décidé** :
+
+- Un candidat déjà passé en stat affiche « En stats » et ne peut pas l'être deux fois (refus).
+- « Tout passer en stats » ne traite que les candidats absents de la feuille ; ceux qui y sont déjà sont laissés de côté, sans faire échouer le lot. L'action est donc rejouable sans risque.
+- La stat garde un lien vers le candidat d'origine. Supprimer le candidat ensuite ne supprime pas la stat : le lien est simplement vidé.
+
 ---
 
 ## Étape 3 — Séance ✅

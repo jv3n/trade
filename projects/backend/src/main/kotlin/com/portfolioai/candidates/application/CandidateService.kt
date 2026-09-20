@@ -1,10 +1,14 @@
 package com.portfolioai.candidates.application
 
 import com.portfolioai.auth.application.AuthService
+import com.portfolioai.candidates.application.dto.BulkPromotionDto
 import com.portfolioai.candidates.application.dto.CandidateDto
 import com.portfolioai.candidates.application.dto.CandidateRequest
 import com.portfolioai.candidates.domain.Candidate
 import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
+import com.portfolioai.stats.application.StatEntryService
+import com.portfolioai.stats.application.dto.StatEntryDto
+import com.portfolioai.stats.application.dto.StatEntryRequest
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -29,18 +33,81 @@ import org.springframework.web.server.ResponseStatusException
 class CandidateService(
   private val repo: CandidateRepository,
   private val authService: AuthService,
+  private val statEntryService: StatEntryService,
 ) {
 
   /** A day's candidates (default today), ticker-ascending — the front sorts by gap. */
   @Transactional(readOnly = true)
   fun listForDate(date: LocalDate?): List<CandidateDto> {
     val userId = authService.getCurrentUser().id
-    return repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, date ?: LocalDate.now()).map {
-      it.toDto()
-    }
+    val candidates =
+      repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, date ?: LocalDate.now())
+    // One query for the whole day rather than one per row.
+    val promoted = statEntryService.promotedCandidateIds(candidates.map { it.id })
+    return candidates.map { it.toDto(promoted = it.id in promoted) }
   }
 
-  @Transactional(readOnly = true) fun findById(id: UUID): CandidateDto = loadOwned(id).toDto()
+  @Transactional(readOnly = true)
+  fun findById(id: UUID): CandidateDto {
+    val candidate = loadOwned(id)
+    return candidate.toDto(
+      promoted = candidate.id in statEntryService.promotedCandidateIds(listOf(id))
+    )
+  }
+
+  // ---- Promotion to the stats sheet (#189) ---------------------------------------------------
+
+  /**
+   * Copies a candidate onto the stats sheet — the « → Stat » action, cf. `mockup/PARCOURS.md`
+   * step 2. The stat takes the whole premarket block and starts "to complete" ; the candidate keeps
+   * a trace through `stat_entry.candidate_id` and shows as promoted from then on.
+   *
+   * Promoting twice is a **409**, so the bulk action below stays idempotent. A stat that already
+   * exists for that (day, ticker) without coming from this candidate is a 409 too — raised by
+   * `StatEntryService`.
+   */
+  @Transactional
+  fun promote(id: UUID): StatEntryDto {
+    val candidate = loadOwned(id)
+    if (candidate.id in statEntryService.promotedCandidateIds(listOf(candidate.id))) {
+      throw ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "Candidate ${candidate.ticker} is already in the stats sheet",
+      )
+    }
+    return statEntryService.create(candidate.toStatRequest(), candidateId = candidate.id)
+  }
+
+  /**
+   * Promotes every candidate of a day that isn't in the stats sheet yet — « Tout passer en stats ».
+   * Idempotent by construction : already-promoted candidates are skipped, and a candidate whose
+   * (day, ticker) slot is taken by another stat is reported as skipped rather than failing the
+   * whole batch.
+   */
+  @Transactional
+  fun promoteDay(date: LocalDate?): BulkPromotionDto {
+    val userId = authService.getCurrentUser().id
+    val day = date ?: LocalDate.now()
+    val candidates = repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, day)
+    val alreadyPromoted = statEntryService.promotedCandidateIds(candidates.map { it.id })
+
+    val promoted = mutableListOf<String>()
+    val skipped = mutableListOf<String>()
+    for (candidate in candidates) {
+      // Both conditions are checked **before** calling `create` : letting it throw the 409 would
+      // mark this transaction rollback-only and take the whole batch down with it.
+      if (
+        candidate.id in alreadyPromoted ||
+          statEntryService.existsForDayAndTicker(candidate.tradingDate, candidate.ticker)
+      ) {
+        skipped += candidate.ticker
+        continue
+      }
+      statEntryService.create(candidate.toStatRequest(), candidateId = candidate.id)
+      promoted += candidate.ticker
+    }
+    return BulkPromotionDto(promoted = promoted, skipped = skipped)
+  }
 
   @Transactional
   fun create(request: CandidateRequest): CandidateDto {
@@ -106,7 +173,25 @@ class CandidateService(
     note = request.note?.trim()?.ifEmpty { null }
   }
 
-  private fun Candidate.toDto(): CandidateDto =
+  /**
+   * The premarket block a promotion copies onto the stats sheet. The session block stays empty —
+   * that is what makes the new stat "to complete" — and the flags default to false.
+   */
+  private fun Candidate.toStatRequest(): StatEntryRequest =
+    StatEntryRequest(
+      tradeDate = tradingDate,
+      pattern = pattern,
+      ticker = ticker,
+      previousClose = previousClose,
+      pmOpen = pmOpen,
+      pmHigh = pmHigh,
+      floatMillions = floatMillions,
+      volumeMillions = volumeMillions,
+      locatePerShare = locatePerShare,
+      note = note,
+    )
+
+  private fun Candidate.toDto(promoted: Boolean = false): CandidateDto =
     CandidateDto(
       id = id,
       tradingDate = tradingDate,
@@ -119,6 +204,7 @@ class CandidateService(
       volumeMillions = volumeMillions,
       locatePerShare = locatePerShare,
       note = note,
+      promoted = promoted,
       createdAt = createdAt,
       updatedAt = updatedAt,
     )

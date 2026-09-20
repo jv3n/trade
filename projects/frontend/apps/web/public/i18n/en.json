@@ -70,7 +70,20 @@
     },
     "actions": {
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "promote": "Stat",
+      "promoteAll": "Promote all to stats",
+      "inStats": "In stats"
+    },
+    "confirmPromote": {
+      "title": "Promote {{ticker}} to a stat?",
+      "message": "The stat takes every candidate field (pattern, previous close, PM open and high, float, volume, locate, note). You will complete it after the 4 pm close.",
+      "confirm": "Promote to stat"
+    },
+    "confirmPromoteAll": {
+      "title": "Promote {{count}} candidate(s) to stats?",
+      "message": "{{tickers}} become stats to complete after the 4 pm close. Candidates already in the sheet are left alone.",
+      "confirm": "Promote all to stats"
     },
     "confirmDelete": {
       "title": "Delete the {{ticker}} candidate?",
@@ -81,6 +94,10 @@
       "createSuccess": "{{ticker}} added.",
       "updateSuccess": "{{ticker}} updated.",
       "deleteSuccess": "{{ticker}} deleted.",
+      "promoteSuccess": "{{ticker}} is now in the stats sheet.",
+      "promoteError": "Couldn't promote {{ticker}}. Please retry.",
+      "promoteAllSuccess": "{{count}} candidate(s) promoted to stats.",
+      "promoteAllError": "Couldn't promote the candidates. Please retry.",
       "duplicate": "{{ticker}} is already captured on this day.",
       "loadError": "Couldn't load the candidates. Please retry.",
       "saveError": "Couldn't save the candidate. Please retry.",

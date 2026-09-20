@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
 import { Pattern } from '../../shared/pattern.model';
-import { Candidate, CandidateInput } from '../candidates.model';
+import { BulkPromotion, Candidate, CandidateInput } from '../candidates.model';
 import { CandidatesRepository } from '../candidates.repository';
 
 // ---------------------------------------------------------------------------
@@ -24,11 +24,12 @@ interface CandidateWireDto {
   volumeMillions: number | null;
   locatePerShare: number | null;
   note: string | null;
+  promoted: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-type CandidateWireRequest = Omit<CandidateWireDto, 'id' | 'createdAt' | 'updatedAt'>;
+type CandidateWireRequest = Omit<CandidateWireDto, 'id' | 'promoted' | 'createdAt' | 'updatedAt'>;
 
 function fromWire(w: CandidateWireDto): Candidate {
   return {
@@ -74,5 +75,15 @@ export class HttpCandidatesRepository extends CandidatesRepository {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  // The created stat is in the response body ; the port drops it on purpose (see its KDoc).
+  promote(id: string): Observable<void> {
+    return this.http.post<unknown>(`${this.base}/${id}/promote`, {}).pipe(map(() => undefined));
+  }
+
+  promoteDay(date: Date): Observable<BulkPromotion> {
+    const params = new HttpParams().set('date', format(date, 'yyyy-MM-dd'));
+    return this.http.post<BulkPromotion>(`${this.base}/promote`, {}, { params });
   }
 }

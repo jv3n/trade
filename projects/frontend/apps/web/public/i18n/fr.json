@@ -70,7 +70,20 @@
     },
     "actions": {
       "edit": "Modifier",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "promote": "Stat",
+      "promoteAll": "Tout passer en stats",
+      "inStats": "En stats"
+    },
+    "confirmPromote": {
+      "title": "Passer {{ticker}} en stat ?",
+      "message": "La stat reprend toutes les données du candidat (pattern, clôture veille, open et high PM, float, volume, locate, note). Tu la compléteras après la clôture de 16h.",
+      "confirm": "Passer en stat"
+    },
+    "confirmPromoteAll": {
+      "title": "Passer {{count}} candidat(s) en stats ?",
+      "message": "{{tickers}} deviennent des stats à compléter après 16h. Les candidats déjà en stats sont laissés de côté.",
+      "confirm": "Tout passer en stats"
     },
     "confirmDelete": {
       "title": "Supprimer le candidat {{ticker}} ?",
@@ -81,6 +94,10 @@
       "createSuccess": "{{ticker}} ajouté.",
       "updateSuccess": "{{ticker}} mis à jour.",
       "deleteSuccess": "{{ticker}} supprimé.",
+      "promoteSuccess": "{{ticker}} est passé en stats.",
+      "promoteError": "Impossible de passer {{ticker}} en stat. Réessaie.",
+      "promoteAllSuccess": "{{count}} candidat(s) passés en stats.",
+      "promoteAllError": "Impossible de passer les candidats en stats. Réessaie.",
       "duplicate": "{{ticker}} est déjà saisi ce jour-là.",
       "loadError": "Impossible de charger les candidats. Réessaie.",
       "saveError": "Impossible d'enregistrer le candidat. Réessaie.",

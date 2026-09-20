@@ -25,9 +25,20 @@ export interface Candidate {
   volumeMillions: number | null;
   locatePerShare: number | null;
   note: string | null;
+  /** True once this candidate has been promoted to the stats sheet — it can't be promoted twice. */
+  promoted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-/** Create / update payload — [Candidate] minus the server-owned id + audit fields. */
-export type CandidateInput = Omit<Candidate, 'id' | 'createdAt' | 'updatedAt'>;
+/** Create / update payload — [Candidate] minus the server-owned id, promotion state and audit. */
+export type CandidateInput = Omit<Candidate, 'id' | 'promoted' | 'createdAt' | 'updatedAt'>;
+
+/**
+ * Outcome of « Promote all to stats » : the tickers copied to the sheet by that call, and those
+ * left alone because they were already in it.
+ */
+export interface BulkPromotion {
+  promoted: string[];
+  skipped: string[];
+}

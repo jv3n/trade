@@ -195,6 +195,12 @@
     <h3>
       {{ day() | date: 'fullDate' }}
       <span class="hint">{{ 'candidates.list.count' | translate: { count: rows().length } }}</span>
+      @if (!readOnly() && promotable().length > 0) {
+        <button mat-stroked-button stbSize="sm" type="button" (click)="promoteAll()">
+          <mat-icon>keyboard_double_arrow_right</mat-icon>
+          {{ 'candidates.actions.promoteAll' | translate }}
+        </button>
+      }
     </h3>
 
     @if (loadError()) {
@@ -327,6 +333,18 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
             <td mat-cell *matCellDef="let c" stbCol="actions">
+              @if (c.promoted) {
+                <!-- Status, not an outcome → indigo like the other categories (colour rule). -->
+                <span class="stats-tag">
+                  <mat-icon class="stats-tag__icon">check</mat-icon>
+                  {{ 'candidates.actions.inStats' | translate }}
+                </span>
+              } @else if (!readOnly()) {
+                <button mat-stroked-button stbSize="sm" type="button" (click)="promote(c)">
+                  <mat-icon>arrow_forward</mat-icon>
+                  {{ 'candidates.actions.promote' | translate }}
+                </button>
+              }
               @if (!readOnly()) {
                 <button
                   mat-icon-button
