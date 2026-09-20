@@ -131,7 +131,7 @@
       "load": "Couldn't load the account. Please retry."
     },
     "movements": "Movements",
-    "viewInJournal": "View in the journal",
+    "viewTrade": "View the trade",
     "dailySubtotal": "Daily total",
     "type": {
       "DEPOSIT": "Deposit",
