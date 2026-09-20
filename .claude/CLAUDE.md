@@ -38,7 +38,7 @@ trade/
 │   │       │              # app-state/ (UI signal services), http/ (interceptors),
 │   │       │              # router/ (guards), providers.ts
 │   │       ├── shared/    # cross-cutting helpers (no state, no DI)
-│   │       └── features/  # account, journal, stats, candidates, lexicon,
+│   │       └── features/  # today, account, journal, stats, candidates, lexicon,
 │   │                      # settings, login, error
 │   ├── libs/ui/                                    # @portfolioai/ui design-system lib
 │   │   ├── src/lib/<component>/                    # Stb*Module wrappers + scss overrides
