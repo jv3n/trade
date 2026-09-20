@@ -186,7 +186,7 @@ export class JournalPage {
     return s === null ? null : s.traded + s.untraded;
   });
 
-  // ---- Sort (server-side, controlled-component pattern à la ic3) ----
+  // ---- Sort (server-side, controlled-component pattern) ----
   // The `sort` signal is the **source of truth** for the table's sort state. It's bound back
   // into MatSort via `[matSortActive]` + `[matSortDirection]` in the template, so a) the
   // arrow always reflects what the server returned, b) MatSort doesn't end up in a stale

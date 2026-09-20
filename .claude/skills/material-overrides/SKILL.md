@@ -199,3 +199,13 @@ The toolbar global type `theme` (`dark` / `light`) toggles `document.documentEle
 
 - **Pure Material directive with no design-system surface** — if the wrapper would just re-export `MatXxxModule` with nothing else (no token override, no directive), skip it ; the app can import `MatXxxModule` directly until a real customisation appears. Today every Material module the app uses has either token overrides or a directive justifying the wrapper.
 - **Components Material doesn't ship** — domain widgets (e.g. a CSV drop-zone) live in `apps/web/src/app/features/<name>/` or `apps/web/src/app/shared/`, not in `libs/ui`. `libs/ui` is specifically the Material-wrapping layer.
+
+## Comments — the strict minimum, with one exception
+
+See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum) : everywhere else, a
+comment earns its line only by saying *why*.
+
+**The token override files are the exception.** Listing every M3 token — applied with a value,
+deferred as a commented line with a one-line rationale — is the point of the file : it is how the
+next contributor sees what is still on the table without re-reading the Material source. Keep those
+rationales to a single line each, and don't let the exception spread to the rest of the lib.

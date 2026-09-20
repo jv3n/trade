@@ -111,3 +111,20 @@ Don't use a scope function just to save a line.
 ## Wire models
 
 Jackson-bound classes mirroring an upstream payload are `data class`es (Jackson needs the canonical constructor), follow the upstream JSON names, declare only the fields actually read, and stay `private` to the adapter file when nothing else needs them (`FrankfurterLatestResponse`).
+
+## Comments — the strict minimum
+
+See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum). A KDoc is worth its
+lines when it tells a caller what they can't read off the signature: the invariant, the failure
+mode, the reason the obvious alternative was rejected. Not the mechanics, not the history.
+
+```kotlin
+// ✗ narrates the code and its past
+/**
+ * Loads the trade. Added in Phase 4. First we fetch it from the repository, then we check the
+ * owner, then we map it to a DTO.
+ */
+
+// ✓ says what the caller can't guess
+/** Foreign or missing id → 404 (never 403) so we don't leak the existence of someone else's row. */
+```

@@ -1,25 +1,11 @@
-# Dependabot — alerts + auto-PRs sur deps obsolètes ou vulnérables.
-# Doc : https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Dependabot — one grouped PR per ecosystem, patch and minor only.
 #
-# Stratégie :
-# - Passe quotidienne à 06:00 (America/Toronto) sur les 3 écosystèmes.
-# - **Pas de majors**. Chaque écosystème ignore `version-update:semver-major` via une règle
-#   catch-all `dependency-name: '*'`. Un major peut embarquer des breaking changes silencieux
-#   (ex : springdoc 3.x cible Spring Boot 4, Kotlin 2.1 → 2.3 casse le `resolutionStrategy`
-#   Detekt qui pin Kotlin 2.0.10) — on les traite manuellement quand le contexte est prêt.
-# - **Un seul groupe catch-all par écosystème**, sur `patch` + `minor` : une PR par écosystème
-#   au lieu d'une PR par dépendance. Les groupes par famille (Angular, Spring Boot,
-#   ngx-translate) sont subsumés — leur raison d'être était la solidarité des peer-deps et des
-#   plugins d'un même bump, que le catch-all garantit par construction. Contrepartie assumée :
-#   quand la CI casse, le bump coupable se bisecte à la main dans la PR.
-# - Les **`ignore`** spécifiques bloquent en plus les bumps qu'on sait perdants d'avance
-#   (peer dep d'Angular sur TS, bridge Kotlin chez Detekt). Dependabot rouvre automatiquement
-#   quand le contexte change.
-# - `open-pull-requests-limit` reste large : le groupage borne déjà le volume, la limite ne sert
-#   plus que de garde-fou.
+# **No majors** : a major can carry silent breaking changes (springdoc 3.x targets Spring Boot 4,
+# Kotlin 2.1 → 2.3 breaks Detekt's pinned `resolutionStrategy`), so they are taken on by hand when
+# the context is ready. The specific `ignore` blocks below add the bumps that are known to be
+# blocked by a peer dependency ; Dependabot reopens them on its own once that changes.
 #
-# Note : toute modification de ce fichier relance immédiatement une passe sur les écosystèmes
-# concernés — pas besoin d'attendre 06:00 ni du bouton « Check for updates ».
+# The trade-off of grouping : when CI breaks, the guilty bump is bisected by hand inside the PR.
 
 version: 2
 
@@ -33,8 +19,6 @@ updates:
       timezone: America/Toronto
     open-pull-requests-limit: 10
     groups:
-      # Catch-all patch + minor. Couvre la solidarité Spring Boot (starter + plugin +
-      # dependency-management bougent ensemble sur un même bump).
       all:
         patterns:
           - '*'
@@ -42,10 +26,6 @@ updates:
           - patch
           - minor
     ignore:
-      # Catch-all : pas de major. Cf. en-tête du fichier (springdoc 3.x → Spring Boot 4, etc.).
-      # Cette règle subsume les blocs major-only par dépendance (Detekt 2.0 qui demanderait de
-      # retirer le `resolutionStrategy` Kotlin 2.0.10 ; Spotless major qui pourrait reformater
-      # toute la codebase). Les commentaires restent à titre de mémo pour le bump manuel.
       - dependency-name: '*'
         update-types:
           - 'version-update:semver-major'
@@ -59,9 +39,6 @@ updates:
       timezone: America/Toronto
     open-pull-requests-limit: 10
     groups:
-      # Catch-all patch + minor. Couvre la solidarité `@angular/*` / `@angular-*/*` /
-      # `@ngtools/*` (peer-deps internes : `@angular/build` exige le même major que
-      # `@angular/compiler-cli`) et celle de `@ngx-translate/*` (core + http-loader).
       all:
         patterns:
           - '*'
@@ -69,14 +46,11 @@ updates:
           - patch
           - minor
     ignore:
-      # Catch-all : pas de major. Cf. en-tête du fichier. Subsume notamment le major TypeScript
-      # (borné par la peer dep d'Angular `>=5.9 <6.0` pour Angular 21 — Dependabot rouvrira la
-      # PR automatiquement quand on bumpera Angular en major).
       - dependency-name: '*'
         update-types:
           - 'version-update:semver-major'
-      # Zone.js — explicitement retiré du projet (zoneless). Dependabot ne devrait pas le voir,
-      # mais si un transitif le réintroduit on bloque tous les bumps (pas que les majors).
+      # Zone.js was removed (the app is zoneless) — if a transitive dependency drags it back in,
+      # block every bump, not just the majors.
       - dependency-name: 'zone.js'
 
   # ─────────────────────────────────────────────────────────────────────── GitHub Actions
@@ -88,7 +62,6 @@ updates:
       timezone: America/Toronto
     open-pull-requests-limit: 5
     groups:
-      # Catch-all patch + minor — les actions GitHub sont peu nombreuses, une PR suffit.
       all:
         patterns:
           - '*'
@@ -96,7 +69,6 @@ updates:
           - patch
           - minor
     ignore:
-      # Catch-all : pas de major. Cf. en-tête du fichier.
       - dependency-name: '*'
         update-types:
           - 'version-update:semver-major'

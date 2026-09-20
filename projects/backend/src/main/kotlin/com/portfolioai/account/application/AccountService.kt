@@ -35,7 +35,7 @@ import org.springframework.web.server.ResponseStatusException
  * - `TRADE` — pushed from the journal (journal-integration slice), **read-only** here : create /
  *   update / delete via the manual endpoints are rejected with 400.
  *
- * Validation is done in-service (à la `LexiconEntryService`) — non-positive / wrong-type / no-op
+ * Validation is done in-service (like `LexiconEntryService`) — non-positive / wrong-type / no-op
  * inputs return a clean 400 rather than reaching the DB CHECK constraints.
  */
 @Service

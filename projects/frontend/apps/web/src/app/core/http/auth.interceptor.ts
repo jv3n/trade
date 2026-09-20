@@ -22,7 +22,7 @@ import { AuthService } from '../app-state/auth.service';
  *   500 from a mutation needs an inline snackbar / banner near the action button, not a
  *   full-page redirect. The `/error` route stays available for explicit navigation (e.g. from a
  *   future fatal error boundary) but the interceptor doesn't trigger it.
- * - **No retry logic**. Components own their retry strategy (snackbar with "Réessayer" button,
+ * - **No retry logic**. Components own their retry strategy (snackbar with a Retry button,
  *   etc.). Centralising retry here would race with caller-level intent.
  *
  * Three skip conditions for the 401 branch :

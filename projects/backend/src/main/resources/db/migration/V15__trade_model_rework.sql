@@ -14,7 +14,7 @@
 -- rather than stored so the two sources can never drift.
 --
 -- Changed : `stat_entry_id` becomes mandatory (a trade is only ever created from a stat, cf.
--- PARCOURS étape 4) and its FK moves from ON DELETE SET NULL to ON DELETE RESTRICT — a stat that
+-- PARCOURS step 4) and its FK moves from ON DELETE SET NULL to ON DELETE RESTRICT — a stat that
 -- carries a trade can no longer be deleted out from under it.
 --
 -- New on the executions : `executed_at`, the fill time read off the broker's statement. Nullable

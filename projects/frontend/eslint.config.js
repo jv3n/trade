@@ -1,11 +1,10 @@
 // @ts-check
 //
-// ESLint flat config — Angular 21 workspace (apps/web + libs/ui). Prettier reste seul responsable
-// de la mise en forme : `eslint-config-prettier` est appliqué en dernier pour désactiver les
-// règles ESLint qui chevaucheraient Prettier (indentation, semis, quotes, …). On n'ajoute
-// volontairement pas `recommended-type-checked` côté TS — beaucoup plus strict mais 5-10× plus
-// lent (nécessite la résolution de types complète) ; à activer plus tard en session dédiée si on
-// veut serrer.
+// ESLint flat config for the workspace. Prettier owns formatting : `eslint-config-prettier` is
+// applied last to switch off every rule that would overlap it.
+//
+// `recommended-type-checked` is deliberately left out — much stricter, but 5-10× slower since it
+// needs full type resolution.
 const eslint = require('@eslint/js');
 const { defineConfig, globalIgnores } = require('eslint/config');
 const tseslint = require('typescript-eslint');

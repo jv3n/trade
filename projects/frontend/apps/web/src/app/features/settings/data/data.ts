@@ -17,8 +17,8 @@ import { StatsRepository } from '../../../core/api/stats/stats.repository';
 type Dataset = 'journal' | 'stats';
 
 /**
- * `/settings/data` — « Données », the back-office corner where the journal and the stats sheet are
- * downloaded as CSV (`mockup/parametres.html` › Données).
+ * `/settings/data` — the back-office corner where the journal and the stats sheet are downloaded as
+ * CSV (`mockup/parametres.html` › Données).
  *
  * **Export only** (#196) : neither sheet can be fed from a file. A trade is born from a stat and a
  * stat from a candidate, so an importer would be a second way in, competing with the daily flow

@@ -176,3 +176,10 @@ log.info("OAuth login (existing user) — id={} provider={}", existing.id, provi
 - Parameterised messages, not string interpolation.
 - **Never log emails, `displayName` or `providerId`** — log the user UUID. `AppConfigService.set` logs only the key, never the value (the whitelist is a list of emails).
 - Levels: `DEBUG` trace, `INFO` milestones, `WARN` fail-soft upstream errors (`FrankfurterForexClient`), `ERROR` user-visible failures.
+
+## Comments — the strict minimum
+
+See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum). This applies to
+`application*.yml` too: a key whose name says it all needs no line above it. Keep the ones that
+carry a constraint (`baseline-version: 0` — why zero and not one), drop the tutorials (how to create
+an OAuth client, how to reset a database): those belong in the issue or in `docs/`.

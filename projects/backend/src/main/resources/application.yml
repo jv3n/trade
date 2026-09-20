@@ -1,74 +1,29 @@
 server:
-  # Port HTTP du backend natif. Surchargeable via `BACKEND_HOST_PORT` dans `.env` à la racine
-  # du repo en cas de conflit avec un autre service local (cf. `.env.example`).
   port: ${BACKEND_HOST_PORT:8080}
-  # En dev, le SPA Angular tourne sur un port distinct (4200/4201) et le proxy CLI forward
-  # `/api/**`, `/oauth2/**`, `/logout`, `/login/oauth2/**` vers ce backend (cf. `projects/frontend/apps/web/proxy.conf.js`).
-  # `xfwd: true` du proxy ajoute les headers `X-Forwarded-Host/Port/Proto`. `framework` fait que
-  # Spring les lit via `ForwardedHeaderFilter` pour construire ses URLs absolues (notamment le
-  # `redirect_uri` OAuth envoyé à Google) sur le host du SPA — sinon Google reçoit
-  # `localhost:8081` et la session cookie ne sera pas accessible au SPA sur `localhost:4201`.
-  # En prod derrière un reverse proxy (nginx, traefik, ALB), même besoin : trust the forwarded
-  # headers pour générer les URLs publiques correctes. Risque de spoofing : nul tant que le
-  # backend n'est pas exposé directement à internet sans proxy devant — invariant tenu en prod
-  # par le Google Front End Cloud Run + Cloudflare Worker. Sur VPS self-managed
-  # (Hetzner, Oracle, etc.), basculer ici sur `NATIVE` + `server.tomcat.remoteip.internal-proxies`
-  # pinné sur l'IP du reverse proxy local (e.g. `127\.0\.0\.1|::1` pour nginx/Caddy sidecar).
+  # The SPA runs on its own port in dev and proxies to here with `xfwd`. Spring must read the
+  # forwarded headers to build the OAuth `redirect_uri` on the SPA's host — otherwise Google
+  # receives the backend's port and the session cookie is unreadable by the SPA.
   forward-headers-strategy: framework
 
 spring:
   application:
     name: portfolioai-backend
 
-  # Upload multipart — relève le défaut Spring (1 Mo) pour accepter une capture d'écran de trade
-  # (issue #110). La vraie garde (type d'image + taille) est appliquée côté service → 400 ; cette
-  # limite n'est qu'un garde-fou de transport.
+  # Transport-level backstop for the trade screenshot ; the real guard (type + size) is in the
+  # service.
   servlet:
     multipart:
       max-file-size: 5MB
       max-request-size: 5MB
 
-  # **Profile activation pilotée par Tilt** — le Tiltfile lit `BACKEND_AUTH_MODE` dans `.env` à
-  # l'exécution du `serve_cmd` :
-  #   - `BACKEND_AUTH_MODE=no-auth` (défaut) → lance avec `--spring.profiles.active=local,local-no-auth`
-  #     → `LocalNoAuthSecurityConfig` bypasse Spring Security, user fake ADMIN (`dev@local.test`)
-  #     seedé au boot et injecté dans le SecurityContext sur chaque request.
-  #   - `BACKEND_AUTH_MODE=oauth` → lance avec `--spring.profiles.active=local` → `SecurityConfig`
-  #     kicks in et utilise la registration `spring.security.oauth2.client.registration.google`
-  #     déclarée dans `application-local.yml`. Vrai flow OAuth Google contre localhost.
-  #
-  # Bouton Tilt « Switch auth mode → oauth/no-auth » disponible sur la ressource `backend` pour
-  # flipper sans éditer `.env` à la main.
-  #
-  # Pas de `spring.profiles.group` hardcodé ici : la décision est entièrement au Tiltfile, ce qui
-  # permet le toggle runtime via bouton + restart sans toucher au YAML.
+  # No `spring.profiles.group` here on purpose : the Tiltfile picks the profiles from
+  # `BACKEND_AUTH_MODE`, which is what makes the runtime auth toggle possible.
 
-  # OAuth2 client registration — intentionally **absent** from this default config because Spring
-  # Boot's `ClientRegistration.Builder.build()` does `Assert.hasText(clientId)` and crashes at boot
-  # if a registration is declared with an empty client-id. A fresh clone / CI run needs to start
-  # without OAuth credentials (the `@SpringBootTest` smoke test relies on this).
-  #
-  # Pour activer le vrai flow OAuth Google :
-  #   1. Crée un OAuth Client ID dans Google Cloud Console > APIs & Services > Credentials
-  #      (Web application). Redirect URI : `http://localhost:<FRONTEND_HOST_PORT>/login/oauth2/code/google`
-  #      (le port FRONT, pas backend — le proxy CLI forward avec xfwd et Spring construit son
-  #      redirect_uri sur le host du SPA grâce à `server.forward-headers-strategy: framework`).
-  #   2. Dans `.env` à la racine (gitignored), définis :
-  #        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=...
-  #        SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=...
-  #        APP_ADMIN_EMAILS=ton.email@gmail.com    # pour atterrir en role ADMIN
-  #        APP_FRONTEND_URL=http://localhost:4201/ # cible du redirect post-login
-  #        BACKEND_AUTH_MODE=oauth                  # bascule du `local-no-auth` au mode réel
-  #   3. Restart Tilt — le `serve_cmd` du backend `source` `.env`, exporte les vars au sous-process
-  #      gradle, et Spring Boot les pickè up via son relaxed binding (env-var → property tree).
-  #   4. Le scope OAuth est laissé aux défauts Google fournis par `CommonOAuth2Provider.GOOGLE`
-  #      (openid + profile + email) — pas besoin de le surcharger explicitement.
-  # En prod, les mêmes env vars sont injectées par le secret manager du provider.
+  # OAuth2 client registration is deliberately **absent** : `ClientRegistration.Builder.build()`
+  # asserts a non-empty client-id and crashes at boot, so a fresh clone or a CI run could not
+  # start. Cloud Run and `application-local.yml` provide it through env vars.
 
   datasource:
-    # Le port Postgres côté hôte est configurable via `POSTGRES_HOST_PORT` dans `.env`
-    # (le container reste en 5432 en interne, seul le mapping host:container change). Cf.
-    # `.env.example` pour la procédure quand 5432 est déjà occupé localement.
     url: jdbc:postgresql://localhost:${POSTGRES_HOST_PORT:5432}/portfolioai
     username: portfolioai
     password: portfolioai
@@ -86,100 +41,59 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    # **Baseline on migrate** (livré 2026-05-17 avec la fusion V1→V10 en un seul V1).
-    #
-    # `baseline-version: 0` est intentionnel — empiriquement vérifié sur DB greenfield :
-    # avec `baseline-version: 1`, Flyway baseline la `flyway_schema_history` à V1 et **n'applique
-    # pas** V1 sur une DB vide → résultat catastrophique, les 11 tables ne sont jamais créées
-    # et Hibernate `ddl-auto: validate` crash au boot. Avec `baseline-version: 0`, le baseline
-    # est posé AVANT V1, donc Flyway applique ensuite toutes les migrations >= 1 normalement.
-    #
-    # Sur une DB existante avec `flyway_schema_history` (cas dev local post-V10), le baseline
-    # n'est pas re-déclenché (l'history existe déjà). Pour upgrader cette DB sans repartir de
-    # zéro, la procédure est : `docker compose down -v && tilt up` pour reset complet (perte
-    # data acceptable single-user). Alternative non-destructive : drop manuellement la table
-    # `flyway_schema_history` avant `tilt up` ; Flyway recrée ensuite la table à partir de
-    # zéro et baseline à V0 + apply V1 sur le schéma existant. Hibernate `validate` passe parce
-    # que le schéma est déjà identique au V1 cible.
     baseline-on-migrate: true
+    # Zero, not one : with `baseline-version: 1` Flyway writes the baseline at V1 and never applies
+    # it on an empty database, so no table is created and `ddl-auto: validate` crashes at boot.
     baseline-version: 0
 
 management:
   endpoints:
     web:
-      # `metrics` est inclus ici parce que le profil base sert aussi `local` (dev) où on peut
-      # vouloir grep `/actuator/metrics` pour debug à la main (heap, HikariCP, http server.requests).
-      # **En prod**, `application-prod.yml` surcharge cette liste à `health, info` uniquement —
-      # `metrics` n'est PAS exposé en prod (cf. décision Phase 5 : surface publique minimale).
-      # `SecurityConfig.kt` laisse `/actuator/**` autre que `/health` en `permitAll` (cf. commentaire
-      # de la chaîne de sécurité), donc `/metrics` est public sur le profil base. Acceptable tant
-      # qu'on tourne sur `localhost` ; **si tu partages la session via tunnel (ngrok, Cloudflare
-      # Tunnel, etc.), exclus `metrics` ici** — ou ajoute un `requestMatchers("/actuator/**").authenticated()`
-      # dans SecurityConfig avant de tunneler.
+      # `metrics` is public on this profile (`SecurityConfig` leaves `/actuator/**` but `/health`
+      # permitted) — fine on localhost, drop it before exposing the app through a tunnel.
+      # `application-prod.yml` narrows the list to health + info.
       exposure:
         include: health,info,metrics
   endpoint:
     health:
       show-details: always
-  # `/actuator/info` — exposé via `endpoints.web.exposure` ci-dessus. Les contributeurs `build` et
-  # `git` sont activés par défaut en Spring Boot 3.x (auto-détectent `build-info.properties` /
-  # `git.properties` posés par `springBoot.buildInfo()` + plugin `gradle-git-properties` dans
-  # `build.gradle.kts`). `git.mode: full` exporte tous les champs déclarés dans `gitProperties.keys`
-  # (commit message court + tags inclus) — le défaut `simple` n'expose que `branch + commit.id +
-  # commit.time`, ce qui prive l'endpoint de l'info utile pour corréler une révision Cloud Run à
-  # un tag de release.
   info:
     git:
+      # `simple` would only expose branch + commit id + time, too little to tie a Cloud Run
+      # revision back to a release tag.
       mode: full
 
-# Auth — application-level config consumed by `CustomOAuth2UserService` on first user creation
-# to assign role ADMIN vs USER. Comma-separated list of emails. Email comparison is
-# case-insensitive. Modifications to this list only affect *new* user creations — existing rows
-# keep the role they were assigned on first login (DB is the source of truth post-creation).
-#
-# `frontend-url` est la cible du redirect post-login OAuth (cf. `SecurityConfig.defaultSuccessUrl`).
-# Défaut `/` est correct quand le SPA et le backend partagent la même origine (prod derrière un
-# reverse proxy). En dev où le SPA tourne sur un port distinct (Angular CLI 4200/4201), surcharger
-# dans `application-local.yml` avec l'URL complète du SPA — sinon le user atterrit sur le backend
-# (Whitelabel 404 après login).
+# Consumed by `CustomOAuth2UserService` on **first** user creation to assign ADMIN vs USER ;
+# existing rows keep the role they got at first login. The set checked at login is
+# `admins ∪ allowed_emails`, so an admin cannot lock themselves out from the UI. An empty
+# `allowed.emails` means open mode — the state a fresh deploy starts in.
 app:
   admin:
     emails: ${APP_ADMIN_EMAILS:}
-  # Whitelist of emails authorised to complete the OAuth login. Empty = open mode (backward-compat
-  # for a fresh deploy before the admin posts the first list via `/settings/access-control`). The
-  # list is runtime-editable through the UI, not redeploy-required — the admin posts the first
-  # email shortly after the initial deploy. The effective set checked at login is `admins ∪
-  # allowed_emails` so an admin cannot lock themselves out by removing their own email from the UI.
   allowed:
     emails: ${APP_ALLOWED_EMAILS:}
+  # `/` is right when the SPA and the backend share an origin (prod). In dev the SPA has its own
+  # port : `application-local.yml` overrides it, or the user lands on a Whitelabel 404 after login.
   frontend-url: ${APP_FRONTEND_URL:/}
 
-# Taux de change — alimente le toggle de devise de la page Compte (solde USD affiché en CAD).
-# Frankfurter : taux de référence BCE, publiés une fois par jour ouvré, API publique sans clé ni
-# quota. Pas de routing mock/réel : un seul provider keyless suffit pour une conversion cosmétique.
+# ECB reference rates, published once per business day, keyless — enough for the cosmetic USD→CAD
+# conversion of the account balance.
 forex:
   frankfurter:
     base-url: https://api.frankfurter.dev/v1
 
-# Sentry — error tracking. **Disabled by default** so dev local and CI don't ship events.
-# `application-prod.yml` flips this to true and provides the DSN (sourced from Secret Manager) +
-# environment tag + release tag. We keep an empty `dsn` here so a fresh clone boots without any
-# Sentry network activity — the SDK no-ops when the DSN is empty, even with `enabled: true`.
+# Empty DSN = the SDK no-ops, so a fresh clone and CI ship no event. `application-prod.yml` provides
+# the real one.
 sentry:
   dsn: ${SENTRY_DSN:}
-  # `send-default-pii: false` is intentional — we capture `userId` UUID via the Logback MDC
-  # appender (cf. `SentryUserContextFilter`), never the email or IP. Same convention as
-  # `CustomOAuth2UserService.findOrCreateUser` log redaction. Flipping this to true would leak
-  # `User-Agent`, `Cookie`, `Referer`, IP, and any header marked PII by Sentry's filter.
+  # Keep false : true would ship `User-Agent`, `Cookie`, `Referer` and the IP. The userId UUID is
+  # attached through the Logback MDC instead (`SentryUserContextFilter`), never the email.
   send-default-pii: false
 
-# springdoc-openapi — Swagger UI / OpenAPI schema. **Disabled by default** so any environment that
-# does not explicitly opt-in (CI, eventual prod) never exposes the REST surface. The `local` profile
-# overrides both flags to `true` (cf. `application-local.yml`) — Swagger UI is then reachable at
-# `http://localhost:${BACKEND_HOST_PORT}/swagger-ui.html` and surfaced as a link in the Tilt panel.
+# Off by default so no environment exposes the REST surface without opting in ; the `local` profile
+# turns both on.
 springdoc:
   api-docs:
     enabled: false
   swagger-ui:
     enabled: false
-

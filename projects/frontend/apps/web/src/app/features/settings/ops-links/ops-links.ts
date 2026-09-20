@@ -38,11 +38,9 @@ interface OpsLinkSection {
  * lands the link addition in the same diff.
  */
 const OPS_LINKS_SECTIONS: OpsLinkSection[] = [
-  // **Billing first** by user request 2026-05-24 — regroupe toutes les pages où une carte est
-  // sur fichier, pour qu'un check facturation hebdomadaire se fasse en un coup d'œil sans
-  // naviguer entre les sections par provider. Les autres sections (Hosting / Database / CDN /
-  // External APIs) ne carrient PLUS leurs liens billing — un lien = un endroit, pas de
-  // duplication qui drift.
+  // Billing first, and every card-on-file page in that one section : the weekly billing check is
+  // one glance instead of a tour of the providers. No billing link is repeated in the sections
+  // below — one link, one place, nothing to drift.
   {
     titleKey: 'settings.opsLinksPage.sections.billing.title',
     descriptionKey: 'settings.opsLinksPage.sections.billing.description',

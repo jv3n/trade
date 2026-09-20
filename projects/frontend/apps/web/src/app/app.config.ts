@@ -47,9 +47,7 @@ class GlitchtipErrorHandler implements ErrorHandler {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Zoneless change detection — pas de `zone.js` installé, on rend l'opt-in explicite
-    // plutôt que de dépendre du comportement implicite. Toute la state est en `signal()` /
-    // `computed()` ; le template re-rend automatiquement quand les signaux qu'il lit changent.
+    // No `zone.js` is installed ; the opt-in is explicit rather than implicit.
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),
     // Global GlitchTip ErrorHandler — forwards unhandled exceptions bubbling up from component

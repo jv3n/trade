@@ -1,28 +1,19 @@
 name: Deploy to Cloud Run
 
-# Release-triggered, not push-triggered. The rituel : clore une phase → tag annoté `vX.Y.Z` →
-# « Draft a new release » dans GitHub → Publish → ce workflow se déclenche. Les pushes sur
-# `master` continuent de faire tourner backend/frontend/codeql CI mais ne déclenchent **pas**
-# de deploy : un deploy reste un acte conscient (cf. décision 2026-05-18 dans le ticket de
-# clôture, et le walkthrough `docs/devops/deploiement.md > §6.2`).
-#
-# Les pre-releases (tags `vX.Y.Z-rcN`) déclenchent aussi `release: published` — c'est voulu
-# pour tester une release candidate sur un déploiement réel avant le tag final.
+# Publishing a GitHub Release deploys ; pushing to `master` does not. A deploy stays a deliberate
+# act. Pre-releases (`vX.Y.Z-rcN`) fire too, on purpose — a release candidate is worth testing on a
+# real deployment.
 on:
   release:
     types: [published]
 
-# Empêche deux deploys de tourner en parallèle. Si une 2e release est publiée pendant qu'un
-# deploy est en cours, le 2e attend la fin du 1er au lieu de se battre pour les révisions
-# Cloud Run. `cancel-in-progress: false` parce qu'un deploy à moitié appliqué laisse Cloud Run
-# dans un état inconsistant — mieux vaut séquencer.
+# Never two deploys at once, and never cancel one : a half-applied deploy leaves Cloud Run in an
+# inconsistent state, so the second waits instead.
 concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-# Baseline workflow-level — les linters (CodeQL `actions/missing-workflow-permissions`)
-# exigent que la déclaration soit au niveau workflow, pas seulement job, pour qu'un éventuel
-# job ajouté plus tard ne reparte pas avec le token permissif par défaut.
+# Declared at workflow level so a job added later doesn't start from the permissive default token.
 permissions:
   contents: read
 
@@ -33,15 +24,12 @@ jobs:
     environment: production
     permissions:
       contents: read
-      # Required pour Workload Identity Federation — `google-github-actions/auth@v3` mint un
-      # OIDC token court-terme via GitHub puis l'échange contre un access token GCP. Pas de
-      # service account JSON key long-terme dans GitHub Secrets (cf. `deploiement.md > §6`).
+      # Short-lived OIDC token exchanged for a GCP one — no long-lived service-account key in
+      # GitHub Secrets.
       id-token: write
 
     steps:
-      # Fail-fast si la Release publiée a un tag hors format SemVer strict. Évite qu'une
-      # Release créée par erreur (typo, format `latest`, branch-tag accidentel) ne build une
-      # image AR avec un tag bizarre. Cf. `docs/devops/release-process.md > Versioning`.
+      # A mistyped release tag would otherwise build an image under a nonsense tag.
       - name: Validate release tag format
         run: |
           TAG="${{ github.event.release.tag_name }}"
@@ -51,10 +39,8 @@ jobs:
           fi
           echo "Release tag '$TAG' matches SemVer policy."
 
-      # `fetch-depth: 0` — full history + tags. Requis pour que `gradle-git-properties` (lancé
-      # dans le Dockerfile prod) trouve le tag courant et le pose dans `git.properties >
-      # git.tags`, et pour que `git describe` voie l'historique. Sans ça, le shallow clone par
-      # défaut (depth 1) n'expose ni le tag annoté ni les SHA parents.
+      # Full history and tags : the default shallow clone exposes neither the annotated tag nor the
+      # parent SHAs, and `gradle-git-properties` needs both.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -71,14 +57,9 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v3
 
-      # Pose le credential helper Docker pour pousser vers Artifact Registry. `--quiet` évite
-      # le prompt de confirmation interactif qui sinon bloquerait le runner.
       - name: Configure Docker credential helper for Artifact Registry
         run: gcloud auth configure-docker northamerica-northeast1-docker.pkg.dev --quiet
 
-      # Build natif amd64 sur ubuntu-latest (pas de QEMU émulation contrairement à un build
-      # local Mac M1 — gain ~5-10×). Tag = nom de la release GitHub (`v0.7.0`, `v0.7.0-rc1`…).
-      # Labels OCI standard pour que `docker inspect` retrace l'image vers le commit + le tag.
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -87,10 +68,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }}
-          # `APP_VERSION` consommé par `Dockerfile > ARG APP_VERSION` → `./gradlew bootJar
-          # -Pversion=$APP_VERSION` → `build.version` sur `/actuator/info`. Source de vérité
-          # unique : le tag de la GitHub Release sert à la fois pour l'image Docker, le tag
-          # GlitchTip (SENTRY_RELEASE), le label OCI version, et désormais la version Spring Boot.
+          # One source of truth : the release tag is the image tag, the OCI label, the Sentry
+          # release and `build.version` on `/actuator/info`.
           build-args: |
             APP_VERSION=${{ github.event.release.tag_name }}
           labels: |
@@ -98,13 +77,8 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ github.event.release.tag_name }}
 
-      # Deploy imperatif (`gcloud run deploy`) plutôt que déclaratif (`services replace --file`)
-      # — le `service.yaml` reste documentaire pour un futur passage déclaratif. Les flags
-      # repris du 1er deploy manuel validé (dev5, cf. journal Phase 5a). `APP_FRONTEND_URL` +
-      # `SPRING_SECURITY_OAUTH2_..._REDIRECT_URI` posés depuis Phase 5b custom domain Cloudflare
-      # (cf. journal Phase 5b) — Cloud Run strip `X-Forwarded-Host` que le Worker envoie, donc
-      # Spring ne peut pas inférer l'hostname public ; on force ces 2 URIs à la valeur littérale.
-      # `SENTRY_RELEASE` propagé pour tagger chaque event GlitchTip avec la release courante.
+      # The public URLs are passed literally : Cloud Run strips the `X-Forwarded-Host` the Worker
+      # sends, so Spring cannot infer the public hostname on its own.
       - name: Deploy revision to Cloud Run
         run: |
           gcloud run deploy portfolioai \
@@ -123,10 +97,7 @@ jobs:
             --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=https://tickerstory.org/,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=https://tickerstory.org/login/oauth2/code/google,SENTRY_RELEASE=${{ github.event.release.tag_name }} \
             --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails:latest,SPRING_DATASOURCE_URL=supabase-db-url:latest,SENTRY_DSN=sentry-dsn-backend:latest
 
-      # Smoke /actuator/health post-deploy + écriture du résumé du run. `gcloud run deploy`
-      # échoue déjà si la révision crash au boot (Cloud Run lit les startupProbes avant de
-      # router le trafic), donc ce step est de la defense-in-depth, mais c'est cheap et le
-      # résumé est utile pour pister un deploy depuis la page Actions.
+      # Defence in depth — `gcloud run deploy` already fails when the revision crashes at boot.
       - name: Smoke test and summary
         run: |
           URL=$(gcloud run services describe portfolioai \

@@ -41,10 +41,7 @@ RUN npm run build
 # ---------------------------------------------------------------------------
 FROM eclipse-temurin:21-jdk-jammy AS backend-builder
 
-# Version passée par le workflow `deploy.yml` (= tag de la GitHub Release, ex: `v0.7.0`). Le
-# build gradle pickup la valeur via `-Pversion=$APP_VERSION` plus bas → finit dans
-# `META-INF/build-info.properties` → exposé sur `/actuator/info > build.version`. Default
-# `0.0.0-SNAPSHOT` pour un `docker build` local sans `--build-arg`.
+# Passed by `deploy.yml` (= the GitHub Release tag) and surfaced on `/actuator/info > build.version`.
 ARG APP_VERSION=0.0.0-SNAPSHOT
 
 WORKDIR /app
@@ -57,10 +54,8 @@ RUN cd projects/backend && ./gradlew --no-daemon dependencies > /dev/null 2>&1 |
 # Copy backend source
 COPY projects/backend/ ./projects/backend/
 
-# Copy `.git/` so `gradle-git-properties` peut générer `META-INF/git.properties` (commit SHA,
-# branche, tag) → exposé sur `/actuator/info > git`. Le workflow CI doit faire un `fetch-depth: 0`
-# côté `actions/checkout` pour que les tags soient présents (sinon la section `git.tags` du payload
-# sera vide). Le plugin a `failOnNoGitDirectory = false` donc un build hors-git ne casse pas.
+# `gradle-git-properties` reads it to fill `/actuator/info > git`. The CI checkout needs
+# `fetch-depth: 0` or the tags are missing from the payload.
 COPY .git/ ./.git/
 
 # Embed the Angular build into Spring Boot's static resources directory
@@ -70,10 +65,8 @@ RUN mkdir -p ./projects/backend/src/main/resources/static/ \
  && cp -r ./projects/backend/src/main/resources/static-frontend/*/browser/* ./projects/backend/src/main/resources/static/ \
  && rm -rf ./projects/backend/src/main/resources/static-frontend/
 
-# Build the fat jar — `-Pversion=$APP_VERSION` propage le tag de release au gradle `version`
-# property (cf. `build.gradle.kts` ligne `version = …`). Le `v` initial du tag GitHub
-# (`v0.7.0`) est conservé tel quel dans `build.version` — cohérent avec le tag Cloud Run /
-# Docker image / SENTRY_RELEASE.
+# The release tag keeps its leading `v`, matching the Cloud Run revision, the image tag and
+# SENTRY_RELEASE.
 RUN cd projects/backend && ./gradlew --no-daemon bootJar -x test -Pversion=$APP_VERSION
 
 # ---------------------------------------------------------------------------

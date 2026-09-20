@@ -5,7 +5,7 @@ import com.portfolioai.forex.domain.ForexRateClient
 import org.springframework.stereotype.Service
 
 /**
- * Thin read-side façade over [ForexRateClient]. Normalises the currency codes (upper-case) and maps
+ * Thin read-side facade over [ForexRateClient]. Normalises the currency codes (upper-case) and maps
  * the domain rate to its wire DTO. No business logic beyond that : amount conversion happens on the
  * client, the backend only vends the rate.
  */

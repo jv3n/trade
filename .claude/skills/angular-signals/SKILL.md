@@ -93,7 +93,7 @@ Rules when you reach for it:
 - **Read** every signal you want to track; never write a signal the effect reads (feedback loop).
 - If the effect must run before first paint, also apply once synchronously in the constructor (`this.applyDom(this.theme())` then `effect(...)` in `ThemeService`) — keep the applied write idempotent.
 - Browser-global side effects gate on `isBrowser` — see [`angular-di > SSR-safe pattern`](../angular-di/SKILL.md#ssr-safe-pattern--platform_id--isplatformbrowser).
-- Say *why* in a comment when the reason isn't obvious from the code.
+- Say *why* in a comment when the reason isn't obvious from the code — one line, and only then (cf. [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum)).
 
 ## `refetchTrigger` — force the fetch effect to re-fire
 

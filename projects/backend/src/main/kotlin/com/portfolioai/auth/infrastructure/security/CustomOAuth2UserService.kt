@@ -26,9 +26,9 @@ import org.springframework.transaction.annotation.Transactional
  * it on later requests without a second DB lookup on the principal.
  *
  * **Role assignment is one-shot** — at user creation only. Re-applying the whitelist on every login
- * would erase a manual rétrogradation (`UPDATE app_user SET role='USER'`) and would only apply
- * promotions on the *next* login of someone newly added to the whitelist, which is surprising. The
- * DB is the source of truth post-creation ; the whitelist only seeds.
+ * would erase a manual demotion (`UPDATE app_user SET role='USER'`) and would only apply promotions
+ * on the *next* login of someone newly added to the whitelist, which is surprising. The DB is the
+ * source of truth post-creation ; the whitelist only seeds.
  *
  * The class extends Spring's [DefaultOAuth2UserService] rather than implementing the interface
  * because we still want the standard userinfo HTTP fetch — only the post-fetch handling differs.

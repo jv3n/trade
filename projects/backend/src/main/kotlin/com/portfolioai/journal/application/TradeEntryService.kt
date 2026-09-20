@@ -295,7 +295,7 @@ class TradeEntryService(
   /**
    * Rewrites the [entry]'s executions + direction from the [request] and recomputes the derived
    * aggregates (size, avg prices, realized P&L, gain%) via [TradePositionCalculator] — the single
-   * place where the "calculs auto à l'insert" happen. Per-leg positivity is validated here (→ HTTP
+   * place where the aggregates are recomputed. Per-leg positivity is validated here (→ HTTP
    * 400) so a bad input never reaches the DB CHECK constraints (which would surface as a 409).
    */
   private fun applyExecutions(entry: TradeEntry, request: TradeEntryRequest) {

@@ -80,7 +80,7 @@ class StatEntryService(
     val userId = authService.getCurrentUser().id
     val rows = repo.findAll(StatEntrySpecifications.matching(userId, filter))
     val completed = rows.filter { it.isCompleted }
-    // « 8 stats tradées sur 10 » of the journal KPIs (#195) : one query for the whole filtered set,
+    // The journal's "8 of 10 stats traded" KPI (#195) : one query for the whole filtered set,
     // the same read the listing already uses row by row.
     val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
     return StatSummaryDto(
