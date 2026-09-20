@@ -29,6 +29,12 @@ export abstract class StatsRepository {
     page?: PageRequest,
   ): Observable<PagedResult<StatEntry>>;
 
+  /**
+   * Single stat by id. The trade page reads it to show the day context (premarket + session) its
+   * trade was born from, read-only. Foreign id / unknown id → 404.
+   */
+  abstract findById(id: string): Observable<StatEntry>;
+
   /** KPIs over the same filter as the listing, computed on the whole filtered set. */
   abstract summary(filter?: StatEntryFilter): Observable<StatSummary>;
 

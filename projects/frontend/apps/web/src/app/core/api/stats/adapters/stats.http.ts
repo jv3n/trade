@@ -141,6 +141,10 @@ export class HttpStatsRepository extends StatsRepository {
       .pipe(map((p) => fromPageWire(p)));
   }
 
+  findById(id: string): Observable<StatEntry> {
+    return this.http.get<StatEntryWireDto>(`${this.base}/${id}`).pipe(map(fromWire));
+  }
+
   summary(filter?: StatEntryFilter): Observable<StatSummary> {
     return this.http.get<StatSummary>(`${this.base}/summary`, {
       params: buildFilterParams(filter),

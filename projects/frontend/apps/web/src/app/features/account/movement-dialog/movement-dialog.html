@@ -2,7 +2,7 @@
   {{ (isEdit() ? 'account.dialog.editTitle' : 'account.dialog.addTitle') | translate }}
 </h2>
 
-<!-- Signal Forms has no submit directive — bind native (submit) + preventDefault (cf. AddTradeDialog). -->
+<!-- Signal Forms has no submit directive — bind native (submit) + preventDefault ourselves. -->
 <form (submit)="$event.preventDefault(); submit()" class="movement-form">
   <mat-dialog-content>
     @if (isEdit()) {

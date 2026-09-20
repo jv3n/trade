@@ -283,12 +283,49 @@
       "back": "Retour au journal",
       "loading": "Chargement du trade…",
       "loadError": "Impossible de charger le trade. Réessaie.",
+      "fromStat": "créé depuis la",
+      "statOf": "stat du {{date}}",
+      "unsaved": "Modifications non enregistrées",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
       "executions": "Exécutions",
       "noExecutions": "Aucune exécution enregistrée.",
-      "aggregates": "Position calculée",
-      "notes": "Notes",
-      "postMortem": "Débrief",
-      "noNote": "—",
+      "postMortem": "Post-mortem",
+      "kpi": {
+        "retained": "P&L retenu",
+        "adjusted": "ajusté de {{gap}} $ vs calculé",
+        "position": "Position",
+        "positionSub": "actions sur la position",
+        "avgPrices": "Entrée / sortie moyennes",
+        "vsOpen": "vs open {{open}} : {{entry}} → {{exit}}",
+        "noOpen": "Open de la séance non saisi sur la stat.",
+        "duration": "Durée",
+        "durationValue": "{{hours}} h {{minutes}}",
+        "noTimes": "Aucune heure saisie"
+      },
+      "executionsBlock": {
+        "add": "Ajouter une exécution",
+        "remove": "Supprimer l'exécution",
+        "invalid": "Exécutions incohérentes : plus d'actions fermées qu'ouvertes.",
+        "remaining": "{{shares}} actions encore ouvertes — P&L calculé",
+        "closed": "Position fermée — P&L calculé"
+      },
+      "pnl": {
+        "title": "P&L",
+        "hint": "ajustable pour coller au relevé TradeZero",
+        "computed": "Calculé (exécutions)",
+        "real": "Réel (relevé broker)",
+        "gap": "Écart (frais, arrondis)",
+        "note": "Vide = on retient le P&L calculé. Le P&L retenu est celui qui remonte au compte."
+      },
+      "context": {
+        "title": "Contexte du jour",
+        "link": "voir la stat",
+        "premarket": "Clôture veille · open PM · high PM",
+        "gapPush": "Gap · push PM",
+        "floatVolumeLocate": "Float · volume · locate",
+        "unavailable": "Contexte du jour indisponible."
+      },
       "screenshot": {
         "title": "Capture d'écran",
         "dropHint": "Glisse une image ici, ou :",
@@ -301,32 +338,6 @@
         "uploadError": "Échec de l'envoi de la capture. Réessaie.",
         "deleteSuccess": "Capture supprimée.",
         "deleteError": "Échec de la suppression de la capture. Réessaie."
-      }
-    },
-    "dialog": {
-      "createTitle": "Saisir un trade",
-      "editTitle": "Modifier le trade",
-      "save": "Enregistrer",
-      "cancel": "Annuler",
-      "sections": {
-        "execution": "Identité",
-        "executions": "Exécutions",
-        "postMortem": "Débrief",
-        "statLink": "Lien stat"
-      },
-      "executions": {
-        "addEntry": "Ajouter une entrée",
-        "addExit": "Ajouter une sortie",
-        "remove": "Supprimer l'exécution",
-        "invalid": "Exécutions incohérentes : les actions sorties dépassent les actions entrées."
-      },
-      "preview": {
-        "size": "Taille",
-        "avgEntry": "Prix d'entrée moyen",
-        "avgExit": "Prix de sortie moyen",
-        "profit": "Profit",
-        "gain": "Gain",
-        "status": "Statut"
       }
     },
     "snackbar": {

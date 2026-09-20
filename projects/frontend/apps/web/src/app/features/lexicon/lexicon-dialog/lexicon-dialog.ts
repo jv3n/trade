@@ -23,8 +23,8 @@ interface LexiconFormModel {
 }
 
 /**
- * Add / edit dialog for a lexicon entry — built on **Signal Forms** (same convention as the
- * journal's `AddTradeDialog`). Three required text fields (term + FR + EN definition) ; returns the
+ * Add / edit dialog for a lexicon entry — built on **Signal Forms** (same convention as the other
+ * dialogs). Three required text fields (term + FR + EN definition) ; returns the
  * domain [LexiconEntryInput] on close (the adapter trims on the way to the wire).
  */
 @Component({

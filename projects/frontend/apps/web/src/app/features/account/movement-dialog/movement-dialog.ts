@@ -34,7 +34,7 @@ interface MovementFormModel {
 /**
  * Add / edit dialog for a manual cash movement (DEPOSIT / WITHDRAWAL). Built on Signal Forms for the
  * type select + note ; the amount (`appNumberMask`) and date (`MatDatepicker`) are pushed
- * imperatively because their CVAs clash with `[formField]` (same pattern as `AddTradeDialog`).
+ * imperatively because their CVAs clash with `[formField]` (a known Signal Forms limitation).
  *
  * [amount] is a **positive magnitude** — the backend applies the sign from the type. On edit the
  * type is fixed (a deposit can't morph into a withdrawal) and the amount is shown as its magnitude.

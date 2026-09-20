@@ -283,12 +283,49 @@
       "back": "Back to journal",
       "loading": "Loading trade…",
       "loadError": "Couldn't load the trade. Try again.",
+      "fromStat": "created from the",
+      "statOf": "stat of {{date}}",
+      "unsaved": "Unsaved changes",
+      "save": "Save",
+      "cancel": "Cancel",
       "executions": "Executions",
-      "noExecutions": "No execution recorded.",
-      "aggregates": "Computed position",
-      "notes": "Notes",
-      "postMortem": "Debrief",
-      "noNote": "—",
+      "noExecutions": "No fill recorded yet.",
+      "postMortem": "Post-mortem",
+      "kpi": {
+        "retained": "Retained P&L",
+        "adjusted": "adjusted by {{gap}} $ vs computed",
+        "position": "Position",
+        "positionSub": "shares in the position",
+        "avgPrices": "Average entry / exit",
+        "vsOpen": "vs open {{open}}: {{entry}} → {{exit}}",
+        "noOpen": "Session open not filled in on the stat.",
+        "duration": "Duration",
+        "durationValue": "{{hours}} h {{minutes}}",
+        "noTimes": "No fill time yet"
+      },
+      "executionsBlock": {
+        "add": "Add a fill",
+        "remove": "Remove the fill",
+        "invalid": "Inconsistent fills: more shares closed than opened.",
+        "remaining": "{{shares}} shares still open — computed P&L",
+        "closed": "Position closed — computed P&L"
+      },
+      "pnl": {
+        "title": "P&L",
+        "hint": "adjustable to match the TradeZero statement",
+        "computed": "Computed (fills)",
+        "real": "Real (broker statement)",
+        "gap": "Gap (fees, rounding)",
+        "note": "Empty = the computed P&L is retained. The retained P&L is the one that reaches the account."
+      },
+      "context": {
+        "title": "Day context",
+        "link": "view the stat",
+        "premarket": "Previous close · PM open · PM high",
+        "gapPush": "Gap · PM push",
+        "floatVolumeLocate": "Float · volume · locate",
+        "unavailable": "Day context unavailable."
+      },
       "screenshot": {
         "title": "Screenshot",
         "dropHint": "Drop an image here, or:",
@@ -301,32 +338,6 @@
         "uploadError": "Couldn't upload the screenshot. Try again.",
         "deleteSuccess": "Screenshot removed.",
         "deleteError": "Couldn't remove the screenshot. Try again."
-      }
-    },
-    "dialog": {
-      "createTitle": "Log a trade",
-      "editTitle": "Edit trade",
-      "save": "Save",
-      "cancel": "Cancel",
-      "sections": {
-        "execution": "Identity",
-        "executions": "Executions",
-        "postMortem": "Debrief",
-        "statLink": "Stat link"
-      },
-      "executions": {
-        "addEntry": "Add entry",
-        "addExit": "Add exit",
-        "remove": "Remove execution",
-        "invalid": "Inconsistent executions: exited shares exceed entered shares."
-      },
-      "preview": {
-        "size": "Size",
-        "avgEntry": "Avg entry price",
-        "avgExit": "Avg exit price",
-        "profit": "Profit",
-        "gain": "Gain",
-        "status": "Status"
       }
     },
     "snackbar": {

@@ -1,4 +1,4 @@
-<div class="page page--full journal-detail">
+<div class="page page--full trade-page">
   <a mat-stroked-button routerLink="/journal" class="back-link">
     <mat-icon>arrow_back</mat-icon>
     <span>{{ 'journal.detail.back' | translate }}</span>
@@ -15,27 +15,33 @@
       <span>{{ 'journal.detail.loadError' | translate }}</span>
     </div>
   } @else if (entry(); as e) {
+    <!-- Identity — everything here is inherited from the stat and read-only on the trade. -->
     <header class="content-header">
       <div class="header-row">
         <div class="title-block">
-          <mat-chip-set>
-            <mat-chip stbChip="ticker" disableRipple>{{ e.ticker }}</mat-chip>
-          </mat-chip-set>
-          <span class="trade-date">{{ e.tradeDate | date: 'fullDate' }}</span>
-          @if (e.direction) {
-            <span class="direction-tag">
-              {{ 'journal.enums.direction.' + e.direction | translate }}
+          <h2>
+            <mat-chip-set>
+              <mat-chip stbChip="ticker" disableRipple>{{ e.ticker }}</mat-chip>
+            </mat-chip-set>
+            <span class="direction">
+              {{ 'journal.enums.direction.' + (draft()?.direction ?? 'SHORT') | translate }}
             </span>
-          }
-          @if (status(); as s) {
-            <span class="status-tag">{{ 'journal.enums.positionStatus.' + s | translate }}</span>
-          }
+            <span class="trade-date">{{ e.tradeDate | date: 'fullDate' }}</span>
+          </h2>
+          <p class="subtitle">
+            <span class="tag tag-accent">{{ 'patterns.short.' + e.pattern | translate }}</span>
+            <span>
+              {{ 'journal.detail.fromStat' | translate }}
+              <a routerLink="/stats">{{
+                'journal.detail.statOf' | translate: { date: (e.tradeDate | date: 'shortDate') }
+              }}</a>
+            </span>
+            <span class="status">{{
+              'journal.enums.positionStatus.' + preview().status | translate
+            }}</span>
+          </p>
         </div>
         <div class="header-actions">
-          <button mat-stroked-button type="button" (click)="edit()">
-            <mat-icon>edit</mat-icon>
-            <span>{{ 'journal.actions.edit' | translate }}</span>
-          </button>
           <button mat-stroked-button type="button" (click)="delete()">
             <mat-icon>delete</mat-icon>
             <span>{{ 'journal.actions.delete' | translate }}</span>
@@ -44,115 +50,361 @@
       </div>
     </header>
 
-    <!-- Executions — the atomic source-of-truth rows the position is derived from. -->
-    <section class="detail-section">
-      <h3>{{ 'journal.detail.executions' | translate }}</h3>
-      @if (e.executions.length === 0) {
-        <p class="muted">{{ 'journal.detail.noExecutions' | translate }}</p>
-      } @else {
-        <div stbTable>
-          <table mat-table [dataSource]="e.executions">
-            <ng-container matColumnDef="seq">
-              <th mat-header-cell *matHeaderCellDef>#</th>
-              <td mat-cell *matCellDef="let x">{{ x.seq + 1 }}</td>
-            </ng-container>
-            <ng-container matColumnDef="kind">
-              <th mat-header-cell *matHeaderCellDef>
-                {{ 'journal.fields.executionKind' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let x">
-                {{ 'journal.enums.executionKind.' + x.kind | translate }}
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="executedAt">
-              <th mat-header-cell *matHeaderCellDef>
-                {{ 'journal.fields.executedAt' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let x">{{ x.executedAt ?? '—' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="shares">
-              <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-                {{ 'journal.fields.shares' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let x" stbCol="numeric">{{ x.shares }}</td>
-            </ng-container>
-            <ng-container matColumnDef="price">
-              <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-                {{ 'journal.fields.price' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let x" stbCol="numeric">
-                {{ x.price | number: '1.2-4' }} $
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="executionColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: executionColumns"></tr>
-          </table>
+    <!-- KPIs — all derived from the draft, so they follow the executions as they are typed. -->
+    <section class="kpi-row">
+      <div class="card kpi">
+        <div class="kpi__label">{{ 'journal.detail.kpi.retained' | translate }}</div>
+        <div
+          class="kpi__value"
+          [class.gain]="(pnl().retained ?? 0) > 0"
+          [class.loss]="(pnl().retained ?? 0) < 0"
+        >
+          {{ pnl().retained !== null ? (pnl().retained | number: '1.2-2') + ' $' : '—' }}
         </div>
-      }
-    </section>
-
-    <mat-divider />
-
-    <!-- Derived aggregates — recomputed server-side from the executions. -->
-    <section class="detail-section">
-      <h3>{{ 'journal.detail.aggregates' | translate }}</h3>
-      <dl class="aggregates">
-        <dt>{{ 'journal.fields.size' | translate }}</dt>
-        <dd>{{ e.size ?? '—' }}</dd>
-        <dt>{{ 'journal.fields.openPrice' | translate }}</dt>
-        <dd>{{ e.openPrice !== null ? (e.openPrice | number: '1.2-4') + ' $' : '—' }}</dd>
-        <dt>{{ 'journal.fields.exitPrice' | translate }}</dt>
-        <dd>{{ e.exitPrice !== null ? (e.exitPrice | number: '1.2-4') + ' $' : '—' }}</dd>
-        <dt>{{ 'journal.fields.profitDollars' | translate }}</dt>
-        <dd
-          [class.profit-positive]="(e.profitDollars ?? 0) > 0"
-          [class.profit-negative]="(e.profitDollars ?? 0) < 0"
-        >
-          {{ e.profitDollars !== null ? (e.profitDollars | number: '1.2-2') + ' $' : '—' }}
-        </dd>
-        <dt>{{ 'journal.fields.gainPercent' | translate }}</dt>
-        <dd
-          [class.profit-positive]="(e.gainPercent ?? 0) > 0"
-          [class.profit-negative]="(e.gainPercent ?? 0) < 0"
-        >
-          {{ e.gainPercent !== null ? (e.gainPercent | number: '1.2-2') + ' %' : '—' }}
-        </dd>
-        <dt>{{ 'journal.fields.realProfitDollars' | translate }}</dt>
-        <dd>
-          {{ e.realProfitDollars !== null ? (e.realProfitDollars | number: '1.2-2') + ' $' : '—' }}
-        </dd>
-        <dt>{{ 'journal.fields.retainedProfitDollars' | translate }}</dt>
-        <dd
-          [class.profit-positive]="(e.retainedProfitDollars ?? 0) > 0"
-          [class.profit-negative]="(e.retainedProfitDollars ?? 0) < 0"
-        >
+        <div class="kpi__sub">
           {{
-            e.retainedProfitDollars !== null
-              ? (e.retainedProfitDollars | number: '1.2-2') + ' $'
-              : '—'
+            pnl().retainedPercent !== null ? (pnl().retainedPercent | number: '1.1-1') + ' %' : '—'
           }}
-        </dd>
-        <dt>{{ 'journal.fields.durationMinutes' | translate }}</dt>
-        <dd>{{ e.durationMinutes !== null ? e.durationMinutes + ' min' : '—' }}</dd>
-        <dt>{{ 'journal.fields.pattern' | translate }}</dt>
-        <dd>{{ 'patterns.long.' + e.pattern | translate }}</dd>
-      </dl>
+          @if (pnl().gap !== null) {
+            ·
+            {{ 'journal.detail.kpi.adjusted' | translate: { gap: (pnl().gap | number: '1.2-2') } }}
+          }
+        </div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi__label">{{ 'journal.detail.kpi.position' | translate }}</div>
+        <div class="kpi__value">{{ preview().size ?? '—' }}</div>
+        <div class="kpi__sub">
+          {{ 'journal.detail.kpi.positionSub' | translate }}
+        </div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi__label">{{ 'journal.detail.kpi.avgPrices' | translate }}</div>
+        <div class="kpi__value">
+          {{ preview().avgEntry !== null ? (preview().avgEntry | number: '1.2-4') : '—' }} →
+          {{ preview().avgExit !== null ? (preview().avgExit | number: '1.2-4') : '—' }}
+        </div>
+        <div class="kpi__sub">
+          @if (context(); as ctx) {
+            @if (ctx.stat.openPrice !== null) {
+              {{
+                'journal.detail.kpi.vsOpen'
+                  | translate
+                    : {
+                        open: (ctx.stat.openPrice | number: '1.2-4'),
+                        entry:
+                          entryVsOpen() !== null ? (entryVsOpen() | number: '1.1-1') + ' %' : '—',
+                        exit: exitVsOpen() !== null ? (exitVsOpen() | number: '1.1-1') + ' %' : '—',
+                      }
+              }}
+            } @else {
+              {{ 'journal.detail.kpi.noOpen' | translate }}
+            }
+          }
+        </div>
+      </div>
+      <div class="card kpi">
+        <div class="kpi__label">{{ 'journal.detail.kpi.duration' | translate }}</div>
+        <div class="kpi__value">
+          @if (duration(); as span) {
+            {{
+              'journal.detail.kpi.durationValue'
+                | translate: { hours: span.hours, minutes: span.minutes }
+            }}
+          } @else {
+            —
+          }
+        </div>
+        <div class="kpi__sub">
+          @if (timeRange(); as range) {
+            {{ range.first }} → {{ range.last }}
+          } @else {
+            {{ 'journal.detail.kpi.noTimes' | translate }}
+          }
+        </div>
+      </div>
     </section>
 
-    <mat-divider />
+    @if (draft(); as d) {
+      <div class="trade-columns">
+        <!-- Executions + P&L — the two blocks the user actually types in. -->
+        <div class="card">
+          <h3>
+            <span>{{ 'journal.detail.executions' | translate }}</span>
+            <span class="head-actions">
+              <mat-form-field
+                appearance="outline"
+                subscriptSizing="dynamic"
+                class="direction-field"
+              >
+                <mat-label>{{ 'journal.fields.direction' | translate }}</mat-label>
+                <mat-select [value]="d.direction" (selectionChange)="setDirection($event.value)">
+                  @for (dir of directions; track dir) {
+                    <mat-option [value]="dir">
+                      {{ 'journal.enums.direction.' + dir | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button mat-stroked-button type="button" (click)="addExecution()">
+                <mat-icon>add</mat-icon>
+                <span>{{ 'journal.detail.executionsBlock.add' | translate }}</span>
+              </button>
+            </span>
+          </h3>
 
-    <!-- Notes + debrief. -->
-    <section class="detail-section">
-      <h3>{{ 'journal.detail.notes' | translate }}</h3>
-      <p class="note-block">{{ e.note || ('journal.detail.noNote' | translate) }}</p>
-      <h3>{{ 'journal.detail.postMortem' | translate }}</h3>
-      <p class="note-block">{{ e.errorNote || ('journal.detail.noNote' | translate) }}</p>
-    </section>
+          @if (d.executions.length === 0) {
+            <p class="muted">{{ 'journal.detail.noExecutions' | translate }}</p>
+          }
 
-    <mat-divider />
+          @for (exec of d.executions; track $index) {
+            <div class="execution-row">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="exec-time">
+                <mat-label>{{ 'journal.fields.executedAt' | translate }}</mat-label>
+                <input
+                  matInput
+                  type="time"
+                  [value]="exec.executedAt ?? ''"
+                  (change)="setExecutionTime($index, $event)"
+                />
+              </mat-form-field>
 
-    <!-- Screenshot — single optional image, managed here once the trade exists (issue #110). -->
-    <section class="detail-section">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="exec-kind">
+                <mat-label>{{ 'journal.fields.executionKind' | translate }}</mat-label>
+                <mat-select
+                  [value]="exec.kind"
+                  (selectionChange)="setExecutionKind($index, $event.value)"
+                >
+                  @for (kind of executionKinds; track kind) {
+                    <mat-option [value]="kind">
+                      {{ 'journal.enums.executionKind.' + kind | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'journal.fields.shares' | translate }}</mat-label>
+                <input
+                  matInput
+                  appNumberMask
+                  [decimals]="0"
+                  [min]="1"
+                  [value]="exec.shares"
+                  (numberChange)="setExecutionShares($index, $event)"
+                  inputmode="numeric"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'journal.fields.price' | translate }}</mat-label>
+                <input
+                  matInput
+                  appNumberMask
+                  [decimals]="4"
+                  [min]="0"
+                  [value]="exec.price"
+                  (numberChange)="setExecutionPrice($index, $event)"
+                  inputmode="decimal"
+                />
+                <span matTextSuffix>$</span>
+              </mat-form-field>
+
+              <span class="exec-amount">
+                {{ amountOf(exec) !== null ? (amountOf(exec) | number: '1.2-2') + ' $' : '—' }}
+              </span>
+
+              <button
+                mat-icon-button
+                type="button"
+                [matTooltip]="'journal.detail.executionsBlock.remove' | translate"
+                [attr.aria-label]="'journal.detail.executionsBlock.remove' | translate"
+                (click)="removeExecution($index)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+
+          @if (executionInvalid()) {
+            <p class="invalid">{{ 'journal.detail.executionsBlock.invalid' | translate }}</p>
+          }
+
+          <!-- Footer of the mockup's table : what is left open + the computed P&L. -->
+          <p class="exec-footer">
+            <span>
+              {{
+                remainingShares() > 0
+                  ? ('journal.detail.executionsBlock.remaining'
+                    | translate: { shares: remainingShares() })
+                  : ('journal.detail.executionsBlock.closed' | translate)
+              }}
+            </span>
+            <span
+              class="exec-footer__pnl"
+              [class.gain]="(pnl().computed ?? 0) > 0"
+              [class.loss]="(pnl().computed ?? 0) < 0"
+            >
+              {{ pnl().computed !== null ? (pnl().computed | number: '1.2-2') + ' $' : '—' }}
+            </span>
+          </p>
+
+          <h3 class="pnl-title">
+            <span>{{ 'journal.detail.pnl.title' | translate }}</span>
+            <span class="hint">{{ 'journal.detail.pnl.hint' | translate }}</span>
+          </h3>
+          <div class="pnl-grid">
+            <div class="pnl-figure">
+              <span class="pnl-figure__label">{{ 'journal.detail.pnl.computed' | translate }}</span>
+              <span class="pnl-figure__value">
+                {{ pnl().computed !== null ? (pnl().computed | number: '1.2-2') + ' $' : '—' }}
+              </span>
+            </div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'journal.detail.pnl.real' | translate }}</mat-label>
+              <input
+                matInput
+                appNumberMask
+                [decimals]="2"
+                [allowNegative]="true"
+                [value]="d.realProfitDollars"
+                (numberChange)="setRealProfit($event)"
+                inputmode="decimal"
+              />
+              <span matTextSuffix>$</span>
+            </mat-form-field>
+            <div class="pnl-figure">
+              <span class="pnl-figure__label">{{ 'journal.detail.pnl.gap' | translate }}</span>
+              <span
+                class="pnl-figure__value"
+                [class.gain]="(pnl().gap ?? 0) > 0"
+                [class.loss]="(pnl().gap ?? 0) < 0"
+              >
+                {{ pnl().gap !== null ? (pnl().gap | number: '1.2-2') + ' $' : '—' }}
+              </span>
+            </div>
+          </div>
+          <p class="hint pnl-note">{{ 'journal.detail.pnl.note' | translate }}</p>
+        </div>
+
+        <!-- Day context — the stat block, strictly read-only here. -->
+        <div class="card">
+          <h3>
+            <span>{{ 'journal.detail.context.title' | translate }}</span>
+            <a class="hint" routerLink="/stats">
+              {{ 'journal.detail.context.link' | translate }}
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          </h3>
+          @if (context(); as ctx) {
+            <dl class="kv">
+              <dt>{{ 'journal.detail.context.premarket' | translate }}</dt>
+              <dd>
+                {{ ctx.stat.previousClose | number: '1.2-4' }} ·
+                {{ ctx.stat.pmOpen | number: '1.2-4' }} · {{ ctx.stat.pmHigh | number: '1.2-4' }}
+              </dd>
+              <dt>{{ 'journal.detail.context.gapPush' | translate }}</dt>
+              <dd>
+                {{ ctx.gap !== null ? (ctx.gap | number: '1.1-1') + ' %' : '—' }} ·
+                {{ ctx.pmPush !== null ? (ctx.pmPush | number: '1.1-1') + ' %' : '—' }}
+              </dd>
+              <dt>{{ 'journal.detail.context.floatVolumeLocate' | translate }}</dt>
+              <dd>
+                {{
+                  ctx.stat.floatMillions !== null
+                    ? (ctx.stat.floatMillions | number: '1.1-2') + ' M'
+                    : '—'
+                }}
+                ·
+                {{
+                  ctx.stat.volumeMillions !== null
+                    ? (ctx.stat.volumeMillions | number: '1.1-2') + ' M'
+                    : '—'
+                }}
+                ·
+                {{
+                  ctx.stat.locatePerShare !== null
+                    ? (ctx.stat.locatePerShare | number: '1.2-4')
+                    : '—'
+                }}
+              </dd>
+              <dt>{{ 'stats.fields.openPrice' | translate }}</dt>
+              <dd>
+                {{ ctx.stat.openPrice !== null ? (ctx.stat.openPrice | number: '1.2-4') : '—' }}
+              </dd>
+              <dt>{{ 'stats.fields.pushOpen' | translate }}</dt>
+              <dd>
+                {{
+                  ctx.stat.pushOpenPrice !== null ? (ctx.stat.pushOpenPrice | number: '1.2-4') : '—'
+                }}
+                <span class="muted">
+                  {{
+                    ctx.pushOpenPercent !== null
+                      ? (ctx.pushOpenPercent | number: '1.1-1') + ' %'
+                      : ''
+                  }}
+                </span>
+              </dd>
+              <dt>{{ 'stats.fields.hod' | translate }}</dt>
+              <dd>
+                {{ ctx.stat.hodPrice !== null ? (ctx.stat.hodPrice | number: '1.2-4') : '—' }}
+                <span class="muted">
+                  {{ ctx.hodPercent !== null ? (ctx.hodPercent | number: '1.1-1') + ' %' : '' }}
+                </span>
+              </dd>
+              <dt>{{ 'stats.fields.lod' | translate }}</dt>
+              <dd>
+                {{ ctx.stat.lodPrice !== null ? (ctx.stat.lodPrice | number: '1.2-4') : '—' }}
+                <span class="muted">
+                  {{ ctx.lodPercent !== null ? (ctx.lodPercent | number: '1.1-1') + ' %' : '' }}
+                </span>
+              </dd>
+              <dt>{{ 'stats.fields.eod' | translate }}</dt>
+              <dd>
+                {{ ctx.stat.eodPrice !== null ? (ctx.stat.eodPrice | number: '1.2-4') : '—' }}
+                <span class="muted">
+                  {{ ctx.eodPercent !== null ? (ctx.eodPercent | number: '1.1-1') + ' %' : '' }}
+                </span>
+              </dd>
+              @if (ctx.stat.note) {
+                <dt>{{ 'stats.fields.note' | translate }}</dt>
+                <dd>{{ ctx.stat.note }}</dd>
+              }
+            </dl>
+          } @else {
+            <p class="muted">{{ 'journal.detail.context.unavailable' | translate }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Post-mortem — two free-text fields, saved with the rest of the draft. -->
+      <section class="card">
+        <h3>{{ 'journal.detail.postMortem' | translate }}</h3>
+        <div class="post-mortem">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'journal.fields.note' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="4"
+              [value]="d.note"
+              (input)="setNote($any($event.target).value)"
+            ></textarea>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'journal.fields.errorNote' | translate }}</mat-label>
+            <textarea
+              matInput
+              rows="4"
+              [value]="d.errorNote"
+              (input)="setErrorNote($any($event.target).value)"
+            ></textarea>
+          </mat-form-field>
+        </div>
+      </section>
+    }
+
+    <!-- Screenshot — single optional image, saved on its own endpoint (issue #110). -->
+    <section class="card">
       <h3>{{ 'journal.detail.screenshot.title' | translate }}</h3>
       @if (e.hasScreenshot) {
         <div class="screenshot-view">
@@ -215,6 +467,29 @@
         hidden
       />
     </section>
+
+    <!-- Save bar — shows up only once the draft drifts from what is persisted. -->
+    @if (dirty()) {
+      <div class="save-bar">
+        <span>{{ 'journal.detail.unsaved' | translate }}</span>
+        <button mat-stroked-button type="button" (click)="cancel()" [disabled]="saving()">
+          {{ 'journal.detail.cancel' | translate }}
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          (click)="save()"
+          [disabled]="saving() || executionInvalid()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="16" />
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          <span>{{ 'journal.detail.save' | translate }}</span>
+        </button>
+      </div>
+    }
   }
 
   <!-- Fullscreen preview — the backdrop is a button (click / Enter / Space close), Escape closes via
