@@ -1,5 +1,6 @@
 package com.portfolioai.auth.infrastructure.security
 
+import com.portfolioai.auth.application.UserCreatedEvent
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
@@ -7,6 +8,7 @@ import com.portfolioai.config.application.AppConfigService
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
@@ -38,6 +40,7 @@ class CustomOAuth2UserService(
   private val userRepository: UserRepository,
   @Value("\${app.admin.emails:}") private val adminEmailsRaw: String,
   private val appConfigService: AppConfigService,
+  private val events: ApplicationEventPublisher,
 ) : DefaultOAuth2UserService() {
 
   private val log = LoggerFactory.getLogger(javaClass)
@@ -141,6 +144,7 @@ class CustomOAuth2UserService(
       provider,
       assignedRole,
     )
+    events.publishEvent(UserCreatedEvent(created.id))
     return created
   }
 }

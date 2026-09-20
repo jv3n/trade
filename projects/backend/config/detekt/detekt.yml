@@ -95,21 +95,13 @@ style:
     active: true
     # Tests are riddled with magic numbers (prices, quantities, timestamps) that read naturally as
     # values rather than constants. Excluding the test source set avoids 100+ pointless findings.
-    # `Mock*Client.kt` are dev-only synthetic generators (volatility, drift, bar counts, EPS bands,
-    # bias thresholds — tuning constants that are clearer inline than as named consts).
-    # `IndicatorCalculator` uses well-known financial periods (21=1mo, 63=3mo, 252=1y) that any
-    # trader recognises. `TwelveDataClient` carries the bar-count lookup table for the chart
-    # endpoint (each `range × interval` cell is a single integer ; named constants would obscure
-    # the table). `ConfigTestClient` carries HTTP probe timeouts and message-preview lengths
-    # (`.take(120)`) that are formatting / I/O knobs, not algorithmic constants.
+    # `LocalDataSeeder` is a dev-only synthetic generator : its price bands, gap ranges and share
+    # sizes are tuning knobs that read better inline than as fifteen named constants.
     excludes:
       - '**/test/**'
       - '**/*Test.kt'
       - '**/*Tests.kt'
-      - '**/Mock*Client.kt'
-      - '**/IndicatorCalculator.kt'
-      - '**/TwelveDataClient.kt'
-      - '**/ConfigTestClient.kt'
+      - '**/LocalDataSeeder.kt'
     # Whitelisted small + common values. Includes percent-100, RSI-50, HTTP status codes (4xx),
     # standard ms timeouts (5_000 / 10_000 etc.), validator thresholds (3-7), and basic counts.
     ignoreNumbers:
