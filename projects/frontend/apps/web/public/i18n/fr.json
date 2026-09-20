@@ -23,8 +23,6 @@
     "candidates": "Candidats",
     "stats": "Stats",
     "lexicon": "Lexique",
-    "collapse": "Réduire la sidebar",
-    "expand": "Déployer la sidebar",
     "settings": "Paramètres"
   },
   "today": {
@@ -631,8 +629,13 @@
     "en": "English"
   },
   "settings": {
-    "navLabel": "Configuration",
-    "backToApp": "Retour à l'app",
+    "title": "Paramètres",
+    "subtitle": "Préférences d'affichage, et pour l'administrateur : accès, données, lexique et liens d'exploitation.",
+    "groups": {
+      "personal": "Personnel",
+      "admin": "Administration"
+    },
+    "adminTag": "admin",
     "preferences": "Préférences",
     "opsLinks": "Liens ops",
     "accessControl": "Contrôle d'accès",
@@ -674,16 +677,21 @@
     },
     "preferencesPage": {
       "title": "Préférences",
-      "description": "Thème et langue. Ces paramètres sont stockés localement dans ton navigateur.",
+      "description": "Profil, thème, langue et devise d'affichage du solde.",
       "theme": {
         "label": "Thème",
-        "description": "Bascule toute l'application entre la palette sombre (défaut) et claire.",
+        "description": "« Système » suit le réglage clair / sombre de ton ordinateur, en direct.",
+        "system": "Système",
         "dark": "Sombre",
         "light": "Clair"
       },
       "language": {
         "label": "Langue",
-        "description": "Locale utilisée pour toute la copie d'interface. S'applique à la session courante et persiste dans le navigateur."
+        "description": "Langue de l'interface. Le lexique garde sa bascule FR / EN."
+      },
+      "currency": {
+        "label": "Devise d'affichage du solde",
+        "description": "Le compte reste en USD ; la conversion CAD utilise le taux BCE du jour."
       }
     },
     "opsLinksPage": {

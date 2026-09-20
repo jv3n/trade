@@ -127,29 +127,32 @@ class AuthServiceTest {
 
   @Test
   fun `updatePreferences applies theme and language and persists`() {
-    val u = user(email = "u@example.com", role = Role.USER) // defaults theme=dark, language=fr
+    val u =
+      user(email = "u@example.com", role = Role.USER) // defaults theme=system, language=fr, USD
     setPrincipal(AppOAuth2User(u.id, u.email, emptyMap(), emptyList()))
     given(userRepository.findById(eq(u.id))).willReturn(Optional.of(u))
     given(userRepository.save(any<User>())).willAnswer { it.getArgument(0) }
 
-    val saved = service.updatePreferences(theme = "light", language = "en")
+    val saved = service.updatePreferences(theme = "light", language = "en", balanceCurrency = "CAD")
 
     assertEquals("light", saved.theme)
     assertEquals("en", saved.language)
+    assertEquals("CAD", saved.balanceCurrency)
   }
 
   @Test
   fun `updatePreferences leaves a null field untouched`() {
     // The SPA sends only the knob that changed — a null field must not reset the other preference.
-    val u = user(email = "u@example.com", role = Role.USER) // theme=dark, language=fr
+    val u = user(email = "u@example.com", role = Role.USER) // theme=system, language=fr, USD
     setPrincipal(AppOAuth2User(u.id, u.email, emptyMap(), emptyList()))
     given(userRepository.findById(eq(u.id))).willReturn(Optional.of(u))
     given(userRepository.save(any<User>())).willAnswer { it.getArgument(0) }
 
-    service.updatePreferences(theme = "light", language = null)
+    service.updatePreferences(theme = "light", language = null, balanceCurrency = null)
 
     assertEquals("light", u.theme)
     assertEquals("fr", u.language, "language left at its default — not nulled")
+    assertEquals("USD", u.balanceCurrency, "currency left at its default — not nulled")
   }
 
   @Test
@@ -160,7 +163,30 @@ class AuthServiceTest {
 
     val ex =
       assertThrows<ResponseStatusException> {
-        service.updatePreferences(theme = "sepia", language = null)
+        service.updatePreferences(theme = "sepia", language = null, balanceCurrency = null)
+      }
+    assertEquals(HttpStatus.BAD_REQUEST, ex.statusCode)
+  }
+
+  @Test
+  fun `updatePreferences accepts the system theme — the default since #201`() {
+    val u = user(email = "u@example.com", role = Role.USER)
+    setPrincipal(AppOAuth2User(u.id, u.email, emptyMap(), emptyList()))
+    given(userRepository.findById(eq(u.id))).willReturn(Optional.of(u))
+    given(userRepository.save(any<User>())).willAnswer { it.getArgument(0) }
+
+    assertEquals("system", service.updatePreferences("system", null, null).theme)
+  }
+
+  @Test
+  fun `updatePreferences rejects an unknown balance currency with 400`() {
+    val u = user(email = "u@example.com", role = Role.USER)
+    setPrincipal(AppOAuth2User(u.id, u.email, emptyMap(), emptyList()))
+    given(userRepository.findById(eq(u.id))).willReturn(Optional.of(u))
+
+    val ex =
+      assertThrows<ResponseStatusException> {
+        service.updatePreferences(theme = null, language = null, balanceCurrency = "EUR")
       }
     assertEquals(HttpStatus.BAD_REQUEST, ex.statusCode)
   }

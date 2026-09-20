@@ -29,6 +29,10 @@ import {
 import { AccountRepository } from '../../core/api/account/account.repository';
 import { ForexRate } from '../../core/api/forex/forex.model';
 import { ForexRepository } from '../../core/api/forex/forex.repository';
+import {
+  BalanceCurrency,
+  BalanceCurrencyService,
+} from '../../core/app-state/balance-currency.service';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
@@ -44,15 +48,6 @@ interface DayGroup {
 /** Window presets for the balance chart + the hero change KPI. */
 type Period = '1W' | '1M' | '3M' | 'YTD' | 'ALL';
 const PERIODS: readonly Period[] = ['1W', '1M', '3M', 'YTD', 'ALL'];
-
-/**
- * Display currency for the hero balance. The account is USD-denominated ; CAD is a cosmetic
- * conversion of the **hero balance only** (movements, summary and chart stay in USD) using the live
- * ECB reference rate. The toggle resets to USD on each visit — it's a presentation preference, not
- * stored state.
- */
-type Currency = 'USD' | 'CAD';
-const CURRENCIES: readonly Currency[] = ['USD', 'CAD'];
 
 /**
  * Broker cash-account page. Hero balance + summary panel (from `/summary`) and the movement history
@@ -111,8 +106,15 @@ export class AccountPage {
 
   /** USD→other-currency rate for the hero toggle ; null until loaded (or if the lookup failed). */
   readonly rate = signal<ForexRate | null>(null);
-  readonly currencies = CURRENCIES;
-  readonly currency = signal<Currency>('USD');
+
+  /**
+   * The display currency is a **user preference** since #201 : toggling it here writes it on the
+   * account, so the choice survives the visit and matches what Settings › Preferences shows. The
+   * account stays USD-denominated — CAD converts the hero balance only.
+   */
+  private readonly balanceCurrency = inject(BalanceCurrencyService);
+  readonly currencies = this.balanceCurrency.supported;
+  readonly currency = this.balanceCurrency.currency;
 
   /** Series filtered to the selected window, mapped for the chart (x = epoch ms, label = date). */
   readonly chartPoints = computed<AreaChartPoint[]>(() => {
@@ -236,8 +238,8 @@ export class AccountPage {
     this.period.set(period);
   }
 
-  setCurrency(currency: Currency): void {
-    this.currency.set(currency);
+  setCurrency(currency: BalanceCurrency): void {
+    this.balanceCurrency.set(currency);
   }
 
   /**

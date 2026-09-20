@@ -37,10 +37,8 @@ $space-3xl: 48px;
 // consumers that need to size below it. Keep in sync with the Material toolbar default.
 $toolbar-height: 64px;
 
-// Sidenav width — expanded vs collapsed (icon-only rail). The collapsed width matches
-// `$icon-button-size` + a small symmetric padding so the icons sit visually centred.
+// Sidenav width. There is no collapsed rail since #200 — the menu is short enough to stay open.
 $sidenav-width: 240px;
-$sidenav-collapsed-width: 64px;
 
 // ============================================================================
 // Component sizes

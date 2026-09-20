@@ -2,7 +2,8 @@ import { Routes } from '@angular/router';
 import { adminGuard, authGuard } from './core/router/auth.guards';
 
 /**
- * Trading-tracking app : account, journal (+ CSV io), stats sheet, candidates, lexicon, settings.
+ * Trading-tracking app : today (home), candidates, stats sheet, journal, account, lexicon and
+ * settings.
  *
  * **Admin gating** is per sub-route, not on `/settings` itself, so USER role can reach
  * `/settings/preferences` (theme + language) while ADMIN-only sub-routes (ops-links,

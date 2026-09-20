@@ -23,8 +23,6 @@
     "candidates": "Candidates",
     "stats": "Stats",
     "lexicon": "Lexicon",
-    "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar",
     "settings": "Settings"
   },
   "today": {
@@ -631,8 +629,13 @@
     "en": "English"
   },
   "settings": {
-    "navLabel": "Configuration",
-    "backToApp": "Back to app",
+    "title": "Settings",
+    "subtitle": "Display preferences, and for the administrator : access, data, lexicon and ops links.",
+    "groups": {
+      "personal": "Personal",
+      "admin": "Administration"
+    },
+    "adminTag": "admin",
     "preferences": "Preferences",
     "opsLinks": "Ops links",
     "accessControl": "Access control",
@@ -674,16 +677,21 @@
     },
     "preferencesPage": {
       "title": "Preferences",
-      "description": "Theme and language. These settings are stored locally in your browser.",
+      "description": "Profile, theme, language and the currency the balance is displayed in.",
       "theme": {
         "label": "Theme",
-        "description": "Switches the entire app between the dark (default) and light palettes.",
+        "description": "« System » follows the light / dark setting of your computer, live.",
+        "system": "System",
         "dark": "Dark",
         "light": "Light"
       },
       "language": {
         "label": "Language",
-        "description": "Locale used for all interface copy. Affects this session and persists in your browser."
+        "description": "Interface language. The lexicon keeps its own FR / EN toggle."
+      },
+      "currency": {
+        "label": "Balance display currency",
+        "description": "The account stays in USD ; the CAD conversion uses the day's ECB reference rate."
       }
     },
     "opsLinksPage": {

@@ -92,7 +92,7 @@ class AuthControllerTest {
   }
 
   @Test
-  fun `GET api me exposes the user's theme and language preferences`() {
+  fun `GET api me exposes the user's theme, language and balance currency`() {
     given(authService.getCurrentUser())
       .willReturn(
         User(
@@ -104,6 +104,7 @@ class AuthControllerTest {
           role = Role.ADMIN,
           theme = "light",
           language = "en",
+          balanceCurrency = "CAD",
         )
       )
 
@@ -112,11 +113,12 @@ class AuthControllerTest {
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.theme").value("light"))
       .andExpect(jsonPath("$.language").value("en"))
+      .andExpect(jsonPath("$.balanceCurrency").value("CAD"))
   }
 
   @Test
   fun `PUT api me preferences echoes the refreshed user`() {
-    given(authService.updatePreferences("light", "en"))
+    given(authService.updatePreferences("light", "en", null))
       .willReturn(
         User(
           id = UUID.randomUUID(),

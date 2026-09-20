@@ -47,7 +47,7 @@ class AuthService(private val userRepository: UserRepository) {
    * the DB CHECK constraints are the hard backstop, this gives a clean error instead of a 500.
    */
   @Transactional
-  fun updatePreferences(theme: String?, language: String?): User {
+  fun updatePreferences(theme: String?, language: String?, balanceCurrency: String?): User {
     val user = getCurrentUser()
     theme?.let {
       if (it !in ALLOWED_THEMES) {
@@ -61,11 +61,20 @@ class AuthService(private val userRepository: UserRepository) {
       }
       user.language = it
     }
+    balanceCurrency?.let {
+      if (it !in ALLOWED_CURRENCIES) {
+        throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown currency '$it'")
+      }
+      user.balanceCurrency = it
+    }
     return userRepository.save(user)
   }
 
   companion object {
-    private val ALLOWED_THEMES = setOf("dark", "light")
+    /** `system` follows the OS setting, live — it is the default (#201). */
+    private val ALLOWED_THEMES = setOf("system", "dark", "light")
     private val ALLOWED_LANGUAGES = setOf("fr", "en")
+    /** Display currency of the balance only : the account stays USD-denominated. */
+    private val ALLOWED_CURRENCIES = setOf("USD", "CAD")
   }
 }

@@ -1,19 +1,86 @@
-// Shell layout (`.ui-shell` + `.ui-sidenav` + `.sidenav-list`) lives in
-// `libs/ui/styles/_shell.scss`. The settings-specific bits are the `.back-to-app` escape-hatch
-// modifier on the nav list and the content panel's padding/scroll behaviour.
+// The settings page after `mockup/parametres.html` : a secondary menu on the left, the active
+// section on the right. No second sidenav — the app's own navigation stays visible (#200).
 
-.sidenav-list {
-  // Slight visual differentiation so the "back to app" entry reads as an escape hatch rather
-  // than a peer of the settings sub-routes — muted text colour.
-  .back-to-app {
-    color: var(--color-text-muted);
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
   }
 }
 
+// ---- Secondary menu ----
+
+.subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-md, 8px);
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+
+    &:hover {
+      background: var(--color-surface-2);
+      color: var(--color-text);
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  // Same language as the app sidenav's active entry : accent text on a soft accent background.
+  .subnav-active {
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    color: var(--color-accent-strong);
+    font-weight: 600;
+  }
+}
+
+.subnav-title {
+  margin: 14px 0 4px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-faint);
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.admin-tag {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  color: var(--color-text-faint);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
 .settings-content {
-  padding: 1.5rem 2rem;
-  overflow-y: auto;
-  background: var(--color-bg);
-  height: 100%;
-  box-sizing: border-box;
+  min-width: 0;
 }

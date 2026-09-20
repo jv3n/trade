@@ -1,6 +1,5 @@
-import { Component, computed, effect, inject, viewChild } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatSidenavContainer } from '@angular/material/sidenav';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -16,7 +15,6 @@ import {
 import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from './core/app-state/auth.service';
 import { LanguageService } from './core/app-state/language.service';
-import { SidenavCollapseService } from './core/app-state/sidenav-collapse.service';
 import { ThemeService } from './core/app-state/theme.service';
 
 /**
@@ -56,7 +54,6 @@ import { ThemeService } from './core/app-state/theme.service';
 })
 export class App {
   readonly auth = inject(AuthService);
-  readonly sidenavCollapse = inject(SidenavCollapseService);
   private readonly router = inject(Router);
 
   // Side-effect-only injections — see class-level docstring. The services derive theme / language
@@ -66,21 +63,6 @@ export class App {
   // (configured to ignore that prefix) lets them through without a directive.
   private readonly _theme = inject(ThemeService);
   private readonly _language = inject(LanguageService);
-
-  // `<mat-sidenav-container>` query — needed to manually trigger Material's content-margin
-  // recomputation when the sidenav width changes. Without this, toggling `collapsed` shrinks
-  // the sidenav's CSS width but leaves the content panel offset by the original 240 px.
-  private readonly sidenavContainer = viewChild<MatSidenavContainer>('sidenavContainer');
-
-  constructor() {
-    // Re-runs whenever `collapsed()` flips. The microtask defers the call until after the
-    // CSS variable change has propagated to layout — calling `updateContentMargins()` while
-    // the DOM still reports the old width would just compute the same margin again.
-    effect(() => {
-      this.sidenavCollapse.collapsed();
-      queueMicrotask(() => this.sidenavContainer()?.updateContentMargins());
-    });
-  }
 
   /**
    * True when the current URL is `/login` or `/error` — used to hide the toolbar so those pages
