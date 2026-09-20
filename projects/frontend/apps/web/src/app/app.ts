@@ -88,14 +88,6 @@ export class App {
     return url.startsWith('/login') || url.startsWith('/error');
   });
 
-  /**
-   * True when the current URL is under `/settings`. Settings provides its **own** left sidenav
-   * with its sub-routes (preferences / ops-links / access-control / data / lexicon),
-   * so the global app sidenav is hidden to avoid stacking two nav columns side-by-side. The
-   * toolbar stays visible so the user menu stays reachable.
-   */
-  readonly isInSettings = computed(() => this.currentUrl().startsWith('/settings'));
-
   /** Displayed in the user menu trigger ; falls back to email if Google didn't return a name. */
   readonly userDisplay = computed(() => {
     const user = this.auth.currentUser();

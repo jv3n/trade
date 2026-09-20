@@ -46,86 +46,79 @@
     a ledger consulted now and then rather than a step. Lexicon and Settings sit apart at the
     bottom : a reference and a back-office, not part of the daily flow.
 
-    **Hidden on `/settings/*`** : the settings shell ships its own left sidenav with the back-office
-    sub-routes, so stacking the global one alongside would give a confusing two-column nav. The
-    settings shell takes over the full content area instead.
+    It stays on `/settings/*` too (#200) : settings has its own secondary menu **inside** the page,
+    so leaving it is one click on the menu the user already knows.
   -->
-  @if (isInSettings()) {
-    <main class="app-content">
-      <router-outlet />
-    </main>
-  } @else {
-    <mat-sidenav-container class="ui-shell">
-      <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
-        <mat-nav-list class="sidenav-list">
-          <a
-            mat-list-item
-            routerLink="/today"
-            routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <mat-icon matListItemIcon>today</mat-icon>
-            <span matListItemTitle>{{ 'nav.today' | translate }}</span>
-          </a>
-          <a
-            mat-list-item
-            routerLink="/candidates"
-            routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <mat-icon matListItemIcon>radar</mat-icon>
-            <span matListItemTitle>{{ 'nav.candidates' | translate }}</span>
-          </a>
-          <a
-            mat-list-item
-            routerLink="/stats"
-            routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <mat-icon matListItemIcon>query_stats</mat-icon>
-            <span matListItemTitle>{{ 'nav.stats' | translate }}</span>
-          </a>
-          <a
-            mat-list-item
-            routerLink="/journal"
-            routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <mat-icon matListItemIcon>menu_book</mat-icon>
-            <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
-          </a>
-          <a
-            mat-list-item
-            routerLink="/account"
-            routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
-            <span matListItemTitle>{{ 'nav.account' | translate }}</span>
-          </a>
-        </mat-nav-list>
-        <!-- Pinned to the bottom — a reference and a back-office, not part of the daily flow. -->
-        <mat-nav-list class="sidenav-list sidenav-list--footer">
-          <a
-            mat-list-item
-            routerLink="/lexicon"
-            routerLinkActive="sidenav-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <mat-icon matListItemIcon>dictionary</mat-icon>
-            <span matListItemTitle>{{ 'nav.lexicon' | translate }}</span>
-          </a>
-          <a mat-list-item routerLink="/settings" routerLinkActive="sidenav-active">
-            <mat-icon matListItemIcon>settings</mat-icon>
-            <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
-          </a>
-        </mat-nav-list>
-      </mat-sidenav>
-      <mat-sidenav-content>
-        <main class="app-content">
-          <router-outlet />
-        </main>
-      </mat-sidenav-content>
-    </mat-sidenav-container>
-  }
+  <mat-sidenav-container class="ui-shell">
+    <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
+      <mat-nav-list class="sidenav-list">
+        <a
+          mat-list-item
+          routerLink="/today"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>today</mat-icon>
+          <span matListItemTitle>{{ 'nav.today' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
+          routerLink="/candidates"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>radar</mat-icon>
+          <span matListItemTitle>{{ 'nav.candidates' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
+          routerLink="/stats"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>query_stats</mat-icon>
+          <span matListItemTitle>{{ 'nav.stats' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
+          routerLink="/journal"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>menu_book</mat-icon>
+          <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
+          routerLink="/account"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+          <span matListItemTitle>{{ 'nav.account' | translate }}</span>
+        </a>
+      </mat-nav-list>
+      <!-- Pinned to the bottom — a reference and a back-office, not part of the daily flow. -->
+      <mat-nav-list class="sidenav-list sidenav-list--footer">
+        <a
+          mat-list-item
+          routerLink="/lexicon"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>dictionary</mat-icon>
+          <span matListItemTitle>{{ 'nav.lexicon' | translate }}</span>
+        </a>
+        <a mat-list-item routerLink="/settings" routerLinkActive="sidenav-active">
+          <mat-icon matListItemIcon>settings</mat-icon>
+          <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+    <mat-sidenav-content>
+      <main class="app-content">
+        <router-outlet />
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
 }
