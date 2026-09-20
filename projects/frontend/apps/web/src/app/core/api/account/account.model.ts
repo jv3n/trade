@@ -35,13 +35,6 @@ export interface AccountMovementInput {
   note: string | null;
 }
 
-/** Balance-correction payload — the real broker balance ; the backend records the signed delta. */
-export interface CorrectionInput {
-  targetBalance: number;
-  valueDate: Date;
-  note: string | null;
-}
-
 /** One point of the cumulative balance series — end-of-day balance on [date]. */
 export interface BalancePoint {
   date: Date;
@@ -57,4 +50,26 @@ export interface AccountSummary {
   tradesPnl: number;
   adjustments: number;
   movementCount: number;
+}
+
+/**
+ * One morning's reconciliation between the app balance and the one TradeZero displays (#198).
+ * [gap] is `brokerBalance − appBalance` as it was that morning : zero on a clean one, and then
+ * [correctionId] is null. Both travel together so the history line can read « 18/09 ✓ » or
+ * « 12/09 −12,40 » without inferring one from the other.
+ */
+export interface Reconciliation {
+  id: string;
+  valueDate: Date;
+  brokerBalance: number;
+  appBalance: number;
+  gap: number;
+  correctionId: string | null;
+  reconciledAt: Date;
+}
+
+/** What the morning block sends : the balance read on TradeZero, and the day it settles. */
+export interface ReconciliationInput {
+  brokerBalance: number;
+  valueDate: Date;
 }

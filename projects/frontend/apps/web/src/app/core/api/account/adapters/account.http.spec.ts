@@ -131,19 +131,44 @@ describe('HttpAccountRepository', () => {
     req.flush(movementWire());
   });
 
-  it('correctBalance posts the target balance to the corrections endpoint', () => {
-    repo
-      .correctBalance({ targetBalance: 4850, valueDate: new Date(2026, 5, 15), note: null })
-      .subscribe();
-
-    const req = httpMock.expectOne('/api/account/corrections');
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({
-      targetBalance: 4850,
-      valueDate: '2026-06-15',
-      note: null,
+  it('reconcile posts the broker balance for that morning (#198)', () => {
+    repo.reconcile({ brokerBalance: 4850, valueDate: new Date(2026, 5, 15) }).subscribe((r) => {
+      expect(r.gap).toBe(-150);
+      expect(r.valueDate.getDate()).toBe(15);
+      expect(r.reconciledAt).toBeInstanceOf(Date);
     });
-    req.flush(movementWire({ type: 'ADJUSTMENT', amount: -150 }));
+
+    const req = httpMock.expectOne('/api/account/reconciliations');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ brokerBalance: 4850, valueDate: '2026-06-15' });
+    req.flush({
+      id: 'reco-1',
+      valueDate: '2026-06-15',
+      brokerBalance: 4850,
+      appBalance: 5000,
+      gap: -150,
+      correctionId: 'mv-9',
+      reconciledAt: '2026-06-15T12:02:00Z',
+    });
+  });
+
+  it('reconciliations reads the history with its limit', () => {
+    repo.reconciliations(5).subscribe((rows) => expect(rows).toHaveLength(1));
+
+    const req = httpMock.expectOne((r) => r.url === '/api/account/reconciliations');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('limit')).toBe('5');
+    req.flush([
+      {
+        id: 'reco-1',
+        valueDate: '2026-06-15',
+        brokerBalance: 4850,
+        appBalance: 4850,
+        gap: 0,
+        correctionId: null,
+        reconciledAt: '2026-06-15T12:02:00Z',
+      },
+    ]);
   });
 
   it('updateMovement PUTs to the id path', () => {

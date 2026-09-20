@@ -8,7 +8,8 @@ import {
   AccountMovementType,
   AccountSummary,
   BalancePoint,
-  CorrectionInput,
+  Reconciliation,
+  ReconciliationInput,
 } from '../account.model';
 import { AccountRepository, PageRequest, PagedResult } from '../account.repository';
 
@@ -36,10 +37,14 @@ interface MovementWireRequest {
   note: string | null;
 }
 
-interface CorrectionWireRequest {
-  targetBalance: number;
+interface ReconciliationWireDto {
+  id: string;
   valueDate: string;
-  note: string | null;
+  brokerBalance: number;
+  appBalance: number;
+  gap: number;
+  correctionId: string | null;
+  reconciledAt: string;
 }
 
 interface BalancePointWireDto {
@@ -78,18 +83,15 @@ function fromPageWire(p: SpringPageWireDto<AccountMovementWireDto>): PagedResult
   };
 }
 
+/** The morning's date stays a local day ; `reconciledAt` is an instant. Same rule as elsewhere. */
+function reconciliationFromWire(w: ReconciliationWireDto): Reconciliation {
+  return { ...w, valueDate: parseISO(w.valueDate), reconciledAt: parseISO(w.reconciledAt) };
+}
+
 function toMovementWire(input: AccountMovementInput): MovementWireRequest {
   return {
     type: input.type,
     amount: input.amount,
-    valueDate: format(input.valueDate, 'yyyy-MM-dd'),
-    note: input.note?.trim() || null,
-  };
-}
-
-function toCorrectionWire(input: CorrectionInput): CorrectionWireRequest {
-  return {
-    targetBalance: input.targetBalance,
     valueDate: format(input.valueDate, 'yyyy-MM-dd'),
     note: input.note?.trim() || null,
   };
@@ -131,10 +133,21 @@ export class HttpAccountRepository extends AccountRepository {
       .pipe(map(fromWire));
   }
 
-  correctBalance(input: CorrectionInput): Observable<AccountMovement> {
+  reconcile(input: ReconciliationInput): Observable<Reconciliation> {
     return this.http
-      .post<AccountMovementWireDto>(`${this.base}/corrections`, toCorrectionWire(input))
-      .pipe(map(fromWire));
+      .post<ReconciliationWireDto>(`${this.base}/reconciliations`, {
+        brokerBalance: input.brokerBalance,
+        valueDate: format(input.valueDate, 'yyyy-MM-dd'),
+      })
+      .pipe(map(reconciliationFromWire));
+  }
+
+  reconciliations(limit = 10): Observable<Reconciliation[]> {
+    return this.http
+      .get<ReconciliationWireDto[]>(`${this.base}/reconciliations`, {
+        params: new HttpParams().set('limit', limit),
+      })
+      .pipe(map((rows) => rows.map(reconciliationFromWire)));
   }
 
   updateMovement(id: string, input: AccountMovementInput): Observable<AccountMovement> {

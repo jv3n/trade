@@ -106,6 +106,24 @@
   "account": {
     "title": "Compte",
     "subtitle": "Ton compte broker — solde, mouvements et corrections. Saisi à la main, sans connexion au broker.",
+    "reconciliation": {
+      "title": "Rapprochement du matin",
+      "hint": "à faire chaque matin avec le solde affiché par TradeZero",
+      "appBalance": "Solde app (calculé)",
+      "brokerBalance": "Solde TradeZero",
+      "gap": "Écart",
+      "validate": "Valider le rapprochement",
+      "createCorrection": "Créer la correction",
+      "note": "Aucun écart : le rapprochement est simplement horodaté. En cas d'écart, une ligne « Correction » cale le solde sur TradeZero.",
+      "history": "Derniers rapprochements :",
+      "doneClean": "Rapproché ce matin — aucun écart.",
+      "doneCorrected": "Rapproché ce matin — une correction de {{gap}} $ a été enregistrée.",
+      "confirmCorrection": {
+        "title": "Créer la correction ?",
+        "message": "Une ligne « Correction » de {{gap}} $ est ajoutée au compte pour caler le solde sur TradeZero. Le rapprochement est horodaté avec elle.",
+        "confirm": "Créer la correction"
+      }
+    },
     "currentBalance": "Solde courant",
     "currency": {
       "USD": "USD",
@@ -114,7 +132,6 @@
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · taux BCE, {{date}}",
     "fxUnavailable": "Taux de change indisponible pour le moment.",
     "addMovement": "Ajouter un mouvement",
-    "correctBalance": "Corriger la balance",
     "change": "Variation {{period}}",
     "chartEmpty": "Pas assez de mouvements pour tracer la courbe du solde.",
     "period": {
@@ -167,10 +184,7 @@
     "dialog": {
       "addTitle": "Ajouter un mouvement",
       "editTitle": "Modifier le mouvement",
-      "correctTitle": "Corriger la balance",
-      "correctHint": "Saisis le solde réel affiché par ton broker. L'écart est enregistré comme une correction — il absorbe les frais, le financement et le slippage que le journal n'a pas captés.",
       "amountRequired": "Saisis un montant supérieur à zéro.",
-      "targetRequired": "Saisis le solde réel du broker.",
       "save": "Enregistrer",
       "cancel": "Annuler"
     },
@@ -182,7 +196,9 @@
       "deleteSuccess": "Mouvement supprimé.",
       "deleteError": "Impossible de supprimer le mouvement. Réessaie.",
       "correctSuccess": "Balance corrigée.",
-      "correctError": "Impossible de corriger la balance. Réessaie."
+      "correctError": "Impossible de corriger la balance. Réessaie.",
+      "reconcileSuccess": "Matin rapproché.",
+      "reconcileError": "Impossible de rapprocher ce matin. Réessaie."
     }
   },
   "journal": {
