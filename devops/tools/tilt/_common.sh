@@ -32,7 +32,15 @@ GRADLE_BUILD_DIR="$(tilt_env GRADLE_BUILD_DIR projects/backend/build)"
 GRADLE_PROJECT_CACHE="$(tilt_env GRADLE_PROJECT_CACHE projects/backend/.gradle)"
 JAVA_HOME="$(tilt_env JAVA_HOME "${JAVA_HOME:-}")"
 export JAVA_HOME
-PATH="$(tilt_env NODE_BIN "")${PATH:+:$PATH}"
+# Only when it isn't already first in line: Tilt hands us a PATH that already starts with it, and
+# prepending again would push a duplicate into every child process.
+node_bin="$(tilt_env NODE_BIN "")"
+if [ -n "$node_bin" ]; then
+  case ":$PATH:" in
+    *":$node_bin:"*) ;;
+    *) PATH="$node_bin${PATH:+:$PATH}" ;;
+  esac
+fi
 export PATH
 
 ok() { printf '  \033[32m✓\033[0m %s\n' "$1"; }
