@@ -30,8 +30,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 /**
- * Pins the journal → account integration : a trade's realized P&L lands in the account ledger as a
- * read-only `TRADE` movement, kept in sync through the trade's lifecycle.
+ * Pins the journal → account integration : a trade's **retained** P&L (the broker's real figure
+ * when it has been typed in, the one computed from the executions otherwise) lands in the account
+ * ledger as a read-only `TRADE` movement, kept in sync through the trade's lifecycle (#197).
  *
  * Drives the **real** [TradeEntryService] (create / update / delete) and asserts on the resulting
  * `account_movement` rows — exercising `TradeEntryService`'s `TradeChangedEvent` publication, the
@@ -164,6 +165,47 @@ class AccountTradeSyncIntegrationTest {
       0,
       BigDecimal("287.35").compareTo(tradeMovements().single().amount),
       "the retained P&L is the real one, not the 300.00 computed from the executions",
+    )
+  }
+
+  @Test
+  fun `typing the broker P&L on an existing trade moves the movement and the balance onto it`() {
+    // The daily flow of the trade page (#194) : the fills are in first, the broker statement comes
+    // later. The ledger must follow the real figure the very moment it is typed.
+    val trade = tradeService.create(closedTrade(ticker = "KTTA", pnl = "294.00"))
+    assertEquals(0, BigDecimal("294.00").compareTo(tradeMovements().single().amount))
+
+    tradeService.update(
+      trade.id,
+      closedTrade(ticker = "KTTA", pnl = "294.00").copy(realProfitDollars = BigDecimal("291.85")),
+    )
+
+    assertEquals(1, tradeMovements().size, "still one movement — the same row, re-amounted")
+    assertEquals(
+      0,
+      BigDecimal("291.85").compareTo(tradeMovements().single().amount),
+      "the 2.15 of fees and rounding reach the ledger",
+    )
+    assertEquals(
+      0,
+      BigDecimal("291.85").compareTo(accountService.summary().balance),
+      "the balance follows the retained P&L",
+    )
+  }
+
+  @Test
+  fun `clearing the real P&L falls the movement back onto the computed one`() {
+    // Mistyped a broker figure : emptying the field must hand the ledger back to the executions.
+    val request =
+      closedTrade(ticker = "KTTA", pnl = "294.00").copy(realProfitDollars = BigDecimal("291.85"))
+    val trade = tradeService.create(request)
+
+    tradeService.update(trade.id, request.copy(realProfitDollars = null))
+
+    assertEquals(
+      0,
+      BigDecimal("294.00").compareTo(tradeMovements().single().amount),
+      "no real P&L anymore — the computed one is retained again",
     )
   }
 
