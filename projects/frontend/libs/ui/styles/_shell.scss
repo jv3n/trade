@@ -56,13 +56,25 @@
   // Active entry (mockup) : neutral raised background, accent bar on the left edge, filled
   // accent icon. The accent stays an emphasis, not a wash over the whole row.
   //
-  // The bar is an **inset** shadow, drawn inside the item : the list item must keep its
-  // `overflow: hidden`, otherwise Material's click ripple (a circle sized to the item's diagonal)
-  // spills out as a large bubble.
+  // The bar is a pseudo-element inset from the top and bottom, not an inset shadow : a shadow is
+  // clipped by the item's `border-radius` and curls around both corners. It stays inside the item
+  // because Material's ripple needs `overflow: hidden` here. The 8px inset matches `--radius`
+  // exactly — below it the bar would still cross the corner arc.
   .sidenav-active {
+    position: relative;
     background: var(--color-surface-2);
     color: var(--color-text);
-    box-shadow: inset 3px 0 0 var(--color-accent);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: s.$space-sm;
+      bottom: s.$space-sm;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--color-accent);
+    }
 
     .mat-icon {
       color: var(--color-accent);
