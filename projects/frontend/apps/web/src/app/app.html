@@ -29,10 +29,8 @@
           </div>
         </div>
         <mat-divider></mat-divider>
-        <a mat-menu-item routerLink="/settings">
-          <mat-icon>settings</mat-icon>
-          <span>{{ 'header.settings' | translate }}</span>
-        </a>
+        <!-- Settings lives at the bottom of the sidenav since #200 — the avatar menu keeps the
+             sign-out, which has nowhere else to go. -->
         <button mat-menu-item type="button" (click)="signOut()">
           <mat-icon>logout</mat-icon>
           <span>{{ 'auth.signOut' | translate }}</span>
@@ -42,9 +40,11 @@
   </mat-toolbar>
 
   <!--
-    v1.0 sidenav — `mode="side"` + `opened` = sidenav permanently docked on the left, hosts the
-    primary navigation. Only the journal entry exists today (cf. `docs/projet/roadmap.md` —
-    the pivot moves the app to a trading journal). Add new nav items as new features land.
+    Sidenav — `mode="side"` + `opened` = permanently docked on the left, hosting the primary
+    navigation. The order follows the life cycle of a ticker (#200) : Today, then Candidates →
+    Stats → Journal (each « → Stat » / « → Trade » button leads to the next tab), then Account,
+    a ledger consulted now and then rather than a step. Lexicon and Settings sit apart at the
+    bottom : a reference and a back-office, not part of the daily flow.
 
     **Hidden on `/settings/*`** : the settings shell ships its own left sidenav with the back-office
     sub-routes, so stacking the global one alongside would give a confusing two-column nav. The
@@ -66,15 +66,15 @@
         <mat-nav-list class="sidenav-list">
           <a
             mat-list-item
-            routerLink="/account"
+            routerLink="/today"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.account' | translate"
+            [matTooltip]="'nav.today' | translate"
             [matTooltipDisabled]="!sidenavCollapse.collapsed()"
             matTooltipPosition="right"
           >
-            <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
-            <span matListItemTitle>{{ 'nav.account' | translate }}</span>
+            <mat-icon matListItemIcon>today</mat-icon>
+            <span matListItemTitle>{{ 'nav.today' | translate }}</span>
           </a>
           <a
             mat-list-item
@@ -85,7 +85,7 @@
             [matTooltipDisabled]="!sidenavCollapse.collapsed()"
             matTooltipPosition="right"
           >
-            <mat-icon matListItemIcon>fact_check</mat-icon>
+            <mat-icon matListItemIcon>radar</mat-icon>
             <span matListItemTitle>{{ 'nav.candidates' | translate }}</span>
           </a>
           <a
@@ -97,7 +97,7 @@
             [matTooltipDisabled]="!sidenavCollapse.collapsed()"
             matTooltipPosition="right"
           >
-            <mat-icon matListItemIcon>insights</mat-icon>
+            <mat-icon matListItemIcon>query_stats</mat-icon>
             <span matListItemTitle>{{ 'nav.stats' | translate }}</span>
           </a>
           <a
@@ -109,8 +109,20 @@
             [matTooltipDisabled]="!sidenavCollapse.collapsed()"
             matTooltipPosition="right"
           >
-            <mat-icon matListItemIcon>book</mat-icon>
+            <mat-icon matListItemIcon>menu_book</mat-icon>
             <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
+          </a>
+          <a
+            mat-list-item
+            routerLink="/account"
+            routerLinkActive="sidenav-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [matTooltip]="'nav.account' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
+            <span matListItemTitle>{{ 'nav.account' | translate }}</span>
           </a>
         </mat-nav-list>
         <!-- Pinned to the bottom of the sidenav (above the collapse toggle) — the lexicon is a
@@ -125,8 +137,19 @@
             [matTooltipDisabled]="!sidenavCollapse.collapsed()"
             matTooltipPosition="right"
           >
-            <mat-icon matListItemIcon>menu_book</mat-icon>
+            <mat-icon matListItemIcon>dictionary</mat-icon>
             <span matListItemTitle>{{ 'nav.lexicon' | translate }}</span>
+          </a>
+          <a
+            mat-list-item
+            routerLink="/settings"
+            routerLinkActive="sidenav-active"
+            [matTooltip]="'nav.settings' | translate"
+            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
+            matTooltipPosition="right"
+          >
+            <mat-icon matListItemIcon>settings</mat-icon>
+            <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
           </a>
         </mat-nav-list>
         <div class="sidenav-toggle">

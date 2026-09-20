@@ -13,27 +13,24 @@ import {
   StbCardModule,
   StbChipsModule,
   StbDividerModule,
-  StbFormFieldModule,
   StbIconModule,
-  StbInputModule,
   StbPaginatorModule,
   StbProgressSpinnerModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
-import { EMPTY, catchError, filter, finalize, of, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
 import {
   AccountMovement,
   AccountMovementInput,
   AccountSummary,
   BalancePoint,
-  Reconciliation,
 } from '../../core/api/account/account.model';
 import { AccountRepository } from '../../core/api/account/account.repository';
 import { ForexRate } from '../../core/api/forex/forex.model';
 import { ForexRepository } from '../../core/api/forex/forex.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
-import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
+import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
 
 /** A day's worth of movements with its running subtotal — built from the current page's content. */
@@ -78,13 +75,11 @@ const CURRENCIES: readonly Currency[] = ['USD', 'CAD'];
     StbCardModule,
     StbChipsModule,
     StbDividerModule,
-    StbFormFieldModule,
     StbIconModule,
-    StbInputModule,
     StbPaginatorModule,
     StbProgressSpinnerModule,
     StbTooltipModule,
-    NumberMaskDirective,
+    MorningReconciliation,
     TranslatePipe,
   ],
   templateUrl: './account-page.html',
@@ -107,25 +102,6 @@ export class AccountPage {
   readonly pageSize = signal(25);
 
   readonly series = signal<BalancePoint[]>([]);
-
-  // ---- Morning reconciliation (#198) ----
-  /** The balance TradeZero displays, as typed. Null until the user enters it. */
-  readonly brokerBalance = signal<number | null>(null);
-  readonly reconciling = signal(false);
-  readonly reconciliations = signal<Reconciliation[]>([]);
-
-  /** Live gap between the typed broker balance and the app's — null while nothing is typed. */
-  readonly reconciliationGap = computed(() => {
-    const broker = this.brokerBalance();
-    const balance = this.summary()?.balance;
-    return broker === null || balance === undefined ? null : broker - balance;
-  });
-
-  /** Today's reconciliation, if this morning is already settled — drives the « done » state. */
-  readonly todayReconciliation = computed(() => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    return this.reconciliations().find((r) => format(r.valueDate, 'yyyy-MM-dd') === today) ?? null;
-  });
 
   /** Today, captured once so the header date doesn't re-evaluate on every change detection. */
   readonly today = new Date();
@@ -245,54 +221,9 @@ export class AccountPage {
       .subscribe();
   }
 
-  // ---- Morning reconciliation (#198) ----------------------------------------------------------
-
-  setBrokerBalance(value: number | null): void {
-    this.brokerBalance.set(value);
-  }
-
-  /**
-   * Settles this morning. A gap creates an `ADJUSTMENT` line, so it goes through the confirmation
-   * modal (the redesign's rule : confirm anything that creates or deletes) ; a clean morning only
-   * timestamps itself and needs none.
-   */
-  reconcile(): void {
-    const broker = this.brokerBalance();
-    if (broker === null || this.reconciling()) return;
-    const gap = this.reconciliationGap();
-
-    const confirmed =
-      gap !== null && gap !== 0
-        ? this.confirm.ask('account.reconciliation.confirmCorrection', {
-            params: { gap: gap.toFixed(2) },
-          })
-        : of(true);
-
-    confirmed
-      .pipe(
-        filter(Boolean),
-        tap(() => this.reconciling.set(true)),
-        switchMap(() =>
-          this.repo.reconcile({ brokerBalance: broker, valueDate: new Date() }).pipe(
-            tap((settled) => {
-              this.toast(
-                settled.correctionId
-                  ? 'account.snackbar.correctSuccess'
-                  : 'account.snackbar.reconcileSuccess',
-                'success',
-              );
-              this.brokerBalance.set(null);
-              this.fetch();
-            }),
-            catchError(() => {
-              this.toast('account.snackbar.reconcileError', 'error');
-              return EMPTY;
-            }),
-            finalize(() => this.reconciling.set(false)),
-          ),
-        ),
-      )
-      .subscribe();
+  /** The morning may have moved the balance — refetch summary, series and movements. */
+  onReconciled(): void {
+    this.fetch();
   }
 
   onPage(event: PageEvent): void {
@@ -392,12 +323,6 @@ export class AccountPage {
     this.repo.getBalanceSeries().subscribe({
       next: (pts) => this.series.set(pts),
       error: () => this.error.set(this.translate.instant('account.errors.load')),
-    });
-    // The morning history is a recap, not the page's reason to exist : a failure empties the line
-    // rather than raising the error banner over the balance.
-    this.repo.reconciliations().subscribe({
-      next: (rows) => this.reconciliations.set(rows),
-      error: () => this.reconciliations.set([]),
     });
     this.fetchMovements();
   }

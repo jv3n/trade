@@ -103,7 +103,7 @@ describe('LoginPage', () => {
     // let the constructor's effect() run its first iteration.
     await fixture.whenStable();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/account']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/today']);
   });
 
   it('renders the title, tagline, feature copy and disclaimer i18n keys when not authenticated', () => {

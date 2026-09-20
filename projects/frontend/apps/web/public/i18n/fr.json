@@ -17,13 +17,92 @@
     }
   },
   "nav": {
+    "today": "Aujourd'hui",
     "account": "Compte",
     "journal": "Journal",
     "candidates": "Candidats",
     "stats": "Stats",
     "lexicon": "Lexique",
     "collapse": "Réduire la sidebar",
-    "expand": "Déployer la sidebar"
+    "expand": "Déployer la sidebar",
+    "settings": "Paramètres"
+  },
+  "today": {
+    "subtitle": "Ta journée de trading, étape par étape.",
+    "market": {
+      "PREMARKET": "Premarket · New York",
+      "OPEN": "Séance ouverte · New York",
+      "CLOSED": "Marché fermé · New York"
+    },
+    "steps": {
+      "title": "Déroulé du jour",
+      "progress": "{{done}} étape(s) faite(s) sur {{total}}",
+      "reconciliation": {
+        "title": "Rapprochement du matin",
+        "body": "Saisis le solde affiché par TradeZero : l'app le compare à son solde calculé."
+      },
+      "candidates": {
+        "title": "Saisir les candidats",
+        "body": "Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.",
+        "captured": "{{count}} candidats saisis — {{tickers}}."
+      },
+      "session": {
+        "title": "Séance",
+        "body": "Sur TradeZero — rien à faire dans l'app."
+      },
+      "stats": {
+        "title": "Compléter les stats",
+        "from": "à partir de 16:00",
+        "body": "Open, push à l'open, HOD, LOD et EOD de chaque stat du jour.",
+        "pending": "{{count}} à compléter",
+        "toComplete": "{{tickers}} attend(ent) son bloc de séance.",
+        "notPromoted": "{{count}} candidats ne sont pas encore passés en stats.",
+        "confirmPromote": {
+          "title": "Passer {{count}} candidats en stats ?",
+          "message": "{{tickers}} deviennent des stats à compléter après la clôture de 16h. Les candidats déjà passés sont laissés tels quels.",
+          "confirm": "Tout passer en stats"
+        }
+      },
+      "trades": {
+        "title": "Saisir les trades du jour",
+        "body": "Tu as tradé aujourd'hui ? Crée le trade depuis sa stat, puis ajoute exécutions et post-mortem.",
+        "entered": "{{count}} trades saisis — {{tickers}}."
+      }
+    },
+    "actions": {
+      "view": "Voir",
+      "capture": "Saisir les candidats",
+      "promoteRemaining": "Passer les {{count}} restants",
+      "complete": "Compléter",
+      "pickStat": "Choisir une stat",
+      "openJournal": "Ouvrir le journal"
+    },
+    "account": {
+      "title": "Compte",
+      "detail": "détail",
+      "balance": "Solde",
+      "reconciled": "rapproché ce matin ✓",
+      "toReconcile": "à rapprocher ce matin",
+      "pnlDay": "P&L du jour",
+      "pnlWeek": "P&L de la semaine",
+      "pnlMonth": "P&L du mois",
+      "noTrade": "— pas de trade"
+    },
+    "candidates": {
+      "title": "Candidats du jour",
+      "all": "tout voir",
+      "empty": "Pas encore de candidat aujourd'hui.",
+      "inStats": "En stats",
+      "metrics": "gap {{gap}} % · push {{push}} %"
+    },
+    "week": {
+      "title": "Cette semaine",
+      "empty": "Aucun trade cette semaine."
+    },
+    "snackbar": {
+      "promoteSuccess": "{{count}} candidats passés en stats.",
+      "promoteError": "Impossible de passer les candidats en stats. Réessaie."
+    }
   },
   "candidates": {
     "title": "Candidats",
@@ -504,7 +583,6 @@
     }
   },
   "header": {
-    "settings": "Paramètres",
     "userMenu": "Mon compte"
   },
   "auth": {

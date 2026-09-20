@@ -1,0 +1,336 @@
+@let states = stepStates();
+
+<div class="page page--full today-page">
+  <header class="content-header">
+    <div class="header-row">
+      <div>
+        <h2>{{ today | date: 'EEEE d MMMM' }}</h2>
+        <p>{{ 'today.subtitle' | translate }}</p>
+      </div>
+      <span class="market-pill" [attr.data-status]="marketStatus">
+        <i></i>
+        {{ 'today.market.' + marketStatus | translate }}
+      </span>
+    </div>
+  </header>
+
+  <div class="day-layout">
+    <!-- The walk-through : one step per row, state derived from the data and the NY clock. -->
+    <section class="card">
+      <h3>
+        <span>{{ 'today.steps.title' | translate }}</span>
+        <span class="hint">
+          {{ 'today.steps.progress' | translate: { done: doneCount(), total: steps.length } }}
+        </span>
+      </h3>
+
+      <ol class="steps">
+        <!-- 1 — Morning reconciliation, settled right here. -->
+        <li class="step" [class]="'step--' + states.reconciliation">
+          <span class="step-dot">
+            @if (states.reconciliation === 'done') {
+              <mat-icon>check</mat-icon>
+            } @else {
+              1
+            }
+          </span>
+          <div class="step-main">
+            <div class="step-title">{{ 'today.steps.reconciliation.title' | translate }}</div>
+            <div class="step-body">{{ 'today.steps.reconciliation.body' | translate }}</div>
+            <app-morning-reconciliation
+              class="step-inline"
+              compact
+              [appBalance]="accountSummary()?.balance ?? null"
+              (settled)="onReconciled()"
+            />
+          </div>
+          <div></div>
+        </li>
+
+        <!-- 2 — Candidates captured in premarket. -->
+        <li class="step" [class]="'step--' + states.candidates">
+          <span class="step-dot">
+            @if (states.candidates === 'done') {
+              <mat-icon>check</mat-icon>
+            } @else {
+              2
+            }
+          </span>
+          <div class="step-main">
+            <div class="step-title">{{ 'today.steps.candidates.title' | translate }}</div>
+            <div class="step-body">
+              @if (candidates().length > 0) {
+                {{
+                  'today.steps.candidates.captured'
+                    | translate
+                      : {
+                          count: candidates().length,
+                          tickers: tickersOf(candidates()),
+                        }
+                }}
+              } @else {
+                {{ 'today.steps.candidates.body' | translate }}
+              }
+            </div>
+          </div>
+          <div class="step-action">
+            <a mat-stroked-button routerLink="/candidates">
+              <mat-icon>{{ candidates().length > 0 ? 'visibility' : 'add' }}</mat-icon>
+              <span>
+                {{
+                  (candidates().length > 0 ? 'today.actions.view' : 'today.actions.capture')
+                    | translate
+                }}
+              </span>
+            </a>
+          </div>
+        </li>
+
+        <!-- 3 — The session itself : nothing to do in the app. -->
+        <li class="step" [class]="'step--' + states.session">
+          <span class="step-dot">
+            @if (states.session === 'done') {
+              <mat-icon>check</mat-icon>
+            } @else {
+              3
+            }
+          </span>
+          <div class="step-main">
+            <div class="step-title">
+              {{ 'today.steps.session.title' | translate }}
+              <span class="step-time">09:30 → 16:00</span>
+            </div>
+            <div class="step-body">{{ 'today.steps.session.body' | translate }}</div>
+          </div>
+          <div></div>
+        </li>
+
+        <!-- 4 — Complete the stats, from the 4 pm close. -->
+        <li class="step" [class]="'step--' + states.stats">
+          <span class="step-dot">
+            @if (states.stats === 'done') {
+              <mat-icon>check</mat-icon>
+            } @else {
+              4
+            }
+          </span>
+          <div class="step-main">
+            <div class="step-title">
+              {{ 'today.steps.stats.title' | translate }}
+              <span class="step-time">{{ 'today.steps.stats.from' | translate }}</span>
+              @if (statsToComplete().length > 0) {
+                <span class="tag tag-warn">
+                  {{ 'today.steps.stats.pending' | translate: { count: statsToComplete().length } }}
+                </span>
+              }
+            </div>
+            <div class="step-body">
+              @if (statsToComplete().length > 0) {
+                {{
+                  'today.steps.stats.toComplete'
+                    | translate: { tickers: tickersOf(statsToComplete()) }
+                }}
+              } @else {
+                {{ 'today.steps.stats.body' | translate }}
+              }
+              @if (pendingCandidates().length > 0) {
+                {{
+                  'today.steps.stats.notPromoted' | translate: { count: pendingCandidates().length }
+                }}
+              }
+            </div>
+          </div>
+          <div class="step-action actions">
+            @if (pendingCandidates().length > 0) {
+              <button mat-stroked-button type="button" (click)="promoteRemaining()">
+                <mat-icon>keyboard_double_arrow_right</mat-icon>
+                <span>
+                  {{
+                    'today.actions.promoteRemaining'
+                      | translate: { count: pendingCandidates().length }
+                  }}
+                </span>
+              </button>
+            }
+            @if (statsToComplete().length > 0) {
+              <a mat-flat-button routerLink="/stats">
+                <mat-icon>edit_note</mat-icon>
+                <span>{{ 'today.actions.complete' | translate }}</span>
+              </a>
+            }
+          </div>
+        </li>
+
+        <!-- 5 — Enter the day's trades, from their stat. -->
+        <li class="step" [class]="'step--' + states.trades">
+          <span class="step-dot">
+            @if (states.trades === 'done') {
+              <mat-icon>check</mat-icon>
+            } @else {
+              5
+            }
+          </span>
+          <div class="step-main">
+            <div class="step-title">{{ 'today.steps.trades.title' | translate }}</div>
+            <div class="step-body">
+              @if (todayTrades().length > 0) {
+                {{
+                  'today.steps.trades.entered'
+                    | translate: { count: todayTrades().length, tickers: tickersOf(todayTrades()) }
+                }}
+              } @else {
+                {{ 'today.steps.trades.body' | translate }}
+              }
+            </div>
+          </div>
+          <div class="step-action">
+            <a mat-stroked-button [routerLink]="todayTrades().length > 0 ? '/journal' : '/stats'">
+              <mat-icon>{{ todayTrades().length > 0 ? 'menu_book' : 'playlist_add' }}</mat-icon>
+              <span>
+                {{
+                  (todayTrades().length > 0
+                    ? 'today.actions.openJournal'
+                    : 'today.actions.pickStat'
+                  ) | translate
+                }}
+              </span>
+            </a>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- The side column : where things stand between two steps. -->
+    <div class="side">
+      <section class="card">
+        <h3>
+          <span>{{ 'today.account.title' | translate }}</span>
+          <a class="hint" routerLink="/account">
+            {{ 'today.account.detail' | translate }}
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </h3>
+
+        <div class="kpi">
+          <div class="kpi__label">{{ 'today.account.balance' | translate }}</div>
+          <div class="kpi__value">
+            {{ accountSummary() ? (accountSummary()!.balance | number: '1.2-2') + ' $' : '—' }}
+          </div>
+          <div class="kpi__sub">
+            @if (reconciledToday()) {
+              <span class="pos">{{ 'today.account.reconciled' | translate }}</span>
+            } @else {
+              <span class="warn">{{ 'today.account.toReconcile' | translate }}</span>
+            }
+          </div>
+        </div>
+
+        <dl class="kv">
+          <dt>{{ 'today.account.pnlDay' | translate }}</dt>
+          <dd>
+            @if (dayPnl(); as p) {
+              @if (p.tradeCount === 0) {
+                <span class="muted">{{ 'today.account.noTrade' | translate }}</span>
+              } @else {
+                <span [class.pos]="p.retainedPnl > 0" [class.neg]="p.retainedPnl < 0">
+                  {{ p.retainedPnl | number: '1.2-2' }} $
+                </span>
+              }
+            } @else {
+              —
+            }
+          </dd>
+          <dt>{{ 'today.account.pnlWeek' | translate }}</dt>
+          <dd>
+            @if (weekPnl(); as p) {
+              <span [class.pos]="p.retainedPnl > 0" [class.neg]="p.retainedPnl < 0">
+                {{ p.retainedPnl | number: '1.2-2' }} $
+              </span>
+            } @else {
+              —
+            }
+          </dd>
+          <dt>{{ 'today.account.pnlMonth' | translate }}</dt>
+          <dd>
+            @if (monthPnl(); as p) {
+              <span [class.pos]="p.retainedPnl > 0" [class.neg]="p.retainedPnl < 0">
+                {{ p.retainedPnl | number: '1.2-2' }} $
+              </span>
+            } @else {
+              —
+            }
+          </dd>
+        </dl>
+      </section>
+
+      <section class="card">
+        <h3>
+          <span>{{ 'today.candidates.title' | translate }}</span>
+          <a class="hint" routerLink="/candidates">
+            {{ 'today.candidates.all' | translate }}
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </h3>
+
+        @if (candidates().length === 0) {
+          <div class="empty">
+            <mat-icon>radar</mat-icon>
+            <p>{{ 'today.candidates.empty' | translate }}</p>
+            <a mat-stroked-button routerLink="/candidates">
+              <mat-icon>add</mat-icon>
+              <span>{{ 'today.actions.capture' | translate }}</span>
+            </a>
+          </div>
+        } @else {
+          @for (c of candidates(); track c.id) {
+            <div class="mini-row">
+              <mat-chip-set>
+                <mat-chip stbChip="ticker" disableRipple>{{ c.ticker }}</mat-chip>
+              </mat-chip-set>
+              @if (c.promoted) {
+                <span class="tag">{{ 'today.candidates.inStats' | translate }}</span>
+              }
+              <span class="mini-row__num muted">
+                {{
+                  'today.candidates.metrics'
+                    | translate
+                      : {
+                          gap: gapOf(c) !== null ? (gapOf(c) | number: '1.1-1') : '—',
+                          push: pushOf(c) !== null ? (pushOf(c) | number: '1.1-1') : '—',
+                        }
+                }}
+              </span>
+            </div>
+          }
+        }
+      </section>
+
+      <section class="card">
+        <h3>{{ 'today.week.title' | translate }}</h3>
+        @if (weekTrades().length === 0) {
+          <p class="muted">{{ 'today.week.empty' | translate }}</p>
+        } @else {
+          @for (t of weekTrades(); track t.id) {
+            <div class="mini-row">
+              <span class="muted">{{ t.tradeDate | date: 'EEE dd/MM' }}</span>
+              <mat-chip-set>
+                <mat-chip stbChip="ticker" disableRipple>{{ t.ticker }}</mat-chip>
+              </mat-chip-set>
+              <span
+                class="mini-row__num"
+                [class.pos]="(t.retainedProfitDollars ?? 0) > 0"
+                [class.neg]="(t.retainedProfitDollars ?? 0) < 0"
+              >
+                {{
+                  t.retainedProfitDollars !== null
+                    ? (t.retainedProfitDollars | number: '1.2-2')
+                    : '—'
+                }}
+              </span>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  </div>
+</div>

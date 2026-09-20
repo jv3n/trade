@@ -1,0 +1,85 @@
+@if (today(); as done) {
+  <p class="reconciled" [class.clean]="done.gap === 0">
+    <mat-icon>{{ done.gap === 0 ? 'check_circle' : 'published_with_changes' }}</mat-icon>
+    <span>
+      {{
+        (done.gap === 0
+          ? 'account.reconciliation.doneClean'
+          : 'account.reconciliation.doneCorrected'
+        ) | translate: { gap: (done.gap | number: '1.2-2') }
+      }}
+    </span>
+  </p>
+}
+
+<div class="reconciliation-form">
+  <div class="figure">
+    <span class="figure__label">{{ 'account.reconciliation.appBalance' | translate }}</span>
+    <span class="figure__value">
+      {{ appBalance() !== null ? (appBalance() | number: '1.2-2') + ' $' : '—' }}
+    </span>
+  </div>
+
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label>{{ 'account.reconciliation.brokerBalance' | translate }}</mat-label>
+    <input
+      matInput
+      appNumberMask
+      [decimals]="2"
+      [allowNegative]="true"
+      [value]="brokerBalance()"
+      (numberChange)="setBrokerBalance($event)"
+      inputmode="decimal"
+    />
+    <span matTextSuffix>$</span>
+  </mat-form-field>
+
+  <div class="figure">
+    <span class="figure__label">{{ 'account.reconciliation.gap' | translate }}</span>
+    <span class="figure__value" [class.pos]="(gap() ?? 0) > 0" [class.neg]="(gap() ?? 0) < 0">
+      {{ gap() !== null ? (gap() | number: '1.2-2') + ' $' : '—' }}
+    </span>
+  </div>
+
+  <button
+    mat-flat-button
+    type="button"
+    [disabled]="brokerBalance() === null || submitting()"
+    (click)="submit()"
+  >
+    @if (submitting()) {
+      <mat-spinner diameter="16" />
+    } @else {
+      <mat-icon>{{ gap() === 0 ? 'check' : 'tune' }}</mat-icon>
+    }
+    <span>
+      {{
+        (gap() === 0
+          ? 'account.reconciliation.validate'
+          : 'account.reconciliation.createCorrection'
+        ) | translate
+      }}
+    </span>
+  </button>
+</div>
+
+<p class="hint note">{{ 'account.reconciliation.note' | translate }}</p>
+
+<!-- The history is the account page's recap ; step 1 of the Today page stays a single line. -->
+@if (!compact() && history().length > 0) {
+  <p class="hint history">
+    <span>{{ 'account.reconciliation.history' | translate }}</span>
+    @for (r of history(); track r.id) {
+      <span class="history__item">
+        {{ r.valueDate | date: 'dd/MM' }}
+        @if (r.gap === 0) {
+          <span class="pos">✓</span>
+        } @else {
+          <span [class.pos]="r.gap > 0" [class.neg]="r.gap < 0">
+            {{ r.gap | number: '1.2-2' }}
+          </span>
+        }
+      </span>
+    }
+  </p>
+}

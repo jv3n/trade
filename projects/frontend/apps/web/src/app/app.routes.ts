@@ -21,7 +21,13 @@ export const routes: Routes = [
     path: 'error',
     loadComponent: () => import('./features/error/error-page').then((m) => m.ErrorPage),
   },
-  { path: '', redirectTo: 'account', pathMatch: 'full' },
+  // The home page since #199 : the day's walk-through, not the ledger.
+  { path: '', redirectTo: 'today', pathMatch: 'full' },
+  {
+    path: 'today',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/today/today-page').then((m) => m.TodayPage),
+  },
   {
     path: 'account',
     canActivate: [authGuard],
