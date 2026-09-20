@@ -11,9 +11,6 @@ import {
   TradeEntryFilter,
   TradeEntryInput,
   TradeExecution,
-  TradeExitStrategy,
-  TradeOpenSide,
-  TradePlay,
 } from '../trade-entry.model';
 
 // ---------------------------------------------------------------------------
@@ -29,61 +26,49 @@ interface ExecutionWireDto {
   kind: ExecutionKind;
   shares: number;
   price: number;
+  executedAt: string | null;
 }
 
 interface ExecutionWireRequest {
   kind: ExecutionKind;
   shares: number;
   price: number;
+  executedAt: string | null;
 }
 
 interface TradeEntryWireDto {
   id: string;
+  statEntryId: string;
   tradeDate: string;
   ticker: string;
+  pattern: Pattern;
   direction: TradeDirection | null;
   executions: ExecutionWireDto[];
-  play: TradePlay | null;
-  pattern: Pattern;
   size: number | null;
   openPrice: number | null;
   exitPrice: number | null;
-  profitDollars: number | null;
   gainPercent: number | null;
+  profitDollars: number | null;
+  realProfitDollars: number | null;
+  retainedProfitDollars: number | null;
+  durationMinutes: number | null;
   note: string | null;
-  pre935To10h: boolean | null;
-  preGapUp50: boolean | null;
-  prePrice1To10: boolean | null;
-  preFloat3To50m: boolean | null;
-  preWaitPush: boolean | null;
-  openSide: TradeOpenSide | null;
-  shortOnResistance: boolean | null;
-  exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
-  statEntryId: string | null;
   hasScreenshot: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 interface TradeEntryWireRequest {
+  statEntryId: string;
   tradeDate: string;
   ticker: string;
+  pattern: Pattern | null;
   direction: TradeDirection | null;
   executions: ExecutionWireRequest[];
-  play: TradePlay | null;
-  pattern: Pattern | null;
+  realProfitDollars: number | null;
   note: string | null;
-  pre935To10h: boolean | null;
-  preGapUp50: boolean | null;
-  prePrice1To10: boolean | null;
-  preFloat3To50m: boolean | null;
-  preWaitPush: boolean | null;
-  openSide: TradeOpenSide | null;
-  shortOnResistance: boolean | null;
-  exitStrategy: TradeExitStrategy | null;
   errorNote: string | null;
-  statEntryId: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,34 +83,36 @@ interface TradeEntryWireRequest {
 // shape, so a round-trip preserves the user's day.
 
 function executionFromWire(w: ExecutionWireDto): TradeExecution {
-  return { seq: w.seq, kind: w.kind, shares: w.shares, price: w.price };
+  return {
+    seq: w.seq,
+    kind: w.kind,
+    shares: w.shares,
+    price: w.price,
+    // Spring serialises `LocalTime` as `HH:mm` (or `HH:mm:ss`) — kept as a string, the fill time
+    // is a wall-clock on the trade's own day, never an instant.
+    executedAt: w.executedAt,
+  };
 }
 
 function fromWire(w: TradeEntryWireDto): TradeEntry {
   return {
     id: w.id,
+    statEntryId: w.statEntryId,
     tradeDate: parseISO(w.tradeDate),
     ticker: w.ticker,
+    pattern: w.pattern,
     direction: w.direction,
     executions: (w.executions ?? []).map(executionFromWire),
-    play: w.play,
-    pattern: w.pattern,
     size: w.size,
     openPrice: w.openPrice,
     exitPrice: w.exitPrice,
-    profitDollars: w.profitDollars,
     gainPercent: w.gainPercent,
+    profitDollars: w.profitDollars,
+    realProfitDollars: w.realProfitDollars,
+    retainedProfitDollars: w.retainedProfitDollars,
+    durationMinutes: w.durationMinutes,
     note: w.note,
-    pre935To10h: w.pre935To10h,
-    preGapUp50: w.preGapUp50,
-    prePrice1To10: w.prePrice1To10,
-    preFloat3To50m: w.preFloat3To50m,
-    preWaitPush: w.preWaitPush,
-    openSide: w.openSide,
-    shortOnResistance: w.shortOnResistance,
-    exitStrategy: w.exitStrategy,
     errorNote: w.errorNote,
-    statEntryId: w.statEntryId,
     hasScreenshot: w.hasScreenshot,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
@@ -134,27 +121,20 @@ function fromWire(w: TradeEntryWireDto): TradeEntry {
 
 function toWire(input: TradeEntryInput): TradeEntryWireRequest {
   return {
+    statEntryId: input.statEntryId,
     tradeDate: format(input.tradeDate, 'yyyy-MM-dd'),
     ticker: input.ticker.trim().toUpperCase(),
+    pattern: input.pattern,
     direction: input.direction,
     executions: input.executions.map((e) => ({
       kind: e.kind,
       shares: e.shares,
       price: e.price,
+      executedAt: e.executedAt,
     })),
-    play: input.play,
-    pattern: input.pattern,
+    realProfitDollars: input.realProfitDollars,
     note: input.note?.trim() || null,
-    pre935To10h: input.pre935To10h,
-    preGapUp50: input.preGapUp50,
-    prePrice1To10: input.prePrice1To10,
-    preFloat3To50m: input.preFloat3To50m,
-    preWaitPush: input.preWaitPush,
-    openSide: input.openSide,
-    shortOnResistance: input.shortOnResistance,
-    exitStrategy: input.exitStrategy,
     errorNote: input.errorNote?.trim() || null,
-    statEntryId: input.statEntryId,
   };
 }
 
@@ -179,9 +159,9 @@ function fromPageWire(p: SpringPageWireDto<TradeEntryWireDto>): PagedResult<Trad
   };
 }
 
-// Filter → `HttpParams`. Multi-value fields (`plays`, `patterns`) use the repeated
-// `?play=A&play=B` form Spring expects ; empty arrays / blank strings / nullish values are
-// omitted entirely so the backend treats them as "no filter on that axis".
+// Filter → `HttpParams`. The multi-value `patterns` field uses the repeated
+// `?pattern=GUS&pattern=DT` form Spring expects ; empty arrays / blank strings / nullish values
+// are omitted entirely so the backend treats them as "no filter on that axis".
 function buildFilterParams(filter?: TradeEntryFilter): HttpParams {
   let params = new HttpParams();
   if (!filter) return params;
@@ -194,9 +174,6 @@ function buildFilterParams(filter?: TradeEntryFilter): HttpParams {
   }
   if (filter.dateTo) {
     params = params.set('dateTo', format(filter.dateTo, 'yyyy-MM-dd'));
-  }
-  for (const p of filter.plays ?? []) {
-    params = params.append('play', p);
   }
   for (const p of filter.patterns ?? []) {
     params = params.append('pattern', p);

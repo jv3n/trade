@@ -2,9 +2,7 @@ package com.portfolioai.journal.application.dto
 
 import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntry
-import com.portfolioai.journal.domain.TradeExitStrategy
-import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePlay
+import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.Instant
@@ -15,31 +13,32 @@ import java.util.UUID
  * Response shape for a single [TradeEntry]. The execution legs are nested in [executions] ; the
  * flat [size] / [openPrice] / [exitPrice] / [profitDollars] / [gainPercent] are the derived
  * aggregates (read-only — recomputed from the executions on every write).
+ *
+ * The three P&L figures are all exposed so the trade page can show the gap between them (#192) :
+ * [profitDollars] computed from the executions, [realProfitDollars] typed from the broker
+ * statement, [retainedProfitDollars] the one that reaches the account (real if set, else computed).
+ *
+ * [durationMinutes] is derived on the fly from the execution times — null while the position is
+ * open, or as soon as one end has no time.
  */
 data class TradeEntryDto(
   val id: UUID,
+  val statEntryId: UUID,
   val tradeDate: LocalDate,
   val ticker: String,
+  val pattern: Pattern,
   val direction: TradeDirection?,
   val executions: List<ExecutionDto>,
-  val play: TradePlay?,
-  val pattern: Pattern,
   val size: Int?,
   val openPrice: BigDecimal?,
   val exitPrice: BigDecimal?,
-  val profitDollars: BigDecimal?,
   val gainPercent: BigDecimal?,
+  val profitDollars: BigDecimal?,
+  val realProfitDollars: BigDecimal?,
+  val retainedProfitDollars: BigDecimal?,
+  val durationMinutes: Long?,
   val note: String?,
-  val pre935To10h: Boolean?,
-  val preGapUp50: Boolean?,
-  val prePrice1To10: Boolean?,
-  val preFloat3To50m: Boolean?,
-  val preWaitPush: Boolean?,
-  val openSide: TradeOpenSide?,
-  val shortOnResistance: Boolean?,
-  val exitStrategy: TradeExitStrategy?,
   val errorNote: String?,
-  val statEntryId: UUID?,
   val hasScreenshot: Boolean,
   val createdAt: Instant,
   val updatedAt: Instant,
@@ -48,28 +47,22 @@ data class TradeEntryDto(
 fun TradeEntry.toDto() =
   TradeEntryDto(
     id = id,
+    statEntryId = statEntryId,
     tradeDate = tradeDate,
     ticker = ticker,
+    pattern = pattern,
     direction = direction,
     executions = executions.map { it.toDto() },
-    play = play,
-    pattern = pattern,
     size = size,
     openPrice = openPrice,
     exitPrice = exitPrice,
-    profitDollars = profitDollars,
     gainPercent = gainPercent,
+    profitDollars = profitDollars,
+    realProfitDollars = realProfitDollars,
+    retainedProfitDollars = retainedProfit,
+    durationMinutes = TradePositionCalculator.duration(executions.map { it.toLeg() }),
     note = note,
-    pre935To10h = pre935To10h,
-    preGapUp50 = preGapUp50,
-    prePrice1To10 = prePrice1To10,
-    preFloat3To50m = preFloat3To50m,
-    preWaitPush = preWaitPush,
-    openSide = openSide,
-    shortOnResistance = shortOnResistance,
-    exitStrategy = exitStrategy,
     errorNote = errorNote,
-    statEntryId = statEntryId,
     hasScreenshot = hasScreenshot,
     createdAt = createdAt,
     updatedAt = updatedAt,

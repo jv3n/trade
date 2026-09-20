@@ -4,14 +4,13 @@ import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.ImportError
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
-import com.portfolioai.journal.domain.TradeExitStrategy
-import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePlay
+import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.util.UUID
 
 /**
  * Parses a CSV string produced by [TradeEntryCsvEncoder] (or hand-edited from a previous export)
@@ -30,27 +29,22 @@ object TradeEntryCsvDecoder {
   private val HEADERS = TradeEntryCsvEncoder.HEADERS
 
   /**
-   * Cell index of each column in [HEADERS]. `profitDollars` (7) and `gainPercent` (8) have no
-   * constant on purpose : they are recomputed from the executions, never read on import.
+   * Cell index of each column in [HEADERS]. `profitDollars` (8) and `gainPercent` (9) have no
+   * constant on purpose : they are recomputed from the executions, never read on import. The real
+   * P&L is read, though — it is user input no computation can reproduce.
    */
   private object Col {
     const val TRADE_DATE = 0
     const val TICKER = 1
-    const val PLAY = 2
-    const val PATTERN = 3
-    const val SIZE = 4
-    const val OPEN_PRICE = 5
-    const val EXIT_PRICE = 6
-    const val NOTE = 9
-    const val PRE_935_TO_10H = 10
-    const val PRE_GAP_UP_50 = 11
-    const val PRE_PRICE_1_TO_10 = 12
-    const val PRE_FLOAT_3_TO_50M = 13
-    const val PRE_WAIT_PUSH = 14
-    const val OPEN_SIDE = 15
-    const val SHORT_ON_RESISTANCE = 16
-    const val EXIT_STRATEGY = 17
-    const val ERROR_NOTE = 18
+    const val PATTERN = 2
+    const val STAT_ENTRY_ID = 3
+    const val DIRECTION = 4
+    const val SIZE = 5
+    const val OPEN_PRICE = 6
+    const val EXIT_PRICE = 7
+    const val REAL_PROFIT_DOLLARS = 10
+    const val NOTE = 11
+    const val ERROR_NOTE = 12
   }
 
   data class DecodeResult(val rows: List<TradeEntryRequest>, val errors: List<ImportError>)
@@ -149,12 +143,11 @@ object TradeEntryCsvDecoder {
   // (validated above).
   // ============================================================================
   private fun toRequest(cells: List<String>): TradeEntryRequest {
-    // The CSV layout is frozen on the legacy flat columns (issue #93 — the multi-exec CSV format is
-    // a dedicated future ticket). We reconstruct a *simple* position from them : one ENTRY leg
-    // (size @ openPrice) and, when the trade was closed, one EXIT leg (size @ exitPrice). The
-    // direction is inferred short-biased, and profitDollars / gainPercent (cells 7-8) are ignored
-    // on
-    // import — they are recomputed from the executions by the service.
+    // The CSV row stays flat : we reconstruct a *simple* position from the aggregate columns — one
+    // ENTRY leg (size @ openPrice) and, when the trade was closed, one EXIT leg (size @ exitPrice).
+    // A per-execution layout (with the fill times) is issue #196. `direction` is taken from its
+    // column and only inferred (short-biased) when the cell was left blank ; profitDollars /
+    // gainPercent are ignored on import — the service recomputes them from the executions.
     val size = optionalPositiveInt(cells[Col.SIZE], "size")
     val openPrice = optionalPositiveDecimal(cells[Col.OPEN_PRICE], "openPrice")
     val exitPrice = optionalDecimal(cells[Col.EXIT_PRICE], "exitPrice")
@@ -168,22 +161,22 @@ object TradeEntryCsvDecoder {
         )
       }
     }
+    val declaredDirection =
+      optionalEnum(
+        cells[Col.DIRECTION],
+        "direction",
+        TradeDirection::valueOf,
+        TradeDirection.entries.map { it.name },
+      )
     val direction =
-      if (executions.isEmpty()) null
-      else TradePositionCalculator.inferDirection(openPrice, exitPrice)
+      declaredDirection
+        ?: if (executions.isEmpty()) null
+        else TradePositionCalculator.inferDirection(openPrice, exitPrice)
 
     return TradeEntryRequest(
+      statEntryId = requireUuid(cells[Col.STAT_ENTRY_ID], "statEntryId"),
       tradeDate = requireDate(cells[Col.TRADE_DATE], "tradeDate"),
       ticker = requireNonBlank(cells[Col.TICKER], "ticker").trim().uppercase(),
-      direction = direction,
-      executions = executions,
-      play =
-        optionalEnum(
-          cells[Col.PLAY],
-          "play",
-          TradePlay::valueOf,
-          TradePlay.entries.map { it.name },
-        ),
       pattern =
         optionalEnum(
           cells[Col.PATTERN],
@@ -191,27 +184,10 @@ object TradeEntryCsvDecoder {
           Pattern::valueOf,
           Pattern.entries.map { it.name },
         ),
+      direction = direction,
+      executions = executions,
+      realProfitDollars = optionalDecimal(cells[Col.REAL_PROFIT_DOLLARS], "realProfitDollars"),
       note = optionalString(cells[Col.NOTE]),
-      pre935To10h = optionalBoolean(cells[Col.PRE_935_TO_10H], "pre935To10h"),
-      preGapUp50 = optionalBoolean(cells[Col.PRE_GAP_UP_50], "preGapUp50"),
-      prePrice1To10 = optionalBoolean(cells[Col.PRE_PRICE_1_TO_10], "prePrice1To10"),
-      preFloat3To50m = optionalBoolean(cells[Col.PRE_FLOAT_3_TO_50M], "preFloat3To50m"),
-      preWaitPush = optionalBoolean(cells[Col.PRE_WAIT_PUSH], "preWaitPush"),
-      openSide =
-        optionalEnum(
-          cells[Col.OPEN_SIDE],
-          "openSide",
-          TradeOpenSide::valueOf,
-          TradeOpenSide.entries.map { it.name },
-        ),
-      shortOnResistance = optionalBoolean(cells[Col.SHORT_ON_RESISTANCE], "shortOnResistance"),
-      exitStrategy =
-        optionalEnum(
-          cells[Col.EXIT_STRATEGY],
-          "exitStrategy",
-          TradeExitStrategy::valueOf,
-          TradeExitStrategy.entries.map { it.name },
-        ),
       errorNote = optionalString(cells[Col.ERROR_NOTE]),
     )
   }
@@ -225,6 +201,16 @@ object TradeEntryCsvDecoder {
       LocalDate.parse(trimmed)
     } catch (_: DateTimeParseException) {
       throw DecodeException("$field must be an ISO date (yyyy-MM-dd), got '$trimmed'")
+    }
+  }
+
+  /** A trade always belongs to a stat since #192 — a blank or malformed link is a hard error. */
+  private fun requireUuid(raw: String, field: String): UUID {
+    val trimmed = requireNonBlank(raw, field)
+    return try {
+      UUID.fromString(trimmed)
+    } catch (_: IllegalArgumentException) {
+      throw DecodeException("$field must be a UUID, got '$trimmed'")
     }
   }
 
@@ -253,16 +239,6 @@ object TradeEntryCsvDecoder {
     if (trimmed.isEmpty()) return null
     return trimmed.toBigDecimalOrNull()
       ?: throw DecodeException("$field must be a decimal, got '$trimmed'")
-  }
-
-  private fun optionalBoolean(raw: String, field: String): Boolean? {
-    val trimmed = raw.trim().lowercase()
-    return when (trimmed) {
-      "" -> null
-      "true" -> true
-      "false" -> false
-      else -> throw DecodeException("$field must be true / false / empty, got '$trimmed'")
-    }
   }
 
   private fun optionalString(raw: String): String? = raw.trim().ifBlank { null }

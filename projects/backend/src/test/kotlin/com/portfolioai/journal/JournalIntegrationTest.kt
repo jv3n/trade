@@ -9,10 +9,8 @@ import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeDirection
+import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
-import com.portfolioai.journal.domain.TradeExitStrategy
-import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePlay
 import com.portfolioai.journal.domain.TradeStatus
 import com.portfolioai.journal.infrastructure.persistence.TradeAttachmentRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
@@ -21,6 +19,7 @@ import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -33,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
@@ -41,16 +41,23 @@ import org.springframework.web.server.ResponseStatusException
  * [TradeEntryService] + [com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications]
  * + JPA → Postgres (Testcontainers via the launcher-session bootstrap, no per-class plumbing).
  *
- * The two pinning targets :
+ * The pinning targets :
  *
  * - **CRUD lifecycle** — create, fetch, update, delete each go round-trip the real schema. Catches
  *   regressions in the JPA mapping (Postgres ENUM types, `@JdbcTypeCode(SqlTypes.NAMED_ENUM)`), the
  *   updated_at trigger, ticker normalisation (`trim().uppercase()` in the service).
  *
- * - **Filter Specifications** — every filter axis (query, date range, plays IN, patterns IN, status
- *   derived predicates) exercises the SQL builder against real Postgres semantics. Pure unit tests
- *   on `Specification` can't reach this because the Criteria API needs a live `EntityManager` for
- *   the `Root` / `Path` lookups to resolve correctly.
+ * - **The stat link** — since #192 a trade is born from a stat : the FK is mandatory and the stat
+ *   can no longer be deleted out from under its trades (ON DELETE RESTRICT).
+ *
+ * - **The three P&L figures** — computed from the executions, real (broker statement) and retained
+ *   (real if set, else computed). The retained one is what the status filter and the account event
+ *   read, so a broker figure that flips the sign must flip the bucket too.
+ *
+ * - **Filter Specifications** — every filter axis (query, date range, patterns IN, status derived
+ *   predicates) exercises the SQL builder against real Postgres semantics. Pure unit tests on
+ *   `Specification` can't reach this because the Criteria API needs a live `EntityManager` for the
+ *   `Root` / `Path` lookups to resolve correctly.
  *
  * `AuthService` is overridden with `@MockitoBean` so the service's user-scope is deterministic —
  * every test seeds a fixed `testUser` and configures the mock to return it. A second user is seeded
@@ -72,39 +79,28 @@ class JournalIntegrationTest {
   private lateinit var testUser: User
   private lateinit var otherUser: User
 
+  /** The stat every sample trade hangs off — one per user, since the FK is now mandatory. */
+  private lateinit var stat: StatEntry
+  private lateinit var otherStat: StatEntry
+
   @BeforeEach
   fun setUp() {
     // Wipe the journal table between tests — we share the Testcontainers Postgres across the
-    // whole suite, so isolating per-class data is the test's responsibility.
+    // whole suite, so isolating per-class data is the test's responsibility. Trades go first :
+    // `trade_entry.stat_entry_id` is ON DELETE RESTRICT since #192, so a leftover trade would
+    // block the stat wipe below.
     repo.deleteAll()
-    // Stats are wiped before the users : `trade_entry.stat_entry_id` is ON DELETE SET NULL, so a
-    // leftover stat would survive the cascade below and break the (user, date, ticker) uniqueness.
     statRepo.deleteAll()
 
     // The two users are recreated each time : `deleteAll()` on `app_user` cascades to
     // trade_entry, so test independence is guaranteed even if a previous failure left rows.
     userRepository.deleteAll()
-    testUser =
-      userRepository.save(
-        User(
-          email = "trader-${UUID.randomUUID()}@test.local",
-          displayName = "Trader",
-          provider = "test",
-          providerId = null,
-          role = Role.USER,
-        )
-      )
-    otherUser =
-      userRepository.save(
-        User(
-          email = "other-${UUID.randomUUID()}@test.local",
-          displayName = "Other",
-          provider = "test",
-          providerId = null,
-          role = Role.USER,
-        )
-      )
+    testUser = saveUser("trader")
+    otherUser = saveUser("other")
     org.mockito.kotlin.whenever(authService.getCurrentUser()).thenReturn(testUser)
+
+    stat = statRepo.save(sampleStat(user = testUser))
+    otherStat = statRepo.save(sampleStat(user = otherUser))
   }
 
   // ---------------------------------------------------------------------------
@@ -112,16 +108,14 @@ class JournalIntegrationTest {
   // ---------------------------------------------------------------------------
 
   @Test
-  fun `create persists every field including enums and the preparation checklist`() {
-    val request = sampleRequest(ticker = "aapl")
-    val dto = service.create(request)
+  fun `create persists the stat-borne identity and the executions`() {
+    val dto = service.create(sampleRequest(ticker = "aapl"))
 
     // Ticker normalisation : the request had lowercase, the persisted row must be uppercase.
     assertEquals("AAPL", dto.ticker, "ticker should be uppercased on create")
-    assertEquals(TradePlay.A, dto.play)
-    assertEquals(Pattern.GUS, dto.pattern)
-    assertEquals(TradeOpenSide.FRONT, dto.openSide)
-    assertEquals(TradeExitStrategy.SWING_20, dto.exitStrategy)
+    assertEquals(stat.id, dto.statEntryId, "the trade carries its source stat")
+    assertEquals(Pattern.GUS, dto.pattern, "the pattern is inherited from the stat")
+    assertEquals(TradeDirection.SHORT, dto.direction)
     assertEquals(100, dto.size)
     assertEquals(0, dto.openPrice!!.compareTo(BigDecimal("3.2100")))
     assertNotNull(dto.createdAt)
@@ -129,20 +123,24 @@ class JournalIntegrationTest {
   }
 
   @Test
-  fun `create accepts a bare trade with only date and ticker — execution fields stay null`() {
-    // Post-pivot relaxation (V4) : a trade can be jotted down fast and fleshed out later, so
-    // play / size / open_price are optional. Only date + ticker are mandatory ; a missing pattern
-    // falls back to the default GUS (V12, #184).
+  fun `create accepts a trade with no execution yet — the aggregates stay null`() {
+    // A trade can be opened from its stat before any fill is typed in ; the position is then empty
+    // and every derived figure is unknown. A missing pattern falls back to the default GUS.
     val dto =
-      service.create(TradeEntryRequest(tradeDate = LocalDate.of(2026, 6, 4), ticker = "bac"))
+      service.create(
+        TradeEntryRequest(
+          statEntryId = stat.id,
+          tradeDate = LocalDate.of(2026, 6, 4),
+          ticker = "bac",
+        )
+      )
 
     assertEquals("BAC", dto.ticker)
-    assertNull(dto.play)
     assertEquals(Pattern.GUS, dto.pattern, "a trade created without a pattern defaults to GUS")
+    assertNull(dto.direction)
     assertNull(dto.size)
     assertNull(dto.openPrice)
-    // No stat attached yet — a fresh trade is an "orphan".
-    assertNull(dto.statEntryId, "a fresh trade should be orphan (no stat link)")
+    assertNull(dto.retainedProfitDollars)
   }
 
   @Test
@@ -151,6 +149,7 @@ class JournalIntegrationTest {
     // Realized P&L (short) = (5 - 4.5) * 200 = 100 ; gain = 100 / (5 * 200) * 100 = 10 %.
     val request =
       TradeEntryRequest(
+        statEntryId = stat.id,
         tradeDate = LocalDate.of(2026, 6, 4),
         ticker = "bac",
         direction = TradeDirection.SHORT,
@@ -179,6 +178,29 @@ class JournalIntegrationTest {
   }
 
   @Test
+  fun `execution times round-trip and give the trade its duration`() {
+    val dto =
+      service.create(
+        sampleRequest(
+          exitPrice = BigDecimal("2.0000"),
+          entryTime = LocalTime.of(9, 42),
+          exitTime = LocalTime.of(10, 15),
+        )
+      )
+
+    assertEquals(LocalTime.of(9, 42), dto.executions.first().executedAt)
+    assertEquals(33L, dto.durationMinutes, "9h42 → 10h15 is 33 minutes held")
+  }
+
+  @Test
+  fun `a trade whose fills carry no time has no duration`() {
+    val dto = service.create(sampleRequest(exitPrice = BigDecimal("2.0000")))
+
+    assertNull(dto.executions.first().executedAt)
+    assertNull(dto.durationMinutes, "no fill time, no duration — not a zero")
+  }
+
+  @Test
   fun `editing executions recomputes the aggregates and orphan-removes the old legs`() {
     val created = service.create(sampleRequest(ticker = "AAPL")) // open: 1 ENTRY leg
     assertEquals(1, created.executions.size)
@@ -193,28 +215,15 @@ class JournalIntegrationTest {
   }
 
   @Test
-  fun `update can attach an imported stat — statEntryId round-trips through the FK`() {
-    val stat = statRepo.save(sampleStat(ticker = "AAPL"))
-    val created = service.create(sampleRequest(ticker = "AAPL"))
-    assertNull(created.statEntryId, "starts orphan")
+  fun `deleting a stat that still carries a trade is rejected (ON DELETE RESTRICT)`() {
+    // A trade without its stat has no context and no pattern — the DB refuses to create one
+    // rather than silently re-orphaning the trade the way it used to (ON DELETE SET NULL).
+    service.create(sampleRequest(ticker = "AAPL"))
 
-    val linked = service.update(created.id, sampleRequest(ticker = "AAPL", statEntryId = stat.id))
-
-    assertEquals(stat.id, linked.statEntryId, "the stat link should persist")
-  }
-
-  @Test
-  fun `deleting the linked stat re-orphans the trade (ON DELETE SET NULL)`() {
-    val stat = statRepo.save(sampleStat(ticker = "AAPL"))
-    val created = service.create(sampleRequest(ticker = "AAPL", statEntryId = stat.id))
-    assertEquals(stat.id, created.statEntryId)
-
-    statRepo.delete(stat)
-
-    assertNull(
-      service.findById(created.id).statEntryId,
-      "deleting the stat must re-orphan, not cascade",
-    )
+    assertThrows(DataIntegrityViolationException::class.java) {
+      statRepo.delete(stat)
+      statRepo.flush()
+    }
   }
 
   @Test
@@ -236,13 +245,9 @@ class JournalIntegrationTest {
     Thread.sleep(10) // ensure the Postgres trigger's now() falls on a later instant
 
     val updated =
-      service.update(
-        created.id,
-        sampleRequest(ticker = "TSLA", play = TradePlay.B, exitPrice = BigDecimal("4.5000")),
-      )
+      service.update(created.id, sampleRequest(ticker = "TSLA", exitPrice = BigDecimal("4.5000")))
 
     assertEquals("TSLA", updated.ticker)
-    assertEquals(TradePlay.B, updated.play)
     // exit_price is the derived weighted-average exit — here a single EXIT leg at 4.50.
     assertEquals(0, updated.exitPrice!!.compareTo(BigDecimal("4.5000")))
     assertTrue(
@@ -272,6 +277,45 @@ class JournalIntegrationTest {
 
     assertEquals(2, mine.size, "exactly the two rows owned by testUser")
     assertTrue(mine.all { it.ticker == "AAPL" || it.ticker == "MSFT" })
+  }
+
+  // ---------------------------------------------------------------------------
+  // P&L : computed, real, retained (#192)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the real P&L overrides the computed one and becomes the retained figure`() {
+    // SHORT 100 @ 3.21 covered @ 2.00 → computed (3.21 - 2.00) * 100 = 121.00. The TradeZero
+    // statement reads 118.45 once the fees are in : that is the figure that counts.
+    val dto =
+      service.create(
+        sampleRequest(exitPrice = BigDecimal("2.0000"), realProfitDollars = BigDecimal("118.45"))
+      )
+
+    assertEquals(0, dto.profitDollars!!.compareTo(BigDecimal("121.00")), "computed is untouched")
+    assertEquals(0, dto.realProfitDollars!!.compareTo(BigDecimal("118.45")))
+    assertEquals(0, dto.retainedProfitDollars!!.compareTo(BigDecimal("118.45")), "real wins")
+  }
+
+  @Test
+  fun `without a real P&L the retained figure is the computed one`() {
+    val dto = service.create(sampleRequest(exitPrice = BigDecimal("2.0000")))
+
+    assertNull(dto.realProfitDollars)
+    assertEquals(0, dto.retainedProfitDollars!!.compareTo(dto.profitDollars!!))
+  }
+
+  @Test
+  fun `clearing the real P&L on update falls back to the computed one`() {
+    val created =
+      service.create(
+        sampleRequest(exitPrice = BigDecimal("2.0000"), realProfitDollars = BigDecimal("118.45"))
+      )
+
+    val cleared = service.update(created.id, sampleRequest(exitPrice = BigDecimal("2.0000")))
+
+    assertNull(cleared.realProfitDollars, "a null in the request erases the broker figure")
+    assertEquals(0, cleared.retainedProfitDollars!!.compareTo(BigDecimal("121.00")))
   }
 
   // ---------------------------------------------------------------------------
@@ -306,19 +350,6 @@ class JournalIntegrationTest {
   }
 
   @Test
-  fun `filter by plays — IN list semantics`() {
-    repo.save(sampleEntity(user = testUser, play = TradePlay.A))
-    repo.save(sampleEntity(user = testUser, play = TradePlay.A))
-    repo.save(sampleEntity(user = testUser, play = TradePlay.B))
-
-    val aOnly = service.findAll(TradeEntryFilter(plays = listOf(TradePlay.A)))
-    assertEquals(2, aOnly.size)
-
-    val both = service.findAll(TradeEntryFilter(plays = listOf(TradePlay.A, TradePlay.B)))
-    assertEquals(3, both.size, "passing both values acts as no filter on this axis")
-  }
-
-  @Test
   fun `filter by patterns — IN list semantics`() {
     repo.save(sampleEntity(user = testUser, pattern = Pattern.GUS))
     repo.save(sampleEntity(user = testUser, pattern = Pattern.DT))
@@ -326,6 +357,9 @@ class JournalIntegrationTest {
     val gus = service.findAll(TradeEntryFilter(patterns = listOf(Pattern.GUS)))
     assertEquals(1, gus.size)
     assertEquals(Pattern.GUS, gus.first().pattern)
+
+    val both = service.findAll(TradeEntryFilter(patterns = listOf(Pattern.GUS, Pattern.DT)))
+    assertEquals(2, both.size, "passing both values acts as no filter on this axis")
   }
 
   @Test
@@ -347,7 +381,7 @@ class JournalIntegrationTest {
   }
 
   @Test
-  fun `filter by status PROFITABLE — strictly positive profit_dollars`() {
+  fun `filter by status PROFITABLE — strictly positive retained P&L`() {
     repo.save(sampleEntity(user = testUser, ticker = "WIN", profitDollars = BigDecimal("50.00")))
     repo.save(sampleEntity(user = testUser, ticker = "LOSS", profitDollars = BigDecimal("-25.00")))
     repo.save(sampleEntity(user = testUser, ticker = "BREAK", profitDollars = BigDecimal.ZERO))
@@ -359,7 +393,7 @@ class JournalIntegrationTest {
   }
 
   @Test
-  fun `filter by status LOSING — strictly negative profit_dollars`() {
+  fun `filter by status LOSING — strictly negative retained P&L`() {
     repo.save(sampleEntity(user = testUser, ticker = "WIN", profitDollars = BigDecimal("50.00")))
     repo.save(sampleEntity(user = testUser, ticker = "LOSS", profitDollars = BigDecimal("-25.00")))
 
@@ -369,22 +403,43 @@ class JournalIntegrationTest {
   }
 
   @Test
+  fun `the status filter reads the real P&L when there is one`() {
+    // A computed gain of 5 $ that the broker statement turns into a 2 $ loss (fees) belongs in
+    // the LOSING bucket, not the PROFITABLE one — the filter must COALESCE like the domain does.
+    repo.save(
+      sampleEntity(
+        user = testUser,
+        ticker = "FEES",
+        exitPrice = BigDecimal("2.00"),
+        profitDollars = BigDecimal("5.00"),
+        realProfitDollars = BigDecimal("-2.00"),
+      )
+    )
+
+    assertTrue(service.findAll(TradeEntryFilter(status = TradeStatus.PROFITABLE)).isEmpty())
+    assertEquals(
+      "FEES",
+      service.findAll(TradeEntryFilter(status = TradeStatus.LOSING)).single().ticker,
+    )
+  }
+
+  @Test
   fun `combining filters — AND semantics across axes`() {
-    // Two rows match the date range, but only one matches play=A within it.
+    // Two rows match the date range, but only one matches pattern=GUS within it.
     repo.save(
       sampleEntity(
         user = testUser,
         ticker = "MATCH",
         tradeDate = LocalDate.of(2026, 6, 10),
-        play = TradePlay.A,
+        pattern = Pattern.GUS,
       )
     )
     repo.save(
       sampleEntity(
         user = testUser,
-        ticker = "WRONG_PLAY",
+        ticker = "WRONG_PATTERN",
         tradeDate = LocalDate.of(2026, 6, 10),
-        play = TradePlay.B,
+        pattern = Pattern.DT,
       )
     )
     repo.save(
@@ -392,7 +447,7 @@ class JournalIntegrationTest {
         user = testUser,
         ticker = "WRONG_DATE",
         tradeDate = LocalDate.of(2026, 5, 1),
-        play = TradePlay.A,
+        pattern = Pattern.GUS,
       )
     )
 
@@ -401,7 +456,7 @@ class JournalIntegrationTest {
         TradeEntryFilter(
           dateFrom = LocalDate.of(2026, 6, 1),
           dateTo = LocalDate.of(2026, 6, 30),
-          plays = listOf(TradePlay.A),
+          patterns = listOf(Pattern.GUS),
         )
       )
 
@@ -510,53 +565,76 @@ class JournalIntegrationTest {
   // Sample factories — sensible defaults, each test overrides only the field that matters.
   // ---------------------------------------------------------------------------
 
+  private fun saveUser(prefix: String) =
+    userRepository.save(
+      User(
+        email = "$prefix-${UUID.randomUUID()}@test.local",
+        displayName = prefix.replaceFirstChar { it.uppercase() },
+        provider = "test",
+        providerId = null,
+        role = Role.USER,
+      )
+    )
+
   private fun sampleRequest(
     tradeDate: LocalDate = LocalDate.of(2026, 6, 4),
     ticker: String = "AAPL",
-    play: TradePlay = TradePlay.A,
     pattern: Pattern = Pattern.GUS,
     direction: TradeDirection = TradeDirection.SHORT,
     size: Int = 100,
     openPrice: BigDecimal = BigDecimal("3.2100"),
     exitPrice: BigDecimal? = null,
-    statEntryId: UUID? = null,
+    entryTime: LocalTime? = null,
+    exitTime: LocalTime? = null,
+    realProfitDollars: BigDecimal? = null,
+    statEntryId: UUID = stat.id,
   ) =
     TradeEntryRequest(
+      statEntryId = statEntryId,
       tradeDate = tradeDate,
       ticker = ticker,
-      // The flat aggregates (size / openPrice / exitPrice / profit / gain) are now derived from the
+      pattern = pattern,
+      // The flat aggregates (size / openPrice / exitPrice / profit / gain) are derived from the
       // executions — a single ENTRY leg, plus an EXIT leg when the test wants a closed position.
       direction = direction,
       executions =
         buildList {
-          add(ExecutionRequest(kind = ExecutionKind.ENTRY, shares = size, price = openPrice))
+          add(
+            ExecutionRequest(
+              kind = ExecutionKind.ENTRY,
+              shares = size,
+              price = openPrice,
+              executedAt = entryTime,
+            )
+          )
           if (exitPrice != null) {
-            add(ExecutionRequest(kind = ExecutionKind.EXIT, shares = size, price = exitPrice))
+            add(
+              ExecutionRequest(
+                kind = ExecutionKind.EXIT,
+                shares = size,
+                price = exitPrice,
+                executedAt = exitTime,
+              )
+            )
           }
         },
-      play = play,
-      pattern = pattern,
+      realProfitDollars = realProfitDollars,
       note = null,
-      pre935To10h = true,
-      preGapUp50 = true,
-      prePrice1To10 = true,
-      preFloat3To50m = true,
-      preWaitPush = false,
-      openSide = TradeOpenSide.FRONT,
-      shortOnResistance = false,
-      exitStrategy = TradeExitStrategy.SWING_20,
       errorNote = null,
-      statEntryId = statEntryId,
     )
 
   /**
-   * A stat of [testUser] — since #187 a stat always belongs to a user, so the FK tested here hangs
-   * off the caller's own sheet. Only the premarket block is required ; the session block is what
-   * the stats module completes at the 4 pm close and plays no part in the journal link.
+   * A stat of [user] — since #187 a stat always belongs to a user. Only the premarket block is
+   * required ; the session block is what the stats module completes at the 4 pm close and plays no
+   * part in the journal link.
    */
-  private fun sampleStat(ticker: String = "AAPL", tradeDate: LocalDate = LocalDate.of(2026, 6, 4)) =
+  private fun sampleStat(
+    user: User,
+    ticker: String = "AAPL",
+    tradeDate: LocalDate = LocalDate.of(2026, 6, 4),
+  ) =
     StatEntry(
-      user = testUser,
+      user = user,
       tradeDate = tradeDate,
       ticker = ticker,
       previousClose = BigDecimal("2.6500"),
@@ -564,24 +642,30 @@ class JournalIntegrationTest {
       pmHigh = BigDecimal("3.6000"),
     )
 
+  /**
+   * A trade persisted straight through the repository — used by the filter tests, which need to pin
+   * the derived aggregates by hand rather than go through the calculator. Every trade points at its
+   * owner's stat : the FK is mandatory and user-scoped in practice.
+   */
   private fun sampleEntity(
     user: User,
     ticker: String = "AAPL",
     tradeDate: LocalDate = LocalDate.of(2026, 6, 4),
-    play: TradePlay = TradePlay.A,
     pattern: Pattern = Pattern.GUS,
     exitPrice: BigDecimal? = null,
     profitDollars: BigDecimal? = null,
+    realProfitDollars: BigDecimal? = null,
   ) =
-    com.portfolioai.journal.domain.TradeEntry(
+    TradeEntry(
       user = user,
+      statEntryId = if (user.id == testUser.id) stat.id else otherStat.id,
       tradeDate = tradeDate,
       ticker = ticker,
-      play = play,
       pattern = pattern,
       size = 100,
       openPrice = BigDecimal("3.2100"),
       exitPrice = exitPrice,
       profitDollars = profitDollars,
+      realProfitDollars = realProfitDollars,
     )
 }

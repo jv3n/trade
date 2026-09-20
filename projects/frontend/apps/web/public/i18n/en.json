@@ -198,7 +198,6 @@
       "period": "Period",
       "dateFrom": "From",
       "dateTo": "To",
-      "play": "Play",
       "pattern": "Pattern",
       "status": "Status",
       "statusAll": "Any status",
@@ -231,25 +230,20 @@
       "tradeDate": "Date",
       "ticker": "Ticker",
       "direction": "Direction",
-      "play": "Play",
       "pattern": "Pattern",
       "size": "Size (shares)",
       "openPrice": "Avg entry price",
       "exitPrice": "Avg exit price",
-      "profitDollars": "Profit ($)",
+      "profitDollars": "Computed profit ($)",
+      "realProfitDollars": "Real profit ($)",
+      "retainedProfitDollars": "Retained profit ($)",
       "gainPercent": "Gain (%)",
+      "durationMinutes": "Duration",
       "executionKind": "Type",
+      "executedAt": "Time",
       "shares": "Shares",
       "price": "Price",
       "note": "Notes",
-      "pre935To10h": "9h35 → 10h",
-      "preGapUp50": "Gap up 50 %",
-      "prePrice1To10": "Price $1 → $10",
-      "preFloat3To50m": "Float 3M → 50M",
-      "preWaitPush": "Wait for the push",
-      "openSide": "Open on",
-      "shortOnResistance": "Short on resistance",
-      "exitStrategy": "Exit strategy",
       "errorNote": "Mistake / lesson",
       "statLink": "Stat"
     },
@@ -261,14 +255,6 @@
       "noCandidates": "No stat for this ticker on this date."
     },
     "enums": {
-      "openSide": {
-        "FRONT": "Front side",
-        "BACK": "Back side"
-      },
-      "exitStrategy": {
-        "SWING_20": "Swing 20 %",
-        "EOD": "End of day"
-      },
       "status": {
         "OPEN": "Open",
         "CLOSED": "Closed",
@@ -300,7 +286,6 @@
       "executions": "Executions",
       "noExecutions": "No execution recorded.",
       "aggregates": "Computed position",
-      "preparation": "Preparation checklist",
       "notes": "Notes",
       "postMortem": "Debrief",
       "noNote": "—",
@@ -326,8 +311,7 @@
       "sections": {
         "execution": "Identity",
         "executions": "Executions",
-        "exit": "Exit",
-        "preparation": "Preparation checklist",
+        "postMortem": "Debrief",
         "statLink": "Stat link"
       },
       "executions": {

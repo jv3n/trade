@@ -5,7 +5,6 @@ import com.portfolioai.journal.application.dto.ImportResult
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.TradeEntryFilter
-import com.portfolioai.journal.domain.TradePlay
 import com.portfolioai.journal.domain.TradeStatus
 import com.portfolioai.shared.Pattern
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -41,7 +40,8 @@ class TradeEntryController(private val service: TradeEntryService) {
 
   /**
    * Filtered + paginated listing. Every filter parameter is optional ; absence means "no filter on
-   * that axis". Multi-value params (`play`, `pattern`) accept the repeated `?play=A&play=B` form.
+   * that axis". The multi-value `pattern` param accepts the repeated `?pattern=GUS&pattern=DT`
+   * form.
    *
    * Pagination is standard Spring `Pageable` — clients pass `?page=0&size=50&sort=tradeDate,desc`.
    * Default : 50 rows per page, sorted by `tradeDate` desc then `createdAt` desc (which puts the
@@ -49,9 +49,8 @@ class TradeEntryController(private val service: TradeEntryService) {
    * totalElements: N, totalPages: M, number: page, size: pageSize, ... }`.
    *
    * q — ticker LIKE %q% (case-insensitive) dateFrom — `trade_date >= dateFrom` (inclusive,
-   * yyyy-MM-dd) dateTo — `trade_date <= dateTo` (inclusive, yyyy-MM-dd) play — repeated, IN (...)
-   * pattern — repeated, IN (...) status — one of OPEN / CLOSED / PROFITABLE / LOSING (derived
-   * predicate)
+   * yyyy-MM-dd) dateTo — `trade_date <= dateTo` (inclusive, yyyy-MM-dd) pattern — repeated, IN
+   * (...) status — one of OPEN / CLOSED / PROFITABLE / LOSING (derived predicate)
    */
   @GetMapping
   fun findAll(
@@ -62,7 +61,6 @@ class TradeEntryController(private val service: TradeEntryService) {
     @RequestParam(required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     dateTo: LocalDate? = null,
-    @RequestParam(required = false) play: List<TradePlay>? = null,
     @RequestParam(required = false) pattern: List<Pattern>? = null,
     @RequestParam(required = false) status: TradeStatus? = null,
     // No `sort` default here — the service applies its own fallback when the URL has no `sort`
@@ -75,7 +73,6 @@ class TradeEntryController(private val service: TradeEntryService) {
         query = q,
         dateFrom = dateFrom,
         dateTo = dateTo,
-        plays = play,
         patterns = pattern,
         status = status,
       ),

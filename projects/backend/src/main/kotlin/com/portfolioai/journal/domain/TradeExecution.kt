@@ -9,6 +9,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalTime
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -21,6 +22,9 @@ import org.hibernate.type.SqlTypes
  * [TradePositionCalculator] — the executions are the atomic, source-of-truth data.
  *
  * [seq] is the 0-based saisie/display order within the parent ; unique per parent (DB constraint).
+ * [executedAt] is the fill time read off the broker statement — the day is the parent's
+ * [TradeEntry.tradeDate], so only the time is stored. Nullable : a fill can be jotted down without
+ * it, and the trade duration is then simply unknown.
  */
 @Entity
 @Table(name = "trade_execution")
@@ -35,9 +39,15 @@ class TradeExecution(
   @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(nullable = false) var kind: ExecutionKind,
   @Column(nullable = false) var shares: Int,
   @Column(nullable = false, precision = 18, scale = 4) var price: BigDecimal,
+  @Column(name = "executed_at") var executedAt: LocalTime? = null,
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
 ) {
   fun toLeg(): TradePositionCalculator.Leg =
-    TradePositionCalculator.Leg(kind = kind, shares = shares, price = price)
+    TradePositionCalculator.Leg(
+      kind = kind,
+      shares = shares,
+      price = price,
+      executedAt = executedAt,
+    )
 }

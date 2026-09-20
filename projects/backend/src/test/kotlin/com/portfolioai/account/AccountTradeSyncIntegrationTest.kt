@@ -14,6 +14,8 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
+import com.portfolioai.stats.domain.StatEntry
+import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -48,16 +50,21 @@ class AccountTradeSyncIntegrationTest {
   @Autowired private lateinit var accountService: AccountService
   @Autowired private lateinit var accountRepo: AccountMovementRepository
   @Autowired private lateinit var tradeRepo: TradeEntryRepository
+  @Autowired private lateinit var statRepo: StatEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
 
   @MockitoBean private lateinit var authService: AuthService
 
   private lateinit var testUser: User
 
+  /** The stat every trade of this test hangs off — the journal FK is mandatory since #192. */
+  private lateinit var stat: StatEntry
+
   @BeforeEach
   fun setUp() {
     accountRepo.deleteAll()
     tradeRepo.deleteAll()
+    statRepo.deleteAll()
     userRepository.deleteAll()
     testUser =
       userRepository.save(
@@ -70,6 +77,18 @@ class AccountTradeSyncIntegrationTest {
         )
       )
     whenever(authService.getCurrentUser()).thenReturn(testUser)
+
+    stat =
+      statRepo.save(
+        StatEntry(
+          user = testUser,
+          tradeDate = TRADE_DATE,
+          ticker = "BAC",
+          previousClose = BigDecimal("2.6500"),
+          pmOpen = BigDecimal("3.2100"),
+          pmHigh = BigDecimal("3.6000"),
+        )
+      )
   }
 
   @Test
@@ -87,7 +106,9 @@ class AccountTradeSyncIntegrationTest {
 
   @Test
   fun `an open trade (no realized P&L) creates no movement`() {
-    tradeService.create(TradeEntryRequest(tradeDate = TRADE_DATE, ticker = "GUS"))
+    tradeService.create(
+      TradeEntryRequest(statEntryId = stat.id, tradeDate = TRADE_DATE, ticker = "GUS")
+    )
     assertEquals(0, tradeMovements().size, "an open trade has no balance impact")
   }
 
@@ -114,7 +135,10 @@ class AccountTradeSyncIntegrationTest {
     assertEquals(1, tradeMovements().size)
 
     // Reopen : same trade, no realized P&L anymore.
-    tradeService.update(trade.id, TradeEntryRequest(tradeDate = TRADE_DATE, ticker = "AMC"))
+    tradeService.update(
+      trade.id,
+      TradeEntryRequest(statEntryId = stat.id, tradeDate = TRADE_DATE, ticker = "AMC"),
+    )
 
     assertEquals(0, tradeMovements().size, "a reopened trade drops its TRADE movement")
   }
@@ -129,6 +153,22 @@ class AccountTradeSyncIntegrationTest {
     assertNull(
       accountRepo.findByTradeEntryId(trade.id),
       "ON DELETE CASCADE on trade_entry_id removes the movement",
+    )
+  }
+
+  @Test
+  fun `the movement carries the real P&L when the broker statement has been entered`() {
+    // The account must match the broker to the cent : once the real P&L is typed in, the computed
+    // one stops reaching the ledger (#192).
+    val request =
+      closedTrade(ticker = "BAC", pnl = "300.00").copy(realProfitDollars = BigDecimal("287.35"))
+
+    tradeService.create(request)
+
+    assertEquals(
+      0,
+      BigDecimal("287.35").compareTo(tradeMovements().single().amount),
+      "the retained P&L is the real one, not the 300.00 computed from the executions",
     )
   }
 
@@ -207,6 +247,7 @@ class AccountTradeSyncIntegrationTest {
     val entryPrice = BigDecimal("10.00")
     val exitPrice = entryPrice.subtract(BigDecimal(pnl).divide(BigDecimal(shares)))
     return TradeEntryRequest(
+      statEntryId = stat.id,
       tradeDate = TRADE_DATE,
       ticker = ticker,
       direction = TradeDirection.SHORT,

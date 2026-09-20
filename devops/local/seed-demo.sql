@@ -8,7 +8,7 @@
 -- The script aborts if that user already has data, so it never overwrites anything : use Tilt's
 -- "Purge" first to start from an empty database.
 --
--- Matches the schema up to V14. When a model changes (redesign issues #186, #187, #192…), update
+-- Matches the schema up to V15. When a model changes (redesign issues #186, #187, #192…), update
 -- this file in the same PR.
 
 DO $$
@@ -83,35 +83,40 @@ BEGIN
           'Locate cher, float serré — attention au squeeze');
 
   -- ------------------------------------------------------------------ trades (+ executions, account movements)
+  -- V15 model (#192) : every trade hangs off its stat (mandatory FK), carries the fill times on its
+  -- executions, and may carry a `real_profit_dollars` — the figure read off the TradeZero statement,
+  -- a few cents / dollars below the computed one (fees, rounding). The retained P&L, the one the
+  -- account movement is built from, is COALESCE(real, computed) : `pnl_real` is used below when it
+  -- is set.
   FOR t IN
     SELECT * FROM (VALUES
-      ('2026-09-17'::date, 'KTTA', 350, 4.50, 3.66,  294.00, 18.6667, 'Push à 4,62 rejeté sous la résistance de 4,65 (high PM). Deuxième entrée sur le rejet, cover moitié à 3,78, le reste après le flush de midi.', 'Couvert la 2e moitié trop tôt : LOD à 3,41, objectif à 3,36 abandonné par peur du rebond.'),
-      ('2026-09-16'::date, 'BNZI', 500, 2.84, 2.61,  115.00,  8.0986, 'Fade propre après l''open, SSR déclenché en fin de matinée.', NULL),
-      ('2026-09-15'::date, 'SNTG', 200, 6.10, 6.72, -124.00,-10.1639, 'Squeeze au-dessus du high PM, stop touché.', 'Entrée trop tôt, pas attendu le rejet du push.'),
-      ('2026-09-12'::date, 'NUWE', 400, 3.25, 2.70,  220.00, 16.9231, 'Rejet net sous 3,40, tenu jusqu''au flush.', NULL),
-      ('2026-09-11'::date, 'HOTH', 250, 7.40, 7.28,   30.00,  1.6216, 'Peu de mouvement, sorti à l''EOD.', 'Entrée après 11h — setup déjà essoufflé.'),
-      ('2026-09-10'::date, 'AEHL', 600, 1.92, 2.21, -174.00,-15.1042, 'Squeeze violent à l''open (+30 %).', 'Float trop petit (3,4 M) : squeeze prévisible.'),
-      ('2026-09-09'::date, 'CRKN', 300, 5.05, 3.98,  321.00, 21.1881, 'Fade continu toute la matinée, LOD à −23 %.', NULL),
-      ('2026-09-08'::date, 'TOP',  150, 8.60, 8.12,   72.00,  5.5814, 'Petit fade, gros float.', NULL)
-    ) AS v(d, ticker, size, avg_in, avg_out, pnl, gain, note, err)
+      ('2026-09-17'::date, 'KTTA', 350, 4.50, 3.66,  294.00, 18.6667, 291.35::numeric, '09:41'::time, '11:20'::time, 'Push à 4,62 rejeté sous la résistance de 4,65 (high PM). Deuxième entrée sur le rejet, cover moitié à 3,78, le reste après le flush de midi.', 'Couvert la 2e moitié trop tôt : LOD à 3,41, objectif à 3,36 abandonné par peur du rebond.'),
+      ('2026-09-16'::date, 'BNZI', 500, 2.84, 2.61,  115.00,  8.0986, 113.80::numeric, '09:47'::time, '10:32'::time, 'Fade propre après l''open, SSR déclenché en fin de matinée.', NULL),
+      ('2026-09-15'::date, 'SNTG', 200, 6.10, 6.72, -124.00,-10.1639, NULL::numeric,   '09:38'::time, '09:55'::time, 'Squeeze au-dessus du high PM, stop touché.', 'Entrée trop tôt, pas attendu le rejet du push.'),
+      ('2026-09-12'::date, 'NUWE', 400, 3.25, 2.70,  220.00, 16.9231, NULL::numeric,   '09:44'::time, '11:05'::time, 'Rejet net sous 3,40, tenu jusqu''au flush.', NULL),
+      ('2026-09-11'::date, 'HOTH', 250, 7.40, 7.28,   30.00,  1.6216, NULL::numeric,   '11:12'::time, '15:55'::time, 'Peu de mouvement, sorti à l''EOD.', 'Entrée après 11h — setup déjà essoufflé.'),
+      ('2026-09-10'::date, 'AEHL', 600, 1.92, 2.21, -174.00,-15.1042, NULL::numeric,   '09:33'::time, '09:48'::time, 'Squeeze violent à l''open (+30 %).', 'Float trop petit (3,4 M) : squeeze prévisible.'),
+      ('2026-09-09'::date, 'CRKN', 300, 5.05, 3.98,  321.00, 21.1881, NULL::numeric,   '09:36'::time, '12:10'::time, 'Fade continu toute la matinée, LOD à −23 %.', NULL),
+      ('2026-09-08'::date, 'TOP',  150, 8.60, 8.12,   72.00,  5.5814, NULL::numeric,   '09:52'::time, '10:41'::time, 'Petit fade, gros float.', NULL)
+    ) AS v(d, ticker, size, avg_in, avg_out, pnl, gain, pnl_real, t_in, t_out, note, err)
   LOOP
     SELECT id INTO sid FROM stat_entry WHERE user_id = uid AND trade_date = t.d AND ticker = t.ticker;
     INSERT INTO trade_entry (user_id, trade_date, ticker, direction, pattern, size, open_price, exit_price,
-                             profit_dollars, gain_percent, note, error_note, stat_entry_id)
-    VALUES (uid, t.d, t.ticker, 'SHORT', 'GUS', t.size, t.avg_in, t.avg_out, t.pnl, t.gain, t.note, t.err, sid)
+                             profit_dollars, real_profit_dollars, gain_percent, note, error_note, stat_entry_id)
+    VALUES (uid, t.d, t.ticker, 'SHORT', 'GUS', t.size, t.avg_in, t.avg_out, t.pnl, t.pnl_real, t.gain, t.note, t.err, sid)
     RETURNING id INTO tid;
 
     IF t.ticker = 'KTTA' THEN
-      INSERT INTO trade_execution (trade_entry_id, seq, kind, shares, price) VALUES
-        (tid, 0, 'ENTRY', 200, 4.41), (tid, 1, 'ENTRY', 150, 4.62),
-        (tid, 2, 'EXIT',  150, 3.78), (tid, 3, 'EXIT',  200, 3.57);
+      INSERT INTO trade_execution (trade_entry_id, seq, kind, shares, price, executed_at) VALUES
+        (tid, 0, 'ENTRY', 200, 4.41, '09:41'), (tid, 1, 'ENTRY', 150, 4.62, '09:58'),
+        (tid, 2, 'EXIT',  150, 3.78, '10:26'), (tid, 3, 'EXIT',  200, 3.57, '11:20');
     ELSE
-      INSERT INTO trade_execution (trade_entry_id, seq, kind, shares, price) VALUES
-        (tid, 0, 'ENTRY', t.size, t.avg_in), (tid, 1, 'EXIT', t.size, t.avg_out);
+      INSERT INTO trade_execution (trade_entry_id, seq, kind, shares, price, executed_at) VALUES
+        (tid, 0, 'ENTRY', t.size, t.avg_in, t.t_in), (tid, 1, 'EXIT', t.size, t.avg_out, t.t_out);
     END IF;
 
     INSERT INTO account_movement (user_id, type, amount, value_date, note, trade_entry_id)
-    VALUES (uid, 'TRADE', t.pnl, t.d, t.ticker, tid);
+    VALUES (uid, 'TRADE', COALESCE(t.pnl_real, t.pnl), t.d, t.ticker, tid);
   END LOOP;
 
   -- ------------------------------------------------------------------ cash movements

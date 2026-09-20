@@ -3,6 +3,7 @@ package com.portfolioai.journal.domain
 import com.portfolioai.journal.domain.TradePositionCalculator.Leg
 import com.portfolioai.journal.domain.TradePositionCalculator.PositionStatus
 import java.math.BigDecimal
+import java.time.LocalTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test
  * - weighted-average entry/exit across multiple legs at different prices ;
  * - realized P&L is computed on the **exited** shares only (partial closes) ;
  * - the open / partial / closed fill status ;
+ * - the trade duration derived from the fill times (#192) ;
  * - inconsistent inputs (exit-without-entry, over-exit, missing direction) are rejected, not
  *   silently mis-computed.
  *
@@ -27,6 +29,9 @@ class TradePositionCalculatorTest {
     Leg(ExecutionKind.ENTRY, shares, BigDecimal(price))
 
   private fun exit(shares: Int, price: String) = Leg(ExecutionKind.EXIT, shares, BigDecimal(price))
+
+  /** Stamps a fill time on a leg — only the duration tests care about it. */
+  private fun Leg.at(hour: Int, minute: Int) = copy(executedAt = LocalTime.of(hour, minute))
 
   @Test
   fun `no executions yields an empty open position`() {
@@ -112,6 +117,43 @@ class TradePositionCalculatorTest {
     assertThrows(IllegalArgumentException::class.java) {
       TradePositionCalculator.compute(TradeDirection.SHORT, listOf(exit(100, "4")))
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Duration (#192) — first entry fill to last exit fill.
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `duration spans the first entry fill to the last exit fill`() {
+    val legs =
+      listOf(
+        entry(100, "5").at(9, 42),
+        entry(100, "4").at(9, 50),
+        exit(100, "4").at(10, 5),
+        exit(100, "3").at(10, 15),
+      )
+
+    assertEquals(33L, TradePositionCalculator.duration(legs), "9h42 → 10h15")
+    assertEquals(33L, TradePositionCalculator.compute(TradeDirection.SHORT, legs).durationMinutes)
+  }
+
+  @Test
+  fun `an open position has no duration`() {
+    assertNull(TradePositionCalculator.duration(listOf(entry(100, "5").at(9, 42))))
+  }
+
+  @Test
+  fun `a half-timed position has no duration rather than a wrong one`() {
+    // The entry time was typed in, the exit one wasn't : there is no span to report, and reporting
+    // zero would read as a scratch on the trade page.
+    val legs = listOf(entry(100, "5").at(9, 42), exit(100, "4"))
+    assertNull(TradePositionCalculator.duration(legs))
+  }
+
+  @Test
+  fun `fills entered out of order yield no duration rather than a negative one`() {
+    val legs = listOf(entry(100, "5").at(10, 30), exit(100, "4").at(9, 45))
+    assertNull(TradePositionCalculator.duration(legs))
   }
 
   @Test

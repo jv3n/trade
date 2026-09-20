@@ -23,26 +23,26 @@ import org.hibernate.type.SqlTypes
 /**
  * One trade in the journal. Multi-tenant via [user] (`@ManyToOne` on the FK, `ON DELETE CASCADE`).
  *
- * Categorical fields ([play], [pattern], [openSide], [exitStrategy]) map to Postgres ENUM types via
+ * Since the model rework (issue #192) a trade is **born from a stat** : [statEntryId] is mandatory,
+ * and [tradeDate], [ticker] and [pattern] are copied from that stat at creation — the trade itself
+ * only carries what the user types afterwards (executions, post-mortem, screenshot, real P&L). The
+ * copy is deliberate denormalization : the listing sorts and filters on those three columns without
+ * ever joining `stat_entry`.
+ *
+ * Categorical fields ([direction], [pattern]) map to Postgres ENUM types via
  * `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` — Hibernate 6 reads the Postgres enum cast directly without
- * going through a STRING converter. Kotlin enum names must match the Postgres enum values exactly
- * (cf. V1__init.sql).
+ * going through a STRING converter. Kotlin enum names must match the Postgres enum values exactly.
  *
- * Only [tradeDate] and [ticker] are mandatory (V4 relaxed [play] / [size] / [openPrice] to nullable
- * so a trade can be jotted down fast and completed later). [pattern] always has a value : the
- * shared [Pattern], [Pattern.GUS] by default (V12). Exit-side fields ([exitPrice], [profitDollars],
- * [gainPercent]) are nullable while the position is open. Preparation-checklist fields are nullable
- * so a backfilled entry doesn't have to tick every box.
- *
- * [statEntryId] is a nullable link to the matching imported stat row (`stat_entry.id`). NULL = an
- * "orphan" trade with no stat attached yet ; the link is assigned later from the UI.
- *
- * Since the multi-execution model (issue #93), the position is built from an ordered list of
- * [executions] and a [direction]. The flat columns [size], [openPrice], [exitPrice],
- * [profitDollars], [gainPercent] are no longer user-supplied : they are **derived aggregates**
- * recomputed from the executions by [TradePositionCalculator] on every write (see
- * `TradeEntryService`). They stay as columns so the listing's sort/filter/pagination, the CSV
+ * The position is built from an ordered list of [executions] and a [direction]. The flat columns
+ * [size], [openPrice], [exitPrice], [profitDollars], [gainPercent] are not user-supplied : they are
+ * **derived aggregates** recomputed from the executions by [TradePositionCalculator] on every write
+ * (see `TradeEntryService`). They stay as columns so the listing's sort/filter/pagination, the CSV
  * export and the account event keep reading flat values without a join.
+ *
+ * **P&L** — [profitDollars] is the one computed from the executions ; [realProfitDollars] is the
+ * one read off the broker statement, entered by hand to absorb fees and rounding. [retainedProfit]
+ * (real if set, else computed) is what reaches the account ; it is derived, never stored, so the
+ * two sources can't drift.
  */
 @Entity
 @Table(name = "trade_entry")
@@ -52,40 +52,33 @@ class TradeEntry(
   /** Owner. Multi-tenant scope key — every read path filters on `user.id`. */
   @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id", nullable = false) val user: User,
 
-  // ---- Identity ----
+  /** Source stat. Mandatory : there is no way to create a trade out of thin air (#192). */
+  @Column(name = "stat_entry_id", nullable = false) var statEntryId: UUID,
+
+  // ---- Identity, copied from the source stat ----
   @Column(name = "trade_date", nullable = false) var tradeDate: LocalDate,
   @Column(nullable = false, length = 20) var ticker: String,
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(nullable = false) var pattern: Pattern = Pattern.GUS,
 
-  /** Position direction. NULL until the first execution is recorded (issue #93). */
+  /** Position direction. NULL until the first execution is recorded. */
   @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var direction: TradeDirection? = null,
 
   // ---- Derived aggregates (computed from `executions` by TradePositionCalculator) ----
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var play: TradePlay? = null,
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column var pattern: Pattern = Pattern.GUS,
   @Column var size: Int? = null,
   @Column(name = "open_price", precision = 18, scale = 4) var openPrice: BigDecimal? = null,
   @Column(name = "exit_price", precision = 18, scale = 4) var exitPrice: BigDecimal? = null,
   @Column(name = "profit_dollars", precision = 18, scale = 2) var profitDollars: BigDecimal? = null,
   @Column(name = "gain_percent", precision = 8, scale = 4) var gainPercent: BigDecimal? = null,
+
+  /** P&L read off the broker statement — overrides [profitDollars] when set. */
+  @Column(name = "real_profit_dollars", precision = 18, scale = 2)
+  var realProfitDollars: BigDecimal? = null,
+
+  // ---- Post-mortem ----
+  /** "What happened" — the free-text account of the trade. */
   @Column(length = 2000) var note: String? = null,
-
-  // ---- Preparation checklist ----
-  @Column(name = "pre_9h35_to_10h") var pre935To10h: Boolean? = null,
-  @Column(name = "pre_gap_up_50") var preGapUp50: Boolean? = null,
-  @Column(name = "pre_price_1_to_10") var prePrice1To10: Boolean? = null,
-  @Column(name = "pre_float_3_to_50m") var preFloat3To50m: Boolean? = null,
-  @Column(name = "pre_wait_push") var preWaitPush: Boolean? = null,
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-  @Column(name = "open_side")
-  var openSide: TradeOpenSide? = null,
-  @Column(name = "short_on_resistance") var shortOnResistance: Boolean? = null,
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-  @Column(name = "exit_strategy")
-  var exitStrategy: TradeExitStrategy? = null,
+  /** "Mistake / to improve" — what to do differently next time. */
   @Column(name = "error_note", length = 2000) var errorNote: String? = null,
-
-  // ---- Stat link (NULL = orphan trade, no stat attached) ----
-  @Column(name = "stat_entry_id") var statEntryId: UUID? = null,
 
   /**
    * Denormalized presence flag for the single optional screenshot (issue #110). Maintained by the
@@ -113,8 +106,14 @@ class TradeEntry(
   var executions: MutableList<TradeExecution> = mutableListOf()
 
   /**
-   * Rewrites the execution list from the given (kind, shares, price) legs, re-sequencing them
-   * 0-based in order.
+   * The P&L that counts : the real one when the broker statement has been entered, the computed one
+   * otherwise. This is what the account movement is built from — see `TradeChangedEvent`.
+   */
+  val retainedProfit: BigDecimal?
+    get() = realProfitDollars ?: profitDollars
+
+  /**
+   * Rewrites the execution list from the given legs, re-sequencing them 0-based in order.
    *
    * **Reuse in place, don't clear + re-add** : a `clear()` + re-add makes Hibernate INSERT the new
    * `seq` values before it DELETEs the old ones during a full-replace update, which transiently
@@ -131,6 +130,7 @@ class TradeEntry(
         exec.kind = leg.kind
         exec.shares = leg.shares
         exec.price = leg.price
+        exec.executedAt = leg.executedAt
       } else {
         executions.add(
           TradeExecution(
@@ -139,6 +139,7 @@ class TradeEntry(
             kind = leg.kind,
             shares = leg.shares,
             price = leg.price,
+            executedAt = leg.executedAt,
           )
         )
       }

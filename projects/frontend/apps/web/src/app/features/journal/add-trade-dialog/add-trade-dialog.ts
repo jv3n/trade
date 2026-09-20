@@ -6,7 +6,6 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   StbButtonModule,
-  StbCheckboxModule,
   StbDatePickerModule,
   StbDialogModule,
   StbDividerModule,
@@ -24,16 +23,10 @@ import {
 import {
   ExecutionKind,
   TRADE_DIRECTIONS,
-  TRADE_EXIT_STRATEGIES,
-  TRADE_OPEN_SIDES,
-  TRADE_PLAYS,
   TradeDirection,
   TradeEntry,
   TradeEntryInput,
   TradeExecutionInput,
-  TradeExitStrategy,
-  TradeOpenSide,
-  TradePlay,
 } from '../../../core/api/journal/trade-entry.model';
 import { DEFAULT_PATTERN, Pattern, PATTERNS } from '../../../core/api/shared/pattern.model';
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
@@ -48,6 +41,8 @@ interface ExecRow {
   kind: ExecutionKind;
   shares: number | null;
   price: number | null;
+  /** Fill time (`HH:mm`) when the broker statement gives one. No input yet — carried on edit. */
+  executedAt: string | null;
 }
 
 /**
@@ -76,17 +71,8 @@ interface TradeFormModel {
   tradeDate: Date;
   ticker: string;
   direction: TradeDirection;
-  play: TradePlay | null;
   pattern: Pattern;
   note: string;
-  pre935To10h: boolean;
-  preGapUp50: boolean;
-  prePrice1To10: boolean;
-  preFloat3To50m: boolean;
-  preWaitPush: boolean;
-  openSide: TradeOpenSide | null;
-  shortOnResistance: boolean;
-  exitStrategy: TradeExitStrategy | null;
   errorNote: string;
 }
 
@@ -105,7 +91,8 @@ interface TradeFormModel {
  * instant feedback, and the backend recomputes them on persist. Only `tradeDate` + `ticker` are
  * required ; a trade can be jotted down with no executions yet. Returns the **domain**
  * [TradeEntryInput] on close — the HTTP adapter handles the wire serialisation. The stat link
- * (`statEntryId`) is carried through unchanged on edit ; it's assigned elsewhere.
+ * (`statEntryId`) is **mandatory** since #192 — a trade is born from a stat — so submit is blocked
+ * until the combobox holds one.
  */
 @Component({
   selector: 'app-add-trade-dialog',
@@ -114,7 +101,6 @@ interface TradeFormModel {
     DecimalPipe,
     FormField,
     StbButtonModule,
-    StbCheckboxModule,
     StbDialogModule,
     StbDividerModule,
     StbFormFieldModule,
@@ -138,10 +124,7 @@ export class AddTradeDialog {
   readonly isEdit = computed(() => this.data.entry !== null);
   readonly submitting = signal(false);
 
-  readonly plays = TRADE_PLAYS;
   readonly patterns = PATTERNS;
-  readonly openSides = TRADE_OPEN_SIDES;
-  readonly exitStrategies = TRADE_EXIT_STRATEGIES;
   readonly directions = TRADE_DIRECTIONS;
 
   readonly model = signal<TradeFormModel>(this.initialModel());
@@ -161,7 +144,12 @@ export class AddTradeDialog {
   private readonly cleanExecutions = computed<TradeExecutionInput[]>(() =>
     this.executions()
       .filter((e) => e.shares !== null && e.shares > 0 && e.price !== null && e.price > 0)
-      .map((e) => ({ kind: e.kind, shares: e.shares as number, price: e.price as number })),
+      .map((e) => ({
+        kind: e.kind,
+        shares: e.shares as number,
+        price: e.price as number,
+        executedAt: e.executedAt,
+      })),
   );
 
   /** Live aggregates mirroring the backend `TradePositionCalculator` — for instant preview. */
@@ -175,7 +163,10 @@ export class AddTradeDialog {
   );
 
   addExecution(kind: ExecutionKind): void {
-    this.executions.update((rows) => [...rows, { kind, shares: null, price: null }]);
+    this.executions.update((rows) => [
+      ...rows,
+      { kind, shares: null, price: null, executedAt: null },
+    ]);
   }
 
   removeExecution(index: number): void {
@@ -198,9 +189,10 @@ export class AddTradeDialog {
     this.model.update((m) => ({ ...m, direction }));
   }
 
-  // ---- Stat link (orphan ↔ linked) -------------------------------------------------------------
-  // Not a form field — it's a relation assigned via a combobox, carried as its own signal and
-  // emitted on submit. Defaults to the trade's existing link (null = orphan).
+  // ---- Stat link (mandatory since #192) -------------------------------------------------------
+  // Not a form field — it is a relation assigned via a combobox, carried as its own signal and
+  // emitted on submit. Defaults to the trade existing link, or to the seed when the dialog was
+  // opened from a stat row. Null blocks the submit : a trade without its stat has no context.
   readonly statEntryId = signal<string | null>(
     this.data.entry?.statEntryId ?? this.data.seed?.statEntryId ?? null,
   );
@@ -242,32 +234,26 @@ export class AddTradeDialog {
   }
 
   submit(): void {
-    if (!this.tradeForm().valid() || this.executionInvalid()) {
+    const statEntryId = this.statEntryId();
+    if (!this.tradeForm().valid() || this.executionInvalid() || statEntryId === null) {
       this.tradeForm().markAsTouched();
       return;
     }
     const v = this.model();
     const executions = this.cleanExecutions();
     const input: TradeEntryInput = {
+      statEntryId,
       tradeDate: v.tradeDate,
       ticker: v.ticker,
+      pattern: v.pattern,
       // Only attach a direction when there's actually a position — a blank jotted trade stays
       // direction-less (matches the backend nullable column).
       direction: executions.length > 0 ? v.direction : null,
       executions,
-      play: v.play,
-      pattern: v.pattern,
+      // The real P&L is typed on the trade page, not here — carried through untouched on edit.
+      realProfitDollars: this.data.entry?.realProfitDollars ?? null,
       note: v.note || null,
-      pre935To10h: v.pre935To10h,
-      preGapUp50: v.preGapUp50,
-      prePrice1To10: v.prePrice1To10,
-      preFloat3To50m: v.preFloat3To50m,
-      preWaitPush: v.preWaitPush,
-      openSide: v.openSide,
-      shortOnResistance: v.shortOnResistance,
-      exitStrategy: v.exitStrategy,
       errorNote: v.errorNote || null,
-      statEntryId: this.statEntryId(),
     };
     this.dialogRef.close(input);
   }
@@ -295,17 +281,8 @@ export class AddTradeDialog {
         ticker: seed?.ticker ?? '',
         // Short-biased default — the bread-and-butter of this journal.
         direction: 'SHORT',
-        play: null,
         pattern: DEFAULT_PATTERN,
         note: '',
-        pre935To10h: false,
-        preGapUp50: false,
-        prePrice1To10: false,
-        preFloat3To50m: false,
-        preWaitPush: false,
-        openSide: null,
-        shortOnResistance: false,
-        exitStrategy: null,
         errorNote: '',
       };
     }
@@ -313,17 +290,8 @@ export class AddTradeDialog {
       tradeDate: entry.tradeDate,
       ticker: entry.ticker,
       direction: entry.direction ?? 'SHORT',
-      play: entry.play,
       pattern: entry.pattern,
       note: entry.note ?? '',
-      pre935To10h: entry.pre935To10h ?? false,
-      preGapUp50: entry.preGapUp50 ?? false,
-      prePrice1To10: entry.prePrice1To10 ?? false,
-      preFloat3To50m: entry.preFloat3To50m ?? false,
-      preWaitPush: entry.preWaitPush ?? false,
-      openSide: entry.openSide,
-      shortOnResistance: entry.shortOnResistance ?? false,
-      exitStrategy: entry.exitStrategy,
       errorNote: entry.errorNote ?? '',
     };
   }
@@ -332,11 +300,16 @@ export class AddTradeDialog {
   private initialExecutions(): ExecRow[] {
     const entry = this.data.entry;
     if (!entry || entry.executions.length === 0) {
-      return [{ kind: 'ENTRY', shares: null, price: null }];
+      return [{ kind: 'ENTRY', shares: null, price: null, executedAt: null }];
     }
     return entry.executions
       .slice()
       .sort((a, b) => a.seq - b.seq)
-      .map((e) => ({ kind: e.kind, shares: e.shares, price: e.price }));
+      .map((e) => ({
+        kind: e.kind,
+        shares: e.shares,
+        price: e.price,
+        executedAt: e.executedAt,
+      }));
   }
 }
