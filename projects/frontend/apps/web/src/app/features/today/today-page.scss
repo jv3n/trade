@@ -1,0 +1,333 @@
+// « Aujourd'hui » — after `mockup/aujourdhui.html` : the day's walk-through on the left, the
+// side column on the right. Same card / KPI shapes as the stats, journal and trade pages.
+
+.today-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h2 {
+    text-transform: capitalize;
+  }
+}
+
+// Where the market stands — neutral by default, amber in premarket, green while it is open.
+.market-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+
+  i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-text-faint);
+  }
+
+  &[data-status='PREMARKET'] i {
+    background: var(--color-warning);
+  }
+
+  &[data-status='OPEN'] i {
+    background: var(--color-success);
+  }
+}
+
+.day-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  padding: 18px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+
+  h3 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-faint);
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+// ---- The day's steps ----
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 0;
+  position: relative;
+
+  & + & {
+    border-top: 1px solid var(--color-border);
+  }
+
+  // The thread that ties the steps together, stopping at the last one.
+  &::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 46px;
+    bottom: -14px;
+    width: 2px;
+    background: var(--color-border);
+  }
+
+  &:last-child::before {
+    display: none;
+  }
+}
+
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid var(--color-border-strong);
+  color: var(--color-text-faint);
+  background: var(--color-surface);
+  position: relative;
+  z-index: 1;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Done : green, it is behind us. Current : accent halo, it is what the user has to do now.
+.step--done .step-dot {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  color: var(--color-success);
+}
+
+.step--current .step-dot {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+.step--done .step-title,
+.step--todo .step-title {
+  color: var(--color-text-muted);
+}
+
+.step-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+
+.step-time {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.step-body {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+// Step 1 hosts the reconciliation block ; it only earns its space while the step is current.
+.step-inline {
+  display: block;
+  margin-top: 12px;
+}
+
+.step--done .step-inline,
+.step--todo .step-inline {
+  display: none;
+}
+
+.step-action {
+  padding-top: 3px;
+
+  &.actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+// Amber = a warning (something still to complete), per the colour rule.
+.tag {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.tag-warn {
+  background: color-mix(in srgb, var(--color-warning) 16%, transparent);
+  color: var(--color-warning);
+}
+
+.warn {
+  color: var(--color-warning);
+}
+
+// ---- Side column ----
+
+.kpi {
+  &__label {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  &__value {
+    margin: 4px 0 2px;
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__sub {
+    font-size: 12px;
+    color: var(--color-text-faint);
+  }
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 14px 0 0;
+
+  dt {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+}
+
+.mini-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+
+  & + & {
+    border-top: 1px solid var(--color-border-soft);
+  }
+
+  &__num {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 1.25rem 0;
+  color: var(--color-text-muted);
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: var(--color-text-faint);
+  }
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.pos {
+  color: var(--color-success);
+}
+
+.neg {
+  color: var(--color-danger);
+}

@@ -17,13 +17,92 @@
     }
   },
   "nav": {
+    "today": "Today",
     "account": "Account",
     "journal": "Journal",
     "candidates": "Candidates",
     "stats": "Stats",
     "lexicon": "Lexicon",
     "collapse": "Collapse sidebar",
-    "expand": "Expand sidebar"
+    "expand": "Expand sidebar",
+    "settings": "Settings"
+  },
+  "today": {
+    "subtitle": "Your trading day, step by step.",
+    "market": {
+      "PREMARKET": "Premarket · New York",
+      "OPEN": "Session open · New York",
+      "CLOSED": "Market closed · New York"
+    },
+    "steps": {
+      "title": "The day's run",
+      "progress": "{{done}} of {{total}} steps done",
+      "reconciliation": {
+        "title": "Morning reconciliation",
+        "body": "Enter the balance TradeZero displays : the app compares it to the one it computes."
+      },
+      "candidates": {
+        "title": "Capture the candidates",
+        "body": "After the radar screen : ticker, previous close, PM open / high, float, volume, locate.",
+        "captured": "{{count}} candidates captured — {{tickers}}."
+      },
+      "session": {
+        "title": "Session",
+        "body": "On TradeZero — nothing to do in the app."
+      },
+      "stats": {
+        "title": "Complete the stats",
+        "from": "from 4:00 pm",
+        "body": "Open, push at the open, HOD, LOD and EOD of each stat of the day.",
+        "pending": "{{count}} to complete",
+        "toComplete": "{{tickers}} still waiting for their session block.",
+        "notPromoted": "{{count}} candidates are not in the stats sheet yet.",
+        "confirmPromote": {
+          "title": "Promote {{count}} candidates to the stats sheet?",
+          "message": "{{tickers}} become stats to complete after the 4 pm close. The candidates already promoted are left alone.",
+          "confirm": "Promote them all"
+        }
+      },
+      "trades": {
+        "title": "Enter the day's trades",
+        "body": "Traded today? Create the trade from its stat, then add the fills and the post-mortem.",
+        "entered": "{{count}} trades entered — {{tickers}}."
+      }
+    },
+    "actions": {
+      "view": "View",
+      "capture": "Capture the candidates",
+      "promoteRemaining": "Promote the {{count}} remaining",
+      "complete": "Complete",
+      "pickStat": "Pick a stat",
+      "openJournal": "Open the journal"
+    },
+    "account": {
+      "title": "Account",
+      "detail": "detail",
+      "balance": "Balance",
+      "reconciled": "reconciled this morning ✓",
+      "toReconcile": "to reconcile this morning",
+      "pnlDay": "Day's P&L",
+      "pnlWeek": "Week's P&L",
+      "pnlMonth": "Month's P&L",
+      "noTrade": "— no trade"
+    },
+    "candidates": {
+      "title": "Today's candidates",
+      "all": "see all",
+      "empty": "No candidate today yet.",
+      "inStats": "In stats",
+      "metrics": "gap {{gap}} % · push {{push}} %"
+    },
+    "week": {
+      "title": "This week",
+      "empty": "No trade this week."
+    },
+    "snackbar": {
+      "promoteSuccess": "{{count}} candidates promoted to the stats sheet.",
+      "promoteError": "Couldn't promote the candidates. Please retry."
+    }
   },
   "candidates": {
     "title": "Candidates",
@@ -504,7 +583,6 @@
     }
   },
   "header": {
-    "settings": "Settings",
     "userMenu": "My account"
   },
   "auth": {

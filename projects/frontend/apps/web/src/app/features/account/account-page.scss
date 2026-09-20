@@ -278,7 +278,7 @@
   }
 }
 
-// ---- Morning reconciliation (#198) ----
+// ---- Morning reconciliation (#198) — the block itself is a component, this is its shell. ----
 
 .reconciliation-card {
   margin-bottom: 1rem;
@@ -298,74 +298,10 @@
       text-transform: capitalize;
     }
   }
-}
 
-.hint {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--color-text-faint);
-}
-
-// The four cells of the mockup : app balance, broker balance, gap, action.
-.reconciliation-form {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  gap: 0.75rem;
-  align-items: center;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.figure {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-
-  &__label {
+  .hint {
     font-size: 12px;
-    color: var(--color-text-muted);
-  }
-
-  &__value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-// Already settled this morning — a recap line above the form, which stays usable for a re-settle.
-.reconciled {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0 0 0.75rem;
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-  }
-
-  &.pos mat-icon {
-    color: var(--color-success);
-  }
-}
-
-.reconciliation-note {
-  margin: 0.6rem 0 0;
-}
-
-.history {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0.5rem 0 0;
-
-  &__item {
-    font-variant-numeric: tabular-nums;
+    font-weight: 400;
+    color: var(--color-text-faint);
   }
 }

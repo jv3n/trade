@@ -1,37 +1,30 @@
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { Observable, of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  AccountMovement,
-  AccountSummary,
-  Reconciliation,
-  ReconciliationInput,
-} from '../../core/api/account/account.model';
-import { AccountRepository } from '../../core/api/account/account.repository';
-import { ForexRepository } from '../../core/api/forex/forex.repository';
-import { ConfirmService } from '../../core/app-state/confirm.service';
-import { AccountPage } from './account-page';
+import { Reconciliation, ReconciliationInput } from '../../../core/api/account/account.model';
+import { AccountRepository } from '../../../core/api/account/account.repository';
+import { ConfirmService } from '../../../core/app-state/confirm.service';
+import { MorningReconciliation } from './morning-reconciliation';
 
 /**
- * Pins the **morning reconciliation** block of the account page (#198) — the one place in the app
- * where a figure typed by hand moves the balance, so the regressions here cost money :
+ * Pins the morning block (#198) — the one flow in the app where a figure typed by hand moves the
+ * balance, hosted both by the account page and by step 1 of the Today page. The regressions here
+ * cost money :
  *
  * - the **gap is live** : broker balance minus the app's, recomputed on every keystroke ;
  * - a gap goes through the **confirmation modal** (it creates a `Correction` line), a clean morning
  *   does not (it only timestamps itself) ;
  * - **cancelling** the modal reaches no endpoint ;
- * - a settled morning is **recognised as today's**, so the page can say so ;
- * - the input is **cleared** on success, so the next keystroke starts from the new balance.
+ * - the host is **told** once the morning is settled, and the input is cleared so the next
+ *   keystroke starts from the new balance ;
+ * - a settled morning is **recognised as today's** — and yesterday's is not.
  */
-describe('AccountPage — morning reconciliation', () => {
+describe('MorningReconciliation', () => {
   let reconcile: ReturnType<typeof vi.fn>;
-  let reconciliations: ReturnType<typeof vi.fn>;
   let confirmed: boolean;
   let confirmAsk: ReturnType<typeof vi.fn>;
   /** What the history endpoint answers — set by a test **before** `setup()`. */
@@ -39,44 +32,31 @@ describe('AccountPage — morning reconciliation', () => {
 
   beforeEach(() => {
     confirmed = true;
+    historyRows = [];
     reconcile = vi.fn((input: ReconciliationInput) =>
       of(
-        makeReconciliation({ brokerBalance: input.brokerBalance, gap: input.brokerBalance - 1000 }),
+        makeReconciliation({
+          brokerBalance: input.brokerBalance,
+          gap: input.brokerBalance - 1000,
+          correctionId: input.brokerBalance === 1000 ? null : 'mv-9',
+        }),
       ),
     );
-    historyRows = [];
-    reconciliations = vi.fn(() => of(historyRows));
     confirmAsk = vi.fn(() => of(confirmed));
 
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideRouter([]),
         provideTranslateService({ lang: 'en' }),
         {
           provide: AccountRepository,
           useValue: {
-            findMovements: () =>
-              of({
-                content: [] as AccountMovement[],
-                pageIndex: 0,
-                pageSize: 25,
-                totalElements: 0,
-                totalPages: 1,
-              }),
-            getSummary: (): Observable<AccountSummary> => of(makeSummary()),
-            getBalanceSeries: () => of([]),
-            addMovement: () => of({} as AccountMovement),
-            updateMovement: () => of({} as AccountMovement),
-            deleteMovement: () => of(undefined),
             reconcile,
-            reconciliations,
+            reconciliations: vi.fn(() => of(historyRows)),
           } as unknown as AccountRepository,
         },
-        { provide: ForexRepository, useValue: { latestRate: () => throwError(() => new Error()) } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         { provide: ConfirmService, useValue: { ask: confirmAsk } },
-        { provide: MatDialog, useValue: { open: () => ({ afterClosed: () => of(undefined) }) } },
       ],
     });
   });
@@ -86,29 +66,39 @@ describe('AccountPage — morning reconciliation', () => {
     TestBed.resetTestingModule();
   });
 
-  function setup(): AccountPage {
-    const fixture = TestBed.createComponent(AccountPage);
+  /** Mounts the block with the app balance its host would pass (1 000 $ unless told otherwise). */
+  function setup(appBalance: number | null = 1000): ComponentFixture<MorningReconciliation> {
+    const fixture = TestBed.createComponent(MorningReconciliation);
+    fixture.componentRef.setInput('appBalance', appBalance);
     fixture.detectChanges();
-    return fixture.componentInstance;
+    return fixture;
   }
 
   it('shows no gap until a broker balance is typed, then computes it live', () => {
-    const page = setup();
+    const page = setup().componentInstance;
 
-    expect(page.reconciliationGap()).toBeNull();
+    expect(page.gap()).toBeNull();
 
     page.setBrokerBalance(987.6);
-    expect(page.reconciliationGap()).toBeCloseTo(-12.4, 2);
+    expect(page.gap()).toBeCloseTo(-12.4, 2);
 
     page.setBrokerBalance(1000);
-    expect(page.reconciliationGap()).toBe(0);
+    expect(page.gap()).toBe(0);
+  });
+
+  it('waits for the host balance before computing anything', () => {
+    const page = setup(null).componentInstance;
+
+    page.setBrokerBalance(987.6);
+
+    expect(page.gap()).toBeNull();
   });
 
   it('a clean morning is settled without a confirmation — nothing is created', () => {
-    const page = setup();
+    const page = setup().componentInstance;
 
     page.setBrokerBalance(1000);
-    page.reconcile();
+    page.submit();
 
     expect(confirmAsk).not.toHaveBeenCalled();
     expect(reconcile).toHaveBeenCalledTimes(1);
@@ -116,10 +106,10 @@ describe('AccountPage — morning reconciliation', () => {
   });
 
   it('a gap asks for confirmation before creating the correction', () => {
-    const page = setup();
+    const page = setup().componentInstance;
 
     page.setBrokerBalance(987.6);
-    page.reconcile();
+    page.submit();
 
     expect(confirmAsk).toHaveBeenCalledWith(
       'account.reconciliation.confirmCorrection',
@@ -130,53 +120,42 @@ describe('AccountPage — morning reconciliation', () => {
 
   it('cancelling the confirmation never reaches the repository', () => {
     confirmed = false;
-    const page = setup();
+    const page = setup().componentInstance;
 
     page.setBrokerBalance(987.6);
-    page.reconcile();
+    page.submit();
 
     expect(reconcile).not.toHaveBeenCalled();
   });
 
-  it('clears the typed balance once the morning is settled', () => {
-    const page = setup();
+  it('tells the host and clears the input once the morning is settled', () => {
+    const fixture = setup();
+    const page = fixture.componentInstance;
+    const settled = vi.fn();
+    page.settled.subscribe(settled);
 
     page.setBrokerBalance(1000);
-    page.reconcile();
+    page.submit();
 
+    expect(settled).toHaveBeenCalledTimes(1);
     expect(page.brokerBalance()).toBeNull();
-    expect(page.reconciling()).toBe(false);
+    expect(page.submitting()).toBe(false);
   });
 
   it('recognises this morning as already settled', () => {
     historyRows = [makeReconciliation({ valueDate: new Date() })];
-    const page = setup();
 
-    expect(page.todayReconciliation()).not.toBeNull();
+    expect(setup().componentInstance.today()).not.toBeNull();
   });
 
   it("yesterday's reconciliation doesn't count as this morning's", () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     historyRows = [makeReconciliation({ valueDate: yesterday })];
-    const page = setup();
 
-    expect(page.todayReconciliation()).toBeNull();
+    expect(setup().componentInstance.today()).toBeNull();
   });
 });
-
-function makeSummary(overrides: Partial<AccountSummary> = {}): AccountSummary {
-  return {
-    balance: 1000,
-    totalDeposits: 1000,
-    totalWithdrawals: 0,
-    netInjected: 1000,
-    tradesPnl: 0,
-    adjustments: 0,
-    movementCount: 1,
-    ...overrides,
-  };
-}
 
 function makeReconciliation(overrides: Partial<Reconciliation> = {}): Reconciliation {
   return {
