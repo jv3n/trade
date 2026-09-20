@@ -1,5 +1,0 @@
-﻿tradeDate,ticker,pattern,statEntryId,direction,size,avgEntryPrice,avgExitPrice,executions,durationMinutes,computedProfitDollars,realProfitDollars,retainedProfitDollars,retainedGainPercent,note,errorNote
-2026-09-17,KTTA,GUS,6f1b0c2e-7d3a-4a1e-9a55-1f0c9a7b4e21,SHORT,350,4.5000,3.6600,09:41|ENTRY|200|4.4100 ; 09:52|ENTRY|150|4.6200 ; 10:48|EXIT|150|3.7800 ; 13:15|EXIT|200|3.5700,214,294.00,291.85,291.85,18.5302,"Push à 4,62 rejeté sous la résistance de 4,65 (high premarket).","Couvert la 2e moitié trop tôt : LOD à 3,41."
-2026-09-16,BNZI,GUS,2c84f9d1-5b60-4f77-8f0e-6d2a3c9b1f04,SHORT,500,2.8400,2.6100,09:38|ENTRY|500|2.8400 ; 11:02|EXIT|500|2.6100,84,115.00,,115.00,8.0986,Fade régulier sous VWAP.,
-2026-09-15,SNTG,GUS,9a3d7e55-0c14-43b8-b1a2-77e5f6c8d930,SHORT,200,6.1000,6.7200,09:35|ENTRY|200|6.1000 ; 09:52|EXIT|200|6.7200,17,-124.00,-126.40,-126.40,-10.3607,,"Entrée trop tôt sur le premier push, pas de confirmation de rejet."
-2026-09-14,NUWE,GUS,4b0f2a18-9e6c-4d52-a3c7-58b19d0e7f6a,SHORT,400,3.2500,,09:41|ENTRY|400|3.2500,,,,,,Position encore ouverte au moment de l'export.,

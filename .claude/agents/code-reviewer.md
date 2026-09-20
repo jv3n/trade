@@ -95,7 +95,7 @@ Targeted review of what the diff omits:
 
 To stay focused on code, you **do not** flag:
 
-- **Wording of the French product docs** (`mockup/`, `docs/pattern/`) — you can mention a factual drift between `PARCOURS.md` and the code, not a wording choice.
+- **Wording of the product docs** (`mockup/`, `docs/pattern/`) — you can mention a factual drift between `PARCOURS.md` and the code, not a wording choice.
 - **Commit conventions** — unless the diff includes a `git log` showing non-conventional messages, you can't audit a commit that doesn't exist yet. You may flag "plan for a Conventional Commits message in EN at the time of `git commit`" as a reminder, never as a `Bloquant`.
 
 ## Recommended workflow

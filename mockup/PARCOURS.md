@@ -1,245 +1,314 @@
-# Parcours utilisateur — suivi de trading
+# User journey — trading tracker
 
-Document de travail pour redéfinir l'app. On décrit la journée de trading telle qu'elle se passe vraiment, étape par étape, et pour chaque étape ce que l'app doit capter. Les maquettes (`index.html`) suivent ce document.
+Working document for redefining the app. It describes the trading day as it actually happens, step
+by step, and what the app has to capture at each one. The mockups (`index.html`) follow this
+document. Their copy stays in French, because the interface is.
 
-Légende : ✅ défini · 🟡 en cours · ❓ à définir
+Legend : ✅ defined · 🟡 in progress · ❓ to define
 
 ---
 
-## Contexte
+## Context
 
-- **Stratégie : le GUS** (*Gap Up Short*) pour l'instant — shorter une small-cap US qui a gap up en premarket sans fondamental, en pariant sur le retour du cours. Référence dans [`docs/pattern/GUS.md`](../docs/pattern/GUS.md) (prix 1–10 $, gap ≥ +50 %, float 3–50 M, chart flat/downtrend, société faible, volume PM modéré, pas de reverse split).
-- **Courtier : TradeZero.**
-- **Repérage : le radar** (outil externe) sert à trouver les tickers du jour. L'app ne remplace pas le radar, elle enregistre ce qui en sort.
+- **Strategy : the GUS** (*Gap Up Short*) for now — shorting a US small-cap that gapped up in
+  premarket with no fundamental behind it, betting on the price coming back. Reference in
+  [`docs/pattern/GUS.md`](../docs/pattern/GUS.md) (price $1–10, gap ≥ +50 %, float 3–50 M, flat or
+  downtrend chart, weak company, moderate PM volume, no reverse split).
+- **Broker : TradeZero.**
+- **Spotting : the radar** (an external tool) finds the day's tickers. The app doesn't replace the
+  radar, it records what comes out of it.
 
 ### Pattern
 
-Le **candidat**, la **stat** et le **trade** portent chacun un **pattern** (saisi sur le candidat, hérité par la stat puis par le trade). On ne fait que du GUS au début, mais la liste est prévue dès maintenant — et elle **va évoluer dans le temps** (DT et d'autres patterns viendront) :
+The **candidate**, the **stat** and the **trade** each carry a **pattern** (typed on the candidate,
+inherited by the stat and then by the trade). Only GUS is traded at first, but the list is planned
+now — and it **will grow over time** (DT and others will come) :
 
-| Valeur | Libellé | Description |
-|--------|---------|-------------|
-| `GUS` | Gap Up Short | Short d'un gap up premarket sans fondamental. **Défaut.** |
-| `DT` | Double Top | Short sur double sommet. |
-| `DISCRETIONARY` | Discrétionnaire | Trade sans pattern pré-établi. |
+| Value | Label | Description |
+|-------|-------|-------------|
+| `GUS` | Gap Up Short | Shorting a premarket gap up with no fundamental. **Default.** |
+| `DT` | Double Top | Shorting a double top. |
+| `DISCRETIONARY` | Discretionary | A trade with no pre-established pattern. |
 
-### Le cycle de vie : candidat → stat → trade
+### The life cycle : candidate → stat → trade
 
 ```
-Candidat (matin) ──[ action : « → Stat » ]──▶ Stat ──[ action : « → Trade » ]──▶ Trade (journal)
+Candidate (morning) ──[ action : « → Stat » ]──▶ Stat ──[ action : « → Trade » ]──▶ Trade (journal)
 ```
 
-- Chaque passage est une **action manuelle** : c'est moi qui choisis.
-- En pratique, **presque tous les candidats deviennent des stats** (d'où un bouton « Tout passer en stats »). Seule une partie des stats devient un trade.
-- Un candidat non promu reste dans l'historique du jour.
+- Each step is a **manual action** : I decide.
+- In practice, **almost every candidate becomes a stat** (hence a "promote them all" button). Only
+  some stats become a trade.
+- A candidate that is not promoted stays in the day's history.
 
 ---
 
-## La journée type
+## The typical day
 
-| # | Moment | Ce que je fais | Ce que l'app capte | Statut |
-|---|--------|----------------|--------------------|--------|
-| 1 | Matin, premarket | Connexion TradeZero, analyse au radar, choix des tickers | Les **candidats** du jour | ✅ |
-| 2 | Matin | Je retiens les candidats à suivre | Candidat → **stat** (bouton) | ✅ |
-| 3 | Séance | Je prends (ou non) des trades sur TradeZero | Rien — l'app ne sert pas pendant la séance | ✅ |
-| 4 | Après la séance | Je fais le bilan de mes trades | Stat → **trade** (bouton) : exécutions, post-mortem, capture | ✅ |
-| 5 | Clôture, 16h | Je note comment les tickers du jour ont évolué | La **feuille de stats** complétée | ✅ |
-| 6 | Chaque matin + au fil de l'eau | Rapprochement du solde avec TradeZero, dépôts, retraits | Le **compte** | ✅ |
-
----
-
-## Accueil — « Aujourd'hui » ✅
-
-La page d'accueil suit la journée type : chaque étape avec son état (**faite** / **en cours** / **à faire**), l'heure à laquelle elle a été faite, et un bouton vers l'écran concerné. L'état se déduit des données : rapprochement validé ce matin, candidats saisis, stats encore à compléter, etc. À côté : solde (rapproché ou non), P&L du jour / de la semaine / du mois, candidats du jour, trades de la semaine.
-
-**Ordre du menu** : Aujourd'hui · Candidats · Stats · Journal · Compte · (en bas, à part) Lexique. Candidats → Stats → Journal suit le cycle de vie d'un ticker (chaque bouton « → Stat » / « → Trade » mène à l'onglet suivant) ; Compte est un registre consulté ponctuellement, pas une étape ; Lexique est une référence. Le futur onglet monitoring / graphes ira entre Journal et Compte.
-
-**Le rapprochement du matin se fait directement dans l'étape 1** : solde app, solde TradeZero saisi, écart calculé en direct, bouton « Valider » (ou « Créer la correction » s'il y a un écart). Plus besoin d'ouvrir Compte le matin.
-
-**Écran** : [`aujourdhui.html`](aujourdhui.html). La maquette a une bascule « 8h00 / 16h15 » pour voir la page à deux moments de la journée.
+| # | When | What I do | What the app captures | Status |
+|---|------|-----------|-----------------------|--------|
+| 1 | Morning, premarket | Log into TradeZero, screen on the radar, pick the tickers | The day's **candidates** | ✅ |
+| 2 | Morning | I keep the candidates worth following | Candidate → **stat** (button) | ✅ |
+| 3 | Session | I take trades on TradeZero, or I don't | Nothing — the app is not used during the session | ✅ |
+| 4 | After the session | I go over my trades | Stat → **trade** (button) : executions, post-mortem, screenshot | ✅ |
+| 5 | Close, 4 pm | I note how the day's tickers behaved | The completed **stats sheet** | ✅ |
+| 6 | Every morning + as it goes | Reconciling the balance with TradeZero, deposits, withdrawals | The **account** | ✅ |
 
 ---
 
-## Étape 1 — Capture des candidats (matin) ✅
+## Home — « Aujourd'hui » ✅
 
-**Quand** : en premarket, juste après l'analyse au radar, avant l'ouverture.
+The home page follows the typical day : each step with its state (**done** / **current** / **to
+do**), the time it was done at, and a button to the screen concerned. The state is derived from the
+data : reconciliation validated this morning, candidates captured, stats still to complete, and so
+on. Beside it : the balance (reconciled or not), the P&L of the day / week / month, the day's
+candidates, the week's trades.
 
-**Ce que je saisis** (tout ce que je connais à ce moment-là) :
+**Menu order** : Today · Candidates · Stats · Journal · Account · (apart, at the bottom) Lexicon.
+Candidates → Stats → Journal follows the life cycle of a ticker (each « → Stat » / « → Trade »
+button leads to the next tab) ; the account is a ledger consulted now and then, not a step ; the
+lexicon is a reference. The future monitoring / charts tab will sit between Journal and Account.
 
-| Donnée | Exemple | Source / précision |
-|--------|---------|--------------------|
-| Pattern | GUS | Défaut GUS (cf. enum ci-dessus) |
+**The morning reconciliation happens right inside step 1** : app balance, typed TradeZero balance,
+live gap, and a button to validate (or to create the correction when there is a gap). No need to
+open the account page in the morning.
+
+**Screen** : [`aujourdhui.html`](aujourdhui.html). The mockup has an « 8h00 / 16h15 » toggle to see
+the page at two moments of the day.
+
+---
+
+## Step 1 — Capturing the candidates (morning) ✅
+
+**When** : in premarket, right after the radar screen, before the open.
+
+**What I type in** (everything known at that point) :
+
+| Data | Example | Source / detail |
+|------|---------|-----------------|
+| Pattern | GUS | Defaults to GUS (cf. the enum above) |
 | Ticker | `KTTA` | |
-| Clôture de la veille | 2,65 | Bougie daily |
-| Open premarket | 4,05 | Premier prix du premarket, **4h00** |
-| High premarket | 4,65 | |
-| Float | 8,2 M | |
-| Volume | 3,1 M | TradeZero, **au moment de la saisie** — donne l'idée globale du volume pour valider le pattern |
-| Locate | 0,03 $ / action | Coût pour emprunter l'action à shorter |
-| Note | « Résistance 4,65 » | Libre, optionnelle |
+| Previous close | 2.65 | Daily candle |
+| Premarket open | 4.05 | First premarket price, **4:00 am** |
+| Premarket high | 4.65 | |
+| Float | 8.2 M | |
+| Volume | 3.1 M | TradeZero, **at capture time** — gives the general idea of the volume, enough to validate the pattern |
+| Locate | $0.03 / share | Cost of borrowing the share to short |
+| Note | « Résistance 4,65 » | Free text, optional |
 
-**Ce que l'app calcule** (rien à saisir) :
+**What the app computes** (nothing to type) :
 
-- **Gap %** = (open PM − clôture veille) ÷ clôture veille → ici +52,8 %.
-- **Push %** = (high PM − open PM) ÷ open PM → ici +14,8 %.
-- **Locate / prix** = locate ÷ open PM → poids du coût d'emprunt *(proposition, à garder ou non)*.
+- **Gap %** = (PM open − previous close) ÷ previous close → +52.8 % here.
+- **Push %** = (PM high − PM open) ÷ PM open → +14.8 % here.
+- **Locate / price** = locate ÷ PM open → the weight of the borrowing cost *(a proposal, to keep or
+  not)*.
 
-**Décidé** :
+**Decided** :
 
-- Pas de cases à cocher pour les critères qualitatifs du GUS (chart, société, reverse split).
-- Rien sur le sizing (capital, risque, stop, échelle d'entrée, fills, covers) : ce n'est pas connu au moment de la capture.
-- Un seul candidat par jour et par ticker : une deuxième saisie du même ticker le même jour est refusée.
-- Clôture veille, open PM et high PM sont obligatoires (high PM ≥ open PM) ; float, volume, locate et note sont facultatifs.
-- Locate / prix en ambre au-delà de 5 % (coût d'emprunt lourd).
-- Les jours passés sont en lecture seule (historique).
+- No checkboxes for the qualitative GUS criteria (chart, company, reverse split).
+- Nothing about sizing (capital, risk, stop, entry scale, fills, covers) : none of it is known at
+  capture time.
+- One candidate per day and per ticker : a second entry for the same ticker on the same day is
+  refused.
+- Previous close, PM open and PM high are mandatory (PM high ≥ PM open) ; float, volume, locate and
+  note are optional.
+- Locate / price turns amber above 5 % (heavy borrowing cost).
+- Past days are read-only (history).
 
-**Écran** : [`candidat.html`](candidat.html) — saisie rapide en haut (aperçu gap / push en direct), liste des candidats du jour triée par gap, bouton « → Stat » par ligne et « Tout passer en stats », navigation jour par jour.
-
----
-
-## Étape 2 — Candidat → stat ✅
-
-- **Uniquement par un bouton d'action** : « → Stat » sur une ligne de candidat, ou « Tout passer en stats ». Aucune création automatique.
-- La stat **reprend toutes les données du candidat** (pattern, ticker, clôture veille, open / high PM, gap, push PM, float, volume, locate, note).
-- La stat est créée « à compléter » : les données de séance arrivent à l'étape 5.
-
-**Décidé** :
-
-- Un candidat déjà passé en stat affiche « En stats » et ne peut pas l'être deux fois (refus).
-- « Tout passer en stats » ne traite que les candidats absents de la feuille ; ceux qui y sont déjà sont laissés de côté, sans faire échouer le lot. L'action est donc rejouable sans risque.
-- La stat garde un lien vers le candidat d'origine. Supprimer le candidat ensuite ne supprime pas la stat : le lien est simplement vidé.
+**Screen** : [`candidat.html`](candidat.html) — quick entry at the top (live gap / push preview),
+the day's candidates sorted by gap, a « → Stat » button per row and a "promote them all" button,
+day-by-day navigation.
 
 ---
 
-## Étape 3 — Séance ✅
+## Step 2 — Candidate → stat ✅
 
-**L'app ne sert pas pendant la séance.** Tout se passe sur TradeZero ; l'app intervient avant (candidats, le matin) et après (stats à 16h, trades au journal). Conséquence : aucun écran « temps réel », pas de suivi de position en direct.
+- **Only through an action button** : « → Stat » on a candidate row, or "promote them all". Nothing
+  is created automatically.
+- The stat **takes every field of the candidate** (pattern, ticker, previous close, PM open / high,
+  gap, PM push, float, volume, locate, note).
+- The stat is created "to complete" : the session data arrives at step 5.
 
----
+**Decided** :
 
-## Étape 4 — Stat → trade (journal) ✅
-
-- **Uniquement par un bouton d'action** « → Trade » sur une ligne de stat. Pas de création de trade « à vide » depuis le journal.
-- Le trade **hérite du pattern de la stat** et affiche son contexte (premarket + séance) en lecture seule.
-
-**Ce que je saisis sur le trade** :
-
-| Bloc | Contenu |
-|------|---------|
-| Exécutions | Heure, type (short / cover), nombre d'actions, prix — une ligne par fill TradeZero |
-| Post-mortem | « Ce qui s'est passé » + « Erreur / à améliorer » |
-| Capture du chart | Une image (PNG / JPEG / WebP, 5 Mo max) |
-
-**Ce que l'app calcule** : position, entrée / sortie moyennes (et leur écart vs l'open), P&L $ et %, durée du trade.
-
-**P&L ajustable** : le P&L est calculé à partir des exécutions, mais je peux saisir le **P&L réel** du relevé TradeZero pour absorber les frais et les arrondis du broker (quelques centimes à quelques dollars — je ne connais pas les frais exacts à l'avance). L'app affiche le calculé, le réel et l'écart. Le **P&L retenu** (le réel s'il est saisi, sinon le calculé) est celui qui remonte au compte.
-
-**Retiré** : checklist pré-trade, bloc « exécution » (front / back side, short sur résistance, stratégie de sortie), play A / B, indicateurs de risque (budget, R multiple).
-
-**Écrans** : [`journal.html`](journal.html) (liste + KPIs, filtre par pattern) et [`trade.html`](trade.html) (fiche du trade).
+- A candidate already promoted shows "in stats" and cannot be promoted twice (refused).
+- "Promote them all" only handles the candidates missing from the sheet ; the ones already there are
+  left alone without failing the batch. The action is safe to replay.
+- The stat keeps a link back to its candidate. Deleting that candidate later does not delete the
+  stat : the link is simply cleared.
 
 ---
 
-## Étape 5 — Compléter la stat (clôture, 16h) ✅
+## Step 3 — Session ✅
 
-**Quand** : après la fermeture du marché, à 16h.
-
-**Ce que je saisis** (en $, valeurs de l'action) :
-
-| Donnée | Exemple | Remarque |
-|--------|---------|----------|
-| Open | 4,20 | Prix d'ouverture de la séance — base de tous les % |
-| Push à l'open | 4,62 | **Nouveau** — le prix atteint par le push qui suit l'ouverture |
-| HOD | 4,62 | High of Day |
-| LOD | 3,41 | Low of Day |
-| EOD | 3,52 | Clôture |
-| SSR | oui / non | |
-| Prix < 1 $ | oui / non | |
-| Entrée après 11h | oui / non | Gardé même si en théorie je ne devrais pas le faire |
-
-**Ce que l'app calcule** : push à l'open %, HOD %, LOD %, EOD %, tous **vs l'open** — ex. push à l'open (4,62 − 4,20) ÷ 4,20 = +10,0 %.
-
-**Retiré** de l'ancienne feuille : institutionnels % et « > 20 % institutionnels ». C'est une condition du GUS filtrée en amont : un ticker à forte détention institutionnelle ne devient jamais candidat, donc la donnée n'apporte rien dans la stat. Retiré aussi : l'origine RADAR / MANUEL / IMPORT et le jeu de stats partagé entre utilisateurs — une stat appartient toujours à son utilisateur.
-
-**Décidé** :
-
-- Une seule stat par jour et par ticker (comme les candidats) ; une deuxième est refusée.
-- La stat est « à compléter » tant que les cinq prix de séance ne sont pas tous saisis ; les flags valent non par défaut.
-- Aucun pourcentage n'est stocké : tout se recalcule à partir des prix.
-- Les KPI du haut (complétées, push à l'open moyen, LOD moyen, fade) portent sur **tout le filtre**, pas sur la page affichée.
-- Pas d'import CSV : ni pour les stats (une stat naît d'un candidat), ni pour le journal (un trade naît d'une stat). Il reste un **export** CSV pour les deux — bloc premarket, bloc séance et flags côté stats (prix de séance vides pour une stat à compléter) ; identité, position, exécutions et les trois P&L côté journal.
-- Filtre « tradées / non tradées » : reporté avec le lien vers le trade (#193).
-
-**Écran** : [`stats.html`](stats.html) — encart « Compléter la séance » pour les stats en attente (aperçu des % en direct), tableau avec les données premarket (reprises du candidat) et de séance, flags, bouton « → Trade » ou lien vers le trade existant.
+**The app is not used during the session.** Everything happens on TradeZero ; the app comes before
+(the morning's candidates) and after (the stats at 4 pm, the trades in the journal). As a
+consequence : no real-time screen, no live position tracking.
 
 ---
 
-## Référence — Lexique ✅
+## Step 4 — Stat → trade (journal) ✅
 
-Hors du flux quotidien : le glossaire du vocabulaire trading (GUS, DT, float, locate, SSR, LOD, squeeze…), consultable à tout moment.
+- **Only through the « → Trade » action button** on a stat row. No blank trade can be created from
+  the journal.
+- The trade **inherits the stat's pattern** and shows its context (premarket + session), read-only.
 
-- **Affichage en cards** (une card par terme : terme, abréviation développée, définition), triées par ordre alphabétique — validé tel quel.
-- **Bascule FR / EN** pour la définition.
-- **Recherche** par terme + index alphabétique.
-- Lecture seule : l'ajout, la modification et la suppression se font dans Paramètres › Lexique (admin).
-- Les termes suivent l'enum pattern : FRD retiré, DT ajouté.
+**What I type in on the trade** :
 
-**Écran** : [`lexique.html`](lexique.html).
+| Block | Content |
+|-------|---------|
+| Executions | Time, kind (short / cover), share count, price — one row per TradeZero fill |
+| Post-mortem | "What happened" + "Mistake / to improve" |
+| Chart screenshot | One image (PNG / JPEG / WebP, 5 MB max) |
+
+**What the app computes** : position, average entry / exit (and their distance to the open), P&L in
+$ and %, duration of the trade.
+
+**Adjustable P&L** : the P&L is computed from the executions, but I can type in the **real P&L** of
+the TradeZero statement to absorb the broker's fees and rounding (a few cents to a few dollars — I
+don't know the exact fees in advance). The app shows the computed one, the real one and the gap. The
+**retained P&L** (the real one if typed, else the computed one) is what reaches the account.
+
+**Removed** : the pre-trade checklist, the "execution" block (front / back side, short on
+resistance, exit strategy), play A / B, the risk indicators (budget, R multiple).
+
+**Screens** : [`journal.html`](journal.html) (list + KPIs, pattern filter) and
+[`trade.html`](trade.html) (the trade sheet).
 
 ---
 
-## Paramètres ✅
+## Step 5 — Completing the stat (close, 4 pm) ✅
 
-Accessible depuis le bas du menu (sous Lexique). Un menu secondaire à gauche, quatre sections :
+**When** : after the market closes, at 4 pm.
 
-| Section | Pour qui | Contenu |
+**What I type in** (in $, share prices) :
+
+| Data | Example | Note |
+|------|---------|------|
+| Open | 4.20 | Session open — the base of every percentage |
+| Push at the open | 4.62 | **New** — the price reached by the push that follows the open |
+| HOD | 4.62 | High of Day |
+| LOD | 3.41 | Low of Day |
+| EOD | 3.52 | Close |
+| SSR | yes / no | |
+| Price < $1 | yes / no | |
+| Entry after 11 am | yes / no | Kept even though in theory I shouldn't be doing it |
+
+**What the app computes** : push at the open %, HOD %, LOD %, EOD %, all **vs the open** — e.g. push
+at the open (4.62 − 4.20) ÷ 4.20 = +10.0 %.
+
+**Removed** from the old sheet : institutional % and "> 20 % institutional". It is a GUS condition
+filtered upstream : a ticker with heavy institutional ownership never becomes a candidate, so the
+figure adds nothing to the stat. Removed too : the RADAR / MANUAL / IMPORT origin and the stats set
+shared between users — a stat always belongs to its user.
+
+**Decided** :
+
+- One stat per day and per ticker (like the candidates) ; a second one is refused.
+- The stat stays "to complete" until all five session prices are in ; the flags default to no.
+- No percentage is stored : everything is recomputed from the prices.
+- The KPIs on top (completed, average push at the open, average LOD, fade) cover **the whole
+  filter**, not the displayed page.
+- No CSV import : neither for the stats (a stat is born from a candidate) nor for the journal (a
+  trade is born from a stat). Both keep a CSV **export** — premarket block, session block and flags
+  on the stats side (session prices empty for a stat still to complete) ; identity, position,
+  executions and the three P&L figures on the journal side.
+- "Traded / not traded" filter : shipped with the link to the trade (#193).
+
+**Screen** : [`stats.html`](stats.html) — a "complete the session" panel for the pending stats (live
+percentage preview), a table with the premarket data (carried from the candidate) and the session
+data, the flags, and a « → Trade » button or a link to the existing trade.
+
+---
+
+## Reference — Lexicon ✅
+
+Outside the daily flow : the glossary of the trading vocabulary (GUS, DT, float, locate, SSR, LOD,
+squeeze…), readable at any time.
+
+- **Displayed as cards** (one per term : term, expanded abbreviation, definition), sorted
+  alphabetically — validated as is.
+- **FR / EN toggle** for the definition.
+- **Search** by term + an alphabetical index.
+- Read-only : adding, editing and deleting happen in Settings › Lexicon (admin).
+- The terms follow the pattern enum : FRD removed, DT added.
+
+**Screen** : [`lexique.html`](lexique.html).
+
+---
+
+## Settings ✅
+
+Reachable from the bottom of the menu (under Lexicon). A secondary menu on the left, four sections :
+
+| Section | For whom | Content |
 |---------|----------|---------|
-| Préférences | Tout le monde | Profil + déconnexion, **thème** (système / clair / sombre), langue (FR / EN), devise d'affichage du solde (USD / CAD) |
-| Accès | Admin | Emails autorisés à se connecter (liste modifiable) ; administrateurs (lecture seule, définis au déploiement) |
-| Données | Admin | Export CSV du journal et des stats (**export uniquement**, pas d'import) |
-| Lexique | Admin | Tableau des termes (terme, définition FR, définition EN) : ajouter, modifier, supprimer (avec confirmation) |
-| Liens ops | Admin | Consoles et tableaux de bord (facturation, production, base, supervision, GitHub) |
+| Preferences | Everyone | Profile + sign out, **theme** (system / light / dark), language (FR / EN), balance display currency (USD / CAD) |
+| Access | Admin | Emails allowed to log in (editable list) ; administrators (read-only, set at deploy time) |
+| Data | Admin | CSV export of the journal and the stats (**export only**, no import) |
+| Lexicon | Admin | Table of terms (term, FR definition, EN definition) : add, edit, delete (confirmed) |
+| Ops links | Admin | Consoles and dashboards (billing, production, database, monitoring, GitHub) |
 
-- **Le thème ne se choisit que dans Préférences** — plus de bouton de thème dans le menu. « Système » (défaut) suit le réglage clair / sombre de l'ordinateur, en direct.
-- **Le lexique ne se modifie que par l'admin, ici.** La page Lexique est en lecture seule pour tout le monde (cards + recherche + FR / EN).
+- **The theme is chosen in Preferences only** — no theme button in the menu anymore. "System" (the
+  default) follows the computer's light / dark setting, live.
+- **The lexicon is edited by the admin, here, and nowhere else.** The Lexicon page is read-only for
+  everyone (cards + search + FR / EN).
 
-**Écran** : [`parametres.html`](parametres.html).
-
----
-
-## Principes d'interface ✅
-
-- **Confirmation dans une modale** pour toute action qui crée ou supprime quelque chose : « → Stat », « Tout passer en stats », « → Trade », suppression d'un candidat ou d'un trade. La modale dit ce qui va se passer (ce qui est repris, ce qui disparaît — ex. le mouvement du compte quand on supprime un trade). Les suppressions ont un bouton rouge. Pas de modale pour « Modifier » ni pour les saisies.
-- **Saisie du matin** : validée telle quelle (formulaire en ligne + aperçu gap / push en direct).
-- **Tableau des stats** : on garde toutes les colonnes, le défilement horizontal ne gêne pas.
-- **Couleurs** : vert / rouge réservés aux résultats (P&L, montants, écarts) ; ambre pour les alertes (SSR, < 1 $, locate cher, à compléter) ; indigo pour les statuts et catégories (pattern, « En stats ») ; le reste neutre, y compris les variations de prix et les tickers.
-- **Icônes** : Material Symbols Rounded — correspondance dans `README.md`.
-- **Alignement** : contenu aligné à gauche (juste après le menu), pas centré — plus simple à lire. Largeur maximale conservée pour ne pas étirer les lignes.
-- **Formulaires denses** : champs Material à 40 px (densité -4) et pas d'espace réservé sous un champ tant qu'il n'y a pas de message d'erreur.
+**Screen** : [`parametres.html`](parametres.html).
 
 ---
 
-## Plus tard — Monitoring & graphes
+## Interface principles ✅
 
-Une fois les stats alimentées sur la durée : tableaux de bord et graphes pour voir **ce qui marche le mieux** (par pattern, par tranche de gap / float / push, taux de fade, résultats des trades vs stats…). **Pas maintenant** : on refait d'abord les écrans existants.
-
----
-
-## Étape 6 — Compte ✅
-
-Le solde est **dérivé des mouvements** :
-
-| Mouvement | Origine |
-|-----------|---------|
-| Trade | **Automatique** — chaque trade du journal remonte avec son P&L retenu (non éditable depuis le compte) |
-| Dépôt / retrait | Saisi à la main |
-| Correction | Créée par le **rapprochement du matin** |
-
-**Rapprochement du matin** (tous les matins) : je saisis le solde affiché par TradeZero, l'app le compare au solde calculé. Pas d'écart → le rapprochement est simplement horodaté. Écart → une ligne « Correction » cale le solde sur TradeZero. Ça rattrape tout ce que les P&L ajustés n'auraient pas couvert (frais d'emprunt, arrondis…).
-
-**Écran** : [`compte.html`](compte.html) — solde USD / CAD, encart « Rapprochement du matin » (écart calculé en direct), historique des derniers rapprochements, courbe du solde, liste des mouvements.
+- **Confirmation modal** for anything that creates or deletes : « → Stat », "promote them all",
+  « → Trade », deleting a candidate or a trade. The modal says what is about to happen (what is
+  carried over, what disappears — e.g. the account movement when a trade is deleted). Deletions get
+  a red button. No modal for editing, and none for data entry.
+- **The morning entry** : validated as is (inline form + live gap / push preview).
+- **The stats table** : every column stays, horizontal scrolling is not a problem.
+- **Colours** : green / red for outcomes only (P&L, amounts, gaps) ; amber for warnings (SSR, < $1,
+  expensive locate, to complete) ; indigo for statuses and categories (pattern, "in stats") ; the
+  rest neutral, price moves and tickers included.
+- **Icons** : Material Symbols Rounded — the mapping is in `README.md`.
+- **Alignment** : content aligned left (right after the menu), not centred — easier to read. A
+  maximum width is kept so the lines don't stretch.
+- **Dense forms** : Material fields at 40 px (density -4), and no space reserved under a field until
+  there is an error to show.
 
 ---
 
-## Mise en œuvre
+## Later — Monitoring & charts
 
-Le recodage est découpé en issues GitHub **#184 à #205** (enum pattern, modale de confirmation, candidats, stats, journal, compte, page Aujourd'hui, navigation, paramètres, icônes, couleurs…). Chaque issue décrit le périmètre, les critères d'acceptation, les maquettes de référence et ses dépendances. Décisions de mise en œuvre : pattern en **enum** dans le code, **base repartie à vide** (pas de migration de données).
+Once the stats have been fed for a while : dashboards and charts to see **what works best** (by
+pattern, by gap / float / push bracket, fade rate, trade results vs stats…). **Not now** : the
+existing screens come first.
+
+---
+
+## Step 6 — Account ✅
+
+The balance is **derived from the movements** :
+
+| Movement | Origin |
+|----------|--------|
+| Trade | **Automatic** — every journal trade shows up with its retained P&L (not editable from the account) |
+| Deposit / withdrawal | Typed by hand |
+| Correction | Created by the **morning reconciliation** |
+
+**Morning reconciliation** (every morning) : I type in the balance TradeZero displays, the app
+compares it with the computed one. No gap → the reconciliation is simply timestamped. A gap → a
+"correction" line puts the balance on the TradeZero figure. It catches whatever the adjusted P&L
+figures didn't cover (borrowing fees, rounding…).
+
+**Screen** : [`compte.html`](compte.html) — USD / CAD balance, the morning reconciliation panel
+(live gap), the history of the last reconciliations, the balance curve, the movements list.
+
+---
+
+## Implementation
+
+The recode is broken down into GitHub issues **#184 to #205** (pattern enum, confirmation modal,
+candidates, stats, journal, account, Today page, navigation, settings, icons, colours…). Each issue
+describes its scope, its acceptance criteria, the reference mockups and its dependencies.
+Implementation decisions : the pattern is an **enum** in the code, and the **database restarts
+empty** (no data migration).

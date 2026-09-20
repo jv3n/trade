@@ -167,9 +167,12 @@ read top to bottom is the point there.
 | **All source code** — identifiers, comments, KDoc / JSDoc, test names, log messages, config files (`application*.yml`, `Tiltfile`, `build.gradle.kts`, `docker-compose.yml`, workflows, scripts…) | **English** |
 | **Everything written on GitHub** — commit messages, PR titles & descriptions, issue titles & bodies, review / issue / PR comments | **English** |
 | `.claude/` (CLAUDE.md, agents, skills) | **English** |
-| `docs/` and `mockup/` (product docs, user journey, mockup copy) | **French** |
+| **Documentation** — `README.md` files, `docs/`, `mockup/PARCOURS.md` and `mockup/README.md` | **English** |
+| **The copy inside the mockup pages** (`mockup/*.html`) | **French** — it mirrors the app's own interface |
+| **Demo and test data** — the lexicon seed, the fixtures, `fr.json` | **French** — it is content, not code |
 
-Existing French comments in the source (notably `application*.yml`, `proxy.conf.js`) are legacy : translate them to English when touching the surrounding code, don't add new ones. User-facing UI strings stay in the i18n files (FR + EN), never hard-coded.
+The whole tree was swept in #204 : there is no French comment left in the source, and none should be
+added. User-facing UI strings stay in the i18n files (FR + EN), never hard-coded.
 
 ## Instructions for Claude
 
@@ -205,6 +208,6 @@ The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues
 
 ### Documentation
 
-- **Product** : `mockup/PARCOURS.md` (French) is the functional reference — update it when a product decision is made or changed, and keep the matching mockup page in sync.
-- **Trading domain** : `docs/pattern/` (French) holds pattern references (`GUS.md`).
+- **Product** : `mockup/PARCOURS.md` is the functional reference — update it when a product decision is made or changed, and keep the matching mockup page in sync.
+- **Trading domain** : `docs/pattern/` holds pattern references (`GUS.md`).
 - The former `docs/` doc set was deleted on 2026-09-18. Don't recreate technical doc files unless the user asks — code, KDoc / JSDoc and these skills carry the technical knowledge.
