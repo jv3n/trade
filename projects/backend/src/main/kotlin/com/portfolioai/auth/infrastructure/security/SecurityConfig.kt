@@ -4,7 +4,6 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -20,10 +19,10 @@ import org.springframework.security.web.csrf.CsrfFilter
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 
 /**
- * Production-side filter chain — wired whenever the `local-no-auth` profile is NOT active. The
- * exact route matrix lives in `authorizeHttpRequests` below ; in short : health + OAuth callback
- * routes are permitAll, the three back-office areas (config, prompts, narrative observability)
- * require ROLE_ADMIN, everything else requires an authenticated session.
+ * The application's only filter chain. The exact route matrix lives in `authorizeHttpRequests`
+ * below ; in short : health + OAuth callback routes are permitAll, the three back-office areas
+ * (config, prompts, narrative observability) require ROLE_ADMIN, everything else requires an
+ * authenticated session.
  *
  * Unauthenticated requests get a HTTP 401, not the default 302 to the Google authorization URL —
  * the SPA's HTTP interceptor needs a clean status code to decide whether to redirect to /login. A
@@ -48,7 +47,6 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
  * 6 made resolution lazy by default).
  */
 @Configuration
-@Profile("!local-no-auth")
 class SecurityConfig(
   /**
    * Where a successful OAuth login lands. `/` is enough in prod, where the SPA and the backend

@@ -6,8 +6,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.user.OAuth2User
 
 /**
- * Custom [OAuth2User] returned by [CustomOAuth2UserService] (and by [LocalNoAuthFilter] under the
- * dev profile). Carries the DB-side [userId] so that
+ * Custom [OAuth2User] returned by [CustomOAuth2UserService]. Carries the DB-side [userId] so that
  * [com.portfolioai.auth.application.AuthService.getCurrentUser] resolves the
  * [com.portfolioai.auth.domain.User] row without re-reading the email-keyed lookup on every
  * request.

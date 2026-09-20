@@ -34,8 +34,8 @@ import org.springframework.web.server.ResponseStatusException
  *   returns the fresh row.
  * - The wiring-bug paths : missing authentication, wrong principal type, principal referencing a
  *   deleted user. All three are [IllegalStateException] because they indicate a regression in the
- *   chain — `SecurityConfig` + `LocalNoAuthFilter` + Spring Security itself should never route an
- *   unauthenticated request to a method that calls [AuthService.getCurrentUser].
+ *   chain — `SecurityConfig` + Spring Security itself should never route an unauthenticated request
+ *   to a method that calls [AuthService.getCurrentUser].
  * - [AuthService.isAdmin] : trivially reads [User.role] but pinned here so future role additions
  *   don't accidentally make a new role admin-equivalent.
  *

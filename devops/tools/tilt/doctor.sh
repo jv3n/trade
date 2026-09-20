@@ -75,7 +75,7 @@ else
 fi
 
 if [ -f .env ]; then
-  ok ".env present (auth mode: ${BACKEND_AUTH_MODE:-no-auth})"
+  ok ".env present"
 else
   warn ".env absent — defaults from .env.example apply"
 fi

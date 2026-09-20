@@ -48,7 +48,7 @@ trade/
 │   ├── eslint.config.js                            # flat config — `ui` + `stb` selector prefixes
 │   └── angular.json                                # 2 projects : web, ui
 ├── projects/backend/src/main/kotlin/com/portfolioai/
-│   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles + local-no-auth profile
+│   ├── auth/        # OAuth2/OIDC + ADMIN/USER roles
 │   ├── journal/     # Trade journal (CRUD + CSV export + Pageable + executions + attachments)
 │   ├── account/     # Broker cash account — movements + derived balance, fed by journal P&L (event)
 │   ├── stats/       # Stats sheet (CSV export + per-user rows)

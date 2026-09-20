@@ -37,11 +37,7 @@ backend_port = dotenv.get("BACKEND_HOST_PORT", "8080")
 frontend_port = dotenv.get("FRONTEND_HOST_PORT", "4200")
 storybook_port = dotenv.get("STORYBOOK_HOST_PORT", "6006")
 
-# `.env` is watched, so flipping the mode reloads this file and restarts the backend by itself.
-auth_mode = dotenv.get("BACKEND_AUTH_MODE", "no-auth")
-if auth_mode not in ["no-auth", "oauth"]:
-    fail("BACKEND_AUTH_MODE must be 'no-auth' or 'oauth', got '" + auth_mode + "'")
-spring_profiles = "local" if auth_mode == "oauth" else "local,local-no-auth"
+spring_profiles = "local"
 
 node_version = tools.get("nodejs", "24.15.0")
 java_major = tools.get("java", "openjdk-21").replace("openjdk-", "").replace("temurin-", "").split(".")[0]
@@ -220,22 +216,6 @@ local_resource(
     ),
     labels=["app"],
     links=[link("http://{}:{}".format(host, storybook_port), "Storybook")],
-)
-
-cmd_button(
-    name="auth-mode-oauth",
-    resource="backend",
-    text="Mode → OAuth (real Google login)",
-    icon_name="login",
-    argv=["./devops/tools/tilt/auth-mode.sh", "oauth"],
-)
-
-cmd_button(
-    name="auth-mode-no-auth",
-    resource="backend",
-    text="Mode → no-auth (fast dev)",
-    icon_name="developer_mode",
-    argv=["./devops/tools/tilt/auth-mode.sh", "no-auth"],
 )
 
 # ─────────────────────────────────────────── tools
