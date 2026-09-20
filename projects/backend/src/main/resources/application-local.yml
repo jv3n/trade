@@ -1,26 +1,22 @@
-# Profil local — surcharge `application.yml` pour le dev solo via Tilt.
-#
-# **Pas de secrets ici.** Toutes les clés API + credentials OAuth Google + emails admin + URL
-# frontend vivent dans `.env` à la racine du repo (gitignored). Le Tiltfile `source` ce `.env`
-# dans le `serve_cmd` du backend, qui exporte les vars au sous-process gradle, et Spring Boot
-# les pickè up via son relaxed binding (`SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
-# → la property correspondante). Ce fichier ne contient donc que les overrides de **comportement**
-# dev — SQL verbeux, Swagger activé.
+# Local profile — behaviour overrides for solo dev under Tilt. No secrets here: credentials live in
+# `.env` at the repo root and reach Spring through the relaxed binding.
 
 spring:
-  # Lazy initialization — les beans ne sont créés qu'au premier usage, pas au boot. Gain de
-  # démarrage en dev.
-  # Contrepartie acceptée en dev solo : une erreur de wiring n'apparaît qu'au 1ᵉʳ appel du bean
-  # concerné (pas au boot), et la 1ʳᵉ requête sur un module froid est un peu plus lente. **Local
-  # uniquement** — la prod (`application-prod.yml`) garde l'eager init pour fail-fast au déploiement.
+  # Beans are created on first use instead of at boot. A wiring error then surfaces on the first
+  # call to the bean rather than at startup — accepted in dev, never in prod.
   main:
     lazy-initialization: true
 
-  # JPA SQL logging désactivé par défaut — bruit excessif sur les logs Tilt (chaque cache hit,
-  # chaque /api/me, chaque check ownership produit 3-5 lignes de SQL formatté). Repasse à `true`
-  # ponctuellement quand tu debug un comportement persistance spécifique (lazy fetch en trop,
-  # N+1, mauvais JOIN). Idem pour `format_sql` qui rend les requêtes lisibles mais multiplie
-  # leur hauteur par ~6 lignes.
+  # `backend-compile` (Tiltfile) recompiles into the classpath devtools polls, which restarts the
+  # context in ~2 s instead of a full `bootRun`. Gradle writes classes in bursts, so the quiet
+  # period has to outlast a compile round or the context restarts mid-write.
+  devtools:
+    restart:
+      quiet-period: 1s
+      poll-interval: 2s
+
+  # Flip to `true` when chasing a persistence behaviour (N+1, unwanted lazy fetch): every cache hit
+  # and every ownership check otherwise adds 3-5 lines of SQL to the Tilt logs.
   jpa:
     show-sql: false
     properties:
@@ -28,11 +24,10 @@ spring:
         format_sql: false
 
   flyway:
-    repair-on-migrate: true  # Répare automatiquement les checksums en dev
+    repair-on-migrate: true
 
-# springdoc-openapi — activé en local seulement (le défaut côté `application.yml` est `false`).
-# Swagger UI : http://localhost:${BACKEND_HOST_PORT}/swagger-ui.html
-# OpenAPI JSON : http://localhost:${BACKEND_HOST_PORT}/v3/api-docs
+# Enabled locally only — `application.yml` keeps it off everywhere else.
+# Swagger UI: http://localhost:${BACKEND_HOST_PORT}/swagger-ui.html
 springdoc:
   api-docs:
     enabled: true

@@ -1,0 +1,14 @@
+# Written by the Tiltfile itself — watching it would loop the reload.
+.tilt.env
+
+# Build output.
+projects/backend/build/**
+projects/backend/.gradle/**
+projects/frontend/node_modules/**
+projects/frontend/dist/**
+projects/frontend/.angular/**
+
+# Local-only data.
+devops/local/dumps/**
+docs/data-input-local/**
+docs/tmp-files/**
