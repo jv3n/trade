@@ -1,353 +1,311 @@
-# PortfolioAI — Tiltfile
+# PortfolioAI — local stack: Postgres in Docker, backend and frontend run natively.
+# The logic behind every button lives in devops/tools/tilt/ ; this file only declares and wires.
 
 load("ext://uibutton", "cmd_button")
 
-# Network host (override with: tilt up -- --host=192.168.18.13)
-config.define_string("host", args=False, usage="Network host (e.g. 192.168.18.13)")
-cfg = config.parse()
-host = cfg.get("host", "localhost")
+config.define_string("host", args=False, usage="Host used in the UI links (e.g. 192.168.18.13)")
+host = config.parse().get("host", "localhost")
 
-# ────────────────────────────────────────────────
-# Ports — loaded from .env (gitignored) with fallback to defaults
-# ────────────────────────────────────────────────
-#
-# If a `.env` file exists at the repo root, we read it to pick up port overrides
-# (POSTGRES_HOST_PORT / BACKEND_HOST_PORT / FRONTEND_HOST_PORT).
-# Otherwise we fall back to the defaults. See `.env.example` for the template.
-#
-# Docker Compose reads `.env` automatically for its own `${VAR:-default}` substitutions ;
-# we duplicate the read here because Tilt does NOT auto-load `.env` into its Starlark env
-# and we need the values for (a) the Tilt UI links and (b) injecting into the serve_cmds
-# that run the backend (Spring) and frontend (Angular).
+# ─────────────────────────────────────────── configuration
 
-def load_env_file(path):
-    """Reads `.env` if present, returns a {key: str} dict. Skips comments and blank lines."""
+def read_pairs(path, sep):
+    """Parses a `.env` (sep '=') or `.tool-versions` (sep ' ') file into a dict."""
     if not os.path.exists(path):
         return {}
     out = {}
-    for raw_line in str(read_file(path)).splitlines():
-        line = raw_line.strip()
+    for raw in str(read_file(path)).splitlines():
+        line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        if "=" not in line:
-            continue
-        k, _, v = line.partition("=")
-        # Strip optional surrounding quotes — `KEY="value"` and `KEY='value'` accepted.
-        out[k.strip()] = v.strip().strip('"').strip("'")
+        if sep == "=":
+            if "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            out[k.strip()] = v.strip().strip('"').strip("'")
+        else:
+            parts = line.split()
+            if len(parts) >= 2:
+                out[parts[0]] = parts[1]
     return out
 
-env = load_env_file(".env")
+watch_file(".env")
+dotenv = read_pairs(".env", "=")
+tools = read_pairs(".tool-versions", " ")
 
-postgres_port = env.get("POSTGRES_HOST_PORT", "5432")
-backend_port = env.get("BACKEND_HOST_PORT", "8080")
-frontend_port = env.get("FRONTEND_HOST_PORT", "4200")
-storybook_port = env.get("STORYBOOK_HOST_PORT", "6006")
+postgres_port = dotenv.get("POSTGRES_HOST_PORT", "5432")
+backend_port = dotenv.get("BACKEND_HOST_PORT", "8080")
+frontend_port = dotenv.get("FRONTEND_HOST_PORT", "4200")
+storybook_port = dotenv.get("STORYBOOK_HOST_PORT", "6006")
 
-# ────────────────────────────────────────────────
-# Toolchain resolver — mise (Linux/WSL) vs nvm + java_home (macOS)
-# ────────────────────────────────────────────────
-#
-# Tilt's `os.name` is Python-style (`posix`/`nt`), not GOOS — useless to tell macOS from Linux.
-# We shell out to `uname -s` instead ("Darwin" on macOS, "Linux" on Linux/WSL2). WSL2 reports
-# as Linux, which is the branch we want there. On macOS we don't assume `mise` is installed
-# and fall back to the historical combo: nvm for node, `/usr/libexec/java_home` for Java.
-# Versions are read from the repo-root `.tool-versions` in either case, so bumping a version
-# is a single file edit regardless of platform.
+# `.env` is watched, so flipping the mode reloads this file and restarts the backend by itself.
+auth_mode = dotenv.get("BACKEND_AUTH_MODE", "no-auth")
+if auth_mode not in ["no-auth", "oauth"]:
+    fail("BACKEND_AUTH_MODE must be 'no-auth' or 'oauth', got '" + auth_mode + "'")
+spring_profiles = "local" if auth_mode == "oauth" else "local,local-no-auth"
 
-def load_tool_versions(path):
-    """Reads asdf/mise `.tool-versions`, returns {tool: version}."""
-    if not os.path.exists(path):
-        return {}
-    out = {}
-    for raw_line in str(read_file(path)).splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        parts = line.split()
-        if len(parts) >= 2:
-            out[parts[0]] = parts[1]
-    return out
-
-tools = load_tool_versions(".tool-versions")
 node_version = tools.get("nodejs", "24.15.0")
-# `.tool-versions` java spec looks like `openjdk-21.0.11` or `temurin-21.0.4` — strip the
-# distribution prefix and keep only the major for `/usr/libexec/java_home -v <major>`.
-java_spec = tools.get("java", "openjdk-21.0.11")
-java_major = java_spec.replace("openjdk-", "").replace("temurin-", "").split(".")[0]
+java_major = tools.get("java", "openjdk-21").replace("openjdk-", "").replace("temurin-", "").split(".")[0]
 
-uname = str(local("uname -s", quiet = True, echo_off = True)).strip()
+# ─────────────────────────────────────────── platform & toolchain
 
-# WSL2 detection — the repo lives on a `/mnt/c` (DrvFs) mount there, which forbids deleting a file
-# still held open by another process. A lingering `bootRun` JVM keeping `.class` files open then
-# makes Gradle's `compileKotlin` fail with `Could not delete build/classes/kotlin/main/com`. We
-# dodge it by relocating the Gradle build dir to the native ext4 fs on WSL only (`backend_build_dir`
-# below). `uname -r` carries "microsoft" on WSL2; native Linux / macOS don't.
-is_wsl = uname == "Linux" and "microsoft" in str(local("uname -r", quiet = True, echo_off = True)).lower()
+uname = str(local("uname -s", quiet=True, echo_off=True)).strip()
+is_mac = uname == "Darwin"
+is_wsl = not is_mac and "microsoft" in str(local("uname -r", quiet=True, echo_off=True)).lower()
 
-# Backend Gradle build directory. On WSL → the native ext4 fs (`~/.cache`) to dodge the DrvFs
-# delete-while-open failure described above; elsewhere → the default in-tree `projects/backend/build`. The
-# value is consumed in two places: exported as `GRADLE_BUILD_DIR` to the backend `serve_cmd` (read
-# by `build.gradle.kts`), and in the db-purge button's `rm -rf` of the compiled migrations. `$HOME`
-# stays unexpanded here on purpose — it is resolved by the `sh -c` that actually runs each command.
-backend_build_dir = "$HOME/.cache/portfolioai/backend-build" if is_wsl else "projects/backend/build"
-build_dir_export = ('export GRADLE_BUILD_DIR="' + backend_build_dir + '" ; \\\n  ') if is_wsl else ""
+# WSL2 only: the repo sits on a /mnt/c (9p) mount where deleting a file another process holds open
+# fails, and where inotify misses writes made from the Windows side. Gradle's output and Tilt's own
+# project cache move to ext4, and the Angular dev server polls instead of watching.
+gradle_build_dir = os.getenv("HOME") + "/.cache/portfolioai/backend-build" if is_wsl else "projects/backend/build"
+gradle_cache_dir = os.getenv("HOME") + "/.cache/portfolioai/tilt-project-cache" if is_wsl else "projects/backend/.gradle"
+gradle_cache_arg = ' --project-cache-dir="' + gradle_cache_dir + '"' if is_wsl else ""
+ng_poll = " --poll 2000" if is_wsl else ""
 
-# Dedicated Gradle *project cache* for Tilt's `bootRun`. The default project cache is `projects/backend/.gradle`
-# — on WSL that sits on the `/mnt/c` (9p) mount whose fragile file locking bit us: a `bootRun` daemon
-# left over across a Kotlin-plugin bump kept `projects/backend/.gradle/<ver>/fileHashes` locked, so the next,
-# version-incompatible `bootRun` daemon could not acquire it → "Cannot lock file hash cache … already
-# locked". Giving Tilt its own project cache (a) moves the lock file to native ext4 and (b) stops
-# IntelliJ / a terminal Gradle run from ever contending on the same lock. Paired with `--no-daemon`
-# in `backend_cmd` so the build JVM dies with the serve_cmd on every restart — no daemon survives a
-# toolchain change to keep the lock held. WSL-only (the DrvFs fragility is the driver); elsewhere the
-# in-tree default is fine. `$HOME` stays unexpanded — resolved by the `sh -c` that runs the command.
-tilt_project_cache = "$HOME/.cache/portfolioai/tilt-project-cache" if is_wsl else "projects/backend/.gradle"
-project_cache_arg = (' --project-cache-dir="' + tilt_project_cache + '"') if is_wsl else ""
+def resolve(what, cmd, fix):
+    """Resolves a toolchain path once, at load time, so commands stay plain one-liners."""
+    found = str(local(cmd + " 2>/dev/null || true", quiet=True, echo_off=True)).strip()
+    if not found:
+        fail("no " + what + " found. Fix: " + fix)
+    return found
 
-if uname == "Darwin":
-    java_resolver = "JAVA_HOME=$(/usr/libexec/java_home -v " + java_major + ")"
-    # `sh -c` doesn't source ~/.zshrc, so nvm is off PATH — source nvm.sh and pin the version
-    # declared in `.tool-versions`.
-    node_init = (
-        'export NVM_DIR="$HOME/.nvm" ; ' +
-        'if [ -s "$NVM_DIR/nvm.sh" ]; then . "$NVM_DIR/nvm.sh" --no-use ; ' +
-        'nvm use ' + node_version + ' >/dev/null ; fi'
-    )
-    npm_run = "npm"
-else:
-    java_resolver = "JAVA_HOME=$(mise where java)"
-    node_init = ":"  # noop — mise resolves node per-call via `mise exec`
-    npm_run = "mise exec -- npm"
+java_home = resolve(
+    "JDK " + java_major,
+    "/usr/libexec/java_home -v " + java_major if is_mac else "mise where java",
+    "install a JDK " + java_major + " (see .tool-versions)",
+)
+node_bin = resolve(
+    "node " + node_version,
+    'export NVM_DIR="$HOME/.nvm" ; . "$NVM_DIR/nvm.sh" --no-use ; dirname $(nvm which ' + node_version + ")"
+    if is_mac
+    else "echo $(mise where node)/bin",
+    "nvm install " + node_version if is_mac else "mise install node@" + node_version,
+)
 
-# ────────────────────────────────────────────────
-# Infra — Docker services (PostgreSQL)
-# ────────────────────────────────────────────────
+tool_env = {"JAVA_HOME": java_home, "PATH": node_bin + ":" + os.getenv("PATH")}
+if is_wsl:
+    tool_env["GRADLE_BUILD_DIR"] = gradle_build_dir
+
+# Exported so the tool scripts resolve the same toolchain and the same relocated dirs as Tilt does.
+local(
+    'echo "$CONTENTS" > .tilt.env',
+    env={
+        "CONTENTS": "\n".join(
+            [k + "=" + v for k, v in tool_env.items()]
+            + [
+                "GRADLE_BUILD_DIR=" + gradle_build_dir,
+                "GRADLE_PROJECT_CACHE=" + gradle_cache_dir,
+                "NODE_BIN=" + node_bin,
+                # The scripts branch on it the same way this file does (9p quirks).
+                "IS_WSL=" + ("1" if is_wsl else "0"),
+            ]
+        )
+    },
+    quiet=True,
+    echo_off=True,
+)
+
+# ─────────────────────────────────────────── infra
 
 docker_compose("docker-compose.yml")
-dc_resource("postgres", labels = ["infra"])
-
-# "Purge" button attached to the `postgres` panel — drop the schema + wipe stale compiled
-# migrations + restart the backend (which replays Flyway from scratch against the empty schema).
-#
-# The restart goes through `tilt trigger backend`, NOT a `touch application.yml`. Reason: on
-# WSL2 the repo sits on a `/mnt/c` (9p) mount where inotify does not propagate reliably — Tilt
-# never sees the `touch` and never re-runs the `serve_cmd`. Outcome (already lived): schema
-# dropped but backend still up on its old connections → missing tables, `/actuator/health` KO.
-# `tilt trigger` forces the resource update independently of file-watch → 100% reliable.
-#
-# The `rm -rf <buildDir>/resources/main/db/migration` is the second lesson learned: Gradle's
-# `processResources` is a `Copy` task, which updates/adds files but NEVER deletes ones removed
-# from `src`. A deleted/renamed migration therefore lingers in `build/` and Flyway replays it
-# from the classpath — e.g. a merged-away `V8` re-running `ADD COLUMN entries` → "already exists",
-# backend down. Wiping the compiled migration dir forces `processResources` (a dependency of
-# `bootRun`) to detect the tampered output and recopy migrations fresh from `src` on restart.
-# Targeted on purpose: a full `./gradlew clean` would add a ~50 s recompile to every purge and
-# would race the still-live `bootRun` daemon.
-cmd_button(
-    name = "db-purge",
-    resource = "postgres",
-    text = "Purge — drop schema + restart backend",
-    icon_name = "delete_sweep",
-    argv = [
-        "sh",
-        "-c",
-        "docker exec portfolioai-postgres psql -U portfolioai -d portfolioai -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO portfolioai; GRANT ALL ON SCHEMA public TO public;' && rm -rf \"" + backend_build_dir + "/resources/main/db/migration\" && tilt trigger backend",
-    ],
-)
-
-# "Seed" button — loads the demo data mirroring the mockups (`devops/local/seed-demo.sql`) for the
-# first user. Typical cycle : Purge → wait for the backend to replay Flyway → log in → Seed. The
-# script refuses to run if the user already has data, so a stray click never overwrites anything.
-cmd_button(
-    name = "db-seed",
-    resource = "postgres",
-    text = "Seed — load the demo data",
-    icon_name = "dataset",
-    argv = [
-        "sh",
-        "-c",
-        "docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/local/seed-demo.sql",
-    ],
-)
-
-# ────────────────────────────────────────────────
-# App — Backend Spring Boot & Frontend Angular
-# ────────────────────────────────────────────────
-
-# The `serve_cmd` sources `.env` at the repo root (`set -a` + `. ../../.env`) to export **all**
-# its variables to the gradle sub-process. Spring Boot then reads them via its relaxed
-# binding — `POSTGRES_HOST_PORT` → `${POSTGRES_HOST_PORT}` in application.yml,
-# `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID`
-# → the matching property, etc. No more per-var hardcoding here: the single source of truth
-# is `.env`. If `.env` does not exist (fresh clone), gradle starts without any var and Spring
-# falls back to the application.yml defaults — expected behaviour.
-#
-# Spring profiles: `BACKEND_AUTH_MODE` (sourced from `.env`) drives which profiles the backend
-# activates. The Tilt buttons below flip the mode by editing `.env` then forcing a backend
-# restart via `tilt trigger backend`.
-#   - no-auth (default) → --spring.profiles.active=local,local-no-auth
-#       → `LocalNoAuthSecurityConfig` bypasses Spring Security, fake ADMIN user seeded at boot.
-#   - oauth             → --spring.profiles.active=local
-#       → `SecurityConfig` kicks in, real Google OAuth flow (creds via env vars sourced from
-#         `.env` → `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_{CLIENT_ID,CLIENT_SECRET}`).
-backend_cmd = """cd projects/backend && \\
-  """ + build_dir_export + """if [ -f ../../.env ]; then set -a ; . ../../.env ; set +a ; fi ; \\
-  AUTH_MODE=${BACKEND_AUTH_MODE:-no-auth} ; \\
-  if [ \"$AUTH_MODE\" = \"oauth\" ]; then PROFILES=\"local\"; else PROFILES=\"local,local-no-auth\"; fi ; \\
-  echo \"[Tilt] backend launching with --spring.profiles.active=$PROFILES (BACKEND_AUTH_MODE=$AUTH_MODE)\" ; \\
-  """ + java_resolver + """ \\
-    ./gradlew --no-daemon bootRun --configuration-cache""" + project_cache_arg + """ --args=\"--spring.profiles.active=$PROFILES\""""
+dc_resource("postgres", labels=["infra"])
 
 local_resource(
-    name = "backend",
-    serve_cmd = backend_cmd,
-    deps = [
-        "projects/backend/src",
-        "projects/backend/build.gradle.kts",
-        "projects/backend/settings.gradle.kts",
-    ],
-    resource_deps = ["postgres"],
-    readiness_probe = probe(
-        http_get = http_get_action(port = int(backend_port), path = "/actuator/health"),
-        period_secs = 3,
-        failure_threshold = 20,
+    name="frontend-deps",
+    cmd="./devops/tools/tilt/frontend-deps.sh",
+    env=tool_env,
+    deps=["projects/frontend/package-lock.json", "devops/tools/tilt/frontend-deps.sh"],
+    labels=["infra"],
+)
+
+# Recompiles into the classpath that spring-boot-devtools polls, which restarts the running context
+# on its own. Test sources are excluded — they never belong to the running app.
+#
+# `deps` is empty on WSL2: Tilt's watch is inotify-based and never sees a write made from the
+# Windows side, so it would silently stop recompiling exactly when an editor (or an agent) running
+# on Windows edits the code. `backend-watch` below polls instead — measured on this machine: a
+# Windows-side edit triggers nothing without it.
+local_resource(
+    name="backend-compile",
+    cmd="cd projects/backend && ./gradlew classes" + gradle_cache_arg,
+    env=tool_env,
+    deps=[] if is_wsl else ["projects/backend/src/main"],
+    resource_deps=["backend"],
+    labels=["infra"],
+)
+
+if is_wsl:
+    local_resource(
+        name="backend-watch",
+        serve_cmd="./devops/tools/tilt/backend-watch.sh",
+        serve_env=tool_env,
+        resource_deps=["backend-compile"],
+        labels=["infra"],
+    )
+
+# ─────────────────────────────────────────── app
+
+backend_cmd = """cd projects/backend && \\
+  if [ -f ../../.env ]; then set -a ; . ../../.env ; set +a ; fi ; \\
+  ./gradlew --no-daemon bootRun --configuration-cache{cache} --args="--spring.profiles.active={profiles}\"""".format(
+    cache=gradle_cache_arg, profiles=spring_profiles
+)
+
+local_resource(
+    name="backend",
+    serve_cmd=backend_cmd,
+    serve_env=tool_env,
+    # Sources are deliberately absent: they are handled by `backend-compile`, which is a ~2 s
+    # devtools restart instead of the ~40 s cold `bootRun` a change here costs (resource above).
+    deps=["projects/backend/build.gradle.kts", "projects/backend/settings.gradle.kts"],
+    resource_deps=["postgres"],
+    readiness_probe=probe(
+        http_get=http_get_action(port=int(backend_port), path="/actuator/health"),
+        period_secs=3,
+        failure_threshold=20,
     ),
-    labels = ["app"],
-    links = [
+    labels=["app"],
+    links=[
         link("http://{}:{}/actuator/health".format(host, backend_port), "Health"),
         link("http://{}:{}/swagger-ui.html".format(host, backend_port), "Swagger UI"),
     ],
 )
 
-# Buttons to flip `BACKEND_AUTH_MODE` in `.env` without editing the file by hand. Each button
-# rewrites the line (or appends it if absent), then forces a backend restart via
-# `tilt trigger backend` → the shell re-runs `bootRun`, re-reads `.env`, and starts Spring with
-# the matching profiles. We use `tilt trigger` rather than a `touch application.yml` because
-# Tilt's inotify is not reliable on the `/mnt/c` 9p mount under WSL2 (see db-purge button).
-cmd_button(
-    name = "switch-auth-mode-oauth",
-    resource = "backend",
-    text = "Mode → OAuth (test Google login)",
-    icon_name = "login",
-    argv = [
-        "sh",
-        "-c",
-        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=oauth' >> .env; tilt trigger backend; echo 'Switched to OAuth mode — backend restarting. Make sure application-local.yml has real google client-id/secret + app.admin.emails.'",
-    ],
+local_resource(
+    name="frontend",
+    serve_cmd="cd projects/frontend && npm start -- --host 0.0.0.0 --port {}{}".format(frontend_port, ng_poll),
+    serve_env=tool_env,
+    # `proxy.conf.js` is only read at startup, so it has to restart the dev server.
+    deps=["projects/frontend/apps/web/proxy.conf.js"],
+    resource_deps=["frontend-deps"],
+    # Without a probe the resource goes green when the process starts, which is a minute before the
+    # dev server binds its port — it only listens once the first build lands. TCP rather than HTTP:
+    # a successful http_get probe dumps the whole page into the Tilt logs.
+    readiness_probe=probe(
+        tcp_socket=tcp_socket_action(port=int(frontend_port)),
+        period_secs=3,
+        failure_threshold=40,
+    ),
+    labels=["app"],
+    links=[link("http://{}:{}".format(host, frontend_port), "App")],
 )
-
-cmd_button(
-    name = "switch-auth-mode-no-auth",
-    resource = "backend",
-    text = "Mode → no-auth (fast dev)",
-    icon_name = "developer_mode",
-    argv = [
-        "sh",
-        "-c",
-        "set -e; touch .env; grep -v '^BACKEND_AUTH_MODE=' .env > .env.tmp || true; mv .env.tmp .env; echo 'BACKEND_AUTH_MODE=no-auth' >> .env; tilt trigger backend; echo 'Switched to no-auth mode — backend restarting with fake ADMIN dev@local.test'",
-    ],
-)
-
-
-# `serve_cmd` runs under non-interactive `sh -c`, so we resolve node/npm via the toolchain
-# resolver picked above (mise on Linux/WSL, nvm on macOS). Either way the node version comes
-# from the repo-root `.tool-versions` — bumping node = bumping `.tool-versions`, no Tiltfile
-# edit needed.
-#
-# `--poll 2000` forces `ng serve` to stat-poll the source tree every 2 s instead of relying on
-# native filesystem events. Required on WSL2: the repo sits on a `/mnt/c` 9p/drvfs mount where
-# inotify does **not** fire for writes made from the Windows side (e.g. an editor or tool running
-# on Windows). Without polling those edits never trigger a rebuild and the dev server looks stuck
-# even though the code on disk is correct. The 2 s interval is a CPU/latency compromise. On macOS
-# it costs ~nothing — native fsevents would work but the option is harmless to leave on.
-frontend_cmd = """cd projects/frontend && \\
-  """ + node_init + """ ; \\
-  """ + npm_run + """ start -- --host 0.0.0.0 --port {} --poll 2000""".format(frontend_port)
 
 local_resource(
-    name = "frontend",
-    serve_cmd = frontend_cmd,
-    deps = [
-        "projects/frontend/apps/web/src",
-        "projects/frontend/libs/ui/src",
-        "projects/frontend/angular.json",
-        "projects/frontend/package.json",
-        # `proxy.conf.js` is only read by `ng serve` at startup — no native hot-reload.
-        # Listing it in `deps` makes Tilt re-run the `serve_cmd` (= restart the dev server) on
-        # every save of that file, which avoids the silent trap: you edit the proxy, Tilt says
-        # "no changes", and you stay on the old config (e.g. the `/oauth2/**`, `/logout`,
-        # `/login/oauth2/**` routes or the `xfwd: true` flag added in Phase 4 would have been
-        # ignored without this deps entry).
-        "projects/frontend/apps/web/proxy.conf.js",
-    ],
-    labels = ["app"],
-    links = [link("http://{}:{}".format(host, frontend_port), "App")],
+    name="storybook",
+    serve_cmd="cd projects/frontend && npm run storybook -- --host 0.0.0.0 --port {} --no-open".format(storybook_port),
+    serve_env=tool_env,
+    resource_deps=["frontend-deps"],
+    auto_init=False,
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    readiness_probe=probe(
+        tcp_socket=tcp_socket_action(port=int(storybook_port)),
+        period_secs=3,
+        failure_threshold=40,
+    ),
+    labels=["app"],
+    links=[link("http://{}:{}".format(host, storybook_port), "Storybook")],
 )
 
-# Storybook — serves the `@portfolioai/ui` lib in isolation. Resource disabled at boot
-# (`auto_init=False`) because Storybook takes ~10 s to start and we don't need it every
-# session: trigger it manually from the Tilt UI when working on the lib ("play" button on
-# the `storybook` panel). HMR is handled by Storybook itself, so no `deps` that would force
-# Tilt to restart the server on every story edit.
-storybook_cmd = """cd projects/frontend && \\
-  """ + node_init + """ ; \\
-  """ + npm_run + """ run storybook -- --host 0.0.0.0 --port {} --no-open""".format(storybook_port)
+cmd_button(
+    name="auth-mode-oauth",
+    resource="backend",
+    text="Mode → OAuth (real Google login)",
+    icon_name="login",
+    argv=["./devops/tools/tilt/auth-mode.sh", "oauth"],
+)
+
+cmd_button(
+    name="auth-mode-no-auth",
+    resource="backend",
+    text="Mode → no-auth (fast dev)",
+    icon_name="developer_mode",
+    argv=["./devops/tools/tilt/auth-mode.sh", "no-auth"],
+)
+
+# ─────────────────────────────────────────── tools
+
+# Diagnostic, not a startup step: at `tilt up` time half of what it looks at is legitimately not
+# there yet. Runs standalone too, which is what to do when Tilt itself refuses to load.
+local_resource(
+    name="doctor 🩺",
+    cmd="./devops/tools/tilt/doctor.sh",
+    deps=["devops/tools/tilt/doctor.sh"],
+    auto_init=False,
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    labels=["tools"],
+)
+
+# Button holders — the resource itself does nothing, the buttons are the tooling.
+local_resource(name="database 🛢", cmd="date", labels=["tools"])
+
+cmd_button(
+    name="db-purge",
+    resource="database 🛢",
+    text="Purge — drop schema + restart backend",
+    icon_name="delete_sweep",
+    argv=["./devops/tools/tilt/db-purge.sh"],
+    requires_confirmation=True,
+)
+
+cmd_button(
+    name="db-seed",
+    resource="database 🛢",
+    text="Seed — load the demo data",
+    icon_name="dataset",
+    argv=["./devops/tools/tilt/db-seed.sh"],
+)
+
+cmd_button(
+    name="db-dump",
+    resource="database 🛢",
+    text="Dump — snapshot to devops/local/dumps",
+    icon_name="archive",
+    argv=["./devops/tools/tilt/db-dump.sh"],
+)
+
+cmd_button(
+    name="db-restore",
+    resource="database 🛢",
+    text="Restore — reload the latest dump",
+    icon_name="unarchive",
+    argv=["./devops/tools/tilt/db-restore.sh"],
+    requires_confirmation=True,
+)
 
 local_resource(
-    name = "storybook",
-    serve_cmd = storybook_cmd,
-    auto_init = False,
-    trigger_mode = TRIGGER_MODE_MANUAL,
-    labels = ["app"],
-    links = [link("http://{}:{}".format(host, storybook_port), "Storybook")],
+    name="housekeeping 🧹",
+    cmd="docker system df",
+    auto_init=False,
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    labels=["tools"],
 )
 
-# ────────────────────────────────────────────────
-# Misc — housekeeping (Docker + Gradle cleanup)
-# ────────────────────────────────────────────────
-#
-# A manual, non-auto-init resource grouped under its own `misc` label so the cleanup tooling lives
-# in a dedicated Tilt tab, away from infra/app. Triggering the resource just prints Docker disk
-# usage (`docker system df`) ; the actions are the two buttons below. Nothing here runs on
-# `tilt up`.
-local_resource(
-    name = "docker-housekeeping",
-    cmd = "docker system df",
-    auto_init = False,
-    trigger_mode = TRIGGER_MODE_MANUAL,
-    labels = ["misc"],
-)
-
-# One button to reclaim everything unused — stopped containers, unused images, build cache AND
-# unused volumes (`docker system prune -af --volumes`). The everyday clean-slate button, handy
-# before/after a dependency or base-image upgrade to avoid stale-layer / stale-cache surprises.
-#
-# Volume safety: `--volumes` only removes volumes referenced by NO container. While the compose
-# containers exist (the normal `tilt up` state), `portfolioai-postgres`'s `postgres_data` volume
-# stays referenced and is never touched — the local DB survives. It would only be dropped if the
-# postgres container had already been removed (e.g. after `docker compose down`).
 cmd_button(
-    name = "docker-prune-all",
-    resource = "docker-housekeeping",
-    text = "Docker — clean all unused (images + volumes + cache)",
-    icon_name = "cleaning_services",
-    argv = ["sh", "-c", "docker system prune -af --volumes ; echo '--- disk usage after ---' ; docker system df"],
+    name="docker-prune",
+    resource="housekeeping 🧹",
+    text="Docker — remove everything unused",
+    icon_name="cleaning_services",
+    argv=["./devops/tools/tilt/docker-prune.sh"],
+    requires_confirmation=True,
 )
 
-# Gradle reset — stop the daemons and wipe both the backend build dir and Tilt's dedicated project
-# cache (both relocated off /mnt/c on WSL, see `backend_build_dir` / `tilt_project_cache`). Clears the
-# "Could not delete build/classes" lock class, a stale `fileHashes` lock, and any stale compiled
-# output or configuration-cache after a dependency/toolchain bump. Trigger the backend to recompile.
 cmd_button(
-    name = "gradle-reset",
-    resource = "docker-housekeeping",
-    text = "Gradle — stop daemons + wipe build/project cache",
-    icon_name = "restart_alt",
-    argv = ["sh", "-c", "(cd projects/backend && " + java_resolver + " ./gradlew --stop) ; rm -rf \"" + backend_build_dir + "\" \"" + tilt_project_cache + "\" ; echo 'Gradle daemons stopped + build dir & project cache wiped. Trigger the backend to recompile.'"],
+    name="gradle-reset",
+    resource="housekeeping 🧹",
+    text="Gradle — stop daemons + wipe caches",
+    icon_name="restart_alt",
+    argv=["./devops/tools/tilt/gradle-reset.sh"],
 )
 
-# Print useful links
+local_resource(name="checks 🧪", cmd="date", labels=["tools"])
+
+for check in ["backend-test", "frontend-test", "lint", "format"]:
+    cmd_button(
+        name="check-" + check,
+        resource="checks 🧪",
+        text=check.replace("-", " "),
+        icon_name="task_alt",
+        argv=["./devops/tools/tilt/run-check.sh", check],
+    )
+
 print("Frontend  : http://{}:{}".format(host, frontend_port))
-print("Storybook : http://{}:{} (manual start)".format(host, storybook_port))
-print("Backend   : http://{}:{}".format(host, backend_port))
-print("Health    : http://{}:{}/actuator/health".format(host, backend_port))
+print("Backend   : http://{}:{}  (profiles: {})".format(host, backend_port, spring_profiles))
+print("Storybook : http://{}:{}  (manual start)".format(host, storybook_port))

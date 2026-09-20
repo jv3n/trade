@@ -6,6 +6,13 @@ services:
       POSTGRES_DB: portfolioai
       POSTGRES_USER: portfolioai
       POSTGRES_PASSWORD: portfolioai
+    # Without it Tilt turns the resource green as soon as the container is up, and the backend
+    # starts against a Postgres that is not accepting connections yet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolioai -d portfolioai"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
     ports:
       # The host port is configurable via `.env` (POSTGRES_HOST_PORT) in case of a conflict with
       # another local service. The container's internal port stays 5432 — only the host:container

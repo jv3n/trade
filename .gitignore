@@ -116,3 +116,7 @@ docs/pso/
 *.swp
 *.swo
 *~
+
+# Tilt
+.tilt.env
+devops/local/dumps/
