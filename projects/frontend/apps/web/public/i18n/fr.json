@@ -5,7 +5,6 @@
     "cancel": "Annuler",
     "retry": "Réessayer",
     "noData": "—",
-    "errorIcon": "error_outline",
     "instrumentLabel": {
       "STOCK": "Action",
       "ETF": "ETF",

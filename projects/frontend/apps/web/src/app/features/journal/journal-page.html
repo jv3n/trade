@@ -189,7 +189,7 @@
 
     @if (error(); as msg) {
       <div class="error-banner">
-        <mat-icon>error_outline</mat-icon>
+        <mat-icon>error</mat-icon>
         <span>{{ msg }}</span>
       </div>
     }
@@ -201,7 +201,7 @@
       </div>
     } @else if (entries().length === 0) {
       <div class="empty-state">
-        <mat-icon>book</mat-icon>
+        <mat-icon>menu_book</mat-icon>
         <p>{{ 'journal.empty' | translate }}</p>
       </div>
     } @else {
