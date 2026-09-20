@@ -59,8 +59,7 @@ trade/
 │   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
 ├── docs/
 │   ├── pattern/                                    # Trading-pattern references (GUS.md)
-│   ├── data-input/                                 # synthetic CSVs (versioned)
-│   └── data-input-local/                           # real Wealthsimple exports (gitignored)
+│   └── data-input-local/                           # real broker exports (gitignored)
 ├── mockup/                                         # Target product : static HTML mockups + PARCOURS.md (user journey)
 ├── devops/prod/                                    # Dockerfile + service.yaml (Cloud Run deploy)
 ├── .github/workflows/                              # backend.yml, frontend.yml, codeql.yml, deploy.yml, …
@@ -149,7 +148,7 @@ read top to bottom is the point there.
 ### Data & secrets
 
 - `application-local.yml` + `application-prod.yml` are **committed** (no secrets — only behavior overrides like `spring.flyway.repair-on-migrate`, `springdoc.api-docs.enabled`). The dangerous-in-prod settings are isolated to the `local` profile by construction. **Never commit API keys / OAuth secrets / DB passwords** — those live in `.env` (local, gitignored) and GCP Secret Manager (prod).
-- `docs/data-input/` holds synthetic CSVs (versioned) — `journal-export-sample.csv` documents the shape of the journal export. Real exports go to `docs/data-input-local/` (gitignored). Never mix them.
+- Real broker exports go to `docs/data-input-local/` (gitignored) and never into the repo.
 
 ### Commits
 
