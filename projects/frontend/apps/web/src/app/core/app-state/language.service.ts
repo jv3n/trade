@@ -9,9 +9,8 @@ export type { Language };
 export const SUPPORTED_LANGUAGES: readonly Language[] = ['fr', 'en'];
 
 /**
- * Unicode regional indicator emojis used to label languages in the UI. Choices :
- * - `fr` → 🇫🇷 (Hexagone, plus universel que 🇨🇦 même si la cible primaire est canadienne)
- * - `en` → 🇬🇧 (par convention pour l'anglais international ; 🇺🇸 reste lisible mais plus marqué)
+ * Flags labelling the languages in the UI : 🇫🇷 reads more universally than 🇨🇦 even though the
+ * user is Canadian, and 🇬🇧 is the convention for international English.
  */
 const LANGUAGE_FLAGS: Readonly<Record<Language, string>> = {
   fr: '🇫🇷',

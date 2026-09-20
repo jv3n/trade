@@ -17,9 +17,9 @@ import java.util.UUID
  * `app.admin.emails` whitelist (matching email → [Role.ADMIN], otherwise [Role.USER]). On
  * subsequent logins the row is updated in place ([lastLoginAt] refreshed, [displayName] re-sync'd
  * if Google returns a different name). The role itself is **not** re-evaluated on subsequent logins
- * so that a manual rétrogradation (`UPDATE app_user SET role='USER'`) survives the next login of an
- * email that's still in the whitelist — the table is the source of truth, the whitelist only seeds
- * the first creation.
+ * so that a manual demotion (`UPDATE app_user SET role='USER'`) survives the next login of an email
+ * that's still in the whitelist — the table is the source of truth, the whitelist only seeds the
+ * first creation.
  *
  * Email is the natural key (UNIQUE constraint) so a future second provider (GitHub OAuth) doesn't
  * fork a user per provider for the same human ; [provider] and [providerId] stay as traceability

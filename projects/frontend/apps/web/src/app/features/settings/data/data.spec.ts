@@ -10,7 +10,7 @@ import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { DataPage } from './data';
 
 /**
- * Spec for the « Données » page — the two CSV exports of the back-office (#196). What it pins :
+ * Spec for the Settings › Data page — the two CSV exports of the back-office (#196). What it pins :
  *
  * - **Download plumbing** — the blob reaches the browser through a throwaway anchor whose
  *   `download` filename carries the dataset and the day, and the object URL is revoked right after.

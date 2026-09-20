@@ -1,48 +1,38 @@
-# Spring profile `prod` overrides for PortfolioAI on Cloud Run + Supabase Postgres
-#
-# Chargé automatiquement par Spring Boot quand `SPRING_PROFILES_ACTIVE=prod` est posé
-# (injecté par Cloud Run via `service.yaml` env vars, cf. `devops/prod/service.yaml`).
-# **Pas de secrets ici** — uniquement des overrides de comportement (logging, pool size,
-# Flyway baseline). Les credentials runtime sont mountés via Cloud Run `--update-secrets`
-# depuis GCP Secret Manager, cf. `docs/devops/deploiement.md > §6`.
+# Spring profile `prod` — Cloud Run + Supabase Postgres.
+# Behaviour overrides only ; the runtime credentials are mounted from GCP Secret Manager.
 
 server:
-  port: ${PORT:8080}  # Cloud Run injecte PORT, on respecte
-  # Reverse proxy Cloud Run + Cloudflare devant — Spring doit faire confiance aux
-  # headers X-Forwarded-* pour générer les redirect URIs OAuth correctement.
+  port: ${PORT:8080}
   forward-headers-strategy: framework
-  # Pas d'arrêt brutal — laisse 30s pour drainer les requêtes en cours quand Cloud Run
-  # déploie une nouvelle révision (zero-downtime déploiement).
+  # 30 s to drain in-flight requests while Cloud Run rolls out a new revision.
   shutdown: graceful
 
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 
-  # DataSource — URL JDBC + creds inline lus depuis le secret `supabase-db-url`.
   datasource:
-    url: ${SPRING_DATASOURCE_URL}  # injecté via valueFrom.secretKeyRef côté Cloud Run
+    url: ${SPRING_DATASOURCE_URL}
     hikari:
-      maximum-pool-size: 10  # max instances Cloud Run = 3, max conn Supabase free = 60.
-                              # 3 × 10 = 30 connexions max simultanées, sous la limite.
-      minimum-idle: 0  # libère les connexions quand scale-to-zero
-      idle-timeout: 30000  # 30 s
+      # 3 Cloud Run instances × 10 = 30 connections at most, under the 60 of the Supabase free tier.
+      maximum-pool-size: 10
+      minimum-idle: 0
+      idle-timeout: 30000
 
   jpa:
     hibernate:
-      ddl-auto: validate  # pas `update` ni `create` en prod — Flyway gère le schema
+      ddl-auto: validate
     properties:
       hibernate:
-        format_sql: false  # pas de SQL verbose en prod
+        format_sql: false
         jdbc:
           time_zone: UTC
 
   flyway:
     enabled: true
     baseline-on-migrate: true
-    baseline-version: 0  # squash V1__init.sql livré Phase 4 — démarre à partir de V1
+    baseline-version: 0
 
-  # Pas de Tomcat verbose en prod
   mvc:
     log-resolved-exception: false
 
@@ -53,70 +43,35 @@ logging:
     org.hibernate.SQL: WARN
     org.springframework.web: WARN
     okhttp3: WARN
-    org.flywaydb.core: INFO  # garde le log des migrations au boot
-
-  # Format ligne unique adapté à Cloud Logging (parsing automatique côté GCP). `[%X{userId:-}]`
-  # surface le userId UUID posé par `SentryUserContextFilter` quand la requête est authentifiée
-  # (vide entre crochets sinon : `[]`). Pas l'email — convention `CLAUDE.md > Backend > Never log
-  # user emails`.
+    org.flywaydb.core: INFO
   pattern:
+    # Single line for Cloud Logging. `[%X{userId:-}]` carries the userId UUID of an authenticated
+    # request — never the email (cf. `CLAUDE.md > Backend`).
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{userId:-}] %logger{36} - %msg%n"
 
-# Sentry — DSN + tags posés ici parce qu'ils sont prod-only. Le base `application.yml` déclare le
-# bloc `sentry:` avec `dsn` vide (no-op SDK) ; on l'override ici avec la valeur Secret Manager.
-# Cf. `docs/devops/deploiement.md > §monitoring` pour la procédure de rotation du DSN.
 sentry:
-  # Injecté via `--update-secrets=SENTRY_DSN=sentry-dsn-backend:latest` dans `deploy.yml`. Si le
-  # secret est vide ou absent, le SDK no-op silencieusement — pas de crash boot.
   dsn: ${SENTRY_DSN:}
   environment: prod
-  # Tag chaque event avec la release courante (= tag git GitHub Release). `deploy.yml` propage la
-  # valeur via `--set-env-vars=SENTRY_RELEASE=${tag}`. Permet de filtrer dans le dashboard "errors
-  # introduced in v0.8.0" et d'attribuer les régressions à une release précise.
+  # The GitHub Release tag, propagated by `deploy.yml` — it is what attributes a regression to a
+  # release in the dashboard.
   release: ${SENTRY_RELEASE:}
-  # 100% errors + 0% performance traces — décision figée 2026-05-23, optimise le quota free tier
-  # (5K events/mo GlitchTip SaaS, ou illimité si self-host plus tard). Ne tracé aucune transaction
-  # HTTP ni span (overkill solo dev, et brûlerait le quota rapidement). À ré-évaluer si on passe
-  # multi-user ou si on veut profiler une endpoint en particulier.
+  # Errors only : tracing every transaction would burn the free-tier quota for no use on a solo app.
   traces-sample-rate: 0.0
-  # Limite l'instrumentation aux packages projet — Spring framework / Hibernate / etc. ne sont pas
-  # marqués `in_app: true` et leurs frames apparaissent en gris dans la stack trace (collapsable).
-  # Améliore la lisibilité du debugger sans perdre d'info.
+  # Frames outside these packages show up greyed out in the stack trace.
   in-app-includes: com.portfolioai
 
-# Actuator — endpoints minimaux pour Cloud Run probes + Healthcheck.io
 management:
   endpoints:
     web:
+      # No `env` and no `configprops` in prod — leak risk.
       exposure:
-        include: health, info  # pas de `env` ni `configprops` en prod (leak risk)
+        include: health, info
   endpoint:
     health:
       probes:
-        enabled: true  # active `/actuator/health/liveness` + `/readiness`
-      show-details: never  # pas de details secrets dans le payload public
+        enabled: true
+      show-details: never
 
-# App-level settings (`app.frontend-url`, `app.admin.emails`) + OAuth2 Google client registration
-# **gérés directement par le base `application.yml` + le relaxed binding env vars** :
-#
-#   - `app.frontend-url` : le base a `${APP_FRONTEND_URL:/}` (default `/` si env var non posée).
-#     En prod on peut soit poser `APP_FRONTEND_URL=https://<cloud-run-url>` au deploy pour que
-#     Spring construise les redirect URIs publiques correctes, soit laisser le default `/` qui
-#     marche aussi puisque le backend et la SPA Angular sont au même origine (Angular embarqué
-#     dans le jar via `static/`).
-#
-#   - `app.admin.emails` : le base a `${APP_ADMIN_EMAILS:}` (empty default). Cloud Run mount le
-#     secret `app-admin-emails` comme env var `APP_ADMIN_EMAILS` → Spring relaxed binding pickè
-#     up automatiquement, aucune YAML override nécessaire.
-#
-#   - `spring.security.oauth2.client.registration.google.*` : le base **n'en déclare pas** par
-#     design (`ClientRegistration.Builder.build()` crash sur `Assert.hasText(client-id)` si la
-#     registration est déclarée avec une valeur vide). Cloud Run mount les secrets
-#     `google-oauth-client-id` + `google-oauth-client-secret` comme env vars
-#     `SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID` / `_CLIENT_SECRET` →
-#     Spring relaxed binding crée la registration directement depuis les env vars + utilise les
-#     défauts `CommonOAuth2Provider.GOOGLE` pour les autres champs (scope, authorization URI…).
-#
-# Bref : Cloud Run pose les 3 env vars `APP_ADMIN_EMAILS` + `SPRING_SECURITY_OAUTH2_*` via les
-# secrets mountés, et le base `application.yml` (ou son absence pour OAuth) fait le reste. Pas
-# de double déclaration ici qui pourrait introduire un placeholder unresolvable.
+# `app.*` and the Google OAuth registration are not repeated here : Cloud Run mounts them as env
+# vars and Spring's relaxed binding picks them up from the base config. Declaring them again would
+# risk an unresolvable placeholder.

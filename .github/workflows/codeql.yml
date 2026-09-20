@@ -63,12 +63,9 @@ jobs:
           java-version: '21'
           distribution: temurin
 
-      # Same Gradle cache action as backend.yml for the *dependency* cache (JARs téléchargés
-      # depuis Maven Central). On NE PARTAGE PAS le build cache avec backend.yml : CodeQL extrait
-      # l'AST via un agent JVM pendant la compilation, donc un compileKotlin marqué FROM-CACHE ou
-      # UP-TO-DATE ne déclenche pas l'extraction → "no source code seen during build" et l'analyse
-      # crash en `database finalize` (exit 32). La step `Compile Kotlin` plus bas force `--rerun-tasks`
-      # pour garantir qu'une vraie compilation se produit.
+      # Dependency cache only — the build cache is deliberately not shared with backend.yml :
+      # CodeQL extracts the AST during compilation, so a task served FROM-CACHE extracts nothing
+      # and the analysis dies with "no source code seen during build".
       - name: Set up Gradle
         if: matrix.language == 'java-kotlin'
         uses: gradle/actions/setup-gradle@v6.3.0
@@ -85,10 +82,7 @@ jobs:
           # extraction is the bottleneck (~2 min cold) ; smaller on JS/TS but still helpful.
           trap-caching: true
 
-      # `--rerun-tasks` force Gradle à exécuter compileKotlin / compileTestKotlin même si l'output
-      # est UP-TO-DATE ou disponible en build cache. C'est OBLIGATOIRE pour CodeQL : son agent JVM
-      # ne s'injecte que sur des tâches qui se sont réellement exécutées. Pas de `--build-cache` ici
-      # par symétrie — on ne veut pas qu'un task soit FROM-CACHE et zappe l'extraction.
+      # `--rerun-tasks` is mandatory : CodeQL's agent only attaches to tasks that actually run.
       - name: Compile Kotlin (no tests, no DB)
         if: matrix.language == 'java-kotlin'
         working-directory: projects/backend

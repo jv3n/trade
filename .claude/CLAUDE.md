@@ -103,6 +103,27 @@ npx vitest run apps/web/src/path/to/file.spec.ts    # single test
 
 ## Conventions
 
+### Comments — the strict minimum
+
+Code says *what*; a comment is only worth its line when it says *why*, and only when the why isn't
+obvious from the code. Default to writing none.
+
+- **Keep** — a non-obvious constraint (a library bug worked around, an ordering that must hold, a
+  value verified empirically), a decision whose alternative looks more natural, a warning about
+  what breaks if the line changes.
+- **Drop** — anything restating the code (`// increments the counter`), describing the framework's
+  own behaviour, or narrating history (`// previously we…`, `// added in Phase 4`). Git holds the
+  history; the issue holds the rationale of a change.
+- **Not in comments** — procedures, tutorials, setup steps, links to consoles. They belong in the
+  issue, in `docs/`, or in the `README` of the concerned directory.
+- **Length** — one or two lines. A comment that needs a paragraph is a design that needs a name:
+  extract a function, or move the explanation to the issue.
+- **KDoc / JSDoc** on a public type or function follows the same bar: what it is for and what a
+  caller must know, not how it works line by line.
+
+Test docstrings are the exception — see [Tests as documentation](#tests-as-documentation): a spec
+read top to bottom is the point there.
+
 ### Backend (Kotlin + Spring)
 
 - Idiomatic Kotlin (data classes, sealed classes, extension functions).

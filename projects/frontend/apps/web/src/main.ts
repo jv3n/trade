@@ -25,7 +25,7 @@ if (!isDevMode()) {
     dsn: GLITCHTIP_DSN,
     environment: 'prod',
     // 100% errors + 0% performance traces — same policy as backend (`application-prod.yml`).
-    // Optimizes the GlitchTip free tier quota and avoids brûler 5K events/mo on noisy spans.
+    // Optimizes the GlitchTip free tier quota and avoids burning 5K events/mo on noisy spans.
     tracesSampleRate: 0,
     // Don't auto-attach Cookie / Authorization / X-CSRF-TOKEN headers or IP to events. The
     // backend's `SentryUserContextFilter` already supplies userId UUID per request via MDC →

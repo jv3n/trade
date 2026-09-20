@@ -25,7 +25,7 @@ class GlobalExceptionHandler {
     ResponseEntity.status(HttpStatus.CONFLICT)
       .body(
         mapOf(
-          "error" to "Conflit : ressource déjà existante",
+          "error" to "Conflict : the resource already exists",
           "detail" to (ex.mostSpecificCause.message ?: "constraint violation"),
         )
       )
@@ -52,9 +52,6 @@ class GlobalExceptionHandler {
   ): ResponseEntity<Map<String, String>> =
     ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
       .body(
-        mapOf(
-          "error" to "Données momentanément indisponibles",
-          "detail" to (ex.message ?: "unavailable"),
-        )
+        mapOf("error" to "Data temporarily unavailable", "detail" to (ex.message ?: "unavailable"))
       )
 }

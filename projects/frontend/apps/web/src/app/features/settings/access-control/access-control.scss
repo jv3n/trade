@@ -1,7 +1,5 @@
-// `.content-header`, `.loading-state`, `.error-banner`, `.info-banner`, `.warn-banner` et
-// `.config-card` viennent de la lib (`libs/ui/styles/`). Tout ce qui reste ici est spécifique
-// à la page d'access-control : layout outer, modifier de la card emails, et les inline
-// messages success/error sous les actions.
+// The banners and `.config-card` come from the lib (`libs/ui/styles/`) ; what is left here is
+// specific to this page.
 
 // Container (padding + max-width 720) comes from the global `.page page--form` composition ;
 // the local class only carries the flex-stack rhythm for the access-control sections.
@@ -11,7 +9,7 @@
   gap: 1rem;
 }
 
-// `.config-card` (lib) avec une `.card-header h3` qui héberge la pastille `(N)` à droite du titre.
+// `.config-card` (lib) whose `.card-header h3` carries the `(N)` badge next to the title.
 .emails-card {
   .card-header h3 {
     margin: 0;

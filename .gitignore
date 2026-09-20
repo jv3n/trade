@@ -87,25 +87,21 @@ docker-compose.override.yml
 tilt_modules/
 
 # ========================
-# Données locales (CSV, exports courtiers)
+# Local data (CSV, broker exports)
 # ========================
-# data-input/ contient des CSV factices versionnés (smoke test, démo, CI).
-# Les vrais exports Wealthsimple vont dans data-input-local/, jamais commit.
+# Real broker exports — the synthetic ones in data-input/ are versioned, these never are.
 docs/data-input-local/
 
 # ========================
-# Échanges éphémères avec Claude (screenshots, snippets, drafts)
+# Files shown to Claude (screenshots, snippets, drafts)
 # ========================
-# Dossier où l'utilisateur dépose les fichiers qu'il veut montrer à Claude
-# (captures d'écran d'un bug, sortie tronquée, brouillon collé, etc.). Tout
-# ce qui y traîne est jetable et ne doit jamais arriver dans le repo.
+# Throwaway by definition — nothing in there belongs in the repo.
 docs/tmp-files/
 
 # ========================
-# Procédures opérationnelles perso (PSO)
+# Personal operating procedures
 # ========================
-# Notes de procédures locales (rebuild npm manuel, recettes d'ops perso…)
-# qui n'ont pas vocation à être partagées dans le repo.
+# Local ops notes, not meant to be shared in the repo.
 docs/pso/
 
 # ========================

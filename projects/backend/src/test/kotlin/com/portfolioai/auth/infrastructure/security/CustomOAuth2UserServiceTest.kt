@@ -28,18 +28,17 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User
  *
  * We deliberately don't exercise [CustomOAuth2UserService.loadUser] because it delegates HTTP to
  * Spring's `DefaultOAuth2UserService.loadUser` ; the refactor that extracted
- * [CustomOAuth2UserService.processOAuth2User] (livré with the Phase 4 auth foundation) exists
- * specifically so the tests can pin behaviour without mocking the HTTP path. Spring's HTTP layer is
- * its own responsibility.
+ * [CustomOAuth2UserService.processOAuth2User] exists specifically so the tests can pin behaviour
+ * without mocking the HTTP path. Spring's HTTP layer is its own responsibility.
  *
  * What we pin :
  * - **First login creates a row** with role computed from the `app.admin.emails` whitelist
  *   (case-insensitive match). Two scenarios — match → ADMIN, no match → USER.
  * - **Subsequent logins update in place** (`lastLoginAt`, `providerId`, `displayName` if Google
  *   returns one) but **do NOT re-evaluate the role**. The DB is the source of truth post-creation —
- *   a manual rétrogradation `UPDATE app_user SET role='USER'` must survive the next login of
- *   someone still in the whitelist. Pin this explicitly because it's the kind of "obvious" rule a
- *   future refactor would silently break.
+ *   a manual demotion `UPDATE app_user SET role='USER'` must survive the next login of someone
+ *   still in the whitelist. Pin this explicitly because it's the kind of "obvious" rule a future
+ *   refactor would silently break.
  * - **Missing `email` or `sub` claims** throw [IllegalStateException]. Google should never return
  *   userinfo without these (the scopes are `openid profile email`) — if it happens, scope
  *   configuration drifted and we surface loudly rather than insert a row with a synthesised key.

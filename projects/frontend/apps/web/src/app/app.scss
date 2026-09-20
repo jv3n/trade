@@ -26,8 +26,8 @@
 
 // ---- User menu ----
 //
-// On hide le texte du display name sur petite largeur — l'icône `account_circle` reste cliquable
-// et le menu déroulant affiche le nom complet + le rôle dans son entête.
+// The display name is hidden on a narrow viewport — the avatar stays clickable and the menu shows
+// the full name and the role in its header.
 
 .user-trigger {
   .user-display {

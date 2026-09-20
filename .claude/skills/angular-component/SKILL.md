@@ -187,3 +187,10 @@ export class Toggle {
   toggle() { this.checkedChange.emit(!this.checked()); }
 }
 ```
+
+## Comments — the strict minimum
+
+See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum). In a component, the
+class docstring earns its place when it says what the screen is for and where the data comes from;
+inline comments only for a *why* the template can't show — a Material quirk worked around, an
+ordering that must hold, a binding that looks wrong and isn't.

@@ -3,27 +3,20 @@ name: Backup Supabase Postgres
 # Weekly `pg_dump` of the Supabase database to Cloudflare R2 for exit-discipline. Keeps our own
 # archive independent of Supabase's proprietary snapshot format — if Supabase shrinks the free
 # tier or disappears, we restore from R2 to any Postgres elsewhere (Neon, Fly Postgres, VPS…).
-# Cadence weekly suffisante pour un dev solo (Supabase free tier fait déjà des snapshots
-# quotidiens avec rétention 7j → notre backup R2 est le filet long-terme, pas le rolling court).
-# Rétention 30 backups (~7 mois d'historique au rythme hebdo).
+# Supabase already keeps 7 days of daily snapshots ; the 30 kept here are the long-term net.
 #
-# Setup pré-requis (cf. `docs/devops/backup-process.md`) :
-#   - R2 bucket `portfolioai-backups` créé chez Cloudflare
-#   - 3 GitHub Secrets : R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
-#   - 3 GitHub Variables repo-level : GCP_PROJECT, GCP_WIF_PROVIDER, GCP_SA_EMAIL
-#   - Grant `roles/secretmanager.secretAccessor` à `github-deploy@` sur `supabase-db-url`
+# Needs the R2 bucket, three GitHub secrets (R2_*), three repo variables (GCP_*), and
+# `roles/secretmanager.secretAccessor` granted to `github-deploy@` on `supabase-db-url`.
 
 on:
   schedule:
-    # Dimanche 4 AM UTC = samedi soir minuit Eastern = creux d'activité. Une fois par semaine.
+    # Sunday 4 AM UTC = Saturday midnight Eastern, the quietest slot.
     - cron: '0 4 * * 0'
-  # Manual trigger pour les spot backups avant une opération risquée (migration schema, fix SQL
-  # manuel, etc.) et pour les restore drills trimestriels.
+  # For a spot backup before a risky operation, and for the restore drills.
   workflow_dispatch:
 
-# Un backup à la fois — cron + workflow_dispatch races théoriques (l'user trigger un manual
-# pendant que le cron tourne). Serialize pour éviter deux `aws s3 cp` qui se battent sur le
-# même filename.
+# One backup at a time : a manual run firing while the cron one is in flight would have two
+# `aws s3 cp` fighting over the same filename.
 concurrency:
   group: backup-postgres
   cancel-in-progress: false
@@ -37,8 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # WIF — même pattern que deploy.yml. Le SA `github-deploy@` doit avoir
-      # `roles/secretmanager.secretAccessor` sur `supabase-db-url` (one-time, cf. doc setup).
       id-token: write
 
     steps:
@@ -51,11 +42,8 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v3
 
-      # Le `pg_dump` qui ship par défaut sur `ubuntu-latest` peut être 1-2 majeurs en retard sur
-      # Supabase (PG 15 free tier en 2026). On installe `postgresql-client-16` depuis l'apt repo
-      # officiel Postgres — un pg_dump client plus récent peut toujours dumper un serveur plus
-      # ancien, donc 16 contre 15 marche, et nous donne 1 majeur de buffer si Supabase upgrade
-      # silently.
+      # The `pg_dump` shipped on `ubuntu-latest` can trail Supabase by a major or two. A newer
+      # client can always dump an older server, so pinning 16 gives a major of headroom.
       - name: Install postgresql-client-16
         run: |
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
@@ -66,11 +54,8 @@ jobs:
           sudo apt-get install --yes --quiet postgresql-client-16
           pg_dump --version
 
-      # Le secret `supabase-db-url` contient une URL **JDBC** (`jdbc:postgresql://...?user=...
-      # &password=...&sslmode=require`) — libpq ne tolère pas le préfixe `jdbc:`. On le strip,
-      # le reste de l'URL (user/password en query params, sslmode) est compatible libpq URI.
-      # On `::add-mask::` la valeur pour qu'elle n'apparaisse pas en clair si un step ultérieur
-      # l'écrit accidentellement dans les logs.
+      # The secret holds a **JDBC** URL and libpq rejects the `jdbc:` prefix ; the rest is a valid
+      # libpq URI. Masked so a later step cannot echo the credentials into the logs.
       - name: Read DATABASE_URL from Secret Manager
         id: db
         run: |
@@ -81,12 +66,9 @@ jobs:
           echo "::add-mask::$LIBPQ_URL"
           echo "url=$LIBPQ_URL" >> "$GITHUB_OUTPUT"
 
-      # `--no-owner --no-acl` : le dump est restore-portable vers n'importe quelle instance
-      # Postgres sans que les rôles Supabase-spécifiques existent côté target. Format `plain`
-      # (SQL lisible) + gzip plutôt que `custom` — moins compact mais inspectable avec
-      # `zgrep`/`zless` pendant un incident, ce qui vaut le trade pour single-user.
-      # Filename ISO timestamp UTC → trié lexicographique = trié chronologique, simplifie la
-      # rotation et autorise plusieurs runs le même jour (workflow_dispatch manuel).
+      # `--no-owner --no-acl` so the dump restores anywhere, without the Supabase-specific roles.
+      # Plain SQL + gzip rather than `custom` : less compact, but readable with `zless` during an
+      # incident. The UTC timestamp in the filename makes the alphabetical order chronological.
       - name: Dump database
         env:
           DATABASE_URL: ${{ steps.db.outputs.url }}
@@ -100,9 +82,7 @@ jobs:
           # no auto-lowercase magic.
           echo "BACKUP_FILE=$BACKUP_FILE" >> "$GITHUB_ENV"
 
-      # R2 est S3-compatible : `aws s3` marche en pointant `--endpoint-url`. La région virtuelle
-      # `auto` est la convention R2 (pas de région réelle, replication transparente côté
-      # Cloudflare).
+      # R2 is S3-compatible ; `auto` is its conventional virtual region.
       - name: Upload to Cloudflare R2
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -113,10 +93,8 @@ jobs:
           aws s3 cp "$BACKUP_FILE" "s3://portfolioai-backups/$BACKUP_FILE" --endpoint-url "$ENDPOINT_URL"
           echo "BACKUP_UPLOADED=s3://portfolioai-backups/$BACKUP_FILE" >> "$GITHUB_ENV"
 
-      # Garde les 30 plus récents, supprime les anciens. `aws s3 ls` retourne
-      # "DATE TIME SIZE NAME" trié alphabétiquement par NAME ; comme NAME est ISO-timestamped UTC,
-      # le tri alpha = tri chronologique. `head -n -30` retire les 30 dernières lignes (= les 30
-      # plus récents) → reste les candidats à supprimer.
+      # Alphabetical order is chronological (the names are UTC-timestamped), so `head -n -30` drops
+      # the newest thirty and leaves the ones to delete.
       - name: Prune backups older than the 30 most recent
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}

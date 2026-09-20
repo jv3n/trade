@@ -112,3 +112,10 @@ Contexts talk through **application-layer types** — services or events — nev
 - **`shared/`** holds the few symbols every context may import: `GlobalExceptionHandler`, `UpstreamUnavailableException`, `SpaFallbackConfig`.
 
 If a new cross-context dependency would force importing an adapter or wire model, that's a smell — publish an event, expose what you need through the owning application service, or move the shared concept to `shared/`.
+
+## Comments — the strict minimum
+
+See [`CLAUDE.md > Comments`](../../CLAUDE.md#comments--the-strict-minimum). A port's KDoc is the one
+place worth a few lines: it is the contract adapters and tests are written against — what the caller
+may assume, and what happens when the upstream is down (cf. [Fail-hard vs
+fail-soft](#fail-hard-vs-fail-soft)).

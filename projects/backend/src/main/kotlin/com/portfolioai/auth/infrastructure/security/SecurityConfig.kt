@@ -51,13 +51,9 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 @Profile("!local-no-auth")
 class SecurityConfig(
   /**
-   * Cible du redirect après login OAuth réussi. En prod (SPA + backend derrière le même reverse
-   * proxy), `/` suffit — Spring redirige vers `/` et le proxy sert la SPA. En dev où le SPA tourne
-   * sur un port distinct du backend (Angular CLI 4200/4201 vs Spring Boot 8080/8081), on doit
-   * pointer explicitement vers l'URL du SPA, sinon Spring redirige vers son propre `/` et
-   * l'utilisateur atterrit sur le backend (Whitelabel 404). La session cookie est scopée sur
-   * `localhost` (sans port) donc valide cross-port — il suffit de naviguer côté SPA pour que le
-   * `/api/me` suivant remonte la session.
+   * Where a successful OAuth login lands. `/` is enough in prod, where the SPA and the backend
+   * share an origin ; in dev the SPA has its own port and this must point at it explicitly, or the
+   * user ends up on the backend's Whitelabel 404.
    */
   @Value("\${app.frontend-url:/}") private val frontendUrl: String
 ) {
@@ -100,20 +96,10 @@ class SecurityConfig(
         // (today it assumes one is present). The 401-as-signal contract is the simpler
         // invariant — don't move `/api/me` into `permitAll` by reflex.
         it.requestMatchers("/api/**").authenticated()
-        // Tout le reste = `permitAll`. Couvre (a) la SPA Angular embarquée dans le jar prod
-        // (`src/main/resources/static/index.html` + bundles JS/CSS + `/assets/**` + `/i18n/**`)
-        // que Spring sert automatiquement via son resource handler, et (b) les routes client-side
-        // Angular (`/dashboard`, `/login`, `/error`, `/ticker/**`, `/settings/**`, etc.) qui se
-        // résolvent via `SpaFallbackConfig` (forward vers `index.html`, Angular Router prend le
-        // relais). **Aussi public par construction** : `/actuator/info` (build version + git
-        // commit, no PII — public by design, cf. `docs/devops/deploiement.md > §6.4`).
-        // `/actuator/health` est explicitement `permitAll` ci-dessus. Les autres endpoints
-        // (`/actuator/env`, `/actuator/configprops`) ne sont **pas exposés en prod** par le
-        // include `health, info` d'`application-prod.yml > management.endpoints.web.exposure`.
-        // En profil base (dev local) `/actuator/metrics` est aussi exposé et tombe ici en
-        // `permitAll` — acceptable en local. Si jamais on active `/actuator/env` ou
-        // `configprops`, ajouter `requestMatchers("/actuator/**").authenticated()` AVANT cette
-        // règle pour ne pas leaker le secret tree.
+        // Everything else is public : the embedded SPA and its client-side routes, plus whatever
+        // actuator endpoint the active profile exposes. If `/actuator/env` or `configprops` is
+        // ever turned on, add `requestMatchers("/actuator/**").authenticated()` **above** this line
+        // or the secret tree becomes public with it.
         it.anyRequest().permitAll()
       }
       .exceptionHandling {

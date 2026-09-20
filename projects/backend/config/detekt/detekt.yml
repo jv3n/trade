@@ -14,7 +14,7 @@
 #   (the framework matches them to URL placeholders).
 #
 # Anything we can't tame here without losing real signal is fixed in code instead. See the
-# backlog entry "Linter ESLint côté frontend" for the symmetric story on the JS side.
+# backlog entry "ESLint on the frontend" for the symmetric story on the JS side.
 
 build:
   maxIssues: 0
@@ -43,7 +43,7 @@ complexity:
     # params by design — that's the schema, not a code smell. Annotation-based exclusion below
     # also catches `@Embeddable` and `@MappedSuperclass`. `AppConfigService` used to carry 14
     # `@Value` injected defaults and bumped this threshold to 16 ; the v3 refactor (ticket #B6,
-    # livré 2026-05-15) split those into `SecretsDefaults` / `DataProvidersDefaults` /
+    # split those into `SecretsDefaults` / `DataProvidersDefaults` /
     # `LlmDefaults` `@Component` data classes, dropping the service constructor back to 6 params.
     # Threshold kept at 8 (the function threshold, for symmetry) — two distinct patterns govern
     # what to do when a bean approaches it :
@@ -55,7 +55,7 @@ complexity:
     #
     # 2. **Orchestrator with collaborators** (a `@Service` coordinating N distinct beans, each
     #    doing a distinct piece of the pipeline at a distinct phase) — these legitimately hit
-    #    8-10 deps. Façade-grouping pairs (parser+validator, persister+scoreRecorder, …) usually
+    #    8-10 deps. Facade-grouping pairs (parser+validator, persister+scoreRecorder, …) usually
     #    hurts more than it helps because each collaborator has different transactional /
     #    failure / event-granularity contracts. **Suppress at the class** with
     #    `@Suppress("LongParameterList")` + a comment justifying the exception. See
