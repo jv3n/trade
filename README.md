@@ -1,23 +1,24 @@
 # PortfolioAI
 
-**Suivi de trading** pour short small-caps (gap-up shorts, $1–$10).
+**Personal trading tracker** for small-cap shorts (gap-up shorts, $1–$10).
 
-| Module | Rôle |
+| Module | Role |
 |---|---|
-| Compte | Solde du compte courtier — mouvements + P&L réalisé du journal |
-| Journal | Chaque trade : exécution, checklist pré-trade, post-mortem ; import / export CSV |
-| Stats | Feuille de stats des setups gap-up |
-| Candidats | Fiche candidat |
-| Lexique | Glossaire bilingue du vocabulaire trading |
+| Today | The trading day step by step — morning reconciliation, candidates, stats, trades |
+| Candidates | The premarket capture of a ticker |
+| Stats | The stats sheet, completed after the 4 pm close |
+| Journal | Each trade : executions, adjustable P&L, post-mortem, chart screenshot |
+| Account | Broker balance — movements and the retained P&L coming from the journal |
+| Lexicon | Bilingual glossary of the trading vocabulary |
 
-> **Disclaimer** : outil personnel de suivi de trades. Ne constitue pas un conseil en investissement agréé.
+> **Disclaimer** : a personal trade-tracking tool. Not licensed investment advice.
 
-## Statut CI & qualité
+## CI & quality
 
 <a href="https://github.com/jv3n/trade/actions/workflows/backend.yml" target="_blank" rel="noopener"><img src="https://github.com/jv3n/trade/actions/workflows/backend.yml/badge.svg" alt="Backend CI"></a>
 <a href="https://github.com/jv3n/trade/actions/workflows/frontend.yml" target="_blank" rel="noopener"><img src="https://github.com/jv3n/trade/actions/workflows/frontend.yml/badge.svg" alt="Frontend CI"></a>
 <a href="https://github.com/jv3n/trade/actions/workflows/codeql.yml" target="_blank" rel="noopener"><img src="https://github.com/jv3n/trade/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
 
-## Démarrage local
+## Running it locally
 
-`tilt up` à la racine (PostgreSQL + backend Spring Boot + frontend Angular). UI Tilt : http://localhost:10350/.
+`tilt up` at the root (PostgreSQL + Spring Boot backend + Angular frontend). Tilt UI : http://localhost:10350/.

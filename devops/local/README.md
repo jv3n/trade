@@ -1,21 +1,26 @@
-# Données de démo locales
+# Local demo data
 
-`seed-demo.sql` remplit la base **locale** avec les données des maquettes (septembre 2026) : candidats, stats, trades avec exécutions et post-mortem, mouvements du compte. Ce n'est pas une migration Flyway : rien ne part en prod.
+`seed-demo.sql` fills the **local** database with the data of the mockups (September 2026) :
+candidates, stats, trades with their executions and post-mortem, account movements. It is not a
+Flyway migration — nothing of it reaches production.
 
-## Utilisation
+## Use
 
-1. Tilt → ressource `postgres` → **Purge** (base vide, migrations rejouées au redémarrage du backend).
-2. Se connecter une fois dans l'app (ou démarrer en mode no-auth) pour que l'utilisateur existe.
-3. Tilt → ressource `postgres` → **Seed**.
+1. Tilt → `postgres` resource → **Purge** (empty database, migrations replayed when the backend
+   restarts).
+2. Log in once (or start in no-auth mode) so the user row exists.
+3. Tilt → `postgres` resource → **Seed**.
 
-À la main :
+By hand :
 
 ```bash
 docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/local/seed-demo.sql
 ```
 
-Les données appartiennent au premier utilisateur de `app_user`. Le script s'arrête s'il a déjà des données : il n'écrase jamais rien.
+The data belongs to the first user in `app_user`. The script stops if that user already has data :
+it never overwrites anything.
 
 ## Maintenance
 
-Le script suit le schéma de la base. Quand un modèle change (issues de la refonte #186, #187, #192…), mettre le seed à jour **dans la même PR**, pour qu'il reste rejouable après une purge.
+The script follows the database schema. When a model changes, update the seed **in the same PR**, so
+it stays replayable after a purge.
