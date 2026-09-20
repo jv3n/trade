@@ -131,7 +131,7 @@
       "load": "Impossible de charger le compte. Réessaie."
     },
     "movements": "Mouvements",
-    "viewInJournal": "Voir dans le journal",
+    "viewTrade": "Voir le trade",
     "dailySubtotal": "Total du jour",
     "type": {
       "DEPOSIT": "Dépôt",

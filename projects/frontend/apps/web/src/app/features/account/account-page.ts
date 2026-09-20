@@ -183,6 +183,14 @@ export class AccountPage {
     this.openMovementDialog(movement);
   }
 
+  /**
+   * Where a TRADE row points : its own trade page when the link is there (#197), the journal
+   * listing otherwise — an old movement whose trade is gone still has to lead somewhere.
+   */
+  tradeLink(m: AccountMovement): string[] {
+    return m.tradeEntryId ? ['/journal', m.tradeEntryId] : ['/journal'];
+  }
+
   canEdit(m: AccountMovement): boolean {
     return m.type === 'DEPOSIT' || m.type === 'WITHDRAWAL';
   }

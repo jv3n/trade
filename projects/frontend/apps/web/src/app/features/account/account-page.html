@@ -152,8 +152,8 @@
                   <mat-chip
                     stbChip="ticker"
                     class="ticker-chip--link"
-                    [routerLink]="['/journal']"
-                    [matTooltip]="'account.viewInJournal' | translate"
+                    [routerLink]="tradeLink(m)"
+                    [matTooltip]="'account.viewTrade' | translate"
                   >
                     {{ m.note }}
                   </mat-chip>
