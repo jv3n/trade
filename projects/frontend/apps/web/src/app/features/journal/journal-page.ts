@@ -42,12 +42,10 @@ import {
 } from '@portfolioai/ui';
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
 import {
-  TRADE_PLAYS,
   TRADE_STATUSES,
   TradeEntry,
   TradeEntryFilter,
   TradeEntryInput,
-  TradePlay,
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
 import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
@@ -80,7 +78,6 @@ interface FilterFormModel {
   period: PeriodPresetKey;
   dateFrom: Date | null;
   dateTo: Date | null;
-  plays: TradePlay[];
   patterns: Pattern[];
   status: TradeStatus | null;
 }
@@ -89,7 +86,6 @@ const EMPTY_FILTER: FilterFormModel = {
   period: 'all',
   dateFrom: null,
   dateTo: null,
-  plays: [],
   patterns: [],
   status: null,
 };
@@ -103,7 +99,7 @@ const DEFAULT_PAGE_SIZE = 10;
  *     `?sort=field,direction`. Sorting a column always queries page 0 so we don't strand the
  *     user on a page index that doesn't exist for the new sort.
  *   - **Filters** : right-side `<mat-sidenav>` with period presets (this month / last quarter
- *     / etc.), explicit date range, play / pattern multi-selects, status (open / closed /
+ *     / etc.), explicit date range, pattern multi-select, status (open / closed /
  *     profitable / losing). Filter changes refetch from the backend.
  *   - **Pagination** : `<mat-paginator>` below the table. Default 10 rows per page. Filter /
  *     search / sort changes reset the index to 0.
@@ -185,7 +181,6 @@ export class JournalPage {
     const f = this.appliedFilter();
     let n = 0;
     if (f.dateFrom || f.dateTo) n += 1;
-    if (f.plays.length > 0) n += 1;
     if (f.patterns.length > 0) n += 1;
     if (f.status) n += 1;
     return n;
@@ -201,14 +196,12 @@ export class JournalPage {
 
   // ---- Constants for the template ----
   readonly periods = PERIOD_PRESETS;
-  readonly plays = TRADE_PLAYS;
   readonly patterns = PATTERNS;
   readonly statuses = TRADE_STATUSES;
 
   readonly columns = [
     'tradeDate',
     'ticker',
-    'play',
     'pattern',
     'size',
     'openPrice',
@@ -232,7 +225,6 @@ export class JournalPage {
           query: q || null,
           dateFrom: f.dateFrom,
           dateTo: f.dateTo,
-          plays: f.plays.length > 0 ? f.plays : null,
           patterns: f.patterns.length > 0 ? f.patterns : null,
           status: f.status,
         },
@@ -316,13 +308,6 @@ export class JournalPage {
       period: key,
       dateFrom: range.dateFrom,
       dateTo: range.dateTo,
-    }));
-  }
-
-  togglePlay(p: TradePlay, checked: boolean): void {
-    this.filterModel.update((m) => ({
-      ...m,
-      plays: checked ? [...m.plays, p] : m.plays.filter((x) => x !== p),
     }));
   }
 

@@ -1,6 +1,7 @@
 package com.portfolioai.journal.application
 
 import com.portfolioai.auth.application.AuthService
+import com.portfolioai.auth.domain.User
 import com.portfolioai.journal.application.dto.ImportResult
 import com.portfolioai.journal.application.dto.ScreenshotContent
 import com.portfolioai.journal.application.dto.TradeEntryDto
@@ -131,25 +132,7 @@ class TradeEntryService(
     }
     val user = authService.getCurrentUser()
     for (request in decoded.rows) {
-      val entry =
-        TradeEntry(
-          user = user,
-          tradeDate = request.tradeDate,
-          ticker = request.ticker,
-          play = request.play,
-          pattern = request.pattern ?: Pattern.GUS,
-          note = request.note,
-          pre935To10h = request.pre935To10h,
-          preGapUp50 = request.preGapUp50,
-          prePrice1To10 = request.prePrice1To10,
-          preFloat3To50m = request.preFloat3To50m,
-          preWaitPush = request.preWaitPush,
-          openSide = request.openSide,
-          shortOnResistance = request.shortOnResistance,
-          exitStrategy = request.exitStrategy,
-          errorNote = request.errorNote,
-          statEntryId = request.statEntryId,
-        )
+      val entry = newEntry(user, request)
       applyExecutions(entry, request)
       publishChange(repo.saveAndFlush(entry))
     }
@@ -162,26 +145,7 @@ class TradeEntryService(
 
   @Transactional
   fun create(request: TradeEntryRequest): TradeEntryDto {
-    val user = authService.getCurrentUser()
-    val entry =
-      TradeEntry(
-        user = user,
-        tradeDate = request.tradeDate,
-        ticker = request.ticker.trim().uppercase(),
-        play = request.play,
-        pattern = request.pattern ?: Pattern.GUS,
-        note = request.note,
-        pre935To10h = request.pre935To10h,
-        preGapUp50 = request.preGapUp50,
-        prePrice1To10 = request.prePrice1To10,
-        preFloat3To50m = request.preFloat3To50m,
-        preWaitPush = request.preWaitPush,
-        openSide = request.openSide,
-        shortOnResistance = request.shortOnResistance,
-        exitStrategy = request.exitStrategy,
-        errorNote = request.errorNote,
-        statEntryId = request.statEntryId,
-      )
+    val entry = newEntry(authService.getCurrentUser(), request)
     applyExecutions(entry, request)
     val saved = repo.saveAndFlush(entry)
     publishChange(saved)
@@ -191,21 +155,13 @@ class TradeEntryService(
   @Transactional
   fun update(id: UUID, request: TradeEntryRequest): TradeEntryDto {
     val entry = loadOwned(id)
+    entry.statEntryId = request.statEntryId
     entry.tradeDate = request.tradeDate
     entry.ticker = request.ticker.trim().uppercase()
-    entry.play = request.play
     entry.pattern = request.pattern ?: Pattern.GUS
+    entry.realProfitDollars = request.realProfitDollars
     entry.note = request.note
-    entry.pre935To10h = request.pre935To10h
-    entry.preGapUp50 = request.preGapUp50
-    entry.prePrice1To10 = request.prePrice1To10
-    entry.preFloat3To50m = request.preFloat3To50m
-    entry.preWaitPush = request.preWaitPush
-    entry.openSide = request.openSide
-    entry.shortOnResistance = request.shortOnResistance
-    entry.exitStrategy = request.exitStrategy
     entry.errorNote = request.errorNote
-    entry.statEntryId = request.statEntryId
     applyExecutions(entry, request)
     entry.updatedAt = Instant.now()
     val saved = repo.saveAndFlush(entry)
@@ -319,7 +275,12 @@ class TradeEntryService(
         require(exec.price > BigDecimal.ZERO) {
           "Execution price must be positive, got ${exec.price.toPlainString()}"
         }
-        TradePositionCalculator.Leg(kind = exec.kind, shares = exec.shares, price = exec.price)
+        TradePositionCalculator.Leg(
+          kind = exec.kind,
+          shares = exec.shares,
+          price = exec.price,
+          executedAt = exec.executedAt,
+        )
       }
     entry.direction = request.direction
     entry.replaceExecutions(legs)
@@ -327,9 +288,28 @@ class TradeEntryService(
   }
 
   /**
-   * Notifies the `account` context so it can sync the trade's realized P&L as a read-only `TRADE`
-   * movement. Fired on create / update / import ; deletion is handled by the DB `ON DELETE
-   * CASCADE`.
+   * A brand-new trade from its [request] — the stat-borne identity (stat link, date, ticker,
+   * pattern) plus the post-mortem and the real P&L. The executions are applied separately by
+   * [applyExecutions], which also derives the flat aggregates.
+   */
+  private fun newEntry(user: User, request: TradeEntryRequest) =
+    TradeEntry(
+      user = user,
+      statEntryId = request.statEntryId,
+      tradeDate = request.tradeDate,
+      ticker = request.ticker.trim().uppercase(),
+      pattern = request.pattern ?: Pattern.GUS,
+      realProfitDollars = request.realProfitDollars,
+      note = request.note,
+      errorNote = request.errorNote,
+    )
+
+  /**
+   * Notifies the `account` context so it can sync the trade's P&L as a read-only `TRADE` movement.
+   * The figure published is the **retained** one (the broker's real P&L when it has been typed in,
+   * the computed one otherwise) — the balance must match the broker statement to the cent, which is
+   * the whole point of the real-P&L override (#192). Fired on create / update / import ; deletion
+   * publishes a null P&L first (see [delete]).
    */
   private fun publishChange(entry: TradeEntry) {
     events.publishEvent(
@@ -338,7 +318,7 @@ class TradeEntryService(
         userId = entry.user.id,
         ticker = entry.ticker,
         tradeDate = entry.tradeDate,
-        profitDollars = entry.profitDollars,
+        profitDollars = entry.retainedProfit,
       )
     )
   }

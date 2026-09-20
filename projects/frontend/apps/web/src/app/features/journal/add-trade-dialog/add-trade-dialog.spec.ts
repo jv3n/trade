@@ -12,10 +12,15 @@ import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog';
 /**
  * Pins the multi-execution editor of [AddTradeDialog] (issue #93) : the dynamic executions list, the
  * live preview mirroring the backend calculator, and the submit payload (direction + cleaned
- * executions, no flat aggregates). Template rendering isn't exercised — the component logic is.
+ * executions, no flat aggregates). The mandatory stat link (#192) is pinned too : no stat, no
+ * submit. Template rendering isn't exercised — the component logic is.
  */
 describe('AddTradeDialog', () => {
   let close: ReturnType<typeof vi.fn>;
+
+  // A trade is always created from a stat (#192), so create mode is always seeded with one —
+  // without it the dialog refuses to submit.
+  const SEED = { ticker: 'BAC', tradeDate: new Date(2026, 5, 4), statEntryId: 'stat-1' };
 
   function setup(data: AddTradeDialogData) {
     close = vi.fn();
@@ -45,12 +50,14 @@ describe('AddTradeDialog', () => {
   });
 
   it('create mode starts with a single empty ENTRY row', () => {
-    const c = setup({ entry: null });
-    expect(c.executions()).toEqual([{ kind: 'ENTRY', shares: null, price: null }]);
+    const c = setup({ entry: null, seed: SEED });
+    expect(c.executions()).toEqual([
+      { kind: 'ENTRY', shares: null, price: null, executedAt: null },
+    ]);
   });
 
   it('addExecution / removeExecution mutate the list', () => {
-    const c = setup({ entry: null });
+    const c = setup({ entry: null, seed: SEED });
     c.addExecution('EXIT');
     expect(c.executions()).toHaveLength(2);
     expect(c.executions()[1].kind).toBe('EXIT');
@@ -60,7 +67,7 @@ describe('AddTradeDialog', () => {
   });
 
   it('preview mirrors the backend calculator for a closed short', () => {
-    const c = setup({ entry: null });
+    const c = setup({ entry: null, seed: SEED });
     c.setDirection('SHORT');
     c.setExecutionShares(0, 100);
     c.setExecutionPrice(0, 5);
@@ -75,7 +82,7 @@ describe('AddTradeDialog', () => {
   });
 
   it('flags an over-exited position as invalid and blocks submit', () => {
-    const c = setup({ entry: null });
+    const c = setup({ entry: null, seed: SEED });
     c.setDirection('SHORT');
     c.setExecutionShares(0, 100);
     c.setExecutionPrice(0, 5);
@@ -89,7 +96,7 @@ describe('AddTradeDialog', () => {
   });
 
   it('submit emits direction + cleaned executions, dropping empty rows', () => {
-    const c = setup({ entry: null });
+    const c = setup({ entry: null, seed: SEED });
     c.setDirection('SHORT');
     c.setExecutionShares(0, 100);
     c.setExecutionPrice(0, 5);
@@ -101,6 +108,19 @@ describe('AddTradeDialog', () => {
     expect(close).toHaveBeenCalledTimes(1);
     const input = close.mock.calls[0][0];
     expect(input.direction).toBe('SHORT');
-    expect(input.executions).toEqual([{ kind: 'ENTRY', shares: 100, price: 5 }]);
+    expect(input.executions).toEqual([{ kind: 'ENTRY', shares: 100, price: 5, executedAt: null }]);
+    expect(input.statEntryId).toBe('stat-1');
+  });
+
+  it('refuses to submit a trade with no stat link', () => {
+    const c = setup({ entry: null, seed: SEED });
+    c.setExecutionShares(0, 100);
+    c.setExecutionPrice(0, 5);
+    c.model.update((m) => ({ ...m, ticker: 'BAC' }));
+    c.setStatEntryId(null);
+
+    c.submit();
+
+    expect(close).not.toHaveBeenCalled();
   });
 });

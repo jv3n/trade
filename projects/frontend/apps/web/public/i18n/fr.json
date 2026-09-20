@@ -198,7 +198,6 @@
       "period": "Période",
       "dateFrom": "De",
       "dateTo": "À",
-      "play": "Play",
       "pattern": "Pattern",
       "status": "Statut",
       "statusAll": "Tout statut",
@@ -231,25 +230,20 @@
       "tradeDate": "Date",
       "ticker": "Ticker",
       "direction": "Sens",
-      "play": "Play",
       "pattern": "Pattern",
       "size": "Taille (actions)",
       "openPrice": "Prix d'entrée moyen",
       "exitPrice": "Prix de sortie moyen",
-      "profitDollars": "Profit ($)",
+      "profitDollars": "Profit calculé ($)",
+      "realProfitDollars": "Profit réel ($)",
+      "retainedProfitDollars": "Profit retenu ($)",
       "gainPercent": "Gain (%)",
+      "durationMinutes": "Durée",
       "executionKind": "Type",
+      "executedAt": "Heure",
       "shares": "Actions",
       "price": "Prix",
       "note": "Notes",
-      "pre935To10h": "9h35 → 10h",
-      "preGapUp50": "Gap up 50 %",
-      "prePrice1To10": "Prix $1 → $10",
-      "preFloat3To50m": "Float 3M → 50M",
-      "preWaitPush": "Attendre le push",
-      "openSide": "Entrée sur",
-      "shortOnResistance": "Short sur résistance",
-      "exitStrategy": "Stratégie de sortie",
       "errorNote": "Erreur / leçon",
       "statLink": "Stat"
     },
@@ -261,14 +255,6 @@
       "noCandidates": "Aucune stat pour ce ticker à cette date."
     },
     "enums": {
-      "openSide": {
-        "FRONT": "Front side",
-        "BACK": "Back side"
-      },
-      "exitStrategy": {
-        "SWING_20": "Swing 20 %",
-        "EOD": "Fin de journée"
-      },
       "status": {
         "OPEN": "Ouvert",
         "CLOSED": "Fermé",
@@ -300,7 +286,6 @@
       "executions": "Exécutions",
       "noExecutions": "Aucune exécution enregistrée.",
       "aggregates": "Position calculée",
-      "preparation": "Checklist de préparation",
       "notes": "Notes",
       "postMortem": "Débrief",
       "noNote": "—",
@@ -326,8 +311,7 @@
       "sections": {
         "execution": "Identité",
         "executions": "Exécutions",
-        "exit": "Sortie",
-        "preparation": "Checklist de préparation",
+        "postMortem": "Débrief",
         "statLink": "Lien stat"
       },
       "executions": {

@@ -2,12 +2,14 @@ package com.portfolioai.journal.domain
 
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.Duration
+import java.time.LocalTime
 
 /**
  * Pure, side-effect-free derivation of a position's aggregates from its raw executions. This is the
  * single source of truth for the journal's auto-computed numbers — the service writes the result
  * onto `trade_entry` on every create/update, the frontend mirrors the same formula for a live
- * preview, and both the account event (realized P&L) and the listing table read the persisted
+ * preview, and both the account event (retained P&L) and the listing table read the persisted
  * aggregates.
  *
  * **Sign convention** — realized P&L is computed on the *exited* shares only:
@@ -30,8 +32,14 @@ object TradePositionCalculator {
 
   /**
    * Minimal execution shape the calculator needs — decoupled from the JPA entity for easy testing.
+   * [executedAt] is the fill time when known ; it only feeds [Aggregates.durationMinutes].
    */
-  data class Leg(val kind: ExecutionKind, val shares: Int, val price: BigDecimal)
+  data class Leg(
+    val kind: ExecutionKind,
+    val shares: Int,
+    val price: BigDecimal,
+    val executedAt: LocalTime? = null,
+  )
 
   /**
    * Fill state of the position, finer-grained than the listing's `exit_price IS NULL` predicate.
@@ -45,7 +53,11 @@ object TradePositionCalculator {
     CLOSED,
   }
 
-  /** Derived snapshot persisted onto `trade_entry` and surfaced in the detail view. */
+  /**
+   * Derived snapshot persisted onto `trade_entry` and surfaced in the detail view.
+   * [durationMinutes] is the only one that isn't persisted : it is recomputed for the detail view
+   * from the execution times, and is null as soon as one of the two ends has no time.
+   */
   data class Aggregates(
     val size: Int?,
     val avgEntry: BigDecimal?,
@@ -53,6 +65,7 @@ object TradePositionCalculator {
     val profitDollars: BigDecimal?,
     val gainPercent: BigDecimal?,
     val status: PositionStatus,
+    val durationMinutes: Long? = null,
   ) {
     companion object {
       /** A position with no executions yet — every aggregate is unknown, status OPEN. */
@@ -108,8 +121,39 @@ object TradePositionCalculator {
       profitDollars = profit,
       gainPercent = gainPercent,
       status = if (exitShares == entryShares) PositionStatus.CLOSED else PositionStatus.PARTIAL,
+      durationMinutes = duration(legs),
     )
   }
+
+  /**
+   * Time held, from the **first** entry fill to the **last** exit fill, in whole minutes. Null as
+   * soon as one of the two ends has no [Leg.executedAt] — a partially timed position has no
+   * meaningful duration. Both fills belong to the same session day, so comparing wall-clock times
+   * is enough ; a negative span (fills entered out of order) also yields null rather than a
+   * nonsense negative duration.
+   */
+  fun duration(legs: List<Leg>): Long? {
+    val start =
+      legs.filter { it.kind == ExecutionKind.ENTRY }.mapNotNull { it.executedAt }.minOrNull()
+        ?: return null
+    val end =
+      legs.filter { it.kind == ExecutionKind.EXIT }.mapNotNull { it.executedAt }.maxOrNull()
+        ?: return null
+    return Duration.between(start, end).toMinutes().takeIf { it >= 0 }
+  }
+
+  /**
+   * Best-effort direction inference for the CSV import path, where only the flat `openPrice` /
+   * `exitPrice` are known and the `direction` column was left blank. The strategy is short-biased :
+   * a cover-lower (`exit <= open`) reads as SHORT, anything else as BUY, and a missing exit price
+   * (open position) falls back to SHORT — the bread-and-butter of this journal.
+   */
+  fun inferDirection(openPrice: BigDecimal?, exitPrice: BigDecimal?): TradeDirection =
+    when {
+      openPrice == null || exitPrice == null -> TradeDirection.SHORT
+      exitPrice <= openPrice -> TradeDirection.SHORT
+      else -> TradeDirection.BUY
+    }
 
   /**
    * Σ(shares × price) / Σ(shares), rounded to the price scale. Caller guarantees a non-empty list.
@@ -120,17 +164,4 @@ object TradePositionCalculator {
       legs.fold(BigDecimal.ZERO) { acc, l -> acc.add(l.price.multiply(l.shares.toBigDecimal())) }
     return notional.divide(totalShares, PRICE_SCALE, RoundingMode.HALF_UP)
   }
-
-  /**
-   * Best-effort direction inference for the CSV import path and the V8 backfill, where only the
-   * flat `openPrice` / `exitPrice` are known. The strategy is short-biased : a cover-lower (`exit
-   * <= open`) reads as SHORT, anything else as BUY, and a missing exit price (open position) falls
-   * back to SHORT — the bread-and-butter of this journal.
-   */
-  fun inferDirection(openPrice: BigDecimal?, exitPrice: BigDecimal?): TradeDirection =
-    when {
-      openPrice == null || exitPrice == null -> TradeDirection.SHORT
-      exitPrice <= openPrice -> TradeDirection.SHORT
-      else -> TradeDirection.BUY
-    }
 }

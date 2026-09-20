@@ -12,6 +12,8 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
+import com.portfolioai.stats.domain.StatEntry
+import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -51,6 +53,7 @@ class AccountIntegrationTest {
   @Autowired private lateinit var service: AccountService
   @Autowired private lateinit var repo: AccountMovementRepository
   @Autowired private lateinit var tradeRepo: TradeEntryRepository
+  @Autowired private lateinit var statRepo: StatEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
 
   @MockitoBean private lateinit var authService: AuthService
@@ -64,6 +67,7 @@ class AccountIntegrationTest {
     // cover it, but explicit deletes keep the intent obvious and survive a previous failure.
     repo.deleteAll()
     tradeRepo.deleteAll()
+    statRepo.deleteAll()
     userRepository.deleteAll()
     testUser = userRepository.save(makeUser("trader"))
     otherUser = userRepository.save(makeUser("other"))
@@ -315,9 +319,26 @@ class AccountIntegrationTest {
    * tradeEntryId-present invariant, so this is the only valid way to create one.
    */
   private fun seedTradeMovement(pnl: String): AccountMovement {
+    // A trade is born from a stat since #192, so the source stat is seeded alongside it.
+    val stat =
+      statRepo.save(
+        StatEntry(
+          user = testUser,
+          tradeDate = LocalDate.of(2026, 6, 15),
+          ticker = "BAC-${UUID.randomUUID().toString().take(8)}",
+          previousClose = BigDecimal("2.6500"),
+          pmOpen = BigDecimal("3.2100"),
+          pmHigh = BigDecimal("3.6000"),
+        )
+      )
     val trade =
       tradeRepo.save(
-        TradeEntry(user = testUser, tradeDate = LocalDate.of(2026, 6, 15), ticker = "BAC")
+        TradeEntry(
+          user = testUser,
+          statEntryId = stat.id,
+          tradeDate = LocalDate.of(2026, 6, 15),
+          ticker = "BAC",
+        )
       )
     return repo.save(
       AccountMovement(

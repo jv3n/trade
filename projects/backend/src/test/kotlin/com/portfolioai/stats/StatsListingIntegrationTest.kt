@@ -4,6 +4,7 @@ import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
+import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryRequest
@@ -55,6 +56,7 @@ class StatsListingIntegrationTest {
 
   @Autowired private lateinit var service: StatEntryService
   @Autowired private lateinit var repo: StatEntryRepository
+  @Autowired private lateinit var tradeRepo: TradeEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
 
   @MockitoBean private lateinit var authService: AuthService
@@ -66,6 +68,9 @@ class StatsListingIntegrationTest {
 
   @BeforeEach
   fun setUp() {
+    // Trades first : `trade_entry.stat_entry_id` is ON DELETE RESTRICT since #192, so a trade left
+    // behind by another test class in the shared container would block the stat wipe.
+    tradeRepo.deleteAll()
     repo.deleteAll()
     userRepository.deleteAll()
     testUser = userRepository.save(makeUser("trader"))

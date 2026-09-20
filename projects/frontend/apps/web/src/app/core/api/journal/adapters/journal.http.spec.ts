@@ -17,8 +17,8 @@ import { HttpJournalRepository } from './journal.http';
  *    pins the contract.
  *  - **Ticker normalisation** — `toWire` calls `.trim().toUpperCase()` on the ticker. A bug
  *    here would send mixed-case tickers to the backend and trigger duplicate-row anxiety.
- *  - **Filter query-param building** — multi-value (`plays`, `patterns`) must use the
- *    repeated `?play=A&play=B` form ; null / empty / blank values must be **omitted**, not
+ *  - **Filter query-param building** — the multi-value `patterns` must use the repeated
+ *    `?pattern=GUS&pattern=DT` form ; null / empty / blank values must be **omitted**, not
  *    sent as `?q=&dateFrom=` (which the backend would parse as empty-string filter and
  *    return nothing).
  *  - **Pagination wire shape** — page coordinates land as `?page=N&size=N&sort=field,direction`
@@ -75,18 +75,16 @@ describe('HttpJournalRepository', () => {
     req.flush(wirePageFixture([]));
   });
 
-  it('findAll repeats play and pattern params for multi-value filters', () => {
-    repo.findAll({ plays: ['A', 'B'], patterns: ['GUS'] }).subscribe();
+  it('findAll repeats the pattern param for a multi-value filter', () => {
+    repo.findAll({ patterns: ['GUS', 'DT'] }).subscribe();
     const req = http.expectOne((r) => r.url === '/api/journal/trades');
-    expect(req.request.params.getAll('play')).toEqual(['A', 'B']);
-    expect(req.request.params.getAll('pattern')).toEqual(['GUS']);
+    expect(req.request.params.getAll('pattern')).toEqual(['GUS', 'DT']);
     req.flush(wirePageFixture([]));
   });
 
   it('findAll omits empty arrays (no-filter on that axis)', () => {
-    repo.findAll({ plays: [], patterns: [] }).subscribe();
+    repo.findAll({ patterns: [] }).subscribe();
     const req = http.expectOne('/api/journal/trades');
-    expect(req.request.params.has('play')).toBe(false);
     expect(req.request.params.has('pattern')).toBe(false);
     req.flush(wirePageFixture([]));
   });
@@ -207,8 +205,8 @@ describe('HttpJournalRepository', () => {
         inputFixture({
           direction: 'SHORT',
           executions: [
-            { kind: 'ENTRY', shares: 100, price: 5 },
-            { kind: 'EXIT', shares: 100, price: 4 },
+            { kind: 'ENTRY', shares: 100, price: 5, executedAt: '09:42' },
+            { kind: 'EXIT', shares: 100, price: 4, executedAt: null },
           ],
         }),
       )
@@ -216,8 +214,8 @@ describe('HttpJournalRepository', () => {
     const req = http.expectOne('/api/journal/trades');
     expect(req.request.body.direction).toBe('SHORT');
     expect(req.request.body.executions).toEqual([
-      { kind: 'ENTRY', shares: 100, price: 5 },
-      { kind: 'EXIT', shares: 100, price: 4 },
+      { kind: 'ENTRY', shares: 100, price: 5, executedAt: '09:42' },
+      { kind: 'EXIT', shares: 100, price: 4, executedAt: null },
     ]);
     req.flush(wireFixture());
   });
@@ -225,9 +223,30 @@ describe('HttpJournalRepository', () => {
   it('parses executions from the wire into domain TradeExecution[]', () => {
     repo.findById('abc-123').subscribe((entry) => {
       expect(entry.direction).toBe('SHORT');
-      expect(entry.executions).toEqual([{ seq: 0, kind: 'ENTRY', shares: 100, price: 3.21 }]);
+      expect(entry.executions).toEqual([
+        { seq: 0, kind: 'ENTRY', shares: 100, price: 3.21, executedAt: '09:42' },
+      ]);
     });
     http.expectOne('/api/journal/trades/abc-123').flush(wireFixture({ id: 'abc-123' }));
+  });
+
+  it('carries the three P&L figures and the duration through to the domain', () => {
+    repo.findById('abc-123').subscribe((entry) => {
+      expect(entry.profitDollars).toBe(121);
+      expect(entry.realProfitDollars).toBe(118.45);
+      // The backend owns the "real wins over computed" rule — the adapter just carries it.
+      expect(entry.retainedProfitDollars).toBe(118.45);
+      expect(entry.durationMinutes).toBe(33);
+    });
+    http.expectOne('/api/journal/trades/abc-123').flush(
+      wireFixture({
+        id: 'abc-123',
+        profitDollars: 121,
+        realProfitDollars: 118.45,
+        retainedProfitDollars: 118.45,
+        durationMinutes: 33,
+      }),
+    );
   });
 
   it('create maps blank note / errorNote to null on the wire', () => {
@@ -301,28 +320,22 @@ describe('HttpJournalRepository', () => {
 function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: 'fixture-id',
+    statEntryId: 'stat-id',
     tradeDate: '2026-06-04',
     ticker: 'AAPL',
-    direction: 'SHORT',
-    executions: [{ seq: 0, kind: 'ENTRY', shares: 100, price: 3.21 }],
-    play: 'A',
     pattern: 'GUS',
+    direction: 'SHORT',
+    executions: [{ seq: 0, kind: 'ENTRY', shares: 100, price: 3.21, executedAt: '09:42' }],
     size: 100,
     openPrice: 3.21,
     exitPrice: null,
-    profitDollars: null,
     gainPercent: null,
+    profitDollars: null,
+    realProfitDollars: null,
+    retainedProfitDollars: null,
+    durationMinutes: null,
     note: null,
-    pre935To10h: null,
-    preGapUp50: null,
-    prePrice1To10: null,
-    preFloat3To50m: null,
-    preWaitPush: null,
-    openSide: null,
-    shortOnResistance: null,
-    exitStrategy: null,
     errorNote: null,
-    statEntryId: null,
     hasScreenshot: false,
     createdAt: '2026-06-04T15:30:00Z',
     updatedAt: '2026-06-04T15:30:00Z',
@@ -346,23 +359,15 @@ function wirePageFixture(content: ReturnType<typeof wireFixture>[]) {
 
 function inputFixture(overrides: Partial<TradeEntryInput> = {}): TradeEntryInput {
   return {
+    statEntryId: 'stat-id',
     tradeDate: new Date(2026, 5, 4),
     ticker: 'AAPL',
-    direction: 'SHORT',
-    executions: [{ kind: 'ENTRY', shares: 100, price: 3.21 }],
-    play: 'A',
     pattern: 'GUS',
+    direction: 'SHORT',
+    executions: [{ kind: 'ENTRY', shares: 100, price: 3.21, executedAt: '09:42' }],
+    realProfitDollars: null,
     note: null,
-    pre935To10h: null,
-    preGapUp50: null,
-    prePrice1To10: null,
-    preFloat3To50m: null,
-    preWaitPush: null,
-    openSide: null,
-    shortOnResistance: null,
-    exitStrategy: null,
     errorNote: null,
-    statEntryId: null,
     ...overrides,
   };
 }

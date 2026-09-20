@@ -12,7 +12,6 @@ data class TradeEntryFilter(
   val query: String? = null,
   val dateFrom: LocalDate? = null,
   val dateTo: LocalDate? = null,
-  val plays: List<TradePlay>? = null,
   val patterns: List<Pattern>? = null,
   val status: TradeStatus? = null,
 )
@@ -22,8 +21,8 @@ enum class TradeStatus {
   OPEN,
   /** Position closed — `exit_price IS NOT NULL` (regardless of P/L). */
   CLOSED,
-  /** Closed at a profit — `profit_dollars > 0`. */
+  /** Closed at a profit — retained P&L > 0. */
   PROFITABLE,
-  /** Closed at a loss — `profit_dollars < 0`. */
+  /** Closed at a loss — retained P&L < 0. */
   LOSING,
 }

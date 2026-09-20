@@ -80,16 +80,6 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.play' | translate }}</mat-label>
-          <mat-select [formField]="tradeForm.play">
-            <mat-option [value]="null">—</mat-option>
-            @for (p of plays; track p) {
-              <mat-option [value]="p">{{ p }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
           <mat-label>{{ 'journal.fields.pattern' | translate }}</mat-label>
           <mat-select [formField]="tradeForm.pattern">
             @for (p of patterns; track p) {
@@ -217,53 +207,9 @@
 
     <mat-divider />
 
-    <!-- Section 3 : Preparation checklist -->
+    <!-- Section 3 : Post-mortem -->
     <section class="form-section">
-      <h3>{{ 'journal.dialog.sections.preparation' | translate }}</h3>
-      <div class="checklist">
-        <mat-checkbox [formField]="tradeForm.pre935To10h">
-          {{ 'journal.fields.pre935To10h' | translate }}
-        </mat-checkbox>
-        <mat-checkbox [formField]="tradeForm.preGapUp50">
-          {{ 'journal.fields.preGapUp50' | translate }}
-        </mat-checkbox>
-        <mat-checkbox [formField]="tradeForm.prePrice1To10">
-          {{ 'journal.fields.prePrice1To10' | translate }}
-        </mat-checkbox>
-        <mat-checkbox [formField]="tradeForm.preFloat3To50m">
-          {{ 'journal.fields.preFloat3To50m' | translate }}
-        </mat-checkbox>
-        <mat-checkbox [formField]="tradeForm.preWaitPush">
-          {{ 'journal.fields.preWaitPush' | translate }}
-        </mat-checkbox>
-        <mat-checkbox [formField]="tradeForm.shortOnResistance">
-          {{ 'journal.fields.shortOnResistance' | translate }}
-        </mat-checkbox>
-      </div>
-
-      <div class="grid-2">
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.openSide' | translate }}</mat-label>
-          <mat-select [formField]="tradeForm.openSide">
-            <mat-option [value]="null">—</mat-option>
-            @for (s of openSides; track s) {
-              <mat-option [value]="s">{{ 'journal.enums.openSide.' + s | translate }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'journal.fields.exitStrategy' | translate }}</mat-label>
-          <mat-select [formField]="tradeForm.exitStrategy">
-            <mat-option [value]="null">—</mat-option>
-            @for (e of exitStrategies; track e) {
-              <mat-option [value]="e">
-                {{ 'journal.enums.exitStrategy.' + e | translate }}
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
+      <h3>{{ 'journal.dialog.sections.postMortem' | translate }}</h3>
 
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ 'journal.fields.errorNote' | translate }}</mat-label>

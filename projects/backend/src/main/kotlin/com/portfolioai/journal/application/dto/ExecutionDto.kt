@@ -3,6 +3,7 @@ package com.portfolioai.journal.application.dto
 import com.portfolioai.journal.domain.ExecutionKind
 import com.portfolioai.journal.domain.TradeExecution
 import java.math.BigDecimal
+import java.time.LocalTime
 
 /** Response shape for a single [TradeExecution]. Ordered by [seq] within its parent position. */
 data class ExecutionDto(
@@ -10,6 +11,8 @@ data class ExecutionDto(
   val kind: ExecutionKind,
   val shares: Int,
   val price: BigDecimal,
+  val executedAt: LocalTime?,
 )
 
-fun TradeExecution.toDto() = ExecutionDto(seq = seq, kind = kind, shares = shares, price = price)
+fun TradeExecution.toDto() =
+  ExecutionDto(seq = seq, kind = kind, shares = shares, price = price, executedAt = executedAt)

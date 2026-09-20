@@ -25,7 +25,7 @@ import { AddTradeDialog, AddTradeDialogData } from '../add-trade-dialog/add-trad
  * Read-only detail view for a single journal position, reached by clicking a row in the journal
  * table (`/journal/:id`). Shows the full picture the listing table can't fit : the ordered list of
  * executions the position is built from, the derived aggregates (avg prices, realized P&L, gain%,
- * fill status), the preparation checklist and the debrief notes.
+ * fill status), the three P&L figures and the post-mortem notes.
  *
  * Edit reuses the same [AddTradeDialog] as the listing ; on save the entry is refetched in place.
  * Delete confirms then navigates back to the journal. The fill `status` (OPEN / PARTIAL / CLOSED) is
@@ -74,27 +74,13 @@ export class JournalDetailPage {
   /** Kept raw so we can revoke it — the signal holds the sanitized wrapper the template binds to. */
   private objectUrl: string | null = null;
 
-  readonly executionColumns = ['seq', 'kind', 'shares', 'price'] as const;
+  readonly executionColumns = ['seq', 'kind', 'executedAt', 'shares', 'price'] as const;
 
   /** Fill status derived from the executions — not a stored field. */
   readonly status = computed(() => {
     const e = this.entry();
     if (!e) return null;
     return computePositionAggregates(e.direction, e.executions).status;
-  });
-
-  /** Whether every preparation-checklist box is meaningfully set — drives the read-only ticks. */
-  readonly checklist = computed(() => {
-    const e = this.entry();
-    if (!e) return [];
-    return [
-      { key: 'pre935To10h', value: e.pre935To10h },
-      { key: 'preGapUp50', value: e.preGapUp50 },
-      { key: 'prePrice1To10', value: e.prePrice1To10 },
-      { key: 'preFloat3To50m', value: e.preFloat3To50m },
-      { key: 'preWaitPush', value: e.preWaitPush },
-      { key: 'shortOnResistance', value: e.shortOnResistance },
-    ];
   });
 
   constructor() {

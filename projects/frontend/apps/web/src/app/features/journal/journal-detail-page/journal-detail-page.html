@@ -64,6 +64,12 @@
                 {{ 'journal.enums.executionKind.' + x.kind | translate }}
               </td>
             </ng-container>
+            <ng-container matColumnDef="executedAt">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ 'journal.fields.executedAt' | translate }}
+              </th>
+              <td mat-cell *matCellDef="let x">{{ x.executedAt ?? '—' }}</td>
+            </ng-container>
             <ng-container matColumnDef="shares">
               <th mat-header-cell *matHeaderCellDef stbCol="numeric">
                 {{ 'journal.fields.shares' | translate }}
@@ -111,33 +117,25 @@
         >
           {{ e.gainPercent !== null ? (e.gainPercent | number: '1.2-2') + ' %' : '—' }}
         </dd>
-        <dt>{{ 'journal.fields.play' | translate }}</dt>
-        <dd>{{ e.play ?? '—' }}</dd>
+        <dt>{{ 'journal.fields.realProfitDollars' | translate }}</dt>
+        <dd>
+          {{ e.realProfitDollars !== null ? (e.realProfitDollars | number: '1.2-2') + ' $' : '—' }}
+        </dd>
+        <dt>{{ 'journal.fields.retainedProfitDollars' | translate }}</dt>
+        <dd
+          [class.profit-positive]="(e.retainedProfitDollars ?? 0) > 0"
+          [class.profit-negative]="(e.retainedProfitDollars ?? 0) < 0"
+        >
+          {{
+            e.retainedProfitDollars !== null
+              ? (e.retainedProfitDollars | number: '1.2-2') + ' $'
+              : '—'
+          }}
+        </dd>
+        <dt>{{ 'journal.fields.durationMinutes' | translate }}</dt>
+        <dd>{{ e.durationMinutes !== null ? e.durationMinutes + ' min' : '—' }}</dd>
         <dt>{{ 'journal.fields.pattern' | translate }}</dt>
         <dd>{{ 'patterns.long.' + e.pattern | translate }}</dd>
-      </dl>
-    </section>
-
-    <mat-divider />
-
-    <!-- Preparation checklist — read-only ticks. -->
-    <section class="detail-section">
-      <h3>{{ 'journal.detail.preparation' | translate }}</h3>
-      <ul class="checklist-view">
-        @for (item of checklist(); track item.key) {
-          <li [class.checked]="item.value">
-            <mat-icon>{{ item.value ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
-            <span>{{ 'journal.fields.' + item.key | translate }}</span>
-          </li>
-        }
-      </ul>
-      <dl class="aggregates">
-        <dt>{{ 'journal.fields.openSide' | translate }}</dt>
-        <dd>{{ e.openSide ? ('journal.enums.openSide.' + e.openSide | translate) : '—' }}</dd>
-        <dt>{{ 'journal.fields.exitStrategy' | translate }}</dt>
-        <dd>
-          {{ e.exitStrategy ? ('journal.enums.exitStrategy.' + e.exitStrategy | translate) : '—' }}
-        </dd>
       </dl>
     </section>
 

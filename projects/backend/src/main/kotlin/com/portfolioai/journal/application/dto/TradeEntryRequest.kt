@@ -1,10 +1,8 @@
 package com.portfolioai.journal.application.dto
 
 import com.portfolioai.journal.domain.TradeDirection
-import com.portfolioai.journal.domain.TradeExitStrategy
-import com.portfolioai.journal.domain.TradeOpenSide
-import com.portfolioai.journal.domain.TradePlay
 import com.portfolioai.shared.Pattern
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
@@ -13,28 +11,25 @@ import java.util.UUID
  * create and full replace — the journal is small enough that PATCH-style partial updates aren't
  * worth the divergence.
  *
- * Only [tradeDate] and [ticker] are mandatory. Since the multi-execution model (issue #93) the
- * execution data is carried by [direction] + [executions] (an ordered list of entry/exit legs). The
- * flat aggregates (size, avg prices, P&L, gain%) are **derived** server-side by
- * `TradePositionCalculator` — the client never sends them. An empty [executions] list is valid (a
- * trade jotted down before any fill) ; [direction] may then stay null.
+ * [statEntryId], [tradeDate], [ticker] and [pattern] describe the source stat the trade was created
+ * from (#192) : the caller copies them off the stat, the journal stores them as-is and never lets
+ * the user retype them. The execution data is carried by [direction] + [executions] (an ordered
+ * list of entry/exit legs) ; the flat aggregates (size, avg prices, computed P&L, gain%) are
+ * **derived** server-side by `TradePositionCalculator` — the client never sends them. An empty
+ * [executions] list is valid (a trade opened before any fill is recorded) ; [direction] may then
+ * stay null.
+ *
+ * [realProfitDollars] is the only P&L the client may send : the figure read off the broker
+ * statement, which overrides the computed one.
  */
 data class TradeEntryRequest(
+  val statEntryId: UUID,
   val tradeDate: LocalDate,
   val ticker: String,
+  val pattern: Pattern? = null,
   val direction: TradeDirection? = null,
   val executions: List<ExecutionRequest> = emptyList(),
-  val play: TradePlay? = null,
-  val pattern: Pattern? = null,
+  val realProfitDollars: BigDecimal? = null,
   val note: String? = null,
-  val pre935To10h: Boolean? = null,
-  val preGapUp50: Boolean? = null,
-  val prePrice1To10: Boolean? = null,
-  val preFloat3To50m: Boolean? = null,
-  val preWaitPush: Boolean? = null,
-  val openSide: TradeOpenSide? = null,
-  val shortOnResistance: Boolean? = null,
-  val exitStrategy: TradeExitStrategy? = null,
   val errorNote: String? = null,
-  val statEntryId: UUID? = null,
 )

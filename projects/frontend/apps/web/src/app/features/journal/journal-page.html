@@ -102,13 +102,6 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="play">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header="play">
-                {{ 'journal.fields.play' | translate }}
-              </th>
-              <td mat-cell *matCellDef="let e">{{ e.play ?? '—' }}</td>
-            </ng-container>
-
             <ng-container matColumnDef="pattern">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="pattern">
                 {{ 'journal.fields.pattern' | translate }}
@@ -297,24 +290,6 @@
             <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
             <mat-datepicker #toPicker />
           </mat-form-field>
-        </div>
-      </section>
-
-      <mat-divider />
-
-      <section class="filter-section">
-        <h4>{{ 'journal.filterPanel.play' | translate }}</h4>
-        <div class="chip-row">
-          @for (p of plays; track p) {
-            <button
-              mat-stroked-button
-              type="button"
-              [class.chip-active]="filterModel().plays.includes(p)"
-              (click)="togglePlay(p, !filterModel().plays.includes(p))"
-            >
-              {{ p }}
-            </button>
-          }
         </div>
       </section>
 

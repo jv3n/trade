@@ -14,11 +14,13 @@ describe('computePositionAggregates', () => {
     kind: 'ENTRY',
     shares,
     price,
+    executedAt: null,
   });
   const exit = (shares: number, price: number): TradeExecutionInput => ({
     kind: 'EXIT',
     shares,
     price,
+    executedAt: null,
   });
 
   it('returns an empty open position when there are no executions', () => {
