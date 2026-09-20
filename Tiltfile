@@ -52,13 +52,19 @@ uname = str(local("uname -s", quiet=True, echo_off=True)).strip()
 is_mac = uname == "Darwin"
 is_wsl = not is_mac and "microsoft" in str(local("uname -r", quiet=True, echo_off=True)).lower()
 
-# WSL2 only: the repo sits on a /mnt/c (9p) mount where deleting a file another process holds open
-# fails, and where inotify misses writes made from the Windows side. Gradle's output and Tilt's own
-# project cache move to ext4, and the Angular dev server polls instead of watching.
+# What breaks is the 9p mount, not WSL itself: a working copy under /mnt/c can't delete a file
+# another process holds open, and inotify misses writes made from the Windows side. A copy on the
+# WSL filesystem behaves like any native one, so the workarounds below are keyed on the mount.
+on_9p = is_wsl and os.getcwd().startswith("/mnt/")
+
+# Polling costs CPU for every file, every two seconds. It only buys something when inotify is deaf.
+ng_poll = " --poll 2000" if on_9p else ""
+
+# Gradle's output and Tilt's own project cache stay on ext4 under WSL either way — off 9p it is no
+# longer a workaround, but it still keeps build artefacts out of the working copy.
 gradle_build_dir = os.getenv("HOME") + "/.cache/portfolioai/backend-build" if is_wsl else "projects/backend/build"
 gradle_cache_dir = os.getenv("HOME") + "/.cache/portfolioai/tilt-project-cache" if is_wsl else "projects/backend/.gradle"
 gradle_cache_arg = ' --project-cache-dir="' + gradle_cache_dir + '"' if is_wsl else ""
-ng_poll = " --poll 2000" if is_wsl else ""
 
 def resolve(what, cmd, fix):
     """Resolves a toolchain path once, at load time, so commands stay plain one-liners."""
@@ -263,23 +269,6 @@ cmd_button(
     text="Seed — load the demo data",
     icon_name="dataset",
     argv=["./devops/tools/tilt/db-seed.sh"],
-)
-
-cmd_button(
-    name="db-dump",
-    resource="database 🛢",
-    text="Dump — snapshot to devops/local/dumps",
-    icon_name="archive",
-    argv=["./devops/tools/tilt/db-dump.sh"],
-)
-
-cmd_button(
-    name="db-restore",
-    resource="database 🛢",
-    text="Restore — reload the latest dump",
-    icon_name="unarchive",
-    argv=["./devops/tools/tilt/db-restore.sh"],
-    requires_confirmation=True,
 )
 
 local_resource(
