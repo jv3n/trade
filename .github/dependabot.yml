@@ -29,6 +29,10 @@ updates:
       - dependency-name: '*'
         update-types:
           - 'version-update:semver-major'
+      # CodeQL 2.27.0's Kotlin extractor cannot compile 2.4.20 — `Analyze (java-kotlin)` fails
+      # while `Backend CI` passes. Drop this once the extractor catches up (see #243).
+      - dependency-name: 'org.jetbrains.kotlin*'
+        versions: ['2.4.20']
 
   # ─────────────────────────────────────────────────────────────────────── Frontend npm
   - package-ecosystem: npm
