@@ -1,28 +1,31 @@
-# Maquettes
+# Mockups
 
-Maquettes HTML statiques pour redéfinir l'app de suivi de trading avant de la recoder.
+Static HTML mockups, used to redefine the trading tracker before recoding it. The copy inside them
+stays in French : it mirrors the app's own interface.
 
-- Ouvrir `index.html` directement dans le navigateur — aucune dépendance, aucun build.
-- `assets/mockup.css` : tokens (thème sombre / clair) et composants partagés.
-- `assets/mockup.js` : bascule de thème, groupes segmentés (USD / CAD, FR / EN), lignes cliquables.
-- `PARCOURS.md` : le parcours utilisateur étape par étape — la référence que les maquettes suivent.
-- Données fictives mais cohérentes entre les pages : les trades du journal alimentent le compte, correspondent aux lignes de stats, et le candidat KTTA devient la stat puis le trade du 17/09.
+- Open `index.html` straight in a browser — no dependency, no build.
+- `assets/mockup.css` : tokens (dark / light theme) and shared components.
+- `assets/mockup.js` : theme toggle, segmented groups (USD / CAD, FR / EN), clickable rows.
+- `PARCOURS.md` : the user journey, step by step — the reference the mockups follow.
+- The data is fictional but consistent across the pages : the journal's trades feed the account,
+  match the stats rows, and the KTTA candidate becomes the stat and then the trade of 17/09.
 
-## Icônes
+## Icons
 
-**Material Symbols Rounded** (Google Fonts). Les noms ci-dessous sont ceux à utiliser tels quels dans `<mat-icon>` dans l'app.
+**Material Symbols Rounded** (Google Fonts). Use the names below as-is in `<mat-icon>`.
 
-| Usage | Icône |
-|-------|-------|
-| Menu — Aujourd'hui / Compte / Candidats / Stats / Journal / Lexique | `today` · `account_balance_wallet` · `radar` · `query_stats` · `menu_book` · `dictionary` |
-| Modifier / supprimer | `edit` · `delete` |
-| Ajouter / dépôt / retrait | `add` · `add` · `remove` |
-| Import / export CSV | `import_export` |
-| Passer en stat / en trade, liens « voir » | `arrow_forward` |
-| Tout passer en stats | `keyboard_double_arrow_right` |
-| Jour précédent / suivant, retour | `chevron_left` · `chevron_right` · `arrow_back` |
-| Étape faite, statut « En stats » | `check` |
-| Thème clair / sombre | `light_mode` · `dark_mode` |
-| Déposer une capture du chart | `add_photo_alternate` |
+| Use | Icon |
+|-----|------|
+| Menu — Today / Account / Candidates / Stats / Journal / Lexicon | `today` · `account_balance_wallet` · `radar` · `query_stats` · `menu_book` · `dictionary` |
+| Edit / delete | `edit` · `delete` |
+| Add / deposit / withdrawal | `add` · `add` · `remove` |
+| CSV export | `import_export` |
+| Promote to stat / to trade, "view" links | `arrow_forward` |
+| Promote every candidate | `keyboard_double_arrow_right` |
+| Previous / next day, back | `chevron_left` · `chevron_right` · `arrow_back` |
+| Step done, "in stats" status | `check` |
+| Light / dark theme | `light_mode` · `dark_mode` |
+| Drop a chart screenshot | `add_photo_alternate` |
 
-Style : trait fin (`wght` 400), contour ; l'entrée active du menu passe en icône **pleine** (`FILL` 1).
+Style : thin stroke (`wght` 400), outlined ; the active menu entry switches to the **filled** icon
+(`FILL` 1).
