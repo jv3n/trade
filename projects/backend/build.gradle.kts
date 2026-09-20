@@ -1,9 +1,9 @@
 plugins {
-  kotlin("jvm") version "2.4.10"
-  kotlin("plugin.spring") version "2.4.10"
+  kotlin("jvm") version "2.4.20"
+  kotlin("plugin.spring") version "2.4.20"
   id("org.springframework.boot") version "3.5.16"
   id("io.spring.dependency-management") version "1.1.7"
-  kotlin("plugin.jpa") version "2.4.10"
+  kotlin("plugin.jpa") version "2.4.20"
   id("com.diffplug.spotless") version "6.25.0"
   // Detekt — Kotlin static analysis (cyclomatic complexity, magic numbers, long methods,
   // potential bugs). Complements Spotless, which only handles formatting. See the `detekt { … }`
@@ -76,7 +76,7 @@ dependencies {
   // appender so MDC values (notably `userId`) become event extras automatically. The `-jakarta`
   // variant targets Spring Boot 3 (Jakarta EE) — picking `sentry-spring-boot-starter` (no suffix)
   // would silently link the javax-namespaced classes and the bean wiring would crash at boot.
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.56.0")
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.57.0")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
