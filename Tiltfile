@@ -80,7 +80,19 @@ node_bin = resolve(
     "nvm install " + node_version if is_mac else "mise install node@" + node_version,
 )
 
-tool_env = {"JAVA_HOME": java_home, "PATH": node_bin + ":" + os.getenv("PATH")}
+def dedupe_path(raw):
+    """Keeps the first occurrence of each entry. The PATH Tilt inherits already carries the mise
+    bins (the launching shell has mise active) and, under WSL, a doubled Windows interop block —
+    prepending to it compounds the duplicates in every command we then run."""
+    seen = {}
+    entries = []
+    for entry in raw.split(":"):
+        if entry and entry not in seen:
+            seen[entry] = True
+            entries.append(entry)
+    return ":".join(entries)
+
+tool_env = {"JAVA_HOME": java_home, "PATH": dedupe_path(node_bin + ":" + os.getenv("PATH"))}
 if is_wsl:
     tool_env["GRADLE_BUILD_DIR"] = gradle_build_dir
 
