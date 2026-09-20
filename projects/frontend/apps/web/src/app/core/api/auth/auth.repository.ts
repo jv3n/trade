@@ -2,18 +2,22 @@ import { Observable } from 'rxjs';
 
 export type Role = 'ADMIN' | 'USER';
 
-/** UI preference value types — persisted per-user, mirror of the backend `app_user` columns. */
-export type Theme = 'dark' | 'light';
+// UI preference value types — persisted per-user, mirror of the backend `app_user` columns.
+
+/** `system` follows the OS light / dark setting, live — and is the default (#201). */
+export type Theme = 'system' | 'dark' | 'light';
 export type Language = 'fr' | 'en';
+/** Display currency of the account balance. The account itself stays USD-denominated. */
+export type BalanceCurrency = 'USD' | 'CAD';
 
 /**
  * The shape returned by `GET /api/me` — what the SPA needs to render the navbar (email +
  * optional display name), gate admin-only routes (role), and apply the user's UI preferences
- * ([theme] + [language]). Mirror of the backend `CurrentUserDto`.
+ * ([theme], [language], [balanceCurrency]). Mirror of the backend `CurrentUserDto`.
  *
- * [theme] / [language] are typed optional so the `?? default` fallback in `ThemeService` /
- * `LanguageService` covers both the unauthenticated case (no user at all) and any older payload
- * uniformly — the live backend always populates them.
+ * The preferences are typed optional so the `?? default` fallback in `ThemeService` /
+ * `LanguageService` / `BalanceCurrencyService` covers both the unauthenticated case (no user at
+ * all) and any older payload uniformly — the live backend always populates them.
  */
 export interface CurrentUser {
   email: string;
@@ -21,12 +25,14 @@ export interface CurrentUser {
   role: Role;
   theme?: Theme;
   language?: Language;
+  balanceCurrency?: BalanceCurrency;
 }
 
 /** Partial preference update sent to `PUT /api/me/preferences` — only the changed knob. */
 export interface PreferencesUpdate {
   theme?: Theme;
   language?: Language;
+  balanceCurrency?: BalanceCurrency;
 }
 
 /**
@@ -49,6 +55,6 @@ export interface PreferencesUpdate {
 export abstract class AuthRepository {
   abstract getCurrentUser(): Observable<CurrentUser>;
   abstract logout(): Observable<void>;
-  /** `PUT /api/me/preferences` — persists theme / language on the user, returns the refreshed user. */
+  /** `PUT /api/me/preferences` — persists one preference on the user, returns the refreshed user. */
   abstract updatePreferences(prefs: PreferencesUpdate): Observable<CurrentUser>;
 }

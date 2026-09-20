@@ -36,5 +36,7 @@ class AuthController(private val authService: AuthService) {
    */
   @PutMapping("/me/preferences")
   fun updatePreferences(@RequestBody request: UpdatePreferencesRequest): CurrentUserDto =
-    authService.updatePreferences(request.theme, request.language).toCurrentUserDto()
+    authService
+      .updatePreferences(request.theme, request.language, request.balanceCurrency)
+      .toCurrentUserDto()
 }

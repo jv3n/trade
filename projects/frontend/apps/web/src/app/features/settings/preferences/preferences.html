@@ -4,6 +4,24 @@
     <p>{{ 'settings.preferencesPage.description' | translate }}</p>
   </header>
 
+  <!-- Profile — and the sign out, which lost its home when the avatar menu was emptied (#200). -->
+  <section class="config-card profile-card">
+    <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+    <div class="identity">
+      <span class="name">{{ auth.currentUser()?.displayName || auth.currentUser()?.email }}</span>
+      <span class="meta">
+        {{ auth.currentUser()?.email }}
+        <span class="role-tag">
+          {{ 'auth.role.' + (auth.currentUser()?.role ?? 'USER') | translate }}
+        </span>
+      </span>
+    </div>
+    <button mat-stroked-button type="button" class="sign-out" (click)="signOut()">
+      <mat-icon>logout</mat-icon>
+      <span>{{ 'auth.signOut' | translate }}</span>
+    </button>
+  </section>
+
   <section class="config-card">
     <div class="card-header">
       <h3>{{ 'settings.preferencesPage.theme.label' | translate }}</h3>
@@ -14,14 +32,12 @@
       (change)="setTheme($event)"
       [hideSingleSelectionIndicator]="true"
     >
-      <mat-button-toggle value="dark">
-        <mat-icon>dark_mode</mat-icon>
-        <span>{{ 'settings.preferencesPage.theme.dark' | translate }}</span>
-      </mat-button-toggle>
-      <mat-button-toggle value="light">
-        <mat-icon>light_mode</mat-icon>
-        <span>{{ 'settings.preferencesPage.theme.light' | translate }}</span>
-      </mat-button-toggle>
+      @for (t of themes; track t) {
+        <mat-button-toggle [value]="t">
+          <mat-icon>{{ themeIcons[t] }}</mat-icon>
+          <span>{{ 'settings.preferencesPage.theme.' + t | translate }}</span>
+        </mat-button-toggle>
+      }
     </mat-button-toggle-group>
   </section>
 
@@ -39,6 +55,24 @@
         <mat-button-toggle [value]="l">
           <span class="lang-flag" aria-hidden="true">{{ language.flag(l) }}</span>
           <span>{{ 'language.' + l | translate }}</span>
+        </mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </section>
+
+  <section class="config-card">
+    <div class="card-header">
+      <h3>{{ 'settings.preferencesPage.currency.label' | translate }}</h3>
+    </div>
+    <p class="description">{{ 'settings.preferencesPage.currency.description' | translate }}</p>
+    <mat-button-toggle-group
+      [value]="balanceCurrency.currency()"
+      (change)="setCurrency($event)"
+      [hideSingleSelectionIndicator]="true"
+    >
+      @for (c of balanceCurrency.supported; track c) {
+        <mat-button-toggle [value]="c">
+          <span>{{ 'account.currency.' + c | translate }}</span>
         </mat-button-toggle>
       }
     </mat-button-toggle-group>

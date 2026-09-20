@@ -55,23 +55,14 @@
       <router-outlet />
     </main>
   } @else {
-    <mat-sidenav-container class="ui-shell" #sidenavContainer>
-      <mat-sidenav
-        mode="side"
-        opened
-        class="ui-sidenav"
-        [class.ui-sidenav--collapsed]="sidenavCollapse.collapsed()"
-        disableClose
-      >
+    <mat-sidenav-container class="ui-shell">
+      <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
         <mat-nav-list class="sidenav-list">
           <a
             mat-list-item
             routerLink="/today"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.today' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
           >
             <mat-icon matListItemIcon>today</mat-icon>
             <span matListItemTitle>{{ 'nav.today' | translate }}</span>
@@ -81,9 +72,6 @@
             routerLink="/candidates"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.candidates' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
           >
             <mat-icon matListItemIcon>radar</mat-icon>
             <span matListItemTitle>{{ 'nav.candidates' | translate }}</span>
@@ -93,9 +81,6 @@
             routerLink="/stats"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.stats' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
           >
             <mat-icon matListItemIcon>query_stats</mat-icon>
             <span matListItemTitle>{{ 'nav.stats' | translate }}</span>
@@ -105,9 +90,6 @@
             routerLink="/journal"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.journal' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
           >
             <mat-icon matListItemIcon>menu_book</mat-icon>
             <span matListItemTitle>{{ 'nav.journal' | translate }}</span>
@@ -117,56 +99,27 @@
             routerLink="/account"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.account' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
           >
             <mat-icon matListItemIcon>account_balance_wallet</mat-icon>
             <span matListItemTitle>{{ 'nav.account' | translate }}</span>
           </a>
         </mat-nav-list>
-        <!-- Pinned to the bottom of the sidenav (above the collapse toggle) — the lexicon is a
-             reference/help surface, not a primary workflow, so it sits apart from the main list. -->
+        <!-- Pinned to the bottom — a reference and a back-office, not part of the daily flow. -->
         <mat-nav-list class="sidenav-list sidenav-list--footer">
           <a
             mat-list-item
             routerLink="/lexicon"
             routerLinkActive="sidenav-active"
             [routerLinkActiveOptions]="{ exact: true }"
-            [matTooltip]="'nav.lexicon' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
           >
             <mat-icon matListItemIcon>dictionary</mat-icon>
             <span matListItemTitle>{{ 'nav.lexicon' | translate }}</span>
           </a>
-          <a
-            mat-list-item
-            routerLink="/settings"
-            routerLinkActive="sidenav-active"
-            [matTooltip]="'nav.settings' | translate"
-            [matTooltipDisabled]="!sidenavCollapse.collapsed()"
-            matTooltipPosition="right"
-          >
+          <a mat-list-item routerLink="/settings" routerLinkActive="sidenav-active">
             <mat-icon matListItemIcon>settings</mat-icon>
             <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
           </a>
         </mat-nav-list>
-        <div class="sidenav-toggle">
-          <button
-            mat-icon-button
-            type="button"
-            (click)="sidenavCollapse.toggle()"
-            [matTooltip]="(sidenavCollapse.collapsed() ? 'nav.expand' : 'nav.collapse') | translate"
-            matTooltipPosition="right"
-          >
-            <mat-icon>{{
-              sidenavCollapse.collapsed()
-                ? 'keyboard_double_arrow_right'
-                : 'keyboard_double_arrow_left'
-            }}</mat-icon>
-          </button>
-        </div>
       </mat-sidenav>
       <mat-sidenav-content>
         <main class="app-content">

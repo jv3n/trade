@@ -37,12 +37,16 @@ class User(
   @Column(nullable = false, length = 50) val provider: String,
   @Column(name = "provider_id", length = 255) var providerId: String? = null,
   @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) var role: Role,
-  // UI preferences, persisted per-user (V7). Defaults match the SPA's ThemeService /
-  // LanguageService
-  // so a freshly created row renders identically to the old localStorage defaults. Allowed values
-  // are enforced by CHECK constraints + an app-layer validation in AuthService.updatePreferences.
-  @Column(nullable = false, length = 20) var theme: String = "dark",
+  // UI preferences, persisted per-user (V7, extended in V19). Allowed values are enforced by CHECK
+  // constraints + an app-layer validation in AuthService.updatePreferences.
+  //
+  // `system` is the theme default : the app follows the OS light / dark setting until the user
+  // says otherwise. The balance currency is a display choice only — the account itself stays
+  // USD-denominated, CAD is a conversion at the day's rate.
+  @Column(nullable = false, length = 20) var theme: String = "system",
   @Column(nullable = false, length = 5) var language: String = "fr",
+  @Column(name = "balance_currency", nullable = false, length = 3)
+  var balanceCurrency: String = "USD",
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
   @Column(name = "last_login_at") var lastLoginAt: Instant? = null,

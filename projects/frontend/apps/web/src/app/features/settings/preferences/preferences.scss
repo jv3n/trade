@@ -1,5 +1,5 @@
-// `.content-header`, `.config-card`, `.card-header` viennent de la lib (`libs/ui/styles/`).
-// La page reste skinny — juste le layout outer et un fix de baseline pour les emojis-drapeau.
+// `.content-header`, `.config-card`, `.card-header` come from the lib (`libs/ui/styles/`).
+// The page stays skinny — the outer layout, the profile card and a baseline fix for flag emojis.
 
 // Container (padding + max-width 720) comes from the global `.page page--form` composition ;
 // the local class only carries the flex-stack rhythm for the preferences-specific sections.
@@ -9,7 +9,7 @@
   gap: 1rem;
 }
 
-// Apple Color Emoji descender — neutralise un décalage vertical sous le glyph.
+// Apple Color Emoji descender — neutralises a vertical offset under the glyph.
 .lang-flag {
   display: inline-flex;
   align-items: center;
@@ -20,12 +20,65 @@
   transform: translateY(-1px);
 }
 
-// Icônes Material à l'intérieur des `<mat-button-toggle>` du thème — légèrement plus serrées
-// que par défaut pour cohérence avec l'icon-button densité 36 px de la toolbar.
+// Material icons inside the theme `<mat-button-toggle>` — slightly tighter than the default,
+// to match the 36 px icon-button density of the toolbar.
 mat-button-toggle mat-icon {
   font-size: 1.05rem;
   width: 1.05rem;
   height: 1.05rem;
   margin-right: 0.4rem;
   vertical-align: middle;
+}
+
+// Profile card — avatar, identity, and the sign out pinned to the right (#201).
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+
+  .name {
+    font-weight: 600;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+}
+
+.role-tag {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent);
+}
+
+.sign-out {
+  margin-left: auto;
 }
