@@ -5,6 +5,19 @@
         <h2>{{ 'lexicon.title' | translate }}</h2>
         <p>{{ 'lexicon.subtitle' | translate }}</p>
       </div>
+      <mat-button-toggle-group
+        class="lang-toggle"
+        [value]="definitionLanguage()"
+        (change)="setDefinitionLanguage($event.value)"
+        [hideSingleSelectionIndicator]="true"
+        [attr.aria-label]="'lexicon.definitionLanguage' | translate"
+      >
+        @for (l of languages; track l) {
+          <mat-button-toggle [value]="l">{{
+            'lexicon.languages.' + l | translate
+          }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
     </div>
   </header>
 
@@ -26,6 +39,47 @@
       <p>{{ 'lexicon.empty' | translate }}</p>
     </div>
   } @else {
-    <app-lexicon-table [entries]="entries()" />
+    <div class="toolbar">
+      <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+        <mat-icon matIconPrefix>search</mat-icon>
+        <input
+          matInput
+          type="search"
+          [value]="search()"
+          (input)="setSearch($any($event.target).value)"
+          [placeholder]="'lexicon.searchPlaceholder' | translate"
+        />
+      </mat-form-field>
+
+      <nav class="letters" [attr.aria-label]="'lexicon.letterIndex' | translate">
+        <button type="button" [class.on]="letter() === allLetters" (click)="setLetter(allLetters)">
+          {{ 'lexicon.allLetters' | translate }}
+        </button>
+        @for (l of letters(); track l) {
+          <button type="button" [class.on]="letter() === l" (click)="setLetter(l)">{{ l }}</button>
+        }
+      </nav>
+    </div>
+
+    @if (visible().length === 0) {
+      <div class="empty-state">
+        <mat-icon>search_off</mat-icon>
+        <p>{{ 'lexicon.noMatch' | translate }}</p>
+      </div>
+    } @else {
+      <section class="terms">
+        @for (card of visible(); track card.id) {
+          <article class="card term">
+            <h3>
+              {{ card.heading }}
+              @if (card.expansion) {
+                <span class="tag">{{ card.expansion }}</span>
+              }
+            </h3>
+            <p>{{ card.definition }}</p>
+          </article>
+        }
+      </section>
+    }
   }
 </div>
