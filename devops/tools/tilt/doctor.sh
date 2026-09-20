@@ -65,11 +65,13 @@ else
 fi
 
 step "Workspace"
-if [ -d projects/frontend/node_modules/@angular/cli ]; then
+# The bin link, not the package directory : an interrupted install leaves the second one standing
+# and takes the first one with it, which is exactly the 'ng: command not found' this warns about.
+if [ -x projects/frontend/node_modules/.bin/ng ]; then
   ok "frontend dependencies installed"
 else
-  fail "projects/frontend/node_modules missing — 'ng: command not found' at startup" \
-    "trigger the 'frontend-deps' resource in Tilt, or run npm ci from projects/frontend"
+  fail "projects/frontend/node_modules incomplete — 'ng: command not found' at startup" \
+    "trigger the 'frontend-deps' resource in Tilt, or run npm install from projects/frontend"
 fi
 
 if [ -f .env ]; then
