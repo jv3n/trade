@@ -2,9 +2,11 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
+import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import {
   PageRequest,
   PagedResult,
@@ -56,6 +58,8 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     under1Dollar: false,
     entryAfter11am: false,
     completed: true,
+    tradeId: null,
+    tradeRetainedProfitDollars: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -115,6 +119,9 @@ class MockStatsRepository extends StatsRepository {
     of(makeStat({ ...input, id, completed: true })),
   );
   delete = vi.fn((_id: string): Observable<void> => of(undefined));
+  promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
+    of({ id: 'trade-1' } as TradeEntry),
+  );
   exportCsv = vi.fn((): Observable<Blob> => of(new Blob()));
 }
 
@@ -131,6 +138,7 @@ function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
       provideZonelessChangeDetection(),
       provideTranslateService({ lang: 'en' }),
       provideNativeDateAdapter(),
+      provideRouter([]),
       { provide: StatsRepository, useClass: MockStatsRepository },
       { provide: MatSnackBar, useValue: { open: snackBarOpen } },
       { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
@@ -288,6 +296,38 @@ describe('StatsPage', () => {
     page.delete(makeStat());
 
     expect(repo.delete).not.toHaveBeenCalled();
+  });
+
+  // ---- Stat → trade (#193) ----
+
+  it('« → Trade » creates the trade and lands on its page', () => {
+    // The whole point of the action is to go and type the executions, so the navigation is part of
+    // the contract, not a nicety.
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.detectChanges();
+
+    page.promoteToTrade(makeStat());
+
+    expect(repo.promoteToTrade).toHaveBeenCalledWith('stat-ktta');
+    expect(navigate).toHaveBeenCalledWith(['/journal', 'trade-1']);
+  });
+
+  it('a cancelled confirmation creates nothing', () => {
+    const { page, repo } = setup({ rows: [makeStat()], confirmed: false });
+
+    page.promoteToTrade(makeStat());
+
+    expect(repo.promoteToTrade).not.toHaveBeenCalled();
+  });
+
+  it('a stat that already has a trade carries the link instead of the action', () => {
+    const traded = makeStat({ tradeId: 'trade-7', tradeRetainedProfitDollars: 291.35 });
+    const { page } = setup({ rows: [traded] });
+
+    const row = page.rows()[0];
+    expect(row.tradeId).toBe('trade-7');
+    expect(row.tradeRetainedProfitDollars).toBe(291.35);
   });
 
   // ---- Filters ----

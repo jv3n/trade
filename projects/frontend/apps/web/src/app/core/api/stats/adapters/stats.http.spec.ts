@@ -154,6 +154,57 @@ describe('HttpStatsRepository', () => {
     req.flush(wireStat());
   });
 
+  it('promoteToTrade POSTs to /:id/trade and parses the journal trade that comes back', () => {
+    // The response is a journal wire DTO, not a stat — the mapping is the journal adapter's, and
+    // what the caller needs from it is the id to navigate to (#193).
+    repo.promoteToTrade('stat-1').subscribe((trade) => {
+      expect(trade.id).toBe('trade-9');
+      expect(trade.statEntryId).toBe('stat-1');
+      expect(trade.tradeDate).toBeInstanceOf(Date);
+      expect(trade.tradeDate.getDate()).toBe(17);
+    });
+
+    const req = http.expectOne('/api/stats/stat-1/trade');
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      id: 'trade-9',
+      statEntryId: 'stat-1',
+      tradeDate: '2026-09-17',
+      ticker: 'KTTA',
+      pattern: 'GUS',
+      direction: null,
+      executions: [],
+      size: null,
+      openPrice: null,
+      exitPrice: null,
+      gainPercent: null,
+      profitDollars: null,
+      realProfitDollars: null,
+      retainedProfitDollars: null,
+      durationMinutes: null,
+      note: null,
+      errorNote: null,
+      hasScreenshot: false,
+      createdAt: '2026-09-17T12:00:00Z',
+      updatedAt: '2026-09-17T12:00:00Z',
+    });
+  });
+
+  it('a traded stat carries its trade link through the page mapping', () => {
+    repo.findAll().subscribe((page) => {
+      expect(page.content[0].tradeId).toBe('trade-9');
+      expect(page.content[0].tradeRetainedProfitDollars).toBe(291.35);
+    });
+
+    http
+      .expectOne('/api/stats')
+      .flush(
+        wirePageFixture([
+          { ...wireStat(), tradeId: 'trade-9', tradeRetainedProfitDollars: 291.35 },
+        ]),
+      );
+  });
+
   // ---- Fixtures --------------------------------------------------------------------------------
 
   /** KTTA on 09/17 — the example of `mockup/PARCOURS.md`, steps 1 and 5. */
@@ -180,6 +231,8 @@ describe('HttpStatsRepository', () => {
       under1Dollar: false,
       entryAfter11am: false,
       completed: true,
+      tradeId: null,
+      tradeRetainedProfitDollars: null,
       createdAt: '2026-09-17T12:00:00Z',
       updatedAt: '2026-09-17T21:00:00Z',
     };

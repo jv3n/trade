@@ -12,12 +12,18 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
  *
  * Extends [JpaSpecificationExecutor] so the service layer can pass a dynamic [Specification] (see
  * [TradeEntrySpecifications.matching]) for filtered listings — required-where predicate (user
- * scope) + optional filters (search, date range, plays, patterns, status).
+ * scope) + optional filters (search, date range, patterns, status).
  */
 interface TradeEntryRepository :
   JpaRepository<TradeEntry, UUID>, JpaSpecificationExecutor<TradeEntry> {
 
   fun findByIdAndUserId(id: UUID, userId: UUID): TradeEntry?
+
+  /**
+   * The caller trades born from these stats — one per stat at most (unique index, #193). Backs the
+   * link the stats listing shows in place of the « → Trade » button, in one query per page.
+   */
+  fun findByUserIdAndStatEntryIdIn(userId: UUID, statEntryIds: Collection<UUID>): List<TradeEntry>
 
   fun deleteByIdAndUserId(id: UUID, userId: UUID): Long
 }

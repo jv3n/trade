@@ -21,7 +21,10 @@ export abstract class JournalRepository {
     page?: PageRequest,
   ): Observable<PagedResult<TradeEntry>>;
   abstract findById(id: string): Observable<TradeEntry>;
-  abstract create(input: TradeEntryInput): Observable<TradeEntry>;
+  /**
+   * No `create` on purpose (#193) : a trade is born from a stat, through
+   * `StatsRepository.promoteToTrade`. The backend has no create endpoint either.
+   */
   abstract update(id: string, input: TradeEntryInput): Observable<TradeEntry>;
   abstract delete(id: string): Observable<void>;
   /** Downloads every trade as a CSV blob (UTF-8 with BOM, RFC 4180). */

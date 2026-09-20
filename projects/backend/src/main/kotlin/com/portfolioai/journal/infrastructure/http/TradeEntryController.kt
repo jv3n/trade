@@ -108,9 +108,7 @@ class TradeEntryController(private val service: TradeEntryService) {
     return service.importCsv(csv)
   }
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  fun create(@RequestBody request: TradeEntryRequest): TradeEntryDto = service.create(request)
+  // No create endpoint : a trade is born from a stat, through `POST /api/stats/{id}/trade` (#193).
 
   @PutMapping("/{id}")
   fun update(@PathVariable id: UUID, @RequestBody request: TradeEntryRequest): TradeEntryDto =

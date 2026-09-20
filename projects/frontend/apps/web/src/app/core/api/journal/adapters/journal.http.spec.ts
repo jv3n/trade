@@ -187,21 +187,24 @@ describe('HttpJournalRepository', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // create / update — domain → wire mapping
+  // update — domain → wire mapping. There is no create : a trade is born from a stat (#193).
   // ---------------------------------------------------------------------------
 
-  it('create POSTs with uppercased trimmed ticker and yyyy-MM-dd date', () => {
-    repo.create(inputFixture({ ticker: '  aapl  ', tradeDate: new Date(2026, 5, 4) })).subscribe();
-    const req = http.expectOne('/api/journal/trades');
-    expect(req.request.method).toBe('POST');
+  it('update PUTs with uppercased trimmed ticker and yyyy-MM-dd date', () => {
+    repo
+      .update('abc-123', inputFixture({ ticker: '  aapl  ', tradeDate: new Date(2026, 5, 4) }))
+      .subscribe();
+    const req = http.expectOne('/api/journal/trades/abc-123');
+    expect(req.request.method).toBe('PUT');
     expect(req.request.body.ticker).toBe('AAPL');
     expect(req.request.body.tradeDate).toBe('2026-06-04');
     req.flush(wireFixture());
   });
 
-  it('create serialises direction + executions on the wire', () => {
+  it('update serialises direction + executions on the wire', () => {
     repo
-      .create(
+      .update(
+        'abc-123',
         inputFixture({
           direction: 'SHORT',
           executions: [
@@ -211,7 +214,7 @@ describe('HttpJournalRepository', () => {
         }),
       )
       .subscribe();
-    const req = http.expectOne('/api/journal/trades');
+    const req = http.expectOne('/api/journal/trades/abc-123');
     expect(req.request.body.direction).toBe('SHORT');
     expect(req.request.body.executions).toEqual([
       { kind: 'ENTRY', shares: 100, price: 5, executedAt: '09:42' },
@@ -249,9 +252,9 @@ describe('HttpJournalRepository', () => {
     );
   });
 
-  it('create maps blank note / errorNote to null on the wire', () => {
-    repo.create(inputFixture({ note: '   ', errorNote: '' })).subscribe();
-    const req = http.expectOne('/api/journal/trades');
+  it('update maps blank note / errorNote to null on the wire', () => {
+    repo.update('abc-123', inputFixture({ note: '   ', errorNote: '' })).subscribe();
+    const req = http.expectOne('/api/journal/trades/abc-123');
     expect(req.request.body.note).toBeNull();
     expect(req.request.body.errorNote).toBeNull();
     req.flush(wireFixture());

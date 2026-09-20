@@ -57,8 +57,12 @@ class AccountTradeSyncIntegrationTest {
 
   private lateinit var testUser: User
 
-  /** The stat every trade of this test hangs off — the journal FK is mandatory since #192. */
+  /**
+   * The stats the trades of this test hang off — the journal FK is mandatory since #192, and a stat
+   * carries at most one trade since #193, so a test with two trades needs two stats.
+   */
   private lateinit var stat: StatEntry
+  private lateinit var secondStat: StatEntry
 
   @BeforeEach
   fun setUp() {
@@ -78,17 +82,8 @@ class AccountTradeSyncIntegrationTest {
       )
     whenever(authService.getCurrentUser()).thenReturn(testUser)
 
-    stat =
-      statRepo.save(
-        StatEntry(
-          user = testUser,
-          tradeDate = TRADE_DATE,
-          ticker = "BAC",
-          previousClose = BigDecimal("2.6500"),
-          pmOpen = BigDecimal("3.2100"),
-          pmHigh = BigDecimal("3.6000"),
-        )
-      )
+    stat = saveStat("BAC")
+    secondStat = saveStat("GUS")
   }
 
   @Test
@@ -225,7 +220,9 @@ class AccountTradeSyncIntegrationTest {
       CorrectionRequest(BigDecimal("250.00"), TRADE_DATE)
     ) // adj −50 → 250
 
-    tradeService.create(closedTrade(ticker = "GUS", pnl = "100.00")) // fresh P&L, not a mistake
+    tradeService.create(
+      closedTrade(ticker = "GUS", pnl = "100.00", statEntryId = secondStat.id)
+    ) // fresh P&L, not a mistake
 
     assertEquals(
       0,
@@ -236,18 +233,34 @@ class AccountTradeSyncIntegrationTest {
 
   // ---------------------------------------------------------------------------
 
+  private fun saveStat(ticker: String) =
+    statRepo.save(
+      StatEntry(
+        user = testUser,
+        tradeDate = TRADE_DATE,
+        ticker = ticker,
+        previousClose = BigDecimal("2.6500"),
+        pmOpen = BigDecimal("3.2100"),
+        pmHigh = BigDecimal("3.6000"),
+      )
+    )
+
   private fun tradeMovements() =
     accountRepo.findByUserId(testUser.id).filter { it.type == AccountMovementType.TRADE }
 
   // Builds a SHORT 100-share position whose **derived** realized P&L equals `pnl` exactly :
   // profit = (entry - exit) * 100, with entry fixed at 10.00 and exit = 10 - pnl/100. The P&L is no
   // longer a user-supplied field (issue #93) — it falls out of the executions.
-  private fun closedTrade(ticker: String, pnl: String): TradeEntryRequest {
+  private fun closedTrade(
+    ticker: String,
+    pnl: String,
+    statEntryId: UUID = stat.id,
+  ): TradeEntryRequest {
     val shares = 100
     val entryPrice = BigDecimal("10.00")
     val exitPrice = entryPrice.subtract(BigDecimal(pnl).divide(BigDecimal(shares)))
     return TradeEntryRequest(
-      statEntryId = stat.id,
+      statEntryId = statEntryId,
       tradeDate = TRADE_DATE,
       ticker = ticker,
       direction = TradeDirection.SHORT,

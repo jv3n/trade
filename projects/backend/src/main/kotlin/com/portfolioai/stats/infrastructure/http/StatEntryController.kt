@@ -1,5 +1,6 @@
 package com.portfolioai.stats.infrastructure.http
 
+import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryDto
@@ -21,6 +22,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -90,6 +92,17 @@ class StatEntryController(private val service: StatEntryService) {
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun delete(@PathVariable id: UUID) = service.delete(id)
+
+  /**
+   * « → Trade » (#193) — creates the journal trade this stat gave birth to and returns it, so the
+   * client can navigate straight to its page. The trade inherits the stat's date, ticker and
+   * pattern ; everything else is typed on the trade page. A stat that already has a trade is a 409.
+   *
+   * This is the **only** way a trade is created : the journal has no create endpoint.
+   */
+  @PostMapping("/{id}/trade")
+  @ResponseStatus(HttpStatus.CREATED)
+  fun promoteToTrade(@PathVariable id: UUID): TradeEntryDto = service.promoteToTrade(id)
 
   /**
    * CSV export of the caller's stats — a spreadsheet-friendly copy, no import counterpart.

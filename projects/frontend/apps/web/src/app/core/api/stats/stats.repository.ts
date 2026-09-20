@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs';
+import { TradeEntry } from '../journal/trade-entry.model';
 import {
   PageRequest,
   PagedResult,
@@ -38,6 +39,14 @@ export abstract class StatsRepository {
   abstract update(id: string, input: StatEntryInput): Observable<StatEntry>;
 
   abstract delete(id: string): Observable<void>;
+
+  /**
+   * « → Trade » (#193) — creates the journal trade this stat gave birth to and returns it, so the
+   * caller can navigate straight to its page. The trade inherits the stat's date, ticker and
+   * pattern. One trade per stat : a stat that already has one answers 409, and its row shows a link
+   * instead of the action.
+   */
+  abstract promoteToTrade(id: string): Observable<TradeEntry>;
 
   /**
    * Downloads the caller's stats as a CSV blob (UTF-8 with BOM, RFC 4180). Same layout as the

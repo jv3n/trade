@@ -36,7 +36,11 @@ interface ExecutionWireRequest {
   executedAt: string | null;
 }
 
-interface TradeEntryWireDto {
+/**
+ * Exported for the stats adapter : « → Trade » (#193) answers with a journal trade, and the wire
+ * format keeps a single owner — this file — rather than being re-parsed over there.
+ */
+export interface TradeEntryWireDto {
   id: string;
   statEntryId: string;
   tradeDate: string;
@@ -94,7 +98,7 @@ function executionFromWire(w: ExecutionWireDto): TradeExecution {
   };
 }
 
-function fromWire(w: TradeEntryWireDto): TradeEntry {
+export function tradeEntryFromWire(w: TradeEntryWireDto): TradeEntry {
   return {
     id: w.id,
     statEntryId: w.statEntryId,
@@ -151,7 +155,7 @@ interface SpringPageWireDto<T> {
 
 function fromPageWire(p: SpringPageWireDto<TradeEntryWireDto>): PagedResult<TradeEntry> {
   return {
-    content: p.content.map(fromWire),
+    content: p.content.map(tradeEntryFromWire),
     pageIndex: p.number,
     pageSize: p.size,
     totalElements: p.totalElements,
@@ -218,17 +222,15 @@ export class HttpJournalRepository extends JournalRepository {
   }
 
   findById(id: string): Observable<TradeEntry> {
-    return this.http.get<TradeEntryWireDto>(`${this.base}/${id}`).pipe(map(fromWire));
+    return this.http.get<TradeEntryWireDto>(`${this.base}/${id}`).pipe(map(tradeEntryFromWire));
   }
 
-  create(input: TradeEntryInput): Observable<TradeEntry> {
-    return this.http.post<TradeEntryWireDto>(this.base, toWire(input)).pipe(map(fromWire));
-  }
+  // No create : a trade is born from a stat, through `StatsRepository.promoteToTrade` (#193).
 
   update(id: string, input: TradeEntryInput): Observable<TradeEntry> {
     return this.http
       .put<TradeEntryWireDto>(`${this.base}/${id}`, toWire(input))
-      .pipe(map(fromWire));
+      .pipe(map(tradeEntryFromWire));
   }
 
   delete(id: string): Observable<void> {
@@ -263,7 +265,7 @@ export class HttpJournalRepository extends JournalRepository {
     form.append('file', file, file.name);
     return this.http
       .post<TradeEntryWireDto>(`${this.base}/${id}/screenshot`, form)
-      .pipe(map(fromWire));
+      .pipe(map(tradeEntryFromWire));
   }
 
   getScreenshotBlob(id: string): Observable<Blob> {
@@ -271,6 +273,8 @@ export class HttpJournalRepository extends JournalRepository {
   }
 
   deleteScreenshot(id: string): Observable<TradeEntry> {
-    return this.http.delete<TradeEntryWireDto>(`${this.base}/${id}/screenshot`).pipe(map(fromWire));
+    return this.http
+      .delete<TradeEntryWireDto>(`${this.base}/${id}/screenshot`)
+      .pipe(map(tradeEntryFromWire));
   }
 }

@@ -6,7 +6,9 @@ import com.portfolioai.journal.application.dto.ImportResult
 import com.portfolioai.journal.application.dto.ScreenshotContent
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
+import com.portfolioai.journal.application.dto.TradeLinkDto
 import com.portfolioai.journal.application.dto.toDto
+import com.portfolioai.journal.application.dto.toLinkDto
 import com.portfolioai.journal.domain.TradeAttachment
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
@@ -100,6 +102,21 @@ class TradeEntryService(
   @Transactional(readOnly = true) fun findById(id: UUID): TradeEntryDto = loadOwned(id).toDto()
 
   /**
+   * The caller's trades born from these stats, keyed by stat id — at most one per stat (#193). Read
+   * exposed to the `stats` context through this application service, the way cross-context reads
+   * are done here : the stats listing swaps the « → Trade » button for a link to the trade, and
+   * `StatEntryService` guards against promoting the same stat twice.
+   */
+  @Transactional(readOnly = true)
+  fun tradeLinksByStat(statEntryIds: Collection<UUID>): Map<UUID, TradeLinkDto> {
+    if (statEntryIds.isEmpty()) return emptyMap()
+    val userId = authService.getCurrentUser().id
+    return repo.findByUserIdAndStatEntryIdIn(userId, statEntryIds).associate {
+      it.statEntryId to it.toLinkDto()
+    }
+  }
+
+  /**
    * CSV dump of every trade for the current user, ordered by tradeDate desc then createdAt desc
    * (same order as [findAll]). Returned as a single UTF-8 string ; the controller wraps it in a
    * `text/csv` attachment response with a dated filename. Roundtrip-safe with the future importer —
@@ -143,6 +160,11 @@ class TradeEntryService(
     )
   }
 
+  /**
+   * Creates a trade for the caller. Its only callers are the stat promotion (#193 — `stats` hands
+   * over the stat's identity) and the CSV import : the journal has no create endpoint of its own, a
+   * trade is always born from a stat.
+   */
   @Transactional
   fun create(request: TradeEntryRequest): TradeEntryDto {
     val entry = newEntry(authService.getCurrentUser(), request)

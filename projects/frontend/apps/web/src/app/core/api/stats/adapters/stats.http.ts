@@ -2,6 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
+import { TradeEntryWireDto, tradeEntryFromWire } from '../../journal/adapters/journal.http';
+import { TradeEntry } from '../../journal/trade-entry.model';
 import { Pattern } from '../../shared/pattern.model';
 import {
   PageRequest,
@@ -41,6 +43,8 @@ interface StatEntryWireDto {
   under1Dollar: boolean;
   entryAfter11am: boolean;
   completed: boolean;
+  tradeId: string | null;
+  tradeRetainedProfitDollars: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,7 +52,13 @@ interface StatEntryWireDto {
 /** Body of `PUT /api/stats/{id}` — the backend `StatEntryRequest`. */
 type StatEntryWireRequest = Omit<
   StatEntryWireDto,
-  'id' | 'candidateId' | 'completed' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'candidateId'
+  | 'completed'
+  | 'tradeId'
+  | 'tradeRetainedProfitDollars'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
 // `parseISO('2026-06-04')` → midnight LOCAL (no UTC shift) ; `parseISO('…Z')` → instant. Same
@@ -143,6 +153,16 @@ export class HttpStatsRepository extends StatsRepository {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  /**
+   * « → Trade » (#193). The response is a **journal** trade, so the wire mapping is borrowed from
+   * the journal adapter instead of being duplicated here — one owner per wire format.
+   */
+  promoteToTrade(id: string): Observable<TradeEntry> {
+    return this.http
+      .post<TradeEntryWireDto>(`${this.base}/${id}/trade`, null)
+      .pipe(map(tradeEntryFromWire));
   }
 
   /**

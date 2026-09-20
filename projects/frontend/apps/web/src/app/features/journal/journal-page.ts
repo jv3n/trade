@@ -7,13 +7,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSidenav } from '@angular/material/sidenav';
 import { Sort } from '@angular/material/sort';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { StbDatePickerModule } from '@portfolioai/ui';
-import { parseISO } from 'date-fns';
 import {
   EMPTY,
   Subject,
@@ -55,11 +54,7 @@ import {
   PeriodPresetKey,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
-import {
-  AddTradeDialog,
-  AddTradeDialogData,
-  AddTradeSeed,
-} from './add-trade-dialog/add-trade-dialog';
+import { AddTradeDialog, AddTradeDialogData } from './add-trade-dialog/add-trade-dialog';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
@@ -103,9 +98,9 @@ const DEFAULT_PAGE_SIZE = 10;
  *     profitable / losing). Filter changes refetch from the backend.
  *   - **Pagination** : `<mat-paginator>` below the table. Default 10 rows per page. Filter /
  *     search / sort changes reset the index to 0.
- *   - **CRUD** : add / edit via Material dialog, delete via the confirmation modal (`ConfirmService`). Every mutation
- *     refetches the current page (a created trade may not land on the current page given the
- *     active filter + sort, so we don't try to splice the result locally).
+ *   - **Edit / delete** : edit via Material dialog, delete via the confirmation modal
+ *     (`ConfirmService`). There is no « add » here since #193 — a trade is born from a stat, on
+ *     the stats sheet. Every mutation refetches the current page rather than splicing locally.
  *
  * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`) and
  * refetches when any of them changes.
@@ -142,7 +137,6 @@ export class JournalPage {
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   // ---- Data state ----
@@ -236,34 +230,6 @@ export class JournalPage {
         },
       );
     });
-
-    this.handleCreateFromStat();
-  }
-
-  /**
-   * Deep-link from the stats page : `?ticker=…&date=YYYY-MM-DD&statId=…` opens the add-trade
-   * dialog pre-filled (ticker + date) and pre-linked to the stat (`statId` → `statEntryId`). The
-   * params are stripped right away (replaceUrl) so a refresh / back-nav doesn't reopen the dialog.
-   */
-  private handleCreateFromStat(): void {
-    const params = this.route.snapshot.queryParamMap;
-    const ticker = params.get('ticker');
-    if (!ticker) return;
-
-    const date = params.get('date');
-    const seed: AddTradeSeed = {
-      ticker,
-      tradeDate: date ? parseISO(date) : new Date(),
-      statEntryId: params.get('statId'),
-    };
-
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-      replaceUrl: true,
-    });
-
-    this.openDialog(null, seed);
   }
 
   // ---- Search handlers ----
@@ -349,9 +315,8 @@ export class JournalPage {
   }
 
   // ---- CRUD ----
-  openCreate(): void {
-    this.openDialog(null);
-  }
+  // No create here (#193) : a trade is born from a stat, through the « → Trade » action of the
+  // stats sheet. The journal only edits and deletes.
 
   openEdit(entry: TradeEntry): void {
     this.openDialog(entry);
@@ -425,13 +390,12 @@ export class JournalPage {
 
   /**
    * Dialog → save pipeline. The afterClosed() stream emits one value (the dialog result), then
-   * completes ; `switchMap` chains into the right CRUD call. `tap` posts the success
-   * snackbar + refetches ; `catchError` swallows the error after the user-facing toast so the
-   * outer subscription completes cleanly.
+   * completes ; `switchMap` chains into the update call. `tap` posts the success snackbar +
+   * refetches ; `catchError` swallows the error after the user-facing toast so the outer
+   * subscription completes cleanly. Edit only — creation lives on the stats sheet (#193).
    */
-  private openDialog(entry: TradeEntry | null, seed?: AddTradeSeed): void {
-    const isUpdate = entry !== null;
-    const data: AddTradeDialogData = { entry, seed };
+  private openDialog(entry: TradeEntry): void {
+    const data: AddTradeDialogData = { entry };
     const ref = this.dialog.open<AddTradeDialog, AddTradeDialogData, TradeEntryInput | undefined>(
       AddTradeDialog,
       { data, width: '1040px', maxWidth: '95vw', autoFocus: 'first-tabbable' },
@@ -441,19 +405,13 @@ export class JournalPage {
       .pipe(
         filter((input): input is TradeEntryInput => !!input),
         switchMap((input) =>
-          (isUpdate ? this.repo.update(entry!.id, input) : this.repo.create(input)).pipe(
+          this.repo.update(entry.id, input).pipe(
             tap((saved) => {
-              const key = isUpdate
-                ? 'journal.snackbar.updateSuccess'
-                : 'journal.snackbar.createSuccess';
-              this.toast(key, 'success', { ticker: saved.ticker });
+              this.toast('journal.snackbar.updateSuccess', 'success', { ticker: saved.ticker });
               this.refetch();
             }),
             catchError(() => {
-              this.toast(
-                isUpdate ? 'journal.snackbar.updateError' : 'journal.snackbar.createError',
-                'error',
-              );
+              this.toast('journal.snackbar.updateError', 'error');
               return EMPTY;
             }),
           ),

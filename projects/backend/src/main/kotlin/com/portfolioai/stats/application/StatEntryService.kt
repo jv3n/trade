@@ -2,6 +2,9 @@ package com.portfolioai.stats.application
 
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.User
+import com.portfolioai.journal.application.TradeEntryService
+import com.portfolioai.journal.application.dto.TradeEntryDto
+import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
@@ -43,6 +46,7 @@ import org.springframework.web.server.ResponseStatusException
 class StatEntryService(
   private val repo: StatEntryRepository,
   private val authService: AuthService,
+  private val tradeEntryService: TradeEntryService,
 ) {
 
   // ---- Listing -------------------------------------------------------------------------------
@@ -60,7 +64,10 @@ class StatEntryService(
       if (pageable.sort.isUnsorted)
         PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
       else pageable
-    return repo.findAll(spec, effective).map { it.toDto() }
+    val page = repo.findAll(spec, effective)
+    // One query for the whole page rather than one per row — same shape as the candidates listing.
+    val links = tradeEntryService.tradeLinksByStat(page.content.map { it.id })
+    return page.map { it.toDto(links[it.id]) }
   }
 
   /**
@@ -115,7 +122,42 @@ class StatEntryService(
 
   // ---- CRUD (user-scoped) --------------------------------------------------------------------
 
-  @Transactional(readOnly = true) fun findById(id: UUID): StatEntryDto = loadOwned(id).toDto()
+  @Transactional(readOnly = true)
+  fun findById(id: UUID): StatEntryDto {
+    val entry = loadOwned(id)
+    return entry.toDto(tradeEntryService.tradeLinksByStat(listOf(entry.id))[entry.id])
+  }
+
+  // ---- Promotion to the journal (#193) --------------------------------------------------------
+
+  /**
+   * Creates the trade this stat gave birth to — the « → Trade » action, cf. `mockup/PARCOURS.md`
+   * step 4. The trade inherits the stat's date, ticker and pattern and starts empty : executions,
+   * real P&L, post-mortem and screenshot are typed on the trade page afterwards.
+   *
+   * **One trade per stat** : a second call is a 409, and the listing shows a link to the existing
+   * trade instead of the button from then on. The unique index `ux_trade_entry_stat_entry_id` is
+   * the race-safe backstop.
+   */
+  @Transactional
+  fun promoteToTrade(id: UUID): TradeEntryDto {
+    val stat = loadOwned(id)
+    val existing = tradeEntryService.tradeLinksByStat(listOf(stat.id))[stat.id]
+    if (existing != null) {
+      throw ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "Stat ${stat.ticker} already has a trade in the journal",
+      )
+    }
+    return tradeEntryService.create(
+      TradeEntryRequest(
+        statEntryId = stat.id,
+        tradeDate = stat.tradeDate,
+        ticker = stat.ticker,
+        pattern = stat.pattern,
+      )
+    )
+  }
 
   /**
    * Creates a stat for the caller — the promotion of a candidate (#189) is its only caller.
@@ -143,10 +185,28 @@ class StatEntryService(
     requireFree(entry.user.id, request, ticker, ownId = entry.id)
     entry.apply(request, ticker)
     entry.updatedAt = Instant.now()
-    return repo.save(entry).toDto()
+    val saved = repo.save(entry)
+    // The completion panel replaces its row with this response — dropping the link would make the
+    // « → Trade » button reappear on a stat that already has its trade.
+    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id])
   }
 
-  @Transactional fun delete(id: UUID) = repo.delete(loadOwned(id))
+  /**
+   * Deletes a stat. A stat that gave birth to a trade is a **409** : the FK is ON DELETE RESTRICT
+   * (#192), so letting it reach the DB would surface as a 500 — and deleting the trade silently
+   * would throw away the P&L the account is built on. The trade goes first, from the journal.
+   */
+  @Transactional
+  fun delete(id: UUID) {
+    val entry = loadOwned(id)
+    if (tradeEntryService.tradeLinksByStat(listOf(entry.id)).isNotEmpty()) {
+      throw ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "Stat ${entry.ticker} has a trade in the journal — delete the trade first",
+      )
+    }
+    repo.delete(entry)
+  }
 
   // ---- CSV export ----------------------------------------------------------------------------
 
