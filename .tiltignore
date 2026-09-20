@@ -9,6 +9,5 @@ projects/frontend/dist/**
 projects/frontend/.angular/**
 
 # Local-only data.
-devops/local/dumps/**
 docs/data-input-local/**
 docs/tmp-files/**
