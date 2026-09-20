@@ -19,43 +19,12 @@
     </div>
   }
 
+  <!-- KPI row — balance is the live one, the other two are scoped to the active filter. -->
   @if (summary(); as s) {
-    <mat-card class="hero-card" appearance="outlined">
-      <div class="hero-top">
-        <div class="hero-left">
-          <span class="hero-label">{{ 'account.currentBalance' | translate }}</span>
-          <span class="hero-balance" [class.neg]="s.balance < 0">
-            {{ convert(s.balance) | number: '1.2-2' }} $
-          </span>
-          @if (periodChange(); as c) {
-            <span class="hero-change" [class.pos]="c.amount > 0" [class.neg]="c.amount < 0">
-              <mat-icon>{{ c.amount >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-              {{ c.amount > 0 ? '+' : '' }}{{ convert(c.amount) | number: '1.2-2' }} $
-              @if (c.percent !== null) {
-                ({{ c.percent > 0 ? '+' : '' }}{{ c.percent | number: '1.1-1' }} %)
-              }
-              <span class="change-label">
-                {{ 'account.change' | translate: { period: period() } }}
-              </span>
-            </span>
-          }
-          @if (currency() === 'CAD' && rate(); as r) {
-            <span class="rate-caption">
-              {{
-                'account.fxRate'
-                  | translate
-                    : {
-                        base: r.base,
-                        quote: r.quote,
-                        rate: r.rate | number: '1.4-4',
-                        date: r.asOf | date: 'longDate',
-                      }
-              }}
-            </span>
-          }
-        </div>
-
-        <div class="hero-right">
+    <section class="kpi-row">
+      <mat-card class="kpi kpi-hero" appearance="outlined">
+        <div class="kpi__label">
+          <span>{{ 'account.currentBalance' | translate }}</span>
           <mat-button-toggle-group
             class="currency-toggle"
             [value]="currency()"
@@ -72,28 +41,56 @@
               </mat-button-toggle>
             }
           </mat-button-toggle-group>
-
-          <mat-button-toggle-group
-            class="period-toggle"
-            [value]="period()"
-            (change)="setPeriod($event.value)"
-            [hideSingleSelectionIndicator]="true"
-          >
-            @for (p of periods; track p) {
-              <mat-button-toggle [value]="p">{{
-                'account.period.' + p | translate
-              }}</mat-button-toggle>
-            }
-          </mat-button-toggle-group>
         </div>
-      </div>
+        <div class="kpi__value" [class.neg]="s.balance < 0">
+          {{ convert(s.balance) | number: '1.2-2' }} $
+        </div>
+        @if (currency() === 'CAD' && rate(); as r) {
+          <div class="kpi__sub">
+            {{
+              'account.fxRate'
+                | translate
+                  : {
+                      base: r.base,
+                      quote: r.quote,
+                      rate: r.rate | number: '1.4-4',
+                      date: r.asOf | date: 'longDate',
+                    }
+            }}
+          </div>
+        }
+      </mat-card>
 
-      @if (chartPoints().length >= 2) {
-        <ui-area-chart [points]="chartPoints()" [unit]="currencySuffix()" />
-      } @else {
-        <p class="chart-empty">{{ 'account.chartEmpty' | translate }}</p>
-      }
-    </mat-card>
+      <mat-card class="kpi" appearance="outlined">
+        <div class="kpi__label">{{ 'account.kpi.periodPnl' | translate }}</div>
+        <div class="kpi__value" [class.pos]="s.periodPnl > 0" [class.neg]="s.periodPnl < 0">
+          {{ s.periodPnl > 0 ? '+' : '' }}{{ s.periodPnl | number: '1.2-2' }} $
+        </div>
+        <div class="kpi__sub">
+          {{
+            'account.kpi.periodPnlSub'
+              | translate: { trades: s.periodTradeCount, winners: s.periodWinningTradeCount }
+          }}
+        </div>
+      </mat-card>
+
+      <mat-card class="kpi" appearance="outlined">
+        <div class="kpi__label">{{ 'account.kpi.netInjected' | translate }}</div>
+        <div class="kpi__value">
+          {{ s.periodNetInjected > 0 ? '+' : '' }}{{ s.periodNetInjected | number: '1.2-2' }} $
+        </div>
+        <div class="kpi__sub">
+          {{
+            'account.kpi.netInjectedSub'
+              | translate
+                : {
+                    deposits: s.periodDeposits | number: '1.2-2',
+                    withdrawals: s.periodWithdrawals | number: '1.2-2',
+                  }
+          }}
+        </div>
+      </mat-card>
+    </section>
   }
 
   <!-- Morning reconciliation (#198) — the same block as step 1 of the Today page. -->
@@ -111,76 +108,168 @@
     />
   </mat-card>
 
-  <div class="account-grid">
-    <!-- Movements -->
-    <mat-card class="movements-card" appearance="outlined">
-      <h3 class="card-title">{{ 'account.movements' | translate }}</h3>
+  <mat-card class="chart-card" appearance="outlined">
+    <h3 class="card-title">
+      <span>{{ 'account.chartTitle' | translate }}</span>
+      @if (chartRange(); as r) {
+        <span class="hint">{{ r.from | date: 'dd/MM' }} → {{ r.to | date: 'dd/MM' }}</span>
+      }
+    </h3>
+    @if (chartPoints().length >= 2) {
+      <ui-area-chart [points]="chartPoints()" [unit]="currencySuffix()" />
+    } @else {
+      <p class="chart-empty">{{ 'account.chartEmpty' | translate }}</p>
+    }
+  </mat-card>
 
-      @if (loading()) {
-        <div class="loading-state">
-          <mat-spinner diameter="20" />
-          <span>{{ 'account.loading' | translate }}</span>
-        </div>
-      } @else if (groups().length === 0) {
-        <div class="empty-state">
-          <mat-icon>account_balance_wallet</mat-icon>
-          <p>{{ 'account.empty' | translate }}</p>
-        </div>
-      } @else {
-        @for (group of groups(); track group.key) {
-          <div class="day-head">
-            <span class="day-date">{{ group.date | date: 'longDate' }}</span>
-            <span
-              class="day-subtotal"
-              [class.pos]="group.subtotal > 0"
-              [class.neg]="group.subtotal < 0"
-            >
-              {{ group.subtotal > 0 ? '+' : '' }}{{ group.subtotal | number: '1.2-2' }} $
-            </span>
-          </div>
+  <mat-card class="movements-card" appearance="outlined">
+    <h3 class="card-title">
+      <span>{{ 'account.movements' | translate }}</span>
+    </h3>
 
-          @for (m of group.rows; track m.id) {
-            <div class="movement-row" [attr.data-type]="m.type">
-              <div class="avatar" [attr.data-type]="m.type">
-                @switch (m.type) {
-                  @case ('DEPOSIT') {
-                    <mat-icon>south_east</mat-icon>
-                  }
-                  @case ('WITHDRAWAL') {
-                    <mat-icon>north_east</mat-icon>
-                  }
-                  @case ('TRADE') {
-                    <mat-icon>insights</mat-icon>
-                  }
-                  @default {
-                    <mat-icon>tune</mat-icon>
-                  }
-                }
-              </div>
+    <!-- Filter toolbar — every control applies on the spot, no « Apply » step. Same shape as the
+         journal's, so the two listings are learnt once. -->
+    <div class="toolbar">
+      <mat-form-field appearance="outline" class="period-field" subscriptSizing="dynamic">
+        <mat-select
+          [value]="appliedFilter().period"
+          (selectionChange)="onPeriodChange($event.value)"
+          [aria-label]="'account.filter.period' | translate"
+        >
+          @for (p of periods; track p) {
+            <mat-option [value]="p">
+              {{ 'account.filter.periodPresets.' + p | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-              <div class="label">
-                @if (m.type === 'TRADE') {
-                  <mat-chip
-                    stbChip="ticker"
-                    class="ticker-chip--link"
-                    [routerLink]="tradeLink(m)"
-                    [matTooltip]="'account.viewTrade' | translate"
-                  >
-                    {{ m.note }}
-                  </mat-chip>
-                } @else {
-                  <span class="type-label">{{ 'account.type.' + m.type | translate }}</span>
-                  @if (m.note) {
-                    <span class="note">{{ m.note }}</span>
-                  }
-                }
-              </div>
+      <mat-form-field appearance="outline" class="type-field" subscriptSizing="dynamic">
+        <mat-select
+          [value]="appliedFilter().type"
+          (selectionChange)="onTypeChange($event.value)"
+          [aria-label]="'account.filter.type' | translate"
+        >
+          @for (t of typeFilters; track t) {
+            <mat-option [value]="t">{{ 'account.filter.types.' + t | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-              <span class="amt" [class.pos]="m.amount > 0" [class.neg]="m.amount < 0">
-                {{ m.amount > 0 ? '+' : '' }}{{ m.amount | number: '1.2-2' }} $
+      <!-- Explicit range — only when the period preset is « custom ». -->
+      @if (appliedFilter().period === 'custom') {
+        <mat-form-field appearance="outline" class="date-field" subscriptSizing="dynamic">
+          <mat-label>{{ 'account.filter.dateFrom' | translate }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="fromPicker"
+            [value]="appliedFilter().dateFrom"
+            (dateChange)="setDateFrom($event.value)"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+          <mat-datepicker #fromPicker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="date-field" subscriptSizing="dynamic">
+          <mat-label>{{ 'account.filter.dateTo' | translate }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="toPicker"
+            [value]="appliedFilter().dateTo"
+            (dateChange)="setDateTo($event.value)"
+          />
+          <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+          <mat-datepicker #toPicker />
+        </mat-form-field>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="loading-state">
+        <mat-spinner diameter="20" />
+        <span>{{ 'account.loading' | translate }}</span>
+      </div>
+    } @else if (movements().length === 0) {
+      <div class="empty-state">
+        <mat-icon>account_balance_wallet</mat-icon>
+        <p>{{ 'account.empty' | translate }}</p>
+      </div>
+    } @else {
+      <div stbTable>
+        <table mat-table [dataSource]="movements()">
+          <ng-container matColumnDef="valueDate">
+            <th mat-header-cell *matHeaderCellDef>{{ 'account.fields.valueDate' | translate }}</th>
+            <td mat-cell *matCellDef="let m">{{ m.valueDate | date: 'dd/MM' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>{{ 'account.fields.type' | translate }}</th>
+            <td mat-cell *matCellDef="let m">
+              <span class="type-tag" [class.type-tag--trade]="m.type === 'TRADE'">
+                {{ 'account.type.' + m.type | translate }}
               </span>
+            </td>
+          </ng-container>
 
-              <div class="row-actions">
+          <!-- « KTTA short 350 » for a trade, the free note otherwise. -->
+          <ng-container matColumnDef="label">
+            <th mat-header-cell *matHeaderCellDef>{{ 'account.fields.label' | translate }}</th>
+            <td mat-cell *matCellDef="let m">
+              @if (m.type === 'TRADE') {
+                <mat-chip-set class="inline-chip">
+                  <mat-chip stbChip="ticker" disableRipple>{{ m.note }}</mat-chip>
+                </mat-chip-set>
+                @if (m.tradeDirection) {
+                  <span class="muted">
+                    {{ 'account.direction.' + m.tradeDirection | translate }}
+                    @if (m.tradeSize !== null) {
+                      {{ m.tradeSize }}
+                    }
+                  </span>
+                }
+              } @else {
+                {{ m.note || '—' }}
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef stbCol="numeric">
+              {{ 'account.fields.amount' | translate }}
+            </th>
+            <td
+              mat-cell
+              *matCellDef="let m"
+              stbCol="numeric"
+              [class.pos]="m.amount > 0"
+              [class.neg]="m.amount < 0"
+            >
+              {{ m.amount > 0 ? '+' : '' }}{{ m.amount | number: '1.2-2' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="balanceAfter">
+            <th mat-header-cell *matHeaderCellDef stbCol="numeric">
+              {{ 'account.fields.balanceAfter' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let m" stbCol="numeric">
+              {{ m.balanceAfter | number: '1.2-2' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef stbCol="numeric"></th>
+            <td mat-cell *matCellDef="let m" stbCol="numeric">
+              @if (m.type === 'TRADE') {
+                <a
+                  mat-button
+                  [routerLink]="tradeLink(m)"
+                  [matTooltip]="'account.viewTrade' | translate"
+                >
+                  <span>{{ 'account.viewTrade' | translate }}</span>
+                  <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                </a>
+              } @else {
                 @if (canEdit(m)) {
                   <button
                     mat-icon-button
@@ -195,75 +284,29 @@
                   <button
                     mat-icon-button
                     type="button"
+                    stbDanger
                     (click)="delete(m)"
                     [matTooltip]="'account.actions.delete' | translate"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
                 }
-              </div>
-            </div>
-          }
-        }
-
-        <mat-paginator
-          [length]="totalElements()"
-          [pageSize]="pageSize()"
-          [pageIndex]="pageIndex()"
-          [pageSizeOptions]="[10, 25, 50, 100]"
-          (page)="onPage($event)"
-        />
-      }
-    </mat-card>
-
-    <!-- Summary -->
-    @if (summary(); as s) {
-      <mat-card class="summary-card" appearance="outlined">
-        <h3 class="card-title">{{ 'account.summary.title' | translate }}</h3>
-        <div class="sum-row">
-          <span class="k">{{ 'account.summary.totalDeposits' | translate }}</span>
-          <span class="v pos">+{{ s.totalDeposits | number: '1.2-2' }} $</span>
-        </div>
-        <div class="sum-row">
-          <span class="k">{{ 'account.summary.totalWithdrawals' | translate }}</span>
-          <span class="v neg">{{ s.totalWithdrawals | number: '1.2-2' }} $</span>
-        </div>
-        <div class="sum-row">
-          <span class="k">{{ 'account.summary.netInjected' | translate }}</span>
-          <span class="v">{{ s.netInjected | number: '1.2-2' }} $</span>
-        </div>
-        <mat-divider />
-        <div class="sum-row">
-          <span class="k">{{ 'account.summary.tradesPnl' | translate }}</span>
-          <span class="v" [class.pos]="s.tradesPnl > 0" [class.neg]="s.tradesPnl < 0">
-            {{ s.tradesPnl > 0 ? '+' : '' }}{{ s.tradesPnl | number: '1.2-2' }} $
-          </span>
-        </div>
-        <div class="sum-row">
-          <span class="k">{{ 'account.summary.adjustments' | translate }}</span>
-          <span class="v" [class.pos]="s.adjustments > 0" [class.neg]="s.adjustments < 0">
-            {{ s.adjustments > 0 ? '+' : '' }}{{ s.adjustments | number: '1.2-2' }} $
-          </span>
-        </div>
-        @if (accountReturn(); as r) {
-          <div class="sum-row sum-row--return">
-            <span class="k">{{ 'account.summary.return' | translate }}</span>
-            <span class="v" [class.pos]="r.amount > 0" [class.neg]="r.amount < 0">
-              {{ r.amount > 0 ? '+' : '' }}{{ r.amount | number: '1.2-2' }} $
-              @if (r.percent !== null) {
-                <span class="pct"
-                  >({{ r.percent > 0 ? '+' : '' }}{{ r.percent | number: '1.1-1' }} %)</span
-                >
               }
-            </span>
-          </div>
-        }
-        <mat-divider />
-        <div class="sum-row">
-          <span class="k">{{ 'account.summary.movementCount' | translate }}</span>
-          <span class="v">{{ s.movementCount }}</span>
-        </div>
-      </mat-card>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[25, 50, 100]"
+        (page)="onPage($event)"
+      />
     }
-  </div>
+  </mat-card>
 </div>

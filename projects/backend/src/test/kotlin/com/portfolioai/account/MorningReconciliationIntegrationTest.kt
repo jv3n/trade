@@ -4,6 +4,7 @@ import com.portfolioai.account.application.AccountReconciliationService
 import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.application.dto.ReconciliationRequest
+import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
@@ -85,7 +86,10 @@ class MorningReconciliationIntegrationTest {
     assertEquals(0, BigDecimal("-12.40").compareTo(settled.gap))
     assertEquals(0, BigDecimal("1000.00").compareTo(settled.appBalance), "the figures compared")
     assertNotNull(settled.correctionId, "the gap left an auditable line")
-    assertEquals(0, BigDecimal("987.60").compareTo(accountService.summary().balance))
+    assertEquals(
+      0,
+      BigDecimal("987.60").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
     val adjustments =
       movements.findByUserId(testUser.id).filter { it.type == AccountMovementType.ADJUSTMENT }
     assertEquals(1, adjustments.size)
@@ -101,7 +105,10 @@ class MorningReconciliationIntegrationTest {
     val corrected = service.reconcile(ReconciliationRequest(BigDecimal("995.00"), MONDAY))
 
     assertEquals(1, service.history(10).size, "one morning, one row")
-    assertEquals(0, BigDecimal("995.00").compareTo(accountService.summary().balance))
+    assertEquals(
+      0,
+      BigDecimal("995.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
     // The morning is still remembered from where it started (1000), not from the 987.60 the first
     // pass left behind : that day cost 5, not 5 on top of a forgotten 12.40.
     assertEquals(0, BigDecimal("1000.00").compareTo(corrected.appBalance))

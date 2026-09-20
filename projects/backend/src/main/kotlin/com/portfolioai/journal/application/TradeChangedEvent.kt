@@ -1,5 +1,6 @@
 package com.portfolioai.journal.application
 
+import com.portfolioai.shared.TradeDirection
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -26,4 +27,10 @@ data class TradeChangedEvent(
   val ticker: String,
   val tradeDate: LocalDate,
   val profitDollars: BigDecimal?,
+  /**
+   * Position direction and size, carried so the account ledger can label its TRADE line without
+   * reading the journal's tables. Both null until the trade has an execution recorded.
+   */
+  val direction: TradeDirection? = null,
+  val size: Int? = null,
 )

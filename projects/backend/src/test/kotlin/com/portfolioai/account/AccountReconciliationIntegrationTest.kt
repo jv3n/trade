@@ -4,6 +4,7 @@ import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.domain.AccountMovement
+import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.auth.application.AuthService
@@ -76,7 +77,10 @@ class AccountReconciliationIntegrationTest {
     service.delete(deposit.id)
 
     // The old bug left the frozen −50 → balance −50. Now the correction re-floats to hold 950.
-    assertEquals(0, BigDecimal("950.00").compareTo(service.summary().balance))
+    assertEquals(
+      0,
+      BigDecimal("950.00").compareTo(service.summary(AccountMovementFilter()).balance),
+    )
     assertEquals(0, BigDecimal("950.00").compareTo(theAdjustment().amount), "plug re-floated")
   }
 
@@ -87,7 +91,11 @@ class AccountReconciliationIntegrationTest {
 
     service.update(deposit.id, deposit("1200.00"))
 
-    assertEquals(0, BigDecimal("950.00").compareTo(service.summary().balance), "still on target")
+    assertEquals(
+      0,
+      BigDecimal("950.00").compareTo(service.summary(AccountMovementFilter()).balance),
+      "still on target",
+    )
     assertEquals(0, BigDecimal("-250.00").compareTo(theAdjustment().amount), "1200 − 250 = 950")
   }
 
@@ -99,7 +107,11 @@ class AccountReconciliationIntegrationTest {
     service.addMovement(deposit("500.00"))
 
     // Fresh cash is a real move — the correction does NOT absorb it.
-    assertEquals(0, BigDecimal("1450.00").compareTo(service.summary().balance), "1000 + 500 − 50")
+    assertEquals(
+      0,
+      BigDecimal("1450.00").compareTo(service.summary(AccountMovementFilter()).balance),
+      "1000 + 500 − 50",
+    )
     assertEquals(0, BigDecimal("-50.00").compareTo(theAdjustment().amount), "adjustment untouched")
   }
 
@@ -111,14 +123,14 @@ class AccountReconciliationIntegrationTest {
     // Edit the deposit down to the target itself → the plug would be 0, which the CHECK forbids.
     service.update(deposit.id, deposit("950.00"))
 
-    val summary = service.summary()
+    val summary = service.summary(AccountMovementFilter())
     assertEquals(0, BigDecimal("950.00").compareTo(summary.balance))
     assertEquals(
       0,
-      BigDecimal.ZERO.compareTo(summary.adjustments),
+      BigDecimal.ZERO.compareTo(summary.periodAdjustments),
       "adjustment removed, not left at 0",
     )
-    assertEquals(1, summary.movementCount, "only the deposit remains")
+    assertEquals(1, summary.periodMovementCount, "only the deposit remains")
   }
 
   @Test
@@ -130,12 +142,18 @@ class AccountReconciliationIntegrationTest {
       service.correctBalance(
         CorrectionRequest(BigDecimal("900.00"), VALUE_DATE)
       ) // adj2, target 900
-    assertEquals(0, BigDecimal("900.00").compareTo(service.summary().balance))
+    assertEquals(
+      0,
+      BigDecimal("900.00").compareTo(service.summary(AccountMovementFilter()).balance),
+    )
 
     service.delete(second.id)
 
     // adj1 becomes the anchor again → balance snaps back to its 950 target.
-    assertEquals(0, BigDecimal("950.00").compareTo(service.summary().balance))
+    assertEquals(
+      0,
+      BigDecimal("950.00").compareTo(service.summary(AccountMovementFilter()).balance),
+    )
   }
 
   @Test
@@ -156,7 +174,7 @@ class AccountReconciliationIntegrationTest {
 
     assertEquals(
       0,
-      BigDecimal("-50.00").compareTo(service.summary().balance),
+      BigDecimal("-50.00").compareTo(service.summary(AccountMovementFilter()).balance),
       "legacy delta is left exactly as-is",
     )
   }

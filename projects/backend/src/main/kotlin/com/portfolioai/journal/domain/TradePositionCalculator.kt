@@ -1,5 +1,6 @@
 package com.portfolioai.journal.domain
 
+import com.portfolioai.shared.TradeDirection
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration

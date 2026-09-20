@@ -1,3 +1,5 @@
+import { TradeDirection } from '../journal/trade-entry.model';
+
 /**
  * Broker cash-account **domain** types — consumed by the account feature and the repository port.
  * The wire format (ISO date strings) is owned by the HTTP adapter ; consumers stay in `Date` land.
@@ -18,8 +20,19 @@ export interface AccountMovement {
   amount: number;
   valueDate: Date;
   note: string | null;
+  /**
+   * Balance of the account **after** this movement, always computed by the backend over the whole
+   * ordered history — never over the filtered page, so narrowing to trades does not renumber it.
+   */
+  balanceAfter: number;
   /** Non-null only for TRADE movements — the linked journal trade (row is read-only). */
   tradeEntryId: string | null;
+  /**
+   * Direction and size of the linked trade, completing its label (« KTTA short 350 »). Structured
+   * rather than pre-formatted : the direction word is translated here. Null on manual movements.
+   */
+  tradeDirection: TradeDirection | null;
+  tradeSize: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,15 +54,33 @@ export interface BalancePoint {
   balance: number;
 }
 
-/** Aggregates for the summary panel — all in the account's single currency (USD v1). */
+/**
+ * Figures behind the KPI row — all in the account's single currency (USD v1).
+ *
+ * [balance] is the **current** account balance, never windowed : it is what the broker shows this
+ * morning. Every `period*` figure is scoped to the active filter, so the KPI row and the movements
+ * table always describe the same window.
+ */
 export interface AccountSummary {
   balance: number;
-  totalDeposits: number;
-  totalWithdrawals: number;
-  netInjected: number;
-  tradesPnl: number;
-  adjustments: number;
-  movementCount: number;
+  periodPnl: number;
+  periodTradeCount: number;
+  periodWinningTradeCount: number;
+  periodDeposits: number;
+  periodWithdrawals: number;
+  periodNetInjected: number;
+  periodAdjustments: number;
+  periodMovementCount: number;
+}
+
+/**
+ * Movement filter. Mirrors the journal's : the period presets resolve to a `dateFrom` / `dateTo`
+ * pair here, and only dates travel to the backend — preset names stay a UI concern.
+ */
+export interface AccountMovementFilter {
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  types: readonly AccountMovementType[] | null;
 }
 
 /**

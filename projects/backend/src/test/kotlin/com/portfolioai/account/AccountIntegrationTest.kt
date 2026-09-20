@@ -4,6 +4,7 @@ import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.domain.AccountMovement
+import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.auth.application.AuthService
@@ -97,22 +98,26 @@ class AccountIntegrationTest {
     service.addMovement(movement(AccountMovementType.WITHDRAWAL, "1500.00"))
     seedTradeMovement(pnl = "300.00") // realized P&L pushed from the journal
 
-    val summary = service.summary()
+    val summary = service.summary(AccountMovementFilter())
 
     assertEquals(0, BigDecimal("3800.00").compareTo(summary.balance), "5000 − 1500 + 300")
-    assertEquals(0, BigDecimal("5000.00").compareTo(summary.totalDeposits))
-    assertEquals(0, BigDecimal("-1500.00").compareTo(summary.totalWithdrawals))
-    assertEquals(0, BigDecimal("3500.00").compareTo(summary.netInjected), "deposits + withdrawals")
-    assertEquals(0, BigDecimal("300.00").compareTo(summary.tradesPnl))
-    assertEquals(0, BigDecimal.ZERO.compareTo(summary.adjustments))
-    assertEquals(3, summary.movementCount)
+    assertEquals(0, BigDecimal("5000.00").compareTo(summary.periodDeposits))
+    assertEquals(0, BigDecimal("-1500.00").compareTo(summary.periodWithdrawals))
+    assertEquals(
+      0,
+      BigDecimal("3500.00").compareTo(summary.periodNetInjected),
+      "deposits + withdrawals",
+    )
+    assertEquals(0, BigDecimal("300.00").compareTo(summary.periodPnl))
+    assertEquals(0, BigDecimal.ZERO.compareTo(summary.periodAdjustments))
+    assertEquals(3, summary.periodMovementCount)
   }
 
   @Test
   fun `summary on an empty account is all zeros, not null`() {
-    val summary = service.summary()
+    val summary = service.summary(AccountMovementFilter())
     assertEquals(0, BigDecimal.ZERO.compareTo(summary.balance))
-    assertEquals(0, summary.movementCount)
+    assertEquals(0, summary.periodMovementCount)
   }
 
   // ---------------------------------------------------------------------------
@@ -130,7 +135,7 @@ class AccountIntegrationTest {
     assertEquals(0, BigDecimal("-150.00").compareTo(correction.amount))
     assertEquals(
       0,
-      BigDecimal("4850.00").compareTo(service.summary().balance),
+      BigDecimal("4850.00").compareTo(service.summary(AccountMovementFilter()).balance),
       "balance now matches",
     )
   }
@@ -261,10 +266,10 @@ class AccountIntegrationTest {
 
     assertEquals(
       0,
-      BigDecimal("5000.00").compareTo(service.summary().balance),
+      BigDecimal("5000.00").compareTo(service.summary(AccountMovementFilter()).balance),
       "only testUser's row",
     )
-    val page = service.findAllPaged(PageRequest.of(0, 25))
+    val page = service.findAllPaged(AccountMovementFilter(), PageRequest.of(0, 25))
     assertEquals(1, page.totalElements)
   }
 
@@ -297,6 +302,87 @@ class AccountIntegrationTest {
     )
   }
 
+  // ---------------------------------------------------------------------------
+  // Running balance + period filter (#229)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `numbers each movement with the balance it left behind`() {
+    service.addMovement(movement(AccountMovementType.DEPOSIT, "1000", LocalDate.of(2026, 6, 1)))
+    service.addMovement(movement(AccountMovementType.WITHDRAWAL, "250", LocalDate.of(2026, 6, 10)))
+    service.addMovement(movement(AccountMovementType.DEPOSIT, "500", LocalDate.of(2026, 6, 20)))
+
+    // Newest first, so the balances read backwards : 1250 → 750 → 1000.
+    val rows = service.findAllPaged(AccountMovementFilter(), PageRequest.of(0, 25)).content
+    assertEquals(
+      listOf("1250.00", "750.00", "1000.00"),
+      rows.map { it.balanceAfter.toPlainString() },
+    )
+    assertEquals(
+      0,
+      service.summary(AccountMovementFilter()).balance.compareTo(rows.first().balanceAfter),
+    )
+  }
+
+  /**
+   * The acceptance criterion of #229. A filtered listing must keep numbering against the whole
+   * history : the withdrawal between the two trades still has to be felt, even though it is not on
+   * screen. Computing the running sum over the filtered rows alone would read 291.85 / 441.85.
+   */
+  @Test
+  fun `keeps the balance column on the full history when the listing is filtered`() {
+    service.addMovement(movement(AccountMovementType.DEPOSIT, "1000", LocalDate.of(2026, 6, 1)))
+    seedTradeMovement("291.85")
+    service.addMovement(movement(AccountMovementType.WITHDRAWAL, "400", LocalDate.of(2026, 6, 16)))
+    seedTradeMovement("150.00", LocalDate.of(2026, 6, 17))
+
+    val trades =
+      service
+        .findAllPaged(
+          AccountMovementFilter(types = listOf(AccountMovementType.TRADE)),
+          PageRequest.of(0, 25),
+        )
+        .content
+
+    assertEquals(2, trades.size)
+    assertEquals(listOf("1041.85", "1291.85"), trades.map { it.balanceAfter.toPlainString() })
+  }
+
+  @Test
+  fun `scopes the summary figures to the period but never the balance`() {
+    service.addMovement(movement(AccountMovementType.DEPOSIT, "1000", LocalDate.of(2026, 5, 20)))
+    service.addMovement(movement(AccountMovementType.DEPOSIT, "300", LocalDate.of(2026, 6, 5)))
+    service.addMovement(movement(AccountMovementType.WITHDRAWAL, "100", LocalDate.of(2026, 6, 25)))
+
+    val june =
+      service.summary(
+        AccountMovementFilter(
+          dateFrom = LocalDate.of(2026, 6, 1),
+          dateTo = LocalDate.of(2026, 6, 30),
+        )
+      )
+
+    assertEquals(0, BigDecimal("300.00").compareTo(june.periodDeposits))
+    assertEquals(0, BigDecimal("-100.00").compareTo(june.periodWithdrawals))
+    assertEquals(0, BigDecimal("200.00").compareTo(june.periodNetInjected))
+    assertEquals(2, june.periodMovementCount)
+    // May's deposit is outside the window, yet the balance still counts it — it is the real one.
+    assertEquals(0, BigDecimal("1200.00").compareTo(june.balance))
+  }
+
+  @Test
+  fun `counts the winners among the trades of the period`() {
+    seedTradeMovement("291.85")
+    seedTradeMovement("-124.00", LocalDate.of(2026, 6, 16))
+    seedTradeMovement("115.00", LocalDate.of(2026, 6, 17))
+
+    val summary = service.summary(AccountMovementFilter())
+
+    assertEquals(3, summary.periodTradeCount)
+    assertEquals(2, summary.periodWinningTradeCount)
+    assertEquals(0, BigDecimal("282.85").compareTo(summary.periodPnl))
+  }
+
   private fun makeUser(prefix: String) =
     User(
       email = "$prefix-${UUID.randomUUID()}@test.local",
@@ -318,13 +404,16 @@ class AccountIntegrationTest {
    * an `AccountMovement(type = TRADE, tradeEntryId = trade.id)`. The DB CHECK enforces the TRADE ⟺
    * tradeEntryId-present invariant, so this is the only valid way to create one.
    */
-  private fun seedTradeMovement(pnl: String): AccountMovement {
+  private fun seedTradeMovement(
+    pnl: String,
+    valueDate: LocalDate = LocalDate.of(2026, 6, 15),
+  ): AccountMovement {
     // A trade is born from a stat since #192, so the source stat is seeded alongside it.
     val stat =
       statRepo.save(
         StatEntry(
           user = testUser,
-          tradeDate = LocalDate.of(2026, 6, 15),
+          tradeDate = valueDate,
           ticker = "BAC-${UUID.randomUUID().toString().take(8)}",
           previousClose = BigDecimal("2.6500"),
           pmOpen = BigDecimal("3.2100"),
@@ -336,7 +425,7 @@ class AccountIntegrationTest {
         TradeEntry(
           user = testUser,
           statEntryId = stat.id,
-          tradeDate = LocalDate.of(2026, 6, 15),
+          tradeDate = valueDate,
           ticker = "BAC",
         )
       )
@@ -345,7 +434,7 @@ class AccountIntegrationTest {
         user = testUser,
         type = AccountMovementType.TRADE,
         amount = BigDecimal(pnl),
-        valueDate = LocalDate.of(2026, 6, 15),
+        valueDate = valueDate,
         tradeEntryId = trade.id,
       )
     )

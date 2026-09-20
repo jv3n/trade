@@ -7,6 +7,7 @@ import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.application.dto.toDto
 import com.portfolioai.account.domain.AccountMovement
+import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.auth.application.AuthService
@@ -15,9 +16,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -45,35 +45,81 @@ class AccountService(
   private val reconciler: AccountReconciler,
 ) {
 
+  /**
+   * Movements of the filtered period, most recent first, each carrying the balance it left behind.
+   *
+   * Walks the user's whole history in memory rather than paging in SQL. Two reasons, and both are
+   * requirements rather than convenience :
+   * - `balanceAfter` is defined over the **entire** ordered history, so filtering down to trades
+   *   must not renumber it (#229). A SQL page cannot see the rows it excluded.
+   * - a JPQL predicate on [AccountMovementType] makes Hibernate emit `cast(? as
+   *   accountmovementtype)`, a type that does not exist in Postgres (the enum is
+   *   `account_movement_type`) — see `AccountMovementRepository.findLatestCorrection`. Filtering in
+   *   Kotlin sidesteps it.
+   *
+   * `summary` and `balanceSeries` already load the full history; at one user's ledger scale this is
+   * a non-issue. The listing's order is therefore fixed (value date then creation, descending) and
+   * a `sort` in the URL is ignored — an arbitrary order would make `balanceAfter` unreadable.
+   */
   @Transactional(readOnly = true)
-  fun findAllPaged(pageable: Pageable): Page<AccountMovementDto> {
+  fun findAllPaged(filter: AccountMovementFilter, pageable: Pageable): Page<AccountMovementDto> {
     val userId = authService.getCurrentUser().id
-    val effective =
-      if (pageable.sort.isUnsorted)
-        PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
-      else pageable
-    return repo.findByUserId(userId, effective).map { it.toDto() }
+    val balances = runningBalances(userId)
+    val matching =
+      repo
+        .findByUserId(userId)
+        .filter(filter::matches)
+        .sortedWith(
+          compareByDescending<AccountMovement> { it.valueDate }.thenByDescending { it.createdAt }
+        )
+    val from = (pageable.pageNumber * pageable.pageSize).coerceAtMost(matching.size)
+    val to = (from + pageable.pageSize).coerceAtMost(matching.size)
+    val page = matching.subList(from, to).map { it.toDto(balances.getValue(it.id)) }
+    return PageImpl(page, pageable, matching.size.toLong())
   }
 
-  /** Current balance + breakdown by movement type. */
+  /**
+   * Current balance, plus the figures of the filtered period. The balance itself is deliberately
+   * **not** windowed — it is what the broker shows right now.
+   */
   @Transactional(readOnly = true)
-  fun summary(): AccountSummaryDto {
-    val movements = repo.findByUserId(authService.getCurrentUser().id)
+  fun summary(filter: AccountMovementFilter): AccountSummaryDto {
+    val all = repo.findByUserId(authService.getCurrentUser().id)
+    val period = all.filter(filter::matches)
     fun sumOf(type: AccountMovementType): BigDecimal =
-      movements.filter { it.type == type }.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
+      period.filter { it.type == type }.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
     val deposits = sumOf(AccountMovementType.DEPOSIT)
     val withdrawals = sumOf(AccountMovementType.WITHDRAWAL)
-    val trades = sumOf(AccountMovementType.TRADE)
-    val adjustments = sumOf(AccountMovementType.ADJUSTMENT)
+    val trades = period.filter { it.type == AccountMovementType.TRADE }
     return AccountSummaryDto(
-      balance = deposits + withdrawals + trades + adjustments,
-      totalDeposits = deposits,
-      totalWithdrawals = withdrawals,
-      netInjected = deposits + withdrawals,
-      tradesPnl = trades,
-      adjustments = adjustments,
-      movementCount = movements.size.toLong(),
+      balance = all.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount },
+      periodPnl = sumOf(AccountMovementType.TRADE),
+      periodTradeCount = trades.size.toLong(),
+      // A winner is a trade whose retained P&L landed positive — a break-even trade is not one.
+      periodWinningTradeCount = trades.count { it.amount > BigDecimal.ZERO }.toLong(),
+      periodDeposits = deposits,
+      periodWithdrawals = withdrawals,
+      periodNetInjected = deposits + withdrawals,
+      periodAdjustments = sumOf(AccountMovementType.ADJUSTMENT),
+      periodMovementCount = period.size.toLong(),
     )
+  }
+
+  /**
+   * Balance left behind by each movement, keyed by id — the running sum over the whole history in
+   * chronological order. Same walk as [balanceSeries], kept separate because that one collapses to
+   * one point per day while this one needs every row.
+   */
+  private fun runningBalances(userId: UUID): Map<UUID, BigDecimal> {
+    val chronological =
+      repo.findByUserId(userId).sortedWith(compareBy({ it.valueDate }, { it.createdAt }))
+    var running = BigDecimal.ZERO
+    val balances = LinkedHashMap<UUID, BigDecimal>()
+    for (m in chronological) {
+      running += m.amount
+      balances[m.id] = running
+    }
+    return balances
   }
 
   /**
@@ -114,7 +160,8 @@ class AccountService(
         valueDate = request.valueDate,
         note = request.note.cleanNote(),
       )
-    return repo.save(movement).toDto()
+    val saved = repo.save(movement)
+    return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
   }
 
   /**
@@ -140,7 +187,8 @@ class AccountService(
         // `target`) when another line is edited or deleted later.
         targetBalance = request.targetBalance,
       )
-    return repo.save(movement).toDto()
+    val saved = repo.save(movement)
+    return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
   }
 
   /** Edits a manual movement. TRADE → 400 ; type change → 400 ; foreign / missing id → 404. */
@@ -165,7 +213,7 @@ class AccountService(
     if (movement.type != AccountMovementType.ADJUSTMENT) {
       reconciler.reconcile(movement.user.id)
     }
-    return saved.toDto()
+    return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
   }
 
   /**
@@ -209,9 +257,4 @@ class AccountService(
   private fun String?.cleanNote(): String? = this?.trim()?.ifEmpty { null }
 
   private fun badRequest(message: String) = ResponseStatusException(HttpStatus.BAD_REQUEST, message)
-
-  private companion object {
-    /** Newest-first, `createdAt` tiebreaker — implicit listing sort when the URL has no `sort`. */
-    val DEFAULT_SORT: Sort = Sort.by(Sort.Order.desc("valueDate"), Sort.Order.desc("createdAt"))
-  }
 }

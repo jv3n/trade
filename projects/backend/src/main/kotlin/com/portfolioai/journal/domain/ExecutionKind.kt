@@ -1,5 +1,7 @@
 package com.portfolioai.journal.domain
 
+import com.portfolioai.shared.TradeDirection
+
 /**
  * Whether a [TradeExecution] opens/adds to the position (`ENTRY`) or closes/reduces it (`EXIT`),
  * independent of the position [TradeDirection]. A SHORT position's ENTRY is a sell-to-open and its

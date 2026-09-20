@@ -2,6 +2,7 @@ package com.portfolioai.account
 
 import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.CorrectionRequest
+import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.auth.application.AuthService
@@ -12,8 +13,8 @@ import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
-import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
+import com.portfolioai.shared.TradeDirection
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
@@ -188,7 +189,7 @@ class AccountTradeSyncIntegrationTest {
     )
     assertEquals(
       0,
-      BigDecimal("291.85").compareTo(accountService.summary().balance),
+      BigDecimal("291.85").compareTo(accountService.summary(AccountMovementFilter()).balance),
       "the balance follows the retained P&L",
     )
   }
@@ -213,8 +214,8 @@ class AccountTradeSyncIntegrationTest {
   fun `the synced trade P&L counts in the account balance and tradesPnl`() {
     tradeService.create(closedTrade(ticker = "FFIE", pnl = "820.00"))
 
-    val summary = accountService.summary()
-    assertEquals(0, BigDecimal("820.00").compareTo(summary.tradesPnl))
+    val summary = accountService.summary(AccountMovementFilter())
+    assertEquals(0, BigDecimal("820.00").compareTo(summary.periodPnl))
     assertEquals(
       0,
       BigDecimal("820.00").compareTo(summary.balance),
@@ -237,7 +238,7 @@ class AccountTradeSyncIntegrationTest {
 
     assertEquals(
       0,
-      BigDecimal("250.00").compareTo(accountService.summary().balance),
+      BigDecimal("250.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
       "the correction absorbs the P&L change so the balance stays on target",
     )
   }
@@ -252,7 +253,10 @@ class AccountTradeSyncIntegrationTest {
     tradeService.delete(trade.id)
 
     // Before the removal event, the frozen −50 left the balance at −50 ; now it re-floats to 250.
-    assertEquals(0, BigDecimal("250.00").compareTo(accountService.summary().balance))
+    assertEquals(
+      0,
+      BigDecimal("250.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
   }
 
   @Test
@@ -268,7 +272,7 @@ class AccountTradeSyncIntegrationTest {
 
     assertEquals(
       0,
-      BigDecimal("350.00").compareTo(accountService.summary().balance),
+      BigDecimal("350.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
       "250 + 100 — a new trade is a real move, not absorbed by the correction",
     )
   }

@@ -51,6 +51,8 @@ class AccountTradeSyncService(
       existing.amount = pnl
       existing.valueDate = event.tradeDate
       existing.note = event.ticker
+      existing.tradeDirection = event.direction
+      existing.tradeSize = event.size
       existing.updatedAt = Instant.now()
       repo.save(existing)
       // Editing a trade's realized P&L moves the balance → re-float the latest correction.
@@ -64,6 +66,8 @@ class AccountTradeSyncService(
           amount = pnl,
           valueDate = event.tradeDate,
           note = event.ticker,
+          tradeDirection = event.direction,
+          tradeSize = event.size,
           tradeEntryId = event.tradeId,
         )
       )

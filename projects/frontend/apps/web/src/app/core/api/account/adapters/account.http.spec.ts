@@ -34,7 +34,10 @@ describe('HttpAccountRepository', () => {
       amount: -1500,
       valueDate: '2026-06-15',
       note: 'Withdraw to bank',
+      balanceAfter: 26953.1,
       tradeEntryId: null,
+      tradeDirection: null,
+      tradeSize: null,
       createdAt: '2026-06-15T10:00:00Z',
       updatedAt: '2026-06-15T10:00:00Z',
       ...overrides,
@@ -44,7 +47,7 @@ describe('HttpAccountRepository', () => {
   it('findMovements forwards page coordinates and maps the Spring page + ISO dates', () => {
     let result: { content: { valueDate: Date; amount: number }[]; totalElements: number } | null =
       null;
-    repo.findMovements({ pageIndex: 1, pageSize: 25 }).subscribe((r) => (result = r));
+    repo.findMovements(undefined, { pageIndex: 1, pageSize: 25 }).subscribe((r) => (result = r));
 
     const req = httpMock.expectOne((r) => r.url === '/api/account/movements');
     expect(req.request.method).toBe('GET');
@@ -63,6 +66,40 @@ describe('HttpAccountRepository', () => {
     expect(row.amount).toBe(-1500); // signed amount passes through untouched
     expect(row.valueDate instanceof Date).toBe(true);
     expect(row.valueDate.getFullYear()).toBe(2026);
+  });
+
+  it('findMovements sends the period as inclusive dates and repeats the type param', () => {
+    repo
+      .findMovements({
+        dateFrom: new Date(2026, 8, 1),
+        dateTo: new Date(2026, 8, 30),
+        types: ['DEPOSIT', 'WITHDRAWAL'],
+      })
+      .subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === '/api/account/movements');
+    expect(req.request.params.get('dateFrom')).toBe('2026-09-01');
+    expect(req.request.params.get('dateTo')).toBe('2026-09-30');
+    expect(req.request.params.getAll('type')).toEqual(['DEPOSIT', 'WITHDRAWAL']);
+    req.flush({ content: [], number: 0, size: 25, totalElements: 0, totalPages: 0 });
+  });
+
+  it('findMovements omits every filter param when nothing is selected', () => {
+    repo.findMovements({ dateFrom: null, dateTo: null, types: null }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === '/api/account/movements');
+    expect(req.request.params.keys()).toEqual([]);
+    req.flush({ content: [], number: 0, size: 25, totalElements: 0, totalPages: 0 });
+  });
+
+  it('getSummary carries the same filter as the listing', () => {
+    repo.getSummary({ dateFrom: new Date(2026, 8, 1), dateTo: null, types: ['TRADE'] }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === '/api/account/summary');
+    expect(req.request.params.get('dateFrom')).toBe('2026-09-01');
+    expect(req.request.params.has('dateTo')).toBe(false);
+    expect(req.request.params.getAll('type')).toEqual(['TRADE']);
+    req.flush({ balance: 0 });
   });
 
   it('getSummary passes the aggregate through as-is', () => {

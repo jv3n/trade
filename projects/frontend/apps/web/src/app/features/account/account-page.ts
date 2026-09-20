@@ -12,17 +12,23 @@ import {
   StbButtonToggleModule,
   StbCardModule,
   StbChipsModule,
-  StbDividerModule,
+  StbDatePickerModule,
+  StbFormFieldModule,
   StbIconModule,
+  StbInputModule,
   StbPaginatorModule,
   StbProgressSpinnerModule,
+  StbSelectModule,
+  StbTableModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
 import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
 import {
   AccountMovement,
+  AccountMovementFilter,
   AccountMovementInput,
+  AccountMovementType,
   AccountSummary,
   BalancePoint,
 } from '../../core/api/account/account.model';
@@ -34,29 +40,58 @@ import {
   BalanceCurrencyService,
 } from '../../core/app-state/balance-currency.service';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import {
+  PERIOD_PRESETS,
+  PeriodPresetKey,
+  computePeriodRange,
+} from '../../shared/period-preset/period-preset';
 import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
 
-/** A day's worth of movements with its running subtotal — built from the current page's content. */
-interface DayGroup {
-  key: string;
-  date: Date;
-  subtotal: number;
-  rows: AccountMovement[];
+/**
+ * The type filter as the user reads it. `cash` groups deposits and withdrawals : from the ledger's
+ * point of view they are the same question — money I put in or took out — and the mockup offers
+ * them as one choice.
+ */
+export type MovementTypeFilter = 'all' | 'trades' | 'cash' | 'corrections';
+
+export const MOVEMENT_TYPE_FILTERS: readonly MovementTypeFilter[] = [
+  'all',
+  'trades',
+  'cash',
+  'corrections',
+];
+
+const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[] | null> = {
+  all: null,
+  trades: ['TRADE'],
+  cash: ['DEPOSIT', 'WITHDRAWAL'],
+  corrections: ['ADJUSTMENT'],
+};
+
+/** What the filter toolbar holds. The preset is UI-only — only the resolved dates reach the API. */
+interface AccountFilter {
+  period: PeriodPresetKey;
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  type: MovementTypeFilter;
 }
 
-/** Window presets for the balance chart + the hero change KPI. */
-type Period = '1W' | '1M' | '3M' | 'YTD' | 'ALL';
-const PERIODS: readonly Period[] = ['1W', '1M', '3M', 'YTD', 'ALL'];
-
 /**
- * Broker cash-account page. Hero balance + summary panel (from `/summary`) and the movement history
- * grouped by date with a daily subtotal (from `/movements`, paginated). Manual movements get
- * edit / delete ; TRADE movements are read-only and link back to the journal (ticker rendered via
- * the `stbChip="ticker"` directive, per the project convention).
+ * Broker cash-account page, laid out after `mockup/compte.html` (#229) : a KPI row (balance with
+ * its USD / CAD switch, P&L of the period, net injected), the balance curve in its own card, and
+ * the movements as a filterable table carrying the running balance.
+ *
+ * **One filter drives everything.** The period + type toolbar feeds `/summary`, `/movements` and
+ * the chart window at once, so the three always describe the same slice — a KPI row that disagreed
+ * with the table below it would be worse than no KPI at all. The filter mirrors the journal's,
+ * presets included, and only resolved dates travel to the backend.
+ *
+ * The balance column comes from the server (`balanceAfter`), never recomputed here : it is defined
+ * over the whole history, so filtering to trades must not renumber it.
  *
  * Every mutation refetches summary + movements — the dataset is small, so we trust the server
- * rather than splicing locally. The balance-evolution chart ships in a follow-up slice.
+ * rather than splicing locally.
  */
 @Component({
   selector: 'app-account-page',
@@ -69,10 +104,14 @@ const PERIODS: readonly Period[] = ['1W', '1M', '3M', 'YTD', 'ALL'];
     StbButtonToggleModule,
     StbCardModule,
     StbChipsModule,
-    StbDividerModule,
+    StbDatePickerModule,
+    StbFormFieldModule,
     StbIconModule,
+    StbInputModule,
     StbPaginatorModule,
     StbProgressSpinnerModule,
+    StbSelectModule,
+    StbTableModule,
     StbTooltipModule,
     MorningReconciliation,
     TranslatePipe,
@@ -101,8 +140,17 @@ export class AccountPage {
   /** Today, captured once so the header date doesn't re-evaluate on every change detection. */
   readonly today = new Date();
 
-  readonly periods = PERIODS;
-  readonly period = signal<Period>('1M');
+  readonly periods = PERIOD_PRESETS;
+  readonly typeFilters = MOVEMENT_TYPE_FILTERS;
+
+  /** Defaults to the running month — the question the page is opened to answer. */
+  readonly appliedFilter = signal<AccountFilter>({
+    period: 'thisMonth',
+    ...computePeriodRange('thisMonth'),
+    type: 'all',
+  });
+
+  readonly displayedColumns = ['valueDate', 'type', 'label', 'amount', 'balanceAfter', 'actions'];
 
   /** USD→other-currency rate for the hero toggle ; null until loaded (or if the lookup failed). */
   readonly rate = signal<ForexRate | null>(null);
@@ -117,70 +165,25 @@ export class AccountPage {
   readonly currency = this.balanceCurrency.currency;
 
   /**
-   * Series filtered to the selected window, mapped for the chart (x = epoch ms, label = date).
+   * Series clipped to the active period, mapped for the chart (x = epoch ms, label = date).
    * Converted like the hero balance : a CAD hero above a USD curve reads as a broken account.
    */
-  readonly chartPoints = computed<AreaChartPoint[]>(() => {
-    const start = this.windowStart(this.period());
-    const pts = start ? this.series().filter((p) => p.date >= start) : this.series();
-    return pts.map((p) => ({
+  readonly chartPoints = computed<AreaChartPoint[]>(() =>
+    this.clippedSeries().map((p) => ({
       x: p.date.getTime(),
       y: this.convert(p.balance),
       label: format(p.date, 'd MMM yyyy'),
-    }));
+    })),
+  );
+
+  /** The span the curve actually covers — the card's subtitle, « 31/08 → 17/09 » in the mockup. */
+  readonly chartRange = computed<{ from: Date; to: Date } | null>(() => {
+    const pts = this.clippedSeries();
+    return pts.length ? { from: pts[0].date, to: pts[pts.length - 1].date } : null;
   });
 
   /** Tells the two dollars apart in the tooltip — both currencies use the same sign. */
   readonly currencySuffix = computed(() => (this.currency() === 'CAD' ? ' $ CA' : ' $ US'));
-
-  /**
-   * Change over the selected window : current balance vs the balance just before the window opened
-   * (0 if the account started inside it, or for the ALL preset). `percent` is null when the base is
-   * 0 (no meaningful ratio).
-   */
-  readonly periodChange = computed<{ amount: number; percent: number | null } | null>(() => {
-    const pts = this.series();
-    if (pts.length === 0) return null;
-    const current = pts[pts.length - 1].balance;
-    const start = this.windowStart(this.period());
-    const before = start ? pts.filter((p) => p.date < start) : [];
-    const base = before.length ? before[before.length - 1].balance : 0;
-    const amount = current - base;
-    return { amount, percent: base !== 0 ? (amount / Math.abs(base)) * 100 : null };
-  });
-
-  /**
-   * Account return — what the account has earned over the cash actually injected :
-   * `balance − netInjected` ( = tradesPnl + adjustments ), and as a % of `netInjected`. `percent` is
-   * null when nothing was injected (`netInjected ≤ 0`, no meaningful base). Distinct from
-   * [periodChange], which is windowed against the chart series.
-   */
-  readonly accountReturn = computed<{ amount: number; percent: number | null } | null>(() => {
-    const s = this.summary();
-    if (!s) return null;
-    const amount = s.balance - s.netInjected;
-    return { amount, percent: s.netInjected > 0 ? (amount / s.netInjected) * 100 : null };
-  });
-
-  /**
-   * Groups the current page's movements by value date, preserving the server order (value_date
-   * desc, created_at desc) — so same-date rows are contiguous and a group's subtotal is its sum.
-   */
-  readonly groups = computed<DayGroup[]>(() => {
-    const out: DayGroup[] = [];
-    for (const m of this.movements()) {
-      const key = format(m.valueDate, 'yyyy-MM-dd');
-      const last = out.length ? out[out.length - 1] : null;
-      const group = last && last.key === key ? last : null;
-      if (group) {
-        group.rows.push(m);
-        group.subtotal += m.amount;
-      } else {
-        out.push({ key, date: m.valueDate, subtotal: m.amount, rows: [m] });
-      }
-    }
-    return out;
-  });
 
   constructor() {
     this.fetch();
@@ -240,8 +243,26 @@ export class AccountPage {
     this.fetchMovements();
   }
 
-  setPeriod(period: Period): void {
-    this.period.set(period);
+  /** A preset fills the range ; `custom` leaves the two pickers to the user. */
+  onPeriodChange(period: PeriodPresetKey): void {
+    const range = computePeriodRange(period);
+    this.applyFilter(
+      period === 'custom'
+        ? { ...this.appliedFilter(), period }
+        : { ...this.appliedFilter(), period, ...range },
+    );
+  }
+
+  setDateFrom(dateFrom: Date | null): void {
+    this.applyFilter({ ...this.appliedFilter(), dateFrom });
+  }
+
+  setDateTo(dateTo: Date | null): void {
+    this.applyFilter({ ...this.appliedFilter(), dateTo });
+  }
+
+  onTypeChange(type: MovementTypeFilter): void {
+    this.applyFilter({ ...this.appliedFilter(), type });
   }
 
   setCurrency(currency: BalanceCurrency): void {
@@ -250,38 +271,32 @@ export class AccountPage {
 
   /**
    * Converts a USD hero amount for display : as-is in USD mode, or × the live rate in CAD mode. Used
-   * for the hero balance and its change KPI only — the rest of the page stays in USD by design. A
-   * null rate (lookup failed) can't be reached here : the CAD toggle is disabled until the rate loads.
+   * for the hero balance and the curve only — the table stays in USD by design. A null rate (lookup
+   * failed) can't be reached here : the CAD toggle is disabled until the rate loads.
    */
   convert(amountUsd: number): number {
     const r = this.rate();
     return this.currency() === 'CAD' && r ? amountUsd * r.rate : amountUsd;
   }
 
-  /** Start of the selected window from "now" ; null = no lower bound (the ALL preset). */
-  private windowStart(period: Period): Date | null {
-    const now = new Date();
-    switch (period) {
-      case '1W': {
-        const d = new Date(now);
-        d.setDate(d.getDate() - 7);
-        return d;
-      }
-      case '1M': {
-        const d = new Date(now);
-        d.setMonth(d.getMonth() - 1);
-        return d;
-      }
-      case '3M': {
-        const d = new Date(now);
-        d.setMonth(d.getMonth() - 3);
-        return d;
-      }
-      case 'YTD':
-        return new Date(now.getFullYear(), 0, 1);
-      case 'ALL':
-        return null;
-    }
+  /** Any filter change resets to the first page — page 4 of the old result set means nothing. */
+  private applyFilter(next: AccountFilter): void {
+    this.appliedFilter.set(next);
+    this.pageIndex.set(0);
+    this.fetch();
+  }
+
+  private clippedSeries(): BalancePoint[] {
+    const { dateFrom, dateTo } = this.appliedFilter();
+    return this.series().filter(
+      (p) => (!dateFrom || p.date >= dateFrom) && (!dateTo || p.date <= dateTo),
+    );
+  }
+
+  /** The toolbar state as the API reads it — presets resolved, the type choice expanded. */
+  private toApiFilter(): AccountMovementFilter {
+    const f = this.appliedFilter();
+    return { dateFrom: f.dateFrom, dateTo: f.dateTo, types: TYPES_BY_FILTER[f.type] };
   }
 
   private openMovementDialog(movement: AccountMovement | null): void {
@@ -324,10 +339,12 @@ export class AccountPage {
   private fetch(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.repo.getSummary().subscribe({
+    this.repo.getSummary(this.toApiFilter()).subscribe({
       next: (s) => this.summary.set(s),
       error: () => this.error.set(this.translate.instant('account.errors.load')),
     });
+    // The whole series, always : the chart is clipped client-side, so changing the window doesn't
+    // cost a round-trip and the curve keeps its shape when the user flips between presets.
     this.repo.getBalanceSeries().subscribe({
       next: (pts) => this.series.set(pts),
       error: () => this.error.set(this.translate.instant('account.errors.load')),
@@ -349,17 +366,22 @@ export class AccountPage {
 
   private fetchMovements(): void {
     this.loading.set(true);
-    this.repo.findMovements({ pageIndex: this.pageIndex(), pageSize: this.pageSize() }).subscribe({
-      next: (page) => {
-        this.movements.set(page.content);
-        this.totalElements.set(page.totalElements);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set(this.translate.instant('account.errors.load'));
-        this.loading.set(false);
-      },
-    });
+    this.repo
+      .findMovements(this.toApiFilter(), {
+        pageIndex: this.pageIndex(),
+        pageSize: this.pageSize(),
+      })
+      .subscribe({
+        next: (page) => {
+          this.movements.set(page.content);
+          this.totalElements.set(page.totalElements);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set(this.translate.instant('account.errors.load'));
+          this.loading.set(false);
+        },
+      });
   }
 
   private toast(key: string, variant: 'success' | 'error'): void {

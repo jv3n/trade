@@ -1,7 +1,9 @@
 import {
+  endOfDay,
   endOfMonth,
   endOfQuarter,
   endOfYear,
+  startOfDay,
   startOfMonth,
   startOfQuarter,
   startOfYear,
@@ -11,7 +13,7 @@ import {
 } from 'date-fns';
 
 /**
- * Period shortcuts for the list filters (journal + stats). Each preset resolves to a
+ * Period shortcuts for the list filters (journal, stats, account). Each preset resolves to a
  * `{ dateFrom, dateTo }` pair that the filter uses to populate the date range. `custom` and `all`
  * are special : `custom` lets the user type dates manually, `all` clears the range (no filter).
  */
@@ -20,6 +22,8 @@ export type PeriodPresetKey =
   | 'custom'
   | 'thisMonth'
   | 'lastMonth'
+  | 'last3Months'
+  | 'last6Months'
   | 'thisQuarter'
   | 'lastQuarter'
   | 'thisYear'
@@ -30,6 +34,8 @@ export const PERIOD_PRESETS: readonly PeriodPresetKey[] = [
   'custom',
   'thisMonth',
   'lastMonth',
+  'last3Months',
+  'last6Months',
   'thisQuarter',
   'lastQuarter',
   'thisYear',
@@ -56,6 +62,12 @@ export function computePeriodRange(key: PeriodPresetKey, now: Date = new Date())
       const d = subMonths(now, 1);
       return { dateFrom: startOfMonth(d), dateTo: endOfMonth(d) };
     }
+    // Rolling windows, not calendar ones : « last 3 months » ends today, where `lastQuarter`
+    // snaps to quarter boundaries. Both are offered because they answer different questions.
+    case 'last3Months':
+      return { dateFrom: startOfDay(subMonths(now, 3)), dateTo: endOfDay(now) };
+    case 'last6Months':
+      return { dateFrom: startOfDay(subMonths(now, 6)), dateTo: endOfDay(now) };
     case 'thisQuarter':
       return { dateFrom: startOfQuarter(now), dateTo: endOfQuarter(now) };
     case 'lastQuarter': {

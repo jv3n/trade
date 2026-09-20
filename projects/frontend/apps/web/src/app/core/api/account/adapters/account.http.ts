@@ -2,8 +2,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
+import { TradeDirection } from '../../journal/trade-entry.model';
 import {
   AccountMovement,
+  AccountMovementFilter,
   AccountMovementInput,
   AccountMovementType,
   AccountSummary,
@@ -25,7 +27,10 @@ interface AccountMovementWireDto {
   amount: number;
   valueDate: string;
   note: string | null;
+  balanceAfter: number;
   tradeEntryId: string | null;
+  tradeDirection: TradeDirection | null;
+  tradeSize: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,7 +72,10 @@ function fromWire(w: AccountMovementWireDto): AccountMovement {
     amount: w.amount,
     valueDate: parseISO(w.valueDate),
     note: w.note,
+    balanceAfter: w.balanceAfter,
     tradeEntryId: w.tradeEntryId,
+    tradeDirection: w.tradeDirection,
+    tradeSize: w.tradeSize,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };
@@ -88,6 +96,28 @@ function reconciliationFromWire(w: ReconciliationWireDto): Reconciliation {
   return { ...w, valueDate: parseISO(w.valueDate), reconciledAt: parseISO(w.reconciledAt) };
 }
 
+/**
+ * Filter → query params, the same vocabulary the journal listing uses : inclusive `dateFrom` /
+ * `dateTo` as `YYYY-MM-DD`, and `type` repeated once per selected value. A null or empty field is
+ * simply omitted — the backend reads that as « no filter ».
+ */
+function withFilter(params: HttpParams, filter?: AccountMovementFilter): HttpParams {
+  if (!filter) {
+    return params;
+  }
+  let next = params;
+  if (filter.dateFrom) {
+    next = next.set('dateFrom', format(filter.dateFrom, 'yyyy-MM-dd'));
+  }
+  if (filter.dateTo) {
+    next = next.set('dateTo', format(filter.dateTo, 'yyyy-MM-dd'));
+  }
+  for (const type of filter.types ?? []) {
+    next = next.append('type', type);
+  }
+  return next;
+}
+
 function toMovementWire(input: AccountMovementInput): MovementWireRequest {
   return {
     type: input.type,
@@ -106,19 +136,25 @@ export class HttpAccountRepository extends AccountRepository {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/account';
 
-  findMovements(page?: PageRequest): Observable<PagedResult<AccountMovement>> {
+  findMovements(
+    filter?: AccountMovementFilter,
+    page?: PageRequest,
+  ): Observable<PagedResult<AccountMovement>> {
     let params = new HttpParams();
     if (page) {
       params = params.set('page', page.pageIndex).set('size', page.pageSize);
     }
+    params = withFilter(params, filter);
     return this.http
       .get<SpringPageWireDto<AccountMovementWireDto>>(`${this.base}/movements`, { params })
       .pipe(map(fromPageWire));
   }
 
-  getSummary(): Observable<AccountSummary> {
+  getSummary(filter?: AccountMovementFilter): Observable<AccountSummary> {
     // Wire shape is identical to the domain (all numbers, no dates) — pass through.
-    return this.http.get<AccountSummary>(`${this.base}/summary`);
+    return this.http.get<AccountSummary>(`${this.base}/summary`, {
+      params: withFilter(new HttpParams(), filter),
+    });
   }
 
   getBalanceSeries(): Observable<BalancePoint[]> {

@@ -349,6 +349,8 @@ class TradeEntryService(
         ticker = entry.ticker,
         tradeDate = entry.tradeDate,
         profitDollars = entry.retainedProfit,
+        direction = entry.direction,
+        size = entry.size,
       )
     )
   }

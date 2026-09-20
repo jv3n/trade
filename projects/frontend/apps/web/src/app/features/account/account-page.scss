@@ -1,3 +1,7 @@
+// Page layout after `mockup/compte.html` (#229) : a KPI row, the morning reconciliation, the
+// balance curve, then one card holding the filter toolbar and the movements table. The KPI and
+// toolbar shapes are the journal's on purpose — the two listings are learnt once.
+
 .account-page {
   display: flex;
   flex-direction: column;
@@ -41,189 +45,170 @@
   color: var(--color-danger);
 }
 
-.hero-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.25rem 1.5rem;
+// ---- KPI row ----
 
-  .hero-top {
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.kpi {
+  padding: 18px 20px;
+
+  // The balance is the page's headline figure — it gets the width of two.
+  &.kpi-hero {
+    grid-column: span 2;
+
+    @media (max-width: 640px) {
+      grid-column: span 1;
+    }
+  }
+
+  &__label {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .hero-left {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .hero-label {
-    font-size: 0.72rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    gap: 0.75rem;
+    font-size: 12px;
     color: var(--color-text-muted);
   }
 
-  .hero-balance {
-    font-size: 2.2rem;
+  &__value {
+    margin: 4px 0 2px;
+    font-size: 24px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-
-    &.neg {
-      color: var(--color-danger);
-    }
   }
 
-  .hero-change {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.85rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--color-text-muted);
-
-    mat-icon {
-      font-size: 1rem;
-      width: 1rem;
-      height: 1rem;
-    }
-
-    .change-label {
-      color: var(--color-text-muted);
-      margin-left: 0.25rem;
-    }
-  }
-
-  .hero-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.4rem;
-  }
-
-  .rate-caption {
-    margin-top: 0.1rem;
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .chart-empty {
-    margin: 0.5rem 0 0;
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
+  &__sub {
+    font-size: 12px;
+    color: var(--color-text-faint);
   }
 }
 
-.account-grid {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1rem;
-  align-items: start;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
+.kpi-hero .kpi__value {
+  font-size: 32px;
 }
+
+// ---- Cards ----
 
 .card-title {
-  margin: 0 0 0.5rem;
-  font-size: 1.05rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  font-size: 15px;
+
+  .day {
+    margin-left: 0.5rem;
+    color: var(--color-text-muted);
+    font-weight: 400;
+  }
+
+  .hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-faint);
+  }
 }
 
-.movements-card,
-.summary-card {
-  padding: 1.25rem;
+.reconciliation-card,
+.chart-card,
+.movements-card {
+  padding: 18px 20px;
+}
+
+.chart-empty {
+  margin: 0;
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--color-text-faint);
+}
+
+// ---- Filter toolbar ----
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+// Material's outline form-field runs too tall next to the dense controls of an inline toolbar.
+@mixin toolbar-field($width) {
+  width: $width;
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 36px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+.period-field {
+  @include toolbar-field(190px);
+}
+
+.type-field {
+  @include toolbar-field(200px);
+}
+
+.date-field {
+  @include toolbar-field(170px);
+}
+
+// ---- Movements table ----
+
+// Category, not outcome — indigo, per the colour rule in `mockup/PARCOURS.md`. Only the amount
+// column is allowed to go green or red.
+.type-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+
+  &--trade {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+}
+
+.inline-chip {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.muted {
+  margin-left: 0.35rem;
+  color: var(--color-text-muted);
 }
 
 .loading-state,
 .empty-state {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 1.5rem 0;
+  padding: 2rem 0;
   color: var(--color-text-muted);
 }
 
 .empty-state {
   flex-direction: column;
-  text-align: center;
-}
-
-.day-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.25rem;
-  margin-top: 0.5rem;
-  border-bottom: 1px solid var(--color-border-soft);
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.day-subtotal {
-  font-variant-numeric: tabular-nums;
-}
-
-.movement-row {
-  display: grid;
-  grid-template-columns: 40px 1fr auto auto;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.25rem;
-  border-bottom: 1px solid var(--color-border-soft);
-
-  &:last-child {
-    border-bottom: 0;
-  }
-
-  .avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: var(--color-surface-2);
-    color: var(--color-text-muted);
-
-    // Colour rule (#203) : the movement **type** is a category, not an outcome — indigo for the
-    // trade, amber for a correction, neutral for the manual cash in / out. Green and red belong to
-    // the amount next to it, which is the figure that actually went up or down. Deposits and
-    // withdrawals used to be green / red here, which read as "good money / bad money".
-    &[data-type='TRADE'] {
-      color: var(--color-accent);
-    }
-
-    &[data-type='ADJUSTMENT'] {
-      color: var(--color-warning);
-    }
-  }
-
-  .label {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.15rem;
-    min-width: 0;
-
-    .type-label {
-      font-weight: 600;
-    }
-
-    .note {
-      font-size: 0.8rem;
-      color: var(--color-text-muted);
-    }
-  }
-
-  .amt {
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-  }
 }
 
 .pos {
@@ -232,72 +217,4 @@
 
 .neg {
   color: var(--color-danger);
-}
-
-.row-actions {
-  display: flex;
-}
-
-.summary-card {
-  .sum-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.55rem 0;
-    font-size: 0.9rem;
-
-    .k {
-      color: var(--color-text-muted);
-    }
-
-    .v {
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-    }
-  }
-
-  // The "return" line is the bottom-line result of the P&L block — give it a touch more weight and
-  // keep the % paired with the $ in the same (coloured) value cell.
-  .sum-row--return {
-    .k {
-      font-weight: 600;
-    }
-
-    .v {
-      font-weight: 700;
-
-      .pct {
-        margin-left: 0.25rem;
-        font-size: 0.85em;
-      }
-    }
-  }
-}
-
-// ---- Morning reconciliation (#198) — the block itself is a component, this is its shell. ----
-
-.reconciliation-card {
-  margin-bottom: 1rem;
-  padding: 1rem 1.25rem;
-
-  .card-title {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-
-    .day {
-      margin-left: 0.4rem;
-      font-weight: 400;
-      color: var(--color-text-muted);
-      text-transform: capitalize;
-    }
-  }
-
-  .hint {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--color-text-faint);
-  }
 }

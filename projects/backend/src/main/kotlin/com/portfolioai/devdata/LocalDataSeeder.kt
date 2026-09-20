@@ -8,11 +8,11 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.journal.application.TradeChangedEvent
 import com.portfolioai.journal.domain.ExecutionKind
-import com.portfolioai.journal.domain.TradeDirection
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.TradeDirection
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
@@ -196,6 +196,8 @@ class LocalDataSeeder(
         ticker = saved.ticker,
         tradeDate = saved.tradeDate,
         profitDollars = saved.retainedProfit,
+        direction = saved.direction,
+        size = saved.size,
       )
     )
   }

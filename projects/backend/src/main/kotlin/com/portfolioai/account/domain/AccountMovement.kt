@@ -1,6 +1,7 @@
 package com.portfolioai.account.domain
 
 import com.portfolioai.auth.domain.User
+import com.portfolioai.shared.TradeDirection
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -54,6 +55,17 @@ class AccountMovement(
 
   /** Set only for TRADE movements (journal link). Null for manual movements. */
   @Column(name = "trade_entry_id") val tradeEntryId: UUID? = null,
+
+  /**
+   * Position direction and size of the linked trade, copied here when the journal publishes
+   * `TradeChangedEvent` — the account page labels a TRADE line "KTTA short 350" without reading the
+   * journal's tables. Structured rather than a formatted string : "short" is translated by the
+   * frontend. Null on manual movements, and on a trade with no execution recorded yet.
+   */
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(name = "trade_direction")
+  var tradeDirection: TradeDirection? = null,
+  @Column(name = "trade_size") var tradeSize: Int? = null,
 
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)
