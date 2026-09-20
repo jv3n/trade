@@ -6,7 +6,8 @@
     "@angular/common": "^21.2.0",
     "@angular/core": "^21.2.0",
     "@angular/material": "^21.2.0",
-    "@angular/cdk": "^21.2.0"
+    "@angular/cdk": "^21.2.0",
+    "echarts": "^6.1.0"
   },
   "sideEffects": false
 }
