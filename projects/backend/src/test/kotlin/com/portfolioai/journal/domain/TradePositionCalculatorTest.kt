@@ -155,21 +155,4 @@ class TradePositionCalculatorTest {
     val legs = listOf(entry(100, "5").at(10, 30), exit(100, "4").at(9, 45))
     assertNull(TradePositionCalculator.duration(legs))
   }
-
-  @Test
-  fun `infers SHORT when the exit is at or below the entry, BUY otherwise`() {
-    assertEquals(
-      TradeDirection.SHORT,
-      TradePositionCalculator.inferDirection(BigDecimal("5"), BigDecimal("4")),
-    )
-    assertEquals(
-      TradeDirection.BUY,
-      TradePositionCalculator.inferDirection(BigDecimal("4"), BigDecimal("5")),
-    )
-    // Open position (no exit) falls back to SHORT — the journal's bread and butter.
-    assertEquals(
-      TradeDirection.SHORT,
-      TradePositionCalculator.inferDirection(BigDecimal("4"), null),
-    )
-  }
 }

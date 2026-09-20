@@ -77,7 +77,6 @@ describe('JournalPage', () => {
             update: () => of({} as unknown),
             delete: () => deleteSubject.asObservable(),
             exportCsv: () => of(new Blob()),
-            importCsv: () => of({ parsed: 0, created: 0, errors: [] }),
           } as unknown as JournalRepository,
         },
         {

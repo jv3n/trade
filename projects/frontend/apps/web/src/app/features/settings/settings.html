@@ -63,15 +63,15 @@
         </a>
         <a
           mat-list-item
-          routerLink="/settings/stats-export"
+          routerLink="/settings/data"
           routerLinkActive="sidenav-active"
           [routerLinkActiveOptions]="{ exact: false }"
-          [matTooltip]="'settings.statsExport' | translate"
+          [matTooltip]="'settings.data' | translate"
           [matTooltipDisabled]="!sidenavCollapse.collapsed()"
           matTooltipPosition="right"
         >
-          <mat-icon matListItemIcon>query_stats</mat-icon>
-          <span matListItemTitle>{{ 'settings.statsExport' | translate }}</span>
+          <mat-icon matListItemIcon>import_export</mat-icon>
+          <span matListItemTitle>{{ 'settings.data' | translate }}</span>
         </a>
         <a
           mat-list-item

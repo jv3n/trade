@@ -34,15 +34,11 @@ export abstract class JournalRepository {
    */
   abstract update(id: string, input: TradeEntryInput): Observable<TradeEntry>;
   abstract delete(id: string): Observable<void>;
-  /** Downloads every trade as a CSV blob (UTF-8 with BOM, RFC 4180). */
-  abstract exportCsv(): Observable<Blob>;
   /**
-   * Imports a CSV file produced by [exportCsv] (or hand-edited from a previous export).
-   * Atomic batch — partial success is impossible : either the whole file is persisted
-   * (`created == parsed`, `errors` empty) or no row is (`created == 0`, per-row diagnostics
-   * in `errors`).
+   * Downloads every trade as a CSV blob (UTF-8 with BOM, RFC 4180). Export only (#196) : there is
+   * no import leg — a trade is born from a stat and its executions are typed on its page.
    */
-  abstract importCsv(file: File): Observable<ImportResult>;
+  abstract exportCsv(): Observable<Blob>;
 
   /**
    * Attaches (or replaces) the trade's single screenshot. Returns the refreshed trade so the caller
@@ -73,17 +69,4 @@ export interface PagedResult<T> {
   pageSize: number;
   totalElements: number;
   totalPages: number;
-}
-
-/** Outcome of [JournalRepository.importCsv]. Aligned 1:1 with the backend DTO. */
-export interface ImportResult {
-  parsed: number;
-  created: number;
-  errors: ImportError[];
-}
-
-/** Per-row diagnostic emitted by the CSV decoder. */
-export interface ImportError {
-  line: number;
-  message: string;
 }

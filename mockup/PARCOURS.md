@@ -166,7 +166,7 @@ La page d'accueil suit la journée type : chaque étape avec son état (**faite*
 - La stat est « à compléter » tant que les cinq prix de séance ne sont pas tous saisis ; les flags valent non par défaut.
 - Aucun pourcentage n'est stocké : tout se recalcule à partir des prix.
 - Les KPI du haut (complétées, push à l'open moyen, LOD moyen, fade) portent sur **tout le filtre**, pas sur la page affichée.
-- Pas d'import CSV pour les stats : une stat naît d'un candidat. Il reste un **export** CSV (bloc premarket, bloc séance, flags), avec les prix de séance vides pour une stat à compléter.
+- Pas d'import CSV : ni pour les stats (une stat naît d'un candidat), ni pour le journal (un trade naît d'une stat). Il reste un **export** CSV pour les deux — bloc premarket, bloc séance et flags côté stats (prix de séance vides pour une stat à compléter) ; identité, position, exécutions et les trois P&L côté journal.
 - Filtre « tradées / non tradées » : reporté avec le lien vers le trade (#193).
 
 **Écran** : [`stats.html`](stats.html) — encart « Compléter la séance » pour les stats en attente (aperçu des % en direct), tableau avec les données premarket (reprises du candidat) et de séance, flags, bouton « → Trade » ou lien vers le trade existant.
@@ -195,7 +195,7 @@ Accessible depuis le bas du menu (sous Lexique). Un menu secondaire à gauche, q
 |---------|----------|---------|
 | Préférences | Tout le monde | Profil + déconnexion, **thème** (système / clair / sombre), langue (FR / EN), devise d'affichage du solde (USD / CAD) |
 | Accès | Admin | Emails autorisés à se connecter (liste modifiable) ; administrateurs (lecture seule, définis au déploiement) |
-| Données | Admin | Export / import CSV du journal, export CSV des stats |
+| Données | Admin | Export CSV du journal et des stats (**export uniquement**, pas d'import) |
 | Lexique | Admin | Tableau des termes (terme, définition FR, définition EN) : ajouter, modifier, supprimer (avec confirmation) |
 | Liens ops | Admin | Consoles et tableaux de bord (facturation, production, base, supervision, GitHub) |
 
