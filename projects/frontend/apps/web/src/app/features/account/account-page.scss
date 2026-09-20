@@ -190,14 +190,10 @@
     background: var(--color-surface-2);
     color: var(--color-text-muted);
 
-    &[data-type='DEPOSIT'] {
-      color: var(--color-success);
-    }
-
-    &[data-type='WITHDRAWAL'] {
-      color: var(--color-danger);
-    }
-
+    // Colour rule (#203) : the movement **type** is a category, not an outcome — indigo for the
+    // trade, amber for a correction, neutral for the manual cash in / out. Green and red belong to
+    // the amount next to it, which is the figure that actually went up or down. Deposits and
+    // withdrawals used to be green / red here, which read as "good money / bad money".
     &[data-type='TRADE'] {
       color: var(--color-accent);
     }

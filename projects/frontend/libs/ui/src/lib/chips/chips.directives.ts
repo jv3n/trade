@@ -6,13 +6,11 @@ import { Directive, computed, input } from '@angular/core';
  * class on the host ; the actual styling lives in `chips.scss` and works by overriding
  * the chip's `--mat-chip-*` CSS variables on the host element.
  *
- *  - `ticker` → label rendered in the success-green palette, matching the trading-domain
- *    convention used for ticker symbols (BAC, AAPL, NVDA…). Selected ticker chips swap to
- *    the success-soft container.
- *  - `linked` → info-blue status chip — the row is attached to something (e.g. a journal trade
- *    linked to an imported stat row).
- *  - `orphan` → warning-amber status chip — the row stands alone with no link yet (e.g. a
- *    journal trade with no stat attached).
+ *  - `ticker` → **neutral** monospace label on a raised grey surface, for ticker symbols (BAC,
+ *    AAPL, NVDA…). Deliberately colourless : green and red are reserved for outcomes, and a green
+ *    ticker would read as "this one made money" (colour rule, #203).
+ *  - `linked` → info-blue status chip — the row is attached to something.
+ *  - `orphan` → warning-amber status chip — the row stands alone with no link yet.
  */
 export type StbChipVariant = 'ticker' | 'linked' | 'orphan';
 
