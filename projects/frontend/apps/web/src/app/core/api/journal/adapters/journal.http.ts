@@ -6,6 +6,7 @@ import { Pattern } from '../../shared/pattern.model';
 import { ImportResult, JournalRepository, PageRequest, PagedResult } from '../journal.repository';
 import {
   ExecutionKind,
+  JournalSummary,
   TradeDirection,
   TradeEntry,
   TradeEntryFilter,
@@ -55,6 +56,7 @@ export interface TradeEntryWireDto {
   profitDollars: number | null;
   realProfitDollars: number | null;
   retainedProfitDollars: number | null;
+  retainedGainPercent: number | null;
   durationMinutes: number | null;
   note: string | null;
   errorNote: string | null;
@@ -114,6 +116,7 @@ export function tradeEntryFromWire(w: TradeEntryWireDto): TradeEntry {
     profitDollars: w.profitDollars,
     realProfitDollars: w.realProfitDollars,
     retainedProfitDollars: w.retainedProfitDollars,
+    retainedGainPercent: w.retainedGainPercent,
     durationMinutes: w.durationMinutes,
     note: w.note,
     errorNote: w.errorNote,
@@ -223,6 +226,13 @@ export class HttpJournalRepository extends JournalRepository {
 
   findById(id: string): Observable<TradeEntry> {
     return this.http.get<TradeEntryWireDto>(`${this.base}/${id}`).pipe(map(tradeEntryFromWire));
+  }
+
+  // The summary carries no date / decimal quirk — the wire shape is the domain shape.
+  summary(filter?: TradeEntryFilter): Observable<JournalSummary> {
+    return this.http.get<JournalSummary>(`${this.base}/summary`, {
+      params: buildFilterParams(filter),
+    });
   }
 
   // No create : a trade is born from a stat, through `StatsRepository.promoteToTrade` (#193).

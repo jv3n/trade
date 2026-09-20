@@ -2,6 +2,7 @@ package com.portfolioai.journal.infrastructure.http
 
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.ImportResult
+import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.TradeEntryFilter
@@ -77,6 +78,33 @@ class TradeEntryController(private val service: TradeEntryService) {
         status = status,
       ),
       pageable,
+    )
+
+  /**
+   * KPIs of the journal page over the **same filter** as the listing (#195) — realized P&L, win
+   * rate, average win / loss, profit factor. No pagination : the figures cover the whole filtered
+   * set, not the visible page.
+   */
+  @GetMapping("/summary")
+  fun summary(
+    @RequestParam(required = false) q: String? = null,
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateFrom: LocalDate? = null,
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateTo: LocalDate? = null,
+    @RequestParam(required = false) pattern: List<Pattern>? = null,
+    @RequestParam(required = false) status: TradeStatus? = null,
+  ): JournalSummaryDto =
+    service.summarise(
+      TradeEntryFilter(
+        query = q,
+        dateFrom = dateFrom,
+        dateTo = dateTo,
+        patterns = pattern,
+        status = status,
+      )
     )
 
   @GetMapping("/{id}") fun findById(@PathVariable id: UUID): TradeEntryDto = service.findById(id)

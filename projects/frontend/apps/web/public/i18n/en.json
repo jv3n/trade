@@ -189,20 +189,24 @@
   "journal": {
     "title": "Trading journal",
     "subtitle": "Log every trade with its setup, execution and review.",
-    "addTrade": "Add trade",
+    "kpi": {
+      "pnl": "P&L over the period",
+      "trades": "{{count}} trades",
+      "winRate": "Win rate",
+      "winLossCount": "{{wins}} winners · {{losses}} losers",
+      "averages": "Average win / average loss",
+      "profitFactor": "Profit factor {{value}}",
+      "tradedStats": "Traded stats",
+      "untraded": "{{count}} untraded stats",
+      "allTraded": "Every stat of the period was traded"
+    },
     "searchPlaceholder": "Search ticker…",
     "clearSearch": "Clear search",
-    "filters": "Filters",
-    "toggleFilters": "Show / hide filters",
     "filterPanel": {
       "period": "Period",
       "dateFrom": "From",
       "dateTo": "To",
-      "pattern": "Pattern",
-      "status": "Status",
       "statusAll": "Any status",
-      "apply": "Apply",
-      "reset": "Reset",
       "periodPresets": {
         "all": "All time",
         "custom": "Custom range",
@@ -212,10 +216,11 @@
         "lastQuarter": "Last quarter",
         "thisYear": "This year",
         "lastYear": "Last year"
-      }
+      },
+      "allPatterns": "All patterns"
     },
     "loading": "Loading journal…",
-    "empty": "No trades yet. Click « Add trade » to log your first one.",
+    "empty": "No trade over this period. A trade is born from a stat, on the stats sheet.",
     "confirmDelete": {
       "title": "Delete the {{ticker}} trade?",
       "message": "Permanent: executions, post-mortem and chart capture are deleted, and the trade's movement disappears from the account. The stat of the day is kept.",
@@ -236,7 +241,7 @@
       "exitPrice": "Avg exit price",
       "profitDollars": "Computed profit ($)",
       "realProfitDollars": "Real profit ($)",
-      "retainedProfitDollars": "Retained profit ($)",
+      "retainedProfitDollars": "Retained P&L ($)",
       "gainPercent": "Gain (%)",
       "durationMinutes": "Duration",
       "executionKind": "Type",
@@ -244,15 +249,7 @@
       "shares": "Shares",
       "price": "Price",
       "note": "Notes",
-      "errorNote": "Mistake / lesson",
-      "statLink": "Stat"
-    },
-    "statLink": {
-      "linked": "Linked",
-      "orphan": "Orphan",
-      "field": "Linked stat",
-      "none": "— None (orphan)",
-      "noCandidates": "No stat for this ticker on this date."
+      "errorNote": "Mistake / lesson"
     },
     "enums": {
       "status": {

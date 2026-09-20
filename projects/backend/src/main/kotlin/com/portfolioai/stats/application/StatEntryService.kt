@@ -80,6 +80,9 @@ class StatEntryService(
     val userId = authService.getCurrentUser().id
     val rows = repo.findAll(StatEntrySpecifications.matching(userId, filter))
     val completed = rows.filter { it.isCompleted }
+    // « 8 stats tradées sur 10 » of the journal KPIs (#195) : one query for the whole filtered set,
+    // the same read the listing already uses row by row.
+    val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
     return StatSummaryDto(
       completed = completed.size,
       toComplete = rows.size - completed.size,
@@ -88,6 +91,8 @@ class StatEntryService(
       averageLodPercent =
         completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
       fadeCount = completed.count { it.eodPrice!! < it.openPrice!! },
+      traded = traded,
+      untraded = rows.size - traded,
       averageEodPercent =
         completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
     )

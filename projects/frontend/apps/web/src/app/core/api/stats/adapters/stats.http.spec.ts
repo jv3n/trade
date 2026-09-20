@@ -111,6 +111,8 @@ describe('HttpStatsRepository', () => {
       averageLodPercent: -12.3,
       fadeCount: 2,
       averageEodPercent: -3.7,
+      traded: 2,
+      untraded: 2,
     });
   });
 

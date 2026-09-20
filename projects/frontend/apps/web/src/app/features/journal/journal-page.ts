@@ -1,9 +1,8 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { PageEvent } from '@angular/material/paginator';
-import { MatSidenav } from '@angular/material/sidenav';
 import { Sort } from '@angular/material/sort';
 import { Router, RouterLink } from '@angular/router';
 
@@ -24,27 +23,28 @@ import {
 
 import {
   StbButtonModule,
+  StbButtonToggleModule,
   StbChipsModule,
-  StbDividerModule,
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
   StbPaginatorModule,
   StbProgressSpinnerModule,
   StbSelectModule,
-  StbSidenavModule,
   StbSortHeaderModule,
   StbTableModule,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
 import {
-  TRADE_STATUSES,
+  JournalSummary,
   TradeEntry,
   TradeEntryFilter,
   TradeStatus,
 } from '../../core/api/journal/trade-entry.model';
 import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
+import { StatSummary } from '../../core/api/stats/stat-entry.model';
+import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import {
   PERIOD_PRESETS,
@@ -65,21 +65,31 @@ interface SortRequest {
   isAscending: boolean;
 }
 
+/**
+ * The three filter axes of the toolbar (#195) : a period, one pattern at a time, and the outcome.
+ * They apply as soon as they are clicked — there is no « Apply » step anymore, the toolbar *is*
+ * the filter. `custom` reveals the two date pickers ; every other preset fills the range itself.
+ */
 interface FilterFormModel {
   period: PeriodPresetKey;
   dateFrom: Date | null;
   dateTo: Date | null;
-  patterns: Pattern[];
+  pattern: Pattern | null;
+  /** Outcome segment — only PROFITABLE / LOSING are reachable from the toolbar. */
   status: TradeStatus | null;
 }
 
-const EMPTY_FILTER: FilterFormModel = {
-  period: 'all',
-  dateFrom: null,
-  dateTo: null,
-  patterns: [],
-  status: null,
-};
+/** The journal opens on the running month, the way the KPI row reads it ("P&L September"). */
+function defaultFilter(): FilterFormModel {
+  const range = computePeriodRange('thisMonth');
+  return {
+    period: 'thisMonth',
+    dateFrom: range.dateFrom,
+    dateTo: range.dateTo,
+    pattern: null,
+    status: null,
+  };
+}
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -89,9 +99,12 @@ const DEFAULT_PAGE_SIZE = 10;
  *   - **Server-side sort** : MatSort emits `(active, direction)` → forwarded as Spring's
  *     `?sort=field,direction`. Sorting a column always queries page 0 so we don't strand the
  *     user on a page index that doesn't exist for the new sort.
- *   - **Filters** : right-side `<mat-sidenav>` with period presets (this month / last quarter
- *     / etc.), explicit date range, pattern multi-select, status (open / closed /
- *     profitable / losing). Filter changes refetch from the backend.
+ *   - **KPIs** (#195) : realized P&L over the filtered period, win rate, average win / loss with
+ *     the profit factor, and how many stats of that period were traded — all computed on the
+ *     **whole filtered set**, not the visible page. The first three come from
+ *     `GET /api/journal/trades/summary`, the last one from the stats sheet's own summary.
+ *   - **Filters** : an inline toolbar — period preset (+ an explicit range on « custom »),
+ *     pattern, and outcome (all / winners / losers). They apply on click and refetch.
  *   - **Pagination** : `<mat-paginator>` below the table. Default 10 rows per page. Filter /
  *     search / sort changes reset the index to 0.
  *   - **Open / delete** : a row opens the trade page, where everything is edited in place (#194) ;
@@ -110,16 +123,15 @@ const DEFAULT_PAGE_SIZE = 10;
     DecimalPipe,
     RouterLink,
     StbButtonModule,
+    StbButtonToggleModule,
     StbChipsModule,
     StbDatePickerModule,
-    StbDividerModule,
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
     StbPaginatorModule,
     StbProgressSpinnerModule,
     StbSelectModule,
-    StbSidenavModule,
     StbSortHeaderModule,
     StbTableModule,
     StbTooltipModule,
@@ -130,6 +142,7 @@ const DEFAULT_PAGE_SIZE = 10;
 })
 export class JournalPage {
   private readonly repo = inject(JournalRepository);
+  private readonly statsRepo = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly snackBar = inject(MatSnackBar);
@@ -161,19 +174,16 @@ export class JournalPage {
   );
   readonly searchValue = signal('');
 
-  // ---- Filter drawer ----
-  readonly drawer = viewChild.required<MatSidenav>('filterDrawer');
-  /** Working copy edited inside the drawer — not applied until the user clicks « Apply ». */
-  readonly filterModel = signal<FilterFormModel>(EMPTY_FILTER);
-  /** Applied filter — what actually drives the backend query. */
-  readonly appliedFilter = signal<FilterFormModel>(EMPTY_FILTER);
-  readonly activeFilterCount = computed(() => {
-    const f = this.appliedFilter();
-    let n = 0;
-    if (f.dateFrom || f.dateTo) n += 1;
-    if (f.patterns.length > 0) n += 1;
-    if (f.status) n += 1;
-    return n;
+  // ---- Filters (applied on click — the toolbar is the filter) ----
+  readonly appliedFilter = signal<FilterFormModel>(defaultFilter());
+
+  // ---- KPIs over the filtered set ----
+  readonly summary = signal<JournalSummary | null>(null);
+  /** « 8 / 10 stats traded » — the stats sheet's own count over the same period. */
+  readonly statSummary = signal<StatSummary | null>(null);
+  readonly statCount = computed(() => {
+    const s = this.statSummary();
+    return s === null ? null : s.traded + s.untraded;
   });
 
   // ---- Sort (server-side, controlled-component pattern à la ic3) ----
@@ -187,7 +197,6 @@ export class JournalPage {
   // ---- Constants for the template ----
   readonly periods = PERIOD_PRESETS;
   readonly patterns = PATTERNS;
-  readonly statuses = TRADE_STATUSES;
 
   readonly columns = [
     'tradeDate',
@@ -196,9 +205,8 @@ export class JournalPage {
     'size',
     'openPrice',
     'exitPrice',
-    'profitDollars',
-    'gainPercent',
-    'link',
+    'retainedProfitDollars',
+    'retainedGainPercent',
     'actions',
   ] as const;
 
@@ -210,21 +218,20 @@ export class JournalPage {
       const pageIndex = this.pageIndex();
       const pageSize = this.pageSize();
       this.refetchTrigger(); // read so the effect re-fires when the CRUD path bumps it
-      this.fetch(
-        {
-          query: q || null,
-          dateFrom: f.dateFrom,
-          dateTo: f.dateTo,
-          patterns: f.patterns.length > 0 ? f.patterns : null,
-          status: f.status,
-        },
-        {
-          pageIndex,
-          pageSize,
-          sortField: sort.columnName || undefined,
-          sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
-        },
-      );
+      const criteria: TradeEntryFilter = {
+        query: q || null,
+        dateFrom: f.dateFrom,
+        dateTo: f.dateTo,
+        patterns: f.pattern ? [f.pattern] : null,
+        status: f.status,
+      };
+      this.fetchSummaries(criteria);
+      this.fetch(criteria, {
+        pageIndex,
+        pageSize,
+        sortField: sort.columnName || undefined,
+        sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
+      });
     });
   }
 
@@ -241,55 +248,39 @@ export class JournalPage {
     this.pageIndex.set(0);
   }
 
-  // ---- Drawer + filter handlers ----
-  toggleDrawer(): void {
-    void this.drawer().toggle();
-  }
-
-  applyFilters(): void {
-    this.appliedFilter.set({ ...this.filterModel() });
-    this.pageIndex.set(0);
-    void this.drawer().close();
-  }
-
-  resetFilters(): void {
-    this.filterModel.set({ ...EMPTY_FILTER });
-    this.appliedFilter.set({ ...EMPTY_FILTER });
-    this.pageIndex.set(0);
-  }
+  // ---- Filter handlers — every one of them applies straight away and rewinds to page 0 ----
 
   /** Picking a preset populates dateFrom / dateTo via `date-fns` helpers. */
   onPeriodChange(key: PeriodPresetKey): void {
     if (key === 'custom') {
-      this.filterModel.update((m) => ({ ...m, period: 'custom' }));
+      // Keep the current range as the starting point of the custom one — the user narrows it
+      // from what they were already looking at rather than from nothing.
+      this.patchFilter({ period: 'custom' });
       return;
     }
     const range = computePeriodRange(key);
-    this.filterModel.update((m) => ({
-      ...m,
-      period: key,
-      dateFrom: range.dateFrom,
-      dateTo: range.dateTo,
-    }));
+    this.patchFilter({ period: key, dateFrom: range.dateFrom, dateTo: range.dateTo });
   }
 
-  togglePattern(p: Pattern, checked: boolean): void {
-    this.filterModel.update((m) => ({
-      ...m,
-      patterns: checked ? [...m.patterns, p] : m.patterns.filter((x) => x !== p),
-    }));
+  setPattern(p: Pattern | null): void {
+    this.patchFilter({ pattern: p });
   }
 
   setStatus(s: TradeStatus | null): void {
-    this.filterModel.update((m) => ({ ...m, status: s }));
+    this.patchFilter({ status: s });
   }
 
   setDateFrom(d: Date | null): void {
-    this.filterModel.update((m) => ({ ...m, period: 'custom', dateFrom: d }));
+    this.patchFilter({ period: 'custom', dateFrom: d });
   }
 
   setDateTo(d: Date | null): void {
-    this.filterModel.update((m) => ({ ...m, period: 'custom', dateTo: d }));
+    this.patchFilter({ period: 'custom', dateTo: d });
+  }
+
+  private patchFilter(change: Partial<FilterFormModel>): void {
+    this.appliedFilter.update((f) => ({ ...f, ...change }));
+    this.pageIndex.set(0);
   }
 
   // ---- Sort handler ----
@@ -363,6 +354,23 @@ export class JournalPage {
    */
   private refetch(): void {
     this.refetchTrigger.update((n) => n + 1);
+  }
+
+  /**
+   * KPI row — two independent calls, each over the same filtered set as the listing. A failing
+   * summary leaves its cards empty rather than taking the page down : the table is what the user
+   * came for. The stats count only cares about the period (a pattern or an outcome filter would
+   * make « traded / all » compare two different sets).
+   */
+  private fetchSummaries(criteria: TradeEntryFilter): void {
+    this.repo.summary(criteria).subscribe({
+      next: (s) => this.summary.set(s),
+      error: () => this.summary.set(null),
+    });
+    this.statsRepo.summary({ dateFrom: criteria.dateFrom, dateTo: criteria.dateTo }).subscribe({
+      next: (s) => this.statSummary.set(s),
+      error: () => this.statSummary.set(null),
+    });
   }
 
   private fetch(filter: TradeEntryFilter, page: PageRequest): void {

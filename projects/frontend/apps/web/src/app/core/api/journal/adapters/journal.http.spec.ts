@@ -314,6 +314,30 @@ describe('HttpJournalRepository', () => {
     });
     http.expectOne('/api/journal/trades/abc-123').flush(wireFixture({ id: 'abc-123' }));
   });
+
+  it('summary hits /summary with the very same filter params as the listing (#195)', () => {
+    repo
+      .summary({ dateFrom: new Date(2026, 8, 1), dateTo: new Date(2026, 8, 30), status: 'LOSING' })
+      .subscribe((s) => expect(s.profitFactor).toBe(3.52));
+
+    const req = http.expectOne((r) => r.url === '/api/journal/trades/summary');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('dateFrom')).toBe('2026-09-01');
+    expect(req.request.params.get('dateTo')).toBe('2026-09-30');
+    expect(req.request.params.get('status')).toBe('LOSING');
+    // No page / size : the KPIs cover the whole filtered set.
+    expect(req.request.params.get('page')).toBeNull();
+    req.flush({
+      tradeCount: 8,
+      retainedPnl: 751.85,
+      winCount: 6,
+      lossCount: 2,
+      winRatePercent: 75,
+      averageWin: 175,
+      averageLoss: -149,
+      profitFactor: 3.52,
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -336,6 +360,7 @@ function wireFixture(overrides: Partial<Record<string, unknown>> = {}) {
     profitDollars: null,
     realProfitDollars: null,
     retainedProfitDollars: null,
+    retainedGainPercent: null,
     durationMinutes: null,
     note: null,
     errorNote: null,

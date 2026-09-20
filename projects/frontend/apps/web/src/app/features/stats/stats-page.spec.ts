@@ -90,6 +90,8 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     averageLodPercent: -12.3,
     fadeCount: 7,
     averageEodPercent: -3.7,
+    traded: 8,
+    untraded: 2,
     ...overrides,
   };
 }
