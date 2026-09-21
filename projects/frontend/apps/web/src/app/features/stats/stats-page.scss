@@ -4,6 +4,9 @@
 // ---- KPIs ----
 
 // Amber = warning (stats still to complete), per the colour rule.
+
+@use 'sizes' as s;
+
 .warn {
   color: var(--color-warning);
 }
@@ -17,7 +20,7 @@
 .complete-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: s.$space-sm;
   flex-wrap: wrap;
 }
 
@@ -29,12 +32,12 @@
 .recap {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
-  margin-bottom: 14px;
-  padding: 10px 12px;
+  gap: s.$space-sm s.$space-lg;
+  margin-bottom: s.$space-lg;
+  padding: s.$space-md s.$space-md;
   border-radius: var(--radius);
   background: var(--color-surface-2);
-  font-size: 12px;
+  font-size: s.$font-xs;
   color: var(--color-text-muted);
 
   b {
@@ -46,7 +49,7 @@
 .session-form {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: s.$space-md;
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -57,8 +60,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 14px;
+  gap: s.$space-lg;
+  margin-top: s.$space-lg;
 
   &__spacer {
     flex: 1 1 auto;
@@ -81,11 +84,11 @@
 // Pattern = category → indigo tag (colour rule).
 .pattern-tag {
   display: inline-block;
-  padding: 2px 7px;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-sm);
   background: var(--color-accent-soft);
   color: var(--color-accent);
-  font-size: 11px;
+  font-size: s.$font-2xs;
   font-weight: 550;
   white-space: nowrap;
 }
@@ -93,16 +96,16 @@
 // Flags are alerts → amber.
 .flags {
   display: inline-flex;
-  gap: 4px;
+  gap: s.$space-xs;
   flex-wrap: wrap;
 }
 
 .flag-tag {
-  padding: 2px 6px;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-sm);
   background: var(--color-warning-soft);
   color: var(--color-warning);
-  font-size: 11px;
+  font-size: s.$font-2xs;
   font-weight: 550;
   white-space: nowrap;
 }
@@ -147,7 +150,7 @@ tr.editing td {
 
 .saved-cue,
 .progress {
-  font-size: 12px;
+  font-size: s.$font-xs;
   color: var(--color-text-muted);
 }
 

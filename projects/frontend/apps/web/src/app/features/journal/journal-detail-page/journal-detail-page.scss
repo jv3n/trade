@@ -1,9 +1,13 @@
 // Trade page — layout after `mockup/trade.html` : header, KPI row, then two columns (executions +
 // P&L on the left, day context on the right), post-mortem, screenshot and the floating save bar.
 
+@use 'sizes' as s;
+
+// Room for the floating save bar so it never covers the last card.
+$save-bar-room: 72px;
+
 .trade-page {
-  // Room for the floating save bar so it never covers the last card.
-  padding-bottom: 72px;
+  padding-bottom: $save-bar-room;
 }
 
 .back-link {
@@ -16,27 +20,27 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: s.$space-lg;
   flex-wrap: wrap;
 }
 
 .header-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: s.$space-sm;
 }
 
 .title-block {
   h2 {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: s.$space-sm;
     flex-wrap: wrap;
     margin: 0;
   }
 
   .direction,
   .trade-date {
-    font-size: 1rem;
+    font-size: s.$font-lg;
     font-weight: 600;
     color: var(--color-text);
   }
@@ -44,10 +48,10 @@
   .subtitle {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: s.$space-sm;
     flex-wrap: wrap;
-    margin: 6px 0 0;
-    font-size: 12px;
+    margin: s.$space-sm 0 0;
+    font-size: s.$font-xs;
     color: var(--color-text-muted);
   }
 }
@@ -55,9 +59,9 @@
 // Indigo = status / category, per the colour rule — never green / red for a pattern.
 .tag,
 .status {
-  padding: 2px 8px;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: s.$font-2xs;
   font-weight: 600;
   background: var(--color-surface-2);
   color: var(--color-text-muted);
@@ -88,7 +92,7 @@
 .trade-columns {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 16px;
+  gap: s.$space-lg;
   align-items: start;
 
   @media (max-width: 1100px) {
@@ -99,7 +103,7 @@
 .head-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: s.$space-sm;
 }
 
 .direction-field {
@@ -112,9 +116,9 @@
 .execution-row {
   display: grid;
   grid-template-columns: 7.5rem 9rem 1fr 1fr 6.5rem auto;
-  gap: 0.5rem;
+  gap: s.$space-sm;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: s.$space-sm;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr 1fr;
@@ -122,7 +126,7 @@
 }
 
 .exec-amount {
-  font-size: 13px;
+  font-size: s.$font-sm;
   font-weight: 600;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -132,11 +136,11 @@
 .exec-footer {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  margin: 10px 0 0;
-  padding-top: 10px;
+  gap: s.$space-sm;
+  margin: s.$space-md 0 0;
+  padding-top: s.$space-md;
   border-top: 1px solid var(--color-border);
-  font-size: 13px;
+  font-size: s.$font-sm;
   color: var(--color-text-muted);
 
   &__pnl {
@@ -146,21 +150,21 @@
 }
 
 .invalid {
-  margin: 0 0 0.75rem;
-  font-size: 0.85rem;
+  margin: 0 0 s.$space-md;
+  font-size: s.$font-md;
   color: var(--color-danger);
 }
 
 // ---- P&L block ----
 
 .pnl-title {
-  margin-top: 22px;
+  margin-top: s.$space-xl;
 }
 
 .pnl-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: s.$space-md;
   align-items: center;
 
   @media (max-width: 700px) {
@@ -171,22 +175,22 @@
 .pnl-figure {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: s.$space-xs;
 
   &__label {
-    font-size: 12px;
+    font-size: s.$font-xs;
     color: var(--color-text-muted);
   }
 
   &__value {
-    font-size: 18px;
+    font-size: s.$font-xl;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 }
 
 .pnl-note {
-  margin: 8px 0 0;
+  margin: s.$space-sm 0 0;
 }
 
 // ---- Day context ----
@@ -194,17 +198,17 @@
 .kv {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 8px 16px;
+  gap: s.$space-sm s.$space-lg;
   margin: 0;
 
   dt {
-    font-size: 12px;
+    font-size: s.$font-xs;
     color: var(--color-text-muted);
   }
 
   dd {
     margin: 0;
-    font-size: 13px;
+    font-size: s.$font-sm;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--color-text);
@@ -216,7 +220,7 @@
 .post-mortem {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: s.$space-md;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -236,13 +240,13 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: s.$space-md;
+  padding: s.$space-md s.$space-lg;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow);
-  font-size: 13px;
+  font-size: s.$font-sm;
   color: var(--color-text-muted);
 }
 
@@ -251,7 +255,7 @@
 .screenshot-view {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: s.$space-md;
   align-items: flex-start;
 }
 
@@ -279,7 +283,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: s.$space-2xl;
   border: none;
   background: rgba(0, 0, 0, 0.85);
   cursor: zoom-out;
@@ -309,7 +313,7 @@
 
 .screenshot-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: s.$space-sm;
 }
 
 .screenshot-drop {
@@ -317,8 +321,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem;
+  gap: s.$space-sm;
+  padding: s.$space-2xl;
   border: 2px dashed var(--color-border);
   border-radius: 0.5rem;
   color: var(--color-text-muted);
@@ -333,6 +337,6 @@
 
   p {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: s.$font-md;
   }
 }

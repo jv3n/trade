@@ -8,7 +8,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: s.$space-lg;
   flex-wrap: wrap;
 
   h2 {
@@ -16,14 +16,14 @@
   }
 
   .description {
-    margin: 0.25rem 0 0;
+    margin: s.$space-xs 0 0;
     color: var(--color-text-muted);
     max-width: 60ch;
   }
 
   .header-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: s.$space-sm;
     flex-shrink: 0;
   }
 }
@@ -39,12 +39,12 @@
 .reconciliation-card,
 .chart-card,
 .movements-card {
-  padding: 18px 20px;
+  padding: s.$card-padding-y s.$card-padding-x;
 }
 
 .chart-empty {
   margin: 0;
-  padding: 1.5rem 0;
+  padding: s.$space-xl 0;
   text-align: center;
   color: var(--color-text-faint);
 }
@@ -61,11 +61,11 @@
 // column is allowed to go green or red.
 .type-tag {
   display: inline-block;
-  padding: 2px 8px;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-sm);
   background: var(--color-surface-2);
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: s.$font-xs;
   white-space: nowrap;
 
   &--trade {
@@ -80,7 +80,7 @@
 }
 
 .muted {
-  margin-left: 0.35rem;
+  margin-left: s.$space-xs;
   color: var(--color-text-muted);
 }
 

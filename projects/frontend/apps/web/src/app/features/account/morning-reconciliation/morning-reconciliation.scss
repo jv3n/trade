@@ -1,5 +1,7 @@
 // The morning block, hosted by the account page (full) and by step 1 of the Today page (compact).
 
+@use 'sizes' as s;
+
 :host {
   display: block;
 }
@@ -8,7 +10,7 @@
 .reconciliation-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  gap: 0.75rem;
+  gap: s.$space-md;
   align-items: center;
 
   @media (max-width: 900px) {
@@ -19,15 +21,15 @@
 .figure {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: s.$space-xs;
 
   &__label {
-    font-size: 12px;
+    font-size: s.$font-xs;
     color: var(--color-text-muted);
   }
 
   &__value {
-    font-size: 1.1rem;
+    font-size: s.$font-xl;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
@@ -37,15 +39,15 @@
 .reconciled {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  margin: 0 0 0.75rem;
-  font-size: 0.85rem;
+  gap: s.$space-sm;
+  margin: 0 0 s.$space-md;
+  font-size: s.$font-md;
   color: var(--color-text-muted);
 
   mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+    font-size: s.$icon-md;
+    width: s.$icon-md;
+    height: s.$icon-md;
   }
 
   &.clean mat-icon {
@@ -54,14 +56,14 @@
 }
 
 .note {
-  margin: 0.6rem 0 0;
+  margin: s.$space-sm 0 0;
 }
 
 .history {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0.5rem 0 0;
+  gap: s.$space-sm;
+  margin: s.$space-sm 0 0;
 
   &__item {
     font-variant-numeric: tabular-nums;

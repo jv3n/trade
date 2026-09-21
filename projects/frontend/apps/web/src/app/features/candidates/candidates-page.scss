@@ -1,9 +1,11 @@
 // Candidates page — layout after `mockup/candidat.html` : quick-entry card, then the day's list.
 
+@use 'sizes' as s;
+
 .day-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: s.$space-sm;
 
   .day-field {
     width: 11rem;
@@ -15,7 +17,7 @@
 .capture {
   display: grid;
   grid-template-columns: 1.4fr 1fr repeat(6, 1fr);
-  gap: 10px;
+  gap: s.$space-md;
   align-items: start;
 
   .field--note {
@@ -37,21 +39,21 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 18px;
+  gap: s.$space-lg;
 }
 
 .derived {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: s.$space-hairline;
 
   &__label {
-    font-size: 12px;
+    font-size: s.$font-xs;
     color: var(--color-text-muted);
   }
 
   &__value {
-    font-size: 16px;
+    font-size: s.$font-lg;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 
@@ -78,11 +80,11 @@
 // Pattern = category → indigo tag (colour rule).
 .pattern-tag {
   display: inline-block;
-  padding: 2px 7px;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-sm);
   background: var(--color-accent-soft);
   color: var(--color-accent);
-  font-size: 11px;
+  font-size: s.$font-2xs;
   font-weight: 550;
   white-space: nowrap;
 }
@@ -108,17 +110,17 @@ tr.editing td {
 .stats-tag {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px 7px;
+  gap: s.$space-hairline;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-sm);
   background: var(--color-accent-soft);
   color: var(--color-accent);
-  font-size: 11px;
+  font-size: s.$font-2xs;
   font-weight: 550;
   white-space: nowrap;
 
   &__icon {
-    font-size: 14px;
+    font-size: s.$font-md;
     width: 14px;
     height: 14px;
   }
