@@ -1,5 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe, formatNumber } from '@angular/common';
+import { Component, DestroyRef, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -14,7 +14,7 @@ import {
   StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
-import { EMPTY, catchError, filter, finalize, from, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, finalize, from, of, switchMap, tap } from 'rxjs';
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import {
   PositionAggregates,
@@ -155,6 +155,7 @@ export class JournalDetailPage {
   private readonly repo = inject(JournalRepository);
   private readonly statsRepo = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
+  private readonly locale = inject(LOCALE_ID);
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
   private readonly route = inject(ActivatedRoute);
@@ -211,6 +212,20 @@ export class JournalDetailPage {
     return entered - exited;
   });
 
+  /**
+   * The broker's P&L is read off a closed trade : on an open or partial position it would post an
+   * amount no exit backs (#304). The typed value stays in the draft, and comes back once it closes.
+   */
+  readonly realAllowed = computed(() => this.preview().status === 'CLOSED');
+
+  /**
+   * The broker P&L already saved on a trade now reopened — Save would erase it, so the field says
+   * so rather than hinting at an entry to come.
+   */
+  readonly realToBeErased = computed(() =>
+    this.realAllowed() ? null : (this.entry()?.realProfitDollars ?? null),
+  );
+
   /** Cost basis of the closed part — the denominator of every percentage on this page. */
   private readonly exitedNotional = computed(() => {
     const avgEntry = this.preview().avgEntry;
@@ -223,7 +238,7 @@ export class JournalDetailPage {
   /** The three figures of the P&L block, recomputed on every keystroke. */
   readonly pnl = computed<PnlBlock>(() => {
     const computedPnl = this.preview().profitDollars;
-    const real = this.draft()?.realProfitDollars ?? null;
+    const real = this.realAllowed() ? (this.draft()?.realProfitDollars ?? null) : null;
     const retained = real ?? computedPnl;
     const notional = this.exitedNotional();
     return {
@@ -416,15 +431,26 @@ export class JournalDetailPage {
       // No position yet ⇒ no direction, matching the nullable backend column.
       direction: executions.length > 0 ? draft.direction : null,
       executions,
-      realProfitDollars: draft.realProfitDollars,
+      realProfitDollars: this.realAllowed() ? draft.realProfitDollars : null,
       note: draft.note.trim() || null,
       errorNote: draft.errorNote.trim() || null,
     };
 
-    this.saving.set(true);
-    this.repo
-      .update(entry.id, input)
+    // The hint under the field may be off screen when Save is clicked : erasing a saved broker P&L
+    // is confirmed here, where the click happens.
+    const erased = this.realToBeErased();
+    const proceed$ =
+      erased === null
+        ? of(true)
+        : this.confirm.ask('journal.confirmEraseReal', {
+            params: { amount: formatNumber(erased, this.locale, '1.2-2') },
+            variant: 'danger',
+          });
+    proceed$
       .pipe(
+        filter(Boolean),
+        tap(() => this.saving.set(true)),
+        switchMap(() => this.repo.update(entry.id, input)),
         tap((saved) => {
           this.accept(saved);
           this.toasts.success(

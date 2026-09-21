@@ -141,6 +141,28 @@ class AccountTradeSyncIntegrationTest {
   }
 
   @Test
+  fun `reopening a trade that carried a broker P&L drops its movement and its balance`() {
+    // What the trade page sends once an exit is removed : the entry alone, the broker figure
+    // cleared since an open position can't carry one (#304).
+    val closed =
+      closedTrade(ticker = "KTTA", pnl = "750.00").copy(realProfitDollars = BigDecimal("746.34"))
+    val trade = tradeService.create(closed)
+    assertEquals(0, BigDecimal("746.34").compareTo(tradeMovements().single().amount))
+
+    tradeService.update(
+      trade.id,
+      closed.copy(executions = closed.executions.take(1), realProfitDollars = null),
+    )
+
+    assertEquals(0, tradeMovements().size, "no exit backs the amount any more")
+    assertEquals(
+      0,
+      BigDecimal.ZERO.compareTo(accountService.summary(AccountMovementFilter()).balance),
+      "the balance lets the 746.34 go with the movement",
+    )
+  }
+
+  @Test
   fun `deleting a trade removes its movement via the DB cascade`() {
     val trade = tradeService.create(closedTrade(ticker = "MULN", pnl = "300.00"))
     assertNotNull(accountRepo.findByTradeEntryId(trade.id))

@@ -193,6 +193,11 @@ $save-bar-room: 72px;
   margin: s.$space-sm 0 0;
 }
 
+// Amber = a warning, per the colour rule : Save would erase the broker P&L already saved.
+.warn {
+  color: var(--color-warning);
+}
+
 // ---- Day context ----
 
 .kv {
