@@ -33,13 +33,13 @@
   // Text
   --color-text: oklch(0.955 0.004 270);
   --color-text-muted: oklch(0.69 0.012 270);
-  --color-text-dim: oklch(0.6 0.012 270);
-  --color-text-faint: oklch(0.54 0.012 270);
+  --color-text-dim: oklch(0.64 0.012 270);
+  --color-text-faint: oklch(0.62 0.012 270);
 
   // Accent (indigo)
   --color-accent: oklch(0.7 0.155 277);
   --color-accent-strong: oklch(0.8 0.12 277);
-  --color-on-accent: oklch(0.99 0 0);
+  --color-on-accent: oklch(0.2 0.02 277);
 
   // Logo (consumed by `img/logo/logo.svg` via inline MatIconRegistry — see app.config.ts)
   --logo-tile: #ffffff;
@@ -47,11 +47,11 @@
 
   // Semantic — solid colours ; the `-soft` pairs are derived below.
   --color-success: oklch(0.76 0.15 162);
-  --color-on-success: oklch(0.99 0 0);
+  --color-on-success: oklch(0.2 0.02 162);
   --color-warning: oklch(0.81 0.14 78);
   --color-on-warning: oklch(0.2 0.02 78);
   --color-danger: oklch(0.7 0.18 18);
-  --color-on-danger: oklch(0.99 0 0);
+  --color-on-danger: oklch(0.2 0.02 18);
   --color-info: oklch(0.74 0.12 245);
   --color-purple: oklch(0.72 0.15 305);
   --color-orange: oklch(0.72 0.15 50);
@@ -79,8 +79,8 @@
 
   --color-text: oklch(0.21 0.012 270);
   --color-text-muted: oklch(0.48 0.014 270);
-  --color-text-dim: oklch(0.55 0.013 270);
-  --color-text-faint: oklch(0.62 0.012 270);
+  --color-text-dim: oklch(0.52 0.013 270);
+  --color-text-faint: oklch(0.54 0.012 270);
 
   --color-accent: oklch(0.52 0.19 277);
   --color-accent-strong: oklch(0.45 0.2 277);
@@ -89,10 +89,12 @@
   --logo-tile: #111318;
   --logo-mark: #e8eaf0;
 
-  --color-success: oklch(0.56 0.14 160);
-  --color-warning: oklch(0.63 0.14 68);
+  --color-success: oklch(0.52 0.14 160);
+  --color-on-success: oklch(0.99 0 0);
+  --color-warning: oklch(0.55 0.14 68);
   --color-on-warning: oklch(0.99 0 0);
-  --color-danger: oklch(0.57 0.2 22);
+  --color-danger: oklch(0.56 0.2 22);
+  --color-on-danger: oklch(0.99 0 0);
   --color-info: oklch(0.55 0.15 245);
   --color-purple: oklch(0.52 0.18 305);
   --color-orange: oklch(0.6 0.16 50);
