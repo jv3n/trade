@@ -3,16 +3,19 @@
 // muted descriptions. Each section is a card stacked vertically ; no responsive grid needed
 // since the typical usage is « open page → scan all sections in one scroll → click the right
 // link » (no triage / filter UX).
+
+@use 'sizes' as s;
+
 .ops-links-page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  gap: s.$space-xl;
+  padding: s.$space-xl;
   max-width: 960px;
 
   .page-header {
     h2 {
-      margin: 0 0 0.25rem;
+      margin: 0 0 s.$space-xs;
       color: var(--color-text);
     }
 
@@ -26,35 +29,35 @@
 .ops-section {
   background: var(--color-surface-2);
   border-radius: var(--radius);
-  padding: 1.25rem 1.5rem;
+  padding: s.$space-xl s.$space-xl;
 
   .section-header {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: s.$space-md;
+    margin-bottom: s.$space-lg;
 
     mat-icon {
       color: var(--color-text);
       flex-shrink: 0;
-      margin-top: 0.1rem;
+      margin-top: s.$space-hairline;
     }
 
     .section-titles {
       display: flex;
       flex-direction: column;
-      gap: 0.15rem;
+      gap: s.$space-hairline;
 
       h3 {
         margin: 0;
         color: var(--color-text);
-        font-size: 1.05rem;
+        font-size: s.$font-lg;
       }
 
       .section-description {
         margin: 0;
         color: var(--color-text-muted);
-        font-size: 0.875rem;
+        font-size: s.$font-md;
       }
     }
   }
@@ -66,18 +69,18 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: s.$space-sm;
 
   li {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: s.$space-hairline;
   }
 
   a {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: s.$space-sm;
     color: var(--color-link, var(--color-primary));
     text-decoration: none;
     font-weight: 500;
@@ -88,7 +91,7 @@
     }
 
     .external-icon {
-      font-size: 1rem;
+      font-size: s.$font-lg;
       width: 1rem;
       height: 1rem;
       opacity: 0.6;
@@ -99,6 +102,6 @@
     margin: 0;
     padding-left: 0;
     color: var(--color-text-muted);
-    font-size: 0.8rem;
+    font-size: s.$font-sm;
   }
 }

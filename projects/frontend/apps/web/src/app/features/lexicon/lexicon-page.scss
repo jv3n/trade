@@ -2,11 +2,13 @@
 // `.loading-state` and `.empty-state` come from the lib (`libs/ui/styles/`) — only the lexicon's
 // own arrangement lives here.
 
+@use 'sizes' as s;
+
 .header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: s.$space-lg;
   flex-wrap: wrap;
 }
 
@@ -17,17 +19,17 @@
 .letters {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
+  gap: s.$space-hairline;
 
   button {
     min-width: 28px;
-    padding: 4px 6px;
+    padding: s.$space-xs s.$space-sm;
     border: 0;
     border-radius: var(--radius-sm);
     background: transparent;
     color: var(--color-text-muted);
     font: inherit;
-    font-size: 13px;
+    font-size: s.$font-sm;
     cursor: pointer;
 
     &:hover {
@@ -47,11 +49,11 @@
 .terms {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  gap: s.$space-md;
 }
 
 .term {
-  padding: 14px 16px;
+  padding: s.$space-lg s.$space-lg;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -61,24 +63,24 @@
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
-    gap: 6px;
-    margin: 0 0 6px;
-    font-size: 15px;
+    gap: s.$space-sm;
+    margin: 0 0 s.$space-sm;
+    font-size: s.$font-lg;
   }
 
   p {
     margin: 0;
     color: var(--color-text-muted);
-    font-size: 13px;
+    font-size: s.$font-sm;
     line-height: 1.5;
   }
 
   .tag {
-    padding: 1px 6px;
+    padding: 1px s.$space-sm;
     border-radius: var(--radius-sm);
     background: var(--color-surface-2);
     color: var(--color-text-muted);
-    font-size: 11px;
+    font-size: s.$font-2xs;
     font-weight: 400;
   }
 }

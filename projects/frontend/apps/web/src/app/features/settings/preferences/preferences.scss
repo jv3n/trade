@@ -2,10 +2,13 @@
 // The page stays skinny — the outer layout, the profile card and a baseline fix for flag emojis.
 
 // A section of the settings page, which carries the outer padding ; this is only its stack.
+
+@use 'sizes' as s;
+
 .preferences-page {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: s.$space-lg;
 }
 
 // Apple Color Emoji descender — neutralises a vertical offset under the glyph.
@@ -13,8 +16,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-right: 0.5rem;
-  font-size: 1.1rem;
+  margin-right: s.$space-sm;
+  font-size: s.$font-xl;
   line-height: 1;
   transform: translateY(-1px);
 }
@@ -22,10 +25,10 @@
 // Material icons inside the theme `<mat-button-toggle>` — slightly tighter than the default,
 // to match the 36 px icon-button density of the toolbar.
 mat-button-toggle mat-icon {
-  font-size: 1.05rem;
-  width: 1.05rem;
-  height: 1.05rem;
-  margin-right: 0.4rem;
+  font-size: s.$icon-sm;
+  width: s.$icon-sm;
+  height: s.$icon-sm;
+  margin-right: s.$space-sm;
   vertical-align: middle;
 }
 
@@ -33,7 +36,7 @@ mat-button-toggle mat-icon {
 .profile-card {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: s.$space-lg;
 }
 
 .avatar {
@@ -46,13 +49,13 @@ mat-button-toggle mat-icon {
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: s.$font-md;
 }
 
 .identity {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: s.$space-hairline;
   min-width: 0;
 
   .name {
@@ -62,17 +65,17 @@ mat-button-toggle mat-icon {
   .meta {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: s.$space-sm;
     flex-wrap: wrap;
-    font-size: 13px;
+    font-size: s.$font-sm;
     color: var(--color-text-muted);
   }
 }
 
 .role-tag {
-  padding: 2px 8px;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-pill);
-  font-size: 11px;
+  font-size: s.$font-2xs;
   font-weight: 600;
   background: color-mix(in srgb, var(--color-accent) 16%, transparent);
   color: var(--color-accent);
