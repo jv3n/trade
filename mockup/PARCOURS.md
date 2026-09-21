@@ -134,6 +134,8 @@ trade.
   saved when leaving the field — an edit, no modal. The target price is recomputed, never stored.
 - Both are optional : a candidate without an open simply shows no target price, and without any
   completed stat for the pattern there is no reference.
+- A target push **above 100 %** is shown in amber — a small cap can push 200 % and more, so it is
+  kept, but it is rare enough to deserve a second look. Past **1000 %** it is a typo and is capped.
 - Past days are read-only : the card shows what was typed that morning.
 - Deleting a candidate deletes its open and target push with it. A stat already created keeps its
   own copy of the open ; the target push is a plan and doesn't go to the stat.
@@ -315,6 +317,8 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   filters the listing and the KPIs alike.
 - **Dense forms** : Material fields at 40 px (density -4), and no space reserved under a field until
   there is an error to show.
+- **Numeric fields** : focusing one selects its value, so typing replaces it — at 9:30 there is no
+  time to clear a field first.
 
 ---
 

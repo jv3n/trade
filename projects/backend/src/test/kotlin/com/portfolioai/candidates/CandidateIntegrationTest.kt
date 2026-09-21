@@ -477,10 +477,26 @@ class CandidateIntegrationTest {
   }
 
   @Test
+  fun `a target push above 100 percent is saved, a small cap can push that far`() {
+    val candidate = service.create(request(targetPushPercent = BigDecimal("250")))
+    assertEquals(0, BigDecimal("250").compareTo(candidate.targetPushPercent))
+  }
+
+  @Test
   fun `a negative target push is a 400`() {
     val ex =
       assertThrows(ResponseStatusException::class.java) {
         service.create(request(targetPushPercent = BigDecimal("-5")))
+      }
+    assertEquals(400, ex.statusCode.value())
+  }
+
+  // Hit in the pilot test : a push typed after the pre-filled 15,3 read 15200 % and was saved.
+  @Test
+  fun `a target push above 1000 percent is a 400`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(request(targetPushPercent = BigDecimal("15200")))
       }
     assertEquals(400, ex.statusCode.value())
   }

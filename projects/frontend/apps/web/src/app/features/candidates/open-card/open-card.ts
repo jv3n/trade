@@ -13,7 +13,11 @@ import { Candidate } from '../../../core/api/candidates/candidates.model';
 import { Pattern } from '../../../core/api/shared/pattern.model';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 import { percentChange } from '../../../shared/percent/percent';
-import { targetPrice } from '../candidates.math';
+import {
+  MAX_TARGET_PUSH_PERCENT,
+  UNUSUAL_TARGET_PUSH_PERCENT,
+  targetPrice,
+} from '../candidates.math';
 
 /** The push at the open of the completed stats of one pattern — what a row can aim at. */
 export interface PushReferences {
@@ -46,6 +50,8 @@ interface OpenRow {
   push: number | null;
   /** True when the candidate has its own target push rather than following the reference. */
   custom: boolean;
+  /** Past 100 % : possible, but worth a second look before aiming at it. */
+  unusualPush: boolean;
   highVsOpen: number | null;
   target: number | null;
   delta: number | null;
@@ -89,6 +95,8 @@ export class OpenCard {
   readonly atOpenChange = output<AtOpenChange>();
 
   readonly kinds = REFERENCE_KINDS;
+  readonly maxTargetPush = MAX_TARGET_PUSH_PERCENT;
+  readonly unusualPush = UNUSUAL_TARGET_PUSH_PERCENT;
   readonly columns = ['ticker', 'pmHigh', 'open', 'highVsOpen', 'push', 'target', 'delta'] as const;
 
   readonly kind = signal<ReferenceKind>('average');
@@ -126,6 +134,7 @@ export class OpenCard {
         reference,
         push,
         custom,
+        unusualPush: push !== null && push > UNUSUAL_TARGET_PUSH_PERCENT,
         highVsOpen: percentChange(candidate.openPrice, candidate.pmHigh),
         target,
         delta:
@@ -155,7 +164,10 @@ export class OpenCard {
   }
 
   draftPush(row: OpenRow, value: number | null): void {
-    this.pushDrafts.set(row.candidate.id, value);
+    this.pushDrafts.set(
+      row.candidate.id,
+      value === null ? null : Math.min(value, MAX_TARGET_PUSH_PERCENT),
+    );
   }
 
   /** A cleared push, or one typed back to the reference, follows the reference again. */

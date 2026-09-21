@@ -156,6 +156,7 @@
       "push": "Target push",
       "pushOf": "Target push for {{ticker}}",
       "backToReference": "Back to the reference",
+      "unusualPush": "Unusual push, above {{max}} % — check what you typed.",
       "target": "Target price",
       "delta": "Gap"
     },

@@ -19,6 +19,8 @@ import {
  *   - At most one decimal separator. Extra ones are dropped.
  *   - Decimals beyond `[decimals]` are truncated (default 2).
  *   - Optional `[allowNegative]` lets a leading `-` through.
+ *   - Focusing the field selects its content, so typing replaces the value instead of appending
+ *     to it (`15,3` then `200` gave `15200`).
  *
  * Formatting :
  *   - **Comma decimal separator, no thousand grouping** (`3,21`, `1234,56`). French-style — the
@@ -66,6 +68,8 @@ export class NumberMaskDirective {
   /** Emits the parsed number whenever the user's input resolves to one. `null` = blank. */
   readonly numberChange = output<number | null>();
 
+  private selectOnMouseUp = false;
+
   constructor() {
     // Sync the visible text with the bound `[value]`. Programmatic updates from the model
     // (reset form, edit-mode prefill) flow through here. We skip the round-trip when the
@@ -78,6 +82,25 @@ export class NumberMaskDirective {
         this.host.nativeElement.value = v === null ? '' : formatNumber(v, this.decimals());
       }
     });
+  }
+
+  @HostListener('mousedown')
+  onMouseDown(): void {
+    this.selectOnMouseUp = document.activeElement !== this.host.nativeElement;
+  }
+
+  @HostListener('focus')
+  onFocus(): void {
+    this.host.nativeElement.select();
+  }
+
+  // The click that focuses the field would otherwise drop the selection on mouseup and leave a
+  // caret. Only that first click : a click in an already focused field still places the caret.
+  @HostListener('mouseup', ['$event'])
+  onMouseUp(event: MouseEvent): void {
+    if (!this.selectOnMouseUp) return;
+    this.selectOnMouseUp = false;
+    event.preventDefault();
   }
 
   @HostListener('input', ['$event'])

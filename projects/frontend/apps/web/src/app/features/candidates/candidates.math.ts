@@ -9,6 +9,11 @@ import { percentChange } from '../../shared/percent/percent';
  * the base is not positive (see [percentChange]).
  */
 
+/** Past it, a target push is a typo — the backend refuses it too. */
+export const MAX_TARGET_PUSH_PERCENT = 1000;
+/** Past it, a target push is possible on a small cap but rare enough to be flagged. */
+export const UNUSUAL_TARGET_PUSH_PERCENT = 100;
+
 /** Gap % = (PM open − previous close) ÷ previous close. */
 export function gapPercent(previousClose: number | null, pmOpen: number | null): number | null {
   return percentChange(previousClose, pmOpen);
