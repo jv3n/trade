@@ -13,6 +13,11 @@
       "CRYPTO": "Crypto",
       "BOND": "Obligation",
       "COMMODITY": "Matière première"
+    },
+    "confirmLeave": {
+      "title": "Quitter sans enregistrer ?",
+      "message": "Tes modifications ne sont pas enregistrées : elles seront perdues.",
+      "confirm": "Quitter sans enregistrer"
     }
   },
   "nav": {

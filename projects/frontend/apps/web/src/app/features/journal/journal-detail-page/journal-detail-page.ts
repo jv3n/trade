@@ -32,6 +32,7 @@ import {
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
+import { HasUnsavedChanges } from '../../../core/router/unsaved-changes.guard';
 import { compressImage } from '../../../shared/image/compress-image';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 import { gapPercent, percentVsOpen, pmPushPercent } from '../../stats/stats.math';
@@ -125,13 +126,15 @@ function spanMinutes(executions: ExecRow[]): number | null {
  * - **Post-mortem** — « what happened » + « mistake / to improve », and the chart screenshot.
  *
  * Everything is edited **in the page** (no dialog — `MatDialog` is kept for confirmations) : the
- * draft lives in [draft], [dirty] drives the save bar, and Save sends the whole trade back.
+ * draft lives in [draft], [dirty] drives the save bar, and Save sends the whole trade back. Leaving
+ * with the draft unsaved asks first (`unsavedChangesGuard`, and the browser prompt on tab close).
  */
 @Component({
   selector: 'app-journal-detail-page',
   host: {
     '(document:keydown.escape)': 'closeLightbox()',
     '(document:paste)': 'onPaste($event)',
+    '(window:beforeunload)': 'warnBeforeUnload($event)',
   },
   imports: [
     DatePipe,
@@ -151,7 +154,7 @@ function spanMinutes(executions: ExecRow[]): number | null {
   templateUrl: './journal-detail-page.html',
   styleUrl: './journal-detail-page.scss',
 })
-export class JournalDetailPage {
+export class JournalDetailPage implements HasUnsavedChanges {
   private readonly repo = inject(JournalRepository);
   private readonly statsRepo = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
@@ -181,6 +184,17 @@ export class JournalDetailPage {
     const d = this.draft();
     return d !== null && JSON.stringify(d) !== this.pristine();
   });
+  /** Set once the trade is deleted : its draft has nowhere to go, leaving must not ask. */
+  private deleted = false;
+
+  hasUnsavedChanges(): boolean {
+    return this.dirty() && !this.deleted;
+  }
+
+  /** Tab close / reload — the browser's own prompt, the router guard never sees these. */
+  warnBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) event.preventDefault();
+  }
 
   /** Rows that carry a usable share count + price — what the calculator / the backend consume. */
   private readonly cleanExecutions = computed<TradeExecutionInput[]>(() =>
@@ -480,6 +494,7 @@ export class JournalDetailPage {
         filter(Boolean),
         switchMap(() => this.repo.delete(entry.id)),
         tap(() => {
+          this.deleted = true;
           this.toasts.success(
             this.translate.instant('journal.snackbar.deleteSuccess', { ticker: entry.ticker }),
           );

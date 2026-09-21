@@ -199,6 +199,11 @@ don't know the exact fees in advance). The app shows the computed one, the real 
 The real P&L can only be typed **once the position is closed** : on an open or partial position the
 field is greyed out, since no exit backs the amount yet.
 
+**Saving** : the trade sheet is edited as a whole and saved with the « Save » bar that shows up as
+soon as something changed. Leaving the page with changes not saved asks first (« Leave without
+saving? ») — a nav click, the back button, closing or reloading the tab — so a debrief is never lost
+silently.
+
 **Removed** : the pre-trade checklist, the "execution" block (front / back side, short on
 resistance, exit strategy), play A / B, the risk indicators (budget, R multiple).
 

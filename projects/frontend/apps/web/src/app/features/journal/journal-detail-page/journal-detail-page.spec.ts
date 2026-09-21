@@ -239,6 +239,41 @@ describe('JournalDetailPage', () => {
     expect(page.draft()?.errorNote).toBe('');
   });
 
+  // Hit twice in the pilot test : leaving the page dropped the post-mortem without a word (#303).
+  it('reports unsaved changes to the leave guard, and asks the browser on tab close', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const unload = () => {
+      const event = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+
+    expect(page.hasUnsavedChanges()).toBe(false);
+    expect(unload()).toBe(false);
+
+    page.setNote('Covered too early, the fade had room to run.');
+
+    expect(page.hasUnsavedChanges()).toBe(true);
+    expect(unload()).toBe(true);
+  });
+
+  it('leaves without asking once the trade is deleted', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    page.setNote('Half-written debrief');
+
+    page.delete();
+    deleteSubject.next();
+
+    expect(page.hasUnsavedChanges()).toBe(false);
+  });
+
   it('a new fill defaults to a cover while shares are still open', () => {
     findById = vi.fn(() =>
       of(
