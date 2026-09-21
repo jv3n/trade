@@ -42,6 +42,7 @@ interface StatEntryWireDto {
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;
+  noPush: boolean;
   completed: boolean;
   tradeId: string | null;
   tradeRetainedProfitDollars: number | null;
@@ -111,6 +112,7 @@ function buildFilterParams(filter?: StatEntryFilter): HttpParams {
   if (filter.dateTo) params = params.set('dateTo', format(filter.dateTo, 'yyyy-MM-dd'));
   if (filter.pattern) params = params.set('pattern', filter.pattern);
   if (filter.status) params = params.set('status', filter.status);
+  if (filter.noPush) params = params.set('noPush', true);
   return params;
 }
 

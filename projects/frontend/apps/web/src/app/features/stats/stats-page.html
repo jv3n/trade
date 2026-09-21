@@ -33,7 +33,21 @@
               : '—'
           }}
         </div>
-        <div class="kpi__sub">{{ 'stats.kpi.vsOpen' | translate }}</div>
+        <div class="kpi__sub">
+          @if (kpi.noPushCount > 0) {
+            {{
+              'stats.kpi.noPushSub'
+                | translate
+                  : {
+                      pushed: kpi.completed - kpi.noPushCount,
+                      count: kpi.noPushCount,
+                      total: kpi.completed,
+                    }
+            }}
+          } @else {
+            {{ 'stats.kpi.vsOpen' | translate }}
+          }
+        </div>
       </div>
       <div class="card kpi">
         <div class="kpi__label">{{ 'stats.kpi.averageLod' | translate }}</div>
@@ -143,24 +157,35 @@
           <mat-hint>{{ 'stats.complete.percentBase' | translate }}</mat-hint>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'stats.fields.pushOpen' | translate }}</mat-label>
-          <input
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [value]="session().pushOpenPrice"
-            (numberChange)="setSessionPrice('pushOpenPrice', $event)"
-            (blur)="saveSession()"
-            (keydown.enter)="$any($event.target).blur()"
-          />
-          <mat-hint>{{
-            sessionPercents().pushOpen !== null
-              ? (sessionPercents().pushOpen | number: '1.1-1') + ' %'
-              : '—'
-          }}</mat-hint>
-        </mat-form-field>
+        <!-- « No push » sits under the field it greys out (#302). -->
+        <div class="push-field">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.pushOpen' | translate }}</mat-label>
+            <input
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [value]="session().pushOpenPrice"
+              [disabled]="session().noPush"
+              (numberChange)="setSessionPrice('pushOpenPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <mat-hint>{{
+              sessionPercents().pushOpen !== null
+                ? (sessionPercents().pushOpen | number: '1.1-1') + ' %'
+                : '—'
+            }}</mat-hint>
+          </mat-form-field>
+          <mat-checkbox
+            [checked]="session().noPush"
+            (change)="toggleNoPush($event.checked)"
+            [matTooltip]="'stats.fields.noPushHint' | translate"
+          >
+            {{ 'stats.fields.noPush' | translate }}
+          </mat-checkbox>
+        </div>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.hod' | translate }}</mat-label>
@@ -240,7 +265,7 @@
         <span class="flags-row__spacer"></span>
         <span class="progress">{{
           'stats.complete.progress'
-            | translate: { filled: sessionFilled(), total: sessionPriceCount }
+            | translate: { filled: sessionFilled(), total: sessionPriceCount() }
         }}</span>
         <button mat-stroked-button type="button" (click)="close()">
           {{ 'stats.complete.close' | translate }}
@@ -423,7 +448,13 @@
               {{ 'stats.fields.pushOpen' | translate }}
             </th>
             <td mat-cell *matCellDef="let s" stbCol="numeric">
-              {{ s.pushOpenPercent !== null ? (s.pushOpenPercent | number: '1.1-1') + ' %' : '—' }}
+              @if (s.noPush) {
+                <span class="flag-tag">{{ 'stats.fields.noPushTag' | translate }}</span>
+              } @else {
+                {{
+                  s.pushOpenPercent !== null ? (s.pushOpenPercent | number: '1.1-1') + ' %' : '—'
+                }}
+              }
             </td>
           </ng-container>
 

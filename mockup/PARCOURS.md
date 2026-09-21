@@ -222,7 +222,8 @@ push once it has happened, the flags as they come — and the rest after the 4 p
 | Data | Example | Note |
 |------|---------|------|
 | Open | 4.20 | Session open — the base of every percentage. **Pre-filled** with the open typed on the candidate at 9:30 |
-| Push at the open | 4.62 | **New** — the price reached by the push that follows the open |
+| Push at the open | 4.62 | **New** — the price reached by the push that follows the open, within ~10 minutes |
+| No push | yes / no | The stock never pushed at the open — the push field is greyed out (see below) |
 | HOD | 4.62 | High of Day |
 | LOD | 3.41 | Low of Day |
 | EOD | 3.52 | Close |
@@ -260,8 +261,29 @@ shared between users — a stat always belongs to its user.
   executions and the three P&L figures on the journal side.
 - "Traded / not traded" filter : shipped with the link to the trade (#193).
 
+**No push at the open** (#302) : some days have everything of a GUS in the premarket but
+the stock never pushes after the open — GLND on 2026-09-21 dropped straight from the open and only
+came back up around 11 am. A push is expected within ~10 minutes of 9:30 ; a later bounce is not one.
+These days are a setup of their own, to trade **right at the open** instead of waiting for a push
+that never comes, so they count in the stats and are made easy to single out.
+
+- A **« No push »** checkbox sits right under the push field. Ticking it greys out and empties the
+  field ; unticking gives back the value typed before. It is saved when changed, like a flag.
+- A no-push stat is **checked with the four other prices** (open, HOD, LOD, EOD) — the panel counts
+  « n / 4 prices ». HOD stays required : on a no-push day it is the open or the later bounce.
+- In the table, the push column shows a neutral « no push » tag (not an outcome, not a warning).
+- The **average push at the open** only counts the stats that pushed, so the 0 % days don't drag it
+  down ; its KPI shows the **no-push rate** underneath (« 1 / 11 without a push »). The no-push days
+  count in everything else (LOD, fade, EOD).
+- A **« No push »** button in the table's filter isolates them, to compare their premarket (gap, PM
+  push, float, volume) with the days that pushed.
+- The « À l'open » card is left alone : it is a quick calculation aid, the analysis lives in the
+  stats. Its references are built on the push at the open, which a no-push stat doesn't have, so
+  they already leave these days out.
+
 **Screen** : [`stats.html`](stats.html) — a "session" panel for the stat being filled (live
-percentage preview, fields saved one by one, "n / 5 prices" and the check button), a table with the
+percentage preview, fields saved one by one, "n / 5 prices" — 4 with « No push » — and the check
+button), a table with the
 premarket data (carried from the candidate), the session data (partial for the stats in progress),
 the flags, the check column, and a « → Trade » button or a link to the existing trade.
 

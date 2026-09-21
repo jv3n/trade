@@ -11,7 +11,8 @@
         display: grid;
         grid-template-columns: repeat(5, 1fr);
         gap: 10px;
-        align-items: end;
+        /* Par le haut : la case « Pas de push » sous le push allonge sa colonne, les champs restent alignés. */
+        align-items: start;
       }
 
       .complete .pct {
@@ -120,6 +121,21 @@
         opacity: 0.5;
       }
 
+      /* « Pas de push » sous le champ du push : cocher grise le champ, la stat se complète sans lui. */
+      .no-push {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 12px;
+        color: var(--text-muted);
+        cursor: pointer;
+      }
+
+      .input:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
       @media (max-width: 1100px) {
         .complete {
           grid-template-columns: repeat(2, 1fr);
@@ -155,23 +171,23 @@
         <section class="grid grid-4" style="margin-bottom: 16px">
           <div class="card kpi">
             <div class="label">Stats complétées</div>
-            <div class="value">10</div>
+            <div class="value">11</div>
             <div class="sub">septembre · <span style="color: var(--warn)">2 à compléter</span></div>
           </div>
           <div class="card kpi">
             <div class="label">Push à l'open moyen</div>
             <div class="value">+9,6 %</div>
-            <div class="sub">vs open</div>
+            <div class="sub">vs open · sur les 10 qui ont poussé · <b>1 / 11 sans push</b> (9 %)</div>
           </div>
           <div class="card kpi">
             <div class="label">LOD moyen</div>
-            <div class="value">−12,3 %</div>
+            <div class="value">−13,2 %</div>
             <div class="sub">vs open</div>
           </div>
           <div class="card kpi">
             <div class="label">Fade à la clôture</div>
-            <div class="value">7 / 10</div>
-            <div class="sub">EOD sous l'open · moyenne −3,7 %</div>
+            <div class="value">8 / 11</div>
+            <div class="sub">EOD sous l'open · moyenne −4,7 %</div>
           </div>
         </section>
 
@@ -193,7 +209,11 @@
           </div>
           <form class="complete" onsubmit="return false">
             <div class="field"><label>Open ($)</label><input class="input" id="c-open" data-price value="1,90" /><span class="pct muted">repris du candidat (9h30)</span></div>
-            <div class="field"><label>Push à l'open ($)</label><input class="input" data-pct data-price value="2,20" /><span class="pct muted">—</span></div>
+            <div class="field">
+              <label>Push à l'open ($)</label>
+              <input class="input" id="c-push" data-pct data-price value="2,20" /><span class="pct muted">—</span>
+              <label class="no-push" title="Le titre n'a pas poussé dans les ~10 minutes après l'open"><input type="checkbox" id="c-no-push" /> Pas de push</label>
+            </div>
             <div class="field"><label>HOD ($)</label><input class="input" data-pct data-price placeholder="2,35" /><span class="pct muted">—</span></div>
             <div class="field"><label>LOD ($)</label><input class="input" data-pct data-price placeholder="1,52" /><span class="pct muted">—</span></div>
             <div class="field"><label>EOD ($)</label><input class="input" data-pct data-price placeholder="1,61" /><span class="pct muted">—</span></div>
@@ -241,6 +261,7 @@
               <button>À compléter</button>
               <button>Tradées</button>
               <button>Non tradées</button>
+              <button>Sans push</button>
             </div>
           </div>
 
@@ -273,6 +294,18 @@
                 </tr>
               </thead>
               <tbody>
+                <tr>
+                  <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+58,4 %</td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td><td class="num">0,05</td>
+                  <td class="num sep">3,10</td>
+                  <td class="num"><span class="tag">pas de push</span></td>
+                  <td class="num">3,10<small class="muted">+0,0 %</small></td>
+                  <td class="num">2,41<small class="muted">−22,3 %</small></td>
+                  <td class="num">2,66<small class="muted">−14,2 %</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
+                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
                   <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
@@ -420,11 +453,11 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="9">Moyennes — 10 stats complétées</td>
-                  <td class="num">+9,6 %</td>
+                  <td colspan="9">Moyennes — 11 stats complétées</td>
+                  <td class="num">+9,6 %<small class="muted">10 avec push</small></td>
                   <td class="num"></td>
-                  <td class="num">−12,3 %</td>
-                  <td class="num">−3,7 %</td>
+                  <td class="num">−13,2 %</td>
+                  <td class="num">−4,7 %</td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -439,6 +472,10 @@
           reste « à compléter » jusqu'à ce qu'on la coche (✓, comme une transaction revue dans Monarch) : la coche n'est possible
           qu'avec les cinq prix et se décoche d'un clic. La coche d'une stat complétée est verte. Vider un prix d'une stat cochée est refusé — il faut la décocher d'abord. Les
           KPIs et les moyennes ne comptent que les stats cochées.
+          « Pas de push », sous le champ du push : le titre n'a pas poussé dans les ~10 minutes après l'open (GLND, 21/09 — chute dès
+          l'open, rebond vers 11h seulement). Cocher grise et vide le champ, et la stat se coche avec les quatre autres prix. Ces
+          jours-là comptent dans les stats — c'est un setup à part, à exécuter dès l'open : le push moyen ne compte que les stats qui
+          ont poussé, et le taux de « sans push » s'affiche à côté ; le filtre « Sans push » les isole pour comparer leur premarket.
           « → Trade » crée le trade au journal (action manuelle). Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
         </p>
       </main>
@@ -473,6 +510,9 @@
       (function () {
         const prices = [...document.querySelectorAll('#session-panel [data-price]')];
         const names = ['Open', 'Push', 'HOD', 'LOD', 'EOD'];
+        const push = document.getElementById('c-push');
+        const noPush = document.getElementById('c-no-push');
+        let typedPush = push.value;
         const progress = document.getElementById('panel-progress');
         const saved = document.getElementById('panel-saved');
         const check = document.getElementById('panel-check');
@@ -480,8 +520,9 @@
         let done = false;
 
         function refresh() {
-          const missing = names.filter((_, i) => prices[i].value.trim() === '');
-          progress.textContent = 5 - missing.length + ' / 5 prix saisis';
+          const needed = names.filter((_, i) => !prices[i].disabled);
+          const missing = needed.filter((n) => prices[names.indexOf(n)].value.trim() === '');
+          progress.textContent = needed.length - missing.length + ' / ' + needed.length + ' prix saisis';
           check.disabled = missing.length > 0 && !done;
           check.title = missing.length > 0 ? 'Il manque ' + missing.join(', ') : '';
           // Une stat cochée ne peut pas perdre un prix : les champs vides sont refusés tant qu'elle l'est.
@@ -493,6 +534,14 @@
           input.addEventListener('change', markSaved);
         });
         document.querySelectorAll('#session-panel [data-flag]').forEach((f) => f.addEventListener('change', markSaved));
+        // Pas de push : le champ est grisé et vidé ; décocher rend la valeur tapée avant.
+        noPush.addEventListener('change', () => {
+          if (noPush.checked) typedPush = push.value;
+          push.disabled = noPush.checked;
+          push.value = noPush.checked ? '' : typedPush;
+          push.dispatchEvent(new Event('input'));
+          markSaved();
+        });
         check.addEventListener('click', () => {
           done = !done;
           check.classList.toggle('done', done);

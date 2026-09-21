@@ -35,4 +35,6 @@ data class StatEntryRequest(
   val ssr: Boolean = false,
   val under1Dollar: Boolean = false,
   val entryAfter11am: Boolean = false,
+  /** The stock never pushed after the open — [pushOpenPrice] is then ignored and stored empty. */
+  val noPush: Boolean = false,
 )

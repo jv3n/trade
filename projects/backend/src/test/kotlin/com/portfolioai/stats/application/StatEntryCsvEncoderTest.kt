@@ -29,7 +29,7 @@ class StatEntryCsvEncoderTest {
     val header = csv.removePrefix("﻿").substringBefore("\r\n")
 
     assertEquals(StatEntryCsvEncoder.HEADERS, header.split(","))
-    assertEquals(19, StatEntryCsvEncoder.HEADERS.size)
+    assertEquals(20, StatEntryCsvEncoder.HEADERS.size)
   }
 
   @Test
@@ -41,12 +41,12 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
-  fun `a completed stat renders the 19 columns in order, numbers in plain form`() {
+  fun `a completed stat renders the 20 columns in order, numbers in plain form`() {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry()))
 
     assertEquals(
       "2026-09-17,GUS,KTTA,2.65,4.05,4.65,8.2,3.1,0.03,Push rejeté sous 4.65," +
-        "4.20,4.62,4.62,3.41,3.52,false,false,false,true",
+        "4.20,4.62,4.62,3.41,3.52,false,false,false,false,true",
       dataRowOf(csv),
     )
   }
@@ -58,7 +58,7 @@ class StatEntryCsvEncoderTest {
 
     assertEquals(
       "2026-09-18,GUS,SGBX,2.65,4.05,4.65,8.2,3.1,0.03,Push rejeté sous 4.65," +
-        ",,,,,false,false,false,false",
+        ",,,,,false,false,false,false,false",
       dataRowOf(csv),
     )
   }

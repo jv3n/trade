@@ -33,6 +33,8 @@ import { StatsPage } from './stats-page';
  * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
  * - **Filters** — changing the status resets to page 0 and refetches ; a custom period range
  *   reaches both the listing and the KPIs.
+ * - **No push (#302)** — ticking it empties the push and takes it out of the prices a stat needs ;
+ *   unticking gives the typed push back ; the « No push » tab is its own filter axis.
  *
  * The repository, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
  */
@@ -60,6 +62,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     ssr: false,
     under1Dollar: false,
     entryAfter11am: false,
+    noPush: false,
     completed: true,
     tradeId: null,
     tradeRetainedProfitDollars: null,
@@ -93,6 +96,7 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     medianPushOpenPercent: 6.8,
     thirdQuartilePushOpenPercent: 14.2,
     maxPushOpenPercent: 21.5,
+    noPushCount: 0,
     averageLodPercent: -12.3,
     fadeCount: 7,
     averageEodPercent: -3.7,
@@ -486,5 +490,50 @@ describe('StatsPage', () => {
 
     expect(page.pageIndex()).toBe(0);
     expect(repo.lastFilter?.status).toBe('TO_COMPLETE');
+  });
+
+  // ---- No push (#302) ----
+
+  // GLND, 2026-09-21 : dropped straight from the open, only came back up around 11 am.
+  it('« No push » empties the push, saves it and counts four prices', () => {
+    const { page, repo } = setup({ rows: [makePending({ ticker: 'GLND' })] });
+    page.setSessionPrice('pushOpenPrice', 3.3);
+
+    page.toggleNoPush(true);
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx',
+      expect.objectContaining({ noPush: true, pushOpenPrice: null }),
+    );
+    expect(page.sessionPriceCount()).toBe(4);
+    expect(page.sessionMissing()).not.toContain('stats.fields.pushOpen');
+  });
+
+  it('unticking « No push » gives back the push typed before', () => {
+    const { page } = setup({ rows: [makePending()] });
+    page.setSessionPrice('pushOpenPrice', 3.3);
+
+    page.toggleNoPush(true);
+    page.toggleNoPush(false);
+
+    expect(page.session().pushOpenPrice).toBe(3.3);
+    expect(page.sessionPriceCount()).toBe(5);
+  });
+
+  it('a no-push stat can be ticked without a push price', () => {
+    const glnd = makeStat({ noPush: true, pushOpenPrice: null, completed: false });
+    const { page } = setup({ rows: [glnd] });
+
+    expect(page.rows()[0].missing).toEqual([]);
+  });
+
+  it('the « No push » tab filters on the no-push days, whatever their status', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+
+    page.setStatus('NO_PUSH');
+    fixture.detectChanges();
+
+    expect(repo.lastFilter?.noPush).toBe(true);
+    expect(repo.lastFilter?.status).toBeNull();
   });
 });

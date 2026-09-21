@@ -47,6 +47,8 @@ import org.springframework.web.server.ResponseStatusException
  *   a slot the caller already holds.
  * - **Completion (#263)** — the session is saved field by field ; a stat is completed only when
  *   ticked, which needs the five prices, and a ticked stat can't lose a price.
+ * - **No push (#302)** — a stat whose stock never pushed after the open is ticked with the four
+ *   other prices, keeps no push price, stays out of the push references and can be filtered on.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
  *   set and averages the derived percentages (never stored) of the completed rows only, plus the
  *   median / 3rd quartile / max push at open behind the candidates' « À l'open » card (#261).
@@ -405,6 +407,35 @@ class StatsListingIntegrationTest {
     assertEquals(0, BigDecimal("3.52").compareTo(kept.eodPrice), "the rejected edit left no trace")
   }
 
+  // GLND, 2026-09-21 : dropped straight from the open, only came back up around 11 am.
+  @Test
+  fun `a no-push stat is ticked with the four other prices`() {
+    val stat = service.create(noPushRequest())
+
+    assertTrue(service.setCompleted(stat.id, completed = true).completed)
+  }
+
+  @Test
+  fun `a no-push stat keeps no push price, even when one is sent`() {
+    val stat = service.create(noPushRequest().copy(pushOpenPrice = BigDecimal("3.30")))
+
+    assertTrue(stat.noPush)
+    assertNull(stat.pushOpenPrice)
+  }
+
+  @Test
+  fun `unticking no push on a completed stat is a 400 until the push is typed`() {
+    val stat = createCompleted(noPushRequest())
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.update(stat.id, noPushRequest().copy(noPush = false))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("Push at open"), "got ${ex.reason}")
+  }
+
   @Test
   fun `ticking a foreign stat returns 404, not 403`() {
     val foreign = repo.save(makeStat(otherUser, ticker = "TSLA", tradeDate = DAY))
@@ -450,6 +481,31 @@ class StatsListingIntegrationTest {
     // 5.17 + 0.75 * (10.00 - 5.17) = 8.7925 -> 8.79.
     assertEquals(0, BigDecimal("8.79").compareTo(summary.thirdQuartilePushOpenPercent))
     assertEquals(0, BigDecimal("10.00").compareTo(summary.maxPushOpenPercent))
+  }
+
+  @Test
+  fun `summarise leaves the no-push days out of the push figures and counts them apart`() {
+    seedThreeStats()
+    createCompleted(noPushRequest())
+
+    val summary = service.summarise(noFilter)
+
+    assertEquals(3, summary.completed)
+    assertEquals(1, summary.noPushCount)
+    // Still KTTA +10.00 and BNZI +5.17 : a no-push day has no push to drag the average down.
+    assertEquals(0, BigDecimal("7.59").compareTo(summary.averagePushOpenPercent))
+    assertEquals(0, BigDecimal("7.59").compareTo(summary.medianPushOpenPercent))
+    assertEquals(3, summary.fadeCount, "GLND closed under its open too")
+  }
+
+  @Test
+  fun `filters on the no-push days`() {
+    seedThreeStats()
+    createCompleted(noPushRequest())
+
+    val page = service.findAllPaged(StatEntryFilter(noPush = true), PageRequest.of(0, 10))
+
+    assertEquals(listOf("GLND"), page.content.map { it.ticker })
   }
 
   @Test
@@ -575,6 +631,17 @@ class StatsListingIntegrationTest {
         eodPrice = BigDecimal("3.52"),
         ssr = ssr,
         entryAfter11am = entryAfter11am,
+      )
+
+  /** GLND : open 3.10, no push, HOD 3.10 (the open), LOD 2.41, EOD 2.66. */
+  private fun noPushRequest() =
+    premarketRequest(ticker = "GLND")
+      .copy(
+        openPrice = BigDecimal("3.10"),
+        noPush = true,
+        hodPrice = BigDecimal("3.10"),
+        lodPrice = BigDecimal("2.41"),
+        eodPrice = BigDecimal("2.66"),
       )
 
   private fun makeStat(owner: User, ticker: String, tradeDate: LocalDate) =

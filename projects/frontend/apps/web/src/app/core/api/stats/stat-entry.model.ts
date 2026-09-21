@@ -39,7 +39,12 @@ export interface StatEntry {
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;
-  /** Ticked by the owner (#263) — needs the five session prices, which alone don't tick it. */
+  /** The stock never pushed after the open (#302) — [pushOpenPrice] stays null. */
+  noPush: boolean;
+  /**
+   * Ticked by the owner (#263) — needs the five session prices (four on a no-push day), which alone
+   * don't tick it.
+   */
   completed: boolean;
 
   // ---- Journal link (#193) ----
@@ -77,6 +82,8 @@ export interface StatEntryFilter {
   dateTo?: Date | null;
   pattern?: Pattern | null;
   status?: StatStatus | null;
+  /** True keeps the no-push days only. */
+  noPush?: boolean | null;
 }
 
 /**
@@ -92,6 +99,8 @@ export interface StatSummary {
   medianPushOpenPercent: number | null;
   thirdQuartilePushOpenPercent: number | null;
   maxPushOpenPercent: number | null;
+  /** Completed stats ticked « no push » — they stay out of the push figures above. */
+  noPushCount: number;
   averageLodPercent: number | null;
   /** Completed stats whose EOD closed below the open — the GUS thesis playing out. */
   fadeCount: number;

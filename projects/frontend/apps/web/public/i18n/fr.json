@@ -488,7 +488,8 @@
       "averageLod": "LOD moyen",
       "vsOpen": "vs open",
       "fade": "Fade à la clôture",
-      "fadeSub": "EOD sous l'open · moyenne {{average}}"
+      "fadeSub": "EOD sous l'open · moyenne {{average}}",
+      "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push"
     },
     "complete": {
       "title": "Séance —",
@@ -513,7 +514,8 @@
     "status": {
       "ALL": "Toutes",
       "TO_COMPLETE": "À compléter",
-      "COMPLETED": "Complétées"
+      "COMPLETED": "Complétées",
+      "NO_PUSH": "Sans push"
     },
     "fields": {
       "tradeDate": "Date",
@@ -538,7 +540,10 @@
       "ssr": "SSR",
       "under1Dollar": "Prix < 1 $",
       "entryAfter11am": "Entrée après 11h",
-      "trade": "Trade"
+      "trade": "Trade",
+      "noPush": "Pas de push",
+      "noPushHint": "Le titre n'a pas poussé dans les ~10 minutes après l'open",
+      "noPushTag": "pas de push"
     },
     "actions": {
       "edit": "Modifier la séance",

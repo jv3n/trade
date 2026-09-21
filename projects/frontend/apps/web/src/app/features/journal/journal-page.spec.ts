@@ -329,6 +329,7 @@ function makeStatSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     medianPushOpenPercent: 6.8,
     thirdQuartilePushOpenPercent: 14.2,
     maxPushOpenPercent: 21.5,
+    noPushCount: 0,
     averageLodPercent: -12.3,
     fadeCount: 7,
     averageEodPercent: -3.7,
