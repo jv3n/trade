@@ -1,12 +1,14 @@
 // « À l'open » card — layout after `mockup/candidat.html`. The card frame and title come from the page.
 
+@use 'sizes' as s;
+
 .references {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  font-size: 12px;
+  gap: s.$space-sm;
+  margin-bottom: s.$space-md;
+  font-size: s.$font-xs;
 
   &__label,
   &__none {
@@ -19,7 +21,7 @@
 .cell-input {
   width: 5.5rem;
   height: 28px;
-  padding: 0 8px;
+  padding: 0 s.$space-sm;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface-2);
@@ -55,7 +57,7 @@
 
   .cell-input {
     width: 4.5rem;
-    padding-right: 22px;
+    padding-right: s.$space-xl;
   }
 
   &__unit {
@@ -82,7 +84,7 @@
 }
 
 .target {
-  font-size: 15px;
+  font-size: s.$font-lg;
 }
 
 .muted {

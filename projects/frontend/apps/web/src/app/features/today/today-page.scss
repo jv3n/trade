@@ -1,11 +1,13 @@
 // « Aujourd'hui » — after `mockup/aujourdhui.html` : the day's walk-through on the left, the
 // side column on the right. Same card / KPI shapes as the stats, journal and trade pages.
 
+@use 'sizes' as s;
+
 .header-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: s.$space-lg;
   flex-wrap: wrap;
 
   h2 {
@@ -17,12 +19,12 @@
 .market-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 12px;
+  gap: s.$space-sm;
+  padding: s.$space-xs s.$space-md;
   border-radius: var(--radius-pill);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
-  font-size: 12px;
+  font-size: s.$font-xs;
   font-weight: 600;
   color: var(--color-text-muted);
 
@@ -45,7 +47,7 @@
 .day-layout {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 16px;
+  gap: s.$space-lg;
   align-items: start;
 
   @media (max-width: 1100px) {
@@ -56,7 +58,7 @@
 .side {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: s.$space-lg;
 }
 
 // ---- The day's steps ----
@@ -70,9 +72,9 @@
 .step {
   display: grid;
   grid-template-columns: 32px 1fr auto;
-  gap: 14px;
+  gap: s.$space-lg;
   align-items: start;
-  padding: 14px 0;
+  padding: s.$space-lg 0;
   position: relative;
 
   & + & {
@@ -103,7 +105,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: s.$font-sm;
   border: 2px solid var(--color-border-strong);
   color: var(--color-text-faint);
   background: var(--color-surface);
@@ -111,9 +113,9 @@
   z-index: 1;
 
   mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+    font-size: s.$icon-md;
+    width: s.$icon-md;
+    height: s.$icon-md;
   }
 }
 
@@ -138,28 +140,28 @@
 .step-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: s.$space-sm;
   flex-wrap: wrap;
   font-weight: 600;
 }
 
 .step-time {
-  font-size: 12px;
+  font-size: s.$font-xs;
   font-weight: 500;
   color: var(--color-text-faint);
   font-variant-numeric: tabular-nums;
 }
 
 .step-body {
-  margin-top: 3px;
-  font-size: 13px;
+  margin-top: s.$space-xs;
+  font-size: s.$font-sm;
   color: var(--color-text-muted);
 }
 
 // Step 1 hosts the reconciliation block ; it only earns its space while the step is current.
 .step-inline {
   display: block;
-  margin-top: 12px;
+  margin-top: s.$space-md;
 }
 
 .step--done .step-inline,
@@ -168,11 +170,11 @@
 }
 
 .step-action {
-  padding-top: 3px;
+  padding-top: s.$space-xs;
 
   &.actions {
     display: flex;
-    gap: 8px;
+    gap: s.$space-sm;
     flex-wrap: wrap;
     justify-content: flex-end;
   }
@@ -180,9 +182,9 @@
 
 // Amber = a warning (something still to complete), per the colour rule.
 .tag {
-  padding: 2px 8px;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-pill);
-  font-size: 11px;
+  font-size: s.$font-2xs;
   font-weight: 600;
   background: var(--color-surface-2);
   color: var(--color-text-muted);
@@ -202,17 +204,17 @@
 .kv {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 8px 16px;
-  margin: 14px 0 0;
+  gap: s.$space-sm s.$space-lg;
+  margin: s.$space-lg 0 0;
 
   dt {
-    font-size: 12px;
+    font-size: s.$font-xs;
     color: var(--color-text-muted);
   }
 
   dd {
     margin: 0;
-    font-size: 13px;
+    font-size: s.$font-sm;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     text-align: right;
@@ -222,9 +224,9 @@
 .mini-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-  font-size: 13px;
+  gap: s.$space-sm;
+  padding: s.$space-sm 0;
+  font-size: s.$font-sm;
 
   & + & {
     border-top: 1px solid var(--color-border-soft);
@@ -241,20 +243,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 1.25rem 0;
+  gap: s.$space-sm;
+  padding: s.$space-xl 0;
   color: var(--color-text-muted);
   text-align: center;
 
   p {
     margin: 0;
-    font-size: 13px;
+    font-size: s.$font-sm;
   }
 
   mat-icon {
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
+    font-size: s.$icon-lg;
+    width: s.$icon-lg;
+    height: s.$icon-lg;
     color: var(--color-text-faint);
   }
 }
