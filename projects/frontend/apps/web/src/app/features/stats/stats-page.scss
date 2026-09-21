@@ -3,38 +3,6 @@
 
 // ---- KPIs ----
 
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.kpi {
-  margin-bottom: 0;
-
-  &__label {
-    font-size: 12px;
-    color: var(--color-text-muted);
-  }
-
-  &__value {
-    margin: 4px 0 2px;
-    font-size: 24px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__sub {
-    font-size: 12px;
-    color: var(--color-text-faint);
-  }
-}
-
 // Amber = warning (stats still to complete), per the colour rule.
 .warn {
   color: var(--color-warning);

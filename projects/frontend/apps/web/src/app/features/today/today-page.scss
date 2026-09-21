@@ -210,25 +210,6 @@
 
 // ---- Side column ----
 
-.kpi {
-  &__label {
-    font-size: 12px;
-    color: var(--color-text-muted);
-  }
-
-  &__value {
-    margin: 4px 0 2px;
-    font-size: 24px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__sub {
-    font-size: 12px;
-    color: var(--color-text-faint);
-  }
-}
-
 .kv {
   display: grid;
   grid-template-columns: auto 1fr;
