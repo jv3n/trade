@@ -1,8 +1,6 @@
 // KPI row — the four figures on top of the stats, journal, trade and account pages : a grid of
-// tiles, each with a label, a value and a sub-line. A tile is a `.card` or a `mat-card`.
-//
-// The bottom margin spaces the row in a page that flows block by block, like the card's ; a page
-// that lays its sections out with a `gap` cancels it in its own layout.
+// tiles, each with a label, a value and a sub-line. A tile is a `.card` or a `mat-card`. The page
+// stack spaces the row.
 
 @use '../sizes' as s;
 
@@ -10,7 +8,6 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: s.$space-lg;
-  margin-bottom: s.$space-lg;
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -18,11 +15,6 @@
 
   @media (max-width: 640px) {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  // The row's gap spaces the tiles — not the card margin they would otherwise carry.
-  > .kpi {
-    margin: 0;
   }
 }
 

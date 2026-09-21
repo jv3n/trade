@@ -5,11 +5,32 @@
 // The default caps the width at 1360 px (the mockup's content width) ; `.page--full` lifts the cap
 // for the pages whose tables and card grids use the whole screen — every page today. Under 900 px
 // the side padding tightens so a phone keeps its horizontal room.
+//
+// **Spacing** — the page is a vertical stack : its gap spaces the sections, and the vertical
+// margins of its direct children are dropped so they don't add to it. The same card, KPI row or
+// banner is thus spaced alike on every page, and nothing needs cancelling. The page header keeps a
+// little of its own for the larger space under a title. This partial is forwarded after the other
+// components so these rules win the tie against their own margins.
+
+@use '../sizes' as s;
 
 .page {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-lg;
   padding: 2rem 2.5rem;
   max-width: 1360px;
   margin: 0;
+
+  > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  // 16 px of gap + 12 = the 28 px a page title has always had under it.
+  > .content-header {
+    margin-bottom: s.$space-md;
+  }
 }
 
 // Full-bleed — no width cap. For the wide data tables whose many columns need every pixel of

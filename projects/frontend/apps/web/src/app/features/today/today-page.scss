@@ -1,17 +1,6 @@
 // « Aujourd'hui » — after `mockup/aujourdhui.html` : the day's walk-through on the left, the
 // side column on the right. Same card / KPI shapes as the stats, journal and trade pages.
 
-// Sections are spaced by the layout's gaps, not by the lib card's own bottom margin.
-.today-page .card {
-  margin-bottom: 0;
-}
-
-.today-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .header-row {
   display: flex;
   justify-content: space-between;

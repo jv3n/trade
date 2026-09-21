@@ -1,14 +1,11 @@
 // Page card — the surface a page groups each of its sections on (the mockups' `.card`), with its
 // title row and the faint hint that sits next to a title. Global, like `.page`, so every page and
-// the child components it renders get the same one.
-//
-// The bottom margin spaces the cards of a page that flows block by block ; a page that lays its
-// sections out with a `gap` cancels it in its own layout.
+// the child components it renders get the same one. No outer margin : the page stack, or the grid
+// the card sits in, spaces it.
 
 @use '../sizes' as s;
 
 .card {
-  margin-bottom: s.$space-lg;
   padding: s.$card-padding-y s.$card-padding-x;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
