@@ -35,16 +35,6 @@
   }
 }
 
-.error-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
-  background: var(--color-danger-soft);
-  color: var(--color-danger);
-}
-
 // ---- KPI row ----
 
 .kpi-row {
@@ -187,20 +177,6 @@
 .muted {
   margin-left: 0.35rem;
   color: var(--color-text-muted);
-}
-
-.loading-state,
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 2rem 0;
-  color: var(--color-text-muted);
-}
-
-.empty-state {
-  flex-direction: column;
 }
 
 .pos {
