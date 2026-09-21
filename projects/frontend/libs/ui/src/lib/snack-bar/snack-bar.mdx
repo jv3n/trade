@@ -87,4 +87,4 @@ this.snackBar.open('Trade saved.', undefined, {
 
 The default snack-bar follows the same intent as the tooltip — **high-contrast inverted pair**. The container resolves to whatever `--color-text` is in the current theme (light in dark mode, dark in light mode), the text to `--color-bg`, the action button to `--color-accent`. The notification pops against any page surface in either theme.
 
-The semantic variants (`error` / `success`) override the same three `--mat-snack-bar-*` CSS vars on the panel host, swapping the inverted pair for the matching semantic palette. They use `--color-on-danger` / `--color-on-success` (white) for the foreground so the contrast holds on the red / green container in both themes.
+The semantic variants (`error` / `success`) override the same three `--mat-snack-bar-*` CSS vars on the panel host, swapping the inverted pair for the matching semantic palette. They use `--color-on-danger` / `--color-on-success` for the foreground — a dark ink on the bright dark-theme fills, white on the deeper light-theme ones — so the text reaches AA on the red / green container in both themes.

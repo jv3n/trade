@@ -1,39 +1,9 @@
-// WCAG contrast of the palette, both themes — the baseline a palette change is measured against
-// (#258). Every text / fill pair below must stay at AA (4.5:1) ; the few known shortfalls are
-// listed with today's ratio and may not get any worse. Fix one, then raise it to AA here.
+// WCAG contrast of the palette, both themes : every text / fill pair below must reach AA (4.5:1).
 import { readFileSync } from 'node:fs';
 
 const tokensScss = readFileSync(new URL('../styles/_tokens.scss', import.meta.url), 'utf8');
 
 const AA = 4.5;
-
-/** `fg on bg` pairs that fall short today — ratio to hold until #299 reworks the palette. */
-const KNOWN_SHORTFALLS = {
-  dark: {
-    'text-dim on surface-2': 4.22,
-    'text-faint on bg': 3.86,
-    'text-faint on surface': 3.61,
-    'text-faint on surface-2': 3.29,
-    'on-accent on accent': 2.68,
-    'on-success on success': 1.96,
-    'on-danger on danger': 2.82,
-  },
-  light: {
-    'text-dim on surface-2': 4.39,
-    'text-faint on bg': 3.46,
-    'text-faint on surface': 3.64,
-    'text-faint on surface-2': 3.29,
-    'success on bg': 4.06,
-    'success on surface': 4.28,
-    'success on surface-2': 3.86,
-    'danger on surface-2': 4.47,
-    'warning on bg': 3.43,
-    'warning on surface': 3.61,
-    'warning on surface-2': 3.26,
-    'on-success on success': 4.16,
-    'on-warning on warning': 3.51,
-  },
-};
 
 const TEXTS = [
   'text',
@@ -101,10 +71,7 @@ for (const [theme, palette] of Object.entries(themes)) {
   for (const [fg, bg] of PAIRS) {
     const key = `${fg} on ${bg}`;
     const measured = Math.round(ratio(palette[fg], palette[bg]) * 100) / 100;
-    const floor = KNOWN_SHORTFALLS[theme][key] ?? AA;
-    if (measured < floor) failures.push(`${theme}: ${key} = ${measured} (must stay >= ${floor})`);
-    else if (floor < AA && measured >= AA)
-      console.log(`${theme}: ${key} now reaches AA (${measured}) — drop it from KNOWN_SHORTFALLS.`);
+    if (measured < AA) failures.push(`${theme}: ${key} = ${measured} (must be >= ${AA})`);
   }
 }
 
@@ -112,4 +79,4 @@ if (failures.length > 0) {
   failures.forEach((f) => console.error(f));
   process.exit(1);
 }
-console.log('Palette contrast holds its baseline in both themes.');
+console.log('Palette contrast reaches WCAG AA in both themes.');

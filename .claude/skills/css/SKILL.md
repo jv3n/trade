@@ -130,9 +130,9 @@ the blocks' own margins.)
   components bring their own focus indicator.
 - **Motion** — `_base.scss` drops CSS transitions and animations under `prefers-reduced-motion` ;
   JavaScript animation (the ECharts chart) reads the setting itself.
-- **Contrast** — `npm run ui:check-contrast` (in CI) measures every text / fill pair of the palette
-  against WCAG AA in both themes ; a pair may not drop below AA, and the known shortfalls may not
-  get worse. A palette change runs it first.
+- **Contrast** — `npm run ui:check-contrast` (in CI) fails if any text / fill pair of the palette
+  falls below WCAG AA in either theme. A palette change runs it first. On the dark theme's bright
+  fills (accent, success, danger, warning) the text is a dark ink, not white.
 - **Names** — an icon-only button gets `[attr.aria-label]` (its tooltip's key) ;
   `npm run web:check-a11y` (in CI) fails otherwise.
 

@@ -64,7 +64,7 @@
 // ============================================================================
 
 // `error` — red surface for failed actions, lost connections, validation rejections that the
-// user can retry. The action button reads `--color-on-danger` (white) for sufficient contrast
+// user can retry. The action button reads `--color-on-danger` for sufficient contrast
 // against the red container.
 .stb-snack-bar--error {
   --mat-snack-bar-container-color: var(--color-danger);
