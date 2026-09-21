@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { computePeriodRange } from './period-preset';
+import { PeriodSelection, computePeriodRange, selectPeriod } from './period-preset';
 
 /**
  * Pure-function tests on the period preset helper — each preset must resolve to the right
  * `(dateFrom, dateTo)` pair relative to a fixed "now". A regression here would silently shift
- * the filter range and the list pages (journal / stats) would show the wrong slice.
+ * the filter range and the list pages (journal / stats / account) would show the wrong slice.
  *
  * `now` is anchored at 2026-06-15 (mid-month, mid-quarter Q2, mid-year) so every preset
  * exercises a non-trivial computation : `thisMonth` doesn't land on a month boundary,
@@ -23,6 +23,12 @@ describe('computePeriodRange', () => {
     const r = computePeriodRange('custom', NOW);
     expect(r.dateFrom).toBeNull();
     expect(r.dateTo).toBeNull();
+  });
+
+  it('today → the day of `now`, from midnight to 23:59:59.999', () => {
+    const r = computePeriodRange('today', NOW);
+    expect(r.dateFrom).toEqual(new Date(2026, 5, 15, 0, 0, 0));
+    expect(r.dateTo).toEqual(new Date(2026, 5, 15, 23, 59, 59, 999));
   });
 
   it('thisMonth → 2026-06-01 → 2026-06-30 23:59:59.999', () => {
@@ -112,5 +118,37 @@ describe('computePeriodRange', () => {
     expect(r.dateTo?.getFullYear()).toBe(2025);
     expect(r.dateTo?.getMonth()).toBe(11); // December
     expect(r.dateTo?.getDate()).toBe(31);
+  });
+});
+
+/**
+ * `selectPeriod` — what a period filter does when a preset is picked : a preset replaces the range,
+ * `custom` keeps the one on screen so the date pickers start from it.
+ */
+describe('selectPeriod', () => {
+  const NOW = new Date(2026, 5, 15, 12, 0, 0);
+  const THIS_MONTH: PeriodSelection = {
+    period: 'thisMonth',
+    ...computePeriodRange('thisMonth', NOW),
+  };
+
+  it('fills the range of the preset picked', () => {
+    expect(selectPeriod('today', THIS_MONTH, NOW)).toEqual({
+      period: 'today',
+      dateFrom: new Date(2026, 5, 15, 0, 0, 0),
+      dateTo: new Date(2026, 5, 15, 23, 59, 59, 999),
+    });
+  });
+
+  it('keeps the current range when switching to custom', () => {
+    expect(selectPeriod('custom', THIS_MONTH, NOW)).toEqual({ ...THIS_MONTH, period: 'custom' });
+  });
+
+  it('clears the range on « all »', () => {
+    expect(selectPeriod('all', THIS_MONTH, NOW)).toEqual({
+      period: 'all',
+      dateFrom: null,
+      dateTo: null,
+    });
   });
 });

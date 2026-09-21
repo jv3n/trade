@@ -12,7 +12,6 @@ import {
   StbButtonToggleModule,
   StbCardModule,
   StbChipsModule,
-  StbDatePickerModule,
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
@@ -40,9 +39,10 @@ import {
   BalanceCurrencyService,
 } from '../../core/app-state/balance-currency.service';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import {
-  PERIOD_PRESETS,
   PeriodPresetKey,
+  PeriodSelection,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
 import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
@@ -104,7 +104,6 @@ interface AccountFilter {
     StbButtonToggleModule,
     StbCardModule,
     StbChipsModule,
-    StbDatePickerModule,
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
@@ -114,6 +113,7 @@ interface AccountFilter {
     StbTableModule,
     StbTooltipModule,
     MorningReconciliation,
+    PeriodFilter,
     TranslatePipe,
   ],
   templateUrl: './account-page.html',
@@ -140,7 +140,6 @@ export class AccountPage {
   /** Today, captured once so the header date doesn't re-evaluate on every change detection. */
   readonly today = new Date();
 
-  readonly periods = PERIOD_PRESETS;
   readonly typeFilters = MOVEMENT_TYPE_FILTERS;
 
   /** Defaults to the running month — the question the page is opened to answer. */
@@ -243,22 +242,8 @@ export class AccountPage {
     this.fetchMovements();
   }
 
-  /** A preset fills the range ; `custom` leaves the two pickers to the user. */
-  onPeriodChange(period: PeriodPresetKey): void {
-    const range = computePeriodRange(period);
-    this.applyFilter(
-      period === 'custom'
-        ? { ...this.appliedFilter(), period }
-        : { ...this.appliedFilter(), period, ...range },
-    );
-  }
-
-  setDateFrom(dateFrom: Date | null): void {
-    this.applyFilter({ ...this.appliedFilter(), dateFrom });
-  }
-
-  setDateTo(dateTo: Date | null): void {
-    this.applyFilter({ ...this.appliedFilter(), dateTo });
+  setPeriod(selection: PeriodSelection): void {
+    this.applyFilter({ ...this.appliedFilter(), ...selection });
   }
 
   onTypeChange(type: MovementTypeFilter): void {

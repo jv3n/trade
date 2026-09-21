@@ -310,6 +310,9 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
 - **Icons** : Material Symbols Rounded — the mapping is in `README.md`.
 - **Alignment** : content aligned left (right after the menu), not centred — easier to read. A
   maximum width is kept so the lines don't stretch.
+- **Period filter** (stats, journal, account) : one shared control — presets from « today » to
+  « last year », « all time », and « custom range », which reveals a from / to date picker. It
+  filters the listing and the KPIs alike.
 - **Dense forms** : Material fields at 40 px (density -4), and no space reserved under a field until
   there is an error to show.
 

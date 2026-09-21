@@ -87,25 +87,9 @@
   }
 }
 
-.period-field {
-  width: 190px;
-
-  ::ng-deep .mat-mdc-form-field-infix {
-    min-height: 36px;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-}
-
 .segmented {
   // Toggle groups sit on the same line as the fields — keep them from stretching.
   align-self: center;
-}
-
-.date-range {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 12px;
 }
 
 // `.profit-positive` / `.profit-negative` remain page-local — they encode the trading-domain

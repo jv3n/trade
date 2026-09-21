@@ -58,11 +58,23 @@
         <section class="card">
           <div class="toolbar">
             <input class="input search" placeholder="Rechercher un ticker…" />
-            <select class="input">
-              <option>Septembre 2026</option>
-              <option>Août 2026</option>
-              <option>Personnalisé…</option>
+            <select class="input" data-period aria-label="Période">
+              <option>Toutes périodes</option>
+              <option>Aujourd'hui</option>
+              <option value="custom">Plage personnalisée</option>
+              <option selected>Ce mois</option>
+              <option>Mois dernier</option>
+              <option>3 derniers mois</option>
+              <option>6 derniers mois</option>
+              <option>Ce trimestre</option>
+              <option>Trimestre dernier</option>
+              <option>Cette année</option>
+              <option>Année dernière</option>
             </select>
+            <span class="period-range" hidden>
+              <input class="input" type="date" aria-label="Du" value="2026-09-14" />
+              <input class="input" type="date" aria-label="Au" value="2026-09-18" />
+            </span>
             <div class="segmented">
               <button class="active">Tous</button>
               <button>GUS</button>
@@ -188,5 +200,14 @@
         </p>
       </main>
     </div>
+    <script>
+      // Filtre de période : « Plage personnalisée » révèle les deux dates, comme dans l'app.
+      document.querySelectorAll('select[data-period]').forEach((select) => {
+        const range = select.parentElement.querySelector('.period-range');
+        const sync = () => (range.hidden = select.value !== 'custom');
+        select.addEventListener('change', sync);
+        sync();
+      });
+    </script>
   </body>
 </html>

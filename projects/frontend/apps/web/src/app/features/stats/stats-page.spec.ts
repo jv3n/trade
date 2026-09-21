@@ -32,7 +32,8 @@ import { StatsPage } from './stats-page';
  * - **The ✓** — disabled until the five prices are in, it ticks / unticks through `setCompleted`
  *   and reloads the list ; the writes are queued, so a field left right before ✓ lands first.
  * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
- * - **Filters** — changing the status resets to page 0 and refetches.
+ * - **Filters** — changing the status resets to page 0 and refetches ; a custom period range
+ *   reaches both the listing and the KPIs.
  *
  * The repository, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
  */
@@ -457,6 +458,19 @@ describe('StatsPage', () => {
   });
 
   // ---- Filters ----
+
+  it('a custom period range filters the listing and the KPIs', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    const from = new Date(2026, 8, 14);
+    const to = new Date(2026, 8, 18);
+
+    page.setPeriod({ period: 'custom', dateFrom: from, dateTo: to });
+    fixture.detectChanges(); // the fetch effect re-runs on change detection
+
+    expect(repo.lastFilter?.dateFrom).toEqual(from);
+    expect(repo.lastFilter?.dateTo).toEqual(to);
+    expect(repo.summary.mock.calls.at(-1)?.[0]).toEqual(repo.lastFilter);
+  });
 
   it('changing the status filter refetches from page 0 with that status', () => {
     const { fixture, page, repo } = setup({ rows: [makeStat()] });

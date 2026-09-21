@@ -136,16 +136,18 @@ describe('AccountPage', () => {
     expect(fixture.componentInstance.pageIndex()).toBe(0);
   });
 
-  it('leaves the range to the user when the « custom » preset is picked', () => {
+  it('applies a custom range picked in the period filter', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
+    const from = new Date(2026, 8, 1);
+    const to = new Date(2026, 8, 18);
 
-    fixture.componentInstance.onPeriodChange('custom');
+    fixture.componentInstance.setPeriod({ period: 'custom', dateFrom: from, dateTo: to });
 
     const f = fixture.componentInstance.appliedFilter();
     expect(f.period).toBe('custom');
-    // The previous range is kept rather than cleared — the pickers open on something sensible.
-    expect(f.dateFrom).toBeInstanceOf(Date);
+    expect(f.dateFrom).toEqual(from);
+    expect(f.dateTo).toEqual(to);
   });
 
   /**

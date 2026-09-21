@@ -109,18 +109,11 @@
         }
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="period-field" subscriptSizing="dynamic">
-        <mat-select
-          [value]="appliedFilter().period"
-          (selectionChange)="onPeriodChange($event.value)"
-        >
-          @for (p of periods; track p) {
-            <mat-option [value]="p">
-              {{ 'journal.filterPanel.periodPresets.' + p | translate }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <app-period-filter
+        dense
+        [selection]="appliedFilter()"
+        (selectionChange)="setPeriod($event)"
+      />
 
       <mat-button-toggle-group
         class="segmented"
@@ -153,39 +146,6 @@
         </mat-button-toggle>
       </mat-button-toggle-group>
     </div>
-
-    <!-- Explicit range — only when the period preset is « custom ». -->
-    @if (appliedFilter().period === 'custom') {
-      <div class="date-range">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'journal.filterPanel.dateFrom' | translate }}</mat-label>
-          <input
-            matInput
-            readonly
-            [matDatepicker]="fromPicker"
-            [value]="appliedFilter().dateFrom"
-            (dateChange)="setDateFrom($event.value)"
-            (click)="fromPicker.open()"
-          />
-          <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
-          <mat-datepicker #fromPicker />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'journal.filterPanel.dateTo' | translate }}</mat-label>
-          <input
-            matInput
-            readonly
-            [matDatepicker]="toPicker"
-            [value]="appliedFilter().dateTo"
-            (dateChange)="setDateTo($event.value)"
-            (click)="toPicker.open()"
-          />
-          <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
-          <mat-datepicker #toPicker />
-        </mat-form-field>
-      </div>
-    }
 
     @if (error(); as msg) {
       <div class="error-banner">
