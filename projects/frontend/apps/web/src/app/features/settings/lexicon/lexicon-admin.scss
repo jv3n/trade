@@ -1,9 +1,11 @@
 // `.page-header`, `.error-banner`, `.loading-state`, `.empty-state` come from the lib / settings
 // shell. The table + search live in the shared `app-lexicon-table` component.
 
+@use 'sizes' as s;
+
 .header-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: s.$space-lg;
 }

@@ -1,16 +1,18 @@
 // The settings page after `mockup/parametres.html` : a secondary menu on the left, the active
 // section on the right. No second sidenav — the app's own navigation stays visible (#200).
 
+@use 'sizes' as s;
+
 .settings-page {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: s.$space-lg;
 }
 
 .settings-layout {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
-  gap: 24px;
+  gap: s.$space-xl;
   align-items: start;
 
   @media (max-width: 900px) {
@@ -23,17 +25,17 @@
 .subnav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: s.$space-hairline;
 
   a {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
+    gap: s.$space-md;
+    padding: s.$space-sm s.$space-md;
     border-radius: var(--radius-md, 8px);
     color: var(--color-text-muted);
     text-decoration: none;
-    font-size: 13px;
+    font-size: s.$font-sm;
     font-weight: 500;
 
     &:hover {
@@ -42,9 +44,9 @@
     }
 
     mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
+      font-size: s.$icon-md;
+      width: s.$icon-md;
+      height: s.$icon-md;
     }
   }
 
@@ -57,9 +59,9 @@
 }
 
 .subnav-title {
-  margin: 14px 0 4px;
-  padding: 0 12px;
-  font-size: 11px;
+  margin: s.$space-lg 0 s.$space-xs;
+  padding: 0 s.$space-md;
+  font-size: s.$font-2xs;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -72,11 +74,11 @@
 
 .admin-tag {
   margin-left: auto;
-  padding: 1px 6px;
+  padding: 1px s.$space-sm;
   border-radius: var(--radius-pill);
   background: var(--color-surface-2);
   color: var(--color-text-faint);
-  font-size: 10px;
+  font-size: s.$font-2xs;
   font-weight: 600;
   text-transform: uppercase;
 }

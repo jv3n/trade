@@ -2,16 +2,18 @@
 // `libs/ui/styles/_shell.scss`. Only the toolbar brand / user menu chrome that's specific to
 // the app shell stays here.
 
+@use 'sizes' as s;
+
 .toolbar-brand {
   display: flex;
   align-items: center;
-  font-size: 1rem;
-  margin-right: 1rem;
+  font-size: s.$font-lg;
+  margin-right: s.$space-lg;
 
   .brand-mark {
     width: 1.6rem;
     height: 1.6rem;
-    font-size: 1.6rem;
+    font-size: s.$font-2xl;
     flex-shrink: 0;
   }
 }
@@ -31,7 +33,7 @@
 
 .user-trigger {
   .user-display {
-    margin-left: 0.4rem;
+    margin-left: s.$space-sm;
     font-weight: 500;
     max-width: 14ch;
     overflow: hidden;
@@ -52,16 +54,16 @@
   display: flex;
   flex-direction: column;
   line-height: 1.2;
-  padding: 0.2rem 0;
+  padding: s.$space-xs 0;
 }
 
 .user-menu-name {
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: s.$font-lg;
 }
 
 .user-menu-role {
-  font-size: 0.75rem;
+  font-size: s.$font-xs;
   opacity: 0.7;
   text-transform: uppercase;
   letter-spacing: 0.05em;

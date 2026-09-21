@@ -1,9 +1,11 @@
 // `.empty-state` comes from the lib (`libs/ui/styles/`).
 
+@use 'sizes' as s;
+
 .lexicon-table {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: s.$space-lg;
 
   // Spaced by the column's gap, not by the lib toolbar's own bottom margin.
   .toolbar {

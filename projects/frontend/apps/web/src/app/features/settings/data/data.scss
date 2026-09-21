@@ -1,10 +1,12 @@
 // Settings › Data — one card per CSV export (journal, stats).
 
+@use 'sizes' as s;
+
 .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: s.$space-xl;
 
   h2 {
-    margin: 0 0 0.25rem;
+    margin: 0 0 s.$space-xs;
   }
 
   .description {
@@ -17,7 +19,7 @@
   max-width: 640px;
 
   & + & {
-    margin-top: 1rem;
+    margin-top: s.$space-lg;
   }
 
   // Round icon container in the card header — accent-soft tint so it reads as a chip affordance.
@@ -28,17 +30,17 @@
     background: var(--color-accent-soft);
     color: var(--color-accent-strong);
     border-radius: var(--radius-pill);
-    font-size: 1.25rem;
+    font-size: s.$font-xl;
   }
 
   .format-list {
-    margin: 0.75rem 0 0;
-    padding-left: 1.25rem;
+    margin: s.$space-md 0 0;
+    padding-left: s.$space-xl;
     color: var(--color-text-muted);
-    font-size: 0.85rem;
+    font-size: s.$font-md;
 
     li + li {
-      margin-top: 0.25rem;
+      margin-top: s.$space-xs;
     }
   }
 }
