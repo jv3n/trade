@@ -39,7 +39,7 @@ storybook_port = dotenv.get("STORYBOOK_HOST_PORT", "6006")
 
 spring_profiles = "local"
 
-node_version = tools.get("nodejs", "24.15.0")
+node_version = tools.get("nodejs", "24.21.0")
 java_major = tools.get("java", "openjdk-21").replace("openjdk-", "").replace("temurin-", "").split(".")[0]
 
 # ─────────────────────────────────────────── platform & toolchain
