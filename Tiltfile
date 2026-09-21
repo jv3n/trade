@@ -76,10 +76,8 @@ java_home = resolve(
 )
 node_bin = resolve(
     "node " + node_version,
-    'export NVM_DIR="$HOME/.nvm" ; . "$NVM_DIR/nvm.sh" --no-use ; dirname $(nvm which ' + node_version + ")"
-    if is_mac
-    else "echo $(mise where node)/bin",
-    "nvm install " + node_version if is_mac else "mise install node@" + node_version,
+    'export NVM_DIR="$HOME/.nvm" ; . "$NVM_DIR/nvm.sh" --no-use ; dirname $(nvm which ' + node_version + ")",
+    "nvm install " + node_version,
 )
 
 def dedupe_path(raw):
