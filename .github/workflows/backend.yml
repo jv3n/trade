@@ -26,7 +26,8 @@ concurrency:
 jobs:
   build:
     name: Build & Test
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -40,12 +41,12 @@ jobs:
 
     # No `services:` block — integration tests boot their own Postgres via Testcontainers
     # (`projects/backend/src/test/kotlin/com/portfolioai/testsupport/PostgresContainer.kt`). Docker is
-    # already available on `ubuntu-latest` runners, no extra setup needed.
+    # already available on the `ubuntu-24.04` runners, no extra setup needed.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -83,7 +84,7 @@ jobs:
       # HTML report as a downloadable artifact for offline review (linked from the Actions run).
       - name: Upload Detekt HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: detekt-report
           path: projects/backend/build/reports/detekt/detekt.html
@@ -94,7 +95,7 @@ jobs:
       # external tooling that wants the structured form.
       - name: Upload Kover coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-coverage-report
           path: projects/backend/build/reports/kover/
@@ -102,7 +103,7 @@ jobs:
 
       # At-a-glance summary on the run page — parses the Kover XML report (JaCoCo-compatible
       # schema) and writes a Markdown table of root-level counters to `$GITHUB_STEP_SUMMARY`.
-      # No external action ; pure Python (pre-installed on `ubuntu-latest`). The trailing
+      # No external action ; pure Python (pre-installed on `ubuntu-24.04`). The trailing
       # `<counter>` elements at the root scope hold the cumulative project totals.
       - name: Coverage summary
         if: always() && hashFiles('projects/backend/build/reports/kover/report.xml') != ''

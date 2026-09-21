@@ -26,7 +26,8 @@ concurrency:
 jobs:
   build:
     name: Build & Test
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
+    runs-on: ubuntu-24.04
 
     # Redundant with the workflow-level block above, but the scanners want the scope declared on
     # the job too. `pull-requests: write` is what lets the sticky coverage comment be posted.
@@ -35,10 +36,10 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: 'projects/frontend/.nvmrc'
           cache: 'npm'
@@ -47,6 +48,10 @@ jobs:
       - name: Install dependencies
         working-directory: projects/frontend
         run: npm ci
+
+      - name: Check the lib's Angular peers
+        working-directory: projects/frontend
+        run: npm run ui:check-peers
 
       - name: Lint
         working-directory: projects/frontend
@@ -63,7 +68,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage-report
           path: projects/frontend/coverage/

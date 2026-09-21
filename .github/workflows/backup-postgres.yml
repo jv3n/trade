@@ -27,7 +27,8 @@ permissions:
 jobs:
   backup:
     name: Dump and upload to R2
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
@@ -42,7 +43,7 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v3
 
-      # The `pg_dump` shipped on `ubuntu-latest` can trail Supabase by a major or two. A newer
+      # The `pg_dump` shipped on `ubuntu-24.04` can trail Supabase by a major or two. A newer
       # client can always dump an older server, so pinning 16 gives a major of headroom.
       - name: Install postgresql-client-16
         run: |

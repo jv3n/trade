@@ -13,6 +13,7 @@
     "ui:build": "ng build ui",
     "ui:test": "ng test ui",
     "ui:lint": "ng lint ui",
+    "ui:check-peers": "node libs/ui/tools/check-peers.mjs",
     "storybook": "ng run ui:storybook",
     "storybook:build": "ng run ui:build-storybook"
   },
