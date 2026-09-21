@@ -9,11 +9,13 @@
     "test": "ng test web",
     "test:coverage": "ng test web --configuration=coverage",
     "lint": "ng lint web && ng lint ui",
+    "web:check-a11y": "node apps/web/tools/check-icon-button-names.mjs",
     "format": "prettier --write \"{apps,libs}/**/*.{ts,html,scss}\"",
     "ui:build": "ng build ui",
     "ui:test": "ng test ui",
     "ui:lint": "ng lint ui",
     "ui:check-peers": "node libs/ui/tools/check-peers.mjs",
+    "ui:check-contrast": "node libs/ui/tools/check-contrast.mjs",
     "storybook": "ng run ui:storybook",
     "storybook:build": "ng run ui:build-storybook"
   },

@@ -1,6 +1,12 @@
 @if (isStandaloneRoute()) {
   <router-outlet />
 } @else {
+  <!-- First stop of the keyboard : jumps over the toolbar and the seven menu entries. A button,
+       not an `href="#…"` : with `<base href="/">` a fragment link would resolve to the home page. -->
+  <button type="button" class="skip-link" (click)="skipToContent(mainContent)">
+    {{ 'header.skipToContent' | translate }}
+  </button>
+
   <mat-toolbar color="primary">
     <div class="toolbar-brand">
       <mat-icon svgIcon="portfolioai" class="brand-mark" aria-hidden="true"></mat-icon>
@@ -116,7 +122,7 @@
       </mat-nav-list>
     </mat-sidenav>
     <mat-sidenav-content>
-      <main class="app-content">
+      <main #mainContent class="app-content" tabindex="-1">
         <router-outlet />
       </main>
     </mat-sidenav-content>

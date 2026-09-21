@@ -12,6 +12,7 @@
           type="button"
           (click)="previousDay()"
           [matTooltip]="'candidates.day.previous' | translate"
+          [attr.aria-label]="'candidates.day.previous' | translate"
         >
           <mat-icon>chevron_left</mat-icon>
         </button>
@@ -32,6 +33,7 @@
           type="button"
           (click)="nextDay()"
           [matTooltip]="'candidates.day.next' | translate"
+          [attr.aria-label]="'candidates.day.next' | translate"
         >
           <mat-icon>chevron_right</mat-icon>
         </button>
@@ -367,6 +369,7 @@
                   stbSize="sm"
                   (click)="edit(c)"
                   [matTooltip]="'candidates.actions.edit' | translate"
+                  [attr.aria-label]="'candidates.actions.edit' | translate"
                 >
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -376,6 +379,7 @@
                   stbSize="sm"
                   (click)="delete(c)"
                   [matTooltip]="'candidates.actions.delete' | translate"
+                  [attr.aria-label]="'candidates.actions.delete' | translate"
                 >
                   <mat-icon>delete</mat-icon>
                 </button>

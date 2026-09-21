@@ -280,6 +280,7 @@
             type="button"
             (click)="clearSearch()"
             [matTooltip]="'stats.clearSearch' | translate"
+            [attr.aria-label]="'stats.clearSearch' | translate"
           >
             <mat-icon>close</mat-icon>
           </button>
@@ -547,6 +548,7 @@
                   type="button"
                   (click)="open(s)"
                   [matTooltip]="'stats.actions.edit' | translate"
+                  [attr.aria-label]="'stats.actions.edit' | translate"
                 >
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -557,6 +559,7 @@
                 type="button"
                 (click)="delete(s)"
                 [matTooltip]="'stats.actions.delete' | translate"
+                [attr.aria-label]="'stats.actions.delete' | translate"
               >
                 <mat-icon>delete</mat-icon>
               </button>

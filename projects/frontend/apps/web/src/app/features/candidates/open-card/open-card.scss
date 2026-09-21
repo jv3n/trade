@@ -38,8 +38,8 @@
     border-color: var(--color-border-strong);
   }
 
+  // The lib's focus ring (`_base.scss`) stays ; the border only reinforces it.
   &:focus-visible {
-    outline: none;
     border-color: var(--color-accent);
   }
 }

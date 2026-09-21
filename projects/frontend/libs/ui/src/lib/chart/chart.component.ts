@@ -33,6 +33,14 @@ const ANIMATION_DEFAULTS = {
   animationEasingUpdate: 'cubicOut',
 } as const;
 
+/**
+ * ECharts animates in JavaScript, out of reach of the global `prefers-reduced-motion` CSS rule
+ * (`styles/_base.scss`) — so the OS setting is read here. Called in the browser only.
+ */
+function prefersReducedMotion(): boolean {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
 /** The option shape, re-exported so a chart component can type its own builder. */
 export type StbChartOption = echarts.EChartsCoreOption;
 
@@ -119,7 +127,7 @@ export class StbChart {
       renderer: 'canvas',
     });
     this.instance.setOption(
-      { ...ANIMATION_DEFAULTS, ...factory(readChartPalette()) },
+      { ...ANIMATION_DEFAULTS, ...factory(readChartPalette()), animation: !prefersReducedMotion() },
       { replaceMerge: ['series'] },
     );
   }
