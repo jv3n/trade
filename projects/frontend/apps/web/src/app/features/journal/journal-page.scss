@@ -1,17 +1,8 @@
 // Page layout after `mockup/journal.html` : KPI row, then one card holding the filter toolbar and
-// the table. `.content-header`, `.error-banner`, `.loading-state`, `.empty-state` come from the lib
-// (`libs/ui/styles/`) — only the journal-specific arrangement lives here.
+// the table. `.content-header`, `.card`, `.error-banner`, `.loading-state`, `.empty-state` come from
+// the lib (`libs/ui/styles/`) — only the journal-specific arrangement lives here.
 
-// ---- Cards / KPIs (same shape as the stats and trade pages) ----
-
-.card {
-  margin-bottom: 16px;
-  padding: 18px 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
+// ---- KPIs (same shape as the stats and trade pages) ----
 
 .kpi-row {
   display: grid;

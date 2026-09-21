@@ -1,0 +1,46 @@
+// Page card — the surface a page groups each of its sections on (the mockups' `.card`), with its
+// title row and the faint hint that sits next to a title. Global, like `.page`, so every page and
+// the child components it renders get the same one.
+//
+// The bottom margin spaces the cards of a page that flows block by block ; a page that lays its
+// sections out with a `gap` cancels it in its own layout.
+
+@use '../sizes' as s;
+
+.card {
+  margin-bottom: s.$space-lg;
+  padding: s.$card-padding-y s.$card-padding-x;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+// `.card-title` is the same title row for a heading that isn't inside a `.card` — a `mat-card`'s.
+.card h3,
+.card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: s.$space-sm;
+  margin: 0 0 s.$space-md;
+  font-size: s.$font-md;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: s.$space-xs;
+  font-size: s.$font-xs;
+  font-weight: 400;
+  color: var(--color-text-faint);
+
+  mat-icon {
+    font-size: s.$icon-xs;
+    width: s.$icon-xs;
+    height: s.$icon-xs;
+  }
+}
