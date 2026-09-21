@@ -49,7 +49,7 @@ Candidate (morning) ──[ action : « → Stat » ]──▶ Stat ──[ acti
 |---|------|-----------|-----------------------|--------|
 | 1 | Morning, premarket | Log into TradeZero, screen on the radar, pick the tickers | The day's **candidates** | ✅ |
 | 2 | Morning | I keep the candidates worth following | Candidate → **stat** (button) | ✅ |
-| 3 | Session | I take trades on TradeZero, or I don't | Nothing — the app is not used during the session | ✅ |
+| 3 | Session | At 9:30, I note each candidate's open and read the target price ; then I take trades on TradeZero, or I don't | The candidates' **open** — nothing else during the session | ✅ |
 | 4 | After the session | I go over my trades | Stat → **trade** (button) : executions, post-mortem, screenshot | ✅ |
 | 5 | Close, 4 pm | I note how the day's tickers behaved | The completed **stats sheet** | ✅ |
 | 6 | Every morning + as it goes | Reconciling the balance with TradeZero, deposits, withdrawals | The **account** | ✅ |
@@ -115,8 +115,22 @@ the page at two moments of the day.
 - Locate / price turns amber above 5 % (heavy borrowing cost).
 - Past days are read-only (history).
 
+### At the open (9:30)
+
+Once the market opens, I type each candidate's **open** straight into its row (an edit : saved when
+leaving the field, no modal). It tells me where to look for the push and whether I go for the trade.
+
+- **Target price** = open × (1 + average push at the open), computed live next to the open. The
+  average is the one of the completed stats of the same pattern — the « average push at the open »
+  KPI of the stats page (+9.6 % in the mockup), shown in the column header.
+- The open is optional, like the other session data : a candidate without one simply shows no
+  target price.
+- Only the open is stored ; the target price is recomputed.
+- Deleting a candidate deletes its row, open included. A stat already created keeps its own copy of
+  the open.
+
 **Screen** : [`candidat.html`](candidat.html) — quick entry at the top (live gap / push preview),
-the day's candidates sorted by gap, a « → Stat » button per row and a "promote them all" button,
+the day's candidates sorted by gap (with the open input and the target price), a « → Stat » button per row and a "promote them all" button,
 day-by-day navigation.
 
 ---
@@ -126,7 +140,9 @@ day-by-day navigation.
 - **Only through an action button** : « → Stat » on a candidate row, or "promote them all". Nothing
   is created automatically.
 - The stat **takes every field of the candidate** (pattern, ticker, previous close, PM open / high,
-  gap, PM push, float, volume, locate, note).
+  gap, PM push, float, volume, locate, note, open).
+- A candidate promoted before 9:30 has no open yet : the open typed on it afterwards also fills its
+  stat, as long as the stat's open is still empty.
 - The stat is created "to complete" : the session data arrives at step 5.
 
 **Decided** :
@@ -141,9 +157,10 @@ day-by-day navigation.
 
 ## Step 3 — Session ✅
 
-**The app is not used during the session.** Everything happens on TradeZero ; the app comes before
-(the morning's candidates) and after (the stats at 4 pm, the trades in the journal). As a
-consequence : no real-time screen, no live position tracking.
+**The app is barely used during the session.** Everything happens on TradeZero ; the app comes
+before (the morning's candidates, their open at 9:30 and the target price — cf. step 1) and after
+(the stats at 4 pm, the trades in the journal). As a consequence : no real-time screen, no live
+position tracking.
 
 ---
 
@@ -185,7 +202,7 @@ resistance, exit strategy), play A / B, the risk indicators (budget, R multiple)
 
 | Data | Example | Note |
 |------|---------|------|
-| Open | 4.20 | Session open — the base of every percentage |
+| Open | 4.20 | Session open — the base of every percentage. **Pre-filled** with the open typed on the candidate at 9:30 |
 | Push at the open | 4.62 | **New** — the price reached by the push that follows the open |
 | HOD | 4.62 | High of Day |
 | LOD | 3.41 | Low of Day |

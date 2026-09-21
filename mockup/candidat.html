@@ -38,6 +38,13 @@
         gap: 6px;
       }
 
+      td input.open-input {
+        width: 84px;
+        height: 30px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
       td.note-cell {
         max-width: 220px;
         overflow: hidden;
@@ -129,6 +136,8 @@
                   <th class="num">High PM</th>
                   <th class="num">Gap ↓</th>
                   <th class="num">Push</th>
+                  <th class="num">Open</th>
+                  <th class="num" title="Open × (1 + push à l'open moyen des stats GUS)">Prix visé <span class="muted" style="font-weight: 400">+9,6 %</span></th>
                   <th class="num">Float</th>
                   <th class="num">Volume</th>
                   <th class="num">Locate</th>
@@ -146,6 +155,8 @@
                   <td class="num">2,46</td>
                   <td class="num"><strong>+65,2 %</strong></td>
                   <td class="num">+33,0 %</td>
+                  <td class="num"><input class="input open-input" value="1,90" placeholder="—" /></td>
+                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">3,9 M</td>
                   <td class="num">9,7 M</td>
                   <td class="num">0,12</td>
@@ -164,13 +175,15 @@
                   <td class="num">5,94</td>
                   <td class="num"><strong>+63,6 %</strong></td>
                   <td class="num">+10,0 %</td>
+                  <td class="num"><input class="input open-input" value="" placeholder="—" /></td>
+                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">11,2 M</td>
                   <td class="num">2,1 M</td>
                   <td class="num">0,08</td>
                   <td class="num">1,5 %</td>
                   <td class="note-cell" title="Offering possible, surveiller les filings">Offering possible, surveiller les filings</td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -182,13 +195,15 @@
                   <td class="num">3,72</td>
                   <td class="num"><strong>+59,0 %</strong></td>
                   <td class="num">+20,0 %</td>
+                  <td class="num"><input class="input open-input" value="3,25" placeholder="—" /></td>
+                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">6,4 M</td>
                   <td class="num">4,8 M</td>
                   <td class="num">0,04</td>
                   <td class="num">1,3 %</td>
                   <td class="note-cell" title="Résistance 3,75">Résistance 3,75</td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -200,13 +215,15 @@
                   <td class="num">1,08</td>
                   <td class="num"><strong>+58,6 %</strong></td>
                   <td class="num">+17,4 %</td>
+                  <td class="num"><input class="input open-input" value="0,95" placeholder="—" /></td>
+                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">25,0 M</td>
                   <td class="num">1,3 M</td>
                   <td class="num">0,01</td>
                   <td class="num">1,1 %</td>
                   <td class="note-cell"></td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -218,13 +235,15 @@
                   <td class="num">8,35</td>
                   <td class="num"><strong>+52,9 %</strong></td>
                   <td class="num">+7,1 %</td>
+                  <td class="num"><input class="input open-input" value="" placeholder="—" /></td>
+                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">58,0 M</td>
                   <td class="num">0,9 M</td>
                   <td class="num">0,05</td>
                   <td class="num">0,6 %</td>
                   <td class="note-cell" title="Gros float, sans doute à écarter">Gros float, sans doute à écarter</td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -237,6 +256,8 @@
           Maquette statique — saisis : pattern, ticker, clôture veille (bougie daily), open PM à 4h00, high PM, float, volume (TradeZero, au
           moment de la saisie), locate, note. Calculés : gap = (open PM − clôture veille) ÷ clôture veille, push = (high PM − open PM) ÷
           open PM, locate / prix = locate ÷ open PM. « → Stat » crée la ligne de stats à partir du candidat (action manuelle).
+          Open : saisi à 9h30 directement dans la ligne (enregistré à la sortie du champ, pas de modale), repris par la stat et
+          pré-remplissant la séance à 16h. Prix visé = open × (1 + push à l'open moyen des stats complétées du même pattern).
         </p>
       </main>
     </div>
@@ -264,6 +285,22 @@
           show($('push-preview'), open, high);
         }
         ['prev-close', 'pm-open', 'pm-high'].forEach((id) => $(id).addEventListener('input', update));
+      })();
+
+      // Prix visé = open × (1 + push à l'open moyen), recalculé à la frappe.
+      (function () {
+        const averagePush = 9.6;
+        const parse = (v) => parseFloat(String(v).replace(',', '.'));
+        const price = (v) => v.toFixed(v < 1 ? 4 : 2).replace('.', ',');
+        document.querySelectorAll('input.open-input').forEach((input) => {
+          const target = input.closest('tr').querySelector('[data-target]');
+          const update = () => {
+            const open = parse(input.value);
+            target.textContent = open > 0 ? price(open * (1 + averagePush / 100)) : '—';
+          };
+          input.addEventListener('input', update);
+          update();
+        });
       })();
     </script>
   </body>
