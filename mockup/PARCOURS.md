@@ -197,6 +197,11 @@ the TradeZero statement to absorb the broker's fees and rounding (a few cents to
 don't know the exact fees in advance). The app shows the computed one, the real one and the gap. The
 **retained P&L** (the real one if typed, else the computed one) is what reaches the account.
 
+**Saving** : the trade sheet is edited as a whole and saved with the « Save » bar that shows up as
+soon as something changed. Leaving the page with changes not saved asks first (« Leave without
+saving? ») — a nav click, the back button, closing or reloading the tab — so a debrief is never lost
+silently.
+
 **Removed** : the pre-trade checklist, the "execution" block (front / back side, short on
 resistance, exit strategy), play A / B, the risk indicators (budget, R multiple).
 

@@ -13,6 +13,11 @@
       "CRYPTO": "Crypto",
       "BOND": "Bond",
       "COMMODITY": "Commodity"
+    },
+    "confirmLeave": {
+      "title": "Leave without saving?",
+      "message": "Your changes are not saved: they will be lost.",
+      "confirm": "Leave without saving"
     }
   },
   "nav": {

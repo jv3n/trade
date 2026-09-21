@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard, authGuard } from './core/router/auth.guards';
+import { unsavedChangesGuard } from './core/router/unsaved-changes.guard';
 
 /**
  * Trading-tracking app : today (home), candidates, stats sheet, journal, account, lexicon and
@@ -53,6 +54,7 @@ export const routes: Routes = [
   {
     path: 'journal/:id',
     canActivate: [authGuard],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./features/journal/journal-detail-page/journal-detail-page').then(
         (m) => m.JournalDetailPage,
