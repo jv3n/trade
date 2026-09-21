@@ -50,13 +50,13 @@
       "stats": {
         "title": "Complete the stats",
         "from": "from 4:00 pm",
-        "body": "Open, push at the open, HOD, LOD and EOD of each stat of the day.",
+        "body": "Finish the session (HOD, LOD, EOD) of each stat of the day, then tick it.",
         "pending": "{{count}} to complete",
         "toComplete": "{{tickers}} still waiting for their session block.",
         "notPromoted": "{{count}} candidates are not in the stats sheet yet.",
         "confirmPromote": {
           "title": "Promote {{count}} candidates to the stats sheet?",
-          "message": "{{tickers}} become stats to complete after the 4 pm close. The candidates already promoted are left alone.",
+          "message": "{{tickers}} become stats to fill in as the session goes. The candidates already promoted are left alone.",
           "confirm": "Promote them all"
         }
       },
@@ -172,12 +172,12 @@
     },
     "confirmPromote": {
       "title": "Promote {{ticker}} to a stat?",
-      "message": "The stat takes every candidate field (pattern, previous close, PM open and high, float, volume, locate, note, 9:30 open). You will complete it after the 4 pm close.",
+      "message": "The stat takes every candidate field (pattern, previous close, PM open and high, float, volume, locate, note, 9:30 open). You will fill it in as the session goes, then tick it.",
       "confirm": "Promote to stat"
     },
     "confirmPromoteAll": {
       "title": "Promote {{count}} candidate(s) to stats?",
-      "message": "{{tickers}} become stats to complete after the 4 pm close. Candidates already in the sheet are left alone.",
+      "message": "{{tickers}} become stats to fill in as the session goes. Candidates already in the sheet are left alone.",
       "confirm": "Promote all to stats"
     },
     "confirmDelete": {
@@ -488,7 +488,7 @@
   },
   "stats": {
     "title": "Stats",
-    "subtitle": "One line per candidate promoted to the sheet — premarket data from the morning, session data entered after the 4 pm close.",
+    "subtitle": "One line per candidate promoted to the sheet — premarket data from the morning, session filled in as the day goes, ticked once complete.",
     "searchPlaceholder": "Search by ticker…",
     "clearSearch": "Clear search",
     "loading": "Loading stats…",
@@ -507,12 +507,20 @@
       "fadeSub": "EOD below the open · average {{average}}"
     },
     "complete": {
-      "title": "Complete the session —",
-      "hint": "to enter after the 4 pm close · the percentages compute vs the open",
+      "title": "Session —",
+      "hint": "fill it as the day goes · each field saves when you leave it · the percentages compute vs the open",
       "percentBase": "base of the percentages",
       "hodBelowLod": "HOD is below the LOD",
-      "later": "Later",
-      "save": "Save"
+      "saved": "✓ saved",
+      "progress": "{{filled}} / {{total}} prices in",
+      "close": "Close"
+    },
+    "completion": {
+      "tick": "Mark completed",
+      "done": "Completed",
+      "untick": "Completed — click to set it back to complete",
+      "missing": "Missing {{fields}}",
+      "column": "Completed"
     },
     "filters": {
       "period": "Period",
@@ -524,6 +532,8 @@
       "custom": "Custom range",
       "thisMonth": "This month",
       "lastMonth": "Last month",
+      "last3Months": "Last 3 months",
+      "last6Months": "Last 6 months",
       "thisQuarter": "This quarter",
       "lastQuarter": "Last quarter",
       "thisYear": "This year",
@@ -560,11 +570,11 @@
       "trade": "Trade"
     },
     "actions": {
-      "complete": "Complete",
       "edit": "Edit the session",
       "delete": "Delete",
       "toTrade": "Trade",
-      "openTrade": "Open the trade"
+      "openTrade": "Open the trade",
+      "session": "Session"
     },
     "confirmPromoteTrade": {
       "title": "Create the {{ticker}} trade?",
@@ -577,12 +587,13 @@
       "confirm": "Delete"
     },
     "snackbar": {
-      "completeSuccess": "Session of {{ticker}} saved.",
-      "completeError": "Couldn't save the session. Please retry.",
       "deleteSuccess": "Stat {{ticker}} deleted.",
       "deleteError": "Couldn't delete the stat. Please retry.",
       "promoteTradeSuccess": "Trade {{ticker}} created in the journal.",
-      "promoteTradeError": "Couldn't create the trade. Please retry."
+      "promoteTradeError": "Couldn't create the trade. Please retry.",
+      "sessionSaveError": "Couldn't save the {{ticker}} session. Please retry.",
+      "untickFirst": "{{ticker}} is completed: untick it before clearing a price.",
+      "completionError": "Couldn't change the status of {{ticker}}. Please retry."
     }
   },
   "lexicon": {
@@ -724,7 +735,7 @@
         "format": {
           "encoding": "UTF-8 with BOM, RFC 4180 — opens cleanly in Excel.",
           "columns": "18 columns — premarket block, session block and flags. No percentage : they are derived from the prices.",
-          "pending": "A stat still to complete comes out with its five session cells empty."
+          "pending": "The session cells come out as filled, and a last column says whether the stat is ticked."
         },
         "success": "Stats export downloaded.",
         "error": "Stats export failed. Please retry."

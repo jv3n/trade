@@ -25,9 +25,12 @@ import { StatsPage } from './stats-page';
  *
  * - **Listing + KPIs** load together on init, and the KPI call carries the same filter as the list.
  * - **Derived columns** — each row exposes gap, PM push and the four session percentages.
- * - **Completion panel** — it opens on the first stat still to complete, « Later » closes it without
- *   saving and stops it re-opening, the save stays blocked until the five session prices are in
- *   (HOD below LOD included), and saving sends the whole row back with the premarket block intact.
+ * - **Session panel** — it opens on the first stat still to complete ; each field left saves the
+ *   whole row (premarket intact) when something changed, nothing while the HOD sits under the LOD ;
+ *   Close saves the field being typed and stops the panel re-opening. A ticked stat can't lose a
+ *   price, and a failed save puts the row back.
+ * - **The ✓** — disabled until the five prices are in, it ticks / unticks through `setCompleted`
+ *   and reloads the list ; the writes are queued, so a field left right before ✓ lands first.
  * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
  * - **Filters** — changing the status resets to page 0 and refetches.
  *
@@ -122,7 +125,12 @@ class MockStatsRepository extends StatsRepository {
   findById = vi.fn((id: string): Observable<StatEntry> => of(makeStat({ id })));
   summary = vi.fn((_filter?: StatEntryFilter): Observable<StatSummary> => of(makeSummary()));
   update = vi.fn((id: string, input: StatEntryInput): Observable<StatEntry> =>
-    of(makeStat({ ...input, id, completed: true })),
+    of(
+      makeStat({ ...input, id, completed: this.rows.find((r) => r.id === id)?.completed ?? false }),
+    ),
+  );
+  setCompleted = vi.fn((id: string, completed: boolean): Observable<StatEntry> =>
+    of({ ...(this.rows.find((r) => r.id === id) ?? makeStat({ id })), completed }),
   );
   delete = vi.fn((_id: string): Observable<void> => of(undefined));
   promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
@@ -157,7 +165,7 @@ function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
   return { fixture, page: fixture.componentInstance, repo, snackBarOpen };
 }
 
-/** Types a full session into the completion panel. */
+/** Types a full session into the session panel. */
 function fillSession(page: StatsPage): void {
   page.setSessionPrice('openPrice', 4.2);
   page.setSessionPrice('pushOpenPrice', 4.62);
@@ -200,9 +208,9 @@ describe('StatsPage', () => {
     expect(page.rows()).toEqual([]);
   });
 
-  // ---- Completion panel ----
+  // ---- Session panel ----
 
-  it('opens the completion panel on the first stat still to complete', () => {
+  it('opens the session panel on the first stat still to complete', () => {
     const pending = makePending();
     const { page } = setup({ rows: [makeStat(), pending] });
 
@@ -210,36 +218,57 @@ describe('StatsPage', () => {
     expect(page.session().openPrice).toBeNull();
   });
 
-  it('Later closes the panel without saving and stops it re-opening on that stat', () => {
-    const { fixture, page, repo } = setup({ rows: [makePending()] });
+  it('saves the whole row when a field is left — session updated, premarket untouched', () => {
+    const pending = makePending();
+    const { page, repo } = setup({ rows: [pending] });
 
-    page.later();
-    expect(page.completing()).toBeNull();
+    // 9:30 : only the open is known.
+    page.setSessionPrice('openPrice', 1.9);
+    page.saveSession();
 
-    // A refetch (here : a filter change) must not bring the dismissed stat back.
-    page.setStatus('TO_COMPLETE');
-    fixture.detectChanges();
-    expect(page.completing()).toBeNull();
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx',
+      expect.objectContaining({
+        ticker: 'SGBX',
+        previousClose: pending.previousClose,
+        pmOpen: pending.pmOpen,
+        openPrice: 1.9,
+        pushOpenPrice: null,
+      }),
+    );
+    expect(page.sessionSaved()).toBe(true);
+    expect(page.rows()[0].openPrice).toBe(1.9);
+    expect(page.completing()?.id).toBe('stat-sgbx');
+  });
+
+  it('saves a flag as soon as it is ticked', () => {
+    const { page, repo } = setup({ rows: [makePending()] });
+
+    page.toggleFlag('entryAfter11am', true);
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx',
+      expect.objectContaining({ entryAfter11am: true }),
+    );
+  });
+
+  it('sends nothing when a field is left unchanged', () => {
+    const { page, repo } = setup({ rows: [makePending()] });
+
+    page.saveSession();
+
     expect(repo.update).not.toHaveBeenCalled();
   });
 
-  it('blocks the save until the five session prices are in', () => {
-    const { page } = setup({ rows: [makePending()] });
-    expect(page.canSave()).toBe(false);
-
-    fillSession(page);
-
-    expect(page.canSave()).toBe(true);
-  });
-
-  it('blocks the save when the HOD is below the LOD', () => {
-    const { page } = setup({ rows: [makePending()] });
+  it('sends nothing while the HOD is below the LOD', () => {
+    const { page, repo } = setup({ rows: [makePending()] });
     fillSession(page);
 
     page.setSessionPrice('hodPrice', 3.2);
+    page.saveSession();
 
     expect(page.hodBelowLod()).toBe(true);
-    expect(page.canSave()).toBe(false);
+    expect(repo.update).not.toHaveBeenCalled();
   });
 
   it('previews each session price against the open while typing', () => {
@@ -251,39 +280,130 @@ describe('StatsPage', () => {
     expect(percents.lod).toBeCloseTo(-18.81, 2);
   });
 
-  it('saves the whole row back — session and flags updated, premarket untouched', () => {
-    const pending = makePending();
-    const { page, repo, snackBarOpen } = setup({ rows: [pending] });
-    fillSession(page);
-    page.toggleFlag('ssr', true);
+  it('counts the prices in and names the missing ones', () => {
+    const { page } = setup({ rows: [makePending()] });
 
-    page.save();
+    page.setSessionPrice('openPrice', 1.9);
+    page.setSessionPrice('pushOpenPrice', 2.2);
+
+    expect(page.sessionFilled()).toBe(2);
+    expect(page.sessionMissing()).toEqual([
+      'stats.fields.hod',
+      'stats.fields.lod',
+      'stats.fields.eod',
+    ]);
+  });
+
+  it('Close saves the field being typed, then stops the panel re-opening on that stat', () => {
+    const { fixture, page, repo } = setup({ rows: [makePending()] });
+    page.setSessionPrice('openPrice', 1.9);
+
+    page.close();
 
     expect(repo.update).toHaveBeenCalledWith(
       'stat-sgbx',
-      expect.objectContaining({
-        ticker: 'SGBX',
-        previousClose: pending.previousClose,
-        pmOpen: pending.pmOpen,
-        openPrice: 4.2,
-        pushOpenPrice: 4.62,
-        eodPrice: 3.52,
-        ssr: true,
-      }),
+      expect.objectContaining({ openPrice: 1.9 }),
     );
-    expect(snackBarOpen.mock.calls.at(-1)?.[2].panelClass).toBe('stb-snack-bar--success');
+    expect(page.completing()).toBeNull();
+    // A refetch (here : a filter change) must not bring the closed stat back.
+    page.setStatus('TO_COMPLETE');
+    fixture.detectChanges();
     expect(page.completing()).toBeNull();
   });
 
-  it('keeps the panel open and toasts an error when the save fails', () => {
+  it('refuses to clear a price of a ticked stat and puts the value back', () => {
+    const ticked = makeStat({ completed: true });
+    const { page, repo, snackBarOpen } = setup({ rows: [ticked] });
+    page.open(ticked);
+
+    page.setSessionPrice('eodPrice', null);
+    page.saveSession();
+
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.session().eodPrice).toBe(3.52);
+    expect(snackBarOpen.mock.calls.at(-1)?.[2].panelClass).toBe('stb-snack-bar--error');
+  });
+
+  it('puts the row back and toasts an error when a save fails', () => {
     const { page, repo, snackBarOpen } = setup({ rows: [makePending()] });
     repo.update.mockReturnValue(throwError(() => new Error('500 from server')));
-    fillSession(page);
 
-    page.save();
+    page.setSessionPrice('openPrice', 1.9);
+    page.saveSession();
 
     expect(snackBarOpen.mock.calls.at(-1)?.[2].panelClass).toBe('stb-snack-bar--error');
+    expect(page.rows()[0].openPrice).toBeNull();
+    expect(page.session().openPrice).toBeNull();
     expect(page.completing()).not.toBeNull();
+  });
+
+  // ---- The ✓ (#263) ----
+
+  it('lists what a row misses before it can be ticked', () => {
+    const { page } = setup({ rows: [makePending({ openPrice: 1.9, pushOpenPrice: 2.2 })] });
+
+    expect(page.rows()[0].missing).toEqual([
+      'stats.fields.hod',
+      'stats.fields.lod',
+      'stats.fields.eod',
+    ]);
+  });
+
+  it('ticks a stat with its five prices, then reloads the list', () => {
+    const full = makeStat({ id: 'stat-bnrg', ticker: 'BNRG', completed: false });
+    const { fixture, page, repo } = setup({ rows: [full] });
+    const fetchesBefore = repo.findAll.mock.calls.length;
+
+    page.toggleCompleted(full);
+    fixture.detectChanges(); // the fetch effect re-runs on change detection
+
+    expect(repo.setCompleted).toHaveBeenCalledWith('stat-bnrg', true);
+    // How many times the effect fires under the test's change detection is not the point — that
+    // the list is fetched again after the tick is.
+    expect(repo.findAll.mock.calls.length).toBeGreaterThan(fetchesBefore);
+  });
+
+  it('unticks a completed stat', () => {
+    const ticked = makeStat({ completed: true });
+    const { page, repo } = setup({ rows: [ticked] });
+
+    page.toggleCompleted(ticked);
+
+    expect(repo.setCompleted).toHaveBeenCalledWith('stat-ktta', false);
+  });
+
+  it('never ticks a stat that misses a price', () => {
+    const pending = makePending();
+    const { page, repo } = setup({ rows: [pending] });
+
+    page.toggleCompleted(pending);
+
+    expect(repo.setCompleted).not.toHaveBeenCalled();
+  });
+
+  it('sends the last field before the tick, one write at a time', () => {
+    const pending = makePending({
+      openPrice: 4.2,
+      pushOpenPrice: 4.62,
+      hodPrice: 4.62,
+      lodPrice: 3.41,
+    });
+    const { page, repo } = setup({ rows: [pending] });
+    const order: string[] = [];
+    repo.update.mockImplementation((id: string, input: StatEntryInput) => {
+      order.push('update');
+      return of(makeStat({ ...input, id, completed: false }));
+    });
+    repo.setCompleted.mockImplementation((id: string, completed: boolean) => {
+      order.push('tick');
+      return of(makeStat({ id, completed }));
+    });
+
+    page.setSessionPrice('eodPrice', 3.52);
+    page.saveSession(); // the EOD field loses focus to the ✓…
+    page.toggleCompleted(page.rows()[0]); // …which is clicked right after
+
+    expect(order).toEqual(['update', 'tick']);
   });
 
   // ---- Delete ----

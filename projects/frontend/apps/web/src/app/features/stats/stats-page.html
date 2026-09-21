@@ -63,7 +63,7 @@
     </section>
   }
 
-  <!-- Completion panel — the 4 pm entry for a stat still to complete. -->
+  <!-- Session panel — filled as the day goes, each field saved when left ; the ✓ ticks the stat. -->
   @if (completing(); as stat) {
     <section class="card complete-card">
       <h3>
@@ -127,7 +127,7 @@
         }
       </div>
 
-      <form class="session-form" (submit)="$event.preventDefault(); save()">
+      <form class="session-form" (submit)="$event.preventDefault()">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.openPrice' | translate }}</mat-label>
           <input
@@ -137,6 +137,8 @@
             [min]="0"
             [value]="session().openPrice"
             (numberChange)="setSessionPrice('openPrice', $event)"
+            (blur)="saveSession()"
+            (keydown.enter)="$any($event.target).blur()"
           />
           <mat-hint>{{ 'stats.complete.percentBase' | translate }}</mat-hint>
         </mat-form-field>
@@ -150,6 +152,8 @@
             [min]="0"
             [value]="session().pushOpenPrice"
             (numberChange)="setSessionPrice('pushOpenPrice', $event)"
+            (blur)="saveSession()"
+            (keydown.enter)="$any($event.target).blur()"
           />
           <mat-hint>{{
             sessionPercents().pushOpen !== null
@@ -167,6 +171,8 @@
             [min]="0"
             [value]="session().hodPrice"
             (numberChange)="setSessionPrice('hodPrice', $event)"
+            (blur)="saveSession()"
+            (keydown.enter)="$any($event.target).blur()"
           />
           <mat-hint>{{
             sessionPercents().hod !== null ? (sessionPercents().hod | number: '1.1-1') + ' %' : '—'
@@ -182,6 +188,8 @@
             [min]="0"
             [value]="session().lodPrice"
             (numberChange)="setSessionPrice('lodPrice', $event)"
+            (blur)="saveSession()"
+            (keydown.enter)="$any($event.target).blur()"
           />
           <mat-hint [class.warn]="hodBelowLod()">{{
             hodBelowLod()
@@ -201,6 +209,8 @@
             [min]="0"
             [value]="session().eodPrice"
             (numberChange)="setSessionPrice('eodPrice', $event)"
+            (blur)="saveSession()"
+            (keydown.enter)="$any($event.target).blur()"
           />
           <mat-hint>{{
             sessionPercents().eod !== null ? (sessionPercents().eod | number: '1.1-1') + ' %' : '—'
@@ -224,12 +234,29 @@
         >
           {{ 'stats.fields.entryAfter11am' | translate }}
         </mat-checkbox>
+        @if (sessionSaved()) {
+          <span class="saved-cue">{{ 'stats.complete.saved' | translate }}</span>
+        }
         <span class="flags-row__spacer"></span>
-        <button mat-stroked-button type="button" (click)="later()">
-          {{ 'stats.complete.later' | translate }}
+        <span class="progress">{{
+          'stats.complete.progress'
+            | translate: { filled: sessionFilled(), total: sessionPriceCount }
+        }}</span>
+        <button mat-stroked-button type="button" (click)="close()">
+          {{ 'stats.complete.close' | translate }}
         </button>
-        <button mat-flat-button type="button" [disabled]="!canSave() || saving()" (click)="save()">
-          {{ 'stats.complete.save' | translate }}
+        <button
+          mat-stroked-button
+          type="button"
+          [stbTone]="stat.completed ? 'success' : null"
+          [disabled]="!stat.completed && sessionMissing().length > 0"
+          [matTooltip]="
+            !stat.completed && sessionMissing().length > 0 ? missingLabel(session()) : ''
+          "
+          (click)="toggleCompleted(stat)"
+        >
+          <mat-icon>check_circle</mat-icon>
+          {{ (stat.completed ? 'stats.completion.done' : 'stats.completion.tick') | translate }}
         </button>
       </div>
     </section>
@@ -452,6 +479,41 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="completed">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              class="tick-col"
+              [matTooltip]="'stats.completion.column' | translate"
+            >
+              ✓
+            </th>
+            <td mat-cell *matCellDef="let s" class="tick-col">
+              <!-- Green once ticked — the one status the colour rule lets be green. -->
+              <button
+                mat-icon-button
+                stbSize="sm"
+                type="button"
+                class="tick"
+                [stbTone]="s.completed ? 'success' : null"
+                [disabled]="!s.completed && s.missing.length > 0"
+                [matTooltip]="
+                  s.completed
+                    ? ('stats.completion.untick' | translate)
+                    : s.missing.length > 0
+                      ? missingLabel(s)
+                      : ('stats.completion.tick' | translate)
+                "
+                [attr.aria-label]="
+                  (s.completed ? 'stats.completion.untick' : 'stats.completion.tick') | translate
+                "
+                (click)="toggleCompleted(s)"
+              >
+                <mat-icon>{{ s.completed ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="trade">
             <th mat-header-cell *matHeaderCellDef>{{ 'stats.fields.trade' | translate }}</th>
             <td mat-cell *matCellDef="let s">
@@ -481,15 +543,16 @@
             <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
             <td mat-cell *matCellDef="let s" stbCol="actions">
               @if (!s.completed) {
-                <button mat-stroked-button stbSize="sm" type="button" (click)="complete(s)">
-                  {{ 'stats.actions.complete' | translate }}
+                <button mat-stroked-button stbSize="sm" type="button" (click)="open(s)">
+                  <mat-icon>edit</mat-icon>
+                  {{ 'stats.actions.session' | translate }}
                 </button>
               } @else {
                 <button
                   mat-icon-button
                   stbSize="sm"
                   type="button"
-                  (click)="complete(s)"
+                  (click)="open(s)"
                   [matTooltip]="'stats.actions.edit' | translate"
                 >
                   <mat-icon>edit</mat-icon>

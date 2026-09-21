@@ -49,9 +49,9 @@ Candidate (morning) ──[ action : « → Stat » ]──▶ Stat ──[ acti
 |---|------|-----------|-----------------------|--------|
 | 1 | Morning, premarket | Log into TradeZero, screen on the radar, pick the tickers | The day's **candidates** | ✅ |
 | 2 | Morning | I keep the candidates worth following | Candidate → **stat** (button) | ✅ |
-| 3 | Session | At 9:30, I note each candidate's open, adjust the target push and read the target price ; then I take trades on TradeZero, or I don't | The candidates' **open** and **target push** — nothing else during the session | ✅ |
+| 3 | Session | At 9:30, I note each candidate's open, adjust the target push and read the target price ; then I take trades on TradeZero, or I don't | The candidates' **open** and **target push** ; the stats as the day goes (push, flags) | ✅ |
 | 4 | After the session | I go over my trades | Stat → **trade** (button) : executions, post-mortem, screenshot | ✅ |
-| 5 | Close, 4 pm | I note how the day's tickers behaved | The completed **stats sheet** | ✅ |
+| 5 | During the day, then the 4 pm close | I note how the day's tickers behaved, then check each stat once complete | The **stats sheet**, each stat checked by hand | ✅ |
 | 6 | Every morning + as it goes | Reconciling the balance with TradeZero, deposits, withdrawals | The **account** | ✅ |
 
 ---
@@ -167,9 +167,9 @@ a « → Stat » button per row and a "promote them all" button, day-by-day navi
 ## Step 3 — Session ✅
 
 **The app is barely used during the session.** Everything happens on TradeZero ; the app comes
-before (the morning's candidates, their open and target push at 9:30 — cf. step 1) and after
-(the stats at 4 pm, the trades in the journal). As a consequence : no real-time screen, no live
-position tracking.
+before (the morning's candidates, their open and target push at 9:30 — cf. step 1), alongside (a
+stat can be filled as the day goes — cf. step 5) and after (the stats checked at 4 pm, the trades in
+the journal). As a consequence : no real-time screen, no live position tracking.
 
 ---
 
@@ -203,11 +203,12 @@ resistance, exit strategy), play A / B, the risk indicators (budget, R multiple)
 
 ---
 
-## Step 5 — Completing the stat (close, 4 pm) ✅
+## Step 5 — Filling and checking the stat (during the day, then 4 pm) ✅
 
-**When** : after the market closes, at 4 pm.
+**When** : as the day goes — the open at 9:30 (already there when it came from the candidate), the
+push once it has happened, the flags as they come — and the rest after the 4 pm close.
 
-**What I type in** (in $, share prices) :
+**What I type in** (in $, share prices), **field by field, in any order** :
 
 | Data | Example | Note |
 |------|---------|------|
@@ -231,7 +232,16 @@ shared between users — a stat always belongs to its user.
 **Decided** :
 
 - One stat per day and per ticker (like the candidates) ; a second one is refused.
-- The stat stays "to complete" until all five session prices are in ; the flags default to no.
+- **Each field is saved on its own**, when leaving it — an edit, no modal. A half-filled stat is a
+  normal state ; the percentages preview on whatever is filled.
+- **Completed is a check I tick myself** (✓, like reviewing a transaction in Monarch), not the
+  consequence of the last price landing. The status is **stored**. The check is only possible once
+  the five session prices are in, and a click unticks it back to "to complete".
+- The check of a completed stat is **green**.
+- A checked stat keeps its check when edited, but can't lose a price : clearing one is refused —
+  untick it first.
+- The KPIs, the averages and the push references of the « À l'open » card only count **checked**
+  stats, so a half-filled day doesn't skew them ; the flags default to no.
 - No percentage is stored : everything is recomputed from the prices.
 - The KPIs on top (completed, average push at the open, average LOD, fade) cover **the whole
   filter**, not the displayed page.
@@ -241,9 +251,10 @@ shared between users — a stat always belongs to its user.
   executions and the three P&L figures on the journal side.
 - "Traded / not traded" filter : shipped with the link to the trade (#193).
 
-**Screen** : [`stats.html`](stats.html) — a "complete the session" panel for the pending stats (live
-percentage preview), a table with the premarket data (carried from the candidate) and the session
-data, the flags, and a « → Trade » button or a link to the existing trade.
+**Screen** : [`stats.html`](stats.html) — a "session" panel for the stat being filled (live
+percentage preview, fields saved one by one, "n / 5 prices" and the check button), a table with the
+premarket data (carried from the candidate), the session data (partial for the stats in progress),
+the flags, the check column, and a « → Trade » button or a link to the existing trade.
 
 ---
 
@@ -292,9 +303,10 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   a red button. No modal for editing, and none for data entry.
 - **The morning entry** : validated as is (inline form + live gap / push preview).
 - **The stats table** : every column stays, horizontal scrolling is not a problem.
-- **Colours** : green / red for outcomes only (P&L, amounts, gaps) ; amber for warnings (SSR, < $1,
-  expensive locate, to complete) ; indigo for statuses and categories (pattern, "in stats") ; the
-  rest neutral, price moves and tickers included.
+- **Colours** : green / red for outcomes (P&L, amounts, gaps) — plus one status, the green check of
+  a completed stat ; amber for warnings (SSR, < $1, expensive locate, to complete) ; indigo for
+  statuses and categories (pattern, "in stats") ; the rest neutral, price moves and tickers
+  included.
 - **Icons** : Material Symbols Rounded — the mapping is in `README.md`.
 - **Alignment** : content aligned left (right after the menu), not centred — easier to read. A
   maximum width is kept so the lines don't stretch.

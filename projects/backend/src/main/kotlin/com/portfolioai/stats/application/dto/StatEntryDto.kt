@@ -13,8 +13,8 @@ import java.util.UUID
  *
  * Carries the **raw prices only** : gap, premarket push, push at open, HOD / LOD / EOD percentages
  * are derived by the front (`features/stats/stats.math.ts`) from these, exactly like the live
- * preview of the completion panel. [completed] is the "to complete" status, derived server-side
- * from the session block.
+ * preview of the session panel. [completed] is the status the owner ticks (#263) — a stat with its
+ * five prices in but not ticked is still "to complete".
  *
  * [tradeId] / [tradeRetainedProfitDollars] mirror the journal side of the stat → trade link (#193)
  * : null means the stat has no trade yet and the listing offers the « → Trade » action ; non-null
@@ -35,7 +35,7 @@ data class StatEntryDto(
   val volumeMillions: BigDecimal?,
   val locatePerShare: BigDecimal?,
   val note: String?,
-  // ---- Session (null while the stat is to complete) ----
+  // ---- Session (typed as the day goes — any of them may still be null) ----
   val openPrice: BigDecimal?,
   val pushOpenPrice: BigDecimal?,
   val hodPrice: BigDecimal?,

@@ -117,6 +117,9 @@ class MockStatsRepository extends StatsRepository {
   update = vi.fn((_id: string, _input: StatEntryInput): Observable<StatEntry> =>
     throwError(() => new Error('not used')),
   );
+  setCompleted = vi.fn((_id: string, _completed: boolean): Observable<StatEntry> =>
+    throwError(() => new Error('not used')),
+  );
   delete = vi.fn((_id: string): Observable<void> => throwError(() => new Error('not used')));
   promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
     throwError(() => new Error('not used')),

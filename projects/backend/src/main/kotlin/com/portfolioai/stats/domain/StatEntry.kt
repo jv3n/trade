@@ -17,16 +17,17 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 
 /**
- * One stat row — a candidate that made it to the stats sheet, completed after the 4 pm close with
- * how the session went (cf. `mockup/PARCOURS.md`, steps 2 and 5). Scoped by [user] (`ON DELETE
- * CASCADE`) ; one stat per (user, [tradeDate], [ticker]).
+ * One stat row — a candidate that made it to the stats sheet, filled with how the session went as
+ * the day goes (cf. `mockup/PARCOURS.md`, steps 2 and 5). Scoped by [user] (`ON DELETE CASCADE`) ;
+ * one stat per (user, [tradeDate], [ticker]).
  *
  * Two blocks :
  * - **Premarket** ([previousClose] … [note]) — copied from the source candidate when the stat is
  *   created, and kept as-is afterwards. [candidateId] keeps the trace (deleting the candidate later
  *   nulls the link without touching the stat).
- * - **Session** ([openPrice] … [eodPrice]) — entered at the close. All null while the stat is "to
- *   complete" ; [isCompleted] is the status, never a stored column.
+ * - **Session** ([openPrice] … [eodPrice]) — typed field by field during the day, any subset may be
+ *   in. [completedAt] is the status : set when the owner ticks the stat, which needs the whole
+ *   session block ([hasFullSession]) — the `ck_stat_entry_completed_whole` CHECK backs it up.
  *
  * No percentage is stored : gap, premarket push, push at open, HOD / LOD / EOD are all derived from
  * the prices ([StatMetrics] server-side for the KPIs, `stats.math` on the front).
@@ -72,18 +73,33 @@ class StatEntry(
   @Column(name = "under_1_dollar", nullable = false) var under1Dollar: Boolean = false,
   @Column(name = "entry_after_11am", nullable = false) var entryAfter11am: Boolean = false,
 
+  /** When the owner ticked the stat as completed — null = to complete. */
+  @Column(name = "completed_at") var completedAt: Instant? = null,
+
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)
   val createdAt: Instant = Instant.now(),
   @Column(name = "updated_at", nullable = false) var updatedAt: Instant = Instant.now(),
 ) {
 
-  /** Completed once the whole session block is in — "to complete" is its negation. */
+  /** Ticked by its owner — "to complete" is its negation. */
   val isCompleted: Boolean
+    get() = completedAt != null
+
+  /** The five session prices are in — the precondition to tick the stat. */
+  val hasFullSession: Boolean
+    get() = missingSessionPrices.isEmpty()
+
+  /** Labels of the session prices still missing, in the sheet's order. */
+  val missingSessionPrices: List<String>
     get() =
-      openPrice != null &&
-        pushOpenPrice != null &&
-        hodPrice != null &&
-        lodPrice != null &&
-        eodPrice != null
+      listOf(
+          "Open" to openPrice,
+          "Push at open" to pushOpenPrice,
+          "HOD" to hodPrice,
+          "LOD" to lodPrice,
+          "EOD" to eodPrice,
+        )
+        .filter { (_, price) -> price == null }
+        .map { (label, _) -> label }
 }

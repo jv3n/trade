@@ -5,6 +5,7 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.domain.StatEntry
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -28,7 +29,7 @@ class StatEntryCsvEncoderTest {
     val header = csv.removePrefix("﻿").substringBefore("\r\n")
 
     assertEquals(StatEntryCsvEncoder.HEADERS, header.split(","))
-    assertEquals(18, StatEntryCsvEncoder.HEADERS.size)
+    assertEquals(19, StatEntryCsvEncoder.HEADERS.size)
   }
 
   @Test
@@ -40,12 +41,12 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
-  fun `a completed stat renders the 18 columns in order, numbers in plain form`() {
+  fun `a completed stat renders the 19 columns in order, numbers in plain form`() {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry()))
 
     assertEquals(
       "2026-09-17,GUS,KTTA,2.65,4.05,4.65,8.2,3.1,0.03,Push rejeté sous 4.65," +
-        "4.20,4.62,4.62,3.41,3.52,false,false,false",
+        "4.20,4.62,4.62,3.41,3.52,false,false,false,true",
       dataRowOf(csv),
     )
   }
@@ -57,7 +58,7 @@ class StatEntryCsvEncoderTest {
 
     assertEquals(
       "2026-09-18,GUS,SGBX,2.65,4.05,4.65,8.2,3.1,0.03,Push rejeté sous 4.65," +
-        ",,,,,false,false,false",
+        ",,,,,false,false,false,false",
       dataRowOf(csv),
     )
   }
@@ -138,6 +139,7 @@ class StatEntryCsvEncoderTest {
       note = note,
       openPrice = if (completed) BigDecimal("4.20") else null,
       pushOpenPrice = if (completed) BigDecimal("4.62") else null,
+      completedAt = if (completed) Instant.parse("2026-09-17T20:05:00Z") else null,
       hodPrice = if (completed) BigDecimal("4.62") else null,
       lodPrice = if (completed) BigDecimal("3.41") else null,
       eodPrice = if (completed) BigDecimal("3.52") else null,

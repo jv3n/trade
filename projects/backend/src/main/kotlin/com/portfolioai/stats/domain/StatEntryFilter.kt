@@ -5,9 +5,9 @@ import java.time.LocalDate
 
 /** Completion status a listing can be narrowed to. */
 enum class StatStatus {
-  /** The session block is still missing — the stat waits for the 4 pm entry. */
+  /** Not ticked yet — the session may be empty, partial or even whole. */
   TO_COMPLETE,
-  /** Every session price is in. */
+  /** Ticked by its owner. */
   COMPLETED,
 }
 

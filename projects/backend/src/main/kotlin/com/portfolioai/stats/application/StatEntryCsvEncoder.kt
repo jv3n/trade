@@ -11,13 +11,14 @@ import com.portfolioai.stats.domain.StatEntry
  * [java.math.BigDecimal.toPlainString] (no scientific notation).
  *
  * Export only — there is no stats CSV import : a stat is born from a candidate. The file is a
- * spreadsheet-friendly copy of the sheet, with a stat still to complete coming out with its five
- * session cells empty. No derived percentage is emitted : gap, premarket push and the session
- * percentages are recomputed from the prices wherever they are displayed.
+ * spreadsheet-friendly copy of the sheet : the session cells carry whatever is filled, and the last
+ * column whether the stat was ticked as completed. No derived percentage is emitted : gap,
+ * premarket push and the session percentages are recomputed from the prices wherever they are
+ * displayed.
  */
 object StatEntryCsvEncoder {
 
-  /** Export layout, order-locked : premarket block, session block, then the flags. */
+  /** Export layout, order-locked : premarket block, session block, the flags, then the status. */
   val HEADERS: List<String> =
     listOf(
       "Date",
@@ -38,6 +39,7 @@ object StatEntryCsvEncoder {
       "SSR?",
       "<\$1 stock?",
       "Entry after 11AM?",
+      "Completed?",
     )
 
   fun encode(entries: List<StatEntry>): String {
@@ -72,6 +74,7 @@ object StatEntryCsvEncoder {
         e.ssr.toString(),
         e.under1Dollar.toString(),
         e.entryAfter11am.toString(),
+        e.isCompleted.toString(),
       )
       .joinToString(",") { escape(it) }
 
