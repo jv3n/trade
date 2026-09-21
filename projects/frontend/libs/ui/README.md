@@ -42,7 +42,8 @@ The app consumes the lib via `projects/frontend/apps/web/src/styles.scss`:
 
 ## Conventions
 
-- **CSS-first**. Don't add TS wrappers for Material components — restyle them via the `--mdc-*` token overrides in `components/_buttons.scss` so every consumer in the app gets the new look on the next reload.
+- **CSS-first**. Restyle Material through its override mixins (`mat.<name>-overrides(...)`) in `src/lib/<name>/<name>.scss`, never by hand-writing its CSS variables — the mixin emits whatever name Material reads, a hand-written one silently dies on a rename.
+- **Peer dependencies follow the workspace's Angular major**. `package.json` declares `@angular/{common,core,material,cdk}` as `^<major>.0.0`, the major of the root `projects/frontend/package.json`. Inside the workspace nothing enforces the range and Dependabot doesn't touch it, so an Angular major bump must lift it by hand — `npm run ui:check-peers` (run by the frontend CI) fails until it does.
 - **One source of truth for tokens**. Every colour, radius, shadow flows through a CSS custom property in `_tokens.scss`. Hard-coded hex anywhere outside `_tokens.scss` is a smell.
 - **Storybook stories live in `src/stories/`**. Use template strings (`render: () => ({ template: '…' })`) — no Angular component required, the goal is to iterate on the SCSS visually.
 - **Typed components arrive on demand**. When a UI pattern needs more than CSS (e.g. composite props, slot projection, signals), add it under `libs/ui/src/lib/<component>/` and export it from `public-api.ts`. Selector prefix `ui`.

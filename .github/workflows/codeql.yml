@@ -36,7 +36,8 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
+    runs-on: ubuntu-24.04
     permissions:
       security-events: write
       packages: read
@@ -54,11 +55,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21
         if: matrix.language == 'java-kotlin'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: temurin

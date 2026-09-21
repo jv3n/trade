@@ -20,7 +20,8 @@ permissions:
 jobs:
   deploy:
     name: Build, push, deploy
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
+    runs-on: ubuntu-24.04
     environment: production
     permissions:
       contents: read
@@ -41,7 +42,7 @@ jobs:
 
       # Full history and tags : the default shallow clone exposes neither the annotated tag nor the
       # parent SHAs, and `gradle-git-properties` needs both.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
