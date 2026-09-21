@@ -4,17 +4,6 @@
 
 @use 'sizes' as s;
 
-// Sections are spaced by the flex gap, not by the lib KPI row's bottom margin.
-.account-page .kpi-row {
-  margin-bottom: 0;
-}
-
-.account-page {
-  display: flex;
-  flex-direction: column;
-  gap: s.$space-lg;
-}
-
 .page-header {
   display: flex;
   align-items: flex-start;

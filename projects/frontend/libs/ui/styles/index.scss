@@ -25,13 +25,14 @@
 @forward 'shell';
 // Global utility classes — page container, card, KPI row, filter toolbar, form stack, banners,
 // badges. NOT tied to a Material module ; stay here.
-@forward 'components/page';
 @forward 'components/card';
 @forward 'components/kpi';
 @forward 'components/toolbar';
 @forward 'components/form';
 @forward 'components/banners';
 @forward 'components/badges';
+// Last : the page stack drops its children's margins, which must win over their own.
+@forward 'components/page';
 
 // Material component overrides — co-located with the wrapper modules under
 // `libs/ui/src/lib/<name>/`. Only the modules that need custom Material 3 token tweaks

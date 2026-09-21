@@ -114,11 +114,14 @@ it when Material's card fits, `.card` otherwise, and give its heading `.card-tit
 
 ## Spacing between blocks
 
-Today two conventions coexist : block margins (the lib's `.card` carries `margin-bottom`, like the
-banners and the KPI row) and container gaps (a page laid out in flex / grid with `gap` cancels
-those margins in its own layout — `.today-page .card`, `.trade-page .card`, `.account-page
-.kpi-row`). #282 unifies them on the lib's `.page`.
-Until then, a new page spaces its sections one way, not both.
+**The page spaces its sections, the sections don't.** `.page` is a vertical stack (`gap:
+$space-lg`) and drops the vertical margins of its direct children, so a card, a KPI row, a banner
+or a toolbar is spaced the same on every page. The page header keeps 12 px of its own — 28 px under
+a title in all. Inside a section, a grid or a flex container spaces its children with `gap` too.
+
+So : no bottom margin on a lib block, no page cancelling one, and a new layout inside a section
+uses `gap`, not sibling margins. (`components/page` is forwarded last so its child rule wins over
+the blocks' own margins.)
 
 ## Before committing styles
 

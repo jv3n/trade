@@ -2,17 +2,8 @@
 // P&L on the left, day context on the right), post-mortem, screenshot and the floating save bar.
 
 .trade-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
   // Room for the floating save bar so it never covers the last card.
   padding-bottom: 72px;
-}
-
-// Sections are spaced by the flex gaps, not by the lib's card / KPI row bottom margins.
-.trade-page .card,
-.trade-page .kpi-row {
-  margin-bottom: 0;
 }
 
 .back-link {
