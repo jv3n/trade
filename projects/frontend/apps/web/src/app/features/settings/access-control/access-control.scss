@@ -1,8 +1,7 @@
 // The banners and `.config-card` come from the lib (`libs/ui/styles/`) ; what is left here is
 // specific to this page.
 
-// Container (padding + max-width 720) comes from the global `.page page--form` composition ;
-// the local class only carries the flex-stack rhythm for the access-control sections.
+// A section of the settings page, which carries the outer padding ; this is only its stack.
 .access-control-layout {
   display: flex;
   flex-direction: column;

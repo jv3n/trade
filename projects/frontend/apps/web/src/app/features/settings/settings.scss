@@ -83,11 +83,4 @@
 
 .settings-content {
   min-width: 0;
-
-  // Each section is a `.page` in its own right elsewhere ; inside this layout the outer padding
-  // is already carried by the settings page itself, so the nested one would double it.
-  ::ng-deep .page {
-    padding: 0;
-    max-width: none;
-  }
 }
