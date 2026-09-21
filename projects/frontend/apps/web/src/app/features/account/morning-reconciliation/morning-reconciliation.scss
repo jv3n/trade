@@ -4,12 +4,6 @@
   display: block;
 }
 
-.hint {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--color-text-faint);
-}
-
 // The four cells of the mockup : app balance, broker balance, gap, action.
 .reconciliation-form {
   display: grid;

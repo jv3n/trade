@@ -1,33 +1,6 @@
 // Stats page — layout after `mockup/stats.html` : KPI row, completion panel, then the table in two
 // column groups (premarket / session).
 
-.card {
-  margin-bottom: 16px;
-  padding: 18px 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-
-  h3 {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 0 0 14px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text);
-  }
-
-  .hint {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--color-text-faint);
-  }
-}
-
 // ---- KPIs ----
 
 .kpi-row {

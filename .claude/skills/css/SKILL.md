@@ -99,20 +99,20 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 | Class | Partial | For |
 | --- | --- | --- |
 | `.page` (+ `--full`, `--medium`, `--narrow`, `--form`) | `components/_page.scss` | the page container |
+| `.card`, `.card h3` / `.card-title`, `.hint` | `components/_card.scss` | a page section, its title row, the faint hint next to a title |
 | `.error-banner`, `.info-banner`, `.warn-banner` | `components/_banners.scss` | page-level messages |
 | `.loading-state`, `.empty-state` | `components/_banners.scss` | a list that loads or has nothing |
 
-The page card (`.card`, its title row, `.hint`), the KPI row and the filter toolbar join the lib
-with their #257 lots (#279, #277, #278).
+The KPI row and the filter toolbar join the lib with their #257 lots (#277, #278).
 
 A `mat-card appearance="outlined"` is already restyled by the lib (surface, border, radius) : use
 it when Material's card fits, `.card` otherwise, and give its heading `.card-title`.
 
 ## Spacing between blocks
 
-Today two conventions coexist : block margins (`.card` carries `margin-bottom`, like the banners)
-and container gaps (a page laid out in flex / grid with `gap` cancels a block's margin in its own
-layout). #282 unifies them on the lib's `.page`.
+Today two conventions coexist : block margins (the lib's `.card` carries `margin-bottom`, like the
+banners) and container gaps (a page laid out in flex / grid with `gap` cancels the card margin in
+its own layout — `.today-page .card`, `.trade-page .card`). #282 unifies them on the lib's `.page`.
 Until then, a new page spaces its sections one way, not both.
 
 ## Before committing styles

@@ -2,6 +2,8 @@
 // balance curve, then one card holding the filter toolbar and the movements table. The KPI and
 // toolbar shapes are the journal's on purpose — the two listings are learnt once.
 
+@use 'sizes' as s;
+
 .account-page {
   display: flex;
   flex-direction: column;
@@ -91,25 +93,10 @@
 
 // ---- Cards ----
 
-.card-title {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin: 0 0 0.75rem;
-  font-size: 15px;
-
-  .day {
-    margin-left: 0.5rem;
-    color: var(--color-text-muted);
-    font-weight: 400;
-  }
-
-  .hint {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--color-text-faint);
-  }
+.card-title .day {
+  margin-left: s.$space-sm;
+  color: var(--color-text-muted);
+  font-weight: 400;
 }
 
 .reconciliation-card,
