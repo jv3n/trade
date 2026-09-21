@@ -90,9 +90,16 @@
             <input
               #pushInput
               class="cell-input"
+              [class.cell-input--warn]="r.unusualPush"
+              [matTooltip]="
+                r.unusualPush
+                  ? ('candidates.openCard.unusualPush' | translate: { max: unusualPush })
+                  : ''
+              "
               appNumberMask
               [decimals]="1"
               [min]="0"
+              [max]="maxTargetPush"
               [value]="r.push"
               placeholder="—"
               autocomplete="off"

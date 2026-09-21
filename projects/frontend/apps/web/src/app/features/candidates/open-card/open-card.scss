@@ -42,6 +42,13 @@
   &:focus-visible {
     border-color: var(--color-accent);
   }
+
+  // Amber = a warning, per the colour rule : a push past 100 % is possible but rare.
+  &--warn,
+  &--warn:hover {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+  }
 }
 
 .push-cell {

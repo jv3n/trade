@@ -1,5 +1,8 @@
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import {
+  NumberMaskDirective,
   caretIndexAfterDigits,
   countDigitsBefore,
   formatNumber,
@@ -100,5 +103,48 @@ describe('NumberMaskDirective helpers', () => {
       // After all positions → end of string.
       expect(caretIndexAfterDigits('1234,5', 99)).toBe(6);
     });
+  });
+});
+
+/**
+ * Focus behaviour on a live `<input>`. Protects the pilot-test bug (#306) : a field pre-filled with
+ * `15,3` read `15200` after typing `200`, because focusing it left a caret at the end.
+ */
+describe('NumberMaskDirective on focus', () => {
+  @Component({
+    imports: [NumberMaskDirective],
+    template: `<input appNumberMask [decimals]="1" [value]="15.3" />`,
+  })
+  class Host {}
+
+  function setup(): HTMLInputElement {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    return fixture.nativeElement.querySelector('input');
+  }
+
+  it('selects the whole value when the field gets the focus', () => {
+    const input = setup();
+    input.focus();
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(input.value.length);
+  });
+
+  it('keeps the selection through the mouseup of the click that focused the field', () => {
+    const input = setup();
+    input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    input.focus();
+    const mouseUp = new MouseEvent('mouseup', { bubbles: true, cancelable: true });
+    input.dispatchEvent(mouseUp);
+    expect(mouseUp.defaultPrevented).toBe(true);
+  });
+
+  it('lets a click inside an already focused field place the caret', () => {
+    const input = setup();
+    input.focus();
+    input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    const mouseUp = new MouseEvent('mouseup', { bubbles: true, cancelable: true });
+    input.dispatchEvent(mouseUp);
+    expect(mouseUp.defaultPrevented).toBe(false);
   });
 });

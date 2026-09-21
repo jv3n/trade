@@ -62,6 +62,12 @@
         padding-right: 24px;
       }
 
+      /* Push visé au-delà de 100 % : possible sur une small cap, mais assez rare pour être signalé. */
+      .open-table .suffixed .input.warn {
+        border-color: var(--warn);
+        color: var(--warn);
+      }
+
       .open-table .suffixed span {
         position: absolute;
         right: 9px;
@@ -234,7 +240,7 @@
                   <td class="num"><input class="input" data-open value="0,95" placeholder="—" /></td>
                   <td class="num muted" data-high-vs-open>—</td>
                   <td class="num" style="white-space: nowrap">
-                    <span class="suffixed"><input class="input" data-push value="9,6" /><span>%</span></span>
+                    <span class="suffixed"><input class="input" data-push value="180,0" /><span>%</span></span>
                     <button type="button" class="btn btn-sm btn-icon reset" title="Revenir au repère"><span class="icon">undo</span></button>
                   </td>
                   <td class="num"><span class="target" data-target>—</span></td>
@@ -387,7 +393,9 @@
           modale : c'est une édition). Prix visé = open × (1 + push visé). Le push visé suit le repère choisi (médiane, moyenne,
           3ᵉ quartile, max du push à l'open des stats complétées du même pattern) tant qu'il n'est pas modifié à la main ; une valeur
           tapée reste propre à ce candidat (↶ pour revenir au repère). Le repère choisi n'est pas enregistré. En passant en stat,
-          l'open est repris, pas le push visé.
+          l'open est repris, pas le push visé. Un champ numérique sélectionne sa valeur au focus : taper remplace la valeur.
+          Un push visé au-delà de 100 % est gardé mais passe en orange (« Push inhabituel ») — une small cap peut pousser de 200 %
+          et plus ; au-delà de 1000 %, c'est une faute de frappe et il est ramené à 1000.
         </p>
       </main>
     </div>
@@ -431,6 +439,10 @@
           const push = parse(tr.querySelector('[data-push]').value);
           const high = parse(tr.dataset.high);
           tr.classList.toggle('custom', push !== reference);
+          const pushInput = tr.querySelector('[data-push]');
+          const unusual = push > 100;
+          pushInput.classList.toggle('warn', unusual);
+          pushInput.title = unusual ? 'Push inhabituel, au-delà de 100 % — vérifie la saisie.' : '';
           const set = (sel, text) => (tr.querySelector(sel).textContent = text);
           if (!(open > 0)) {
             ['[data-high-vs-open]', '[data-target]'].forEach((sel) => set(sel, '—'));
@@ -452,8 +464,19 @@
 
         rows.forEach((tr) => {
           tr.querySelectorAll('input').forEach((input) => {
+            // Le clic qui donne le focus annulerait la sélection au relâchement.
+            let selectOnUp = false;
+            input.addEventListener('mousedown', () => (selectOnUp = document.activeElement !== input));
+            input.addEventListener('mouseup', (e) => selectOnUp && (e.preventDefault(), (selectOnUp = false)));
+            input.addEventListener('focus', () => input.select());
             input.addEventListener('input', () => update(tr));
-            input.addEventListener('change', () => saved(tr));
+            input.addEventListener('change', () => {
+              if (input.matches('[data-push]') && parse(input.value) > 1000) {
+                input.value = '1000';
+                update(tr);
+              }
+              saved(tr);
+            });
           });
           tr.querySelector('.reset').addEventListener('click', () => {
             tr.querySelector('[data-push]').value = String(reference).replace('.', ',');

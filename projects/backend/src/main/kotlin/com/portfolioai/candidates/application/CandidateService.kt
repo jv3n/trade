@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 
+/** Past it, a target push is a typo : a small cap can push 200 % and more, not ten times over. */
+private val MAX_TARGET_PUSH_PERCENT = BigDecimal(1000)
+
 /**
  * Candidates service — the morning capture (cf. `mockup/PARCOURS.md › Étape 1`). Everything is
  * scoped to the current user, and a missing-or-foreign id → 404 (never 403) so we don't leak
@@ -27,7 +30,8 @@ import org.springframework.web.server.ResponseStatusException
  * that day is a 409. The check runs in-service for a precise message ; the DB unique constraint
  * `ux_candidate_user_day_ticker` stays the safety net. Validation is in-service too : a blank
  * ticker, a non-positive price, a PM high below the PM open or a negative float / volume / locate
- * return a clean 400 rather than reaching the DB CHECK constraints.
+ * return a clean 400 rather than reaching the DB CHECK constraints, and so does a target push above
+ * 1000 %.
  *
  * **The open typed at 9:30** travels to the stat : copied on promotion, and — for a candidate
  * promoted before the open — pushed onto its stat when typed later, as long as the stat has none.
@@ -178,7 +182,12 @@ class CandidateService(
     locatePerShare = request.locatePerShare?.requireNonNegative("Locate")
     note = request.note?.trim()?.ifEmpty { null }
     openPrice = request.openPrice?.requirePositive("Open")
-    targetPushPercent = request.targetPushPercent?.requireNonNegative("Target push")
+    targetPushPercent =
+      request.targetPushPercent?.requireNonNegative("Target push")?.also {
+        if (it > MAX_TARGET_PUSH_PERCENT) {
+          throw badRequest("Target push must not exceed $MAX_TARGET_PUSH_PERCENT %")
+        }
+      }
   }
 
   /**

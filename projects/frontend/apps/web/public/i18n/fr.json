@@ -156,6 +156,7 @@
       "push": "Push visé",
       "pushOf": "Push visé pour {{ticker}}",
       "backToReference": "Revenir au repère",
+      "unusualPush": "Push inhabituel, au-delà de {{max}} % — vérifie la saisie.",
       "target": "Prix visé",
       "delta": "Écart"
     },

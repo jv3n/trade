@@ -18,6 +18,8 @@ import { AtOpenChange, OpenCard, PushReferences } from './open-card';
  * - **Saving** — the open and the target push are handed to the page on blur, only when they
  *   changed ; typing the reference back, clearing the push or « back to the reference » hands over
  *   a `null` push (the row follows the reference again).
+ * - **Plausibility** — a push above 100 % is kept but flagged (a small cap can push that far) ; one
+ *   above 1000 % is a typo and is capped.
  *
  * The figures are the stats page mockup's : median +6.8 %, average +9.6 %, Q3 +14.2 %, max +21.5 %.
  */
@@ -173,6 +175,26 @@ describe('OpenCard', () => {
     card.commitPush(row);
 
     expect(emitted).toEqual([{ candidate: row.candidate, patch: { targetPushPercent: 15 } }]);
+  });
+
+  // Hit in the pilot test : 15200 % was saved, aiming at 145 $ on a 1 $ stock.
+  it('caps a typed push at 1000 %', () => {
+    const { card, emitted } = setup();
+    const [row] = card.rows();
+
+    card.draftPush(row, 15200);
+    card.commitPush(row);
+
+    expect(emitted).toEqual([{ candidate: row.candidate, patch: { targetPushPercent: 1000 } }]);
+  });
+
+  it('flags a push above 100 % as unusual, without refusing it', () => {
+    const { card } = setup([
+      makeCandidate({ targetPushPercent: 250 }),
+      makeCandidate({ id: 'c2', ticker: 'GLND', targetPushPercent: 100 }),
+    ]);
+
+    expect(card.rows().map((r) => r.unusualPush)).toEqual([true, false]);
   });
 
   it('puts a row back on the reference when the reference value is typed back or cleared', () => {
