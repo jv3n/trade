@@ -159,12 +159,12 @@ From a component SCSS in the consumer app, go through the aggregator so the rest
 }`}
 />
 
-When interpolating into a CSS custom property value (typical for Material token overrides), wrap with `#{}` — Sass treats `--*` as opaque :
+When feeding a Material token override, pass the variable to the component's override mixin rather than writing the CSS custom property by hand — the mixin emits whatever variable name Material reads :
 
 <Source
   language="scss"
-  code={`.mat-mdc-button-base {
-  --mdc-filled-button-container-height: #{s.$button-height};
+  code={`.stb-size--md {
+  @include mat.button-overrides((filled-container-height: s.$button-height));
 }`}
 />
 
