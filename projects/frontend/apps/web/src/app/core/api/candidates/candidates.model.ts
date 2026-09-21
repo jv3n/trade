@@ -5,8 +5,8 @@ import { Pattern } from '../shared/pattern.model';
  * known in premarket only (cf. `mockup/PARCOURS.md › Étape 1`). The wire format (ISO date strings)
  * is owned by the HTTP adapter ; consumers stay in `Date` land.
  *
- * Only the captured fields live here : gap %, push % and locate / price are derived by
- * `features/candidates/candidates.math`, never stored. Float and volume are in **millions** of
+ * Only the captured fields live here : gap %, push %, locate / price and the target price are
+ * derived by `features/candidates/candidates.math`, never stored. Float and volume are in **millions** of
  * shares, the locate in $ / share. One candidate per (day, ticker) — a duplicate is a 409.
  */
 export interface Candidate {
@@ -25,6 +25,10 @@ export interface Candidate {
   volumeMillions: number | null;
   locatePerShare: number | null;
   note: string | null;
+  /** Session open, typed at 9:30 — `null` until then. Carried over to the stat on promotion. */
+  openPrice: number | null;
+  /** Push aimed at, in % above the open — `null` follows the reference picked on the card. */
+  targetPushPercent: number | null;
   /** True once this candidate has been promoted to the stats sheet — it can't be promoted twice. */
   promoted: boolean;
   createdAt: Date;

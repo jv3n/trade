@@ -1,0 +1,90 @@
+// « À l'open » card — layout after `mockup/candidat.html`. The card frame and title come from the page.
+
+.references {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+
+  &__label,
+  &__none {
+    color: var(--color-text-muted);
+  }
+}
+
+// Bare inputs rather than mat-form-fields : a whole outlined field per cell would double the row
+// height of a table read at a glance at the open.
+.cell-input {
+  width: 5.5rem;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+
+  &::placeholder {
+    color: var(--color-text-faint);
+  }
+
+  &:hover {
+    border-color: var(--color-border-strong);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+}
+
+.push-cell {
+  white-space: nowrap;
+}
+
+.suffixed {
+  position: relative;
+  // inline-flex rather than inline-block : no line-box strut, so the box is exactly the input's
+  // height and the absolutely-placed « % » sits on the input's centre, not the line's.
+  display: inline-flex;
+  align-items: center;
+
+  .cell-input {
+    width: 4.5rem;
+    padding-right: 22px;
+  }
+
+  &__unit {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+}
+
+// Inline boxes sit on the text baseline by default, which drops the 36px icon button below the
+// 28px input next to it. Middle-aligned, they share the row's centre line — as `stbCol="actions"`.
+.cell-input,
+.suffixed,
+.reset {
+  vertical-align: middle;
+}
+
+// Kept in the layout when hidden, so the column doesn't jump as a push gets typed.
+.reset--hidden {
+  visibility: hidden;
+}
+
+.target {
+  font-size: 15px;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}

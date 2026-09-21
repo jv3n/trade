@@ -139,6 +139,26 @@
       "push": "Push",
       "note": "Note"
     },
+    "openCard": {
+      "title": "À l'open",
+      "hint": "à 9h30 · tape l'open, ajuste le push visé selon le ticker",
+      "reference": "Push visé par défaut :",
+      "kinds": {
+        "median": "Médiane",
+        "average": "Moyenne",
+        "thirdQuartile": "3ᵉ quartile",
+        "max": "Max"
+      },
+      "noReference": "Aucune stat complétée pour ce pattern — tape le push à la main.",
+      "open": "Open ($)",
+      "openOf": "Open de {{ticker}}",
+      "highVsOpen": "High PM vs open",
+      "push": "Push visé",
+      "pushOf": "Push visé pour {{ticker}}",
+      "backToReference": "Revenir au repère",
+      "target": "Prix visé",
+      "delta": "Écart"
+    },
     "list": {
       "count": "{{count}} candidat(s) · triés par gap",
       "empty": "Aucun candidat ce jour-là."
@@ -152,7 +172,7 @@
     },
     "confirmPromote": {
       "title": "Passer {{ticker}} en stat ?",
-      "message": "La stat reprend toutes les données du candidat (pattern, clôture veille, open et high PM, float, volume, locate, note). Tu la compléteras après la clôture de 16h.",
+      "message": "La stat reprend toutes les données du candidat (pattern, clôture veille, open et high PM, float, volume, locate, note, open de 9h30). Tu la compléteras après la clôture de 16h.",
       "confirm": "Passer en stat"
     },
     "confirmPromoteAll": {
@@ -176,7 +196,8 @@
       "duplicate": "{{ticker}} est déjà saisi ce jour-là.",
       "loadError": "Impossible de charger les candidats. Réessaie.",
       "saveError": "Impossible d'enregistrer le candidat. Réessaie.",
-      "deleteError": "Impossible de supprimer le candidat. Réessaie."
+      "deleteError": "Impossible de supprimer le candidat. Réessaie.",
+      "atOpenSaveError": "Impossible d'enregistrer {{ticker}} à l'open. Réessaie."
     }
   },
   "account": {

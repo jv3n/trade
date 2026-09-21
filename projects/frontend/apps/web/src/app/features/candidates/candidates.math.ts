@@ -26,6 +26,15 @@ export function locatePercent(locatePerShare: number | null, pmOpen: number | nu
 }
 
 /**
+ * Target price = open × (1 + push %) — where the push that follows the open usually tops out, with
+ * [pushPercent] the average push at the open of the completed stats.
+ */
+export function targetPrice(open: number | null, pushPercent: number | null): number | null {
+  if (open === null || pushPercent === null || !(open > 0)) return null;
+  return open * (1 + pushPercent / 100);
+}
+
+/**
  * Locate / price above which the borrow cost is flagged as a **warning** (amber) — the mockup
  * flags SGBX at 6.5 % while 1–2 % reads as normal.
  */

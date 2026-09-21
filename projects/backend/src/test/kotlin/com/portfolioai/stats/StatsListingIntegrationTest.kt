@@ -46,7 +46,8 @@ import org.springframework.web.server.ResponseStatusException
  * - **One stat per (user, day, ticker)** — a second create is a 409, and so is renaming a stat onto
  *   a slot the caller already holds.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
- *   set and averages the derived percentages (never stored) of the completed rows only.
+ *   set and averages the derived percentages (never stored) of the completed rows only, plus the
+ *   median / 3rd quartile / max push at open behind the candidates' « À l'open » card (#261).
  *
  * `AuthService` is overridden with `@MockitoBean` so the user scope is deterministic — same pattern
  * as `CandidateIntegrationTest`.
@@ -350,6 +351,31 @@ class StatsListingIntegrationTest {
     // KTTA EOD -16.19 (3.52), BNZI -11.03 (2.58) -> average -13.61.
     assertEquals(0, BigDecimal("-13.61").compareTo(summary.averageEodPercent))
     assertEquals(2, summary.fadeCount, "both closed below their open — the GUS thesis playing out")
+  }
+
+  @Test
+  fun `summarise gives the median, 3rd quartile and max push at open of the completed rows`() {
+    seedThreeStats()
+
+    val summary = service.summarise(noFilter)
+
+    // Completed pushes : BNZI +5.17, KTTA +10.00 ; the stat to complete has none and weighs
+    // nothing.
+    assertEquals(0, BigDecimal("7.59").compareTo(summary.medianPushOpenPercent))
+    // 5.17 + 0.75 * (10.00 - 5.17) = 8.7925 -> 8.79.
+    assertEquals(0, BigDecimal("8.79").compareTo(summary.thirdQuartilePushOpenPercent))
+    assertEquals(0, BigDecimal("10.00").compareTo(summary.maxPushOpenPercent))
+  }
+
+  @Test
+  fun `summarise has no push reference without a completed stat`() {
+    service.create(premarketRequest(ticker = "KTTA"))
+
+    val summary = service.summarise(noFilter)
+
+    assertNull(summary.medianPushOpenPercent)
+    assertNull(summary.thirdQuartilePushOpenPercent)
+    assertNull(summary.maxPushOpenPercent)
   }
 
   @Test

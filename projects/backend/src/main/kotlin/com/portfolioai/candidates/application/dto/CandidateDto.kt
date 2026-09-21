@@ -8,8 +8,9 @@ import java.util.UUID
 
 /**
  * One candidate as exposed to the front — the raw morning capture, plus whether it already made it
- * to the stats sheet. Gap %, push % and locate / price are derived client-side from these fields
- * and never stored. Float and volume are in millions of shares, the locate in $ / share.
+ * to the stats sheet. Gap %, push %, locate / price and the target price are derived client-side
+ * from these fields and never stored. Float and volume are in millions of shares, the locate in $ /
+ * share.
  */
 data class CandidateDto(
   val id: UUID,
@@ -23,6 +24,10 @@ data class CandidateDto(
   val volumeMillions: BigDecimal?,
   val locatePerShare: BigDecimal?,
   val note: String?,
+  /** Session open typed at 9:30 — null until then. */
+  val openPrice: BigDecimal?,
+  /** Push aimed at, in % above the open — null = follows the reference picked on the card. */
+  val targetPushPercent: BigDecimal?,
   /** True once this candidate has been promoted to the stats sheet (#189) — it cannot be twice. */
   val promoted: Boolean,
   val createdAt: Instant,

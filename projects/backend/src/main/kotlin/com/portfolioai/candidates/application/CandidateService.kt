@@ -28,6 +28,9 @@ import org.springframework.web.server.ResponseStatusException
  * `ux_candidate_user_day_ticker` stays the safety net. Validation is in-service too : a blank
  * ticker, a non-positive price, a PM high below the PM open or a negative float / volume / locate
  * return a clean 400 rather than reaching the DB CHECK constraints.
+ *
+ * **The open typed at 9:30** travels to the stat : copied on promotion, and — for a candidate
+ * promoted before the open — pushed onto its stat when typed later, as long as the stat has none.
  */
 @Service
 class CandidateService(
@@ -134,7 +137,10 @@ class CandidateService(
     requireFree(candidate.user.id, request.tradingDate, ticker, ownId = candidate.id)
     candidate.apply(request, ticker)
     candidate.updatedAt = Instant.now()
-    return repo.save(candidate).toDto()
+    val saved = repo.save(candidate)
+    saved.openPrice?.let { statEntryService.fillMissingOpen(saved.id, it) }
+    val promoted = saved.id in statEntryService.promotedCandidateIds(listOf(saved.id))
+    return saved.toDto(promoted = promoted)
   }
 
   @Transactional fun delete(id: UUID) = repo.delete(loadOwned(id))
@@ -171,11 +177,14 @@ class CandidateService(
     volumeMillions = request.volumeMillions?.requireNonNegative("Volume")
     locatePerShare = request.locatePerShare?.requireNonNegative("Locate")
     note = request.note?.trim()?.ifEmpty { null }
+    openPrice = request.openPrice?.requirePositive("Open")
+    targetPushPercent = request.targetPushPercent?.requireNonNegative("Target push")
   }
 
   /**
-   * The premarket block a promotion copies onto the stats sheet. The session block stays empty —
-   * that is what makes the new stat "to complete" — and the flags default to false.
+   * What a promotion copies onto the stats sheet : the premarket block, plus the open when it was
+   * typed at 9:30. The rest of the session block stays empty — the new stat is "to complete" — and
+   * the flags default to false.
    */
   private fun Candidate.toStatRequest(): StatEntryRequest =
     StatEntryRequest(
@@ -189,6 +198,7 @@ class CandidateService(
       volumeMillions = volumeMillions,
       locatePerShare = locatePerShare,
       note = note,
+      openPrice = openPrice,
     )
 
   private fun Candidate.toDto(promoted: Boolean = false): CandidateDto =
@@ -204,6 +214,8 @@ class CandidateService(
       volumeMillions = volumeMillions,
       locatePerShare = locatePerShare,
       note = note,
+      openPrice = openPrice,
+      targetPushPercent = targetPushPercent,
       promoted = promoted,
       createdAt = createdAt,
       updatedAt = updatedAt,

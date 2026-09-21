@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test
  * - the sign convention — a negative session percentage means the level sat **below** the open,
  *   which is the favourable side for a short ;
  * - the null-safety contract — a missing price or a non-positive base yields null rather than a
- *   division blow-up, so a stat still "to complete" simply contributes nothing to an average.
+ *   division blow-up, so a stat still "to complete" simply contributes nothing to an average ;
+ * - the quantiles behind the « À l'open » references (#261) — interpolated like the spreadsheet
+ *   `PERCENTILE.INC`, so a figure can be checked by hand.
  *
  * No Spring / DB here.
  */
@@ -100,6 +102,44 @@ class StatMetricsTest {
     assertNull(StatMetrics.gapPercent(previousClose = BigDecimal.ZERO, pmOpen = price("4.05")))
     assertNull(StatMetrics.pmPushPercent(pmOpen = BigDecimal.ZERO, pmHigh = price("4.65")))
   }
+
+  // ---------------------------------------------------------------------------
+  // Quantiles — the « À l'open » references (#261)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the median of an odd count is the middle push`() {
+    val median = StatMetrics.quantile(pushes("7.1", "10.0", "33.0"), BigDecimal("0.5"))
+
+    assertEquals(0, median!!.compareTo(BigDecimal("10.00")), "got ${median.toPlainString()}")
+  }
+
+  @Test
+  fun `the median of an even count sits halfway between the two middle pushes`() {
+    val median = StatMetrics.quantile(pushes("10.0", "5.17", "20.0", "7.1"), BigDecimal("0.5"))
+
+    // Sorted 5.17, 7.1, 10.0, 20.0 -> halfway between 7.1 and 10.0 = 8.55.
+    assertEquals(0, median!!.compareTo(BigDecimal("8.55")), "got ${median.toPlainString()}")
+  }
+
+  @Test
+  fun `the 3rd quartile interpolates between the two nearest ranks`() {
+    val q3 = StatMetrics.quantile(pushes("5.17", "7.1", "10.0", "20.0"), BigDecimal("0.75"))
+
+    // Rank 0.75 * 3 = 2.25 -> 10.0 + 0.25 * (20.0 - 10.0) = 12.50, as PERCENTILE.INC gives.
+    assertEquals(0, q3!!.compareTo(BigDecimal("12.50")), "got ${q3.toPlainString()}")
+  }
+
+  @Test
+  fun `a single push is every quantile, and no push yields null`() {
+    assertEquals(
+      0,
+      StatMetrics.quantile(pushes("9.6"), BigDecimal("0.75"))!!.compareTo(BigDecimal("9.60")),
+    )
+    assertNull(StatMetrics.quantile(emptyList(), BigDecimal("0.5")))
+  }
+
+  private fun pushes(vararg raw: String) = raw.map(::BigDecimal)
 
   private fun price(raw: String) = BigDecimal(raw)
 }

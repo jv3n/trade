@@ -17,10 +17,22 @@ import {
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { addDays, isBefore, isSameDay, startOfDay } from 'date-fns';
-import { EMPTY, Observable, catchError, filter, finalize, switchMap, tap } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  filter,
+  finalize,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { Candidate, CandidateInput } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
+import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import {
@@ -29,6 +41,7 @@ import {
   locatePercent,
   pushPercent,
 } from './candidates.math';
+import { AtOpenChange, OpenCard, PushReferences } from './open-card/open-card';
 
 /** The capture form — numbers are `null` until typed. Float and volume in millions. */
 interface CaptureModel {
@@ -75,6 +88,9 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
  * - **Edit** — a row's edit button loads it into the same form, which then saves an update.
  * - **List** — sorted by gap (largest first), with push, locate / price (amber when expensive) and
  *   the note. Delete goes through the confirmation modal.
+ * - **At the open** — the « À l'open » card ([OpenCard]) : the open and the target push typed at
+ *   9:30 are saved on blur (an edit : no modal) ; the push references come from the stats summary
+ *   of each pattern of the day.
  * - **Day navigation** — past days are read-only history : no form, no row actions.
  *
  * One candidate per (day, ticker) : the backend answers 409 on a duplicate, surfaced as a dedicated
@@ -87,6 +103,7 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
     DecimalPipe,
     FormField,
     NumberMaskDirective,
+    OpenCard,
     StbButtonModule,
     StbChipsModule,
     StbDatePickerModule,
@@ -104,6 +121,7 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
 })
 export class CandidatesPage {
   private readonly repo = inject(CandidatesRepository);
+  private readonly stats = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
@@ -138,6 +156,11 @@ export class CandidatesPage {
   readonly loading = signal(true);
   readonly loadError = signal(false);
   readonly candidates = signal<Candidate[]>([]);
+  /**
+   * Push at the open of the completed stats, per pattern — the references of the « À l'open » card.
+   * Fetched once per pattern : they only move when a stat is completed.
+   */
+  readonly pushReferences = signal<Partial<Record<Pattern, PushReferences>>>({});
   /** The day's candidates with their derived figures, largest gap first (no gap → last). */
   readonly rows = computed<CandidateRow[]>(() =>
     this.candidates()
@@ -268,6 +291,36 @@ export class CandidatesPage {
     this.resetForm();
   }
 
+  // ---- At the open (#261) ----
+
+  /**
+   * Saves what a row of the « À l'open » card changed — an edit, so no modal and no toast unless it
+   * fails. The row is patched **before** the call : the open and the push of a row are often typed
+   * back to back, and the second save must start from the first one, not from the server's reply.
+   * A reload is avoided too — it would steal the focus from the next field.
+   */
+  saveAtOpen({ candidate, patch }: AtOpenChange): void {
+    const current = this.candidates().find((c) => c.id === candidate.id);
+    if (!current) return;
+    const patched = { ...current, ...patch };
+    this.replaceCandidate(patched);
+
+    this.repo
+      .update(candidate.id, toCandidateInput(patched))
+      .pipe(
+        catchError(() => {
+          this.replaceCandidate(current);
+          this.toast('candidates.snackbar.atOpenSaveError', 'error', { ticker: candidate.ticker });
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
+
+  private replaceCandidate(candidate: Candidate): void {
+    this.candidates.update((list) => list.map((c) => (c.id === candidate.id ? candidate : c)));
+  }
+
   // ---- Promotion to the stats sheet (#189) ----
 
   /** Candidates of the day not yet in the stats sheet — what « Promote all » would act on. */
@@ -352,12 +405,39 @@ export class CandidatesPage {
       .listForDate(this.day())
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (list) => this.candidates.set(list),
+        next: (list) => {
+          this.candidates.set(list);
+          this.loadPushReferences(list);
+        },
         error: () => {
           this.candidates.set([]);
           this.loadError.set(true);
         },
       });
+  }
+
+  /** Fetches the push references of the patterns of the day not fetched yet. */
+  private loadPushReferences(list: Candidate[]): void {
+    const known = this.pushReferences();
+    const missing = [...new Set(list.map((c) => c.pattern))].filter((p) => !(p in known));
+    if (missing.length === 0) return;
+    forkJoin(
+      missing.map((pattern) =>
+        this.stats.summary({ pattern }).pipe(
+          map((summary): PushReferences => ({
+            median: summary.medianPushOpenPercent,
+            average: summary.averagePushOpenPercent,
+            thirdQuartile: summary.thirdQuartilePushOpenPercent,
+            max: summary.maxPushOpenPercent,
+          })),
+          // No summary = no reference, so no target price ; the candidates themselves still show.
+          catchError(() => of(NO_REFERENCES)),
+          map((references) => [pattern, references] as const),
+        ),
+      ),
+    ).subscribe((entries) =>
+      this.pushReferences.update((current) => ({ ...current, ...Object.fromEntries(entries) })),
+    );
   }
 
   /** Clears the form for the next capture — keeps the pattern (a scan is usually one pattern). */
@@ -386,6 +466,16 @@ export class CandidatesPage {
       volumeMillions: m.volumeMillions,
       locatePerShare: m.locatePerShare,
       note: m.note,
+      // The form doesn't show the « À l'open » pair : an edit keeps what was typed in the card.
+      ...this.atOpenOf(this.editingId()),
+    };
+  }
+
+  private atOpenOf(id: string | null): Pick<CandidateInput, 'openPrice' | 'targetPushPercent'> {
+    const candidate = this.candidates().find((c) => c.id === id);
+    return {
+      openPrice: candidate?.openPrice ?? null,
+      targetPushPercent: candidate?.targetPushPercent ?? null,
     };
   }
 
@@ -395,6 +485,30 @@ export class CandidatesPage {
       panelClass: `stb-snack-bar--${variant}`,
     });
   }
+}
+
+const NO_REFERENCES: PushReferences = {
+  median: null,
+  average: null,
+  thirdQuartile: null,
+  max: null,
+};
+
+function toCandidateInput(c: Candidate): CandidateInput {
+  return {
+    tradingDate: c.tradingDate,
+    pattern: c.pattern,
+    ticker: c.ticker,
+    previousClose: c.previousClose,
+    pmOpen: c.pmOpen,
+    pmHigh: c.pmHigh,
+    floatMillions: c.floatMillions,
+    volumeMillions: c.volumeMillions,
+    locatePerShare: c.locatePerShare,
+    note: c.note,
+    openPrice: c.openPrice,
+    targetPushPercent: c.targetPushPercent,
+  };
 }
 
 function isPositive(n: number | null): boolean {

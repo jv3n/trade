@@ -72,8 +72,9 @@ class StatEntryService(
 
   /**
    * KPIs over the **whole filtered set**, not the current page : how many stats are completed / to
-   * complete, the average push at open, LOD and EOD, and how many faded at the close. Percentages
-   * are recomputed from the prices ([StatMetrics]) — none of them is stored.
+   * complete, the average push at open, LOD and EOD, the median / 3rd quartile / max push at open,
+   * and how many faded at the close. Percentages are recomputed from the prices ([StatMetrics]) —
+   * none of them is stored.
    */
   @Transactional(readOnly = true)
   fun summarise(filter: StatEntryFilter): StatSummaryDto {
@@ -83,11 +84,15 @@ class StatEntryService(
     // The journal's "8 of 10 stats traded" KPI (#195) : one query for the whole filtered set,
     // the same read the listing already uses row by row.
     val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
+    val pushes = completed.mapNotNull { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) }
     return StatSummaryDto(
       completed = completed.size,
       toComplete = rows.size - completed.size,
       averagePushOpenPercent =
         completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) },
+      medianPushOpenPercent = StatMetrics.quantile(pushes, MEDIAN),
+      thirdQuartilePushOpenPercent = StatMetrics.quantile(pushes, THIRD_QUARTILE),
+      maxPushOpenPercent = pushes.maxOrNull(),
       averageLodPercent =
         completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
       fadeCount = completed.count { it.eodPrice!! < it.openPrice!! },
@@ -123,6 +128,21 @@ class StatEntryService(
     val userId = authService.getCurrentUser().id
     return repo.findByUserIdAndTradeDateAndTicker(userId, tradeDate, ticker.trim().uppercase()) !=
       null
+  }
+
+  /**
+   * Gives the stat born from [candidateId] the [openPrice] typed on the candidate at 9:30 — for a
+   * candidate promoted before the open. A stat that already has an open keeps it : the one typed on
+   * the stat wins. No stat for that candidate → nothing to do.
+   */
+  @Transactional
+  fun fillMissingOpen(candidateId: UUID, openPrice: BigDecimal) {
+    val userId = authService.getCurrentUser().id
+    val stat =
+      repo.findByUserIdAndCandidateIdIn(userId, listOf(candidateId)).firstOrNull() ?: return
+    if (stat.openPrice != null) return
+    stat.openPrice = openPrice
+    stat.updatedAt = Instant.now()
   }
 
   // ---- CRUD (user-scoped) --------------------------------------------------------------------
@@ -307,5 +327,7 @@ class StatEntryService(
   private companion object {
     /** Newest-first, `createdAt` tiebreaker. Export order + implicit listing sort. */
     val DEFAULT_SORT: Sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
+    val MEDIAN = BigDecimal("0.5")
+    val THIRD_QUARTILE = BigDecimal("0.75")
   }
 }

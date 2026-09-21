@@ -13,6 +13,16 @@ import {
   CandidateInput,
 } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
+import { TradeEntry } from '../../core/api/journal/trade-entry.model';
+import {
+  PageRequest,
+  PagedResult,
+  StatEntry,
+  StatEntryFilter,
+  StatEntryInput,
+  StatSummary,
+} from '../../core/api/stats/stat-entry.model';
+import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { CandidatesPage } from './candidates-page';
 
@@ -28,9 +38,13 @@ import { CandidatesPage } from './candidates-page';
  * - **Promotion** — « → Stat » and « Promote all » go through the confirmation modal, the bulk
  *   action only targets the candidates still missing from the sheet, and both reload the day.
  * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
+ * - **At the open** — the push references of the day's patterns are fetched once per pattern and
+ *   handed to the card ; what comes out of the card is patched in place before the save (no
+ *   reload), reverted if the save fails, and an edit through the form keeps it. The card itself is
+ *   pinned in `open-card.spec`.
  * - **Day navigation** — past days are read-only.
  *
- * The repository, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
+ * The repositories, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
  */
 
 /** KTTA — the example of `mockup/PARCOURS.md › Étape 1` (gap +52.8 %, push +14.8 %). */
@@ -47,6 +61,8 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     volumeMillions: 3.1,
     locatePerShare: 0.03,
     note: 'Résistance 4,65 — high PM, pas de news',
+    openPrice: null,
+    targetPushPercent: null,
     promoted: false,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -73,10 +89,48 @@ class MockCandidatesRepository extends CandidatesRepository {
   );
 }
 
-function setup(options: { list?: Candidate[]; confirmed?: boolean } = {}): {
+/**
+ * Mock stats port — only [summary] matters here : it carries the push references of the card. The
+ * figures are the stats page mockup's.
+ */
+class MockStatsRepository extends StatsRepository {
+  findAll = vi.fn(
+    (_filter?: StatEntryFilter, _page?: PageRequest): Observable<PagedResult<StatEntry>> =>
+      throwError(() => new Error('not used')),
+  );
+  findById = vi.fn((_id: string): Observable<StatEntry> => throwError(() => new Error('not used')));
+  summary = vi.fn((_filter?: StatEntryFilter): Observable<StatSummary> =>
+    of({
+      completed: 10,
+      toComplete: 1,
+      averagePushOpenPercent: 9.6,
+      medianPushOpenPercent: 6.8,
+      thirdQuartilePushOpenPercent: 14.2,
+      maxPushOpenPercent: 21.5,
+      averageLodPercent: -12.3,
+      fadeCount: 7,
+      averageEodPercent: -3.7,
+      traded: 8,
+      untraded: 2,
+    }),
+  );
+  update = vi.fn((_id: string, _input: StatEntryInput): Observable<StatEntry> =>
+    throwError(() => new Error('not used')),
+  );
+  delete = vi.fn((_id: string): Observable<void> => throwError(() => new Error('not used')));
+  promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
+    throwError(() => new Error('not used')),
+  );
+  exportCsv = vi.fn((): Observable<Blob> => throwError(() => new Error('not used')));
+}
+
+function setup(
+  options: { list?: Candidate[]; confirmed?: boolean; referencesFail?: boolean } = {},
+): {
   fixture: ComponentFixture<CandidatesPage>;
   page: CandidatesPage;
   repo: MockCandidatesRepository;
+  stats: MockStatsRepository;
   snackBarOpen: ReturnType<typeof vi.fn>;
 } {
   const snackBarOpen = vi.fn();
@@ -87,15 +141,20 @@ function setup(options: { list?: Candidate[]; confirmed?: boolean } = {}): {
       provideTranslateService({ lang: 'en' }),
       provideNativeDateAdapter(),
       { provide: CandidatesRepository, useClass: MockCandidatesRepository },
+      { provide: StatsRepository, useClass: MockStatsRepository },
       { provide: MatSnackBar, useValue: { open: snackBarOpen } },
       { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
     ],
   });
   const repo = TestBed.inject(CandidatesRepository) as MockCandidatesRepository;
+  const stats = TestBed.inject(StatsRepository) as MockStatsRepository;
   repo.listForDate.mockReturnValue(of(options.list ?? []));
+  if (options.referencesFail) {
+    stats.summary.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+  }
   const fixture = TestBed.createComponent(CandidatesPage);
   fixture.detectChanges();
-  return { fixture, page: fixture.componentInstance, repo, snackBarOpen };
+  return { fixture, page: fixture.componentInstance, repo, stats, snackBarOpen };
 }
 
 /** Types a valid KTTA capture into the form. */
@@ -312,6 +371,87 @@ describe('CandidatesPage', () => {
     page.delete(makeCandidate());
 
     expect(repo.delete).not.toHaveBeenCalled();
+  });
+
+  // ---- At the open (#261) ----
+
+  it("fetches the push references of the day's pattern for the card", () => {
+    const { page, stats } = setup({ list: [makeCandidate()] });
+
+    expect(stats.summary).toHaveBeenCalledWith({ pattern: 'GUS' });
+    expect(page.pushReferences()).toEqual({
+      GUS: { median: 6.8, average: 9.6, thirdQuartile: 14.2, max: 21.5 },
+    });
+  });
+
+  it('fetches the references once per pattern, not on every reload', () => {
+    const { page, stats } = setup({ list: [makeCandidate()] });
+
+    page.previousDay();
+    page.nextDay();
+
+    expect(stats.summary).toHaveBeenCalledTimes(1);
+  });
+
+  it('still lists the candidates when the references cannot be fetched', () => {
+    const { page } = setup({ list: [makeCandidate()], referencesFail: true });
+
+    expect(page.rows().length).toBe(1);
+    expect(page.pushReferences().GUS?.average).toBeNull();
+  });
+
+  it('saves an open coming out of the card and patches the row without reloading the day', () => {
+    const ktta = makeCandidate();
+    const { page, repo } = setup({ list: [ktta] });
+
+    page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'c-ktta',
+      expect.objectContaining({ ticker: 'KTTA', pmHigh: 4.65, openPrice: 4.2 }),
+    );
+    expect(page.rows()[0].openPrice).toBe(4.2);
+    expect(repo.listForDate).toHaveBeenCalledTimes(1); // init only
+  });
+
+  it('starts the push save from the open just typed, not from the stale row', () => {
+    // Open then push, typed back to back : the card still holds the row as it was before the open.
+    const ktta = makeCandidate();
+    const { page, repo } = setup({ list: [ktta] });
+
+    page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
+    page.saveAtOpen({ candidate: ktta, patch: { targetPushPercent: 15 } });
+
+    expect(repo.update).toHaveBeenLastCalledWith(
+      'c-ktta',
+      expect.objectContaining({ openPrice: 4.2, targetPushPercent: 15 }),
+    );
+  });
+
+  it('reverts the row and toasts an error when the save fails', () => {
+    const ktta = makeCandidate();
+    const { page, repo, snackBarOpen } = setup({ list: [ktta] });
+    repo.update.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+    page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
+
+    expect(page.rows()[0].openPrice).toBeNull();
+    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--error');
+  });
+
+  it('keeps what was typed in the card when the candidate is edited through the form', () => {
+    // The form has no open nor push field : saving it must not wipe what was typed at 9:30.
+    const ktta = makeCandidate({ openPrice: 4.2, targetPushPercent: 15 });
+    const { page, repo } = setup({ list: [ktta] });
+
+    page.edit(ktta);
+    page.setNumber('pmHigh', 4.9);
+    page.submit();
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'c-ktta',
+      expect.objectContaining({ pmHigh: 4.9, openPrice: 4.2, targetPushPercent: 15 }),
+    );
   });
 
   // ---- Day navigation ----
