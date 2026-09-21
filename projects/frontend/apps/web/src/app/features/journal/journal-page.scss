@@ -1,55 +1,9 @@
 // Page layout after `mockup/journal.html` : KPI row, then one card holding the filter toolbar and
-// the table. `.content-header`, `.card`, `.error-banner`, `.loading-state`, `.empty-state` come from
-// the lib (`libs/ui/styles/`) — only the journal-specific arrangement lives here.
+// the table. `.content-header`, `.card`, `.kpi-row`, `.error-banner`, `.loading-state`,
+// `.empty-state` come from the lib (`libs/ui/styles/`) — only the journal-specific arrangement lives
+// here.
 
-// ---- KPIs (same shape as the stats and trade pages) ----
-
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.kpi {
-  margin-bottom: 0;
-
-  &__label {
-    font-size: 12px;
-    color: var(--color-text-muted);
-  }
-
-  &__value {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    margin: 4px 0 2px;
-    font-size: 24px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__sub {
-    font-size: 12px;
-    color: var(--color-text-faint);
-
-    a {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    mat-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
-    }
-  }
-}
+// ---- KPIs ----
 
 .muted {
   color: var(--color-text-muted);

@@ -1,8 +1,13 @@
 // Page layout after `mockup/compte.html` (#229) : a KPI row, the morning reconciliation, the
-// balance curve, then one card holding the filter toolbar and the movements table. The KPI and
-// toolbar shapes are the journal's on purpose — the two listings are learnt once.
+// balance curve, then one card holding the filter toolbar and the movements table. The KPI row comes
+// from the lib ; the toolbar shape is the journal's on purpose — the two listings are learnt once.
 
 @use 'sizes' as s;
+
+// Sections are spaced by the flex gap, not by the lib KPI row's bottom margin.
+.account-page .kpi-row {
+  margin-bottom: 0;
+}
 
 .account-page {
   display: flex;
@@ -35,60 +40,6 @@
     gap: 0.5rem;
     flex-shrink: 0;
   }
-}
-
-// ---- KPI row ----
-
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.kpi {
-  padding: 18px 20px;
-
-  // The balance is the page's headline figure — it gets the width of two.
-  &.kpi-hero {
-    grid-column: span 2;
-
-    @media (max-width: 640px) {
-      grid-column: span 1;
-    }
-  }
-
-  &__label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    font-size: 12px;
-    color: var(--color-text-muted);
-  }
-
-  &__value {
-    margin: 4px 0 2px;
-    font-size: 24px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__sub {
-    font-size: 12px;
-    color: var(--color-text-faint);
-  }
-}
-
-.kpi-hero .kpi__value {
-  font-size: 32px;
 }
 
 // ---- Cards ----

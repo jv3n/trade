@@ -1,0 +1,81 @@
+// KPI row — the four figures on top of the stats, journal, trade and account pages : a grid of
+// tiles, each with a label, a value and a sub-line. A tile is a `.card` or a `mat-card`.
+//
+// The bottom margin spaces the row in a page that flows block by block, like the card's ; a page
+// that lays its sections out with a `gap` cancels it in its own layout.
+
+@use '../sizes' as s;
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: s.$space-lg;
+  margin-bottom: s.$space-lg;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  // The row's gap spaces the tiles — not the card margin they would otherwise carry.
+  > .kpi {
+    margin: 0;
+  }
+}
+
+// A `mat-card` tile has no padding of its own — give it the page card's.
+.kpi.mat-mdc-card {
+  padding: s.$card-padding-y s.$card-padding-x;
+}
+
+.kpi__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: s.$space-md;
+  font-size: s.$font-xs;
+  color: var(--color-text-muted);
+}
+
+.kpi__value {
+  display: flex;
+  align-items: baseline;
+  gap: s.$space-sm;
+  margin: s.$space-xs 0 s.$space-hairline;
+  font-size: s.$font-2xl;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi__sub {
+  font-size: s.$font-xs;
+  color: var(--color-text-faint);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: s.$space-xs;
+  }
+
+  mat-icon {
+    font-size: s.$icon-xs;
+    width: s.$icon-xs;
+    height: s.$icon-xs;
+  }
+}
+
+// The page's headline figure (the account balance) — twice as wide, a bigger value.
+.kpi--hero {
+  grid-column: span 2;
+
+  @media (max-width: 640px) {
+    grid-column: span 1;
+  }
+
+  .kpi__value {
+    font-size: s.$font-3xl;
+  }
+}

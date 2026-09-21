@@ -9,8 +9,9 @@
   padding-bottom: 72px;
 }
 
-// Sections are spaced by the flex gaps, not by the lib card's own bottom margin.
-.trade-page .card {
+// Sections are spaced by the flex gaps, not by the lib's card / KPI row bottom margins.
+.trade-page .card,
+.trade-page .kpi-row {
   margin-bottom: 0;
 }
 
@@ -77,35 +78,6 @@
 }
 
 // ---- Cards / KPIs (same shape as the stats page) ----
-
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.kpi {
-  &__label {
-    font-size: 12px;
-    color: var(--color-text-muted);
-  }
-
-  &__value {
-    margin: 4px 0 2px;
-    font-size: 24px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__sub {
-    font-size: 12px;
-    color: var(--color-text-faint);
-  }
-}
 
 // Green / red only for outcomes (P&L), per the colour rule.
 .gain {
