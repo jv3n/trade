@@ -79,6 +79,9 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 - **No `::ng-deep`.** It reaches into a Material internal from outside the component. Use the
   component's token ; if none exists, put the rule in the lib (where it breaks once, not per page)
   with a comment naming the missing token.
+- **Density is a set, scoped by context.** A tighter field is `@include mat.form-field-density(-5)`
+  on its container — the custom properties it emits reach every field inside. The `.toolbar` does
+  exactly that instead of the old `.mat-mdc-form-field-infix` reach.
 
 ## Specificity and injection order
 
@@ -101,10 +104,9 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 | `.page` (+ `--full`, `--medium`, `--narrow`, `--form`) | `components/_page.scss` | the page container |
 | `.card`, `.card h3` / `.card-title`, `.hint` | `components/_card.scss` | a page section, its title row, the faint hint next to a title |
 | `.kpi-row` > `.kpi` (`__label`, `__value`, `__sub`, `--hero`) | `components/_kpi.scss` | the figures on top of a page — tiles are `.card`s or `mat-card`s |
+| `.toolbar` | `components/_toolbar.scss` | the filter row above a list ; its form fields are density `-5` (36 px) |
 | `.error-banner`, `.info-banner`, `.warn-banner` | `components/_banners.scss` | page-level messages |
 | `.loading-state`, `.empty-state` | `components/_banners.scss` | a list that loads or has nothing |
-
-The filter toolbar joins the lib with its #257 lot (#278).
 
 A `mat-card appearance="outlined"` is already restyled by the lib (surface, border, radius) : use
 it when Material's card fits, `.card` otherwise, and give its heading `.card-title`.
