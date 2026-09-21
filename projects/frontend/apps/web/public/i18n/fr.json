@@ -296,27 +296,12 @@
       "netInjectedSub": "{{deposits}} dépôt · {{withdrawals}} retrait"
     },
     "filter": {
-      "period": "Période",
       "type": "Type de mouvement",
-      "dateFrom": "Du",
-      "dateTo": "Au",
       "types": {
         "all": "Tous les types",
         "trades": "Trades",
         "cash": "Dépôts / retraits",
         "corrections": "Corrections"
-      },
-      "periodPresets": {
-        "all": "Toutes périodes",
-        "custom": "Plage personnalisée",
-        "thisMonth": "Ce mois",
-        "lastMonth": "Mois dernier",
-        "last3Months": "3 derniers mois",
-        "last6Months": "6 derniers mois",
-        "thisQuarter": "Ce trimestre",
-        "lastQuarter": "Trimestre dernier",
-        "thisYear": "Cette année",
-        "lastYear": "Année dernière"
       }
     },
     "direction": {
@@ -342,21 +327,7 @@
     "clearSearch": "Effacer la recherche",
     "filterPanel": {
       "period": "Période",
-      "dateFrom": "De",
-      "dateTo": "À",
       "statusAll": "Tout statut",
-      "periodPresets": {
-        "all": "Toutes périodes",
-        "custom": "Plage personnalisée",
-        "thisMonth": "Ce mois",
-        "lastMonth": "Mois dernier",
-        "last3Months": "3 derniers mois",
-        "last6Months": "6 derniers mois",
-        "thisQuarter": "Ce trimestre",
-        "lastQuarter": "Trimestre dernier",
-        "thisYear": "Cette année",
-        "lastYear": "Année dernière"
-      },
       "allPatterns": "Tous les patterns"
     },
     "loading": "Chargement du journal…",
@@ -523,21 +494,8 @@
       "column": "Complétée"
     },
     "filters": {
-      "period": "Période",
       "pattern": "Pattern",
       "allPatterns": "Tous les patterns"
-    },
-    "periods": {
-      "all": "Tout l'historique",
-      "custom": "Période personnalisée",
-      "thisMonth": "Ce mois-ci",
-      "lastMonth": "Le mois dernier",
-      "last3Months": "3 derniers mois",
-      "last6Months": "6 derniers mois",
-      "thisQuarter": "Ce trimestre",
-      "lastQuarter": "Le trimestre dernier",
-      "thisYear": "Cette année",
-      "lastYear": "L'an dernier"
     },
     "status": {
       "ALL": "Toutes",
@@ -842,5 +800,23 @@
       "DT": "DT — Double Top",
       "DISCRETIONARY": "Discrétionnaire"
     }
+  },
+  "periods": {
+    "label": "Période",
+    "presets": {
+      "all": "Toutes périodes",
+      "today": "Aujourd'hui",
+      "custom": "Plage personnalisée",
+      "thisMonth": "Ce mois",
+      "lastMonth": "Mois dernier",
+      "last3Months": "3 derniers mois",
+      "last6Months": "6 derniers mois",
+      "thisQuarter": "Ce trimestre",
+      "lastQuarter": "Trimestre dernier",
+      "thisYear": "Cette année",
+      "lastYear": "Année dernière"
+    },
+    "dateFrom": "Du",
+    "dateTo": "Au"
   }
 }

@@ -9,7 +9,6 @@ import { Router, RouterLink } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { StbDatePickerModule } from '@portfolioai/ui';
 import {
   EMPTY,
   Subject,
@@ -30,7 +29,6 @@ import {
   StbInputModule,
   StbPaginatorModule,
   StbProgressSpinnerModule,
-  StbSelectModule,
   StbSortHeaderModule,
   StbTableModule,
   StbTooltipModule,
@@ -46,9 +44,10 @@ import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
 import { StatSummary } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import {
-  PERIOD_PRESETS,
   PeriodPresetKey,
+  PeriodSelection,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
 
@@ -68,7 +67,7 @@ interface SortRequest {
 /**
  * The three filter axes of the toolbar (#195) : a period, one pattern at a time, and the outcome.
  * They apply as soon as they are clicked — there is no « Apply » step anymore, the toolbar *is*
- * the filter. `custom` reveals the two date pickers ; every other preset fills the range itself.
+ * the filter. The period comes from the shared [PeriodFilter] (preset, or a custom range).
  */
 interface FilterFormModel {
   period: PeriodPresetKey;
@@ -125,13 +124,12 @@ const DEFAULT_PAGE_SIZE = 10;
     StbButtonModule,
     StbButtonToggleModule,
     StbChipsModule,
-    StbDatePickerModule,
+    PeriodFilter,
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
     StbPaginatorModule,
     StbProgressSpinnerModule,
-    StbSelectModule,
     StbSortHeaderModule,
     StbTableModule,
     StbTooltipModule,
@@ -195,7 +193,6 @@ export class JournalPage {
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
   // ---- Constants for the template ----
-  readonly periods = PERIOD_PRESETS;
   readonly patterns = PATTERNS;
 
   readonly columns = [
@@ -250,16 +247,8 @@ export class JournalPage {
 
   // ---- Filter handlers — every one of them applies straight away and rewinds to page 0 ----
 
-  /** Picking a preset populates dateFrom / dateTo via `date-fns` helpers. */
-  onPeriodChange(key: PeriodPresetKey): void {
-    if (key === 'custom') {
-      // Keep the current range as the starting point of the custom one — the user narrows it
-      // from what they were already looking at rather than from nothing.
-      this.patchFilter({ period: 'custom' });
-      return;
-    }
-    const range = computePeriodRange(key);
-    this.patchFilter({ period: key, dateFrom: range.dateFrom, dateTo: range.dateTo });
+  setPeriod({ period, dateFrom, dateTo }: PeriodSelection): void {
+    this.patchFilter({ period, dateFrom, dateTo });
   }
 
   setPattern(p: Pattern | null): void {
@@ -268,14 +257,6 @@ export class JournalPage {
 
   setStatus(s: TradeStatus | null): void {
     this.patchFilter({ status: s });
-  }
-
-  setDateFrom(d: Date | null): void {
-    this.patchFilter({ period: 'custom', dateFrom: d });
-  }
-
-  setDateTo(d: Date | null): void {
-    this.patchFilter({ period: 'custom', dateTo: d });
   }
 
   private patchFilter(change: Partial<FilterFormModel>): void {

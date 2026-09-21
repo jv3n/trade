@@ -156,16 +156,8 @@
   }
 }
 
-.period-field {
-  @include toolbar-field(190px);
-}
-
 .type-field {
   @include toolbar-field(200px);
-}
-
-.date-field {
-  @include toolbar-field(170px);
 }
 
 // ---- Movements table ----

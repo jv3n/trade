@@ -286,14 +286,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
-        <mat-label>{{ 'stats.filters.period' | translate }}</mat-label>
-        <mat-select [value]="period()" (selectionChange)="setPeriod($event.value)">
-          @for (p of periods; track p) {
-            <mat-option [value]="p">{{ 'stats.periods.' + p | translate }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <app-period-filter labelled [selection]="period()" (selectionChange)="setPeriod($event)" />
 
       <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
         <mat-label>{{ 'stats.filters.pattern' | translate }}</mat-label>

@@ -117,15 +117,23 @@
           <h2>
             Mouvements
             <span class="actions">
-              <select class="input" style="width: auto">
-                <option>Ce mois</option>
+              <select class="input" style="width: auto" data-period aria-label="Période">
+                <option>Toutes périodes</option>
+                <option>Aujourd'hui</option>
+                <option value="custom">Plage personnalisée</option>
+                <option selected>Ce mois</option>
                 <option>Mois dernier</option>
                 <option>3 derniers mois</option>
                 <option>6 derniers mois</option>
+                <option>Ce trimestre</option>
+                <option>Trimestre dernier</option>
                 <option>Cette année</option>
-                <option>Toutes périodes</option>
-                <option>Plage personnalisée</option>
+                <option>Année dernière</option>
               </select>
+              <span class="period-range" hidden>
+                <input class="input" type="date" aria-label="Du" value="2026-09-14" />
+                <input class="input" type="date" aria-label="Au" value="2026-09-18" />
+              </span>
               <select class="input" style="width: auto">
                 <option>Tous les types</option>
                 <option>Trades</option>
@@ -281,5 +289,14 @@
     </script>
       </main>
     </div>
+    <script>
+      // Filtre de période : « Plage personnalisée » révèle les deux dates, comme dans l'app.
+      document.querySelectorAll('select[data-period]').forEach((select) => {
+        const range = select.parentElement.querySelector('.period-range');
+        const sync = () => (range.hidden = select.value !== 'custom');
+        select.addEventListener('change', sync);
+        sync();
+      });
+    </script>
   </body>
 </html>

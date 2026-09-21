@@ -19,6 +19,7 @@ import {
  */
 export type PeriodPresetKey =
   | 'all'
+  | 'today'
   | 'custom'
   | 'thisMonth'
   | 'lastMonth'
@@ -31,6 +32,7 @@ export type PeriodPresetKey =
 
 export const PERIOD_PRESETS: readonly PeriodPresetKey[] = [
   'all',
+  'today',
   'custom',
   'thisMonth',
   'lastMonth',
@@ -56,6 +58,8 @@ export function computePeriodRange(key: PeriodPresetKey, now: Date = new Date())
     case 'all':
     case 'custom':
       return { dateFrom: null, dateTo: null };
+    case 'today':
+      return { dateFrom: startOfDay(now), dateTo: endOfDay(now) };
     case 'thisMonth':
       return { dateFrom: startOfMonth(now), dateTo: endOfMonth(now) };
     case 'lastMonth': {
@@ -81,4 +85,22 @@ export function computePeriodRange(key: PeriodPresetKey, now: Date = new Date())
       return { dateFrom: startOfYear(d), dateTo: endOfYear(d) };
     }
   }
+}
+
+/** A period filter's state : the preset picked and the range it stands for. */
+export interface PeriodSelection extends PeriodRange {
+  period: PeriodPresetKey;
+}
+
+/**
+ * Applies a preset to the current selection. A preset fills the range ; `custom` keeps the current
+ * one as the starting point, so the date pickers open on what was already shown rather than empty.
+ */
+export function selectPeriod(
+  key: PeriodPresetKey,
+  current: PeriodSelection,
+  now: Date = new Date(),
+): PeriodSelection {
+  if (key === 'custom') return { ...current, period: 'custom' };
+  return { period: key, ...computePeriodRange(key, now) };
 }

@@ -296,27 +296,12 @@
       "netInjectedSub": "{{deposits}} deposited · {{withdrawals}} withdrawn"
     },
     "filter": {
-      "period": "Period",
       "type": "Movement type",
-      "dateFrom": "From",
-      "dateTo": "To",
       "types": {
         "all": "All types",
         "trades": "Trades",
         "cash": "Deposits / withdrawals",
         "corrections": "Corrections"
-      },
-      "periodPresets": {
-        "all": "All time",
-        "custom": "Custom range",
-        "thisMonth": "This month",
-        "lastMonth": "Last month",
-        "last3Months": "Last 3 months",
-        "last6Months": "Last 6 months",
-        "thisQuarter": "This quarter",
-        "lastQuarter": "Last quarter",
-        "thisYear": "This year",
-        "lastYear": "Last year"
       }
     },
     "direction": {
@@ -342,21 +327,7 @@
     "clearSearch": "Clear search",
     "filterPanel": {
       "period": "Period",
-      "dateFrom": "From",
-      "dateTo": "To",
       "statusAll": "Any status",
-      "periodPresets": {
-        "all": "All time",
-        "custom": "Custom range",
-        "thisMonth": "This month",
-        "lastMonth": "Last month",
-        "last3Months": "Last 3 months",
-        "last6Months": "Last 6 months",
-        "thisQuarter": "This quarter",
-        "lastQuarter": "Last quarter",
-        "thisYear": "This year",
-        "lastYear": "Last year"
-      },
       "allPatterns": "All patterns"
     },
     "loading": "Loading journal…",
@@ -523,21 +494,8 @@
       "column": "Completed"
     },
     "filters": {
-      "period": "Period",
       "pattern": "Pattern",
       "allPatterns": "All patterns"
-    },
-    "periods": {
-      "all": "All time",
-      "custom": "Custom range",
-      "thisMonth": "This month",
-      "lastMonth": "Last month",
-      "last3Months": "Last 3 months",
-      "last6Months": "Last 6 months",
-      "thisQuarter": "This quarter",
-      "lastQuarter": "Last quarter",
-      "thisYear": "This year",
-      "lastYear": "Last year"
     },
     "status": {
       "ALL": "All",
@@ -842,5 +800,23 @@
       "DT": "DT — Double Top",
       "DISCRETIONARY": "Discretionary"
     }
+  },
+  "periods": {
+    "label": "Period",
+    "presets": {
+      "all": "All time",
+      "today": "Today",
+      "custom": "Custom range",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "last3Months": "Last 3 months",
+      "last6Months": "Last 6 months",
+      "thisQuarter": "This quarter",
+      "lastQuarter": "Last quarter",
+      "thisYear": "This year",
+      "lastYear": "Last year"
+    },
+    "dateFrom": "From",
+    "dateTo": "To"
   }
 }

@@ -44,11 +44,8 @@ import {
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
-import {
-  PERIOD_PRESETS,
-  PeriodPresetKey,
-  computePeriodRange,
-} from '../../shared/period-preset/period-preset';
+import { PeriodFilter } from '../../shared/period-filter/period-filter';
+import { PeriodSelection } from '../../shared/period-preset/period-preset';
 import { gapPercent, percentVsOpen, pmPushPercent } from './stats.math';
 
 /** Sort state — controlled-component shape (empty `columnName` = the backend's DEFAULT_SORT). */
@@ -141,7 +138,8 @@ function sessionOf(entry: StatEntry): SessionModel {
  *   clearing one is refused with a toast — untick it first.
  * - **Table** in two column groups — Premarket (copied from the candidate) and Session (price + %
  *   vs the open) — then the flags. Every column is kept ; horizontal scrolling is fine.
- * - **Filters** : search, period preset, pattern, status ; server-side sort + pagination.
+ * - **Filters** : search, period (preset or custom range, shared [PeriodFilter]), pattern, status ;
+ *   server-side sort + pagination.
  *
  * Stats are created by promoting a candidate (#189) — this page never creates one. The « → Trade »
  * column (#193) is the **only** way a trade comes into existence : one per stat, confirmed, and the
@@ -153,6 +151,7 @@ function sessionOf(entry: StatEntry): SessionModel {
     DatePipe,
     DecimalPipe,
     NumberMaskDirective,
+    PeriodFilter,
     RouterLink,
     StbButtonModule,
     StbButtonToggleModule,
@@ -205,8 +204,7 @@ export class StatsPage {
   readonly searchValue = signal('');
 
   // ---- Filters ----
-  readonly periods = PERIOD_PRESETS;
-  readonly period = signal<PeriodPresetKey>('all');
+  readonly period = signal<PeriodSelection>({ period: 'all', dateFrom: null, dateTo: null });
   readonly patterns = PATTERNS;
   readonly pattern = signal<Pattern | null>(null);
   readonly statusTabs = STATUS_TABS;
@@ -326,8 +324,8 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
-  setPeriod(period: PeriodPresetKey): void {
-    this.period.set(period);
+  setPeriod(selection: PeriodSelection): void {
+    this.period.set(selection);
     this.pageIndex.set(0);
   }
 
@@ -495,7 +493,7 @@ export class StatsPage {
   // ---- Internals ----
 
   private currentFilter(): StatEntryFilter {
-    const range = computePeriodRange(this.period());
+    const range = this.period();
     return {
       query: this.searchTerm() || null,
       dateFrom: range.dateFrom,

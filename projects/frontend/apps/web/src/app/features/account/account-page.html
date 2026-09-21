@@ -130,19 +130,11 @@
     <!-- Filter toolbar — every control applies on the spot, no « Apply » step. Same shape as the
          journal's, so the two listings are learnt once. -->
     <div class="toolbar">
-      <mat-form-field appearance="outline" class="period-field" subscriptSizing="dynamic">
-        <mat-select
-          [value]="appliedFilter().period"
-          (selectionChange)="onPeriodChange($event.value)"
-          [aria-label]="'account.filter.period' | translate"
-        >
-          @for (p of periods; track p) {
-            <mat-option [value]="p">
-              {{ 'account.filter.periodPresets.' + p | translate }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <app-period-filter
+        dense
+        [selection]="appliedFilter()"
+        (selectionChange)="setPeriod($event)"
+      />
 
       <mat-form-field appearance="outline" class="type-field" subscriptSizing="dynamic">
         <mat-select
@@ -155,33 +147,6 @@
           }
         </mat-select>
       </mat-form-field>
-
-      <!-- Explicit range — only when the period preset is « custom ». -->
-      @if (appliedFilter().period === 'custom') {
-        <mat-form-field appearance="outline" class="date-field" subscriptSizing="dynamic">
-          <mat-label>{{ 'account.filter.dateFrom' | translate }}</mat-label>
-          <input
-            matInput
-            [matDatepicker]="fromPicker"
-            [value]="appliedFilter().dateFrom"
-            (dateChange)="setDateFrom($event.value)"
-          />
-          <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
-          <mat-datepicker #fromPicker />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="date-field" subscriptSizing="dynamic">
-          <mat-label>{{ 'account.filter.dateTo' | translate }}</mat-label>
-          <input
-            matInput
-            [matDatepicker]="toPicker"
-            [value]="appliedFilter().dateTo"
-            (dateChange)="setDateTo($event.value)"
-          />
-          <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
-          <mat-datepicker #toPicker />
-        </mat-form-field>
-      }
     </div>
 
     @if (loading()) {
