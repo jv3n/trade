@@ -28,6 +28,7 @@ $space-lg: 16px;
 $space-xl: 24px;
 $space-2xl: 32px;
 $space-3xl: 48px;
+$space-4xl: 64px;
 
 // ============================================================================
 // Type scale
@@ -80,6 +81,10 @@ $button-height: 32px;
 // dense toolbars ; 36 px keeps the chevron / settings / theme icons compact without losing
 // the click target.
 $icon-button-size: 36px;
+
+// Page container (`components/_page.scss`) — the side padding sits between two steps on purpose.
+$page-padding-y: 32px;
+$page-padding-x: 40px;
 
 // Page card (`components/_card.scss`) — its padding sits between two spacing steps on purpose.
 $card-padding-y: 18px;

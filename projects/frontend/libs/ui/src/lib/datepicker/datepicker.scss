@@ -24,6 +24,8 @@
 
 @use '@angular/material' as mat;
 
+@use '../../../styles/sizes' as s;
+
 :root {
   @include mat.datepicker-overrides(
     (
@@ -137,5 +139,5 @@
 // 4 px inset gives the icon breathing room without breaking alignment with non-datepicker
 // suffix icons.
 .mat-mdc-form-field .mat-datepicker-toggle {
-  padding-right: 4px;
+  padding-right: s.$space-xs;
 }

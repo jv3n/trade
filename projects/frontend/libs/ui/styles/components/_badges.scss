@@ -2,10 +2,13 @@
 // recommendation, status, or asset type.
 
 //TODO: legacy a supprimer
+
+@use '../sizes' as s;
+
 .confidence-badge {
-  font-size: 0.75rem;
+  font-size: s.$font-xs;
   font-weight: 600;
-  padding: 0.15rem 0.6rem;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-pill);
 
   &.high {
@@ -23,9 +26,9 @@
 }
 
 .action-badge {
-  font-size: 0.7rem;
+  font-size: s.$font-2xs;
   font-weight: 700;
-  padding: 0.15rem 0.5rem;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-sm);
   text-transform: uppercase;
 
@@ -48,9 +51,9 @@
 }
 
 .status-badge {
-  font-size: 0.72rem;
+  font-size: s.$font-xs;
   font-weight: 600;
-  padding: 0.15rem 0.55rem;
+  padding: s.$space-hairline s.$space-sm;
   border-radius: var(--radius-pill);
 
   &.status-pending {
@@ -73,9 +76,9 @@
 
 .type-badge {
   display: inline-block;
-  padding: 0.2rem 0.5rem;
+  padding: s.$space-xs s.$space-sm;
   border-radius: var(--radius-sm);
-  font-size: 0.7rem;
+  font-size: s.$font-2xs;
   font-weight: 600;
   text-transform: uppercase;
 
