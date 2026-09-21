@@ -58,9 +58,10 @@ class StatEntryController(private val service: StatEntryService) {
     dateTo: LocalDate? = null,
     @RequestParam(required = false) pattern: Pattern? = null,
     @RequestParam(required = false) status: StatStatus? = null,
+    @RequestParam(required = false) noPush: Boolean? = null,
     @PageableDefault(size = 50) pageable: Pageable,
   ): Page<StatEntryDto> =
-    service.findAllPaged(filterOf(q, dateFrom, dateTo, pattern, status), pageable)
+    service.findAllPaged(filterOf(q, dateFrom, dateTo, pattern, status, noPush), pageable)
 
   /**
    * KPIs over the same filter as the listing, computed on the whole filtered set (not the page).
@@ -76,7 +77,8 @@ class StatEntryController(private val service: StatEntryService) {
     dateTo: LocalDate? = null,
     @RequestParam(required = false) pattern: Pattern? = null,
     @RequestParam(required = false) status: StatStatus? = null,
-  ): StatSummaryDto = service.summarise(filterOf(q, dateFrom, dateTo, pattern, status))
+    @RequestParam(required = false) noPush: Boolean? = null,
+  ): StatSummaryDto = service.summarise(filterOf(q, dateFrom, dateTo, pattern, status, noPush))
 
   /** Fetch a single stat by id (404 if foreign / missing). */
   @GetMapping("/{id}") fun get(@PathVariable id: UUID): StatEntryDto = service.findById(id)
@@ -136,6 +138,7 @@ class StatEntryController(private val service: StatEntryService) {
     dateTo: LocalDate?,
     pattern: Pattern?,
     status: StatStatus?,
+    noPush: Boolean?,
   ) =
     StatEntryFilter(
       query = q,
@@ -143,5 +146,6 @@ class StatEntryController(private val service: StatEntryService) {
       dateTo = dateTo,
       pattern = pattern,
       status = status,
+      noPush = noPush,
     )
 }

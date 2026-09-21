@@ -50,10 +50,19 @@
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: s.$space-md;
+  // The push column is taller (« No push » under it) : stretched, the other fields would grow with it.
+  align-items: start;
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+// A column of its own so « No push » sits under the push field.
+.push-field {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-xs;
 }
 
 .flags-row {

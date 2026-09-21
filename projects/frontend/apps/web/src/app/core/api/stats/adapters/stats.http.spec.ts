@@ -163,6 +163,7 @@ describe('HttpStatsRepository', () => {
       ssr: true,
       under1Dollar: false,
       entryAfter11am: false,
+      noPush: false,
     });
     req.flush(wireStat());
   });
@@ -252,6 +253,7 @@ describe('HttpStatsRepository', () => {
       ssr: true,
       under1Dollar: false,
       entryAfter11am: false,
+      noPush: false,
       completed: true,
       tradeId: null,
       tradeRetainedProfitDollars: null,
@@ -280,6 +282,7 @@ describe('HttpStatsRepository', () => {
       ssr: true,
       under1Dollar: false,
       entryAfter11am: false,
+      noPush: false,
     };
   }
 

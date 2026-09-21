@@ -94,6 +94,7 @@ class StatEntryService(
       medianPushOpenPercent = StatMetrics.quantile(pushes, MEDIAN),
       thirdQuartilePushOpenPercent = StatMetrics.quantile(pushes, THIRD_QUARTILE),
       maxPushOpenPercent = pushes.maxOrNull(),
+      noPushCount = completed.count { it.noPush },
       averageLodPercent =
         completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
       fadeCount = completed.count { it.eodPrice!! < it.openPrice!! },
@@ -227,8 +228,8 @@ class StatEntryService(
 
   /**
    * Ticks a stat as completed, or unticks it back to "to complete" — the ✓ of the sheet (#263).
-   * Ticking needs the five session prices (400 naming the missing ones) ; ticking twice keeps the
-   * first date. Unticking is always allowed.
+   * Ticking needs the session prices — four on a « no push » day — (400 naming the missing ones) ;
+   * ticking twice keeps the first date. Unticking is always allowed.
    */
   @Transactional
   fun setCompleted(id: UUID, completed: Boolean): StatEntryDto {
@@ -323,7 +324,8 @@ class StatEntryService(
     note = request.note?.trim()?.ifEmpty { null }
 
     openPrice = request.openPrice?.requirePositive("Open")
-    pushOpenPrice = request.pushOpenPrice?.requirePositive("Push at open")
+    pushOpenPrice =
+      if (request.noPush) null else request.pushOpenPrice?.requirePositive("Push at open")
     hodPrice = hod
     lodPrice = lod
     eodPrice = request.eodPrice?.requirePositive("EOD")
@@ -331,6 +333,7 @@ class StatEntryService(
     ssr = request.ssr
     under1Dollar = request.under1Dollar
     entryAfter11am = request.entryAfter11am
+    noPush = request.noPush
   }
 
   private fun StatEntryRequest.cleanTicker(): String =

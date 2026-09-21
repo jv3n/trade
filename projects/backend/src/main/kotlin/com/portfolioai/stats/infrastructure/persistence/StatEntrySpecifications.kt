@@ -41,6 +41,10 @@ object StatEntrySpecifications {
           }
       }
 
+      filter.noPush?.let { noPush ->
+        predicates += cb.equal(root.get<Boolean>("noPush"), noPush)
+      }
+
       cb.and(*predicates.toTypedArray())
     }
 }

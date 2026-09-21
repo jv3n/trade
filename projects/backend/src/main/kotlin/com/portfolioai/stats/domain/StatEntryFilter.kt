@@ -20,6 +20,7 @@ enum class StatStatus {
  * - [dateFrom] / [dateTo] — inclusive `trade_date` range.
  * - [pattern] — keep a single pattern.
  * - [status] — to complete vs completed.
+ * - [noPush] — true keeps the « no push » days only (#302), to compare their premarket.
  *
  * The "traded / not traded" axis of the mockup needs the journal link and lands with the stat ->
  * trade flow (#193).
@@ -30,4 +31,5 @@ data class StatEntryFilter(
   val dateTo: LocalDate? = null,
   val pattern: Pattern? = null,
   val status: StatStatus? = null,
+  val noPush: Boolean? = null,
 )

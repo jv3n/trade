@@ -11,11 +11,13 @@ import java.math.BigDecimal
  *
  * @param completed Number of completed stats matching the filter.
  * @param toComplete Number of stats still waiting for their session block.
- * @param averagePushOpenPercent Average push at open, vs the open.
+ * @param averagePushOpenPercent Average push at open, vs the open — over the stats that pushed : a
+ *   « no push » day has no push price, so it doesn't drag the average (nor the quantiles) down.
  * @param medianPushOpenPercent Median push at open — with the 3rd quartile and the max, the
  *   references the candidates' « À l'open » card offers next to the average (#261).
  * @param thirdQuartilePushOpenPercent 3rd quartile of the push at open.
  * @param maxPushOpenPercent Largest push at open.
+ * @param noPushCount Completed stats ticked « no push » (#302) — read against [completed].
  * @param averageLodPercent Average LOD, vs the open.
  * @param fadeCount Completed stats whose EOD closed **below** the open (the GUS thesis playing
  *   out).
@@ -31,6 +33,7 @@ data class StatSummaryDto(
   val medianPushOpenPercent: BigDecimal?,
   val thirdQuartilePushOpenPercent: BigDecimal?,
   val maxPushOpenPercent: BigDecimal?,
+  val noPushCount: Int,
   val averageLodPercent: BigDecimal?,
   val fadeCount: Int,
   val averageEodPercent: BigDecimal?,

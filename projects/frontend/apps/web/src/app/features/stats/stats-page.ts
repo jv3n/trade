@@ -64,6 +64,7 @@ interface SessionModel {
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;
+  noPush: boolean;
 }
 
 /** A listed stat with its derived percentages (never stored — recomputed from the prices). */
@@ -78,8 +79,12 @@ export interface StatRow extends StatEntry {
   missing: string[];
 }
 
-/** Status tabs of the mockup : all / to complete / completed. */
-const STATUS_TABS: readonly (StatStatus | null)[] = [null, 'TO_COMPLETE', 'COMPLETED'];
+/**
+ * Tabs of the mockup : all / to complete / completed, then the no-push days (#302) — a separate axis
+ * of the filter, singled out to compare their premarket with the days that pushed.
+ */
+export type StatTab = StatStatus | 'NO_PUSH' | null;
+const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_PUSH'];
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -93,6 +98,7 @@ const BLANK_SESSION: SessionModel = {
   ssr: false,
   under1Dollar: false,
   entryAfter11am: false,
+  noPush: false,
 };
 
 type SessionPrice = 'openPrice' | 'pushOpenPrice' | 'hodPrice' | 'lodPrice' | 'eodPrice';
@@ -106,9 +112,16 @@ const SESSION_PRICES: readonly { field: SessionPrice; label: string }[] = [
   { field: 'eodPrice', label: 'stats.fields.eod' },
 ];
 
+/** The session prices a stat needs — all five, or four on a no-push day. */
+function expectedPrices(session: Pick<SessionModel, 'noPush'>) {
+  return SESSION_PRICES.filter(({ field }) => !(session.noPush && field === 'pushOpenPrice'));
+}
+
 /** Label keys of the session prices still missing — what stands between a stat and its tick. */
-export function missingPrices(session: Pick<SessionModel, SessionPrice>): string[] {
-  return SESSION_PRICES.filter(({ field }) => !isPositive(session[field])).map((p) => p.label);
+export function missingPrices(session: Pick<SessionModel, SessionPrice | 'noPush'>): string[] {
+  return expectedPrices(session)
+    .filter(({ field }) => !isPositive(session[field]))
+    .map((p) => p.label);
 }
 
 function sessionOf(entry: StatEntry): SessionModel {
@@ -121,6 +134,7 @@ function sessionOf(entry: StatEntry): SessionModel {
     ssr: entry.ssr,
     under1Dollar: entry.under1Dollar,
     entryAfter11am: entry.entryAfter11am,
+    noPush: entry.noPush,
   };
 }
 
@@ -132,7 +146,7 @@ function sessionOf(entry: StatEntry): SessionModel {
  *   push at open, average LOD, fade at the close. They come from `GET /api/stats/summary`.
  * - **Session panel** : the premarket recap on top, then the session prices with their live % vs
  *   the open and the three flags — each saved on its own, when the field is left (an edit : no
- *   modal) — the « n / 5 » progress, Close, and the ✓ that ticks the stat once its five prices are
+ *   modal) — the « n / 5 » progress (4 on a no-push day), Close, and the ✓ that ticks the stat once its prices are
  *   in. It opens on the first stat to complete of the page and on any row's « Session » button.
  * - **The ✓ column** ticks / unticks a stat from the table (#263). A ticked stat can't lose a price :
  *   clearing one is refused with a toast — untick it first.
@@ -208,7 +222,7 @@ export class StatsPage {
   readonly patterns = PATTERNS;
   readonly pattern = signal<Pattern | null>(null);
   readonly statusTabs = STATUS_TABS;
-  readonly status = signal<StatStatus | null>(null);
+  readonly status = signal<StatTab>(null);
 
   // ---- Sort ----
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
@@ -289,8 +303,10 @@ export class StatsPage {
 
   /** Label keys of the prices the panel still misses. */
   readonly sessionMissing = computed(() => missingPrices(this.session()));
-  readonly sessionFilled = computed(() => SESSION_PRICES.length - this.sessionMissing().length);
-  readonly sessionPriceCount = SESSION_PRICES.length;
+  readonly sessionPriceCount = computed(() => expectedPrices(this.session()).length);
+  readonly sessionFilled = computed(() => this.sessionPriceCount() - this.sessionMissing().length);
+  /** The push typed before « no push » was ticked — given back if it is unticked. */
+  private typedPush: number | null = null;
 
   constructor() {
     this.writes.pipe(concatMap((write) => write)).subscribe();
@@ -334,7 +350,7 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
-  setStatus(status: StatStatus | null): void {
+  setStatus(status: StatTab): void {
     this.status.set(status);
     this.pageIndex.set(0);
   }
@@ -357,6 +373,7 @@ export class StatsPage {
   open(entry: StatEntry): void {
     this.completing.set(entry);
     this.session.set(sessionOf(entry));
+    this.typedPush = null;
     this.sessionSaved.set(false);
   }
 
@@ -366,6 +383,14 @@ export class StatsPage {
 
   toggleFlag(field: 'ssr' | 'under1Dollar' | 'entryAfter11am', value: boolean): void {
     this.session.update((m) => ({ ...m, [field]: value }));
+    this.saveSession();
+  }
+
+  /** « No push » greys the push field out and empties it ; unticking gives the typed value back. */
+  toggleNoPush(noPush: boolean): void {
+    const current = this.session();
+    if (noPush) this.typedPush = current.pushOpenPrice;
+    this.session.set({ ...current, noPush, pushOpenPrice: noPush ? null : this.typedPush });
     this.saveSession();
   }
 
@@ -419,7 +444,8 @@ export class StatsPage {
 
   /**
    * The ✓ — ticks the stat as completed, or unticks it back to "to complete". Ticking needs the five
-   * prices : the button is disabled without them, and the backend refuses it too. The list reloads,
+   * prices (four on a no-push day) : the button is disabled without them, and the backend refuses
+   * it too. The list reloads,
    * since the status filter and the KPIs both depend on it.
    */
   toggleCompleted(entry: StatEntry): void {
@@ -442,7 +468,7 @@ export class StatsPage {
   }
 
   /** « Il manque HOD, EOD » — the ✓'s tooltip while it can't tick. */
-  missingLabel(entry: Pick<SessionModel, SessionPrice>): string {
+  missingLabel(entry: Pick<SessionModel, SessionPrice | 'noPush'>): string {
     const fields = missingPrices(entry).map((key) => this.translate.instant(key));
     return this.translate.instant('stats.completion.missing', { fields: fields.join(', ') });
   }
@@ -504,12 +530,14 @@ export class StatsPage {
 
   private currentFilter(): StatEntryFilter {
     const range = this.period();
+    const tab = this.status();
     return {
       query: this.searchTerm() || null,
       dateFrom: range.dateFrom,
       dateTo: range.dateTo,
       pattern: this.pattern(),
-      status: this.status(),
+      status: tab === 'NO_PUSH' ? null : tab,
+      noPush: tab === 'NO_PUSH' || null,
     };
   }
 

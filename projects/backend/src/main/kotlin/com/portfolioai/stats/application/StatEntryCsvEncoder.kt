@@ -39,6 +39,7 @@ object StatEntryCsvEncoder {
       "SSR?",
       "<\$1 stock?",
       "Entry after 11AM?",
+      "No push?",
       "Completed?",
     )
 
@@ -74,6 +75,7 @@ object StatEntryCsvEncoder {
         e.ssr.toString(),
         e.under1Dollar.toString(),
         e.entryAfter11am.toString(),
+        e.noPush.toString(),
         e.isCompleted.toString(),
       )
       .joinToString(",") { escape(it) }

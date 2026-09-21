@@ -317,6 +317,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     ssr: true,
     under1Dollar: false,
     entryAfter11am: false,
+    noPush: false,
     completed: true,
     tradeId: 'abc-123',
     tradeRetainedProfitDollars: null,

@@ -27,7 +27,8 @@ import org.hibernate.type.SqlTypes
  *   nulls the link without touching the stat).
  * - **Session** ([openPrice] … [eodPrice]) — typed field by field during the day, any subset may be
  *   in. [completedAt] is the status : set when the owner ticks the stat, which needs the whole
- *   session block ([hasFullSession]) — the `ck_stat_entry_completed_whole` CHECK backs it up.
+ *   session block ([hasFullSession]) — the `ck_stat_entry_completed_whole` CHECK backs it up. A
+ *   [noPush] stat has no push price, and is whole with the four others (#302).
  *
  * No percentage is stored : gap, premarket push, push at open, HOD / LOD / EOD are all derived from
  * the prices ([StatMetrics] server-side for the KPIs, `stats.math` on the front).
@@ -72,6 +73,8 @@ class StatEntry(
   @Column(nullable = false) var ssr: Boolean = false,
   @Column(name = "under_1_dollar", nullable = false) var under1Dollar: Boolean = false,
   @Column(name = "entry_after_11am", nullable = false) var entryAfter11am: Boolean = false,
+  /** The stock never pushed after the open (#302) — [pushOpenPrice] stays empty. */
+  @Column(name = "no_push", nullable = false) var noPush: Boolean = false,
 
   /** When the owner ticked the stat as completed — null = to complete. */
   @Column(name = "completed_at") var completedAt: Instant? = null,
@@ -86,16 +89,16 @@ class StatEntry(
   val isCompleted: Boolean
     get() = completedAt != null
 
-  /** The five session prices are in — the precondition to tick the stat. */
+  /** The session prices are in — five, or four on a [noPush] day. The precondition to tick. */
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
 
   /** Labels of the session prices still missing, in the sheet's order. */
   val missingSessionPrices: List<String>
     get() =
-      listOf(
+      listOfNotNull(
           "Open" to openPrice,
-          "Push at open" to pushOpenPrice,
+          ("Push at open" to pushOpenPrice).takeUnless { noPush },
           "HOD" to hodPrice,
           "LOD" to lodPrice,
           "EOD" to eodPrice,
