@@ -4,14 +4,9 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 /**
  * StbSnackBarModule — design-system wrapper around Material's [MatSnackBarModule].
  *
- * Snackbars are opened imperatively via the `MatSnackBar` service (`MatSnackBar.open(...)`),
- * not through a template selector — there's no `<mat-snack-bar>` element on the consumer
- * side. The container component is rendered into the CDK overlay by the service. Importing
- * `StbSnackBarModule` exposes the service to the consumer's DI graph and brings in the lib's
- * token overrides (cf. `snack-bar.scss`).
- *
- * Consumers import this instead of `MatSnackBarModule` so token overrides and any future
- * PortfolioAI-specific defaults live in a single place.
+ * Pages don't need it to show a toast : they inject [StbToast] (root-provided), which opens the
+ * Material snack bar with the lib's variants. The module stays for a consumer that wants the raw
+ * Material snack bar surface ; the look comes from `snack-bar.scss` either way.
  */
 @NgModule({
   imports: [MatSnackBarModule],

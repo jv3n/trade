@@ -341,17 +341,6 @@ $stb-button-sizes: (
 }
 
 // ============================================================================
-// `[stbSpinnerEnd]` — push a `<mat-spinner>` to the end of the button's flex row instead of
-// the leading-icon slot. `margin-left: auto` lets the spinner drift right when the label
-// takes the available width ; `order: 99` is a belt for browsers where the row uses gap
-// without an auto-spacer.
-// ============================================================================
-.mat-mdc-button-base .stb-spinner-end {
-  margin-left: auto;
-  order: 99;
-}
-
-// ============================================================================
 // `[stbDanger]` — destructive filled button (deletions), design-system convention.
 //
 // The `StbDanger` directive puts `.stb-button--danger` on a `mat-flat-button`. The filled tokens

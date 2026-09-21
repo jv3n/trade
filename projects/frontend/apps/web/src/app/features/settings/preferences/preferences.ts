@@ -1,9 +1,13 @@
 import { Component, computed, inject } from '@angular/core';
-import { MatButtonToggleChange } from '@angular/material/button-toggle';
 import { Router } from '@angular/router';
 
 import { TranslatePipe } from '@ngx-translate/core';
-import { StbButtonModule, StbButtonToggleModule, StbIconModule } from '@portfolioai/ui';
+import {
+  MatButtonToggleChange,
+  StbButtonModule,
+  StbButtonToggleModule,
+  StbIconModule,
+} from '@portfolioai/ui';
 import { AuthService } from '../../../core/app-state/auth.service';
 import {
   BalanceCurrency,

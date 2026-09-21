@@ -1,12 +1,11 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { PageEvent } from '@angular/material/paginator';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { Sort } from '@angular/material/sort';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
+  PageEvent,
+  Sort,
   StbButtonModule,
   StbButtonToggleModule,
   StbCheckboxModule,
@@ -19,6 +18,7 @@ import {
   StbSelectModule,
   StbSortHeaderModule,
   StbTableModule,
+  StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import {
@@ -174,7 +174,7 @@ function sessionOf(entry: StatEntry): SessionModel {
 export class StatsPage {
   private readonly repo = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
 
@@ -380,7 +380,9 @@ export class StatsPage {
     const session = this.session();
     if (sameSession(session, sessionOf(entry)) || this.hodBelowLod()) return;
     if (entry.completed && missingPrices(session).length > 0) {
-      this.toast('stats.snackbar.untickFirst', 'error', { ticker: entry.ticker });
+      this.toasts.error(
+        this.translate.instant('stats.snackbar.untickFirst', { ticker: entry.ticker }),
+      );
       this.session.set(sessionOf(entry));
       return;
     }
@@ -397,7 +399,9 @@ export class StatsPage {
         catchError(() => {
           this.patchRow(entry);
           if (this.completing()?.id === entry.id) this.session.set(sessionOf(entry));
-          this.toast('stats.snackbar.sessionSaveError', 'error', { ticker: entry.ticker });
+          this.toasts.error(
+            this.translate.instant('stats.snackbar.sessionSaveError', { ticker: entry.ticker }),
+          );
           return EMPTY;
         }),
       ),
@@ -428,7 +432,9 @@ export class StatsPage {
           this.refetch();
         }),
         catchError(() => {
-          this.toast('stats.snackbar.completionError', 'error', { ticker: entry.ticker });
+          this.toasts.error(
+            this.translate.instant('stats.snackbar.completionError', { ticker: entry.ticker }),
+          );
           return EMPTY;
         }),
       ),
@@ -455,11 +461,13 @@ export class StatsPage {
         filter(Boolean),
         switchMap(() => this.repo.promoteToTrade(entry.id)),
         tap((trade) => {
-          this.toast('stats.snackbar.promoteTradeSuccess', 'success', { ticker: entry.ticker });
+          this.toasts.success(
+            this.translate.instant('stats.snackbar.promoteTradeSuccess', { ticker: entry.ticker }),
+          );
           void this.router.navigate(['/journal', trade.id]);
         }),
         catchError(() => {
-          this.toast('stats.snackbar.promoteTradeError', 'error');
+          this.toasts.error(this.translate.instant('stats.snackbar.promoteTradeError'));
           return EMPTY;
         }),
       )
@@ -473,7 +481,9 @@ export class StatsPage {
         filter(Boolean),
         switchMap(() => this.repo.delete(entry.id)),
         tap(() => {
-          this.toast('stats.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
+          this.toasts.success(
+            this.translate.instant('stats.snackbar.deleteSuccess', { ticker: entry.ticker }),
+          );
           if (this.completing()?.id === entry.id) this.completing.set(null);
           // Deleting the last row of a non-zero page would strand the user on an empty page.
           if (this.entries().length === 1 && this.pageIndex() > 0) {
@@ -483,7 +493,7 @@ export class StatsPage {
           }
         }),
         catchError(() => {
-          this.toast('stats.snackbar.deleteError', 'error');
+          this.toasts.error(this.translate.instant('stats.snackbar.deleteError'));
           return EMPTY;
         }),
       )
@@ -579,13 +589,6 @@ export class StatsPage {
       note: entry.note,
       ...session,
     };
-  }
-
-  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
-    this.snackBar.open(this.translate.instant(key, params), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
-    });
   }
 }
 

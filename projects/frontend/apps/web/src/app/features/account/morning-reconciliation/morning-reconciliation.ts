@@ -8,7 +8,6 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -16,6 +15,7 @@ import {
   StbIconModule,
   StbInputModule,
   StbProgressSpinnerModule,
+  StbToast,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
 import { EMPTY, catchError, filter, finalize, of, switchMap, tap } from 'rxjs';
@@ -56,7 +56,7 @@ export class MorningReconciliation {
   private readonly repo = inject(AccountRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
 
   /** The app's derived balance — null while the host is still loading its summary. */
   readonly appBalance = input<number | null>(null);
@@ -114,13 +114,17 @@ export class MorningReconciliation {
         switchMap(() =>
           this.repo.cancelReconciliation(reconciliation.id).pipe(
             tap(() => {
-              this.toast('account.snackbar.cancelReconciliationSuccess', 'success');
+              this.toasts.success(
+                this.translate.instant('account.snackbar.cancelReconciliationSuccess'),
+              );
               this.loadHistory();
               // The host refetches : the correction that just went moved the balance.
               this.settled.emit(reconciliation);
             }),
             catchError(() => {
-              this.toast('account.snackbar.cancelReconciliationError', 'error');
+              this.toasts.error(
+                this.translate.instant('account.snackbar.cancelReconciliationError'),
+              );
               return EMPTY;
             }),
             finalize(() => this.cancelling.set(false)),
@@ -149,18 +153,19 @@ export class MorningReconciliation {
         switchMap(() =>
           this.repo.reconcile({ brokerBalance: broker, valueDate: new Date() }).pipe(
             tap((reconciliation) => {
-              this.toast(
-                reconciliation.correctionId
-                  ? 'account.snackbar.correctSuccess'
-                  : 'account.snackbar.reconcileSuccess',
-                'success',
+              this.toasts.success(
+                this.translate.instant(
+                  reconciliation.correctionId
+                    ? 'account.snackbar.correctSuccess'
+                    : 'account.snackbar.reconcileSuccess',
+                ),
               );
               this.brokerBalance.set(null);
               this.loadHistory();
               this.settled.emit(reconciliation);
             }),
             catchError(() => {
-              this.toast('account.snackbar.reconcileError', 'error');
+              this.toasts.error(this.translate.instant('account.snackbar.reconcileError'));
               return EMPTY;
             }),
             finalize(() => this.submitting.set(false)),
@@ -178,13 +183,6 @@ export class MorningReconciliation {
     this.repo.reconciliations().subscribe({
       next: (rows) => this.history.set(rows),
       error: () => this.history.set([]),
-    });
-  }
-
-  private toast(key: string, variant: 'success' | 'error'): void {
-    this.snackBar.open(this.translate.instant(key), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
     });
   }
 }

@@ -1,8 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
+  MAT_DIALOG_DATA,
+  MatDialogRef,
   StbButtonModule,
   StbDialogModule,
   StbFormFieldModule,

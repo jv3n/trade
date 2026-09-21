@@ -2,7 +2,6 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -14,6 +13,7 @@ import {
   StbProgressSpinnerModule,
   StbSelectModule,
   StbTableModule,
+  StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { addDays, isBefore, isSameDay, startOfDay } from 'date-fns';
@@ -123,7 +123,7 @@ export class CandidatesPage {
   private readonly repo = inject(CandidatesRepository);
   private readonly stats = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
   private readonly translate = inject(TranslateService);
 
   private readonly tickerInput = viewChild<ElementRef<HTMLInputElement>>('tickerInput');
@@ -249,20 +249,22 @@ export class CandidatesPage {
     request$
       .pipe(
         tap((saved) => {
-          this.toast(
-            id ? 'candidates.snackbar.updateSuccess' : 'candidates.snackbar.createSuccess',
-            'success',
-            { ticker: saved.ticker },
+          this.toasts.success(
+            this.translate.instant(
+              id ? 'candidates.snackbar.updateSuccess' : 'candidates.snackbar.createSuccess',
+              { ticker: saved.ticker },
+            ),
           );
           this.resetForm();
           this.load();
         }),
         catchError((err: unknown) => {
           const duplicate = err instanceof HttpErrorResponse && err.status === 409;
-          this.toast(
-            duplicate ? 'candidates.snackbar.duplicate' : 'candidates.snackbar.saveError',
-            'error',
-            { ticker: input.ticker.trim().toUpperCase() },
+          this.toasts.error(
+            this.translate.instant(
+              duplicate ? 'candidates.snackbar.duplicate' : 'candidates.snackbar.saveError',
+              { ticker: input.ticker.trim().toUpperCase() },
+            ),
           );
           return EMPTY;
         }),
@@ -310,7 +312,11 @@ export class CandidatesPage {
       .pipe(
         catchError(() => {
           this.replaceCandidate(current);
-          this.toast('candidates.snackbar.atOpenSaveError', 'error', { ticker: candidate.ticker });
+          this.toasts.error(
+            this.translate.instant('candidates.snackbar.atOpenSaveError', {
+              ticker: candidate.ticker,
+            }),
+          );
           return EMPTY;
         }),
       )
@@ -334,11 +340,19 @@ export class CandidatesPage {
         filter(Boolean),
         switchMap(() => this.repo.promote(candidate.id)),
         tap(() => {
-          this.toast('candidates.snackbar.promoteSuccess', 'success', { ticker: candidate.ticker });
+          this.toasts.success(
+            this.translate.instant('candidates.snackbar.promoteSuccess', {
+              ticker: candidate.ticker,
+            }),
+          );
           this.load();
         }),
         catchError(() => {
-          this.toast('candidates.snackbar.promoteError', 'error', { ticker: candidate.ticker });
+          this.toasts.error(
+            this.translate.instant('candidates.snackbar.promoteError', {
+              ticker: candidate.ticker,
+            }),
+          );
           return EMPTY;
         }),
       )
@@ -364,13 +378,15 @@ export class CandidatesPage {
         filter(Boolean),
         switchMap(() => this.repo.promoteDay(this.day())),
         tap((result) => {
-          this.toast('candidates.snackbar.promoteAllSuccess', 'success', {
-            count: result.promoted.length,
-          });
+          this.toasts.success(
+            this.translate.instant('candidates.snackbar.promoteAllSuccess', {
+              count: result.promoted.length,
+            }),
+          );
           this.load();
         }),
         catchError(() => {
-          this.toast('candidates.snackbar.promoteAllError', 'error');
+          this.toasts.error(this.translate.instant('candidates.snackbar.promoteAllError'));
           return EMPTY;
         }),
       )
@@ -384,12 +400,16 @@ export class CandidatesPage {
         filter(Boolean),
         switchMap(() => this.repo.delete(candidate.id)),
         tap(() => {
-          this.toast('candidates.snackbar.deleteSuccess', 'success', { ticker: candidate.ticker });
+          this.toasts.success(
+            this.translate.instant('candidates.snackbar.deleteSuccess', {
+              ticker: candidate.ticker,
+            }),
+          );
           if (this.editingId() === candidate.id) this.resetForm();
           this.load();
         }),
         catchError(() => {
-          this.toast('candidates.snackbar.deleteError', 'error');
+          this.toasts.error(this.translate.instant('candidates.snackbar.deleteError'));
           return EMPTY;
         }),
       )
@@ -477,13 +497,6 @@ export class CandidatesPage {
       openPrice: candidate?.openPrice ?? null,
       targetPushPercent: candidate?.targetPushPercent ?? null,
     };
-  }
-
-  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
-    this.snackBar.open(this.translate.instant(key, params), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
-    });
   }
 }
 

@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
   StbCardModule,
   StbIconModule,
   StbProgressSpinnerModule,
+  StbToast,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
 import { EMPTY, Observable, catchError, tap } from 'rxjs';
@@ -38,7 +38,7 @@ export class DataPage {
   private readonly journalRepo = inject(JournalRepository);
   private readonly statsRepo = inject(StatsRepository);
   private readonly translate = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
 
   /** Which download is in flight — null when idle. The two buttons are independent. */
   readonly exporting = signal<Dataset | null>(null);
@@ -58,22 +58,15 @@ export class DataPage {
         tap((blob: Blob) => {
           triggerBlobDownload(blob, `${dataset}-export-${format(new Date(), 'yyyy-MM-dd')}.csv`);
           this.exporting.set(null);
-          this.toast(`settings.dataPage.${dataset}.success`, 'success');
+          this.toasts.success(this.translate.instant(`settings.dataPage.${dataset}.success`));
         }),
         catchError(() => {
           this.exporting.set(null);
-          this.toast(`settings.dataPage.${dataset}.error`, 'error');
+          this.toasts.error(this.translate.instant(`settings.dataPage.${dataset}.error`));
           return EMPTY;
         }),
       )
       .subscribe();
-  }
-
-  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
-    this.snackBar.open(this.translate.instant(key, params), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
-    });
   }
 }
 

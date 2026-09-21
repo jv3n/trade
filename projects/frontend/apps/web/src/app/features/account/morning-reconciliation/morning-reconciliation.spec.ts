@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideTranslateService } from '@ngx-translate/core';
+import { StbToast } from '@portfolioai/ui';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -60,7 +60,7 @@ describe('MorningReconciliation', () => {
             cancelReconciliation,
           } as unknown as AccountRepository,
         },
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmService, useValue: { ask: confirmAsk } },
       ],
     });

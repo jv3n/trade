@@ -1,10 +1,10 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
+import { StbToast } from '@portfolioai/ui';
 import { Observable, Subject } from 'rxjs';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { DataPage } from './data';
@@ -22,7 +22,7 @@ import { DataPage } from './data';
 describe('DataPage', () => {
   let statsExport: Subject<Blob>;
   let journalExport: Subject<Blob>;
-  let snackBarOpen: ReturnType<typeof vi.fn>;
+  let toastShown: Mock<(variant: 'success' | 'error', message: string) => void>;
   let anchorClick: ReturnType<typeof vi.fn>;
   let revoke: ReturnType<typeof vi.fn>;
   let lastAnchor: HTMLAnchorElement;
@@ -30,7 +30,7 @@ describe('DataPage', () => {
   beforeEach(() => {
     statsExport = new Subject<Blob>();
     journalExport = new Subject<Blob>();
-    snackBarOpen = vi.fn();
+    toastShown = vi.fn();
     anchorClick = vi.fn();
     revoke = vi.fn();
 
@@ -76,7 +76,13 @@ describe('DataPage', () => {
             exportCsv: (): Observable<Blob> => journalExport.asObservable(),
           } as unknown as JournalRepository,
         },
-        { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+        {
+          provide: StbToast,
+          useValue: {
+            success: (message: string) => toastShown('success', message),
+            error: (message: string) => toastShown('error', message),
+          },
+        },
       ],
     });
   });
@@ -105,7 +111,7 @@ describe('DataPage', () => {
     expect(lastAnchor.download).toMatch(/^stats-export-\d{4}-\d{2}-\d{2}\.csv$/);
     expect(revoke).toHaveBeenCalledWith('blob:stats');
     expect(page.exporting()).toBeNull();
-    expect(snackBarOpen.mock.calls.at(-1)?.[2].panelClass).toBe('stb-snack-bar--success');
+    expect(toastShown.mock.calls.at(-1)?.[0]).toBe('success');
   });
 
   it('the journal export names its own file, and holds both buttons meanwhile', () => {
@@ -130,6 +136,6 @@ describe('DataPage', () => {
 
     expect(page.exporting()).toBeNull();
     expect(anchorClick).not.toHaveBeenCalled();
-    expect(snackBarOpen.mock.calls.at(-1)?.[2].panelClass).toBe('stb-snack-bar--error');
+    expect(toastShown.mock.calls.at(-1)?.[0]).toBe('error');
   });
 });

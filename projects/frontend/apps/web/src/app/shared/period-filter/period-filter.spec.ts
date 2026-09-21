@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideNativeDateAdapter } from '@angular/material/core';
 import { provideTranslateService } from '@ngx-translate/core';
+import { provideNativeDateAdapter } from '@portfolioai/ui';
 import { describe, expect, it } from 'vitest';
 import { PeriodSelection, computePeriodRange } from '../period-preset/period-preset';
 import { PeriodFilter } from './period-filter';

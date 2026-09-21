@@ -1,9 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
+import { StbToast, provideNativeDateAdapter } from '@portfolioai/ui';
 import { Observable, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
@@ -144,9 +143,9 @@ function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
   fixture: ComponentFixture<StatsPage>;
   page: StatsPage;
   repo: MockStatsRepository;
-  snackBarOpen: ReturnType<typeof vi.fn>;
+  toastShown: ReturnType<typeof vi.fn>;
 } {
-  const snackBarOpen = vi.fn();
+  const toastShown = vi.fn();
   TestBed.configureTestingModule({
     imports: [StatsPage],
     providers: [
@@ -155,7 +154,13 @@ function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
       provideNativeDateAdapter(),
       provideRouter([]),
       { provide: StatsRepository, useClass: MockStatsRepository },
-      { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+      {
+        provide: StbToast,
+        useValue: {
+          success: (message: string) => toastShown('success', message),
+          error: (message: string) => toastShown('error', message),
+        },
+      },
       { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
     ],
   });
@@ -163,7 +168,7 @@ function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
   repo.rows = options.rows ?? [];
   const fixture = TestBed.createComponent(StatsPage);
   fixture.detectChanges();
-  return { fixture, page: fixture.componentInstance, repo, snackBarOpen };
+  return { fixture, page: fixture.componentInstance, repo, toastShown };
 }
 
 /** Types a full session into the session panel. */
@@ -314,7 +319,7 @@ describe('StatsPage', () => {
 
   it('refuses to clear a price of a ticked stat and puts the value back', () => {
     const ticked = makeStat({ completed: true });
-    const { page, repo, snackBarOpen } = setup({ rows: [ticked] });
+    const { page, repo, toastShown } = setup({ rows: [ticked] });
     page.open(ticked);
 
     page.setSessionPrice('eodPrice', null);
@@ -322,17 +327,17 @@ describe('StatsPage', () => {
 
     expect(repo.update).not.toHaveBeenCalled();
     expect(page.session().eodPrice).toBe(3.52);
-    expect(snackBarOpen.mock.calls.at(-1)?.[2].panelClass).toBe('stb-snack-bar--error');
+    expect(toastShown.mock.calls.at(-1)?.[0]).toBe('error');
   });
 
   it('puts the row back and toasts an error when a save fails', () => {
-    const { page, repo, snackBarOpen } = setup({ rows: [makePending()] });
+    const { page, repo, toastShown } = setup({ rows: [makePending()] });
     repo.update.mockReturnValue(throwError(() => new Error('500 from server')));
 
     page.setSessionPrice('openPrice', 1.9);
     page.saveSession();
 
-    expect(snackBarOpen.mock.calls.at(-1)?.[2].panelClass).toBe('stb-snack-bar--error');
+    expect(toastShown.mock.calls.at(-1)?.[0]).toBe('error');
     expect(page.rows()[0].openPrice).toBeNull();
     expect(page.session().openPrice).toBeNull();
     expect(page.completing()).not.toBeNull();

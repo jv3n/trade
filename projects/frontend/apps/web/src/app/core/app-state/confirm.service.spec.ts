@@ -14,9 +14,8 @@
  */
 import { ApplicationRef, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MATERIAL_ANIMATIONS } from '@angular/material/core';
-import { MatDialog } from '@angular/material/dialog';
-import { TranslateService, provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
+import { MatDialog, MATERIAL_ANIMATIONS } from '@portfolioai/ui';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfirmOptions, ConfirmService } from './confirm.service';
 

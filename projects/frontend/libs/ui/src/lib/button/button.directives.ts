@@ -76,28 +76,6 @@ export class StbTone {
 }
 
 /**
- * Pushes a `<mat-spinner>` to the **end** of its parent button — the lib button slots
- * icons before the label by default (Material's leading-icon slot), so the spinner of a
- * loading CTA usually lives at the start. Add `stbSpinnerEnd` to put it after the label
- * instead (matches the visual cue "→ working on it").
- *
- * ```html
- * <button mat-flat-button [disabled]="loading()">
- *   <span>Save</span>
- *   <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>
- * </button>
- * ```
- *
- * Pure marker — the actual `order` / margin rules live in `button.scss`.
- */
-@Directive({
-  selector: 'mat-spinner[stbSpinnerEnd], mat-progress-spinner[stbSpinnerEnd]',
-
-  host: { class: 'stb-spinner-end' },
-})
-export class StbSpinnerEnd {}
-
-/**
  * Turns a filled Material button into a **destructive** CTA — red container (`--color-danger`)
  * instead of the indigo accent. Reserved for irreversible actions (deletions), typically the
  * confirm button of a danger `StbConfirmDialog`.

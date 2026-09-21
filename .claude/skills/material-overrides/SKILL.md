@@ -38,21 +38,27 @@ Minimal viable form :
 import { NgModule } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 
-import { StbSize, StbSpinnerEnd } from './button.directives';
+import { StbDanger, StbSize, StbTone } from './button.directives';
 
 /**
  * StbButtonModule — design-system wrapper around Material's [MatButtonModule], plus the
- * `[stbSize]` directive (xs / sm / md / lg) and `[stbSpinnerEnd]` (position a loading
- * spinner after the label).
+ * `[stbSize]` (xs / sm / md / lg), `[stbTone]` (semantic colour) and `[stbDanger]` (destructive
+ * CTA).
  */
 @NgModule({
-  imports: [MatButtonModule, StbSize, StbSpinnerEnd],
-  exports: [MatButtonModule, StbSize, StbSpinnerEnd],
+  imports: [MatButtonModule, StbDanger, StbSize, StbTone],
+  exports: [MatButtonModule, StbDanger, StbSize, StbTone],
 })
 export class StbButtonModule {}
 ```
 
 Constructor injection only. The KDoc explains the intent + any design-system specifics ; consumers see this in IDE tooltips.
+
+## Everything Material goes through the lib
+
+The app never imports `@angular/material/*` — ESLint's `no-restricted-imports` fails `npm run lint` on it in `apps/web`. What the app needs besides the modules is re-exported by the wrapper that owns it : `MatDialog` / `MatDialogRef` / `MAT_DIALOG_DATA` / `MATERIAL_ANIMATIONS` (`dialog`), `PageEvent` (`paginator`), `Sort` (`sort-header`, type only), `MatButtonToggleChange` (`button-toggle`), `MatIconRegistry` (`icon`), `provideNativeDateAdapter` (`datepicker`, for specs). A missing one is added to its wrapper's `public-api.ts`, never imported from Material in the app.
+
+The app-wide Material defaults — native date adapter, no ripples, dense outlined fields with a dynamic subscript, the Material Symbols icon font — are `provideStbMaterial()` (`src/lib/config/`), called once in `app.config.ts`.
 
 ## The exhaustive M3 token override
 
@@ -108,7 +114,7 @@ The `<name>.scss` file is the largest artefact in a typical wrapper. Pattern :
 
 ### When two token APIs apply
 
-A few components (autocomplete, select) compose two override mixins because the panel and the rows live in separate token namespaces. `autocomplete.scss` calls both `mat.autocomplete-overrides(...)` (3 panel tokens) and `mat.option-overrides(...)` (10 row tokens), and the preamble names both sources. The option overrides apply to **every** `<mat-option>` in the app (autocomplete + select panels share that row contract) — flag this in the preamble so the next contributor doesn't duplicate.
+A component can compose two override mixins when its panel and its rows live in separate token namespaces. `select.scss` calls both `mat.select-overrides(...)` (panel, trigger, arrow) and `mat.option-overrides(...)` (the `<mat-option>` rows), and the preamble names both sources. The option overrides apply to **every** `<mat-option>` in the app — whichever file owns them, say so in its preamble, and move them (never drop them) if that wrapper is ever removed.
 
 ## Design-system directives — `Stb<Variant>`
 
@@ -153,7 +159,7 @@ export class StbSize {
 | Directive       | Selector(s)                                | Posts class                          | Lives in        |
 | --------------- | ------------------------------------------ | ------------------------------------ | --------------- |
 | `StbSize`       | `[stbSize]` on every Material button       | `.stb-size--{xs\|sm\|md\|lg}`         | `button/`       |
-| `StbSpinnerEnd` | `mat-spinner[stbSpinnerEnd]`               | `.stb-spinner-end`                    | `button/`       |
+| `StbTone`       | `[stbTone]` on every Material button       | `.stb-tone--{accent\|success\|warning\|danger}` | `button/` |
 | `StbDanger`     | `mat-flat-button[stbDanger]`               | `.stb-button--danger`                 | `button/`       |
 | `StbTable`      | `div[stbTable]`                            | `.stb-table`                          | `table/`        |
 | `StbCol`        | `th[stbCol], td[stbCol]`                   | `.stb-col--{numeric\|mono\|actions}`  | `table/`        |
@@ -161,31 +167,21 @@ export class StbSize {
 
 ## Snackbar variants
 
-`MatSnackBar` is opened imperatively via the service — there's no template selector. The lib ships two semantic variants you opt into via the `panelClass` option of `MatSnackBar.open()` :
+The snack bar is opened imperatively — there's no template selector. The lib ships two semantic variants, `stb-snack-bar--success` (green, 3 s) and `stb-snack-bar--error` (red, 5 s), at the end of `libs/ui/src/lib/snack-bar/snack-bar.scss` : they override `--mat-snack-bar-container-color`, `--mat-snack-bar-supporting-text-color` and `--mat-snack-bar-button-color` on the panel host, with `--color-success` / `--color-on-success` / `--color-danger` / `--color-on-danger`.
 
-- **`stb-snack-bar--success`** — green container + duration 3 s for confirmations.
-- **`stb-snack-bar--error`** — red container + duration 5 s for failures.
+### `StbToast` — the only entry point
 
-The variant CSS lives at the end of `libs/ui/src/lib/snack-bar/snack-bar.scss` and overrides the `--mat-snack-bar-container-color`, `--mat-snack-bar-supporting-text-color`, `--mat-snack-bar-button-color` CSS vars on the panel host. Uses the design-system semantic tokens `--color-success` / `--color-on-success` / `--color-danger` / `--color-on-danger`.
-
-### Call-site helper
-
-Features that emit several toasts factor a private `toast()` helper rather than repeating the snackbar call shape :
+`libs/ui/src/lib/snack-bar/toast.service.ts` (root-provided) owns the panel classes and the durations. The app never injects `MatSnackBar` :
 
 ```typescript
-private toast(
-  key: string,
-  variant: 'success' | 'error',
-  params?: Record<string, unknown>,
-): void {
-  this.snackBar.open(this.translate.instant(key, params), undefined, {
-    duration: variant === 'success' ? 3000 : 5000,
-    panelClass: `stb-snack-bar--${variant}`,
-  });
-}
+private readonly toasts = inject(StbToast);
+private readonly translate = inject(TranslateService);
+
+this.toasts.success(this.translate.instant('journal.snackbar.deleteSuccess', { ticker }));
+this.toasts.error(this.translate.instant('journal.snackbar.deleteError'));
 ```
 
-Call sites read `this.toast('journal.snackbar.deleteSuccess', 'success', { ticker })`. Verbatim in `JournalPage` + `JournalIoPage`.
+The lib has no i18n, so the caller translates. In a spec, provide a double that records the variant : `{ provide: StbToast, useValue: { success: (m: string) => toastShown('success', m), error: (m: string) => toastShown('error', m) } }`, then assert `toastShown.mock.calls.at(-1)?.[0]`.
 
 ## Storybook
 

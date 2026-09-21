@@ -1,12 +1,11 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { PageEvent } from '@angular/material/paginator';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   AreaChartPoint,
+  MatDialog,
+  PageEvent,
   StbAreaChart,
   StbButtonModule,
   StbButtonToggleModule,
@@ -19,6 +18,7 @@ import {
   StbProgressSpinnerModule,
   StbSelectModule,
   StbTableModule,
+  StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { format } from 'date-fns';
@@ -125,7 +125,7 @@ export class AccountPage {
   private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -220,11 +220,11 @@ export class AccountPage {
         filter(Boolean),
         switchMap(() => this.repo.deleteMovement(movement.id)),
         tap(() => {
-          this.toast('account.snackbar.deleteSuccess', 'success');
+          this.toasts.success(this.translate.instant('account.snackbar.deleteSuccess'));
           this.fetch();
         }),
         catchError(() => {
-          this.toast('account.snackbar.deleteError', 'error');
+          this.toasts.error(this.translate.instant('account.snackbar.deleteError'));
           return EMPTY;
         }),
       )
@@ -302,16 +302,18 @@ export class AccountPage {
             : this.repo.addMovement(input)
           ).pipe(
             tap(() => {
-              this.toast(
-                isUpdate ? 'account.snackbar.updateSuccess' : 'account.snackbar.createSuccess',
-                'success',
+              this.toasts.success(
+                this.translate.instant(
+                  isUpdate ? 'account.snackbar.updateSuccess' : 'account.snackbar.createSuccess',
+                ),
               );
               this.fetch();
             }),
             catchError(() => {
-              this.toast(
-                isUpdate ? 'account.snackbar.updateError' : 'account.snackbar.createError',
-                'error',
+              this.toasts.error(
+                this.translate.instant(
+                  isUpdate ? 'account.snackbar.updateError' : 'account.snackbar.createError',
+                ),
               );
               return EMPTY;
             }),
@@ -367,12 +369,5 @@ export class AccountPage {
           this.loading.set(false);
         },
       });
-  }
-
-  private toast(key: string, variant: 'success' | 'error'): void {
-    this.snackBar.open(this.translate.instant(key), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
-    });
   }
 }

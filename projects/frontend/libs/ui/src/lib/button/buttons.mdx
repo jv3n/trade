@@ -9,11 +9,10 @@ Material's `<button mat-*>` restyled via the lib (`libs/ui/src/lib/button/button
 
 - **`[stbSize]`** — `xs | sm | md | lg` swaps the Material container-height + label-text-size tokens.
 - **`[stbTone]`** — `accent | success | warning | danger` recolours the button on the palette (`null` = default colours).
-- **`[stbSpinnerEnd]`** — applied to a `<mat-spinner>` inside a button, pushes it to the end of the row (trailing position) instead of the leading-icon slot.
 
 ## Playground
 
-Use the **Controls** panel on the right to flip the variant, size, tone, label, icon, disabled / loading state, and where the spinner sits.
+Use the **Controls** panel on the right to flip the variant, size, tone, label, icon, disabled / loading state.
 
 <Canvas of={ButtonStories.Default} />
 
@@ -105,20 +104,12 @@ Drop the icon and the label as direct siblings inside the button — Material pr
 
 ## Loading state
 
-Place the spinner where the icon would naturally go (leading), OR at the end via `[stbSpinnerEnd]` :
+Place the spinner where the icon would naturally go — it replaces the icon :
 
 <Source
   language="html"
-  code={`<!-- Leading (replaces the icon) -->
-<button mat-flat-button disabled>
+  code={`<button mat-flat-button disabled>
   <mat-spinner diameter="16"></mat-spinner>
   <span>Saving…</span>
-</button>
-
-<!-- Trailing -->
-
-<button mat-flat-button disabled>
-  <span>Saving</span>
-  <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>
 </button>`}
 />
