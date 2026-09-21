@@ -267,11 +267,20 @@
                 appNumberMask
                 [decimals]="2"
                 [allowNegative]="true"
-                [value]="d.realProfitDollars"
+                data-testid="real-pnl"
+                [value]="realAllowed() ? d.realProfitDollars : null"
+                [disabled]="!realAllowed()"
                 (numberChange)="setRealProfit($event)"
                 inputmode="decimal"
               />
               <span matTextSuffix>$</span>
+              @if (realToBeErased(); as saved) {
+                <mat-hint class="warn">{{
+                  'journal.detail.pnl.realErased' | translate: { amount: (saved | number: '1.2-2') }
+                }}</mat-hint>
+              } @else if (!realAllowed()) {
+                <mat-hint>{{ 'journal.detail.pnl.realNeedsClose' | translate }}</mat-hint>
+              }
             </mat-form-field>
             <div class="pnl-figure">
               <span class="pnl-figure__label">{{ 'journal.detail.pnl.gap' | translate }}</span>

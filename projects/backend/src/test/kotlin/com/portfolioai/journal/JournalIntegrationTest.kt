@@ -54,7 +54,8 @@ import org.springframework.web.server.ResponseStatusException
  *
  * - **The three P&L figures** — computed from the executions, real (broker statement) and retained
  *   (real if set, else computed). The retained one is what the status filter and the account event
- *   read, so a broker figure that flips the sign must flip the bucket too.
+ *   read, so a broker figure that flips the sign must flip the bucket too. A broker figure needs a
+ *   closed position : on an open one it would post an amount no exit backs (#304).
  *
  * - **Filter Specifications** — every filter axis (query, date range, patterns IN, status derived
  *   predicates) exercises the SQL builder against real Postgres semantics. Pure unit tests on
@@ -335,6 +336,53 @@ class JournalIntegrationTest {
 
     assertEquals(0, dto.gainPercent!!.compareTo(BigDecimal("37.6947")), "computed is untouched")
     assertEquals(0, dto.retainedGainPercent!!.compareTo(BigDecimal("36.9003")))
+  }
+
+  // Hit in the pilot test : 592.15 $ typed on a still-open short moved the account balance.
+  @Test
+  fun `a real P&L on an open position is refused`() {
+    val ex =
+      assertThrows(IllegalArgumentException::class.java) {
+        service.create(sampleRequest(realProfitDollars = BigDecimal("592.15")))
+      }
+    assertEquals("The broker P&L can only be set once the position is closed", ex.message)
+  }
+
+  @Test
+  fun `a real P&L on a trade without any execution yet is refused`() {
+    // A trade freshly promoted from a stat has no fill : its position counts as open.
+    val bare = sampleRequest(realProfitDollars = BigDecimal("50.00")).copy(executions = emptyList())
+
+    assertThrows(IllegalArgumentException::class.java) { service.create(bare) }
+  }
+
+  @Test
+  fun `a real P&L on a partially covered position is refused`() {
+    val partial =
+      sampleRequest(realProfitDollars = BigDecimal("60.00")).let {
+        it.copy(
+          executions =
+            it.executions + ExecutionRequest(ExecutionKind.EXIT, 50, BigDecimal("2.0000"))
+        )
+      }
+
+    assertThrows(IllegalArgumentException::class.java) { service.create(partial) }
+  }
+
+  // The trade page never sends this (it clears the broker figure on a reopened position) : the rule
+  // guards the API itself.
+  @Test
+  fun `reopening a trade that has a real P&L is refused until the real P&L is cleared`() {
+    val closed =
+      service.create(
+        sampleRequest(exitPrice = BigDecimal("2.0000"), realProfitDollars = BigDecimal("118.45"))
+      )
+
+    assertThrows(IllegalArgumentException::class.java) {
+      service.update(closed.id, sampleRequest(realProfitDollars = BigDecimal("118.45")))
+    }
+    val reopened = service.update(closed.id, sampleRequest())
+    assertNull(reopened.retainedProfitDollars, "an open position has no P&L to retain")
   }
 
   // ---------------------------------------------------------------------------

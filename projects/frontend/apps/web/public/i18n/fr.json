@@ -424,8 +424,10 @@
         "hint": "ajustable pour coller au relevé TradeZero",
         "computed": "Calculé (exécutions)",
         "real": "Réel (relevé broker)",
+        "realNeedsClose": "Une fois la position clôturée",
         "gap": "Écart (frais, arrondis)",
-        "note": "Vide = on retient le P&L calculé. Le P&L retenu est celui qui remonte au compte."
+        "note": "Vide = on retient le P&L calculé. Le P&L retenu est celui qui remonte au compte.",
+        "realErased": "Le P&L broker de {{amount}} $ sera effacé à l'enregistrement : la position n'est plus clôturée"
       },
       "context": {
         "title": "Contexte du jour",
@@ -456,6 +458,11 @@
       "updateError": "Échec de la mise à jour du trade. Réessaie.",
       "deleteSuccess": "Trade {{ticker}} supprimé.",
       "deleteError": "Échec de la suppression du trade. Réessaie."
+    },
+    "confirmEraseReal": {
+      "title": "Effacer le P&L broker ?",
+      "message": "La position n'est plus clôturée : le P&L broker de {{amount}} $ est effacé et ne compte plus au compte.",
+      "confirm": "Enregistrer et effacer"
     }
   },
   "stats": {

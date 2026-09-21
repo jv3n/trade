@@ -424,8 +424,10 @@
         "hint": "adjustable to match the TradeZero statement",
         "computed": "Computed (fills)",
         "real": "Real (broker statement)",
+        "realNeedsClose": "Once the position is closed",
         "gap": "Gap (fees, rounding)",
-        "note": "Empty = the computed P&L is retained. The retained P&L is the one that reaches the account."
+        "note": "Empty = the computed P&L is retained. The retained P&L is the one that reaches the account.",
+        "realErased": "The broker P&L of {{amount}} $ will be erased on save: the position is no longer closed"
       },
       "context": {
         "title": "Day context",
@@ -456,6 +458,11 @@
       "updateError": "Failed to update the trade. Please retry.",
       "deleteSuccess": "Trade {{ticker}} deleted.",
       "deleteError": "Failed to delete the trade. Please retry."
+    },
+    "confirmEraseReal": {
+      "title": "Erase the broker P&L?",
+      "message": "The position is no longer closed: the broker P&L of {{amount}} $ is erased and no longer counts in the account.",
+      "confirm": "Save and erase"
     }
   },
   "stats": {

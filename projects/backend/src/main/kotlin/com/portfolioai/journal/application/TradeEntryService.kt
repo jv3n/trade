@@ -13,6 +13,7 @@ import com.portfolioai.journal.domain.TradeAttachment
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradePositionCalculator
+import com.portfolioai.journal.domain.TradePositionCalculator.PositionStatus
 import com.portfolioai.journal.infrastructure.persistence.TradeAttachmentRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
@@ -295,8 +296,9 @@ class TradeEntryService(
   /**
    * Rewrites the [entry]'s executions + direction from the [request] and recomputes the derived
    * aggregates (size, avg prices, realized P&L, gain%) via [TradePositionCalculator] — the single
-   * place where the aggregates are recomputed. Per-leg positivity is validated here (→ HTTP
-   * 400) so a bad input never reaches the DB CHECK constraints (which would surface as a 409).
+   * place where the aggregates are recomputed. Per-leg positivity and a real P&L on a closed
+   * position only are validated here (→ HTTP 400), so a bad input never reaches the DB CHECK
+   * constraints (which would surface as a 409).
    */
   private fun applyExecutions(entry: TradeEntry, request: TradeEntryRequest) {
     val legs =
@@ -312,9 +314,15 @@ class TradeEntryService(
           executedAt = exec.executedAt,
         )
       }
+    val aggregates = TradePositionCalculator.compute(request.direction, legs)
+    // The broker's P&L is read off a closed trade : on an open or partial position it would post
+    // an amount to the account that no exit backs (#304).
+    require(request.realProfitDollars == null || aggregates.status == PositionStatus.CLOSED) {
+      "The broker P&L can only be set once the position is closed"
+    }
     entry.direction = request.direction
     entry.replaceExecutions(legs)
-    entry.applyAggregates(TradePositionCalculator.compute(request.direction, legs))
+    entry.applyAggregates(aggregates)
   }
 
   /**

@@ -196,6 +196,8 @@ $ and %, duration of the trade.
 the TradeZero statement to absorb the broker's fees and rounding (a few cents to a few dollars — I
 don't know the exact fees in advance). The app shows the computed one, the real one and the gap. The
 **retained P&L** (the real one if typed, else the computed one) is what reaches the account.
+The real P&L can only be typed **once the position is closed** : on an open or partial position the
+field is greyed out, since no exit backs the amount yet.
 
 **Removed** : the pre-trade checklist, the "execution" block (front / back side, short on
 resistance, exit strategy), play A / B, the risk indicators (budget, R multiple).

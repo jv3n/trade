@@ -146,6 +146,83 @@ describe('JournalDetailPage', () => {
     expect(page.pnl().retainedPercent).toBeCloseTo(18.53, 2);
   });
 
+  // Hit in the pilot test : 592.15 $ typed on a still-open short reached the account (#304).
+  it('keeps the broker P&L out of an open position, in the figures and in what is saved', () => {
+    const openShort = makeTrade({
+      executions: [{ seq: 0, kind: 'ENTRY', shares: 500, price: 8.4, executedAt: '09:41' }],
+    });
+    findById = vi.fn(() => of(openShort));
+    update = vi.fn((_id: string, _input: TradeEntryInput) => of(openShort));
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    page.setRealProfit(592.15);
+
+    expect(page.realAllowed()).toBe(false);
+    expect(page.pnl().retained).toBeNull();
+    page.save();
+    const [, input] = update.mock.calls[0] as [string, TradeEntryInput];
+    expect(input.realProfitDollars).toBeNull();
+  });
+
+  it('warns that Save erases the broker P&L of a trade whose position was reopened', () => {
+    const closed = closedTrade();
+    findById = vi.fn(() => of({ ...closed, realProfitDollars: 746.34 }));
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    expect(page.realToBeErased()).toBeNull();
+
+    page.removeExecution(3); // the last cover : 200 shares are open again
+
+    expect(page.realToBeErased()).toBe(746.34);
+  });
+
+  it('asks before a Save that erases the broker P&L, and saves nothing when cancelled', () => {
+    findById = vi.fn(() => of({ ...closedTrade(), realProfitDollars: 746.34 }));
+    const fixture = setup();
+    confirmed = false;
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    page.removeExecution(3);
+
+    page.save();
+
+    expect(ask).toHaveBeenCalledWith('journal.confirmEraseReal', {
+      params: { amount: '746.34' },
+      variant: 'danger',
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('disables the broker P&L field until the position is closed', () => {
+    findById = vi.fn(() =>
+      of(
+        makeTrade({
+          executions: [{ seq: 0, kind: 'ENTRY', shares: 500, price: 8.4, executedAt: '09:41' }],
+        }),
+      ),
+    );
+    const fixture = setup();
+    fixture.detectChanges();
+    const realInput = (): HTMLInputElement =>
+      fixture.nativeElement.querySelector('[data-testid="real-pnl"]');
+
+    expect(realInput().disabled).toBe(true);
+
+    const page = fixture.componentInstance;
+    page.addExecution();
+    page.setExecutionShares(1, 500);
+    page.setExecutionPrice(1, 7.2);
+    fixture.detectChanges();
+
+    expect(page.realAllowed()).toBe(true);
+    expect(realInput().disabled).toBe(false);
+  });
+
   it('the save bar only shows up once the draft drifts, and Cancel puts the trade back', () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
