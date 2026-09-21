@@ -339,3 +339,45 @@
 .stb-button--danger:not(:disabled):hover {
   background-color: color-mix(in oklch, var(--color-danger) 88%, black);
 }
+
+// ============================================================================
+// `[stbTone]` — semantic colour variants, design-system convention.
+//
+// The `StbTone` directive puts `.stb-tone--{accent|success|warning|danger}` on a Material button.
+// Each tone re-scopes the colour tokens through the same override mixins as above, so the right
+// `--mat-*` variables get set whatever Material names them : the icon of an icon button, the
+// label / outline / state layer of text and stroked buttons (stroked ones also get the soft tint as
+// a background), the container of filled ones.
+// ============================================================================
+
+@each $tone in (accent, success, warning, danger) {
+  .stb-tone--#{$tone} {
+    @include mat.icon-button-overrides(
+      (
+        icon-color: var(--color-#{$tone}),
+        state-layer-color: var(--color-#{$tone}),
+      )
+    );
+    @include mat.button-overrides(
+      (
+        text-label-text-color: var(--color-#{$tone}),
+        text-state-layer-color: var(--color-#{$tone}),
+        outlined-label-text-color: var(--color-#{$tone}),
+        outlined-outline-color: var(--color-#{$tone}),
+        outlined-state-layer-color: var(--color-#{$tone}),
+        filled-container-color: var(--color-#{$tone}),
+        filled-label-text-color: var(--color-on-#{$tone}),
+        filled-state-layer-color: var(--color-on-#{$tone}),
+      )
+    );
+
+    &.mat-mdc-outlined-button {
+      background-color: var(--color-#{$tone}-soft);
+    }
+
+    // Same darker-container hover as the accent CTA, which would otherwise repaint it indigo.
+    &.mat-mdc-unelevated-button:not(:disabled):hover {
+      background-color: color-mix(in oklch, var(--color-#{$tone}) 88%, black);
+    }
+  }
+}

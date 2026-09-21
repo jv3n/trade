@@ -167,6 +167,15 @@ describe('HttpStatsRepository', () => {
     req.flush(wireStat());
   });
 
+  it('setCompleted PUTs the tick to /:id/completion and parses the stat that comes back', () => {
+    repo.setCompleted('stat-1', true).subscribe((stat) => expect(stat.ticker).toBe('KTTA'));
+
+    const req = http.expectOne('/api/stats/stat-1/completion');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ completed: true });
+    req.flush(wireStat());
+  });
+
   it('promoteToTrade POSTs to /:id/trade and parses the journal trade that comes back', () => {
     // The response is a journal wire DTO, not a stat — the mapping is the journal adapter's, and
     // what the caller needs from it is the id to navigate to (#193).

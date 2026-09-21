@@ -1,13 +1,13 @@
 import { Pattern } from '../shared/pattern.model';
 
 /**
- * Stats **domain** types — a candidate promoted to the stats sheet, completed after the 4 pm close
- * (cf. `mockup/PARCOURS.md`, steps 2 and 5). The wire format (ISO date / instant strings) is not
+ * Stats **domain** types — a candidate promoted to the stats sheet, filled as the day goes and
+ * ticked once complete (cf. `mockup/PARCOURS.md`, steps 2 and 5). The wire format (ISO date / instant strings) is not
  * exposed here ; the HTTP adapter in `adapters/stats.http.ts` owns the mapping.
  *
  * Two blocks : the **premarket** one is copied from the candidate at promotion time, the **session**
- * one is entered at the close and is null until then (`completed` says which). No percentage is
- * stored : gap, premarket push and the session percentages are derived by `features/stats/stats.math`.
+ * one is typed field by field, any of its prices may still be null. No percentage is stored : gap,
+ * premarket push and the session percentages are derived by `features/stats/stats.math`.
  */
 export interface StatEntry {
   id: string;
@@ -39,7 +39,7 @@ export interface StatEntry {
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;
-  /** Derived server-side : the whole session block is in. */
+  /** Ticked by the owner (#263) — needs the five session prices, which alone don't tick it. */
   completed: boolean;
 
   // ---- Journal link (#193) ----
@@ -81,8 +81,8 @@ export interface StatEntryFilter {
 
 /**
  * KPIs of the stats page, computed by the backend over the **filtered set** (not the current page).
- * Averages and quantiles cover the completed stats only and are percentages vs the session open ; they are null
- * when no completed stat matches.
+ * Averages and quantiles cover the completed stats only and are percentages vs the session open ;
+ * they are null when no completed stat matches.
  */
 export interface StatSummary {
   completed: number;

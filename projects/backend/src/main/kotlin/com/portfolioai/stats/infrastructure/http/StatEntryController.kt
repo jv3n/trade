@@ -3,6 +3,7 @@ package com.portfolioai.stats.infrastructure.http
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
+import com.portfolioai.stats.application.dto.StatCompletionRequest
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
@@ -81,12 +82,23 @@ class StatEntryController(private val service: StatEntryService) {
   @GetMapping("/{id}") fun get(@PathVariable id: UUID): StatEntryDto = service.findById(id)
 
   /**
-   * Overwrites a stat — the completion panel sends the whole row back (premarket recap + session
-   * prices + flags). Foreign id → 404 ; (day, ticker) already taken → 409.
+   * Overwrites a stat — the session panel sends the whole row back each time a field is left.
+   * Foreign id → 404 ; (day, ticker) already taken → 409 ; clearing a price of a completed stat
+   * → 400.
    */
   @PutMapping("/{id}")
   fun update(@PathVariable id: UUID, @RequestBody request: StatEntryRequest): StatEntryDto =
     service.update(id, request)
+
+  /**
+   * Ticks the stat as completed (`{"completed": true}`) or back to "to complete" — the ✓ of the
+   * sheet. Ticking without the five session prices → 400 ; foreign id → 404.
+   */
+  @PutMapping("/{id}/completion")
+  fun setCompletion(
+    @PathVariable id: UUID,
+    @RequestBody request: StatCompletionRequest,
+  ): StatEntryDto = service.setCompleted(id, request.completed)
 
   /** Deletes one of the caller's stats. Foreign id → 404. */
   @DeleteMapping("/{id}")

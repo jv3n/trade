@@ -37,6 +37,44 @@ export class StbSize {
   protected readonly hostClass = computed(() => `stb-size--${this.stbSize()}`);
 }
 
+/** Semantic colours a button can take — the palette's colour rule, not arbitrary colours. */
+export type StbButtonTone = 'accent' | 'success' | 'warning' | 'danger';
+
+/**
+ * Adds a `stb-tone--{accent|success|warning|danger}` class on a Material button (or icon-button)
+ * so `button.scss` can re-scope its colour tokens to that palette entry — the icon of an icon
+ * button, the label + outline of a stroked / text one, the container of a filled one. `null`
+ * leaves the button on its default colours, so a state can drive it :
+ *
+ * ```html
+ * <button mat-icon-button [stbTone]="done ? 'success' : null"><mat-icon>check_circle</mat-icon></button>
+ * <button mat-stroked-button stbTone="warning">Review</button>
+ * ```
+ *
+ * Follow the colour rule : `success` / `danger` for outcomes, `warning` for warnings, `accent` for
+ * statuses. Pure marker — the overrides live in `button.scss` (the `.stb-tone--*` rules).
+ */
+@Directive({
+  selector: `
+    button[mat-button][stbTone], a[mat-button][stbTone],
+    button[mat-flat-button][stbTone], a[mat-flat-button][stbTone],
+    button[mat-stroked-button][stbTone], a[mat-stroked-button][stbTone],
+    button[mat-icon-button][stbTone], a[mat-icon-button][stbTone]
+  `,
+
+  host: {
+    '[class]': 'hostClass()',
+  },
+})
+export class StbTone {
+  readonly stbTone = input<StbButtonTone | null>(null);
+
+  protected readonly hostClass = computed(() => {
+    const tone = this.stbTone();
+    return tone ? `stb-tone--${tone}` : '';
+  });
+}
+
 /**
  * Pushes a `<mat-spinner>` to the **end** of its parent button — the lib button slots
  * icons before the label by default (Material's leading-icon slot), so the spinner of a

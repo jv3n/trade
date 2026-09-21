@@ -39,10 +39,17 @@ export abstract class StatsRepository {
   abstract summary(filter?: StatEntryFilter): Observable<StatSummary>;
 
   /**
-   * Overwrites a stat — what the completion panel saves (premarket recap + session prices + flags).
-   * Foreign id → 404 ; (day, ticker) already taken → 409.
+   * Overwrites a stat — what the session panel saves each time a field is left (premarket recap +
+   * session prices + flags). Foreign id → 404 ; (day, ticker) already taken → 409 ; clearing a
+   * price of a completed stat → 400.
    */
   abstract update(id: string, input: StatEntryInput): Observable<StatEntry>;
+
+  /**
+   * Ticks the stat as completed, or back to "to complete" (#263). Ticking without the five session
+   * prices → 400.
+   */
+  abstract setCompleted(id: string, completed: boolean): Observable<StatEntry>;
 
   abstract delete(id: string): Observable<void>;
 

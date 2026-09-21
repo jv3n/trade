@@ -155,6 +155,12 @@ export class HttpStatsRepository extends StatsRepository {
     return this.http.put<StatEntryWireDto>(`${this.base}/${id}`, toWire(input)).pipe(map(fromWire));
   }
 
+  setCompleted(id: string, completed: boolean): Observable<StatEntry> {
+    return this.http
+      .put<StatEntryWireDto>(`${this.base}/${id}/completion`, { completed })
+      .pipe(map(fromWire));
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
   }

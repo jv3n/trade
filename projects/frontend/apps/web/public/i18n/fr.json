@@ -50,13 +50,13 @@
       "stats": {
         "title": "Compléter les stats",
         "from": "à partir de 16:00",
-        "body": "Open, push à l'open, HOD, LOD et EOD de chaque stat du jour.",
+        "body": "Finir la séance (HOD, LOD, EOD) de chaque stat du jour, puis la cocher.",
         "pending": "{{count}} à compléter",
         "toComplete": "{{tickers}} attend(ent) son bloc de séance.",
         "notPromoted": "{{count}} candidats ne sont pas encore passés en stats.",
         "confirmPromote": {
           "title": "Passer {{count}} candidats en stats ?",
-          "message": "{{tickers}} deviennent des stats à compléter après la clôture de 16h. Les candidats déjà passés sont laissés tels quels.",
+          "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
           "confirm": "Tout passer en stats"
         }
       },
@@ -172,12 +172,12 @@
     },
     "confirmPromote": {
       "title": "Passer {{ticker}} en stat ?",
-      "message": "La stat reprend toutes les données du candidat (pattern, clôture veille, open et high PM, float, volume, locate, note, open de 9h30). Tu la compléteras après la clôture de 16h.",
+      "message": "La stat reprend toutes les données du candidat (pattern, clôture veille, open et high PM, float, volume, locate, note, open de 9h30). Tu la rempliras au fil de la séance, puis tu la cocheras.",
       "confirm": "Passer en stat"
     },
     "confirmPromoteAll": {
       "title": "Passer {{count}} candidat(s) en stats ?",
-      "message": "{{tickers}} deviennent des stats à compléter après 16h. Les candidats déjà en stats sont laissés de côté.",
+      "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà en stats sont laissés de côté.",
       "confirm": "Tout passer en stats"
     },
     "confirmDelete": {
@@ -488,7 +488,7 @@
   },
   "stats": {
     "title": "Stats",
-    "subtitle": "Une ligne par candidat passé en stats — données du matin en premarket, données de séance saisies après la clôture de 16h.",
+    "subtitle": "Une ligne par candidat passé en stats — données du matin en premarket, séance remplie au fil de la journée, cochée une fois complète.",
     "searchPlaceholder": "Rechercher un ticker…",
     "clearSearch": "Effacer la recherche",
     "loading": "Chargement des stats…",
@@ -507,12 +507,20 @@
       "fadeSub": "EOD sous l'open · moyenne {{average}}"
     },
     "complete": {
-      "title": "Compléter la séance —",
-      "hint": "à saisir après la clôture de 16h · les % se calculent vs l'open",
+      "title": "Séance —",
+      "hint": "à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open",
       "percentBase": "base des %",
       "hodBelowLod": "Le HOD est sous le LOD",
-      "later": "Plus tard",
-      "save": "Enregistrer"
+      "saved": "✓ enregistré",
+      "progress": "{{filled}} / {{total}} prix saisis",
+      "close": "Fermer"
+    },
+    "completion": {
+      "tick": "Marquer complétée",
+      "done": "Complétée",
+      "untick": "Complétée — cliquer pour la repasser à compléter",
+      "missing": "Il manque {{fields}}",
+      "column": "Complétée"
     },
     "filters": {
       "period": "Période",
@@ -524,6 +532,8 @@
       "custom": "Période personnalisée",
       "thisMonth": "Ce mois-ci",
       "lastMonth": "Le mois dernier",
+      "last3Months": "3 derniers mois",
+      "last6Months": "6 derniers mois",
       "thisQuarter": "Ce trimestre",
       "lastQuarter": "Le trimestre dernier",
       "thisYear": "Cette année",
@@ -560,11 +570,11 @@
       "trade": "Trade"
     },
     "actions": {
-      "complete": "Compléter",
       "edit": "Modifier la séance",
       "delete": "Supprimer",
       "toTrade": "Trade",
-      "openTrade": "Voir le trade"
+      "openTrade": "Voir le trade",
+      "session": "Séance"
     },
     "confirmPromoteTrade": {
       "title": "Créer le trade {{ticker}} ?",
@@ -577,12 +587,13 @@
       "confirm": "Supprimer"
     },
     "snackbar": {
-      "completeSuccess": "Séance de {{ticker}} enregistrée.",
-      "completeError": "Impossible d'enregistrer la séance. Réessaie.",
       "deleteSuccess": "Stat {{ticker}} supprimée.",
       "deleteError": "Impossible de supprimer la stat. Réessaie.",
       "promoteTradeSuccess": "Trade {{ticker}} créé au journal.",
-      "promoteTradeError": "Impossible de créer le trade. Réessaie."
+      "promoteTradeError": "Impossible de créer le trade. Réessaie.",
+      "sessionSaveError": "Impossible d'enregistrer la séance de {{ticker}}. Réessaie.",
+      "untickFirst": "{{ticker}} est complétée : décoche-la avant de vider un prix.",
+      "completionError": "Impossible de changer le statut de {{ticker}}. Réessaie."
     }
   },
   "lexicon": {
@@ -724,7 +735,7 @@
         "format": {
           "encoding": "UTF-8 avec BOM, RFC 4180 — s’ouvre proprement dans Excel.",
           "columns": "18 colonnes — bloc premarket, bloc séance et flags. Aucun pourcentage : ils sont dérivés des prix.",
-          "pending": "Une stat à compléter sort avec ses cinq cellules de séance vides."
+          "pending": "Les cellules de séance sortent telles que remplies, et une dernière colonne dit si la stat est cochée."
         },
         "success": "Export des stats téléchargé.",
         "error": "L'export des stats a échoué. Réessaie."

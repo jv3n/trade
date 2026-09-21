@@ -29,7 +29,8 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 
 /**
- * Stats service — the sheet completed after the 4 pm close (cf. `mockup/PARCOURS.md`, step 5).
+ * Stats service — the sheet filled as the day goes and ticked once complete (cf.
+ * `mockup/PARCOURS.md`, step 5).
  *
  * Every stat **belongs to a user** since #187 : there is no shared community dataset and no RADAR /
  * MANUAL / IMPORT source any more. Reads, edits and deletes are user-scoped and a
@@ -200,8 +201,10 @@ class StatEntryService(
   }
 
   /**
-   * Overwrites a stat — the completion panel sends the whole row back (premarket recap + session
-   * prices + flags). Renaming onto a (day, ticker) the caller already has is a 409.
+   * Overwrites a stat — the session panel sends the whole row back each time a field is left
+   * (premarket recap + session prices + flags), so any subset of the session may come in. Renaming
+   * onto a (day, ticker) the caller already has is a 409. A ticked stat keeps its tick but can't
+   * lose a price : that is a 400, untick it first.
    */
   @Transactional
   fun update(id: UUID, request: StatEntryRequest): StatEntryDto {
@@ -209,10 +212,36 @@ class StatEntryService(
     val ticker = request.cleanTicker()
     requireFree(entry.user.id, request, ticker, ownId = entry.id)
     entry.apply(request, ticker)
+    if (entry.isCompleted && !entry.hasFullSession) {
+      throw badRequest(
+        "Stat ${entry.ticker} is completed — untick it before clearing " +
+          entry.missingSessionPrices.joinToString(", ")
+      )
+    }
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
     // The completion panel replaces its row with this response — dropping the link would make the
     // « → Trade » button reappear on a stat that already has its trade.
+    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id])
+  }
+
+  /**
+   * Ticks a stat as completed, or unticks it back to "to complete" — the ✓ of the sheet (#263).
+   * Ticking needs the five session prices (400 naming the missing ones) ; ticking twice keeps the
+   * first date. Unticking is always allowed.
+   */
+  @Transactional
+  fun setCompleted(id: UUID, completed: Boolean): StatEntryDto {
+    val entry = loadOwned(id)
+    if (completed && !entry.hasFullSession) {
+      throw badRequest(
+        "Stat ${entry.ticker} can't be completed yet — missing " +
+          entry.missingSessionPrices.joinToString(", ")
+      )
+    }
+    entry.completedAt = if (completed) entry.completedAt ?: Instant.now() else null
+    entry.updatedAt = Instant.now()
+    val saved = repo.save(entry)
     return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id])
   }
 

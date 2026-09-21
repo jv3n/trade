@@ -5,14 +5,15 @@ import * as ButtonStories from './buttons.stories';
 
 # Button
 
-Material's `<button mat-*>` restyled via the lib (`libs/ui/src/lib/button/button.scss`), shipped with two directives carried by `StbButtonModule` :
+Material's `<button mat-*>` restyled via the lib (`libs/ui/src/lib/button/button.scss`), shipped with the directives carried by `StbButtonModule` :
 
 - **`[stbSize]`** — `xs | sm | md | lg` swaps the MDC container-height + label-text-size tokens.
+- **`[stbTone]`** — `accent | success | warning | danger` recolours the button on the palette (`null` = default colours).
 - **`[stbSpinnerEnd]`** — applied to a `<mat-spinner>` inside a button, pushes it to the end of the row (trailing position) instead of the leading-icon slot.
 
 ## Playground
 
-Use the **Controls** panel on the right to flip the variant, size, label, icon, disabled / loading state, and where the spinner sits.
+Use the **Controls** panel on the right to flip the variant, size, tone, label, icon, disabled / loading state, and where the spinner sits.
 
 <Canvas of={ButtonStories.Default} />
 
@@ -25,19 +26,19 @@ Use the **Controls** panel on the right to flip the variant, size, label, icon, 
   code={`import { StbButtonModule } from '@portfolioai/ui';
 
 @Component({
-  imports: [StbButtonModule],
-  template: \`
-    <button mat-flat-button (click)="save()">Save</button>
-    <button mat-flat-button stbSize="lg" (click)="signIn()">Sign in with Google</button>
-    <button mat-icon-button stbSize="xs"><mat-icon>close</mat-icon></button>
-  \`,
+imports: [StbButtonModule],
+template: \`
+<button mat-flat-button (click)="save()">Save</button>
+<button mat-flat-button stbSize="lg" (click)="signIn()">Sign in with Google</button>
+<button mat-icon-button stbSize="xs"><mat-icon>close</mat-icon></button>
+\`,
 })`}
 />
 
 ## Variants
 
 <Markdown>
-{`
+  {`
 | Selector              | Role                       | Use it for                                            |
 | --------------------- | -------------------------- | ----------------------------------------------------- |
 | \`mat-flat-button\`     | Filled, no elevation       | **Primary CTA** (Save, Generate, Confirm…).            |
@@ -53,7 +54,7 @@ Use the **Controls** panel on the right to flip the variant, size, label, icon, 
 `sm` is the design-system default — same height as a button without `[stbSize]`.
 
 <Markdown>
-{`
+  {`
 | Token            | Container height | Label size | Typical use                              |
 | ---------------- | ---------------- | ---------- | ---------------------------------------- |
 | \`stbSize="xs"\`   | 24 px            | 0.75 rem   | Inline chip-row actions, table row icons. |
@@ -62,6 +63,19 @@ Use the **Controls** panel on the right to flip the variant, size, label, icon, 
 | \`stbSize="lg"\`   | 44 px            | 0.95 rem   | Hero CTAs (login, primary action page).   |
 `}
 </Markdown>
+
+## Tones
+
+`[stbTone]` re-scopes the colour tokens of the button to one palette entry : the icon of an icon button, the label + outline (and a soft tint) of a stroked / text button, the container of a filled one. It follows the colour rule — **success / danger** for outcomes, **warning** for warnings, **accent** for statuses — with one status exception in the app : the green check of a completed stat. Bind it to a state, `null` keeps the default colours.
+
+<Source
+  language="html"
+  dark
+  code={`<button mat-icon-button [stbTone]="stat.completed ? 'success' : null">
+  <mat-icon>{{ stat.completed ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+</button>
+<button mat-stroked-button stbTone="warning">Review</button>`}
+/>
 
 ## Composing icon + label
 
@@ -102,6 +116,7 @@ Place the spinner where the icon would naturally go (leading), OR at the end via
 </button>
 
 <!-- Trailing -->
+
 <button mat-flat-button disabled>
   <span>Saving</span>
   <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>

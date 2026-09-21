@@ -43,7 +43,7 @@ BEGIN
   -- ------------------------------------------------------------------ stats
   -- V14 model : the premarket block is a copy of the candidate (previous close, PM open, PM high,
   -- float / volume in M, locate in $ / share) and the session block (open, push at open, HOD, LOD,
-  -- EOD) is entered after the 4 pm close. No percentage is stored — gap, PM push and the session
+  -- EOD) is typed as the day goes ; every past day below is complete and ticked (`completed_at`). No percentage is stored — gap, PM push and the session
   -- percentages are all derived from these prices. `candidate_id` is filled when a candidate exists
   -- for the same (day, ticker) : only SGBX 18/09 and KTTA 17/09 here, the older days predate the
   -- candidates captured above.
@@ -65,11 +65,11 @@ BEGIN
                             previous_close, pm_open, pm_high, float_millions, volume_millions,
                             locate_per_share, note,
                             open_price, push_open_price, hod_price, lod_price, eod_price,
-                            ssr, under_1_dollar, entry_after_11am)
+                            ssr, under_1_dollar, entry_after_11am, completed_at)
     VALUES (uid,
             (SELECT id FROM candidate WHERE user_id = uid AND trading_date = s.d AND ticker = s.ticker),
             s.d, 'GUS', s.ticker, s.prev, s.pmo, s.pmh, s.flt, s.vol, s.loc, s.note,
-            s.o, s.po, s.h, s.l, s.e, s.ssr, s.u1, s.a11);
+            s.o, s.po, s.h, s.l, s.e, s.ssr, s.u1, s.a11, now());
   END LOOP;
 
   -- Today's stat, still to complete after the 4 pm close : the premarket block is in, the five

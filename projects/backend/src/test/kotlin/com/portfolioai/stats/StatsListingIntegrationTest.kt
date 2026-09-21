@@ -40,11 +40,13 @@ import org.springframework.web.server.ResponseStatusException
  * - **Listing** — default ordering `tradeDate desc` owned by the service (so a URL sort wins),
  *   pagination slices vs. totals.
  * - **Filters** — ticker query (case-insensitive), inclusive date range, pattern, and the
- *   completion status, which has no column : "completed" means the five session prices are set.
+ *   completion status — the tick stored in `completed_at`, not the prices (#263).
  * - **CRUD** — the premarket + session blocks round-trip through the real `NUMERIC` columns, an
  *   edit overwrites the row, a delete removes it.
  * - **One stat per (user, day, ticker)** — a second create is a 409, and so is renaming a stat onto
  *   a slot the caller already holds.
+ * - **Completion (#263)** — the session is saved field by field ; a stat is completed only when
+ *   ticked, which needs the five prices, and a ticked stat can't lose a price.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
  *   set and averages the derived percentages (never stored) of the completed rows only, plus the
  *   median / 3rd quartile / max push at open behind the candidates' « À l'open » card (#261).
@@ -164,7 +166,7 @@ class StatsListingIntegrationTest {
   }
 
   @Test
-  fun `filters by completion status — a stat is completed only once the five session prices are in`() {
+  fun `filters by completion status — a stat is completed only once ticked`() {
     seedThreeStats()
 
     val completed =
@@ -177,10 +179,10 @@ class StatsListingIntegrationTest {
   }
 
   @Test
-  fun `a half-filled session block still counts as to complete`() {
-    // Regression guard : the status is "every price set", not "any price set" — a stat abandoned
-    // mid-entry must stay in the to-complete bucket.
-    service.create(completedRequest(ticker = "KTTA").copy(eodPrice = null))
+  fun `a whole session block not ticked yet still counts as to complete`() {
+    // Regression guard : the status is the tick, not "every price set" — the last price landing
+    // must not complete the stat behind the owner's back.
+    service.create(fullSessionRequest(ticker = "KTTA"))
 
     val toComplete =
       service.findAllPaged(StatEntryFilter(status = StatStatus.TO_COMPLETE), PageRequest.of(0, 50))
@@ -194,7 +196,7 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `create persists the premarket and session blocks and normalises the ticker`() {
-    val created = service.create(completedRequest(ticker = " ktta "))
+    val created = service.create(fullSessionRequest(ticker = " ktta "))
 
     val reloaded = service.findById(created.id)
     assertEquals("KTTA", reloaded.ticker, "ticker is trimmed + upper-cased")
@@ -207,7 +209,7 @@ class StatsListingIntegrationTest {
     assertEquals(0, BigDecimal("4.62").compareTo(reloaded.hodPrice))
     assertEquals(0, BigDecimal("3.41").compareTo(reloaded.lodPrice))
     assertEquals(0, BigDecimal("3.52").compareTo(reloaded.eodPrice))
-    assertTrue(reloaded.completed)
+    assertFalse(reloaded.completed, "the prices alone don't complete a stat — the tick does")
     assertNull(reloaded.candidateId, "no source candidate when the stat is not a promotion")
   }
 
@@ -231,22 +233,21 @@ class StatsListingIntegrationTest {
     val created = service.create(premarketRequest(ticker = "KTTA"))
     Thread.sleep(10) // let the next now() fall on a later instant
 
-    val completed =
+    val updated =
       service.update(
         created.id,
-        completedRequest(ticker = "KTTA", ssr = true, entryAfter11am = true),
+        fullSessionRequest(ticker = "KTTA", ssr = true, entryAfter11am = true),
       )
 
-    assertTrue(completed.completed, "the session block turns the stat into a completed one")
-    assertEquals(0, BigDecimal("3.52").compareTo(completed.eodPrice))
-    assertTrue(completed.ssr)
-    assertTrue(completed.entryAfter11am)
-    assertTrue(completed.updatedAt.isAfter(created.updatedAt))
+    assertEquals(0, BigDecimal("3.52").compareTo(updated.eodPrice))
+    assertTrue(updated.ssr)
+    assertTrue(updated.entryAfter11am)
+    assertTrue(updated.updatedAt.isAfter(created.updatedAt))
   }
 
   @Test
   fun `delete removes a stat and a second delete is a 404`() {
-    val created = service.create(completedRequest(ticker = "KTTA"))
+    val created = service.create(fullSessionRequest(ticker = "KTTA"))
 
     service.delete(created.id)
     assertNull(repo.findByIdAndUserId(created.id, testUser.id))
@@ -264,7 +265,7 @@ class StatsListingIntegrationTest {
 
     val edit =
       assertThrows(ResponseStatusException::class.java) {
-        service.update(foreign.id, completedRequest(ticker = "TSLA"))
+        service.update(foreign.id, fullSessionRequest(ticker = "TSLA"))
       }
     assertEquals(404, edit.statusCode.value())
 
@@ -286,12 +287,12 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `creating a second stat for the same day and ticker is a 409`() {
-    service.create(completedRequest(ticker = "KTTA"))
+    service.create(fullSessionRequest(ticker = "KTTA"))
 
     // Case-insensitive : the ticker is normalised before the check.
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.create(completedRequest(ticker = "ktta"))
+        service.create(fullSessionRequest(ticker = "ktta"))
       }
 
     assertEquals(409, ex.statusCode.value())
@@ -300,12 +301,12 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `renaming a stat onto a day-ticker the caller already holds is a 409`() {
-    service.create(completedRequest(ticker = "KTTA"))
-    val other = service.create(completedRequest(ticker = "BNZI"))
+    service.create(fullSessionRequest(ticker = "KTTA"))
+    val other = service.create(fullSessionRequest(ticker = "BNZI"))
 
     val ex =
       assertThrows(ResponseStatusException::class.java) {
-        service.update(other.id, completedRequest(ticker = "KTTA"))
+        service.update(other.id, fullSessionRequest(ticker = "KTTA"))
       }
 
     assertEquals(409, ex.statusCode.value())
@@ -313,12 +314,12 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `updating a stat without changing its ticker is not a conflict with itself`() {
-    val created = service.create(completedRequest(ticker = "KTTA"))
+    val created = service.create(fullSessionRequest(ticker = "KTTA"))
 
     val updated =
       service.update(
         created.id,
-        completedRequest(ticker = "KTTA").copy(eodPrice = BigDecimal("3.60")),
+        fullSessionRequest(ticker = "KTTA").copy(eodPrice = BigDecimal("3.60")),
       )
 
     assertEquals(0, BigDecimal("3.60").compareTo(updated.eodPrice))
@@ -326,10 +327,94 @@ class StatsListingIntegrationTest {
 
   @Test
   fun `the same day and ticker for another user is a separate stat`() {
-    service.create(completedRequest(ticker = "KTTA"))
+    service.create(fullSessionRequest(ticker = "KTTA"))
     repo.save(makeStat(otherUser, ticker = "KTTA", tradeDate = DAY))
 
     assertEquals(1, service.findAllPaged(noFilter, PageRequest.of(0, 50)).totalElements)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Completion (#263)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the session can be saved one field at a time, in any order`() {
+    val stat = service.create(premarketRequest(ticker = "SGBX"))
+
+    // 9:30 the open, then the push once it happened, then a flag — each field left is a save.
+    val open = premarketRequest(ticker = "SGBX").copy(openPrice = BigDecimal("1.90"))
+    service.update(stat.id, open)
+    val push = open.copy(pushOpenPrice = BigDecimal("2.20"), entryAfter11am = true)
+    val saved = service.update(stat.id, push)
+
+    assertEquals(0, BigDecimal("1.90").compareTo(saved.openPrice))
+    assertEquals(0, BigDecimal("2.20").compareTo(saved.pushOpenPrice))
+    assertNull(saved.hodPrice)
+    assertTrue(saved.entryAfter11am)
+    assertFalse(saved.completed)
+  }
+
+  @Test
+  fun `ticking a stat with its five prices completes it, and unticking puts it back`() {
+    val stat = service.create(fullSessionRequest(ticker = "KTTA"))
+
+    assertTrue(service.setCompleted(stat.id, completed = true).completed)
+    assertEquals(1, service.summarise(noFilter).completed)
+
+    assertFalse(service.setCompleted(stat.id, completed = false).completed)
+    assertEquals(1, service.summarise(noFilter).toComplete)
+  }
+
+  @Test
+  fun `ticking a stat with a missing price is a 400 naming what is missing`() {
+    val stat =
+      service.create(fullSessionRequest(ticker = "SGBX").copy(hodPrice = null, eodPrice = null))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.setCompleted(stat.id, completed = true)
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("HOD, EOD"), "got ${ex.reason}")
+    assertFalse(service.findById(stat.id).completed)
+  }
+
+  @Test
+  fun `a completed stat stays completed when edited with its five prices`() {
+    val stat = createCompleted(fullSessionRequest(ticker = "KTTA"))
+
+    val edited = service.update(stat.id, fullSessionRequest(ticker = "KTTA", ssr = true))
+
+    assertTrue(edited.completed)
+    assertTrue(edited.ssr)
+  }
+
+  @Test
+  fun `clearing a price of a completed stat is a 400 — untick it first`() {
+    val stat = createCompleted(fullSessionRequest(ticker = "KTTA"))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.update(stat.id, fullSessionRequest(ticker = "KTTA").copy(eodPrice = null))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    val kept = service.findById(stat.id)
+    assertTrue(kept.completed)
+    assertEquals(0, BigDecimal("3.52").compareTo(kept.eodPrice), "the rejected edit left no trace")
+  }
+
+  @Test
+  fun `ticking a foreign stat returns 404, not 403`() {
+    val foreign = repo.save(makeStat(otherUser, ticker = "TSLA", tradeDate = DAY))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.setCompleted(foreign.id, completed = true)
+      }
+
+    assertEquals(404, ex.statusCode.value())
   }
 
   // ---------------------------------------------------------------------------
@@ -392,8 +477,8 @@ class StatsListingIntegrationTest {
   @Test
   fun `a stat that closed above its open is not counted as a fade`() {
     // ZVSA 11/09 of the mockup : the push never gave back, EOD +16 % over the open.
-    service.create(
-      completedRequest(ticker = "ZVSA")
+    createCompleted(
+      fullSessionRequest(ticker = "ZVSA")
         .copy(
           openPrice = BigDecimal("3.55"),
           pushOpenPrice = BigDecimal("4.10"),
@@ -431,9 +516,9 @@ class StatsListingIntegrationTest {
    * bite on). Prices come from `mockup/stats.html`.
    */
   private fun seedThreeStats() {
-    service.create(completedRequest(ticker = "KTTA", tradeDate = DAY))
-    service.create(
-      completedRequest(ticker = "BNZI", tradeDate = DAY.minusDays(1))
+    createCompleted(fullSessionRequest(ticker = "KTTA", tradeDate = DAY))
+    createCompleted(
+      fullSessionRequest(ticker = "BNZI", tradeDate = DAY.minusDays(1))
         .copy(
           previousClose = BigDecimal("1.85"),
           pmOpen = BigDecimal("2.99"),
@@ -451,6 +536,10 @@ class StatsListingIntegrationTest {
   }
 
   /** KTTA on 09/17, premarket block only — the shape a promotion creates before the 4 pm close. */
+  /** A stat typed in full and ticked — what the KPIs count. */
+  private fun createCompleted(request: StatEntryRequest) =
+    service.setCompleted(service.create(request).id, completed = true)
+
   private fun premarketRequest(
     ticker: String = "KTTA",
     tradeDate: LocalDate = DAY,
@@ -470,7 +559,7 @@ class StatsListingIntegrationTest {
     )
 
   /** The same KTTA row, completed : open 4.20, push 4.62, HOD 4.62, LOD 3.41, EOD 3.52. */
-  private fun completedRequest(
+  private fun fullSessionRequest(
     ticker: String = "KTTA",
     tradeDate: LocalDate = DAY,
     pattern: Pattern = Pattern.GUS,

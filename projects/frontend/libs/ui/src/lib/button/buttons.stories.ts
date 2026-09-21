@@ -3,7 +3,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { moduleMetadata, type Meta, type StoryObj } from '@storybook/angular';
 
-import { StbSize, StbSpinnerEnd, type StbButtonSize } from './button.directives';
+import {
+  StbSize,
+  StbSpinnerEnd,
+  StbTone,
+  type StbButtonSize,
+  type StbButtonTone,
+} from './button.directives';
 
 type Variant =
   'mat-button' | 'mat-flat-button' | 'mat-stroked-button' | 'mat-raised-button' | 'mat-icon-button';
@@ -11,6 +17,7 @@ type Variant =
 interface ButtonArgs {
   variant: Variant;
   size: StbButtonSize;
+  tone: StbButtonTone | 'none';
   label: string;
   icon: string;
   disabled: boolean;
@@ -22,7 +29,14 @@ const meta: Meta<ButtonArgs> = {
   title: 'Components/Button',
   decorators: [
     moduleMetadata({
-      imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, StbSize, StbSpinnerEnd],
+      imports: [
+        MatButtonModule,
+        MatIconModule,
+        MatProgressSpinnerModule,
+        StbSize,
+        StbSpinnerEnd,
+        StbTone,
+      ],
     }),
   ],
   argTypes: {
@@ -41,6 +55,12 @@ const meta: Meta<ButtonArgs> = {
       description: 'Lib `[stbSize]` directive — swaps the MDC container height + label size.',
       control: 'inline-radio',
       options: ['xs', 'sm', 'md', 'lg'],
+    },
+    tone: {
+      description:
+        'Lib `[stbTone]` directive — semantic colour (colour rule : success / danger for outcomes, warning for warnings, accent for statuses). `none` = default colours.',
+      control: 'inline-radio',
+      options: ['none', 'accent', 'success', 'warning', 'danger'],
     },
     label: {
       description: 'Button text. Ignored for `mat-icon-button`.',
@@ -68,6 +88,7 @@ const meta: Meta<ButtonArgs> = {
   args: {
     variant: 'mat-flat-button',
     size: 'sm',
+    tone: 'none',
     label: 'Click me',
     icon: 'add',
     disabled: false,
@@ -78,7 +99,7 @@ const meta: Meta<ButtonArgs> = {
     docs: {
       description: {
         component:
-          'Material button variants restyled via the lib (`libs/ui/src/lib/button/button.scss`), plus two directives carried by `StbButtonModule` : `[stbSize]` (xs / sm / md / lg) and `[stbSpinnerEnd]` (loading spinner at the end of the label). Use the controls panel to flip the playground.',
+          'Material button variants restyled via the lib (`libs/ui/src/lib/button/button.scss`), plus the directives carried by `StbButtonModule` : `[stbSize]` (xs / sm / md / lg), `[stbTone]` (semantic colour) and `[stbSpinnerEnd]` (loading spinner at the end of the label). Use the controls panel to flip the playground.',
       },
     },
   },
@@ -95,13 +116,13 @@ type Story = StoryObj<ButtonArgs>;
  */
 export const Default: Story = {
   render: (args) => ({
-    props: args,
+    props: { ...args, toneOrNull: args.tone === 'none' ? null : args.tone },
     template: `
       @switch (variant) {
         @case ('mat-icon-button') {
           <button
             mat-icon-button
-            [stbSize]="size"
+            [stbSize]="size" [stbTone]="toneOrNull"
             [disabled]="disabled"
             [attr.aria-label]="label">
             @if (loading) {
@@ -112,7 +133,7 @@ export const Default: Story = {
           </button>
         }
         @case ('mat-button') {
-          <button mat-button [stbSize]="size" [disabled]="disabled">
+          <button mat-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
             @if (loading && spinnerPosition === 'leading') {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {
@@ -125,7 +146,7 @@ export const Default: Story = {
           </button>
         }
         @case ('mat-flat-button') {
-          <button mat-flat-button [stbSize]="size" [disabled]="disabled">
+          <button mat-flat-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
             @if (loading && spinnerPosition === 'leading') {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {
@@ -138,7 +159,7 @@ export const Default: Story = {
           </button>
         }
         @case ('mat-stroked-button') {
-          <button mat-stroked-button [stbSize]="size" [disabled]="disabled">
+          <button mat-stroked-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
             @if (loading && spinnerPosition === 'leading') {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {
@@ -151,7 +172,7 @@ export const Default: Story = {
           </button>
         }
         @case ('mat-raised-button') {
-          <button mat-raised-button [stbSize]="size" [disabled]="disabled">
+          <button mat-raised-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
             @if (loading && spinnerPosition === 'leading') {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {

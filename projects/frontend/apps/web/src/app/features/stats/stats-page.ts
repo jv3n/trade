@@ -23,12 +23,13 @@ import {
 } from '@portfolioai/ui';
 import {
   EMPTY,
+  Observable,
   Subject,
   catchError,
+  concatMap,
   debounceTime,
   distinctUntilChanged,
   filter,
-  finalize,
   switchMap,
   tap,
 } from 'rxjs';
@@ -56,7 +57,7 @@ interface SortRequest {
   isAscending: boolean;
 }
 
-/** The session block being typed in the completion panel. Numbers are null until typed. */
+/** The session block being typed in the session panel. Numbers are null until typed. */
 interface SessionModel {
   openPrice: number | null;
   pushOpenPrice: number | null;
@@ -76,6 +77,8 @@ export interface StatRow extends StatEntry {
   hodPercent: number | null;
   lodPercent: number | null;
   eodPercent: number | null;
+  /** Label keys of the session prices still missing — the ✓ stays disabled until it's empty. */
+  missing: string[];
 }
 
 /** Status tabs of the mockup : all / to complete / completed. */
@@ -95,6 +98,22 @@ const BLANK_SESSION: SessionModel = {
   entryAfter11am: false,
 };
 
+type SessionPrice = 'openPrice' | 'pushOpenPrice' | 'hodPrice' | 'lodPrice' | 'eodPrice';
+
+/** The five session prices, in the sheet's order, with the label key naming them. */
+const SESSION_PRICES: readonly { field: SessionPrice; label: string }[] = [
+  { field: 'openPrice', label: 'stats.fields.openPriceShort' },
+  { field: 'pushOpenPrice', label: 'stats.fields.pushOpen' },
+  { field: 'hodPrice', label: 'stats.fields.hod' },
+  { field: 'lodPrice', label: 'stats.fields.lod' },
+  { field: 'eodPrice', label: 'stats.fields.eod' },
+];
+
+/** Label keys of the session prices still missing — what stands between a stat and its tick. */
+export function missingPrices(session: Pick<SessionModel, SessionPrice>): string[] {
+  return SESSION_PRICES.filter(({ field }) => !isPositive(session[field])).map((p) => p.label);
+}
+
 function sessionOf(entry: StatEntry): SessionModel {
   return {
     openPrice: entry.openPrice,
@@ -109,14 +128,17 @@ function sessionOf(entry: StatEntry): SessionModel {
 }
 
 /**
- * Stats page — the sheet completed after the 4 pm close (cf. `mockup/stats.html` and
- * `mockup/PARCOURS.md`, step 5) :
+ * Stats page — the sheet filled as the day goes and ticked once complete (cf. `mockup/stats.html`
+ * and `mockup/PARCOURS.md`, step 5) :
  *
  * - **KPIs** over the filtered set (not the current page) : stats completed / to complete, average
  *   push at open, average LOD, fade at the close. They come from `GET /api/stats/summary`.
- * - **Completion panel** for a pending stat : the premarket recap on top, then the session prices
- *   with their live % vs the open, the three flags, and Save / Later. It opens on the first pending
- *   stat of the page and on the « Complete » button of any pending row.
+ * - **Session panel** : the premarket recap on top, then the session prices with their live % vs
+ *   the open and the three flags — each saved on its own, when the field is left (an edit : no
+ *   modal) — the « n / 5 » progress, Close, and the ✓ that ticks the stat once its five prices are
+ *   in. It opens on the first stat to complete of the page and on any row's « Session » button.
+ * - **The ✓ column** ticks / unticks a stat from the table (#263). A ticked stat can't lose a price :
+ *   clearing one is refused with a toast — untick it first.
  * - **Table** in two column groups — Premarket (copied from the candidate) and Session (price + %
  *   vs the open) — then the flags. Every column is kept ; horizontal scrolling is fine.
  * - **Filters** : search, period preset, pattern, status ; server-side sort + pagination.
@@ -208,6 +230,7 @@ export class StatsPage {
     'lod',
     'eod',
     'flags',
+    'completed',
     'trade',
     'actions',
   ] as const;
@@ -222,16 +245,23 @@ export class StatsPage {
       hodPercent: percentVsOpen(e.openPrice, e.hodPrice),
       lodPercent: percentVsOpen(e.openPrice, e.lodPrice),
       eodPercent: percentVsOpen(e.openPrice, e.eodPrice),
+      missing: missingPrices(e),
     })),
   );
 
-  // ---- Completion panel ----
-  /** The stat being completed — null = the panel is closed. */
+  // ---- Session panel ----
+  /** The stat open in the panel — null = the panel is closed. */
   readonly completing = signal<StatEntry | null>(null);
-  readonly saving = signal(false);
   readonly session = signal<SessionModel>(BLANK_SESSION);
-  /** Rows the user dismissed with « Later » — they stop auto-opening the panel for this visit. */
+  /** True once a field of the open stat has been saved — the panel's « ✓ saved » cue. */
+  readonly sessionSaved = signal(false);
+  /** Rows the user closed — they stop auto-opening the panel for this visit. */
   private readonly dismissed = signal<ReadonlySet<string>>(new Set());
+  /**
+   * Every write goes through this queue, one at a time : a field left right before a click on ✓
+   * must reach the server first, or the tick would be judged on the row without that price.
+   */
+  private readonly writes = new Subject<Observable<unknown>>();
 
   /** Premarket recap shown above the session inputs. */
   readonly completingRecap = computed(() => {
@@ -259,20 +289,14 @@ export class StatsPage {
     return hodPrice !== null && lodPrice !== null && hodPrice < lodPrice;
   });
 
-  /** Saving needs the whole session block — a half-filled panel stays "to complete". */
-  readonly canSave = computed(() => {
-    const m = this.session();
-    return (
-      isPositive(m.openPrice) &&
-      isPositive(m.pushOpenPrice) &&
-      isPositive(m.hodPrice) &&
-      isPositive(m.lodPrice) &&
-      isPositive(m.eodPrice) &&
-      !this.hodBelowLod()
-    );
-  });
+  /** Label keys of the prices the panel still misses. */
+  readonly sessionMissing = computed(() => missingPrices(this.session()));
+  readonly sessionFilled = computed(() => SESSION_PRICES.length - this.sessionMissing().length);
+  readonly sessionPriceCount = SESSION_PRICES.length;
 
   constructor() {
+    this.writes.pipe(concatMap((write) => write)).subscribe();
+
     effect(() => {
       const filterValue = this.currentFilter();
       const sort = this.sort();
@@ -330,51 +354,93 @@ export class StatsPage {
     this.pageSize.set(event.pageSize);
   }
 
-  // ---- Completion panel ----
+  // ---- Session panel ----
 
-  complete(entry: StatEntry): void {
+  open(entry: StatEntry): void {
     this.completing.set(entry);
     this.session.set(sessionOf(entry));
+    this.sessionSaved.set(false);
   }
 
-  setSessionPrice(field: keyof SessionModel, value: number | null): void {
+  setSessionPrice(field: SessionPrice, value: number | null): void {
     this.session.update((m) => ({ ...m, [field]: value }));
   }
 
   toggleFlag(field: 'ssr' | 'under1Dollar' | 'entryAfter11am', value: boolean): void {
     this.session.update((m) => ({ ...m, [field]: value }));
+    this.saveSession();
   }
 
-  /** « Later » — closes the panel without saving and stops it re-opening on this stat. */
-  later(): void {
-    const current = this.completing();
-    if (current) {
-      this.dismissed.update((set) => new Set(set).add(current.id));
+  /**
+   * Saves the panel's session when a field is left — the whole row goes back, as the backend
+   * expects. Nothing is sent when nothing changed or while the HOD sits under the LOD (the hint
+   * says so) ; a ticked stat losing a price is refused here, before the backend's 400.
+   */
+  saveSession(): void {
+    const entry = this.completing();
+    if (!entry) return;
+    const session = this.session();
+    if (sameSession(session, sessionOf(entry)) || this.hodBelowLod()) return;
+    if (entry.completed && missingPrices(session).length > 0) {
+      this.toast('stats.snackbar.untickFirst', 'error', { ticker: entry.ticker });
+      this.session.set(sessionOf(entry));
+      return;
     }
+    // Patched right away : the next field left starts from this one, not from the server's reply.
+    this.patchRow({ ...entry, ...session });
+    this.enqueue(
+      this.repo.update(entry.id, this.toInput(entry, session)).pipe(
+        tap((saved) => {
+          this.patchRow(saved);
+          this.sessionSaved.set(true);
+          // The KPIs only count ticked stats : editing one of them moves them.
+          if (saved.completed) this.refreshSummary();
+        }),
+        catchError(() => {
+          this.patchRow(entry);
+          if (this.completing()?.id === entry.id) this.session.set(sessionOf(entry));
+          this.toast('stats.snackbar.sessionSaveError', 'error', { ticker: entry.ticker });
+          return EMPTY;
+        }),
+      ),
+    );
+  }
+
+  /** « Close » — the field being typed is saved on the way out, then the panel stops re-opening. */
+  close(): void {
+    const current = this.completing();
+    if (!current) return;
+    this.saveSession();
+    this.dismissed.update((set) => new Set(set).add(current.id));
     this.completing.set(null);
   }
 
-  save(): void {
-    const entry = this.completing();
-    if (!entry || !this.canSave() || this.saving()) return;
-    const input = this.toInput(entry, this.session());
-
-    this.saving.set(true);
-    this.repo
-      .update(entry.id, input)
-      .pipe(
+  /**
+   * The ✓ — ticks the stat as completed, or unticks it back to "to complete". Ticking needs the five
+   * prices : the button is disabled without them, and the backend refuses it too. The list reloads,
+   * since the status filter and the KPIs both depend on it.
+   */
+  toggleCompleted(entry: StatEntry): void {
+    const completed = !entry.completed;
+    if (completed && missingPrices(entry).length > 0) return;
+    this.enqueue(
+      this.repo.setCompleted(entry.id, completed).pipe(
         tap((saved) => {
-          this.toast('stats.snackbar.completeSuccess', 'success', { ticker: saved.ticker });
-          this.completing.set(null);
+          this.patchRow(saved);
           this.refetch();
         }),
         catchError(() => {
-          this.toast('stats.snackbar.completeError', 'error');
+          this.toast('stats.snackbar.completionError', 'error', { ticker: entry.ticker });
           return EMPTY;
         }),
-        finalize(() => this.saving.set(false)),
-      )
-      .subscribe();
+      ),
+    );
+  }
+
+  /** « Il manque HOD, EOD » — the ✓'s tooltip while it can't tick. */
+  missingLabel(entry: Pick<SessionModel, SessionPrice>): string {
+    const fields = missingPrices(entry).map((key) => this.translate.instant(key));
+    return this.translate.instant('stats.completion.missing', { fields: fields.join(', ') });
   }
 
   // ---- Row actions ----
@@ -470,20 +536,37 @@ export class StatsPage {
   }
 
   /**
-   * Opens the completion panel on the first pending stat of the page — the page's job at 4 pm is to
-   * complete them. Stats dismissed with « Later » are skipped, and an open panel is never replaced.
+   * Opens the session panel on the first stat of the page still to complete. Stats closed during
+   * this visit are skipped, and an open panel is never replaced.
    */
   private autoOpenPending(rows: StatEntry[]): void {
     if (this.completing()) return;
     const pending = rows.find((s) => !s.completed && !this.dismissed().has(s.id));
-    if (pending) this.complete(pending);
+    if (pending) this.open(pending);
+  }
+
+  private enqueue(write: Observable<unknown>): void {
+    this.writes.next(write);
+  }
+
+  /** Replaces a row of the page — and the panel's stat when it is that one — with [entry]. */
+  private patchRow(entry: StatEntry): void {
+    this.entries.update((list) => list.map((s) => (s.id === entry.id ? entry : s)));
+    if (this.completing()?.id === entry.id) this.completing.set(entry);
+  }
+
+  private refreshSummary(): void {
+    this.repo.summary(this.currentFilter()).subscribe({
+      next: (summary) => this.summary.set(summary),
+      error: () => this.summary.set(null),
+    });
   }
 
   private refetch(): void {
     this.refetchTrigger.update((n) => n + 1);
   }
 
-  /** The completion panel sends the whole row back — premarket untouched, session + flags updated. */
+  /** The session panel sends the whole row back — premarket untouched, session + flags updated. */
   private toInput(entry: StatEntry, session: SessionModel): StatEntryInput {
     return {
       tradeDate: entry.tradeDate,
@@ -510,4 +593,8 @@ export class StatsPage {
 
 function isPositive(n: number | null): boolean {
   return n !== null && n > 0;
+}
+
+function sameSession(a: SessionModel, b: SessionModel): boolean {
+  return (Object.keys(a) as (keyof SessionModel)[]).every((key) => a[key] === b[key]);
 }

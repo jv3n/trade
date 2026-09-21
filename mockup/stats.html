@@ -70,6 +70,56 @@
         background: var(--warn-soft);
       }
 
+      .saved,
+      .progress {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* Coche « complétée », façon « reviewed » de Monarch — verte une fois cochée (seule exception de statut en vert). */
+      .check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text-faint);
+        cursor: pointer;
+        vertical-align: middle;
+      }
+
+      .check:hover:not(:disabled) {
+        background: var(--surface-hover);
+        color: var(--text);
+      }
+
+      .check.done {
+        color: var(--gain);
+      }
+
+      .check:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+
+      .check .icon {
+        font-size: 22px;
+      }
+
+      .btn-check.done {
+        background: var(--gain-soft);
+        border-color: var(--gain);
+        color: var(--gain);
+      }
+
+      .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
       @media (max-width: 1100px) {
         .complete {
           grid-template-columns: repeat(2, 1fr);
@@ -95,7 +145,7 @@
         <header class="page-header">
           <div>
             <h1>Stats</h1>
-            <p>Les candidats retenus, complétés à la clôture (16h) avec le déroulé de la séance.</p>
+            <p>Les candidats retenus, remplis au fil de la séance et cochés une fois complets.</p>
           </div>
           <div class="actions">
             <button class="btn"><span class="icon">import_export</span> Import / export CSV</button>
@@ -106,7 +156,7 @@
           <div class="card kpi">
             <div class="label">Stats complétées</div>
             <div class="value">10</div>
-            <div class="sub">septembre · <span style="color: var(--warn)">1 à compléter</span></div>
+            <div class="sub">septembre · <span style="color: var(--warn)">2 à compléter</span></div>
           </div>
           <div class="card kpi">
             <div class="label">Push à l'open moyen</div>
@@ -125,10 +175,10 @@
           </div>
         </section>
 
-        <section class="card" style="margin-bottom: 16px; border-color: var(--warn)">
+        <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="session-panel">
           <h2>
-            <span>Compléter la séance — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span></span>
-            <span class="hint">à saisir après la clôture de 16h · les % se calculent vs l'open</span>
+            <span>Séance — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span></span>
+            <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open</span>
           </h2>
           <div class="recap">
             <span>Clôture veille <b>1,12</b></span>
@@ -142,19 +192,21 @@
             <span>Note <b>Locate cher, float serré — attention au squeeze</b></span>
           </div>
           <form class="complete" onsubmit="return false">
-            <div class="field"><label>Open ($)</label><input class="input" id="c-open" placeholder="1,90" /><span class="pct muted">base des %</span></div>
-            <div class="field"><label>Push à l'open ($)</label><input class="input" data-pct placeholder="2,20" /><span class="pct muted">—</span></div>
-            <div class="field"><label>HOD ($)</label><input class="input" data-pct placeholder="2,35" /><span class="pct muted">—</span></div>
-            <div class="field"><label>LOD ($)</label><input class="input" data-pct placeholder="1,52" /><span class="pct muted">—</span></div>
-            <div class="field"><label>EOD ($)</label><input class="input" data-pct placeholder="1,61" /><span class="pct muted">—</span></div>
+            <div class="field"><label>Open ($)</label><input class="input" id="c-open" data-price value="1,90" /><span class="pct muted">repris du candidat (9h30)</span></div>
+            <div class="field"><label>Push à l'open ($)</label><input class="input" data-pct data-price value="2,20" /><span class="pct muted">—</span></div>
+            <div class="field"><label>HOD ($)</label><input class="input" data-pct data-price placeholder="2,35" /><span class="pct muted">—</span></div>
+            <div class="field"><label>LOD ($)</label><input class="input" data-pct data-price placeholder="1,52" /><span class="pct muted">—</span></div>
+            <div class="field"><label>EOD ($)</label><input class="input" data-pct data-price placeholder="1,61" /><span class="pct muted">—</span></div>
           </form>
           <div class="flags-row">
-            <label><input type="checkbox" /> SSR</label>
-            <label><input type="checkbox" /> Prix &lt; 1 $</label>
-            <label><input type="checkbox" /> Entrée après 11h</label>
+            <label><input type="checkbox" data-flag /> SSR</label>
+            <label><input type="checkbox" data-flag /> Prix &lt; 1 $</label>
+            <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
+            <span class="saved" id="panel-saved"></span>
             <span style="flex: 1"></span>
-            <button class="btn">Plus tard</button>
-            <button class="btn btn-primary">Enregistrer</button>
+            <span class="progress" id="panel-progress">2 / 5 prix saisis</span>
+            <button class="btn">Fermer</button>
+            <button class="btn btn-check" id="panel-check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
           </div>
         </section>
 
@@ -186,8 +238,8 @@
                 <tr class="group-head">
                   <th colspan="3"></th>
                   <th colspan="5" class="sep">Premarket — repris du candidat</th>
-                  <th colspan="5" class="sep">Séance — saisi à 16h (% vs open)</th>
-                  <th colspan="2" class="sep"></th>
+                  <th colspan="5" class="sep">Séance — saisie en journée (% vs open)</th>
+                  <th colspan="3" class="sep"></th>
                 </tr>
                 <tr>
                   <th>Date ↓</th>
@@ -204,6 +256,7 @@
                   <th class="num">LOD</th>
                   <th class="num">EOD</th>
                   <th class="sep">Flags</th>
+                  <th title="Complétée">✓</th>
                   <th>Trade</th>
                 </tr>
               </thead>
@@ -211,9 +264,26 @@
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
                   <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
-                  <td class="num sep muted" colspan="5" style="text-align: center">à compléter après 16h</td>
+                  <td class="num sep">1,90</td>
+                  <td class="num">2,20<small class="muted">+15,8 %</small></td>
+                  <td class="num muted">—</td>
+                  <td class="num muted">—</td>
+                  <td class="num muted">—</td>
+                  <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><button class="check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><button class="btn btn-sm"><span class="icon">edit</span> Séance</button></td>
+                </tr>
+                <tr class="pending">
+                  <td>18/09</td><td><span class="ticker">BNRG</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+63,6 %</td><td class="num">+10,0 %</td><td class="num">11,2 M</td><td class="num">2,1 M</td><td class="num">0,08</td>
+                  <td class="num sep">5,50</td>
+                  <td class="num">5,88<small class="muted">+6,9 %</small></td>
+                  <td class="num">5,95<small class="muted">+8,2 %</small></td>
+                  <td class="num">4,62<small class="muted">−16,0 %</small></td>
+                  <td class="num">4,70<small class="muted">−14,5 %</small></td>
                   <td class="sep"></td>
-                  <td><button class="btn btn-sm">Compléter</button></td>
+                  <td><button class="check" title="Marquer complétée"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><button class="btn btn-sm"><span class="icon">edit</span> Séance</button></td>
                 </tr>
                 <tr>
                   <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">GUS</span></td>
@@ -224,6 +294,7 @@
                   <td class="num">3,41<small class="muted">−18,8 %</small></td>
                   <td class="num">3,52<small class="muted">−16,2 %</small></td>
                   <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="trade.html" class="tag tag-gain">+292</a></td>
                 </tr>
                 <tr>
@@ -235,6 +306,7 @@
                   <td class="num">2,44<small class="muted">−15,9 %</small></td>
                   <td class="num">2,58<small class="muted">−11,0 %</small></td>
                   <td class="sep"><span class="tag tag-warn">SSR</span></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+115</a></td>
                 </tr>
                 <tr>
@@ -246,6 +318,7 @@
                   <td class="num">5,80<small class="muted">−3,3 %</small></td>
                   <td class="num">6,95<small class="muted">+15,8 %</small></td>
                   <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-loss">−124</a></td>
                 </tr>
                 <tr>
@@ -257,6 +330,7 @@
                   <td class="num">2,52<small class="muted">−21,3 %</small></td>
                   <td class="num">2,61<small class="muted">−18,4 %</small></td>
                   <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+220</a></td>
                 </tr>
                 <tr>
@@ -268,6 +342,7 @@
                   <td class="num">6,90<small class="muted">−5,5 %</small></td>
                   <td class="num">7,05<small class="muted">−3,4 %</small></td>
                   <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+30</a></td>
                 </tr>
                 <tr>
@@ -279,6 +354,7 @@
                   <td class="num">3,30<small class="muted">−7,0 %</small></td>
                   <td class="num">4,12<small class="muted">+16,1 %</small></td>
                   <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
                 </tr>
                 <tr>
@@ -290,6 +366,7 @@
                   <td class="num">1,85<small class="muted">−2,6 %</small></td>
                   <td class="num">2,31<small class="muted">+21,6 %</small></td>
                   <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-loss">−174</a></td>
                 </tr>
                 <tr>
@@ -301,6 +378,7 @@
                   <td class="num">0,71<small class="muted">−19,3 %</small></td>
                   <td class="num">0,74<small class="muted">−15,9 %</small></td>
                   <td class="sep"><span class="tag tag-warn">&lt; 1 $</span></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
                 </tr>
                 <tr>
@@ -312,6 +390,7 @@
                   <td class="num">3,85<small class="muted">−23,0 %</small></td>
                   <td class="num">3,95<small class="muted">−21,0 %</small></td>
                   <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+321</a></td>
                 </tr>
                 <tr>
@@ -323,6 +402,7 @@
                   <td class="num">7,95<small class="muted">−6,5 %</small></td>
                   <td class="num">8,10<small class="muted">−4,7 %</small></td>
                   <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+72</a></td>
                 </tr>
               </tbody>
@@ -333,7 +413,7 @@
                   <td class="num"></td>
                   <td class="num">−12,3 %</td>
                   <td class="num">−3,7 %</td>
-                  <td colspan="2"></td>
+                  <td colspan="3"></td>
                 </tr>
               </tfoot>
             </table>
@@ -341,8 +421,12 @@
         </section>
 
         <p class="mockup-note">
-          Maquette statique — une stat naît d'un candidat (bouton « → Stat ») et reprend toutes ses données premarket. À 16h on saisit
-          Open, Push à l'open, HOD, LOD, EOD (en $) ; l'app calcule chaque % vs l'open. Flags : SSR, prix &lt; 1 $, entrée après 11h.
+          Maquette statique — une stat naît d'un candidat (bouton « → Stat ») et reprend ses données premarket et l'open de 9h30. La
+          séance se remplit au fil de la journée, champ par champ : Open, Push à l'open, HOD, LOD, EOD (en $) et les flags (SSR, prix
+          &lt; 1 $, entrée après 11h), chacun enregistré à la sortie du champ, sans modale ; l'app calcule chaque % vs l'open. Une stat
+          reste « à compléter » jusqu'à ce qu'on la coche (✓, comme une transaction revue dans Monarch) : la coche n'est possible
+          qu'avec les cinq prix et se décoche d'un clic. La coche d'une stat complétée est verte. Vider un prix d'une stat cochée est refusé — il faut la décocher d'abord. Les
+          KPIs et les moyennes ne comptent que les stats cochées.
           « → Trade » crée le trade au journal (action manuelle). Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
         </p>
       </main>
@@ -371,6 +455,49 @@
         }
         open.addEventListener('input', update);
         fields.forEach((f) => f.addEventListener('input', update));
+      })();
+
+      // Séance en journée : chaque champ « s'enregistre » à la sortie, la coche n'est possible qu'avec les cinq prix.
+      (function () {
+        const prices = [...document.querySelectorAll('#session-panel [data-price]')];
+        const names = ['Open', 'Push', 'HOD', 'LOD', 'EOD'];
+        const progress = document.getElementById('panel-progress');
+        const saved = document.getElementById('panel-saved');
+        const check = document.getElementById('panel-check');
+        const label = check.querySelector('[data-label]');
+        let done = false;
+
+        function refresh() {
+          const missing = names.filter((_, i) => prices[i].value.trim() === '');
+          progress.textContent = 5 - missing.length + ' / 5 prix saisis';
+          check.disabled = missing.length > 0 && !done;
+          check.title = missing.length > 0 ? 'Il manque ' + missing.join(', ') : '';
+          // Une stat cochée ne peut pas perdre un prix : les champs vides sont refusés tant qu'elle l'est.
+          prices.forEach((p) => (p.required = done));
+        }
+        const markSaved = () => (saved.textContent = '✓ enregistré');
+        prices.forEach((input) => {
+          input.addEventListener('input', refresh);
+          input.addEventListener('change', markSaved);
+        });
+        document.querySelectorAll('#session-panel [data-flag]').forEach((f) => f.addEventListener('change', markSaved));
+        check.addEventListener('click', () => {
+          done = !done;
+          check.classList.toggle('done', done);
+          label.textContent = done ? 'Complétée' : 'Marquer complétée';
+          refresh();
+        });
+        refresh();
+
+        // Coche de la liste : bascule complétée / à compléter.
+        document.querySelectorAll('table .check').forEach((btn) =>
+          btn.addEventListener('click', () => {
+            const isDone = btn.classList.toggle('done');
+            btn.querySelector('.icon').textContent = isDone ? 'check_circle' : 'radio_button_unchecked';
+            btn.title = isDone ? 'Complétée — cliquer pour la repasser à compléter' : 'Marquer complétée';
+            btn.closest('tr').classList.toggle('pending', !isDone);
+          }),
+        );
       })();
     </script>
   </body>
