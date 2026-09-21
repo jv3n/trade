@@ -1,0 +1,20 @@
+// Filter toolbar — the row of search, period and filter fields above a list (stats, journal,
+// account, lexicon). It wraps on a narrow screen.
+//
+// Its form fields are one density step tighter than the lib's default (36 px instead of 40), to
+// sit level with the dense buttons and toggles next to them. Material's density set is scoped to
+// the toolbar : the custom properties it emits reach every field inside, no reaching into a
+// Material internal.
+
+@use '@angular/material' as mat;
+@use '../sizes' as s;
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: s.$space-md;
+  margin-bottom: s.$space-md;
+
+  @include mat.form-field-density(-5);
+}

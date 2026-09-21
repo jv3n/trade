@@ -12,29 +12,8 @@
 
 // ---- Filter toolbar ----
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-
 .search-field {
   width: 260px;
-
-  // Tighten Material's outline form-field for the inline-toolbar use case — default vertical
-  // padding pushes the field too tall against the dense buttons next to it.
-  ::ng-deep .mat-mdc-form-field-infix {
-    min-height: 36px;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-}
-
-.segmented {
-  // Toggle groups sit on the same line as the fields — keep them from stretching.
-  align-self: center;
 }
 
 // `.profit-positive` / `.profit-negative` remain page-local — they encode the trading-domain

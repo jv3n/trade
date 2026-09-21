@@ -67,21 +67,13 @@
 
 // ---- Toolbar ----
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 14px;
+.search-field {
+  flex: 1 1 18rem;
+  max-width: 24rem;
+}
 
-  .search-field {
-    flex: 1 1 18rem;
-    max-width: 24rem;
-  }
-
-  .filter-field {
-    width: 12rem;
-  }
+.filter-field {
+  width: 12rem;
 }
 
 // ---- Table ----

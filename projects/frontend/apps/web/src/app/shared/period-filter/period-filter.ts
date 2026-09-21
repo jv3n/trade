@@ -29,7 +29,6 @@ import {
     StbSelectModule,
     TranslatePipe,
   ],
-  host: { '[class.dense]': 'dense()' },
   templateUrl: './period-filter.html',
   styleUrl: './period-filter.scss',
 })
@@ -37,8 +36,6 @@ export class PeriodFilter {
   readonly selection = input.required<PeriodSelection>();
   /** Shows the « Period » label above the select — for toolbars whose other fields have one. */
   readonly labelled = input(false, { transform: booleanAttribute });
-  /** 36 px fields, to line up with a toolbar whose other fields are compacted the same way. */
-  readonly dense = input(false, { transform: booleanAttribute });
 
   readonly selectionChange = output<PeriodSelection>();
 

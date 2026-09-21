@@ -130,11 +130,7 @@
     <!-- Filter toolbar — every control applies on the spot, no « Apply » step. Same shape as the
          journal's, so the two listings are learnt once. -->
     <div class="toolbar">
-      <app-period-filter
-        dense
-        [selection]="appliedFilter()"
-        (selectionChange)="setPeriod($event)"
-      />
+      <app-period-filter [selection]="appliedFilter()" (selectionChange)="setPeriod($event)" />
 
       <mat-form-field appearance="outline" class="type-field" subscriptSizing="dynamic">
         <mat-select

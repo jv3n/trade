@@ -109,11 +109,7 @@
         }
       </mat-form-field>
 
-      <app-period-filter
-        dense
-        [selection]="appliedFilter()"
-        (selectionChange)="setPeriod($event)"
-      />
+      <app-period-filter [selection]="appliedFilter()" (selectionChange)="setPeriod($event)" />
 
       <mat-button-toggle-group
         class="segmented"
