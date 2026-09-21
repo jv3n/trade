@@ -23,12 +23,13 @@
 @forward 'base';
 @forward 'scrollbars';
 @forward 'shell';
-// Global utility classes — page container + card + KPI row + filter toolbar + banners + badges. NOT tied to a Material module ;
-// stay here.
+// Global utility classes — page container, card, KPI row, filter toolbar, form stack, banners,
+// badges. NOT tied to a Material module ; stay here.
 @forward 'components/page';
 @forward 'components/card';
 @forward 'components/kpi';
 @forward 'components/toolbar';
+@forward 'components/form';
 @forward 'components/banners';
 @forward 'components/badges';
 

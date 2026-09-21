@@ -1,0 +1,14 @@
+// Form stack — a column of form fields, evenly spaced. Needed because every field is
+// `subscriptSizing: 'dynamic'` (app.config.ts) : no space is reserved under a field until it
+// shows an error, so nothing else spaces them.
+
+@use '../sizes' as s;
+
+// Doubled on a dialog's content : Material's own `.mat-mdc-dialog-content { display: block }` is
+// injected after the global sheet and would win at equal specificity.
+.form-stack,
+.mat-mdc-dialog-content.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-md;
+}

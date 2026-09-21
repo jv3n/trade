@@ -4,7 +4,7 @@
 
 <!-- Signal Forms has no submit directive — bind native (submit) + preventDefault ourselves. -->
 <form (submit)="$event.preventDefault(); submit()" class="movement-form">
-  <mat-dialog-content>
+  <mat-dialog-content class="form-stack">
     @if (isEdit()) {
       <p class="type-readonly">
         {{ 'account.fields.type' | translate }} :
