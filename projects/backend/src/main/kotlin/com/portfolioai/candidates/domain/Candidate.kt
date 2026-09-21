@@ -22,8 +22,9 @@ import org.hibernate.type.SqlTypes
  * (user, [tradingDate], [ticker]) — enforced by `ux_candidate_user_day_ticker`.
  *
  * Nothing about sizing lives here (capital, risk, stop, ladders) : it isn't known at capture time.
- * The derived figures — gap %, push %, locate / price — are never stored ; the front computes them
- * from [previousClose], [pmOpen], [pmHigh] and [locatePerShare].
+ * The derived figures — gap %, push %, locate / price, target price — are never stored ; the front
+ * computes them from [previousClose], [pmOpen], [pmHigh], [locatePerShare], [openPrice] and
+ * [targetPushPercent].
  */
 @Entity
 @Table(name = "candidate")
@@ -55,6 +56,16 @@ class Candidate(
   @Column(name = "locate_per_share", precision = 10, scale = 4)
   var locatePerShare: BigDecimal? = null,
   @Column(length = 2000) var note: String? = null,
+
+  // ---- At the open ----
+  /** Session open, typed at 9:30 — the base of the target price, carried over to the stat. */
+  @Column(name = "open_price", precision = 18, scale = 4) var openPrice: BigDecimal? = null,
+  /**
+   * Push aimed at for this ticker, in % above the open — null follows the reference picked on the
+   * card (median, average… of the completed stats). A plan, so it stays off the stat.
+   */
+  @Column(name = "target_push_percent", precision = 7, scale = 2)
+  var targetPushPercent: BigDecimal? = null,
 
   // ---- Audit ----
   @Column(name = "created_at", nullable = false, updatable = false)

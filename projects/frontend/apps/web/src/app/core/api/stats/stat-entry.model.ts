@@ -81,13 +81,17 @@ export interface StatEntryFilter {
 
 /**
  * KPIs of the stats page, computed by the backend over the **filtered set** (not the current page).
- * Averages cover the completed stats only and are percentages vs the session open ; they are null
+ * Averages and quantiles cover the completed stats only and are percentages vs the session open ; they are null
  * when no completed stat matches.
  */
 export interface StatSummary {
   completed: number;
   toComplete: number;
   averagePushOpenPercent: number | null;
+  /** Median, 3rd quartile and max push at the open — the « À l'open » card's references. */
+  medianPushOpenPercent: number | null;
+  thirdQuartilePushOpenPercent: number | null;
+  maxPushOpenPercent: number | null;
   averageLodPercent: number | null;
   /** Completed stats whose EOD closed below the open — the GUS thesis playing out. */
   fadeCount: number;

@@ -312,6 +312,8 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     volumeMillions: 3.1,
     locatePerShare: 0.03,
     note: null,
+    openPrice: null,
+    targetPushPercent: null,
     promoted: false,
     createdAt: new Date(),
     updatedAt: new Date(),

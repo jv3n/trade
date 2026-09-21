@@ -38,19 +38,59 @@
         gap: 6px;
       }
 
-      td input.open-input {
-        width: 84px;
-        height: 30px;
-        text-align: right;
-        font-variant-numeric: tabular-nums;
-      }
-
       td.note-cell {
         max-width: 220px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         color: var(--text-muted);
+      }
+
+      .open-table input.input {
+        width: 92px;
+        height: 30px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .open-table .suffixed {
+        position: relative;
+        display: inline-block;
+      }
+
+      .open-table .suffixed .input {
+        padding-right: 24px;
+      }
+
+      .open-table .suffixed span {
+        position: absolute;
+        right: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+
+      .open-table .target {
+        font-weight: 700;
+        font-size: 15px;
+      }
+
+      .open-table .reset {
+        visibility: hidden;
+      }
+
+      .open-table tr.custom .reset {
+        visibility: visible;
+      }
+
+      .push-ref {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+        font-size: 12px;
       }
 
       @media (max-width: 1100px) {
@@ -120,6 +160,105 @@
           </form>
         </section>
 
+        <section class="card" style="margin-bottom: 16px">
+          <h2>
+            À l'open
+            <span class="hint">à 9h30 · tape l'open, ajuste le push visé selon le ticker</span>
+          </h2>
+          <div class="push-ref">
+            <span class="muted">Push visé par défaut — push à l'open des stats GUS complétées (10) :</span>
+            <div class="segmented" id="push-presets">
+              <button type="button" data-pct="6.8">Médiane +6,8 %</button>
+              <button type="button" data-pct="9.6" class="active">Moyenne +9,6 %</button>
+              <button type="button" data-pct="14.2">3ᵉ quartile +14,2 %</button>
+              <button type="button" data-pct="21.5">Max +21,5 %</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="open-table">
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th class="num">High PM</th>
+                  <th class="num">Open ($)</th>
+                  <th class="num">High PM vs open</th>
+                  <th class="num">Push visé</th>
+                  <th class="num">Prix visé</th>
+                  <th class="num">Écart</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-high="2.46">
+                  <td><span class="ticker">SGBX</span></td>
+                  <td class="num">2,46</td>
+                  <td class="num"><input class="input" data-open value="1,90" placeholder="—" /></td>
+                  <td class="num muted" data-high-vs-open>—</td>
+                  <td class="num" style="white-space: nowrap">
+                    <span class="suffixed"><input class="input" data-push value="15,0" /><span>%</span></span>
+                    <button type="button" class="btn btn-sm btn-icon reset" title="Revenir au repère"><span class="icon">undo</span></button>
+                  </td>
+                  <td class="num"><span class="target" data-target>—</span></td>
+                  <td class="num muted" data-delta></td>
+                  <td class="muted" data-saved style="font-size: 12px; white-space: nowrap"></td>
+                </tr>
+                <tr data-high="5.94">
+                  <td><span class="ticker">BNRG</span></td>
+                  <td class="num">5,94</td>
+                  <td class="num"><input class="input" data-open value="" placeholder="—" /></td>
+                  <td class="num muted" data-high-vs-open>—</td>
+                  <td class="num" style="white-space: nowrap">
+                    <span class="suffixed"><input class="input" data-push value="9,6" /><span>%</span></span>
+                    <button type="button" class="btn btn-sm btn-icon reset" title="Revenir au repère"><span class="icon">undo</span></button>
+                  </td>
+                  <td class="num"><span class="target" data-target>—</span></td>
+                  <td class="num muted" data-delta></td>
+                  <td class="muted" data-saved style="font-size: 12px; white-space: nowrap"></td>
+                </tr>
+                <tr data-high="3.72">
+                  <td><span class="ticker">MLGO</span></td>
+                  <td class="num">3,72</td>
+                  <td class="num"><input class="input" data-open value="3,25" placeholder="—" /></td>
+                  <td class="num muted" data-high-vs-open>—</td>
+                  <td class="num" style="white-space: nowrap">
+                    <span class="suffixed"><input class="input" data-push value="9,6" /><span>%</span></span>
+                    <button type="button" class="btn btn-sm btn-icon reset" title="Revenir au repère"><span class="icon">undo</span></button>
+                  </td>
+                  <td class="num"><span class="target" data-target>—</span></td>
+                  <td class="num muted" data-delta></td>
+                  <td class="muted" data-saved style="font-size: 12px; white-space: nowrap"></td>
+                </tr>
+                <tr data-high="1.08">
+                  <td><span class="ticker">ATXG</span></td>
+                  <td class="num">1,08</td>
+                  <td class="num"><input class="input" data-open value="0,95" placeholder="—" /></td>
+                  <td class="num muted" data-high-vs-open>—</td>
+                  <td class="num" style="white-space: nowrap">
+                    <span class="suffixed"><input class="input" data-push value="9,6" /><span>%</span></span>
+                    <button type="button" class="btn btn-sm btn-icon reset" title="Revenir au repère"><span class="icon">undo</span></button>
+                  </td>
+                  <td class="num"><span class="target" data-target>—</span></td>
+                  <td class="num muted" data-delta></td>
+                  <td class="muted" data-saved style="font-size: 12px; white-space: nowrap"></td>
+                </tr>
+                <tr data-high="8.35">
+                  <td><span class="ticker">VERB</span></td>
+                  <td class="num">8,35</td>
+                  <td class="num"><input class="input" data-open value="" placeholder="—" /></td>
+                  <td class="num muted" data-high-vs-open>—</td>
+                  <td class="num" style="white-space: nowrap">
+                    <span class="suffixed"><input class="input" data-push value="9,6" /><span>%</span></span>
+                    <button type="button" class="btn btn-sm btn-icon reset" title="Revenir au repère"><span class="icon">undo</span></button>
+                  </td>
+                  <td class="num"><span class="target" data-target>—</span></td>
+                  <td class="num muted" data-delta></td>
+                  <td class="muted" data-saved style="font-size: 12px; white-space: nowrap"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section class="card">
           <h2>
             Vendredi 18 septembre <span class="hint">5 candidats · 1 déjà en stats · triés par gap</span>
@@ -136,8 +275,6 @@
                   <th class="num">High PM</th>
                   <th class="num">Gap ↓</th>
                   <th class="num">Push</th>
-                  <th class="num">Open</th>
-                  <th class="num" title="Open × (1 + push à l'open moyen des stats GUS)">Prix visé <span class="muted" style="font-weight: 400">+9,6 %</span></th>
                   <th class="num">Float</th>
                   <th class="num">Volume</th>
                   <th class="num">Locate</th>
@@ -155,8 +292,6 @@
                   <td class="num">2,46</td>
                   <td class="num"><strong>+65,2 %</strong></td>
                   <td class="num">+33,0 %</td>
-                  <td class="num"><input class="input open-input" value="1,90" placeholder="—" /></td>
-                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">3,9 M</td>
                   <td class="num">9,7 M</td>
                   <td class="num">0,12</td>
@@ -175,15 +310,13 @@
                   <td class="num">5,94</td>
                   <td class="num"><strong>+63,6 %</strong></td>
                   <td class="num">+10,0 %</td>
-                  <td class="num"><input class="input open-input" value="" placeholder="—" /></td>
-                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">11,2 M</td>
                   <td class="num">2,1 M</td>
                   <td class="num">0,08</td>
                   <td class="num">1,5 %</td>
                   <td class="note-cell" title="Offering possible, surveiller les filings">Offering possible, surveiller les filings</td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -195,15 +328,13 @@
                   <td class="num">3,72</td>
                   <td class="num"><strong>+59,0 %</strong></td>
                   <td class="num">+20,0 %</td>
-                  <td class="num"><input class="input open-input" value="3,25" placeholder="—" /></td>
-                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">6,4 M</td>
                   <td class="num">4,8 M</td>
                   <td class="num">0,04</td>
                   <td class="num">1,3 %</td>
                   <td class="note-cell" title="Résistance 3,75">Résistance 3,75</td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -215,15 +346,13 @@
                   <td class="num">1,08</td>
                   <td class="num"><strong>+58,6 %</strong></td>
                   <td class="num">+17,4 %</td>
-                  <td class="num"><input class="input open-input" value="0,95" placeholder="—" /></td>
-                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">25,0 M</td>
                   <td class="num">1,3 M</td>
                   <td class="num">0,01</td>
                   <td class="num">1,1 %</td>
                   <td class="note-cell"></td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -235,15 +364,13 @@
                   <td class="num">8,35</td>
                   <td class="num"><strong>+52,9 %</strong></td>
                   <td class="num">+7,1 %</td>
-                  <td class="num"><input class="input open-input" value="" placeholder="—" /></td>
-                  <td class="num"><strong data-target>—</strong></td>
                   <td class="num">58,0 M</td>
                   <td class="num">0,9 M</td>
                   <td class="num">0,05</td>
                   <td class="num">0,6 %</td>
                   <td class="note-cell" title="Gros float, sans doute à écarter">Gros float, sans doute à écarter</td>
                   <td class="num" style="white-space: nowrap">
-                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
+                    <button class="btn btn-sm" data-confirm-title="Passer {ticker} en stat ?" data-confirm-body="La stat reprend toutes les données du candidat (pattern, gap, push, float, volume, locate, note, open de 9h30). Tu la compléteras après la clôture de 16h." data-confirm-ok="Passer en stat"><span class="icon">arrow_forward</span> Stat</button>
                     <button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button> <button class="btn btn-sm btn-icon" title="Supprimer" data-confirm-title="Supprimer le candidat {ticker} ?" data-confirm-body="Le candidat est supprimé définitivement. S\x27il est déjà passé en stat, la stat est conservée." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
                   </td>
                 </tr>
@@ -256,8 +383,11 @@
           Maquette statique — saisis : pattern, ticker, clôture veille (bougie daily), open PM à 4h00, high PM, float, volume (TradeZero, au
           moment de la saisie), locate, note. Calculés : gap = (open PM − clôture veille) ÷ clôture veille, push = (high PM − open PM) ÷
           open PM, locate / prix = locate ÷ open PM. « → Stat » crée la ligne de stats à partir du candidat (action manuelle).
-          Open : saisi à 9h30 directement dans la ligne (enregistré à la sortie du champ, pas de modale), repris par la stat et
-          pré-remplissant la séance à 16h. Prix visé = open × (1 + push à l'open moyen des stats complétées du même pattern).
+          À l'open : l'open et le push visé sont saisis à 9h30 et enregistrés sur le candidat (à la sortie du champ, pas de
+          modale : c'est une édition). Prix visé = open × (1 + push visé). Le push visé suit le repère choisi (médiane, moyenne,
+          3ᵉ quartile, max du push à l'open des stats complétées du même pattern) tant qu'il n'est pas modifié à la main ; une valeur
+          tapée reste propre à ce candidat (↶ pour revenir au repère). Le repère choisi n'est pas enregistré. En passant en stat,
+          l'open est repris, pas le push visé.
         </p>
       </main>
     </div>
@@ -287,19 +417,64 @@
         ['prev-close', 'pm-open', 'pm-high'].forEach((id) => $(id).addEventListener('input', update));
       })();
 
-      // Prix visé = open × (1 + push à l'open moyen), recalculé à la frappe.
+      // À l'open : prix visé = open × (1 + push visé), recalculé à la frappe, « enregistré » à la sortie du champ.
       (function () {
-        const averagePush = 9.6;
         const parse = (v) => parseFloat(String(v).replace(',', '.'));
         const price = (v) => v.toFixed(v < 1 ? 4 : 2).replace('.', ',');
-        document.querySelectorAll('input.open-input').forEach((input) => {
-          const target = input.closest('tr').querySelector('[data-target]');
-          const update = () => {
-            const open = parse(input.value);
-            target.textContent = open > 0 ? price(open * (1 + averagePush / 100)) : '—';
-          };
-          input.addEventListener('input', update);
-          update();
+        const pct = (v) => (v >= 0 ? '+' : '') + v.toFixed(1).replace('.', ',') + ' %';
+        const presets = document.getElementById('push-presets');
+        const rows = [...document.querySelectorAll('.open-table tbody tr')];
+        let reference = 9.6;
+
+        function update(tr) {
+          const open = parse(tr.querySelector('[data-open]').value);
+          const push = parse(tr.querySelector('[data-push]').value);
+          const high = parse(tr.dataset.high);
+          tr.classList.toggle('custom', push !== reference);
+          const set = (sel, text) => (tr.querySelector(sel).textContent = text);
+          if (!(open > 0)) {
+            ['[data-high-vs-open]', '[data-target]'].forEach((sel) => set(sel, '—'));
+            set('[data-delta]', '');
+            return;
+          }
+          set('[data-high-vs-open]', pct(((high - open) / open) * 100));
+          if (isNaN(push)) {
+            set('[data-target]', '—');
+            set('[data-delta]', '');
+            return;
+          }
+          const target = open * (1 + push / 100);
+          set('[data-target]', price(target));
+          set('[data-delta]', '+' + price(target - open) + ' $');
+        }
+
+        const saved = (tr) => (tr.querySelector('[data-saved]').textContent = '✓ enregistré');
+
+        rows.forEach((tr) => {
+          tr.querySelectorAll('input').forEach((input) => {
+            input.addEventListener('input', () => update(tr));
+            input.addEventListener('change', () => saved(tr));
+          });
+          tr.querySelector('.reset').addEventListener('click', () => {
+            tr.querySelector('[data-push]').value = String(reference).replace('.', ',');
+            update(tr);
+            saved(tr);
+          });
+          update(tr);
+        });
+
+        presets.addEventListener('click', (e) => {
+          const b = e.target.closest('button');
+          if (!b) return;
+          const previous = reference;
+          reference = parse(b.dataset.pct);
+          presets.querySelectorAll('button').forEach((x) => x.classList.toggle('active', x === b));
+          // Seules les lignes encore sur le repère le suivent ; un push tapé à la main est gardé.
+          rows.forEach((tr) => {
+            const input = tr.querySelector('[data-push]');
+            if (parse(input.value) === previous) input.value = b.dataset.pct.replace('.', ',');
+            update(tr);
+          });
         });
       })();
     </script>

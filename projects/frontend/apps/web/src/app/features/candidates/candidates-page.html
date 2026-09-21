@@ -191,6 +191,21 @@
     </section>
   }
 
+  @if (!loading() && !loadError() && rows().length > 0) {
+    <section class="card">
+      <h3>
+        {{ 'candidates.openCard.title' | translate }}
+        <span class="hint">{{ 'candidates.openCard.hint' | translate }}</span>
+      </h3>
+      <app-open-card
+        [candidates]="rows()"
+        [references]="pushReferences()"
+        [readOnly]="readOnly()"
+        (atOpenChange)="saveAtOpen($event)"
+      />
+    </section>
+  }
+
   <section class="card">
     <h3>
       {{ day() | date: 'fullDate' }}

@@ -47,6 +47,10 @@ import org.springframework.web.server.ResponseStatusException
  *   true` ; promoting twice is a 409, and « Tout passer en stats » is idempotent — candidates
  *   already in the sheet (through their promotion or through an unrelated stat holding that (day,
  *   ticker) slot) come back in `skipped` without failing the batch.
+ * - **The « À l'open » card (#261)** — the open is optional and positive, copied onto the stat on
+ *   promotion ; typed after the promotion, it fills the stat only while the stat has no open of its
+ *   own, and the stat keeps it once the candidate is deleted. The target push is optional and
+ *   non-negative, and clearing it puts the row back on the card's reference.
  *
  * `AuthService` is overridden with `@MockitoBean` so the user-scope is deterministic.
  */
@@ -425,6 +429,113 @@ class CandidateIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // The « À l'open » card (#261)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the open is optional at capture and saved once typed at the open`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+    assertNull(candidate.openPrice, "nothing is known of the session at capture time")
+
+    service.update(candidate.id, request(ticker = "KTTA", openPrice = BigDecimal("4.20")))
+
+    assertEquals(0, BigDecimal("4.20").compareTo(service.findById(candidate.id).openPrice))
+  }
+
+  @Test
+  fun `a non-positive open is a 400`() {
+    listOf(BigDecimal.ZERO, BigDecimal("-4.20")).forEach { open ->
+      val ex =
+        assertThrows(ResponseStatusException::class.java) {
+          service.create(request(openPrice = open))
+        }
+      assertEquals(400, ex.statusCode.value())
+    }
+  }
+
+  @Test
+  fun `a target push typed for a candidate is saved, and clearing it follows the reference again`() {
+    val candidate = service.create(request(ticker = "SGBX", openPrice = BigDecimal("1.90")))
+    assertNull(candidate.targetPushPercent, "a new candidate follows the card's reference")
+
+    // Tight float, expensive locate : this one is expected to run further than the average.
+    val typed =
+      service.update(
+        candidate.id,
+        request(
+          ticker = "SGBX",
+          openPrice = BigDecimal("1.90"),
+          targetPushPercent = BigDecimal("15.0"),
+        ),
+      )
+    assertEquals(0, BigDecimal("15.00").compareTo(typed.targetPushPercent))
+
+    val cleared =
+      service.update(candidate.id, request(ticker = "SGBX", openPrice = BigDecimal("1.90")))
+    assertNull(cleared.targetPushPercent)
+    assertEquals(0, BigDecimal("1.90").compareTo(cleared.openPrice), "the open is left alone")
+  }
+
+  @Test
+  fun `a negative target push is a 400`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(request(targetPushPercent = BigDecimal("-5")))
+      }
+    assertEquals(400, ex.statusCode.value())
+  }
+
+  @Test
+  fun `promoting a candidate carries its open over to the stat`() {
+    val candidate = service.create(request(ticker = "KTTA", openPrice = BigDecimal("4.20")))
+
+    val stat = service.promote(candidate.id)
+
+    assertEquals(0, BigDecimal("4.20").compareTo(stat.openPrice))
+    assertFalse(stat.completed, "the open alone does not complete the stat")
+  }
+
+  @Test
+  fun `an open typed after an early promotion fills the stat that has none`() {
+    // Promoted in premarket, before 9:30 : the stat starts without an open.
+    val candidate = service.create(request(ticker = "KTTA"))
+    val stat = service.promote(candidate.id)
+
+    val updated =
+      service.update(candidate.id, request(ticker = "KTTA", openPrice = BigDecimal("4.20")))
+
+    assertTrue(updated.promoted, "an inline edit still reports the candidate as in stats")
+    assertEquals(0, BigDecimal("4.20").compareTo(statService.findById(stat.id).openPrice))
+  }
+
+  @Test
+  fun `an open typed on the candidate never overwrites the one already on the stat`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+    val stat = service.promote(candidate.id)
+    statRepo.save(statRepo.findById(stat.id).get().apply { openPrice = BigDecimal("4.18") })
+
+    service.update(candidate.id, request(ticker = "KTTA", openPrice = BigDecimal("4.20")))
+
+    assertEquals(
+      0,
+      BigDecimal("4.18").compareTo(statService.findById(stat.id).openPrice),
+      "the open typed on the stat wins",
+    )
+  }
+
+  @Test
+  fun `deleting a candidate deletes its open, but the stat keeps its own copy`() {
+    val candidate = service.create(request(ticker = "KTTA", openPrice = BigDecimal("4.20")))
+    val stat = service.promote(candidate.id)
+
+    service.delete(candidate.id)
+
+    val kept = statService.findById(stat.id)
+    assertNull(kept.candidateId, "the link to the deleted candidate is cleared")
+    assertEquals(0, BigDecimal("4.20").compareTo(kept.openPrice))
+  }
+
+  // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 
@@ -459,6 +570,8 @@ class CandidateIntegrationTest {
     volumeMillions: BigDecimal? = null,
     locatePerShare: BigDecimal? = null,
     note: String? = null,
+    openPrice: BigDecimal? = null,
+    targetPushPercent: BigDecimal? = null,
   ) =
     CandidateRequest(
       tradingDate = tradingDate,
@@ -471,6 +584,8 @@ class CandidateIntegrationTest {
       volumeMillions = volumeMillions,
       locatePerShare = locatePerShare,
       note = note,
+      openPrice = openPrice,
+      targetPushPercent = targetPushPercent,
     )
 
   /**

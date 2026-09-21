@@ -28,6 +28,23 @@ object StatMetrics {
     return change(open, level)
   }
 
+  /**
+   * The [fraction] quantile of [values] (0.5 = median, 0.75 = 3rd quartile), interpolated between
+   * the two nearest ranks — the spreadsheet `PERCENTILE.INC`, so the figures match a manual check.
+   * Null when [values] is empty.
+   */
+  fun quantile(values: List<BigDecimal>, fraction: BigDecimal): BigDecimal? {
+    if (values.isEmpty()) return null
+    val sorted = values.sorted()
+    val position = fraction.multiply(BigDecimal(sorted.size - 1))
+    val lower = position.toInt()
+    val upper = minOf(lower + 1, sorted.size - 1)
+    val weight = position.subtract(BigDecimal(lower))
+    return sorted[lower]
+      .add(sorted[upper].subtract(sorted[lower]).multiply(weight))
+      .setScale(SCALE, RoundingMode.HALF_UP)
+  }
+
   private fun change(base: BigDecimal, value: BigDecimal): BigDecimal? {
     if (base.signum() <= 0) return null
     return value.subtract(base).multiply(HUNDRED).divide(base, SCALE, RoundingMode.HALF_UP)

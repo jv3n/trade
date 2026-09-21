@@ -24,6 +24,8 @@ interface CandidateWireDto {
   volumeMillions: number | null;
   locatePerShare: number | null;
   note: string | null;
+  openPrice: number | null;
+  targetPushPercent: number | null;
   promoted: boolean;
   createdAt: string;
   updatedAt: string;

@@ -1,0 +1,210 @@
+import { provideZonelessChangeDetection } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTranslateService } from '@ngx-translate/core';
+import { startOfDay } from 'date-fns';
+import { describe, expect, it } from 'vitest';
+import { Candidate } from '../../../core/api/candidates/candidates.model';
+import { Pattern } from '../../../core/api/shared/pattern.model';
+import { AtOpenChange, OpenCard, PushReferences } from './open-card';
+
+/**
+ * Component spec for the « À l'open » card (cf. `mockup/PARCOURS.md › At the open`). What it pins :
+ *
+ * - **Target price** — open × (1 + target push), with the PM high vs the open and the gap in $ ;
+ *   nothing without an open or without a reference.
+ * - **References** — a row follows the selected one (average by default) ; switching it moves only
+ *   the rows without a push of their own. The toggles show the figures only when the day shares one
+ *   pattern.
+ * - **Saving** — the open and the target push are handed to the page on blur, only when they
+ *   changed ; typing the reference back, clearing the push or « back to the reference » hands over
+ *   a `null` push (the row follows the reference again).
+ *
+ * The figures are the stats page mockup's : median +6.8 %, average +9.6 %, Q3 +14.2 %, max +21.5 %.
+ */
+
+const GUS_REFERENCES: PushReferences = {
+  median: 6.8,
+  average: 9.6,
+  thirdQuartile: 14.2,
+  max: 21.5,
+};
+
+/** MLGO of `mockup/candidat.html` : PM high 3.72, opening at 3.25. */
+function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
+  return {
+    id: 'c-mlgo',
+    tradingDate: startOfDay(new Date()),
+    pattern: 'GUS',
+    ticker: 'MLGO',
+    previousClose: 1.95,
+    pmOpen: 3.1,
+    pmHigh: 3.72,
+    floatMillions: 6.4,
+    volumeMillions: 4.8,
+    locatePerShare: 0.04,
+    note: 'Résistance 3,75',
+    openPrice: 3.25,
+    targetPushPercent: null,
+    promoted: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+function setup(
+  candidates: Candidate[] = [makeCandidate()],
+  references: Partial<Record<Pattern, PushReferences>> = { GUS: GUS_REFERENCES },
+): { fixture: ComponentFixture<OpenCard>; card: OpenCard; emitted: AtOpenChange[] } {
+  TestBed.configureTestingModule({
+    imports: [OpenCard],
+    providers: [provideZonelessChangeDetection(), provideTranslateService({ lang: 'en' })],
+  });
+  const fixture = TestBed.createComponent(OpenCard);
+  fixture.componentRef.setInput('candidates', candidates);
+  fixture.componentRef.setInput('references', references);
+  const emitted: AtOpenChange[] = [];
+  fixture.componentInstance.atOpenChange.subscribe((change) => emitted.push(change));
+  fixture.detectChanges();
+  return { fixture, card: fixture.componentInstance, emitted };
+}
+
+describe('OpenCard', () => {
+  // ---- Target price ----
+
+  it('aims at the open plus the average push by default', () => {
+    const { card } = setup();
+
+    const [row] = card.rows();
+    expect(row.push).toBe(9.6);
+    expect(row.custom).toBe(false);
+    expect(row.target).toBeCloseTo(3.562, 3); // 3.25 × 1.096
+    expect(row.delta).toBeCloseTo(0.312, 3);
+    expect(row.highVsOpen).toBeCloseTo(14.46, 2); // the PM high, often the resistance
+  });
+
+  it('has no target price until the open is typed', () => {
+    const { card } = setup([makeCandidate({ openPrice: null })]);
+
+    expect(card.rows()[0].target).toBeNull();
+    expect(card.rows()[0].highVsOpen).toBeNull();
+  });
+
+  it('has no reference nor target price while the pattern has no completed stat', () => {
+    const { card } = setup([makeCandidate()], {});
+
+    expect(card.noReference()).toBe(true);
+    expect(card.rows()[0].push).toBeNull();
+    expect(card.rows()[0].target).toBeNull();
+  });
+
+  // ---- References ----
+
+  it('moves the rows following the reference when another one is selected', () => {
+    const { card } = setup();
+
+    card.selectKind('max');
+
+    expect(card.rows()[0].push).toBe(21.5);
+    expect(card.rows()[0].target).toBeCloseTo(3.949, 3);
+  });
+
+  it("keeps a candidate's own push when the reference changes", () => {
+    // Tight float, expensive locate : this one is expected to run further than the average.
+    const { card } = setup([makeCandidate({ targetPushPercent: 15 })]);
+
+    card.selectKind('median');
+
+    expect(card.rows()[0].push).toBe(15);
+    expect(card.rows()[0].custom).toBe(true);
+    expect(card.rows()[0].target).toBeCloseTo(3.7375, 4);
+  });
+
+  it('shows the figures on the toggles only when the day shares one pattern', () => {
+    expect(setup().card.dayReference('max')).toBe(21.5);
+    TestBed.resetTestingModule();
+
+    const mixed = setup(
+      [makeCandidate(), makeCandidate({ id: 'c-dt', ticker: 'VERB', pattern: 'DT' })],
+      { GUS: GUS_REFERENCES },
+    );
+    expect(mixed.card.dayReference('max')).toBeNull();
+  });
+
+  // ---- Saving ----
+
+  it('shows a past day as text, with no field to type in', () => {
+    const { fixture } = setup([makeCandidate({ targetPushPercent: 15 })]);
+    fixture.componentRef.setInput('readOnly', true);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('input.cell-input').length).toBe(0);
+    expect(el.textContent).toContain('3.25');
+    expect(el.textContent).toContain('15.0 %');
+  });
+
+  it('hands a typed open to the page on blur', () => {
+    const mlgo = makeCandidate({ openPrice: null });
+    const { card, emitted } = setup([mlgo]);
+
+    card.draftOpen(mlgo, 3.25);
+    card.commitOpen(mlgo);
+
+    expect(emitted).toEqual([{ candidate: mlgo, patch: { openPrice: 3.25 } }]);
+  });
+
+  it('does not hand over an open that did not change', () => {
+    const mlgo = makeCandidate({ openPrice: 3.25 });
+    const { card, emitted } = setup([mlgo]);
+
+    card.commitOpen(mlgo); // blur without typing
+    card.draftOpen(mlgo, 3.25);
+    card.commitOpen(mlgo); // typed the same value back
+
+    expect(emitted).toEqual([]);
+  });
+
+  it('hands a typed push to the page on blur', () => {
+    const { card, emitted } = setup();
+    const [row] = card.rows();
+
+    card.draftPush(row, 15);
+    card.commitPush(row);
+
+    expect(emitted).toEqual([{ candidate: row.candidate, patch: { targetPushPercent: 15 } }]);
+  });
+
+  it('puts a row back on the reference when the reference value is typed back or cleared', () => {
+    const { card, emitted } = setup([makeCandidate({ targetPushPercent: 15 })]);
+    const [row] = card.rows();
+
+    card.draftPush(row, 9.6); // the average, typed back
+    card.commitPush(row);
+    card.draftPush(row, null); // the field emptied
+    card.commitPush(row);
+
+    expect(emitted.map((e) => e.patch)).toEqual([
+      { targetPushPercent: null },
+      { targetPushPercent: null },
+    ]);
+  });
+
+  it('does not hand over the reference typed on a row that already follows it', () => {
+    const { card, emitted } = setup();
+    const [row] = card.rows();
+
+    card.draftPush(row, 9.6);
+    card.commitPush(row);
+
+    expect(emitted).toEqual([]);
+  });
+
+  it('hands a null push over with « back to the reference »', () => {
+    const { card, emitted } = setup([makeCandidate({ targetPushPercent: 15 })]);
+
+    card.resetPush(card.rows()[0]);
+
+    expect(emitted.map((e) => e.patch)).toEqual([{ targetPushPercent: null }]);
+  });
+});

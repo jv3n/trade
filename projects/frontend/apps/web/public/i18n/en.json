@@ -139,6 +139,26 @@
       "push": "Push",
       "note": "Note"
     },
+    "openCard": {
+      "title": "At the open",
+      "hint": "at 9:30 · type the open, adjust the target push to the ticker",
+      "reference": "Default target push:",
+      "kinds": {
+        "median": "Median",
+        "average": "Average",
+        "thirdQuartile": "3rd quartile",
+        "max": "Max"
+      },
+      "noReference": "No completed stat for this pattern — type the push by hand.",
+      "open": "Open ($)",
+      "openOf": "{{ticker}} open",
+      "highVsOpen": "PM high vs open",
+      "push": "Target push",
+      "pushOf": "Target push for {{ticker}}",
+      "backToReference": "Back to the reference",
+      "target": "Target price",
+      "delta": "Gap"
+    },
     "list": {
       "count": "{{count}} candidate(s) · sorted by gap",
       "empty": "No candidate on this day."
@@ -152,7 +172,7 @@
     },
     "confirmPromote": {
       "title": "Promote {{ticker}} to a stat?",
-      "message": "The stat takes every candidate field (pattern, previous close, PM open and high, float, volume, locate, note). You will complete it after the 4 pm close.",
+      "message": "The stat takes every candidate field (pattern, previous close, PM open and high, float, volume, locate, note, 9:30 open). You will complete it after the 4 pm close.",
       "confirm": "Promote to stat"
     },
     "confirmPromoteAll": {
@@ -176,7 +196,8 @@
       "duplicate": "{{ticker}} is already captured on this day.",
       "loadError": "Couldn't load the candidates. Please retry.",
       "saveError": "Couldn't save the candidate. Please retry.",
-      "deleteError": "Couldn't delete the candidate. Please retry."
+      "deleteError": "Couldn't delete the candidate. Please retry.",
+      "atOpenSaveError": "Couldn't save {{ticker}} at the open. Please retry."
     }
   },
   "account": {
