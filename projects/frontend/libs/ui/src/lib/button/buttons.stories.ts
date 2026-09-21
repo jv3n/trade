@@ -52,7 +52,7 @@ const meta: Meta<ButtonArgs> = {
       ],
     },
     size: {
-      description: 'Lib `[stbSize]` directive — swaps the MDC container height + label size.',
+      description: 'Lib `[stbSize]` directive — swaps the Material container height + label size.',
       control: 'inline-radio',
       options: ['xs', 'sm', 'md', 'lg'],
     },

@@ -9,8 +9,8 @@
 // Reference from a partial :
 //   @use '../sizes' as s;
 //   .foo { padding-top: s.$space-sm; }
-// or for interpolation into a CSS custom property value :
-//   --mdc-button-container-height: #{s.$button-height};
+// or as the value of a Material token override :
+//   @include mat.button-overrides((filled-container-height: s.$button-height));
 
 // ============================================================================
 // Spacing scale

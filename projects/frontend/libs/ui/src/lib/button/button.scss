@@ -26,6 +26,7 @@
 //   • tonal      → no Material selector ; the tokens are still emitted so we list them, but the
 //                  variant isn't used in PortfolioAI today.
 
+@use 'sass:map';
 @use '@angular/material' as mat;
 @use '../../../styles/sizes' as s;
 
@@ -232,15 +233,25 @@
 }
 
 // Outlined — darken the outline on hover. Same rationale as above : the state-layer tints the
-// surface but doesn't touch the border. No M3 token models a hover-outline colour.
+// surface but doesn't touch the border. No M3 token models a hover-outline colour, so the idle
+// token is re-scoped to the hover state — through the mixin, never a hand-written variable : the
+// mixin emits whatever name Material reads, a hand-written one silently stops working on a rename.
 .mat-mdc-outlined-button:not(:disabled):hover {
-  --mdc-outlined-button-outline-color: var(--color-text-faint);
+  @include mat.button-overrides(
+    (
+      outlined-outline-color: var(--color-text-faint),
+    )
+  );
 }
 
 // Icon-button — bump icon colour on hover (idle = muted, hover = full text). No M3 token
-// models the hover icon colour.
+// models the hover icon colour ; same re-scoping as above.
 .mat-mdc-icon-button:not(:disabled):hover {
-  --mdc-icon-button-icon-color: var(--color-text);
+  @include mat.icon-button-overrides(
+    (
+      icon-color: var(--color-text),
+    )
+  );
 }
 
 // ============================================================================
@@ -248,63 +259,85 @@
 //
 // The `StbSize` directive puts a `.stb-size--{xs|sm|md|lg}` class on the button host. `sm`
 // matches the design-system default (already set via the density tokens above), so no
-// override there. Each variant overrides the MDC container-height + label-text-size tokens
-// for every Material button variant ; the icon-button gets its own `state-layer-size` matched
-// to the same height.
+// override there. Each variant re-scopes the container-height + label-text-size tokens of every
+// labelled variant (text, filled, outlined, protected = raised) through the override mixins ; the
+// icon-button gets its own `state-layer-size` matched to the same height.
 // ============================================================================
 
-.stb-size--xs {
-  --mdc-text-button-container-height: 24px;
-  --mdc-filled-button-container-height: 24px;
-  --mdc-outlined-button-container-height: 24px;
-  --mdc-text-button-label-text-size: 0.75rem;
-  --mdc-filled-button-label-text-size: 0.75rem;
-  --mdc-outlined-button-label-text-size: 0.75rem;
+$stb-button-sizes: (
+  xs: (
+    height: 24px,
+    label: 0.75rem,
+  ),
+  md: (
+    height: 38px,
+    label: 0.875rem,
+  ),
+  lg: (
+    height: 44px,
+    label: 0.95rem,
+  ),
+);
 
-  &.mat-mdc-icon-button {
-    --mdc-icon-button-state-layer-size: 24px;
-    width: 24px;
-    height: 24px;
-    padding: 0;
+@each $size, $spec in $stb-button-sizes {
+  $height: map.get($spec, height);
+  $label: map.get($spec, label);
+
+  .stb-size--#{$size} {
+    @include mat.button-overrides(
+      (
+        text-container-height: $height,
+        filled-container-height: $height,
+        outlined-container-height: $height,
+        protected-container-height: $height,
+        text-label-text-size: $label,
+        filled-label-text-size: $label,
+        outlined-label-text-size: $label,
+        protected-label-text-size: $label,
+      )
+    );
+  }
+}
+
+// Icon-buttons : the state layer follows the height, and the box itself is sized explicitly —
+// Material pads it from the 48 px touch target otherwise.
+.stb-size--xs.mat-mdc-icon-button {
+  @include mat.icon-button-overrides(
+    (
+      state-layer-size: 24px,
+    )
+  );
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1rem;
+
+  .mat-icon {
     font-size: 1rem;
-    line-height: 1rem;
-
-    .mat-icon {
-      font-size: 1rem;
-      width: 1rem;
-      height: 1rem;
-    }
+    width: 1rem;
+    height: 1rem;
   }
 }
 
-.stb-size--md {
-  --mdc-text-button-container-height: 38px;
-  --mdc-filled-button-container-height: 38px;
-  --mdc-outlined-button-container-height: 38px;
-  --mdc-text-button-label-text-size: 0.875rem;
-  --mdc-filled-button-label-text-size: 0.875rem;
-  --mdc-outlined-button-label-text-size: 0.875rem;
-
-  &.mat-mdc-icon-button {
-    --mdc-icon-button-state-layer-size: 40px;
-    width: 40px;
-    height: 40px;
-  }
+.stb-size--md.mat-mdc-icon-button {
+  @include mat.icon-button-overrides(
+    (
+      state-layer-size: 40px,
+    )
+  );
+  width: 40px;
+  height: 40px;
 }
 
-.stb-size--lg {
-  --mdc-text-button-container-height: 44px;
-  --mdc-filled-button-container-height: 44px;
-  --mdc-outlined-button-container-height: 44px;
-  --mdc-text-button-label-text-size: 0.95rem;
-  --mdc-filled-button-label-text-size: 0.95rem;
-  --mdc-outlined-button-label-text-size: 0.95rem;
-
-  &.mat-mdc-icon-button {
-    --mdc-icon-button-state-layer-size: 44px;
-    width: 44px;
-    height: 44px;
-  }
+.stb-size--lg.mat-mdc-icon-button {
+  @include mat.icon-button-overrides(
+    (
+      state-layer-size: 44px,
+    )
+  );
+  width: 44px;
+  height: 44px;
 }
 
 // ============================================================================
@@ -378,6 +411,24 @@
     // Same darker-container hover as the accent CTA, which would otherwise repaint it indigo.
     &.mat-mdc-unelevated-button:not(:disabled):hover {
       background-color: color-mix(in oklch, var(--color-#{$tone}) 88%, black);
+    }
+
+    // The generic hovers above (icon brightening, outline darkening) would drop the tone ; at the
+    // same specificity, source order lets these win.
+    &.mat-mdc-icon-button:not(:disabled):hover {
+      @include mat.icon-button-overrides(
+        (
+          icon-color: var(--color-#{$tone}),
+        )
+      );
+    }
+
+    &.mat-mdc-outlined-button:not(:disabled):hover {
+      @include mat.button-overrides(
+        (
+          outlined-outline-color: var(--color-#{$tone}),
+        )
+      );
     }
   }
 }

@@ -5,7 +5,7 @@ export type StbButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 /**
  * Adds a `stb-size--{xs|sm|md|lg}` class on a Material button (or icon-button) so the lib's
- * `button.scss` can swap the MDC container height + label font-size tokens for that size.
+ * `button.scss` can swap the Material container height + label font-size tokens for that size.
  *
  * Usage :
  *
