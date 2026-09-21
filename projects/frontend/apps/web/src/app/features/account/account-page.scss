@@ -12,10 +12,7 @@
 .account-page {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 2rem 2.5rem;
-  max-width: 1360px;
-  margin: 0;
+  gap: s.$space-lg;
 }
 
 .page-header {
