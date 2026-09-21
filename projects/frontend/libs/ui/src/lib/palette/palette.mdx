@@ -187,6 +187,41 @@ Named by *intent*, not by number, so the underlying value can evolve without bre
 `}
 </Markdown>
 
+### Type scale
+
+Every `font-size` picks a step — pixels, one apart, rather than `rem` fractions.
+
+<Markdown>
+{`
+| Variable         | Value | Typical use                                 |
+| ---------------- | ----- | ------------------------------------------- |
+| \`$font-2xs\`     | 11 px | Tags, badges, table meta                    |
+| \`$font-xs\`      | 12 px | Hints, KPI labels and subs, field help      |
+| \`$font-sm\`      | 13 px | Dense body — table cells, toolbars          |
+| \`$font-md\`      | 14 px | Body, card titles                           |
+| \`$font-lg\`      | 16 px | Section headings                            |
+| \`$font-xl\`      | 18 px | Page sub-headings                           |
+| \`$font-2xl\`     | 24 px | KPI values                                  |
+| \`$font-3xl\`     | 32 px | Hero figures (the account balance)          |
+`}
+</Markdown>
+
+### Icon sizes
+
+For a `mat-icon` resized next to text — `font-size`, `width` and `height` take the same step.
+
+<Markdown>
+{`
+| Variable       | Value | Typical use                              |
+| -------------- | ----- | ---------------------------------------- |
+| \`$icon-xs\`    | 14 px | Inline with a 12 px text (hints, subs)   |
+| \`$icon-sm\`    | 16 px | Inline with body text, banners           |
+| \`$icon-md\`    | 18 px | Buttons, chips                           |
+| \`$icon-lg\`    | 24 px | Material's default                       |
+| \`$icon-xl\`    | 40 px | Empty states                             |
+`}
+</Markdown>
+
 ### Layout
 
 <Markdown>
@@ -206,6 +241,7 @@ Named by *intent*, not by number, so the underlying value can evolve without bre
 | -------------------- | ----- | ------------------------------------------------------------------------ |
 | \`$button-height\`     | 32 px | \`mat-button\` / \`mat-flat-button\` / \`mat-stroked-button\` MDC height |
 | \`$icon-button-size\`  | 36 px | \`mat-icon-button\` hit area (square)                                     |
+| \`$card-padding-y\` / \`$card-padding-x\` | 18 / 20 px | Page card padding (\`.card\`)                          |
 `}
 </Markdown>
 

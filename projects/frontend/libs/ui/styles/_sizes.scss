@@ -30,6 +30,34 @@ $space-2xl: 32px;
 $space-3xl: 48px;
 
 // ============================================================================
+// Type scale
+// ============================================================================
+//
+// Every `font-size` of the lib and the app picks a step here. Pixels rather than `rem` : the app
+// is dense and the steps are one pixel apart, which `rem` fractions only blur.
+
+$font-2xs: 11px; // Tags, badges, table meta.
+$font-xs: 12px; // Hints, KPI labels and subs, field help.
+$font-sm: 13px; // Dense body — table cells, toolbars.
+$font-md: 14px; // Body, card titles.
+$font-lg: 16px; // Section headings.
+$font-xl: 18px; // Page sub-headings.
+$font-2xl: 24px; // KPI values.
+$font-3xl: 32px; // Hero figures (the account balance).
+
+// ============================================================================
+// Icon sizes
+// ============================================================================
+//
+// For a `mat-icon` resized next to text — font-size, width and height take the same step.
+
+$icon-xs: 14px; // Inline with a 12 px text (hints, KPI subs).
+$icon-sm: 16px; // Inline with body text, banners.
+$icon-md: 18px; // Buttons, chips.
+$icon-lg: 24px; // Material's default.
+$icon-xl: 40px; // Empty states.
+
+// ============================================================================
 // Layout
 // ============================================================================
 
@@ -52,6 +80,10 @@ $button-height: 32px;
 // dense toolbars ; 36 px keeps the chevron / settings / theme icons compact without losing
 // the click target.
 $icon-button-size: 36px;
+
+// Page card (`components/_card.scss`) — its padding sits between two spacing steps on purpose.
+$card-padding-y: 18px;
+$card-padding-x: 20px;
 
 // ============================================================================
 // Borders
