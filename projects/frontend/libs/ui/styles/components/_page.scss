@@ -1,24 +1,10 @@
-// Page container — every feature route wraps its content in a `.page` element to get the
-// app-wide `padding + max-width` baseline. Before this partial, each feature
-// duplicated the same three lines in its component SCSS with subtly drifting numbers (some at
-// 720, some at 900, some at 1040, some at 1100, some at 1200, some at 1400). Centralising
-// here means a single source of truth and a smaller diff when the rhythm needs to change.
+// Page container — every feature route wraps its content in a `.page` element for the app-wide
+// padding and width. Content is left-aligned : it starts right after the sidenav, like the mockup,
+// so the page title and the first column are always found at the same place.
 //
-// **Default width = 1360 px** — the mockup's content width (`mockup/assets/mockup.css > .main`).
-// Medium-content pages stay within it ; the wide data-table pages opt out with `.page--full`.
-// Modifiers :
-//   • `.page--full`    → no cap  (the wide data tables : candidates, stats, journal, journal import)
-//   • `.page--medium`  → 1200 px
-//   • `.page--narrow`  → 1100 px
-//   • `.page--form`    → 720 px  (settings forms — preferences, access-control)
-//
-// **Alignment** — content is **left-aligned** (it starts right after the sidenav, like the mockup) :
-// the eye always finds the page title and the first column at the same place. The `max-width` caps
-// only keep lines from stretching on a wide screen. `.page--flush` is kept for compatibility (it is
-// now the default behaviour).
-//
-// **Responsive** — under 900 px the side padding tightens to 1 rem so the content keeps
-// breathing room on a phone without losing horizontal real estate.
+// The default caps the width at 1360 px (the mockup's content width) ; `.page--full` lifts the cap
+// for the pages whose tables and card grids use the whole screen — every page today. Under 900 px
+// the side padding tightens so a phone keeps its horizontal room.
 
 .page {
   padding: 2rem 2.5rem;
@@ -26,27 +12,10 @@
   margin: 0;
 }
 
-.page--medium {
-  max-width: 1200px;
-}
-
-.page--narrow {
-  max-width: 1100px;
-}
-
-.page--form {
-  max-width: 720px;
-}
-
 // Full-bleed — no width cap. For the wide data tables whose many columns need every pixel of
 // horizontal real estate ; the page spans the viewport minus the side padding.
 .page--full {
   max-width: none;
-}
-
-.page--flush {
-  margin-left: 0;
-  margin-right: 0;
 }
 
 @media (max-width: 900px) {

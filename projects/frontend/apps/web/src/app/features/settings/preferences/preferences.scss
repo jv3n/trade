@@ -1,8 +1,7 @@
 // `.content-header`, `.config-card`, `.card-header` come from the lib (`libs/ui/styles/`).
 // The page stays skinny — the outer layout, the profile card and a baseline fix for flag emojis.
 
-// Container (padding + max-width 720) comes from the global `.page page--form` composition ;
-// the local class only carries the flex-stack rhythm for the preferences-specific sections.
+// A section of the settings page, which carries the outer padding ; this is only its stack.
 .preferences-page {
   display: flex;
   flex-direction: column;

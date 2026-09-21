@@ -101,7 +101,7 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 
 | Class | Partial | For |
 | --- | --- | --- |
-| `.page` (+ `--full`, `--medium`, `--narrow`, `--form`) | `components/_page.scss` | the page container |
+| `.page` (+ `--full`) | `components/_page.scss` | the page container — every page is `page page--full` today |
 | `.card`, `.card h3` / `.card-title`, `.hint` | `components/_card.scss` | a page section, its title row, the faint hint next to a title |
 | `.kpi-row` > `.kpi` (`__label`, `__value`, `__sub`, `--hero`) | `components/_kpi.scss` | the figures on top of a page — tiles are `.card`s or `mat-card`s |
 | `.toolbar` | `components/_toolbar.scss` | the filter row above a list ; its form fields are density `-5` (36 px) |
