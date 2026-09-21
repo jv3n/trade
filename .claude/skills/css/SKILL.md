@@ -51,13 +51,13 @@ lib SCSS :
 
 | Scale | Steps |
 | --- | --- |
-| Spacing `$space-*` | `hairline` 2 · `xs` 4 · `sm` 8 · `md` 12 · `lg` 16 · `xl` 24 · `2xl` 32 · `3xl` 48 |
+| Spacing `$space-*` | `hairline` 2 · `xs` 4 · `sm` 8 · `md` 12 · `lg` 16 · `xl` 24 · `2xl` 32 · `3xl` 48 · `4xl` 64 |
 | Type `$font-*` | `2xs` 11 · `xs` 12 · `sm` 13 · `md` 14 · `lg` 16 · `xl` 18 · `2xl` 24 · `3xl` 32 |
 | Icons `$icon-*` | `xs` 14 · `sm` 16 · `md` 18 · `lg` 24 · `xl` 40 — font-size, width and height together |
-| Component sizes | `$button-height`, `$icon-button-size`, `$card-padding-y` / `-x`, `$toolbar-height`, `$sidenav-width` |
+| Component sizes | `$button-height`, `$icon-button-size`, `$page-padding-y` / `-x`, `$card-padding-y` / `-x`, `$toolbar-height`, `$sidenav-width` |
 
 **No raw size.** A padding, margin, gap, font-size or icon size is a token. A value off the scale
-is snapped to the nearest step ; if it is genuinely a component's own dimension, it becomes a named
+is snapped to the nearest step (a tie rounds up) ; if it is genuinely a component's own dimension, it becomes a named
 component size in `_sizes.scss`. Left raw on purpose : `1px` borders / hairlines, media-query
 breakpoints, and values that are Material's own dimensions.
 

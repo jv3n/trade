@@ -310,13 +310,13 @@ $stb-button-sizes: (
   width: 24px;
   height: 24px;
   padding: 0;
-  font-size: 1rem;
+  font-size: s.$font-lg;
   line-height: 1rem;
 
   .mat-icon {
-    font-size: 1rem;
-    width: 1rem;
-    height: 1rem;
+    font-size: s.$icon-sm;
+    width: s.$icon-sm;
+    height: s.$icon-sm;
   }
 }
 

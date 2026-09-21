@@ -19,6 +19,8 @@
 
 @use '@angular/material' as mat;
 
+@use '../../../styles/sizes' as s;
+
 :root {
   @include mat.table-overrides(
     (
@@ -124,7 +126,7 @@
 .stb-col--mono {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: s.$font-md;
 }
 
 // Fixed-width right-aligned slot for trailing icon-button rows (edit / delete).
@@ -133,7 +135,7 @@
   text-align: right;
   // `!important` because Material's `.mat-mdc-cell` ships its own padding override that
   // would otherwise win the cascade for a single-pixel difference.
-  padding-right: 0.5rem !important;
+  padding-right: s.$space-sm !important;
 }
 
 // Cell side — keep the trailing icon buttons right-aligned (inherited `text-align: right`) and on
