@@ -105,6 +105,7 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 | `.card`, `.card h3` / `.card-title`, `.hint` | `components/_card.scss` | a page section, its title row, the faint hint next to a title |
 | `.kpi-row` > `.kpi` (`__label`, `__value`, `__sub`, `--hero`) | `components/_kpi.scss` | the figures on top of a page — tiles are `.card`s or `mat-card`s |
 | `.toolbar` | `components/_toolbar.scss` | the filter row above a list ; its form fields are density `-5` (36 px) |
+| `.form-stack` | `components/_form.scss` | a column of form fields (a dialog's `mat-dialog-content`) — fields reserve no subscript space, so they need it |
 | `.error-banner`, `.info-banner`, `.warn-banner` | `components/_banners.scss` | page-level messages |
 | `.loading-state`, `.empty-state` | `components/_banners.scss` | a list that loads or has nothing |
 

@@ -3,7 +3,7 @@
 </h2>
 
 <form (submit)="$event.preventDefault(); submit()" class="lexicon-form">
-  <mat-dialog-content>
+  <mat-dialog-content class="form-stack">
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ 'lexicon.fields.term' | translate }}</mat-label>
       <input matInput [formField]="lexiconForm.term" />
