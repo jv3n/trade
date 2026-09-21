@@ -123,6 +123,19 @@ So : no bottom margin on a lib block, no page cancelling one, and a new layout i
 uses `gap`, not sibling margins. (`components/page` is forwarded last so its child rule wins over
 the blocks' own margins.)
 
+## Accessibility
+
+- **Focus** — `_base.scss` draws the accent focus ring on every non-Material element ; never
+  `outline: none` a control (a border tint can reinforce the ring, not replace it). Material
+  components bring their own focus indicator.
+- **Motion** — `_base.scss` drops CSS transitions and animations under `prefers-reduced-motion` ;
+  JavaScript animation (the ECharts chart) reads the setting itself.
+- **Contrast** — `npm run ui:check-contrast` (in CI) measures every text / fill pair of the palette
+  against WCAG AA in both themes ; a pair may not drop below AA, and the known shortfalls may not
+  get worse. A palette change runs it first.
+- **Names** — an icon-only button gets `[attr.aria-label]` (its tooltip's key) ;
+  `npm run web:check-a11y` (in CI) fails otherwise.
+
 ## Before committing styles
 
 - No new raw size, colour or `::ng-deep` ; no redeclared lib class.

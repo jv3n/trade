@@ -53,9 +53,17 @@ jobs:
         working-directory: projects/frontend
         run: npm run ui:check-peers
 
+      - name: Check the palette contrast baseline
+        working-directory: projects/frontend
+        run: npm run ui:check-contrast
+
       - name: Lint
         working-directory: projects/frontend
         run: npm run lint
+
+      - name: Check the icon buttons have an accessible name
+        working-directory: projects/frontend
+        run: npm run web:check-a11y
 
       - name: Build
         working-directory: projects/frontend

@@ -94,6 +94,11 @@ export class App {
     return user?.displayName ?? user?.email ?? '';
   });
 
+  /** Moves the keyboard focus to the page content — the skip link's action. */
+  skipToContent(main: HTMLElement): void {
+    main.focus();
+  }
+
   signOut(): void {
     this.auth.logout().subscribe({
       // Always navigate to /login regardless of backend success/failure — the local signal is

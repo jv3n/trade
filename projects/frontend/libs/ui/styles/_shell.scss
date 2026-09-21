@@ -99,3 +99,32 @@
   overflow-y: visible;
   border-top: s.$border-width solid var(--color-border-soft);
 }
+
+// Skip link — the first stop of the keyboard, off-screen until it takes the focus, so it never
+// shows to a mouse user.
+.skip-link {
+  position: fixed;
+  top: s.$space-sm;
+  left: s.$space-sm;
+  z-index: 1000;
+  padding: s.$space-sm s.$space-lg;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font: inherit;
+  font-size: s.$font-md;
+  font-weight: 600;
+  cursor: pointer;
+  transform: translateY(calc(-100% - #{s.$space-lg}));
+
+  &:focus-visible {
+    transform: none;
+  }
+}
+
+// The skip link's target : focusable so the next Tab starts inside the page, but not a control —
+// a ring around the whole content would read as a bug.
+.app-content:focus {
+  outline: none;
+}

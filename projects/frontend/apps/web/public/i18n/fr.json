@@ -605,7 +605,8 @@
     "allLetters": "Tous"
   },
   "header": {
-    "userMenu": "Mon compte"
+    "userMenu": "Mon compte",
+    "skipToContent": "Aller au contenu"
   },
   "auth": {
     "login": {
