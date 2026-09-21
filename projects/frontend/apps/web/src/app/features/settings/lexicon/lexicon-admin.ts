@@ -1,8 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { StbButtonModule, StbIconModule, StbProgressSpinnerModule } from '@portfolioai/ui';
+import {
+  MatDialog,
+  StbButtonModule,
+  StbIconModule,
+  StbProgressSpinnerModule,
+  StbToast,
+} from '@portfolioai/ui';
 import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
 
 import { LexiconEntry, LexiconEntryInput } from '../../../core/api/lexicon/lexicon.model';
@@ -31,7 +35,7 @@ export class LexiconAdminPage {
   private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -56,11 +60,13 @@ export class LexiconAdminPage {
         filter(Boolean),
         switchMap(() => this.repo.delete(entry.id)),
         tap(() => {
-          this.toast('lexicon.snackbar.deleteSuccess', 'success', { term: entry.term });
+          this.toasts.success(
+            this.translate.instant('lexicon.snackbar.deleteSuccess', { term: entry.term }),
+          );
           this.fetch();
         }),
         catchError(() => {
-          this.toast('lexicon.snackbar.deleteError', 'error');
+          this.toasts.error(this.translate.instant('lexicon.snackbar.deleteError'));
           return EMPTY;
         }),
       )
@@ -99,14 +105,15 @@ export class LexiconAdminPage {
               const key = isUpdate
                 ? 'lexicon.snackbar.updateSuccess'
                 : 'lexicon.snackbar.createSuccess';
-              this.toast(key, 'success', { term: saved.term });
+              this.toasts.success(this.translate.instant(key, { term: saved.term }));
               this.fetch();
             }),
             catchError(() => {
               // A 409 (duplicate term) surfaces here too — generic error toast is enough.
-              this.toast(
-                isUpdate ? 'lexicon.snackbar.updateError' : 'lexicon.snackbar.createError',
-                'error',
+              this.toasts.error(
+                this.translate.instant(
+                  isUpdate ? 'lexicon.snackbar.updateError' : 'lexicon.snackbar.createError',
+                ),
               );
               return EMPTY;
             }),
@@ -114,12 +121,5 @@ export class LexiconAdminPage {
         ),
       )
       .subscribe();
-  }
-
-  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
-    this.snackBar.open(this.translate.instant(key, params), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
-    });
   }
 }

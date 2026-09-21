@@ -54,14 +54,14 @@
       // ============================================================================
       // Color — menu item, hover / focus
       // M3 ties the state layer to `on-surface` (neutral wash) — we steer to the accent-soft
-      // surface for the same "this row is interactive" affordance as the autocomplete option
+      // surface for the same "this row is interactive" affordance as the select option
       // and the list item.
       // ============================================================================
       item-hover-state-layer-color: var(--color-accent-soft),
       item-focus-state-layer-color: var(--color-accent-soft),
       // ============================================================================
       // Typography — menu item label
-      // M3 default = label-large (14 px) ; we ship 0.875 rem to match the autocomplete option
+      // M3 default = label-large (14 px) ; we ship 0.875 rem to match the select option
       // and the list item label.
       // ============================================================================
       item-label-text-size: 0.875rem,
@@ -79,7 +79,7 @@
 
 // Hairline border on the menu panel — `mat.menu-overrides()` doesn't expose a border token,
 // but a 1 px outline reads crisper than the M3 surface-tinted default, especially against
-// close-toned page backgrounds. Same approach as the autocomplete and datepicker panels.
+// close-toned page backgrounds. Same approach as the select and datepicker panels.
 .mat-mdc-menu-panel {
   border: 1px solid var(--color-border-soft);
 }

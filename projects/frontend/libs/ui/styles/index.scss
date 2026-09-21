@@ -43,14 +43,12 @@
 // `mat.<name>-overrides(...)` block, then append a `@forward` line below.
 @forward '../src/lib/button/button';
 @forward '../src/lib/button-toggle/button-toggle';
-@forward '../src/lib/autocomplete/autocomplete';
 @forward '../src/lib/card/card';
 @forward '../src/lib/checkbox/checkbox';
 @forward '../src/lib/chips/chips';
 @forward '../src/lib/datepicker/datepicker';
 @forward '../src/lib/dialog/dialog';
 @forward '../src/lib/divider/divider';
-@forward '../src/lib/expansion/expansion';
 @forward '../src/lib/form-field/form-field';
 @forward '../src/lib/icon/icon';
 @forward '../src/lib/input/input';
@@ -60,8 +58,6 @@
 @forward '../src/lib/progress-spinner/progress-spinner';
 @forward '../src/lib/select/select';
 @forward '../src/lib/sidenav/sidenav';
-@forward '../src/lib/slide-toggle/slide-toggle';
-@forward '../src/lib/slider/slider';
 @forward '../src/lib/snack-bar/snack-bar';
 @forward '../src/lib/sort-header/sort-header';
 @forward '../src/lib/table/table';

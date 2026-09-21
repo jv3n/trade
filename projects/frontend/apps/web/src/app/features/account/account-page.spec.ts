@@ -1,13 +1,11 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { MatDialog, provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import {
   AccountMovement,
   AccountMovementFilter,
@@ -67,7 +65,7 @@ describe('AccountPage', () => {
           } as unknown as AccountRepository,
         },
         { provide: ForexRepository, useValue: { latestRate: () => of(null) } },
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         // Stubbed rather than provided for real : it reaches the user preferences through
         // AuthService → AuthRepository, and the display currency is not what these tests pin.

@@ -2,11 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { PageEvent } from '@angular/material/paginator';
-import { Sort } from '@angular/material/sort';
 import { Router, RouterLink } from '@angular/router';
-
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -21,6 +17,8 @@ import {
 } from 'rxjs';
 
 import {
+  PageEvent,
+  Sort,
   StbButtonModule,
   StbButtonToggleModule,
   StbChipsModule,
@@ -31,6 +29,7 @@ import {
   StbProgressSpinnerModule,
   StbSortHeaderModule,
   StbTableModule,
+  StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
@@ -143,7 +142,7 @@ export class JournalPage {
   private readonly statsRepo = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
   private readonly router = inject(Router);
 
   // ---- Data state ----
@@ -308,7 +307,9 @@ export class JournalPage {
           return this.repo.delete(entry.id);
         }),
         tap(() => {
-          this.toast('journal.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
+          this.toasts.success(
+            this.translate.instant('journal.snackbar.deleteSuccess', { ticker: entry.ticker }),
+          );
           if (willEmptyPage) {
             // Decrementing pageIndex triggers the effect — no need to bump `refetchTrigger`,
             // the page change is enough to re-fire the fetch on the previous (existing) page.
@@ -320,7 +321,7 @@ export class JournalPage {
           }
         }),
         catchError(() => {
-          this.toast('journal.snackbar.deleteError', 'error');
+          this.toasts.error(this.translate.instant('journal.snackbar.deleteError'));
           return EMPTY;
         }),
       )
@@ -367,18 +368,6 @@ export class JournalPage {
         this.error.set(this.translate.instant('journal.errors.load'));
         this.loading.set(false);
       },
-    });
-  }
-
-  /**
-   * Snackbar helper — keeps the call-sites focused on the i18n key + variant. `success` lives
-   * 3 s, `error` lives 5 s (more time to read the message). Variants are the global classes
-   * declared in `libs/ui/src/lib/snack-bar/snack-bar.scss`.
-   */
-  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
-    this.snackBar.open(this.translate.instant(key, params), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
     });
   }
 }

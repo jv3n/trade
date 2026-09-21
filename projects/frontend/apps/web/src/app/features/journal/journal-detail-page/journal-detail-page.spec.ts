@@ -1,8 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
+import { StbToast } from '@portfolioai/ui';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -68,7 +68,7 @@ describe('JournalDetailPage', () => {
           provide: StatsRepository,
           useValue: { findById: statFindById } as unknown as StatsRepository,
         },
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
         {
           provide: ActivatedRoute,

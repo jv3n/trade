@@ -5,7 +5,7 @@ import * as Stories from './snack-bar.stories';
 
 # Snack-bar
 
-Ephemeral notifications — opened imperatively via the `MatSnackBar` service. The snackbar container is rendered into the CDK overlay on `<body>` ; there's no `<mat-snack-bar>` selector on the consumer side.
+Ephemeral notifications, rendered into the CDK overlay on `<body>` — there's no `<mat-snack-bar>` selector on the consumer side. **The app shows them through `StbToast`**, which opens the Material snack bar with the lib's success / error variant and duration ; `MatSnackBar` itself stays inside the lib.
 
 Use it for : "Trade saved", "Filter applied", "Connection lost — retrying", "Undo" affordances on destructive actions. Never use it for errors that need a stable resolution path (use an inline error banner instead — the snackbar auto-dismisses).
 
@@ -19,25 +19,26 @@ Click **Show snack-bar** in the canvas. Use the Controls panel to tune the messa
 
 ## How to use
 
+`StbToast` is root-provided — inject it, no module to import. The lib has no i18n : pass the message already translated.
+
 <Source
   language="ts"
   code={`import { inject } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { StbSnackBarModule } from '@portfolioai/ui';
+import { TranslateService } from '@ngx-translate/core';
+import { StbToast } from '@portfolioai/ui';
 
-@Component({
-  imports: [StbSnackBarModule],   // brings the MatSnackBar service into the DI graph
-  template: \`<button mat-flat-button (click)="save()">Save</button>\`,
-})
 export class TradeForm {
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
+  private readonly translate = inject(TranslateService);
 
   save(): void {
     // ... persist the trade ...
-    this.snackBar.open('Trade saved.', 'Undo', { duration: 3000 });
+    this.toasts.success(this.translate.instant('journal.snackbar.saveSuccess'));
   }
 }`}
 />
+
+`success(message)` stays 3 s with the `stb-snack-bar--success` variant, `error(message)` 5 s with `stb-snack-bar--error`. The options and variants below describe the Material surface `StbToast` drives.
 
 ## Options
 

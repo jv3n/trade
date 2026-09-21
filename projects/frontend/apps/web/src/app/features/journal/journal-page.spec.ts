@@ -1,12 +1,11 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { Subject, of, throwError } from 'rxjs';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { of, Subject, throwError } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
+import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { JournalRepository, PagedResult } from '../../core/api/journal/journal.repository';
 import {
   JournalSummary,
@@ -43,7 +42,7 @@ describe('JournalPage', () => {
   let deleteSubject: Subject<void>;
   /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
   let confirmed: boolean;
-  let snackBarOpen: ReturnType<typeof vi.fn>;
+  let toastShown: Mock<(variant: 'success' | 'error', message: string) => void>;
   let summary: ReturnType<typeof vi.fn>;
   let statSummary: ReturnType<typeof vi.fn>;
 
@@ -52,7 +51,7 @@ describe('JournalPage', () => {
     findAll = vi.fn(() => of(nextPage));
     deleteSubject = new Subject<void>();
     confirmed = true;
-    snackBarOpen = vi.fn();
+    toastShown = vi.fn();
     summary = vi.fn((_filter?: TradeEntryFilter) => of(makeSummary()));
     statSummary = vi.fn(() => of(makeStatSummary()));
 
@@ -83,7 +82,13 @@ describe('JournalPage', () => {
           provide: StatsRepository,
           useValue: { summary: statSummary } as unknown as StatsRepository,
         },
-        { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+        {
+          provide: StbToast,
+          useValue: {
+            success: (message: string) => toastShown('success', message),
+            error: (message: string) => toastShown('error', message),
+          },
+        },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
       ],
     }).compileComponents();
@@ -189,11 +194,7 @@ describe('JournalPage', () => {
     expect(page.pageIndex()).toBe(1);
     // pageIndex change itself triggers the effect → exactly one additional fetch.
     expect(findAll.mock.calls.length).toBe(callsBefore + 1);
-    expect(snackBarOpen).toHaveBeenCalledWith(
-      expect.any(String),
-      undefined,
-      expect.objectContaining({ panelClass: 'stb-snack-bar--success' }),
-    );
+    expect(toastShown).toHaveBeenCalledWith('success', expect.any(String));
   });
 
   it('delete on the last row of page 0 does NOT decrement pageIndex (refetches in place)', () => {
@@ -253,14 +254,7 @@ describe('JournalPage', () => {
     deleteSubject.error(new Error('500 from server'));
     fixture.detectChanges();
 
-    expect(snackBarOpen).toHaveBeenCalledWith(
-      expect.any(String),
-      undefined,
-      expect.objectContaining({
-        panelClass: 'stb-snack-bar--error',
-        duration: 5000,
-      }),
-    );
+    expect(toastShown).toHaveBeenCalledWith('error', expect.any(String));
   });
 
   // ---------------------------------------------------------------------------
@@ -278,7 +272,7 @@ describe('JournalPage', () => {
     page.delete(makeTrade());
 
     expect(deleteSpy).not.toHaveBeenCalled();
-    expect(snackBarOpen).not.toHaveBeenCalled();
+    expect(toastShown).not.toHaveBeenCalled();
   });
 });
 

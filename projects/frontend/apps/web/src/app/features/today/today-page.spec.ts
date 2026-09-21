@@ -1,8 +1,8 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
+import { StbToast } from '@portfolioai/ui';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -86,7 +86,7 @@ describe('TodayPage', () => {
             summary: () => of(makeJournalSummary()),
           } as unknown as JournalRepository,
         },
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
       ],
     });

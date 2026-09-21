@@ -1,9 +1,8 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { StbButtonModule, StbChipsModule, StbIconModule } from '@portfolioai/ui';
+import { StbButtonModule, StbChipsModule, StbIconModule, StbToast } from '@portfolioai/ui';
 import { endOfWeek, startOfWeek } from 'date-fns';
 import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
 import { AccountSummary } from '../../core/api/account/account.model';
@@ -100,7 +99,7 @@ export class TodayPage {
   private readonly journalRepo = inject(JournalRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
 
   /** Captured once : the page is mounted fresh on every visit, and the day doesn't turn under it. */
   readonly today = new Date();
@@ -181,11 +180,15 @@ export class TodayPage {
         filter(Boolean),
         switchMap(() => this.candidatesRepo.promoteDay(this.today)),
         tap((result) => {
-          this.toast('today.snackbar.promoteSuccess', 'success', { count: result.promoted.length });
+          this.toasts.success(
+            this.translate.instant('today.snackbar.promoteSuccess', {
+              count: result.promoted.length,
+            }),
+          );
           this.fetch();
         }),
         catchError(() => {
-          this.toast('today.snackbar.promoteError', 'error');
+          this.toasts.error(this.translate.instant('today.snackbar.promoteError'));
           return EMPTY;
         }),
       )
@@ -245,13 +248,6 @@ export class TodayPage {
     this.journalRepo.summary(day).subscribe({ next: (s) => this.dayPnl.set(s) });
     this.journalRepo.summary(week).subscribe({ next: (s) => this.weekPnl.set(s) });
     this.journalRepo.summary(month).subscribe({ next: (s) => this.monthPnl.set(s) });
-  }
-
-  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
-    this.snackBar.open(this.translate.instant(key, params), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
-    });
   }
 }
 

@@ -135,7 +135,7 @@ export class StbSize {
 
 Selectors in `libs/ui` **always** start with `stb` or `ui` (ESLint rule; `apps/web` uses `app`) — design-system directives use `stb`. Input bindings use the same name as the selector attribute to avoid `no-input-rename`.
 
-Existing: `StbSize` + `StbDanger` + `StbSpinnerEnd` (button), `StbTable` + `StbCol` (table), `StbChip` (chips — `stbChip="ticker"` is the mandatory ticker rendering).
+Existing: `StbSize` + `StbTone` + `StbDanger` (button), `StbTable` + `StbCol` (table), `StbChip` (chips — `stbChip="ticker"` is the mandatory ticker rendering).
 
 ### `styles/`
 

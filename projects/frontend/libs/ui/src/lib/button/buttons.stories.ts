@@ -3,13 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { moduleMetadata, type Meta, type StoryObj } from '@storybook/angular';
 
-import {
-  StbSize,
-  StbSpinnerEnd,
-  StbTone,
-  type StbButtonSize,
-  type StbButtonTone,
-} from './button.directives';
+import { StbSize, StbTone, type StbButtonSize, type StbButtonTone } from './button.directives';
 
 type Variant =
   'mat-button' | 'mat-flat-button' | 'mat-stroked-button' | 'mat-raised-button' | 'mat-icon-button';
@@ -22,21 +16,13 @@ interface ButtonArgs {
   icon: string;
   disabled: boolean;
   loading: boolean;
-  spinnerPosition: 'leading' | 'trailing';
 }
 
 const meta: Meta<ButtonArgs> = {
   title: 'Components/Button',
   decorators: [
     moduleMetadata({
-      imports: [
-        MatButtonModule,
-        MatIconModule,
-        MatProgressSpinnerModule,
-        StbSize,
-        StbSpinnerEnd,
-        StbTone,
-      ],
+      imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, StbSize, StbTone],
     }),
   ],
   argTypes: {
@@ -73,16 +59,8 @@ const meta: Meta<ButtonArgs> = {
     },
     disabled: { control: 'boolean' },
     loading: {
-      description:
-        'Replaces the icon with a spinner (or appends one if `spinnerPosition=trailing`).',
+      description: 'Replaces the icon with a spinner.',
       control: 'boolean',
-    },
-    spinnerPosition: {
-      description:
-        '`leading` = replaces the icon ; `trailing` = via `[stbSpinnerEnd]` after the label.',
-      control: 'inline-radio',
-      options: ['leading', 'trailing'],
-      if: { arg: 'loading' },
     },
   },
   args: {
@@ -93,13 +71,12 @@ const meta: Meta<ButtonArgs> = {
     icon: 'add',
     disabled: false,
     loading: false,
-    spinnerPosition: 'leading',
   },
   parameters: {
     docs: {
       description: {
         component:
-          'Material button variants restyled via the lib (`libs/ui/src/lib/button/button.scss`), plus the directives carried by `StbButtonModule` : `[stbSize]` (xs / sm / md / lg), `[stbTone]` (semantic colour) and `[stbSpinnerEnd]` (loading spinner at the end of the label). Use the controls panel to flip the playground.',
+          'Material button variants restyled via the lib (`libs/ui/src/lib/button/button.scss`), plus the directives carried by `StbButtonModule` : `[stbSize]` (xs / sm / md / lg), `[stbTone]` (semantic colour) and `[stbDanger]` (destructive CTA). Use the controls panel to flip the playground.',
       },
     },
   },
@@ -134,54 +111,42 @@ export const Default: Story = {
         }
         @case ('mat-button') {
           <button mat-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
-            @if (loading && spinnerPosition === 'leading') {
+            @if (loading) {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {
               <mat-icon>{{ icon }}</mat-icon>
             }
             <span>{{ label }}</span>
-            @if (loading && spinnerPosition === 'trailing') {
-              <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>
-            }
           </button>
         }
         @case ('mat-flat-button') {
           <button mat-flat-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
-            @if (loading && spinnerPosition === 'leading') {
+            @if (loading) {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {
               <mat-icon>{{ icon }}</mat-icon>
             }
             <span>{{ label }}</span>
-            @if (loading && spinnerPosition === 'trailing') {
-              <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>
-            }
           </button>
         }
         @case ('mat-stroked-button') {
           <button mat-stroked-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
-            @if (loading && spinnerPosition === 'leading') {
+            @if (loading) {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {
               <mat-icon>{{ icon }}</mat-icon>
             }
             <span>{{ label }}</span>
-            @if (loading && spinnerPosition === 'trailing') {
-              <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>
-            }
           </button>
         }
         @case ('mat-raised-button') {
           <button mat-raised-button [stbSize]="size" [stbTone]="toneOrNull" [disabled]="disabled">
-            @if (loading && spinnerPosition === 'leading') {
+            @if (loading) {
               <mat-spinner diameter="16"></mat-spinner>
             } @else if (icon && !loading) {
               <mat-icon>{{ icon }}</mat-icon>
             }
             <span>{{ label }}</span>
-            @if (loading && spinnerPosition === 'trailing') {
-              <mat-spinner stbSpinnerEnd diameter="16"></mat-spinner>
-            }
           </button>
         }
       }

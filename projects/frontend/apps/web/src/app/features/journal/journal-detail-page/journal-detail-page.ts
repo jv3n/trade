@@ -1,6 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -12,6 +11,7 @@ import {
   StbInputModule,
   StbProgressSpinnerModule,
   StbSelectModule,
+  StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { EMPTY, catchError, filter, finalize, from, switchMap, tap } from 'rxjs';
@@ -156,7 +156,7 @@ export class JournalDetailPage {
   private readonly statsRepo = inject(StatsRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly toasts = inject(StbToast);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
@@ -427,10 +427,12 @@ export class JournalDetailPage {
       .pipe(
         tap((saved) => {
           this.accept(saved);
-          this.toast('journal.snackbar.updateSuccess', 'success', { ticker: saved.ticker });
+          this.toasts.success(
+            this.translate.instant('journal.snackbar.updateSuccess', { ticker: saved.ticker }),
+          );
         }),
         catchError(() => {
-          this.toast('journal.snackbar.updateError', 'error');
+          this.toasts.error(this.translate.instant('journal.snackbar.updateError'));
           return EMPTY;
         }),
         finalize(() => this.saving.set(false)),
@@ -452,11 +454,13 @@ export class JournalDetailPage {
         filter(Boolean),
         switchMap(() => this.repo.delete(entry.id)),
         tap(() => {
-          this.toast('journal.snackbar.deleteSuccess', 'success', { ticker: entry.ticker });
+          this.toasts.success(
+            this.translate.instant('journal.snackbar.deleteSuccess', { ticker: entry.ticker }),
+          );
           void this.router.navigate(['/journal']);
         }),
         catchError(() => {
-          this.toast('journal.snackbar.deleteError', 'error');
+          this.toasts.error(this.translate.instant('journal.snackbar.deleteError'));
           return EMPTY;
         }),
       )
@@ -517,10 +521,10 @@ export class JournalDetailPage {
         tap((updated) => {
           this.entry.set(updated);
           this.clearObjectUrl();
-          this.toast('journal.detail.screenshot.deleteSuccess', 'success');
+          this.toasts.success(this.translate.instant('journal.detail.screenshot.deleteSuccess'));
         }),
         catchError(() => {
-          this.toast('journal.detail.screenshot.deleteError', 'error');
+          this.toasts.error(this.translate.instant('journal.detail.screenshot.deleteError'));
           return EMPTY;
         }),
       )
@@ -538,10 +542,10 @@ export class JournalDetailPage {
         tap((updated) => {
           this.entry.set(updated);
           this.loadScreenshot(updated.id);
-          this.toast('journal.detail.screenshot.uploadSuccess', 'success');
+          this.toasts.success(this.translate.instant('journal.detail.screenshot.uploadSuccess'));
         }),
         catchError(() => {
-          this.toast('journal.detail.screenshot.uploadError', 'error');
+          this.toasts.error(this.translate.instant('journal.detail.screenshot.uploadError'));
           return EMPTY;
         }),
         finalize(() => this.screenshotUploading.set(false)),
@@ -568,12 +572,5 @@ export class JournalDetailPage {
       this.objectUrl = null;
     }
     this.screenshotUrl.set(null);
-  }
-
-  private toast(key: string, variant: 'success' | 'error', params?: Record<string, unknown>): void {
-    this.snackBar.open(this.translate.instant(key, params), undefined, {
-      duration: variant === 'success' ? 3000 : 5000,
-      panelClass: `stb-snack-bar--${variant}`,
-    });
   }
 }

@@ -1,9 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideTranslateService } from '@ngx-translate/core';
+import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { addDays, startOfDay } from 'date-fns';
 import { Observable, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
@@ -15,8 +14,8 @@ import {
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import {
-  PageRequest,
   PagedResult,
+  PageRequest,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
@@ -134,9 +133,9 @@ function setup(
   page: CandidatesPage;
   repo: MockCandidatesRepository;
   stats: MockStatsRepository;
-  snackBarOpen: ReturnType<typeof vi.fn>;
+  toastShown: ReturnType<typeof vi.fn>;
 } {
-  const snackBarOpen = vi.fn();
+  const toastShown = vi.fn();
   TestBed.configureTestingModule({
     imports: [CandidatesPage],
     providers: [
@@ -145,7 +144,13 @@ function setup(
       provideNativeDateAdapter(),
       { provide: CandidatesRepository, useClass: MockCandidatesRepository },
       { provide: StatsRepository, useClass: MockStatsRepository },
-      { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+      {
+        provide: StbToast,
+        useValue: {
+          success: (message: string) => toastShown('success', message),
+          error: (message: string) => toastShown('error', message),
+        },
+      },
       { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
     ],
   });
@@ -157,7 +162,7 @@ function setup(
   }
   const fixture = TestBed.createComponent(CandidatesPage);
   fixture.detectChanges();
-  return { fixture, page: fixture.componentInstance, repo, stats, snackBarOpen };
+  return { fixture, page: fixture.componentInstance, repo, stats, toastShown };
 }
 
 /** Types a valid KTTA capture into the form. */
@@ -168,8 +173,8 @@ function fillKtta(page: CandidatesPage): void {
   page.setNumber('pmHigh', 4.65);
 }
 
-function lastToastPanel(snackBarOpen: ReturnType<typeof vi.fn>): string {
-  return snackBarOpen.mock.calls.at(-1)?.[2]?.panelClass;
+function lastToast(toastShown: ReturnType<typeof vi.fn>): string {
+  return toastShown.mock.calls.at(-1)?.[0];
 }
 
 describe('CandidatesPage', () => {
@@ -241,7 +246,7 @@ describe('CandidatesPage', () => {
   });
 
   it('creates the candidate for the browsed day, then resets the form but keeps the pattern', () => {
-    const { page, repo, snackBarOpen } = setup();
+    const { page, repo, toastShown } = setup();
     page.setPattern('DT');
     fillKtta(page);
     page.setNumber('locatePerShare', 0.03);
@@ -260,7 +265,7 @@ describe('CandidatesPage', () => {
         floatMillions: null,
       }),
     );
-    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--success');
+    expect(lastToast(toastShown)).toBe('success');
     expect(page.model().ticker).toBe('');
     expect(page.model().pmOpen).toBeNull();
     expect(page.model().pattern).toBe('DT');
@@ -268,17 +273,13 @@ describe('CandidatesPage', () => {
   });
 
   it('surfaces a duplicate (409) with its own toast and keeps the typed capture', () => {
-    const { page, repo, snackBarOpen } = setup();
+    const { page, repo, toastShown } = setup();
     repo.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
     fillKtta(page);
 
     page.submit();
 
-    expect(snackBarOpen).toHaveBeenCalledWith(
-      'candidates.snackbar.duplicate',
-      undefined,
-      expect.objectContaining({ panelClass: 'stb-snack-bar--error' }),
-    );
+    expect(toastShown).toHaveBeenCalledWith('error', 'candidates.snackbar.duplicate');
     expect(page.model().ticker).toBe('ktta');
   });
 
@@ -300,12 +301,12 @@ describe('CandidatesPage', () => {
   // ---- Promotion ----
 
   it('promotes a candidate once the confirmation modal is confirmed, then reloads the day', () => {
-    const { page, repo, snackBarOpen } = setup({ list: [makeCandidate()] });
+    const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
 
     page.promote(makeCandidate());
 
     expect(repo.promote).toHaveBeenCalledWith('c-ktta');
-    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--success');
+    expect(lastToast(toastShown)).toBe('success');
     expect(repo.listForDate).toHaveBeenCalledTimes(2); // init + reload
   });
 
@@ -318,12 +319,12 @@ describe('CandidatesPage', () => {
   });
 
   it('toasts an error when a promotion fails', () => {
-    const { page, repo, snackBarOpen } = setup({ list: [makeCandidate()] });
+    const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
     repo.promote.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
 
     page.promote(makeCandidate());
 
-    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--error');
+    expect(lastToast(toastShown)).toBe('error');
   });
 
   it('counts only the candidates still missing from the sheet as promotable', () => {
@@ -338,16 +339,12 @@ describe('CandidatesPage', () => {
   });
 
   it('promotes the whole day in one call and reports how many landed', () => {
-    const { page, repo, snackBarOpen } = setup({ list: [makeCandidate()] });
+    const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
 
     page.promoteAll();
 
     expect(repo.promoteDay).toHaveBeenCalledWith(startOfDay(new Date()));
-    expect(snackBarOpen).toHaveBeenCalledWith(
-      'candidates.snackbar.promoteAllSuccess',
-      undefined,
-      expect.objectContaining({ panelClass: 'stb-snack-bar--success' }),
-    );
+    expect(toastShown).toHaveBeenCalledWith('success', 'candidates.snackbar.promoteAllSuccess');
   });
 
   it('does nothing when every candidate of the day is already in the sheet', () => {
@@ -433,13 +430,13 @@ describe('CandidatesPage', () => {
 
   it('reverts the row and toasts an error when the save fails', () => {
     const ktta = makeCandidate();
-    const { page, repo, snackBarOpen } = setup({ list: [ktta] });
+    const { page, repo, toastShown } = setup({ list: [ktta] });
     repo.update.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
     page.saveAtOpen({ candidate: ktta, patch: { openPrice: 4.2 } });
 
     expect(page.rows()[0].openPrice).toBeNull();
-    expect(lastToastPanel(snackBarOpen)).toBe('stb-snack-bar--error');
+    expect(lastToast(toastShown)).toBe('error');
   });
 
   it('keeps what was typed in the card when the candidate is edited through the form', () => {

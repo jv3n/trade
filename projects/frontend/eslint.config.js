@@ -55,6 +55,19 @@ module.exports = defineConfig([
         'error',
         { type: 'element', prefix: 'app', style: 'kebab-case' },
       ],
+      // Material reaches the app only through the design-system lib — modules, services, tokens
+      // and types alike — so the lib stays its single point of configuration.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@angular/material', '@angular/material/*'],
+              message: "Import it from '@portfolioai/ui' — re-export it there if it's missing.",
+            },
+          ],
+        },
+      ],
     },
   },
 
