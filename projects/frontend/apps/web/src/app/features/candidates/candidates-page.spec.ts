@@ -41,6 +41,10 @@ import { CandidatesPage } from './candidates-page';
  *   handed to the card ; what comes out of the card is patched in place before the save (no
  *   reload), reverted if the save fails, and an edit through the form keeps it. The card itself is
  *   pinned in `open-card.spec`.
+ * - **The form is clean after a save** (#315) — no value survives into the next capture, not even
+ *   the field that held the focus, and a ticker already captured that day is flagged while typing.
+ *   That first one rides on blur / focus ordering and on Signal Forms' `reset()` : if an Angular
+ *   migration ever changes either, this is where it shows.
  * - **Day navigation** — past days are read-only.
  *
  * The repositories, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
@@ -300,6 +304,53 @@ describe('CandidatesPage', () => {
     expect(repo.update).toHaveBeenCalledWith('c-ktta', expect.objectContaining({ pmHigh: 4.9 }));
     expect(repo.create).not.toHaveBeenCalled();
     expect(page.editingId()).toBeNull();
+  });
+
+  // The trap behind #315 : `resetForm` gives the focus back to the ticker, which fires `blur` on
+  // the field being typed — and the mask answers a blur by pushing the text it still shows back
+  // into the model. The cleared value came back and rode into the next candidate of the morning.
+  it('an edited field does not write itself back when the form resets', async () => {
+    const ktta = makeCandidate();
+    const { fixture, page, repo } = setup({ list: [ktta] });
+    page.edit(ktta);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const pmHigh = fixture.nativeElement.querySelectorAll(
+      'input[appNumberMask]',
+    )[2] as HTMLInputElement;
+    pmHigh.focus();
+    // Above the PM open (4.05) : below it the save is blocked and the form never resets.
+    pmHigh.value = '5';
+    pmHigh.dispatchEvent(new Event('input'));
+
+    page.submit();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // The typed value did reach the save — it is the *reset* that must not give it back.
+    expect(repo.update).toHaveBeenCalledWith('c-ktta', expect.objectContaining({ pmHigh: 5 }));
+    expect(page.model().pmHigh).toBeNull();
+    expect(page.model().ticker).toBe('');
+    expect(pmHigh.value).toBe('');
+  });
+
+  it('flags a ticker already captured that day while it is typed, and blocks the save', () => {
+    const { page } = setup({ list: [makeCandidate()] });
+    fillKtta(page);
+
+    expect(page.duplicateTicker()).toBe(true);
+    expect(page.canSave()).toBe(false);
+  });
+
+  it('an edited candidate is not its own duplicate', () => {
+    const ktta = makeCandidate();
+    const { page } = setup({ list: [ktta] });
+
+    page.edit(ktta);
+
+    expect(page.duplicateTicker()).toBe(false);
+    expect(page.canSave()).toBe(true);
   });
 
   // ---- Promotion ----
