@@ -383,6 +383,17 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   there is an error to show.
 - **Numeric fields** : focusing one selects its value, so typing replaces it — at 9:30 there is no
   time to clear a field first.
+- **One setting drives language *and* formats** (#311) — the FR / EN choice of the settings page
+  decides the wording, the decimal separator and the date format alike ; the browser locale is only
+  the default while nobody is logged in. The machine's regional settings are deliberately **not**
+  followed : an English Windows would otherwise print US dates and dots under a French interface,
+  which is the contradiction #341 reported. A separate « region » setting can come later if the two
+  ever need to differ. Since the locale is read once at start-up, changing the language reloads the
+  page.
+- **Numbers** (#311) : prices show 2 decimals from $1 up and 4 below (a $0.42 stock moves in
+  fractions of a cent), money 2 decimals, percentages 1. A field pads its value when left, so a
+  column of prices lines up on the separator. What is displayed is what is computed : a target
+  price follows the **rounded** target push shown next to it, never the unrounded one.
 
 ---
 

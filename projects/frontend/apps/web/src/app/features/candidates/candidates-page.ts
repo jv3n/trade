@@ -35,6 +35,7 @@ import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/patter
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
+import { PricePipe } from '../../shared/price/price.pipe';
 import {
   EXPENSIVE_LOCATE_PERCENT,
   gapPercent,
@@ -101,6 +102,7 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
   imports: [
     DatePipe,
     DecimalPipe,
+    PricePipe,
     FormField,
     NumberMaskDirective,
     OpenCard,

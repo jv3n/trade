@@ -49,6 +49,7 @@ import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import { PeriodSelection } from '../../shared/period-preset/period-preset';
+import { PricePipe } from '../../shared/price/price.pipe';
 import { gapPercent, percentVsOpen, pmPushPercent } from './stats.math';
 
 /** Sort state — controlled-component shape (empty `columnName` = the backend's DEFAULT_SORT). */
@@ -237,6 +238,7 @@ function sessionOf(entry: StatEntry): SessionModel {
   imports: [
     DatePipe,
     DecimalPipe,
+    PricePipe,
     NumberMaskDirective,
     PeriodFilter,
     RouterLink,

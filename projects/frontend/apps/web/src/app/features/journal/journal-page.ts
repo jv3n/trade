@@ -49,6 +49,7 @@ import {
   PeriodSelection,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
+import { PricePipe } from '../../shared/price/price.pipe';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
@@ -119,6 +120,7 @@ const DEFAULT_PAGE_SIZE = 10;
   imports: [
     DatePipe,
     DecimalPipe,
+    PricePipe,
     RouterLink,
     StbButtonModule,
     StbButtonToggleModule,

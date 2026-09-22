@@ -46,7 +46,7 @@
         {{ 'candidates.fields.pmHighShort' | translate }}
       </th>
       <td mat-cell *matCellDef="let r" stbCol="numeric">
-        {{ r.candidate.pmHigh | number: '1.2-4' }}
+        {{ r.candidate.pmHigh | price }}
       </td>
     </ng-container>
 
@@ -56,7 +56,7 @@
       </th>
       <td mat-cell *matCellDef="let r" stbCol="numeric">
         @if (readOnly()) {
-          {{ r.candidate.openPrice !== null ? (r.candidate.openPrice | number: '1.2-4') : '—' }}
+          {{ r.candidate.openPrice !== null ? (r.candidate.openPrice | price) : '—' }}
         } @else {
           <!-- Committed on blur ; Enter blurs, so typing the open and hitting Enter saves it. -->
           <input
@@ -144,7 +144,7 @@
       </th>
       <td mat-cell *matCellDef="let r" stbCol="numeric">
         @if (r.target !== null) {
-          <strong class="target">{{ r.target | number: '1.2-4' }}</strong>
+          <strong class="target">{{ r.target | price }}</strong>
         } @else {
           —
         }
@@ -156,7 +156,7 @@
         {{ 'candidates.openCard.delta' | translate }}
       </th>
       <td mat-cell *matCellDef="let r" stbCol="numeric" class="muted">
-        {{ r.delta !== null ? '+' + (r.delta | number: '1.2-4') + ' $' : '' }}
+        {{ r.delta !== null ? '+' + (r.delta | price) + ' $' : '' }}
       </td>
     </ng-container>
 

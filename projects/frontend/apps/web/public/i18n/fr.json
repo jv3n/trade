@@ -711,7 +711,8 @@
   },
   "language": {
     "fr": "Français",
-    "en": "English"
+    "en": "English",
+    "saveError": "La langue n'a pas pu être enregistrée. Réessaie."
   },
   "settings": {
     "title": "Paramètres",
