@@ -4,7 +4,7 @@
   <header class="content-header">
     <div class="header-row">
       <div>
-        <h2>{{ today | date: 'EEEE d MMMM' }}</h2>
+        <h2>{{ today | date: 'fullDate' }}</h2>
         <p>{{ 'today.subtitle' | translate }}</p>
       </div>
       <span class="market-pill" [attr.data-status]="marketStatus">
@@ -312,7 +312,7 @@
         } @else {
           @for (t of weekTrades(); track t.id) {
             <div class="mini-row">
-              <span class="muted">{{ t.tradeDate | date: 'EEE dd/MM' }}</span>
+              <span class="muted">{{ t.tradeDate | date: 'shortDate' }}</span>
               <mat-chip-set>
                 <mat-chip stbChip="ticker" disableRipple>{{ t.ticker }}</mat-chip>
               </mat-chip-set>

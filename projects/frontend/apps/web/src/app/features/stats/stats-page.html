@@ -97,7 +97,7 @@
               <mat-chip stbChip="ticker" disableRipple>{{ stat.ticker }}</mat-chip>
             </mat-chip-set>
             <span class="muted">
-              {{ stat.tradeDate | date: 'mediumDate' }} ·
+              {{ stat.tradeDate | date: 'shortDate' }} ·
               {{ 'patterns.short.' + stat.pattern | translate }}
             </span>
             <span
@@ -540,7 +540,7 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeDate">
               {{ 'stats.fields.tradeDate' | translate }}
             </th>
-            <td mat-cell *matCellDef="let s">{{ s.tradeDate | date: 'mediumDate' }}</td>
+            <td mat-cell *matCellDef="let s">{{ s.tradeDate | date: 'shortDate' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="ticker">
