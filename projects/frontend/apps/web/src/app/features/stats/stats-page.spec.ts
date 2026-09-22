@@ -71,6 +71,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     ssr: false,
     under1Dollar: false,
     entryAfter11am: false,
+    lowInstitutions: true,
     noPush: false,
     completed: true,
     tradeId: null,
@@ -271,6 +272,18 @@ describe('StatsPage', () => {
     expect(repo.update).toHaveBeenCalledWith(
       'stat-sgbx',
       expect.objectContaining({ entryAfter11am: true }),
+    );
+  });
+
+  // #349 : screened upstream on a GUS, so it rides with the other flags rather than on its own.
+  it('saves the institutions flag like the other three', () => {
+    const { page, repo } = setup({ rows: [makePending({ lowInstitutions: false })] });
+
+    page.toggleFlag('lowInstitutions', true);
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx',
+      expect.objectContaining({ lowInstitutions: true }),
     );
   });
 

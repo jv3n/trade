@@ -451,6 +451,15 @@ class StatsListingIntegrationTest {
     assertTrue(service.setCompleted(stat.id, completed = true).completed)
   }
 
+  // #349 : a GUS is screened on low institutional ownership, so the flag rides along with the rest.
+  @Test
+  fun `the institutions flag is stored and given back like the other flags`() {
+    val stat = service.create(premarketRequest(ticker = "NUKK").copy(lowInstitutions = true))
+
+    assertTrue(stat.lowInstitutions)
+    assertTrue(service.findById(stat.id).lowInstitutions)
+  }
+
   @Test
   fun `a no-push stat keeps no push price, even when one is sent`() {
     val stat = service.create(noPushRequest().copy(pushOpenPrice = BigDecimal("3.30")))

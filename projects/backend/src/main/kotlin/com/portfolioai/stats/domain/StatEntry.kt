@@ -75,6 +75,8 @@ class StatEntry(
   @Column(name = "entry_after_11am", nullable = false) var entryAfter11am: Boolean = false,
   /** The stock never pushed after the open (#302) — [pushOpenPrice] stays empty. */
   @Column(name = "no_push", nullable = false) var noPush: Boolean = false,
+  /** Less than 20 % of the float held by institutions (#349) — the threshold lives in the UI. */
+  @Column(name = "low_institutions", nullable = false) var lowInstitutions: Boolean = false,
 
   /** When the owner ticked the stat as completed — null = to complete. */
   @Column(name = "completed_at") var completedAt: Instant? = null,

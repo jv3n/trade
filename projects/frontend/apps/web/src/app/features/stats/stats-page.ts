@@ -68,6 +68,7 @@ interface SessionModel {
   under1Dollar: boolean;
   entryAfter11am: boolean;
   noPush: boolean;
+  lowInstitutions: boolean;
 }
 
 /** The premarket block being typed in the premarket card — copied from the candidate, editable. */
@@ -136,6 +137,7 @@ const BLANK_SESSION: SessionModel = {
   under1Dollar: false,
   entryAfter11am: false,
   noPush: false,
+  lowInstitutions: false,
 };
 
 const BLANK_PREMARKET: PremarketModel = {
@@ -205,6 +207,7 @@ function sessionOf(entry: StatEntry): SessionModel {
     under1Dollar: entry.under1Dollar,
     entryAfter11am: entry.entryAfter11am,
     noPush: entry.noPush,
+    lowInstitutions: entry.lowInstitutions,
   };
 }
 
@@ -523,7 +526,10 @@ export class StatsPage {
     this.session.update((m) => ({ ...m, [field]: value }));
   }
 
-  toggleFlag(field: 'ssr' | 'under1Dollar' | 'entryAfter11am', value: boolean): void {
+  toggleFlag(
+    field: 'ssr' | 'under1Dollar' | 'entryAfter11am' | 'lowInstitutions',
+    value: boolean,
+  ): void {
     this.session.update((m) => ({ ...m, [field]: value }));
     this.saveSession('session');
   }
