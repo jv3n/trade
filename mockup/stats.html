@@ -15,6 +15,46 @@
         align-items: start;
       }
 
+      /* Premarket : mêmes champs que la saisie du candidat, modifiables sur la stat. */
+      .premarket {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        align-items: start;
+      }
+
+      .premarket .wide {
+        grid-column: 1 / -1;
+      }
+
+      .premarket .pct,
+      .identity .pct {
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        min-height: 16px;
+      }
+
+      /* Identité d'une nouvelle stat : date (jusqu'à aujourd'hui), pattern, ticker. */
+      .identity {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .panel-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
       .complete .pct {
         font-size: 12px;
         font-variant-numeric: tabular-nums;
@@ -71,10 +111,21 @@
         background: var(--warn-soft);
       }
 
-      .saved,
       .progress {
         font-size: 12px;
         color: var(--text-muted);
+      }
+
+      /* État d'enregistrement de chaque carte, à côté de son titre : neutre, rouge seulement si l'envoi a échoué. */
+      .save-state {
+        margin-left: 10px;
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--text-muted);
+      }
+
+      .save-state.error {
+        color: var(--loss);
       }
 
       /* Coche « complétée », façon « reviewed » de Monarch — verte une fois cochée (seule exception de statut en vert). */
@@ -137,7 +188,9 @@
       }
 
       @media (max-width: 1100px) {
-        .complete {
+        .complete,
+        .premarket,
+        .identity {
           grid-template-columns: repeat(2, 1fr);
         }
       }
@@ -165,6 +218,7 @@
           </div>
           <div class="actions">
             <button class="btn"><span class="icon">import_export</span> Import / export CSV</button>
+            <button class="btn btn-primary" id="new-stat"><span class="icon">add</span> Nouvelle stat</button>
           </div>
         </header>
 
@@ -191,22 +245,54 @@
           </div>
         </section>
 
+        <section class="card" style="margin-bottom: 16px" id="premarket-panel">
+          <h2>
+            <span data-mode="edit">Premarket — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span><span class="save-state" id="premarket-state">✓ enregistré à 09:31</span></span>
+            <span data-mode="new" hidden>Nouvelle stat</span>
+            <span class="hint" data-mode="edit">repris du candidat · modifiable · chaque champ s'enregistre à la sortie</span>
+            <span class="hint" data-mode="new" hidden>un chart trouvé après coup · n'importe quel jour jusqu'à aujourd'hui</span>
+          </h2>
+          <div class="identity" data-mode="new" hidden>
+            <div class="field"><label>Date</label><input class="input" type="date" id="n-date" max="2026-09-21" value="2026-09-18" /></div>
+            <div class="field">
+              <label>Pattern</label>
+              <select class="input">
+                <option selected>GUS — Gap Up Short</option>
+                <option>DT — Double Top</option>
+                <option>Discrétionnaire</option>
+              </select>
+            </div>
+            <div class="field"><label>Ticker</label><input class="input mono" id="n-ticker" placeholder="KTTA" /></div>
+          </div>
+          <form class="premarket" onsubmit="return false">
+            <div class="field"><label>Clôture veille ($)</label><input class="input" id="p-close" data-pm value="1,12" /><span class="pct muted">&nbsp;</span></div>
+            <div class="field"><label>Open PM ($)</label><input class="input" id="p-open" data-pm value="1,85" /><span class="pct muted" id="p-gap">—</span></div>
+            <div class="field"><label>High PM ($)</label><input class="input" id="p-high" data-pm value="2,46" /><span class="pct muted" id="p-push">—</span></div>
+            <div class="field"><label>Float (M)</label><input class="input" data-pm-opt value="3,9" /></div>
+            <div class="field"><label>Volume (M)</label><input class="input" data-pm-opt value="9,7" /></div>
+            <div class="field"><label>Locate ($ / action)</label><input class="input" data-pm-opt value="0,12" /></div>
+            <div class="field wide"><label>Note</label><input class="input" data-pm-opt value="Locate cher, float serré — attention au squeeze" /></div>
+          </form>
+          <div class="panel-actions" data-mode="new" hidden>
+            <span class="progress" id="new-missing"></span>
+            <button class="btn" id="new-cancel">Annuler</button>
+            <button
+              class="btn btn-primary"
+              id="new-create"
+              data-confirm-title="Créer la stat ?"
+              data-confirm-body="Elle rejoint le tableau comme les stats du matin : une par jour et par ticker. Tu la coches une fois la séance complète."
+              data-confirm-ok="Créer la stat"
+            >
+              <span class="icon">add</span> Créer la stat
+            </button>
+          </div>
+        </section>
+
         <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="session-panel">
           <h2>
-            <span>Séance — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span></span>
+            <span>Séance<span class="save-state" id="session-state">✓ enregistré à 09:42</span></span>
             <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open</span>
           </h2>
-          <div class="recap">
-            <span>Clôture veille <b>1,12</b></span>
-            <span>Open PM <b>1,85</b></span>
-            <span>High PM <b>2,46</b></span>
-            <span>Gap <b>+65,2 %</b></span>
-            <span>Push PM <b>+33,0 %</b></span>
-            <span>Float <b>3,9 M</b></span>
-            <span>Volume <b>9,7 M</b></span>
-            <span>Locate <b>0,12</b></span>
-            <span>Note <b>Locate cher, float serré — attention au squeeze</b></span>
-          </div>
           <form class="complete" onsubmit="return false">
             <div class="field"><label>Open ($)</label><input class="input" id="c-open" data-price value="1,90" /><span class="pct muted">repris du candidat (9h30)</span></div>
             <div class="field">
@@ -222,7 +308,6 @@
             <label><input type="checkbox" data-flag /> SSR</label>
             <label><input type="checkbox" data-flag /> Prix &lt; 1 $</label>
             <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
-            <span class="saved" id="panel-saved"></span>
             <span style="flex: 1"></span>
             <span class="progress" id="panel-progress">2 / 5 prix saisis</span>
             <button class="btn">Fermer</button>
@@ -472,6 +557,13 @@
           reste « à compléter » jusqu'à ce qu'on la coche (✓, comme une transaction revue dans Monarch) : la coche n'est possible
           qu'avec les cinq prix et se décoche d'un clic. La coche d'une stat complétée est verte. Vider un prix d'une stat cochée est refusé — il faut la décocher d'abord. Les
           KPIs et les moyennes ne comptent que les stats cochées.
+          Le premarket est une carte à part, modifiable comme la séance (champ par champ, à la sortie) : repris du candidat, il se
+          corrige sur la stat — la stat garde sa propre copie. « Nouvelle stat » ouvre les deux cartes vides, avec la date (n'importe
+          quel jour jusqu'à aujourd'hui), le pattern et le ticker : pour un chart qui colle au pattern trouvé après coup. « Créer la
+          stat » demande confirmation et n'est possible qu'avec la date, le ticker et les trois prix premarket ; une par jour et par
+          ticker, comme toujours. Chaque carte montre son état d'enregistrement à côté du titre : « enregistrement… » pendant l'envoi,
+          « ✓ enregistré à 09:42 » ensuite, et en rouge « non enregistré — … » si le serveur refuse (high PM sous l'open PM, HOD sous le
+          LOD) — pas de bouton « Enregistrer » : la saisie reste rapide au fil de la séance.
           « Pas de push », sous le champ du push : le titre n'a pas poussé dans les ~10 minutes après l'open (GLND, 21/09 — chute dès
           l'open, rebond vers 11h seulement). Cocher grise et vide le champ, et la stat se coche avec les quatre autres prix. Ces
           jours-là comptent dans les stats — c'est un setup à part, à exécuter dès l'open : le push moyen ne compte que les stats qui
@@ -481,6 +573,24 @@
       </main>
     </div>
 
+    <script>
+      // État d'enregistrement d'une carte : « enregistrement… » pendant l'envoi, puis l'heure, ou l'erreur si le serveur refuse.
+      window.saveCue = function (id, invalid) {
+        const el = document.getElementById(id);
+        el.className = 'save-state';
+        el.textContent = 'enregistrement…';
+        setTimeout(() => {
+          const problem = invalid && invalid();
+          if (problem) {
+            el.className = 'save-state error';
+            el.textContent = 'non enregistré — ' + problem;
+            return;
+          }
+          const now = new Date();
+          el.textContent = '✓ enregistré à ' + now.toTimeString().slice(0, 5);
+        }, 500);
+      };
+    </script>
     <script>
       // Aperçu des % vs l'open dans le formulaire de complétion (accepte la virgule décimale).
       (function () {
@@ -514,7 +624,6 @@
         const noPush = document.getElementById('c-no-push');
         let typedPush = push.value;
         const progress = document.getElementById('panel-progress');
-        const saved = document.getElementById('panel-saved');
         const check = document.getElementById('panel-check');
         const label = check.querySelector('[data-label]');
         let done = false;
@@ -528,7 +637,14 @@
           // Une stat cochée ne peut pas perdre un prix : les champs vides sont refusés tant qu'elle l'est.
           prices.forEach((p) => (p.required = done));
         }
-        const markSaved = () => (saved.textContent = '✓ enregistré');
+        // Une nouvelle stat n'existe pas encore : rien ne part avant « Créer la stat ».
+        const markSaved = () =>
+          document.querySelector('#premarket-panel .identity').hidden &&
+          window.saveCue('session-state', () =>
+            (parseFloat(prices[2].value.replace(',', '.')) < parseFloat(prices[3].value.replace(',', '.')))
+              ? 'le HOD est sous le LOD'
+              : null,
+          );
         prices.forEach((input) => {
           input.addEventListener('input', refresh);
           input.addEventListener('change', markSaved);
@@ -569,6 +685,94 @@
         select.addEventListener('change', sync);
         sync();
       });
+    </script>
+    <script>
+      // Carte premarket : gap et push PM recalculés à la frappe ; « Nouvelle stat » vide les deux cartes et ajoute date, pattern, ticker.
+      (function () {
+        const $ = (id) => document.getElementById(id);
+        const parse = (v) => parseFloat(String(v).replace(',', '.'));
+        const fmt = (pct) => (pct >= 0 ? '+' : '') + pct.toFixed(1).replace('.', ',') + ' %';
+        const show = (el, label, base, value) => {
+          const ok = base > 0 && !isNaN(value);
+          el.textContent = ok ? label + ' ' + fmt(((value - base) / base) * 100) : '—';
+          el.className = ok ? 'pct' : 'pct muted';
+        };
+        function preview() {
+          show($('p-gap'), 'gap', parse($('p-close').value), parse($('p-open').value));
+          show($('p-push'), 'push PM', parse($('p-open').value), parse($('p-high').value));
+          refreshCreate();
+        }
+        document.querySelectorAll('#premarket-panel [data-pm]').forEach((i) => i.addEventListener('input', preview));
+
+        // En édition, chaque champ du premarket s'enregistre à la sortie ; une nouvelle stat attend « Créer la stat ».
+        const isNew = () => !panel.querySelector('.identity').hidden;
+        document.querySelectorAll('#premarket-panel .premarket input').forEach((i) =>
+          i.addEventListener('change', () => {
+            if (isNew()) return;
+            window.saveCue('premarket-state', () => {
+              const [close, open, high] = [$('p-close'), $('p-open'), $('p-high')].map((x) => parse(x.value));
+              if (!(close > 0 && open > 0 && high > 0)) return 'les trois prix premarket sont requis';
+              if (high < open) return "le high PM est sous l'open PM";
+              return null;
+            });
+          }),
+        );
+
+        const panel = $('premarket-panel');
+        const session = $('session-panel');
+        const create = $('new-create');
+        const inputs = () => [...panel.querySelectorAll('.premarket input'), ...session.querySelectorAll('input:not([type=checkbox])')];
+        let saved = null;
+
+        function refreshCreate() {
+          const missing = [];
+          if (!$('n-date').value) missing.push('la date');
+          if (!$('n-ticker').value.trim()) missing.push('le ticker');
+          if (![$('p-close'), $('p-open'), $('p-high')].every((i) => parse(i.value) > 0)) missing.push('les trois prix premarket');
+          create.disabled = missing.length > 0;
+          $('new-missing').textContent = missing.length ? 'Il manque ' + missing.join(', ') : '';
+        }
+        $('n-ticker').addEventListener('input', refreshCreate);
+        $('n-date').addEventListener('input', refreshCreate);
+
+        function setMode(isNew) {
+          panel.querySelectorAll('[data-mode]').forEach((el) => (el.hidden = (el.dataset.mode === 'new') !== isNew));
+          $('session-state').textContent = '';
+          if (isNew) {
+            saved = inputs().map((i) => i.value);
+            inputs().forEach((i) => (i.value = ''));
+            $('n-ticker').value = '';
+            $('n-ticker').focus();
+          } else if (saved) {
+            inputs().forEach((i, k) => (i.value = saved[k]));
+          }
+          inputs().forEach((i) => i.dispatchEvent(new Event('input')));
+          preview();
+        }
+        $('new-stat').addEventListener('click', () => setMode(true));
+        $('new-cancel').addEventListener('click', () => setMode(false));
+
+        // « Créer la stat » passe par la modale de confirmation (mockup.js) ; une fois confirmée, la stat existe et ses cartes
+        // repassent en édition, champ par champ.
+        let creating = false;
+        create.addEventListener('pointerdown', () => (creating = true));
+        document.addEventListener('close', (e) => {
+          if (!e.target.matches?.('dialog.confirm') || !creating) return;
+          creating = false;
+          if (e.target.returnValue !== 'ok') return;
+          const ticker = $('n-ticker').value.trim().toUpperCase();
+          const day = new Date($('n-date').value + 'T12:00');
+          panel.querySelector('[data-mode=edit] .ticker').textContent = ticker;
+          panel.querySelector('[data-mode=edit] .muted').textContent =
+            day.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' }) + ' · GUS';
+          panel.querySelectorAll('[data-mode]').forEach((el) => (el.hidden = el.dataset.mode === 'new'));
+          saved = null;
+          window.saveCue('premarket-state');
+          window.saveCue('session-state');
+        }, true);
+
+        preview();
+      })();
     </script>
   </body>
 </html>
