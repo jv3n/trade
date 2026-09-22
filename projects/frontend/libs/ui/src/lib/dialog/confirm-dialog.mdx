@@ -21,10 +21,10 @@ Cancel, Esc and a backdrop click close without acting ; initial focus lands on C
 private readonly confirm = inject(StbConfirm);
 
 delete(id: string): void {
-  this.confirm
-    .open({ title, message, confirmLabel, cancelLabel, variant: 'danger' })
-    .pipe(filter(Boolean), switchMap(() => this.repo.delete(id)))
-    .subscribe();
+this.confirm
+.open({ title, message, confirmLabel, cancelLabel, variant: 'danger' })
+.pipe(filter(Boolean), switchMap(() => this.repo.delete(id)))
+.subscribe();
 }`}
 />
 

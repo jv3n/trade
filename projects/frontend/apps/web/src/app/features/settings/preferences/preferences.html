@@ -53,7 +53,7 @@
     >
       @for (l of language.supported; track l) {
         <mat-button-toggle [value]="l">
-          <span class="lang-flag" aria-hidden="true">{{ language.flag(l) }}</span>
+          <span class="lang-tag" aria-hidden="true">{{ language.tag(l) }}</span>
           <span>{{ 'language.' + l | translate }}</span>
         </mat-button-toggle>
       }

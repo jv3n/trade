@@ -21,13 +21,13 @@ Page navigation control — pairs with `<mat-table>` or any list-like surface. T
 import { PageEvent } from '@angular/material/paginator';
 
 @Component({
-  imports: [StbTableModule, StbPaginatorModule],
-  template: \`
-    <div stbTable>
-      <table mat-table [dataSource]="pageRows()">
-        <!-- ... columns ... -->
-      </table>
-    </div>
+imports: [StbTableModule, StbPaginatorModule],
+template: \`
+<div stbTable>
+<table mat-table [dataSource]="pageRows()">
+<!-- ... columns ... -->
+</table>
+</div>
 
     <mat-paginator
       [length]="totalCount()"
@@ -36,24 +36,25 @@ import { PageEvent } from '@angular/material/paginator';
       showFirstLastButtons
       (page)="onPage($event)"
     />
-  \`,
+
+\`,
 })
 export class JournalPage {
-  readonly pageRows = signal<TradeEntry[]>([]);
-  readonly totalCount = signal(0);
-  readonly pageSize = signal(10);
+readonly pageRows = signal<TradeEntry[]>([]);
+readonly totalCount = signal(0);
+readonly pageSize = signal(10);
 
-  onPage(e: PageEvent): void {
-    this.pageSize.set(e.pageSize);
-    // refetch with page index + page size, or slice the local array
-  }
+onPage(e: PageEvent): void {
+this.pageSize.set(e.pageSize);
+// refetch with page index + page size, or slice the local array
+}
 }`}
 />
 
 ## Inputs
 
 <Markdown>
-{`
+  {`
 | Input                  | Type            | Notes                                                            |
 | ---------------------- | --------------- | ---------------------------------------------------------------- |
 | \`length\`               | number          | **Total** item count across all pages — not the current page.     |

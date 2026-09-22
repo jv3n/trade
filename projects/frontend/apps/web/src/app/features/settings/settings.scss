@@ -65,7 +65,9 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--color-text-faint);
+  // The faintest token on 11 px uppercase text was unreadable on the dark theme (#318) : small,
+  // spaced letters carry far less ink than the ratio suggests.
+  color: var(--color-text-muted);
 
   &:first-child {
     margin-top: 0;
@@ -77,7 +79,7 @@
   padding: 1px s.$space-sm;
   border-radius: var(--radius-pill);
   background: var(--color-surface-2);
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
   font-size: s.$font-2xs;
   font-weight: 600;
   text-transform: uppercase;

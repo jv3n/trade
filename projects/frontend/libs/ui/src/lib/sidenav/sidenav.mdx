@@ -38,7 +38,7 @@ The app shell layout (toolbar on top, sidenav on the left, content on the right)
 ## Class cheat-sheet
 
 <Markdown>
-{`
+  {`
 | Class             | Element                          | Role                                                  |
 | ----------------- | -------------------------------- | ----------------------------------------------------- |
 | \`ui-shell\`        | \`<mat-sidenav-container>\`        | Sizes the container to the viewport minus the toolbar.|
@@ -69,7 +69,7 @@ The third token, `--mat-sidenav-container-shape`, flattens the right-side corner
 ## Tokens consumed
 
 <Markdown>
-{`
+  {`
 | Material token                              | Resolves to                  |
 | ------------------------------------------- | ---------------------------- |
 | \`--mat-sidenav-container-background-color\`  | \`var(--color-surface)\`       |
@@ -80,4 +80,3 @@ The third token, `--mat-sidenav-container-shape`, flattens the right-side corner
 </Markdown>
 
 The last one is the **content panel** background — Material 3 derives its default from the violet primary palette which leaks a faint lavender tint in light mode. We override on `.mat-drawer-content` in `_base.scss` to pin it to our neutral `--color-bg`.
-

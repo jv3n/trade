@@ -11,15 +11,20 @@
   gap: s.$space-lg;
 }
 
-// Apple Color Emoji descender — neutralises a vertical offset under the glyph.
-.lang-flag {
+// Two-letter language tag, read as a label rather than as a word (#318).
+.lang-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-right: s.$space-sm;
-  font-size: s.$font-xl;
-  line-height: 1;
-  transform: translateY(-1px);
+  padding: 1px s.$space-xs;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: s.$font-2xs;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
 }
 
 // Material icons inside the theme `<mat-button-toggle>` — slightly tighter than the default,

@@ -30,7 +30,7 @@ Both palettes cascade through the same `var()` calls — never hard-code a hex. 
 ### Surfaces
 
 <Markdown>
-{`
+  {`
 | Token                  | Role                                          |
 | ---------------------- | --------------------------------------------- |
 | \`--color-bg\`           | Page background (chrome).                     |
@@ -43,7 +43,7 @@ Both palettes cascade through the same `var()` calls — never hard-code a hex. 
 ### Borders
 
 <Markdown>
-{`
+  {`
 | Token                  | Role                                          |
 | ---------------------- | --------------------------------------------- |
 | \`--color-border\`       | Default 1 px borders, dividers.               |
@@ -54,20 +54,20 @@ Both palettes cascade through the same `var()` calls — never hard-code a hex. 
 ### Text
 
 <Markdown>
-{`
+  {`
 | Token                  | Role                                          |
 | ---------------------- | --------------------------------------------- |
 | \`--color-text\`         | Default body text.                            |
 | \`--color-text-muted\`   | Descriptions, metadata.                       |
 | \`--color-text-dim\`     | Placeholders, captions.                       |
-| \`--color-text-faint\`   | Empty-state copy, watermarks.                 |
+| \`--color-text-faint\`   | Placeholders, disabled states, watermarks — **not** copy (#318). |
 `}
 </Markdown>
 
 ### Brand — violet, kept across both themes
 
 <Markdown>
-{`
+  {`
 | Token                         | Role                                          |
 | ----------------------------- | --------------------------------------------- |
 | \`--color-accent\`              | Primary accent. Default for CTA backgrounds.  |
@@ -84,7 +84,7 @@ Both palettes cascade through the same `var()` calls — never hard-code a hex. 
 Pair `--color-<role>` (foreground + border) with `--color-<role>-soft` (filled background) for soft banners / badges :
 
 <Markdown>
-{`
+  {`
 | Role     | Foreground / border token | Soft background token        |
 | -------- | ------------------------- | ---------------------------- |
 | Success  | \`--color-success\`         | \`--color-success-soft\`       |
@@ -101,7 +101,7 @@ Pair `--color-<role>` (foreground + border) with `--color-<role>-soft` (filled b
 Convenience aliases — derive from the semantic palette so renaming one cascades :
 
 <Markdown>
-{`
+  {`
 | Token                       | Aliases to              |
 | --------------------------- | ----------------------- |
 | \`--color-action-buy\`        | \`--color-success\`       |
@@ -114,7 +114,7 @@ Convenience aliases — derive from the semantic palette so renaming one cascade
 ### Radii / shadows / typography
 
 <Markdown>
-{`
+  {`
 | Token                       | Value                                   |
 | --------------------------- | --------------------------------------- |
 | \`--radius-sm\`               | 4 px                                    |
@@ -143,7 +143,7 @@ From a partial inside the lib :
   code={`@use 'sizes' as s;
 
 .foo {
-  padding-top: s.$space-sm;
+padding-top: s.$space-sm;
   height: s.$button-height;
 }`}
 />
@@ -155,7 +155,7 @@ From a component SCSS in the consumer app, go through the aggregator so the rest
   code={`@use '../../../../libs/ui/styles' as ui;
 
 .foo {
-  padding-top: ui.$space-sm;
+padding-top: ui.$space-sm;
 }`}
 />
 
@@ -170,10 +170,10 @@ When feeding a Material token override, pass the variable to the component's ove
 
 ### Spacing scale
 
-Named by *intent*, not by number, so the underlying value can evolve without breaking consumers' semantics. 4 px baseline with a 2 px hairline step for tight grids.
+Named by _intent_, not by number, so the underlying value can evolve without breaking consumers' semantics. 4 px baseline with a 2 px hairline step for tight grids.
 
 <Markdown>
-{`
+  {`
 | Variable               | Value | Typical use                                       |
 | ---------------------- | ----- | ------------------------------------------------- |
 | \`$space-hairline\`      | 2 px  | Sidenav inter-item gap, badge inner padding       |
@@ -193,7 +193,7 @@ Named by *intent*, not by number, so the underlying value can evolve without bre
 Every `font-size` picks a step — pixels, one apart, rather than `rem` fractions.
 
 <Markdown>
-{`
+  {`
 | Variable         | Value | Typical use                                 |
 | ---------------- | ----- | ------------------------------------------- |
 | \`$font-2xs\`     | 11 px | Tags, badges, table meta                    |
@@ -212,7 +212,7 @@ Every `font-size` picks a step — pixels, one apart, rather than `rem` fraction
 For a `mat-icon` resized next to text — `font-size`, `width` and `height` take the same step.
 
 <Markdown>
-{`
+  {`
 | Variable       | Value | Typical use                              |
 | -------------- | ----- | ---------------------------------------- |
 | \`$icon-xs\`    | 14 px | Inline with a 12 px text (hints, subs)   |
@@ -226,7 +226,7 @@ For a `mat-icon` resized next to text — `font-size`, `width` and `height` take
 ### Layout
 
 <Markdown>
-{`
+  {`
 | Variable             | Value  | Where it's used                                          |
 | -------------------- | ------ | -------------------------------------------------------- |
 | \`$toolbar-height\`    | 64 px  | \`.ui-shell { height: calc(100vh - …) }\`                  |
@@ -237,7 +237,7 @@ For a `mat-icon` resized next to text — `font-size`, `width` and `height` take
 ### Component sizes
 
 <Markdown>
-{`
+  {`
 | Variable             | Value | Where it's used                                                          |
 | -------------------- | ----- | ------------------------------------------------------------------------ |
 | \`$button-height\`     | 32 px | \`mat-button\` / \`mat-flat-button\` / \`mat-stroked-button\` MDC height |
@@ -250,7 +250,7 @@ For a `mat-icon` resized next to text — `font-size`, `width` and `height` take
 ### Borders
 
 <Markdown>
-{`
+  {`
 | Variable          | Value | Where it's used                                  |
 | ----------------- | ----- | ------------------------------------------------ |
 | \`$border-width\`   | 1 px  | Toolbar bottom border, banner outlines, dividers |
@@ -260,7 +260,7 @@ For a `mat-icon` resized next to text — `font-size`, `width` and `height` take
 ### CSS custom property vs SCSS variable — when which ?
 
 <Markdown>
-{`
+  {`
 | Use a **CSS custom property** (\`--foo\`) when…    | Use a **SCSS variable** (\`$foo\`) when…             |
 | ------------------------------------------------ | -------------------------------------------------- |
 | The value varies by theme (dark / light).        | The value is fixed across themes.                  |
@@ -273,4 +273,3 @@ For a `mat-icon` resized next to text — `font-size`, `width` and `height` take
 ## Iterating the palette
 
 The stories below render every swatch in both themes. Edit `libs/ui/styles/_tokens.scss`, save — Storybook HMR repaints. When the contrast pair feels right, the app picks it up too (same `var(--color-*)` calls everywhere).
-

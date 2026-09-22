@@ -31,10 +31,10 @@ export class TradeForm {
   private readonly toasts = inject(StbToast);
   private readonly translate = inject(TranslateService);
 
-  save(): void {
-    // ... persist the trade ...
-    this.toasts.success(this.translate.instant('journal.snackbar.saveSuccess'));
-  }
+save(): void {
+// ... persist the trade ...
+this.toasts.success(this.translate.instant('journal.snackbar.saveSuccess'));
+}
 }`}
 />
 
@@ -43,7 +43,7 @@ export class TradeForm {
 ## Options
 
 <Markdown>
-{`
+  {`
 | Option               | Type                              | Notes                                                |
 | -------------------- | --------------------------------- | ---------------------------------------------------- |
 | \`duration\`           | number (ms)                       | \`0\` = no auto-dismiss. Default in M3 = \`0\`.          |
@@ -59,7 +59,7 @@ export class TradeForm {
 Two semantic variants ship out of the box via `panelClass` :
 
 <Markdown>
-{`
+  {`
 | Variant                     | Use it for                                              | Palette                                 |
 | --------------------------- | ------------------------------------------------------- | --------------------------------------- |
 | (default)                   | Neutral confirmations, generic notifications.           | Inverted pair — \`--color-text\` bg.      |
@@ -78,8 +78,8 @@ this.snackBar.open('Connection failed.', 'Retry', {
 
 // Success variant
 this.snackBar.open('Trade saved.', undefined, {
-  duration: 3000,
-  panelClass: 'stb-snack-bar--success',
+duration: 3000,
+panelClass: 'stb-snack-bar--success',
 });`}
 />
 

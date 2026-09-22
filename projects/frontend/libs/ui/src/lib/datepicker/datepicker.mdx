@@ -41,7 +41,7 @@ Signal Forms still picks up the change for validation — the schema runs agains
 ## Why no `[formField]` integration
 
 <Markdown>
-{`
+  {`
 | Concern                              | Detail                                                                                                                                                |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **CVA collision**                    | \`MatDatepickerInput\` registers itself on \`NG_VALUE_ACCESSOR\`. Signal Forms' \`[formField]\` selects the first CVA on the element — one wins, the other gets ignored. |
@@ -53,4 +53,3 @@ Signal Forms still picks up the change for validation — the schema runs agains
 ## Tokens consumed
 
 The datepicker reads Material 3 tokens (`--mat-datepicker-*`) that the lib's `_theme.scss` populates via `mat.all-component-themes`. No additional override is needed — the violet accent appears on the selected day, the surface uses `--mat-sys-surface` which the lib pins to `--color-surface` on dark / `--color-bg` on light.
-
