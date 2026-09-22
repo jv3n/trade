@@ -40,8 +40,9 @@ import org.springframework.web.server.ResponseStatusException
  * **One stat per (user, day, ticker)** — creating a second one is a 409 ; the DB unique constraint
  * `ux_stat_entry_user_day_ticker` is the race-safe backstop.
  *
- * Creating a stat is a copy of a candidate (the promotion action, #189) : this service exposes
- * [create], the HTTP layer has no create endpoint. The CSV leg is **export only**.
+ * A stat is born from a candidate (the promotion action, #189, through [create]) or typed by hand
+ * for a chart found afterwards, on any day up to today ([createByHand], #326). The CSV leg is
+ * **export only**.
  */
 @Service
 class StatEntryService(
@@ -187,7 +188,20 @@ class StatEntryService(
   }
 
   /**
-   * Creates a stat for the caller — the promotion of a candidate (#189) is its only caller.
+   * A stat typed by hand on the stats page (#326) — a ticker that matched the pattern a few days
+   * ago and never made it to the candidates. Any day up to today : a future day is a 400. Same
+   * rules as any stat otherwise, and no source candidate.
+   */
+  @Transactional
+  fun createByHand(request: StatEntryRequest): StatEntryDto {
+    if (request.tradeDate.isAfter(LocalDate.now())) {
+      throw badRequest("A stat can't be dated in the future (${request.tradeDate})")
+    }
+    return create(request)
+  }
+
+  /**
+   * Creates a stat for the caller — the promotion of a candidate (#189), or [createByHand].
    * [candidateId] keeps the trace of the source candidate. A (day, ticker) already in the sheet is
    * a 409.
    */

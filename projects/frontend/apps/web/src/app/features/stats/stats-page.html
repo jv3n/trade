@@ -5,6 +5,10 @@
         <h2>{{ 'stats.title' | translate }}</h2>
         <p>{{ 'stats.subtitle' | translate }}</p>
       </div>
+      <button mat-flat-button type="button" (click)="startNew()" [disabled]="creating()">
+        <mat-icon>add</mat-icon>
+        {{ 'stats.create.open' | translate }}
+      </button>
     </div>
   </header>
 
@@ -77,69 +81,220 @@
     </section>
   }
 
-  <!-- Session panel — filled as the day goes, each field saved when left ; the ✓ ticks the stat. -->
-  @if (completing(); as stat) {
+  <!--
+    The stat being filled, in two cards saved field by field — each shows where its last save stands
+    (no « Save » button). « New stat » opens them empty, with the identity on top (#326).
+  -->
+  @if (completing() || creating()) {
+    <section class="card premarket-card">
+      <h3>
+        <span class="complete-title">
+          @if (completing(); as stat) {
+            {{ 'stats.premarket.title' | translate }}
+            <mat-chip-set>
+              <mat-chip stbChip="ticker" disableRipple>{{ stat.ticker }}</mat-chip>
+            </mat-chip-set>
+            <span class="muted">
+              {{ stat.tradeDate | date: 'mediumDate' }} ·
+              {{ 'patterns.short.' + stat.pattern | translate }}
+            </span>
+            <span
+              class="save-state"
+              [class.save-state--error]="saveStates().premarket.status === 'error'"
+              >{{ saveLabel(saveStates().premarket) }}</span
+            >
+          } @else {
+            {{ 'stats.create.title' | translate }}
+          }
+        </span>
+        <span class="hint">{{
+          (creating() ? 'stats.create.hint' : 'stats.premarket.hint') | translate
+        }}</span>
+      </h3>
+
+      @if (creating()) {
+        <div class="identity">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.tradeDate' | translate }}</mat-label>
+            <input
+              matInput
+              readonly
+              [matDatepicker]="newStatPicker"
+              [max]="maxDate"
+              [value]="identity().tradeDate"
+              (dateChange)="setIdentity({ tradeDate: $event.value })"
+            />
+            <mat-datepicker-toggle matIconSuffix [for]="newStatPicker" />
+            <mat-datepicker #newStatPicker />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.pattern' | translate }}</mat-label>
+            <mat-select
+              [value]="identity().pattern"
+              (selectionChange)="setIdentity({ pattern: $event.value })"
+            >
+              @for (p of patterns; track p) {
+                <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.ticker' | translate }}</mat-label>
+            <input
+              matInput
+              class="mono"
+              autocomplete="off"
+              [value]="identity().ticker"
+              (input)="setIdentity({ ticker: $any($event.target).value })"
+            />
+          </mat-form-field>
+        </div>
+      }
+
+      <form class="premarket-form" (submit)="$event.preventDefault()">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'stats.fields.previousClose' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="premarket().previousClose"
+            (numberChange)="setPremarketPrice('previousClose', $event)"
+            (blur)="saveSession('premarket')"
+            (keydown.enter)="$any($event.target).blur()"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'stats.fields.pmOpen' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="premarket().pmOpen"
+            (numberChange)="setPremarketPrice('pmOpen', $event)"
+            (blur)="saveSession('premarket')"
+            (keydown.enter)="$any($event.target).blur()"
+          />
+          <mat-hint>{{
+            premarketPercents().gap !== null
+              ? ('stats.fields.gap' | translate) +
+                ' ' +
+                (premarketPercents().gap | number: '1.1-1') +
+                ' %'
+              : '—'
+          }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'stats.fields.pmHigh' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="premarket().pmHigh"
+            (numberChange)="setPremarketPrice('pmHigh', $event)"
+            (blur)="saveSession('premarket')"
+            (keydown.enter)="$any($event.target).blur()"
+          />
+          <mat-hint [class.warn]="pmHighBelowPmOpen()">{{
+            pmHighBelowPmOpen()
+              ? ('stats.save.pmHighBelowPmOpen' | translate)
+              : premarketPercents().pmPush !== null
+                ? ('stats.fields.pmPush' | translate) +
+                  ' ' +
+                  (premarketPercents().pmPush | number: '1.1-1') +
+                  ' %'
+                : '—'
+          }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'stats.fields.float' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="premarket().floatMillions"
+            (numberChange)="setPremarketPrice('floatMillions', $event)"
+            (blur)="saveSession('premarket')"
+            (keydown.enter)="$any($event.target).blur()"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'stats.fields.volume' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="2"
+            [min]="0"
+            [value]="premarket().volumeMillions"
+            (numberChange)="setPremarketPrice('volumeMillions', $event)"
+            (blur)="saveSession('premarket')"
+            (keydown.enter)="$any($event.target).blur()"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'stats.fields.locate' | translate }}</mat-label>
+          <input
+            matInput
+            appNumberMask
+            [decimals]="4"
+            [min]="0"
+            [value]="premarket().locatePerShare"
+            (numberChange)="setPremarketPrice('locatePerShare', $event)"
+            (blur)="saveSession('premarket')"
+            (keydown.enter)="$any($event.target).blur()"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="premarket-form__note">
+          <mat-label>{{ 'stats.fields.note' | translate }}</mat-label>
+          <input
+            matInput
+            [value]="premarket().note"
+            (input)="setPremarketNote($any($event.target).value)"
+            (blur)="saveSession('premarket')"
+            (keydown.enter)="$any($event.target).blur()"
+          />
+        </mat-form-field>
+      </form>
+
+      @if (creating()) {
+        <div class="panel-actions">
+          @if (createMissing().length > 0) {
+            <span class="progress">{{ createMissingLabel() }}</span>
+          }
+          <button mat-stroked-button type="button" (click)="cancelNew()">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button
+            mat-flat-button
+            type="button"
+            [disabled]="createMissing().length > 0"
+            (click)="createStat()"
+          >
+            <mat-icon>add</mat-icon>
+            {{ 'stats.create.submit' | translate }}
+          </button>
+        </div>
+      }
+    </section>
+
     <section class="card complete-card">
       <h3>
         <span class="complete-title">
           {{ 'stats.complete.title' | translate }}
-          <mat-chip-set>
-            <mat-chip stbChip="ticker" disableRipple>{{ stat.ticker }}</mat-chip>
-          </mat-chip-set>
-          <span class="muted">
-            {{ stat.tradeDate | date: 'mediumDate' }} ·
-            {{ 'patterns.short.' + stat.pattern | translate }}
-          </span>
+          @if (completing()) {
+            <span
+              class="save-state"
+              [class.save-state--error]="saveStates().session.status === 'error'"
+              >{{ saveLabel(saveStates().session) }}</span
+            >
+          }
         </span>
         <span class="hint">{{ 'stats.complete.hint' | translate }}</span>
       </h3>
-
-      <!-- Premarket recap : what the candidate captured in the morning. -->
-      <div class="recap">
-        <span
-          >{{ 'stats.fields.previousClose' | translate }}
-          <b>{{ stat.previousClose | number: '1.2-4' }}</b></span
-        >
-        <span
-          >{{ 'stats.fields.pmOpen' | translate }} <b>{{ stat.pmOpen | number: '1.2-4' }}</b></span
-        >
-        <span
-          >{{ 'stats.fields.pmHigh' | translate }} <b>{{ stat.pmHigh | number: '1.2-4' }}</b></span
-        >
-        @if (completingRecap(); as recap) {
-          <span
-            >{{ 'stats.fields.gap' | translate }}
-            <b>{{ recap.gap !== null ? (recap.gap | number: '1.1-1') + ' %' : '—' }}</b></span
-          >
-          <span
-            >{{ 'stats.fields.pmPush' | translate }}
-            <b>{{ recap.pmPush !== null ? (recap.pmPush | number: '1.1-1') + ' %' : '—' }}</b></span
-          >
-        }
-        @if (stat.floatMillions !== null) {
-          <span
-            >{{ 'stats.fields.float' | translate }}
-            <b>{{ stat.floatMillions | number: '1.1-2' }} M</b></span
-          >
-        }
-        @if (stat.volumeMillions !== null) {
-          <span
-            >{{ 'stats.fields.volume' | translate }}
-            <b>{{ stat.volumeMillions | number: '1.1-2' }} M</b></span
-          >
-        }
-        @if (stat.locatePerShare !== null) {
-          <span
-            >{{ 'stats.fields.locate' | translate }}
-            <b>{{ stat.locatePerShare | number: '1.2-4' }}</b></span
-          >
-        }
-        @if (stat.note) {
-          <span
-            >{{ 'stats.fields.note' | translate }} <b>{{ stat.note }}</b></span
-          >
-        }
-      </div>
 
       <form class="session-form" (submit)="$event.preventDefault()">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -259,30 +414,29 @@
         >
           {{ 'stats.fields.entryAfter11am' | translate }}
         </mat-checkbox>
-        @if (sessionSaved()) {
-          <span class="saved-cue">{{ 'stats.complete.saved' | translate }}</span>
-        }
         <span class="flags-row__spacer"></span>
         <span class="progress">{{
           'stats.complete.progress'
             | translate: { filled: sessionFilled(), total: sessionPriceCount() }
         }}</span>
-        <button mat-stroked-button type="button" (click)="close()">
-          {{ 'stats.complete.close' | translate }}
-        </button>
-        <button
-          mat-stroked-button
-          type="button"
-          [stbTone]="stat.completed ? 'success' : null"
-          [disabled]="!stat.completed && sessionMissing().length > 0"
-          [matTooltip]="
-            !stat.completed && sessionMissing().length > 0 ? missingLabel(session()) : ''
-          "
-          (click)="toggleCompleted(stat)"
-        >
-          <mat-icon>check_circle</mat-icon>
-          {{ (stat.completed ? 'stats.completion.done' : 'stats.completion.tick') | translate }}
-        </button>
+        @if (completing(); as stat) {
+          <button mat-stroked-button type="button" (click)="close()">
+            {{ 'stats.complete.close' | translate }}
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            [stbTone]="stat.completed ? 'success' : null"
+            [disabled]="!stat.completed && sessionMissing().length > 0"
+            [matTooltip]="
+              !stat.completed && sessionMissing().length > 0 ? missingLabel(session()) : ''
+            "
+            (click)="toggleCompleted(stat)"
+          >
+            <mat-icon>check_circle</mat-icon>
+            {{ (stat.completed ? 'stats.completion.done' : 'stats.completion.tick') | translate }}
+          </button>
+        }
       </div>
     </section>
   }

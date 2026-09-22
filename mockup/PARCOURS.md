@@ -262,7 +262,7 @@ shared between users — a stat always belongs to its user.
   executions and the three P&L figures on the journal side.
 - "Traded / not traded" filter : shipped with the link to the trade (#193).
 
-**Editing the premarket, and a stat from scratch** (#326 — to build) :
+**Editing the premarket, and a stat from scratch** (#326) :
 
 - The premarket is a **card of its own**, above the session one and built the same way : previous
   close, PM open, PM high, float, volume, locate, note, **editable** and saved field by field, gap

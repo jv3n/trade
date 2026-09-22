@@ -492,11 +492,10 @@
       "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push"
     },
     "complete": {
-      "title": "Séance —",
+      "title": "Séance",
       "hint": "à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open",
       "percentBase": "base des %",
       "hodBelowLod": "Le HOD est sous le LOD",
-      "saved": "✓ enregistré",
       "progress": "{{filled}} / {{total}} prix saisis",
       "close": "Fermer"
     },
@@ -569,7 +568,34 @@
       "promoteTradeError": "Impossible de créer le trade. Réessaie.",
       "sessionSaveError": "Impossible d'enregistrer la séance de {{ticker}}. Réessaie.",
       "untickFirst": "{{ticker}} est complétée : décoche-la avant de vider un prix.",
-      "completionError": "Impossible de changer le statut de {{ticker}}. Réessaie."
+      "completionError": "Impossible de changer le statut de {{ticker}}. Réessaie.",
+      "createSuccess": "Stat {{ticker}} créée.",
+      "createConflict": "{{ticker}} a déjà une stat ce jour-là.",
+      "createError": "Impossible de créer la stat {{ticker}}. Réessaie."
+    },
+    "premarket": {
+      "title": "Premarket —",
+      "hint": "repris du candidat · modifiable · chaque champ s'enregistre à la sortie"
+    },
+    "create": {
+      "open": "Nouvelle stat",
+      "title": "Nouvelle stat",
+      "hint": "un chart trouvé après coup · n'importe quel jour jusqu'à aujourd'hui",
+      "submit": "Créer la stat",
+      "premarketPrices": "les trois prix premarket"
+    },
+    "save": {
+      "saving": "enregistrement…",
+      "savedAt": "✓ enregistré à {{time}}",
+      "notSaved": "non enregistré — {{reason}}",
+      "premarketRequired": "les trois prix premarket sont requis",
+      "pmHighBelowPmOpen": "le high PM est sous l'open PM",
+      "serverRefused": "le serveur a refusé la modification"
+    },
+    "confirmCreate": {
+      "title": "Créer la stat {{ticker}} ?",
+      "message": "Elle rejoint le tableau comme les stats du matin : une par jour et par ticker. Tu la coches une fois la séance complète.",
+      "confirm": "Créer la stat"
     }
   },
   "lexicon": {

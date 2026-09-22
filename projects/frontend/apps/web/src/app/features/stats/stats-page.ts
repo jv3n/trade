@@ -1,5 +1,6 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe, formatDate } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, LOCALE_ID, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -10,6 +11,7 @@ import {
   StbButtonToggleModule,
   StbCheckboxModule,
   StbChipsModule,
+  StbDatePickerModule,
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
@@ -21,6 +23,7 @@ import {
   StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
+import { startOfDay } from 'date-fns';
 import {
   EMPTY,
   Observable,
@@ -33,7 +36,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
+import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
 import {
   StatEntry,
   StatEntryFilter,
@@ -66,6 +69,40 @@ interface SessionModel {
   entryAfter11am: boolean;
   noPush: boolean;
 }
+
+/** The premarket block being typed in the premarket card — copied from the candidate, editable. */
+interface PremarketModel {
+  previousClose: number | null;
+  pmOpen: number | null;
+  pmHigh: number | null;
+  floatMillions: number | null;
+  volumeMillions: number | null;
+  locatePerShare: number | null;
+  note: string;
+}
+
+/** Who a new stat is : typed on top of the premarket card, only when creating one (#326). */
+interface IdentityModel {
+  tradeDate: Date | null;
+  pattern: Pattern;
+  ticker: string;
+}
+
+/** The two cards of the panel — each shows where its own last save stands. */
+export type SheetCard = 'premarket' | 'session';
+
+/**
+ * Where a card's save stands, shown next to its title (no « Save » button, #326) : in flight, done
+ * at a time, or refused with the reason (an i18n key).
+ */
+export interface SaveState {
+  status: 'idle' | 'saving' | 'saved' | 'error';
+  at: Date | null;
+  reason: string | null;
+}
+
+type PremarketPrice =
+  'previousClose' | 'pmOpen' | 'pmHigh' | 'floatMillions' | 'volumeMillions' | 'locatePerShare';
 
 /** A listed stat with its derived percentages (never stored — recomputed from the prices). */
 export interface StatRow extends StatEntry {
@@ -101,6 +138,18 @@ const BLANK_SESSION: SessionModel = {
   noPush: false,
 };
 
+const BLANK_PREMARKET: PremarketModel = {
+  previousClose: null,
+  pmOpen: null,
+  pmHigh: null,
+  floatMillions: null,
+  volumeMillions: null,
+  locatePerShare: null,
+  note: '',
+};
+
+const IDLE: SaveState = { status: 'idle', at: null, reason: null };
+
 type SessionPrice = 'openPrice' | 'pushOpenPrice' | 'hodPrice' | 'lodPrice' | 'eodPrice';
 
 /** The five session prices, in the sheet's order, with the label key naming them. */
@@ -122,6 +171,27 @@ export function missingPrices(session: Pick<SessionModel, SessionPrice | 'noPush
   return expectedPrices(session)
     .filter(({ field }) => !isPositive(session[field]))
     .map((p) => p.label);
+}
+
+function premarketOf(entry: StatEntry): PremarketModel {
+  return {
+    previousClose: entry.previousClose,
+    pmOpen: entry.pmOpen,
+    pmHigh: entry.pmHigh,
+    floatMillions: entry.floatMillions,
+    volumeMillions: entry.volumeMillions,
+    locatePerShare: entry.locatePerShare,
+    note: entry.note ?? '',
+  };
+}
+
+/** Why a premarket block can't be saved — an i18n key — or null when it can. */
+export function premarketProblem(m: PremarketModel): string | null {
+  if (![m.previousClose, m.pmOpen, m.pmHigh].every(isPositive)) {
+    return 'stats.save.premarketRequired';
+  }
+  if ((m.pmHigh as number) < (m.pmOpen as number)) return 'stats.save.pmHighBelowPmOpen';
+  return null;
 }
 
 function sessionOf(entry: StatEntry): SessionModel {
@@ -171,6 +241,7 @@ function sessionOf(entry: StatEntry): SessionModel {
     StbButtonToggleModule,
     StbCheckboxModule,
     StbChipsModule,
+    StbDatePickerModule,
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
@@ -191,6 +262,7 @@ export class StatsPage {
   private readonly toasts = inject(StbToast);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
+  private readonly locale = inject(LOCALE_ID);
 
   // ---- Data state ----
   readonly loading = signal(true);
@@ -264,9 +336,19 @@ export class StatsPage {
   // ---- Session panel ----
   /** The stat open in the panel — null = the panel is closed. */
   readonly completing = signal<StatEntry | null>(null);
+  readonly premarket = signal<PremarketModel>(BLANK_PREMARKET);
   readonly session = signal<SessionModel>(BLANK_SESSION);
-  /** True once a field of the open stat has been saved — the panel's « ✓ saved » cue. */
-  readonly sessionSaved = signal(false);
+  readonly saveStates = signal<Record<SheetCard, SaveState>>({ premarket: IDLE, session: IDLE });
+
+  // ---- New stat (#326) : the same two cards, empty, with the identity on top ----
+  readonly creating = signal(false);
+  readonly identity = signal<IdentityModel>({
+    tradeDate: null,
+    pattern: DEFAULT_PATTERN,
+    ticker: '',
+  });
+  /** A stat is dated up to today — the picker stops there, the backend refuses a future day. */
+  readonly maxDate = startOfDay(new Date());
   /** Rows the user closed — they stop auto-opening the panel for this visit. */
   private readonly dismissed = signal<ReadonlySet<string>>(new Set());
   /**
@@ -275,14 +357,29 @@ export class StatsPage {
    */
   private readonly writes = new Subject<Observable<unknown>>();
 
-  /** Premarket recap shown above the session inputs. */
-  readonly completingRecap = computed(() => {
-    const s = this.completing();
-    if (!s) return null;
+  /** Live gap and premarket push under their fields, as the user types. */
+  readonly premarketPercents = computed(() => {
+    const m = this.premarket();
     return {
-      gap: gapPercent(s.previousClose, s.pmOpen),
-      pmPush: pmPushPercent(s.pmOpen, s.pmHigh),
+      gap: gapPercent(m.previousClose, m.pmOpen),
+      pmPush: pmPushPercent(m.pmOpen, m.pmHigh),
     };
+  });
+
+  /** PM high under the PM open — shown under the field, and nothing is sent. */
+  readonly pmHighBelowPmOpen = computed(() => {
+    const { pmOpen, pmHigh } = this.premarket();
+    return pmOpen !== null && pmHigh !== null && pmHigh < pmOpen;
+  });
+
+  /** What « Create the stat » still needs — i18n keys, empty once it can go. */
+  readonly createMissing = computed(() => {
+    const id = this.identity();
+    const missing: string[] = [];
+    if (!id.tradeDate) missing.push('stats.fields.tradeDate');
+    if (!id.ticker.trim()) missing.push('stats.fields.ticker');
+    if (premarketProblem(this.premarket())) missing.push('stats.create.premarketPrices');
+    return missing;
   });
 
   /** Live % vs the open for each session input, as the user types. */
@@ -371,10 +468,22 @@ export class StatsPage {
   // ---- Session panel ----
 
   open(entry: StatEntry): void {
+    this.creating.set(false);
     this.completing.set(entry);
+    this.premarket.set(premarketOf(entry));
     this.session.set(sessionOf(entry));
     this.typedPush = null;
-    this.sessionSaved.set(false);
+    // Both cards open on what is already in : saved at the stat's last update.
+    const saved: SaveState = { status: 'saved', at: entry.updatedAt, reason: null };
+    this.saveStates.set({ premarket: saved, session: saved });
+  }
+
+  setPremarketPrice(field: PremarketPrice, value: number | null): void {
+    this.premarket.update((m) => ({ ...m, [field]: value }));
+  }
+
+  setPremarketNote(note: string): void {
+    this.premarket.update((m) => ({ ...m, note }));
   }
 
   setSessionPrice(field: SessionPrice, value: number | null): void {
@@ -383,7 +492,7 @@ export class StatsPage {
 
   toggleFlag(field: 'ssr' | 'under1Dollar' | 'entryAfter11am', value: boolean): void {
     this.session.update((m) => ({ ...m, [field]: value }));
-    this.saveSession();
+    this.saveSession('session');
   }
 
   /** « No push » greys the push field out and empties it ; unticking gives the typed value back. */
@@ -391,19 +500,33 @@ export class StatsPage {
     const current = this.session();
     if (noPush) this.typedPush = current.pushOpenPrice;
     this.session.set({ ...current, noPush, pushOpenPrice: noPush ? null : this.typedPush });
-    this.saveSession();
+    this.saveSession('session');
   }
 
   /**
-   * Saves the panel's session when a field is left — the whole row goes back, as the backend
-   * expects. Nothing is sent when nothing changed or while the HOD sits under the LOD (the hint
-   * says so) ; a ticked stat losing a price is refused here, before the backend's 400.
+   * Saves the stat when a field of [card] is left — the whole row goes back, as the backend expects,
+   * and [card] shows where the save stands. Nothing is sent while a new stat isn't created yet, when
+   * nothing changed, or when the card holds a problem the server would refuse (the card says it). A
+   * ticked stat losing a price is refused here, before the backend's 400.
    */
-  saveSession(): void {
+  saveSession(card: SheetCard = 'session'): void {
     const entry = this.completing();
-    if (!entry) return;
+    if (!entry || this.creating()) return;
+    const premarket = this.premarket();
     const session = this.session();
-    if (sameSession(session, sessionOf(entry)) || this.hodBelowLod()) return;
+    const problem =
+      card === 'premarket'
+        ? premarketProblem(premarket)
+        : this.hodBelowLod()
+          ? 'stats.complete.hodBelowLod'
+          : null;
+    if (problem) {
+      this.setSaveState(card, { status: 'error', at: null, reason: problem });
+      return;
+    }
+    if (sameSession(session, sessionOf(entry)) && samePremarket(premarket, premarketOf(entry))) {
+      return;
+    }
     if (entry.completed && missingPrices(session).length > 0) {
       this.toasts.error(
         this.translate.instant('stats.snackbar.untickFirst', { ticker: entry.ticker }),
@@ -412,18 +535,28 @@ export class StatsPage {
       return;
     }
     // Patched right away : the next field left starts from this one, not from the server's reply.
-    this.patchRow({ ...entry, ...session });
+    const input = this.toInput(entry, premarket, session);
+    this.patchRow({ ...entry, ...input });
+    this.setSaveState(card, { status: 'saving', at: null, reason: null });
     this.enqueue(
-      this.repo.update(entry.id, this.toInput(entry, session)).pipe(
+      this.repo.update(entry.id, input).pipe(
         tap((saved) => {
           this.patchRow(saved);
-          this.sessionSaved.set(true);
+          this.setSaveState(card, { status: 'saved', at: new Date(), reason: null });
           // The KPIs only count ticked stats : editing one of them moves them.
           if (saved.completed) this.refreshSummary();
         }),
         catchError(() => {
           this.patchRow(entry);
-          if (this.completing()?.id === entry.id) this.session.set(sessionOf(entry));
+          if (this.completing()?.id === entry.id) {
+            this.premarket.set(premarketOf(entry));
+            this.session.set(sessionOf(entry));
+          }
+          this.setSaveState(card, {
+            status: 'error',
+            at: null,
+            reason: 'stats.save.serverRefused',
+          });
           this.toasts.error(
             this.translate.instant('stats.snackbar.sessionSaveError', { ticker: entry.ticker }),
           );
@@ -433,11 +566,95 @@ export class StatsPage {
     );
   }
 
+  /** « saving… », « ✓ saved at 09:42 », « not saved — … » — the label next to a card's title. */
+  saveLabel(state: SaveState): string {
+    switch (state.status) {
+      case 'saving':
+        return this.translate.instant('stats.save.saving');
+      case 'saved':
+        return state.at
+          ? this.translate.instant('stats.save.savedAt', {
+              time: formatDate(state.at, 'HH:mm', this.locale),
+            })
+          : '';
+      case 'error':
+        return this.translate.instant('stats.save.notSaved', {
+          reason: this.translate.instant(state.reason ?? 'stats.save.serverRefused'),
+        });
+      default:
+        return '';
+    }
+  }
+
+  // ---- New stat (#326) ----
+
+  /** « New stat » — the two cards empty, today's date and the default pattern pre-filled. */
+  startNew(): void {
+    this.completing.set(null);
+    this.creating.set(true);
+    this.identity.set({ tradeDate: this.maxDate, pattern: DEFAULT_PATTERN, ticker: '' });
+    this.premarket.set(BLANK_PREMARKET);
+    this.session.set(BLANK_SESSION);
+    this.typedPush = null;
+    this.saveStates.set({ premarket: IDLE, session: IDLE });
+  }
+
+  cancelNew(): void {
+    this.creating.set(false);
+  }
+
+  setIdentity(patch: Partial<IdentityModel>): void {
+    this.identity.update((id) => ({ ...id, ...patch }));
+  }
+
+  /**
+   * « Create the stat » — confirmed (it creates something), then the stat joins the table and its
+   * cards go on saving field by field, like any stat's.
+   */
+  createStat(): void {
+    if (!this.creating() || this.createMissing().length > 0) return;
+    const id = this.identity();
+    const ticker = id.ticker.trim().toUpperCase();
+    const input: StatEntryInput = {
+      tradeDate: id.tradeDate as Date,
+      pattern: id.pattern,
+      ticker,
+      ...this.premarketInput(this.premarket()),
+      ...this.session(),
+    };
+    this.confirm
+      .ask('stats.confirmCreate', { params: { ticker } })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.create(input)),
+        tap((saved) => {
+          this.toasts.success(this.translate.instant('stats.snackbar.createSuccess', { ticker }));
+          this.open(saved);
+          this.refetch();
+        }),
+        catchError((err: unknown) => {
+          const key =
+            err instanceof HttpErrorResponse && err.status === 409
+              ? 'stats.snackbar.createConflict'
+              : 'stats.snackbar.createError';
+          this.toasts.error(this.translate.instant(key, { ticker }));
+          return EMPTY;
+        }),
+      )
+      .subscribe();
+  }
+
+  /** « Missing : date, ticker » — next to « Create the stat » while it can't go. */
+  createMissingLabel(): string {
+    const fields = this.createMissing().map((key) => this.translate.instant(key));
+    return this.translate.instant('stats.completion.missing', { fields: fields.join(', ') });
+  }
+
   /** « Close » — the field being typed is saved on the way out, then the panel stops re-opening. */
   close(): void {
     const current = this.completing();
     if (!current) return;
-    this.saveSession();
+    this.saveSession('session');
     this.dismissed.update((set) => new Set(set).add(current.id));
     this.completing.set(null);
   }
@@ -576,7 +793,7 @@ export class StatsPage {
    * this visit are skipped, and an open panel is never replaced.
    */
   private autoOpenPending(rows: StatEntry[]): void {
-    if (this.completing()) return;
+    if (this.completing() || this.creating()) return;
     const pending = rows.find((s) => !s.completed && !this.dismissed().has(s.id));
     if (pending) this.open(pending);
   }
@@ -602,26 +819,45 @@ export class StatsPage {
     this.refetchTrigger.update((n) => n + 1);
   }
 
-  /** The session panel sends the whole row back — premarket untouched, session + flags updated. */
-  private toInput(entry: StatEntry, session: SessionModel): StatEntryInput {
+  private setSaveState(card: SheetCard, state: SaveState): void {
+    this.saveStates.update((states) => ({ ...states, [card]: state }));
+  }
+
+  /** The panel sends the whole row back — identity untouched, premarket, session and flags typed. */
+  private toInput(
+    entry: StatEntry,
+    premarket: PremarketModel,
+    session: SessionModel,
+  ): StatEntryInput {
     return {
       tradeDate: entry.tradeDate,
       pattern: entry.pattern,
       ticker: entry.ticker,
-      previousClose: entry.previousClose,
-      pmOpen: entry.pmOpen,
-      pmHigh: entry.pmHigh,
-      floatMillions: entry.floatMillions,
-      volumeMillions: entry.volumeMillions,
-      locatePerShare: entry.locatePerShare,
-      note: entry.note,
+      ...this.premarketInput(premarket),
       ...session,
+    };
+  }
+
+  /** The premarket card as the API takes it — its three prices are checked before this is called. */
+  private premarketInput(m: PremarketModel) {
+    return {
+      previousClose: m.previousClose as number,
+      pmOpen: m.pmOpen as number,
+      pmHigh: m.pmHigh as number,
+      floatMillions: m.floatMillions,
+      volumeMillions: m.volumeMillions,
+      locatePerShare: m.locatePerShare,
+      note: m.note.trim() || null,
     };
   }
 }
 
 function isPositive(n: number | null): boolean {
   return n !== null && n > 0;
+}
+
+function samePremarket(a: PremarketModel, b: PremarketModel): boolean {
+  return (Object.keys(a) as (keyof PremarketModel)[]).every((key) => a[key] === b[key]);
 }
 
 function sameSession(a: SessionModel, b: SessionModel): boolean {

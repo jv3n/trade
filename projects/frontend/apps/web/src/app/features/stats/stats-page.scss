@@ -29,20 +29,52 @@
   color: var(--color-text-muted);
 }
 
-.recap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: s.$space-sm s.$space-lg;
+.identity {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 12rem));
+  gap: s.$space-md;
   margin-bottom: s.$space-lg;
-  padding: s.$space-md s.$space-md;
-  border-radius: var(--radius);
-  background: var(--color-surface-2);
+  padding-bottom: s.$space-lg;
+  border-bottom: 1px solid var(--color-border);
+
+  .mono {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+}
+
+// Same shape as the session form : one field per column, the note on its own row.
+.premarket-form {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: s.$space-md;
+  align-items: start;
+
+  &__note {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: s.$space-md;
+  margin-top: s.$space-lg;
+}
+
+// Where a card's last save stands, next to its title : neutral, red only when it was refused.
+.save-state {
   font-size: s.$font-xs;
+  font-weight: 400;
   color: var(--color-text-muted);
 
-  b {
-    color: var(--color-text);
-    font-variant-numeric: tabular-nums;
+  &--error {
+    color: var(--color-danger);
   }
 }
 
@@ -157,7 +189,6 @@ tr.editing td {
 
 // ---- Completion (#263) ----
 
-.saved-cue,
 .progress {
   font-size: s.$font-xs;
   color: var(--color-text-muted);

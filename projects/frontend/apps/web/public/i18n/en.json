@@ -492,11 +492,10 @@
       "noPushSub": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push"
     },
     "complete": {
-      "title": "Session —",
+      "title": "Session",
       "hint": "fill it as the day goes · each field saves when you leave it · the percentages compute vs the open",
       "percentBase": "base of the percentages",
       "hodBelowLod": "HOD is below the LOD",
-      "saved": "✓ saved",
       "progress": "{{filled}} / {{total}} prices in",
       "close": "Close"
     },
@@ -569,7 +568,34 @@
       "promoteTradeError": "Couldn't create the trade. Please retry.",
       "sessionSaveError": "Couldn't save the {{ticker}} session. Please retry.",
       "untickFirst": "{{ticker}} is completed: untick it before clearing a price.",
-      "completionError": "Couldn't change the status of {{ticker}}. Please retry."
+      "completionError": "Couldn't change the status of {{ticker}}. Please retry.",
+      "createSuccess": "Stat {{ticker}} created.",
+      "createConflict": "{{ticker}} already has a stat that day.",
+      "createError": "Could not create the {{ticker}} stat. Try again."
+    },
+    "premarket": {
+      "title": "Premarket —",
+      "hint": "copied from the candidate · editable · each field is saved when left"
+    },
+    "create": {
+      "open": "New stat",
+      "title": "New stat",
+      "hint": "a chart found afterwards · any day up to today",
+      "submit": "Create the stat",
+      "premarketPrices": "the three premarket prices"
+    },
+    "save": {
+      "saving": "saving…",
+      "savedAt": "✓ saved at {{time}}",
+      "notSaved": "not saved — {{reason}}",
+      "premarketRequired": "the three premarket prices are required",
+      "pmHighBelowPmOpen": "the PM high is below the PM open",
+      "serverRefused": "the server refused the change"
+    },
+    "confirmCreate": {
+      "title": "Create the {{ticker}} stat?",
+      "message": "It joins the table like the morning stats: one per day and ticker. You tick it once the session is complete.",
+      "confirm": "Create the stat"
     }
   },
   "lexicon": {

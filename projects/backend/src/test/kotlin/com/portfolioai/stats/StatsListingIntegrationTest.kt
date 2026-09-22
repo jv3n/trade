@@ -47,6 +47,8 @@ import org.springframework.web.server.ResponseStatusException
  *   a slot the caller already holds.
  * - **Completion (#263)** — the session is saved field by field ; a stat is completed only when
  *   ticked, which needs the five prices, and a ticked stat can't lose a price.
+ * - **By hand (#326)** — a stat typed on the stats page for a past day has no source candidate ; a
+ *   future day is refused, and the one-per-day-and-ticker rule still holds.
  * - **No push (#302)** — a stat whose stock never pushed after the open is ticked with the four
  *   other prices, keeps no push price, stays out of the push references and can be filtered on.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
@@ -286,6 +288,40 @@ class StatsListingIntegrationTest {
   // ---------------------------------------------------------------------------
   // One stat per (user, day, ticker)
   // ---------------------------------------------------------------------------
+
+  // A chart found three days later that matched the pattern : it goes in the stats anyway.
+  @Test
+  fun `a stat typed by hand for a past day is stored without a source candidate`() {
+    val past = LocalDate.now().minusDays(3)
+
+    val stat = service.createByHand(fullSessionRequest(ticker = "GLND", tradeDate = past))
+
+    assertEquals(past, stat.tradeDate)
+    assertNull(stat.candidateId)
+    assertFalse(stat.completed, "ticked by hand, like any stat")
+  }
+
+  @Test
+  fun `a stat typed by hand for a future day is a 400`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.createByHand(premarketRequest(tradeDate = LocalDate.now().plusDays(1)))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+  }
+
+  @Test
+  fun `a stat typed by hand on a day and ticker already in the sheet is a 409`() {
+    service.create(premarketRequest(ticker = "KTTA", tradeDate = LocalDate.now()))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.createByHand(premarketRequest(ticker = "KTTA", tradeDate = LocalDate.now()))
+      }
+
+    assertEquals(409, ex.statusCode.value())
+  }
 
   @Test
   fun `creating a second stat for the same day and ticker is a 409`() {

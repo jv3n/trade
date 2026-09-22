@@ -35,8 +35,8 @@ import org.springframework.web.bind.annotation.RestController
   name = "Stats",
   description =
     "The stats sheet : premarket data copied from the candidate, completed with the session prices " +
-      "after the 4 pm close. Scoped to the current user. A stat is created by promoting a candidate " +
-      "(see Candidates) — there is no create endpoint here ; the CSV leg is export only.",
+      "as the day goes. Scoped to the current user. A stat is created by promoting a candidate " +
+      "(see Candidates) or typed by hand for a past day ; the CSV leg is export only.",
 )
 @RestController
 @RequestMapping("/api/stats")
@@ -79,6 +79,14 @@ class StatEntryController(private val service: StatEntryService) {
     @RequestParam(required = false) status: StatStatus? = null,
     @RequestParam(required = false) noPush: Boolean? = null,
   ): StatSummaryDto = service.summarise(filterOf(q, dateFrom, dateTo, pattern, status, noPush))
+
+  /**
+   * Creates a stat typed by hand (#326) — premarket, session and flags in one go. A future day →
+   * 400 ; (day, ticker) already taken → 409.
+   */
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  fun create(@RequestBody request: StatEntryRequest): StatEntryDto = service.createByHand(request)
 
   /** Fetch a single stat by id (404 if foreign / missing). */
   @GetMapping("/{id}") fun get(@PathVariable id: UUID): StatEntryDto = service.findById(id)
