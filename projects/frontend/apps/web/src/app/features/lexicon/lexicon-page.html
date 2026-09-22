@@ -64,7 +64,15 @@
     @if (visible().length === 0) {
       <div class="empty-state">
         <mat-icon>search_off</mat-icon>
-        <p>{{ 'lexicon.noMatch' | translate }}</p>
+        <p>
+          @if (search().trim()) {
+            {{ 'lexicon.noMatch' | translate: { query: search().trim() } }}
+          } @else if (letter() !== allLetters) {
+            {{ 'lexicon.noneForLetter' | translate: { letter: letter() } }}
+          } @else {
+            {{ 'lexicon.empty' | translate }}
+          }
+        </p>
       </div>
     } @else {
       <section class="terms">

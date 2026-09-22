@@ -628,9 +628,10 @@
     "searchPlaceholder": "Search a term or definition…",
     "clearSearch": "Clear search",
     "loading": "Loading the lexicon…",
-    "empty": "The glossary is empty for now.",
+    "empty": "The lexicon is empty.",
     "emptyAdmin": "No terms yet. Click « Add term » to create the first one.",
     "noMatch": "No term matches « {{query}} ».",
+    "noneForLetter": "No term under the letter {{letter}}.",
     "confirmDelete": {
       "title": "Delete the term « {{term}} »?",
       "message": "The term and its French and English definitions are permanently deleted.",
