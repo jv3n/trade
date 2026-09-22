@@ -82,3 +82,16 @@ $sys-overrides: (
     $sys-overrides
   );
 }
+
+// Keyboard focus on Material components (#317). `_base.scss` rings plain elements but skips
+// anything Material, on the assumption that Material draws its own indicator — it doesn't unless
+// this is switched on, so the sidebar links and the action buttons focused invisibly.
+// The ring is drawn by a `::before` on `.mat-focus-indicator`, outside the layout flow, so it
+// never shifts a button.
+@include mat.strong-focus-indicators(
+  (
+    border-color: var(--color-accent),
+    border-width: 2px,
+    border-radius: var(--radius-sm),
+  )
+);
