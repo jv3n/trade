@@ -89,7 +89,14 @@ function draftOf(entry: TradeEntry): TradeDraft {
     executions: entry.executions
       .slice()
       .sort((a, b) => a.seq - b.seq)
-      .map((e) => ({ kind: e.kind, shares: e.shares, price: e.price, executedAt: e.executedAt })),
+      .map((e) => ({
+        kind: e.kind,
+        shares: e.shares,
+        price: e.price,
+        // The API sends `09:38:00` ; the time input hands back `09:38` once touched, which would
+        // make an untouched trade look edited (#331).
+        executedAt: e.executedAt?.slice(0, 5) ?? null,
+      })),
     realProfitDollars: entry.realProfitDollars,
     note: entry.note ?? '',
     errorNote: entry.errorNote ?? '',
