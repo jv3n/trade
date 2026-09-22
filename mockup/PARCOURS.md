@@ -149,7 +149,8 @@ a « → Stat » button per row and a "promote them all" button, day-by-day navi
 ## Step 2 — Candidate → stat ✅
 
 - **Only through an action button** : « → Stat » on a candidate row, or "promote them all". Nothing
-  is created automatically.
+  is created automatically. (A stat can also be typed from scratch on the stats page, for a chart
+  found afterwards — see step 5.)
 - The stat **takes every field of the candidate** (pattern, ticker, previous close, PM open / high,
   gap, PM push, float, volume, locate, note, open) — not the target push, which is a plan.
 - A candidate promoted before 9:30 has no open yet : the open typed on it afterwards also fills its
@@ -248,11 +249,28 @@ shared between users — a stat always belongs to its user.
 - No percentage is stored : everything is recomputed from the prices.
 - The KPIs on top (completed, average push at the open, average LOD, fade) cover **the whole
   filter**, not the displayed page.
-- No CSV import : neither for the stats (a stat is born from a candidate) nor for the journal (a
-  trade is born from a stat). Both keep a CSV **export** — premarket block, session block and flags
+- No CSV import : neither for the stats (a stat is born from a candidate, or typed by hand) nor for
+  the journal (a trade is born from a stat). Both keep a CSV **export** — premarket block, session block and flags
   on the stats side (session prices empty for a stat still to complete) ; identity, position,
   executions and the three P&L figures on the journal side.
 - "Traded / not traded" filter : shipped with the link to the trade (#193).
+
+**Editing the premarket, and a stat from scratch** (#326 — to build) :
+
+- The premarket is a **card of its own**, above the session one and built the same way : previous
+  close, PM open, PM high, float, volume, locate, note, **editable** and saved field by field, gap
+  and PM push shown live under their fields. Copied from the candidate at promotion, it can be fixed
+  on the stat ; the stat keeps its own copy, the candidate is left alone.
+- **« New stat »** opens the two cards empty, with the **date** (any day up to today, never a future
+  one), the pattern and the ticker on top : going through the charts, I find a ticker that matched
+  my pattern a few days ago and never made it to my candidates — leaving it out would bias the stats
+  towards the days I happened to be watching.
+- **« Create the stat »** asks for confirmation (it creates something) and needs the date, the
+  ticker and the three premarket prices. Same rules as any stat : one per day and per ticker, ticked
+  by hand once complete, « → Trade » available. It has no source candidate.
+- **No « Save » button** : each card shows where it stands next to its title — « saving… », then
+  « ✓ saved at 09:42 », or in red « not saved — … » when the server refuses (PM high under the PM
+  open, HOD under the LOD). Typing stays fast during the session, and it is always clear what is in.
 
 **No push at the open** (#302) : some days have everything of a GUS in the premarket but
 the stock never pushes after the open — GLND on 2026-09-21 dropped straight from the open and only
@@ -274,10 +292,10 @@ that never comes, so they count in the stats and are made easy to single out.
   stats. Its references are built on the push at the open, which a no-push stat doesn't have, so
   they already leave these days out.
 
-**Screen** : [`stats.html`](stats.html) — a "session" panel for the stat being filled (live
-percentage preview, fields saved one by one, "n / 5 prices" — 4 with « No push » — and the check
-button), a table with the
-premarket data (carried from the candidate), the session data (partial for the stats in progress),
+**Screen** : [`stats.html`](stats.html) — a « Premarket » card and a « Session » card for the stat
+being filled (live percentage preview, fields saved one by one with the save state next to each
+title, "n / 5 prices" — 4 with « No push » — and the check button), a « New stat » button, a table
+with the premarket data, the session data (partial for the stats in progress),
 the flags, the check column, and a « → Trade » button or a link to the existing trade.
 
 ---
