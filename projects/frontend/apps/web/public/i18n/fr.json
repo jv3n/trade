@@ -216,6 +216,7 @@
       "hint": "à faire chaque matin avec le solde affiché par TradeZero",
       "appBalance": "Solde app (calculé)",
       "brokerBalance": "Solde TradeZero",
+      "negativeBalance": "Un solde négatif est impossible — corrige le montant lu sur TradeZero.",
       "gap": "Écart",
       "validate": "Valider le rapprochement",
       "createCorrection": "Créer la correction",
@@ -226,6 +227,11 @@
       "confirmCorrection": {
         "title": "Créer la correction ?",
         "message": "Une ligne « Correction » de {{gap}} $ est ajoutée au compte pour caler le solde sur TradeZero. Le rapprochement est horodaté avec elle.",
+        "confirm": "Créer la correction"
+      },
+      "confirmUnusualCorrection": {
+        "title": "Écart inhabituel — créer quand même ?",
+        "message": "L'écart de {{gap}} $ dépasse 20 % du solde calculé ({{balance}} $). À cette taille, c'est le plus souvent une faute de frappe. En confirmant, une ligne « Correction » réécrit le solde du compte.",
         "confirm": "Créer la correction"
       },
       "cancel": "Annuler ce rapprochement",

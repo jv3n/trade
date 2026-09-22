@@ -47,6 +47,10 @@ class AccountReconciliationService(
   /** Settles [request]'s morning : timestamps it, and records a correction when the two differ. */
   @Transactional
   fun reconcile(request: ReconciliationRequest): ReconciliationDto {
+    // The broker never shows a negative balance (#307) — the UI blocks it, the API says no too.
+    if (request.brokerBalance.signum() < 0) {
+      throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Broker balance must not be negative")
+    }
     val user = authService.getCurrentUser()
     val existing = repo.findByUserIdAndValueDate(user.id, request.valueDate)
     val currentBalance = movements.balanceFor(user.id)

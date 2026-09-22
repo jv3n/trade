@@ -77,3 +77,8 @@
 .neg {
   color: var(--color-danger);
 }
+
+// Amber, per the colour rule : a refused figure is a warning, not a loss.
+.warn {
+  color: var(--color-warning);
+}

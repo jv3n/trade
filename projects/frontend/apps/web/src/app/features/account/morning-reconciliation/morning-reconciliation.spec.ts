@@ -118,9 +118,63 @@ describe('MorningReconciliation', () => {
 
     expect(confirmAsk).toHaveBeenCalledWith(
       'account.reconciliation.confirmCorrection',
-      expect.objectContaining({ params: { gap: '-12.40' } }),
+      expect.objectContaining({ params: { gap: '-12.40', balance: '1,000.00' } }),
     );
     expect(reconcile).toHaveBeenCalledTimes(1);
+  });
+
+  // Typed on staging : -999999999 gave a gap of -1,000,045,754 $ and the button stayed enabled.
+  it('refuses a negative broker balance — no gap, no call, button blocked', () => {
+    const component = setup(1000).componentInstance;
+
+    component.setBrokerBalance(-999999999);
+
+    expect(component.negativeBalance()).toBe(true);
+    component.submit();
+    expect(confirmAsk).not.toHaveBeenCalled();
+    expect(reconcile).not.toHaveBeenCalled();
+  });
+
+  it('warns before writing a gap past a fifth of the computed balance', () => {
+    const component = setup(1000).componentInstance;
+
+    component.setBrokerBalance(1300);
+
+    // Read before submitting : a settled morning clears the input, and with it the gap.
+    expect(component.unusualGap()).toBe(true);
+    component.submit();
+
+    expect(confirmAsk).toHaveBeenCalledWith(
+      'account.reconciliation.confirmUnusualCorrection',
+      expect.objectContaining({ variant: 'danger' }),
+    );
+    expect(reconcile).toHaveBeenCalled();
+  });
+
+  it('an ordinary gap keeps the plain confirmation', () => {
+    const component = setup(1000).componentInstance;
+
+    component.setBrokerBalance(1050);
+
+    expect(component.unusualGap()).toBe(false);
+    component.submit();
+
+    expect(confirmAsk).toHaveBeenCalledWith(
+      'account.reconciliation.confirmCorrection',
+      expect.objectContaining({ variant: undefined }),
+    );
+  });
+
+  // The Today page mounts the block before its summary lands : on a cold start that window is
+  // seconds long, and a submit then slipped past the confirmation entirely (#307).
+  it('sends nothing while the app balance has not landed', () => {
+    const component = setup(null).componentInstance;
+
+    component.setBrokerBalance(1300);
+    component.submit();
+
+    expect(confirmAsk).not.toHaveBeenCalled();
+    expect(reconcile).not.toHaveBeenCalled();
   });
 
   it('cancelling the confirmation never reaches the repository', () => {
