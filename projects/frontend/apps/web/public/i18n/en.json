@@ -122,7 +122,8 @@
       "hint": "Enter to validate · gap and push compute themselves",
       "add": "Add",
       "save": "Save",
-      "pmHighBelowOpen": "Below the PM open"
+      "pmHighBelowOpen": "Below the PM open",
+      "duplicateTicker": "Already captured that day"
     },
     "fields": {
       "pattern": "Pattern",

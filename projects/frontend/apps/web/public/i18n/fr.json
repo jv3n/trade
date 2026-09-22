@@ -122,7 +122,8 @@
       "hint": "Entrée pour valider · gap et push se calculent tout seuls",
       "add": "Ajouter",
       "save": "Enregistrer",
-      "pmHighBelowOpen": "Sous l'open PM"
+      "pmHighBelowOpen": "Sous l'open PM",
+      "duplicateTicker": "Déjà saisi ce jour-là"
     },
     "fields": {
       "pattern": "Pattern",

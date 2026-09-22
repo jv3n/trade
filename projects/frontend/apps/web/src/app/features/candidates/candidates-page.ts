@@ -1,6 +1,14 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DOCUMENT,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -129,6 +137,7 @@ export class CandidatesPage {
   private readonly translate = inject(TranslateService);
 
   private readonly tickerInput = viewChild<ElementRef<HTMLInputElement>>('tickerInput');
+  private readonly document = inject(DOCUMENT);
 
   readonly patterns = PATTERNS;
   readonly expensiveLocate = EXPENSIVE_LOCATE_PERCENT;
@@ -194,9 +203,21 @@ export class CandidatesPage {
     const { pmOpen, pmHigh } = this.model();
     return pmOpen !== null && pmHigh !== null && pmHigh < pmOpen;
   });
+  /**
+   * The ticker is already in the day (#315) — said while typing rather than by a 409 toast on
+   * submit. The candidate being edited doesn't count as its own duplicate.
+   */
+  readonly duplicateTicker = computed(() => {
+    const ticker = this.model().ticker.trim().toUpperCase();
+    if (!ticker) return false;
+    const editing = this.editingId();
+    return this.rows().some((c) => c.ticker === ticker && c.id !== editing);
+  });
+
   readonly canSave = computed(() => {
     const m = this.model();
     return (
+      !this.duplicateTicker() &&
       this.captureForm().valid() &&
       isPositive(m.previousClose) &&
       isPositive(m.pmOpen) &&
@@ -473,12 +494,30 @@ export class CandidatesPage {
     });
   }
 
-  /** Clears the form for the next capture — keeps the pattern (a scan is usually one pattern). */
+  /**
+   * Clears the form for the next capture — keeps the pattern (a scan is usually one pattern).
+   *
+   * **Blurs first** (#315) : giving the focus back to the ticker fires `blur` on the field being
+   * typed, and the number mask answers a blur by pushing the text it still shows back into the
+   * model — the value we just cleared would come back, and ride into the next candidate. Leaving
+   * the field before the model is cleared makes that write land on the value it came from.
+   *
+   * This leans on blur / focus ordering and on what Signal Forms' `reset()` touches, both young
+   * enough to move : re-read it on the next Angular migration. The spec around it is what catches
+   * the day it does.
+   */
   private resetForm(): void {
+    this.blurActiveField();
     this.editingId.set(null);
     this.model.set(blankCapture(this.model().pattern));
     this.captureForm().reset();
     this.focusTicker();
+  }
+
+  /** Leaves whichever capture field holds the focus, so its own blur runs before anything else. */
+  private blurActiveField(): void {
+    const active = this.document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
   }
 
   private focusTicker(): void {
