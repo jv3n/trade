@@ -1,16 +1,16 @@
 name: Deploy to Cloud Run
 
 # Publishing a GitHub Release deploys ; pushing to `master` does not. A deploy stays a deliberate
-# act. Pre-releases (`vX.Y.Z-rcN`) fire too, on purpose — a release candidate is worth testing on a
-# real deployment.
+# act. The tag picks the environment (#297) : a release candidate `vX.Y.Z-rcN` goes to staging, a
+# release `vX.Y.Z` to production — nothing reaches production without a candidate tried first.
 on:
   release:
     types: [published]
 
-# Never two deploys at once, and never cancel one : a half-applied deploy leaves Cloud Run in an
-# inconsistent state, so the second waits instead.
+# Never two deploys of the same environment at once, and never cancel one : a half-applied deploy
+# leaves Cloud Run in an inconsistent state, so the second waits instead.
 concurrency:
-  group: deploy-production
+  group: deploy-${{ contains(github.event.release.tag_name, '-rc') && 'staging' || 'production' }}
   cancel-in-progress: false
 
 # Declared at workflow level so a job added later doesn't start from the permissive default token.
@@ -22,7 +22,8 @@ jobs:
     name: Build, push, deploy
     # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
     runs-on: ubuntu-24.04
-    environment: production
+    # Production keeps its required reviewer ; staging has none, a candidate goes straight out.
+    environment: ${{ contains(github.event.release.tag_name, '-rc') && 'staging' || 'production' }}
     permissions:
       contents: read
       # Short-lived OIDC token exchanged for a GCP one — no long-lived service-account key in
@@ -35,10 +36,49 @@ jobs:
         run: |
           TAG="${{ github.event.release.tag_name }}"
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
-            echo "::error::Release tag '$TAG' must match ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ (e.g. v0.7.0 or v0.7.0-rc1). See docs/devops/release-process.md > Versioning."
+            echo "::error::Release tag '$TAG' must match ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ (e.g. v0.7.0 or v0.7.0-rc1). See devops/README.md > Releasing."
+            exit 1
+          fi
+          # The tag routes the deploy, the pre-release box is what GitHub shows : they must agree,
+          # or a candidate would be listed as the latest release.
+          PRERELEASE="${{ github.event.release.prerelease }}"
+          if [[ "$TAG" == *-rc* && "$PRERELEASE" != "true" ]]; then
+            echo "::error::'$TAG' is a release candidate : publish it as a pre-release."
+            exit 1
+          fi
+          if [[ "$TAG" != *-rc* && "$PRERELEASE" == "true" ]]; then
+            echo "::error::'$TAG' is a final release : untick « Set as a pre-release », or tag it vX.Y.Z-rcN."
             exit 1
           fi
           echo "Release tag '$TAG' matches SemVer policy."
+
+      # Everything that differs between the two environments, in one place. Staging shares the
+      # image, the Google OAuth client and the Sentry project ; it has its own service, runtime
+      # account, database and admin list.
+      - name: Resolve the target environment
+        id: target
+        run: |
+          if [[ "${{ github.event.release.tag_name }}" == *-rc* ]]; then
+            {
+              echo "name=staging"
+              echo "service=portfolioai-staging"
+              echo "url=https://staging.tickerstory.org/"
+              echo "runtime_sa=portfolioai-staging-runtime"
+              echo "secret_suffix=-staging"
+              echo "max_instances=1"
+              echo "sentry_env=staging"
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "name=production"
+              echo "service=portfolioai"
+              echo "url=https://tickerstory.org/"
+              echo "runtime_sa=portfolioai-runtime"
+              echo "secret_suffix="
+              echo "max_instances=3"
+              echo "sentry_env=prod"
+            } >> "$GITHUB_OUTPUT"
+          fi
 
       # Full history and tags : the default shallow clone exposes neither the annotated tag nor the
       # parent SHAs, and `gradle-git-properties` needs both.
@@ -82,26 +122,26 @@ jobs:
       # sends, so Spring cannot infer the public hostname on its own.
       - name: Deploy revision to Cloud Run
         run: |
-          gcloud run deploy portfolioai \
+          gcloud run deploy ${{ steps.target.outputs.service }} \
             --image=northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }} \
             --region=northamerica-northeast1 \
             --project=${{ vars.GCP_PROJECT }} \
             --platform=managed \
-            --service-account=portfolioai-runtime@${{ vars.GCP_PROJECT }}.iam.gserviceaccount.com \
+            --service-account=${{ steps.target.outputs.runtime_sa }}@${{ vars.GCP_PROJECT }}.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --memory=1Gi \
             --cpu=1 \
             --min-instances=0 \
-            --max-instances=3 \
+            --max-instances=${{ steps.target.outputs.max_instances }} \
             --timeout=300 \
             --port=8080 \
-            --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=https://tickerstory.org/,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=https://tickerstory.org/login/oauth2/code/google,SENTRY_RELEASE=${{ github.event.release.tag_name }} \
-            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails:latest,SPRING_DATASOURCE_URL=supabase-db-url:latest,SENTRY_DSN=sentry-dsn-backend:latest
+            --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=${{ steps.target.outputs.url }},SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=${{ steps.target.outputs.url }}login/oauth2/code/google,SENTRY_RELEASE=${{ github.event.release.tag_name }},SENTRY_ENVIRONMENT=${{ steps.target.outputs.sentry_env }} \
+            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_URL=supabase-db-url${{ steps.target.outputs.secret_suffix }}:latest,SENTRY_DSN=sentry-dsn-backend:latest
 
       # Defence in depth — `gcloud run deploy` already fails when the revision crashes at boot.
       - name: Smoke test and summary
         run: |
-          URL=$(gcloud run services describe portfolioai \
+          URL=$(gcloud run services describe ${{ steps.target.outputs.service }} \
             --region=northamerica-northeast1 \
             --project=${{ vars.GCP_PROJECT }} \
             --format='value(status.url)')
@@ -113,6 +153,7 @@ jobs:
             echo ""
             echo "| | |"
             echo "|---|---|"
+            echo "| Environment | **${{ steps.target.outputs.name }}** — ${{ steps.target.outputs.url }} |"
             echo "| Release | \`${{ github.event.release.tag_name }}\` |"
             echo "| Commit | \`${{ github.sha }}\` |"
             echo "| Image | \`northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }}\` |"
