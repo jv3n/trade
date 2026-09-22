@@ -128,6 +128,15 @@
         color: var(--loss);
       }
 
+      /* Un prix premarket requis laissé vide : le champ le dit lui-même, en ambre comme « high PM sous l'open PM ». */
+      .premarket .input.invalid {
+        border-color: var(--warn);
+      }
+
+      .premarket .pct.warn {
+        color: var(--warn);
+      }
+
       /* Coche « complétée », façon « reviewed » de Monarch — verte une fois cochée (seule exception de statut en vert). */
       .check {
         display: inline-flex;
@@ -310,7 +319,7 @@
             <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
             <span style="flex: 1"></span>
             <span class="progress" id="panel-progress">2 / 5 prix saisis</span>
-            <button class="btn">Fermer</button>
+            <button class="btn" id="panel-close">Fermer</button>
             <button class="btn btn-check" id="panel-check" disabled title="Il manque HOD, LOD, EOD"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
           </div>
         </section>
@@ -563,7 +572,9 @@
           stat » demande confirmation et n'est possible qu'avec la date, le ticker et les trois prix premarket ; une par jour et par
           ticker, comme toujours. Chaque carte montre son état d'enregistrement à côté du titre : « enregistrement… » pendant l'envoi,
           « ✓ enregistré à 09:42 » ensuite, et en rouge « non enregistré — … » si le serveur refuse (high PM sous l'open PM, HOD sous le
-          LOD) — pas de bouton « Enregistrer » : la saisie reste rapide au fil de la séance.
+          LOD) — pas de bouton « Enregistrer » : la saisie reste rapide au fil de la séance. Un prix premarket requis vidé le dit sous son
+          champ et retient aussi la séance (« en attente du premarket ») ; « Fermer » dans cet état demande « Quitter sans enregistrer ? »
+          et, si on quitte, la stat garde ses dernières valeurs enregistrées.
           « Pas de push », sous le champ du push : le titre n'a pas poussé dans les ~10 minutes après l'open (GLND, 21/09 — chute dès
           l'open, rebond vers 11h seulement). Cocher grise et vide le champ, et la stat se coche avec les quatre autres prix. Ces
           jours-là comptent dans les stats — c'est un setup à part, à exécuter dès l'open : le push moyen ne compte que les stats qui
@@ -638,12 +649,15 @@
           prices.forEach((p) => (p.required = done));
         }
         // Une nouvelle stat n'existe pas encore : rien ne part avant « Créer la stat ».
+        // Toute la ligne repart à chaque envoi : un premarket incomplet retient aussi la séance.
         const markSaved = () =>
           document.querySelector('#premarket-panel .identity').hidden &&
           window.saveCue('session-state', () =>
-            (parseFloat(prices[2].value.replace(',', '.')) < parseFloat(prices[3].value.replace(',', '.')))
-              ? 'le HOD est sous le LOD'
-              : null,
+            window.premarketProblem()
+              ? 'en attente du premarket'
+              : parseFloat(prices[2].value.replace(',', '.')) < parseFloat(prices[3].value.replace(',', '.'))
+                ? 'le HOD est sous le LOD'
+                : null,
           );
         prices.forEach((input) => {
           input.addEventListener('input', refresh);
@@ -697,26 +711,79 @@
           el.textContent = ok ? label + ' ' + fmt(((value - base) / base) * 100) : '—';
           el.className = ok ? 'pct' : 'pct muted';
         };
+        const required = () => [$('p-close'), $('p-open'), $('p-high')];
+        window.premarketProblem = () => {
+          if (isNew()) return null;
+          const [close, open, high] = required().map((x) => parse(x.value));
+          if (!(close > 0 && open > 0 && high > 0)) return 'les trois prix premarket sont requis';
+          if (high < open) return "le high PM est sous l'open PM";
+          return null;
+        };
+
+        // En édition, un prix requis vidé le dit sous son champ (une nouvelle stat liste ce qui manque à côté de « Créer »).
         function preview() {
           show($('p-gap'), 'gap', parse($('p-close').value), parse($('p-open').value));
           show($('p-push'), 'push PM', parse($('p-open').value), parse($('p-high').value));
+          const edit = !isNew();
+          required().forEach((input) => {
+            const empty = edit && !(parse(input.value) > 0);
+            input.classList.toggle('invalid', empty);
+            if (empty) {
+              const out = input.nextElementSibling;
+              out.textContent = 'requis';
+              out.className = 'pct warn';
+            }
+          });
+          if (edit && parse($('p-high').value) < parse($('p-open').value)) {
+            $('p-push').textContent = "le high PM est sous l'open PM";
+            $('p-push').className = 'pct warn';
+          }
+          guardClose();
           refreshCreate();
         }
         document.querySelectorAll('#premarket-panel [data-pm]').forEach((i) => i.addEventListener('input', preview));
 
+        // « Fermer » avec un premarket bloqué : les modifications en attente ne sont pas parties, on le demande avant de les perdre.
+        const close = $('panel-close');
+        function guardClose() {
+          const blocked = !!window.premarketProblem();
+          if (blocked) {
+            close.dataset.confirmTitle = 'Quitter sans enregistrer ?';
+            close.dataset.confirmBody =
+              'Le premarket est incomplet : les modifications en attente ne sont pas enregistrées. En quittant, la stat garde ses dernières valeurs enregistrées.';
+            close.dataset.confirmOk = 'Quitter sans enregistrer';
+          } else {
+            delete close.dataset.confirmTitle;
+            delete close.dataset.confirmBody;
+            delete close.dataset.confirmOk;
+          }
+        }
+
         // En édition, chaque champ du premarket s'enregistre à la sortie ; une nouvelle stat attend « Créer la stat ».
         const isNew = () => !panel.querySelector('.identity').hidden;
+        let lastSaved = null;
+        const snapshot = () => (lastSaved = inputs().map((i) => i.value));
         document.querySelectorAll('#premarket-panel .premarket input').forEach((i) =>
           i.addEventListener('change', () => {
             if (isNew()) return;
-            window.saveCue('premarket-state', () => {
-              const [close, open, high] = [$('p-close'), $('p-open'), $('p-high')].map((x) => parse(x.value));
-              if (!(close > 0 && open > 0 && high > 0)) return 'les trois prix premarket sont requis';
-              if (high < open) return "le high PM est sous l'open PM";
-              return null;
-            });
+            window.saveCue('premarket-state', window.premarketProblem);
+            if (!window.premarketProblem()) snapshot();
           }),
         );
+
+        let leaving = false;
+        close.addEventListener('pointerdown', () => (leaving = !!close.dataset.confirmTitle));
+        document.addEventListener('close', (e) => {
+          if (!e.target.matches?.('dialog.confirm') || !leaving) return;
+          leaving = false;
+          if (e.target.returnValue !== 'ok') return;
+          inputs().forEach((i, k) => (i.value = lastSaved[k]));
+          inputs().forEach((i) => i.dispatchEvent(new Event('input')));
+          $('premarket-state').className = 'save-state';
+          $('premarket-state').textContent = '';
+          $('session-state').className = 'save-state';
+          $('session-state').textContent = '';
+        }, true);
 
         const panel = $('premarket-panel');
         const session = $('session-panel');
@@ -767,10 +834,12 @@
             day.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' }) + ' · GUS';
           panel.querySelectorAll('[data-mode]').forEach((el) => (el.hidden = el.dataset.mode === 'new'));
           saved = null;
+          snapshot();
           window.saveCue('premarket-state');
           window.saveCue('session-state');
         }, true);
 
+        snapshot();
         preview();
       })();
     </script>

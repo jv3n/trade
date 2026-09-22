@@ -278,6 +278,12 @@ shared between users — a stat always belongs to its user.
 - **No « Save » button** : each card shows where it stands next to its title — « saving… », then
   « ✓ saved at 09:42 », or in red « not saved — … » when the server refuses (PM high under the PM
   open, HOD under the LOD). Typing stays fast during the session, and it is always clear what is in.
+- **A required premarket price left empty** (#340) — clearing a price to retype it is ordinary, so
+  it must never lose anything silently : the field says « required » under itself (amber, like « PM
+  high under the PM open »), the premarket card reads « not saved — the three premarket prices are
+  required », and since every save sends the whole row, the session card holds too (« not saved —
+  waiting for the premarket »). **« Close »** in that state asks « Leave without saving ? » ; leaving
+  puts back the last saved values, staying lets the price be retyped — which then saves everything.
 
 **No push at the open** (#302) : some days have everything of a GUS in the premarket but
 the stock never pushes after the open — GLND on 2026-09-21 dropped straight from the open and only
