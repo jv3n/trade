@@ -82,7 +82,7 @@
           </div>
           <p class="muted" id="reco-hint" style="margin: 8px 0 0; font-size: 12px">
             Aucun écart : le rapprochement est simplement horodaté. En cas d'écart, une ligne « Correction » est créée pour caler le solde
-            sur TradeZero.
+            sur TradeZero. Un solde négatif est refusé, et un écart de plus de 20 % du solde calculé demande une confirmation renforcée.
           </p>
           <p class="muted" style="margin: 10px 0 0; font-size: 12px">
             Derniers rapprochements : 18/09 ✓ · 17/09 ✓ · 16/09 ✓ · 15/09 ✓ · 12/09 <span class="loss">−12,40</span>
@@ -273,11 +273,27 @@
           const v = parseFloat(input.value.replace(/s/g, '').replace(',', '.'));
           if (isNaN(v)) return;
           const gap = Math.round((v - appBalance) * 100) / 100;
+          // Un solde négatif n'existe pas chez le broker : refusé avant tout calcul (#307).
+          if (v < 0) {
+            out.textContent = '—';
+            out.className = 'input muted';
+            btn.disabled = true;
+            hint.textContent = 'Un solde négatif est impossible : corrige le montant lu sur TradeZero.';
+            return;
+          }
+          btn.disabled = false;
           if (gap === 0) {
             out.textContent = '0,00 ✓';
             out.className = 'input gain';
             btn.textContent = 'Valider le rapprochement';
             hint.textContent = 'Aucun écart : le rapprochement est simplement horodaté.';
+          } else if (Math.abs(gap) > 0.2 * appBalance) {
+            // Au-delà de 20 % du solde calculé, c'est plus probablement une faute de frappe (#307).
+            out.textContent = (gap > 0 ? '+' : '−') + fmt(Math.abs(gap));
+            out.className = 'input loss';
+            btn.textContent = 'Créer la correction';
+            hint.textContent =
+              'Écart de plus de 20 % du solde calculé : la confirmation le signalera comme inhabituel avant de réécrire le compte.';
           } else {
             out.textContent = (gap > 0 ? '+' : '−') + fmt(Math.abs(gap));
             out.className = 'input ' + (gap > 0 ? 'gain' : 'loss');

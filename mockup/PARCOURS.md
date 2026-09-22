@@ -409,6 +409,11 @@ compares it with the computed one. No gap → the reconciliation is simply times
 "correction" line puts the balance on the TradeZero figure. It catches whatever the adjusted P&L
 figures didn't cover (borrowing fees, rounding…).
 
+**A typed balance is checked before it rewrites the account** (#307) : a **negative** balance is
+refused on the field (the broker never shows one) and the button stays disabled ; a gap **above
+20 % of the computed balance** still goes through, but its confirmation says so and reads as a
+warning — at that size it is a typo far more often than a real drift.
+
 **Screen** : [`compte.html`](compte.html) — USD / CAD balance, the morning reconciliation panel
 (live gap), the history of the last reconciliations, the balance curve, the movements list.
 

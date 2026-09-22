@@ -243,7 +243,7 @@
                     </div>
                     <p class="muted" id="reco-hint" style="margin: 8px 0 0; font-size: 12px">
                       Sans écart, le rapprochement est simplement horodaté. Avec un écart, une ligne « Correction » cale le solde sur
-                      TradeZero.
+                      TradeZero. Un solde négatif est refusé ; un écart de plus de 20 % demande une confirmation renforcée.
                     </p>
                   </div>
                   <div></div>
@@ -433,6 +433,14 @@
             return;
           }
           const gap = Math.round((v - appBalance) * 100) / 100;
+          if (v < 0) {
+            out.textContent = '—';
+            out.className = 'input muted';
+            btn.disabled = true;
+            hint.textContent = 'Un solde négatif est impossible : corrige le montant lu sur TradeZero.';
+            return;
+          }
+          btn.disabled = false;
           if (gap === 0) {
             out.textContent = '0,00 ✓';
             out.className = 'input gain';
