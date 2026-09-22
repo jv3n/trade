@@ -10,12 +10,13 @@ export type { Language };
 export const SUPPORTED_LANGUAGES: readonly Language[] = ['fr', 'en'];
 
 /**
- * Flags labelling the languages in the UI : 🇫🇷 reads more universally than 🇨🇦 even though the
- * user is Canadian, and 🇬🇧 is the convention for international English.
+ * Two-letter tags labelling the languages in the UI. Flag emojis used to sit here, but Windows
+ * ships no glyph for them and rendered boxed letters instead (#318) — the letters themselves are
+ * what a reader gets either way, minus the box.
  */
-const LANGUAGE_FLAGS: Readonly<Record<Language, string>> = {
-  fr: '🇫🇷',
-  en: '🇬🇧',
+const LANGUAGE_TAGS: Readonly<Record<Language, string>> = {
+  fr: 'FR',
+  en: 'EN',
 };
 
 /**
@@ -76,9 +77,9 @@ export class LanguageService {
     this.set(this.lang() === 'fr' ? 'en' : 'fr');
   }
 
-  /** Flag emoji for a language, suitable for inline display next to the name. */
-  flag(lang: Language): string {
-    return LANGUAGE_FLAGS[lang];
+  /** Two-letter tag for a language, shown next to its name. */
+  tag(lang: Language): string {
+    return LANGUAGE_TAGS[lang];
   }
 
   private apply(lang: Language): void {

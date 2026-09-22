@@ -7,7 +7,7 @@ import * as Stories from './card.stories';
 
 Material's `<mat-card>` restyled via the lib (`libs/ui/src/lib/card/card.scss`). Three appearances are supported, each with its own token group :
 
-- **`appearance="raised"`** *(default — M3 elevated)* — slightly raised surface, soft shadow. Dashboard tiles, configuration sections.
+- **`appearance="raised"`** _(default — M3 elevated)_ — slightly raised surface, soft shadow. Dashboard tiles, configuration sections.
 - **`appearance="filled"`** — denser surface, no shadow. Inline groupings (card inside a card, or card on same-toned background).
 - **`appearance="outlined"`** — transparent fill, hairline border. Selectable / clickable surfaces.
 
@@ -26,27 +26,27 @@ Use the **Controls** panel on the right to flip the appearance and the header / 
   code={`import { StbCardModule } from '@portfolioai/ui';
 
 @Component({
-  imports: [StbCardModule],
-  template: \`
-    <mat-card appearance="raised">
-      <mat-card-header>
-        <mat-card-title>Trading journal</mat-card-title>
-        <mat-card-subtitle>Last 30 days</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>Log every trade with its setup, execution and review.</mat-card-content>
-      <mat-card-actions align="end">
-        <button mat-button>Cancel</button>
-        <button mat-flat-button>Confirm</button>
-      </mat-card-actions>
-    </mat-card>
-  \`,
+imports: [StbCardModule],
+template: \`
+<mat-card appearance="raised">
+<mat-card-header>
+<mat-card-title>Trading journal</mat-card-title>
+<mat-card-subtitle>Last 30 days</mat-card-subtitle>
+</mat-card-header>
+<mat-card-content>Log every trade with its setup, execution and review.</mat-card-content>
+<mat-card-actions align="end">
+<button mat-button>Cancel</button>
+<button mat-flat-button>Confirm</button>
+</mat-card-actions>
+</mat-card>
+\`,
 })`}
 />
 
 ## Appearances
 
 <Markdown>
-{`
+  {`
 | Appearance        | Container                            | Use it for                                                |
 | ----------------- | ------------------------------------ | --------------------------------------------------------- |
 | \`raised\`          | \`--color-surface\` + \`--shadow\`       | Dashboard tiles, configuration sections (default).        |

@@ -19,7 +19,9 @@
   p {
     margin: 0;
     font-size: s.$font-md;
-    color: var(--color-text-dim);
+    // Muted, not dim : the palette reaches AA either way, but a page subtitle is read, not
+    // glanced at — dim made it disappear on the dark theme (#318).
+    color: var(--color-text-muted);
   }
 }
 
@@ -125,7 +127,7 @@
   gap: s.$space-md;
   padding: s.$space-4xl s.$space-2xl;
   text-align: center;
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
 
   mat-icon {
     font-size: s.$icon-xl;

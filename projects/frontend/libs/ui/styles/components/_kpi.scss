@@ -44,7 +44,9 @@
 
 .kpi__sub {
   font-size: s.$font-xs;
-  color: var(--color-text-faint);
+  // Copy, not a placeholder : the faintest token belongs to disabled states and watermarks, and
+  // this line is read on every page (« 4 à compléter · 266 au total ») — #318.
+  color: var(--color-text-muted);
 
   a {
     display: inline-flex;

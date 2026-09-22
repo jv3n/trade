@@ -51,7 +51,7 @@ Import `StbTableModule` + `StbSortHeaderModule` together in the consumer compone
 ## Column variants
 
 <Markdown>
-{`
+  {`
 | Variant            | Effect                                    | Use it for                                |
 | ------------------ | ----------------------------------------- | ----------------------------------------- |
 | \`stbCol="numeric"\` | Right-aligned, \`font-variant: tabular-nums\` | Prices, sizes, PnL — anything that benefits from digit alignment. |
@@ -60,7 +60,7 @@ Import `StbTableModule` + `StbSortHeaderModule` together in the consumer compone
 `}
 </Markdown>
 
-**Caveat** — `mat-table` does not propagate column-level classes to its cells, so `[stbCol]` must be set on **both** the `<th mat-header-cell>` *and* the `<td mat-cell>` separately. Skipping the header drops the alignment on the column heading.
+**Caveat** — `mat-table` does not propagate column-level classes to its cells, so `[stbCol]` must be set on **both** the `<th mat-header-cell>` _and_ the `<td mat-cell>` separately. Skipping the header drops the alignment on the column heading.
 
 ## Default
 

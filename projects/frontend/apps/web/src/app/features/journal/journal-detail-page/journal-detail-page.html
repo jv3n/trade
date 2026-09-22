@@ -81,9 +81,7 @@
       <div class="card kpi">
         <div class="kpi__label">{{ 'journal.detail.kpi.avgPrices' | translate }}</div>
         <div class="kpi__value">
-          {{
-            preview().avgEntry !== null ? (preview().avgEntry | price: preview().avgEntry) : '—'
-          }}
+          {{ preview().avgEntry !== null ? (preview().avgEntry | price: preview().avgEntry) : '—' }}
           →
           {{ preview().avgExit !== null ? (preview().avgExit | price: preview().avgEntry) : '—' }}
         </div>
