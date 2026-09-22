@@ -232,13 +232,18 @@ push once it has happened, the flags as they come — and the rest after the 4 p
 | SSR | yes / no | |
 | Price < $1 | yes / no | |
 | Entry after 11 am | yes / no | Kept even though in theory I shouldn't be doing it |
+| Institutions < 20 % | yes / no | Less than 20 % of the float held by institutions, read on the broker screen — ticked by hand (#349) |
 
 **What the app computes** : push at the open %, HOD %, LOD %, EOD %, all **vs the open** — e.g. push
 at the open (4.62 − 4.20) ÷ 4.20 = +10.0 %.
 
-**Removed** from the old sheet : institutional % and "> 20 % institutional". It is a GUS condition
-filtered upstream : a ticker with heavy institutional ownership never becomes a candidate, so the
-figure adds nothing to the stat. Removed too : the RADAR / MANUAL / IMPORT origin and the stats set
+**Institutional ownership** came back as a flag (#349) — « Institutions < 20 % », ticked by hand
+like the other three. It is a GUS entry criterion filtered upstream (`docs/pattern/GUS.md`, #7), so
+it is expected to be ticked most days ; keeping the trace on the stat is what lets the exceptions be
+seen later. The **exact percentage** stays out : the flag is the unit of comparison, and the
+threshold lives in the label, so it can move without touching the data.
+
+**Removed** from the old sheet : the RADAR / MANUAL / IMPORT origin and the stats set
 shared between users — a stat always belongs to its user.
 
 **Decided** :
