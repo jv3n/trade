@@ -12,9 +12,8 @@ on:
       - '.github/workflows/frontend.yml'
 
 # Workflow-level baseline — every job inherits `contents: read`. Jobs that need to write
-# elsewhere (PR coverage comment below) override at job scope. Declaring this explicit baseline
-# revokes every other implicit scope on `GITHUB_TOKEN`, satisfying the CodeQL
-# "missing-explicit-permissions" hint.
+# elsewhere override at job scope. Declaring this explicit baseline revokes every other implicit
+# scope on `GITHUB_TOKEN`, satisfying the CodeQL "missing-explicit-permissions" hint.
 permissions:
   contents: read
 
@@ -30,10 +29,9 @@ jobs:
     runs-on: ubuntu-24.04
 
     # Redundant with the workflow-level block above, but the scanners want the scope declared on
-    # the job too. `pull-requests: write` is what lets the sticky coverage comment be posted.
+    # the job too.
     permissions:
       contents: read
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v7
@@ -104,20 +102,3 @@ jobs:
             console.log(`| ${label} | ${m.covered} | ${m.total} | ${m.pct.toFixed(1)}% |`);
           }
           JS
-
-      # Sticky PR comment with the frontend coverage table + per-file diff vs base. The action
-      # reads the `coverage-summary.json` we already generate (json-summary reporter wired in
-      # `angular.json > test > configurations > coverage`) and edits a single comment on every
-      # push to the PR rather than spamming. `name: Frontend` disambiguates from the sibling
-      # backend comment posted by the Kover action in `backend.yml`. No-op on `push master`
-      # because there's no PR to comment on — guarded by the `pull_request` event check.
-      - name: Comment coverage on PR
-        if: |
-          always()
-          && github.event_name == 'pull_request'
-          && hashFiles('projects/frontend/coverage/web/coverage-summary.json') != ''
-        uses: davelosert/vitest-coverage-report-action@v2
-        with:
-          name: Frontend
-          json-summary-path: projects/frontend/coverage/web/coverage-summary.json
-          json-final-path: projects/frontend/coverage/web/coverage-final.json
