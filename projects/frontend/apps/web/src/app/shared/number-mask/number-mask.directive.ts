@@ -1,7 +1,9 @@
+import { NumberSymbol, getLocaleNumberSymbol } from '@angular/common';
 import {
   Directive,
   ElementRef,
   HostListener,
+  LOCALE_ID,
   effect,
   inject,
   input,
@@ -23,10 +25,13 @@ import {
  *     to it (`15,3` then `200` gave `15200`).
  *
  * Formatting :
- *   - **Comma decimal separator, no thousand grouping** (`3,21`, `1234,56`). French-style — the
- *     app is FR-first and the monetary fields read more naturally with a comma. The internal
- *     numeric value is always a plain JS number ; only the *display* uses the comma. The caret is
- *     preserved across the reformat (tracked by digit / separator index).
+ *   - **The locale's decimal separator, no thousand grouping** (`3,21` in French, `3.21` in
+ *     English) — one setting drives the language and the formats alike (#311, `PARCOURS.md` >
+ *     Interface principles). Typing accepts both `.` and `,` whatever the locale. The internal
+ *     numeric value is always a plain JS number ; only the *display* follows the locale. The caret
+ *     is preserved across the reformat (tracked by digit / separator index).
+ *   - **Blur pads to [decimals]** (#335) : a money field left at `618.2` shows `618.20`, so a
+ *     column of amounts lines up on the separator. An empty field stays empty.
  *
  * Wiring :
  *   - `[appNumberMask]` doesn't pretend to be a `ControlValueAccessor` — Signal Forms native
@@ -53,6 +58,7 @@ import {
 })
 export class NumberMaskDirective {
   private readonly host = inject<ElementRef<HTMLInputElement>>(ElementRef);
+  private readonly separator = getLocaleNumberSymbol(inject(LOCALE_ID), NumberSymbol.Decimal);
 
   /** Number of decimal places allowed (default 2). Set to 0 for integers only. */
   readonly decimals = input(2, { transform: numberAttribute });
@@ -79,7 +85,8 @@ export class NumberMaskDirective {
       const v = this.value();
       const current = parseNumber(this.host.nativeElement.value);
       if (current !== v) {
-        this.host.nativeElement.value = v === null ? '' : formatNumber(v, this.decimals());
+        this.host.nativeElement.value =
+          v === null ? '' : formatNumber(v, this.decimals(), this.separator, true);
       }
     });
   }
@@ -122,7 +129,7 @@ export class NumberMaskDirective {
     // typed (no `toLocaleString` round-trip) so trailing zeros survive while typing — e.g.
     // "12,50" stays "12,50" instead of collapsing to "12,5" mid-entry. Blur does the canonical
     // reformat.
-    const formatted = cleaned.replace('.', ',');
+    const formatted = cleaned.replace('.', this.separator);
     el.value = formatted;
 
     // Restore caret — find the position in `formatted` that comes after `caretDigits` positions
@@ -146,7 +153,7 @@ export class NumberMaskDirective {
     const max = this.max();
     if (num !== null && min !== null && num < min) num = min;
     if (num !== null && max !== null && num > max) num = max;
-    el.value = num === null ? '' : formatNumber(num, this.decimals());
+    el.value = num === null ? '' : formatNumber(num, this.decimals(), this.separator, true);
     this.numberChange.emit(num);
   }
 }
@@ -192,17 +199,18 @@ export function parseNumber(s: string): number | null {
 }
 
 /**
- * Formats a number with a comma decimal separator and no thousand grouping (`1234,56`). Manual /
- * locale-independent so the display is deterministic across environments. `decimals` caps the
- * fractional digits (max, not min — no zero-padding).
+ * Formats a number with [separator] and no thousand grouping (`1234,56`). Manual rather than
+ * `Intl` so the display is deterministic across environments. `decimals` caps the fractional
+ * digits ; [pad] fills them to that many, which is what a field shows once left (#335) — while
+ * typing, trailing zeros must survive as typed, so padding stays off.
  */
-export function formatNumber(n: number, decimals: number): string {
+export function formatNumber(n: number, decimals: number, separator = ',', pad = false): string {
   const negative = n < 0;
   // Round to `decimals` then drop trailing zeros via Number's own toString (dot decimal, no
   // grouping). Values here are small monetary numbers — no exponential-notation risk.
-  const rounded = Number(Math.abs(n).toFixed(decimals));
-  const s = rounded.toString().replace('.', ',');
-  return negative ? '-' + s : s;
+  const abs = Math.abs(n);
+  const s = pad ? abs.toFixed(decimals) : Number(abs.toFixed(decimals)).toString();
+  return (negative ? '-' : '') + s.replace('.', separator);
 }
 
 /**

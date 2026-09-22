@@ -717,7 +717,8 @@
   },
   "language": {
     "fr": "Français",
-    "en": "English"
+    "en": "English",
+    "saveError": "The language could not be saved. Try again."
   },
   "settings": {
     "title": "Settings",

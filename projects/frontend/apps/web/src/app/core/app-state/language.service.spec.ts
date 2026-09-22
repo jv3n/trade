@@ -8,22 +8,27 @@
  * - **set()** — delegates to [AuthService.updatePreferences] (no localStorage) and the resolved
  *   language reflects the change once the (stubbed) backend round-trip updates `currentUser`.
  * - **SSR safety** — on the server platform no `<html lang>` write happens (default `'fr'`).
+ * - **A failed save is said out loud** (#311) — since the locale is fixed at start-up, a language
+ *   change reloads the page ; when the save fails nothing moves at all, so the click would read as
+ *   a dead button without the snackbar.
  */
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { StbToast } from '@portfolioai/ui';
+import { Observable, of, throwError } from 'rxjs';
 import { CurrentUser, PreferencesUpdate } from '../api/auth/auth.repository';
 import { AuthService } from './auth.service';
 import { LanguageService } from './language.service';
 
-function fakeAuth(initial: CurrentUser | null) {
+function fakeAuth(initial: CurrentUser | null, fails = false) {
   const user = signal<CurrentUser | null>(initial);
   const calls: PreferencesUpdate[] = [];
   const stub = {
     currentUser: user.asReadonly(),
     updatePreferences(prefs: PreferencesUpdate): Observable<void> {
       calls.push(prefs);
+      if (fails) return throwError(() => new Error('nope'));
       user.update((u) => (u ? { ...u, ...prefs } : u));
       return of(undefined);
     },
@@ -35,16 +40,22 @@ function makeUser(language?: 'fr' | 'en'): CurrentUser {
   return { email: 'u@example.com', displayName: null, role: 'USER', language };
 }
 
-function setup(initial: CurrentUser | null, platform: 'browser' | 'server' = 'browser') {
-  const { stub, calls } = fakeAuth(initial);
+function setup(
+  initial: CurrentUser | null,
+  platform: 'browser' | 'server' = 'browser',
+  options: { failing?: boolean } = {},
+) {
+  const { stub, calls } = fakeAuth(initial, options.failing);
+  const errors: string[] = [];
   TestBed.configureTestingModule({
     providers: [
       provideTranslateService({ lang: 'fr' }),
       { provide: AuthService, useValue: stub },
+      { provide: StbToast, useValue: { error: (m: string) => errors.push(m) } },
       { provide: PLATFORM_ID, useValue: platform },
     ],
   });
-  return { service: TestBed.inject(LanguageService), calls };
+  return { service: TestBed.inject(LanguageService), calls, errors };
 }
 
 describe('LanguageService', () => {
@@ -74,6 +85,23 @@ describe('LanguageService', () => {
 
     expect(calls).toEqual([{ language: 'en' }]);
     expect(service.lang()).toBe('en');
+  });
+
+  it('says so when the language could not be saved', () => {
+    const { service, errors } = setup(makeUser('fr'), 'browser', { failing: true });
+
+    service.set('en');
+
+    expect(errors).toEqual(['language.saveError']);
+    expect(service.lang()).toBe('fr');
+  });
+
+  it('asks for nothing when the language picked is the one already applied', () => {
+    const { service, calls } = setup(makeUser('fr'));
+
+    service.set('fr');
+
+    expect(calls).toEqual([]);
   });
 
   it('does not touch the DOM on the server platform', () => {

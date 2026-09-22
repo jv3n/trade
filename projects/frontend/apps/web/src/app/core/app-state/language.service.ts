@@ -1,6 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, computed, effect, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { StbToast } from '@portfolioai/ui';
 import { Language } from '../api/auth/auth.repository';
 import { AuthService } from './auth.service';
 
@@ -37,6 +38,7 @@ export class LanguageService {
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly translate = inject(TranslateService);
   private readonly auth = inject(AuthService);
+  private readonly toasts = inject(StbToast);
   readonly supported = SUPPORTED_LANGUAGES;
 
   /** Resolved language : the user's preference, else the browser locale, else `'fr'`. */
@@ -50,9 +52,23 @@ export class LanguageService {
     effect(() => this.apply(this.lang()));
   }
 
-  /** Persists the choice on the user ; [lang] + the effect re-apply once `currentUser` updates. */
+  /**
+   * Persists the choice on the user ; [lang] + the effect re-apply once `currentUser` updates.
+   *
+   * Then **reloads** : `LOCALE_ID` is resolved once at start-up (#311), so the pipes already
+   * rendered would keep the old separator and date format. Reloading is the honest way to keep the
+   * whole page in one language — and this is a settings-page action, not something done mid-flow.
+   */
   set(lang: Language): void {
-    this.auth.updatePreferences({ language: lang }).subscribe();
+    if (lang === this.lang()) return;
+    this.auth.updatePreferences({ language: lang }).subscribe({
+      next: () => {
+        if (this.isBrowser) location.reload();
+      },
+      // Without the reload nothing at all moves on screen, so a silent failure would read as a
+      // dead button : say it rather than leave the click unanswered.
+      error: () => this.toasts.error(this.translate.instant('language.saveError')),
+    });
   }
 
   /** Quick toggle — useful for a 2-language app where a single button cycles through. */

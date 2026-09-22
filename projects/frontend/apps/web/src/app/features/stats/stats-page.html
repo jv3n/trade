@@ -598,7 +598,7 @@
               {{ 'stats.fields.locate' | translate }}
             </th>
             <td mat-cell *matCellDef="let s" stbCol="numeric">
-              {{ s.locatePerShare !== null ? (s.locatePerShare | number: '1.2-4') : '—' }}
+              {{ s.locatePerShare !== null ? (s.locatePerShare | price) : '—' }}
             </td>
           </ng-container>
 
@@ -607,7 +607,7 @@
               {{ 'stats.fields.openPriceShort' | translate }}
             </th>
             <td mat-cell *matCellDef="let s" stbCol="numeric" class="group-start">
-              {{ s.openPrice !== null ? (s.openPrice | number: '1.2-4') : '—' }}
+              {{ s.openPrice !== null ? (s.openPrice | price) : '—' }}
             </td>
           </ng-container>
 

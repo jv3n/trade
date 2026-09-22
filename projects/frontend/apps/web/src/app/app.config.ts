@@ -1,7 +1,11 @@
+import { registerLocaleData } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import localeEn from '@angular/common/locales/en';
+import localeFr from '@angular/common/locales/fr';
 import {
   ApplicationConfig,
   ErrorHandler,
+  LOCALE_ID,
   inject,
   isDevMode,
   provideAppInitializer,
@@ -17,6 +21,7 @@ import * as Sentry from '@sentry/browser';
 
 import { routes } from './app.routes';
 import { AuthService } from './core/app-state/auth.service';
+import { LanguageService } from './core/app-state/language.service';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { provideRepositories } from './core/providers';
 
@@ -36,8 +41,17 @@ class GlitchtipErrorHandler implements ErrorHandler {
   }
 }
 
+registerLocaleData(localeFr);
+registerLocaleData(localeEn);
+
 export const appConfig: ApplicationConfig = {
   providers: [
+    // One setting drives the wording **and** the formats (#311, cf. `PARCOURS.md` > Interface
+    // principles) : `LanguageService.lang` feeds `LOCALE_ID`, so the decimal separator and the
+    // date format follow the language, never the machine's regional settings. `/api/me` is primed
+    // by the initializer below, so the user's own choice is in before the first pipe runs ; the
+    // value is read once, which is why changing the language reloads the page.
+    { provide: LOCALE_ID, useFactory: () => inject(LanguageService).lang() },
     // No `zone.js` is installed ; the opt-in is explicit rather than implicit.
     provideZonelessChangeDetection(),
     provideBrowserGlobalErrorListeners(),

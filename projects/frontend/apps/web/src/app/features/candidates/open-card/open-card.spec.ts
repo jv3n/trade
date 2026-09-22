@@ -158,6 +158,17 @@ describe('OpenCard', () => {
     expect(empty.card.dayNoPushRate()).toBeNull();
   });
 
+  // #311 : « 3,9 × 15,3 % » must reproduce the target price printed beside it — the displayed
+  // push drives it, not the unrounded average behind the reference.
+  it('computes the target price from the push as it is displayed', () => {
+    const { card } = setup([makeCandidate({ openPrice: 3.9 })], {
+      GUS: { ...GUS_REFERENCES, average: 15.32 },
+    });
+
+    expect(card.rows()[0].push).toBe(15.3);
+    expect(card.rows()[0].target).toBeCloseTo(4.4967, 4);
+  });
+
   // ---- Saving ----
 
   it('shows a past day as text, with no field to type in', () => {

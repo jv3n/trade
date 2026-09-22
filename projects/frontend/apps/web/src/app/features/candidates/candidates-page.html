@@ -260,7 +260,7 @@
               {{ 'candidates.fields.previousCloseShort' | translate }}
             </th>
             <td mat-cell *matCellDef="let c" stbCol="numeric">
-              {{ c.previousClose | number: '1.2-4' }}
+              {{ c.previousClose | price }}
             </td>
           </ng-container>
 
@@ -268,14 +268,14 @@
             <th mat-header-cell *matHeaderCellDef stbCol="numeric">
               {{ 'candidates.fields.pmOpenShort' | translate }}
             </th>
-            <td mat-cell *matCellDef="let c" stbCol="numeric">{{ c.pmOpen | number: '1.2-4' }}</td>
+            <td mat-cell *matCellDef="let c" stbCol="numeric">{{ c.pmOpen | price }}</td>
           </ng-container>
 
           <ng-container matColumnDef="pmHigh">
             <th mat-header-cell *matHeaderCellDef stbCol="numeric">
               {{ 'candidates.fields.pmHighShort' | translate }}
             </th>
-            <td mat-cell *matCellDef="let c" stbCol="numeric">{{ c.pmHigh | number: '1.2-4' }}</td>
+            <td mat-cell *matCellDef="let c" stbCol="numeric">{{ c.pmHigh | price }}</td>
           </ng-container>
 
           <ng-container matColumnDef="gap">
@@ -323,7 +323,7 @@
               {{ 'candidates.fields.locateShort' | translate }}
             </th>
             <td mat-cell *matCellDef="let c" stbCol="numeric">
-              {{ c.locatePerShare !== null ? (c.locatePerShare | number: '1.2-4') : '—' }}
+              {{ c.locatePerShare !== null ? (c.locatePerShare | price) : '—' }}
             </td>
           </ng-container>
 

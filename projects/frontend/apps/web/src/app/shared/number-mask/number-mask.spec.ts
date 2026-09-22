@@ -86,6 +86,21 @@ describe('NumberMaskDirective helpers', () => {
       expect(formatNumber(3.149, 2)).toBe('3,15');
     });
 
+    // #335 : a money field left at `618,2` read like an entry cut short, and a column of prices
+    // with ragged decimals is harder to scan than one aligned on the separator.
+    it('pads to the decimals when asked — what a field shows once left', () => {
+      expect(formatNumber(618.2, 2, ',', true)).toBe('618,20');
+      expect(formatNumber(7.2, 4, ',', true)).toBe('7,2000');
+      expect(formatNumber(3, 2, ',', true)).toBe('3,00');
+    });
+
+    // #311 : one setting drives the language and the formats, so the separator comes from the
+    // locale — an English display never mixes `8,5` and `8.6` in the same row.
+    it('takes the decimal separator it is given', () => {
+      expect(formatNumber(1234.56, 2, '.')).toBe('1234.56');
+      expect(formatNumber(618.2, 2, '.', true)).toBe('618.20');
+    });
+
     it('handles negative numbers', () => {
       expect(formatNumber(-1234.5, 2)).toBe('-1234,5');
     });

@@ -13,6 +13,7 @@ import { Candidate } from '../../../core/api/candidates/candidates.model';
 import { Pattern } from '../../../core/api/shared/pattern.model';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 import { percentChange } from '../../../shared/percent/percent';
+import { PricePipe } from '../../../shared/price/price.pipe';
 import {
   MAX_TARGET_PUSH_PERCENT,
   UNUSUAL_TARGET_PUSH_PERCENT,
@@ -81,6 +82,7 @@ interface OpenRow {
   selector: 'app-open-card',
   imports: [
     DecimalPipe,
+    PricePipe,
     NumberMaskDirective,
     StbButtonModule,
     StbButtonToggleModule,
@@ -149,9 +151,11 @@ export class OpenCard {
   readonly rows = computed<OpenRow[]>(() => {
     const kind = this.kind();
     return this.candidates().map((candidate) => {
-      const reference = this.references()[candidate.pattern]?.[kind] ?? null;
+      // The number on screen is the number used (#311) : the push is shown at one decimal, so the
+      // target price is computed from that one — `3.9 × 15.3 %` has to reproduce what is displayed.
+      const reference = roundToOneDecimal(this.references()[candidate.pattern]?.[kind] ?? null);
       const custom = candidate.targetPushPercent !== null;
-      const push = custom ? candidate.targetPushPercent : reference;
+      const push = custom ? roundToOneDecimal(candidate.targetPushPercent) : reference;
       const target = targetPrice(candidate.openPrice, push);
       return {
         candidate,
@@ -209,4 +213,9 @@ export class OpenCard {
   resetPush(row: OpenRow): void {
     this.atOpenChange.emit({ candidate: row.candidate, patch: { targetPushPercent: null } });
   }
+}
+
+/** One decimal — the precision the push is both shown at and computed from (#311). */
+function roundToOneDecimal(value: number | null): number | null {
+  return value === null ? null : Math.round(value * 10) / 10;
 }
