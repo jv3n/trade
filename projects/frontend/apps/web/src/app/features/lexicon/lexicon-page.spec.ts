@@ -55,6 +55,27 @@ describe('LexiconPage', () => {
     expect(page.letters()).toEqual(['#', 'B', 'D', 'G']);
   });
 
+  // #314 : the grid read « Average », « EOD », « LOD », « Average Push » — sorting and the A-Z
+  // index ran on the stored term while the card shows the acronym.
+  it('orders and files an acronym under the heading the card shows', () => {
+    rows.push(
+      entry({ id: '5', term: 'Average End of Day (EOD)', fr: 'Moyenne EOD', en: 'Average EOD' }),
+      entry({ id: '6', term: 'Average Push', fr: 'Push moyen', en: 'Average push' }),
+    );
+    const page = TestBed.createComponent(LexiconPage).componentInstance;
+
+    expect(page.visible().map((c) => c.heading)).toEqual([
+      '% of Total Equity @ Risk',
+      'Average Push',
+      'Borrow fee',
+      'DT',
+      'EOD',
+      'GUS',
+    ]);
+    // E for the acronym, not A for « Average End of Day ».
+    expect(page.letters()).toContain('E');
+  });
+
   it('finds a card by the words its acronym stands for', () => {
     const page = TestBed.createComponent(LexiconPage).componentInstance;
 

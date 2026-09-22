@@ -17,7 +17,9 @@ import org.springframework.web.server.ResponseStatusException
  * Integration test on [LexiconEntryService] + JPA → Postgres (Testcontainers via the
  * launcher-session bootstrap). Pins the lexicon CRUD that backs the `/lexicon` page :
  *
- * - **The seed loaded** — the 117 hand-authored terms are present (bilingual) and resolve.
+ * - **The seed loaded** — the 114 hand-authored terms are present (bilingual) and resolve. Three
+ *   went out in `V6` : two averages colliding with a plain term, and one duplicate definition
+ *   (#314).
  * - **Listing is alphabetical** (case-insensitive) — the order the glossary reads in.
  * - **Create / update / delete** round-trip through the real DB.
  * - **Case-insensitive unique term** — a duplicate (any case) is rejected with 409, not persisted.
@@ -37,10 +39,16 @@ class LexiconIntegrationTest {
   @Test
   fun `the migrations seed the full bilingual glossary`() {
     val all = service.findAll()
-    assertEquals(117, all.size, "seed should load all 117 terms")
-    val gus = all.single { it.term == "GUS" }
-    assertEquals("Gap Up Short", gus.definitionFr, "French seed (V8)")
-    assertEquals("Gap Up Short", gus.definitionEn, "English seed (V8)")
+    assertEquals(114, all.size, "seed should load all 114 terms")
+    // GUS used to carry its expansion as its definition ; `V6` gave it a real one (#314).
+    val gus = all.single { it.term == "Gap Up Short (GUS)" }
+    assertTrue(
+      gus.definitionFr.startsWith("Shorter un titre"),
+      "French definition, not the expansion",
+    )
+    assertTrue(gus.definitionEn.startsWith("Shorting a stock"), "English definition")
+    assertTrue(all.none { it.term == "Average End of Day (EOD)" }, "the colliding average is gone")
+    assertTrue(all.none { it.term == "% Capital at risk" }, "the duplicate definition is gone")
   }
 
   @Test
@@ -50,7 +58,8 @@ class LexiconIntegrationTest {
     // collation (en_US) — which weighs spaces / punctuation differently than Kotlin's code-unit
     // `compareTo` (e.g. "Stop Loss" vs "Stop-Limit"). The checkpoints below avoid those edge cases.
     val terms = service.findAll().map { it.term }
-    val order = listOf("Account Equity", "Bearish", "Close", "GUS", "Push", "Win Rate")
+    val order =
+      listOf("Account Equity", "Bearish", "Close", "Gap Up Short (GUS)", "Push", "Win Rate")
     val indices = order.map { terms.indexOf(it) }
     assertTrue(indices.none { it == -1 }, "all checkpoint terms must be present")
     assertEquals(indices.sorted(), indices, "checkpoints must appear in alphabetical order")
@@ -71,7 +80,7 @@ class LexiconIntegrationTest {
     assertEquals("Halt", created.term, "term is trimmed")
     assertEquals("Suspension de cotation", created.definitionFr, "FR definition is trimmed")
     assertEquals("Trading halt", created.definitionEn, "EN definition is trimmed")
-    assertEquals(118, repo.count())
+    assertEquals(115, repo.count())
   }
 
   @Test
@@ -84,7 +93,7 @@ class LexiconIntegrationTest {
         )
       }
     assertEquals(HttpStatus.CONFLICT, ex.statusCode)
-    assertEquals(117, repo.count(), "nothing persisted on conflict")
+    assertEquals(114, repo.count(), "nothing persisted on conflict")
   }
 
   @Test
@@ -110,7 +119,7 @@ class LexiconIntegrationTest {
 
   @Test
   fun `update changes both definitions and persists`() {
-    val target = service.findAll().first { it.term == "GUS" }
+    val target = service.findAll().first { it.term == "Gap Up Short (GUS)" }
 
     val updated =
       service.update(
@@ -129,7 +138,7 @@ class LexiconIntegrationTest {
 
   @Test
   fun `update rejects renaming onto another existing term`() {
-    val gus = service.findAll().first { it.term == "GUS" }
+    val gus = service.findAll().first { it.term == "Gap Up Short (GUS)" }
 
     // "Short" already exists in the seed — renaming GUS to it must 409.
     val ex =
@@ -144,11 +153,11 @@ class LexiconIntegrationTest {
 
   @Test
   fun `delete removes the entry`() {
-    val target = service.findAll().first { it.term == "GUS" }
+    val target = service.findAll().first { it.term == "Gap Up Short (GUS)" }
 
     service.delete(target.id)
 
-    assertEquals(116, repo.count())
-    assertTrue(service.findAll().none { it.term == "GUS" })
+    assertEquals(113, repo.count())
+    assertTrue(service.findAll().none { it.term == "Gap Up Short (GUS)" })
   }
 }
