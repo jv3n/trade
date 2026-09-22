@@ -89,9 +89,10 @@ Same set-up as production, pointed at the staging service :
 - *Authorized JavaScript origins* : add `https://staging.tickerstory.org`
 - *Authorized redirect URIs* : add `https://staging.tickerstory.org/login/oauth2/code/google`
 
-### 7. Demo data
+### 7. Demo data (optional)
 
-Log in once on https://staging.tickerstory.org/ (it creates your user), then load the mockup data :
+To start from the mockup data rather than an empty sheet, log in once on
+https://staging.tickerstory.org/ (it creates your user), then :
 
 ```bash
 psql "postgresql://…pooler.supabase.com:5432/postgres?sslmode=require" \
