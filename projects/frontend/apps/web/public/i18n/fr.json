@@ -628,9 +628,10 @@
     "searchPlaceholder": "Rechercher un terme ou une définition…",
     "clearSearch": "Effacer la recherche",
     "loading": "Chargement du lexique…",
-    "empty": "Le glossaire est vide pour l'instant.",
+    "empty": "Le lexique est vide.",
     "emptyAdmin": "Aucun terme pour l'instant. Clique sur « Ajouter un terme » pour créer le premier.",
     "noMatch": "Aucun terme ne correspond à « {{query}} ».",
+    "noneForLetter": "Aucun terme à la lettre {{letter}}.",
     "confirmDelete": {
       "title": "Supprimer le terme « {{term}} » ?",
       "message": "Le terme et ses définitions française et anglaise sont supprimés définitivement.",
