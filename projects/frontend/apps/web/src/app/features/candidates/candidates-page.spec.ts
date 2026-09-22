@@ -379,13 +379,15 @@ describe('CandidatesPage', () => {
 
   // ---- At the open (#261) ----
 
-  it("fetches the push references of the day's pattern for the card", () => {
+  it("fetches the push references and the no-push rate of the day's pattern for the card", () => {
     const { page, stats } = setup({ list: [makeCandidate()] });
 
     expect(stats.summary).toHaveBeenCalledWith({ pattern: 'GUS' });
     expect(page.pushReferences()).toEqual({
       GUS: { median: 6.8, average: 9.6, thirdQuartile: 14.2, max: 21.5 },
     });
+    // The no-push rate comes with them, over the same completed stats (#332).
+    expect(page.noPushRates()).toEqual({ GUS: { noPush: 0, completed: 10 } });
   });
 
   it('fetches the references once per pattern, not on every reload', () => {

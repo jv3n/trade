@@ -41,7 +41,7 @@ import {
   locatePercent,
   pushPercent,
 } from './candidates.math';
-import { AtOpenChange, OpenCard, PushReferences } from './open-card/open-card';
+import { AtOpenChange, NoPushRate, OpenCard, PushReferences } from './open-card/open-card';
 
 /** The capture form — numbers are `null` until typed. Float and volume in millions. */
 interface CaptureModel {
@@ -161,6 +161,7 @@ export class CandidatesPage {
    * Fetched once per pattern : they only move when a stat is completed.
    */
   readonly pushReferences = signal<Partial<Record<Pattern, PushReferences>>>({});
+  readonly noPushRates = signal<Partial<Record<Pattern, NoPushRate>>>({});
   /** The day's candidates with their derived figures, largest gap first (no gap → last). */
   readonly rows = computed<CandidateRow[]>(() =>
     this.candidates()
@@ -444,20 +445,30 @@ export class CandidatesPage {
     forkJoin(
       missing.map((pattern) =>
         this.stats.summary({ pattern }).pipe(
-          map((summary): PushReferences => ({
-            median: summary.medianPushOpenPercent,
-            average: summary.averagePushOpenPercent,
-            thirdQuartile: summary.thirdQuartilePushOpenPercent,
-            max: summary.maxPushOpenPercent,
+          map((summary): PatternSummary => ({
+            references: {
+              median: summary.medianPushOpenPercent,
+              average: summary.averagePushOpenPercent,
+              thirdQuartile: summary.thirdQuartilePushOpenPercent,
+              max: summary.maxPushOpenPercent,
+            },
+            rate: { noPush: summary.noPushCount, completed: summary.completed },
           })),
           // No summary = no reference, so no target price ; the candidates themselves still show.
-          catchError(() => of(NO_REFERENCES)),
-          map((references) => [pattern, references] as const),
+          catchError(() => of<PatternSummary>({ references: NO_REFERENCES, rate: null })),
+          map(({ references, rate }) => ({ pattern, references, rate })),
         ),
       ),
-    ).subscribe((entries) =>
-      this.pushReferences.update((current) => ({ ...current, ...Object.fromEntries(entries) })),
-    );
+    ).subscribe((loaded) => {
+      this.pushReferences.update((current) => ({
+        ...current,
+        ...Object.fromEntries(loaded.map((l) => [l.pattern, l.references])),
+      }));
+      this.noPushRates.update((current) => ({
+        ...current,
+        ...Object.fromEntries(loaded.filter((l) => l.rate).map((l) => [l.pattern, l.rate])),
+      }));
+    });
   }
 
   /** Clears the form for the next capture — keeps the pattern (a scan is usually one pattern). */
@@ -498,6 +509,12 @@ export class CandidatesPage {
       targetPushPercent: candidate?.targetPushPercent ?? null,
     };
   }
+}
+
+/** What the open card reads from one pattern's stats summary. */
+interface PatternSummary {
+  references: PushReferences;
+  rate: NoPushRate | null;
 }
 
 const NO_REFERENCES: PushReferences = {

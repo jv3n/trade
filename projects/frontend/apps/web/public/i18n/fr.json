@@ -154,6 +154,8 @@
         "thirdQuartile": "3ᵉ quartile",
         "max": "Max"
       },
+      "noPushRate": "{{noPush}} / {{completed}} sans push",
+      "noPushHint": "Jours sans push dans les 10 minutes après l'open : les repères ne les comptent pas",
       "noReference": "Aucune stat complétée pour ce pattern — tape le push à la main.",
       "open": "Open ($)",
       "openOf": "Open de {{ticker}}",

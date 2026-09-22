@@ -308,7 +308,8 @@ that never comes, so they count in the stats and are made easy to single out.
   doesn't have, so they leave these days out — and say so (#332) : next to the references, the
   **no-push rate of the same set** (the checked stats of the pattern, « 1 / 11 without a push (9 %) »),
   so a target built on « the average day pushes 9.6 % » doesn't silently assume a push is coming.
-  It only informs : the default target push still follows the selected reference.
+  It only informs : the default target push still follows the selected reference. Hidden when no
+  day went without a push, like the stats page's KPI.
 
 **Screen** : [`stats.html`](stats.html) — a « Premarket » card and a « Session » card for the stat
 being filled (live percentage preview, fields saved one by one with the save state next to each

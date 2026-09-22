@@ -11,8 +11,13 @@
   font-size: s.$font-xs;
 
   &__label,
-  &__none {
+  &__none,
+  &__no-push {
     color: var(--color-text-muted);
+  }
+
+  &__no-push b {
+    color: var(--color-text);
   }
 }
 

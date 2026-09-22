@@ -154,6 +154,8 @@
         "thirdQuartile": "3rd quartile",
         "max": "Max"
       },
+      "noPushRate": "{{noPush}} / {{completed}} without a push",
+      "noPushHint": "Days with no push within 10 minutes of the open: the references leave them out",
       "noReference": "No completed stat for this pattern — type the push by hand.",
       "open": "Open ($)",
       "openOf": "{{ticker}} open",

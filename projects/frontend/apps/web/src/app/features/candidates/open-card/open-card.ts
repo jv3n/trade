@@ -27,6 +27,15 @@ export interface PushReferences {
   max: number | null;
 }
 
+/**
+ * How many of the same completed stats never pushed (#302) — the references leave them out, so the
+ * card states it : a target built on the average assumes a push is coming (#332).
+ */
+export interface NoPushRate {
+  noPush: number;
+  completed: number;
+}
+
 export type ReferenceKind = keyof PushReferences;
 
 export const REFERENCE_KINDS: readonly ReferenceKind[] = [
@@ -89,6 +98,8 @@ export class OpenCard {
   readonly candidates = input.required<Candidate[]>();
   /** References per pattern — a pattern missing here is still loading or has no completed stat. */
   readonly references = input.required<Partial<Record<Pattern, PushReferences>>>();
+  /** No-push rate per pattern, over the same completed stats as [references]. */
+  readonly noPushRates = input<Partial<Record<Pattern, NoPushRate>>>({});
   /** Past days are history : the open and the push are shown, not typed. */
   readonly readOnly = input(false);
 
@@ -116,6 +127,19 @@ export class OpenCard {
   dayReference(kind: ReferenceKind): number | null {
     return this.dayReferences()?.[kind] ?? null;
   }
+
+  /**
+   * The no-push rate beside the toggles — like their figures, only on a one-pattern day ; hidden
+   * when no day went without a push, as under the stats page's KPI.
+   */
+  readonly dayNoPushRate = computed(() => {
+    const patterns = new Set(this.candidates().map((c) => c.pattern));
+    if (patterns.size !== 1) return null;
+    const [pattern] = patterns;
+    const rate = this.noPushRates()[pattern];
+    if (!rate || rate.noPush === 0) return null;
+    return { ...rate, percent: (rate.noPush / rate.completed) * 100 };
+  });
 
   /** No reference at all for the day's patterns — no completed stat yet. */
   readonly noReference = computed(() =>
