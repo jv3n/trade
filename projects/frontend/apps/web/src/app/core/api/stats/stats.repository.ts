@@ -13,8 +13,8 @@ import {
  * Port — the stats sheet : listing, KPIs, completion, delete and the CSV export. Every stat belongs
  * to the current user ; a foreign id answers 404.
  *
- * A stat is **created by promoting a candidate** (#189) — there is no create method here on
- * purpose, and no import : the CSV leg is export only.
+ * A stat is created by promoting a candidate (#189, on the candidates side) or typed by hand for a
+ * past day ([create], #326). No import : the CSV leg is export only.
  *
  * The default adapter (`HttpStatsRepository` in `adapters/stats.http.ts`) owns the wire formats
  * (ISO dates, Spring `Page`, multipart, blob) ; consumers only ever see the domain shapes.
@@ -37,6 +37,12 @@ export abstract class StatsRepository {
 
   /** KPIs over the same filter as the listing, computed on the whole filtered set. */
   abstract summary(filter?: StatEntryFilter): Observable<StatSummary>;
+
+  /**
+   * Creates a stat typed by hand (#326) — premarket, session and flags in one go, for any day up to
+   * today. A future day → 400 ; (day, ticker) already taken → 409.
+   */
+  abstract create(input: StatEntryInput): Observable<StatEntry>;
 
   /**
    * Overwrites a stat — what the session panel saves each time a field is left (premarket recap +

@@ -153,6 +153,10 @@ export class HttpStatsRepository extends StatsRepository {
     });
   }
 
+  create(input: StatEntryInput): Observable<StatEntry> {
+    return this.http.post<StatEntryWireDto>(this.base, toWire(input)).pipe(map(fromWire));
+  }
+
   update(id: string, input: StatEntryInput): Observable<StatEntry> {
     return this.http.put<StatEntryWireDto>(`${this.base}/${id}`, toWire(input)).pipe(map(fromWire));
   }

@@ -33,6 +33,11 @@ import { StatsPage } from './stats-page';
  * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
  * - **Filters** — changing the status resets to page 0 and refetches ; a custom period range
  *   reaches both the listing and the KPIs.
+ * - **Premarket card (#326)** — editable like the session, saved field by field with its own save
+ *   state ; a PM high under the PM open is refused before anything is sent.
+ * - **New stat (#326)** — the two cards empty with the identity on top ; « Create » waits for the
+ *   date, the ticker and the three premarket prices, goes through the confirmation modal, then the
+ *   panel carries on with the created stat.
  * - **No push (#302)** — ticking it empties the push and takes it out of the prices a stat needs ;
  *   unticking gives the typed push back ; the « No push » tab is its own filter axis.
  *
@@ -128,6 +133,9 @@ class MockStatsRepository extends StatsRepository {
   );
   findById = vi.fn((id: string): Observable<StatEntry> => of(makeStat({ id })));
   summary = vi.fn((_filter?: StatEntryFilter): Observable<StatSummary> => of(makeSummary()));
+  create = vi.fn((input: StatEntryInput): Observable<StatEntry> =>
+    of(makeStat({ ...input, id: 'stat-new', candidateId: null, completed: false })),
+  );
   update = vi.fn((id: string, input: StatEntryInput): Observable<StatEntry> =>
     of(
       makeStat({ ...input, id, completed: this.rows.find((r) => r.id === id)?.completed ?? false }),
@@ -246,7 +254,7 @@ describe('StatsPage', () => {
         pushOpenPrice: null,
       }),
     );
-    expect(page.sessionSaved()).toBe(true);
+    expect(page.saveStates().session.status).toBe('saved');
     expect(page.rows()[0].openPrice).toBe(1.9);
     expect(page.completing()?.id).toBe('stat-sgbx');
   });
@@ -535,5 +543,83 @@ describe('StatsPage', () => {
 
     expect(repo.lastFilter?.noPush).toBe(true);
     expect(repo.lastFilter?.status).toBeNull();
+  });
+
+  // ---- Premarket card (#326) ----
+
+  it('saves a premarket fix with the whole row and marks the premarket card saved', () => {
+    const { page, repo } = setup({ rows: [makePending()] });
+
+    page.setPremarketPrice('pmHigh', 4.8);
+    page.saveSession('premarket');
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx',
+      expect.objectContaining({ pmHigh: 4.8, ticker: 'SGBX' }),
+    );
+    expect(page.saveStates().premarket.status).toBe('saved');
+  });
+
+  it('refuses a PM high under the PM open without sending anything', () => {
+    const { page, repo } = setup({ rows: [makePending()] });
+
+    page.setPremarketPrice('pmHigh', 1.0);
+    page.saveSession('premarket');
+
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.saveStates().premarket).toEqual(
+      expect.objectContaining({ status: 'error', reason: 'stats.save.pmHighBelowPmOpen' }),
+    );
+  });
+
+  // ---- New stat (#326) ----
+
+  // GLND, three days back : found on the charts, never captured as a candidate.
+  it('creates a stat typed by hand once confirmed, then carries on with it', () => {
+    const { page, repo } = setup({ rows: [] });
+    page.startNew();
+    expect(page.createMissing()).toEqual(['stats.fields.ticker', 'stats.create.premarketPrices']);
+
+    page.setIdentity({ ticker: 'glnd', tradeDate: new Date(2026, 8, 18) });
+    page.setPremarketPrice('previousClose', 1.96);
+    page.setPremarketPrice('pmOpen', 3.1);
+    page.setPremarketPrice('pmHigh', 3.48);
+    page.setSessionPrice('openPrice', 3.1);
+    page.createStat();
+
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ticker: 'GLND',
+        tradeDate: new Date(2026, 8, 18),
+        pmHigh: 3.48,
+        openPrice: 3.1,
+      }),
+    );
+    expect(page.creating()).toBe(false);
+    expect(page.completing()?.id).toBe('stat-new');
+  });
+
+  it('never saves a field of a stat not created yet', () => {
+    const { page, repo } = setup({ rows: [] });
+    page.startNew();
+
+    page.setPremarketPrice('previousClose', 1.96);
+    page.saveSession('premarket');
+
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('creates nothing when the confirmation is cancelled', () => {
+    const { page, repo } = setup({ rows: [], confirmed: false });
+    page.startNew();
+    page.setIdentity({ ticker: 'GLND' });
+    page.setPremarketPrice('previousClose', 1.96);
+    page.setPremarketPrice('pmOpen', 3.1);
+    page.setPremarketPrice('pmHigh', 3.48);
+
+    page.createStat();
+
+    expect(repo.create).not.toHaveBeenCalled();
+    expect(page.creating()).toBe(true);
   });
 });

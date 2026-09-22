@@ -98,6 +98,9 @@ class MockStatsRepository extends StatsRepository {
       throwError(() => new Error('not used')),
   );
   findById = vi.fn((_id: string): Observable<StatEntry> => throwError(() => new Error('not used')));
+  create = vi.fn((_input: StatEntryInput): Observable<StatEntry> =>
+    throwError(() => new Error('not used')),
+  );
   summary = vi.fn((_filter?: StatEntryFilter): Observable<StatSummary> =>
     of({
       completed: 10,
