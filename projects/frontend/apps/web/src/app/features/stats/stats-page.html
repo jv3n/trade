@@ -421,6 +421,13 @@
         >
           {{ 'stats.fields.entryAfter11am' | translate }}
         </mat-checkbox>
+        <mat-checkbox
+          [checked]="session().lowInstitutions"
+          (change)="toggleFlag('lowInstitutions', $event.checked)"
+          [matTooltip]="'stats.fields.lowInstitutionsHint' | translate"
+        >
+          {{ 'stats.fields.lowInstitutions' | translate }}
+        </mat-checkbox>
         <span class="flags-row__spacer"></span>
         <span class="progress">{{
           'stats.complete.progress'
@@ -660,6 +667,11 @@
                 }
                 @if (s.entryAfter11am) {
                   <span class="flag-tag">{{ 'stats.fields.entryAfter11am' | translate }}</span>
+                }
+                @if (s.lowInstitutions) {
+                  <span class="flag-tag">{{
+                    'stats.fields.lowInstitutionsShort' | translate
+                  }}</span>
                 }
               </span>
             </td>

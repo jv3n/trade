@@ -145,6 +145,8 @@ class LocalDataSeeder(
       ssr = random.nextDouble() < 0.45,
       under1Dollar = previousClose < 1.0,
       entryAfter11am = random.nextDouble() < 0.2,
+      // A GUS candidate is screened on low institutional ownership, so it holds most days.
+      lowInstitutions = random.nextDouble() < 0.85,
     )
   }
 
