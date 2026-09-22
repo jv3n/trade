@@ -15,6 +15,16 @@
       </mat-button-toggle>
     }
   </mat-button-toggle-group>
+  @if (dayNoPushRate(); as rate) {
+    <span class="references__no-push" [matTooltip]="'candidates.openCard.noPushHint' | translate">
+      ·
+      <b>{{
+        'candidates.openCard.noPushRate'
+          | translate: { noPush: rate.noPush, completed: rate.completed }
+      }}</b>
+      ({{ rate.percent | number: '1.0-0' }} %)
+    </span>
+  }
   @if (noReference()) {
     <span class="references__none">{{ 'candidates.openCard.noReference' | translate }}</span>
   }

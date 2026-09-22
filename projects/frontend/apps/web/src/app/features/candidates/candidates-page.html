@@ -202,6 +202,7 @@
       <app-open-card
         [candidates]="rows()"
         [references]="pushReferences()"
+        [noPushRates]="noPushRates()"
         [readOnly]="readOnly()"
         (atOpenChange)="saveAtOpen($event)"
       />

@@ -14,7 +14,7 @@ import { AtOpenChange, OpenCard, PushReferences } from './open-card';
  *   nothing without an open or without a reference.
  * - **References** — a row follows the selected one (average by default) ; switching it moves only
  *   the rows without a push of their own. The toggles show the figures only when the day shares one
- *   pattern.
+ *   pattern — and so does the no-push rate of the same stats beside them (#332).
  * - **Saving** — the open and the target push are handed to the page on blur, only when they
  *   changed ; typing the reference back, clearing the push or « back to the reference » hands over
  *   a `null` push (the row follows the reference again).
@@ -131,6 +131,31 @@ describe('OpenCard', () => {
       { GUS: GUS_REFERENCES },
     );
     expect(mixed.card.dayReference('max')).toBeNull();
+  });
+
+  // 1 GUS in 11 never pushed : the references leave it out, the card says how often it happens.
+  it('states the no-push rate of the same stats beside the references', () => {
+    const { fixture, card } = setup();
+    fixture.componentRef.setInput('noPushRates', { GUS: { noPush: 1, completed: 11 } });
+
+    expect(card.dayNoPushRate()).toEqual(
+      expect.objectContaining({ noPush: 1, completed: 11, percent: expect.closeTo(9.09, 2) }),
+    );
+  });
+
+  it('shows no no-push rate on a mixed day, nor when no day went without a push', () => {
+    const mixed = setup([
+      makeCandidate(),
+      makeCandidate({ id: 'c-dt', ticker: 'VERB', pattern: 'DT' }),
+    ]);
+    mixed.fixture.componentRef.setInput('noPushRates', { GUS: { noPush: 1, completed: 11 } });
+    expect(mixed.card.dayNoPushRate()).toBeNull();
+    TestBed.resetTestingModule();
+
+    const empty = setup();
+    // Nothing to warn about : the references cover every completed stat (same rule as /stats).
+    empty.fixture.componentRef.setInput('noPushRates', { GUS: { noPush: 0, completed: 11 } });
+    expect(empty.card.dayNoPushRate()).toBeNull();
   });
 
   // ---- Saving ----
