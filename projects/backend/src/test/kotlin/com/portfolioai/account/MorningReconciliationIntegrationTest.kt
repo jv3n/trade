@@ -18,6 +18,7 @@ import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,6 +26,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.web.server.ResponseStatusException
 
 /**
  * Pins the morning reconciliation (#198) — the daily ritual that settles the app's derived balance
@@ -74,6 +76,21 @@ class MorningReconciliationIntegrationTest {
     assertNull(settled.correctionId, "nothing to correct")
     assertNotNull(settled.reconciledAt, "the morning is timestamped all the same")
     assertEquals(1, movements.findByUserId(testUser.id).size, "only the deposit — no plug")
+  }
+
+  // Typed on staging (#307) : -999999999 would have written a billion-dollar correction line.
+  @Test
+  fun `a negative broker balance is a 400 and writes nothing`() {
+    accountService.addMovement(deposit("1000.00"))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.reconcile(ReconciliationRequest(BigDecimal("-999999999"), MONDAY))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertEquals(1, movements.findByUserId(testUser.id).size, "only the deposit — no plug")
+    assertTrue(repo.findAll().isEmpty(), "no morning recorded either")
   }
 
   @Test

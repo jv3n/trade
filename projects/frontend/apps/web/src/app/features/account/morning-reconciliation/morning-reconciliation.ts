@@ -1,6 +1,7 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, formatNumber } from '@angular/common';
 import {
   Component,
+  LOCALE_ID,
   booleanAttribute,
   computed,
   inject,
@@ -23,6 +24,9 @@ import { Reconciliation } from '../../../core/api/account/account.model';
 import { AccountRepository } from '../../../core/api/account/account.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
+
+/** Past this share of the computed balance, a gap is flagged as unusual before it is written. */
+const UNUSUAL_GAP_RATIO = 0.2;
 
 /**
  * The morning ritual (#198), as a component because it lives in **two** places : the account page
@@ -56,6 +60,7 @@ export class MorningReconciliation {
   private readonly repo = inject(AccountRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
+  private readonly locale = inject(LOCALE_ID);
   private readonly toasts = inject(StbToast);
 
   /** The app's derived balance — null while the host is still loading its summary. */
@@ -80,6 +85,21 @@ export class MorningReconciliation {
     const broker = this.brokerBalance();
     const balance = this.appBalance();
     return broker === null || balance === null ? null : broker - balance;
+  });
+
+  /** The broker never shows a negative balance : refused on the field, before any gap (#307). */
+  readonly negativeBalance = computed(() => (this.brokerBalance() ?? 0) < 0);
+
+  /**
+   * A gap past a fifth of the computed balance (#307). It still goes through — a real drift can be
+   * that big after a long gap in the reconciliations — but at that size it is a typo far more
+   * often, so the confirmation says so and reads as a warning.
+   */
+  readonly unusualGap = computed(() => {
+    const gap = this.gap();
+    const balance = this.appBalance();
+    if (gap === null || gap === 0 || balance === null) return false;
+    return balance === 0 || Math.abs(gap) > UNUSUAL_GAP_RATIO * Math.abs(balance);
   });
 
   /** Today's reconciliation, when this morning is already settled. */
@@ -136,14 +156,28 @@ export class MorningReconciliation {
 
   submit(): void {
     const broker = this.brokerBalance();
-    if (broker === null || this.submitting()) return;
+    // No app balance = no gap to show, so a submit here would slip past the confirmation below and
+    // let the backend write whatever its own balance implies. The window is the host's summary
+    // still loading — seconds on a cold start (#307).
+    if (broker === null || this.appBalance() === null) return;
+    if (this.submitting() || this.negativeBalance()) return;
     const gap = this.gap();
 
     const confirmed =
       gap !== null && gap !== 0
-        ? this.confirm.ask('account.reconciliation.confirmCorrection', {
-            params: { gap: gap.toFixed(2) },
-          })
+        ? this.confirm.ask(
+            this.unusualGap()
+              ? 'account.reconciliation.confirmUnusualCorrection'
+              : 'account.reconciliation.confirmCorrection',
+            {
+              // The modal reads like the page around it : same locale, same two decimals.
+              params: {
+                gap: formatNumber(gap, this.locale, '1.2-2'),
+                balance: formatNumber(this.appBalance() ?? 0, this.locale, '1.2-2'),
+              },
+              variant: this.unusualGap() ? 'danger' : undefined,
+            },
+          )
         : of(true);
 
     confirmed

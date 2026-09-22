@@ -40,6 +40,9 @@
       inputmode="decimal"
     />
     <span matTextSuffix>$</span>
+    @if (negativeBalance()) {
+      <mat-hint class="warn">{{ 'account.reconciliation.negativeBalance' | translate }}</mat-hint>
+    }
   </mat-form-field>
 
   <div class="figure">
@@ -52,7 +55,9 @@
   <button
     mat-flat-button
     type="button"
-    [disabled]="brokerBalance() === null || submitting()"
+    [disabled]="
+      brokerBalance() === null || appBalance() === null || negativeBalance() || submitting()
+    "
     (click)="submit()"
   >
     @if (submitting()) {

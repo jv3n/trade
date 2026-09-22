@@ -216,6 +216,7 @@
       "hint": "to do every morning, with the balance TradeZero displays",
       "appBalance": "App balance (computed)",
       "brokerBalance": "TradeZero balance",
+      "negativeBalance": "A negative balance is impossible — check the figure read on TradeZero.",
       "gap": "Gap",
       "validate": "Validate the reconciliation",
       "createCorrection": "Create the correction",
@@ -226,6 +227,11 @@
       "confirmCorrection": {
         "title": "Create the correction?",
         "message": "A « Correction » line of {{gap}} $ is added to the account so the balance matches the TradeZero figure. The reconciliation is timestamped with it.",
+        "confirm": "Create the correction"
+      },
+      "confirmUnusualCorrection": {
+        "title": "Unusual gap — create it anyway?",
+        "message": "The {{gap}} $ gap is more than 20 % of the computed balance ({{balance}} $). At that size it is most often a typo. Confirming writes a « Correction » line that rewrites the account balance.",
         "confirm": "Create the correction"
       },
       "cancel": "Cancel this reconciliation",
