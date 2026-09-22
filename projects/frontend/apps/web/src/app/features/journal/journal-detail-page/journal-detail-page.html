@@ -81,8 +81,11 @@
       <div class="card kpi">
         <div class="kpi__label">{{ 'journal.detail.kpi.avgPrices' | translate }}</div>
         <div class="kpi__value">
-          {{ preview().avgEntry !== null ? (preview().avgEntry | price) : '—' }} →
-          {{ preview().avgExit !== null ? (preview().avgExit | price) : '—' }}
+          {{
+            preview().avgEntry !== null ? (preview().avgEntry | price: preview().avgEntry) : '—'
+          }}
+          →
+          {{ preview().avgExit !== null ? (preview().avgExit | price: preview().avgEntry) : '—' }}
         </div>
         <div class="kpi__sub">
           @if (context(); as ctx) {
@@ -91,7 +94,7 @@
                 'journal.detail.kpi.vsOpen'
                   | translate
                     : {
-                        open: (ctx.stat.openPrice | price),
+                        open: (ctx.stat.openPrice | price: ctx.stat.previousClose),
                         entry:
                           entryVsOpen() !== null ? (entryVsOpen() | number: '1.1-1') + ' %' : '—',
                         exit: exitVsOpen() !== null ? (exitVsOpen() | number: '1.1-1') + ' %' : '—',
@@ -309,8 +312,9 @@
             <dl class="kv">
               <dt>{{ 'journal.detail.context.premarket' | translate }}</dt>
               <dd>
-                {{ ctx.stat.previousClose | price }} · {{ ctx.stat.pmOpen | price }} ·
-                {{ ctx.stat.pmHigh | price }}
+                {{ ctx.stat.previousClose | price }} ·
+                {{ ctx.stat.pmOpen | price: ctx.stat.previousClose }} ·
+                {{ ctx.stat.pmHigh | price: ctx.stat.previousClose }}
               </dd>
               <dt>{{ 'journal.detail.context.gapPush' | translate }}</dt>
               <dd>
@@ -335,11 +339,19 @@
               </dd>
               <dt>{{ 'stats.fields.openPrice' | translate }}</dt>
               <dd>
-                {{ ctx.stat.openPrice !== null ? (ctx.stat.openPrice | price) : '—' }}
+                {{
+                  ctx.stat.openPrice !== null
+                    ? (ctx.stat.openPrice | price: ctx.stat.previousClose)
+                    : '—'
+                }}
               </dd>
               <dt>{{ 'stats.fields.pushOpen' | translate }}</dt>
               <dd>
-                {{ ctx.stat.pushOpenPrice !== null ? (ctx.stat.pushOpenPrice | price) : '—' }}
+                {{
+                  ctx.stat.pushOpenPrice !== null
+                    ? (ctx.stat.pushOpenPrice | price: ctx.stat.previousClose)
+                    : '—'
+                }}
                 <span class="muted">
                   {{
                     ctx.pushOpenPercent !== null
@@ -350,21 +362,33 @@
               </dd>
               <dt>{{ 'stats.fields.hod' | translate }}</dt>
               <dd>
-                {{ ctx.stat.hodPrice !== null ? (ctx.stat.hodPrice | price) : '—' }}
+                {{
+                  ctx.stat.hodPrice !== null
+                    ? (ctx.stat.hodPrice | price: ctx.stat.previousClose)
+                    : '—'
+                }}
                 <span class="muted">
                   {{ ctx.hodPercent !== null ? (ctx.hodPercent | number: '1.1-1') + ' %' : '' }}
                 </span>
               </dd>
               <dt>{{ 'stats.fields.lod' | translate }}</dt>
               <dd>
-                {{ ctx.stat.lodPrice !== null ? (ctx.stat.lodPrice | price) : '—' }}
+                {{
+                  ctx.stat.lodPrice !== null
+                    ? (ctx.stat.lodPrice | price: ctx.stat.previousClose)
+                    : '—'
+                }}
                 <span class="muted">
                   {{ ctx.lodPercent !== null ? (ctx.lodPercent | number: '1.1-1') + ' %' : '' }}
                 </span>
               </dd>
               <dt>{{ 'stats.fields.eod' | translate }}</dt>
               <dd>
-                {{ ctx.stat.eodPrice !== null ? (ctx.stat.eodPrice | price) : '—' }}
+                {{
+                  ctx.stat.eodPrice !== null
+                    ? (ctx.stat.eodPrice | price: ctx.stat.previousClose)
+                    : '—'
+                }}
                 <span class="muted">
                   {{ ctx.eodPercent !== null ? (ctx.eodPercent | number: '1.1-1') + ' %' : '' }}
                 </span>

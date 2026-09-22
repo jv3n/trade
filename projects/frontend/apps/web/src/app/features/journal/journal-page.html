@@ -208,7 +208,7 @@
               {{ 'journal.fields.openPrice' | translate }}
             </th>
             <td mat-cell *matCellDef="let e" stbCol="numeric">
-              {{ e.openPrice !== null ? (e.openPrice | price) : '—' }}
+              {{ e.openPrice !== null ? (e.openPrice | price: e.openPrice) : '—' }}
             </td>
           </ng-container>
 
@@ -217,7 +217,7 @@
               {{ 'journal.fields.exitPrice' | translate }}
             </th>
             <td mat-cell *matCellDef="let e" stbCol="numeric">
-              {{ e.exitPrice !== null ? (e.exitPrice | price) : '—' }}
+              {{ e.exitPrice !== null ? (e.exitPrice | price: e.openPrice) : '—' }}
             </td>
           </ng-container>
 
