@@ -30,7 +30,9 @@ Cloud Run sets `SPRING_PROFILES_ACTIVE=prod`.
 
 ## What is wired, GitHub side (`jv3n/trade`)
 
-- A `production` environment with a required reviewer and a `master`-only branch policy.
+- A `production` environment with a required reviewer, deployable from a version tag only
+  (`v*.*.*`) — a branch can't deploy it. The same pattern also matches a candidate (`vX.Y.Z-rc1`) :
+  keeping candidates out of production is the workflow's job, which routes them to staging.
 - Three non-secret environment variables : `GCP_PROJECT`, `GCP_WIF_PROVIDER`, `GCP_SA_EMAIL`.
 - Secret scanning, push protection and Dependabot alerts on.
 
