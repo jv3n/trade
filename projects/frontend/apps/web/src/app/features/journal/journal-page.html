@@ -175,7 +175,7 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header="tradeDate">
               {{ 'journal.fields.tradeDate' | translate }}
             </th>
-            <td mat-cell *matCellDef="let e">{{ e.tradeDate | date: 'dd/MM' }}</td>
+            <td mat-cell *matCellDef="let e">{{ e.tradeDate | date: 'shortDate' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="ticker">

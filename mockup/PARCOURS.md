@@ -402,6 +402,10 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   - a **break-even trade** counts in the journal but leaves **no line on the account** : it moved
     nothing, and the ledger records balance moves. It is the one case where the two counts differ
     by design, so the account says « trades on the account ».
+- **Dates : two formats, no more** (#310, #341) — **long** (`fullDate` : « jeudi 17 septembre
+  2026 ») for what heads a page or a day, **short** (`shortDate` : « 17/09/2026 ») everywhere else,
+  tables and inline text alike. Both follow the language like the numbers do, the date picker
+  included, so a French reader never meets `9/17/26` — ambiguous against `17/09`.
 - **Numbers** (#311) : prices show 2 decimals from $1 up and 4 below (a $0.42 stock moves in
   fractions of a cent, so the **row** decides : every price of a line follows its own reference
   price — the session open, else the previous close — and a ticker crossing $1 during the day

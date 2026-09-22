@@ -633,7 +633,7 @@ export class StatsPage {
         if (isYesterday(state.at)) {
           return this.translate.instant('stats.save.savedYesterdayAt', { time });
         }
-        const date = formatDate(state.at, 'd MMM', this.locale);
+        const date = formatDate(state.at, 'shortDate', this.locale);
         return this.translate.instant('stats.save.savedOnAt', { date, time });
       }
       case 'error':

@@ -84,7 +84,7 @@
     <span>{{ 'account.reconciliation.history' | translate }}</span>
     @for (r of history(); track r.id) {
       <span class="history__item">
-        {{ r.valueDate | date: 'dd/MM' }}
+        {{ r.valueDate | date: 'shortDate' }}
         @if (r.gap === 0) {
           <span class="pos">✓</span>
         } @else {
