@@ -403,7 +403,11 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
     nothing, and the ledger records balance moves. It is the one case where the two counts differ
     by design, so the account says « trades on the account ».
 - **Numbers** (#311) : prices show 2 decimals from $1 up and 4 below (a $0.42 stock moves in
-  fractions of a cent), money 2 decimals, percentages 1. A field pads its value when left, so a
+  fractions of a cent, so the **row** decides : every price of a line follows its own reference
+  price — the session open, else the previous close — and a ticker crossing $1 during the day
+  doesn't print `1,33` next to `0,9540`, #355), money 2 decimals, percentages 1. Thousands are
+  grouped, in the tables **and** in the fields once left — a field strips the grouping while it is
+  being typed in (#356). A field pads its value when left, so a
   column of prices lines up on the separator. What is displayed is what is computed : a target
   price follows the **rounded** target push shown next to it, never the unrounded one.
 
