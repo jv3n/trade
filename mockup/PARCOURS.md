@@ -390,6 +390,18 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   which is the contradiction #341 reported. A separate « region » setting can come later if the two
   ever need to differ. Since the locale is read once at start-up, changing the language reloads the
   page.
+- **What a KPI counts, it says** (#309) — three pages read the same trading days, so they share one
+  vocabulary :
+  - a **completed stat** is one that was **ticked** (its five session prices in, four on a no-push
+    day). Every stats KPI — the average push, the LOD, the fade — is measured on those, over the
+    **filtered set**, never the displayed page. The card shows the total beside the count, so
+    « completed » can't be mistaken for « all of them ».
+  - a **counted trade** is one carrying a **retained P&L** (closed, or with a broker P&L typed on
+    it). An open position has none, so the journal's KPI card counts fewer trades than its table
+    lists rows — and says « closed trades » for that reason.
+  - a **break-even trade** counts in the journal but leaves **no line on the account** : it moved
+    nothing, and the ledger records balance moves. It is the one case where the two counts differ
+    by design, so the account says « trades on the account ».
 - **Numbers** (#311) : prices show 2 decimals from $1 up and 4 below (a $0.42 stock moves in
   fractions of a cent), money 2 decimals, percentages 1. A field pads its value when left, so a
   column of prices lines up on the separator. What is displayed is what is computed : a target

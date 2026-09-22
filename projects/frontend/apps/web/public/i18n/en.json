@@ -306,7 +306,7 @@
     "chartTitle": "Balance over time",
     "kpi": {
       "periodPnl": "P&L for the period",
-      "periodPnlSub": "{{trades}} trades · {{winners}} winners",
+      "periodPnlSub": "{{trades}} trades on the account · {{winners}} winners",
       "netInjected": "Net injected for the period",
       "netInjectedSub": "{{deposits}} deposited · {{withdrawals}} withdrawn"
     },
@@ -329,7 +329,7 @@
     "subtitle": "Log every trade with its setup, execution and review.",
     "kpi": {
       "pnl": "P&L over the period",
-      "trades": "{{count}} trades",
+      "trades": "{{count}} closed trades",
       "winRate": "Win rate",
       "winLossCount": "{{wins}} winners · {{losses}} losers",
       "averages": "Average win / average loss",
@@ -491,13 +491,13 @@
     },
     "kpi": {
       "completed": "Completed stats",
-      "toComplete": "{{count}} to complete",
-      "allDone": "Nothing left to complete",
+      "toComplete": "{{count}} to complete · {{total}} in total",
+      "allDone": "Nothing to complete · {{total}} in total",
       "averagePushOpen": "Average push at open",
       "averageLod": "Average LOD",
       "vsOpen": "vs open",
       "fade": "Fade at the close",
-      "fadeSub": "EOD below the open · average {{average}}",
+      "fadeSub": "EOD below the open · over the {{total}} completed · average {{average}}",
       "noPushSub": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push"
     },
     "complete": {
