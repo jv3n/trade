@@ -172,13 +172,16 @@
             <span class="hint">à 9h30 · tape l'open, ajuste le push visé selon le ticker</span>
           </h2>
           <div class="push-ref">
-            <span class="muted">Push visé par défaut — push à l'open des stats GUS complétées (10) :</span>
+            <span class="muted">Push visé par défaut — push à l'open des 10 stats GUS complétées qui ont poussé :</span>
             <div class="segmented" id="push-presets">
               <button type="button" data-pct="6.8">Médiane +6,8 %</button>
               <button type="button" data-pct="9.6" class="active">Moyenne +9,6 %</button>
               <button type="button" data-pct="14.2">3ᵉ quartile +14,2 %</button>
               <button type="button" data-pct="21.5">Max +21,5 %</button>
             </div>
+            <span class="muted" title="Jours sans push dans les 10 minutes après l'open : les repères ne les comptent pas">
+              · <b style="color: var(--text)">1 / 11 sans push</b> (9 %)
+            </span>
           </div>
           <div class="table-wrap">
             <table class="open-table">
@@ -392,7 +395,9 @@
           À l'open : l'open et le push visé sont saisis à 9h30 et enregistrés sur le candidat (à la sortie du champ, pas de
           modale : c'est une édition). Prix visé = open × (1 + push visé). Le push visé suit le repère choisi (médiane, moyenne,
           3ᵉ quartile, max du push à l'open des stats complétées du même pattern) tant qu'il n'est pas modifié à la main ; une valeur
-          tapée reste propre à ce candidat (↶ pour revenir au repère). Le repère choisi n'est pas enregistré. En passant en stat,
+          tapée reste propre à ce candidat (↶ pour revenir au repère). Le repère choisi n'est pas enregistré. Les repères ne
+          comptent que les stats qui ont poussé : le taux de « sans push » des mêmes stats s'affiche à côté (« 1 / 11 sans push »),
+          pour rappeler que le push attendu ne vient pas toujours — il informe, il ne change pas le push visé. En passant en stat,
           l'open est repris, pas le push visé. Un champ numérique sélectionne sa valeur au focus : taper remplace la valeur.
           Un push visé au-delà de 100 % est gardé mais passe en orange (« Push inhabituel ») — une small cap peut pousser de 200 %
           et plus ; au-delà de 1000 %, c'est une faute de frappe et il est ramené à 1000.

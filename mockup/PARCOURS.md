@@ -125,7 +125,8 @@ trade.
 - **Target price** = open × (1 + target push), computed live, with the gap in $ and where the PM
   high stands vs the open (the PM high is often the resistance).
 - **The target push starts from a reference**, picked above the card among the push at the open of
-  the completed stats of the same pattern : **median, average (default), 3rd quartile, max**.
+  the completed stats of the same pattern : **median, average (default), 3rd quartile, max** — with
+  the no-push rate of those stats beside them (#332).
 - A row keeps following the reference until I type another percentage in it ; a typed value stays
   specific to that candidate, and a « back to the reference » button undoes it (so does typing the
   reference's value back or emptying the field). Switching the reference moves only the rows still
@@ -303,9 +304,11 @@ that never comes, so they count in the stats and are made easy to single out.
   count in everything else (LOD, fade, EOD).
 - A **« No push »** button in the table's filter isolates them, to compare their premarket (gap, PM
   push, float, volume) with the days that pushed.
-- The « À l'open » card is left alone : it is a quick calculation aid, the analysis lives in the
-  stats. Its references are built on the push at the open, which a no-push stat doesn't have, so
-  they already leave these days out.
+- The « À l'open » card's references are built on the push at the open, which a no-push stat
+  doesn't have, so they leave these days out — and say so (#332) : next to the references, the
+  **no-push rate of the same set** (the checked stats of the pattern, « 1 / 11 without a push (9 %) »),
+  so a target built on « the average day pushes 9.6 % » doesn't silently assume a push is coming.
+  It only informs : the default target push still follows the selected reference.
 
 **Screen** : [`stats.html`](stats.html) — a « Premarket » card and a « Session » card for the stat
 being filled (live percentage preview, fields saved one by one with the save state next to each
