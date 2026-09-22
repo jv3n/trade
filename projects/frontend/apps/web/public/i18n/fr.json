@@ -305,7 +305,7 @@
     "chartTitle": "Évolution du solde",
     "kpi": {
       "periodPnl": "P&L de la période",
-      "periodPnlSub": "{{trades}} trades · {{winners}} gagnants",
+      "periodPnlSub": "{{trades}} trades au compte · {{winners}} gagnants",
       "netInjected": "Apports nets de la période",
       "netInjectedSub": "{{deposits}} dépôt · {{withdrawals}} retrait"
     },
@@ -328,7 +328,7 @@
     "subtitle": "Consigne chaque trade avec son setup, son exécution et son débrief.",
     "kpi": {
       "pnl": "P&L de la période",
-      "trades": "{{count}} trades",
+      "trades": "{{count}} trades clôturés",
       "winRate": "Taux de réussite",
       "winLossCount": "{{wins}} gagnants · {{losses}} perdants",
       "averages": "Gain moyen / perte moyenne",
@@ -490,13 +490,13 @@
     },
     "kpi": {
       "completed": "Stats complétées",
-      "toComplete": "{{count}} à compléter",
-      "allDone": "Rien à compléter",
+      "toComplete": "{{count}} à compléter · {{total}} au total",
+      "allDone": "Rien à compléter · {{total}} au total",
       "averagePushOpen": "Push à l'open moyen",
       "averageLod": "LOD moyen",
       "vsOpen": "vs open",
       "fade": "Fade à la clôture",
-      "fadeSub": "EOD sous l'open · moyenne {{average}}",
+      "fadeSub": "EOD sous l'open · sur les {{total}} complétées · moyenne {{average}}",
       "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push"
     },
     "complete": {

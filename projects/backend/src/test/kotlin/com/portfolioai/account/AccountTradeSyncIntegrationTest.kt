@@ -13,6 +13,7 @@ import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.domain.ExecutionKind
+import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.TradeDirection
 import com.portfolioai.stats.domain.StatEntry
@@ -113,6 +114,21 @@ class AccountTradeSyncIntegrationTest {
   fun `a break-even trade (zero P&L) creates no movement`() {
     tradeService.create(closedTrade(ticker = "SOBR", pnl = "0.00"))
     assertEquals(0, tradeMovements().size, "zero P&L doesn't move the balance")
+  }
+
+  // #309 : the one place the two counts differ **by design**. The journal judges every trade it
+  // has a retained P&L for ; the ledger records balance moves, and a break-even trade moved
+  // nothing. `PARCOURS.md` > Interface principles states it, the KPI labels say it on screen.
+  @Test
+  fun `a break-even trade counts in the journal but leaves no line on the account`() {
+    tradeService.create(closedTrade(ticker = "SOBR", pnl = "0.00"))
+
+    assertEquals(
+      1,
+      tradeService.summarise(TradeEntryFilter()).tradeCount,
+      "the journal counts it : its P&L is settled, it just happens to be zero",
+    )
+    assertEquals(0, tradeMovements().size, "the account doesn't : nothing moved")
   }
 
   @Test

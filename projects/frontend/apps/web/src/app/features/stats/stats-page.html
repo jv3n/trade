@@ -21,10 +21,11 @@
         <div class="kpi__sub">
           @if (kpi.toComplete > 0) {
             <span class="warn">{{
-              'stats.kpi.toComplete' | translate: { count: kpi.toComplete }
+              'stats.kpi.toComplete'
+                | translate: { count: kpi.toComplete, total: kpi.completed + kpi.toComplete }
             }}</span>
           } @else {
-            {{ 'stats.kpi.allDone' | translate }}
+            {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
           }
         </div>
       </div>
@@ -70,6 +71,7 @@
             'stats.kpi.fadeSub'
               | translate
                 : {
+                    total: kpi.completed,
                     average:
                       kpi.averageEodPercent !== null
                         ? (kpi.averageEodPercent | number: '1.1-1') + ' %'
