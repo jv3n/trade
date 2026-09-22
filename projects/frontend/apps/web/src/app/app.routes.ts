@@ -103,8 +103,9 @@ export const routes: Routes = [
       },
     ],
   },
-  // 404 fallback — any unknown URL routes to `/account` (the default landing). The authGuard will
-  // catch unauthenticated users on the next hop and bounce them to `/login`, so the redirect target
-  // works whether the user is logged in or not.
-  { path: '**', redirectTo: 'account' },
+  // Unknown URL (#316) — sent to the home page, **and the address bar follows** : landing on
+  // `/account` under a wrong URL made a bookmarked typo look like a working page. `today` is the
+  // day's starting point, so a mistyped link drops the user where the day begins rather than in
+  // the ledger. The authGuard on `/today` still bounces an anonymous visitor to `/login`.
+  { path: '**', redirectTo: 'today' },
 ];
