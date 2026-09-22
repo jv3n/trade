@@ -51,7 +51,7 @@
     "@storybook/angular": "^10.6.0",
     "@vitest/coverage-v8": "^4.1.11",
     "angular-eslint": "22.5.0",
-    "eslint": "^10.10.0",
+    "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^29.1.1",
     "ng-packagr": "^22.1.1",
