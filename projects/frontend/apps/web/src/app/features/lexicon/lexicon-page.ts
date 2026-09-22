@@ -59,17 +59,25 @@ export class LexiconPage {
   /** Seeded from the app locale, then owned by the toggle — it never writes back. */
   readonly definitionLanguage = signal<Language>(this.language.lang());
 
+  /**
+   * Both the order and the index letter come from the **heading** — what the card actually shows
+   * (#314). Sorting the stored term filed `Average End of Day (EOD)` under A, between « Average »
+   * and « Average Push », while the card read « EOD ».
+   */
   private readonly cards = computed<LexiconCard[]>(() => {
     const lang = this.definitionLanguage();
     return this.entries()
-      .map((e) => ({
-        id: e.id,
-        term: e.term,
-        definition: lang === 'fr' ? e.definitionFr : e.definitionEn,
-        letter: indexLetter(e.term),
-        ...splitTerm(e.term),
-      }))
-      .sort((a, b) => a.term.localeCompare(b.term));
+      .map((e) => {
+        const split = splitTerm(e.term);
+        return {
+          id: e.id,
+          term: e.term,
+          definition: lang === 'fr' ? e.definitionFr : e.definitionEn,
+          letter: indexLetter(split.heading),
+          ...split,
+        };
+      })
+      .sort((a, b) => a.heading.localeCompare(b.heading, undefined, { sensitivity: 'base' }));
   });
 
   /** Only the initials that have entries — a dead letter is a dead end. */
