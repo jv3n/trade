@@ -35,6 +35,10 @@ import { StatsPage } from './stats-page';
  *   reaches both the listing and the KPIs.
  * - **Premarket card (#326)** — editable like the session, saved field by field with its own save
  *   state ; a PM high under the PM open is refused before anything is sent.
+ * - **An emptied premarket price (#340)** — the field says it is required and nothing is sent, the
+ *   session card included (and the other way round on a HOD under the LOD) ; leaving the panel
+ *   asks first whenever an edit never left, whichever validation held it back.
+ * - **The save cue (#342)** — it states the day when the last save is not from today.
  * - **New stat (#326)** — the two cards empty with the identity on top ; « Create » waits for the
  *   date, the ticker and the three premarket prices, goes through the confirmation modal, then the
  *   panel carries on with the created stat.
@@ -570,6 +574,141 @@ describe('StatsPage', () => {
     expect(page.saveStates().premarket).toEqual(
       expect.objectContaining({ status: 'error', reason: 'stats.save.pmHighBelowPmOpen' }),
     );
+  });
+
+  // ---- An emptied premarket price (#340) ----
+
+  // Clearing a price to retype it : the field and the card both say why nothing goes out.
+  it('marks an emptied premarket price as required and sends nothing', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta] });
+    page.open(ktta);
+
+    page.setPremarketPrice('previousClose', null);
+    page.saveSession('premarket');
+
+    expect(page.premarketRequired().previousClose).toBe(true);
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.saveStates().premarket).toEqual(
+      expect.objectContaining({ status: 'error', reason: 'stats.save.premarketRequired' }),
+    );
+  });
+
+  // The whole row goes back on every save : a session edit would carry the empty premarket along.
+  it('holds a session edit while the premarket is incomplete, and says so', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta] });
+    page.open(ktta);
+    page.setPremarketPrice('previousClose', null);
+
+    page.setSessionPrice('eodPrice', 3.6);
+    page.saveSession('session');
+
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.saveStates().session).toEqual(
+      expect.objectContaining({ status: 'error', reason: 'stats.save.waitingPremarket' }),
+    );
+  });
+
+  it('closes on « leave without saving », the row keeping its saved premarket', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta] });
+    page.open(ktta);
+    page.setPremarketPrice('previousClose', null);
+    page.setPremarketPrice('floatMillions', 6.0);
+
+    page.close();
+
+    expect(page.completing()).toBeNull();
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.entries()[0]).toEqual(
+      expect.objectContaining({ previousClose: 2.65, floatMillions: 8.2 }),
+    );
+  });
+
+  // The same hole from the session side : a transposed HOD / LOD holds a float edit too.
+  it('holds a premarket edit while the HOD is below the LOD, and says so', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta] });
+    page.open(ktta);
+    page.setSessionPrice('hodPrice', 3.2);
+
+    page.setPremarketPrice('floatMillions', 6.0);
+    page.saveSession('premarket');
+
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.saveStates().premarket).toEqual(
+      expect.objectContaining({ status: 'error', reason: 'stats.save.waitingSession' }),
+    );
+  });
+
+  // The guard reads what never left, whichever validation held it back — not the premarket alone.
+  it('asks before closing on a HOD below the LOD, and stays open when cancelled', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta], confirmed: false });
+    page.open(ktta);
+    page.setSessionPrice('hodPrice', 3.2);
+    page.setSessionPrice('eodPrice', 3.6);
+
+    page.close();
+
+    expect(page.completing()?.id).toBe(ktta.id);
+    expect(page.session().eodPrice).toBe(3.6);
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('closes without asking once every edit is saved', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta], confirmed: false });
+    page.open(ktta);
+    page.setPremarketPrice('floatMillions', 6.0);
+
+    page.close();
+
+    expect(repo.update).toHaveBeenCalledTimes(1);
+    // A premarket-only edit lights the premarket card, not the session one.
+    expect(page.saveStates().premarket.status).toBe('saved');
+    expect(page.completing()).toBeNull();
+  });
+
+  // ---- The save cue states its day (#342) ----
+
+  // NUKK last saved yesterday evening : « saved at 22:25 » read as if it had just happened.
+  it('says « yesterday » on a stat last saved the day before', () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(22, 25);
+    const nukk = makeStat({ ticker: 'NUKK', updatedAt: yesterday });
+    const { page } = setup({ rows: [nukk] });
+    page.open(nukk);
+
+    expect(page.saveLabel(page.saveStates().premarket)).toBe('stats.save.savedYesterdayAt');
+    expect(page.saveLabel(page.saveStates().session)).toBe('stats.save.savedYesterdayAt');
+  });
+
+  it('gives the date on a stat last saved before yesterday, the time alone today', () => {
+    const { page } = setup({ rows: [] });
+
+    expect(
+      page.saveLabel({ status: 'saved', at: new Date(2026, 7, 10, 18, 5), reason: null }),
+    ).toBe('stats.save.savedOnAt');
+    expect(page.saveLabel({ status: 'saved', at: new Date(), reason: null })).toBe(
+      'stats.save.savedAt',
+    );
+  });
+
+  it('stays open with the pending edits when leaving is cancelled', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta], confirmed: false });
+    page.open(ktta);
+    page.setPremarketPrice('previousClose', null);
+    page.setPremarketPrice('floatMillions', 6.0);
+
+    page.close();
+
+    expect(page.completing()?.id).toBe(ktta.id);
+    expect(page.premarket().floatMillions).toBe(6.0);
+    expect(repo.update).not.toHaveBeenCalled();
   });
 
   // ---- New stat (#326) ----
