@@ -96,6 +96,17 @@ describe('NumberMaskDirective helpers', () => {
 
     // #311 : one setting drives the language and the formats, so the separator comes from the
     // locale — an English display never mixes `8,5` and `8.6` in the same row.
+    // #356 : a field read `1234,56` where the table under it read `1 234,56`.
+    it('groups thousands when a group separator is given', () => {
+      expect(formatNumber(1234567.89, 2, ',', true, ' ')).toBe('1 234 567,89');
+      expect(formatNumber(999, 2, ',', true, ' ')).toBe('999,00');
+      expect(formatNumber(-1234.5, 2, ',', true, ' ')).toBe('-1 234,50');
+    });
+
+    it('leaves the plain form alone when no group separator is given — what typing sees', () => {
+      expect(formatNumber(1234567.89, 2, ',', true)).toBe('1234567,89');
+    });
+
     it('takes the decimal separator it is given', () => {
       expect(formatNumber(1234.56, 2, '.')).toBe('1234.56');
       expect(formatNumber(618.2, 2, '.', true)).toBe('618.20');
@@ -137,6 +148,26 @@ describe('NumberMaskDirective on focus', () => {
     fixture.detectChanges();
     return fixture.nativeElement.querySelector('input');
   }
+
+  // #356 : grouping is stripped on focus so the caret tracking keeps counting digits alone.
+  it('drops the thousand separators when the field gets the focus', () => {
+    // The specs run on the default `en-US` locale : group `,`, decimal `.`.
+    const input = setup();
+    input.value = '1,234.5';
+    input.focus();
+    expect(input.value).toBe('1234.5');
+  });
+
+  // The group separator is a comma in English, which the parser reads as a decimal point : left
+  // in place it turned `1,234.5` into NaN, and the field came back blank (#356).
+  it('reads a grouped value back instead of losing it', () => {
+    const input = setup();
+    input.value = '1,234.5';
+    input.focus();
+    input.dispatchEvent(new Event('blur'));
+
+    expect(input.value).toBe('1,234.5');
+  });
 
   it('selects the whole value when the field gets the focus', () => {
     const input = setup();
