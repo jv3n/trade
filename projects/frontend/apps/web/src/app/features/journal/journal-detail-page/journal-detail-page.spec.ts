@@ -22,7 +22,7 @@ import { JournalDetailPage } from './journal-detail-page';
  * - **The three P&L figures** : computed from the executions, real as typed, and the live gap —
  *   plus the retained one (real if typed, else computed) that reaches the account.
  * - **The draft** : the page edits a buffer, the save bar only shows up once it drifts, and Cancel
- *   puts the persisted trade back.
+ *   puts the persisted trade back. Fill times enter it as `HH:mm`, like the time input returns them.
  * - **Save sends the whole trade** : the stat-borne identity is carried through untouched,
  *   half-typed execution rows are dropped, and an inconsistent set blocks the call entirely.
  * - **Delete (confirmed)** navigates back to the journal.
@@ -237,6 +237,31 @@ describe('JournalDetailPage', () => {
     page.cancel();
     expect(page.dirty()).toBe(false);
     expect(page.draft()?.errorNote).toBe('');
+  });
+
+  // Seen on staging (#331) : the API sends `09:38:00`, the time input hands back `09:38` once
+  // touched — re-picking the same fill time raised the save bar and the leave confirmation.
+  it('shows fill times without seconds, and re-picking the same one leaves the trade clean', () => {
+    findById = vi.fn(() =>
+      of(
+        makeTrade({
+          executions: [{ seq: 0, kind: 'ENTRY', shares: 200, price: 4.41, executedAt: '09:38:00' }],
+        }),
+      ),
+    );
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const pick = (value: string) =>
+      page.setExecutionTime(0, { target: { value } } as unknown as Event);
+
+    expect(page.draft()?.executions[0].executedAt).toBe('09:38');
+
+    pick('09:38');
+    expect(page.dirty()).toBe(false);
+
+    pick('09:45');
+    expect(page.dirty()).toBe(true);
   });
 
   // Hit twice in the pilot test : leaving the page dropped the post-mortem without a word (#303).
