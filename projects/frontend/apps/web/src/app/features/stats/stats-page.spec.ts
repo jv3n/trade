@@ -684,6 +684,45 @@ describe('StatsPage', () => {
     expect(page.completing()).toBeNull();
   });
 
+  // #348, on the recovery path of #340 : the whole row goes out with the premarket, so the session
+  // card is no longer waiting for anything — saying it still is, at the very moment the user checks
+  // whether their edits made it, invites retyping what is already in.
+  it('releases the session card once the premarket it was waiting for is saved', () => {
+    const ktta = makeStat();
+    const { page, repo } = setup({ rows: [ktta] });
+    page.open(ktta);
+    page.setPremarketPrice('previousClose', null);
+    page.setSessionPrice('eodPrice', 3.6);
+    page.saveSession('session');
+    expect(page.saveStates().session.reason).toBe('stats.save.waitingPremarket');
+
+    page.setPremarketPrice('previousClose', 2.7);
+    page.saveSession('premarket');
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-ktta',
+      expect.objectContaining({ previousClose: 2.7, eodPrice: 3.6 }),
+    );
+    expect(page.saveStates().premarket.status).toBe('saved');
+    expect(page.saveStates().session.status).toBe('saved');
+  });
+
+  it('leaves a card blocked on a reason of its own alone', () => {
+    const ktta = makeStat();
+    const { page } = setup({ rows: [ktta] });
+    page.open(ktta);
+    page.setSessionPrice('hodPrice', 3.2);
+    page.saveSession('session');
+    expect(page.saveStates().session.reason).toBe('stats.save.hodBelowLod');
+
+    page.setPremarketPrice('floatMillions', 6.0);
+    page.saveSession('premarket');
+
+    // Nothing was saved — the premarket is the one held now — and the session keeps its own error.
+    expect(page.saveStates().session.reason).toBe('stats.save.hodBelowLod');
+    expect(page.saveStates().premarket.reason).toBe('stats.save.waitingSession');
+  });
+
   // ---- The save cue states its day (#342) ----
 
   // NUKK last saved yesterday evening : « saved at 22:25 » read as if it had just happened.

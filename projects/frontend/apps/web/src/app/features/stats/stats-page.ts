@@ -153,6 +153,12 @@ const BLANK_PREMARKET: PremarketModel = {
 
 const IDLE: SaveState = { status: 'idle', at: null, reason: null };
 
+/** Errors that say « the other card is holding this one » — the only ones a save settles (#348). */
+const HELD_REASONS: readonly string[] = [
+  'stats.save.waitingPremarket',
+  'stats.save.waitingSession',
+];
+
 type SessionPrice = 'openPrice' | 'pushOpenPrice' | 'hodPrice' | 'lodPrice' | 'eodPrice';
 
 /** The five session prices, in the sheet's order, with the label key naming them. */
@@ -586,7 +592,11 @@ export class StatsPage {
       this.repo.update(entry.id, input).pipe(
         tap((saved) => {
           this.patchRow(saved);
-          this.setSaveState(card, { status: 'saved', at: new Date(), reason: null });
+          const at = new Date();
+          this.setSaveState(card, { status: 'saved', at, reason: null });
+          // The request carried the **whole row**, so whatever the other card was holding back for
+          // this one has just gone out with it (#348). Its own problems, if any, are left alone.
+          this.releaseHeldCard(card === 'premarket' ? 'session' : 'premarket', at);
           // The KPIs only count ticked stats : editing one of them moves them.
           if (saved.completed) this.refreshSummary();
         }),
@@ -888,6 +898,16 @@ export class StatsPage {
 
   private refetch(): void {
     this.refetchTrigger.update((n) => n + 1);
+  }
+
+  /**
+   * Clears a card left waiting on the one that just saved — and only that : a card blocked on a
+   * problem of its own (a HOD under the LOD) keeps its error, since nothing solved it.
+   */
+  private releaseHeldCard(card: SheetCard, at: Date): void {
+    const state = this.saveStates()[card];
+    const held = state.status === 'error' && HELD_REASONS.includes(state.reason ?? '');
+    if (held) this.setSaveState(card, { status: 'saved', at, reason: null });
   }
 
   private setSaveState(card: SheetCard, state: SaveState): void {
