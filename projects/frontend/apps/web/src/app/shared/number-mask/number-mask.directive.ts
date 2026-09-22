@@ -32,6 +32,9 @@ import {
  *     is preserved across the reformat (tracked by digit / separator index).
  *   - **Blur pads to [decimals]** (#335) : a money field left at `618.2` shows `618.20`, so a
  *     column of amounts lines up on the separator. An empty field stays empty.
+ *   - **Thousands are grouped at rest, never while typing** (#356) : a field left alone reads
+ *     `1 234,56` like the table beside it, and focusing it strips the grouping back to `1234,56`
+ *     so the caret tracking keeps working on digits alone.
  *
  * Wiring :
  *   - `[appNumberMask]` doesn't pretend to be a `ControlValueAccessor` — Signal Forms native
@@ -58,7 +61,9 @@ import {
 })
 export class NumberMaskDirective {
   private readonly host = inject<ElementRef<HTMLInputElement>>(ElementRef);
-  private readonly separator = getLocaleNumberSymbol(inject(LOCALE_ID), NumberSymbol.Decimal);
+  private readonly locale = inject(LOCALE_ID);
+  private readonly separator = getLocaleNumberSymbol(this.locale, NumberSymbol.Decimal);
+  private readonly group = getLocaleNumberSymbol(this.locale, NumberSymbol.Group);
 
   /** Number of decimal places allowed (default 2). Set to 0 for integers only. */
   readonly decimals = input(2, { transform: numberAttribute });
@@ -83,10 +88,9 @@ export class NumberMaskDirective {
     // mid-typing.
     effect(() => {
       const v = this.value();
-      const current = parseNumber(this.host.nativeElement.value);
+      const current = this.parse(this.host.nativeElement.value);
       if (current !== v) {
-        this.host.nativeElement.value =
-          v === null ? '' : formatNumber(v, this.decimals(), this.separator, true);
+        this.host.nativeElement.value = v === null ? '' : this.atRest(v);
       }
     });
   }
@@ -98,7 +102,27 @@ export class NumberMaskDirective {
 
   @HostListener('focus')
   onFocus(): void {
-    this.host.nativeElement.select();
+    const el = this.host.nativeElement;
+    // Typing happens on the plain form : the caret is tracked by digit index, and separators
+    // appearing mid-entry would move it under the user's fingers (#356). Grouping comes back on
+    // the way out, where it lines the field up with the table beside it.
+    const num = this.parse(el.value);
+    if (num !== null) el.value = formatNumber(num, this.decimals(), this.separator, true);
+    el.select();
+  }
+
+  /**
+   * Reads the field's text back to a number. The group separator goes **first** : in English it is
+   * a comma, which [parseNumber] would otherwise take for the decimal point and reject the whole
+   * value (`1,234.5` → `NaN`). Typed text never carries grouping — the field is stripped on focus.
+   */
+  private parse(text: string): number | null {
+    return parseNumber(this.group ? text.split(this.group).join('') : text);
+  }
+
+  /** How a value reads when nobody is typing in it : padded, grouped, in the page's locale. */
+  private atRest(value: number): string {
+    return formatNumber(value, this.decimals(), this.separator, true, this.group);
   }
 
   // The click that focuses the field would otherwise drop the selection on mouseup and leave a
@@ -153,7 +177,7 @@ export class NumberMaskDirective {
     const max = this.max();
     if (num !== null && min !== null && num < min) num = min;
     if (num !== null && max !== null && num > max) num = max;
-    el.value = num === null ? '' : formatNumber(num, this.decimals(), this.separator, true);
+    el.value = num === null ? '' : this.atRest(num);
     this.numberChange.emit(num);
   }
 }
@@ -204,13 +228,22 @@ export function parseNumber(s: string): number | null {
  * digits ; [pad] fills them to that many, which is what a field shows once left (#335) — while
  * typing, trailing zeros must survive as typed, so padding stays off.
  */
-export function formatNumber(n: number, decimals: number, separator = ',', pad = false): string {
+export function formatNumber(
+  n: number,
+  decimals: number,
+  separator = ',',
+  pad = false,
+  group = '',
+): string {
   const negative = n < 0;
-  // Round to `decimals` then drop trailing zeros via Number's own toString (dot decimal, no
-  // grouping). Values here are small monetary numbers — no exponential-notation risk.
+  // Round to `decimals` then drop trailing zeros via Number's own toString (dot decimal).
+  // Values here are small monetary numbers — no exponential-notation risk.
   const abs = Math.abs(n);
   const s = pad ? abs.toFixed(decimals) : Number(abs.toFixed(decimals)).toString();
-  return (negative ? '-' : '') + s.replace('.', separator);
+  const [whole, fraction] = s.split('.');
+  const grouped = group ? whole.replace(/\B(?=(\d{3})+(?!\d))/g, group) : whole;
+  const body = fraction === undefined ? grouped : grouped + separator + fraction;
+  return (negative ? '-' : '') + body;
 }
 
 /**
