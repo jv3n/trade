@@ -204,7 +204,9 @@ Tests serve as a top-to-bottom-readable spec. Concretely:
 The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues)**.
 
 - Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:today` / `module:candidates` / `module:stats` / `module:journal` / `module:account` / `module:lexicon` / `module:settings` / `module:ui`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
-- After implementing a feature, suggest closing (or narrowing) the matching issue. Never run `gh issue close` / label edits autonomously — same rule as git: suggest, the user confirms in the current turn.
+- Issues move through the **Trade Board** GitHub project (project 2, owner `jv3n`) : Backlog → Ready → In progress → In review → **Test** → Done.
+- A merged fix is not done until it has been tried on staging (a `vX.Y.Z-rcN` release, see `devops/README.md > Releasing`). So a PR references its issues with **`Refs #N`, never `Closes` / `Fixes` / `Resolves`** (they close the issue on merge) ; once merged, suggest moving the issue to **Test**. Only the user moves it to Done.
+- Never run `gh issue close/reopen`, label edits or board status changes autonomously — same rule as git: suggest, the user confirms in the current turn.
 
 ### Documentation
 
