@@ -1,7 +1,8 @@
 # Production deployment — PortfolioAI
 
 Google Cloud Run + Supabase Postgres, deployed from `.github/workflows/deploy.yml` when a GitHub
-Release is published. The Spring config lives with its siblings in
+Release `vX.Y.Z` is published — a pre-release `vX.Y.Z-rcN` goes to [staging](../staging/README.md)
+instead (see [`../README.md`](../README.md) for the release process). The Spring config lives with its siblings in
 `projects/backend/src/main/resources/application-prod.yml` — committed, secret-free, loaded when
 Cloud Run sets `SPRING_PROFILES_ACTIVE=prod`.
 

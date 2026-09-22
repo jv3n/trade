@@ -51,7 +51,8 @@ logging:
 
 sentry:
   dsn: ${SENTRY_DSN:}
-  environment: prod
+  # Staging runs this same profile : `deploy.yml` sets `staging` so its errors stay apart (#297).
+  environment: ${SENTRY_ENVIRONMENT:prod}
   # The GitHub Release tag, propagated by `deploy.yml` — it is what attributes a regression to a
   # release in the dashboard.
   release: ${SENTRY_RELEASE:}
