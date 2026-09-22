@@ -23,7 +23,7 @@ import {
   StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
-import { startOfDay } from 'date-fns';
+import { isToday, isYesterday, startOfDay } from 'date-fns';
 import {
   EMPTY,
   Observable,
@@ -393,6 +393,35 @@ export class StatsPage {
     };
   });
 
+  /** The required premarket prices left empty on an existing stat — each one says so under its field. */
+  readonly premarketRequired = computed(() => {
+    const m = this.premarket();
+    const edit = this.completing() !== null;
+    return {
+      previousClose: edit && !isPositive(m.previousClose),
+      pmOpen: edit && !isPositive(m.pmOpen),
+      pmHigh: edit && !isPositive(m.pmHigh),
+    };
+  });
+
+  /**
+   * The panel shows values the stat doesn't hold — a save held back by a validation, whichever. A
+   * sent save patches the row at once, so only edits that never left count ; leaving drops them.
+   */
+  readonly hasPendingEdits = computed(() => {
+    const entry = this.completing();
+    return (
+      entry !== null &&
+      !(
+        // The note goes out trimmed : a trailing space is not an edit left behind.
+        samePremarket(
+          { ...this.premarket(), note: this.premarket().note.trim() },
+          premarketOf(entry),
+        ) && sameSession(this.session(), sessionOf(entry))
+      )
+    );
+  });
+
   readonly hodBelowLod = computed(() => {
     const { hodPrice, lodPrice } = this.session();
     return hodPrice !== null && lodPrice !== null && hodPrice < lodPrice;
@@ -468,6 +497,10 @@ export class StatsPage {
   // ---- Session panel ----
 
   open(entry: StatEntry): void {
+    this.leavePanel(() => this.show(entry));
+  }
+
+  private show(entry: StatEntry): void {
     this.creating.set(false);
     this.completing.set(entry);
     this.premarket.set(premarketOf(entry));
@@ -514,12 +547,15 @@ export class StatsPage {
     if (!entry || this.creating()) return;
     const premarket = this.premarket();
     const session = this.session();
+    // Every save sends the whole row : a card the server would refuse holds the other one too.
+    const premarketIssue = premarketProblem(premarket);
+    const sessionIssue = this.hodBelowLod() ? 'stats.save.hodBelowLod' : null;
     const problem =
       card === 'premarket'
-        ? premarketProblem(premarket)
-        : this.hodBelowLod()
-          ? 'stats.complete.hodBelowLod'
-          : null;
+        ? (premarketIssue ?? (sessionIssue && 'stats.save.waitingSession'))
+        : premarketIssue
+          ? 'stats.save.waitingPremarket'
+          : sessionIssue;
     if (problem) {
       this.setSaveState(card, { status: 'error', at: null, reason: problem });
       return;
@@ -571,12 +607,17 @@ export class StatsPage {
     switch (state.status) {
       case 'saving':
         return this.translate.instant('stats.save.saving');
-      case 'saved':
-        return state.at
-          ? this.translate.instant('stats.save.savedAt', {
-              time: formatDate(state.at, 'HH:mm', this.locale),
-            })
-          : '';
+      case 'saved': {
+        if (!state.at) return '';
+        const time = formatDate(state.at, 'HH:mm', this.locale);
+        // Opening a stat shows its last update, often from a previous day (#342).
+        if (isToday(state.at)) return this.translate.instant('stats.save.savedAt', { time });
+        if (isYesterday(state.at)) {
+          return this.translate.instant('stats.save.savedYesterdayAt', { time });
+        }
+        const date = formatDate(state.at, 'd MMM', this.locale);
+        return this.translate.instant('stats.save.savedOnAt', { date, time });
+      }
       case 'error':
         return this.translate.instant('stats.save.notSaved', {
           reason: this.translate.instant(state.reason ?? 'stats.save.serverRefused'),
@@ -590,6 +631,10 @@ export class StatsPage {
 
   /** « New stat » — the two cards empty, today's date and the default pattern pre-filled. */
   startNew(): void {
+    this.leavePanel(() => this.showNew());
+  }
+
+  private showNew(): void {
     this.completing.set(null);
     this.creating.set(true);
     this.identity.set({ tradeDate: this.maxDate, pattern: DEFAULT_PATTERN, ticker: '' });
@@ -654,9 +699,27 @@ export class StatsPage {
   close(): void {
     const current = this.completing();
     if (!current) return;
-    this.saveSession('session');
-    this.dismissed.update((set) => new Set(set).add(current.id));
-    this.completing.set(null);
+    const premarketEdited = !samePremarket(this.premarket(), premarketOf(current));
+    this.saveSession(premarketEdited ? 'premarket' : 'session');
+    this.leavePanel(() => {
+      this.dismissed.update((set) => new Set(set).add(current.id));
+      this.completing.set(null);
+    });
+  }
+
+  /**
+   * Runs [leave] — straight away, or after « Leave without saving? » when the panel holds edits a
+   * validation kept from saving. Leaving drops them : the row still holds the last saved values.
+   */
+  private leavePanel(leave: () => void): void {
+    if (!this.hasPendingEdits()) {
+      leave();
+      return;
+    }
+    this.confirm
+      .ask('stats.confirmLeave', { variant: 'danger' })
+      .pipe(filter(Boolean))
+      .subscribe(() => leave());
   }
 
   /**

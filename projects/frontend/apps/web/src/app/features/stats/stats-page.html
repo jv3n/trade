@@ -164,6 +164,9 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          @if (premarketRequired().previousClose) {
+            <mat-hint class="warn">{{ 'stats.premarket.required' | translate }}</mat-hint>
+          }
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.pmOpen' | translate }}</mat-label>
@@ -177,13 +180,15 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
-          <mat-hint>{{
-            premarketPercents().gap !== null
-              ? ('stats.fields.gap' | translate) +
-                ' ' +
-                (premarketPercents().gap | number: '1.1-1') +
-                ' %'
-              : '—'
+          <mat-hint [class.warn]="premarketRequired().pmOpen">{{
+            premarketRequired().pmOpen
+              ? ('stats.premarket.required' | translate)
+              : premarketPercents().gap !== null
+                ? ('stats.fields.gap' | translate) +
+                  ' ' +
+                  (premarketPercents().gap | number: '1.1-1') +
+                  ' %'
+                : '—'
           }}</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -198,15 +203,17 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
-          <mat-hint [class.warn]="pmHighBelowPmOpen()">{{
-            pmHighBelowPmOpen()
-              ? ('stats.save.pmHighBelowPmOpen' | translate)
-              : premarketPercents().pmPush !== null
-                ? ('stats.fields.pmPush' | translate) +
-                  ' ' +
-                  (premarketPercents().pmPush | number: '1.1-1') +
-                  ' %'
-                : '—'
+          <mat-hint [class.warn]="premarketRequired().pmHigh || pmHighBelowPmOpen()">{{
+            premarketRequired().pmHigh
+              ? ('stats.premarket.required' | translate)
+              : pmHighBelowPmOpen()
+                ? ('stats.save.pmHighBelowPmOpen' | translate)
+                : premarketPercents().pmPush !== null
+                  ? ('stats.fields.pmPush' | translate) +
+                    ' ' +
+                    (premarketPercents().pmPush | number: '1.1-1') +
+                    ' %'
+                  : '—'
           }}</mat-hint>
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">

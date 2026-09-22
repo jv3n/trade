@@ -575,7 +575,8 @@
     },
     "premarket": {
       "title": "Premarket —",
-      "hint": "repris du candidat · modifiable · chaque champ s'enregistre à la sortie"
+      "hint": "repris du candidat · modifiable · chaque champ s'enregistre à la sortie",
+      "required": "requis"
     },
     "create": {
       "open": "Nouvelle stat",
@@ -587,15 +588,25 @@
     "save": {
       "saving": "enregistrement…",
       "savedAt": "✓ enregistré à {{time}}",
+      "savedYesterdayAt": "✓ enregistré hier à {{time}}",
+      "savedOnAt": "✓ enregistré le {{date}} à {{time}}",
       "notSaved": "non enregistré — {{reason}}",
       "premarketRequired": "les trois prix premarket sont requis",
       "pmHighBelowPmOpen": "le high PM est sous l'open PM",
+      "waitingPremarket": "en attente du premarket",
+      "waitingSession": "en attente de la séance",
+      "hodBelowLod": "le HOD est sous le LOD",
       "serverRefused": "le serveur a refusé la modification"
     },
     "confirmCreate": {
       "title": "Créer la stat {{ticker}} ?",
       "message": "Elle rejoint le tableau comme les stats du matin : une par jour et par ticker. Tu la coches une fois la séance complète.",
       "confirm": "Créer la stat"
+    },
+    "confirmLeave": {
+      "title": "Quitter sans enregistrer ?",
+      "message": "Une modification n'a pas pu partir — la raison est à côté du titre de la carte. En quittant, la stat garde ses dernières valeurs enregistrées.",
+      "confirm": "Quitter sans enregistrer"
     }
   },
   "lexicon": {

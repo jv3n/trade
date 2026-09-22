@@ -575,7 +575,8 @@
     },
     "premarket": {
       "title": "Premarket —",
-      "hint": "copied from the candidate · editable · each field is saved when left"
+      "hint": "copied from the candidate · editable · each field is saved when left",
+      "required": "required"
     },
     "create": {
       "open": "New stat",
@@ -587,15 +588,25 @@
     "save": {
       "saving": "saving…",
       "savedAt": "✓ saved at {{time}}",
+      "savedYesterdayAt": "✓ saved yesterday at {{time}}",
+      "savedOnAt": "✓ saved on {{date}} at {{time}}",
       "notSaved": "not saved — {{reason}}",
       "premarketRequired": "the three premarket prices are required",
       "pmHighBelowPmOpen": "the PM high is below the PM open",
+      "waitingPremarket": "waiting for the premarket",
+      "waitingSession": "waiting for the session",
+      "hodBelowLod": "the HOD is below the LOD",
       "serverRefused": "the server refused the change"
     },
     "confirmCreate": {
       "title": "Create the {{ticker}} stat?",
       "message": "It joins the table like the morning stats: one per day and ticker. You tick it once the session is complete.",
       "confirm": "Create the stat"
+    },
+    "confirmLeave": {
+      "title": "Leave without saving?",
+      "message": "A change could not be saved — the reason is next to the card's title. If you leave, the stat keeps its last saved values.",
+      "confirm": "Leave without saving"
     }
   },
   "lexicon": {

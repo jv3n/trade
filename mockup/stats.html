@@ -256,7 +256,7 @@
 
         <section class="card" style="margin-bottom: 16px" id="premarket-panel">
           <h2>
-            <span data-mode="edit">Premarket — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span><span class="save-state" id="premarket-state">✓ enregistré à 09:31</span></span>
+            <span data-mode="edit">Premarket — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span><span class="save-state" id="premarket-state">✓ enregistré hier à 22:25</span></span>
             <span data-mode="new" hidden>Nouvelle stat</span>
             <span class="hint" data-mode="edit">repris du candidat · modifiable · chaque champ s'enregistre à la sortie</span>
             <span class="hint" data-mode="new" hidden>un chart trouvé après coup · n'importe quel jour jusqu'à aujourd'hui</span>
@@ -571,7 +571,7 @@
           quel jour jusqu'à aujourd'hui), le pattern et le ticker : pour un chart qui colle au pattern trouvé après coup. « Créer la
           stat » demande confirmation et n'est possible qu'avec la date, le ticker et les trois prix premarket ; une par jour et par
           ticker, comme toujours. Chaque carte montre son état d'enregistrement à côté du titre : « enregistrement… » pendant l'envoi,
-          « ✓ enregistré à 09:42 » ensuite, et en rouge « non enregistré — … » si le serveur refuse (high PM sous l'open PM, HOD sous le
+          « ✓ enregistré à 09:42 » ensuite (« hier à 22:25 » ou la date si c'est plus ancien), et en rouge « non enregistré — … » si le serveur refuse (high PM sous l'open PM, HOD sous le
           LOD) — pas de bouton « Enregistrer » : la saisie reste rapide au fil de la séance. Un prix premarket requis vidé le dit sous son
           champ et retient aussi la séance (« en attente du premarket ») ; « Fermer » dans cet état demande « Quitter sans enregistrer ? »
           et, si on quitte, la stat garde ses dernières valeurs enregistrées.
@@ -750,7 +750,7 @@
           if (blocked) {
             close.dataset.confirmTitle = 'Quitter sans enregistrer ?';
             close.dataset.confirmBody =
-              'Le premarket est incomplet : les modifications en attente ne sont pas enregistrées. En quittant, la stat garde ses dernières valeurs enregistrées.';
+              "Une modification n'a pas pu partir — la raison est à côté du titre de la carte. En quittant, la stat garde ses dernières valeurs enregistrées.";
             close.dataset.confirmOk = 'Quitter sans enregistrer';
           } else {
             delete close.dataset.confirmTitle;
