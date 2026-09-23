@@ -198,7 +198,7 @@
 
           <ng-container matColumnDef="amount">
             <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-              {{ 'account.fields.amount' | translate }} ({{ 'account.usdSuffix' | translate }})
+              {{ 'account.fields.amount' | translate }} ({{ 'account.usdUnit' | translate }})
             </th>
             <td
               mat-cell
@@ -213,9 +213,7 @@
 
           <ng-container matColumnDef="balanceAfter">
             <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-              {{ 'account.fields.balanceAfter' | translate }} ({{
-                'account.usdSuffix' | translate
-              }})
+              {{ 'account.fields.balanceAfter' | translate }} ({{ 'account.usdUnit' | translate }})
             </th>
             <td mat-cell *matCellDef="let m" stbCol="numeric">
               {{ m.balanceAfter | number: '1.2-2' }}

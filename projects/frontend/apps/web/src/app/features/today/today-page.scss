@@ -10,8 +10,10 @@
   gap: s.$space-lg;
   flex-wrap: wrap;
 
-  h2 {
-    text-transform: capitalize;
+  // `fullDate` is right in both languages ; only the first letter of the French one needs lifting,
+  // `septembre` keeps its lower case.
+  h2::first-letter {
+    text-transform: uppercase;
   }
 }
 
