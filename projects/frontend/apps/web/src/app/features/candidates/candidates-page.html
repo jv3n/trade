@@ -239,7 +239,7 @@
     } @else if (rows().length === 0) {
       <div class="empty-state">
         <mat-icon>radar</mat-icon>
-        <p>{{ 'candidates.list.empty' | translate }}</p>
+        <p>{{ (weekend() ? 'candidates.list.weekend' : 'candidates.list.empty') | translate }}</p>
       </div>
     } @else {
       <div stbTable [busy]="loading()">

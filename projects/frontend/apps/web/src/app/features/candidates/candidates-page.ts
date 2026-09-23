@@ -25,7 +25,7 @@ import {
   StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
-import { addDays, isBefore, isSameDay, startOfDay } from 'date-fns';
+import { addDays, isBefore, isSameDay, isWeekend, startOfDay } from 'date-fns';
 import {
   EMPTY,
   Observable,
@@ -164,6 +164,8 @@ export class CandidatesPage {
   readonly isToday = computed(() => isSameDay(this.day(), new Date()));
   /** Past days are history : read-only. */
   readonly readOnly = computed(() => isBefore(this.day(), startOfDay(new Date())));
+  /** No session on a weekend : an empty list is expected, not a day without candidates. */
+  readonly weekend = computed(() => isWeekend(this.day()));
 
   // ---- List ----
   readonly loading = signal(true);

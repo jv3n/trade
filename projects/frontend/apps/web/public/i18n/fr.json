@@ -174,7 +174,8 @@
     },
     "list": {
       "count": "{{count}} candidat(s) · triés par gap",
-      "empty": "Aucun candidat ce jour-là."
+      "empty": "Aucun candidat ce jour-là.",
+      "weekend": "Week-end, pas de séance."
     },
     "actions": {
       "edit": "Modifier",
