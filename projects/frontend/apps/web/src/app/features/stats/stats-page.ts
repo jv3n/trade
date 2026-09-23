@@ -1,8 +1,17 @@
 import { DatePipe, DecimalPipe, formatDate } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, LOCALE_ID, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  LOCALE_ID,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   PageEvent,
@@ -34,6 +43,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
+  map,
   switchMap,
   tap,
 } from 'rxjs';
@@ -127,6 +137,10 @@ export interface StatRow extends StatEntry {
  */
 export type StatTab = StatStatus | 'NO_PUSH' | null;
 const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_PUSH'];
+
+function tabFromQuery(value: string | null): StatTab {
+  return STATUS_TABS.find((tab) => tab !== null && tab === value) ?? null;
+}
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -297,6 +311,7 @@ export class StatsPage {
   private readonly toasts = inject(StbToast);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly locale = inject(LOCALE_ID);
 
   // ---- Data state ----
@@ -348,7 +363,15 @@ export class StatsPage {
   readonly patterns = PATTERNS;
   readonly pattern = signal<Pattern | null>(null);
   readonly statusTabs = STATUS_TABS;
-  readonly status = signal<StatTab>(null);
+  /**
+   * Opens on the tab named by `?status=`, the way « Complete » on the Today page lands (#337), and
+   * follows it if the query changes under the same page. Picking a tab does not write the URL back.
+   */
+  private readonly queryTab = toSignal(
+    this.route.queryParamMap.pipe(map((params) => tabFromQuery(params.get('status')))),
+    { requireSync: true },
+  );
+  readonly status = linkedSignal<StatTab>(() => this.queryTab());
 
   // ---- Sort ----
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });

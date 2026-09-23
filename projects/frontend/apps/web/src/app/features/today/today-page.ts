@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { StbButtonModule, StbChipsModule, StbIconModule, StbToast } from '@portfolioai/ui';
@@ -31,6 +31,9 @@ export type StepState = 'done' | 'current' | 'todo';
 const PREMARKET_OPEN = 4 * 60;
 const SESSION_OPEN = 9 * 60 + 30;
 const SESSION_CLOSE = 16 * 60;
+
+/** Overdue stats named on step 4 ; the rest is counted. */
+const OVERDUE_SHOWN = 5;
 
 /**
  * Reads the New York wall clock : the trading day is defined over there, so deriving the day's
@@ -100,6 +103,7 @@ export class TodayPage {
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
+  private readonly locale = inject(LOCALE_ID);
 
   /** Captured once : the page is mounted fresh on every visit, and the day doesn't turn under it. */
   readonly today = new Date();
@@ -110,27 +114,59 @@ export class TodayPage {
   readonly accountSummary = signal<AccountSummary | null>(null);
   readonly reconciledToday = signal(false);
   readonly candidates = signal<Candidate[]>([]);
+  /** Newest first, one page : the count of the step comes from [statsToCompleteTotal]. */
   readonly statsToComplete = signal<StatEntry[]>([]);
+  /** `null` until the stats answer, or when they fail : unknown is not « nothing left ». */
+  readonly statsToCompleteTotal = signal<number | null>(null);
   readonly todayTrades = signal<TradeEntry[]>([]);
   readonly weekTrades = signal<TradeEntry[]>([]);
   readonly dayPnl = signal<JournalSummary | null>(null);
   readonly weekPnl = signal<JournalSummary | null>(null);
   readonly monthPnl = signal<JournalSummary | null>(null);
 
-  /** Candidates of the day still waiting to be promoted — step 4's « promote the rest » action. */
+  /** Candidates of the day still waiting to be promoted — step 2's « promote the rest » action. */
   readonly pendingCandidates = computed(() => this.candidates().filter((c) => !c.promoted));
+  /**
+   * Step 4 counts every stat still to complete, whatever its day (#337) : a stat left half-filled
+   * on an earlier day is overdue, and nothing else in the daily flow would point at it.
+   */
+  readonly statsToCompleteToday = computed(() =>
+    this.statsToComplete().filter((s) => isSameDay(s.tradeDate, this.today)),
+  );
+  readonly overdueStats = computed(() =>
+    this.statsToComplete().filter((s) => !isSameDay(s.tradeDate, this.today)),
+  );
+  /** The day's stats come first (newest first), so every stat past them is overdue. */
+  readonly overdueTotal = computed(
+    () => (this.statsToCompleteTotal() ?? 0) - this.statsToCompleteToday().length,
+  );
+  /**
+   * « GLND (21/09), KTTA (17/09) » — overdue stats carry their day, the ticker alone is ambiguous.
+   * Capped : it is the one list of the page whose length has no bound.
+   */
+  readonly overdueLine = computed(() => {
+    const dayMonth = new Intl.DateTimeFormat(this.locale, { day: '2-digit', month: '2-digit' });
+    const shown = this.overdueStats().slice(0, OVERDUE_SHOWN);
+    return {
+      tickers: shown.map((s) => `${s.ticker} (${dayMonth.format(s.tradeDate)})`).join(', '),
+      more: this.overdueTotal() - shown.length,
+    };
+  });
 
   /** Whether each step is behind us, from the data and the clock. */
   private readonly done = computed<Record<StepKey, boolean>>(() => ({
     reconciliation: this.reconciledToday(),
-    candidates: this.candidates().length > 0,
+    // Captured is not enough : the step is done once every candidate is in the stats sheet (#337).
+    candidates: this.candidates().length > 0 && this.pendingCandidates().length === 0,
     // The session is behind us once New York has closed — there is nothing to do in the app while
     // it runs, so it can't be "done" any earlier.
     session: this.marketStatus === 'CLOSED' && newYorkMinutes(this.today).minutes >= SESSION_CLOSE,
+    // Pending candidates are stats not created yet : without them, step 4 would tick and then
+    // untick as soon as step 2 promotes them.
     stats:
       this.candidates().length > 0 &&
       this.pendingCandidates().length === 0 &&
-      this.statsToComplete().length === 0,
+      this.statsToCompleteTotal() === 0,
     trades: this.todayTrades().length > 0,
   }));
 
@@ -166,14 +202,14 @@ export class TodayPage {
   }
 
   /**
-   * « Promote the remaining candidates » of step 4 — a creation, so it goes through the
+   * « Promote the remaining candidates » of step 2 — a creation, so it goes through the
    * confirmation modal, which names the tickers about to become stats.
    */
   promoteRemaining(): void {
     const pending = this.pendingCandidates();
     if (pending.length === 0) return;
     this.confirm
-      .ask('today.steps.stats.confirmPromote', {
+      .ask('today.steps.candidates.confirmPromote', {
         params: { count: pending.length, tickers: pending.map((c) => c.ticker).join(', ') },
       })
       .pipe(
@@ -232,10 +268,19 @@ export class TodayPage {
       error: () => this.candidates.set([]),
     });
     this.statsRepo
-      .findAll({ ...day, status: 'TO_COMPLETE' }, { pageIndex: 0, pageSize: 20 })
+      .findAll(
+        { status: 'TO_COMPLETE' },
+        { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
+      )
       .subscribe({
-        next: (page) => this.statsToComplete.set(page.content),
-        error: () => this.statsToComplete.set([]),
+        next: (page) => {
+          this.statsToComplete.set(page.content);
+          this.statsToCompleteTotal.set(page.totalElements);
+        },
+        error: () => {
+          this.statsToComplete.set([]);
+          this.statsToCompleteTotal.set(null);
+        },
       });
     this.journalRepo.findAll(day, { pageIndex: 0, pageSize: 20 }).subscribe({
       next: (page) => this.todayTrades.set(page.content),

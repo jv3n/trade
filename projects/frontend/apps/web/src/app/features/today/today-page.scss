@@ -158,6 +158,11 @@
   margin-top: s.$space-xs;
   font-size: s.$font-sm;
   color: var(--color-text-muted);
+
+  // A stat left from an earlier day is a warning, not the day's normal work (#337).
+  .overdue {
+    color: var(--color-warning);
+  }
 }
 
 // Step 1 hosts the reconciliation block ; it only earns its space while the step is current.
