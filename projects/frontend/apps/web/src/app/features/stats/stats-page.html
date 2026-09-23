@@ -29,31 +29,55 @@
           }
         </div>
       </div>
-      <div class="card kpi">
-        <div class="kpi__label">{{ 'stats.kpi.averagePushOpen' | translate }}</div>
-        <div class="kpi__value">
-          {{
-            kpi.averagePushOpenPercent !== null
-              ? (kpi.averagePushOpenPercent | number: '1.1-1') + ' %'
-              : '—'
-          }}
+      @if (status() === 'NO_PUSH') {
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.noPushDays' | translate }}</div>
+          @let rate = noPushRate();
+          <!-- Blank, not « — », until the rate arrives : a dash would read as the answer (#334). -->
+          <div class="kpi__value" [attr.aria-busy]="rate === null || null">
+            @if (rate === null) {
+              &nbsp;
+            } @else if (rate.share === null) {
+              —
+            } @else {
+              {{ rate.count }} / {{ rate.total }}
+            }
+          </div>
+          <div class="kpi__sub">
+            @if (rate !== null && rate.share !== null) {
+              {{ 'stats.kpi.noPushShare' | translate: { share: (rate.share | number: '1.0-0') } }}
+            } @else {
+              &nbsp;
+            }
+          </div>
         </div>
-        <div class="kpi__sub">
-          @if (kpi.noPushCount > 0) {
+      } @else {
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.averagePushOpen' | translate }}</div>
+          <div class="kpi__value">
             {{
-              'stats.kpi.noPushSub'
-                | translate
-                  : {
-                      pushed: kpi.completed - kpi.noPushCount,
-                      count: kpi.noPushCount,
-                      total: kpi.completed,
-                    }
+              kpi.averagePushOpenPercent !== null
+                ? (kpi.averagePushOpenPercent | number: '1.1-1') + ' %'
+                : '—'
             }}
-          } @else {
-            {{ 'stats.kpi.vsOpen' | translate }}
-          }
+          </div>
+          <div class="kpi__sub">
+            @if (kpi.noPushCount > 0) {
+              {{
+                'stats.kpi.noPushSub'
+                  | translate
+                    : {
+                        pushed: kpi.completed - kpi.noPushCount,
+                        count: kpi.noPushCount,
+                        total: kpi.completed,
+                      }
+              }}
+            } @else {
+              {{ 'stats.kpi.vsOpen' | translate }}
+            }
+          </div>
         </div>
-      </div>
+      }
       <div class="card kpi">
         <div class="kpi__label">{{ 'stats.kpi.averageLod' | translate }}</div>
         <div class="kpi__value">

@@ -505,7 +505,9 @@
       "vsOpen": "vs open",
       "fade": "Fade à la clôture",
       "fadeSub": "EOD sous l'open · sur les {{total}} complétées · moyenne {{average}}",
-      "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push"
+      "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push",
+      "noPushDays": "Jours sans push",
+      "noPushShare": "{{share}} % des stats complétées de la période"
     },
     "complete": {
       "title": "Séance",

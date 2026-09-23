@@ -44,7 +44,8 @@ import { StatsPage } from './stats-page';
  *   date, the ticker and the three premarket prices, goes through the confirmation modal, then the
  *   panel carries on with the created stat.
  * - **No push (#302)** — ticking it empties the push and takes it out of the prices a stat needs ;
- *   unticking gives the typed push back ; the « No push » tab is its own filter axis.
+ *   unticking gives the typed push back ; the « No push » tab is its own filter axis, and its push
+ *   KPI rates the no-push days over the whole period (#334).
  *
  * The repository, the confirmation modal and the snackbar are stubbed so nothing touches HTTP.
  */
@@ -667,6 +668,74 @@ describe('StatsPage', () => {
 
     expect(repo.lastFilter?.noPush).toBe(true);
     expect(repo.lastFilter?.status).toBeNull();
+  });
+
+  // #334 : on this tab the average push read « — » over « 0 that pushed ».
+  it('the « No push » tab rates the no-push days over every completed stat of the period', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    repo.summary.mockImplementation((filter?: StatEntryFilter) =>
+      of(
+        filter?.noPush
+          ? makeSummary({ completed: 1, noPushCount: 1 })
+          : makeSummary({ completed: 11, noPushCount: 1 }),
+      ),
+    );
+
+    page.setStatus('NO_PUSH');
+    fixture.detectChanges();
+
+    expect(repo.summary).toHaveBeenLastCalledWith(expect.objectContaining({ noPush: null }));
+    expect(page.noPushRate()?.count).toBe(1);
+    expect(page.noPushRate()?.total).toBe(11);
+    expect(page.noPushRate()?.share).toBeCloseTo(9.09, 2);
+    expect(fixture.nativeElement.textContent).toContain('stats.kpi.noPushDays');
+  });
+
+  // A search for SGBX made it « 1 / 1 · 100 % of the period » : one ticker over itself.
+  it('rates the no-push days over the period whatever the search box holds', () => {
+    vi.useFakeTimers();
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    page.setStatus('NO_PUSH');
+    page.onSearchInput('SGBX');
+    vi.advanceTimersByTime(250); // the search box is debounced
+    fixture.detectChanges();
+    vi.useRealTimers();
+
+    expect(repo.lastFilter?.query).toBe('SGBX');
+    expect(repo.summary).toHaveBeenLastCalledWith(
+      expect.objectContaining({ noPush: null, query: null }),
+    );
+  });
+
+  it('forgets the rate once the tab is left, so it never comes back stale', () => {
+    const { fixture, page } = setup({ rows: [makeStat()] });
+    page.setStatus('NO_PUSH');
+    fixture.detectChanges();
+    expect(page.noPushRate()).not.toBeNull();
+
+    page.setStatus(null);
+    fixture.detectChanges();
+
+    expect(page.noPushRate()).toBeNull();
+  });
+
+  it('shows a dash rather than « 0 / 0 » on a period with no completed stat', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    repo.summary.mockReturnValue(of(makeSummary({ completed: 0, noPushCount: 0 })));
+
+    page.setStatus('NO_PUSH');
+    fixture.detectChanges();
+
+    expect(page.noPushRate()?.share).toBeNull();
+    expect(fixture.nativeElement.querySelector('.kpi__value[aria-busy]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('0 / 0');
+  });
+
+  it('the other tabs keep the average push and fetch no period summary', () => {
+    const { repo, page } = setup({ rows: [makeStat()] });
+
+    expect(repo.summary).toHaveBeenCalledTimes(1);
+    expect(page.noPushRate()).toBeNull();
   });
 
   // ---- Premarket card (#326) ----

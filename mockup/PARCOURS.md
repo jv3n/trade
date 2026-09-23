@@ -312,7 +312,9 @@ that never comes, so they count in the stats and are made easy to single out.
 - On that tab the push KPI has nothing to average, so it becomes **« Days without a push »** (#334) :
   the no-push days over the completed stats of the same period and pattern (« 1 / 11 »), with the
   share underneath (« 9 % of the completed stats »). The rate counts every completed stat, not only
-  the tab's rows, so it is computed on the period's summary without the no-push filter. Comparing
+  the tab's rows, so it is computed on the period's summary without the no-push filter — and
+  without the search, which would turn it into one ticker over itself. Until it arrives the card
+  stays blank rather than showing « — », which would read as the answer. Comparing
   their premarket with the days that pushed (« PM push 12 % vs 18 % ») waits for enough of them to
   mean something (#302).
 - The « À l'open » card's references are built on the push at the open, which a no-push stat

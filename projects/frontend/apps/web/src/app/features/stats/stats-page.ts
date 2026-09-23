@@ -305,9 +305,25 @@ export class StatsPage {
   readonly entries = signal<StatEntry[]>([]);
   readonly totalElements = signal(0);
   readonly summary = signal<StatSummary | null>(null);
+  /**
+   * The « No push » tab's KPI (#334) : how often a day goes without a push, over every completed
+   * stat of the period — the tab's own summary only holds the no-push days, so the rate needs the
+   * summary without that filter.
+   */
+  private readonly periodSummary = signal<StatSummary | null>(null);
+  readonly noPushRate = computed(() => {
+    const period = this.periodSummary();
+    if (period === null) return null;
+    return {
+      count: period.noPushCount,
+      total: period.completed,
+      share: period.completed > 0 ? (period.noPushCount / period.completed) * 100 : null,
+    };
+  });
   // A superseded request is dropped, or the slower of two quick filter changes wins (#370).
   private listing?: Subscription;
   private summaryFetch?: Subscription;
+  private periodSummaryFetch?: Subscription;
 
   // ---- Pagination ----
   readonly pageIndex = signal(0);
@@ -482,6 +498,7 @@ export class StatsPage {
     inject(DestroyRef).onDestroy(() => {
       this.listing?.unsubscribe();
       this.summaryFetch?.unsubscribe();
+      this.periodSummaryFetch?.unsubscribe();
     });
     this.writes.pipe(concatMap((write) => write)).subscribe();
 
@@ -949,6 +966,17 @@ export class StatsPage {
     this.summaryFetch = this.repo.summary(filterValue).subscribe({
       next: (summary) => this.summary.set(summary),
       error: () => this.summary.set(null),
+    });
+    this.periodSummaryFetch?.unsubscribe();
+    if (!filterValue.noPush) {
+      this.periodSummary.set(null);
+      return;
+    }
+    // The whole period, whatever the search box holds : one ticker over itself is not a rate.
+    const period: StatEntryFilter = { ...filterValue, noPush: null, query: null };
+    this.periodSummaryFetch = this.repo.summary(period).subscribe({
+      next: (summary) => this.periodSummary.set(summary),
+      error: () => this.periodSummary.set(null),
     });
   }
 
