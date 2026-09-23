@@ -43,7 +43,7 @@ interface StatEntryWireDto {
   under1Dollar: boolean;
   entryAfter11am: boolean;
   noPush: boolean;
-  lowInstitutions: boolean;
+  highInstitutions: boolean;
   completed: boolean;
   tradeId: string | null;
   tradeRetainedProfitDollars: number | null;

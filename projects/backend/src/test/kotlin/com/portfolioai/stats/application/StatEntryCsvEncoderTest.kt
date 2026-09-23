@@ -84,13 +84,13 @@ class StatEntryCsvEncoderTest {
             ssr = true,
             under1Dollar = false,
             entryAfter11am = true,
-            lowInstitutions = true,
+            highInstitutions = true,
           )
         )
       )
     val cells = dataRowOf(csv).split(",")
 
-    // SSR / < $1 / after 11am sit at 15-17, « no push » at 18 and « institutions < 20 % » at 19.
+    // SSR / < $1 / after 11am sit at 15-17, « no push » at 18 and « institutions > 20 % » at 19.
     assertEquals(listOf("true", "false", "true"), cells.subList(15, 18))
     assertEquals("true", cells[19])
   }
@@ -133,7 +133,7 @@ class StatEntryCsvEncoderTest {
     ssr: Boolean = false,
     under1Dollar: Boolean = false,
     entryAfter11am: Boolean = false,
-    lowInstitutions: Boolean = false,
+    highInstitutions: Boolean = false,
   ): StatEntry =
     StatEntry(
       user = owner,
@@ -156,7 +156,7 @@ class StatEntryCsvEncoderTest {
       ssr = ssr,
       under1Dollar = under1Dollar,
       entryAfter11am = entryAfter11am,
-      lowInstitutions = lowInstitutions,
+      highInstitutions = highInstitutions,
     )
 
   private val owner =

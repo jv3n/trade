@@ -38,5 +38,5 @@ data class StatEntryRequest(
   /** The stock never pushed after the open — [pushOpenPrice] is then ignored and stored empty. */
   val noPush: Boolean = false,
   /** Less than 20 % of the float held by institutions (#349). */
-  val lowInstitutions: Boolean = false,
+  val highInstitutions: Boolean = false,
 )

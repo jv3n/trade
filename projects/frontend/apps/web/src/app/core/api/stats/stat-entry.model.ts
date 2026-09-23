@@ -42,7 +42,7 @@ export interface StatEntry {
   /** The stock never pushed after the open (#302) — [pushOpenPrice] stays null. */
   noPush: boolean;
   /** Less than 20 % of the float held by institutions (#349) — the threshold lives in the label. */
-  lowInstitutions: boolean;
+  highInstitutions: boolean;
   /**
    * Ticked by the owner (#263) — needs the five session prices (four on a no-push day), which alone
    * don't tick it.

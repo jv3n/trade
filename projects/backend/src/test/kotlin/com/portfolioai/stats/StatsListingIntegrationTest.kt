@@ -513,10 +513,10 @@ class StatsListingIntegrationTest {
   // #349 : a GUS is screened on low institutional ownership, so the flag rides along with the rest.
   @Test
   fun `the institutions flag is stored and given back like the other flags`() {
-    val stat = service.create(premarketRequest(ticker = "NUKK").copy(lowInstitutions = true))
+    val stat = service.create(premarketRequest(ticker = "NUKK").copy(highInstitutions = true))
 
-    assertTrue(stat.lowInstitutions)
-    assertTrue(service.findById(stat.id).lowInstitutions)
+    assertTrue(stat.highInstitutions)
+    assertTrue(service.findById(stat.id).highInstitutions)
   }
 
   @Test
