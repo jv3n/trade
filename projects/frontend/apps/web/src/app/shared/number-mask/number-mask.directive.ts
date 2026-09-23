@@ -82,16 +82,20 @@ export class NumberMaskDirective {
   private selectOnMouseUp = false;
 
   constructor() {
-    // Sync the visible text with the bound `[value]`. Programmatic updates from the model
-    // (reset form, edit-mode prefill) flow through here. We skip the round-trip when the
-    // current text already parses to the same value to avoid clobbering the user's caret
-    // mid-typing.
+    // `matInput` consumes `[value]` too and writes the raw number (`1500`, `1.3`) first, so a
+    // field at rest is compared on its text, not its parsed value (#363). While typing, only a
+    // text that no longer means the value is replaced, so the caret is not clobbered.
     effect(() => {
       const v = this.value();
-      const current = this.parse(this.host.nativeElement.value);
-      if (current !== v) {
-        this.host.nativeElement.value = v === null ? '' : this.atRest(v);
+      const el = this.host.nativeElement;
+      if (document.activeElement === el) {
+        if (this.parse(el.value) !== v) {
+          el.value = v === null ? '' : formatNumber(v, this.decimals(), this.separator, true);
+        }
+        return;
       }
+      const wanted = v === null ? '' : this.atRest(v);
+      if (el.value !== wanted) el.value = wanted;
     });
   }
 

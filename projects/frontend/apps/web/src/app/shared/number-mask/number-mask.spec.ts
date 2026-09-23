@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { StbInputModule } from '@portfolioai/ui';
 import { describe, expect, it } from 'vitest';
 import {
   NumberMaskDirective,
@@ -192,5 +193,26 @@ describe('NumberMaskDirective on focus', () => {
     const mouseUp = new MouseEvent('mouseup', { bubbles: true, cancelable: true });
     input.dispatchEvent(mouseUp);
     expect(mouseUp.defaultPrevented).toBe(false);
+  });
+});
+
+/**
+ * First paint next to `matInput`, which reads `[value]` too and writes the raw number into the
+ * field. The locale form must win from the first render, not only once the field is left (#363).
+ */
+describe('NumberMaskDirective on first render', () => {
+  @Component({
+    imports: [StbInputModule, NumberMaskDirective],
+    template: `<input matInput appNumberMask [decimals]="2" [value]="1500" />`,
+  })
+  class Host {}
+
+  it('shows a prefilled amount grouped and padded before the field is ever touched', () => {
+    const fixture = TestBed.createComponent(Host);
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input');
+
+    // Default `en-US` locale in the specs : `1,500.00` is what the French page reads `1 500,00`.
+    expect(input.value).toBe('1,500.00');
   });
 });
