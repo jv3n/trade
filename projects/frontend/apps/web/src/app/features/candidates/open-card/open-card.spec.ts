@@ -122,6 +122,14 @@ describe('OpenCard', () => {
     expect(card.rows()[0].target).toBeCloseTo(3.7375, 4);
   });
 
+  // #320 : « back to the reference » was offered on a row already showing the reference.
+  it('offers no way back to the reference on a push that already equals it', () => {
+    const { card } = setup([makeCandidate({ targetPushPercent: 9.6 })]);
+
+    expect(card.rows()[0].push).toBe(9.6);
+    expect(card.rows()[0].custom).toBe(false);
+  });
+
   it('shows the figures on the toggles only when the day shares one pattern', () => {
     expect(setup().card.dayReference('max')).toBe(21.5);
     TestBed.resetTestingModule();
