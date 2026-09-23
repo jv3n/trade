@@ -28,6 +28,7 @@ import { addDays, isBefore, isSameDay, startOfDay } from 'date-fns';
 import {
   EMPTY,
   Observable,
+  Subscription,
   catchError,
   filter,
   finalize,
@@ -166,6 +167,8 @@ export class CandidatesPage {
   // ---- List ----
   readonly loading = signal(true);
   readonly loadError = signal(false);
+  // A superseded day is dropped, or a slow answer for yesterday lands on today's page (#370).
+  private listing?: Subscription;
   readonly candidates = signal<Candidate[]>([]);
   /**
    * Push at the open of the completed stats, per pattern — the references of the « À l'open » card.
@@ -443,9 +446,11 @@ export class CandidatesPage {
   // ---- Internals ----
 
   private load(): void {
+    // Before `loading.set(true)` : the dropped request's `finalize` resets the flag.
+    this.listing?.unsubscribe();
     this.loading.set(true);
     this.loadError.set(false);
-    this.repo
+    this.listing = this.repo
       .listForDate(this.day())
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({

@@ -28,6 +28,7 @@ import {
   EMPTY,
   Observable,
   Subject,
+  Subscription,
   catchError,
   concatMap,
   debounceTime,
@@ -304,6 +305,9 @@ export class StatsPage {
   readonly entries = signal<StatEntry[]>([]);
   readonly totalElements = signal(0);
   readonly summary = signal<StatSummary | null>(null);
+  // A superseded request is dropped, or the slower of two quick filter changes wins (#370).
+  private listing?: Subscription;
+  private summaryFetch?: Subscription;
 
   // ---- Pagination ----
   readonly pageIndex = signal(0);
@@ -893,9 +897,10 @@ export class StatsPage {
       sortDirection?: 'asc' | 'desc';
     },
   ): void {
+    this.listing?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
-    this.repo.findAll(filterValue, page).subscribe({
+    this.listing = this.repo.findAll(filterValue, page).subscribe({
       next: (result) => {
         this.entries.set(result.content);
         this.totalElements.set(result.totalElements);
@@ -908,10 +913,7 @@ export class StatsPage {
         this.loading.set(false);
       },
     });
-    this.repo.summary(filterValue).subscribe({
-      next: (summary) => this.summary.set(summary),
-      error: () => this.summary.set(null),
-    });
+    this.loadSummary(filterValue);
   }
 
   /**
@@ -935,7 +937,12 @@ export class StatsPage {
   }
 
   private refreshSummary(): void {
-    this.repo.summary(this.currentFilter()).subscribe({
+    this.loadSummary(this.currentFilter());
+  }
+
+  private loadSummary(filterValue: StatEntryFilter): void {
+    this.summaryFetch?.unsubscribe();
+    this.summaryFetch = this.repo.summary(filterValue).subscribe({
       next: (summary) => this.summary.set(summary),
       error: () => this.summary.set(null),
     });

@@ -526,7 +526,7 @@
         <mat-icon>error</mat-icon>
         <span>{{ msg }}</span>
       </div>
-    } @else if (loading()) {
+    } @else if (loading() && rows().length === 0) {
       <div class="loading-state">
         <mat-spinner diameter="20" />
         <span>{{ 'stats.loading' | translate }}</span>
@@ -537,7 +537,7 @@
         <p>{{ 'stats.empty' | translate }}</p>
       </div>
     } @else {
-      <div stbTable>
+      <div stbTable [busy]="loading()">
         <table
           mat-table
           [dataSource]="rows()"

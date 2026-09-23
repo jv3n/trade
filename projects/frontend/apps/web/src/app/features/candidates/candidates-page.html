@@ -198,7 +198,7 @@
     </section>
   }
 
-  @if (!loading() && !loadError() && rows().length > 0) {
+  @if (!loadError() && rows().length > 0) {
     <section class="card">
       <h3>
         {{ 'candidates.openCard.title' | translate }}
@@ -231,7 +231,7 @@
         <mat-icon>error</mat-icon>
         <span>{{ 'candidates.snackbar.loadError' | translate }}</span>
       </div>
-    } @else if (loading()) {
+    } @else if (loading() && rows().length === 0) {
       <div class="loading-state">
         <mat-spinner diameter="20" />
         <span>{{ 'common.loading' | translate }}</span>
@@ -242,7 +242,7 @@
         <p>{{ 'candidates.list.empty' | translate }}</p>
       </div>
     } @else {
-      <div stbTable>
+      <div stbTable [busy]="loading()">
         <table mat-table [dataSource]="rows()">
           <ng-container matColumnDef="ticker">
             <th mat-header-cell *matHeaderCellDef>{{ 'candidates.fields.ticker' | translate }}</th>

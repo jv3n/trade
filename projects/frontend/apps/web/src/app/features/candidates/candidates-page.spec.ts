@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { addDays, startOfDay } from 'date-fns';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   BulkPromotion,
@@ -521,5 +521,25 @@ describe('CandidatesPage', () => {
 
     expect(repo.listForDate).toHaveBeenLastCalledWith(addDays(startOfDay(new Date()), -1));
     expect(page.readOnly()).toBe(true);
+  });
+
+  // #370 : a slow answer for the day left behind landed on the day being browsed.
+  it('keeps the list of the day left until the next one arrives, and drops a stale answer', () => {
+    const { fixture, page, repo } = setup({ list: [makeCandidate()] });
+    const dayBefore = new Subject<Candidate[]>();
+    const twoDaysBefore = new Subject<Candidate[]>();
+    repo.listForDate.mockReturnValueOnce(dayBefore).mockReturnValueOnce(twoDaysBefore);
+
+    page.previousDay();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.stb-table--busy')).not.toBeNull();
+
+    page.previousDay();
+    twoDaysBefore.next([makeCandidate({ id: 'c-bnrg', ticker: 'BNRG' })]);
+    twoDaysBefore.complete();
+    dayBefore.next([makeCandidate({ id: 'c-slnh', ticker: 'SLNH' })]);
+
+    expect(page.rows().map((c) => c.ticker)).toEqual(['BNRG']);
+    expect(page.loading()).toBe(false);
   });
 });

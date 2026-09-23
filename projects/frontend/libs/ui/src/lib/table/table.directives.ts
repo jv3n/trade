@@ -4,13 +4,21 @@ import { Directive, computed, input } from '@angular/core';
  * Lib directive that wraps a `<table mat-table>` inside a styled container :
  * surface background, border, radius and horizontal overflow scroll. Drop it on a
  * `<div>` that hosts the table — no class name needed on the consumer side.
+ *
+ * `[busy]` marks a refetch : the rows on screen stay, dimmed, until the new ones replace them.
+ * Unmounting the table instead made every filter change blink (#370).
  */
 @Directive({
   selector: 'div[stbTable]',
 
-  host: { class: 'stb-table' },
+  host: { '[class]': 'hostClass()', '[attr.aria-busy]': 'busy() || null' },
 })
-export class StbTable {}
+export class StbTable {
+  readonly busy = input(false);
+  protected readonly hostClass = computed(() =>
+    this.busy() ? 'stb-table stb-table--busy' : 'stb-table',
+  );
+}
 
 export type StbTableColVariant = 'numeric' | 'mono' | 'actions';
 

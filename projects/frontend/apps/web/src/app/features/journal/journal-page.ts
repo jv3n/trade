@@ -8,6 +8,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   EMPTY,
   Subject,
+  Subscription,
   catchError,
   debounceTime,
   distinctUntilChanged,
@@ -149,6 +150,10 @@ export class JournalPage {
 
   // ---- Data state ----
   readonly loading = signal(true);
+  // A superseded request is dropped, or the slower of two quick filter changes wins (#370).
+  private listing?: Subscription;
+  private summaryFetch?: Subscription;
+  private statSummaryFetch?: Subscription;
   readonly error = signal<string | null>(null);
   readonly entries = signal<TradeEntry[]>([]);
   readonly totalElements = signal(0);
@@ -347,20 +352,25 @@ export class JournalPage {
    * make « traded / all » compare two different sets).
    */
   private fetchSummaries(criteria: TradeEntryFilter): void {
-    this.repo.summary(criteria).subscribe({
+    this.summaryFetch?.unsubscribe();
+    this.summaryFetch = this.repo.summary(criteria).subscribe({
       next: (s) => this.summary.set(s),
       error: () => this.summary.set(null),
     });
-    this.statsRepo.summary({ dateFrom: criteria.dateFrom, dateTo: criteria.dateTo }).subscribe({
-      next: (s) => this.statSummary.set(s),
-      error: () => this.statSummary.set(null),
-    });
+    this.statSummaryFetch?.unsubscribe();
+    this.statSummaryFetch = this.statsRepo
+      .summary({ dateFrom: criteria.dateFrom, dateTo: criteria.dateTo })
+      .subscribe({
+        next: (s) => this.statSummary.set(s),
+        error: () => this.statSummary.set(null),
+      });
   }
 
   private fetch(filter: TradeEntryFilter, page: PageRequest): void {
+    this.listing?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
-    this.repo.findAll(filter, page).subscribe({
+    this.listing = this.repo.findAll(filter, page).subscribe({
       next: (result) => {
         this.entries.set(result.content);
         this.totalElements.set(result.totalElements);
