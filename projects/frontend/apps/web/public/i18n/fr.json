@@ -608,6 +608,8 @@
       "waitingPremarket": "en attente du premarket",
       "waitingSession": "en attente de la séance",
       "hodBelowLod": "le HOD est sous le LOD",
+      "aboveHod": "un prix passe au-dessus du HOD",
+      "belowLod": "un prix passe sous le LOD",
       "serverRefused": "le serveur a refusé la modification"
     },
     "confirmCreate": {

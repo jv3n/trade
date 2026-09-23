@@ -254,6 +254,19 @@ class StatEntryService(
           entry.missingSessionPrices.joinToString(", ")
       )
     }
+    // Rows written before the range rule existed (#305) can hold an impossible set : the ✓ replays
+    // it rather than blessing what a write would refuse today.
+    if (completed) {
+      requireInsideTheDay(
+        entry.hodPrice,
+        entry.lodPrice,
+        listOf(
+          "Open" to entry.openPrice,
+          "Push at open" to entry.pushOpenPrice,
+          "EOD" to entry.eodPrice,
+        ),
+      )
+    }
     entry.completedAt = if (completed) entry.completedAt ?: Instant.now() else null
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
@@ -324,7 +337,10 @@ class StatEntryService(
     if (pmHigh < pmOpen) throw badRequest("PM high must not be below the PM open")
     val hod = request.hodPrice?.requirePositive("HOD")
     val lod = request.lodPrice?.requirePositive("LOD")
-    if (hod != null && lod != null && hod < lod) throw badRequest("HOD must not be below the LOD")
+    val open = request.openPrice?.requirePositive("Open")
+    val push = if (request.noPush) null else request.pushOpenPrice?.requirePositive("Push at open")
+    val eod = request.eodPrice?.requirePositive("EOD")
+    requireInsideTheDay(hod, lod, listOf("Open" to open, "Push at open" to push, "EOD" to eod))
 
     tradeDate = request.tradeDate
     pattern = request.pattern
@@ -337,12 +353,11 @@ class StatEntryService(
     locatePerShare = request.locatePerShare?.requireNonNegative("Locate")
     note = request.note?.trim()?.ifEmpty { null }
 
-    openPrice = request.openPrice?.requirePositive("Open")
-    pushOpenPrice =
-      if (request.noPush) null else request.pushOpenPrice?.requirePositive("Push at open")
+    openPrice = open
+    pushOpenPrice = push
     hodPrice = hod
     lodPrice = lod
-    eodPrice = request.eodPrice?.requirePositive("EOD")
+    eodPrice = eod
 
     ssr = request.ssr
     under1Dollar = request.under1Dollar
@@ -353,6 +368,24 @@ class StatEntryService(
 
   private fun StatEntryRequest.cleanTicker(): String =
     ticker.trim().uppercase().ifEmpty { throw badRequest("Ticker must not be blank") }
+
+  /**
+   * The day's range holds every price it contains (#305) : `LOD <= open, push, EOD <= HOD`. The HOD
+   * / LOD pair was checked, the three prices inside were not — a stat could carry a HOD of 1 under
+   * a push of 10 and still be ticked.
+   */
+  private fun requireInsideTheDay(
+    hod: BigDecimal?,
+    lod: BigDecimal?,
+    prices: List<Pair<String, BigDecimal?>>,
+  ) {
+    if (hod != null && lod != null && hod < lod) throw badRequest("HOD must not be below the LOD")
+    for ((label, price) in prices) {
+      if (price == null) continue
+      if (hod != null && price > hod) throw badRequest("$label must not be above the HOD")
+      if (lod != null && price < lod) throw badRequest("$label must not be below the LOD")
+    }
+  }
 
   private fun BigDecimal.requirePositive(label: String): BigDecimal = also {
     if (it.signum() <= 0) throw badRequest("$label must be greater than zero")

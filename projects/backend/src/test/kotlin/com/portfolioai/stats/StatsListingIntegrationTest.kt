@@ -443,6 +443,65 @@ class StatsListingIntegrationTest {
     assertEquals(0, BigDecimal("3.52").compareTo(kept.eodPrice), "the rejected edit left no trace")
   }
 
+  // #305 : the HOD / LOD pair was the only check, so this set went in and could be ticked — a HOD
+  // of 1 under a push of 10.06 is not a day, it is a typo.
+  @Test
+  fun `a price above the HOD is a 400, naming the price`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        // The issue's own case : a HOD under the prices it should contain, with no LOD to
+        // trip the HOD / LOD rule first.
+        service.create(
+          fullSessionRequest(ticker = "NUKK").copy(hodPrice = BigDecimal("1.00"), lodPrice = null)
+        )
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("above the HOD"), "got ${ex.reason}")
+  }
+
+  // A row stored before the rule existed (#305) : ticking it would bless what a write refuses.
+  @Test
+  fun `ticking a stat whose prices leave the day is a 400`() {
+    val stat = repo.save(makeStat(testUser, ticker = "NUKK", tradeDate = DAY))
+    stat.openPrice = BigDecimal("4.20")
+    stat.pushOpenPrice = BigDecimal("4.62")
+    stat.hodPrice = BigDecimal("1.00")
+    stat.lodPrice = BigDecimal("0.90")
+    stat.eodPrice = BigDecimal("3.52")
+    repo.save(stat)
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.setCompleted(stat.id, completed = true)
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("above the HOD"), "got ${ex.reason}")
+  }
+
+  @Test
+  fun `a price below the LOD is a 400`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(fullSessionRequest(ticker = "SOBR").copy(eodPrice = BigDecimal("0.10")))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("below the LOD"), "got ${ex.reason}")
+  }
+
+  @Test
+  fun `a price at zero is a 400, not a filled price`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(fullSessionRequest(ticker = "CYN").copy(eodPrice = BigDecimal.ZERO))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("EOD"), "got ${ex.reason}")
+  }
+
   // GLND, 2026-09-21 : dropped straight from the open, only came back up around 11 am.
   @Test
   fun `a no-push stat is ticked with the four other prices`() {
