@@ -174,7 +174,8 @@
     },
     "list": {
       "count": "{{count}} candidate(s) · sorted by gap",
-      "empty": "No candidate on this day."
+      "empty": "No candidate on this day.",
+      "weekend": "Weekend, no session."
     },
     "actions": {
       "edit": "Edit",

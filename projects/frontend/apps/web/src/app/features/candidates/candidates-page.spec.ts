@@ -542,4 +542,16 @@ describe('CandidatesPage', () => {
     expect(page.rows().map((c) => c.ticker)).toEqual(['BNRG']);
     expect(page.loading()).toBe(false);
   });
+
+  // #320 : Sunday 2026-09-20 read « no candidate on this day », as if a session had been missed.
+  it('says there is no session on a weekend day', () => {
+    const { fixture, page } = setup();
+    page.day.set(new Date(2026, 8, 20));
+    fixture.detectChanges();
+
+    expect(page.weekend()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.empty-state').textContent).toContain(
+      'candidates.list.weekend',
+    );
+  });
 });
