@@ -232,15 +232,15 @@ push once it has happened, the flags as they come — and the rest after the 4 p
 | SSR | yes / no | |
 | Price < $1 | yes / no | |
 | Entry after 11 am | yes / no | Kept even though in theory I shouldn't be doing it |
-| Institutions < 20 % | yes / no | Less than 20 % of the float held by institutions, read on the broker screen — ticked by hand (#349) |
+| Institutions > 20 % | yes / no | More than 20 % of the float held by institutions, read on the broker screen — ticked by hand (#349, #369) |
 
 **What the app computes** : push at the open %, HOD %, LOD %, EOD %, all **vs the open** — e.g. push
 at the open (4.62 − 4.20) ÷ 4.20 = +10.0 %.
 
-**Institutional ownership** came back as a flag (#349) — « Institutions < 20 % », ticked by hand
-like the other three. It is a GUS entry criterion filtered upstream (`docs/pattern/GUS.md`, #7), so
-it is expected to be ticked most days ; keeping the trace on the stat is what lets the exceptions be
-seen later. The **exact percentage** stays out : the flag is the unit of comparison, and the
+**Institutional ownership** came back as a flag (#349) — « Institutions > 20 % », ticked by hand
+like the other three (#369 fixed a label that read the other way round). Low ownership is a GUS entry
+criterion filtered upstream (`docs/pattern/GUS.md`, #7), so the flag is expected to stay unticked
+most days ; keeping the trace on the stat is what lets the exceptions be seen later. The **exact percentage** stays out : the flag is the unit of comparison, and the
 threshold lives in the label, so it can move without touching the data.
 
 **Removed** from the old sheet : the RADAR / MANUAL / IMPORT origin and the stats set

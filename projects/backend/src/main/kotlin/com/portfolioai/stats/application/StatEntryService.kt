@@ -363,7 +363,7 @@ class StatEntryService(
     under1Dollar = request.under1Dollar
     entryAfter11am = request.entryAfter11am
     noPush = request.noPush
-    lowInstitutions = request.lowInstitutions
+    highInstitutions = request.highInstitutions
   }
 
   private fun StatEntryRequest.cleanTicker(): String =

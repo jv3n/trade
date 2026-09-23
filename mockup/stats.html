@@ -317,7 +317,7 @@
             <label><input type="checkbox" data-flag /> SSR</label>
             <label><input type="checkbox" data-flag /> Prix &lt; 1 $</label>
             <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
-            <label title="Moins de 20 % du float détenu par des institutions"><input type="checkbox" data-flag checked /> Institutions &lt; 20 %</label>
+            <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
             <span style="flex: 1"></span>
             <span class="progress" id="panel-progress">2 / 5 prix saisis</span>
             <button class="btn" id="panel-close">Fermer</button>
@@ -563,7 +563,7 @@
         <p class="mockup-note">
           Maquette statique — une stat naît d'un candidat (bouton « → Stat ») et reprend ses données premarket et l'open de 9h30. La
           séance se remplit au fil de la journée, champ par champ : Open, Push à l'open, HOD, LOD, EOD (en $) et les flags (SSR, prix
-          &lt; 1 $, entrée après 11h, institutions &lt; 20 %), chacun enregistré à la sortie du champ, sans modale ; l'app calcule chaque % vs l'open. Une stat
+          &lt; 1 $, entrée après 11h, institutions &gt; 20 %), chacun enregistré à la sortie du champ, sans modale ; l'app calcule chaque % vs l'open. Une stat
           reste « à compléter » jusqu'à ce qu'on la coche (✓, comme une transaction revue dans Monarch) : la coche n'est possible
           qu'avec les cinq prix et se décoche d'un clic. La coche d'une stat complétée est verte. Vider un prix d'une stat cochée est refusé — il faut la décocher d'abord. Les
           KPIs et les moyennes ne comptent que les stats cochées.
