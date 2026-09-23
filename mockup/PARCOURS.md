@@ -73,6 +73,17 @@ lexicon is a reference. The future monitoring / charts tab will sit between Jour
 live gap, and a button to validate (or to create the correction when there is a gap). No need to
 open the account page in the morning.
 
+**Each step's title, text and action describe the same job** (#337) :
+
+- **Capture the candidates** (step 2) is done once **every** captured candidate is in the stats
+  sheet — capturing one is not enough. It carries the « Promote the N left » action : promotion is
+  morning work, before the session the stats are filled during.
+- **Complete the stats** (step 4) counts **every** stat still to complete, the earlier days
+  included — a stat left half-filled on a previous day stays visible here until it is ticked. The
+  earlier days are listed in amber (« Overdue : GLND (21/09), KTTA (17/09) »), even in the morning ;
+  the day's own stats are normal until the close. Its single action opens the stats sheet, where the
+  session panel opens on the first stat to complete. The step is done once none is left, any day.
+
 **Screen** : [`aujourdhui.html`](aujourdhui.html). The mockup has an « 8h00 / 16h15 » toggle to see
 the page at two moments of the day.
 
