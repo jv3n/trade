@@ -61,7 +61,10 @@
             <div class="step-body">
               @if (candidates().length > 0) {
                 {{
-                  'today.steps.candidates.captured'
+                  (candidates().length === 1
+                    ? 'today.steps.candidates.capturedOne'
+                    : 'today.steps.candidates.captured'
+                  )
                     | translate
                       : {
                           count: candidates().length,
@@ -127,15 +130,20 @@
             <div class="step-body">
               @if (statsToComplete().length > 0) {
                 {{
-                  'today.steps.stats.toComplete'
-                    | translate: { tickers: tickersOf(statsToComplete()) }
+                  (statsToComplete().length === 1
+                    ? 'today.steps.stats.toCompleteOne'
+                    : 'today.steps.stats.toComplete'
+                  ) | translate: { tickers: tickersOf(statsToComplete()) }
                 }}
               } @else {
                 {{ 'today.steps.stats.body' | translate }}
               }
               @if (pendingCandidates().length > 0) {
                 {{
-                  'today.steps.stats.notPromoted' | translate: { count: pendingCandidates().length }
+                  (pendingCandidates().length === 1
+                    ? 'today.steps.stats.notPromotedOne'
+                    : 'today.steps.stats.notPromoted'
+                  ) | translate: { count: pendingCandidates().length }
                 }}
               }
             </div>
@@ -175,8 +183,10 @@
             <div class="step-body">
               @if (todayTrades().length > 0) {
                 {{
-                  'today.steps.trades.entered'
-                    | translate: { count: todayTrades().length, tickers: tickersOf(todayTrades()) }
+                  (todayTrades().length === 1
+                    ? 'today.steps.trades.enteredOne'
+                    : 'today.steps.trades.entered'
+                  ) | translate: { count: todayTrades().length, tickers: tickersOf(todayTrades()) }
                 }}
               } @else {
                 {{ 'today.steps.trades.body' | translate }}

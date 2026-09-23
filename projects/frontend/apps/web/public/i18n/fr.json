@@ -46,7 +46,8 @@
       "candidates": {
         "title": "Saisir les candidats",
         "body": "Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.",
-        "captured": "{{count}} candidats saisis — {{tickers}}."
+        "captured": "{{count}} candidats saisis — {{tickers}}.",
+        "capturedOne": "1 candidat saisi — {{tickers}}."
       },
       "session": {
         "title": "Séance",
@@ -57,8 +58,10 @@
         "from": "à partir de 16:00",
         "body": "Finir la séance (HOD, LOD, EOD) de chaque stat du jour, puis la cocher.",
         "pending": "{{count}} à compléter",
-        "toComplete": "{{tickers}} attend(ent) son bloc de séance.",
+        "toComplete": "{{tickers}} attendent leur bloc de séance.",
+        "toCompleteOne": "{{tickers}} attend son bloc de séance.",
         "notPromoted": "{{count}} candidats ne sont pas encore passés en stats.",
+        "notPromotedOne": "1 candidat n'est pas encore passé en stats.",
         "confirmPromote": {
           "title": "Passer {{count}} candidats en stats ?",
           "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
@@ -68,7 +71,8 @@
       "trades": {
         "title": "Saisir les trades du jour",
         "body": "Tu as tradé aujourd'hui ? Crée le trade depuis sa stat, puis ajoute exécutions et post-mortem.",
-        "entered": "{{count}} trades saisis — {{tickers}}."
+        "entered": "{{count}} trades saisis — {{tickers}}.",
+        "enteredOne": "1 trade saisi — {{tickers}}."
       }
     },
     "actions": {
