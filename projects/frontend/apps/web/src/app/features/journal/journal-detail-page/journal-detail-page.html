@@ -239,28 +239,31 @@
             <p class="invalid">{{ 'journal.detail.executionsBlock.invalid' | translate }}</p>
           }
 
-          <!-- Footer of the mockup's table : what is left open + the computed P&L. -->
-          <p class="exec-footer">
-            <span>
-              {{
-                remainingShares() > 0
-                  ? ('journal.detail.executionsBlock.remaining'
-                    | translate: { shares: remainingShares() })
-                  : ('journal.detail.executionsBlock.closed' | translate)
-              }}
-            </span>
-            <span
-              class="exec-footer__pnl"
-              [class.gain]="(pnl().computed ?? 0) > 0"
-              [class.loss]="(pnl().computed ?? 0) < 0"
-            >
-              {{
-                pnl().computed !== null
-                  ? (pnl().computed | number: '1.2-2') + ('account.usdSuffix' | translate)
-                  : '—'
-              }}
-            </span>
-          </p>
+          <!-- Footer of the mockup's table : what is left open + the computed P&L. With no execution
+               there is no position to call open or closed : the empty message says it all. -->
+          @if (d.executions.length > 0) {
+            <p class="exec-footer">
+              <span>
+                {{
+                  remainingShares() > 0
+                    ? ('journal.detail.executionsBlock.remaining'
+                      | translate: { shares: remainingShares() })
+                    : ('journal.detail.executionsBlock.closed' | translate)
+                }}
+              </span>
+              <span
+                class="exec-footer__pnl"
+                [class.gain]="(pnl().computed ?? 0) > 0"
+                [class.loss]="(pnl().computed ?? 0) < 0"
+              >
+                {{
+                  pnl().computed !== null
+                    ? (pnl().computed | number: '1.2-2') + ('account.usdSuffix' | translate)
+                    : '—'
+                }}
+              </span>
+            </p>
+          }
 
           <h3 class="pnl-title">
             <span>{{ 'journal.detail.pnl.title' | translate }}</span>
