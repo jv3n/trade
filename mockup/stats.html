@@ -237,10 +237,16 @@
             <div class="value">11</div>
             <div class="sub">septembre · <span style="color: var(--warn)">2 à compléter</span></div>
           </div>
-          <div class="card kpi">
+          <div class="card kpi" data-group="status" data-value="all">
             <div class="label">Push à l'open moyen</div>
             <div class="value">+9,6 %</div>
             <div class="sub">vs open · sur les 10 qui ont poussé · <b>1 / 11 sans push</b> (9 %)</div>
+          </div>
+          <!-- Onglet « Sans push » : un push moyen n'y a rien à dire, la carte donne leur fréquence (#334). -->
+          <div class="card kpi" data-group="status" data-value="no-push" hidden>
+            <div class="label">Jours sans push</div>
+            <div class="value">1 / 11</div>
+            <div class="sub">9 % des stats complétées de la période</div>
           </div>
           <div class="card kpi">
             <div class="label">LOD moyen</div>
@@ -351,12 +357,12 @@
               <option>DT</option>
               <option>Discrétionnaire</option>
             </select>
-            <div class="segmented">
-              <button class="active">Toutes</button>
-              <button>À compléter</button>
-              <button>Tradées</button>
-              <button>Non tradées</button>
-              <button>Sans push</button>
+            <div class="segmented" data-group="status">
+              <button class="active" data-value="all">Toutes</button>
+              <button data-value="all">À compléter</button>
+              <button data-value="all">Tradées</button>
+              <button data-value="all">Non tradées</button>
+              <button data-value="no-push">Sans push</button>
             </div>
           </div>
 
