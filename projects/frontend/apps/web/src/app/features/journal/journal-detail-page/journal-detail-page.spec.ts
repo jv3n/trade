@@ -108,6 +108,15 @@ describe('JournalDetailPage', () => {
     expect(fixture.componentInstance.entry()).not.toBeNull();
   });
 
+  // #320 : « Position closed · computed P&L — » stood under the empty message of a new trade.
+  it('shows no position footer while the trade has no execution', () => {
+    findById = vi.fn(() => of(makeTrade({ executions: [] })));
+    const fixture = setup();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.exec-footer')).toBeNull();
+  });
+
   it('derives the position, its duration and the computed P&L from the executions', () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
