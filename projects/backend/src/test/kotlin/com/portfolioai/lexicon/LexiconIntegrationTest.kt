@@ -49,6 +49,9 @@ class LexiconIntegrationTest {
     assertTrue(gus.definitionEn.startsWith("Shorting a stock"), "English definition")
     assertTrue(all.none { it.term == "Average End of Day (EOD)" }, "the colliding average is gone")
     assertTrue(all.none { it.term == "% Capital at risk" }, "the duplicate definition is gone")
+    // The stop orders no longer borrow the plain orders' acronym (#364).
+    assertTrue(all.any { it.term == "Stop-Limit (STP LMT)" }, "Stop-Limit has its own acronym")
+    assertTrue(all.none { it.term == "Stop-Market (MKT)" }, "Stop-Market no longer reads MKT")
   }
 
   @Test
