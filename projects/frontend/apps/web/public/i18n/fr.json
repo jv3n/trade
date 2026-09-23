@@ -367,9 +367,9 @@
       "size": "Taille (actions)",
       "openPrice": "Prix d'entrée moyen",
       "exitPrice": "Prix de sortie moyen",
-      "profitDollars": "Profit calculé ($)",
-      "realProfitDollars": "Profit réel ($)",
-      "retainedProfitDollars": "P&L retenu ($)",
+      "profitDollars": "Profit calculé ($ US)",
+      "realProfitDollars": "Profit réel ($ US)",
+      "retainedProfitDollars": "P&L retenu ($ US)",
       "gainPercent": "Gain (%)",
       "durationMinutes": "Durée",
       "executionKind": "Type",
@@ -418,7 +418,7 @@
       "postMortem": "Post-mortem",
       "kpi": {
         "retained": "P&L retenu",
-        "adjusted": "ajusté de {{gap}} $ vs calculé",
+        "adjusted": "ajusté de {{gap}} $ US vs calculé",
         "position": "Position",
         "positionSub": "actions sur la position",
         "avgPrices": "Entrée / sortie moyennes",
@@ -443,7 +443,7 @@
         "realNeedsClose": "Une fois la position clôturée",
         "gap": "Écart (frais, arrondis)",
         "note": "Vide = on retient le P&L calculé. Le P&L retenu est celui qui remonte au compte.",
-        "realErased": "Le P&L broker de {{amount}} $ sera effacé à l'enregistrement : la position n'est plus clôturée"
+        "realErased": "Le P&L broker de {{amount}} $ US sera effacé à l'enregistrement : la position n'est plus clôturée"
       },
       "context": {
         "title": "Contexte du jour",
@@ -477,7 +477,7 @@
     },
     "confirmEraseReal": {
       "title": "Effacer le P&L broker ?",
-      "message": "La position n'est plus clôturée : le P&L broker de {{amount}} $ est effacé et ne compte plus au compte.",
+      "message": "La position n'est plus clôturée : le P&L broker de {{amount}} $ US est effacé et ne compte plus au compte.",
       "confirm": "Enregistrer et effacer"
     }
   },
