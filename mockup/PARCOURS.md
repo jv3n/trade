@@ -309,6 +309,12 @@ that never comes, so they count in the stats and are made easy to single out.
   count in everything else (LOD, fade, EOD).
 - A **« No push »** button in the table's filter isolates them, to compare their premarket (gap, PM
   push, float, volume) with the days that pushed.
+- On that tab the push KPI has nothing to average, so it becomes **« Days without a push »** (#334) :
+  the no-push days over the completed stats of the same period and pattern (« 1 / 11 »), with the
+  share underneath (« 9 % of the completed stats »). The rate counts every completed stat, not only
+  the tab's rows, so it is computed on the period's summary without the no-push filter. Comparing
+  their premarket with the days that pushed (« PM push 12 % vs 18 % ») waits for enough of them to
+  mean something (#302).
 - The « À l'open » card's references are built on the push at the open, which a no-push stat
   doesn't have, so they leave these days out — and say so (#332) : next to the references, the
   **no-push rate of the same set** (the checked stats of the pattern, « 1 / 11 without a push (9 %) »),
