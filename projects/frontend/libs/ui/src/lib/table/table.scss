@@ -98,6 +98,7 @@
   > .mat-mdc-table {
     width: 100%;
     background: transparent;
+    transition: opacity 0.15s;
 
     // No line-wrapping inside cells — a header like « % Push » or a long value should never
     // break onto two lines. Cells stay on one line ; when the columns together exceed the
@@ -107,6 +108,10 @@
     td.mat-mdc-cell {
       white-space: nowrap;
     }
+  }
+
+  &.stb-table--busy > .mat-mdc-table {
+    opacity: 0.55;
   }
 }
 

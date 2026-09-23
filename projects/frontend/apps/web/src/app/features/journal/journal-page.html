@@ -151,7 +151,7 @@
       </div>
     }
 
-    @if (loading()) {
+    @if (loading() && entries().length === 0) {
       <div class="loading-state">
         <mat-spinner diameter="20" />
         <span>{{ 'journal.loading' | translate }}</span>
@@ -162,7 +162,7 @@
         <p>{{ 'journal.empty' | translate }}</p>
       </div>
     } @else {
-      <div stbTable>
+      <div stbTable [busy]="loading()">
         <table
           mat-table
           [dataSource]="entries()"

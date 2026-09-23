@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 
@@ -27,7 +27,7 @@ const ROWS: Row[] = [
 
   imports: [StbTableModule, StbSortHeaderModule, DecimalPipe],
   template: `
-    <div stbTable>
+    <div stbTable [busy]="busy()">
       <table mat-table [dataSource]="sorted()" matSort (matSortChange)="onSort($event)">
         <ng-container matColumnDef="ticker">
           <th mat-header-cell *matHeaderCellDef mat-sort-header="ticker">Ticker</th>
@@ -60,6 +60,7 @@ const ROWS: Row[] = [
   `,
 })
 class Demo {
+  readonly busy = input(false);
   readonly cols = ['ticker', 'play', 'size', 'entry', 'exit', 'pnl'];
   readonly sorted = signal<Row[]>([...ROWS]);
 
@@ -89,7 +90,7 @@ const meta: Meta<Demo> = {
     docs: {
       description: {
         component:
-          'Data table. The `[stbTable]` directive on the wrapping `<div>` adds the surface bg + border + radius. The `[stbCol]` directive on `<th>` / `<td>` carries the cell variant (`numeric` / `mono` / `actions`). Sort headers are wired with `matSort` / `mat-sort-header` from `StbSortHeaderModule` — click any column header to toggle asc / desc / unsorted.',
+          'Data table. The `[stbTable]` directive on the wrapping `<div>` adds the surface bg + border + radius. The `[stbCol]` directive on `<th>` / `<td>` carries the cell variant (`numeric` / `mono` / `actions`). Sort headers are wired with `matSort` / `mat-sort-header` from `StbSortHeaderModule` — click any column header to toggle asc / desc / unsorted. `[busy]` dims the rows during a refetch instead of unmounting the table.',
       },
     },
   },
@@ -100,3 +101,5 @@ export default meta;
 type Story = StoryObj<Demo>;
 
 export const Default: Story = {};
+
+export const Busy: Story = { args: { busy: true } };

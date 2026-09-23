@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StbToast, provideNativeDateAdapter } from '@portfolioai/ui';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import {
@@ -32,7 +32,8 @@ import { StatsPage } from './stats-page';
  *   and reloads the list ; the writes are queued, so a field left right before ✓ lands first.
  * - **Delete** — goes through the confirmation modal ; cancelling never reaches the repository.
  * - **Filters** — changing the status resets to page 0 and refetches ; a custom period range
- *   reaches both the listing and the KPIs.
+ *   reaches both the listing and the KPIs. A refetch keeps the rows on screen, dimmed, and a
+ *   superseded answer is dropped (#370).
  * - **Premarket card (#326)** — editable like the session, saved field by field with its own save
  *   state ; a PM high under the PM open is refused before anything is sent.
  * - **An emptied premarket price (#340)** — the field says it is required and nothing is sent, the
@@ -186,6 +187,10 @@ function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
   const fixture = TestBed.createComponent(StatsPage);
   fixture.detectChanges();
   return { fixture, page: fixture.componentInstance, repo, toastShown };
+}
+
+function paged(rows: StatEntry[]): PagedResult<StatEntry> {
+  return { content: rows, pageIndex: 0, pageSize: 25, totalElements: rows.length, totalPages: 1 };
 }
 
 /** Types a full session into the session panel. */
@@ -586,6 +591,37 @@ describe('StatsPage', () => {
 
     expect(page.pageIndex()).toBe(0);
     expect(repo.lastFilter?.status).toBe('TO_COMPLETE');
+  });
+
+  // #370 : the table was unmounted for the length of every refetch, which read as a page reload.
+  it('keeps the rows on screen, dimmed, while a filter change refetches', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    repo.findAll.mockReturnValue(new Subject<PagedResult<StatEntry>>());
+
+    page.setStatus('COMPLETED');
+    fixture.detectChanges();
+
+    const table: HTMLElement | null = fixture.nativeElement.querySelector('.stb-table');
+    expect(table?.classList).toContain('stb-table--busy');
+    expect(fixture.nativeElement.querySelector('.loading-state')).toBeNull();
+    expect(page.rows().map((r) => r.ticker)).toEqual(['KTTA']);
+  });
+
+  it('drops the answer of a filter changed again before it arrived', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    const first = new Subject<PagedResult<StatEntry>>();
+    const second = new Subject<PagedResult<StatEntry>>();
+    repo.findAll.mockReturnValueOnce(first).mockReturnValueOnce(second);
+
+    page.setStatus('COMPLETED');
+    fixture.detectChanges();
+    page.setStatus('TO_COMPLETE');
+    fixture.detectChanges();
+    // The slower, older request answers last : it used to overwrite the newer result.
+    second.next(paged([makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })]));
+    first.next(paged([makeStat({ id: 'stat-slnh', ticker: 'SLNH' })]));
+
+    expect(page.rows().map((r) => r.ticker)).toEqual(['BNRG']);
   });
 
   // ---- No push (#302) ----
