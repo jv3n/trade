@@ -302,8 +302,79 @@ describe('StatsPage', () => {
     page.setSessionPrice('hodPrice', 3.2);
     page.saveSession();
 
-    expect(page.hodBelowLod()).toBe(true);
+    expect(page.sessionIssue()?.reason).toBe('stats.save.hodBelowLod');
     expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  // #305 : the HOD / LOD pair was the only check, so a HOD of 1 under a push of 10 went through
+  // and could even be ticked — physically impossible on a single day.
+  it('refuses a price outside the day it belongs to, and names the fields', () => {
+    const { page, repo } = setup({ rows: [makePending()] });
+    fillSession(page);
+
+    // The issue's own case : open 4.20, push 4.62, HOD 1 — and no LOD yet, so the HOD / LOD rule
+    // stays quiet and this one has to speak.
+    page.setSessionPrice('lodPrice', null);
+    page.setSessionPrice('hodPrice', 1);
+
+    expect(page.sessionIssue()).toEqual({
+      reason: 'stats.save.aboveHod',
+      fields: ['openPrice', 'pushOpenPrice', 'eodPrice', 'hodPrice'],
+    });
+    expect(page.atFault('pushOpenPrice')).toBe(true);
+    expect(page.atFault('lodPrice')).toBe(false);
+
+    page.saveSession();
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses an EOD under the LOD', () => {
+    const { page } = setup({ rows: [makePending()] });
+    fillSession(page);
+
+    page.setSessionPrice('eodPrice', 1);
+
+    expect(page.sessionIssue()).toEqual({
+      reason: 'stats.save.belowLod',
+      fields: ['eodPrice', 'lodPrice'],
+    });
+  });
+
+  // The ✓ answers for both reasons, and its tooltip is what the wrapper shows (#308).
+  it('keeps the ✓ out of reach while the set is impossible, and says why', () => {
+    const { page } = setup({ rows: [makePending()] });
+    fillSession(page);
+    expect(page.tickBlockedReason()).toBe('');
+
+    // HOD above the LOD, but under the prices it should contain.
+    page.setSessionPrice('lodPrice', 1);
+    page.setSessionPrice('hodPrice', 2);
+
+    expect(page.tickBlockedReason()).toBe('stats.save.aboveHod');
+  });
+
+  // A row stored before the rule existed : the table's ✓ must answer for it too, not just the
+  // panel's — and the backend replays the rule when the tick lands (#305).
+  it("keeps the table ✓ out of reach on a row the day's range refuses", () => {
+    // Every price is in — a missing one would be reported first, and rightly so — but the open,
+    // the push and the EOD all sit above a HOD of 1.
+    const impossible = makeStat({ hodPrice: 1, lodPrice: 0.9 });
+    const { page } = setup({ rows: [impossible] });
+
+    expect(page.rows()[0].issue).toBe('stats.save.aboveHod');
+    expect(page.rowBlockedReason(page.rows()[0])).toBe('stats.save.aboveHod');
+  });
+
+  it('names the HOD / LOD inversion rather than the prices it drags along', () => {
+    const { page } = setup({ rows: [makePending()] });
+    fillSession(page);
+
+    page.setSessionPrice('hodPrice', 1);
+
+    expect(page.sessionIssue()).toEqual({
+      reason: 'stats.save.hodBelowLod',
+      fields: ['hodPrice', 'lodPrice'],
+    });
   });
 
   it('previews each session price against the open while typing', () => {

@@ -116,6 +116,8 @@ export interface StatRow extends StatEntry {
   eodPercent: number | null;
   /** Label keys of the session prices still missing — the ✓ stays disabled until it's empty. */
   missing: string[];
+  /** Why the day's range refuses this row (#305) — null when it holds. Blocks the ✓ too. */
+  issue: string | null;
 }
 
 /**
@@ -200,6 +202,27 @@ export function premarketProblem(m: PremarketModel): string | null {
     return 'stats.save.premarketRequired';
   }
   if ((m.pmHigh as number) < (m.pmOpen as number)) return 'stats.save.pmHighBelowPmOpen';
+  return null;
+}
+
+/**
+ * A day's range holds every price inside it (#305) : `LOD <= open, push, EOD <= HOD`. Returns the
+ * i18n key of what is wrong and the fields that make it wrong — the HOD / LOD pair was the only
+ * check before, so a stat could carry a HOD of 1 under a push of 10 and still be ticked. Prices at
+ * zero are refused too, by [missingPrices] on the panel and by the backend on write.
+ */
+export function sessionProblem(
+  session: SessionModel,
+): { reason: string; fields: SessionPrice[] } | null {
+  const { hodPrice: hod, lodPrice: lod } = session;
+  if (hod !== null && lod !== null && hod < lod) {
+    return { reason: 'stats.save.hodBelowLod', fields: ['hodPrice', 'lodPrice'] };
+  }
+  const inside: SessionPrice[] = ['openPrice', 'pushOpenPrice', 'eodPrice'];
+  const above = inside.filter((f) => hod !== null && session[f] !== null && session[f]! > hod);
+  if (above.length > 0) return { reason: 'stats.save.aboveHod', fields: [...above, 'hodPrice'] };
+  const below = inside.filter((f) => lod !== null && session[f] !== null && session[f]! < lod);
+  if (below.length > 0) return { reason: 'stats.save.belowLod', fields: [...below, 'lodPrice'] };
   return null;
 }
 
@@ -341,6 +364,9 @@ export class StatsPage {
       lodPercent: percentVsOpen(e.openPrice, e.lodPrice),
       eodPercent: percentVsOpen(e.openPrice, e.eodPrice),
       missing: missingPrices(e),
+      // A row written before the range rule existed can still hold an impossible set : the ✓ of
+      // the table answers for it like the panel's does, and the backend replays it on the tick.
+      issue: sessionProblem(sessionOf(e))?.reason ?? null,
     })),
   );
 
@@ -433,10 +459,13 @@ export class StatsPage {
     );
   });
 
-  readonly hodBelowLod = computed(() => {
-    const { hodPrice, lodPrice } = this.session();
-    return hodPrice !== null && lodPrice !== null && hodPrice < lodPrice;
-  });
+  /** What makes the session block impossible, and which fields say so — null when it holds. */
+  readonly sessionIssue = computed(() => sessionProblem(this.session()));
+
+  /** True when [field] takes part in the current incoherence — its own hint then says which. */
+  atFault(field: SessionPrice): boolean {
+    return this.sessionIssue()?.fields.includes(field) ?? false;
+  }
 
   /** Label keys of the prices the panel still misses. */
   readonly sessionMissing = computed(() => missingPrices(this.session()));
@@ -563,7 +592,7 @@ export class StatsPage {
     const session = this.session();
     // Every save sends the whole row : a card the server would refuse holds the other one too.
     const premarketIssue = premarketProblem(premarket);
-    const sessionIssue = this.hodBelowLod() ? 'stats.save.hodBelowLod' : null;
+    const sessionIssue = this.sessionIssue()?.reason ?? null;
     const problem =
       card === 'premarket'
         ? (premarketIssue ?? (sessionIssue && 'stats.save.waitingSession'))
@@ -763,6 +792,22 @@ export class StatsPage {
         }),
       ),
     );
+  }
+
+  /**
+   * Why the ✓ can't tick the open stat — a missing price, or a set the day's range refuses (#305).
+   * Empty when nothing stands in the way, which is also what disables the button.
+   */
+  tickBlockedReason(): string {
+    if (this.sessionMissing().length > 0) return this.missingLabel(this.session());
+    const issue = this.sessionIssue();
+    return issue ? this.translate.instant(issue.reason) : '';
+  }
+
+  /** The same answer for a row of the table, which has no panel model to read. */
+  rowBlockedReason(row: StatRow): string {
+    if (row.missing.length > 0) return this.missingLabel(row);
+    return row.issue ? this.translate.instant(row.issue) : '';
   }
 
   /** « Il manque HOD, EOD » — the ✓'s tooltip while it can't tick. */

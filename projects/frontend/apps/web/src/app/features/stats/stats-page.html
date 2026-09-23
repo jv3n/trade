@@ -318,7 +318,11 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
-          <mat-hint>{{ 'stats.complete.percentBase' | translate }}</mat-hint>
+          <mat-hint [class.warn]="atFault('openPrice')">{{
+            atFault('openPrice')
+              ? (sessionIssue()!.reason | translate)
+              : ('stats.complete.percentBase' | translate)
+          }}</mat-hint>
         </mat-form-field>
 
         <!-- « No push » sits under the field it greys out (#302). -->
@@ -336,10 +340,12 @@
               (blur)="saveSession()"
               (keydown.enter)="$any($event.target).blur()"
             />
-            <mat-hint>{{
-              sessionPercents().pushOpen !== null
-                ? (sessionPercents().pushOpen | number: '1.1-1') + ' %'
-                : '—'
+            <mat-hint [class.warn]="atFault('pushOpenPrice')">{{
+              atFault('pushOpenPrice')
+                ? (sessionIssue()!.reason | translate)
+                : sessionPercents().pushOpen !== null
+                  ? (sessionPercents().pushOpen | number: '1.1-1') + ' %'
+                  : '—'
             }}</mat-hint>
           </mat-form-field>
           <mat-checkbox
@@ -363,8 +369,12 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
-          <mat-hint>{{
-            sessionPercents().hod !== null ? (sessionPercents().hod | number: '1.1-1') + ' %' : '—'
+          <mat-hint [class.warn]="atFault('hodPrice')">{{
+            atFault('hodPrice')
+              ? (sessionIssue()!.reason | translate)
+              : sessionPercents().hod !== null
+                ? (sessionPercents().hod | number: '1.1-1') + ' %'
+                : '—'
           }}</mat-hint>
         </mat-form-field>
 
@@ -380,9 +390,9 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
-          <mat-hint [class.warn]="hodBelowLod()">{{
-            hodBelowLod()
-              ? ('stats.complete.hodBelowLod' | translate)
+          <mat-hint [class.warn]="atFault('lodPrice')">{{
+            atFault('lodPrice')
+              ? (sessionIssue()!.reason | translate)
               : sessionPercents().lod !== null
                 ? (sessionPercents().lod | number: '1.1-1') + ' %'
                 : '—'
@@ -401,8 +411,12 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
-          <mat-hint>{{
-            sessionPercents().eod !== null ? (sessionPercents().eod | number: '1.1-1') + ' %' : '—'
+          <mat-hint [class.warn]="atFault('eodPrice')">{{
+            atFault('eodPrice')
+              ? (sessionIssue()!.reason | translate)
+              : sessionPercents().eod !== null
+                ? (sessionPercents().eod | number: '1.1-1') + ' %'
+                : '—'
           }}</mat-hint>
         </mat-form-field>
       </form>
@@ -440,16 +454,12 @@
             {{ 'stats.complete.close' | translate }}
           </button>
           <!-- Same wrapper as the table's ✓ : a disabled button shows no tooltip of its own. -->
-          <span
-            [matTooltip]="
-              !stat.completed && sessionMissing().length > 0 ? missingLabel(session()) : ''
-            "
-          >
+          <span [matTooltip]="stat.completed ? '' : tickBlockedReason()">
             <button
               mat-stroked-button
               type="button"
               [stbTone]="stat.completed ? 'success' : null"
-              [disabled]="!stat.completed && sessionMissing().length > 0"
+              [disabled]="!stat.completed && tickBlockedReason() !== ''"
               (click)="toggleCompleted(stat)"
             >
               <mat-icon>check_circle</mat-icon>
@@ -700,9 +710,7 @@
                 [matTooltip]="
                   s.completed
                     ? ('stats.completion.untick' | translate)
-                    : s.missing.length > 0
-                      ? missingLabel(s)
-                      : ('stats.completion.tick' | translate)
+                    : rowBlockedReason(s) || ('stats.completion.tick' | translate)
                 "
               >
                 <!-- Green once ticked — the one status the colour rule lets be green. -->
@@ -712,7 +720,7 @@
                   type="button"
                   class="tick"
                   [stbTone]="s.completed ? 'success' : null"
-                  [disabled]="!s.completed && s.missing.length > 0"
+                  [disabled]="!s.completed && rowBlockedReason(s) !== ''"
                   [attr.aria-label]="
                     (s.completed ? 'stats.completion.untick' : 'stats.completion.tick') | translate
                   "
