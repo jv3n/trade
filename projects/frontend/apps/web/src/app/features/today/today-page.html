@@ -71,12 +71,31 @@
                           tickers: tickersOf(candidates()),
                         }
                 }}
+                @if (pendingCandidates().length > 0) {
+                  {{
+                    (pendingCandidates().length === 1
+                      ? 'today.steps.candidates.notPromotedOne'
+                      : 'today.steps.candidates.notPromoted'
+                    ) | translate: { count: pendingCandidates().length }
+                  }}
+                }
               } @else {
                 {{ 'today.steps.candidates.body' | translate }}
               }
             </div>
           </div>
-          <div class="step-action">
+          <div class="step-action actions">
+            @if (pendingCandidates().length > 0) {
+              <button mat-flat-button type="button" (click)="promoteRemaining()">
+                <mat-icon>keyboard_double_arrow_right</mat-icon>
+                <span>
+                  {{
+                    'today.actions.promoteRemaining'
+                      | translate: { count: pendingCandidates().length }
+                  }}
+                </span>
+              </button>
+            }
             <a mat-stroked-button routerLink="/candidates">
               <mat-icon>{{ candidates().length > 0 ? 'visibility' : 'add' }}</mat-icon>
               <span>
@@ -121,47 +140,46 @@
             <div class="step-title">
               {{ 'today.steps.stats.title' | translate }}
               <span class="step-time">{{ 'today.steps.stats.from' | translate }}</span>
-              @if (statsToComplete().length > 0) {
+              <!-- The day's stats and the overdue ones make one count : 1 today + 2 overdue = « 3 ». -->
+              @if (statsToCompleteToday().length > 0) {
                 <span class="tag tag-warn">
-                  {{ 'today.steps.stats.pending' | translate: { count: statsToComplete().length } }}
+                  {{ 'today.steps.stats.pending' | translate: { count: statsToCompleteTotal() } }}
+                </span>
+              } @else if (overdueTotal() > 0) {
+                <span class="tag tag-warn">
+                  {{ 'today.steps.stats.overdueTag' | translate: { count: overdueTotal() } }}
                 </span>
               }
             </div>
             <div class="step-body">
-              @if (statsToComplete().length > 0) {
+              @if (statsToCompleteToday().length > 0) {
                 {{
-                  (statsToComplete().length === 1
+                  (statsToCompleteToday().length === 1
                     ? 'today.steps.stats.toCompleteOne'
                     : 'today.steps.stats.toComplete'
-                  ) | translate: { tickers: tickersOf(statsToComplete()) }
+                  ) | translate: { tickers: tickersOf(statsToCompleteToday()) }
                 }}
               } @else {
                 {{ 'today.steps.stats.body' | translate }}
               }
-              @if (pendingCandidates().length > 0) {
-                {{
-                  (pendingCandidates().length === 1
-                    ? 'today.steps.stats.notPromotedOne'
-                    : 'today.steps.stats.notPromoted'
-                  ) | translate: { count: pendingCandidates().length }
-                }}
+              @if (overdueStats().length > 0) {
+                @let overdue = overdueLine();
+                <span class="overdue">
+                  @if (overdue.more > 0) {
+                    {{
+                      'today.steps.stats.overdueMore'
+                        | translate: { tickers: overdue.tickers, count: overdue.more }
+                    }}
+                  } @else {
+                    {{ 'today.steps.stats.overdue' | translate: { tickers: overdue.tickers } }}
+                  }
+                </span>
               }
             </div>
           </div>
-          <div class="step-action actions">
-            @if (pendingCandidates().length > 0) {
-              <button mat-stroked-button type="button" (click)="promoteRemaining()">
-                <mat-icon>keyboard_double_arrow_right</mat-icon>
-                <span>
-                  {{
-                    'today.actions.promoteRemaining'
-                      | translate: { count: pendingCandidates().length }
-                  }}
-                </span>
-              </button>
-            }
-            @if (statsToComplete().length > 0) {
-              <a mat-flat-button routerLink="/stats">
+          <div class="step-action">
+            @if ((statsToCompleteTotal() ?? 0) > 0) {
+              <a mat-flat-button routerLink="/stats" [queryParams]="{ status: 'TO_COMPLETE' }">
                 <mat-icon>edit_note</mat-icon>
                 <span>{{ 'today.actions.complete' | translate }}</span>
               </a>

@@ -22,8 +22,10 @@ import { TodayPage, marketStatusAt } from './today-page';
  *
  * - the **market status** comes from the New York clock, not the browser's ;
  * - the **current step** is the first one that isn't behind us, whatever the day looks like ;
- * - a step is done from the **data** : a reconciled morning, captured candidates, stats with
- *   nothing left to complete and no candidate left out, a trade entered ;
+ * - a step is done from the **data** : a reconciled morning, every captured candidate in the
+ *   stats sheet, no stat left to complete whatever its day, a trade entered (#337) ;
+ * - step 4 splits the stats to complete between the day's and the **overdue** ones, which carry
+ *   their date ;
  * - « promote the remaining » **confirms** before creating stats ;
  * - a failing call leaves the page standing — it is the home page, it can't go blank.
  *
@@ -140,9 +142,14 @@ describe('TodayPage', () => {
     expect(page.stepStates().candidates).toBe('current');
   });
 
-  it('captured candidates move the day on — the session is still ahead in premarket', () => {
+  it('captured candidates, all in the sheet, move the day on — the session is still ahead', () => {
     reconciledToday = true;
-    candidates = [makeCandidate(), makeCandidate({ id: 'c2', ticker: 'BNRG' })];
+    candidates = [
+      makeCandidate({ promoted: true }),
+      makeCandidate({ id: 'c2', ticker: 'BNRG', promoted: true }),
+    ];
+    // Promoted this morning, so their stats wait for the session : step 4 is not behind us.
+    statsToComplete = [makeStat(), makeStat({ id: 's2', ticker: 'BNRG' })];
     const page = setup();
 
     expect(page.stepStates().candidates).toBe('done');
@@ -150,19 +157,97 @@ describe('TodayPage', () => {
     expect(page.doneCount()).toBe(2);
   });
 
-  it('the stats step stays open while a candidate has not reached the sheet', () => {
+  // #337 : capturing one candidate was enough, and the promotion hid under step 4.
+  it('the candidates step stays current while a candidate has not reached the sheet', () => {
     reconciledToday = true;
     candidates = [makeCandidate({ promoted: true }), makeCandidate({ id: 'c2', promoted: false })];
     const page = setup();
 
     expect(page.pendingCandidates()).toHaveLength(1);
-    expect(page.stepStates().stats).not.toBe('done');
+    expect(page.stepStates().candidates).toBe('current');
   });
 
   it('the stats step stays open while a stat still waits for its session block', () => {
     reconciledToday = true;
     candidates = [makeCandidate({ promoted: true })];
     statsToComplete = [makeStat()];
+    const page = setup();
+
+    expect(page.stepStates().stats).not.toBe('done');
+  });
+
+  // #337 : BNRG (17/09) and SLNH (18/09) sat half-filled with nothing on this page pointing at them.
+  it('keeps the stats step open on a stat left from an earlier day, and dates it', () => {
+    reconciledToday = true;
+    candidates = [makeCandidate({ promoted: true })];
+    statsToComplete = [
+      makeStat({ id: 's-sgbx', ticker: 'SGBX' }),
+      makeStat({ id: 's-bnrg', ticker: 'BNRG', tradeDate: new Date(2026, 8, 17) }),
+    ];
+    const page = setup();
+
+    expect(page.statsToCompleteToday().map((s) => s.ticker)).toEqual(['SGBX']);
+    expect(page.overdueStats().map((s) => s.ticker)).toEqual(['BNRG']);
+    expect(page.overdueLine()).toEqual({ tickers: 'BNRG (09/17)', more: 0 }); // en locale
+    expect(page.stepStates().stats).not.toBe('done');
+  });
+
+  it('asks for the stats to complete of every day, not only today', () => {
+    const findAll = vi.fn(() => of(page([])));
+    TestBed.overrideProvider(StatsRepository, {
+      useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
+    });
+    setup();
+
+    expect(findAll).toHaveBeenCalledWith(
+      { status: 'TO_COMPLETE' },
+      expect.objectContaining({ sortField: 'tradeDate', sortDirection: 'desc' }),
+    );
+  });
+
+  // Back from two weeks off, the page said « 50 to complete » when there were 63.
+  it('counts every stat to complete, not the length of the page it received', () => {
+    const findAll = vi.fn(() => of({ ...page([makeStat()]), totalElements: 63 }));
+    TestBed.overrideProvider(StatsRepository, {
+      useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
+    });
+    const today = setup();
+
+    expect(today.statsToCompleteTotal()).toBe(63);
+    expect(today.overdueTotal()).toBe(62);
+  });
+
+  // A failed call, or stats slower than the candidates, read as « nothing left » and ticked step 4.
+  it('keeps the stats step open while the stats to complete are unknown', () => {
+    reconciledToday = true;
+    candidates = [makeCandidate({ promoted: true })];
+    TestBed.overrideProvider(StatsRepository, {
+      useValue: {
+        findAll: () => throwError(() => new Error('500')),
+        summary: () => of(makeStatSummary()),
+      } as unknown as StatsRepository,
+    });
+    const page = setup();
+
+    expect(page.statsToCompleteTotal()).toBeNull();
+    expect(page.stepStates().stats).not.toBe('done');
+  });
+
+  it('names five overdue stats and counts the rest', () => {
+    statsToComplete = ['GLND', 'KTTA', 'SLNH', 'BNRG', 'MLGO', 'ATXG', 'VERB'].map((ticker, i) =>
+      makeStat({ id: `s-${ticker}`, ticker, tradeDate: new Date(2026, 8, 17 - i) }),
+    );
+    const page = setup();
+
+    expect(page.overdueLine().tickers.split(', ')).toHaveLength(5);
+    expect(page.overdueLine().more).toBe(2);
+  });
+
+  // The guard was dropped once step 2 took the promotion over ; step 4 then ticked, and unticked
+  // the moment step 2 promoted the candidates left.
+  it('keeps the stats step open while candidates are still to promote', () => {
+    reconciledToday = true;
+    candidates = [makeCandidate({ promoted: true }), makeCandidate({ id: 'c2', promoted: false })];
     const page = setup();
 
     expect(page.stepStates().stats).not.toBe('done');
@@ -231,7 +316,7 @@ describe('TodayPage', () => {
         reconcile: () => of(makeReconciliation()),
       } as unknown as AccountRepository,
     });
-    candidates = [makeCandidate()];
+    candidates = [makeCandidate({ promoted: true })];
 
     const page = setup();
 

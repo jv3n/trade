@@ -1,9 +1,15 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import {
+  ActivatedRoute,
+  ParamMap,
+  Router,
+  convertToParamMap,
+  provideRouter,
+} from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StbToast, provideNativeDateAdapter } from '@portfolioai/ui';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import {
@@ -157,13 +163,17 @@ class MockStatsRepository extends StatsRepository {
   exportCsv = vi.fn((): Observable<Blob> => of(new Blob()));
 }
 
-function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
+function setup(
+  options: { rows?: StatEntry[]; confirmed?: boolean; query?: Record<string, string> } = {},
+): {
   fixture: ComponentFixture<StatsPage>;
   page: StatsPage;
   repo: MockStatsRepository;
   toastShown: ReturnType<typeof vi.fn>;
+  query: BehaviorSubject<ParamMap>;
 } {
   const toastShown = vi.fn();
+  const query = new BehaviorSubject(convertToParamMap(options.query ?? {}));
   TestBed.configureTestingModule({
     imports: [StatsPage],
     providers: [
@@ -180,13 +190,15 @@ function setup(options: { rows?: StatEntry[]; confirmed?: boolean } = {}): {
         },
       },
       { provide: ConfirmService, useValue: { ask: () => of(options.confirmed ?? true) } },
+      // Only when a test names a query : the rows' `routerLink` needs the real route otherwise.
+      ...(options.query ? [{ provide: ActivatedRoute, useValue: { queryParamMap: query } }] : []),
     ],
   });
   const repo = TestBed.inject(StatsRepository) as MockStatsRepository;
   repo.rows = options.rows ?? [];
   const fixture = TestBed.createComponent(StatsPage);
   fixture.detectChanges();
-  return { fixture, page: fixture.componentInstance, repo, toastShown };
+  return { fixture, page: fixture.componentInstance, repo, toastShown, query };
 }
 
 function paged(rows: StatEntry[]): PagedResult<StatEntry> {
@@ -591,6 +603,29 @@ describe('StatsPage', () => {
 
     expect(page.pageIndex()).toBe(0);
     expect(repo.lastFilter?.status).toBe('TO_COMPLETE');
+  });
+
+  // #337 : « Complete » on the Today page lands on the stats still to complete.
+  it('opens on the tab named in the URL', () => {
+    const { page, repo } = setup({ query: { status: 'TO_COMPLETE' } });
+
+    expect(page.status()).toBe('TO_COMPLETE');
+    expect(repo.lastFilter?.status).toBe('TO_COMPLETE');
+  });
+
+  it('falls back to every stat on a tab the URL names wrong', () => {
+    const { page } = setup({ query: { status: 'SOMEDAY' } });
+
+    expect(page.status()).toBeNull();
+  });
+
+  it('follows the URL when it changes under the same page', () => {
+    const { fixture, page, query } = setup({ query: { status: 'TO_COMPLETE' } });
+
+    query.next(convertToParamMap({ status: 'COMPLETED' }));
+    fixture.detectChanges();
+
+    expect(page.status()).toBe('COMPLETED');
   });
 
   // #370 : the table was unmounted for the length of every refetch, which read as a page reload.

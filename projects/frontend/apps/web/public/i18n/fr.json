@@ -47,7 +47,14 @@
         "title": "Saisir les candidats",
         "body": "Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.",
         "captured": "{{count}} candidats saisis — {{tickers}}.",
-        "capturedOne": "1 candidat saisi — {{tickers}}."
+        "capturedOne": "1 candidat saisi — {{tickers}}.",
+        "notPromoted": "{{count}} candidats ne sont pas encore passés en stats.",
+        "notPromotedOne": "1 candidat n'est pas encore passé en stats.",
+        "confirmPromote": {
+          "title": "Passer {{count}} candidats en stats ?",
+          "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
+          "confirm": "Tout passer en stats"
+        }
       },
       "session": {
         "title": "Séance",
@@ -60,13 +67,9 @@
         "pending": "{{count}} à compléter",
         "toComplete": "{{tickers}} attendent leur bloc de séance.",
         "toCompleteOne": "{{tickers}} attend son bloc de séance.",
-        "notPromoted": "{{count}} candidats ne sont pas encore passés en stats.",
-        "notPromotedOne": "1 candidat n'est pas encore passé en stats.",
-        "confirmPromote": {
-          "title": "Passer {{count}} candidats en stats ?",
-          "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
-          "confirm": "Tout passer en stats"
-        }
+        "overdue": "En retard : {{tickers}}.",
+        "overdueMore": "En retard : {{tickers}} et {{count}} autres.",
+        "overdueTag": "{{count}} en retard"
       },
       "trades": {
         "title": "Saisir les trades du jour",

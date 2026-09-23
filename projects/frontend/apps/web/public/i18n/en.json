@@ -47,7 +47,14 @@
         "title": "Capture the candidates",
         "body": "After the radar screen : ticker, previous close, PM open / high, float, volume, locate.",
         "captured": "{{count}} candidates captured — {{tickers}}.",
-        "capturedOne": "1 candidate captured — {{tickers}}."
+        "capturedOne": "1 candidate captured — {{tickers}}.",
+        "notPromoted": "{{count}} candidates are not in the stats sheet yet.",
+        "notPromotedOne": "1 candidate is not in the stats sheet yet.",
+        "confirmPromote": {
+          "title": "Promote {{count}} candidates to the stats sheet?",
+          "message": "{{tickers}} become stats to fill in as the session goes. The candidates already promoted are left alone.",
+          "confirm": "Promote them all"
+        }
       },
       "session": {
         "title": "Session",
@@ -60,13 +67,9 @@
         "pending": "{{count}} to complete",
         "toComplete": "{{tickers}} still waiting for their session block.",
         "toCompleteOne": "{{tickers}} is still waiting for its session block.",
-        "notPromoted": "{{count}} candidates are not in the stats sheet yet.",
-        "notPromotedOne": "1 candidate is not in the stats sheet yet.",
-        "confirmPromote": {
-          "title": "Promote {{count}} candidates to the stats sheet?",
-          "message": "{{tickers}} become stats to fill in as the session goes. The candidates already promoted are left alone.",
-          "confirm": "Promote them all"
-        }
+        "overdue": "Overdue: {{tickers}}.",
+        "overdueMore": "Overdue: {{tickers}} and {{count}} more.",
+        "overdueTag": "{{count}} overdue"
       },
       "trades": {
         "title": "Enter the day's trades",
