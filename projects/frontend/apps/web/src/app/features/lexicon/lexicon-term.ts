@@ -5,8 +5,9 @@ export interface SplitTerm {
 }
 
 // Narrow on purpose : eleven entries parenthesise something else (`Risk per trade ($)`,
-// `Average TP (Take Profit)`), and a looser rule would make nonsense headings of them.
-const TRAILING_ACRONYM = /^(.+?)\s*\(([A-Z]{2,5})\)$/;
+// `Average TP (Take Profit)`), and a looser rule would make nonsense headings of them. Two words
+// are allowed for the broker's order types (`STP LMT`).
+const TRAILING_ACRONYM = /^(.+?)\s*\(([A-Z]{2,5}(?: [A-Z]{2,5})?)\)$/;
 
 export function splitTerm(term: string): SplitTerm {
   const match = TRAILING_ACRONYM.exec(term.trim());

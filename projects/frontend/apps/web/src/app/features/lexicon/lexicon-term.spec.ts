@@ -16,6 +16,14 @@ describe('splitTerm', () => {
     expect(splitTerm('Year-to-Date (YTD)')).toEqual({ heading: 'YTD', expansion: 'Year-to-Date' });
   });
 
+  // #364 : the stop orders borrowed `LMT` / `MKT` and collided with the plain orders' cards.
+  it('reads a two-word broker acronym as the heading', () => {
+    expect(splitTerm('Stop-Limit (STP LMT)')).toEqual({
+      heading: 'STP LMT',
+      expansion: 'Stop-Limit',
+    });
+  });
+
   it('leaves a term whole when the parentheses hold something other than an acronym', () => {
     // Real entries of the seeded glossary — each would break under a looser rule.
     for (const term of [
