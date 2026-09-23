@@ -59,7 +59,11 @@
           [class.gain]="(pnl().retained ?? 0) > 0"
           [class.loss]="(pnl().retained ?? 0) < 0"
         >
-          {{ pnl().retained !== null ? (pnl().retained | number: '1.2-2') + ' $' : '—' }}
+          {{
+            pnl().retained !== null
+              ? (pnl().retained | number: '1.2-2') + ('account.usdSuffix' | translate)
+              : '—'
+          }}
         </div>
         <div class="kpi__sub">
           {{
@@ -208,11 +212,15 @@
                   (numberChange)="setExecutionPrice($index, $event)"
                   inputmode="decimal"
                 />
-                <span matTextSuffix>$</span>
+                <span matTextSuffix>{{ 'account.usdUnit' | translate }}</span>
               </mat-form-field>
 
               <span class="exec-amount">
-                {{ amountOf(exec) !== null ? (amountOf(exec) | number: '1.2-2') + ' $' : '—' }}
+                {{
+                  amountOf(exec) !== null
+                    ? (amountOf(exec) | number: '1.2-2') + ('account.usdSuffix' | translate)
+                    : '—'
+                }}
               </span>
 
               <button
@@ -246,7 +254,11 @@
               [class.gain]="(pnl().computed ?? 0) > 0"
               [class.loss]="(pnl().computed ?? 0) < 0"
             >
-              {{ pnl().computed !== null ? (pnl().computed | number: '1.2-2') + ' $' : '—' }}
+              {{
+                pnl().computed !== null
+                  ? (pnl().computed | number: '1.2-2') + ('account.usdSuffix' | translate)
+                  : '—'
+              }}
             </span>
           </p>
 
@@ -258,7 +270,11 @@
             <div class="pnl-figure">
               <span class="pnl-figure__label">{{ 'journal.detail.pnl.computed' | translate }}</span>
               <span class="pnl-figure__value">
-                {{ pnl().computed !== null ? (pnl().computed | number: '1.2-2') + ' $' : '—' }}
+                {{
+                  pnl().computed !== null
+                    ? (pnl().computed | number: '1.2-2') + ('account.usdSuffix' | translate)
+                    : '—'
+                }}
               </span>
             </div>
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -274,7 +290,7 @@
                 (numberChange)="setRealProfit($event)"
                 inputmode="decimal"
               />
-              <span matTextSuffix>$</span>
+              <span matTextSuffix>{{ 'account.usdUnit' | translate }}</span>
               @if (realToBeErased(); as saved) {
                 <mat-hint class="warn">{{
                   'journal.detail.pnl.realErased' | translate: { amount: (saved | number: '1.2-2') }
@@ -290,7 +306,11 @@
                 [class.gain]="(pnl().gap ?? 0) > 0"
                 [class.loss]="(pnl().gap ?? 0) < 0"
               >
-                {{ pnl().gap !== null ? (pnl().gap | number: '1.2-2') + ' $' : '—' }}
+                {{
+                  pnl().gap !== null
+                    ? (pnl().gap | number: '1.2-2') + ('account.usdSuffix' | translate)
+                    : '—'
+                }}
               </span>
             </div>
           </div>

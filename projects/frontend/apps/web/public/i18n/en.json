@@ -367,9 +367,9 @@
       "size": "Size (shares)",
       "openPrice": "Avg entry price",
       "exitPrice": "Avg exit price",
-      "profitDollars": "Computed profit ($)",
-      "realProfitDollars": "Real profit ($)",
-      "retainedProfitDollars": "Retained P&L ($)",
+      "profitDollars": "Computed profit (USD)",
+      "realProfitDollars": "Real profit (USD)",
+      "retainedProfitDollars": "Retained P&L (USD)",
       "gainPercent": "Gain (%)",
       "durationMinutes": "Duration",
       "executionKind": "Type",
@@ -418,7 +418,7 @@
       "postMortem": "Post-mortem",
       "kpi": {
         "retained": "Retained P&L",
-        "adjusted": "adjusted by {{gap}} $ vs computed",
+        "adjusted": "adjusted by {{gap}} USD vs computed",
         "position": "Position",
         "positionSub": "shares in the position",
         "avgPrices": "Average entry / exit",
@@ -443,7 +443,7 @@
         "realNeedsClose": "Once the position is closed",
         "gap": "Gap (fees, rounding)",
         "note": "Empty = the computed P&L is retained. The retained P&L is the one that reaches the account.",
-        "realErased": "The broker P&L of {{amount}} $ will be erased on save: the position is no longer closed"
+        "realErased": "The broker P&L of {{amount}} USD will be erased on save: the position is no longer closed"
       },
       "context": {
         "title": "Day context",
@@ -477,7 +477,7 @@
     },
     "confirmEraseReal": {
       "title": "Erase the broker P&L?",
-      "message": "The position is no longer closed: the broker P&L of {{amount}} $ is erased and no longer counts in the account.",
+      "message": "The position is no longer closed: the broker P&L of {{amount}} USD is erased and no longer counts in the account.",
       "confirm": "Save and erase"
     }
   },
