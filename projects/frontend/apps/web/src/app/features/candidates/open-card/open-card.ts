@@ -154,8 +154,10 @@ export class OpenCard {
       // The number on screen is the number used (#311) : the push is shown at one decimal, so the
       // target price is computed from that one — `3.9 × 15.3 %` has to reproduce what is displayed.
       const reference = roundToOneDecimal(this.references()[candidate.pattern]?.[kind] ?? null);
-      const custom = candidate.targetPushPercent !== null;
-      const push = custom ? roundToOneDecimal(candidate.targetPushPercent) : reference;
+      const own = roundToOneDecimal(candidate.targetPushPercent);
+      // A push of its own that equals the reference has nothing to go back to (#320).
+      const custom = own !== null && own !== reference;
+      const push = custom ? own : reference;
       const target = targetPrice(candidate.openPrice, push);
       return {
         candidate,
