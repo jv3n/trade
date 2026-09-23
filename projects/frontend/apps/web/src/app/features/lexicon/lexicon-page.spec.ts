@@ -97,6 +97,27 @@ describe('LexiconPage', () => {
     expect(page.visible().map((c) => c.heading)).toEqual(['GUS']);
   });
 
+  // #365 : the other way round, a letter picked over a search emptied the grid and the empty
+  // state blamed the search, which still matched.
+  it('clears the search when a letter is picked, so only one filter is ever on', () => {
+    const page = TestBed.createComponent(LexiconPage).componentInstance;
+
+    page.setSearch('gus');
+    page.setLetter('B');
+
+    expect(page.search()).toBe('');
+    expect(page.visible().map((c) => c.term)).toEqual(['Borrow fee']);
+  });
+
+  it('keeps the search when every letter is picked back', () => {
+    const page = TestBed.createComponent(LexiconPage).componentInstance;
+
+    page.setSearch('gus');
+    page.setLetter(page.allLetters);
+
+    expect(page.search()).toBe('gus');
+  });
+
   it('starts on the app language and swaps the definitions without touching it', () => {
     const page = TestBed.createComponent(LexiconPage).componentInstance;
 
