@@ -6,15 +6,17 @@
   box-sizing: border-box;
 }
 
+// `html` carries the palette too : it is the element `data-theme` switches, and the overscroll
+// area and anything reading `currentColor` above `body` must not keep the dark defaults (#368).
 html,
 body {
   font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
   // Tabular numerals globally — keeps prices, P/L, percentages aligned in tables without
   // forcing `font-variant-numeric` on every cell. Geist ships this feature natively ; `ss01`
   // enables its more open alternates.
@@ -70,6 +72,14 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+// Native fields take their text colour from the system, not the page : a caret left on `auto`
+// went white on the light theme (#368). Material inputs keep their accent caret, set by class.
+input,
+textarea,
+[contenteditable] {
+  caret-color: var(--color-text);
 }
 
 .mat-toolbar {
