@@ -23,7 +23,7 @@
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>
-        {{ 'account.fields.amount' | translate }} ({{ 'account.usdSuffix' | translate }})
+        {{ 'account.fields.amount' | translate }} ({{ 'account.usdUnit' | translate }})
       </mat-label>
       <input
         matInput
@@ -34,7 +34,6 @@
         (numberChange)="setAmount($event)"
         inputmode="decimal"
       />
-      <span matTextSuffix>$</span>
     </mat-form-field>
     @if (amountInvalid()) {
       <p class="field-error">{{ 'account.dialog.amountRequired' | translate }}</p>
