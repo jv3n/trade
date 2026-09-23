@@ -24,7 +24,11 @@
   <div class="figure">
     <span class="figure__label">{{ 'account.reconciliation.appBalance' | translate }}</span>
     <span class="figure__value">
-      {{ appBalance() !== null ? (appBalance() | number: '1.2-2') + ' $' : '—' }}
+      {{
+        appBalance() !== null
+          ? (appBalance() | number: '1.2-2') + ('account.usdSuffix' | translate)
+          : '—'
+      }}
     </span>
   </div>
 
@@ -39,7 +43,7 @@
       (numberChange)="setBrokerBalance($event)"
       inputmode="decimal"
     />
-    <span matTextSuffix>$</span>
+    <span matTextSuffix>{{ 'account.usdSuffix' | translate }}</span>
     @if (negativeBalance()) {
       <mat-hint class="warn">{{ 'account.reconciliation.negativeBalance' | translate }}</mat-hint>
     }
@@ -48,7 +52,7 @@
   <div class="figure">
     <span class="figure__label">{{ 'account.reconciliation.gap' | translate }}</span>
     <span class="figure__value" [class.pos]="(gap() ?? 0) > 0" [class.neg]="(gap() ?? 0) < 0">
-      {{ gap() !== null ? (gap() | number: '1.2-2') + ' $' : '—' }}
+      {{ gap() !== null ? (gap() | number: '1.2-2') + ('account.usdSuffix' | translate) : '—' }}
     </span>
   </div>
 

@@ -43,7 +43,7 @@
           </mat-button-toggle-group>
         </div>
         <div class="kpi__value" [class.neg]="s.balance < 0">
-          {{ convert(s.balance) | number: '1.2-2' }} $
+          {{ convert(s.balance) | number: '1.2-2' }}{{ currencySuffix() }}
         </div>
         @if (currency() === 'CAD' && rate(); as r) {
           <div class="kpi__sub">
@@ -64,7 +64,8 @@
       <mat-card class="kpi" appearance="outlined">
         <div class="kpi__label">{{ 'account.kpi.periodPnl' | translate }}</div>
         <div class="kpi__value" [class.pos]="s.periodPnl > 0" [class.neg]="s.periodPnl < 0">
-          {{ s.periodPnl > 0 ? '+' : '' }}{{ s.periodPnl | number: '1.2-2' }} $
+          {{ s.periodPnl > 0 ? '+' : '' }}{{ s.periodPnl | number: '1.2-2'
+          }}{{ 'account.usdSuffix' | translate }}
         </div>
         <div class="kpi__sub">
           {{
@@ -77,7 +78,8 @@
       <mat-card class="kpi" appearance="outlined">
         <div class="kpi__label">{{ 'account.kpi.netInjected' | translate }}</div>
         <div class="kpi__value">
-          {{ s.periodNetInjected > 0 ? '+' : '' }}{{ s.periodNetInjected | number: '1.2-2' }} $
+          {{ s.periodNetInjected > 0 ? '+' : '' }}{{ s.periodNetInjected | number: '1.2-2'
+          }}{{ 'account.usdSuffix' | translate }}
         </div>
         <div class="kpi__sub">
           {{
@@ -196,7 +198,7 @@
 
           <ng-container matColumnDef="amount">
             <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-              {{ 'account.fields.amount' | translate }}
+              {{ 'account.fields.amount' | translate }} ({{ 'account.usdSuffix' | translate }})
             </th>
             <td
               mat-cell
@@ -211,7 +213,9 @@
 
           <ng-container matColumnDef="balanceAfter">
             <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-              {{ 'account.fields.balanceAfter' | translate }}
+              {{ 'account.fields.balanceAfter' | translate }} ({{
+                'account.usdSuffix' | translate
+              }})
             </th>
             <td mat-cell *matCellDef="let m" stbCol="numeric">
               {{ m.balanceAfter | number: '1.2-2' }}

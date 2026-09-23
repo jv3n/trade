@@ -248,6 +248,7 @@
       "CAD": "CAD"
     },
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · taux BCE, {{date}}",
+    "usdSuffix": " $ US",
     "fxUnavailable": "Taux de change indisponible pour le moment.",
     "addMovement": "Ajouter un mouvement",
     "chartEmpty": "Pas assez de mouvements pour tracer la courbe du solde.",
