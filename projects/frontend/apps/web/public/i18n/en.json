@@ -500,7 +500,9 @@
       "vsOpen": "vs open",
       "fade": "Fade at the close",
       "fadeSub": "EOD below the open · over the {{total}} completed · average {{average}}",
-      "noPushSub": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push"
+      "noPushSub": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
+      "noPushDays": "Days without a push",
+      "noPushShare": "{{share}} % of the period's completed stats"
     },
     "complete": {
       "title": "Session",
