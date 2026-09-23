@@ -435,6 +435,11 @@ The balance is **derived from the movements** :
 | Deposit / withdrawal | Typed by hand |
 | Correction | Created by the **morning reconciliation** |
 
+**The account is denominated in USD** (#312), because TradeZero is : the **CAD toggle converts the
+hero balance and the curve only**, and every other amount says « $ US » next to it — the movements
+table in its column headers, the KPIs, the reconciliation block and the « add a movement » dialog.
+Converting the ledger would leave nothing left to reconcile the broker's own figures against.
+
 **Morning reconciliation** (every morning) : I type in the balance TradeZero displays, the app
 compares it with the computed one. No gap → the reconciliation is simply timestamped. A gap → a
 "correction" line puts the balance on the TradeZero figure. It catches whatever the adjusted P&L
