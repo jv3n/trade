@@ -118,6 +118,7 @@ export class LexiconPage {
 
   setLetter(letter: string): void {
     this.letter.set(letter);
+    if (letter !== ALL_LETTERS) this.search.set('');
   }
 
   setDefinitionLanguage(lang: Language): void {
