@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { Router, RouterLink } from '@angular/router';
@@ -214,6 +214,11 @@ export class JournalPage {
   ] as const;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.listing?.unsubscribe();
+      this.summaryFetch?.unsubscribe();
+      this.statSummaryFetch?.unsubscribe();
+    });
     effect(() => {
       const q = this.searchTerm();
       const f = this.appliedFilter();
