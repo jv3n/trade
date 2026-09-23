@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   DOCUMENT,
+  DestroyRef,
   ElementRef,
   computed,
   inject,
@@ -230,6 +231,7 @@ export class CandidatesPage {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.listing?.unsubscribe());
     this.load();
   }
 

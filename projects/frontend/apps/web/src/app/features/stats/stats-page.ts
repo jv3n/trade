@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe, formatDate } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, LOCALE_ID, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, LOCALE_ID, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -479,6 +479,10 @@ export class StatsPage {
   private typedPush: number | null = null;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.listing?.unsubscribe();
+      this.summaryFetch?.unsubscribe();
+    });
     this.writes.pipe(concatMap((write) => write)).subscribe();
 
     effect(() => {
