@@ -88,7 +88,7 @@ export class NumberMaskDirective {
     effect(() => {
       const v = this.value();
       const el = this.host.nativeElement;
-      if (document.activeElement === el) {
+      if (el.ownerDocument.activeElement === el) {
         if (this.parse(el.value) !== v) {
           el.value = v === null ? '' : formatNumber(v, this.decimals(), this.separator, true);
         }
@@ -101,7 +101,8 @@ export class NumberMaskDirective {
 
   @HostListener('mousedown')
   onMouseDown(): void {
-    this.selectOnMouseUp = document.activeElement !== this.host.nativeElement;
+    const el = this.host.nativeElement;
+    this.selectOnMouseUp = el.ownerDocument.activeElement !== el;
   }
 
   @HostListener('focus')
