@@ -10,7 +10,7 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -438,6 +438,11 @@ export class StatsPage {
    * must reach the server first, or the tick would be judged on the row without that price.
    */
   private readonly writes = new Subject<Observable<unknown>>();
+  /**
+   * Whether the next listing keeps the panel wherever its stat went : a reload a write asked for
+   * (tick, create, delete), and the first one, which a `?stat=` link may have opened off the page.
+   */
+  private keepPanelOnNextLoad = true;
 
   /** Live gap and premarket push under their fields, as the user types. */
   readonly premarketPercents = computed(() => {
@@ -540,6 +545,18 @@ export class StatsPage {
         sortDirection: sort.columnName ? (sort.isAscending ? 'asc' : 'desc') : undefined,
       });
     });
+
+    // « In stats » on a candidate lands here with `?stat=` (#383) : that stat, its panel open, even
+    // when it is not on the first page.
+    this.route.queryParamMap
+      .pipe(
+        map((params) => params.get('stat')),
+        distinctUntilChanged(),
+        filter((id): id is string => id !== null),
+        switchMap((id) => this.repo.findById(id).pipe(catchError(() => EMPTY))),
+        takeUntilDestroyed(),
+      )
+      .subscribe((entry) => this.open(entry));
   }
 
   // ---- Filter handlers ----
@@ -948,9 +965,12 @@ export class StatsPage {
     this.error.set(null);
     this.listing = this.repo.findAll(filterValue, page).subscribe({
       next: (result) => {
+        const keepPanel = this.keepPanelOnNextLoad;
+        this.keepPanelOnNextLoad = false;
         this.entries.set(result.content);
         this.totalElements.set(result.totalElements);
         this.loading.set(false);
+        if (!keepPanel) this.closeOffScreen(result.content);
         this.autoOpenPending(result.content);
       },
       error: () => {
@@ -960,6 +980,22 @@ export class StatsPage {
       },
     });
     this.loadSummary(filterValue);
+  }
+
+  /**
+   * Closes the panel when a filter, a page or a sort took its stat off the table (#383) — typing
+   * into a row that isn't on screen is how a price lands on the wrong ticker. It doesn't ask : an
+   * edit the validation held back could never be saved anyway, so it is dropped and a toast says so.
+   */
+  private closeOffScreen(rows: StatEntry[]): void {
+    const current = this.completing();
+    if (!current || rows.some((s) => s.id === current.id)) return;
+    if (this.hasPendingEdits()) {
+      this.toasts.error(
+        this.translate.instant('stats.snackbar.editDropped', { ticker: current.ticker }),
+      );
+    }
+    this.completing.set(null);
   }
 
   /**
@@ -1006,6 +1042,7 @@ export class StatsPage {
   }
 
   private refetch(): void {
+    this.keepPanelOnNextLoad = true;
     this.refetchTrigger.update((n) => n + 1);
   }
 

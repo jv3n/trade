@@ -400,6 +400,7 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     openPrice: null,
     targetPushPercent: null,
     promoted: false,
+    statId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

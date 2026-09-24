@@ -362,12 +362,17 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
             <td mat-cell *matCellDef="let c" stbCol="actions">
-              @if (c.promoted) {
+              @if (c.statId; as statId) {
                 <!-- Status, not an outcome → indigo like the other categories (colour rule). -->
-                <span class="stats-tag">
+                <a
+                  class="stats-tag"
+                  routerLink="/stats"
+                  [queryParams]="{ stat: statId }"
+                  [matTooltip]="'candidates.actions.openStat' | translate"
+                >
                   <mat-icon class="stats-tag__icon">check</mat-icon>
                   {{ 'candidates.actions.inStats' | translate }}
-                </span>
+                </a>
               } @else if (!readOnly()) {
                 <button mat-stroked-button stbSize="sm" type="button" (click)="promote(c)">
                   <mat-icon>arrow_forward</mat-icon>

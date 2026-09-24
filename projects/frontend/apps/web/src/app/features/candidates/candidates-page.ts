@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   StbButtonModule,
@@ -118,6 +119,7 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
     FormField,
     NumberMaskDirective,
     OpenCard,
+    RouterLink,
     StbButtonModule,
     StbChipsModule,
     StbDatePickerModule,

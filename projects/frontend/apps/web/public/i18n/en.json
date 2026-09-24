@@ -195,7 +195,8 @@
       "delete": "Delete",
       "promote": "Stat",
       "promoteAll": "Promote all to stats",
-      "inStats": "In stats"
+      "inStats": "In stats",
+      "openStat": "Open its session"
     },
     "confirmPromote": {
       "title": "Promote {{ticker}} to a stat?",
@@ -622,7 +623,8 @@
       "completionError": "Couldn't change the status of {{ticker}}. Please retry.",
       "createSuccess": "Stat {{ticker}} created.",
       "createConflict": "{{ticker}} already has a stat that day.",
-      "createError": "Could not create the {{ticker}} stat. Try again."
+      "createError": "Could not create the {{ticker}} stat. Try again.",
+      "editDropped": "{{ticker}}: the unsaved edit was dropped."
     },
     "premarket": {
       "title": "Premarket —",

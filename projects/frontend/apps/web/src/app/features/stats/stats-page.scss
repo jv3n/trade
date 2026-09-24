@@ -156,6 +156,12 @@
   border-left: 1px solid var(--color-border);
 }
 
+// Sized for its widest row — « Session » + delete (#383). Left to its content, a page holding a stat
+// to complete widened the table into a horizontal scroll that hid the date.
+.stb-col--actions {
+  width: 152px;
+}
+
 // A stat still to complete stands out until its session is entered.
 tr.pending td {
   background: var(--color-warning-soft);
