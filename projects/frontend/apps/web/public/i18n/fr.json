@@ -26,6 +26,7 @@
     "journal": "Journal",
     "candidates": "Candidats",
     "stats": "Stats",
+    "calculator": "Calculatrice",
     "lexicon": "Lexique",
     "settings": "Paramètres"
   },
@@ -663,6 +664,60 @@
       "title": "Quitter sans enregistrer ?",
       "message": "Une modification n'a pas pu partir — la raison est à côté du titre de la carte. En quittant, la stat garde ses dernières valeurs enregistrées.",
       "confirm": "Quitter sans enregistrer"
+    }
+  },
+  "calculator": {
+    "title": "Calculatrice",
+    "subtitle": "Les petits calculs qu'on refait à la main, en séance ou pas. Rien n'est enregistré : les valeurs restent le temps de la visite, un rechargement efface tout.",
+    "copy": "Copier",
+    "fields": {
+      "from": "De",
+      "to": "À",
+      "price": "Prix",
+      "percent": "Variation (%)",
+      "risk": "Risque ($ US)",
+      "entry": "Entrée",
+      "stop": "Stop",
+      "cover": "Rachat",
+      "shares": "Actions",
+      "fees": "Frais ($ US, facultatif)",
+      "currentPrice": "Prix actuel",
+      "target": "Objectif",
+      "firstShares": "1re entrée — actions",
+      "addShares": "Renfort — actions"
+    },
+    "move": {
+      "title": "Variation en %",
+      "hint": "d'un prix à l'autre, ou l'inverse",
+      "result": "Variation",
+      "price": "Prix obtenu"
+    },
+    "size": {
+      "title": "Taille de position",
+      "hint": "short : le stop au-dessus de l'entrée",
+      "shares": "Actions (arrondi à l'unité inférieure)",
+      "realRisk": "Risque réellement pris",
+      "wrongSide": "Sur un short, le stop se place au-dessus de l'entrée.",
+      "tooFar": "Avec ce risque, le stop est trop loin : pas même une action."
+    },
+    "pnl": {
+      "title": "P&L du short",
+      "result": "P&L",
+      "percent": "Rendement sur la position"
+    },
+    "rr": {
+      "title": "Distance et R:R",
+      "hint": "avant l'entrée",
+      "toStop": "Jusqu'au stop",
+      "toTarget": "Jusqu'à l'objectif",
+      "ratio": "R:R",
+      "stopWrongSide": "Sur un short, le stop se place au-dessus du prix.",
+      "targetWrongSide": "Sur un short, l'objectif se place en dessous du prix."
+    },
+    "avg": {
+      "title": "Prix moyen après un renfort",
+      "average": "Prix moyen",
+      "total": "Position totale (actions)"
     }
   },
   "lexicon": {

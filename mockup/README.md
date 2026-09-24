@@ -16,7 +16,8 @@ stays in French : it mirrors the app's own interface.
 
 | Use | Icon |
 |-----|------|
-| Menu — Today / Account / Candidates / Stats / Journal / Lexicon | `today` · `account_balance_wallet` · `radar` · `query_stats` · `menu_book` · `dictionary` |
+| Menu — Today / Account / Candidates / Stats / Journal / Calculator / Lexicon | `today` · `account_balance_wallet` · `radar` · `query_stats` · `menu_book` · `calculate` · `dictionary` |
+| Copy a result | `content_copy` |
 | Edit / delete | `edit` · `delete` |
 | Add / deposit / withdrawal | `add` · `add` · `remove` |
 | CSV export | `import_export` |
