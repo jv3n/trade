@@ -15,8 +15,8 @@ import org.testcontainers.utility.DockerImageName
  * (~5 s overhead). Either way the tests are fully decoupled from Tilt / docker-compose.
  *
  * Image pinned to `postgres:16` — the CI used to provision the same image via the `services:` block
- * in `.github/workflows/backend.yml`. Prod (Supabase) runs PG 15 ; a one-major buffer on the test
- * client is fine, dump/restore stays compatible.
+ * in `.github/workflows/backend.yml`. Prod (Supabase) runs PG 17 : the tests trail it by a major
+ * until this image moves too (follow-up of #402).
  */
 object PostgresContainer :
   PostgreSQLContainer<PostgresContainer>(DockerImageName.parse("postgres:16")) {

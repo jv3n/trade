@@ -1,17 +1,17 @@
 name: Backup Supabase Postgres
 
-# Weekly `pg_dump` of the Supabase database to Cloudflare R2 for exit-discipline. Keeps our own
+# Monthly `pg_dump` of the Supabase database to Cloudflare R2 for exit-discipline. Keeps our own
 # archive independent of Supabase's proprietary snapshot format — if Supabase shrinks the free
 # tier or disappears, we restore from R2 to any Postgres elsewhere (Neon, Fly Postgres, VPS…).
-# Supabase already keeps 7 days of daily snapshots ; the 30 kept here are the long-term net.
+# Supabase already keeps 7 days of daily snapshots ; the 12 kept here are the long-term net.
 #
 # Needs the R2 bucket, three GitHub secrets (R2_*), three repo variables (GCP_*), and
 # `roles/secretmanager.secretAccessor` granted to `github-deploy@` on `supabase-db-url`.
 
 on:
   schedule:
-    # Sunday 4 AM UTC = Saturday midnight Eastern, the quietest slot.
-    - cron: '0 4 * * 0'
+    # The 1st of the month, 4 AM UTC = midnight Eastern, the quietest slot.
+    - cron: '0 4 1 * *'
   # For a spot backup before a risky operation, and for the restore drills.
   workflow_dispatch:
 
@@ -23,6 +23,10 @@ concurrency:
 
 permissions:
   contents: read
+
+# Under this, a gzip holds no dump — an empty `pg_dump` output gzips to 20 bytes.
+env:
+  MIN_BACKUP_BYTES: 1024
 
 jobs:
   backup:
@@ -43,17 +47,19 @@ jobs:
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v3
 
-      # The `pg_dump` shipped on `ubuntu-24.04` can trail Supabase by a major or two. A newer
-      # client can always dump an older server, so pinning 16 gives a major of headroom.
-      - name: Install postgresql-client-16
+      # The client follows Supabase's major (17) : pg_dump refuses a newer server, and a dump from a
+      # newer client may not restore on it. Called by its full path — Ubuntu's `pg_dump` wrapper
+      # runs the newest client installed, whatever is pinned here. When Supabase upgrades, the
+      # dump fails red (version mismatch) and this number moves with it (#402).
+      - name: Install postgresql-client-17
         run: |
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
             | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
           echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update --quiet
-          sudo apt-get install --yes --quiet postgresql-client-16
-          pg_dump --version
+          sudo apt-get install --yes --quiet postgresql-client-17
+          /usr/lib/postgresql/17/bin/pg_dump --version
 
       # The secret holds a **JDBC** URL and libpq rejects the `jdbc:` prefix ; the rest is a valid
       # libpq URI. Masked so a later step cannot echo the credentials into the logs.
@@ -74,10 +80,20 @@ jobs:
         env:
           DATABASE_URL: ${{ steps.db.outputs.url }}
         run: |
+          # Without it a failing pg_dump hid behind gzip's success, and every weekly run from June
+          # to September uploaded a 20-byte empty file with a green check (#402).
+          set -o pipefail
           TIMESTAMP=$(date -u +%Y-%m-%dT%H-%M-%SZ)
           BACKUP_FILE="backup-$TIMESTAMP.sql.gz"
-          pg_dump "$DATABASE_URL" --no-owner --no-acl --format=plain | gzip > "$BACKUP_FILE"
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" --no-owner --no-acl --format=plain \
+            | gzip > "$BACKUP_FILE"
           ls -lh "$BACKUP_FILE"
+          # Belt and braces : even the schema alone is several KB, so anything smaller is not a dump.
+          SIZE=$(stat -c %s "$BACKUP_FILE")
+          if [ "$SIZE" -lt "$MIN_BACKUP_BYTES" ]; then
+            echo "::error::Backup is $SIZE bytes, under $MIN_BACKUP_BYTES — not uploading an empty dump."
+            exit 1
+          fi
           # `BACKUP_FILE=...` (uppercase, conventional) becomes available to subsequent steps as
           # the env var `BACKUP_FILE`. The key in `$GITHUB_ENV` defines the exported var name —
           # no auto-lowercase magic.
@@ -94,27 +110,32 @@ jobs:
           aws s3 cp "$BACKUP_FILE" "s3://portfolioai-backups/$BACKUP_FILE" --endpoint-url "$ENDPOINT_URL"
           echo "BACKUP_UPLOADED=s3://portfolioai-backups/$BACKUP_FILE" >> "$GITHUB_ENV"
 
-      # Alphabetical order is chronological (the names are UTC-timestamped), so `head -n -30` drops
-      # the newest thirty and leaves the ones to delete.
-      - name: Prune backups older than the 30 most recent
+      # Empty files first — they are no backup at all — then the valid ones past the 12 most recent.
+      # Counting only valid files means an empty upload can never push a real backup out. The
+      # alphabetical order is chronological (UTC-timestamped names), so `head -n -12` leaves the
+      # ones to delete.
+      - name: Prune empty backups and keep the 12 most recent
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
           ENDPOINT_URL: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
         run: |
-          OLD=$(aws s3 ls "s3://portfolioai-backups/" --endpoint-url "$ENDPOINT_URL" \
-            | grep -E 'backup-.*\.sql\.gz$' \
-            | sort \
-            | head -n -30 \
-            | awk '{print $4}')
-          if [ -z "$OLD" ]; then
-            echo "Nothing to prune (less than 30 backups in bucket)."
+          set -o pipefail
+          # `aws s3 ls` prints : date, time, size in bytes, name.
+          LISTING=$(aws s3 ls "s3://portfolioai-backups/" --endpoint-url "$ENDPOINT_URL" \
+            | { grep -E 'backup-.*\.sql\.gz$' || true; } | sort -k4)
+          EMPTY=$(echo "$LISTING" | awk -v min="$MIN_BACKUP_BYTES" 'NF == 4 && $3 < min {print $4}')
+          OLD=$(echo "$LISTING" | awk -v min="$MIN_BACKUP_BYTES" 'NF == 4 && $3 >= min {print $4}' \
+            | head -n -12)
+          TO_DELETE=$(printf '%s\n%s\n' "$EMPTY" "$OLD" | grep -v '^$' || true)
+          if [ -z "$TO_DELETE" ]; then
+            echo "Nothing to prune (no empty file, 12 valid backups or fewer)."
             exit 0
           fi
           echo "Pruning the following objects:"
-          echo "$OLD"
-          echo "$OLD" | xargs -I {} aws s3 rm "s3://portfolioai-backups/{}" --endpoint-url "$ENDPOINT_URL"
+          echo "$TO_DELETE"
+          echo "$TO_DELETE" | xargs -I {} aws s3 rm "s3://portfolioai-backups/{}" --endpoint-url "$ENDPOINT_URL"
 
       - name: Summary
         run: |
@@ -123,7 +144,7 @@ jobs:
             echo ""
             echo "| | |"
             echo "|---|---|"
-            echo "| File | \`$BACKUP_FILE\` |"
+            echo "| File | \`$BACKUP_FILE\` ($(stat -c %s "$BACKUP_FILE") bytes) |"
             echo "| Destination | \`$BACKUP_UPLOADED\` |"
             echo "| Trigger | \`${{ github.event_name }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
