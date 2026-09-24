@@ -39,6 +39,7 @@
     "steps": {
       "title": "The day's run",
       "progress": "{{done}} of {{total}} steps done",
+      "progressOne": "{{done}} of {{total}} steps done",
       "reconciliation": {
         "title": "Morning reconciliation",
         "body": "Enter the balance TradeZero displays : the app compares it to the one it computes."
@@ -47,13 +48,18 @@
         "title": "Capture the candidates",
         "body": "After the radar screen : ticker, previous close, PM open / high, float, volume, locate.",
         "captured": "{{count}} candidates captured — {{tickers}}.",
-        "capturedOne": "1 candidate captured — {{tickers}}.",
+        "capturedOne": "{{count}} candidate captured — {{tickers}}.",
         "notPromoted": "{{count}} candidates are not in the stats sheet yet.",
-        "notPromotedOne": "1 candidate is not in the stats sheet yet.",
+        "notPromotedOne": "{{count}} candidate is not in the stats sheet yet.",
         "confirmPromote": {
           "title": "Promote {{count}} candidates to the stats sheet?",
           "message": "{{tickers}} become stats to fill in as the session goes. The candidates already promoted are left alone.",
           "confirm": "Promote them all"
+        },
+        "confirmPromoteOne": {
+          "title": "Promote {{count}} candidate to the stats sheet?",
+          "message": "{{tickers}} becomes a stat to fill in as the session goes. The candidates already promoted are left alone.",
+          "confirm": "Promote it"
         }
       },
       "session": {
@@ -69,19 +75,21 @@
         "toCompleteOne": "{{tickers}} is still waiting for its session block.",
         "overdue": "Overdue: {{tickers}}.",
         "overdueMore": "Overdue: {{tickers}} and {{count}} more.",
+        "overdueMoreOne": "Overdue: {{tickers}} and {{count}} more.",
         "overdueTag": "{{count}} overdue"
       },
       "trades": {
         "title": "Enter the day's trades",
         "body": "Traded today? Create the trade from its stat, then add the fills and the post-mortem.",
         "entered": "{{count}} trades entered — {{tickers}}.",
-        "enteredOne": "1 trade entered — {{tickers}}."
+        "enteredOne": "{{count}} trade entered — {{tickers}}."
       }
     },
     "actions": {
       "view": "View",
       "capture": "Capture the candidates",
       "promoteRemaining": "Promote the {{count}} remaining",
+      "promoteRemainingOne": "Promote the last one",
       "complete": "Complete",
       "pickStat": "Pick a stat",
       "openJournal": "Open the journal"
@@ -110,6 +118,7 @@
     },
     "snackbar": {
       "promoteSuccess": "{{count}} candidates promoted to the stats sheet.",
+      "promoteSuccessOne": "{{count}} candidate promoted to the stats sheet.",
       "promoteError": "Couldn't promote the candidates. Please retry."
     }
   },
@@ -176,7 +185,8 @@
       "delta": "Gap"
     },
     "list": {
-      "count": "{{count}} candidate(s) · sorted by gap",
+      "count": "{{count}} candidates · sorted by gap",
+      "countOne": "{{count}} candidate · sorted by gap",
       "empty": "No candidate on this day.",
       "weekend": "Weekend, no session."
     },
@@ -193,9 +203,14 @@
       "confirm": "Promote to stat"
     },
     "confirmPromoteAll": {
-      "title": "Promote {{count}} candidate(s) to stats?",
+      "title": "Promote {{count}} candidates to stats?",
       "message": "{{tickers}} become stats to fill in as the session goes. Candidates already in the sheet are left alone.",
       "confirm": "Promote all to stats"
+    },
+    "confirmPromoteAllOne": {
+      "title": "Promote {{count}} candidate to stats?",
+      "message": "{{tickers}} becomes a stat to fill in as the session goes. Candidates already in the sheet are left alone.",
+      "confirm": "Promote to stats"
     },
     "confirmDelete": {
       "title": "Delete the {{ticker}} candidate?",
@@ -208,7 +223,8 @@
       "deleteSuccess": "{{ticker}} deleted.",
       "promoteSuccess": "{{ticker}} is now in the stats sheet.",
       "promoteError": "Couldn't promote {{ticker}}. Please retry.",
-      "promoteAllSuccess": "{{count}} candidate(s) promoted to stats.",
+      "promoteAllSuccess": "{{count}} candidates promoted to stats.",
+      "promoteAllSuccessOne": "{{count}} candidate promoted to stats.",
       "promoteAllError": "Couldn't promote the candidates. Please retry.",
       "duplicate": "{{ticker}} is already captured on this day.",
       "loadError": "Couldn't load the candidates. Please retry.",
@@ -316,7 +332,10 @@
     "chartTitle": "Balance over time",
     "kpi": {
       "periodPnl": "P&L for the period",
-      "periodPnlSub": "{{trades}} trades on the account · {{winners}} winners",
+      "periodTrades": "{{count}} trades on the account",
+      "periodTradesOne": "{{count}} trade on the account",
+      "periodWinners": "{{count}} winners",
+      "periodWinnersOne": "{{count}} winner",
       "netInjected": "Net injected for the period",
       "netInjectedSub": "{{deposits}} deposited · {{withdrawals}} withdrawn"
     },
@@ -340,12 +359,17 @@
     "kpi": {
       "pnl": "P&L over the period",
       "trades": "{{count}} closed trades",
+      "tradesOne": "{{count}} closed trade",
       "winRate": "Win rate",
-      "winLossCount": "{{wins}} winners · {{losses}} losers",
+      "wins": "{{count}} winners",
+      "winsOne": "{{count}} winner",
+      "losses": "{{count}} losers",
+      "lossesOne": "{{count}} loser",
       "averages": "Average win / average loss",
       "profitFactor": "Profit factor {{value}}",
       "tradedStats": "Traded stats",
       "untraded": "{{count}} untraded stats",
+      "untradedOne": "{{count}} untraded stat",
       "allTraded": "Every stat of the period was traded"
     },
     "searchPlaceholder": "Search ticker…",
@@ -441,6 +465,7 @@
         "remove": "Remove the fill",
         "invalid": "Inconsistent fills: more shares closed than opened.",
         "remaining": "{{shares}} shares still open — computed P&L",
+        "remainingOne": "{{shares}} share still open — computed P&L",
         "closed": "Position closed — computed P&L"
       },
       "pnl": {
@@ -508,7 +533,9 @@
       "vsOpen": "vs open",
       "fade": "Fade at the close",
       "fadeSub": "EOD below the open · over the {{total}} completed · average {{average}}",
+      "fadeSubOne": "EOD below the open · over the {{total}} completed · average {{average}}",
       "noPushSub": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
+      "noPushSubOne": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
       "noPushDays": "Days without a push",
       "noPushShare": "{{share}} % of the period's completed stats"
     },

@@ -60,6 +60,7 @@ import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import { PeriodSelection } from '../../shared/period-preset/period-preset';
+import { PluralPipe } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
 import { gapPercent, percentVsOpen, pmPushPercent } from './stats.math';
 
@@ -300,6 +301,7 @@ function sessionOf(entry: StatEntry): SessionModel {
     StbSortHeaderModule,
     StbTableModule,
     StbTooltipModule,
+    PluralPipe,
     TranslatePipe,
   ],
   templateUrl: './stats-page.html',

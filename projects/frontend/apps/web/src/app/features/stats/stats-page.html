@@ -63,11 +63,13 @@
           </div>
           <div class="kpi__sub">
             @if (kpi.noPushCount > 0) {
+              @let pushed = kpi.completed - kpi.noPushCount;
               {{
                 'stats.kpi.noPushSub'
+                  | plural: pushed
                   | translate
                     : {
-                        pushed: kpi.completed - kpi.noPushCount,
+                        pushed,
                         count: kpi.noPushCount,
                         total: kpi.completed,
                       }
@@ -93,6 +95,7 @@
         <div class="kpi__sub">
           {{
             'stats.kpi.fadeSub'
+              | plural: kpi.completed
               | translate
                 : {
                     total: kpi.completed,

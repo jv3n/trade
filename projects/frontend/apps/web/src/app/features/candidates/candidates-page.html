@@ -217,7 +217,9 @@
   <section class="card">
     <h3>
       {{ day() | date: 'fullDate' }}
-      <span class="hint">{{ 'candidates.list.count' | translate: { count: rows().length } }}</span>
+      <span class="hint">{{
+        'candidates.list.count' | plural: rows().length | translate: { count: rows().length }
+      }}</span>
       @if (!readOnly() && promotable().length > 0) {
         <button mat-stroked-button stbSize="sm" type="button" (click)="promoteAll()">
           <mat-icon>keyboard_double_arrow_right</mat-icon>

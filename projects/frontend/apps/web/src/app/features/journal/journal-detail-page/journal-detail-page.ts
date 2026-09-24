@@ -35,6 +35,7 @@ import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { HasUnsavedChanges } from '../../../core/router/unsaved-changes.guard';
 import { compressImage } from '../../../shared/image/compress-image';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
+import { PluralPipe } from '../../../shared/plural/plural';
 import { PricePipe } from '../../../shared/price/price.pipe';
 import { gapPercent, percentVsOpen, pmPushPercent } from '../../stats/stats.math';
 
@@ -158,6 +159,7 @@ function spanMinutes(executions: ExecRow[]): number | null {
     StbSelectModule,
     StbTooltipModule,
     NumberMaskDirective,
+    PluralPipe,
     TranslatePipe,
   ],
   templateUrl: './journal-detail-page.html',

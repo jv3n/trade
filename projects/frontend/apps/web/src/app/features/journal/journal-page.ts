@@ -50,6 +50,7 @@ import {
   PeriodSelection,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
+import { PluralPipe } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
 
 /**
@@ -135,6 +136,7 @@ const DEFAULT_PAGE_SIZE = 10;
     StbSortHeaderModule,
     StbTableModule,
     StbTooltipModule,
+    PluralPipe,
     TranslatePipe,
   ],
   templateUrl: './journal-page.html',

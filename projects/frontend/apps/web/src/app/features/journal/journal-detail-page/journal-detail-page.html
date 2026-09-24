@@ -247,6 +247,7 @@
                 {{
                   remainingShares() > 0
                     ? ('journal.detail.executionsBlock.remaining'
+                      | plural: remainingShares()
                       | translate: { shares: remainingShares() })
                     : ('journal.detail.executionsBlock.closed' | translate)
                 }}

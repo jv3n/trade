@@ -20,7 +20,9 @@
         >
           {{ s.retainedPnl | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
         </div>
-        <div class="kpi__sub">{{ 'journal.kpi.trades' | translate: { count: s.tradeCount } }}</div>
+        <div class="kpi__sub">
+          {{ 'journal.kpi.trades' | plural: s.tradeCount | translate: { count: s.tradeCount } }}
+        </div>
       } @else {
         <div class="kpi__value">—</div>
       }
@@ -33,7 +35,8 @@
           {{ s.winRatePercent !== null ? (s.winRatePercent | number: '1.0-0') + ' %' : '—' }}
         </div>
         <div class="kpi__sub">
-          {{ 'journal.kpi.winLossCount' | translate: { wins: s.winCount, losses: s.lossCount } }}
+          {{ 'journal.kpi.wins' | plural: s.winCount | translate: { count: s.winCount } }} ·
+          {{ 'journal.kpi.losses' | plural: s.lossCount | translate: { count: s.lossCount } }}
         </div>
       } @else {
         <div class="kpi__value">—</div>
@@ -71,7 +74,7 @@
         <div class="kpi__sub">
           @if (s.untraded > 0) {
             <a routerLink="/stats">
-              {{ 'journal.kpi.untraded' | translate: { count: s.untraded } }}
+              {{ 'journal.kpi.untraded' | plural: s.untraded | translate: { count: s.untraded } }}
               <mat-icon>arrow_forward</mat-icon>
             </a>
           } @else {

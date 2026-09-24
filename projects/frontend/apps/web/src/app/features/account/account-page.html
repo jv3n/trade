@@ -69,8 +69,15 @@
         </div>
         <div class="kpi__sub">
           {{
-            'account.kpi.periodPnlSub'
-              | translate: { trades: s.periodTradeCount, winners: s.periodWinningTradeCount }
+            'account.kpi.periodTrades'
+              | plural: s.periodTradeCount
+              | translate: { count: s.periodTradeCount }
+          }}
+          ·
+          {{
+            'account.kpi.periodWinners'
+              | plural: s.periodWinningTradeCount
+              | translate: { count: s.periodWinningTradeCount }
           }}
         </div>
       </mat-card>

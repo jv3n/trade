@@ -14,6 +14,7 @@ import { JournalSummary, TradeEntry } from '../../core/api/journal/trade-entry.m
 import { StatEntry } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { MorningReconciliation } from '../account/morning-reconciliation/morning-reconciliation';
 import { gapPercent, pushPercent } from '../candidates/candidates.math';
 
@@ -92,6 +93,7 @@ export function marketStatusAt(now: Date): MarketStatus {
     StbChipsModule,
     StbIconModule,
     MorningReconciliation,
+    PluralPipe,
     TranslatePipe,
   ],
 })
@@ -209,7 +211,7 @@ export class TodayPage {
     const pending = this.pendingCandidates();
     if (pending.length === 0) return;
     this.confirm
-      .ask('today.steps.candidates.confirmPromote', {
+      .ask(pluralKey('today.steps.candidates.confirmPromote', pending.length, this.locale), {
         params: { count: pending.length, tickers: pending.map((c) => c.ticker).join(', ') },
       })
       .pipe(
@@ -217,9 +219,10 @@ export class TodayPage {
         switchMap(() => this.candidatesRepo.promoteDay(this.today)),
         tap((result) => {
           this.toasts.success(
-            this.translate.instant('today.snackbar.promoteSuccess', {
-              count: result.promoted.length,
-            }),
+            this.translate.instant(
+              pluralKey('today.snackbar.promoteSuccess', result.promoted.length, this.locale),
+              { count: result.promoted.length },
+            ),
           );
           this.fetch();
         }),

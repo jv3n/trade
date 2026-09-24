@@ -393,13 +393,13 @@ describe('CandidatesPage', () => {
     expect(page.promotable().map((c) => c.ticker)).toEqual(['BNRG']);
   });
 
-  it('promotes the whole day in one call and reports how many landed', () => {
+  it('promotes the whole day in one call and reports how many landed, in the singular for one', () => {
     const { page, repo, toastShown } = setup({ list: [makeCandidate()] });
 
     page.promoteAll();
 
     expect(repo.promoteDay).toHaveBeenCalledWith(startOfDay(new Date()));
-    expect(toastShown).toHaveBeenCalledWith('success', 'candidates.snackbar.promoteAllSuccess');
+    expect(toastShown).toHaveBeenCalledWith('success', 'candidates.snackbar.promoteAllSuccessOne');
   });
 
   it('does nothing when every candidate of the day is already in the sheet', () => {

@@ -38,7 +38,8 @@
     },
     "steps": {
       "title": "Déroulé du jour",
-      "progress": "{{done}} étape(s) faite(s) sur {{total}}",
+      "progress": "{{done}} étapes faites sur {{total}}",
+      "progressOne": "{{done}} étape faite sur {{total}}",
       "reconciliation": {
         "title": "Rapprochement du matin",
         "body": "Saisis le solde affiché par TradeZero : l'app le compare à son solde calculé."
@@ -47,13 +48,18 @@
         "title": "Saisir les candidats",
         "body": "Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.",
         "captured": "{{count}} candidats saisis — {{tickers}}.",
-        "capturedOne": "1 candidat saisi — {{tickers}}.",
+        "capturedOne": "{{count}} candidat saisi — {{tickers}}.",
         "notPromoted": "{{count}} candidats ne sont pas encore passés en stats.",
-        "notPromotedOne": "1 candidat n'est pas encore passé en stats.",
+        "notPromotedOne": "{{count}} candidat n'est pas encore passé en stats.",
         "confirmPromote": {
           "title": "Passer {{count}} candidats en stats ?",
           "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
           "confirm": "Tout passer en stats"
+        },
+        "confirmPromoteOne": {
+          "title": "Passer {{count}} candidat en stats ?",
+          "message": "{{tickers}} devient une stat à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
+          "confirm": "Passer en stats"
         }
       },
       "session": {
@@ -69,19 +75,21 @@
         "toCompleteOne": "{{tickers}} attend son bloc de séance.",
         "overdue": "En retard : {{tickers}}.",
         "overdueMore": "En retard : {{tickers}} et {{count}} autres.",
+        "overdueMoreOne": "En retard : {{tickers}} et {{count}} autre.",
         "overdueTag": "{{count}} en retard"
       },
       "trades": {
         "title": "Saisir les trades du jour",
         "body": "Tu as tradé aujourd'hui ? Crée le trade depuis sa stat, puis ajoute exécutions et post-mortem.",
         "entered": "{{count}} trades saisis — {{tickers}}.",
-        "enteredOne": "1 trade saisi — {{tickers}}."
+        "enteredOne": "{{count}} trade saisi — {{tickers}}."
       }
     },
     "actions": {
       "view": "Voir",
       "capture": "Saisir les candidats",
       "promoteRemaining": "Passer les {{count}} restants",
+      "promoteRemainingOne": "Passer le dernier",
       "complete": "Compléter",
       "pickStat": "Choisir une stat",
       "openJournal": "Ouvrir le journal"
@@ -110,6 +118,7 @@
     },
     "snackbar": {
       "promoteSuccess": "{{count}} candidats passés en stats.",
+      "promoteSuccessOne": "{{count}} candidat passé en stats.",
       "promoteError": "Impossible de passer les candidats en stats. Réessaie."
     }
   },
@@ -176,7 +185,8 @@
       "delta": "Écart"
     },
     "list": {
-      "count": "{{count}} candidat(s) · triés par gap",
+      "count": "{{count}} candidats · triés par gap",
+      "countOne": "{{count}} candidat · trié par gap",
       "empty": "Aucun candidat ce jour-là.",
       "weekend": "Week-end, pas de séance."
     },
@@ -193,9 +203,14 @@
       "confirm": "Passer en stat"
     },
     "confirmPromoteAll": {
-      "title": "Passer {{count}} candidat(s) en stats ?",
+      "title": "Passer {{count}} candidats en stats ?",
       "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà en stats sont laissés de côté.",
       "confirm": "Tout passer en stats"
+    },
+    "confirmPromoteAllOne": {
+      "title": "Passer {{count}} candidat en stats ?",
+      "message": "{{tickers}} devient une stat à remplir au fil de la séance. Les candidats déjà en stats sont laissés de côté.",
+      "confirm": "Passer en stats"
     },
     "confirmDelete": {
       "title": "Supprimer le candidat {{ticker}} ?",
@@ -208,7 +223,8 @@
       "deleteSuccess": "{{ticker}} supprimé.",
       "promoteSuccess": "{{ticker}} est passé en stats.",
       "promoteError": "Impossible de passer {{ticker}} en stat. Réessaie.",
-      "promoteAllSuccess": "{{count}} candidat(s) passés en stats.",
+      "promoteAllSuccess": "{{count}} candidats passés en stats.",
+      "promoteAllSuccessOne": "{{count}} candidat passé en stats.",
       "promoteAllError": "Impossible de passer les candidats en stats. Réessaie.",
       "duplicate": "{{ticker}} est déjà saisi ce jour-là.",
       "loadError": "Impossible de charger les candidats. Réessaie.",
@@ -316,7 +332,10 @@
     "chartTitle": "Évolution du solde",
     "kpi": {
       "periodPnl": "P&L de la période",
-      "periodPnlSub": "{{trades}} trades au compte · {{winners}} gagnants",
+      "periodTrades": "{{count}} trades au compte",
+      "periodTradesOne": "{{count}} trade au compte",
+      "periodWinners": "{{count}} gagnants",
+      "periodWinnersOne": "{{count}} gagnant",
       "netInjected": "Apports nets de la période",
       "netInjectedSub": "{{deposits}} dépôt · {{withdrawals}} retrait"
     },
@@ -340,12 +359,17 @@
     "kpi": {
       "pnl": "P&L de la période",
       "trades": "{{count}} trades clôturés",
+      "tradesOne": "{{count}} trade clôturé",
       "winRate": "Taux de réussite",
-      "winLossCount": "{{wins}} gagnants · {{losses}} perdants",
+      "wins": "{{count}} gagnants",
+      "winsOne": "{{count}} gagnant",
+      "losses": "{{count}} perdants",
+      "lossesOne": "{{count}} perdant",
       "averages": "Gain moyen / perte moyenne",
       "profitFactor": "Profit factor {{value}}",
       "tradedStats": "Stats tradées",
       "untraded": "{{count}} stats non tradées",
+      "untradedOne": "{{count}} stat non tradée",
       "allTraded": "Toutes les stats de la période ont été tradées"
     },
     "searchPlaceholder": "Rechercher un ticker…",
@@ -441,6 +465,7 @@
         "remove": "Supprimer l'exécution",
         "invalid": "Exécutions incohérentes : plus d'actions fermées qu'ouvertes.",
         "remaining": "{{shares}} actions encore ouvertes — P&L calculé",
+        "remainingOne": "{{shares}} action encore ouverte — P&L calculé",
         "closed": "Position fermée — P&L calculé"
       },
       "pnl": {
@@ -508,7 +533,9 @@
       "vsOpen": "vs open",
       "fade": "Fade à la clôture",
       "fadeSub": "EOD sous l'open · sur les {{total}} complétées · moyenne {{average}}",
+      "fadeSubOne": "EOD sous l'open · sur {{total}} complétée · moyenne {{average}}",
       "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push",
+      "noPushSubOne": "vs open · sur {{pushed}} qui a poussé · {{count}} / {{total}} sans push",
       "noPushDays": "Jours sans push",
       "noPushShare": "{{share}} % des stats complétées de la période"
     },

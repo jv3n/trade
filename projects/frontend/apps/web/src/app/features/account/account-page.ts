@@ -45,6 +45,7 @@ import {
   PeriodSelection,
   computePeriodRange,
 } from '../../shared/period-preset/period-preset';
+import { PluralPipe } from '../../shared/plural/plural';
 import { MorningReconciliation } from './morning-reconciliation/morning-reconciliation';
 import { MovementDialog, MovementDialogData } from './movement-dialog/movement-dialog';
 
@@ -114,6 +115,7 @@ interface AccountFilter {
     StbTooltipModule,
     MorningReconciliation,
     PeriodFilter,
+    PluralPipe,
     TranslatePipe,
   ],
   templateUrl: './account-page.html',
