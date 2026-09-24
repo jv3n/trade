@@ -183,8 +183,14 @@ export class AccountPage {
     return pts.length ? { from: pts[0].date, to: pts[pts.length - 1].date } : null;
   });
 
-  /** Tells the two dollars apart in the tooltip — both currencies use the same sign. */
-  readonly currencySuffix = computed(() => (this.currency() === 'CAD' ? ' $ CA' : ' $ US'));
+  /**
+   * The suffix key of the displayed currency — tells the two dollars apart, since both use the same
+   * sign. Through i18n like every other amount (#395) : the locale's own form, and a no-break space
+   * so the currency never wraps away from the balance.
+   */
+  readonly currencySuffixKey = computed(() =>
+    this.currency() === 'CAD' ? 'account.cadSuffix' : 'account.usdSuffix',
+  );
 
   constructor() {
     this.fetch();
