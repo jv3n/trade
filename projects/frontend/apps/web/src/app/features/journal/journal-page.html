@@ -18,7 +18,7 @@
           [class.profit-positive]="s.retainedPnl > 0"
           [class.profit-negative]="s.retainedPnl < 0"
         >
-          {{ s.retainedPnl | number: '1.2-2' }} $
+          {{ s.retainedPnl | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
         </div>
         <div class="kpi__sub">{{ 'journal.kpi.trades' | translate: { count: s.tradeCount } }}</div>
       } @else {

@@ -242,7 +242,11 @@
         <div class="kpi">
           <div class="kpi__label">{{ 'today.account.balance' | translate }}</div>
           <div class="kpi__value">
-            {{ accountSummary() ? (accountSummary()!.balance | number: '1.2-2') + ' $' : '—' }}
+            {{
+              accountSummary()
+                ? (accountSummary()!.balance | number: '1.2-2') + ('account.usdSuffix' | translate)
+                : '—'
+            }}
           </div>
           <div class="kpi__sub">
             @if (reconciledToday()) {
@@ -261,7 +265,7 @@
                 <span class="muted">{{ 'today.account.noTrade' | translate }}</span>
               } @else {
                 <span [class.pos]="p.retainedPnl > 0" [class.neg]="p.retainedPnl < 0">
-                  {{ p.retainedPnl | number: '1.2-2' }} $
+                  {{ p.retainedPnl | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
                 </span>
               }
             } @else {
@@ -272,7 +276,7 @@
           <dd>
             @if (weekPnl(); as p) {
               <span [class.pos]="p.retainedPnl > 0" [class.neg]="p.retainedPnl < 0">
-                {{ p.retainedPnl | number: '1.2-2' }} $
+                {{ p.retainedPnl | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
               </span>
             } @else {
               —
@@ -282,7 +286,7 @@
           <dd>
             @if (monthPnl(); as p) {
               <span [class.pos]="p.retainedPnl > 0" [class.neg]="p.retainedPnl < 0">
-                {{ p.retainedPnl | number: '1.2-2' }} $
+                {{ p.retainedPnl | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
               </span>
             } @else {
               —
