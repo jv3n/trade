@@ -43,7 +43,7 @@
           </mat-button-toggle-group>
         </div>
         <div class="kpi__value" [class.neg]="s.balance < 0">
-          {{ convert(s.balance) | number: '1.2-2' }}{{ currencySuffix() }}
+          {{ convert(s.balance) | number: '1.2-2' }}{{ currencySuffixKey() | translate }}
         </div>
         @if (currency() === 'CAD' && rate(); as r) {
           <div class="kpi__sub">
@@ -125,7 +125,7 @@
       }
     </h3>
     @if (chartPoints().length >= 2) {
-      <ui-area-chart [points]="chartPoints()" [unit]="currencySuffix()" />
+      <ui-area-chart [points]="chartPoints()" [unit]="currencySuffixKey() | translate" />
     } @else {
       <p class="chart-empty">{{ 'account.chartEmpty' | translate }}</p>
     }

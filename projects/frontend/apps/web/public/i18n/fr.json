@@ -275,6 +275,7 @@
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · taux BCE, {{date}}",
     "usdSuffix": "\u00a0$\u00a0US",
     "usdUnit": "$\u00a0US",
+    "cadSuffix": "\u00a0$\u00a0CA",
     "fxUnavailable": "Taux de change indisponible pour le moment.",
     "addMovement": "Ajouter un mouvement",
     "chartEmpty": "Pas assez de mouvements pour tracer la courbe du solde.",

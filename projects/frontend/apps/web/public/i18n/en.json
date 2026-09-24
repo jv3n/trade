@@ -275,6 +275,7 @@
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · ECB rate, {{date}}",
     "usdSuffix": "\u00a0USD",
     "usdUnit": "USD",
+    "cadSuffix": "\u00a0CAD",
     "fxUnavailable": "Exchange rate unavailable right now.",
     "addMovement": "Add movement",
     "chartEmpty": "Not enough movements to draw the balance curve.",
