@@ -36,6 +36,32 @@
           <span class="admin-tag">{{ 'settings.adminTag' | translate }}</span>
         </a>
       }
+
+      @if (version(); as v) {
+        <div class="subnav-version">
+          <span class="subnav-title">{{ 'settings.version.title' | translate }}</span>
+          <div class="subnav-version__tag">
+            {{ v.version }}
+            @if (environment(); as env) {
+              <span class="env-tag" [class]="'env-tag--' + env">
+                {{ 'settings.version.env.' + env | translate }}
+              </span>
+            }
+          </div>
+          @if (v.commit || v.builtAt) {
+            <div class="subnav-version__detail">
+              {{
+                'settings.version.detail'
+                  | translate
+                    : {
+                        commit: v.commit ?? '—',
+                        builtAt: v.builtAt ? (v.builtAt | date: 'short') : '—',
+                      }
+              }}
+            </div>
+          }
+        </div>
+      }
     </nav>
 
     <div class="settings-content">

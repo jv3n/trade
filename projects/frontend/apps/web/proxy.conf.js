@@ -39,6 +39,7 @@ const backendProxy = {
 
 module.exports = {
   '/api': backendProxy,
+  '/actuator': backendProxy,
   '/oauth2': backendProxy,
   '/logout': backendProxy,
   '/login/oauth2': backendProxy,

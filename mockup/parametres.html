@@ -69,6 +69,26 @@
         margin-left: auto;
       }
 
+      /* La version déployée, en pied du menu des paramètres, pour tous les rôles (#380). */
+      .subnav-version {
+        margin-top: 16px;
+        padding: 12px 10px 0;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .subnav-version .subnav-title {
+        padding: 0 0 6px;
+      }
+
+      .subnav-version .detail {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--text-faint);
+      }
+
       /* Une ligne de réglage : libellé + description à gauche, contrôle à droite. */
       .setting {
         display: grid;
@@ -270,6 +290,12 @@
             <button data-value="data"><span class="icon">import_export</span>Données <span class="tag admin-tag">admin</span></button>
             <button data-value="lexicon"><span class="icon">dictionary</span>Lexique <span class="tag admin-tag">admin</span></button>
             <button data-value="ops"><span class="icon">open_in_new</span>Liens ops <span class="tag admin-tag">admin</span></button>
+            <!-- Le chip vient du backend : « staging » en indigo, « local » en gris neutre, rien en production. -->
+            <div class="subnav-version">
+              <div class="subnav-title">Version</div>
+              <div>v2.3.0-rc2 <span class="tag tag-accent">staging</span></div>
+              <div class="detail">Commit 9a4da8b · build du 23/09/2026 à 14:56</div>
+            </div>
           </nav>
 
           <div>

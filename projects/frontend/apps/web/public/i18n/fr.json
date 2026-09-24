@@ -737,6 +737,14 @@
     "saveError": "La langue n'a pas pu être enregistrée. Réessaie."
   },
   "settings": {
+    "version": {
+      "title": "Version",
+      "detail": "Commit {{commit}} · build du {{builtAt}}",
+      "env": {
+        "local": "local",
+        "staging": "staging"
+      }
+    },
     "title": "Paramètres",
     "subtitle": "Préférences d'affichage, et pour l'administrateur : accès, données, lexique et liens d'exploitation.",
     "groups": {
