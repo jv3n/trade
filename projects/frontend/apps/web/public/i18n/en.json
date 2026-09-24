@@ -273,7 +273,7 @@
       "CAD": "CAD"
     },
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · ECB rate, {{date}}",
-    "usdSuffix": " USD",
+    "usdSuffix": "\u00a0USD",
     "usdUnit": "USD",
     "fxUnavailable": "Exchange rate unavailable right now.",
     "addMovement": "Add movement",
