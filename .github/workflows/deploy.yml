@@ -20,8 +20,8 @@ permissions:
 jobs:
   deploy:
     name: Build, push, deploy
-    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
-    runs-on: ubuntu-24.04
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
     # Production keeps its required reviewer ; staging has none, a candidate goes straight out.
     environment: ${{ contains(github.event.release.tag_name, '-rc') && 'staging' || 'production' }}
     permissions:

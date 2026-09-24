@@ -5,8 +5,8 @@ on:
 
 jobs:
   test:
-    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
-    runs-on: ubuntu-24.04
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
     environment: production
     permissions:
       contents: read
