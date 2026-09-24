@@ -9,18 +9,19 @@ import { appConfig } from './app/app.config';
 // for event ingestion but doesn't authenticate anything. Rotation = update this constant + ship a
 // new build ; quota lives in the GlitchTip project settings, not in the DSN.
 //
-// **Why `@sentry/browser` and not `@sentry/angular`** — `@sentry/angular@8.x` peer-deps cap at
-// Angular 19 (we're on 21). The framework-agnostic `@sentry/browser` works on any frontend ;
+// **Why `@sentry/browser` and not `@sentry/angular`** — when this was wired, `@sentry/angular`
+// capped its Angular peer below ours. The framework-agnostic `@sentry/browser` works on any frontend ;
 // `app.config.ts` provides a thin custom `ErrorHandler` that forwards Angular's caught errors to
 // `Sentry.captureException`, replicating the only piece of `@sentry/angular` we'd actually use
 // (no routing traces, no HTTP interceptor — we run `tracesSampleRate: 0`).
 const GLITCHTIP_DSN = 'https://08ffb135c4b94b60b7e143b37a1df8e9@app.glitchtip.com/23873';
 
-// Skip Sentry init in dev so local errors don't ship to GlitchTip. `isDevMode()` returns true
-// when Angular's `ngDevMode` flag is set (any non-production build), false in `ng build
-// --configuration=production`. Bundle still includes the SDK — the tree-shaker keeps the import
-// because we reference it in the conditional — ~30 KB gzipped trade-off accepted for v1.
-if (!isDevMode()) {
+// Production only (#404). Staging is a recette like local and reports nothing — and it ships this
+// very bundle, so the build can't tell them apart : the host does. Dev builds (`isDevMode()`) are
+// skipped too, whatever host serves them. The SDK stays in the bundle either way (~30 KB gzipped).
+const PRODUCTION_HOST = 'tickerstory.org';
+
+if (!isDevMode() && location.hostname === PRODUCTION_HOST) {
   Sentry.init({
     dsn: GLITCHTIP_DSN,
     environment: 'prod',

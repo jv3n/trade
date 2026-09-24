@@ -39,5 +39,5 @@ Cloud Run sets `SPRING_PROFILES_ACTIVE=prod`.
 ## Database
 
 Supabase, region `ca-central-1` (free tier). The schema is owned by Flyway : the backend migrates it
-at boot. `.github/workflows/backup-postgres.yml` dumps it weekly to Cloudflare R2 and keeps the last
-thirty — an archive independent of Supabase's own snapshot format.
+at boot. `.github/workflows/backup-postgres.yml` dumps it monthly to Cloudflare R2 and keeps the last
+twelve valid dumps — an archive independent of Supabase's own snapshot format (#402).

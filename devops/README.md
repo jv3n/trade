@@ -10,8 +10,8 @@ tag** picks where a build goes :
 
 Both run the Spring profile `prod`. What differs is passed by the workflow : the service, the public
 URL, the runtime service account, the database and admin-list secrets (`*-staging` for staging) and
-the Sentry environment (`staging` / `prod`). The Google OAuth client and the Sentry project are
-shared.
+the environment name (`staging` / `prod`, the settings page's chip). The Google OAuth client is
+shared. Error tracking is production's only : staging is a recette, like local (#404).
 
 - [`prod/README.md`](prod/README.md) — what is wired for production.
 - [`staging/README.md`](staging/README.md) — what staging adds, and how to set it up.
@@ -36,9 +36,10 @@ browser ──► Cloudflare ─────────────────
   Workload Identity Federation — no service-account key exists anywhere.
 - **Supabase** (region `ca-central-1`, free tier) holds the database : one project per environment,
   reached through the **session pooler** (the direct connection is IPv6-only, Cloud Run egress is
-  IPv4). Flyway migrates the schema at boot. Production is dumped weekly to Cloudflare R2.
+  IPv4). Flyway migrates the schema at boot. Production is dumped monthly to Cloudflare R2, 12 kept.
 - **Google OAuth** — one client for both environments, with the redirect URI of each.
-- **Sentry** — one project, errors tagged `prod` or `staging`.
+- **GlitchTip** (Sentry-compatible) — production only. Staging and local send nothing : the backend
+  has no `SENTRY_DSN` there, the frontend only initialises on `tickerstory.org`.
 
 | | Production | Staging |
 |---|---|---|
@@ -48,8 +49,9 @@ browser ──► Cloudflare ─────────────────
 | Runtime account | `portfolioai-runtime@` | `portfolioai-staging-runtime@` |
 | Supabase project | the production one | `trade-staging` |
 | Own secrets | `supabase-db-url`, `app-admin-emails` | `supabase-db-url-staging`, `app-admin-emails-staging` |
-| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret`, `sentry-dsn-backend` | same |
-| Data | real, backed up weekly | test data, no backup |
+| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret` | same |
+| Error tracking | GlitchTip, `sentry-dsn-backend` | none |
+| Data | real, backed up monthly | test data, no backup |
 
 Consoles : [Cloudflare](https://dash.cloudflare.com/) ·
 [Cloud Run](https://console.cloud.google.com/run?project=trade-496613) ·
