@@ -768,7 +768,8 @@
                 >
                   {{
                     s.tradeRetainedProfitDollars !== null
-                      ? (s.tradeRetainedProfitDollars | number: '1.2-2') + ' $'
+                      ? (s.tradeRetainedProfitDollars | number: '1.2-2') +
+                        ('account.usdSuffix' | translate)
                       : ('stats.actions.openTrade' | translate)
                   }}
                 </a>

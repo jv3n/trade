@@ -160,7 +160,11 @@
         {{ 'candidates.openCard.delta' | translate }}
       </th>
       <td mat-cell *matCellDef="let r" stbCol="numeric" class="muted">
-        {{ r.delta !== null ? '+' + (r.delta | price: r.candidate.previousClose) + ' $' : '' }}
+        {{
+          r.delta !== null
+            ? '+' + (r.delta | price: r.candidate.previousClose) + ('account.usdSuffix' | translate)
+            : ''
+        }}
       </td>
     </ng-container>
 
