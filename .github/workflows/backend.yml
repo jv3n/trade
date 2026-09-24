@@ -52,10 +52,15 @@ jobs:
       # compileKotlin, test, detekt), (3) configuration cache (skips Gradle's config phase, ~5-10 s
       # per run). Read-only on PRs to avoid concurrent writers thrashing the cache key ; writeable
       # on master where the cache is the source-of-truth for downstream branches.
+      # The configuration cache (`--configuration-cache` below, as Tilt runs locally) is only saved
+      # and restored with an encryption key — without the secret the flag still works, it just
+      # rebuilds the configuration on each run. `problems=warn` : a plugin that isn't compatible
+      # (detekt, kover, git-properties…) costs the cache, not the build (#398).
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6.3.0
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       # Build, tests and coverage reports in a **single** Gradle invocation. A separate
       # `koverHtmlReport koverXmlReport` run used to re-execute the whole `test` task (~30 s)
@@ -63,7 +68,7 @@ jobs:
       # (e.g. Detekt or Spotless) so the tests and their coverage still report in the same run.
       - name: Build, test & coverage
         working-directory: projects/backend
-        run: ./gradlew build koverHtmlReport koverXmlReport --build-cache --continue
+        run: ./gradlew build koverHtmlReport koverXmlReport --build-cache --configuration-cache --configuration-cache-problems=warn --continue
 
       # Surface Detekt findings into GitHub Code Scanning (Security tab). `if: always()` so a
       # failed test doesn't swallow the SARIF — Detekt generates it before tests run anyway.
