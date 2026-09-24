@@ -20,7 +20,11 @@
       <h3>
         <span>{{ 'today.steps.title' | translate }}</span>
         <span class="hint">
-          {{ 'today.steps.progress' | translate: { done: doneCount(), total: steps.length } }}
+          {{
+            'today.steps.progress'
+              | plural: doneCount()
+              | translate: { done: doneCount(), total: steps.length }
+          }}
         </span>
       </h3>
 
@@ -61,10 +65,8 @@
             <div class="step-body">
               @if (candidates().length > 0) {
                 {{
-                  (candidates().length === 1
-                    ? 'today.steps.candidates.capturedOne'
-                    : 'today.steps.candidates.captured'
-                  )
+                  'today.steps.candidates.captured'
+                    | plural: candidates().length
                     | translate
                       : {
                           count: candidates().length,
@@ -73,10 +75,9 @@
                 }}
                 @if (pendingCandidates().length > 0) {
                   {{
-                    (pendingCandidates().length === 1
-                      ? 'today.steps.candidates.notPromotedOne'
-                      : 'today.steps.candidates.notPromoted'
-                    ) | translate: { count: pendingCandidates().length }
+                    'today.steps.candidates.notPromoted'
+                      | plural: pendingCandidates().length
+                      | translate: { count: pendingCandidates().length }
                   }}
                 }
               } @else {
@@ -91,6 +92,7 @@
                 <span>
                   {{
                     'today.actions.promoteRemaining'
+                      | plural: pendingCandidates().length
                       | translate: { count: pendingCandidates().length }
                   }}
                 </span>
@@ -154,10 +156,9 @@
             <div class="step-body">
               @if (statsToCompleteToday().length > 0) {
                 {{
-                  (statsToCompleteToday().length === 1
-                    ? 'today.steps.stats.toCompleteOne'
-                    : 'today.steps.stats.toComplete'
-                  ) | translate: { tickers: tickersOf(statsToCompleteToday()) }
+                  'today.steps.stats.toComplete'
+                    | plural: statsToCompleteToday().length
+                    | translate: { tickers: tickersOf(statsToCompleteToday()) }
                 }}
               } @else {
                 {{ 'today.steps.stats.body' | translate }}
@@ -168,6 +169,7 @@
                   @if (overdue.more > 0) {
                     {{
                       'today.steps.stats.overdueMore'
+                        | plural: overdue.more
                         | translate: { tickers: overdue.tickers, count: overdue.more }
                     }}
                   } @else {
@@ -201,10 +203,9 @@
             <div class="step-body">
               @if (todayTrades().length > 0) {
                 {{
-                  (todayTrades().length === 1
-                    ? 'today.steps.trades.enteredOne'
-                    : 'today.steps.trades.entered'
-                  ) | translate: { count: todayTrades().length, tickers: tickersOf(todayTrades()) }
+                  'today.steps.trades.entered'
+                    | plural: todayTrades().length
+                    | translate: { count: todayTrades().length, tickers: tickersOf(todayTrades()) }
                 }}
               } @else {
                 {{ 'today.steps.trades.body' | translate }}

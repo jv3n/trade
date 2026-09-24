@@ -5,6 +5,7 @@ import {
   DOCUMENT,
   DestroyRef,
   ElementRef,
+  LOCALE_ID,
   computed,
   inject,
   signal,
@@ -45,6 +46,7 @@ import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/patter
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
+import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
 import {
   EXPENSIVE_LOCATE_PERCENT,
@@ -126,6 +128,7 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
     StbSelectModule,
     StbTableModule,
     StbTooltipModule,
+    PluralPipe,
     TranslatePipe,
   ],
   templateUrl: './candidates-page.html',
@@ -137,6 +140,7 @@ export class CandidatesPage {
   private readonly confirm = inject(ConfirmService);
   private readonly toasts = inject(StbToast);
   private readonly translate = inject(TranslateService);
+  private readonly locale = inject(LOCALE_ID);
 
   private readonly tickerInput = viewChild<ElementRef<HTMLInputElement>>('tickerInput');
   private readonly document = inject(DOCUMENT);
@@ -399,7 +403,7 @@ export class CandidatesPage {
     const pending = this.promotable();
     if (pending.length === 0) return;
     this.confirm
-      .ask('candidates.confirmPromoteAll', {
+      .ask(pluralKey('candidates.confirmPromoteAll', pending.length, this.locale), {
         params: {
           count: pending.length,
           tickers: pending.map((c) => c.ticker).join(', '),
@@ -410,9 +414,14 @@ export class CandidatesPage {
         switchMap(() => this.repo.promoteDay(this.day())),
         tap((result) => {
           this.toasts.success(
-            this.translate.instant('candidates.snackbar.promoteAllSuccess', {
-              count: result.promoted.length,
-            }),
+            this.translate.instant(
+              pluralKey(
+                'candidates.snackbar.promoteAllSuccess',
+                result.promoted.length,
+                this.locale,
+              ),
+              { count: result.promoted.length },
+            ),
           );
           this.load();
         }),
