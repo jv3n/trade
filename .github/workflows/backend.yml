@@ -26,8 +26,8 @@ concurrency:
 jobs:
   build:
     name: Build & Test
-    # Pinned rather than ubuntu-latest : the move to Ubuntu 26 is done on purpose (#274).
-    runs-on: ubuntu-24.04
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
 
     permissions:
       contents: read
@@ -37,7 +37,7 @@ jobs:
 
     # No `services:` block — integration tests boot their own Postgres via Testcontainers
     # (`projects/backend/src/test/kotlin/com/portfolioai/testsupport/PostgresContainer.kt`). Docker is
-    # already available on the `ubuntu-24.04` runners, no extra setup needed.
+    # already available on the `ubuntu-26.04` runners, no extra setup needed.
     steps:
       - uses: actions/checkout@v7
 
@@ -99,7 +99,7 @@ jobs:
 
       # At-a-glance summary on the run page — parses the Kover XML report (JaCoCo-compatible
       # schema) and writes a Markdown table of root-level counters to `$GITHUB_STEP_SUMMARY`.
-      # No external action ; pure Python (pre-installed on `ubuntu-24.04`). The trailing
+      # No external action ; pure Python (pre-installed on `ubuntu-26.04`). The trailing
       # `<counter>` elements at the root scope hold the cumulative project totals.
       - name: Coverage summary
         if: always() && hashFiles('projects/backend/build/reports/kover/report.xml') != ''
