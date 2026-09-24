@@ -3,8 +3,8 @@ import { adminGuard, authGuard } from './core/router/auth.guards';
 import { unsavedChangesGuard } from './core/router/unsaved-changes.guard';
 
 /**
- * Trading-tracking app : today (home), candidates, stats sheet, journal, account, lexicon and
- * settings.
+ * Trading-tracking app : today (home), candidates, stats sheet, journal, account, calculator,
+ * lexicon and settings.
  *
  * **Admin gating** is per sub-route, not on `/settings` itself, so USER role can reach
  * `/settings/preferences` (theme + language) while ADMIN-only sub-routes (ops-links,
@@ -59,6 +59,12 @@ export const routes: Routes = [
       import('./features/journal/journal-detail-page/journal-detail-page').then(
         (m) => m.JournalDetailPage,
       ),
+  },
+  {
+    path: 'calculator',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/calculator/calculator-page').then((m) => m.CalculatorPage),
   },
   {
     path: 'lexicon',

@@ -26,6 +26,7 @@
     "journal": "Journal",
     "candidates": "Candidates",
     "stats": "Stats",
+    "calculator": "Calculator",
     "lexicon": "Lexicon",
     "settings": "Settings"
   },
@@ -662,6 +663,60 @@
       "title": "Leave without saving?",
       "message": "A change could not be saved — the reason is next to the card's title. If you leave, the stat keeps its last saved values.",
       "confirm": "Leave without saving"
+    }
+  },
+  "calculator": {
+    "title": "Calculator",
+    "subtitle": "The small calculations you redo by hand, in session or not. Nothing is saved: the values last for the visit, a reload clears them.",
+    "copy": "Copy",
+    "fields": {
+      "from": "From",
+      "to": "To",
+      "price": "Price",
+      "percent": "Move (%)",
+      "risk": "Risk (USD)",
+      "entry": "Entry",
+      "stop": "Stop",
+      "cover": "Cover",
+      "shares": "Shares",
+      "fees": "Fees (USD, optional)",
+      "currentPrice": "Current price",
+      "target": "Target",
+      "firstShares": "First entry — shares",
+      "addShares": "Add — shares"
+    },
+    "move": {
+      "title": "Percent move",
+      "hint": "from one price to another, or the reverse",
+      "result": "Move",
+      "price": "Resulting price"
+    },
+    "size": {
+      "title": "Position size",
+      "hint": "short: the stop above the entry",
+      "shares": "Shares (rounded down)",
+      "realRisk": "Risk actually taken",
+      "wrongSide": "On a short, the stop goes above the entry.",
+      "tooFar": "With this risk, the stop is too far: not even one share."
+    },
+    "pnl": {
+      "title": "Short P&L",
+      "result": "P&L",
+      "percent": "Return on the position"
+    },
+    "rr": {
+      "title": "Distance and R:R",
+      "hint": "before the entry",
+      "toStop": "To the stop",
+      "toTarget": "To the target",
+      "ratio": "R:R",
+      "stopWrongSide": "On a short, the stop goes above the price.",
+      "targetWrongSide": "On a short, the target goes below the price."
+    },
+    "avg": {
+      "title": "Average price after a scale-in",
+      "average": "Average price",
+      "total": "Total position (shares)"
     }
   },
   "lexicon": {
