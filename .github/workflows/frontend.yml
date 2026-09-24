@@ -43,9 +43,30 @@ jobs:
           cache: 'npm'
           cache-dependency-path: projects/frontend/package-lock.json
 
+      # `cache: 'npm'` above only keeps the downloaded tarballs : `npm ci` would still install them
+      # all. Restoring `node_modules` itself skips the install whenever the lockfile and Node are
+      # unchanged (#398).
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v6
+        with:
+          path: projects/frontend/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('projects/frontend/.nvmrc', 'projects/frontend/package-lock.json') }}
+
       - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
         working-directory: projects/frontend
         run: npm ci
+
+      # Angular's persistent build cache (`cli.cache.environment: all` in angular.json — CI is off
+      # by default). Restored on every run, saved from master only so PR runs don't fill the
+      # repo's cache quota with one entry per commit (#398).
+      - name: Restore the Angular build cache
+        uses: actions/cache/restore@v6
+        with:
+          path: projects/frontend/.angular/cache
+          key: angular-${{ runner.os }}-${{ hashFiles('projects/frontend/package-lock.json') }}-${{ github.sha }}
+          restore-keys: angular-${{ runner.os }}-${{ hashFiles('projects/frontend/package-lock.json') }}-
 
       - name: Check the lib's Angular peers
         working-directory: projects/frontend
@@ -66,6 +87,13 @@ jobs:
       - name: Build
         working-directory: projects/frontend
         run: npm run build
+
+      - name: Save the Angular build cache
+        if: github.ref == 'refs/heads/master'
+        uses: actions/cache/save@v6
+        with:
+          path: projects/frontend/.angular/cache
+          key: angular-${{ runner.os }}-${{ hashFiles('projects/frontend/package-lock.json') }}-${{ github.sha }}
 
       # No blocking threshold for now — the report is published and read, not enforced.
       - name: Test (with coverage)
