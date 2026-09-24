@@ -155,6 +155,18 @@ class TradeEntryService(
   }
 
   /**
+   * Moves the trade born from [statEntryId] onto its stat's new [pattern] (#393) — the stat was
+   * re-filed, and the trade follows. No trade yet is a no-op. Driven by `StatPatternChangedEvent`.
+   */
+  @Transactional
+  fun followStatPattern(statEntryId: UUID, userId: UUID, pattern: Pattern) {
+    repo.findByUserIdAndStatEntryIdIn(userId, listOf(statEntryId)).forEach {
+      it.pattern = pattern
+      it.updatedAt = Instant.now()
+    }
+  }
+
+  /**
    * CSV dump of every trade for the current user, ordered by tradeDate desc then createdAt desc
    * (same order as [findAll]). Returned as a single UTF-8 string ; the controller wraps it in a
    * `text/csv` attachment response with a dated filename. Roundtrip-safe with the future importer —

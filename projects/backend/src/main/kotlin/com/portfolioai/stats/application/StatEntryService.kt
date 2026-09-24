@@ -19,6 +19,7 @@ import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -49,6 +50,7 @@ class StatEntryService(
   private val repo: StatEntryRepository,
   private val authService: AuthService,
   private val tradeEntryService: TradeEntryService,
+  private val events: ApplicationEventPublisher,
 ) {
 
   // ---- Listing -------------------------------------------------------------------------------
@@ -227,6 +229,7 @@ class StatEntryService(
     val entry = loadOwned(id)
     val ticker = request.cleanTicker()
     requireFree(entry.user.id, request, ticker, ownId = entry.id)
+    val previousPattern = entry.pattern
     entry.apply(request, ticker)
     if (entry.isCompleted && !entry.hasFullSession) {
       throw badRequest(
@@ -236,6 +239,9 @@ class StatEntryService(
     }
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
+    if (saved.pattern != previousPattern) {
+      events.publishEvent(StatPatternChangedEvent(saved.id, saved.user.id, saved.pattern))
+    }
     // The completion panel replaces its row with this response — dropping the link would make the
     // « → Trade » button reappear on a stat that already has its trade.
     return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id])

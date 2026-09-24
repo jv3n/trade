@@ -848,6 +848,19 @@ describe('StatsPage', () => {
     expect(page.saveStates().premarket.status).toBe('saved');
   });
 
+  // #393 : a ticker captured as GUS that turned out to be a double top gets re-filed.
+  it('re-files a stat under another pattern as soon as it is picked, with the whole row', () => {
+    const { page, repo } = setup({ rows: [makePending()] });
+
+    page.setPremarketPattern('DT');
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx',
+      expect.objectContaining({ pattern: 'DT', ticker: 'SGBX', pmOpen: expect.any(Number) }),
+    );
+    expect(page.saveStates().premarket.status).toBe('saved');
+  });
+
   it('refuses a PM high under the PM open without sending anything', () => {
     const { page, repo } = setup({ rows: [makePending()] });
 

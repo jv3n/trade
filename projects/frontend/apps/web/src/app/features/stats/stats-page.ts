@@ -86,6 +86,8 @@ interface SessionModel {
 
 /** The premarket block being typed in the premarket card — copied from the candidate, editable. */
 interface PremarketModel {
+  /** Re-filing a stat under another pattern is a premarket edit too (#393) — its trade follows. */
+  pattern: Pattern;
   previousClose: number | null;
   pmOpen: number | null;
   pmHigh: number | null;
@@ -160,6 +162,7 @@ const BLANK_SESSION: SessionModel = {
 };
 
 const BLANK_PREMARKET: PremarketModel = {
+  pattern: DEFAULT_PATTERN,
   previousClose: null,
   pmOpen: null,
   pmHigh: null,
@@ -202,6 +205,7 @@ export function missingPrices(session: Pick<SessionModel, SessionPrice | 'noPush
 
 function premarketOf(entry: StatEntry): PremarketModel {
   return {
+    pattern: entry.pattern,
     previousClose: entry.previousClose,
     pmOpen: entry.pmOpen,
     pmHigh: entry.pmHigh,
@@ -622,6 +626,12 @@ export class StatsPage {
     this.premarket.update((m) => ({ ...m, [field]: value }));
   }
 
+  /** The pattern saves as soon as it is picked, like a flag — there is no field to leave. */
+  setPremarketPattern(pattern: Pattern): void {
+    this.premarket.update((m) => ({ ...m, pattern }));
+    this.saveSession('premarket');
+  }
+
   setPremarketNote(note: string): void {
     this.premarket.update((m) => ({ ...m, note }));
   }
@@ -774,12 +784,14 @@ export class StatsPage {
     if (!this.creating() || this.createMissing().length > 0) return;
     const id = this.identity();
     const ticker = id.ticker.trim().toUpperCase();
+    // The identity goes last : it must win over anything the premarket card carries — the
+    // pattern picked in « New stat » included.
     const input: StatEntryInput = {
+      ...this.premarketInput(this.premarket()),
+      ...this.session(),
       tradeDate: id.tradeDate as Date,
       pattern: id.pattern,
       ticker,
-      ...this.premarketInput(this.premarket()),
-      ...this.session(),
     };
     this.confirm
       .ask('stats.confirmCreate', { params: { ticker } })
@@ -1060,7 +1072,10 @@ export class StatsPage {
     this.saveStates.update((states) => ({ ...states, [card]: state }));
   }
 
-  /** The panel sends the whole row back — identity untouched, premarket, session and flags typed. */
+  /**
+   * The panel sends the whole row back — date and ticker untouched ; premarket (pattern included),
+   * session and flags as typed.
+   */
   private toInput(
     entry: StatEntry,
     premarket: PremarketModel,
@@ -1068,7 +1083,7 @@ export class StatsPage {
   ): StatEntryInput {
     return {
       tradeDate: entry.tradeDate,
-      pattern: entry.pattern,
+      pattern: premarket.pattern,
       ticker: entry.ticker,
       ...this.premarketInput(premarket),
       ...session,

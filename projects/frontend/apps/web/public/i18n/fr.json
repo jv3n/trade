@@ -915,11 +915,15 @@
     "short": {
       "GUS": "GUS",
       "DT": "DT",
+      "SIR": "SIR",
+      "SIV": "SIV",
       "DISCRETIONARY": "Discrétionnaire"
     },
     "long": {
       "GUS": "GUS — Gap Up Short",
       "DT": "DT — Double Top",
+      "SIR": "SIR — Short Into Resistance",
+      "SIV": "SIV — Short Into VWAP",
       "DISCRETIONARY": "Discrétionnaire"
     }
   },

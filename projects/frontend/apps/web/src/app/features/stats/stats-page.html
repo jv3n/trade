@@ -123,10 +123,7 @@
             <mat-chip-set>
               <mat-chip stbChip="ticker" disableRipple>{{ stat.ticker }}</mat-chip>
             </mat-chip-set>
-            <span class="muted">
-              {{ stat.tradeDate | date: 'shortDate' }} ·
-              {{ 'patterns.short.' + stat.pattern | translate }}
-            </span>
+            <span class="muted">{{ stat.tradeDate | date: 'shortDate' }}</span>
             <span
               class="save-state"
               [class.save-state--error]="saveStates().premarket.status === 'error'"
@@ -181,6 +178,19 @@
       }
 
       <form class="premarket-form" (submit)="$event.preventDefault()">
+        @if (!creating()) {
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.pattern' | translate }}</mat-label>
+            <mat-select
+              [value]="premarket().pattern"
+              (selectionChange)="setPremarketPattern($event.value)"
+            >
+              @for (p of patterns; track p) {
+                <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.previousClose' | translate }}</mat-label>
           <input

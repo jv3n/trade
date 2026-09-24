@@ -262,7 +262,7 @@
 
         <section class="card" style="margin-bottom: 16px" id="premarket-panel">
           <h2>
-            <span data-mode="edit">Premarket — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09 · GUS</span><span class="save-state" id="premarket-state">✓ enregistré hier à 22:25</span></span>
+            <span data-mode="edit">Premarket — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09</span><span class="save-state" id="premarket-state">✓ enregistré hier à 22:25</span></span>
             <span data-mode="new" hidden>Nouvelle stat</span>
             <span class="hint" data-mode="edit">repris du candidat · modifiable · chaque champ s'enregistre à la sortie</span>
             <span class="hint" data-mode="new" hidden>un chart trouvé après coup · n'importe quel jour jusqu'à aujourd'hui</span>
@@ -273,13 +273,25 @@
               <label>Pattern</label>
               <select class="input">
                 <option selected>GUS — Gap Up Short</option>
-                <option>DT — Double Top</option>
+<option>DT — Double Top</option>
+                <option>SIR — Short Into Resistance</option>
+                <option>SIV — Short Into VWAP</option>
                 <option>Discrétionnaire</option>
               </select>
             </div>
             <div class="field"><label>Ticker</label><input class="input mono" id="n-ticker" placeholder="KTTA" /></div>
           </div>
           <form class="premarket" onsubmit="return false">
+            <div class="field" data-mode="edit">
+              <label>Pattern</label>
+              <select class="input" id="p-pattern" title="S'enregistre au changement — le trade lié suit">
+                <option selected>GUS — Gap Up Short</option>
+                <option>DT — Double Top</option>
+                <option>SIR — Short Into Resistance</option>
+                <option>SIV — Short Into VWAP</option>
+                <option>Discrétionnaire</option>
+              </select>
+            </div>
             <div class="field"><label>Clôture veille ($)</label><input class="input" id="p-close" data-pm value="1,12" /><span class="pct muted">&nbsp;</span></div>
             <div class="field"><label>Open PM ($)</label><input class="input" id="p-open" data-pm value="1,85" /><span class="pct muted" id="p-gap">—</span></div>
             <div class="field"><label>High PM ($)</label><input class="input" id="p-high" data-pm value="2,46" /><span class="pct muted" id="p-push">—</span></div>
@@ -355,6 +367,8 @@
               <option>Pattern : tous</option>
               <option>GUS</option>
               <option>DT</option>
+              <option>SIR</option>
+              <option>SIV</option>
               <option>Discrétionnaire</option>
             </select>
             <div class="segmented" data-group="status">
@@ -838,13 +852,16 @@
           const day = new Date($('n-date').value + 'T12:00');
           panel.querySelector('[data-mode=edit] .ticker').textContent = ticker;
           panel.querySelector('[data-mode=edit] .muted').textContent =
-            day.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' }) + ' · GUS';
+            day.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' });
           panel.querySelectorAll('[data-mode]').forEach((el) => (el.hidden = el.dataset.mode === 'new'));
           saved = null;
           snapshot();
           window.saveCue('premarket-state');
           window.saveCue('session-state');
         }, true);
+
+        // Le pattern s'enregistre au changement, comme un flag ; le trade lié suit.
+        $('p-pattern').addEventListener('change', () => window.saveCue('premarket-state'));
 
         snapshot();
         preview();

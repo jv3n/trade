@@ -28,6 +28,8 @@ now — and it **will grow over time** (DT and others will come) :
 |-------|-------|-------------|
 | `GUS` | Gap Up Short | Shorting a premarket gap up with no fundamental. **Default.** |
 | `DT` | Double Top | Shorting a double top. |
+| `SIR` | Short Into Resistance | Shorting into a resistance level (previous day's high, PM high, round number). |
+| `SIV` | Short Into VWAP | Shorting a bounce back up into the VWAP from below. |
 | `DISCRETIONARY` | Discretionary | A trade with no pre-established pattern. |
 
 ### The life cycle : candidate → stat → trade
@@ -195,6 +197,8 @@ the journal). As a consequence : no real-time screen, no live position tracking.
 - **Only through the « → Trade » action button** on a stat row. No blank trade can be created from
   the journal.
 - The trade **inherits the stat's pattern** and shows its context (premarket + session), read-only.
+  If the stat's pattern is changed later, **the trade follows** (#393) : it is a filing correction,
+  not a different decision.
 
 **What I type in on the trade** :
 
@@ -283,10 +287,16 @@ shared between users — a stat always belongs to its user.
 
 **Editing the premarket, and a stat from scratch** (#326) :
 
-- The premarket is a **card of its own**, above the session one and built the same way : previous
-  close, PM open, PM high, float, volume, locate, note, **editable** and saved field by field, gap
-  and PM push shown live under their fields. Copied from the candidate at promotion, it can be fixed
-  on the stat ; the stat keeps its own copy, the candidate is left alone.
+- The premarket is a **card of its own**, above the session one and built the same way : the
+  **pattern**, previous close, PM open, PM high, float, volume, locate, note, **editable** and saved
+  field by field, gap and PM push shown live under their fields. Copied from the candidate at
+  promotion, it can be fixed on the stat ; the stat keeps its own copy, the candidate is left alone.
+- **The pattern can be changed after the fact** (#393) — a ticker captured as GUS that turns out to
+  be a double top. It is a select at the head of the card, saved when changed like a flag. The row
+  moves under the pattern filter and the KPIs and push references follow ; a trade born from the
+  stat takes the new pattern too. **The candidate keeps its own** : the capture records what was
+  thought in the morning, not a classification to keep current — by the time a stat is re-filed,
+  its « À l'open » row has done its job.
 - **« New stat »** opens the two cards empty, with the **date** (any day up to today, never a future
   one), the pattern and the ticker on top : going through the charts, I find a ticker that matched
   my pattern a few days ago and never made it to my candidates — leaving it out would bias the stats
