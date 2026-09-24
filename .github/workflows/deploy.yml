@@ -53,8 +53,8 @@ jobs:
           echo "Release tag '$TAG' matches SemVer policy."
 
       # Everything that differs between the two environments, in one place. Staging shares the
-      # image, the Google OAuth client and the Sentry project ; it has its own service, runtime
-      # account, database and admin list.
+      # image and the Google OAuth client ; it has its own service, runtime account, database and
+      # admin list. Error tracking is production's only : staging is a recette, like local (#404).
       - name: Resolve the target environment
         id: target
         run: |
@@ -67,6 +67,8 @@ jobs:
               echo "secret_suffix=-staging"
               echo "max_instances=1"
               echo "sentry_env=staging"
+              echo "sentry_dsn_secret="
+              echo "remove_secrets_flag=--remove-secrets=SENTRY_DSN"
             } >> "$GITHUB_OUTPUT"
           else
             {
@@ -77,6 +79,8 @@ jobs:
               echo "secret_suffix="
               echo "max_instances=3"
               echo "sentry_env=prod"
+              echo "sentry_dsn_secret=,SENTRY_DSN=sentry-dsn-backend:latest"
+              echo "remove_secrets_flag="
             } >> "$GITHUB_OUTPUT"
           fi
 
@@ -119,7 +123,8 @@ jobs:
             org.opencontainers.image.version=${{ github.event.release.tag_name }}
 
       # The public URLs are passed literally : Cloud Run strips the `X-Forwarded-Host` the Worker
-      # sends, so Spring cannot infer the public hostname on its own.
+      # sends, so Spring cannot infer the public hostname on its own. `--update-secrets` only adds :
+      # staging's `--remove-secrets=SENTRY_DSN` takes off the DSN an earlier deploy mounted (#404).
       - name: Deploy revision to Cloud Run
         run: |
           gcloud run deploy ${{ steps.target.outputs.service }} \
@@ -136,7 +141,8 @@ jobs:
             --timeout=300 \
             --port=8080 \
             --set-env-vars=SPRING_PROFILES_ACTIVE=prod,APP_FRONTEND_URL=${{ steps.target.outputs.url }},SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI=${{ steps.target.outputs.url }}login/oauth2/code/google,SENTRY_RELEASE=${{ github.event.release.tag_name }},SENTRY_ENVIRONMENT=${{ steps.target.outputs.sentry_env }} \
-            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_URL=supabase-db-url${{ steps.target.outputs.secret_suffix }}:latest,SENTRY_DSN=sentry-dsn-backend:latest
+            --update-secrets=SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=google-oauth-client-id:latest,SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=google-oauth-client-secret:latest,APP_ADMIN_EMAILS=app-admin-emails${{ steps.target.outputs.secret_suffix }}:latest,SPRING_DATASOURCE_URL=supabase-db-url${{ steps.target.outputs.secret_suffix }}:latest${{ steps.target.outputs.sentry_dsn_secret }} \
+            ${{ steps.target.outputs.remove_secrets_flag }}
 
       # Defence in depth — `gcloud run deploy` already fails when the revision crashes at boot.
       - name: Smoke test and summary

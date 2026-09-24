@@ -2,8 +2,8 @@
 
 The « recette » : where a release candidate (`vX.Y.Z-rcN`) is tried on a real deployment before it
 reaches production (#297). Same image and Spring profile as production ; its own Cloud Run service,
-database, runtime account and admin list — nothing else is shared but the Google OAuth client and
-the Sentry project.
+database, runtime account and admin list — nothing else is shared but the Google OAuth client. No
+error tracking : like local, staging sends nothing to GlitchTip (#404).
 
 | | Production | Staging |
 |---|---|---|
@@ -12,9 +12,10 @@ the Sentry project.
 | Runtime account | `portfolioai-runtime@` | `portfolioai-staging-runtime@` |
 | Database | its Supabase project | Supabase project `trade-staging`, demo data |
 | Secrets | `supabase-db-url`, `app-admin-emails` | `supabase-db-url-staging`, `app-admin-emails-staging` |
-| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret`, `sentry-dsn-backend` | same |
+| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret` | same |
 | Instances | 0 → 3 | 0 → 1 |
-| Sentry environment | `prod` | `staging` |
+| Error tracking | GlitchTip (`sentry-dsn-backend`) | none |
+| Environment name (`SENTRY_ENVIRONMENT`) | `prod` | `staging` — only feeds the settings page's chip |
 | GitHub environment | `production`, required reviewer | `staging`, none |
 
 ## One-time setup
@@ -47,7 +48,7 @@ printf '%s' 'you@example.com' | gcloud secrets create app-admin-emails-staging -
 # Read access, secret by secret — the staging account never sees the production database
 SA=portfolioai-staging-runtime@trade-496613.iam.gserviceaccount.com
 for s in supabase-db-url-staging app-admin-emails-staging \
-         google-oauth-client-id google-oauth-client-secret sentry-dsn-backend; do
+         google-oauth-client-id google-oauth-client-secret; do
   gcloud secrets add-iam-policy-binding "$s" \
     --member="serviceAccount:$SA" --role=roles/secretmanager.secretAccessor
 done
@@ -104,5 +105,5 @@ The script refuses to run on a user that already has data.
 ## Checking a deploy
 
 The run summary of `deploy.yml` names the environment it hit. The health check answers on
-https://staging.tickerstory.org/actuator/health ; errors show up in Sentry under the `staging`
-environment.
+https://staging.tickerstory.org/actuator/health. Staging reports no errors anywhere : read the Cloud
+Run logs of `portfolioai-staging` and the browser console.
