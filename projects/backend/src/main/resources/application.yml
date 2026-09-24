@@ -46,8 +46,7 @@ spring:
 management:
   endpoints:
     web:
-      # `metrics` is public on this profile (`SecurityConfig` leaves `/actuator/**` but `/health`
-      # permitted) — fine on localhost, drop it before exposing the app through a tunnel.
+      # `SecurityConfig` puts everything but `/health` behind a session.
       # `application-prod.yml` narrows the list to health + info.
       exposure:
         include: health,info,metrics
@@ -55,10 +54,19 @@ management:
     health:
       show-details: always
   info:
+    # Serves the `info.*` properties below — and only those, not the rest of the environment. But
+    # every one of them : a key added under `info.*`, or an `INFO_*` env var set on the deploy
+    # (relaxed binding), lands on `/actuator/info` too.
+    env:
+      enabled: true
     git:
       # `simple` would only expose branch + commit id + time, too little to tie a Cloud Run
       # revision back to a release tag.
       mode: full
+
+# Which environment answers, for the settings page (#380). The deploy already names it for Sentry.
+info:
+  environment: ${SENTRY_ENVIRONMENT:local}
 
 # Consumed by `CustomOAuth2UserService` on **first** user creation to assign ADMIN vs USER ;
 # existing rows keep the role they got at first login. The set checked at login is

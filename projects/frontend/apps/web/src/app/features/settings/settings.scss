@@ -88,3 +88,47 @@
 .settings-content {
   min-width: 0;
 }
+
+// ---- Deployed version (#380) ----
+// Closes the menu for every role. Staging is a status, so indigo — not a warning ; local is neutral.
+
+.subnav-version {
+  margin-top: s.$space-lg;
+  padding-top: s.$space-xs;
+  border-top: s.$border-width solid var(--color-border-soft);
+  font-size: s.$font-xs;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+
+  .subnav-title {
+    display: block;
+  }
+
+  &__tag,
+  &__detail {
+    padding: 0 s.$space-md;
+  }
+
+  &__detail {
+    margin-top: s.$space-xs;
+    font-size: s.$font-2xs;
+  }
+}
+
+.env-tag {
+  margin-left: s.$space-xs;
+  padding: s.$space-hairline s.$space-sm;
+  border-radius: var(--radius-sm);
+  font-size: s.$font-2xs;
+  font-weight: 600;
+
+  &--staging {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+
+  &--local {
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+  }
+}

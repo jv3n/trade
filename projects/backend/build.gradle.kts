@@ -27,10 +27,25 @@ group = "com.portfolioai"
 // Version is overridable via `-Pversion=…` from the CLI / CI. The Cloud Run deploy workflow
 // (`.github/workflows/deploy.yml`) passes the GitHub Release tag as `APP_VERSION` build-arg →
 // `./gradlew bootJar -Pversion=$APP_VERSION` → ends up in `META-INF/build-info.properties` via
-// `springBoot.buildInfo()` → surfaced as `build.version` on `/actuator/info`. Fallback default
-// `0.0.0-SNAPSHOT` covers local dev / Tilt where no version is passed.
+// `springBoot.buildInfo()` → surfaced as `build.version` on `/actuator/info`. Without it (local
+// dev, Tilt) the version is where the checkout stands against the last tag —
+// `v2.3.0-rc2-2-g8d53fd2-dirty` — and `0.0.0-SNAPSHOT` only when git can't tell (no `.git`, no
+// binary).
 version =
   (project.findProperty("version") as? String)?.takeIf { it.isNotBlank() && it != "unspecified" }
+    ?: runCatching {
+        providers
+          .exec {
+            commandLine("git", "describe", "--tags", "--always", "--dirty")
+            workingDir = rootDir.resolve("../..")
+          }
+          .standardOutput
+          .asText
+          .get()
+          .trim()
+      }
+      .getOrNull()
+      ?.takeIf { it.isNotBlank() }
     ?: "0.0.0-SNAPSHOT"
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }

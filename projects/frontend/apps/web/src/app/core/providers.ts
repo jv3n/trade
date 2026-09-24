@@ -1,6 +1,8 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import { AccountRepository } from './api/account/account.repository';
 import { HttpAccountRepository } from './api/account/adapters/account.http';
+import { HttpAppInfoRepository } from './api/app-info/adapters/app-info.http';
+import { AppInfoRepository } from './api/app-info/app-info.repository';
 import { HttpAuthRepository } from './api/auth/adapters/auth.http';
 import { AuthRepository } from './api/auth/auth.repository';
 import { HttpCandidatesRepository } from './api/candidates/adapters/candidates.http';
@@ -31,5 +33,6 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: CandidatesRepository, useClass: HttpCandidatesRepository },
     { provide: StatsRepository, useClass: HttpStatsRepository },
     { provide: LexiconRepository, useClass: HttpLexiconRepository },
+    { provide: AppInfoRepository, useClass: HttpAppInfoRepository },
   ]);
 }

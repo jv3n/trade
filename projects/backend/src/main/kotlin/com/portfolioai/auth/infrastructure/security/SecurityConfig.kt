@@ -21,8 +21,8 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 /**
  * The application's only filter chain. The exact route matrix lives in `authorizeHttpRequests`
  * below ; in short : health + OAuth callback routes are permitAll, the three back-office areas
- * (config, prompts, narrative observability) require ROLE_ADMIN, everything else requires an
- * authenticated session.
+ * (config, prompts, narrative observability) require ROLE_ADMIN, the rest of the API and of the
+ * actuator require an authenticated session, and the SPA itself is public.
  *
  * Unauthenticated requests get a HTTP 401, not the default 302 to the Google authorization URL —
  * the SPA's HTTP interceptor needs a clean status code to decide whether to redirect to /login. A
@@ -71,7 +71,11 @@ class SecurityConfig(
       .addFilterAfter(CsrfTokenResponseFilter(), CsrfFilter::class.java)
       .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
       .authorizeHttpRequests {
-        it.requestMatchers("/actuator/health", "/login/**", "/oauth2/**").permitAll()
+        // `/health/**` too : the Cloud Run probes hit `/actuator/health/liveness` and `/readiness`,
+        // which the bare path doesn't match — a 401 there restarts the container.
+        it
+          .requestMatchers("/actuator/health", "/actuator/health/**", "/login/**", "/oauth2/**")
+          .permitAll()
         it.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
         it
           .requestMatchers("/api/config/**", "/api/prompts/**", "/api/narrative/observability/**")
@@ -94,10 +98,10 @@ class SecurityConfig(
         // (today it assumes one is present). The 401-as-signal contract is the simpler
         // invariant — don't move `/api/me` into `permitAll` by reflex.
         it.requestMatchers("/api/**").authenticated()
-        // Everything else is public : the embedded SPA and its client-side routes, plus whatever
-        // actuator endpoint the active profile exposes. If `/actuator/env` or `configprops` is
-        // ever turned on, add `requestMatchers("/actuator/**").authenticated()` **above** this line
-        // or the secret tree becomes public with it.
+        // `info` serves the release, the commit and the `info.*` properties : only the settings
+        // page reads it, behind a session.
+        it.requestMatchers("/actuator/**").authenticated()
+        // Everything else is public : the embedded SPA and its client-side routes.
         it.anyRequest().permitAll()
       }
       .exceptionHandling {

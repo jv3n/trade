@@ -737,6 +737,14 @@
     "saveError": "The language could not be saved. Try again."
   },
   "settings": {
+    "version": {
+      "title": "Version",
+      "detail": "Commit {{commit}} · built {{builtAt}}",
+      "env": {
+        "local": "local",
+        "staging": "staging"
+      }
+    },
     "title": "Settings",
     "subtitle": "Display preferences, and for the administrator : access, data, lexicon and ops links.",
     "groups": {

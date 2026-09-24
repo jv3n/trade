@@ -375,6 +375,15 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   default) follows the computer's light / dark setting, live.
 - **The lexicon is edited by the admin, here, and nowhere else.** The Lexicon page is read-only for
   everyone (cards + search + FR / EN).
+- **The deployed version** closes the secondary menu, for every role (#380) : the release tag
+  (`v2.3.0-rc2`), a chip naming the environment, and underneath the commit and the build time. The
+  environment is the backend's own word for where it runs : **`staging`** in indigo (a status, not a
+  warning), **`local`** in neutral grey, and **no chip in production**, the normal case. Locally the
+  version is where the checkout stands against the last tag (`v2.3.0-rc2-2-g8d53fd2-dirty`), not a
+  number kept by hand : the release tag stays the only source. Everything is read from the backend
+  (`/actuator/info`), so it always names what is actually running ; if that call fails, the block is
+  simply absent. It sits here rather than in the main menu : it is looked up during a validation,
+  not glanced at all day.
 
 **Screen** : [`parametres.html`](parametres.html).
 
