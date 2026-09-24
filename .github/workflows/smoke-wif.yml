@@ -7,7 +7,8 @@ jobs:
   test:
     # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
     runs-on: ubuntu-26.04
-    environment: production
+    # No `environment:` : the checks are read-only and the GCP_* variables also exist at repo level,
+    # so it runs from any branch — the one place to try the GCP path before a release (#401).
     permissions:
       contents: read
       id-token: write
