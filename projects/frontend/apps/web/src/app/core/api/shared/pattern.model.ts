@@ -6,10 +6,10 @@
  * `patterns.short.<value>` (compact : table cells, chips) and `patterns.long.<value>` (select
  * options) in the i18n files.
  */
-export type Pattern = 'GUS' | 'DT' | 'DISCRETIONARY';
+export type Pattern = 'GUS' | 'DT' | 'SIR' | 'SIV' | 'DISCRETIONARY';
 
 /** Every pattern, in display order. */
-export const PATTERNS: readonly Pattern[] = ['GUS', 'DT', 'DISCRETIONARY'];
+export const PATTERNS: readonly Pattern[] = ['GUS', 'DT', 'SIR', 'SIV', 'DISCRETIONARY'];
 
 /** Pattern pre-selected when something is created without one. */
 export const DEFAULT_PATTERN: Pattern = 'GUS';

@@ -44,7 +44,8 @@ import org.springframework.web.server.ResponseStatusException
  * - the stats listing carries the link back (trade id + retained P&L) so the UI can swap the button
  *   for a link, and it survives an edit of the stat ;
  * - a stat that gave birth to a trade **can't be deleted** — 409 rather than the 500 the ON DELETE
- *   RESTRICT would otherwise produce.
+ *   RESTRICT would otherwise produce ;
+ * - a stat **re-filed under another pattern** takes its trade along (#393).
  *
  * `AuthService` is mocked so the user scope is deterministic ; a second user is seeded to check the
  * action can't reach across tenants.
@@ -181,6 +182,24 @@ class StatToTradeIntegrationTest {
 
     assertEquals(trade.id, updated.tradeId)
     assertNotNull(updated.openPrice, "the session block did land")
+  }
+
+  @Test
+  fun `re-filing a traded stat under another pattern moves its trade along`() {
+    val trade = statService.promoteToTrade(stat.id)
+
+    statService.update(stat.id, completionRequest().copy(pattern = Pattern.DT))
+
+    assertEquals(Pattern.DT, tradeRepo.findById(trade.id).orElseThrow().pattern)
+  }
+
+  @Test
+  fun `a stat without a trade is re-filed on its own, onto the new patterns too`() {
+    // SIR and SIV only exist once V9 added them to the Postgres enum : this save goes through it.
+    val updated = statService.update(stat.id, completionRequest().copy(pattern = Pattern.SIR))
+
+    assertEquals(Pattern.SIR, updated.pattern)
+    assertEquals(Pattern.SIR, statRepo.findByIdAndUserId(stat.id, testUser.id)!!.pattern)
   }
 
   @Test
