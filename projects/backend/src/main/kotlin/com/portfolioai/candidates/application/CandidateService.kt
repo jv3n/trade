@@ -50,16 +50,14 @@ class CandidateService(
     val candidates =
       repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, date ?: LocalDate.now())
     // One query for the whole day rather than one per row.
-    val promoted = statEntryService.promotedCandidateIds(candidates.map { it.id })
-    return candidates.map { it.toDto(promoted = it.id in promoted) }
+    val statIds = statEntryService.statIdsByCandidate(candidates.map { it.id })
+    return candidates.map { it.toDto(statId = statIds[it.id]) }
   }
 
   @Transactional(readOnly = true)
   fun findById(id: UUID): CandidateDto {
     val candidate = loadOwned(id)
-    return candidate.toDto(
-      promoted = candidate.id in statEntryService.promotedCandidateIds(listOf(id))
-    )
+    return candidate.toDto(statId = statEntryService.statIdsByCandidate(listOf(id))[id])
   }
 
   // ---- Promotion to the stats sheet (#189) ---------------------------------------------------
@@ -76,7 +74,7 @@ class CandidateService(
   @Transactional
   fun promote(id: UUID): StatEntryDto {
     val candidate = loadOwned(id)
-    if (candidate.id in statEntryService.promotedCandidateIds(listOf(candidate.id))) {
+    if (candidate.id in statEntryService.statIdsByCandidate(listOf(candidate.id))) {
       throw ResponseStatusException(
         HttpStatus.CONFLICT,
         "Candidate ${candidate.ticker} is already in the stats sheet",
@@ -96,7 +94,7 @@ class CandidateService(
     val userId = authService.getCurrentUser().id
     val day = date ?: LocalDate.now()
     val candidates = repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, day)
-    val alreadyPromoted = statEntryService.promotedCandidateIds(candidates.map { it.id })
+    val alreadyPromoted = statEntryService.statIdsByCandidate(candidates.map { it.id })
 
     val promoted = mutableListOf<String>()
     val skipped = mutableListOf<String>()
@@ -143,8 +141,7 @@ class CandidateService(
     candidate.updatedAt = Instant.now()
     val saved = repo.save(candidate)
     saved.openPrice?.let { statEntryService.fillMissingOpen(saved.id, it) }
-    val promoted = saved.id in statEntryService.promotedCandidateIds(listOf(saved.id))
-    return saved.toDto(promoted = promoted)
+    return saved.toDto(statId = statEntryService.statIdsByCandidate(listOf(saved.id))[saved.id])
   }
 
   @Transactional fun delete(id: UUID) = repo.delete(loadOwned(id))
@@ -210,7 +207,7 @@ class CandidateService(
       openPrice = openPrice,
     )
 
-  private fun Candidate.toDto(promoted: Boolean = false): CandidateDto =
+  private fun Candidate.toDto(statId: UUID? = null): CandidateDto =
     CandidateDto(
       id = id,
       tradingDate = tradingDate,
@@ -225,7 +222,8 @@ class CandidateService(
       note = note,
       openPrice = openPrice,
       targetPushPercent = targetPushPercent,
-      promoted = promoted,
+      promoted = statId != null,
+      statId = statId,
       createdAt = createdAt,
       updatedAt = updatedAt,
     )

@@ -30,6 +30,8 @@ data class CandidateDto(
   val targetPushPercent: BigDecimal?,
   /** True once this candidate has been promoted to the stats sheet (#189) — it cannot be twice. */
   val promoted: Boolean,
+  /** The stat it became — the "in stats" badge links to it (#383) ; null until promoted. */
+  val statId: UUID?,
   val createdAt: Instant,
   val updatedAt: Instant,
 )

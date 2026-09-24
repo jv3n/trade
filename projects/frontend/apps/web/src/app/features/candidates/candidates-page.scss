@@ -106,7 +106,7 @@ tr.editing td {
   background: var(--color-accent-soft);
 }
 
-// « En stats » — a status, so indigo like the pattern tag (colour rule).
+// « En stats » — a status, so indigo like the pattern tag (colour rule). A link to the stat (#383).
 .stats-tag {
   display: inline-flex;
   align-items: center;
@@ -118,6 +118,11 @@ tr.editing td {
   font-size: s.$font-2xs;
   font-weight: 550;
   white-space: nowrap;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
 
   &__icon {
     font-size: s.$font-md;

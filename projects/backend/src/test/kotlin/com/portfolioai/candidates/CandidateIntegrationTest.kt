@@ -344,6 +344,18 @@ class CandidateIntegrationTest {
   }
 
   @Test
+  fun `a promoted candidate points at the stat it became, for the in-stats link`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+    // Read back through the listing : `create` builds its answer without asking for the stat.
+    assertNull(service.listForDate(DAY).single().statId, "no stat before promotion")
+
+    val stat = service.promote(candidate.id)
+
+    assertEquals(stat.id, service.findById(candidate.id).statId)
+    assertEquals(stat.id, service.listForDate(DAY).single().statId)
+  }
+
+  @Test
   fun `promoting the same candidate twice is a 409`() {
     val candidate = service.create(request(ticker = "KTTA"))
     service.promote(candidate.id)

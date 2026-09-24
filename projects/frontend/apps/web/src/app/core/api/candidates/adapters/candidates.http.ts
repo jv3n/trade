@@ -27,11 +27,15 @@ interface CandidateWireDto {
   openPrice: number | null;
   targetPushPercent: number | null;
   promoted: boolean;
+  statId: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-type CandidateWireRequest = Omit<CandidateWireDto, 'id' | 'promoted' | 'createdAt' | 'updatedAt'>;
+type CandidateWireRequest = Omit<
+  CandidateWireDto,
+  'id' | 'promoted' | 'statId' | 'createdAt' | 'updatedAt'
+>;
 
 function fromWire(w: CandidateWireDto): Candidate {
   return {

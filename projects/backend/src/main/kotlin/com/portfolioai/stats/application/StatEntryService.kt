@@ -107,18 +107,19 @@ class StatEntryService(
   }
 
   /**
-   * Which of these candidates already have a stat — the "in stats" flag of the candidates listing
-   * and the guard against promoting twice (#189). Read exposed to the `candidates` context through
-   * this application service, the way cross-context reads are done here.
+   * The stat each of these candidates became, keyed by candidate — the "in stats" link of the
+   * candidates listing (#383) and the guard against promoting twice (#189). A candidate never
+   * promoted is absent. Read exposed to the `candidates` context through this application service,
+   * the way cross-context reads are done here.
    */
   @Transactional(readOnly = true)
-  fun promotedCandidateIds(candidateIds: Collection<UUID>): Set<UUID> {
-    if (candidateIds.isEmpty()) return emptySet()
+  fun statIdsByCandidate(candidateIds: Collection<UUID>): Map<UUID, UUID> {
+    if (candidateIds.isEmpty()) return emptyMap()
     val userId = authService.getCurrentUser().id
     return repo
       .findByUserIdAndCandidateIdIn(userId, candidateIds)
-      .mapNotNull { it.candidateId }
-      .toSet()
+      .mapNotNull { stat -> stat.candidateId?.let { it to stat.id } }
+      .toMap()
   }
 
   /**

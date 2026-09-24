@@ -171,7 +171,9 @@ a « → Stat » button per row and a "promote them all" button, day-by-day navi
 
 **Decided** :
 
-- A candidate already promoted shows "in stats" and cannot be promoted twice (refused).
+- A candidate already promoted shows "in stats" and cannot be promoted twice (refused). The badge
+  is a link : it opens the stats page on that stat, its session panel already open (#383) — right
+  after promoting is when you want to go and fill it.
 - "Promote them all" only handles the candidates missing from the sheet ; the ones already there are
   left alone without failing the batch. The action is safe to replay.
 - The stat keeps a link back to its candidate. Deleting that candidate later does not delete the
@@ -303,6 +305,10 @@ shared between users — a stat always belongs to its user.
   **Leaving the panel** (« Close », another stat, « New stat ») while an edit never left, whatever
   held it back, asks « Leave without saving ? » ; leaving keeps the last saved values, staying lets
   the value be fixed — which then saves everything.
+  **A filter, a page or a sort that takes the open stat off the table** closes the panel (#383) :
+  nothing is typed into a row that is not on screen. It doesn't ask — an edit the validation held
+  back could never be saved anyway, so it is dropped and a toast says so. As on arrival, the first
+  stat to complete of the new list then opens, if there is one. Ticking a stat keeps the panel on it.
 
 **No push at the open** (#302) : some days have everything of a GUS in the premarket but
 the stock never pushes after the open — GLND on 2026-09-21 dropped straight from the open and only

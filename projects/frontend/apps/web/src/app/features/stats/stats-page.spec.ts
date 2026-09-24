@@ -473,6 +473,66 @@ describe('StatsPage', () => {
     ]);
   });
 
+  // #383 : filtered to SGBX, the panel still edited BNRG — whatever was typed landed off screen.
+  it('closes the panel when a filter change leaves its stat off the table', () => {
+    const { fixture, page, repo } = setup({ rows: [makePending()] });
+    expect(page.completing()?.id).toBe('stat-sgbx');
+
+    repo.rows = [makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })];
+    page.setStatus('COMPLETED');
+    fixture.detectChanges();
+
+    expect(page.completing()).toBeNull();
+  });
+
+  it('closes the panel when a page change takes its stat off the table', () => {
+    const { fixture, page, repo } = setup({ rows: [makePending()] });
+
+    repo.rows = [makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })];
+    page.onPage({ pageIndex: 1, pageSize: 25, length: 30 });
+    fixture.detectChanges();
+
+    expect(page.completing()).toBeNull();
+  });
+
+  // Asking would leave « cancel » editing a row the table no longer shows : the edit the validation
+  // held back could never be saved anyway, so it goes, out loud.
+  it('drops an edit the validation held back when its stat leaves the table, and says so', () => {
+    const ktta = makeStat();
+    const { fixture, page, repo, toastShown } = setup({ rows: [ktta] });
+    page.open(ktta);
+    page.setSessionPrice('hodPrice', 3.2);
+
+    repo.rows = [makeStat({ id: 'stat-bnrg', ticker: 'BNRG' })];
+    page.setStatus('COMPLETED');
+    fixture.detectChanges();
+
+    expect(page.completing()).toBeNull();
+    expect(toastShown).toHaveBeenCalledWith('error', 'stats.snackbar.editDropped');
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('stays on a stat just ticked, even once it leaves the tab', () => {
+    const full = makeStat({ id: 'stat-bnrg', ticker: 'BNRG', completed: false });
+    const { fixture, page, repo } = setup({ rows: [full], query: { status: 'TO_COMPLETE' } });
+    expect(page.completing()?.id).toBe('stat-bnrg');
+
+    // Ticked, it is no longer « to complete » : the reload under the same tab comes back without it.
+    repo.rows = [];
+    page.toggleCompleted(full);
+    fixture.detectChanges();
+
+    expect(page.completing()?.id).toBe('stat-bnrg');
+  });
+
+  // #383 : « In stats » on a candidate links here, to the stat it became.
+  it('opens the panel on the stat named in the URL, even when it is not on the page', () => {
+    const { page, repo } = setup({ rows: [makePending()], query: { stat: 'stat-ktta' } });
+
+    expect(repo.findById).toHaveBeenCalledWith('stat-ktta');
+    expect(page.completing()?.id).toBe('stat-ktta');
+  });
+
   it('ticks a stat with its five prices, then reloads the list', () => {
     const full = makeStat({ id: 'stat-bnrg', ticker: 'BNRG', completed: false });
     const { fixture, page, repo } = setup({ rows: [full] });

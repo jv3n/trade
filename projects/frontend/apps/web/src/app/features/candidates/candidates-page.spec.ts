@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { addDays, startOfDay } from 'date-fns';
@@ -67,6 +68,7 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     openPrice: null,
     targetPushPercent: null,
     promoted: false,
+    statId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -148,6 +150,7 @@ function setup(
     imports: [CandidatesPage],
     providers: [
       provideZonelessChangeDetection(),
+      provideRouter([]),
       provideTranslateService({ lang: 'en' }),
       provideNativeDateAdapter(),
       { provide: CandidatesRepository, useClass: MockCandidatesRepository },
@@ -400,6 +403,18 @@ describe('CandidatesPage', () => {
 
     expect(repo.promoteDay).toHaveBeenCalledWith(startOfDay(new Date()));
     expect(toastShown).toHaveBeenCalledWith('success', 'candidates.snackbar.promoteAllSuccess');
+  });
+
+  // #383 : the badge used to be plain text, so the moment you'd jump to the new stat was the moment
+  // the link disappeared.
+  it('links a promoted candidate to the stat it became', async () => {
+    const { fixture } = setup({
+      list: [makeCandidate({ ticker: 'SGBX', promoted: true, statId: 'stat-sgbx' })],
+    });
+    await fixture.whenStable();
+
+    const link = fixture.nativeElement.querySelector('a.stats-tag') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/stats?stat=stat-sgbx');
   });
 
   it('does nothing when every candidate of the day is already in the sheet', () => {

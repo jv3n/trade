@@ -185,7 +185,8 @@
       "delete": "Supprimer",
       "promote": "Stat",
       "promoteAll": "Tout passer en stats",
-      "inStats": "En stats"
+      "inStats": "En stats",
+      "openStat": "Ouvrir sa séance"
     },
     "confirmPromote": {
       "title": "Passer {{ticker}} en stat ?",
@@ -595,7 +596,8 @@
       "completionError": "Impossible de changer le statut de {{ticker}}. Réessaie.",
       "createSuccess": "Stat {{ticker}} créée.",
       "createConflict": "{{ticker}} a déjà une stat ce jour-là.",
-      "createError": "Impossible de créer la stat {{ticker}}. Réessaie."
+      "createError": "Impossible de créer la stat {{ticker}}. Réessaie.",
+      "editDropped": "{{ticker}} : la modification non enregistrée est abandonnée."
     },
     "premarket": {
       "title": "Premarket —",

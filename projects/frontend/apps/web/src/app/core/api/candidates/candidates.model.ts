@@ -31,12 +31,17 @@ export interface Candidate {
   targetPushPercent: number | null;
   /** True once this candidate has been promoted to the stats sheet — it can't be promoted twice. */
   promoted: boolean;
+  /** The stat it became — what the « In stats » badge opens (#383) ; `null` until promoted. */
+  statId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 /** Create / update payload — [Candidate] minus the server-owned id, promotion state and audit. */
-export type CandidateInput = Omit<Candidate, 'id' | 'promoted' | 'createdAt' | 'updatedAt'>;
+export type CandidateInput = Omit<
+  Candidate,
+  'id' | 'promoted' | 'statId' | 'createdAt' | 'updatedAt'
+>;
 
 /**
  * Outcome of « Promote all to stats » : the tickers copied to the sheet by that call, and those
