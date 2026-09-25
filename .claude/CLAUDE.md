@@ -59,7 +59,8 @@ trade/
 │   ├── forex/       # Frankfurter FX rate (account page CAD display)
 │   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
 ├── docs/
-│   ├── pattern/                                    # Trading-pattern references (GUS.md)
+│   ├── pattern/                                    # Pattern sheets (GUS, DT, SIR, SIV, penny break)
+│   ├── notes/                                      # Trading notes that are not patterns (execution signals, four sellers, stop rule)
 │   └── data-input-local/                           # real broker exports (gitignored)
 ├── mockup/                                         # Target product : static HTML mockups + PARCOURS.md (user journey)
 ├── devops/prod/                                    # Dockerfile + service.yaml (Cloud Run deploy)
@@ -214,5 +215,5 @@ The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues
 ### Documentation
 
 - **Product** : `mockup/PARCOURS.md` is the functional reference — update it when a product decision is made or changed, and keep the matching mockup page in sync.
-- **Trading domain** : `docs/pattern/` holds pattern references (`GUS.md`).
+- **Trading domain** : `docs/pattern/` holds the pattern sheets (`GUS.md`, `DT.md`, `SIR.md`, `penny-break.md` ; `SIV.md` still to write), each with its revision date ; `docs/notes/` holds what is not a pattern (`execution-signals.md`, `four-sellers.md`, `stop-rule.md`).
 - The former `docs/` doc set was deleted on 2026-09-18. Don't recreate technical doc files unless the user asks — code, KDoc / JSDoc and these skills carry the technical knowledge.
