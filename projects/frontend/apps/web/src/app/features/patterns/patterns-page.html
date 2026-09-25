@@ -13,6 +13,7 @@
     <mat-tab-group
       [selectedIndex]="tab()"
       (selectedIndexChange)="tab.set($event)"
+      (animationDone)="settled('tab')"
       (click)="followSheetLink($event)"
     >
       @for (shelf of tabs; track shelf) {
@@ -31,6 +32,7 @@
                 [expanded]="open().has(anchor(sheet))"
                 (opened)="setOpen(anchor(sheet), true)"
                 (closed)="setOpen(anchor(sheet), false)"
+                (afterExpand)="settled('panel', anchor(sheet))"
               >
                 <mat-expansion-panel-header>
                   <div class="sheet-header">

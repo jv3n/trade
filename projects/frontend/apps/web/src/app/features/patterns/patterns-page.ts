@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, ElementRef, Injector, afterNextRender, inject, signal } from '@angular/core';
+import { Component, ElementRef, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   StbExpansionModule,
@@ -38,7 +38,6 @@ const TABS: readonly Shelf[] = ['pattern', 'notes'];
 export class PatternsPage {
   private readonly repo = inject(PatternsRepository);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  private readonly injector = inject(Injector);
   private readonly language = inject(LanguageService);
 
   readonly tabs = TABS;
@@ -51,6 +50,12 @@ export class PatternsPage {
   );
 
   readonly anchor = sheetAnchor;
+
+  /**
+   * The panel a followed link brings into view, and the one animation it waits for : the tab's
+   * when the link switches tab, the panel's own when it opens one on the current tab.
+   */
+  private pendingScroll: { anchor: string; after: 'tab' | 'panel' } | null = null;
 
   constructor() {
     // A change of language reloads the app (`LanguageService`), so the language is read once.
@@ -82,7 +87,8 @@ export class PatternsPage {
 
   /**
    * A link from one file to another switches to its tab, opens its panel and brings it into view —
-   * rather than letting the browser jump to a header that may not even be in the page.
+   * rather than letting the browser jump to a header that may not even be in the page. The scroll
+   * waits for the animation that moves the panel : taken mid-animation, it was lost (#424).
    */
   followSheetLink(event: MouseEvent): void {
     const link = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#sheet-"]');
@@ -91,14 +97,32 @@ export class PatternsPage {
     const anchor = link.getAttribute('href')!.slice(1);
     const target = sheetOf(anchor);
     if (!target) return;
-    this.tab.set(TABS.indexOf(target.shelf));
+    const index = TABS.indexOf(target.shelf);
+    if (index !== this.tab()) this.pendingScroll = { anchor, after: 'tab' };
+    else if (!this.open().has(anchor)) this.pendingScroll = { anchor, after: 'panel' };
+    else {
+      this.pendingScroll = null;
+      this.scrollTo(anchor);
+      return;
+    }
+    this.tab.set(index);
     this.setOpen(anchor, true);
-    afterNextRender(
-      () =>
-        this.host.nativeElement
-          .querySelector(`#${anchor}`)
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-      { injector: this.injector },
-    );
+  }
+
+  /**
+   * An animation ended. Only the one the followed link waits for scrolls : a panel expanding while
+   * the tab still slides would scroll too early, and one opened by hand later must not scroll back.
+   */
+  settled(after: 'tab' | 'panel', anchor?: string): void {
+    const pending = this.pendingScroll;
+    if (pending?.after !== after || (after === 'panel' && anchor !== pending.anchor)) return;
+    // Kept pending while the panel is not in the DOM yet : a tab's content attaches mid-animation.
+    if (this.scrollTo(pending.anchor)) this.pendingScroll = null;
+  }
+
+  private scrollTo(anchor: string): boolean {
+    const panel = this.host.nativeElement.querySelector(`#${anchor}`);
+    panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return panel !== null;
   }
 }

@@ -27,7 +27,7 @@ de 10 % ne prouve rien.
 
 À **17-20 %**, les gens commencent à croire que le top est fait. Les longs qui ont raté leur sortie, et
 ceux qui perdent de l'argent maintenant, décident de vendre la prochaine fois qu'il revient — c'est
-cette croyance qui crée la vente sur le retest (voir [`four-sellers.fr.md`](../notes/four-sellers.fr.md)).
+cette croyance qui crée la vente sur le retest (voir les [quatre vendeurs](../notes/four-sellers.fr.md)).
 
 ---
 
@@ -51,4 +51,4 @@ donner l'entrée — un [penny break](penny-break.fr.md).
 ## Le stop
 
 Le stop calculé plus haut mérite un coup d'œil autour avant d'être placé — la règle que partagent
-tous les patterns, dans [`stop-rule.fr.md`](../notes/stop-rule.fr.md).
+tous les patterns, la [règle du stop](../notes/stop-rule.fr.md).

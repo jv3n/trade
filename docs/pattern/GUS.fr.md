@@ -42,8 +42,7 @@ Deux cas de la séance, à garder comme repères :
   tradé, en V pattern — un autre setup.)
 - **BMGL** — un daily propre : tendance baissière, pas à ce prix depuis juillet, des résistances vers
   8,40 et 9,40. **Qualifié sur le graphique.** Mais un float de 0,7 M et un niveau de halt juste sur
-  l'entrée : **refusé sur le risque**. Il a été pris plus tard, en penny break (voir
-  [`penny-break.fr.md`](penny-break.fr.md)).
+  l'entrée : **refusé sur le risque**. Il a été pris plus tard, en [penny break](penny-break.fr.md).
 
 Les captures d'écran aident plus que n'importe quelle règle : l'intraday **et** le daily de chaque
 candidat, pris ou non, revus chaque semaine. Le cerveau apprend à quoi ressemble un daily « pas idéal
@@ -80,8 +79,8 @@ Les deux sont valables ; beaucoup de traders mélangent.
 | **Pour** | Plus d'entrées, moins d'erreurs humaines — le trader comme un robot et accepter le résultat | Meilleur R / R, plus de pourcentage quand il pousse de 20 % |
 | **Contre** | Rend l'avantage quand il pousse au-delà de l'entrée | Rate les trades qui poussent de 5 % et lâchent sans confirmation |
 
-En probabilité, le stop mérite quand même un coup d'œil autour : voir
-[`stop-rule.fr.md`](../notes/stop-rule.fr.md).
+En probabilité, le stop mérite quand même un coup d'œil autour : voir la
+[règle du stop](../notes/stop-rule.fr.md).
 
 Après 11 h, un trade en difficulté vaut rarement la peine qu'on le laisse courir.
 
@@ -91,8 +90,8 @@ Après 11 h, un trade en difficulté vaut rarement la peine qu'on le laisse cour
 
 Un GUS peut contenir un **double top** ou un **penny break** — pas les classiques, en plus petit : un
 push de 5-15 %, un rejet de 5-15 %, un retest. Ce sont les trades « licorne » : le win rate du GUS,
-avec le risk / reward d'une entrée discrétionnaire serrée. Voir
-[`execution-signals.fr.md`](../notes/execution-signals.fr.md) et [`penny-break.fr.md`](penny-break.fr.md).
+avec le risk / reward d'une entrée discrétionnaire serrée. Voir les
+[signaux d'exécution](../notes/execution-signals.fr.md) et le [penny break](penny-break.fr.md).
 
 ---
 

@@ -1,7 +1,7 @@
 # Execution signals — how to enter the setups
 
-> A double top and a penny break are patterns of their own ([`DT.md`](../pattern/DT.md),
-> [`penny-break.md`](../pattern/penny-break.md)), and they are also **execution criteria** : signs of
+> A double top and a penny break are patterns of their own (the
+> [double top](../pattern/DT.md), the [penny break](../pattern/penny-break.md)), and they are also **execution criteria** : signs of
 > weakness, found inside a [GUS](../pattern/GUS.md) or a [short into resistance](../pattern/SIR.md).
 > There, the setup says whether to short ; the signal says **when**.
 
@@ -11,13 +11,13 @@
 
 ## The signals
 
-| Signal | Sheet | In one line |
-|---|---|---|
-| **Double top** | [`DT.md`](../pattern/DT.md) | A rejection, then a failed retest of the high. |
-| **Penny break** | [`penny-break.md`](../pattern/penny-break.md) | A break of ≤ ~1 % above a level, slammed back under it — on the 5-second chart. |
-| **Consolidation** | — | The push slows down and stalls under the level. |
+| Signal | In one line |
+|---|---|
+| [**Double top**](../pattern/DT.md) | A rejection, then a failed retest of the high. |
+| [**Penny break**](../pattern/penny-break.md) | A break of ≤ ~1 % above a level, slammed back under it — on the 5-second chart. |
+| **Consolidation** | The push slows down and stalls under the level. |
 
-And to judge any of them : [`four-sellers.md`](four-sellers.md) — who will create the selling.
+And to judge any of them : the [four sellers](four-sellers.md) — who will create the selling.
 
 ---
 
@@ -29,5 +29,5 @@ That combination is the best trade there is — the win rate of the setup around
 reward of a tight entry.
 
 **When to wait for a signal at all** : a clean setup pushing into a risk level is worth taking
-frontside, without one ([`GUS.md`](../pattern/GUS.md)). The signal is for the setups that miss something — no
+frontside, without one (the [GUS](../pattern/GUS.md)). The signal is for the setups that miss something — no
 risk level, a criterion short, a red flag — where you let the stock show its weakness first.

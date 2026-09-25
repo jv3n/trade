@@ -41,8 +41,7 @@ Two cases from the session, worth keeping as the reference points :
   V pattern — a different setup.)
 - **BMGL** — a clean daily : downtrend, not at that price since July, resistances around 8.40 and
   9.40. **Qualified on the chart.** But a 0.7M float, and a halt level sitting right on the entry :
-  **refused on the risk**. It was taken later, as a penny break (see
-  [`penny-break.md`](penny-break.md)).
+  **refused on the risk**. It was taken later, as a [penny break](penny-break.md).
 
 Screenshots help more than any rule : the intraday **and** the daily of every candidate, taken or not,
 reviewed weekly. The brain learns what a « not ideal but it worked » daily looks like.
@@ -77,8 +76,8 @@ Both are valid ; plenty of traders mix them.
 | **For** | More entries, fewer human errors — trade it like a robot and accept the result | Better R / R, more percentage when it pushes 20 % |
 | **Against** | Gives back the edge when it pushes past the entry | Misses the trades that push 5 % and dump without a confirmation |
 
-On a probability entry, the stop still deserves a look around : see
-[`stop-rule.md`](../notes/stop-rule.md).
+On a probability entry, the stop still deserves a look around : see the
+[stop rule](../notes/stop-rule.md).
 
 After 11:00 am, a trade that is in trouble is rarely worth letting run.
 
@@ -88,8 +87,8 @@ After 11:00 am, a trade that is in trouble is rarely worth letting run.
 
 A GUS can hold a **double top** or a **penny break** — not the classic ones, smaller : a 5-15 % push,
 a 5-15 % rejection, a retest. Those are the « unicorn » trades : the win rate of the GUS, with the
-risk / reward of a tight discretionary entry. See [`execution-signals.md`](../notes/execution-signals.md) and
-[`penny-break.md`](penny-break.md).
+risk / reward of a tight discretionary entry. See the [execution signals](../notes/execution-signals.md)
+and the [penny break](penny-break.md).
 
 ---
 
