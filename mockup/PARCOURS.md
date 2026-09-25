@@ -12,8 +12,12 @@ Legend : ✅ defined · 🟡 in progress · ❓ to define
 
 - **Strategy : the GUS** (*Gap Up Short*) for now — shorting a US small-cap that gapped up in
   premarket with no fundamental behind it, betting on the price coming back. Reference in
-  [`docs/pattern/GUS.md`](../docs/pattern/GUS.md) (price $1–10, gap ≥ +50 %, float 3–50 M, flat or
-  downtrend chart, weak company, moderate PM volume, no reverse split).
+  [`docs/pattern/GUS.md`](../docs/pattern/GUS.md) (price ~$0.30–10, gap ≥ +45 %, float ≥ 1.5 M,
+  institutions < 20 %, flat or downtrend daily, weak company, moderate PM volume, no reverse split).
+  The other sheets sit beside it — `DT.md`, `SIR.md`, `penny-break.md` ; `SIV.md` is still to write
+  (#417). What is not a pattern lives in `docs/notes/` : `execution-signals.md` (the entry
+  signals), `four-sellers.md` (the frame to judge any short) and `stop-rule.md` (stretching a stop to
+  a nearby level).
 - **Broker : TradeZero.**
 - **Spotting : the radar** (an external tool) finds the day's tickers. The app doesn't replace the
   radar, it records what comes out of it.

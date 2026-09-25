@@ -17,9 +17,9 @@ import org.springframework.web.server.ResponseStatusException
  * Integration test on [LexiconEntryService] + JPA → Postgres (Testcontainers via the
  * launcher-session bootstrap). Pins the lexicon CRUD that backs the `/lexicon` page :
  *
- * - **The seed loaded** — the 114 hand-authored terms are present (bilingual) and resolve. Three
+ * - **The seed loaded** — the 117 hand-authored terms are present (bilingual) and resolve. Three
  *   went out in `V6` : two averages colliding with a plain term, and one duplicate definition
- *   (#314).
+ *   (#314) ; three came in with the pattern sheets in `V11` (#417).
  * - **Listing is alphabetical** (case-insensitive) — the order the glossary reads in.
  * - **Create / update / delete** round-trip through the real DB.
  * - **Case-insensitive unique term** — a duplicate (any case) is rejected with 409, not persisted.
@@ -39,7 +39,7 @@ class LexiconIntegrationTest {
   @Test
   fun `the migrations seed the full bilingual glossary`() {
     val all = service.findAll()
-    assertEquals(114, all.size, "seed should load all 114 terms")
+    assertEquals(117, all.size, "seed should load all 117 terms")
     // GUS used to carry its expansion as its definition ; `V6` gave it a real one (#314).
     val gus = all.single { it.term == "Gap Up Short (GUS)" }
     assertTrue(
@@ -52,6 +52,11 @@ class LexiconIntegrationTest {
     // The stop orders no longer borrow the plain orders' acronym (#364).
     assertTrue(all.any { it.term == "Stop-Limit (STP LMT)" }, "Stop-Limit has its own acronym")
     assertTrue(all.none { it.term == "Stop-Market (MKT)" }, "Stop-Market no longer reads MKT")
+    // The execution signals' vocabulary (#417).
+    assertTrue(
+      all.map { it.term }.containsAll(listOf("Penny Break", "Four Sellers", "Bag Holder")),
+      "the pattern sheets' terms are defined",
+    )
   }
 
   @Test
@@ -83,7 +88,7 @@ class LexiconIntegrationTest {
     assertEquals("Halt", created.term, "term is trimmed")
     assertEquals("Suspension de cotation", created.definitionFr, "FR definition is trimmed")
     assertEquals("Trading halt", created.definitionEn, "EN definition is trimmed")
-    assertEquals(115, repo.count())
+    assertEquals(118, repo.count())
   }
 
   @Test
@@ -96,7 +101,7 @@ class LexiconIntegrationTest {
         )
       }
     assertEquals(HttpStatus.CONFLICT, ex.statusCode)
-    assertEquals(114, repo.count(), "nothing persisted on conflict")
+    assertEquals(117, repo.count(), "nothing persisted on conflict")
   }
 
   @Test
@@ -160,7 +165,7 @@ class LexiconIntegrationTest {
 
     service.delete(target.id)
 
-    assertEquals(113, repo.count())
+    assertEquals(116, repo.count())
     assertTrue(service.findAll().none { it.term == "Gap Up Short (GUS)" })
   }
 }
