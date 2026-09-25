@@ -59,7 +59,7 @@
             appNumberMask
             [decimals]="2"
             [allowNegative]="true"
-            [value]="v().movePercent"
+            [number]="v().movePercent"
             (numberChange)="set('movePercent', $event)"
           />
         </mat-form-field>
@@ -365,7 +365,7 @@
       appNumberMask
       [decimals]="decimals"
       [min]="0"
-      [value]="fieldValue(field)"
+      [number]="fieldValue(field)"
       (numberChange)="set(field, $event)"
     />
   </mat-form-field>

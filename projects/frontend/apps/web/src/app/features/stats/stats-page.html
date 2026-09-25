@@ -198,7 +198,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="premarket().previousClose"
+            [number]="premarket().previousClose"
             (numberChange)="setPremarketPrice('previousClose', $event)"
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
@@ -214,7 +214,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="premarket().pmOpen"
+            [number]="premarket().pmOpen"
             (numberChange)="setPremarketPrice('pmOpen', $event)"
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
@@ -237,7 +237,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="premarket().pmHigh"
+            [number]="premarket().pmHigh"
             (numberChange)="setPremarketPrice('pmHigh', $event)"
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
@@ -262,7 +262,7 @@
             appNumberMask
             [decimals]="2"
             [min]="0"
-            [value]="premarket().floatMillions"
+            [number]="premarket().floatMillions"
             (numberChange)="setPremarketPrice('floatMillions', $event)"
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
@@ -275,7 +275,7 @@
             appNumberMask
             [decimals]="2"
             [min]="0"
-            [value]="premarket().volumeMillions"
+            [number]="premarket().volumeMillions"
             (numberChange)="setPremarketPrice('volumeMillions', $event)"
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
@@ -288,7 +288,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="premarket().locatePerShare"
+            [number]="premarket().locatePerShare"
             (numberChange)="setPremarketPrice('locatePerShare', $event)"
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
@@ -350,7 +350,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="session().openPrice"
+            [number]="session().openPrice"
             (numberChange)="setSessionPrice('openPrice', $event)"
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
@@ -371,7 +371,7 @@
               appNumberMask
               [decimals]="4"
               [min]="0"
-              [value]="session().pushOpenPrice"
+              [number]="session().pushOpenPrice"
               [disabled]="session().noPush"
               (numberChange)="setSessionPrice('pushOpenPrice', $event)"
               (blur)="saveSession()"
@@ -401,7 +401,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="session().hodPrice"
+            [number]="session().hodPrice"
             (numberChange)="setSessionPrice('hodPrice', $event)"
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
@@ -422,7 +422,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="session().lodPrice"
+            [number]="session().lodPrice"
             (numberChange)="setSessionPrice('lodPrice', $event)"
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
@@ -443,7 +443,7 @@
             appNumberMask
             [decimals]="4"
             [min]="0"
-            [value]="session().eodPrice"
+            [number]="session().eodPrice"
             (numberChange)="setSessionPrice('eodPrice', $event)"
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"

@@ -41,9 +41,12 @@ import {
  *     binding on `type="text"` would round-trip the string, not the parsed number. Use the
  *     `(numberChange)` output to push the parsed number back into the form model imperatively
  *     (signal `model.update(...)`).
- *   - `[value]` reads the current numeric value from the consumer (model signal). The
+ *   - `[number]` reads the current numeric value from the consumer (model signal). The
  *     directive formats it for display and writes the formatted string back to the element on
- *     change.
+ *     change — `[(number)]` works too, with the output below.
+ *   - **Never `[value]`** (#416) : on a `matInput`, that binding reaches `MatInput` as well, which
+ *     writes the raw number into the element on the next change detection — and overwrites a key
+ *     typed in between (`4,05` read `405`). The directive owns the element's text alone.
  *
  * Example :
  *
@@ -51,7 +54,7 @@ import {
  * <input
  *   appNumberMask
  *   [decimals]="4"
- *   [value]="model().openPrice"
+ *   [number]="model().openPrice"
  *   (numberChange)="setOpenPrice($event)"
  * />
  * ```
@@ -74,7 +77,7 @@ export class NumberMaskDirective {
   /** Whether to allow a leading minus sign. Default false. */
   readonly allowNegative = input(false);
   /** Current numeric value — used to seed / re-sync the input's text. */
-  readonly value = input<number | null>(null);
+  readonly number = input<number | null>(null);
 
   /** Emits the parsed number whenever the user's input resolves to one. `null` = blank. */
   readonly numberChange = output<number | null>();
@@ -82,11 +85,11 @@ export class NumberMaskDirective {
   private selectOnMouseUp = false;
 
   constructor() {
-    // `matInput` consumes `[value]` too and writes the raw number (`1500`, `1.3`) first, so a
-    // field at rest is compared on its text, not its parsed value (#363). While typing, only a
-    // text that no longer means the value is replaced, so the caret is not clobbered.
+    // A field at rest is compared on its text, so it shows the locale form from the first paint
+    // (#363). While typing, only a text that no longer means the value is replaced, so the caret
+    // is not clobbered.
     effect(() => {
-      const v = this.value();
+      const v = this.number();
       const el = this.host.nativeElement;
       if (el.ownerDocument.activeElement === el) {
         if (this.parse(el.value) !== v) {
