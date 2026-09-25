@@ -61,7 +61,8 @@
           "title": "Promote {{count}} candidate to the stats sheet?",
           "message": "{{tickers}} becomes a stat to fill in as the session goes. The candidates already promoted are left alone.",
           "confirm": "Promote it"
-        }
+        },
+        "none": "No candidate today — nothing made it past the radar."
       },
       "session": {
         "title": "Session",
@@ -77,13 +78,15 @@
         "overdue": "Overdue: {{tickers}}.",
         "overdueMore": "Overdue: {{tickers}} and {{count}} more.",
         "overdueMoreOne": "Overdue: {{tickers}} and {{count}} more.",
-        "overdueTag": "{{count}} overdue"
+        "overdueTag": "{{count}} overdue",
+        "none": "Nothing to complete today."
       },
       "trades": {
         "title": "Enter the day's trades",
         "body": "Traded today? Create the trade from its stat, then add the fills and the post-mortem.",
         "entered": "{{count}} trades entered — {{tickers}}.",
-        "enteredOne": "{{count}} trade entered — {{tickers}}."
+        "enteredOne": "{{count}} trade entered — {{tickers}}.",
+        "none": "No trade today."
       }
     },
     "actions": {
@@ -93,7 +96,10 @@
       "promoteRemainingOne": "Promote the last one",
       "complete": "Complete",
       "pickStat": "Pick a stat",
-      "openJournal": "Open the journal"
+      "openJournal": "Open the journal",
+      "noCandidate": "No candidate today",
+      "noTrade": "No trade today",
+      "undo": "Undo"
     },
     "account": {
       "title": "Account",
@@ -120,7 +126,8 @@
     "snackbar": {
       "promoteSuccess": "{{count}} candidates promoted to the stats sheet.",
       "promoteSuccessOne": "{{count}} candidate promoted to the stats sheet.",
-      "promoteError": "Couldn't promote the candidates. Please retry."
+      "promoteError": "Couldn't promote the candidates. Please retry.",
+      "markError": "Couldn't save the day. Please retry."
     }
   },
   "candidates": {
@@ -266,7 +273,8 @@
         "title": "Cancel the reconciliation?",
         "message": "This morning and the correction it produced will be removed, and the balance will go back to what it was before. Use it when the figure you typed was a mistake.",
         "confirm": "Cancel the reconciliation"
-      }
+      },
+      "noGap": "No gap"
     },
     "currentBalance": "Current balance",
     "currency": {

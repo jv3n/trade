@@ -54,6 +54,7 @@ trade/
 │   ├── stats/       # Stats sheet (CSV export + per-user rows)
 │   ├── candidates/  # Candidate sheets
 │   ├── lexicon/     # Bilingual trading lexicon
+│   ├── tradingday/  # « Nothing today » marks of the Today page (no candidate, no trade)
 │   ├── config/      # Runtime-editable settings (login whitelist only)
 │   ├── forex/       # Frankfurter FX rate (account page CAD display)
 │   └── shared/      # GlobalExceptionHandler, UpstreamUnavailableException
@@ -95,7 +96,7 @@ npm run lint                                        # ng lint web && ng lint ui
 npm run format                                      # prettier across apps + libs
 npm run storybook                                   # ng run ui:storybook (lib playground)
 npm run storybook:build                             # ng run ui:build-storybook
-npx vitest run apps/web/src/path/to/file.spec.ts    # single test
+npx ng test web --watch=false --include='apps/web/src/path/to/file.spec.ts'  # single spec (bare `vitest` can't resolve @portfolioai/ui)
 
 # Backend (from projects/backend/)
 ./gradlew bootRun | test | spotlessApply

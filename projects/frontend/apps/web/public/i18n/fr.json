@@ -61,7 +61,8 @@
           "title": "Passer {{count}} candidat en stats ?",
           "message": "{{tickers}} devient une stat à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
           "confirm": "Passer en stats"
-        }
+        },
+        "none": "Aucun candidat aujourd'hui — rien n'a passé le radar."
       },
       "session": {
         "title": "Séance",
@@ -77,13 +78,15 @@
         "overdue": "En retard : {{tickers}}.",
         "overdueMore": "En retard : {{tickers}} et {{count}} autres.",
         "overdueMoreOne": "En retard : {{tickers}} et {{count}} autre.",
-        "overdueTag": "{{count}} en retard"
+        "overdueTag": "{{count}} en retard",
+        "none": "Rien à compléter aujourd'hui."
       },
       "trades": {
         "title": "Saisir les trades du jour",
         "body": "Tu as tradé aujourd'hui ? Crée le trade depuis sa stat, puis ajoute exécutions et post-mortem.",
         "entered": "{{count}} trades saisis — {{tickers}}.",
-        "enteredOne": "{{count}} trade saisi — {{tickers}}."
+        "enteredOne": "{{count}} trade saisi — {{tickers}}.",
+        "none": "Pas de trade aujourd'hui."
       }
     },
     "actions": {
@@ -93,7 +96,10 @@
       "promoteRemainingOne": "Passer le dernier",
       "complete": "Compléter",
       "pickStat": "Choisir une stat",
-      "openJournal": "Ouvrir le journal"
+      "openJournal": "Ouvrir le journal",
+      "noCandidate": "Aucun candidat aujourd'hui",
+      "noTrade": "Pas de trade aujourd'hui",
+      "undo": "Annuler"
     },
     "account": {
       "title": "Compte",
@@ -120,7 +126,8 @@
     "snackbar": {
       "promoteSuccess": "{{count}} candidats passés en stats.",
       "promoteSuccessOne": "{{count}} candidat passé en stats.",
-      "promoteError": "Impossible de passer les candidats en stats. Réessaie."
+      "promoteError": "Impossible de passer les candidats en stats. Réessaie.",
+      "markError": "Impossible d'enregistrer la journée. Réessaie."
     }
   },
   "candidates": {
@@ -266,7 +273,8 @@
         "title": "Annuler le rapprochement ?",
         "message": "Le rapprochement du jour et la correction qu'il a produite seront supprimés, et le solde reviendra à sa valeur d'avant. À utiliser quand le montant saisi était une erreur.",
         "confirm": "Annuler le rapprochement"
-      }
+      },
+      "noGap": "Aucun écart"
     },
     "currentBalance": "Solde courant",
     "currency": {

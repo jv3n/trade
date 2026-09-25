@@ -78,6 +78,16 @@
       }}
     </span>
   </button>
+
+  <button
+    mat-stroked-button
+    type="button"
+    [disabled]="appBalance() === null || submitting()"
+    (click)="reconcileNoGap()"
+  >
+    <mat-icon>check</mat-icon>
+    <span>{{ 'account.reconciliation.noGap' | translate }}</span>
+  </button>
 </div>
 
 <p class="hint note">{{ 'account.reconciliation.note' | translate }}</p>

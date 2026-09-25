@@ -9,7 +9,7 @@
 // The four cells of the mockup : app balance, broker balance, gap, action.
 .reconciliation-form {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
   gap: s.$space-md;
   align-items: center;
 

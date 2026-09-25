@@ -74,7 +74,9 @@ monitoring / charts tab will sit between Journal and Account.
 
 **The morning reconciliation happens right inside step 1** : app balance, typed TradeZero balance,
 live gap, and a button to validate (or to create the correction when there is a gap). No need to
-open the account page in the morning.
+open the account page in the morning. Most mornings TradeZero shows the app's own balance : an
+**« Aucun écart »** button next to it reconciles at the computed balance in one click, nothing to
+type, no confirmation (a clean morning creates no correction) (#407).
 
 **Each step's title, text and action describe the same job** (#337) :
 
@@ -87,8 +89,30 @@ open the account page in the morning.
   the day's own stats are normal until the close. Its single action opens the stats sheet, where the
   session panel opens on the first stat to complete. The step is done once none is left, any day.
 
-**Screen** : [`aujourdhui.html`](aujourdhui.html). The mockup has an « 8h00 / 16h15 » toggle to see
-the page at two moments of the day.
+**A quiet day can be done too** (#407). Some days nothing on the radar is worth a candidate, and
+many days end without a trade : « nothing today » is an answer, not a step left undone.
+
+- **« Aucun candidat aujourd'hui »** on step 2, while the day has no candidate : steps 2 and 4 read
+  « nothing today ». Step 4 only while no stat of an earlier day is still to complete — an overdue
+  stat keeps it open, as usual.
+- **« Pas de trade aujourd'hui »** on step 5, while the day has no trade : step 5 reads « nothing
+  today ». Independent of the first — a day with stats and no trade is the common case.
+- **« Aucun écart »** on step 1, for the morning TradeZero shows the app's balance : a real, clean
+  reconciliation at the computed balance — step 1 is done (green check), not « nothing today ».
+  Same block on the account page. Undone with the reconciliation's own « Annuler ».
+- One click, no confirmation (nothing is created or deleted), and **« Annuler »** next to the state.
+  Capturing a candidate or entering a trade afterwards overrides the mark : the data wins. The
+  step keeps its « Saisir » / « Choisir une stat » link, so a day that turns out busy needs no undo.
+- The mark is **stored as declared**, never cleared by the data : deleting the only candidate or
+  trade of the day brings the « nothing today » state back, at the time of the original mark. On
+  purpose — the declaration was true, and the record of the quiet days stays what the user said.
+- The state is **neutral**, a grey dash in the dot — a status, not an outcome, so never green. A
+  step in that state counts as done in « n étapes faites sur 5 ».
+- The mark is **stored per day** (backend), so it survives a reload or another device, and the quiet
+  days stay on record for the stats later. Today only, for now.
+
+**Screen** : [`aujourdhui.html`](aujourdhui.html). The mockup has an « 8h00 / 16h15 / Jour calme »
+toggle to see the page at two moments of the day, and on a day with nothing to do.
 
 ---
 
@@ -524,7 +548,8 @@ table in its column headers, the KPIs, the reconciliation block and the « add a
 Converting the ledger would leave nothing left to reconcile the broker's own figures against.
 
 **Morning reconciliation** (every morning) : I type in the balance TradeZero displays, the app
-compares it with the computed one. No gap → the reconciliation is simply timestamped. A gap → a
+compares it with the computed one. No gap → the reconciliation is simply timestamped ; the
+**« Aucun écart »** button does it in one click without typing the balance (#407). A gap → a
 "correction" line puts the balance on the TradeZero figure. It catches whatever the adjusted P&L
 figures didn't cover (borrowing fees, rounding…).
 

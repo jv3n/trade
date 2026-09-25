@@ -13,6 +13,8 @@ import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { StatEntry } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
+import { TradingDayRepository } from '../../core/api/trading-day/trading-day.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { TodayPage, marketStatusAt } from './today-page';
 
@@ -26,6 +28,8 @@ import { TodayPage, marketStatusAt } from './today-page';
  *   stats sheet, no stat left to complete whatever its day, a trade entered (#337) ;
  * - step 4 splits the stats to complete between the day's and the **overdue** ones, which carry
  *   their date ;
+ * - a quiet day can be **settled** (#407) : « no candidate » empties steps 2 and 4, « no trade »
+ *   step 5, and a candidate or a trade entered afterwards beats the mark ;
  * - « promote the remaining » **confirms** before creating stats ;
  * - a failing call leaves the page standing — it is the home page, it can't go blank.
  *
@@ -41,6 +45,8 @@ describe('TodayPage', () => {
   let reconciledToday: boolean;
   let confirmed: boolean;
   let promoteDay: ReturnType<typeof vi.fn>;
+  let tradingDay: TradingDay;
+  let putTradingDay: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -52,6 +58,14 @@ describe('TodayPage', () => {
     reconciledToday = false;
     confirmed = true;
     promoteDay = vi.fn(() => of({ promoted: ['BNRG', 'MLGO'], skipped: [] }));
+    tradingDay = { tradingDate: new Date(), noCandidateAt: null, noTradeAt: null };
+    putTradingDay = vi.fn((_date: Date, marks: TradingDayMarks) =>
+      of({
+        tradingDate: new Date(),
+        noCandidateAt: marks.noCandidate ? new Date() : null,
+        noTradeAt: marks.noTrade ? new Date() : null,
+      }),
+    );
 
     TestBed.configureTestingModule({
       providers: [
@@ -87,6 +101,10 @@ describe('TodayPage', () => {
             findAll: () => of(page(todayTrades)),
             summary: () => of(makeJournalSummary()),
           } as unknown as JournalRepository,
+        },
+        {
+          provide: TradingDayRepository,
+          useValue: { get: () => of(tradingDay), put: putTradingDay } as TradingDayRepository,
         },
         { provide: StbToast, useValue: { success: vi.fn(), error: vi.fn() } },
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
@@ -270,6 +288,123 @@ describe('TodayPage', () => {
 
     expect(page.doneCount()).toBe(5);
     expect(Object.values(page.stepStates())).not.toContain('current');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Nothing today (#407)
+  // ---------------------------------------------------------------------------
+
+  it('« no candidate today » settles steps 2 and 4 and moves the day on to the session', () => {
+    reconciledToday = true;
+    tradingDay = { ...tradingDay, noCandidateAt: new Date() };
+    const page = setup();
+
+    expect(page.stepStates().candidates).toBe('none');
+    expect(page.stepStates().stats).toBe('none');
+    expect(page.stepStates().session).toBe('current');
+  });
+
+  it('an overdue stat keeps step 4 open on a day with no candidate', () => {
+    reconciledToday = true;
+    tradingDay = { ...tradingDay, noCandidateAt: new Date() };
+    statsToComplete = [makeStat({ tradeDate: new Date(2026, 8, 17) })];
+    const page = setup();
+
+    expect(page.stepStates().candidates).toBe('none');
+    expect(page.stepStates().stats).not.toBe('none');
+  });
+
+  it('a candidate captured after the mark puts step 2 back on its normal state', () => {
+    reconciledToday = true;
+    tradingDay = { ...tradingDay, noCandidateAt: new Date() };
+    candidates = [makeCandidate({ promoted: false })];
+    const page = setup();
+
+    expect(page.noCandidateToday()).toBe(false);
+    expect(page.stepStates().candidates).toBe('current');
+  });
+
+  // The common case : stats captured and completed, and no trade taken.
+  it('« no trade today » settles step 5 alone', () => {
+    tradingDay = { ...tradingDay, noTradeAt: new Date() };
+    const page = setup();
+
+    expect(page.stepStates().trades).toBe('none');
+    expect(page.stepStates().candidates).not.toBe('none');
+  });
+
+  it('a trade entered after the mark wins over it', () => {
+    tradingDay = { ...tradingDay, noTradeAt: new Date() };
+    todayTrades = [makeTrade()];
+    const page = setup();
+
+    expect(page.stepStates().trades).toBe('done');
+  });
+
+  it('a quiet day reads 5 of 5 once reconciled and New York has closed', () => {
+    reconciledToday = true;
+    tradingDay = { ...tradingDay, noCandidateAt: new Date(), noTradeAt: new Date() };
+    vi.setSystemTime(new Date('2026-09-18T21:00:00Z')); // 17:00 NY
+    const page = setup();
+
+    expect(page.doneCount()).toBe(5);
+    expect(Object.values(page.stepStates())).not.toContain('current');
+  });
+
+  it('setting one mark writes the other back as stored', () => {
+    tradingDay = { ...tradingDay, noCandidateAt: new Date() };
+    const page = setup();
+
+    page.setMark('noTrade', true);
+
+    expect(putTradingDay).toHaveBeenCalledWith(expect.any(Date), {
+      noCandidate: true,
+      noTrade: true,
+    });
+    expect(page.stepStates().trades).toBe('none');
+  });
+
+  it('undoing a mark puts the step back to do', () => {
+    reconciledToday = true;
+    tradingDay = { ...tradingDay, noCandidateAt: new Date() };
+    const page = setup();
+
+    page.setMark('noCandidate', false);
+
+    expect(putTradingDay).toHaveBeenCalledWith(expect.any(Date), {
+      noCandidate: false,
+      noTrade: false,
+    });
+    expect(page.stepStates().candidates).toBe('current');
+  });
+
+  it('a failing read of the marks leaves the day on its data alone', () => {
+    TestBed.overrideProvider(TradingDayRepository, {
+      useValue: {
+        get: () => throwError(() => new Error('500')),
+        put: putTradingDay,
+      } as TradingDayRepository,
+    });
+    reconciledToday = true;
+    const page = setup();
+
+    expect(page.tradingDay()).toBeNull();
+    expect(page.stepStates().candidates).toBe('current');
+  });
+
+  // Rebuilt from an unknown state, the PUT would have cleared a mark stored on the server.
+  it('writes no mark while the stored ones are unknown', () => {
+    TestBed.overrideProvider(TradingDayRepository, {
+      useValue: {
+        get: () => throwError(() => new Error('500')),
+        put: putTradingDay,
+      } as TradingDayRepository,
+    });
+    const page = setup();
+
+    page.setMark('noTrade', true);
+
+    expect(putTradingDay).not.toHaveBeenCalled();
   });
 
   // ---------------------------------------------------------------------------

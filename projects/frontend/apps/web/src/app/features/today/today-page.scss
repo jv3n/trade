@@ -128,6 +128,13 @@
   color: var(--color-success);
 }
 
+// Nothing today (#407) : a status, not an outcome — neutral, never green.
+.step--none .step-dot {
+  border-color: transparent;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
 .step--current .step-dot {
   border-color: var(--color-accent);
   color: var(--color-accent);
@@ -135,6 +142,7 @@
 }
 
 .step--done .step-title,
+.step--none .step-title,
 .step--todo .step-title {
   color: var(--color-text-muted);
 }
@@ -174,6 +182,10 @@
 .step--done .step-inline,
 .step--todo .step-inline {
   display: none;
+}
+
+.undo {
+  margin-left: s.$space-xs;
 }
 
 .step-action {

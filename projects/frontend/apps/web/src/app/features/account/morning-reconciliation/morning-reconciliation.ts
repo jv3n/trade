@@ -154,6 +154,17 @@ export class MorningReconciliation {
       .subscribe();
   }
 
+  /**
+   * « Aucun écart » (#407) — most mornings TradeZero shows the app's own balance : reconciles at it
+   * without typing it back. A zero gap, so no correction and no confirmation.
+   */
+  reconcileNoGap(): void {
+    const balance = this.appBalance();
+    if (balance === null) return;
+    this.brokerBalance.set(balance);
+    this.submit();
+  }
+
   submit(): void {
     const broker = this.brokerBalance();
     // No app balance = no gap to show, so a submit here would slip past the confirmation below and
