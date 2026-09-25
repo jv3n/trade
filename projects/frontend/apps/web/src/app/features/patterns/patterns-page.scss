@@ -1,0 +1,64 @@
+// « Patterns » — after `mockup/patterns.html` : a tab per folder, a full-width accordion of one panel
+// per file in each. The rendered Markdown is styled by the lib's global `.prose`.
+
+@use 'sizes' as s;
+
+.sheets {
+  margin-top: s.$space-lg;
+}
+
+.tab-count {
+  margin-left: s.$space-xs;
+  font-size: s.$font-2xs;
+  color: var(--color-text-faint);
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: s.$space-lg;
+  width: 100%;
+}
+
+.sheet-header__main {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-xs;
+  min-width: 0;
+}
+
+.sheet-title {
+  font-size: s.$font-md;
+  font-weight: 600;
+}
+
+.sheet-summary {
+  font-size: s.$font-sm;
+  color: var(--color-text-muted);
+}
+
+// A file the build did not ship : a warning, so amber.
+.sheet-summary--unreadable {
+  color: var(--color-warning);
+}
+
+.sheet-revised {
+  display: inline-flex;
+  align-items: center;
+  gap: s.$space-xs;
+  flex-shrink: 0;
+  font-size: s.$font-xs;
+  color: var(--color-text-faint);
+
+  mat-icon {
+    font-size: s.$icon-xs;
+    width: s.$icon-xs;
+    height: s.$icon-xs;
+  }
+}
+
+// A sheet still to write (SIV) : dashed, like the mockup's.
+.sheet--unwritten {
+  border-style: dashed;
+}

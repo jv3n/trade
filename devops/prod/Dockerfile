@@ -29,8 +29,11 @@ WORKDIR /app/frontend
 COPY projects/frontend/package.json projects/frontend/package-lock.json projects/frontend/.npmrc ./
 RUN npm ci --no-audit --no-fund --prefer-offline
 
-# Source + build
+# Source + build. The prebuild copies the sheets from the repo's `docs/pattern` and `docs/notes`
+# (#419, `apps/web/tools/copy-docs.mjs`) — `/docs/…` seen from this workspace.
 COPY projects/frontend/ ./
+COPY docs/pattern/ /docs/pattern/
+COPY docs/notes/ /docs/notes/
 RUN npm run build
 
 # Angular 17+ output layout: dist/<app-name>/browser/

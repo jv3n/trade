@@ -1,0 +1,68 @@
+<div class="page page--full">
+  <header class="content-header">
+    <h2>{{ 'patternSheets.title' | translate }}</h2>
+    <p>{{ 'patternSheets.subtitle' | translate }}</p>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="20" />
+      <span>{{ 'patternSheets.loading' | translate }}</span>
+    </div>
+  } @else {
+    <mat-tab-group
+      [selectedIndex]="tab()"
+      (selectedIndexChange)="tab.set($event)"
+      (click)="followSheetLink($event)"
+    >
+      @for (shelf of tabs; track shelf) {
+        <mat-tab>
+          <ng-template mat-tab-label>
+            {{ 'patternSheets.tabs.' + shelf | translate }}
+            <span class="tab-count">{{ sheets()[shelf].length }}</span>
+          </ng-template>
+          <!-- The rendered Markdown goes through Angular's sanitizer via [innerHTML]. -->
+          <mat-accordion multi class="sheets">
+            @for (sheet of sheets()[shelf]; track sheet.file) {
+              <mat-expansion-panel
+                togglePosition="before"
+                [id]="anchor(sheet)"
+                [class.sheet--unwritten]="sheet.revisedOn === null"
+                [expanded]="open().has(anchor(sheet))"
+                (opened)="setOpen(anchor(sheet), true)"
+                (closed)="setOpen(anchor(sheet), false)"
+              >
+                <mat-expansion-panel-header>
+                  <div class="sheet-header">
+                    <div class="sheet-header__main">
+                      <span class="sheet-title">{{ sheet.title }}</span>
+                      @if (sheet.unreadable) {
+                        <span class="sheet-summary sheet-summary--unreadable">{{
+                          'patternSheets.unreadable' | translate
+                        }}</span>
+                      } @else {
+                        <span class="sheet-summary" [innerHTML]="sheet.summaryHtml"></span>
+                      }
+                    </div>
+                    <span class="sheet-revised">
+                      <mat-icon>history</mat-icon>
+                      @if (sheet.revisedOn; as revisedOn) {
+                        {{
+                          'patternSheets.revisedOn'
+                            | translate: { date: (revisedOn | date: 'shortDate') }
+                        }}
+                      } @else {
+                        {{ 'patternSheets.neverRevised' | translate }}
+                      }
+                    </span>
+                  </div>
+                </mat-expansion-panel-header>
+                <div class="prose" [innerHTML]="sheet.bodyHtml"></div>
+              </mat-expansion-panel>
+            }
+          </mat-accordion>
+        </mat-tab>
+      }
+    </mat-tab-group>
+  }
+</div>

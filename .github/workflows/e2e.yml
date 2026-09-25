@@ -112,7 +112,8 @@ jobs:
 
       - name: Start the frontend
         working-directory: projects/frontend
-        run: nohup npx ng serve web --port 4200 > ../../frontend.log 2>&1 &
+        # `npm start`, not `ng serve` : its prestart copies the pattern sheets the app serves (#419).
+        run: nohup npm start -- --port 4200 > ../../frontend.log 2>&1 &
 
       - name: Wait for the stack
         run: |

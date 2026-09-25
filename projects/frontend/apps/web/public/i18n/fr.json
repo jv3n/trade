@@ -28,6 +28,7 @@
     "candidates": "Candidats",
     "stats": "Stats",
     "calculator": "Calculatrice",
+    "patterns": "Patterns",
     "lexicon": "Lexique",
     "settings": "Paramètres"
   },
@@ -726,6 +727,18 @@
       "average": "Prix moyen",
       "total": "Position totale (actions)"
     }
+  },
+  "patternSheets": {
+    "title": "Patterns",
+    "subtitle": "Les fiches des patterns et les notes de trading, à relire avant la séance — telles qu'écrites dans le dépôt.",
+    "tabs": {
+      "pattern": "Patterns",
+      "notes": "Notes"
+    },
+    "revisedOn": "Révisée le {{date}}",
+    "neverRevised": "Jamais révisée",
+    "loading": "Chargement des fiches…",
+    "unreadable": "Cette fiche n'a pas pu être lue."
   },
   "lexicon": {
     "title": "Lexique trading",

@@ -117,6 +117,15 @@
         </a>
         <a
           mat-list-item
+          routerLink="/patterns"
+          routerLinkActive="sidenav-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon>school</mat-icon>
+          <span matListItemTitle>{{ 'nav.patterns' | translate }}</span>
+        </a>
+        <a
+          mat-list-item
           routerLink="/lexicon"
           routerLinkActive="sidenav-active"
           [routerLinkActiveOptions]="{ exact: true }"

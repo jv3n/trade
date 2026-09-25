@@ -1,0 +1,80 @@
+// Rendered Markdown — a document the app shows as written (the pattern sheets, #419). Injected
+// HTML carries no component attribute, so its styling has to be global : scoped by `.prose`.
+
+@use '../sizes' as s;
+
+.prose {
+  font-size: s.$font-sm;
+  line-height: 1.6;
+  color: var(--color-text);
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  h2,
+  h3 {
+    margin: s.$space-lg 0 s.$space-sm;
+    font-size: s.$font-md;
+    font-weight: 600;
+  }
+
+  p,
+  ul,
+  ol {
+    margin: 0 0 s.$space-md;
+  }
+
+  ul,
+  ol {
+    padding-left: s.$space-lg;
+  }
+
+  li + li {
+    margin-top: s.$space-xs;
+  }
+
+  hr {
+    margin: s.$space-lg 0;
+    border: 0;
+    border-top: 1px solid var(--color-border-soft);
+  }
+
+  blockquote {
+    margin: 0 0 s.$space-md;
+    padding-left: s.$space-md;
+    border-left: 2px solid var(--color-border-strong);
+    color: var(--color-text-muted);
+  }
+
+  code {
+    padding: 0 s.$space-xs;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+    font-size: 0.95em;
+  }
+
+  a {
+    color: var(--color-accent);
+  }
+
+  table {
+    width: 100%;
+    margin: 0 0 s.$space-md;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: s.$space-sm s.$space-md;
+    border-bottom: 1px solid var(--color-border-soft);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-size: s.$font-xs;
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+}

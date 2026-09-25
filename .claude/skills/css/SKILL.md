@@ -108,6 +108,7 @@ Pixels, not `rem` : the app is dense and the type steps are one pixel apart.
 | `.form-stack` | `components/_form.scss` | a column of form fields (a dialog's `mat-dialog-content`) — fields reserve no subscript space, so they need it |
 | `.error-banner`, `.info-banner`, `.warn-banner` | `components/_banners.scss` | page-level messages |
 | `.loading-state`, `.empty-state` | `components/_banners.scss` | a list that loads or has nothing |
+| `.prose` | `components/_prose.scss` | rendered Markdown shown as written (the pattern sheets and notes) — injected HTML takes no component style, so it is global |
 
 A `mat-card appearance="outlined"` is already restyled by the lib (surface, border, radius) : use
 it when Material's card fits, `.card` otherwise, and give its heading `.card-title`.

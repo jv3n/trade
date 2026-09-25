@@ -15,6 +15,8 @@ import { HttpJournalRepository } from './api/journal/adapters/journal.http';
 import { JournalRepository } from './api/journal/journal.repository';
 import { HttpLexiconRepository } from './api/lexicon/adapters/lexicon.http';
 import { LexiconRepository } from './api/lexicon/lexicon.repository';
+import { HttpPatternsRepository } from './api/patterns/adapters/patterns.http';
+import { PatternsRepository } from './api/patterns/patterns.repository';
 import { HttpStatsRepository } from './api/stats/adapters/stats.http';
 import { StatsRepository } from './api/stats/stats.repository';
 import { HttpTradingDayRepository } from './api/trading-day/adapters/trading-day.http';
@@ -36,6 +38,7 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: StatsRepository, useClass: HttpStatsRepository },
     { provide: TradingDayRepository, useClass: HttpTradingDayRepository },
     { provide: LexiconRepository, useClass: HttpLexiconRepository },
+    { provide: PatternsRepository, useClass: HttpPatternsRepository },
     { provide: AppInfoRepository, useClass: HttpAppInfoRepository },
   ]);
 }

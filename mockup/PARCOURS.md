@@ -426,6 +426,35 @@ been used for a few days.
 
 ---
 
+## Reference — Patterns (review sheets)
+
+Outside the daily flow, next to the lexicon : the **pattern sheets** and the **trading notes**, to
+reread before the session. **One source** : the app shows the files of `docs/pattern/` and
+`docs/notes/` (#417) as they are written — there is no copy of them in the database and no editing in
+the app. Revising a sheet means editing its file.
+
+- **Two tabs** (Material tabs) : **Patterns** — GUS, DT, SIR, SIV and the penny break (PB), the files
+  of `docs/pattern/` — and **Notes** — the execution signals, the four sellers and the stop rule,
+  `docs/notes/`, what is not a pattern. Each tab shows its count.
+- **In each tab, an accordion, full width, one expansion panel per file**. Several panels open at
+  once ; GUS opens by default.
+- **Collapsed**, a panel reads the file's own **title**, its **summary** (the opening quote) and its
+  **revision date** (the « Last revised » line) — « Révisée le 25/09/2026 », « Jamais révisée » when
+  the file has none (SIV).
+- **Expanded** : the rest of the file, rendered — tables, lists, emphasis.
+- **In the interface language** : every file has a French twin (`GUS.md` / `GUS.fr.md`) ; the page
+  shows the one matching the language set in the preferences.
+- **Links between files follow** : a link from a sheet to a note switches to the Notes tab and opens
+  that panel, and the other way round. The four sellers are also in the lexicon (« Four Sellers »).
+- The files ship **with the app build** (copied into `public/docs/` before each start and build) : a
+  sheet updated in the repo shows after the next deploy.
+- The design system has neither tabs nor an expansion panel yet : this adds `StbTabsModule` and
+  `StbExpansionModule` to `libs/ui`, like every other Material primitive.
+
+**Screen** : [`patterns.html`](patterns.html).
+
+---
+
 ## Reference — Lexicon ✅
 
 Outside the daily flow : the glossary of the trading vocabulary (GUS, DT, float, locate, SSR, LOD,
