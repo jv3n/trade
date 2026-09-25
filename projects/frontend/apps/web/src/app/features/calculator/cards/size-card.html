@@ -1,0 +1,33 @@
+<!-- The risk on a row of its own : with its unit inside, it needs a field's full width (#408). -->
+<div class="calc-row">
+  <app-calc-field
+    field="sizeRisk"
+    label="calculator.fields.risk"
+    decimals="2"
+    suffix="account.usdUnit"
+  />
+</div>
+<div class="calc-row">
+  <app-calc-field field="sizeEntry" label="calculator.fields.entry" decimals="4" />
+  <app-calc-field field="sizeStop" label="calculator.fields.stop" decimals="4" />
+</div>
+@let s = size();
+<app-calc-result
+  label="calculator.size.shares"
+  [text]="s ? (s.shares | number: '1.0-0') : '—'"
+  [value]="s?.shares ?? null"
+  digits="0"
+/>
+<app-calc-result
+  label="calculator.size.realRisk"
+  [text]="s ? (s.risk | number: '1.2-2') + ('account.usdSuffix' | translate) : '—'"
+  [value]="s?.risk ?? null"
+  digits="2"
+/>
+@if (issue(); as problem) {
+  <p class="calc-error">
+    {{
+      (problem === 'too-far' ? 'calculator.size.tooFar' : 'calculator.size.wrongSide') | translate
+    }}
+  </p>
+}

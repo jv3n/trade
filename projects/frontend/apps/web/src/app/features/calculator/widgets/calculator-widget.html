@@ -1,0 +1,47 @@
+<section
+  class="calc-widget"
+  cdkDrag
+  cdkDragBoundary=".calc-widgets"
+  [cdkDragDisabled]="detached()"
+  [cdkDragFreeDragPosition]="position()"
+  (cdkDragEnded)="dropped($event)"
+  [class.calc-widget--detached]="detached()"
+  [style.z-index]="widget().z"
+  role="dialog"
+  [attr.aria-label]="calculator().title | translate"
+  tabindex="-1"
+  (pointerdown)="focus()"
+  (keydown.escape)="close()"
+>
+  <header class="calc-widget__header" cdkDragHandle>
+    <mat-icon class="calc-widget__grip" aria-hidden="true">drag_indicator</mat-icon>
+    <span class="calc-widget__title">{{ calculator().title | translate }}</span>
+    @if (canDetach && !detached()) {
+      <button
+        mat-icon-button
+        stbSize="sm"
+        type="button"
+        (click)="detach()"
+        [matTooltip]="'calculator.widget.detach' | translate"
+        [attr.aria-label]="'calculator.widget.detach' | translate"
+      >
+        <mat-icon>picture_in_picture_alt</mat-icon>
+      </button>
+    }
+    <button
+      mat-icon-button
+      stbSize="sm"
+      type="button"
+      (click)="close()"
+      [matTooltip]="'calculator.widget.close' | translate"
+      [matTooltipDisabled]="detached()"
+      [attr.aria-label]="'calculator.widget.close' | translate"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+  <div class="calc-widget__body">
+    <p class="calc-widget__description">{{ calculator().description | translate }}</p>
+    <ng-container *ngComponentOutlet="calculator().card" />
+  </div>
+</section>

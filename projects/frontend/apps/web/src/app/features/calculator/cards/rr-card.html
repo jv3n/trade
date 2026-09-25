@@ -1,0 +1,47 @@
+<div class="calc-row">
+  <app-calc-field field="rrPrice" label="calculator.fields.currentPrice" decimals="4" />
+  <app-calc-field field="rrStop" label="calculator.fields.stop" decimals="4" />
+  <app-calc-field field="rrTarget" label="calculator.fields.target" decimals="4" />
+</div>
+@let up = toStop();
+<app-calc-result
+  label="calculator.rr.toStop"
+  [text]="
+    up
+      ? '+' +
+        (up.percent | number: '1.1-1') +
+        ' % · ' +
+        (up.dollars | price) +
+        ('account.usdSuffix' | translate)
+      : '—'
+  "
+  [value]="up?.dollars ?? null"
+  [digits]="priceDigits(up?.dollars ?? null)"
+/>
+@let down = toTarget();
+<app-calc-result
+  label="calculator.rr.toTarget"
+  [text]="
+    down
+      ? (down.percent | number: '1.1-1') +
+        ' % · ' +
+        (down.dollars | price) +
+        ('account.usdSuffix' | translate)
+      : '—'
+  "
+  [value]="down?.dollars ?? null"
+  [digits]="priceDigits(down?.dollars ?? null)"
+/>
+@let r = ratio();
+<app-calc-result
+  label="calculator.rr.ratio"
+  [text]="r !== null ? '1 : ' + (r | number: '1.1-1') : '—'"
+  [value]="r"
+  digits="1"
+/>
+@if (stopWrongSide()) {
+  <p class="calc-error">{{ 'calculator.rr.stopWrongSide' | translate }}</p>
+}
+@if (targetWrongSide()) {
+  <p class="calc-error">{{ 'calculator.rr.targetWrongSide' | translate }}</p>
+}

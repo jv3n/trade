@@ -16,6 +16,8 @@ import { filter, map, startWith } from 'rxjs/operators';
 import { AuthService } from './core/app-state/auth.service';
 import { LanguageService } from './core/app-state/language.service';
 import { ThemeService } from './core/app-state/theme.service';
+import { CalculatorLauncher } from './features/calculator/widgets/calculator-launcher';
+import { CalculatorWidgetLayer } from './features/calculator/widgets/calculator-widget-layer';
 
 /**
  * Application shell — top toolbar + left sidenav + router outlet (v1.0 pivot layout, cf.
@@ -48,6 +50,8 @@ import { ThemeService } from './core/app-state/theme.service';
     StbSidenavModule,
     StbListModule,
     TranslatePipe,
+    CalculatorLauncher,
+    CalculatorWidgetLayer,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',

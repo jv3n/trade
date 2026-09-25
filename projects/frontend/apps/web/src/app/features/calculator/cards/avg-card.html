@@ -1,0 +1,31 @@
+<div class="calc-row">
+  <app-calc-field
+    field="avgShares"
+    label="calculator.fields.firstShares"
+    decimals="0"
+    suffix="calculator.units.shares"
+  />
+  <app-calc-field field="avgPrice" label="calculator.fields.price" decimals="4" />
+</div>
+<div class="calc-row">
+  <app-calc-field
+    field="avgAddShares"
+    label="calculator.fields.addShares"
+    decimals="0"
+    suffix="calculator.units.shares"
+  />
+  <app-calc-field field="avgAddPrice" label="calculator.fields.price" decimals="4" />
+</div>
+@let a = scaleIn();
+<app-calc-result
+  label="calculator.avg.average"
+  [text]="a ? (a.average | price) : '—'"
+  [value]="a?.average ?? null"
+  [digits]="priceDigits(a?.average ?? null)"
+/>
+<app-calc-result
+  label="calculator.avg.total"
+  [text]="a ? (a.shares | number: '1.0-0') : '—'"
+  [value]="a?.shares ?? null"
+  digits="0"
+/>
