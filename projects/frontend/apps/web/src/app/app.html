@@ -15,6 +15,7 @@
     <span class="toolbar-spacer"></span>
 
     @if (auth.isAuthenticated()) {
+      <app-calculator-launcher />
       <button
         mat-button
         type="button"
@@ -104,17 +105,8 @@
           <span matListItemTitle>{{ 'nav.account' | translate }}</span>
         </a>
       </mat-nav-list>
-      <!-- Pinned to the bottom — tools, a reference and a back-office, not part of the daily flow. -->
+      <!-- Pinned to the bottom — a reference and a back-office, not part of the daily flow. -->
       <mat-nav-list class="sidenav-list sidenav-list--footer">
-        <a
-          mat-list-item
-          routerLink="/calculator"
-          routerLinkActive="sidenav-active"
-          [routerLinkActiveOptions]="{ exact: true }"
-        >
-          <mat-icon matListItemIcon>calculate</mat-icon>
-          <span matListItemTitle>{{ 'nav.calculator' | translate }}</span>
-        </a>
         <a
           mat-list-item
           routerLink="/patterns"
@@ -145,4 +137,9 @@
       </main>
     </mat-sidenav-content>
   </mat-sidenav-container>
+
+  <!-- The floating calculators (#421), over every page. -->
+  @if (auth.isAuthenticated()) {
+    <app-calculator-widget-layer />
+  }
 }

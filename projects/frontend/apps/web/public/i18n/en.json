@@ -27,7 +27,6 @@
     "journal": "Journal",
     "candidates": "Candidates",
     "stats": "Stats",
-    "calculator": "Calculator",
     "patterns": "Patterns",
     "lexicon": "Lexicon",
     "settings": "Settings"
@@ -675,34 +674,33 @@
     }
   },
   "calculator": {
-    "title": "Calculator",
-    "subtitle": "The small calculations you redo by hand, in session or not. Nothing is saved: the values last for the visit, a reload clears them.",
     "copy": "Copy",
     "fields": {
       "from": "From",
       "to": "To",
       "price": "Price",
-      "percent": "Move (%)",
-      "risk": "Risk (USD)",
+      "percent": "Move",
+      "risk": "Risk",
       "entry": "Entry",
       "stop": "Stop",
       "cover": "Cover",
       "shares": "Shares",
-      "fees": "Fees (USD, optional)",
+      "fees": "Fees",
       "currentPrice": "Current price",
       "target": "Target",
-      "firstShares": "First entry — shares",
-      "addShares": "Add — shares"
+      "firstShares": "First entry",
+      "addShares": "Add",
+      "optional": "optional"
     },
     "move": {
       "title": "Percent move",
-      "hint": "from one price to another, or the reverse",
+      "description": "How far a price moved, in %, from one price to another — or the reverse: the price a given move leads to.",
       "result": "Move",
       "price": "Resulting price"
     },
     "size": {
       "title": "Position size",
-      "hint": "short: the stop above the entry",
+      "description": "How many shares to short so that a stop above the entry never costs more than the risk you chose.",
       "shares": "Shares (rounded down)",
       "realRisk": "Risk actually taken",
       "wrongSide": "On a short, the stop goes above the entry.",
@@ -710,12 +708,13 @@
     },
     "pnl": {
       "title": "Short P&L",
+      "description": "The result of a short from entry to cover, in dollars and in % of the position, fees included.",
       "result": "P&L",
       "percent": "Return on the position"
     },
     "rr": {
       "title": "Distance and R:R",
-      "hint": "before the entry",
+      "description": "Before entering: the distance to the stop and to the target, and the risk / reward ratio between them.",
       "toStop": "To the stop",
       "toTarget": "To the target",
       "ratio": "R:R",
@@ -724,8 +723,21 @@
     },
     "avg": {
       "title": "Average price after a scale-in",
+      "description": "The new average price and the whole position after adding to a trade.",
       "average": "Average price",
       "total": "Total position (shares)"
+    },
+    "units": {
+      "percent": "%",
+      "shares": "shares"
+    },
+    "launcher": {
+      "open": "Calculators",
+      "isOpen": "open"
+    },
+    "widget": {
+      "detach": "Detach into a window",
+      "close": "Close"
     }
   },
   "patternSheets": {

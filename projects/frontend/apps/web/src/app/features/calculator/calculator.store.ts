@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-/** Every field of the calculator page, card by card (#388). */
+/** Every field of the calculators, card by card (#388). */
 export interface CalculatorValues {
   moveFrom: number | null;
   moveTo: number | null;
@@ -46,8 +46,9 @@ const EMPTY: CalculatorValues = {
 };
 
 /**
- * What is typed in the calculator, held in memory at the root so it survives a trip to another page
- * and back. Nothing is persisted : a reload starts from empty, on purpose (#388).
+ * What is typed in the calculators, held in memory at the root so it survives a widget being closed
+ * and opened again, or a trip to another page. Nothing is persisted : a reload starts from empty, on
+ * purpose (#388).
  */
 @Injectable({ providedIn: 'root' })
 export class CalculatorStore {

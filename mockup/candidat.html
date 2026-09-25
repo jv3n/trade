@@ -109,6 +109,134 @@
           grid-column: span 4;
         }
       }
+
+      /* #421 — le lanceur de calculatrices (barre du haut) et un widget flottant. */
+      .topbar {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        margin: -8px 0 12px;
+      }
+
+      .launcher {
+        position: relative;
+      }
+
+      .launcher-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        z-index: 30;
+        min-width: 240px;
+        padding: 6px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .launcher-menu button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 10px;
+        background: none;
+        border: 0;
+        border-radius: var(--radius-sm);
+        color: var(--text);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .launcher-menu button:hover {
+        background: var(--surface-2);
+      }
+
+      .launcher-menu .open-tag {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--accent);
+      }
+
+      .calc-widget {
+        position: fixed;
+        z-index: 20;
+        width: 380px;
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .calc-widget header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 8px 8px 12px;
+        border-bottom: 1px solid var(--border);
+        cursor: grab;
+        user-select: none;
+      }
+
+      .calc-widget header .title {
+        flex: 1;
+        font-weight: 600;
+        font-size: 13px;
+      }
+
+      .calc-widget header .icon.grip {
+        color: var(--text-faint);
+      }
+
+      .calc-widget .body {
+        padding: 12px;
+      }
+
+      .calc-widget .row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .calc-widget .affix {
+        position: relative;
+      }
+
+      .calc-widget .affix .input {
+        width: 100%;
+        padding-right: 40px;
+      }
+
+      .calc-widget .affix span {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        color: var(--text-faint);
+      }
+
+      .calc-widget .result {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 6px 6px 6px 10px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-2);
+        font-size: 12px;
+      }
+
+      .calc-widget .result output {
+        margin-left: auto;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        font-size: 13px;
+      }
     </style>
   </head>
   <body>
@@ -121,13 +249,26 @@
         <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
         <a class="nav-link" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
         <div class="nav-spacer"></div>
-        <a class="nav-link" href="calculatrice.html"><span class="nav-icon icon">calculate</span>Calculatrice</a>
         <a class="nav-link" href="patterns.html"><span class="nav-icon icon">school</span>Patterns</a>
         <a class="nav-link" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
         <a class="nav-link" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
       </aside>
 
       <main class="main">
+        <!-- #421 : le lanceur, dans la barre du haut de l'app (à côté du compte) — sur chaque page. -->
+        <div class="topbar">
+          <div class="launcher">
+            <button class="btn btn-sm" data-toggle-launcher><span class="icon">calculate</span> Calculatrices</button>
+            <div class="launcher-menu" hidden>
+              <button><span class="icon">percent</span> Variation en %</button>
+              <button><span class="icon">straighten</span> Taille de position <span class="open-tag">ouverte</span></button>
+              <button><span class="icon">payments</span> P&amp;L du short</button>
+              <button><span class="icon">compare_arrows</span> Distance et R:R</button>
+              <button><span class="icon">stacked_line_chart</span> Prix moyen après un renfort</button>
+            </div>
+          </div>
+        </div>
+
         <header class="page-header">
           <div>
             <h1>Candidats</h1>
@@ -406,6 +547,27 @@
           Un push visé au-delà de 100 % est gardé mais passe en orange (« Push inhabituel ») — une small cap peut pousser de 200 %
           et plus ; au-delà de 1000 %, c'est une faute de frappe et il est ramené à 1000.
         </p>
+
+        <!-- #421 : une calculatrice flottante, déplaçable par son en-tête, au-dessus de la page.
+             « Détacher » l'envoie dans sa propre fenêtre toujours au premier plan (Document PiP). -->
+        <section class="calc-widget" role="dialog" aria-label="Taille de position" style="right: 32px; bottom: 32px">
+          <header>
+            <span class="icon grip">drag_indicator</span>
+            <span class="title">Taille de position</span>
+            <button class="btn btn-sm btn-icon" title="Détacher dans une fenêtre"><span class="icon">picture_in_picture_alt</span></button>
+            <button class="btn btn-sm btn-icon" title="Fermer" data-close-widget><span class="icon">close</span></button>
+          </header>
+          <div class="body">
+            <p class="muted" style="margin: 0 0 12px; font-size: 12px">Combien d'actions shorter pour qu'un stop placé au-dessus de l'entrée ne coûte jamais plus que le risque choisi.</p>
+            <div class="field"><label>Risque</label><div class="affix"><input class="input" value="100" /><span>$ US</span></div></div>
+            <div class="row" style="margin-top: 8px">
+              <div class="field"><label>Entrée</label><input class="input" value="3,23" /></div>
+              <div class="field"><label>Stop</label><input class="input" value="3,45" /></div>
+            </div>
+            <div class="result"><span>Actions (arrondi à l'unité inférieure)</span><output>454</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <div class="result"><span>Risque réellement pris</span><output>99,88 $ US</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -507,6 +669,37 @@
             if (parse(input.value) === previous) input.value = b.dataset.pct.replace('.', ',');
             update(tr);
           });
+        });
+      })();
+    </script>
+    <script>
+      // Maquette #421 : ouvrir le menu du lanceur, déplacer le widget par son en-tête, le fermer.
+      (function () {
+        document.addEventListener('click', (event) => {
+          const toggle = event.target.closest('[data-toggle-launcher]');
+          const menu = document.querySelector('.launcher-menu');
+          if (toggle) menu.hidden = !menu.hidden;
+          else if (!event.target.closest('.launcher-menu')) menu.hidden = true;
+          if (event.target.closest('[data-close-widget]')) event.target.closest('.calc-widget').hidden = true;
+        });
+        const widget = document.querySelector('.calc-widget');
+        const header = widget.querySelector('header');
+        header.addEventListener('pointerdown', (event) => {
+          if (event.target.closest('button')) return;
+          const box = widget.getBoundingClientRect();
+          const dx = event.clientX - box.left;
+          const dy = event.clientY - box.top;
+          const move = (e) => {
+            const x = Math.min(Math.max(0, e.clientX - dx), window.innerWidth - box.width);
+            const y = Math.min(Math.max(0, e.clientY - dy), window.innerHeight - box.height);
+            Object.assign(widget.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' });
+          };
+          const stop = () => {
+            document.removeEventListener('pointermove', move);
+            document.removeEventListener('pointerup', stop);
+          };
+          document.addEventListener('pointermove', move);
+          document.addEventListener('pointerup', stop);
         });
       })();
     </script>

@@ -1,0 +1,36 @@
+@use 'sizes' as s;
+
+:host {
+  display: block;
+  margin-top: s.$space-sm;
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: s.$space-sm;
+  padding: s.$space-xs s.$space-xs s.$space-xs s.$space-md;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+
+  &__label {
+    font-size: s.$font-xs;
+    color: var(--color-text-muted);
+  }
+
+  &__value {
+    margin-left: auto;
+    font-size: s.$font-md;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// Green / red : an outcome, the one case the colour rule reserves the pair for.
+.profit-positive {
+  color: var(--color-success);
+}
+
+.profit-negative {
+  color: var(--color-danger);
+}

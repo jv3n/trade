@@ -1,0 +1,35 @@
+<div class="calc-row">
+  <app-calc-field field="pnlEntry" label="calculator.fields.entry" decimals="4" />
+  <app-calc-field field="pnlCover" label="calculator.fields.cover" decimals="4" />
+</div>
+<div class="calc-row">
+  <app-calc-field field="pnlShares" label="calculator.fields.shares" decimals="0" />
+  <app-calc-field
+    field="pnlFees"
+    label="calculator.fields.fees"
+    decimals="2"
+    suffix="account.usdUnit"
+    placeholder="calculator.fields.optional"
+  />
+</div>
+@let p = pnl();
+<app-calc-result
+  label="calculator.pnl.result"
+  [tone]="p?.dollars"
+  [text]="
+    p
+      ? (p.dollars > 0 ? '+' : '') +
+        (p.dollars | number: '1.2-2') +
+        ('account.usdSuffix' | translate)
+      : '—'
+  "
+  [value]="p?.dollars ?? null"
+  digits="2"
+/>
+<app-calc-result
+  label="calculator.pnl.percent"
+  [tone]="p?.dollars"
+  [text]="p ? (p.percent > 0 ? '+' : '') + (p.percent | number: '1.1-1') + ' %' : '—'"
+  [value]="p?.percent ?? null"
+  digits="1"
+/>

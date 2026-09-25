@@ -1,0 +1,31 @@
+<div class="calc-row">
+  <app-calc-field field="moveFrom" label="calculator.fields.from" decimals="4" />
+  <app-calc-field field="moveTo" label="calculator.fields.to" decimals="4" />
+</div>
+@let m = move();
+<app-calc-result
+  label="calculator.move.result"
+  [text]="m !== null ? (m > 0 ? '+' : '') + (m | number: '1.1-1') + ' %' : '—'"
+  [value]="m"
+  digits="1"
+/>
+
+<hr class="calc-sep" />
+
+<div class="calc-row">
+  <app-calc-field field="moveBase" label="calculator.fields.price" decimals="4" />
+  <app-calc-field
+    field="movePercent"
+    label="calculator.fields.percent"
+    decimals="2"
+    allowNegative
+    suffix="calculator.units.percent"
+  />
+</div>
+@let moved = movedPrice();
+<app-calc-result
+  label="calculator.move.price"
+  [text]="moved !== null ? (moved | price) : '—'"
+  [value]="moved"
+  [digits]="priceDigits(moved)"
+/>

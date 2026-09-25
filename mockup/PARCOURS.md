@@ -70,10 +70,11 @@ data : reconciliation validated this morning, candidates captured, stats still t
 on. Beside it : the balance (reconciled or not), the P&L of the day / week / month, the day's
 candidates, the week's trades.
 
-**Menu order** : Today · Candidates · Stats · Journal · Account · (apart, at the bottom) Calculator
-· Lexicon. Candidates → Stats → Journal follows the life cycle of a ticker (each « → Stat » /
-« → Trade » button leads to the next tab) ; the account is a ledger consulted now and then, not a
-step ; the calculator and the lexicon are tools at hand, outside the trading day. The future
+**Menu order** : Today · Candidates · Stats · Journal · Account · (apart, at the bottom) Lexicon.
+Candidates → Stats → Journal follows the life cycle of a ticker (each « → Stat » / « → Trade »
+button leads to the next tab) ; the account is a ledger consulted now and then, not a step ; the
+lexicon is a reference at hand, outside the trading day. The calculators are not in the menu : they
+float, from the top bar's launcher. The future
 monitoring / charts tab will sit between Journal and Account.
 
 **The morning reconciliation happens right inside step 1** : app balance, typed TradeZero balance,
@@ -388,41 +389,60 @@ the flags, the check column, and a « → Trade » button or a link to the exist
 
 ---
 
-## Tool — Calculator ✅
+## Tool — Calculators
 
-A page for the **small calculations** a trader redoes by hand — in a phone calculator or out loud —
-during the session or at any other time. Its **menu entry sits at the bottom, right above Lexicon** :
-like the lexicon, it is a tool at hand, outside the trading day.
+The **small calculations** a trader redoes by hand — in a phone calculator or out loud — needed
+*while* looking at something else : typing a candidate, reading a stat, watching TradeZero. So they
+are not a page (#421 removed it) but **floating widgets**, called from anywhere.
 
-- **A scratchpad, front only** : no backend, nothing saved, nothing read. The values survive a trip
-  to another page and back, and a reload clears them, on purpose — it works on any ticker, including
-  one that is not in the candidates.
-- **One card per calculation, all visible at once** — no tabs inside the tab : a glance, not a
-  navigation.
-  1. **Percent move** : from / to → signed percent (`3,23 → 2,70 = −16,4 %`), and the inverse, a
-     price and a percent → the resulting price.
-  2. **Position size** (short) : risk in $, entry, stop → the share count, **rounded down**, and the
-     risk actually taken with it. A stop at or below the entry is an amber error, never a negative
-     count ; a stop so far that the risk doesn't cover one share says so, rather than « 0 ».
-  3. **Short P&L** : entry, cover, shares, fees (optional) → the result in $ and in % of the
-     position, green / red like the KPI cards (an outcome).
-  4. **Distance and R:R** : current price, stop, target → the distance to each in % and in $ per
-     share, and the R:R (`1 : 1,7`). The stop reads from the price and the stop alone — the target is
-     often decided later. A stop under the price or a target above it is an amber error, each its own.
-  5. **Average price after a scale-in** : shares and price of the first entry and of the add → the
-     new average and the total position.
+- **A launcher in the top bar**, on every page, next to the account : a menu of the five
+  calculators. A calculator already open is marked « ouverte » ; picking it again brings it forward
+  rather than opening a second one.
+- **Each one opens as a floating widget** over the page, under a header : a grip, the title,
+  « Détacher », « Fermer ». **A sentence at the top says what the calculator is for** (« Combien
+  d'actions shorter pour qu'un stop… ne coûte jamais plus que le risque choisi »). Several can be open
+  at once, each closed on its own ; Escape closes the focused one, a click brings it forward.
+- **Dragged by its header only** (the body is fields), and kept inside the window — it cannot be lost
+  off-screen. No resizing : a widget is about a card's width (380 px).
+- **« Détacher »** sends the widget into its own always-on-top window (Document Picture-in-Picture),
+  styled and themed like the app, so it stays visible over TradeZero during the session. Closing that
+  window puts the widget back in the page. Where the browser lacks the API, the button is absent and
+  the widget works in the page.
+- **A scratchpad, front only** : no backend, nothing saved, nothing read. The values survive a widget
+  closed and opened again, or a trip to another page ; **a reload leaves nothing** — no widget open,
+  no value kept (#388). It works on any ticker, including one that is not in the candidates.
+
+**The five calculators** :
+
+1. **Percent move** : from / to → signed percent (`3,23 → 2,70 = −16,4 %`), and the inverse, a price
+   and a percent → the resulting price.
+2. **Position size** (short) : risk in $, entry, stop → the share count, **rounded down**, and the
+   risk actually taken with it. A stop at or below the entry is an amber error, never a negative
+   count ; a stop so far that the risk doesn't cover one share says so, rather than « 0 ».
+3. **Short P&L** : entry, cover, shares, fees (optional) → the result in $ and in % of the position,
+   green / red like the KPI cards (an outcome).
+4. **Distance and R:R** : current price, stop, target → the distance to each in % and in $ per share,
+   and the R:R (`1 : 1,7`). The stop reads from the price and the stop alone — the target is often
+   decided later. A stop under the price or a target above it is an amber error, each its own.
+5. **Average price after a scale-in** : shares and price of the first entry and of the add → the new
+   average and the total position.
+
 - **Results update as you type**, no « Compute » button. An incomplete card shows `—`, never `0`.
+- **Short labels, the unit inside the field** (#408) : « Risque » with `$ US` as a suffix, « Frais »
+  with `$ US` and « facultatif » as its placeholder, « 1re entrée » / « Renfort » with `actions`,
+  « Variation » with `%`. The risk of the position size gets a row of its own : with its unit inside,
+  it needs a field's full width.
 - **Both decimal separators** are accepted : the numeric keypad gives `.`, the French layout `,`.
 - **Formats of the rest of the app** : percentages to one decimal, prices at the price precision (2
   decimals from $1, 4 below — #311), amounts with `$ US`, share counts grouped.
-- **Each result copies in one click, as a bare number** ready to paste into the broker or a
-  spreadsheet : no grouping, no currency, a dot for the decimals (`1234.50`). For a distance, the
-  $ per share.
+- **Each result copies in one click, as a bare number** ready to paste into the broker, a
+  spreadsheet or a field of the app : no grouping, no currency, a dot for the decimals (`1234.50`,
+  #406). For a distance, the $ per share.
 
-**Later** : prefilling from a candidate (previous close, open…). Worth it once the manual page has
-been used for a few days.
+**Later** : prefilling from a candidate (previous close, open…).
 
-**Screen** : [`calculatrice.html`](calculatrice.html).
+**Screen** : the launcher and a widget on [`candidat.html`](candidat.html) — the widget drags by its
+header.
 
 ---
 

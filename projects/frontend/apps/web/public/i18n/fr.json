@@ -27,7 +27,6 @@
     "journal": "Journal",
     "candidates": "Candidats",
     "stats": "Stats",
-    "calculator": "Calculatrice",
     "patterns": "Patterns",
     "lexicon": "Lexique",
     "settings": "Paramètres"
@@ -675,34 +674,33 @@
     }
   },
   "calculator": {
-    "title": "Calculatrice",
-    "subtitle": "Les petits calculs qu'on refait à la main, en séance ou pas. Rien n'est enregistré : les valeurs restent le temps de la visite, un rechargement efface tout.",
     "copy": "Copier",
     "fields": {
       "from": "De",
       "to": "À",
       "price": "Prix",
-      "percent": "Variation (%)",
-      "risk": "Risque ($ US)",
+      "percent": "Variation",
+      "risk": "Risque",
       "entry": "Entrée",
       "stop": "Stop",
       "cover": "Rachat",
       "shares": "Actions",
-      "fees": "Frais ($ US, facultatif)",
+      "fees": "Frais",
       "currentPrice": "Prix actuel",
       "target": "Objectif",
-      "firstShares": "1re entrée — actions",
-      "addShares": "Renfort — actions"
+      "firstShares": "1re entrée",
+      "addShares": "Renfort",
+      "optional": "facultatif"
     },
     "move": {
       "title": "Variation en %",
-      "hint": "d'un prix à l'autre, ou l'inverse",
+      "description": "Combien un prix a bougé, en %, d'un prix à l'autre — ou l'inverse : le prix atteint après une variation donnée.",
       "result": "Variation",
       "price": "Prix obtenu"
     },
     "size": {
       "title": "Taille de position",
-      "hint": "short : le stop au-dessus de l'entrée",
+      "description": "Combien d'actions shorter pour qu'un stop placé au-dessus de l'entrée ne coûte jamais plus que le risque choisi.",
       "shares": "Actions (arrondi à l'unité inférieure)",
       "realRisk": "Risque réellement pris",
       "wrongSide": "Sur un short, le stop se place au-dessus de l'entrée.",
@@ -710,12 +708,13 @@
     },
     "pnl": {
       "title": "P&L du short",
+      "description": "Le résultat d'un short, de l'entrée au rachat, en dollars et en % de la position, frais compris.",
       "result": "P&L",
       "percent": "Rendement sur la position"
     },
     "rr": {
       "title": "Distance et R:R",
-      "hint": "avant l'entrée",
+      "description": "Avant d'entrer : la distance jusqu'au stop et jusqu'à l'objectif, et le ratio risque / gain entre les deux.",
       "toStop": "Jusqu'au stop",
       "toTarget": "Jusqu'à l'objectif",
       "ratio": "R:R",
@@ -724,8 +723,21 @@
     },
     "avg": {
       "title": "Prix moyen après un renfort",
+      "description": "Le nouveau prix moyen et la position totale après un renfort.",
       "average": "Prix moyen",
       "total": "Position totale (actions)"
+    },
+    "units": {
+      "percent": "%",
+      "shares": "actions"
+    },
+    "launcher": {
+      "open": "Calculatrices",
+      "isOpen": "ouverte"
+    },
+    "widget": {
+      "detach": "Détacher dans une fenêtre",
+      "close": "Fermer"
     }
   },
   "patternSheets": {

@@ -1,0 +1,35 @@
+// The inside of a calculator card, shared by the five : it sits under its floating widget's header
+// — so no card chrome here.
+
+@use 'sizes' as s;
+
+:host {
+  display: block;
+}
+
+.calc-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: s.$space-sm;
+
+  & + & {
+    margin-top: s.$space-md;
+  }
+}
+
+.calc-row + app-calc-result {
+  margin-top: s.$space-md;
+}
+
+.calc-sep {
+  margin: s.$space-lg 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+// A stop or a target on the wrong side of a short : a warning, so amber.
+.calc-error {
+  margin: s.$space-sm 0 0;
+  font-size: s.$font-xs;
+  color: var(--color-warning);
+}
