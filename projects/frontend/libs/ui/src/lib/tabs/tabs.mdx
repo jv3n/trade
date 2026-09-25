@@ -1,0 +1,24 @@
+import { Canvas, Meta, Source } from '@storybook/addon-docs/blocks';
+import * as Stories from './tabs.stories';
+
+<Meta of={Stories} />
+
+# Tabs
+
+Switches between views of one page. The active tab is underlined in the accent.
+
+## How to use
+
+<Source
+  language="ts"
+  code={`import { StbTabsModule } from '@portfolioai/ui';
+
+@Component({
+imports: [StbTabsModule],
+template: \`<mat-tab-group>…</mat-tab-group>\`,
+})`}
+/>
+
+## Default
+
+<Canvas of={Stories.Default} />

@@ -172,6 +172,7 @@ read top to bottom is the point there.
 | **Everything written on GitHub** — commit messages, PR titles & descriptions, issue titles & bodies, review / issue / PR comments | **English** |
 | `.claude/` (CLAUDE.md, agents, skills) | **English** |
 | **Documentation** — `README.md` files, `docs/`, `mockup/PARCOURS.md` and `mockup/README.md` | **English** |
+| **The pattern sheets and notes** — `docs/pattern/`, `docs/notes/` | **English + a French twin** (`GUS.md` / `GUS.fr.md`) — the Patterns page shows the one matching the interface language ; update both |
 | **The copy inside the mockup pages** (`mockup/*.html`) | **French** — it mirrors the app's own interface |
 | **Demo and test data** — the lexicon seed, the fixtures, `fr.json` | **French** — it is content, not code |
 

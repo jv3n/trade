@@ -5,10 +5,14 @@ on:
     branches: [master]
     paths:
       - 'projects/frontend/**'
+      - 'docs/pattern/**'
+      - 'docs/notes/**'
       - '.github/workflows/frontend.yml'
   pull_request:
     paths:
       - 'projects/frontend/**'
+      - 'docs/pattern/**'
+      - 'docs/notes/**'
       - '.github/workflows/frontend.yml'
 
 # Workflow-level baseline — every job inherits `contents: read`. Jobs that need to write
@@ -104,6 +108,11 @@ jobs:
       - name: Test the lib
         working-directory: projects/frontend
         run: npm run ui:test -- --watch=false
+
+      # The app shows the sheet in the reader's language : a twin revised without the other fails here.
+      - name: Check the pattern sheets have their French twins
+        working-directory: projects/frontend
+        run: npm run docs:check-sync
 
       - name: Upload coverage report
         if: always()

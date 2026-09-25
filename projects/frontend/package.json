@@ -3,8 +3,11 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "prestart": "node apps/web/tools/copy-docs.mjs",
     "start": "ng serve web",
+    "prebuild": "node apps/web/tools/copy-docs.mjs",
     "build": "ng build web",
+    "prewatch": "node apps/web/tools/copy-docs.mjs",
     "watch": "ng build web --watch --configuration development",
     "test": "ng test web",
     "test:coverage": "ng test web --configuration=coverage",
@@ -12,6 +15,7 @@
     "e2e:open": "playwright test -c apps/web-e2e/playwright.config.ts --ui",
     "lint": "ng lint web && ng lint ui",
     "web:check-a11y": "node apps/web/tools/check-icon-button-names.mjs",
+    "docs:check-sync": "node apps/web/tools/check-docs-sync.mjs",
     "format": "prettier --write \"{apps,libs}/**/*.{ts,html,scss}\"",
     "ui:build": "ng build ui",
     "ui:test": "ng test ui",
@@ -40,6 +44,7 @@
     "@sentry/browser": "^10.75.1",
     "date-fns": "^4.4.0",
     "echarts": "^6.1.0",
+    "marked": "^18.0.14",
     "rxjs": "^7.8.2",
     "tslib": "^2.8.1"
   },

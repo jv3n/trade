@@ -31,6 +31,7 @@
 @forward 'components/form';
 @forward 'components/banners';
 @forward 'components/badges';
+@forward 'components/prose';
 // Last : the page stack drops its children's margins, which must win over their own.
 @forward 'components/page';
 
@@ -49,6 +50,7 @@
 @forward '../src/lib/datepicker/datepicker';
 @forward '../src/lib/dialog/dialog';
 @forward '../src/lib/divider/divider';
+@forward '../src/lib/expansion/expansion';
 @forward '../src/lib/form-field/form-field';
 @forward '../src/lib/icon/icon';
 @forward '../src/lib/input/input';
@@ -61,5 +63,6 @@
 @forward '../src/lib/snack-bar/snack-bar';
 @forward '../src/lib/sort-header/sort-header';
 @forward '../src/lib/table/table';
+@forward '../src/lib/tabs/tabs';
 @forward '../src/lib/toolbar/toolbar';
 @forward '../src/lib/tooltip/tooltip';

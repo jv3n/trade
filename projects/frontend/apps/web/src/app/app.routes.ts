@@ -67,6 +67,11 @@ export const routes: Routes = [
       import('./features/calculator/calculator-page').then((m) => m.CalculatorPage),
   },
   {
+    path: 'patterns',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/patterns/patterns-page').then((m) => m.PatternsPage),
+  },
+  {
     path: 'lexicon',
     canActivate: [authGuard],
     loadComponent: () => import('./features/lexicon/lexicon-page').then((m) => m.LexiconPage),

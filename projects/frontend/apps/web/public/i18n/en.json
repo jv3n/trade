@@ -28,6 +28,7 @@
     "candidates": "Candidates",
     "stats": "Stats",
     "calculator": "Calculator",
+    "patterns": "Patterns",
     "lexicon": "Lexicon",
     "settings": "Settings"
   },
@@ -726,6 +727,18 @@
       "average": "Average price",
       "total": "Total position (shares)"
     }
+  },
+  "patternSheets": {
+    "title": "Patterns",
+    "subtitle": "The pattern sheets and the trading notes, to reread before the session — as written in the repository.",
+    "tabs": {
+      "pattern": "Patterns",
+      "notes": "Notes"
+    },
+    "revisedOn": "Revised on {{date}}",
+    "neverRevised": "Never revised",
+    "loading": "Loading the sheets…",
+    "unreadable": "This sheet could not be read."
   },
   "lexicon": {
     "title": "Trading lexicon",

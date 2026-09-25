@@ -1,0 +1,68 @@
+// Material tabs design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/tabs/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/tabs/_m3-tabs.scss > get-tokens()
+//
+// Tabs switch between views of one page : the active label and its underline take the accent
+// (indigo — a status, per the colour rule), the inactive labels stay muted, and the divider under
+// the row is the lib's hairline. No background : the row sits on the page.
+
+@use '@angular/material' as mat;
+@use '../../../styles/sizes' as s;
+
+:root {
+  @include mat.tabs-overrides(
+    (
+      // ============================================================================
+      // Base
+      // ============================================================================
+      active-indicator-height: 2px,
+      // active-indicator-shape: 0,                 // M3 default — a flat underline.
+      divider-height: 1px,
+
+      // ============================================================================
+      // Color — row
+      // ============================================================================
+      background-color: transparent,
+      foreground-color: var(--color-text),
+      divider-color: var(--color-border),
+      pagination-icon-color: var(--color-text-muted),
+      // ============================================================================
+      // Color — active tab
+      // ============================================================================
+      active-indicator-color: var(--color-accent),
+      active-label-text-color: var(--color-accent),
+      active-focus-indicator-color: var(--color-accent),
+      active-focus-label-text-color: var(--color-accent),
+      active-hover-indicator-color: var(--color-accent),
+      active-hover-label-text-color: var(--color-accent),
+      active-ripple-color: var(--color-accent),
+      // ============================================================================
+      // Color — inactive tab
+      // ============================================================================
+      inactive-label-text-color: var(--color-text-muted),
+      inactive-focus-label-text-color: var(--color-text),
+      inactive-hover-label-text-color: var(--color-text),
+      inactive-ripple-color: var(--color-text-muted),
+      // disabled-ripple-color: …,                  // M3 default — no disabled tab in the app.
+      // ============================================================================
+      // Typography — the theme's font ; the weight lifts the labels off the body text.
+      // ============================================================================
+      label-text-weight: 550,
+      // label-text-font: …,                        // M3 default — from the theme.
+      // label-text-line-height: …,                 // M3 default.
+      // label-text-size: …,                        // M3 default.
+       // label-text-tracking: …,                    // M3 default.
+    )
+  );
+}
+
+// ============================================================================
+// Selector-level tweaks — the label box the token API doesn't expose. The tabs sit left, sized to
+// their label (`provideStbMaterial` turns stretching off), so they carry their own padding.
+// ============================================================================
+.mat-mdc-tab-group .mat-mdc-tab.mat-mdc-tab {
+  min-width: 0;
+  padding: 0 s.$space-lg;
+}

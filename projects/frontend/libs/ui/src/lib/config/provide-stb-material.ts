@@ -9,6 +9,7 @@ import {
   MatFormFieldDefaultOptions,
 } from '@angular/material/form-field';
 import { MatIconRegistry } from '@angular/material/icon';
+import { MAT_TABS_CONFIG, MatTabsConfig } from '@angular/material/tabs';
 
 /**
  * The app-wide Material defaults of the design system — call it once, in the app config :
@@ -23,6 +24,7 @@ import { MatIconRegistry } from '@angular/material/icon';
  *   `mat.form-field-density(-4)` in `form-field.scss`.
  * - **Icon font** — ligature icons render with Material Symbols Rounded, loaded by
  *   `styles/_fonts.scss`.
+ * - **Tabs** — sized to their label and aligned left, rather than stretched across the row.
  */
 export function provideStbMaterial(): (Provider | EnvironmentProviders)[] {
   return [
@@ -37,6 +39,10 @@ export function provideStbMaterial(): (Provider | EnvironmentProviders)[] {
         appearance: 'outline',
         subscriptSizing: 'dynamic',
       } satisfies MatFormFieldDefaultOptions,
+    },
+    {
+      provide: MAT_TABS_CONFIG,
+      useValue: { stretchTabs: false, alignTabs: 'start' } satisfies MatTabsConfig,
     },
     provideAppInitializer(() => {
       inject(MatIconRegistry).setDefaultFontSetClass(

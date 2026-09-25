@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Patterns — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+    <style>
+      /* Accordéon : une ligne par pattern, on déplie celle qu'on révise. */
+      .sheets {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .sheet {
+        padding: 0;
+      }
+
+      .sheet > summary {
+        list-style: none;
+        cursor: pointer;
+        display: grid;
+        grid-template-columns: 20px minmax(0, 1.6fr) minmax(0, 1.4fr) auto;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+      }
+
+      .sheet > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .sheet > summary .chevron {
+        color: var(--text-faint);
+        transition: transform 0.15s;
+      }
+
+      .sheet[open] > summary .chevron {
+        transform: rotate(90deg);
+      }
+
+      .sheet[open] > summary {
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sheet h2 {
+        margin: 0;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+      }
+
+      .sheet .summary {
+        margin: 3px 0 0;
+        color: var(--text-muted);
+        font-size: 12.5px;
+      }
+
+      /* Les chiffres qu'on vient réviser, visibles sans déplier. */
+      .key-numbers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .key-numbers .tag {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .revised {
+        font-size: 12px;
+        color: var(--text-faint);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .sheet-body {
+        padding: 14px 18px 18px 52px;
+      }
+
+      .md h3 {
+        font-size: 14px;
+        margin: 16px 0 8px;
+      }
+
+      .md h3:first-child {
+        margin-top: 0;
+      }
+
+      .sheet-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 12px;
+      }
+
+      /* Onglets façon mat-tab-group : soulignement indigo sous l'onglet actif. */
+      .tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .tabs button {
+        background: none;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        padding: 10px 16px;
+        color: var(--text-muted);
+        font: inherit;
+        font-weight: 550;
+        cursor: pointer;
+      }
+
+      .tabs button.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      .tabs .count {
+        font-size: 11px;
+        color: var(--text-faint);
+      }
+
+      .sheet.missing {
+        border-style: dashed;
+      }
+
+      .criteria td:nth-child(2) {
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .criteria td:nth-child(3) {
+        color: var(--text-muted);
+      }
+
+      .key-points {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .key-points li + li {
+        margin-top: 4px;
+      }
+
+      .sheet.missing {
+        border-style: dashed;
+      }
+
+      .edit-row {
+        display: grid;
+        grid-template-columns: 1fr 120px 1.4fr 32px;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      .edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      textarea.input {
+        width: 100%;
+        min-height: 96px;
+        resize: vertical;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidenav">
+        <div class="brand"><span class="brand-mark"></span>Trade</div>
+        <a class="nav-link" href="aujourdhui.html"><span class="nav-icon icon">today</span>Aujourd'hui</a>
+        <a class="nav-link" href="candidat.html"><span class="nav-icon icon">radar</span>Candidats</a>
+        <a class="nav-link" href="stats.html"><span class="nav-icon icon">query_stats</span>Stats</a>
+        <a class="nav-link" href="journal.html"><span class="nav-icon icon">menu_book</span>Journal</a>
+        <a class="nav-link" href="compte.html"><span class="nav-icon icon">account_balance_wallet</span>Compte</a>
+        <div class="nav-spacer"></div>
+        <a class="nav-link" href="calculatrice.html"><span class="nav-icon icon">calculate</span>Calculatrice</a>
+        <a class="nav-link active" href="patterns.html"><span class="nav-icon icon">school</span>Patterns</a>
+        <a class="nav-link" href="lexique.html"><span class="nav-icon icon">dictionary</span>Lexique</a>
+        <a class="nav-link" href="parametres.html"><span class="nav-icon icon">settings</span>Paramètres</a>
+      </aside>
+
+      <main class="main">
+        <header class="page-header">
+          <div>
+            <h1>Patterns</h1>
+            <p>Les fiches des patterns et les notes de trading, à relire avant la séance — telles qu'écrites dans le dépôt.</p>
+          </div>
+        </header>
+
+        <!-- Deux onglets (mat-tab-group) : les patterns de docs/pattern/, les notes de docs/notes/. -->
+        <nav class="subnav tabs" data-group="shelf">
+          <button class="active" data-value="patterns">Patterns <span class="count">5</span></button>
+          <button data-value="notes">Notes <span class="count">3</span></button>
+        </nav>
+        <section class="sheets" data-group="shelf" data-value="patterns">
+          <details class="card sheet" open>
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>Gap Up Short</h2>
+                <p class="summary">Short a US small-cap that gapped up in premarket with no fundamental behind it. The bet : the price falls back during the session because the pump is artificial.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Révisée le 25/09/2026</div>
+            </summary>
+            <!-- Le .md rendu tel quel, sans son titre, son résumé ni sa ligne de révision (déjà dans l'en-tête). -->
+            <div class="sheet-body md">
+              <h3>Entry checklist</h3>
+              <p>Every criterion has to hold <strong>at the same time</strong>. One KO → no trade.</p>
+              <div class="table-wrap">
+                <table class="criteria">
+                  <thead>
+                    <tr><th>#</th><th>Criterion</th><th>Value</th><th>Why</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>1</td><td><strong>Price</strong></td><td>~$0.30 – $10</td><td>The zone of extreme volatility, where the pumps play. Under $1, buying power is the practical limit.</td></tr>
+                    <tr><td>2</td><td><strong>Gap up</strong></td><td>≥ +45 %</td><td>Premarket open vs the previous close.</td></tr>
+                    <tr><td>3</td><td><strong>Float</strong></td><td>≥ 1.5M</td><td>Under it, it squeezes.</td></tr>
+                    <tr><td>4</td><td><strong>Daily chart</strong></td><td>Flat or downtrend</td><td>The one criterion that takes judgement.</td></tr>
+                    <tr><td>7</td><td><strong>Institutions</strong></td><td>&lt; 20 %</td><td>Heavy institutional ownership supports the price.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <h3>The statistics — why this one is learnt first</h3>
+              <ul>
+                <li><strong>Win rate ~75-80 %</strong>, measured over nine years.</li>
+                <li><strong>Risk / reward usually ~1 : 1</strong> — risking 15-20 % to take 15-20 %.</li>
+              </ul>
+              <p class="muted">… the rest of the sheet : the daily chart, the two ways to take it, the reverse-split trap.</p>
+            </div>
+          </details>
+
+          <details class="card sheet">
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>Double Top</h2>
+                <p class="summary">Short a stock that ran hard intraday, got rejected, and comes back to test its high. The bet : the second test fails, because the rejection convinced the market the top is in.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Révisée le 25/09/2026</div>
+            </summary>
+            <div class="sheet-body md"><p class="muted">Le .md de la fiche, rendu.</p></div>
+          </details>
+
+          <details class="card sheet">
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>Short Into Resistance</h2>
+                <p class="summary">Short a stock as it reaches a resistance. The bet : the level holds, because someone is waiting there to sell.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Révisée le 25/09/2026</div>
+            </summary>
+            <div class="sheet-body md"><p class="muted">Le .md de la fiche, rendu.</p></div>
+          </details>
+
+          <!-- Le .md dit « Missing — not written yet » : l'en-tête le montre tel quel. -->
+          <details class="card sheet missing">
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>Short Into VWAP</h2>
+                <p class="summary">Missing — not written yet.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Jamais révisée</div>
+            </summary>
+            <div class="sheet-body md"><p class="muted">Le .md de la fiche, rendu.</p></div>
+          </details>
+
+          <details class="card sheet">
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>Penny Break</h2>
+                <p class="summary">Short the failed break of a level : the stock pokes no more than ~1 % above a top or a bounce level, then gets slammed back under it.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Révisée le 25/09/2026</div>
+            </summary>
+            <div class="sheet-body md"><p class="muted">Le .md de la fiche, rendu.</p></div>
+          </details>
+        </section>
+
+        <!-- Onglet Notes : ce qui n'est pas un pattern (docs/notes/), même accordéon. -->
+        <section class="sheets" data-group="shelf" data-value="notes" hidden>
+          <details class="card sheet" open>
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>Execution signals — how to enter the setups</h2>
+                <p class="summary">A double top and a penny break are not setups, they are execution criteria : signs of weakness. The setup says whether to short ; the signal says when.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Révisée le 25/09/2026</div>
+            </summary>
+            <div class="sheet-body md"><p class="muted">Le .md de la note, rendu — ses liens vers une fiche ouvrent l'onglet Patterns sur cette fiche.</p></div>
+          </details>
+
+          <details class="card sheet">
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>The four sellers — the frame for any short</h2>
+                <p class="summary">A short seller's job is to find what will create selling. There are four sources of it, and a trade wants at least three of the four.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Révisée le 25/09/2026</div>
+            </summary>
+            <div class="sheet-body md"><p class="muted">Le .md de la note, rendu.</p></div>
+          </details>
+
+          <details class="card sheet">
+            <summary>
+              <span class="icon chevron">chevron_right</span>
+              <div>
+                <h2>The stop rule — every pattern</h2>
+                <p class="summary">Once a stop is computed, look around it : a level 1-2 % further out is worth stretching the stop to, and cutting the size to pay for it.</p>
+              </div>
+              <div></div>
+              <div class="revised"><span class="icon">history</span>Révisée le 25/09/2026</div>
+            </summary>
+            <div class="sheet-body md"><p class="muted">Le .md de la note, rendu.</p></div>
+          </details>
+        </section>
+
+        <p class="mockup-note">
+          Maquette statique — deux onglets : <strong>Patterns</strong> (GUS, DT, SIR, SIV, penny break — <code>docs/pattern/</code>) et
+          <strong>Notes</strong> (signaux d'exécution, 4 vendeurs, règle du stop — <code>docs/notes/</code>). Dans chacun, un panneau dépliable par fichier.
+          L'app n'a pas de copie : elle affiche les fichiers, embarqués au build. Replié, un panneau montre le titre, le résumé et la date de
+          révision lus dans le fichier ; déplié, le reste du fichier rendu. Pour réviser, on modifie le fichier.
+        </p>
+      </main>
+    </div>
+  </body>
+</html>

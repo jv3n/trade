@@ -1,0 +1,88 @@
+// Material expansion design — exhaustive token override (Material 22 / M3 API).
+//
+// Reference : https://material.angular.dev/components/expansion/styling
+// Source-of-truth for the available tokens :
+//   node_modules/@angular/material/expansion/_m3-expansion.scss > get-tokens()
+//
+// A panel reads as one of the lib's cards : the page surface, a hairline border, the large radius,
+// and no elevation shadow — an accordion is a list, and a stack of shadows would read as floating
+// cards. The header keeps the text colour ; its description and the chevron are muted.
+
+@use '@angular/material' as mat;
+@use '../../../styles/sizes' as s;
+
+:root {
+  @include mat.expansion-overrides(
+    (
+      // ============================================================================
+      // Base
+      // ============================================================================
+      container-shape: var(--radius-lg),
+      // header-indicator-display: inline-block,      // M3 default — the chevron stays.
+      // legacy-header-indicator-display: none,       // M3 default — the legacy indicator stays off.
+      // ============================================================================
+      // Color
+      // ============================================================================
+      container-elevation-shadow: none,
+      container-background-color: var(--color-surface),
+      container-text-color: var(--color-text),
+      actions-divider-color: var(--color-border-soft),
+      header-text-color: var(--color-text),
+      header-description-color: var(--color-text-muted),
+      header-indicator-color: var(--color-text-faint),
+      header-disabled-state-text-color: var(--color-text-faint),
+      header-hover-state-layer-color: var(--color-surface-2),
+      header-focus-state-layer-color: var(--color-surface-2),
+      // ============================================================================
+      // Typography — the app's font comes through `mat.theme()` ; sizes stay M3.
+      // ============================================================================
+      // container-text-font: …,                      // M3 default — body font from the theme.
+      // container-text-line-height: …,               // M3 default.
+      // container-text-size: …,                      // M3 default.
+      // container-text-tracking: …,                  // M3 default.
+      // container-text-weight: …,                    // M3 default.
+      // header-text-font: …,                         // M3 default — title font from the theme.
+      // header-text-line-height: …,                  // M3 default.
+      // header-text-size: …,                         // M3 default.
+      // header-text-tracking: …,                     // M3 default.
+      // header-text-weight: …,                       // M3 default.
+      // ============================================================================
+      // Density
+      // ============================================================================
+      // A header that holds a summary is taller than M3's fixed 48 / 64 px : it grows with it.
+      header-collapsed-state-height: auto,
+      header-expanded-state-height: auto
+    )
+  );
+}
+
+// ============================================================================
+// Selector-level tweaks — things the token API doesn't expose. Material injects its component
+// styles after the global sheet, so each rule out-specifies the one it replaces.
+// ============================================================================
+.mat-expansion-panel.mat-expansion-panel {
+  border: 1px solid var(--color-border);
+}
+
+.mat-expansion-panel .mat-expansion-panel-header {
+  padding: s.$space-md s.$card-padding-x;
+}
+
+// The open content sits under a hairline, with the card's padding.
+.mat-expansion-panel .mat-expansion-panel-body {
+  padding: s.$space-lg s.$card-padding-x s.$card-padding-y;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+// The panels of an accordion are separate cards : each keeps its radius (Material only rounds the
+// first and the last), and the gap is fixed rather than a margin that jumps when a panel opens.
+.mat-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-md;
+}
+
+.mat-accordion .mat-expansion-panel.mat-expansion-panel.mat-expansion-panel {
+  border-radius: var(--radius-lg);
+  margin: 0;
+}
