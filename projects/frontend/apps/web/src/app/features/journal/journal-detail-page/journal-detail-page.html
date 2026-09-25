@@ -167,11 +167,13 @@
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="exec-time">
                 <mat-label>{{ 'journal.fields.executedAt' | translate }}</mat-label>
                 <input
+                  #executedAtField
                   matInput
                   type="time"
                   [value]="exec.executedAt ?? ''"
                   (change)="setExecutionTime($index, $event)"
                 />
+                <ui-form-field-reset matIconSuffix [for]="executedAtField" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="exec-kind">
@@ -191,6 +193,7 @@
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ 'journal.fields.shares' | translate }}</mat-label>
                 <input
+                  #sharesField
                   matInput
                   appNumberMask
                   [decimals]="0"
@@ -199,11 +202,13 @@
                   (numberChange)="setExecutionShares($index, $event)"
                   inputmode="numeric"
                 />
+                <ui-form-field-reset matIconSuffix [for]="sharesField" />
               </mat-form-field>
 
               <mat-form-field appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ 'journal.fields.price' | translate }}</mat-label>
                 <input
+                  #priceField
                   matInput
                   appNumberMask
                   [decimals]="4"
@@ -212,6 +217,7 @@
                   (numberChange)="setExecutionPrice($index, $event)"
                   inputmode="decimal"
                 />
+                <ui-form-field-reset matIconSuffix [for]="priceField" />
                 <span matTextSuffix>{{ 'account.usdUnit' | translate }}</span>
               </mat-form-field>
 
@@ -284,6 +290,7 @@
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ 'journal.detail.pnl.real' | translate }}</mat-label>
               <input
+                #realProfitField
                 matInput
                 appNumberMask
                 [decimals]="2"
@@ -294,6 +301,7 @@
                 (numberChange)="setRealProfit($event)"
                 inputmode="decimal"
               />
+              <ui-form-field-reset matIconSuffix [for]="realProfitField" />
               <span matTextSuffix>{{ 'account.usdUnit' | translate }}</span>
               @if (realToBeErased(); as saved) {
                 <mat-hint class="warn">{{
@@ -433,20 +441,24 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'journal.fields.note' | translate }}</mat-label>
             <textarea
+              #noteField
               matInput
               rows="4"
               [value]="d.note"
               (input)="setNote($any($event.target).value)"
             ></textarea>
+            <ui-form-field-reset matIconSuffix [for]="noteField" />
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'journal.fields.errorNote' | translate }}</mat-label>
             <textarea
+              #errorNoteField
               matInput
               rows="4"
               [value]="d.errorNote"
               (input)="setErrorNote($any($event.target).value)"
             ></textarea>
+            <ui-form-field-reset matIconSuffix [for]="errorNoteField" />
           </mat-form-field>
         </div>
       </section>

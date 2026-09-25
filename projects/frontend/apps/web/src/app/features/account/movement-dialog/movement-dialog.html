@@ -26,6 +26,7 @@
         {{ 'account.fields.amount' | translate }} ({{ 'account.usdUnit' | translate }})
       </mat-label>
       <input
+        #amountField
         matInput
         appNumberMask
         [decimals]="2"
@@ -34,6 +35,7 @@
         (numberChange)="setAmount($event)"
         inputmode="decimal"
       />
+      <ui-form-field-reset matIconSuffix [for]="amountField" />
     </mat-form-field>
     @if (amountInvalid()) {
       <p class="field-error">{{ 'account.dialog.amountRequired' | translate }}</p>
@@ -54,7 +56,8 @@
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ 'account.fields.note' | translate }}</mat-label>
-      <input matInput [formField]="movementForm.note" />
+      <input #noteField matInput [formField]="movementForm.note" />
+      <ui-form-field-reset matIconSuffix [for]="noteField" />
     </mat-form-field>
   </mat-dialog-content>
 

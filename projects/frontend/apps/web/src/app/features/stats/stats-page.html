@@ -167,12 +167,14 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'stats.fields.ticker' | translate }}</mat-label>
             <input
+              #tickerField
               matInput
               class="mono"
               autocomplete="off"
               [value]="identity().ticker"
               (input)="setIdentity({ ticker: $any($event.target).value })"
             />
+            <ui-form-field-reset matIconSuffix [for]="tickerField" />
           </mat-form-field>
         </div>
       }
@@ -194,6 +196,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.previousClose' | translate }}</mat-label>
           <input
+            #previousCloseField
             matInput
             appNumberMask
             [decimals]="4"
@@ -203,6 +206,7 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="previousCloseField" />
           @if (premarketRequired().previousClose) {
             <mat-hint class="warn">{{ 'stats.premarket.required' | translate }}</mat-hint>
           }
@@ -210,6 +214,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.pmOpen' | translate }}</mat-label>
           <input
+            #pmOpenField
             matInput
             appNumberMask
             [decimals]="4"
@@ -219,6 +224,7 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="pmOpenField" />
           <mat-hint [class.warn]="premarketRequired().pmOpen">{{
             premarketRequired().pmOpen
               ? ('stats.premarket.required' | translate)
@@ -233,6 +239,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.pmHigh' | translate }}</mat-label>
           <input
+            #pmHighField
             matInput
             appNumberMask
             [decimals]="4"
@@ -242,6 +249,7 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="pmHighField" />
           <mat-hint [class.warn]="premarketRequired().pmHigh || pmHighBelowPmOpen()">{{
             premarketRequired().pmHigh
               ? ('stats.premarket.required' | translate)
@@ -258,6 +266,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.float' | translate }}</mat-label>
           <input
+            #floatField
             matInput
             appNumberMask
             [decimals]="2"
@@ -267,10 +276,12 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="floatField" />
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.volume' | translate }}</mat-label>
           <input
+            #volumeField
             matInput
             appNumberMask
             [decimals]="2"
@@ -280,10 +291,12 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="volumeField" />
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.locate' | translate }}</mat-label>
           <input
+            #locateField
             matInput
             appNumberMask
             [decimals]="4"
@@ -293,16 +306,19 @@
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="locateField" />
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="premarket-form__note">
           <mat-label>{{ 'stats.fields.note' | translate }}</mat-label>
           <input
+            #noteField
             matInput
             [value]="premarket().note"
             (input)="setPremarketNote($any($event.target).value)"
             (blur)="saveSession('premarket')"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="noteField" />
         </mat-form-field>
       </form>
 
@@ -346,6 +362,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.openPrice' | translate }}</mat-label>
           <input
+            #openPriceField
             matInput
             appNumberMask
             [decimals]="4"
@@ -355,6 +372,7 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="openPriceField" />
           <mat-hint [class.warn]="atFault('openPrice')">{{
             atFault('openPrice')
               ? (sessionIssue()!.reason | translate)
@@ -367,6 +385,7 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'stats.fields.pushOpen' | translate }}</mat-label>
             <input
+              #pushOpenField
               matInput
               appNumberMask
               [decimals]="4"
@@ -377,6 +396,7 @@
               (blur)="saveSession()"
               (keydown.enter)="$any($event.target).blur()"
             />
+            <ui-form-field-reset matIconSuffix [for]="pushOpenField" />
             <mat-hint [class.warn]="atFault('pushOpenPrice')">{{
               atFault('pushOpenPrice')
                 ? (sessionIssue()!.reason | translate)
@@ -397,6 +417,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.hod' | translate }}</mat-label>
           <input
+            #hodField
             matInput
             appNumberMask
             [decimals]="4"
@@ -406,6 +427,7 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="hodField" />
           <mat-hint [class.warn]="atFault('hodPrice')">{{
             atFault('hodPrice')
               ? (sessionIssue()!.reason | translate)
@@ -418,6 +440,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.lod' | translate }}</mat-label>
           <input
+            #lodField
             matInput
             appNumberMask
             [decimals]="4"
@@ -427,6 +450,7 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="lodField" />
           <mat-hint [class.warn]="atFault('lodPrice')">{{
             atFault('lodPrice')
               ? (sessionIssue()!.reason | translate)
@@ -439,6 +463,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.eod' | translate }}</mat-label>
           <input
+            #eodField
             matInput
             appNumberMask
             [decimals]="4"
@@ -448,6 +473,7 @@
             (blur)="saveSession()"
             (keydown.enter)="$any($event.target).blur()"
           />
+          <ui-form-field-reset matIconSuffix [for]="eodField" />
           <mat-hint [class.warn]="atFault('eodPrice')">{{
             atFault('eodPrice')
               ? (sessionIssue()!.reason | translate)
@@ -513,24 +539,14 @@
       <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
         <mat-icon matPrefix>search</mat-icon>
         <input
+          #searchField
           matInput
           type="text"
           [value]="searchValue()"
           (input)="onSearchInput($any($event.target).value)"
           [placeholder]="'stats.searchPlaceholder' | translate"
         />
-        @if (searchValue()) {
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="clearSearch()"
-            [matTooltip]="'stats.clearSearch' | translate"
-            [attr.aria-label]="'stats.clearSearch' | translate"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
-        }
+        <ui-form-field-reset matIconSuffix [for]="searchField" />
       </mat-form-field>
 
       <app-period-filter labelled [selection]="period()" (selectionChange)="setPeriod($event)" />

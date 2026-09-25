@@ -100,6 +100,11 @@ jobs:
         working-directory: projects/frontend
         run: npm run test:coverage -- --watch=false
 
+      # The design system's own suite : `ng test web` above never loads the lib's specs.
+      - name: Test the lib
+        working-directory: projects/frontend
+        run: npm run ui:test -- --watch=false
+
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v7

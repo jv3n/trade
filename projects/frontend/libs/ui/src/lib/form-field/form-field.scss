@@ -169,3 +169,30 @@
   // Dense fields (40 px) — applied as a coordinated set (height, paddings, label display).
   @include mat.form-field-density(-4);
 }
+
+// ============================================================================
+// `<ui-form-field-reset>` — the ✕ suffix that empties the field
+// ============================================================================
+//
+// Material hands the wrapper's trailing padding over to the suffix container as soon as a suffix
+// is projected (`.mat-mdc-form-field-has-icon-suffix` zeroes `padding-right`). The reset stays in
+// the template whether or not there is anything to clear, so while the button is hidden the
+// container carries that padding itself — an untouched field then reads exactly like a field with
+// no suffix at all. `:only-child` keeps Material's own spacing on a field that also holds a
+// datepicker toggle or another suffix button.
+.mat-mdc-form-field-icon-suffix:has(> ui-form-field-reset) {
+  padding-right: 12px;
+
+  // The 48 px touch target Material centres on an icon button would reach ~12 px into the text of
+  // the field and clear it on a click aimed at the caret. The button is 24 px — WCAG 2.5.8's
+  // minimum — and that is exactly what it should catch, no more.
+  @include mat.icon-button-overrides(
+    (
+      touch-target-size: 24px,
+    )
+  );
+}
+
+.mat-mdc-form-field-icon-suffix:has(> ui-form-field-reset.stb-form-field-reset--idle:only-child) {
+  padding: 0 16px 0 0;
+}

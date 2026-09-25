@@ -14,9 +14,9 @@ import {
 } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { MatIconRegistry, provideStbMaterial } from '@portfolioai/ui';
+import { MatIconRegistry, StbFormFieldResetIntl, provideStbMaterial } from '@portfolioai/ui';
 import * as Sentry from '@sentry/browser';
 
 import { routes } from './app.routes';
@@ -84,6 +84,15 @@ export const appConfig: ApplicationConfig = {
     // logged-out state for a tick even on a valid session, and route guards would race against
     // the auth lookup.
     provideAppInitializer(() => inject(AuthService).refresh()),
+    // The ✕ that empties a field is a lib component, and the lib has no i18n : hand it the
+    // translated wording. `stream()` rather than `instant()` because the translation files load
+    // over HTTP, well after the first fields are on screen.
+    provideAppInitializer(() => {
+      const intl = inject(StbFormFieldResetIntl);
+      inject(TranslateService)
+        .stream('common.resetField')
+        .subscribe((label: string) => intl.resetField.set(label));
+    }),
     // Register the PortfolioAI brand mark so any template can use `<mat-icon svgIcon="portfolioai">`.
     // Loaded once at boot ; MatIconRegistry caches the SVG so subsequent uses don't re-fetch.
     provideAppInitializer(() => {

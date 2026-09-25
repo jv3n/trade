@@ -55,6 +55,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'calculator.fields.percent' | translate }}</mat-label>
           <input
+            #movePercentField
             matInput
             appNumberMask
             [decimals]="2"
@@ -62,6 +63,7 @@
             [value]="v().movePercent"
             (numberChange)="set('movePercent', $event)"
           />
+          <ui-form-field-reset matIconSuffix [for]="movePercentField" />
         </mat-form-field>
       </div>
       @let moved = movedPrice();
@@ -361,6 +363,7 @@
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>{{ label | translate }}</mat-label>
     <input
+      #numberInput
       matInput
       appNumberMask
       [decimals]="decimals"
@@ -368,6 +371,7 @@
       [value]="fieldValue(field)"
       (numberChange)="set(field, $event)"
     />
+    <ui-form-field-reset matIconSuffix [for]="numberInput" />
   </mat-form-field>
 </ng-template>
 

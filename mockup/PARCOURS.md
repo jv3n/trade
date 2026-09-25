@@ -490,6 +490,9 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   there is an error to show.
 - **Numeric fields** : focusing one selects its value, so typing replaces it — at 9:30 there is no
   time to clear a field first.
+- **A field is emptied in one click** (#414) : a ✕ shows in the field as soon as it holds
+  something, and clears it — nothing on an empty field, and out of the tab order, so typing a form
+  field by field is unchanged.
 - **One setting drives language *and* formats** (#311) — the FR / EN choice of the settings page
   decides the wording, the decimal separator and the date format alike ; the browser locale is only
   the default while nobody is logged in. The machine's regional settings are deliberately **not**

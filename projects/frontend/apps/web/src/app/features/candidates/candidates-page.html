@@ -77,6 +77,7 @@
             placeholder="KTTA"
             [formField]="captureForm.ticker"
           />
+          <ui-form-field-reset matIconSuffix [for]="tickerInput" />
           @if (duplicateTicker()) {
             <mat-hint class="warn-hint">{{
               'candidates.form.duplicateTicker' | translate
@@ -87,6 +88,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'candidates.fields.previousClose' | translate }}</mat-label>
           <input
+            #previousCloseField
             matInput
             appNumberMask
             [decimals]="4"
@@ -94,11 +96,13 @@
             [value]="model().previousClose"
             (numberChange)="setNumber('previousClose', $event)"
           />
+          <ui-form-field-reset matIconSuffix [for]="previousCloseField" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'candidates.fields.pmOpen' | translate }}</mat-label>
           <input
+            #pmOpenField
             matInput
             appNumberMask
             [decimals]="4"
@@ -106,6 +110,7 @@
             [value]="model().pmOpen"
             (numberChange)="setNumber('pmOpen', $event)"
           />
+          <ui-form-field-reset matIconSuffix [for]="pmOpenField" />
         </mat-form-field>
 
         <mat-form-field
@@ -115,6 +120,7 @@
         >
           <mat-label>{{ 'candidates.fields.pmHigh' | translate }}</mat-label>
           <input
+            #pmHighField
             matInput
             appNumberMask
             [decimals]="4"
@@ -122,6 +128,7 @@
             [value]="model().pmHigh"
             (numberChange)="setNumber('pmHigh', $event)"
           />
+          <ui-form-field-reset matIconSuffix [for]="pmHighField" />
           @if (pmHighBelowOpen()) {
             <mat-hint class="warn-hint">{{
               'candidates.form.pmHighBelowOpen' | translate
@@ -132,6 +139,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'candidates.fields.float' | translate }}</mat-label>
           <input
+            #floatField
             matInput
             appNumberMask
             [decimals]="2"
@@ -139,12 +147,14 @@
             [value]="model().floatMillions"
             (numberChange)="setNumber('floatMillions', $event)"
           />
+          <ui-form-field-reset matIconSuffix [for]="floatField" />
           <span matTextSuffix>M</span>
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'candidates.fields.volume' | translate }}</mat-label>
           <input
+            #volumeField
             matInput
             appNumberMask
             [decimals]="2"
@@ -152,12 +162,14 @@
             [value]="model().volumeMillions"
             (numberChange)="setNumber('volumeMillions', $event)"
           />
+          <ui-form-field-reset matIconSuffix [for]="volumeField" />
           <span matTextSuffix>M</span>
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'candidates.fields.locate' | translate }}</mat-label>
           <input
+            #locateField
             matInput
             appNumberMask
             [decimals]="4"
@@ -165,11 +177,13 @@
             [value]="model().locatePerShare"
             (numberChange)="setNumber('locatePerShare', $event)"
           />
+          <ui-form-field-reset matIconSuffix [for]="locateField" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field--note">
           <mat-label>{{ 'candidates.fields.note' | translate }}</mat-label>
-          <input matInput autocomplete="off" [formField]="captureForm.note" />
+          <input #noteField matInput autocomplete="off" [formField]="captureForm.note" />
+          <ui-form-field-reset matIconSuffix [for]="noteField" />
         </mat-form-field>
 
         <div class="derived-box">

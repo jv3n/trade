@@ -5,6 +5,7 @@
     "cancel": "Cancel",
     "retry": "Retry",
     "noData": "—",
+    "resetField": "Clear the field",
     "instrumentLabel": {
       "STOCK": "Stock",
       "ETF": "ETF",
@@ -384,7 +385,6 @@
       "allTraded": "Every stat of the period was traded"
     },
     "searchPlaceholder": "Search ticker…",
-    "clearSearch": "Clear search",
     "filterPanel": {
       "period": "Period",
       "statusAll": "Any status",
@@ -529,7 +529,6 @@
     "title": "Stats",
     "subtitle": "One line per candidate promoted to the sheet — premarket data from the morning, session filled in as the day goes, ticked once complete.",
     "searchPlaceholder": "Search by ticker…",
-    "clearSearch": "Clear search",
     "loading": "Loading stats…",
     "empty": "No stat here. Promote a candidate from the Candidates page.",
     "errors": {
@@ -733,7 +732,6 @@
     "subtitle": "Shared glossary of trading terms and their definitions.",
     "addTerm": "Add term",
     "searchPlaceholder": "Search a term or definition…",
-    "clearSearch": "Clear search",
     "loading": "Loading the lexicon…",
     "empty": "The lexicon is empty.",
     "emptyAdmin": "No terms yet. Click « Add term » to create the first one.",

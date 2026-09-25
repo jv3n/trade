@@ -3,24 +3,14 @@
     <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
       <mat-icon matPrefix>search</mat-icon>
       <input
+        #searchField
         matInput
         type="text"
         [value]="searchValue()"
         (input)="onSearchInput($any($event.target).value)"
         [placeholder]="'lexicon.searchPlaceholder' | translate"
       />
-      @if (searchValue()) {
-        <button
-          mat-icon-button
-          matSuffix
-          type="button"
-          (click)="clearSearch()"
-          [matTooltip]="'lexicon.clearSearch' | translate"
-          [attr.aria-label]="'lexicon.clearSearch' | translate"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      }
+      <ui-form-field-reset matIconSuffix [for]="searchField" />
     </mat-form-field>
   </div>
 

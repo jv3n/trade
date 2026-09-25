@@ -571,12 +571,6 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
-  clearSearch(): void {
-    this.searchValue.set('');
-    this.searchInput$.next('');
-    this.pageIndex.set(0);
-  }
-
   setPeriod(selection: PeriodSelection): void {
     this.period.set(selection);
     this.pageIndex.set(0);
