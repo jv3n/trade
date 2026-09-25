@@ -43,12 +43,14 @@
       <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
         <mat-icon matIconPrefix>search</mat-icon>
         <input
+          #searchField
           matInput
           type="search"
           [value]="search()"
           (input)="setSearch($any($event.target).value)"
           [placeholder]="'lexicon.searchPlaceholder' | translate"
         />
+        <ui-form-field-reset matIconSuffix [for]="searchField" />
       </mat-form-field>
 
       <nav class="letters" [attr.aria-label]="'lexicon.letterIndex' | translate">

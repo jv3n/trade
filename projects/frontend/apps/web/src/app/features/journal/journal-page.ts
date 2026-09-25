@@ -252,12 +252,6 @@ export class JournalPage {
     this.pageIndex.set(0);
   }
 
-  clearSearch(): void {
-    this.searchValue.set('');
-    this.searchInput$.next('');
-    this.pageIndex.set(0);
-  }
-
   // ---- Filter handlers — every one of them applies straight away and rewinds to page 0 ----
 
   setPeriod({ period, dateFrom, dateTo }: PeriodSelection): void {

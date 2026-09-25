@@ -64,6 +64,7 @@
         [attr.aria-label]="'settings.accessControlPage.addAriaLabel' | translate"
         (keydown.enter)="onAddKeydown($event, addInput.value)"
       />
+      <ui-form-field-reset matIconSuffix [for]="addInput" />
       <button
         matSuffix
         mat-icon-button

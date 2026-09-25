@@ -5,6 +5,7 @@
     "cancel": "Annuler",
     "retry": "Réessayer",
     "noData": "—",
+    "resetField": "Vider le champ",
     "instrumentLabel": {
       "STOCK": "Action",
       "ETF": "ETF",
@@ -384,7 +385,6 @@
       "allTraded": "Toutes les stats de la période ont été tradées"
     },
     "searchPlaceholder": "Rechercher un ticker…",
-    "clearSearch": "Effacer la recherche",
     "filterPanel": {
       "period": "Période",
       "statusAll": "Tout statut",
@@ -529,7 +529,6 @@
     "title": "Stats",
     "subtitle": "Une ligne par candidat passé en stats — données du matin en premarket, séance remplie au fil de la journée, cochée une fois complète.",
     "searchPlaceholder": "Rechercher un ticker…",
-    "clearSearch": "Effacer la recherche",
     "loading": "Chargement des stats…",
     "empty": "Aucune stat ici. Passe un candidat en stat depuis la page Candidats.",
     "errors": {
@@ -733,7 +732,6 @@
     "subtitle": "Glossaire partagé des termes de trading et leurs définitions.",
     "addTerm": "Ajouter un terme",
     "searchPlaceholder": "Rechercher un terme ou une définition…",
-    "clearSearch": "Effacer la recherche",
     "loading": "Chargement du lexique…",
     "empty": "Le lexique est vide.",
     "emptyAdmin": "Aucun terme pour l'instant. Clique sur « Ajouter un terme » pour créer le premier.",

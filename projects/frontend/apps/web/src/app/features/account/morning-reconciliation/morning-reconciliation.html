@@ -35,6 +35,7 @@
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label>{{ 'account.reconciliation.brokerBalance' | translate }}</mat-label>
     <input
+      #brokerBalanceField
       matInput
       appNumberMask
       [decimals]="2"
@@ -43,6 +44,7 @@
       (numberChange)="setBrokerBalance($event)"
       inputmode="decimal"
     />
+    <ui-form-field-reset matIconSuffix [for]="brokerBalanceField" />
     <span matTextSuffix>{{ 'account.usdSuffix' | translate }}</span>
     @if (negativeBalance()) {
       <mat-hint class="warn">{{ 'account.reconciliation.negativeBalance' | translate }}</mat-hint>

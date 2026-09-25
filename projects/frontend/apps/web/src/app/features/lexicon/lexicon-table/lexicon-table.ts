@@ -75,8 +75,4 @@ export class LexiconTable {
   onSearchInput(value: string): void {
     this.searchValue.set(value);
   }
-
-  clearSearch(): void {
-    this.searchValue.set('');
-  }
 }

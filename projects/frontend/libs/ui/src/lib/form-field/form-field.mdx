@@ -22,3 +22,22 @@ template: \`...\`,
 ## Default
 
 <Canvas of={Stories.Default} />
+
+## Clearing a field
+
+`<ui-form-field-reset matIconSuffix [for]="field" />` puts a ✕ in the suffix slot that empties the
+field it points at — pass the field's own template reference. It shows only while the field holds
+something, and it clears it the way the user would (value emptied, `input` + `change` dispatched),
+so Signal Forms, a numeric mask or a plain `(input)` handler all follow on their own.
+
+<Source
+  language="html"
+  code={`<mat-form-field>
+  <mat-label>Ticker</mat-label>
+  <input #ticker matInput [formField]="captureForm.ticker" />
+  <ui-form-field-reset matIconSuffix [for]="ticker" />
+</mat-form-field>`}
+/>
+
+The wording (tooltip + accessible name) comes from `StbFormFieldResetIntl` — English in the lib,
+overwritten by the app with its own translation.

@@ -6,17 +6,30 @@
   <mat-dialog-content class="form-stack">
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ 'lexicon.fields.term' | translate }}</mat-label>
-      <input matInput [formField]="lexiconForm.term" />
+      <input #termField matInput [formField]="lexiconForm.term" />
+      <ui-form-field-reset matIconSuffix [for]="termField" />
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ 'lexicon.fields.definitionFr' | translate }}</mat-label>
-      <textarea matInput [formField]="lexiconForm.definitionFr" rows="4"></textarea>
+      <textarea
+        #definitionFrField
+        matInput
+        [formField]="lexiconForm.definitionFr"
+        rows="4"
+      ></textarea>
+      <ui-form-field-reset matIconSuffix [for]="definitionFrField" />
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ 'lexicon.fields.definitionEn' | translate }}</mat-label>
-      <textarea matInput [formField]="lexiconForm.definitionEn" rows="4"></textarea>
+      <textarea
+        #definitionEnField
+        matInput
+        [formField]="lexiconForm.definitionEn"
+        rows="4"
+      ></textarea>
+      <ui-form-field-reset matIconSuffix [for]="definitionEnField" />
     </mat-form-field>
   </mat-dialog-content>
 
