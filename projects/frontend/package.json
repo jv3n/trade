@@ -35,7 +35,7 @@
     "@angular/router": "^22.1.7",
     "@ngx-translate/core": "^18.0.0",
     "@ngx-translate/http-loader": "^18.0.0",
-    "@sentry/browser": "^10.75.0",
+    "@sentry/browser": "^10.75.1",
     "date-fns": "^4.4.0",
     "echarts": "^6.1.0",
     "rxjs": "^7.8.2",
@@ -59,7 +59,7 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "storybook": "^10.6.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "8.70.0",
+    "typescript-eslint": "8.70.1",
     "vitest": "^4.1.11"
   }
 }
