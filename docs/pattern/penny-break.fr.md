@@ -3,8 +3,8 @@
 > **Shorter** la cassure ratée d'un niveau : le titre dépasse de **pas plus de ~1 %** un top ou un
 > niveau de rebond, puis se fait rabattre dessous. Un **pattern à part entière** quand un titre
 > s'étend dans un niveau et y échoue, et un **signal d'entrée** dans les autres setups — il y dit
-> *quand* entrer dans un trade que le setup justifie déjà (voir
-> [`execution-signals.fr.md`](../notes/execution-signals.fr.md)).
+> *quand* entrer dans un trade que le setup justifie déjà (voir les
+> [signaux d'exécution](../notes/execution-signals.fr.md)).
 
 *Dernière révision : 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
 
@@ -26,8 +26,8 @@
 ## Pourquoi ça marche
 
 Un long qui attend le breakout achète la cassure. Quand elle échoue aussitôt, il abandonne et vend — la
-même vente qu'un double top reçoit sur son retest (voir les quatre vendeurs dans
-[`four-sellers.fr.md`](../notes/four-sellers.fr.md)). C'est sur un triple top qu'un long attend le plus
+même vente qu'un double top reçoit sur son retest (voir les
+[quatre vendeurs](../notes/four-sellers.fr.md)). C'est sur un triple top qu'un long attend le plus
 le breakout : une cassure de triple top qui meurt tout de suite est celle qui le sort le plus fort.
 
 C'est aussi la façon d'entrer quand un titre s'étend dans un niveau sans jamais donner le rejet de

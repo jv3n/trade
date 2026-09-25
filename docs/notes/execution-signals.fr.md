@@ -1,7 +1,7 @@
 # Signaux d'exécution — comment entrer dans les setups
 
-> Un double top et un penny break sont des patterns à part entière ([`DT.fr.md`](../pattern/DT.fr.md),
-> [`penny-break.fr.md`](../pattern/penny-break.fr.md)), et aussi des **critères d'exécution** : des
+> Un double top et un penny break sont des patterns à part entière (le
+> [double top](../pattern/DT.fr.md), le [penny break](../pattern/penny-break.fr.md)), et aussi des **critères d'exécution** : des
 > signes de faiblesse, qu'on trouve dans un [GUS](../pattern/GUS.fr.md) ou un
 > [short into resistance](../pattern/SIR.fr.md). Là, le setup dit s'il faut shorter ; le signal dit
 > **quand**.
@@ -12,13 +12,13 @@
 
 ## Les signaux
 
-| Signal | Fiche | En une ligne |
-|---|---|---|
-| **Double top** | [`DT.fr.md`](../pattern/DT.fr.md) | Un rejet, puis un retest raté du high. |
-| **Penny break** | [`penny-break.fr.md`](../pattern/penny-break.fr.md) | Une cassure de ≤ ~1 % au-dessus d'un niveau, rabattue dessous — sur le 5 secondes. |
-| **Consolidation** | — | La poussée ralentit et cale sous le niveau. |
+| Signal | En une ligne |
+|---|---|
+| [**Double top**](../pattern/DT.fr.md) | Un rejet, puis un retest raté du high. |
+| [**Penny break**](../pattern/penny-break.fr.md) | Une cassure de ≤ ~1 % au-dessus d'un niveau, rabattue dessous — sur le 5 secondes. |
+| **Consolidation** | La poussée ralentit et cale sous le niveau. |
 
-Et pour juger n'importe lequel : [`four-sellers.fr.md`](four-sellers.fr.md) — qui va créer la vente.
+Et pour juger n'importe lequel : les [quatre vendeurs](four-sellers.fr.md) — qui va créer la vente.
 
 ---
 
@@ -30,6 +30,6 @@ le penny break. Cette combinaison est le meilleur trade qui soit — le win rate
 risk / reward d'une entrée serrée.
 
 **Quand attendre un signal** : un setup propre qui pousse dans un niveau de risque vaut la peine d'être
-pris frontside, sans signal ([`GUS.fr.md`](../pattern/GUS.fr.md)). Le signal sert aux setups à qui il
+pris frontside, sans signal (le [GUS](../pattern/GUS.fr.md)). Le signal sert aux setups à qui il
 manque quelque chose — pas de niveau de risque, un critère juste, un red flag — où on laisse le titre
 montrer sa faiblesse d'abord.

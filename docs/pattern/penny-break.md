@@ -3,7 +3,7 @@
 > **Short** the failed break of a level : the stock pokes **no more than ~1 %** above a top or a bounce
 > level, then gets slammed back under it. A **pattern of its own** when a stock extends into a level
 > and fails there, and an **entry signal** inside the other setups — there it says *when* to enter a
-> trade the setup already justifies (see [`execution-signals.md`](../notes/execution-signals.md)).
+> trade the setup already justifies (see the [execution signals](../notes/execution-signals.md)).
 
 *Last revised : 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
 
@@ -25,8 +25,8 @@
 ## Why it works
 
 A long waiting for the breakout buys the break. When it fails at once, they give up and sell — the
-same selling a double top gets on its retest (see the four sellers in
-[`four-sellers.md`](../notes/four-sellers.md)). A triple top is where a long most expects the breakout, so a
+same selling a double top gets on its retest (see the
+[four sellers](../notes/four-sellers.md)). A triple top is where a long most expects the breakout, so a
 triple-top break that dies right away shakes them out hardest.
 
 It is also the way in when a stock extends into a level but never gives the 17-20 % rejection a

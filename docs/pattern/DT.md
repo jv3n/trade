@@ -26,7 +26,7 @@ you know it, you see 10 % breaths everywhere, and a 10 % rejection proves nothin
 
 At **17-20 %**, people start believing the top is in. The longs who missed their exit, and the ones
 now losing money, decide to sell the next time it comes back — that belief is what creates the
-selling on the retest (see [`four-sellers.md`](../notes/four-sellers.md)).
+selling on the retest (see the [four sellers](../notes/four-sellers.md)).
 
 ---
 
@@ -50,4 +50,4 @@ When the retest never reaches the high, a bounce level that breaks and fails can
 ## The stop
 
 The stop computed above deserves a look around before it is placed — the rule every pattern shares,
-in [`stop-rule.md`](../notes/stop-rule.md).
+the [stop rule](../notes/stop-rule.md).

@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PatternsRepository } from '../../core/api/patterns/patterns.repository';
 import { LanguageService } from '../../core/app-state/language.service';
@@ -13,7 +13,8 @@ import { PatternsPage } from './patterns-page';
  *
  * - a tab per folder, each an accordion of one panel per file, in order ; GUS open ;
  * - the collapsed header carries the file's title and revision date — « never revised » without ;
- * - a link to a file of the other folder switches tab and opens that panel ;
+ * - a link to another file switches tab and opens that panel, then scrolls to it once the
+ *   animation that moves it has ended — the tab's, or the panel's own on the same tab ;
  * - a file that fails to load costs its own panel, never the page.
  */
 describe('PatternsPage', () => {
@@ -38,7 +39,11 @@ describe('PatternsPage', () => {
     });
   });
 
-  afterEach(() => TestBed.resetTestingModule());
+  const scrollIntoView = Element.prototype.scrollIntoView;
+  afterEach(() => {
+    Element.prototype.scrollIntoView = scrollIntoView;
+    TestBed.resetTestingModule();
+  });
 
   async function setup(): Promise<ComponentFixture<PatternsPage>> {
     const fixture = TestBed.createComponent(PatternsPage);
@@ -90,6 +95,40 @@ describe('PatternsPage', () => {
     expect(fixture.componentInstance.open().has('sheet-notes-four-sellers')).toBe(true);
   });
 
+  // Scrolled as soon as the link was followed, the panel was still off-screen once the tab and the
+  // accordion had finished moving (#424).
+  it('brings the linked panel into view once the tab has settled, not before', async () => {
+    const scrolled = recordScrolls();
+    const fixture = await setup();
+
+    fixture.nativeElement.querySelector('a[href="#sheet-notes-four-sellers"]').click();
+    await fixture.whenStable();
+    expect(scrolled).toEqual([]);
+
+    // Material's fallback when no CSS transition runs (jsdom) : the tab settles after 100 ms.
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await fixture.whenStable();
+    expect(scrolled).toEqual(['sheet-notes-four-sellers']);
+  });
+
+  // The panel expands while nothing else moves : its own animation is the one to wait for, and
+  // another panel opened by hand meanwhile must not trigger the scroll (review of #427).
+  it('on the same tab, scrolls once the linked panel has expanded, and on no other', async () => {
+    const scrolled = recordScrolls();
+    const fixture = await setup();
+    const page = fixture.componentInstance;
+
+    fixture.nativeElement.querySelector('a[href="#sheet-pattern-DT"]').click();
+    await fixture.whenStable();
+    page.settled('tab');
+    page.settled('panel', 'sheet-pattern-SIR');
+    expect(scrolled).toEqual([]);
+
+    page.settled('panel', 'sheet-pattern-DT');
+    page.settled('panel', 'sheet-pattern-DT');
+    expect(scrolled).toEqual(['sheet-pattern-DT']);
+  });
+
   it('reads the French twin of each file when the interface is in French', async () => {
     lang.set('fr');
     const asked: string[] = [];
@@ -120,5 +159,15 @@ function source(folder: string, file: string): string {
   const revised = file === 'SIV' ? '' : '*Last revised : 2026-09-25.*\n\n';
   const link =
     folder === 'pattern' ? 'Judged with [the four sellers](../notes/four-sellers.md).' : '';
-  return `# ${file}\n\n> The ${file} summary.\n\n${revised}---\n\n${link}`;
+  const sibling = file === 'GUS' ? ' Or taken as a [double top](DT.md).' : '';
+  return `# ${file}\n\n> The ${file} summary.\n\n${revised}---\n\n${link}${sibling}`;
+}
+
+/** Stubs `scrollIntoView` (jsdom has none) and records the id of every element scrolled to. */
+function recordScrolls(): string[] {
+  const scrolled: string[] = [];
+  Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+    scrolled.push(this.id);
+  });
+  return scrolled;
 }
