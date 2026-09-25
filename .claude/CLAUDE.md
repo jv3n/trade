@@ -62,6 +62,7 @@ trade/
 │   ├── pattern/                                    # Pattern sheets (GUS, DT, SIR, SIV, penny break)
 │   ├── notes/                                      # Trading notes that are not patterns (execution signals, four sellers, stop rule)
 │   └── data-input-local/                           # real broker exports (gitignored)
+├── tooling/                                        # Own package.json ; transcript/ — CLI pulling a training's captions + the transcripts
 ├── mockup/                                         # Target product : static HTML mockups + PARCOURS.md (user journey)
 ├── devops/prod/                                    # Dockerfile + service.yaml (Cloud Run deploy)
 ├── .github/workflows/                              # backend.yml, frontend.yml, codeql.yml, deploy.yml, …

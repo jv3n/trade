@@ -115,9 +115,3 @@ docs/pso/
 
 # Tilt
 .tilt.env
-
-# ========================
-# Course transcripts
-# ========================
-# Paid Trading Desk content — the index is versioned, the transcripts stay local (public repo).
-docs/transcription/transcripts/
