@@ -160,6 +160,28 @@ describe('TodayPage', () => {
     expect(page.stepStates().candidates).toBe('current');
   });
 
+  it('reconciling from step 1 turns it done, as read back from the server', () => {
+    const page = setup();
+
+    reconciledToday = true;
+    page.onSettled();
+
+    expect(page.stepStates().reconciliation).toBe('done');
+  });
+
+  // The block emits the same `settled` for a cancel : taking it as « reconciled » left step 1
+  // green with nothing reconciled (#425).
+  it('cancelling the morning reconciliation puts step 1 back as the current one', () => {
+    reconciledToday = true;
+    const page = setup();
+
+    reconciledToday = false;
+    page.onSettled();
+
+    expect(page.stepStates().reconciliation).toBe('current');
+    expect(page.doneCount()).toBe(0);
+  });
+
   it('captured candidates, all in the sheet, move the day on — the session is still ahead', () => {
     reconciledToday = true;
     candidates = [

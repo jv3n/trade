@@ -229,13 +229,12 @@ export class TodayPage {
     this.fetch();
   }
 
-  /** The morning block settled : the balance moved, and step 1 is behind us. */
-  onReconciled(): void {
-    this.reconciledToday.set(true);
-    this.accountRepo.getSummary().subscribe({
-      next: (s) => this.accountSummary.set(s),
-      error: () => this.accountSummary.set(null),
-    });
+  /**
+   * The morning block settled — reconciled *or* cancelled, it emits the same output : the balance
+   * moved, and step 1 is re-read rather than assumed done (#425).
+   */
+  onSettled(): void {
+    this.fetchAccount();
   }
 
   /**
@@ -316,17 +315,7 @@ export class TodayPage {
     };
     const month = computeMonthRange(this.today);
 
-    this.accountRepo.getSummary().subscribe({
-      next: (s) => this.accountSummary.set(s),
-      error: () => this.accountSummary.set(null),
-    });
-    // Step 1's own block loads the history too ; the page reads it for the side column and for the
-    // step state, which it needs even before the block is rendered.
-    this.accountRepo.reconciliations(1).subscribe({
-      next: (rows) =>
-        this.reconciledToday.set(rows.some((r) => isSameDay(r.valueDate, this.today))),
-      error: () => this.reconciledToday.set(false),
-    });
+    this.fetchAccount();
     this.candidatesRepo.listForDate(this.today).subscribe({
       next: (rows) => this.candidates.set(rows),
       error: () => this.candidates.set([]),
@@ -361,6 +350,20 @@ export class TodayPage {
     this.journalRepo.summary(day).subscribe({ next: (s) => this.dayPnl.set(s) });
     this.journalRepo.summary(week).subscribe({ next: (s) => this.weekPnl.set(s) });
     this.journalRepo.summary(month).subscribe({ next: (s) => this.monthPnl.set(s) });
+  }
+
+  private fetchAccount(): void {
+    this.accountRepo.getSummary().subscribe({
+      next: (s) => this.accountSummary.set(s),
+      error: () => this.accountSummary.set(null),
+    });
+    // Step 1's own block loads the history too ; the page reads it for the side column and for the
+    // step state, which it needs even before the block is rendered.
+    this.accountRepo.reconciliations(1).subscribe({
+      next: (rows) =>
+        this.reconciledToday.set(rows.some((r) => isSameDay(r.valueDate, this.today))),
+      error: () => this.reconciledToday.set(false),
+    });
   }
 }
 
