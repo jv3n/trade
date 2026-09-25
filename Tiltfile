@@ -36,8 +36,10 @@ postgres_port = dotenv.get("POSTGRES_HOST_PORT", "5432")
 backend_port = dotenv.get("BACKEND_HOST_PORT", "8080")
 frontend_port = dotenv.get("FRONTEND_HOST_PORT", "4200")
 storybook_port = dotenv.get("STORYBOOK_HOST_PORT", "6006")
+e2e_ui_port = dotenv.get("E2E_UI_HOST_PORT", "9323")
 
-spring_profiles = "local"
+# `e2e` opens the throwaway sign-in the end-to-end suite needs (#367) — never deployed.
+spring_profiles = "local,e2e"
 
 node_version = tools.get("nodejs", "24.21.0")
 java_major = tools.get("java", "openjdk-21").replace("openjdk-", "").replace("temurin-", "").split(".")[0]
@@ -276,6 +278,40 @@ cmd_button(
 
 local_resource(name="checks 🧪", cmd="date", labels=["tools"])
 
+# End-to-end suite (#367), against the stack Tilt serves. Two ways in, side by side :
+# - « open » (the resource itself, manual) : Playwright's UI mode, served to the browser rather than
+#   as a native window (WSL) — pick a spec, watch it run step by step, replay its trace ;
+# - « run » (button) : the whole suite headless, as CI runs it.
+local_resource(
+    name="e2e 🎭",
+    serve_cmd="""cd projects/frontend && npx playwright install chromium && \\
+  E2E_BASE_URL=http://localhost:{front} npm run e2e:open -- --ui-host=0.0.0.0 --ui-port={ui}""".format(
+        front=frontend_port, ui=e2e_ui_port
+    ),
+    serve_env=tool_env,
+    resource_deps=["backend", "frontend"],
+    auto_init=False,
+    trigger_mode=TRIGGER_MODE_MANUAL,
+    labels=["tools"],
+    links=[link("http://{}:{}".format(host, e2e_ui_port), "Playwright UI")],
+)
+
+cmd_button(
+    name="e2e-open",
+    resource="e2e 🎭",
+    text="open (UI)",
+    icon_name="visibility",
+    argv=["tilt", "trigger", "e2e 🎭"],
+)
+
+cmd_button(
+    name="e2e-run",
+    resource="e2e 🎭",
+    text="run (headless)",
+    icon_name="play_arrow",
+    argv=["./devops/tools/tilt/run-check.sh", "e2e"],
+)
+
 for check in ["backend-test", "frontend-test", "lint", "format"]:
     cmd_button(
         name="check-" + check,
@@ -288,3 +324,4 @@ for check in ["backend-test", "frontend-test", "lint", "format"]:
 print("Frontend  : http://{}:{}".format(host, frontend_port))
 print("Backend   : http://{}:{}  (profiles: {})".format(host, backend_port, spring_profiles))
 print("Storybook : http://{}:{}  (manual start)".format(host, storybook_port))
+print("E2E UI    : http://{}:{}  (manual start)".format(host, e2e_ui_port))

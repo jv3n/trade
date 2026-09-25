@@ -22,7 +22,7 @@ Personal trading tracker — short small-caps, **GUS** (gap-up short, $1–$10) 
 | Backend      | Kotlin + Spring Boot 3 + Hibernate 6            |
 | Build        | Gradle (Kotlin DSL) ; Angular CLI workspace     |
 | DB           | PostgreSQL + Flyway                             |
-| Tests        | Vitest (frontend), JUnit 5 + Testcontainers (backend) |
+| Tests        | Vitest (frontend), JUnit 5 + Testcontainers (backend), Playwright (e2e, `apps/web-e2e`) |
 | Local infra  | Tilt + Docker Compose                           |
 | CI           | GitHub Actions                                  |
 
@@ -94,6 +94,8 @@ npm run build                                       # ng build web
 npm run test                                        # ng test web (Vitest)
 npm run lint                                        # ng lint web && ng lint ui
 npm run format                                      # prettier across apps + libs
+npm run e2e                                         # Playwright against a running stack (E2E_BASE_URL, backend on the `e2e` profile)
+npm run e2e:open                                    # same, in Playwright's UI mode (Tilt : `e2e-ui` resource)
 npm run storybook                                   # ng run ui:storybook (lib playground)
 npm run storybook:build                             # ng run ui:build-storybook
 npx ng test web --watch=false --include='apps/web/src/path/to/file.spec.ts'  # single spec (bare `vitest` can't resolve @portfolioai/ui)

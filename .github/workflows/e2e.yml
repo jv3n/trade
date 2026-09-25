@@ -1,0 +1,135 @@
+name: E2E
+
+# The Playwright suite against the whole stack (#367) — slower than the unit suites, so not on every
+# PR : on master, on the release tags (rc included), on demand, and on the PRs that touch the suite
+# or its sign-in. The app code the suite protects is left out on purpose : for it, this is a
+# post-merge gate — a broken flow is found on master, not on its PR.
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    paths:
+      - 'projects/frontend/apps/web-e2e/**'
+      - 'projects/backend/src/main/kotlin/com/portfolioai/e2e/**'
+      - 'projects/backend/src/main/kotlin/com/portfolioai/auth/infrastructure/security/SecurityConfig.kt'
+      - '.github/workflows/e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Playwright
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+
+    # Same credentials as `application.yml`'s defaults, so the backend needs no datasource override.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: portfolioai
+          POSTGRES_USER: portfolioai
+          POSTGRES_PASSWORD: portfolioai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U portfolioai"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6.3.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: 'projects/frontend/.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: projects/frontend/package-lock.json
+
+      # Same key as the frontend workflow : whichever runs first fills it for the other.
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache@v6
+        with:
+          path: projects/frontend/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('projects/frontend/.nvmrc', 'projects/frontend/package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules.outputs.cache-hit != 'true'
+        working-directory: projects/frontend
+        run: npm ci
+
+      # The browser is cached per Playwright version ; its system libraries are not (apt), so a hit
+      # still installs those.
+      - name: Read the Playwright version
+        id: playwright
+        working-directory: projects/frontend
+        run: echo "version=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Playwright browsers
+        id: browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install Chromium
+        if: steps.browsers.outputs.cache-hit != 'true'
+        working-directory: projects/frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Chromium's system libraries
+        if: steps.browsers.outputs.cache-hit == 'true'
+        working-directory: projects/frontend
+        run: npx playwright install-deps chromium
+
+      - name: Start the backend (e2e profile)
+        working-directory: projects/backend
+        run: nohup ./gradlew bootRun --args='--spring.profiles.active=e2e' > ../../backend.log 2>&1 &
+
+      - name: Start the frontend
+        working-directory: projects/frontend
+        run: nohup npx ng serve web --port 4200 > ../../frontend.log 2>&1 &
+
+      - name: Wait for the stack
+        run: |
+          timeout 300 bash -c 'until curl -sf http://localhost:8080/actuator/health >/dev/null; do sleep 3; done'
+          timeout 300 bash -c 'until curl -sf http://localhost:4200 >/dev/null; do sleep 3; done'
+
+      - name: Run the suite
+        working-directory: projects/frontend
+        run: npm run e2e
+
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report
+          path: |
+            projects/frontend/dist/e2e/
+            backend.log
+            frontend.log
+          if-no-files-found: ignore
