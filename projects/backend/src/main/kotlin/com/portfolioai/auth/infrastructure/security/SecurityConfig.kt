@@ -4,6 +4,7 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -62,11 +63,15 @@ class SecurityConfig(
     clientRegistrationRepository: ObjectProvider<ClientRegistrationRepository>,
     customOAuth2UserService: CustomOAuth2UserService,
     customOidcUserService: CustomOidcUserService,
+    environment: Environment,
   ): SecurityFilterChain {
+    // The e2e suite's sign-in (`E2eSessionController`) — the route only exists under that profile.
+    val e2e = environment.matchesProfiles("e2e")
     http
       .csrf { csrf ->
         csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
         csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
+        if (e2e) csrf.ignoringRequestMatchers(E2E_LOGIN)
       }
       .addFilterAfter(CsrfTokenResponseFilter(), CsrfFilter::class.java)
       .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
@@ -77,6 +82,7 @@ class SecurityConfig(
           .requestMatchers("/actuator/health", "/actuator/health/**", "/login/**", "/oauth2/**")
           .permitAll()
         it.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+        if (e2e) it.requestMatchers(HttpMethod.POST, E2E_LOGIN).permitAll()
         it
           .requestMatchers("/api/config/**", "/api/prompts/**", "/api/narrative/observability/**")
           .hasRole("ADMIN")
@@ -159,4 +165,8 @@ class SecurityConfig(
       // cheap insurance against a future filter order change.
       if (!response.isCommitted) response.sendRedirect(target)
     }
+
+  private companion object {
+    const val E2E_LOGIN = "/api/e2e/login"
+  }
 }
