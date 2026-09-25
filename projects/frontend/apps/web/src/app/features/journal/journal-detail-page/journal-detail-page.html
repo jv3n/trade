@@ -195,7 +195,7 @@
                   appNumberMask
                   [decimals]="0"
                   [min]="1"
-                  [value]="exec.shares"
+                  [number]="exec.shares"
                   (numberChange)="setExecutionShares($index, $event)"
                   inputmode="numeric"
                 />
@@ -208,7 +208,7 @@
                   appNumberMask
                   [decimals]="4"
                   [min]="0"
-                  [value]="exec.price"
+                  [number]="exec.price"
                   (numberChange)="setExecutionPrice($index, $event)"
                   inputmode="decimal"
                 />
@@ -289,7 +289,7 @@
                 [decimals]="2"
                 [allowNegative]="true"
                 data-testid="real-pnl"
-                [value]="realAllowed() ? d.realProfitDollars : null"
+                [number]="realAllowed() ? d.realProfitDollars : null"
                 [disabled]="!realAllowed()"
                 (numberChange)="setRealProfit($event)"
                 inputmode="decimal"

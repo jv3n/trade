@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { StbInputModule } from '@portfolioai/ui';
 import { describe, expect, it } from 'vitest';
@@ -140,7 +140,7 @@ describe('NumberMaskDirective helpers', () => {
 describe('NumberMaskDirective on focus', () => {
   @Component({
     imports: [NumberMaskDirective],
-    template: `<input appNumberMask [decimals]="1" [value]="15.3" />`,
+    template: `<input appNumberMask [decimals]="1" [number]="15.3" />`,
   })
   class Host {}
 
@@ -203,7 +203,7 @@ describe('NumberMaskDirective on focus', () => {
 describe('NumberMaskDirective on first render', () => {
   @Component({
     imports: [StbInputModule, NumberMaskDirective],
-    template: `<input matInput appNumberMask [decimals]="2" [value]="1500" />`,
+    template: `<input matInput appNumberMask [decimals]="2" [number]="1500" />`,
   })
   class Host {}
 
@@ -214,5 +214,51 @@ describe('NumberMaskDirective on first render', () => {
 
     // Default `en-US` locale in the specs : `1,500.00` is what the French page reads `1 500,00`.
     expect(input.value).toBe('1,500.00');
+  });
+});
+
+/**
+ * Typing faster than change detection, next to `matInput` (#416). Each key updates the host's
+ * signal, and the next change detection lands a little later : when `matInput` received the value
+ * too, it wrote the raw number back then and erased the key typed in between — the separator
+ * after « 4 », so « 4.05 » became « 405 », and a 9 987,60 $ balance a 988 760 $ correction.
+ */
+describe('NumberMaskDirective typed faster than change detection', () => {
+  @Component({
+    imports: [StbInputModule, NumberMaskDirective],
+    template: `<input
+      matInput
+      appNumberMask
+      [decimals]="2"
+      [number]="amount()"
+      (numberChange)="amount.set($event)"
+    />`,
+  })
+  class Host {
+    readonly amount = signal<number | null>(null);
+  }
+
+  /** One key : the element's text as the browser leaves it, then its `input` event. */
+  function key(input: HTMLInputElement, text: string): void {
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+  }
+
+  it('keeps a separator typed before the previous key was rendered', async () => {
+    const fixture = TestBed.createComponent(Host);
+    await fixture.whenStable();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('input');
+    input.focus();
+
+    key(input, '4');
+    key(input, '4.'); // before the change detection the first key scheduled
+    await fixture.whenStable();
+    expect(input.value).toBe('4.');
+
+    key(input, '4.0');
+    key(input, '4.05');
+    await fixture.whenStable();
+    expect(input.value).toBe('4.05');
+    expect(fixture.componentInstance.amount()).toBe(4.05);
   });
 });
