@@ -17,6 +17,8 @@ import { HttpLexiconRepository } from './api/lexicon/adapters/lexicon.http';
 import { LexiconRepository } from './api/lexicon/lexicon.repository';
 import { HttpStatsRepository } from './api/stats/adapters/stats.http';
 import { StatsRepository } from './api/stats/stats.repository';
+import { HttpTradingDayRepository } from './api/trading-day/adapters/trading-day.http';
+import { TradingDayRepository } from './api/trading-day/trading-day.repository';
 
 /**
  * Wires every port (`*.repository.ts`) to its default adapter. Aligned on the
@@ -32,6 +34,7 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: JournalRepository, useClass: HttpJournalRepository },
     { provide: CandidatesRepository, useClass: HttpCandidatesRepository },
     { provide: StatsRepository, useClass: HttpStatsRepository },
+    { provide: TradingDayRepository, useClass: HttpTradingDayRepository },
     { provide: LexiconRepository, useClass: HttpLexiconRepository },
     { provide: AppInfoRepository, useClass: HttpAppInfoRepository },
   ]);

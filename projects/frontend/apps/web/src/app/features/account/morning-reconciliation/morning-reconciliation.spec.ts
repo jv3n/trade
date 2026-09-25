@@ -18,6 +18,7 @@ import { MorningReconciliation } from './morning-reconciliation';
  * - the **gap is live** : broker balance minus the app's, recomputed on every keystroke ;
  * - a gap goes through the **confirmation modal** (it creates a `Correction` line), a clean morning
  *   does not (it only timestamps itself) ;
+ * - **« Aucun écart »** (#407) reconciles at the app's own balance in one click, unconfirmed ;
  * - **cancelling** the modal reaches no endpoint ;
  * - the host is **told** once the morning is settled, and the input is cleared so the next
  *   keystroke starts from the new balance ;
@@ -108,6 +109,23 @@ describe('MorningReconciliation', () => {
     expect(confirmAsk).not.toHaveBeenCalled();
     expect(reconcile).toHaveBeenCalledTimes(1);
     expect((reconcile.mock.calls[0][0] as ReconciliationInput).brokerBalance).toBe(1000);
+  });
+
+  it('« Aucun écart » reconciles at the computed balance without asking', () => {
+    const page = setup().componentInstance;
+
+    page.reconcileNoGap();
+
+    expect(confirmAsk).not.toHaveBeenCalled();
+    expect((reconcile.mock.calls[0][0] as ReconciliationInput).brokerBalance).toBe(1000);
+  });
+
+  it('« Aucun écart » sends nothing while the app balance has not landed', () => {
+    const page = setup(null).componentInstance;
+
+    page.reconcileNoGap();
+
+    expect(reconcile).not.toHaveBeenCalled();
   });
 
   it('a gap asks for confirmation before creating the correction', () => {

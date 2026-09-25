@@ -101,6 +101,23 @@
         color: var(--gain);
       }
 
+      /* #407 : « rien aujourd'hui » — un statut, pas un résultat : neutre, jamais vert. */
+      .step.none .step-dot {
+        border-color: transparent;
+        background: var(--surface-2);
+        color: var(--text-muted);
+      }
+
+      .step.none .step-title {
+        color: var(--text-muted);
+      }
+
+      .step .undo {
+        font-size: 12px;
+        color: var(--text-faint);
+        margin-left: 6px;
+      }
+
       .step.current .step-dot {
         border-color: var(--accent);
         color: var(--accent);
@@ -209,9 +226,11 @@
           <div class="header-right">
             <span class="market-pill pre" data-group="moment" data-value="matin"><i></i>Premarket · 08:20 (heure de New York)</span>
             <span class="market-pill" data-group="moment" data-value="soir" hidden><i></i>Marché fermé · 16:15 (heure de New York)</span>
+            <span class="market-pill" data-group="moment" data-value="calme" hidden><i></i>Marché fermé · 16:15 (heure de New York)</span>
             <div class="segmented" data-group="moment" title="Maquette : voir la page à deux moments de la journée">
               <button class="active" data-value="matin">8h00</button>
               <button data-value="soir">16h15</button>
+              <button data-value="calme">Jour calme</button>
             </div>
           </div>
         </header>
@@ -240,10 +259,16 @@
                         <label>Écart</label>
                         <div class="input muted" id="reco-gap" style="background: transparent">—</div>
                       </div>
+                      <div class="actions">
                       <button class="btn btn-primary" id="reco-btn">Valider</button>
+                      <!-- #407 : le cas courant — TradeZero affiche le solde de l'app, rien à taper. Un clic, sans confirmation. -->
+                      <button class="btn" title="Horodate le rapprochement au solde calculé, sans correction">
+                        <span class="icon">check</span> Aucun écart
+                      </button>
+                      </div>
                     </div>
                     <p class="muted" id="reco-hint" style="margin: 8px 0 0; font-size: 12px">
-                      Sans écart, le rapprochement est simplement horodaté. Avec un écart, une ligne « Correction » cale le solde sur
+                      « Aucun écart » : TradeZero affiche le même solde, rien à saisir. Sans écart, le rapprochement est simplement horodaté. Avec un écart, une ligne « Correction » cale le solde sur
                       TradeZero. Un solde négatif est refusé ; un écart de plus de 20 % demande une confirmation renforcée.
                     </p>
                   </div>
@@ -256,8 +281,10 @@
                     <div class="step-title">Saisir les candidats</div>
                     <div class="step-body">Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.</div>
                   </div>
-                  <div class="step-action">
+                  <!-- #407 : rien au radar ? Un clic, sans confirmation — rien n'est créé ni supprimé. -->
+                  <div class="step-action actions">
                     <a class="btn btn-sm" href="candidat.html"><span class="icon">add</span> Saisir</a>
+                    <button class="btn btn-sm" title="Rien au radar : les étapes 2 et 4 passent à « rien aujourd'hui »">Aucun candidat aujourd'hui</button>
                   </div>
                 </li>
 
@@ -348,6 +375,64 @@
                   <div>
                     <div class="step-title">Saisir les trades du jour</div>
                     <div class="step-body">Tu as tradé aujourd'hui ? Crée le trade depuis sa stat, puis ajoute exécutions et post-mortem.</div>
+                  </div>
+                  <!-- #407 : le cas courant — des stats, aucun trade. -->
+                  <div class="step-action actions">
+                    <a class="btn btn-sm" href="stats.html">Choisir une stat</a>
+                    <button class="btn btn-sm">Pas de trade aujourd'hui</button>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <!-- ============================================================ Jour calme (#407) -->
+            <div data-group="moment" data-value="calme" hidden>
+              <h2>Déroulé du jour <span class="hint">5 étapes faites sur 5 · journée calme</span></h2>
+              <ol class="steps">
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
+                    <div class="step-title">Rapprochement du matin <span class="step-time">08:31</span></div>
+                    <div class="step-body">Solde TradeZero 27 359,95 $ US — aucun écart.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <!-- Marqué « aucun candidat » à 08:40 : l'étape 4 suit, puisqu'il n'y a aucune stat du jour. -->
+                <li class="step none">
+                  <span class="step-dot"><span class="icon">remove</span></span>
+                  <div>
+                    <div class="step-title">Saisir les candidats <span class="step-time">08:40</span></div>
+                    <div class="step-body">Aucun candidat aujourd'hui — rien n'a passé le radar. <a class="undo" href="#">Annuler</a></div>
+                  </div>
+                  <!-- Le lien reste : un jour qui n'est finalement pas calme n'a pas à passer par « Annuler ». -->
+                  <div class="step-action"><a class="btn btn-sm" href="candidat.html"><span class="icon">add</span> Saisir</a></div>
+                </li>
+
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
+                    <div class="step-title">Séance <span class="step-time">09:30 → 16:00</span></div>
+                    <div class="step-body">Sur TradeZero — rien à faire dans l'app.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <!-- Seulement sans stat en retard : une stat laissée un jour précédent garde l'étape ouverte (#337). -->
+                <li class="step none">
+                  <span class="step-dot"><span class="icon">remove</span></span>
+                  <div>
+                    <div class="step-title">Compléter les stats</div>
+                    <div class="step-body">Rien à compléter aujourd'hui.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <li class="step none">
+                  <span class="step-dot"><span class="icon">remove</span></span>
+                  <div>
+                    <div class="step-title">Saisir les trades du jour <span class="step-time">16:12</span></div>
+                    <div class="step-body">Pas de trade aujourd'hui. <a class="undo" href="#">Annuler</a></div>
                   </div>
                   <div class="step-action"><a class="btn btn-sm" href="stats.html">Choisir une stat</a></div>
                 </li>

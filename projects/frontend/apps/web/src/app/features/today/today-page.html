@@ -56,14 +56,33 @@
           <span class="step-dot">
             @if (states.candidates === 'done') {
               <mat-icon>check</mat-icon>
+            } @else if (states.candidates === 'none') {
+              <mat-icon>remove</mat-icon>
             } @else {
               2
             }
           </span>
           <div class="step-main">
-            <div class="step-title">{{ 'today.steps.candidates.title' | translate }}</div>
+            <div class="step-title">
+              {{ 'today.steps.candidates.title' | translate }}
+              @if (noCandidateToday()) {
+                <span class="step-time">{{ tradingDay()!.noCandidateAt | date: 'HH:mm' }}</span>
+              }
+            </div>
             <div class="step-body">
-              @if (candidates().length > 0) {
+              @if (noCandidateToday()) {
+                {{ 'today.steps.candidates.none' | translate }}
+                <button
+                  mat-button
+                  stbSize="sm"
+                  type="button"
+                  class="undo"
+                  [disabled]="savingMarks()"
+                  (click)="setMark('noCandidate', false)"
+                >
+                  {{ 'today.actions.undo' | translate }}
+                </button>
+              } @else if (candidates().length > 0) {
                 {{
                   'today.steps.candidates.captured'
                     | plural: candidates().length
@@ -107,6 +126,16 @@
                 }}
               </span>
             </a>
+            @if (candidates().length === 0 && !noCandidateToday()) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="savingMarks() || tradingDay() === null"
+                (click)="setMark('noCandidate', true)"
+              >
+                {{ 'today.actions.noCandidate' | translate }}
+              </button>
+            }
           </div>
         </li>
 
@@ -134,6 +163,8 @@
           <span class="step-dot">
             @if (states.stats === 'done') {
               <mat-icon>check</mat-icon>
+            } @else if (states.stats === 'none') {
+              <mat-icon>remove</mat-icon>
             } @else {
               4
             }
@@ -154,7 +185,9 @@
               }
             </div>
             <div class="step-body">
-              @if (statsToCompleteToday().length > 0) {
+              @if (states.stats === 'none') {
+                {{ 'today.steps.stats.none' | translate }}
+              } @else if (statsToCompleteToday().length > 0) {
                 {{
                   'today.steps.stats.toComplete'
                     | plural: statsToCompleteToday().length
@@ -194,14 +227,33 @@
           <span class="step-dot">
             @if (states.trades === 'done') {
               <mat-icon>check</mat-icon>
+            } @else if (states.trades === 'none') {
+              <mat-icon>remove</mat-icon>
             } @else {
               5
             }
           </span>
           <div class="step-main">
-            <div class="step-title">{{ 'today.steps.trades.title' | translate }}</div>
+            <div class="step-title">
+              {{ 'today.steps.trades.title' | translate }}
+              @if (noTradeToday()) {
+                <span class="step-time">{{ tradingDay()!.noTradeAt | date: 'HH:mm' }}</span>
+              }
+            </div>
             <div class="step-body">
-              @if (todayTrades().length > 0) {
+              @if (noTradeToday()) {
+                {{ 'today.steps.trades.none' | translate }}
+                <button
+                  mat-button
+                  stbSize="sm"
+                  type="button"
+                  class="undo"
+                  [disabled]="savingMarks()"
+                  (click)="setMark('noTrade', false)"
+                >
+                  {{ 'today.actions.undo' | translate }}
+                </button>
+              } @else if (todayTrades().length > 0) {
                 {{
                   'today.steps.trades.entered'
                     | plural: todayTrades().length
@@ -212,7 +264,7 @@
               }
             </div>
           </div>
-          <div class="step-action">
+          <div class="step-action actions">
             <a mat-stroked-button [routerLink]="todayTrades().length > 0 ? '/journal' : '/stats'">
               <mat-icon>{{ todayTrades().length > 0 ? 'menu_book' : 'playlist_add' }}</mat-icon>
               <span>
@@ -224,6 +276,16 @@
                 }}
               </span>
             </a>
+            @if (todayTrades().length === 0 && !noTradeToday()) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="savingMarks() || tradingDay() === null"
+                (click)="setMark('noTrade', true)"
+              >
+                {{ 'today.actions.noTrade' | translate }}
+              </button>
+            }
           </div>
         </li>
       </ol>

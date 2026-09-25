@@ -77,8 +77,12 @@
               <label>Écart</label>
               <div class="input gain" id="reco-gap" style="background: transparent">0,00 ✓</div>
             </div>
-            <div class="field">
+            <div class="field actions">
               <button class="btn btn-primary" id="reco-btn">Valider le rapprochement</button>
+              <!-- #407 : même bloc que l'étape 1 d'Aujourd'hui — sans écart, rien à taper. -->
+              <button class="btn" title="Horodate le rapprochement au solde calculé, sans correction">
+                <span class="icon">check</span> Aucun écart
+              </button>
             </div>
           </div>
           <p class="muted" id="reco-hint" style="margin: 8px 0 0; font-size: 12px">

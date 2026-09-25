@@ -13,6 +13,8 @@ import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { JournalSummary, TradeEntry } from '../../core/api/journal/trade-entry.model';
 import { StatEntry } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
+import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
+import { TradingDayRepository } from '../../core/api/trading-day/trading-day.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { MorningReconciliation } from '../account/morning-reconciliation/morning-reconciliation';
@@ -25,8 +27,11 @@ export type MarketStatus = 'PREMARKET' | 'OPEN' | 'CLOSED';
 export type StepKey = 'reconciliation' | 'candidates' | 'session' | 'stats' | 'trades';
 const STEPS: readonly StepKey[] = ['reconciliation', 'candidates', 'session', 'stats', 'trades'];
 
-/** `done` = behind us, `current` = what to do now, `todo` = not yet. */
-export type StepState = 'done' | 'current' | 'todo';
+/**
+ * `done` = behind us, `none` = nothing to do today, as the user declared it (#407), `current` =
+ * what to do now, `todo` = not yet.
+ */
+export type StepState = 'done' | 'none' | 'current' | 'todo';
 
 /** Minutes since midnight, New York time — the session boundaries are wall-clock over there. */
 const PREMARKET_OPEN = 4 * 60;
@@ -69,17 +74,18 @@ export function marketStatusAt(now: Date): MarketStatus {
  * of leaving the user to remember where they are (`mockup/aujourdhui.html`, `PARCOURS.md` ›
  * Accueil).
  *
- * **The five steps** carry a state derived from the data and from the New York clock, never from a
- * stored flag : morning reconciliation (done inline, step 1 hosts the same block as the account
+ * **The five steps** carry a state derived from the data and from the New York clock : morning
+ * reconciliation (done inline, step 1 hosts the same block as the account
  * page), candidates captured, session (nothing to do in the app), stats completed after the 4 pm
  * close, trades entered. The first step that isn't behind us is the current one — that is the whole
- * point of the page, so it must be right whatever time it is opened.
+ * point of the page, so it must be right whatever time it is opened. The one stored input is the
+ * day's « nothing today » marks (#407) — no candidate, no trade — and the data beats them : a
+ * candidate or a trade entered afterwards puts the step back on its normal state.
  *
  * **The side column** answers the questions asked between two steps : where the balance stands and
  * whether it was reconciled, the P&L of the day / week / month, the candidates captured today and
  * the trades of the week.
  *
- * Everything is read from endpoints that already exist — this page adds no backend of its own.
  */
 @Component({
   selector: 'app-today-page',
@@ -102,6 +108,7 @@ export class TodayPage {
   private readonly candidatesRepo = inject(CandidatesRepository);
   private readonly statsRepo = inject(StatsRepository);
   private readonly journalRepo = inject(JournalRepository);
+  private readonly tradingDayRepo = inject(TradingDayRepository);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
@@ -125,6 +132,9 @@ export class TodayPage {
   readonly dayPnl = signal<JournalSummary | null>(null);
   readonly weekPnl = signal<JournalSummary | null>(null);
   readonly monthPnl = signal<JournalSummary | null>(null);
+  /** The day's « nothing today » marks, as stored — `null` until read, or when the read fails. */
+  readonly tradingDay = signal<TradingDay | null>(null);
+  readonly savingMarks = signal(false);
 
   /** Candidates of the day still waiting to be promoted — step 2's « promote the rest » action. */
   readonly pendingCandidates = computed(() => this.candidates().filter((c) => !c.promoted));
@@ -155,6 +165,14 @@ export class TodayPage {
     };
   });
 
+  /** « Aucun candidat aujourd'hui » holds only while the day really has none : the data wins. */
+  readonly noCandidateToday = computed(
+    () => this.tradingDay()?.noCandidateAt != null && this.candidates().length === 0,
+  );
+  readonly noTradeToday = computed(
+    () => this.tradingDay()?.noTradeAt != null && this.todayTrades().length === 0,
+  );
+
   /** Whether each step is behind us, from the data and the clock. */
   private readonly done = computed<Record<StepKey, boolean>>(() => ({
     reconciliation: this.reconciledToday(),
@@ -173,22 +191,39 @@ export class TodayPage {
   }));
 
   /**
-   * The first step that isn't done is the current one ; everything after it is still to come. A day
-   * where everything is done leaves no current step — nothing is asked of the user anymore.
+   * Steps declared empty for the day (#407). « No candidate » empties step 4 too, unless an overdue
+   * stat keeps it open — or the stats are unknown, which is not « nothing left ».
+   */
+  private readonly none = computed<Record<StepKey, boolean>>(() => ({
+    reconciliation: false,
+    candidates: this.noCandidateToday(),
+    session: false,
+    stats: this.noCandidateToday() && this.statsToCompleteTotal() === 0,
+    trades: this.noTradeToday(),
+  }));
+
+  /**
+   * The first step that is neither done nor empty is the current one ; everything after it is
+   * still to come. A day where everything is settled leaves no current step — nothing is asked of
+   * the user anymore.
    */
   readonly stepStates = computed<Record<StepKey, StepState>>(() => {
     const done = this.done();
-    const current = STEPS.find((key) => !done[key]);
+    const none = this.none();
+    const current = STEPS.find((key) => !done[key] && !none[key]);
     return STEPS.reduce(
       (acc, key) => {
-        acc[key] = done[key] ? 'done' : key === current ? 'current' : 'todo';
+        acc[key] = done[key] ? 'done' : none[key] ? 'none' : key === current ? 'current' : 'todo';
         return acc;
       },
       {} as Record<StepKey, StepState>,
     );
   });
 
-  readonly doneCount = computed(() => STEPS.filter((key) => this.done()[key]).length);
+  /** « Nothing today » counts : the step is settled, which is what the progress reads. */
+  readonly doneCount = computed(
+    () => STEPS.filter((key) => this.done()[key] || this.none()[key]).length,
+  );
 
   constructor() {
     this.fetch();
@@ -232,6 +267,32 @@ export class TodayPage {
         }),
       )
       .subscribe();
+  }
+
+  /**
+   * Sets or clears one « nothing today » mark (#407). No confirmation : nothing is created or
+   * deleted, and the step shows its own « Annuler ». The other mark is written back as stored —
+   * so nothing is written while the marks are unknown, or a failed read would clear the other one.
+   */
+  setMark(mark: keyof TradingDayMarks, value: boolean): void {
+    const stored = this.tradingDay();
+    if (this.savingMarks() || stored === null) return;
+    const marks: TradingDayMarks = {
+      noCandidate: stored.noCandidateAt !== null,
+      noTrade: stored.noTradeAt !== null,
+      [mark]: value,
+    };
+    this.savingMarks.set(true);
+    this.tradingDayRepo.put(this.today, marks).subscribe({
+      next: (day) => {
+        this.tradingDay.set(day);
+        this.savingMarks.set(false);
+      },
+      error: () => {
+        this.toasts.error(this.translate.instant('today.snackbar.markError'));
+        this.savingMarks.set(false);
+      },
+    });
   }
 
   /** « KTTA, BNZI, SNTG » — the tickers of a list, for the one-line recap of a step. */
@@ -292,6 +353,10 @@ export class TodayPage {
     this.journalRepo.findAll(week, { pageIndex: 0, pageSize: 20 }).subscribe({
       next: (page) => this.weekTrades.set(page.content),
       error: () => this.weekTrades.set([]),
+    });
+    this.tradingDayRepo.get(this.today).subscribe({
+      next: (d) => this.tradingDay.set(d),
+      error: () => this.tradingDay.set(null),
     });
     this.journalRepo.summary(day).subscribe({ next: (s) => this.dayPnl.set(s) });
     this.journalRepo.summary(week).subscribe({ next: (s) => this.weekPnl.set(s) });
