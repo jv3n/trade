@@ -6,6 +6,10 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <!-- The manifest alone makes the app installable (#448) : no service worker, it needs its backend. -->
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0b0c0f" />
   </head>
   <body>
     <app-root></app-root>
