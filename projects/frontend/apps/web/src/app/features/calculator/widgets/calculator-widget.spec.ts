@@ -11,7 +11,8 @@ import { CalculatorWidgets } from './calculator-widgets';
 /**
  * One floating calculator (#421) : the page's card under a header that closes it — Escape too —
  * and detaches it into its own window where the browser can. Detached, the widget's element is
- * moved into that window with the theme, and comes back to the page when the window closes.
+ * moved into that window with the theme, stays in view there when clicked, and comes back to the
+ * page when the window closes.
  */
 describe('CalculatorWidget', () => {
   const theme = signal<'dark' | 'light'>('dark');
@@ -77,19 +78,28 @@ describe('CalculatorWidget', () => {
     expect(button(fixture, 'calculator.widget.detach')).toBeNull();
   });
 
-  it('moves into its own window with the theme, and back when that window closes', async () => {
-    const pipDocument = document.implementation.createHTMLDocument('pip');
-    let pagehide: () => void = () => undefined;
+  /** A browser with Document Picture-in-Picture ; `pagehide()` closes the window it opens. */
+  function givenPipWindow(): { pipDocument: Document; pagehide: () => void } {
+    const pip = {
+      pipDocument: document.implementation.createHTMLDocument('pip'),
+      pagehide: () => undefined as void,
+    };
     const pipWindow = {
-      document: pipDocument,
+      document: pip.pipDocument,
       close: vi.fn(),
       addEventListener: (type: string, listener: () => void) => {
-        if (type === 'pagehide') pagehide = listener;
+        if (type === 'pagehide') pip.pagehide = listener;
       },
     };
     (window as unknown as Record<string, unknown>)['documentPictureInPicture'] = {
       requestWindow: vi.fn(() => Promise.resolve(pipWindow)),
     };
+    return pip;
+  }
+
+  it('moves into its own window with the theme, and back when that window closes', async () => {
+    const pip = givenPipWindow();
+    const { pipDocument } = pip;
     const { fixture } = await setup();
     const host = fixture.nativeElement as HTMLElement;
     const home = host.parentNode;
@@ -105,9 +115,25 @@ describe('CalculatorWidget', () => {
     await fixture.whenStable();
     expect(pipDocument.documentElement.getAttribute('data-theme')).toBe('light');
 
-    pagehide();
+    pip.pagehide();
     await fixture.whenStable();
     expect(host.parentNode).toBe(home);
     expect(fixture.componentInstance.detached()).toBe(false);
+  });
+
+  // A click in the window brought the widget forward, and its page position then translated the
+  // card out of the window : the window went blank, nothing left to click.
+  it('stays in view in its own window when clicked', async () => {
+    givenPipWindow();
+    const { fixture, widgets } = await setup();
+    const card = fixture.nativeElement.querySelector('.calc-widget') as HTMLElement;
+    button(fixture, 'calculator.widget.detach')!.click();
+    await fixture.whenStable();
+
+    card.dispatchEvent(new Event('pointerdown'));
+    fixture.componentRef.setInput('widget', widgets.open()[0]);
+    await fixture.whenStable();
+
+    expect(card.style.transform).toBe('translate3d(0px, 0px, 0)');
   });
 });
