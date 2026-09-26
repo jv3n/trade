@@ -11,6 +11,7 @@ import { Candidate } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { JournalSummary, TradeEntry } from '../../core/api/journal/trade-entry.model';
+import { PATTERNS } from '../../core/api/shared/pattern.model';
 import { StatEntry } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
@@ -40,6 +41,10 @@ const SESSION_CLOSE = 16 * 60;
 
 /** Overdue stats named on step 4 ; the rest is counted. */
 const OVERDUE_SHOWN = 5;
+
+/** A ticker with a GUS and a DT to complete lists its two stats side by side (#451). */
+const byTickerThenPattern = (a: StatEntry, b: StatEntry): number =>
+  a.ticker.localeCompare(b.ticker) || PATTERNS.indexOf(a.pattern) - PATTERNS.indexOf(b.pattern);
 
 /**
  * Reads the New York wall clock : the trading day is defined over there, so deriving the day's
@@ -148,24 +153,30 @@ export class TodayPage {
    * on an earlier day is overdue, and nothing else in the daily flow would point at it.
    */
   readonly statsToCompleteToday = computed(() =>
-    this.statsToComplete().filter((s) => isSameDay(s.tradeDate, this.today)),
+    this.statsToComplete()
+      .filter((s) => isSameDay(s.tradeDate, this.today))
+      .sort(byTickerThenPattern),
   );
   readonly overdueStats = computed(() =>
-    this.statsToComplete().filter((s) => !isSameDay(s.tradeDate, this.today)),
+    this.statsToComplete()
+      .filter((s) => !isSameDay(s.tradeDate, this.today))
+      .sort((a, b) => b.tradeDate.getTime() - a.tradeDate.getTime() || byTickerThenPattern(a, b)),
   );
   /** The day's stats come first (newest first), so every stat past them is overdue. */
   readonly overdueTotal = computed(
     () => (this.statsToCompleteTotal() ?? 0) - this.statsToCompleteToday().length,
   );
   /**
-   * « GLND (21/09), KTTA (17/09) » — overdue stats carry their day, the ticker alone is ambiguous.
+   * « GLND GUS (21/09), KTTA DT (17/09) » — overdue stats carry their day, the ticker alone is ambiguous.
    * Capped : it is the one list of the page whose length has no bound.
    */
   readonly overdueLine = computed(() => {
     const dayMonth = new Intl.DateTimeFormat(this.locale, { day: '2-digit', month: '2-digit' });
     const shown = this.overdueStats().slice(0, OVERDUE_SHOWN);
     return {
-      tickers: shown.map((s) => `${s.ticker} (${dayMonth.format(s.tradeDate)})`).join(', '),
+      tickers: shown
+        .map((s) => `${this.statLabel(s)} (${dayMonth.format(s.tradeDate)})`)
+        .join(', '),
       more: this.overdueTotal() - shown.length,
     };
   });
@@ -302,6 +313,15 @@ export class TodayPage {
   /** « KTTA, BNZI, SNTG » — the tickers of a list, for the one-line recap of a step. */
   tickersOf(rows: { ticker: string }[]): string {
     return rows.map((r) => r.ticker).join(', ');
+  }
+
+  /** « FRESH1 GUS, FRESH1 DT » — a ticker can have one stat per pattern, so each carries it. */
+  statsOf(stats: StatEntry[]): string {
+    return stats.map((s) => this.statLabel(s)).join(', ');
+  }
+
+  private statLabel(stat: StatEntry): string {
+    return `${stat.ticker} ${this.translate.instant('patterns.short.' + stat.pattern)}`;
   }
 
   gapOf(candidate: Candidate): number | null {

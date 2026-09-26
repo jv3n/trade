@@ -191,7 +191,7 @@
                 {{
                   'today.steps.stats.toComplete'
                     | plural: statsToCompleteToday().length
-                    | translate: { tickers: tickersOf(statsToCompleteToday()) }
+                    | translate: { tickers: statsOf(statsToCompleteToday()) }
                 }}
               } @else {
                 {{ 'today.steps.stats.body' | translate }}
