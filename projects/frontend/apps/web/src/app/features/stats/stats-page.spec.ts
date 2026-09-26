@@ -49,6 +49,10 @@ import { StatsPage } from './stats-page';
  * - **New stat (#326)** — the two cards empty with the identity on top ; « Create » waits for the
  *   date, the ticker and the three premarket prices, goes through the confirmation modal, then the
  *   panel carries on with the created stat.
+ * - **Views (#437)** — GUS / DT / All pick the pattern of the listing and the KPIs, the columns and
+ *   the averages row ; « No push » is a GUS tab ; a link or a new stat moves to the view it shows in.
+ * - **Double top card (#437)** — a DT stat is filled with its four prices, the legs computed live,
+ *   ticked with all four ; its shape is checked before anything is sent, and it is never re-filed.
  * - **No push (#302)** — ticking it empties the push and takes it out of the prices a stat needs ;
  *   unticking gives the typed push back ; the « No push » tab is its own filter axis, and its push
  *   KPI rates the no-push days over the whole period (#334).
@@ -76,6 +80,10 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     hodPrice: 4.62,
     lodPrice: 3.41,
     eodPrice: 3.52,
+    dtStartPrice: null,
+    dtTopPrice: null,
+    dtLowPrice: null,
+    dtRetestPrice: null,
     ssr: false,
     under1Dollar: false,
     entryAfter11am: false,
@@ -88,6 +96,24 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     updatedAt: new Date(),
     ...overrides,
   };
+}
+
+/**
+ * SGBX of `mockup/stats.html`, its double top late in the morning : start 1.90, top 2.95, rejection
+ * low 2.36, the retest still to come — off a 1.12 previous close.
+ */
+function makeDoubleTop(overrides: Partial<StatEntry> = {}): StatEntry {
+  return makePending({
+    id: 'stat-sgbx-dt',
+    pattern: 'DT',
+    previousClose: 1.12,
+    pmOpen: 1.85,
+    pmHigh: 2.46,
+    dtStartPrice: 1.9,
+    dtTopPrice: 2.95,
+    dtLowPrice: 2.36,
+    ...overrides,
+  });
 }
 
 /** A stat promoted this morning : premarket only, session still to enter. */
@@ -118,6 +144,14 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     averageLodPercent: -12.3,
     fadeCount: 7,
     averageEodPercent: -3.7,
+    completedDoubleTops: 0,
+    averageExtensionPercent: null,
+    averageExtensionWithGapPercent: null,
+    averageRejectionPercent: null,
+    rejectionAtCriterionCount: 0,
+    averageRetestPercent: null,
+    averageRetestToTopPercent: null,
+    retestTookTopCount: 0,
     traded: 8,
     untraded: 2,
     ...overrides,
@@ -165,7 +199,13 @@ class MockStatsRepository extends StatsRepository {
 }
 
 function setup(
-  options: { rows?: StatEntry[]; confirmed?: boolean; query?: Record<string, string> } = {},
+  options: {
+    rows?: StatEntry[];
+    confirmed?: boolean;
+    query?: Record<string, string>;
+    /** What `?stat=` fetches — by default a GUS stat with the asked id. */
+    byId?: StatEntry;
+  } = {},
 ): {
   fixture: ComponentFixture<StatsPage>;
   page: StatsPage;
@@ -197,6 +237,7 @@ function setup(
   });
   const repo = TestBed.inject(StatsRepository) as MockStatsRepository;
   repo.rows = options.rows ?? [];
+  if (options.byId) repo.findById.mockReturnValue(of(options.byId));
   const fixture = TestBed.createComponent(StatsPage);
   fixture.detectChanges();
   return { fixture, page: fixture.componentInstance, repo, toastShown, query };
@@ -848,15 +889,15 @@ describe('StatsPage', () => {
     expect(page.saveStates().premarket.status).toBe('saved');
   });
 
-  // #393 : a ticker captured as GUS that turned out to be a double top gets re-filed.
+  // #393 : a ticker captured as GUS that turned out to be a short into resistance gets re-filed.
   it('re-files a stat under another pattern as soon as it is picked, with the whole row', () => {
     const { page, repo } = setup({ rows: [makePending()] });
 
-    page.setPremarketPattern('DT');
+    page.setPremarketPattern('SIR');
 
     expect(repo.update).toHaveBeenCalledWith(
       'stat-sgbx',
-      expect.objectContaining({ pattern: 'DT', ticker: 'SGBX', pmOpen: expect.any(Number) }),
+      expect.objectContaining({ pattern: 'SIR', ticker: 'SGBX', pmOpen: expect.any(Number) }),
     );
     expect(page.saveStates().premarket.status).toBe('saved');
   });
@@ -1047,6 +1088,141 @@ describe('StatsPage', () => {
     expect(repo.update).not.toHaveBeenCalled();
   });
 
+  // ---- Views (#437) ----
+
+  it('opens on the GUS view : the listing and the KPIs read the GUS stats, with their columns', () => {
+    const { page, repo } = setup({ rows: [makeStat()] });
+
+    expect(page.view()).toBe('GUS');
+    expect(repo.lastFilter?.pattern).toBe('GUS');
+    expect(repo.summary.mock.calls.at(-1)?.[0]).toEqual(repo.lastFilter);
+    expect(page.columns()).toContain('pushOpen');
+    expect(page.columns()).not.toContain('dtTop');
+  });
+
+  it('the DT view reads the double tops, shows their legs and their averages row', async () => {
+    const { fixture, page, repo } = setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
+
+    page.setView('DT');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(repo.lastFilter?.pattern).toBe('DT');
+    expect(page.columns()).toEqual(
+      expect.arrayContaining(['dtStart', 'dtTop', 'dtLow', 'dtRetest']),
+    );
+    expect(page.columns()).not.toContain('pushOpen');
+    expect(fixture.nativeElement.querySelector('tr.averages-row')).not.toBeNull();
+    expect(page.statusTabs()).not.toContain('NO_PUSH');
+  });
+
+  it('« All » reads every pattern, sums each stat up in its own and has no averages row', async () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat(), makeDoubleTop()] });
+
+    page.setView('ALL');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(repo.lastFilter?.pattern).toBeNull();
+    expect(page.columns()).toContain('brief');
+    expect(page.columns()).not.toContain('pushOpen');
+    expect(page.columns()).not.toContain('dtTop');
+    expect(fixture.nativeElement.querySelector('tr.averages-row')).toBeNull();
+  });
+
+  it('leaving the GUS view drops the « No push » tab it was on', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    page.setStatus('NO_PUSH');
+
+    page.setView('DT');
+    fixture.detectChanges();
+
+    expect(page.status()).toBeNull();
+    expect(repo.lastFilter?.noPush).toBeNull();
+  });
+
+  // A double top left to complete is one of them : the GUS view would hide it.
+  it('lands on « All » from a link naming the stats to complete', () => {
+    const { page, repo } = setup({ query: { status: 'TO_COMPLETE' } });
+
+    expect(page.view()).toBe('ALL');
+    expect(repo.lastFilter?.pattern).toBeNull();
+  });
+
+  it('moves to the DT view when the URL names a double top, its panel open', () => {
+    const { fixture, page, repo } = setup({
+      rows: [makeStat()],
+      query: { stat: 'stat-sgbx-dt' },
+      byId: makeDoubleTop(),
+    });
+    fixture.detectChanges();
+
+    expect(page.view()).toBe('DT');
+    expect(repo.lastFilter?.pattern).toBe('DT');
+    expect(page.completing()?.id).toBe('stat-sgbx-dt');
+  });
+
+  // ---- Double top card (#437) ----
+
+  it('shows the double top card on a DT stat, its legs computed live', () => {
+    const { page } = setup({ rows: [makeDoubleTop()] });
+
+    expect(page.completing()?.id).toBe('stat-sgbx-dt');
+    expect(page.isDoubleTop()).toBe(true);
+    page.setSessionPrice('dtRetestPrice', 2.85);
+
+    // The SGBX of the mockup : A +55.3 % (+163 % with the gap), B −20.0 %, C +20.8 %, −3.4 % off the top.
+    const legs = page.doubleTopLegs();
+    expect(legs.extension).toBeCloseTo(55.26, 2);
+    expect(legs.extensionWithGap).toBeCloseTo(163.39, 2);
+    expect(legs.rejection).toBeCloseTo(-20, 2);
+    expect(legs.retest).toBeCloseTo(20.76, 2);
+    expect(legs.retestToTop).toBeCloseTo(-3.39, 2);
+  });
+
+  it('counts four prices on a double top and names the one missing', () => {
+    const { page } = setup({ rows: [makeDoubleTop()] });
+
+    expect(page.sessionPriceCount()).toBe(4);
+    expect(page.sessionFilled()).toBe(3);
+    expect(page.sessionMissing()).toEqual(['stats.fields.dtRetest']);
+    expect(page.rows()[0].missing).toEqual(['stats.fields.dtRetest']);
+  });
+
+  it('saves a double top price with the whole row, then ticks it with its four prices', () => {
+    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+
+    page.setSessionPrice('dtRetestPrice', 2.85);
+    page.saveSession();
+
+    expect(repo.update).toHaveBeenCalledWith(
+      'stat-sgbx-dt',
+      expect.objectContaining({ pattern: 'DT', dtStartPrice: 1.9, dtRetestPrice: 2.85 }),
+    );
+    expect(page.tickBlockedReason()).toBe('');
+    page.toggleCompleted(page.completing()!);
+    expect(repo.setCompleted).toHaveBeenCalledWith('stat-sgbx-dt', true);
+  });
+
+  it('sends nothing while the double top is out of shape, and names the fields', () => {
+    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+
+    page.setSessionPrice('dtRetestPrice', 2.3);
+    page.saveSession();
+
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.sessionIssue()?.reason).toBe('stats.save.retestBelowLow');
+    expect(page.atFault('dtRetestPrice')).toBe(true);
+    expect(page.atFault('dtTopPrice')).toBe(false);
+  });
+
+  it('never offers DT when re-filing a stat', () => {
+    const { page } = setup({ rows: [makePending()] });
+
+    expect(page.refilePatterns).not.toContain('DT');
+    expect(page.refilePatterns).toContain('SIR');
+  });
+
   // ---- New stat (#326) ----
 
   // GLND, three days back : found on the charts, never captured as a candidate.
@@ -1072,6 +1248,32 @@ describe('StatsPage', () => {
     );
     expect(page.creating()).toBe(false);
     expect(page.completing()?.id).toBe('stat-new');
+  });
+
+  it('a new stat typed as DT is created with the double top card, then shown in the DT view', () => {
+    const { page, repo } = setup({ rows: [] });
+    page.startNew();
+
+    page.setIdentity({ ticker: 'nxtt', tradeDate: new Date(2026, 8, 18), pattern: 'DT' });
+    expect(page.isDoubleTop()).toBe(true);
+    expect(page.sessionPriceCount()).toBe(4);
+    page.setPremarketPrice('previousClose', 1.6);
+    page.setPremarketPrice('pmOpen', 1.72);
+    page.setPremarketPrice('pmHigh', 1.8);
+    page.setSessionPrice('dtStartPrice', 1.75);
+    page.setSessionPrice('dtTopPrice', 2.64);
+    page.createStat();
+
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ticker: 'NXTT',
+        pattern: 'DT',
+        dtStartPrice: 1.75,
+        dtTopPrice: 2.64,
+      }),
+    );
+    expect(page.view()).toBe('DT');
+    expect(page.completing()?.pattern).toBe('DT');
   });
 
   it('never saves a field of a stat not created yet', () => {

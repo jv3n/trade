@@ -1,11 +1,32 @@
-// Stats page — layout after `mockup/stats.html` : KPI row, completion panel, then the table in two
-// column groups (premarket / session).
+// Stats page — layout after `mockup/stats.html` : the view switch, KPI row, completion panel, then
+// the table in column groups (premarket / session or double top).
+
+@use 'sizes' as s;
+
+// ---- View (#437) ----
+
+.view-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: s.$space-md;
+  margin-bottom: s.$space-lg;
+
+  .hint {
+    font-size: s.$font-xs;
+    color: var(--color-text-muted);
+  }
+}
 
 // ---- KPIs ----
 
-// Amber = warning (stats still to complete), per the colour rule.
+// « by pattern » — a word where the other cards hold a figure.
+.kpi__value--text {
+  font-size: s.$font-lg;
+}
 
-@use 'sizes' as s;
+// Amber = warning (stats still to complete, a double top leg under its criterion), per the colour
+// rule.
 
 .warn {
   color: var(--color-warning);
@@ -90,6 +111,10 @@
   }
 }
 
+.session-form--dt {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 // A column of its own so « No push » sits under the push field.
 .push-field {
   display: flex;
@@ -114,10 +139,6 @@
 .search-field {
   flex: 1 1 18rem;
   max-width: 24rem;
-}
-
-.filter-field {
-  width: 12rem;
 }
 
 // ---- Table ----
@@ -149,6 +170,37 @@
   font-size: s.$font-2xs;
   font-weight: 550;
   white-space: nowrap;
+}
+
+// A double top leg under its price — neutral, amber under the DT sheet's criterion.
+.leg-note {
+  display: block;
+  font-size: s.$font-2xs;
+  color: var(--color-text-muted);
+
+  &.warn {
+    color: var(--color-warning);
+  }
+}
+
+// The A / B / C of « All » — a category, so indigo.
+.leg {
+  font-size: s.$font-2xs;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.brief {
+  white-space: nowrap;
+}
+
+.averages-row td {
+  font-weight: 600;
+  border-top: 1px solid var(--color-border);
+}
+
+.averages-label {
+  color: var(--color-text-muted);
 }
 
 // Separator opening each column group (premarket / session / flags), like the mockup's `.sep`.

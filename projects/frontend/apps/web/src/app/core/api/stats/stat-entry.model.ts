@@ -6,8 +6,9 @@ import { Pattern } from '../shared/pattern.model';
  * exposed here ; the HTTP adapter in `adapters/stats.http.ts` owns the mapping.
  *
  * Two blocks : the **premarket** one is copied from the candidate at promotion time, the **session**
- * one is typed field by field, any of its prices may still be null. No percentage is stored : gap,
- * premarket push and the session percentages are derived by `features/stats/stats.math`.
+ * one is typed field by field, any of its prices may still be null — the five GUS prices, or the
+ * four prices of a double top for a DT stat. No percentage is stored : gap, premarket push, the
+ * session percentages and the double top legs are derived by `features/stats/stats.math`.
  */
 export interface StatEntry {
   id: string;
@@ -35,6 +36,15 @@ export interface StatEntry {
   lodPrice: number | null;
   eodPrice: number | null;
 
+  // ---- Double top (a DT stat only — null on any other pattern) ----
+  /** Where the push starts — the open by default, a later low when the push starts from there. */
+  dtStartPrice: number | null;
+  dtTopPrice: number | null;
+  /** The low of the rejection off the top. */
+  dtLowPrice: number | null;
+  /** The high of the retest, back toward the top. */
+  dtRetestPrice: number | null;
+
   // ---- Flags ----
   ssr: boolean;
   under1Dollar: boolean;
@@ -44,8 +54,8 @@ export interface StatEntry {
   /** Less than 20 % of the float held by institutions (#349) — the threshold lives in the label. */
   highInstitutions: boolean;
   /**
-   * Ticked by the owner (#263) — needs the five session prices (four on a no-push day), which alone
-   * don't tick it.
+   * Ticked by the owner (#263) — needs the five session prices (four on a no-push day, the four
+   * double top prices on a DT), which alone don't tick it.
    */
   completed: boolean;
 
@@ -90,8 +100,9 @@ export interface StatEntryFilter {
 
 /**
  * KPIs of the stats page, computed by the backend over the **filtered set** (not the current page).
- * Averages and quantiles cover the completed stats only and are percentages vs the session open ;
- * they are null when no completed stat matches.
+ * Averages and quantiles cover the completed stats only and are whole-number percentages ; they
+ * are null when no completed stat matches. The session figures read the GUS-measured stats, the
+ * double top figures the DT stats only.
  */
 export interface StatSummary {
   completed: number;
@@ -107,6 +118,22 @@ export interface StatSummary {
   /** Completed stats whose EOD closed below the open — the GUS thesis playing out. */
   fadeCount: number;
   averageEodPercent: number | null;
+  /** Completed stats that are double tops — part of [completed]. */
+  completedDoubleTops: number;
+  /** Leg A, start → top. */
+  averageExtensionPercent: number | null;
+  /** Leg A counted from the previous close. */
+  averageExtensionWithGapPercent: number | null;
+  /** Leg B, top → rejection low (negative). */
+  averageRejectionPercent: number | null;
+  /** Double tops whose rejection reached the 17 % of the DT sheet. */
+  rejectionAtCriterionCount: number;
+  /** Leg C, rejection low → retest. */
+  averageRetestPercent: number | null;
+  /** Where the retest ended against the top — negative under it. */
+  averageRetestToTopPercent: number | null;
+  /** Double tops whose retest took the top back. */
+  retestTookTopCount: number;
   /** Stats of the filtered set that gave birth to a trade — the journal reads « traded / all ». */
   traded: number;
   untraded: number;
