@@ -19,10 +19,18 @@ import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser
  * rotation in future).
  *
  * The `nameAttributeKey` is fixed at `"sub"` to mirror Google's OIDC convention.
+ *
+ * The principal production stores in the Postgres session (#460) : the pinned `serialVersionUID`
+ * keeps a stored session readable across releases that don't change this class's fields.
  */
 class AppOidcUser(
   override val userId: UUID,
   authorities: Collection<GrantedAuthority>,
   idToken: OidcIdToken,
   userInfo: OidcUserInfo? = null,
-) : DefaultOidcUser(authorities, idToken, userInfo, "sub"), AppUserPrincipal
+) : DefaultOidcUser(authorities, idToken, userInfo, "sub"), AppUserPrincipal {
+
+  private companion object {
+    private const val serialVersionUID = 1L
+  }
+}

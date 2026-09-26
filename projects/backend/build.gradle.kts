@@ -81,6 +81,10 @@ dependencies {
   // `springdoc.swagger-ui.enabled` to false so no env reachable from the outside ever exposes the
   // schema. Surfaced in Tilt as a link on the `backend` resource for one-click access during dev.
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.9.1")
+  // Sessions in Postgres rather than in the JVM (#460) : Cloud Run serves up to three instances
+  // with no affinity and scales to zero, so an in-memory session was lost on the wrong instance,
+  // after every idle period and on every deploy. The tables come from `V14__spring_session.sql`.
+  implementation("org.springframework.session:spring-session-jdbc")
   implementation("org.flywaydb:flyway-core")
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlin:kotlin-reflect")

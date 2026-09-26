@@ -4,6 +4,14 @@ server:
   # forwarded headers to build the OAuth `redirect_uri` on the SPA's host — otherwise Google
   # receives the backend's port and the session cookie is unreadable by the SPA.
   forward-headers-strategy: framework
+  servlet:
+    session:
+      # Read by Spring Session too. Idle time before a sign-in is needed again — the store is durable
+      # (#460), so this is the real lifetime of a session, not the instance's.
+      timeout: 7d
+      # Without it the cookie dies with the browser, whatever the row in the database says.
+      cookie:
+        max-age: 7d
 
 spring:
   application:
@@ -34,6 +42,12 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+
+  session:
+    jdbc:
+      # The tables come from Flyway (`V14__spring_session.sql`), never from Spring Session itself.
+      # Expired sessions are purged by its default cleanup cron, every minute.
+      initialize-schema: never
 
   flyway:
     enabled: true

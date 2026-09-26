@@ -6,6 +6,7 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.auth.infrastructure.security.AppOAuth2User
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
+import jakarta.servlet.http.Cookie
 import java.time.LocalDate
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -15,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
-import org.springframework.mock.web.MockHttpSession
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication
@@ -52,11 +52,11 @@ class E2eSessionIntegrationTest {
     val session = login()
 
     mvc
-      .perform(get("/api/me").session(session))
+      .perform(get("/api/me").cookie(session))
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.role").value("USER"))
     mvc
-      .perform(get("/api/stats").session(session))
+      .perform(get("/api/stats").cookie(session))
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.totalElements").value(0))
   }
@@ -77,7 +77,7 @@ class E2eSessionIntegrationTest {
       mvc
         .perform(
           post("/api/stats")
-            .session(session)
+            .cookie(session)
             .with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(
@@ -90,10 +90,10 @@ class E2eSessionIntegrationTest {
         .contentAsString
     val statId = json.readTree(stat)["id"].asText()
     mvc
-      .perform(post("/api/stats/$statId/trade").session(session).with(csrf()))
+      .perform(post("/api/stats/$statId/trade").cookie(session).with(csrf()))
       .andExpect(status().isCreated)
 
-    mvc.perform(delete("/api/e2e/me").session(session).with(csrf())).andExpect(status().isNoContent)
+    mvc.perform(delete("/api/e2e/me").cookie(session).with(csrf())).andExpect(status().isNoContent)
 
     assertEquals(null, users.findByEmail(email))
     assertFalse(stats.existsById(UUID.fromString(statId)))
@@ -122,12 +122,17 @@ class E2eSessionIntegrationTest {
     assertEquals(real.id, users.findByEmail(real.email)?.id)
   }
 
-  private fun login(): MockHttpSession =
-    mvc.perform(post("/api/e2e/login")).andExpect(status().isOk).andReturn().request.session
-      as MockHttpSession
+  /** The session cookie : Spring Session resolves the session from it, not from the request. */
+  private fun login(): Cookie =
+    mvc
+      .perform(post("/api/e2e/login"))
+      .andExpect(status().isOk)
+      .andReturn()
+      .response
+      .getCookie("SESSION")!!
 
-  private fun email(session: MockHttpSession): String {
-    val me = mvc.perform(get("/api/me").session(session)).andReturn().response.contentAsString
+  private fun email(session: Cookie): String {
+    val me = mvc.perform(get("/api/me").cookie(session)).andReturn().response.contentAsString
     return json.readTree(me)["email"].asText()
   }
 }
