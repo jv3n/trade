@@ -6,6 +6,10 @@
  * is pushed through a probe element's `color` property and read back : the browser resolves the
  * variables and the mix for us, and no colour maths lives here.
  *
+ * What comes back is still `oklch(…)` or `color(srgb …)`, which ECharts' colour parser reads as
+ * `undefined` — and then throws mid-animation when it blends two gradients. So the resolved colour
+ * is painted on a one-pixel canvas and read back as plain `rgba()`.
+ *
  * The lib reads the `data-theme` attribute rather than injecting the app's `ThemeService` — a
  * design-system lib must not depend on the app that consumes it, and Storybook drives the same
  * attribute, so the playground gets the theme switch for free.
@@ -32,18 +36,46 @@ function resolveColor(expression: string): string {
   return resolved;
 }
 
+let pixel: CanvasRenderingContext2D | null | undefined;
+
+/** The colour as `[r, g, b, a]` in 0–255, or null where there is no canvas (jsdom). */
+function paint(color: string): Uint8ClampedArray | null {
+  pixel ??= Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext(
+    '2d',
+    { willReadFrequently: true },
+  );
+  if (!pixel) return null;
+  pixel.clearRect(0, 0, 1, 1);
+  pixel.fillStyle = color;
+  pixel.fillRect(0, 0, 1, 1);
+  return pixel.getImageData(0, 0, 1, 1).data;
+}
+
+function rgba([r, g, b]: Uint8ClampedArray, alpha: number): string {
+  return `rgba(${r}, ${g}, ${b}, ${Math.round(alpha * 1000) / 1000})`;
+}
+
+/** A token as a colour ECharts can parse — `rgba()`, whatever colour space the token is in. */
 function token(name: string): string {
-  return resolveColor(`var(${name})`);
+  const resolved = resolveColor(`var(${name})`);
+  const channels = paint(resolved);
+  return channels ? rgba(channels, channels[3] / 255) : resolved;
 }
 
 export function readChartPalette(): ChartPalette {
   const fontFamily = getComputedStyle(document.documentElement)
     .getPropertyValue('--font-family')
     .trim();
+  const accent = resolveColor('var(--color-accent)');
+  const accentChannels = paint(accent);
   return {
-    accent: token('--color-accent'),
+    accent: accentChannels ? rgba(accentChannels, 1) : accent,
+    // The fade keeps the accent's own channels : painting a near-transparent colour and reading it
+    // back would round its channels away, and the gradient would fade through grey.
     accentFade: (ratio) =>
-      resolveColor(`color-mix(in srgb, var(--color-accent) ${ratio * 100}%, transparent)`),
+      accentChannels
+        ? rgba(accentChannels, ratio)
+        : resolveColor(`color-mix(in srgb, var(--color-accent) ${ratio * 100}%, transparent)`),
     text: token('--color-text'),
     textMuted: token('--color-text-muted'),
     border: token('--color-border'),
