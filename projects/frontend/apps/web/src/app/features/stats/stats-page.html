@@ -1326,11 +1326,12 @@
             [class.editing]="s.id === completing()?.id"
           ></tr>
           <!-- Always declared : the table renders no row def added after its first pass. Out of the DT
-               view it has no column, so nothing shows. -->
+               view it has no column, but still lays out a full-height row — hence the class (#452). -->
           <tr
             mat-footer-row
             *matFooterRowDef="footerColumns()"
             [class.averages-row]="view() === 'DT'"
+            [class.no-averages]="view() !== 'DT'"
           ></tr>
         </table>
       </div>
