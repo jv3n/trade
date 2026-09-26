@@ -58,15 +58,6 @@
       </h3>
 
       <form class="capture" (submit)="$event.preventDefault(); submit()">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field--pattern">
-          <mat-label>{{ 'candidates.fields.pattern' | translate }}</mat-label>
-          <mat-select [value]="model().pattern" (selectionChange)="setPattern($event.value)">
-            @for (p of patterns; track p) {
-              <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field--ticker">
           <mat-label>{{ 'candidates.fields.ticker' | translate }}</mat-label>
           <input
@@ -212,16 +203,16 @@
     </section>
   }
 
-  @if (!loadError() && rows().length > 0) {
+  @if (!loadError() && openRows().length > 0) {
     <section class="card">
       <h3>
         {{ 'candidates.openCard.title' | translate }}
         <span class="hint">{{ 'candidates.openCard.hint' | translate }}</span>
       </h3>
       <app-open-card
-        [candidates]="rows()"
+        [candidates]="openRows()"
         [references]="pushReferences()"
-        [noPushRates]="noPushRates()"
+        [noPushRate]="noPushRate()"
         [readOnly]="readOnly()"
         (atOpenChange)="saveAtOpen($event)"
       />
@@ -266,13 +257,6 @@
               <mat-chip-set>
                 <mat-chip stbChip="ticker" disableRipple>{{ c.ticker }}</mat-chip>
               </mat-chip-set>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="pattern">
-            <th mat-header-cell *matHeaderCellDef>{{ 'candidates.fields.pattern' | translate }}</th>
-            <td mat-cell *matCellDef="let c">
-              <span class="pattern-tag">{{ 'patterns.short.' + c.pattern | translate }}</span>
             </td>
           </ng-container>
 
@@ -376,22 +360,31 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef stbCol="actions"></th>
             <td mat-cell *matCellDef="let c" stbCol="actions">
-              @if (c.statId; as statId) {
+              @for (s of c.stats; track s.statId) {
                 <!-- Status, not an outcome → indigo like the other categories (colour rule). -->
                 <a
                   class="stats-tag"
                   routerLink="/stats"
-                  [queryParams]="{ stat: statId }"
-                  [matTooltip]="'candidates.actions.openStat' | translate"
+                  [queryParams]="{ stat: s.statId }"
+                  [matTooltip]="'candidates.actions.openStat' | translate: { pattern: s.pattern }"
                 >
                   <mat-icon class="stats-tag__icon">check</mat-icon>
-                  {{ 'candidates.actions.inStats' | translate }}
+                  {{ 'patterns.short.' + s.pattern | translate }}
                 </a>
-              } @else if (!readOnly()) {
-                <button mat-stroked-button stbSize="sm" type="button" (click)="promote(c)">
-                  <mat-icon>arrow_forward</mat-icon>
-                  {{ 'candidates.actions.promote' | translate }}
-                </button>
+              }
+              @if (!readOnly()) {
+                @for (p of c.promotableTo; track p) {
+                  <button
+                    mat-stroked-button
+                    stbSize="sm"
+                    type="button"
+                    (click)="promote(c, p)"
+                    [matTooltip]="'candidates.actions.promoteHint.' + p | translate"
+                  >
+                    <mat-icon>arrow_forward</mat-icon>
+                    {{ 'patterns.short.' + p | translate }}
+                  </button>
+                }
               }
               @if (!readOnly()) {
                 <button

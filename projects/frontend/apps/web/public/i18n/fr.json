@@ -51,17 +51,17 @@
         "body": "Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.",
         "captured": "{{count}} candidats saisis — {{tickers}}.",
         "capturedOne": "{{count}} candidat saisi — {{tickers}}.",
-        "notPromoted": "{{count}} candidats ne sont pas encore passés en stats.",
-        "notPromotedOne": "{{count}} candidat n'est pas encore passé en stats.",
+        "notPromoted": "{{count}} candidats n'ont pas encore de stat.",
+        "notPromotedOne": "{{count}} candidat n'a pas encore de stat.",
         "confirmPromote": {
-          "title": "Passer {{count}} candidats en stats ?",
-          "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
-          "confirm": "Tout passer en stats"
+          "title": "Passer {{count}} candidats en GUS ?",
+          "message": "{{tickers}} deviennent des stats GUS à remplir au fil de la séance. Les candidats qui ont déjà une stat sont laissés tels quels. Un DT se choisit à la main, sur la page Candidats, quand il se forme.",
+          "confirm": "Tout passer en GUS"
         },
         "confirmPromoteOne": {
-          "title": "Passer {{count}} candidat en stats ?",
-          "message": "{{tickers}} devient une stat à remplir au fil de la séance. Les candidats déjà passés sont laissés tels quels.",
-          "confirm": "Passer en stats"
+          "title": "Passer {{count}} candidat en GUS ?",
+          "message": "{{tickers}} devient une stat GUS à remplir au fil de la séance. Les candidats qui ont déjà une stat sont laissés tels quels. Un DT se choisit à la main, sur la page Candidats, quand il se forme.",
+          "confirm": "Passer en GUS"
         },
         "none": "Aucun candidat aujourd'hui — rien n'a passé le radar."
       },
@@ -93,8 +93,8 @@
     "actions": {
       "view": "Voir",
       "capture": "Saisir les candidats",
-      "promoteRemaining": "Passer les {{count}} restants",
-      "promoteRemainingOne": "Passer le dernier",
+      "promoteRemaining": "Passer les {{count}} en GUS",
+      "promoteRemainingOne": "Passer le dernier en GUS",
       "complete": "Compléter",
       "pickStat": "Choisir une stat",
       "openJournal": "Ouvrir le journal",
@@ -125,9 +125,9 @@
       "empty": "Aucun trade cette semaine."
     },
     "snackbar": {
-      "promoteSuccess": "{{count}} candidats passés en stats.",
-      "promoteSuccessOne": "{{count}} candidat passé en stats.",
-      "promoteError": "Impossible de passer les candidats en stats. Réessaie.",
+      "promoteSuccess": "{{count}} candidats passés en GUS.",
+      "promoteSuccessOne": "{{count}} candidat passé en GUS.",
+      "promoteError": "Impossible de passer les candidats en GUS. Réessaie.",
       "markError": "Impossible d'enregistrer la journée. Réessaie."
     }
   },
@@ -144,7 +144,7 @@
     "form": {
       "title": "Nouveau candidat",
       "editTitle": "Modifier le candidat",
-      "hint": "Entrée pour valider · gap et push se calculent tout seuls",
+      "hint": "Entrée pour valider · gap et push se calculent tout seuls · le pattern se choisit en passant en stat",
       "add": "Ajouter",
       "save": "Enregistrer",
       "pmHighBelowOpen": "Sous l'open PM",
@@ -202,25 +202,34 @@
     "actions": {
       "edit": "Modifier",
       "delete": "Supprimer",
-      "promote": "Stat",
-      "promoteAll": "Tout passer en stats",
-      "inStats": "En stats",
-      "openStat": "Ouvrir sa séance"
+      "promoteAll": "Tout passer en GUS",
+      "openStat": "Ouvrir sa stat {{pattern}}",
+      "promoteHint": {
+        "GUS": "Passer en stat GUS",
+        "DT": "Quand le double top se forme, en fin de matinée"
+      }
     },
     "confirmPromote": {
-      "title": "Passer {{ticker}} en stat ?",
-      "message": "La stat reprend toutes les données du candidat (pattern, clôture veille, open et high PM, float, volume, locate, note, open de 9h30). Tu la rempliras au fil de la séance, puis tu la cocheras.",
-      "confirm": "Passer en stat"
+      "GUS": {
+        "title": "Passer {{ticker}} en stat GUS ?",
+        "message": "La stat GUS reprend toutes les données du candidat (clôture veille, open et high PM, float, volume, locate, note, open de 9h30). Tu la rempliras au fil de la séance, puis tu la cocheras.",
+        "confirm": "Passer en GUS"
+      },
+      "DT": {
+        "title": "Passer {{ticker}} en stat DT ?",
+        "message": "La stat DT reprend le premarket du candidat ; tu y noteras le départ, le top, le bas du rejet et le retest.",
+        "confirm": "Passer en DT"
+      }
     },
     "confirmPromoteAll": {
-      "title": "Passer {{count}} candidats en stats ?",
-      "message": "{{tickers}} deviennent des stats à remplir au fil de la séance. Les candidats déjà en stats sont laissés de côté.",
-      "confirm": "Tout passer en stats"
+      "title": "Passer {{count}} candidats en GUS ?",
+      "message": "{{tickers}} deviennent des stats GUS, à remplir au fil de la séance. Les candidats qui ont déjà une stat sont laissés de côté, et un DT reste un choix à la main (« → DT »), quand il se forme.",
+      "confirm": "Tout passer en GUS"
     },
     "confirmPromoteAllOne": {
-      "title": "Passer {{count}} candidat en stats ?",
-      "message": "{{tickers}} devient une stat à remplir au fil de la séance. Les candidats déjà en stats sont laissés de côté.",
-      "confirm": "Passer en stats"
+      "title": "Passer {{count}} candidat en GUS ?",
+      "message": "{{tickers}} devient une stat GUS, à remplir au fil de la séance. Les candidats qui ont déjà une stat sont laissés de côté, et un DT reste un choix à la main (« → DT »), quand il se forme.",
+      "confirm": "Passer en GUS"
     },
     "confirmDelete": {
       "title": "Supprimer le candidat {{ticker}} ?",
@@ -231,16 +240,18 @@
       "createSuccess": "{{ticker}} ajouté.",
       "updateSuccess": "{{ticker}} mis à jour.",
       "deleteSuccess": "{{ticker}} supprimé.",
-      "promoteSuccess": "{{ticker}} est passé en stats.",
+      "promoteSuccess": "{{ticker}} est passé en {{pattern}}.",
       "promoteError": "Impossible de passer {{ticker}} en stat. Réessaie.",
-      "promoteAllSuccess": "{{count}} candidats passés en stats.",
-      "promoteAllSuccessOne": "{{count}} candidat passé en stats.",
-      "promoteAllError": "Impossible de passer les candidats en stats. Réessaie.",
+      "promoteAllSuccess": "{{count}} candidats passés en GUS.",
+      "promoteAllSuccessOne": "{{count}} candidat passé en GUS.",
+      "promoteAllError": "Impossible de passer les candidats en GUS. Réessaie.",
       "duplicate": "{{ticker}} est déjà saisi ce jour-là.",
       "loadError": "Impossible de charger les candidats. Réessaie.",
       "saveError": "Impossible d'enregistrer le candidat. Réessaie.",
       "deleteError": "Impossible de supprimer le candidat. Réessaie.",
-      "atOpenSaveError": "Impossible d'enregistrer {{ticker}} à l'open. Réessaie."
+      "atOpenSaveError": "Impossible d'enregistrer {{ticker}} à l'open. Réessaie.",
+      "promoteAllSkipped": "{{tickers}} avaient déjà une stat, laissés de côté.",
+      "promoteAllSkippedOne": "{{tickers}} avait déjà une stat, laissé de côté."
     }
   },
   "account": {

@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs';
+import { Pattern } from '../shared/pattern.model';
 import { BulkPromotion, Candidate, CandidateInput } from './candidates.model';
 
 /**
@@ -17,14 +18,15 @@ export abstract class CandidatesRepository {
   abstract delete(id: string): Observable<void>;
 
   /**
-   * Copies a candidate onto the stats sheet — the « → Stat » action. The new stat starts "to
-   * complete". Errors with HTTP 409 when that candidate (or its day + ticker) is already there.
+   * Copies a candidate onto the stats sheet in [pattern] — the « → GUS » / « → DT » actions. The
+   * new stat starts "to complete". Errors with HTTP 409 when that candidate (or its day + ticker)
+   * already has a stat in that pattern.
    *
    * The created stat is not surfaced : the page reloads the day, and the stats sheet is where it is
    * read. Keeping it out of the port keeps candidates independent from the stats wire shape.
    */
-  abstract promote(id: string): Observable<void>;
+  abstract promote(id: string, pattern: Pattern): Observable<void>;
 
-  /** Promotes every candidate of the day that isn't in the sheet yet. Idempotent. */
+  /** Promotes to GUS every candidate of the day without any stat yet — never a DT. Idempotent. */
   abstract promoteDay(date: Date): Observable<BulkPromotion>;
 }

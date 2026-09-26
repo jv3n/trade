@@ -113,11 +113,12 @@ test('the pattern saves as soon as it is picked', async ({ api, page }) => {
   await openPanel(page, stat);
 
   await premarket(page).getByLabel('Pattern').click();
-  await page.getByRole('option', { name: 'DT — Double Top' }).click();
+  // SIR, measured like a GUS : re-filing to or from DT is refused, a double top is a stat of its own.
+  await page.getByRole('option', { name: 'SIR — Short Into Resistance' }).click();
 
-  await expect.poll(async () => (await api.get<Stat>(`/api/stats/${stat.id}`)).pattern).toBe('DT');
+  await expect.poll(async () => (await api.get<Stat>(`/api/stats/${stat.id}`)).pattern).toBe('SIR');
   const row = page.getByRole('row').filter({ hasText: TICKER });
-  await expect(row.getByRole('cell', { name: 'DT', exact: true })).toBeVisible();
+  await expect(row.getByRole('cell', { name: 'SIR', exact: true })).toBeVisible();
 });
 
 test('closing, a new stat or another stat ask before dropping a held edit', async ({

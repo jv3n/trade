@@ -51,17 +51,17 @@
         "body": "After the radar screen : ticker, previous close, PM open / high, float, volume, locate.",
         "captured": "{{count}} candidates captured — {{tickers}}.",
         "capturedOne": "{{count}} candidate captured — {{tickers}}.",
-        "notPromoted": "{{count}} candidates are not in the stats sheet yet.",
-        "notPromotedOne": "{{count}} candidate is not in the stats sheet yet.",
+        "notPromoted": "{{count}} candidates have no stat yet.",
+        "notPromotedOne": "{{count}} candidate has no stat yet.",
         "confirmPromote": {
-          "title": "Promote {{count}} candidates to the stats sheet?",
-          "message": "{{tickers}} become stats to fill in as the session goes. The candidates already promoted are left alone.",
-          "confirm": "Promote them all"
+          "title": "Promote {{count}} candidates to GUS?",
+          "message": "{{tickers}} become GUS stats to fill in as the session goes. The candidates that already have a stat are left alone. A DT is chosen by hand, on the Candidates page, when it forms.",
+          "confirm": "Promote them all to GUS"
         },
         "confirmPromoteOne": {
-          "title": "Promote {{count}} candidate to the stats sheet?",
-          "message": "{{tickers}} becomes a stat to fill in as the session goes. The candidates already promoted are left alone.",
-          "confirm": "Promote it"
+          "title": "Promote {{count}} candidate to GUS?",
+          "message": "{{tickers}} becomes a GUS stat to fill in as the session goes. The candidates that already have a stat are left alone. A DT is chosen by hand, on the Candidates page, when it forms.",
+          "confirm": "Promote it to GUS"
         },
         "none": "No candidate today — nothing made it past the radar."
       },
@@ -93,8 +93,8 @@
     "actions": {
       "view": "View",
       "capture": "Capture the candidates",
-      "promoteRemaining": "Promote the {{count}} remaining",
-      "promoteRemainingOne": "Promote the last one",
+      "promoteRemaining": "Promote the {{count}} to GUS",
+      "promoteRemainingOne": "Promote the last one to GUS",
       "complete": "Complete",
       "pickStat": "Pick a stat",
       "openJournal": "Open the journal",
@@ -125,9 +125,9 @@
       "empty": "No trade this week."
     },
     "snackbar": {
-      "promoteSuccess": "{{count}} candidates promoted to the stats sheet.",
-      "promoteSuccessOne": "{{count}} candidate promoted to the stats sheet.",
-      "promoteError": "Couldn't promote the candidates. Please retry.",
+      "promoteSuccess": "{{count}} candidates promoted to GUS.",
+      "promoteSuccessOne": "{{count}} candidate promoted to GUS.",
+      "promoteError": "Couldn't promote the candidates to GUS. Please retry.",
       "markError": "Couldn't save the day. Please retry."
     }
   },
@@ -144,7 +144,7 @@
     "form": {
       "title": "New candidate",
       "editTitle": "Edit candidate",
-      "hint": "Enter to validate · gap and push compute themselves",
+      "hint": "Enter to validate · gap and push compute themselves · the pattern is chosen when promoting",
       "add": "Add",
       "save": "Save",
       "pmHighBelowOpen": "Below the PM open",
@@ -202,25 +202,34 @@
     "actions": {
       "edit": "Edit",
       "delete": "Delete",
-      "promote": "Stat",
-      "promoteAll": "Promote all to stats",
-      "inStats": "In stats",
-      "openStat": "Open its session"
+      "promoteAll": "Promote all to GUS",
+      "openStat": "Open its {{pattern}} stat",
+      "promoteHint": {
+        "GUS": "Promote to a GUS stat",
+        "DT": "When the double top forms, late in the morning"
+      }
     },
     "confirmPromote": {
-      "title": "Promote {{ticker}} to a stat?",
-      "message": "The stat takes every candidate field (pattern, previous close, PM open and high, float, volume, locate, note, 9:30 open). You will fill it in as the session goes, then tick it.",
-      "confirm": "Promote to stat"
+      "GUS": {
+        "title": "Promote {{ticker}} to a GUS stat?",
+        "message": "The GUS stat takes every candidate field (previous close, PM open and high, float, volume, locate, note, 9:30 open). You will fill it in as the session goes, then tick it.",
+        "confirm": "Promote to GUS"
+      },
+      "DT": {
+        "title": "Promote {{ticker}} to a DT stat?",
+        "message": "The DT stat takes the candidate's premarket ; you will note the start, the top, the rejection low and the retest.",
+        "confirm": "Promote to DT"
+      }
     },
     "confirmPromoteAll": {
-      "title": "Promote {{count}} candidates to stats?",
-      "message": "{{tickers}} become stats to fill in as the session goes. Candidates already in the sheet are left alone.",
-      "confirm": "Promote all to stats"
+      "title": "Promote {{count}} candidates to GUS?",
+      "message": "{{tickers}} become GUS stats to fill in as the session goes. Candidates that already have a stat are left alone, and a DT stays a choice made by hand (« → DT »), when it forms.",
+      "confirm": "Promote all to GUS"
     },
     "confirmPromoteAllOne": {
-      "title": "Promote {{count}} candidate to stats?",
-      "message": "{{tickers}} becomes a stat to fill in as the session goes. Candidates already in the sheet are left alone.",
-      "confirm": "Promote to stats"
+      "title": "Promote {{count}} candidate to GUS?",
+      "message": "{{tickers}} becomes a GUS stat to fill in as the session goes. Candidates that already have a stat are left alone, and a DT stays a choice made by hand (« → DT »), when it forms.",
+      "confirm": "Promote to GUS"
     },
     "confirmDelete": {
       "title": "Delete the {{ticker}} candidate?",
@@ -231,16 +240,18 @@
       "createSuccess": "{{ticker}} added.",
       "updateSuccess": "{{ticker}} updated.",
       "deleteSuccess": "{{ticker}} deleted.",
-      "promoteSuccess": "{{ticker}} is now in the stats sheet.",
+      "promoteSuccess": "{{ticker}} is now a {{pattern}} stat.",
       "promoteError": "Couldn't promote {{ticker}}. Please retry.",
-      "promoteAllSuccess": "{{count}} candidates promoted to stats.",
-      "promoteAllSuccessOne": "{{count}} candidate promoted to stats.",
-      "promoteAllError": "Couldn't promote the candidates. Please retry.",
+      "promoteAllSuccess": "{{count}} candidates promoted to GUS.",
+      "promoteAllSuccessOne": "{{count}} candidate promoted to GUS.",
+      "promoteAllError": "Couldn't promote the candidates to GUS. Please retry.",
       "duplicate": "{{ticker}} is already captured on this day.",
       "loadError": "Couldn't load the candidates. Please retry.",
       "saveError": "Couldn't save the candidate. Please retry.",
       "deleteError": "Couldn't delete the candidate. Please retry.",
-      "atOpenSaveError": "Couldn't save {{ticker}} at the open. Please retry."
+      "atOpenSaveError": "Couldn't save {{ticker}} at the open. Please retry.",
+      "promoteAllSkipped": "{{tickers}} already had a stat, left alone.",
+      "promoteAllSkippedOne": "{{tickers}} already had a stat, left alone."
     }
   },
   "account": {

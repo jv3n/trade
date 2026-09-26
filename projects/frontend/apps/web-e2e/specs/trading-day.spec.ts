@@ -5,14 +5,14 @@ import { expect, isoToday, parseFrAmount, test, typeNumber } from '../fixtures';
  * A full trading day, end to end (#367, scenario 1) — the money path, in one test, because it is
  * the only one that crosses every context and catches a broken link between two of them :
  *
- * capture a candidate in premarket → type the open at 9:30 → promote it to a stat → reach that stat
- * through the « En stats » badge, even off the first page of the sheet (#383) → fill HOD / LOD / EOD
+ * capture a candidate in premarket → type the open at 9:30 → promote it to a GUS stat → reach that
+ * stat through its « ✓ GUS » badge, even off the first page of the sheet (#383) → fill HOD / LOD / EOD
  * → tick it → promote it to a trade → type the executions and the broker P&L → **the account balance
  * moves by exactly that P&L** → re-file the stat under another pattern and **the trade follows** in
- * the journal (#393).
+ * the journal (#393) — SIR, measured like a GUS : a double top is a stat of its own (#434).
  *
  * Button names are matched as substrings, except where a shorter name is contained in a longer one
- * (« Stat » in « Tout passer en stats ») — see `money.spec.ts`.
+ * (« GUS » in « Tout passer en GUS ») — see `money.spec.ts`.
  */
 
 const TICKER = 'KTTA';
@@ -54,13 +54,13 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
   await expect.poll(async () => (await candidateOf(api))?.openPrice).toBe(4.2);
 
   // ---- The candidate becomes a stat ----
-  await page.getByRole('button', { name: 'Stat', exact: true }).click();
+  await page.getByRole('button', { name: 'GUS', exact: true }).click();
   await page
-    .getByRole('dialog', { name: `Passer ${TICKER} en stat ?` })
-    .getByRole('button', { name: 'Passer en stat' })
+    .getByRole('dialog', { name: `Passer ${TICKER} en stat GUS ?` })
+    .getByRole('button', { name: 'Passer en GUS' })
     .click();
-  await expect(page.getByText(`${TICKER} est passé en stats.`)).toBeVisible();
-  const statId = (await candidateOf(api))!.statId!;
+  await expect(page.getByText(`${TICKER} est passé en GUS.`)).toBeVisible();
+  const statId = (await candidateOf(api))!.stats[0].statId;
 
   // Newer stats of the same day push this one off the sheet's first page.
   for (let i = 0; i < OTHER_STATS; i++) {
@@ -74,7 +74,7 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
   }
 
   // ---- The badge opens that stat's session, wherever it sits in the sheet (#383) ----
-  await page.getByRole('link', { name: 'En stats' }).click();
+  await page.getByRole('link', { name: 'GUS', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/stats\\?stat=${statId}`));
   const premarket = page.locator('.premarket-card');
   await expect(premarket.getByText(TICKER, { exact: true })).toBeVisible();
@@ -126,18 +126,18 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
 
   // ---- Re-filed under another pattern, the trade follows (#393) ----
   await page.goto(`/stats?stat=${statId}`);
-  await pickOption(page, premarket.getByLabel('Pattern'), 'DT — Double Top');
-  await expect.poll(async () => (await api.get<Stat>(`/api/stats/${statId}`)).pattern).toBe('DT');
-  expect((await api.get<Trade>(`/api/journal/trades/${tradeId}`)).pattern).toBe('DT');
+  await pickOption(page, premarket.getByLabel('Pattern'), 'SIR — Short Into Resistance');
+  await expect.poll(async () => (await api.get<Stat>(`/api/stats/${statId}`)).pattern).toBe('SIR');
+  expect((await api.get<Trade>(`/api/journal/trades/${tradeId}`)).pattern).toBe('SIR');
   await page.goto('/journal');
   const row = page.getByRole('row').filter({ hasText: TICKER });
-  await expect(row.getByRole('cell', { name: 'DT', exact: true })).toBeVisible();
+  await expect(row.getByRole('cell', { name: 'SIR', exact: true })).toBeVisible();
 });
 
 interface Candidate {
   ticker: string;
   openPrice: number | null;
-  statId: string | null;
+  stats: { pattern: string; statId: string }[];
 }
 
 async function candidateOf(api: {

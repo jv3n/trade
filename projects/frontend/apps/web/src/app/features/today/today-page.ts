@@ -136,8 +136,13 @@ export class TodayPage {
   readonly tradingDay = signal<TradingDay | null>(null);
   readonly savingMarks = signal(false);
 
-  /** Candidates of the day still waiting to be promoted — step 2's « promote the rest » action. */
-  readonly pendingCandidates = computed(() => this.candidates().filter((c) => !c.promoted));
+  /**
+   * Candidates of the day without any stat — step 2's « Passer les N en GUS » action. A candidate
+   * with only a DT counts as promoted.
+   */
+  readonly pendingCandidates = computed(() =>
+    this.candidates().filter((c) => c.stats.length === 0),
+  );
   /**
    * Step 4 counts every stat still to complete, whatever its day (#337) : a stat left half-filled
    * on an earlier day is overdue, and nothing else in the daily flow would point at it.
@@ -176,7 +181,7 @@ export class TodayPage {
   /** Whether each step is behind us, from the data and the clock. */
   private readonly done = computed<Record<StepKey, boolean>>(() => ({
     reconciliation: this.reconciledToday(),
-    // Captured is not enough : the step is done once every candidate is in the stats sheet (#337).
+    // Captured is not enough : the step is done once every candidate has a stat (#337).
     candidates: this.candidates().length > 0 && this.pendingCandidates().length === 0,
     // The session is behind us once New York has closed — there is nothing to do in the app while
     // it runs, so it can't be "done" any earlier.
@@ -238,8 +243,8 @@ export class TodayPage {
   }
 
   /**
-   * « Promote the remaining candidates » of step 2 — a creation, so it goes through the
-   * confirmation modal, which names the tickers about to become stats.
+   * « Passer les N en GUS » of step 2 — a creation, so it goes through the confirmation modal,
+   * which names the tickers about to become GUS stats. Never a DT : it is chosen by hand.
    */
   promoteRemaining(): void {
     const pending = this.pendingCandidates();
