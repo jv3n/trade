@@ -435,8 +435,8 @@ field by field like the rest.
   compares across patterns — premarket, flags, check, trade — plus a one-line summary of each stat
   in its own pattern, and no averages row : a push at the open and a DT extension don't add up.
 - The « À l'open » push references only use GUS stats, as before (same pattern).
-- **Data model** — to settle in the implementation : the four DT prices likely belong in a table of
-  their own, one row per DT stat, rather than as nullable columns on every stat.
+- **Data model** — the four DT prices are nullable columns on the stat rather than a table of their
+  own, so the database CHECK can keep a ticked stat whole, pattern by pattern (#435).
 
 **Screen** : [`stats.html`](stats.html) — a « Premarket » card and a « Session » card for the stat
 being filled (live percentage preview, fields saved one by one with the save state next to each
