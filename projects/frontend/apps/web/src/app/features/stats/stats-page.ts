@@ -62,7 +62,15 @@ import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import { PeriodSelection } from '../../shared/period-preset/period-preset';
 import { PluralPipe } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
-import { gapPercent, percentVsOpen, pmPushPercent } from './stats.math';
+import {
+  DT_EXTENSION_CRITERION,
+  DT_REJECTION_CRITERION,
+  DoubleTopLegs,
+  doubleTopLegs,
+  gapPercent,
+  percentVsOpen,
+  pmPushPercent,
+} from './stats.math';
 
 /** Sort state — controlled-component shape (empty `columnName` = the backend's DEFAULT_SORT). */
 interface SortRequest {
@@ -70,13 +78,20 @@ interface SortRequest {
   isAscending: boolean;
 }
 
-/** The session block being typed in the session panel. Numbers are null until typed. */
+/**
+ * The session block being typed in the session panel — the GUS session, or the four prices of a
+ * double top on a DT stat. Numbers are null until typed.
+ */
 interface SessionModel {
   openPrice: number | null;
   pushOpenPrice: number | null;
   hodPrice: number | null;
   lodPrice: number | null;
   eodPrice: number | null;
+  dtStartPrice: number | null;
+  dtTopPrice: number | null;
+  dtLowPrice: number | null;
+  dtRetestPrice: number | null;
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;
@@ -86,7 +101,10 @@ interface SessionModel {
 
 /** The premarket block being typed in the premarket card — copied from the candidate, editable. */
 interface PremarketModel {
-  /** Re-filing a stat under another pattern is a premarket edit too (#393) — its trade follows. */
+  /**
+   * Re-filing a stat under another pattern is a premarket edit too (#393) — its trade follows. Never
+   * to or from DT : a double top is a stat of its own.
+   */
   pattern: Pattern;
   previousClose: number | null;
   pmOpen: number | null;
@@ -128,6 +146,8 @@ export interface StatRow extends StatEntry {
   hodPercent: number | null;
   lodPercent: number | null;
   eodPercent: number | null;
+  /** The double top legs — null on any other pattern, or until their prices are in. */
+  legs: DoubleTopLegs;
   /** Label keys of the session prices still missing — the ✓ stays disabled until it's empty. */
   missing: string[];
   /** Why the day's range refuses this row (#305) — null when it holds. Blocks the ✓ too. */
@@ -140,6 +160,44 @@ export interface StatRow extends StatEntry {
  */
 export type StatTab = StatStatus | 'NO_PUSH' | null;
 const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_PUSH'];
+
+/**
+ * The views of the page (#437) : the KPIs, the table's columns and the averages follow the pattern
+ * — a GUS and a double top are not measured alike. « All » keeps what compares across patterns.
+ */
+export type StatView = 'GUS' | 'DT' | 'ALL';
+const VIEWS: readonly StatView[] = ['GUS', 'DT', 'ALL'];
+
+/** The view a stat shows in — SIR, SIV and discretionary only in « All ». */
+function viewOf(pattern: Pattern): StatView {
+  if (pattern === 'GUS' || pattern === 'DT') return pattern;
+  return 'ALL';
+}
+
+const LEADING_COLUMNS = [
+  'tradeDate',
+  'ticker',
+  'pattern',
+  'gap',
+  'pmPush',
+  'float',
+  'volume',
+  'locate',
+] as const;
+const TRAILING_COLUMNS = ['flags', 'completed', 'trade', 'actions'] as const;
+const DOUBLE_TOP_FOOTER_COLUMNS: readonly string[] = [
+  'dtAveragesLabel',
+  'dtTop',
+  'dtLow',
+  'dtRetest',
+  'dtAveragesEnd',
+];
+const NO_COLUMNS: readonly string[] = [];
+const COLUMNS: Record<StatView, readonly string[]> = {
+  GUS: [...LEADING_COLUMNS, 'openPrice', 'pushOpen', 'hod', 'lod', 'eod', ...TRAILING_COLUMNS],
+  DT: [...LEADING_COLUMNS, 'dtStart', 'dtTop', 'dtLow', 'dtRetest', ...TRAILING_COLUMNS],
+  ALL: [...LEADING_COLUMNS, 'brief', ...TRAILING_COLUMNS],
+};
 
 function tabFromQuery(value: string | null): StatTab {
   return STATUS_TABS.find((tab) => tab !== null && tab === value) ?? null;
@@ -154,6 +212,10 @@ const BLANK_SESSION: SessionModel = {
   hodPrice: null,
   lodPrice: null,
   eodPrice: null,
+  dtStartPrice: null,
+  dtTopPrice: null,
+  dtLowPrice: null,
+  dtRetestPrice: null,
   ssr: false,
   under1Dollar: false,
   entryAfter11am: false,
@@ -180,7 +242,16 @@ const HELD_REASONS: readonly string[] = [
   'stats.save.waitingSession',
 ];
 
-type SessionPrice = 'openPrice' | 'pushOpenPrice' | 'hodPrice' | 'lodPrice' | 'eodPrice';
+type SessionPrice =
+  | 'openPrice'
+  | 'pushOpenPrice'
+  | 'hodPrice'
+  | 'lodPrice'
+  | 'eodPrice'
+  | 'dtStartPrice'
+  | 'dtTopPrice'
+  | 'dtLowPrice'
+  | 'dtRetestPrice';
 
 /** The five session prices, in the sheet's order, with the label key naming them. */
 const SESSION_PRICES: readonly { field: SessionPrice; label: string }[] = [
@@ -191,14 +262,26 @@ const SESSION_PRICES: readonly { field: SessionPrice; label: string }[] = [
   { field: 'eodPrice', label: 'stats.fields.eod' },
 ];
 
-/** The session prices a stat needs — all five, or four on a no-push day. */
-function expectedPrices(session: Pick<SessionModel, 'noPush'>) {
+/** The four prices of a double top, in the order it forms. */
+const DOUBLE_TOP_PRICES: readonly { field: SessionPrice; label: string }[] = [
+  { field: 'dtStartPrice', label: 'stats.fields.dtStart' },
+  { field: 'dtTopPrice', label: 'stats.fields.dtTop' },
+  { field: 'dtLowPrice', label: 'stats.fields.dtLow' },
+  { field: 'dtRetestPrice', label: 'stats.fields.dtRetest' },
+];
+
+/** The session prices a stat needs — all five, four on a no-push day, the four of a double top. */
+function expectedPrices(session: Pick<SessionModel, 'noPush'>, pattern: Pattern) {
+  if (pattern === 'DT') return DOUBLE_TOP_PRICES;
   return SESSION_PRICES.filter(({ field }) => !(session.noPush && field === 'pushOpenPrice'));
 }
 
 /** Label keys of the session prices still missing — what stands between a stat and its tick. */
-export function missingPrices(session: Pick<SessionModel, SessionPrice | 'noPush'>): string[] {
-  return expectedPrices(session)
+export function missingPrices(
+  session: Pick<SessionModel, SessionPrice | 'noPush'>,
+  pattern: Pattern,
+): string[] {
+  return expectedPrices(session, pattern)
     .filter(({ field }) => !isPositive(session[field]))
     .map((p) => p.label);
 }
@@ -233,7 +316,9 @@ export function premarketProblem(m: PremarketModel): string | null {
  */
 export function sessionProblem(
   session: SessionModel,
+  pattern: Pattern,
 ): { reason: string; fields: SessionPrice[] } | null {
+  if (pattern === 'DT') return doubleTopProblem(session);
   const { hodPrice: hod, lodPrice: lod } = session;
   if (hod !== null && lod !== null && hod < lod) {
     return { reason: 'stats.save.hodBelowLod', fields: ['hodPrice', 'lodPrice'] };
@@ -246,6 +331,26 @@ export function sessionProblem(
   return null;
 }
 
+/**
+ * The shape of a double top (`docs/pattern/DT.md`) : the top not under the start, the rejection
+ * low not above the top, the retest not under the low — the backend refuses the same.
+ */
+function doubleTopProblem(
+  session: SessionModel,
+): { reason: string; fields: SessionPrice[] } | null {
+  const { dtStartPrice: start, dtTopPrice: top, dtLowPrice: low, dtRetestPrice: retest } = session;
+  if (start !== null && top !== null && top < start) {
+    return { reason: 'stats.save.topBelowStart', fields: ['dtStartPrice', 'dtTopPrice'] };
+  }
+  if (top !== null && low !== null && low > top) {
+    return { reason: 'stats.save.lowAboveTop', fields: ['dtTopPrice', 'dtLowPrice'] };
+  }
+  if (low !== null && retest !== null && retest < low) {
+    return { reason: 'stats.save.retestBelowLow', fields: ['dtLowPrice', 'dtRetestPrice'] };
+  }
+  return null;
+}
+
 function sessionOf(entry: StatEntry): SessionModel {
   return {
     openPrice: entry.openPrice,
@@ -253,6 +358,10 @@ function sessionOf(entry: StatEntry): SessionModel {
     hodPrice: entry.hodPrice,
     lodPrice: entry.lodPrice,
     eodPrice: entry.eodPrice,
+    dtStartPrice: entry.dtStartPrice,
+    dtTopPrice: entry.dtTopPrice,
+    dtLowPrice: entry.dtLowPrice,
+    dtRetestPrice: entry.dtRetestPrice,
     ssr: entry.ssr,
     under1Dollar: entry.under1Dollar,
     entryAfter11am: entry.entryAfter11am,
@@ -265,20 +374,26 @@ function sessionOf(entry: StatEntry): SessionModel {
  * Stats page — the sheet filled as the day goes and ticked once complete (cf. `mockup/stats.html`
  * and `mockup/PARCOURS.md`, step 5) :
  *
+ * - **Views** (#437) : GUS / DT / All pick the KPIs, the table's columns and the averages — a GUS
+ *   is measured by its session, a double top by its three legs ; « All » keeps what compares across
+ *   patterns and sums each stat up in its own, with no averages.
  * - **KPIs** over the filtered set (not the current page) : stats completed / to complete, average
- *   push at open, average LOD, fade at the close. They come from `GET /api/stats/summary`.
+ *   push at open, average LOD, fade at the close — or the legs of the double tops. They come from
+ *   `GET /api/stats/summary`.
  * - **Session panel** : the premarket recap on top, then the session prices with their live % vs
  *   the open and the three flags — each saved on its own, when the field is left (an edit : no
- *   modal) — the « n / 5 » progress (4 on a no-push day), Close, and the ✓ that ticks the stat once its prices are
- *   in. It opens on the first stat to complete of the page and on any row's « Session » button.
+ *   modal) — the « n / 5 » progress (4 on a no-push day), Close, and the ✓ that ticks the stat once
+ *   its prices are in. A DT stat shows the « Double top » card instead : its four prices, the legs
+ *   computed live, « n / 4 ». It opens on the first stat to complete of the page and on any row's
+ *   button.
  * - **The ✓ column** ticks / unticks a stat from the table (#263). A ticked stat can't lose a price :
  *   clearing one is refused with a toast — untick it first.
  * - **Table** in two column groups — Premarket (copied from the candidate) and Session (price + %
  *   vs the open) — then the flags. Every column is kept ; horizontal scrolling is fine.
- * - **Filters** : search, period (preset or custom range, shared [PeriodFilter]), pattern, status ;
- *   server-side sort + pagination.
+ * - **Filters** : search, period (preset or custom range, shared [PeriodFilter]), the view, status
+ *   (« No push » in the GUS view only) ; server-side sort + pagination.
  *
- * Stats are created by promoting a candidate (#189) — this page never creates one. The « → Trade »
+ * Stats are born from a candidate (#189) or typed by hand (« New stat », #326). The « → Trade »
  * column (#193) is the **only** way a trade comes into existence : one per stat, confirmed, and the
  * row shows a link to that trade from then on.
  */
@@ -366,9 +481,11 @@ export class StatsPage {
 
   // ---- Filters ----
   readonly period = signal<PeriodSelection>({ period: 'all', dateFrom: null, dateTo: null });
+  /** Every pattern — what « New stat » picks from. */
   readonly patterns = PATTERNS;
-  readonly pattern = signal<Pattern | null>(null);
-  readonly statusTabs = STATUS_TABS;
+  /** What a stat can be re-filed under : a double top is a stat of its own, never re-filed. */
+  readonly refilePatterns = PATTERNS.filter((p) => p !== 'DT');
+  readonly views = VIEWS;
   /**
    * Opens on the tab named by `?status=`, the way « Complete » on the Today page lands (#337), and
    * follows it if the query changes under the same page. Picking a tab does not write the URL back.
@@ -377,30 +494,30 @@ export class StatsPage {
     this.route.queryParamMap.pipe(map((params) => tabFromQuery(params.get('status')))),
     { requireSync: true },
   );
+  /**
+   * GUS by default ; a link naming the stats to complete or completed lands on « All », since a
+   * double top left to complete is one of them.
+   */
+  readonly view = linkedSignal<StatView>(() => {
+    const tab = this.queryTab();
+    return tab === 'TO_COMPLETE' || tab === 'COMPLETED' ? 'ALL' : 'GUS';
+  });
   readonly status = linkedSignal<StatTab>(() => this.queryTab());
+  /** « No push » is a GUS notion : a double top has no push at the open. */
+  readonly statusTabs = computed(() =>
+    this.view() === 'GUS' ? STATUS_TABS : STATUS_TABS.filter((tab) => tab !== 'NO_PUSH'),
+  );
 
   // ---- Sort ----
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
-  readonly columns = [
-    'tradeDate',
-    'ticker',
-    'pattern',
-    'gap',
-    'pmPush',
-    'float',
-    'volume',
-    'locate',
-    'openPrice',
-    'pushOpen',
-    'hod',
-    'lod',
-    'eod',
-    'flags',
-    'completed',
-    'trade',
-    'actions',
-  ] as const;
+  readonly columns = computed(() => COLUMNS[this.view()]);
+  /** The averages row of the DT view — its label spans the columns before the legs. */
+  readonly footerColumns = computed(() =>
+    this.view() === 'DT' ? DOUBLE_TOP_FOOTER_COLUMNS : NO_COLUMNS,
+  );
+  readonly extensionCriterion = DT_EXTENSION_CRITERION;
+  readonly rejectionCriterion = DT_REJECTION_CRITERION;
 
   /** The day's rows with their derived percentages. */
   readonly rows = computed<StatRow[]>(() =>
@@ -412,10 +529,11 @@ export class StatsPage {
       hodPercent: percentVsOpen(e.openPrice, e.hodPrice),
       lodPercent: percentVsOpen(e.openPrice, e.lodPrice),
       eodPercent: percentVsOpen(e.openPrice, e.eodPrice),
-      missing: missingPrices(e),
+      legs: doubleTopLegs(e),
+      missing: missingPrices(e, e.pattern),
       // A row written before the range rule existed can still hold an impossible set : the ✓ of
       // the table answers for it like the panel's does, and the backend replays it on the tick.
-      issue: sessionProblem(sessionOf(e))?.reason ?? null,
+      issue: sessionProblem(sessionOf(e), e.pattern)?.reason ?? null,
     })),
   );
 
@@ -473,6 +591,18 @@ export class StatsPage {
     return missing;
   });
 
+  /** The pattern of the stat in the panel — the one picked in « New stat » while creating. */
+  readonly panelPattern = computed(() =>
+    this.creating() ? this.identity().pattern : this.premarket().pattern,
+  );
+  /** A DT stat shows the « Double top » card in place of the session one. */
+  readonly isDoubleTop = computed(() => this.panelPattern() === 'DT');
+
+  /** The legs of the double top being typed, live — A reads the gap off the premarket card. */
+  readonly doubleTopLegs = computed(() =>
+    doubleTopLegs({ ...this.session(), previousClose: this.premarket().previousClose }),
+  );
+
   /** Live % vs the open for each session input, as the user types. */
   readonly sessionPercents = computed(() => {
     const m = this.session();
@@ -514,7 +644,7 @@ export class StatsPage {
   });
 
   /** What makes the session block impossible, and which fields say so — null when it holds. */
-  readonly sessionIssue = computed(() => sessionProblem(this.session()));
+  readonly sessionIssue = computed(() => sessionProblem(this.session(), this.panelPattern()));
 
   /** True when [field] takes part in the current incoherence — its own hint then says which. */
   atFault(field: SessionPrice): boolean {
@@ -522,8 +652,10 @@ export class StatsPage {
   }
 
   /** Label keys of the prices the panel still misses. */
-  readonly sessionMissing = computed(() => missingPrices(this.session()));
-  readonly sessionPriceCount = computed(() => expectedPrices(this.session()).length);
+  readonly sessionMissing = computed(() => missingPrices(this.session(), this.panelPattern()));
+  readonly sessionPriceCount = computed(
+    () => expectedPrices(this.session(), this.panelPattern()).length,
+  );
   readonly sessionFilled = computed(() => this.sessionPriceCount() - this.sessionMissing().length);
   /** The push typed before « no push » was ticked — given back if it is unticked. */
   private typedPush: number | null = null;
@@ -560,7 +692,10 @@ export class StatsPage {
         switchMap((id) => this.repo.findById(id).pipe(catchError(() => EMPTY))),
         takeUntilDestroyed(),
       )
-      .subscribe((entry) => this.open(entry));
+      .subscribe((entry) => {
+        this.followView(entry);
+        this.open(entry);
+      });
   }
 
   // ---- Filter handlers ----
@@ -576,8 +711,9 @@ export class StatsPage {
     this.pageIndex.set(0);
   }
 
-  setPattern(pattern: Pattern | null): void {
-    this.pattern.set(pattern);
+  setView(view: StatView): void {
+    this.view.set(view);
+    if (view !== 'GUS' && this.status() === 'NO_PUSH') this.status.set(null);
     this.pageIndex.set(0);
   }
 
@@ -677,7 +813,7 @@ export class StatsPage {
     if (sameSession(session, sessionOf(entry)) && samePremarket(premarket, premarketOf(entry))) {
       return;
     }
-    if (entry.completed && missingPrices(session).length > 0) {
+    if (entry.completed && missingPrices(session, premarket.pattern).length > 0) {
       this.toasts.error(
         this.translate.instant('stats.snackbar.untickFirst', { ticker: entry.ticker }),
       );
@@ -794,6 +930,7 @@ export class StatsPage {
         switchMap(() => this.repo.create(input)),
         tap((saved) => {
           this.toasts.success(this.translate.instant('stats.snackbar.createSuccess', { ticker }));
+          this.followView(saved);
           this.open(saved);
           this.refetch();
         }),
@@ -844,13 +981,13 @@ export class StatsPage {
 
   /**
    * The ✓ — ticks the stat as completed, or unticks it back to "to complete". Ticking needs the five
-   * prices (four on a no-push day) : the button is disabled without them, and the backend refuses
-   * it too. The list reloads,
-   * since the status filter and the KPIs both depend on it.
+   * prices (four on a no-push day, the four of a double top) : the button is disabled without them,
+   * and the backend refuses it too. The list reloads, since the status filter and the KPIs both
+   * depend on it.
    */
   toggleCompleted(entry: StatEntry): void {
     const completed = !entry.completed;
-    if (completed && missingPrices(entry).length > 0) return;
+    if (completed && missingPrices(entry, entry.pattern).length > 0) return;
     this.enqueue(
       this.repo.setCompleted(entry.id, completed).pipe(
         tap((saved) => {
@@ -872,20 +1009,22 @@ export class StatsPage {
    * Empty when nothing stands in the way, which is also what disables the button.
    */
   tickBlockedReason(): string {
-    if (this.sessionMissing().length > 0) return this.missingLabel(this.session());
+    if (this.sessionMissing().length > 0) {
+      return this.missingLabel(this.session(), this.panelPattern());
+    }
     const issue = this.sessionIssue();
     return issue ? this.translate.instant(issue.reason) : '';
   }
 
   /** The same answer for a row of the table, which has no panel model to read. */
   rowBlockedReason(row: StatRow): string {
-    if (row.missing.length > 0) return this.missingLabel(row);
+    if (row.missing.length > 0) return this.missingLabel(row, row.pattern);
     return row.issue ? this.translate.instant(row.issue) : '';
   }
 
   /** « Il manque HOD, EOD » — the ✓'s tooltip while it can't tick. */
-  missingLabel(entry: Pick<SessionModel, SessionPrice | 'noPush'>): string {
-    const fields = missingPrices(entry).map((key) => this.translate.instant(key));
+  missingLabel(entry: Pick<SessionModel, SessionPrice | 'noPush'>, pattern: Pattern): string {
+    const fields = missingPrices(entry, pattern).map((key) => this.translate.instant(key));
     return this.translate.instant('stats.completion.missing', { fields: fields.join(', ') });
   }
 
@@ -944,14 +1083,27 @@ export class StatsPage {
 
   // ---- Internals ----
 
+  /**
+   * Moves to the view a stat shows in when it is opened from a link or just created — typing into a
+   * stat whose row the table doesn't show is how a price lands on the wrong ticker. « All » shows
+   * them all. The next listing keeps the panel, even when the stat sits off its first page.
+   */
+  private followView(entry: StatEntry): void {
+    const view = viewOf(entry.pattern);
+    if (this.view() === 'ALL' || this.view() === view) return;
+    this.keepPanelOnNextLoad = true;
+    this.setView(view);
+  }
+
   private currentFilter(): StatEntryFilter {
     const range = this.period();
     const tab = this.status();
+    const view = this.view();
     return {
       query: this.searchTerm() || null,
       dateFrom: range.dateFrom,
       dateTo: range.dateTo,
-      pattern: this.pattern(),
+      pattern: view === 'ALL' ? null : view,
       status: tab === 'NO_PUSH' ? null : tab,
       noPush: tab === 'NO_PUSH' || null,
     };

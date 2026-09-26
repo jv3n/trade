@@ -558,7 +558,20 @@
       "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push",
       "noPushSubOne": "vs open · sur {{pushed}} qui a poussé · {{count}} / {{total}} sans push",
       "noPushDays": "Jours sans push",
-      "noPushShare": "{{share}} % des stats complétées de la période"
+      "noPushShare": "{{share}} % des stats complétées de la période",
+      "completedGus": "Stats GUS complétées",
+      "completedDt": "Stats DT complétées",
+      "extension": "Extension moyenne (A)",
+      "extensionSub": "depuis le départ · {{withGap}} avec le gap",
+      "rejection": "Rejet moyen (B)",
+      "rejectionSub": "depuis le top · {{count}} / {{total}} à {{criterion}} % ou plus",
+      "retest": "Retest (C)",
+      "retestSub": "du top en moyenne · {{count}} / {{total}} ont repris le top",
+      "traded": "Tradées",
+      "tradedSub": "stats qui ont donné un trade",
+      "averages": "Moyennes",
+      "byPattern": "par pattern",
+      "byPatternSub": "choisis GUS ou DT pour le push, le LOD, l'extension, le rejet…"
     },
     "complete": {
       "title": "Séance",
@@ -574,10 +587,6 @@
       "untick": "Complétée — cliquer pour la repasser à compléter",
       "missing": "Il manque {{fields}}",
       "column": "Complétée"
-    },
-    "filters": {
-      "pattern": "Pattern",
-      "allPatterns": "Tous les patterns"
     },
     "status": {
       "ALL": "Toutes",
@@ -614,14 +623,27 @@
       "trade": "Trade",
       "noPush": "Pas de push",
       "noPushHint": "Le titre n'a pas poussé dans les ~10 minutes après l'open",
-      "noPushTag": "pas de push"
+      "noPushTag": "pas de push",
+      "dtStart": "Départ",
+      "dtTop": "Top",
+      "dtLow": "Bas du rejet",
+      "dtRetest": "Retest",
+      "dtStartPrice": "Départ ($)",
+      "dtTopPrice": "Top ($)",
+      "dtLowPrice": "Bas du rejet ($)",
+      "dtRetestPrice": "Retest ($)",
+      "brief": "En bref",
+      "briefHint": "Les chiffres qui résument la stat dans son pattern",
+      "briefPush": "push {{push}}",
+      "briefLod": "LOD {{lod}}"
     },
     "actions": {
       "edit": "Modifier la séance",
       "delete": "Supprimer",
       "toTrade": "Trade",
       "openTrade": "Voir le trade",
-      "session": "Séance"
+      "session": "Séance",
+      "doubleTop": "Double top"
     },
     "confirmPromoteTrade": {
       "title": "Créer le trade {{ticker}} ?",
@@ -649,7 +671,9 @@
     "premarket": {
       "title": "Premarket —",
       "hint": "repris du candidat · modifiable · chaque champ s'enregistre à la sortie",
-      "required": "requis"
+      "required": "requis",
+      "doubleTopFixed": "Une stat DT reste un DT : ses prix n'ont pas de sens pour un autre pattern",
+      "refileHint": "S'enregistre au changement — le trade lié suit. Un double top est une autre stat : « → DT » sur le candidat."
     },
     "create": {
       "open": "Nouvelle stat",
@@ -671,17 +695,54 @@
       "hodBelowLod": "le HOD est sous le LOD",
       "aboveHod": "un prix passe au-dessus du HOD",
       "belowLod": "un prix passe sous le LOD",
-      "serverRefused": "le serveur a refusé la modification"
+      "serverRefused": "le serveur a refusé la modification",
+      "topBelowStart": "le top est sous le départ",
+      "lowAboveTop": "le bas du rejet est au-dessus du top",
+      "retestBelowLow": "le retest est sous le bas du rejet"
     },
     "confirmCreate": {
       "title": "Créer la stat {{ticker}} ?",
-      "message": "Elle rejoint le tableau comme les stats du matin : une par jour et par ticker. Tu la coches une fois la séance complète.",
+      "message": "Elle rejoint le tableau comme les stats du matin : une par jour, par ticker et par pattern. Tu la coches une fois la séance complète.",
       "confirm": "Créer la stat"
     },
     "confirmLeave": {
       "title": "Quitter sans enregistrer ?",
       "message": "Une modification n'a pas pu partir — la raison est à côté du titre de la carte. En quittant, la stat garde ses dernières valeurs enregistrées.",
       "confirm": "Quitter sans enregistrer"
+    },
+    "view": {
+      "label": "Pattern affiché",
+      "hint": "les KPIs, les colonnes du tableau et les moyennes suivent le pattern — un GUS et un DT ne se mesurent pas pareil",
+      "GUS": "GUS",
+      "DT": "DT",
+      "ALL": "Tous"
+    },
+    "doubleTop": {
+      "title": "Double top",
+      "hint": "en fin de matinée, quand il se forme · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %",
+      "startHint": "l'open (9h30) par défaut — le bas d'où part la poussée",
+      "legA": "A {{leg}} % · {{withGap}} % avec le gap",
+      "legB": "B {{leg}} % depuis le top",
+      "legBBreath": "B {{leg}} % — sous 17 % : une respiration plutôt qu'un rejet",
+      "legC": "C {{leg}} % · {{toTop}} % du top",
+      "legCTookTop": "C {{leg}} % · top repris {{toTop}} %",
+      "columnA": "A — top",
+      "columnAHint": "Du départ au top ; en dessous, avec le gap (depuis la clôture de la veille)",
+      "columnB": "B — bas",
+      "columnBHint": "Du top au bas du rejet",
+      "columnC": "C — retest",
+      "columnCHint": "Du bas au haut du retest ; en dessous, l'écart au top",
+      "cellA": "{{leg}} % · gap {{withGap}} %",
+      "cellC": "{{leg}} % · top {{toTop}} %",
+      "cellCTookTop": "{{leg}} % · top repris {{toTop}} %",
+      "breathHint": "Sous les 17 % de la fiche : une respiration plutôt qu'un rejet",
+      "averageA": "gap {{withGap}} %",
+      "averageB": "{{count}} / {{total}} ≥ {{criterion}} %",
+      "averageC": "top {{toTop}} %",
+      "averages": "Moyennes — {{count}} stats DT complétées",
+      "averagesOne": "Moyennes — {{count}} stat DT complétée",
+      "briefToTop": "top {{toTop}} %",
+      "briefTookTop": "top repris {{toTop}} %"
     }
   },
   "calculator": {

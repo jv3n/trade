@@ -558,7 +558,20 @@
       "noPushSub": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
       "noPushSubOne": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
       "noPushDays": "Days without a push",
-      "noPushShare": "{{share}} % of the period's completed stats"
+      "noPushShare": "{{share}} % of the period's completed stats",
+      "completedGus": "Completed GUS stats",
+      "completedDt": "Completed DT stats",
+      "extension": "Average extension (A)",
+      "extensionSub": "from the start · {{withGap}} with the gap",
+      "rejection": "Average rejection (B)",
+      "rejectionSub": "from the top · {{count}} / {{total}} at {{criterion}} % or more",
+      "retest": "Retest (C)",
+      "retestSub": "from the top on average · {{count}} / {{total}} took the top back",
+      "traded": "Traded",
+      "tradedSub": "stats that gave a trade",
+      "averages": "Averages",
+      "byPattern": "by pattern",
+      "byPatternSub": "pick GUS or DT for the push, the LOD, the extension, the rejection…"
     },
     "complete": {
       "title": "Session",
@@ -574,10 +587,6 @@
       "untick": "Completed — click to set it back to complete",
       "missing": "Missing {{fields}}",
       "column": "Completed"
-    },
-    "filters": {
-      "pattern": "Pattern",
-      "allPatterns": "All patterns"
     },
     "status": {
       "ALL": "All",
@@ -614,14 +623,27 @@
       "trade": "Trade",
       "noPush": "No push",
       "noPushHint": "The stock did not push within ~10 minutes of the open",
-      "noPushTag": "no push"
+      "noPushTag": "no push",
+      "dtStart": "Start",
+      "dtTop": "Top",
+      "dtLow": "Rejection low",
+      "dtRetest": "Retest",
+      "dtStartPrice": "Start ($)",
+      "dtTopPrice": "Top ($)",
+      "dtLowPrice": "Rejection low ($)",
+      "dtRetestPrice": "Retest ($)",
+      "brief": "In short",
+      "briefHint": "The figures that sum the stat up in its own pattern",
+      "briefPush": "push {{push}}",
+      "briefLod": "LOD {{lod}}"
     },
     "actions": {
       "edit": "Edit the session",
       "delete": "Delete",
       "toTrade": "Trade",
       "openTrade": "Open the trade",
-      "session": "Session"
+      "session": "Session",
+      "doubleTop": "Double top"
     },
     "confirmPromoteTrade": {
       "title": "Create the {{ticker}} trade?",
@@ -649,7 +671,9 @@
     "premarket": {
       "title": "Premarket —",
       "hint": "copied from the candidate · editable · each field is saved when left",
-      "required": "required"
+      "required": "required",
+      "doubleTopFixed": "A DT stat stays a DT: its prices mean nothing to another pattern",
+      "refileHint": "Saves on change — the linked trade follows. A double top is a stat of its own: « → DT » on the candidate."
     },
     "create": {
       "open": "New stat",
@@ -671,17 +695,54 @@
       "hodBelowLod": "the HOD is below the LOD",
       "aboveHod": "a price sits above the HOD",
       "belowLod": "a price sits below the LOD",
-      "serverRefused": "the server refused the change"
+      "serverRefused": "the server refused the change",
+      "topBelowStart": "the top is under the start",
+      "lowAboveTop": "the rejection low is above the top",
+      "retestBelowLow": "the retest is under the rejection low"
     },
     "confirmCreate": {
       "title": "Create the {{ticker}} stat?",
-      "message": "It joins the table like the morning stats: one per day and ticker. You tick it once the session is complete.",
+      "message": "It joins the sheet like the morning's stats: one per day, ticker and pattern. Tick it once the session is complete.",
       "confirm": "Create the stat"
     },
     "confirmLeave": {
       "title": "Leave without saving?",
       "message": "A change could not be saved — the reason is next to the card's title. If you leave, the stat keeps its last saved values.",
       "confirm": "Leave without saving"
+    },
+    "view": {
+      "label": "Pattern shown",
+      "hint": "the KPIs, the table's columns and the averages follow the pattern — a GUS and a DT are not measured alike",
+      "GUS": "GUS",
+      "DT": "DT",
+      "ALL": "All"
+    },
+    "doubleTop": {
+      "title": "Double top",
+      "hint": "late in the morning, when it forms · each field saves when you leave it · A ≥ 50 %, B 17-20 %",
+      "startHint": "the 9:30 open by default — the low the push starts from",
+      "legA": "A {{leg}} % · {{withGap}} % with the gap",
+      "legB": "B {{leg}} % from the top",
+      "legBBreath": "B {{leg}} % — under 17 %: a breath rather than a rejection",
+      "legC": "C {{leg}} % · {{toTop}} % from the top",
+      "legCTookTop": "C {{leg}} % · top taken back {{toTop}} %",
+      "columnA": "A — top",
+      "columnAHint": "From the start to the top ; below, with the gap (from the previous close)",
+      "columnB": "B — low",
+      "columnBHint": "From the top to the rejection low",
+      "columnC": "C — retest",
+      "columnCHint": "From the low to the retest high ; below, the distance to the top",
+      "cellA": "{{leg}} % · gap {{withGap}} %",
+      "cellC": "{{leg}} % · top {{toTop}} %",
+      "cellCTookTop": "{{leg}} % · top taken back {{toTop}} %",
+      "breathHint": "Under the 17 % of the DT sheet: a breath rather than a rejection",
+      "averageA": "gap {{withGap}} %",
+      "averageB": "{{count}} / {{total}} ≥ {{criterion}} %",
+      "averageC": "top {{toTop}} %",
+      "averages": "Averages — {{count}} completed DT stats",
+      "averagesOne": "Averages — {{count}} completed DT stat",
+      "briefToTop": "top {{toTop}} %",
+      "briefTookTop": "top taken back {{toTop}} %"
     }
   },
   "calculator": {

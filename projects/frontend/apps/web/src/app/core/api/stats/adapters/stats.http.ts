@@ -39,6 +39,10 @@ interface StatEntryWireDto {
   hodPrice: number | null;
   lodPrice: number | null;
   eodPrice: number | null;
+  dtStartPrice: number | null;
+  dtTopPrice: number | null;
+  dtLowPrice: number | null;
+  dtRetestPrice: number | null;
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;

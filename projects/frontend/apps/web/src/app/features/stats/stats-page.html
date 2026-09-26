@@ -12,102 +12,223 @@
     </div>
   </header>
 
+  <!-- The view picks the KPIs, the table's columns and the averages (#437). -->
+  <div class="view-bar">
+    <mat-button-toggle-group
+      [value]="view()"
+      (change)="setView($event.value)"
+      [attr.aria-label]="'stats.view.label' | translate"
+    >
+      @for (v of views; track v) {
+        <mat-button-toggle [value]="v">{{ 'stats.view.' + v | translate }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+    <span class="hint">{{ 'stats.view.hint' | translate }}</span>
+  </div>
+
   <!-- KPIs — computed by the backend over the filtered set, not the current page. -->
   @if (summary(); as kpi) {
-    <section class="kpi-row">
-      <div class="card kpi">
-        <div class="kpi__label">{{ 'stats.kpi.completed' | translate }}</div>
-        <div class="kpi__value">{{ kpi.completed }}</div>
-        <div class="kpi__sub">
-          @if (kpi.toComplete > 0) {
-            <span class="warn">{{
-              'stats.kpi.toComplete'
-                | translate: { count: kpi.toComplete, total: kpi.completed + kpi.toComplete }
-            }}</span>
-          } @else {
-            {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
-          }
-        </div>
-      </div>
-      @if (status() === 'NO_PUSH') {
+    @if (view() === 'DT') {
+      <section class="kpi-row">
         <div class="card kpi">
-          <div class="kpi__label">{{ 'stats.kpi.noPushDays' | translate }}</div>
-          @let rate = noPushRate();
-          <!-- Blank, not « — », until the rate arrives : a dash would read as the answer (#334). -->
-          <div class="kpi__value" [attr.aria-busy]="rate === null || null">
-            @if (rate === null) {
-              &nbsp;
-            } @else if (rate.share === null) {
-              —
-            } @else {
-              {{ rate.count }} / {{ rate.total }}
-            }
-          </div>
+          <div class="kpi__label">{{ 'stats.kpi.completedDt' | translate }}</div>
+          <div class="kpi__value">{{ kpi.completedDoubleTops }}</div>
           <div class="kpi__sub">
-            @if (rate !== null && rate.share !== null) {
-              {{ 'stats.kpi.noPushShare' | translate: { share: (rate.share | number: '1.0-0') } }}
+            @if (kpi.toComplete > 0) {
+              <span class="warn">{{
+                'stats.kpi.toComplete'
+                  | translate: { count: kpi.toComplete, total: kpi.completed + kpi.toComplete }
+              }}</span>
             } @else {
-              &nbsp;
+              {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
             }
           </div>
         </div>
-      } @else {
         <div class="card kpi">
-          <div class="kpi__label">{{ 'stats.kpi.averagePushOpen' | translate }}</div>
+          <div class="kpi__label">{{ 'stats.kpi.extension' | translate }}</div>
           <div class="kpi__value">
             {{
-              kpi.averagePushOpenPercent !== null
-                ? (kpi.averagePushOpenPercent | number: '1.1-1') + ' %'
+              kpi.averageExtensionPercent !== null
+                ? (kpi.averageExtensionPercent | number: '1.1-1') + ' %'
                 : '—'
             }}
           </div>
           <div class="kpi__sub">
-            @if (kpi.noPushCount > 0) {
-              @let pushed = kpi.completed - kpi.noPushCount;
-              {{
-                'stats.kpi.noPushSub'
-                  | plural: pushed
-                  | translate
-                    : {
-                        pushed,
-                        count: kpi.noPushCount,
-                        total: kpi.completed,
-                      }
-              }}
+            {{
+              'stats.kpi.extensionSub'
+                | translate
+                  : {
+                      withGap:
+                        kpi.averageExtensionWithGapPercent !== null
+                          ? (kpi.averageExtensionWithGapPercent | number: '1.1-1') + ' %'
+                          : '—',
+                    }
+            }}
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.rejection' | translate }}</div>
+          <div class="kpi__value">
+            {{
+              kpi.averageRejectionPercent !== null
+                ? (kpi.averageRejectionPercent | number: '1.1-1') + ' %'
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">
+            {{
+              'stats.kpi.rejectionSub'
+                | translate
+                  : {
+                      count: kpi.rejectionAtCriterionCount,
+                      total: kpi.completedDoubleTops,
+                      criterion: rejectionCriterion,
+                    }
+            }}
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.retest' | translate }}</div>
+          <div class="kpi__value">
+            {{
+              kpi.averageRetestToTopPercent !== null
+                ? (kpi.averageRetestToTopPercent | number: '1.1-1') + ' %'
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">
+            {{
+              'stats.kpi.retestSub'
+                | translate: { count: kpi.retestTookTopCount, total: kpi.completedDoubleTops }
+            }}
+          </div>
+        </div>
+      </section>
+    } @else if (view() === 'ALL') {
+      <section class="kpi-row">
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.completed' | translate }}</div>
+          <div class="kpi__value">{{ kpi.completed }}</div>
+          <div class="kpi__sub">
+            @if (kpi.toComplete > 0) {
+              <span class="warn">{{
+                'stats.kpi.toComplete'
+                  | translate: { count: kpi.toComplete, total: kpi.completed + kpi.toComplete }
+              }}</span>
             } @else {
-              {{ 'stats.kpi.vsOpen' | translate }}
+              {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
             }
           </div>
         </div>
-      }
-      <div class="card kpi">
-        <div class="kpi__label">{{ 'stats.kpi.averageLod' | translate }}</div>
-        <div class="kpi__value">
-          {{
-            kpi.averageLodPercent !== null ? (kpi.averageLodPercent | number: '1.1-1') + ' %' : '—'
-          }}
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.traded' | translate }}</div>
+          <div class="kpi__value">{{ kpi.traded }} / {{ kpi.traded + kpi.untraded }}</div>
+          <div class="kpi__sub">{{ 'stats.kpi.tradedSub' | translate }}</div>
         </div>
-        <div class="kpi__sub">{{ 'stats.kpi.vsOpen' | translate }}</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi__label">{{ 'stats.kpi.fade' | translate }}</div>
-        <div class="kpi__value">{{ kpi.fadeCount }} / {{ kpi.completed }}</div>
-        <div class="kpi__sub">
-          {{
-            'stats.kpi.fadeSub'
-              | plural: kpi.completed
-              | translate
-                : {
-                    total: kpi.completed,
-                    average:
-                      kpi.averageEodPercent !== null
-                        ? (kpi.averageEodPercent | number: '1.1-1') + ' %'
-                        : '—',
-                  }
-          }}
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.averages' | translate }}</div>
+          <div class="kpi__value kpi__value--text">{{ 'stats.kpi.byPattern' | translate }}</div>
+          <div class="kpi__sub">{{ 'stats.kpi.byPatternSub' | translate }}</div>
         </div>
-      </div>
-    </section>
+      </section>
+    } @else {
+      <section class="kpi-row">
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.completedGus' | translate }}</div>
+          <div class="kpi__value">{{ kpi.completed }}</div>
+          <div class="kpi__sub">
+            @if (kpi.toComplete > 0) {
+              <span class="warn">{{
+                'stats.kpi.toComplete'
+                  | translate: { count: kpi.toComplete, total: kpi.completed + kpi.toComplete }
+              }}</span>
+            } @else {
+              {{ 'stats.kpi.allDone' | translate: { total: kpi.completed } }}
+            }
+          </div>
+        </div>
+        @if (status() === 'NO_PUSH') {
+          <div class="card kpi">
+            <div class="kpi__label">{{ 'stats.kpi.noPushDays' | translate }}</div>
+            @let rate = noPushRate();
+            <!-- Blank, not « — », until the rate arrives : a dash would read as the answer (#334). -->
+            <div class="kpi__value" [attr.aria-busy]="rate === null || null">
+              @if (rate === null) {
+                &nbsp;
+              } @else if (rate.share === null) {
+                —
+              } @else {
+                {{ rate.count }} / {{ rate.total }}
+              }
+            </div>
+            <div class="kpi__sub">
+              @if (rate !== null && rate.share !== null) {
+                {{ 'stats.kpi.noPushShare' | translate: { share: (rate.share | number: '1.0-0') } }}
+              } @else {
+                &nbsp;
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="card kpi">
+            <div class="kpi__label">{{ 'stats.kpi.averagePushOpen' | translate }}</div>
+            <div class="kpi__value">
+              {{
+                kpi.averagePushOpenPercent !== null
+                  ? (kpi.averagePushOpenPercent | number: '1.1-1') + ' %'
+                  : '—'
+              }}
+            </div>
+            <div class="kpi__sub">
+              @if (kpi.noPushCount > 0) {
+                @let pushed = kpi.completed - kpi.noPushCount;
+                {{
+                  'stats.kpi.noPushSub'
+                    | plural: pushed
+                    | translate
+                      : {
+                          pushed,
+                          count: kpi.noPushCount,
+                          total: kpi.completed,
+                        }
+                }}
+              } @else {
+                {{ 'stats.kpi.vsOpen' | translate }}
+              }
+            </div>
+          </div>
+        }
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.averageLod' | translate }}</div>
+          <div class="kpi__value">
+            {{
+              kpi.averageLodPercent !== null
+                ? (kpi.averageLodPercent | number: '1.1-1') + ' %'
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">{{ 'stats.kpi.vsOpen' | translate }}</div>
+        </div>
+        <div class="card kpi">
+          <div class="kpi__label">{{ 'stats.kpi.fade' | translate }}</div>
+          <div class="kpi__value">{{ kpi.fadeCount }} / {{ kpi.completed }}</div>
+          <div class="kpi__sub">
+            {{
+              'stats.kpi.fadeSub'
+                | plural: kpi.completed
+                | translate
+                  : {
+                      total: kpi.completed,
+                      average:
+                        kpi.averageEodPercent !== null
+                          ? (kpi.averageEodPercent | number: '1.1-1') + ' %'
+                          : '—',
+                    }
+            }}
+          </div>
+        </div>
+      </section>
+    }
   }
 
   <!--
@@ -183,14 +304,25 @@
         @if (!creating()) {
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'stats.fields.pattern' | translate }}</mat-label>
-            <mat-select
-              [value]="premarket().pattern"
-              (selectionChange)="setPremarketPattern($event.value)"
-            >
-              @for (p of patterns; track p) {
-                <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
-              }
-            </mat-select>
+            @if (isDoubleTop()) {
+              <!-- A double top keeps its pattern : its prices mean nothing to another one. -->
+              <input
+                matInput
+                disabled
+                [value]="'patterns.long.DT' | translate"
+                [matTooltip]="'stats.premarket.doubleTopFixed' | translate"
+              />
+            } @else {
+              <mat-select
+                [value]="premarket().pattern"
+                (selectionChange)="setPremarketPattern($event.value)"
+                [matTooltip]="'stats.premarket.refileHint' | translate"
+              >
+                @for (p of refilePatterns; track p) {
+                  <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
+                }
+              </mat-select>
+            }
           </mat-form-field>
         }
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -346,7 +478,7 @@
     <section class="card complete-card">
       <h3>
         <span class="complete-title">
-          {{ 'stats.complete.title' | translate }}
+          {{ (isDoubleTop() ? 'stats.doubleTop.title' : 'stats.complete.title') | translate }}
           @if (completing()) {
             <span
               class="save-state"
@@ -355,134 +487,262 @@
             >
           }
         </span>
-        <span class="hint">{{ 'stats.complete.hint' | translate }}</span>
+        <span class="hint">{{
+          (isDoubleTop() ? 'stats.doubleTop.hint' : 'stats.complete.hint') | translate
+        }}</span>
       </h3>
 
-      <form class="session-form" (submit)="$event.preventDefault()">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'stats.fields.openPrice' | translate }}</mat-label>
-          <input
-            #openPriceField
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [number]="session().openPrice"
-            (numberChange)="setSessionPrice('openPrice', $event)"
-            (blur)="saveSession()"
-            (keydown.enter)="$any($event.target).blur()"
-          />
-          <ui-form-field-reset matIconSuffix [for]="openPriceField" />
-          <mat-hint [class.warn]="atFault('openPrice')">{{
-            atFault('openPrice')
-              ? (sessionIssue()!.reason | translate)
-              : ('stats.complete.percentBase' | translate)
-          }}</mat-hint>
-        </mat-form-field>
-
-        <!-- « No push » sits under the field it greys out (#302). -->
-        <div class="push-field">
+      @if (isDoubleTop()) {
+        @let legs = doubleTopLegs();
+        <form class="session-form session-form--dt" (submit)="$event.preventDefault()">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'stats.fields.pushOpen' | translate }}</mat-label>
+            <mat-label>{{ 'stats.fields.dtStartPrice' | translate }}</mat-label>
             <input
-              #pushOpenField
+              #dtStartField
               matInput
               appNumberMask
               [decimals]="4"
               [min]="0"
-              [number]="session().pushOpenPrice"
-              [disabled]="session().noPush"
-              (numberChange)="setSessionPrice('pushOpenPrice', $event)"
+              [number]="session().dtStartPrice"
+              (numberChange)="setSessionPrice('dtStartPrice', $event)"
               (blur)="saveSession()"
               (keydown.enter)="$any($event.target).blur()"
             />
-            <ui-form-field-reset matIconSuffix [for]="pushOpenField" />
-            <mat-hint [class.warn]="atFault('pushOpenPrice')">{{
-              atFault('pushOpenPrice')
+            <ui-form-field-reset matIconSuffix [for]="dtStartField" />
+            <mat-hint [class.warn]="atFault('dtStartPrice')">{{
+              atFault('dtStartPrice')
                 ? (sessionIssue()!.reason | translate)
-                : sessionPercents().pushOpen !== null
-                  ? (sessionPercents().pushOpen | number: '1.1-1') + ' %'
+                : ('stats.doubleTop.startHint' | translate)
+            }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.dtTopPrice' | translate }}</mat-label>
+            <input
+              #dtTopField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().dtTopPrice"
+              (numberChange)="setSessionPrice('dtTopPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="dtTopField" />
+            <mat-hint
+              [class.warn]="
+                atFault('dtTopPrice') ||
+                (legs.extension !== null && legs.extension < extensionCriterion)
+              "
+              >{{
+                atFault('dtTopPrice')
+                  ? (sessionIssue()!.reason | translate)
+                  : legs.extension !== null
+                    ? ('stats.doubleTop.legA'
+                      | translate
+                        : {
+                            leg: (legs.extension | number: '1.1-1'),
+                            withGap:
+                              legs.extensionWithGap !== null
+                                ? (legs.extensionWithGap | number: '1.1-1')
+                                : '—',
+                          })
+                    : '—'
+              }}</mat-hint
+            >
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.dtLowPrice' | translate }}</mat-label>
+            <input
+              #dtLowField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().dtLowPrice"
+              (numberChange)="setSessionPrice('dtLowPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="dtLowField" />
+            <mat-hint
+              [class.warn]="
+                atFault('dtLowPrice') ||
+                (legs.rejection !== null && -legs.rejection < rejectionCriterion)
+              "
+              >{{
+                atFault('dtLowPrice')
+                  ? (sessionIssue()!.reason | translate)
+                  : legs.rejection !== null
+                    ? ((-legs.rejection < rejectionCriterion
+                        ? 'stats.doubleTop.legBBreath'
+                        : 'stats.doubleTop.legB'
+                      ) | translate: { leg: (legs.rejection | number: '1.1-1') })
+                    : '—'
+              }}</mat-hint
+            >
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.dtRetestPrice' | translate }}</mat-label>
+            <input
+              #dtRetestField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().dtRetestPrice"
+              (numberChange)="setSessionPrice('dtRetestPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="dtRetestField" />
+            <mat-hint [class.warn]="atFault('dtRetestPrice')">{{
+              atFault('dtRetestPrice')
+                ? (sessionIssue()!.reason | translate)
+                : legs.retest !== null && legs.retestToTop !== null
+                  ? ((legs.retestToTop >= 0
+                      ? 'stats.doubleTop.legCTookTop'
+                      : 'stats.doubleTop.legC'
+                    )
+                    | translate
+                      : {
+                          leg: (legs.retest | number: '1.1-1'),
+                          toTop: (legs.retestToTop | number: '1.1-1'),
+                        })
                   : '—'
             }}</mat-hint>
           </mat-form-field>
-          <mat-checkbox
-            [checked]="session().noPush"
-            (change)="toggleNoPush($event.checked)"
-            [matTooltip]="'stats.fields.noPushHint' | translate"
-          >
-            {{ 'stats.fields.noPush' | translate }}
-          </mat-checkbox>
-        </div>
+        </form>
+      } @else {
+        <form class="session-form" (submit)="$event.preventDefault()">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.openPrice' | translate }}</mat-label>
+            <input
+              #openPriceField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().openPrice"
+              (numberChange)="setSessionPrice('openPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="openPriceField" />
+            <mat-hint [class.warn]="atFault('openPrice')">{{
+              atFault('openPrice')
+                ? (sessionIssue()!.reason | translate)
+                : ('stats.complete.percentBase' | translate)
+            }}</mat-hint>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'stats.fields.hod' | translate }}</mat-label>
-          <input
-            #hodField
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [number]="session().hodPrice"
-            (numberChange)="setSessionPrice('hodPrice', $event)"
-            (blur)="saveSession()"
-            (keydown.enter)="$any($event.target).blur()"
-          />
-          <ui-form-field-reset matIconSuffix [for]="hodField" />
-          <mat-hint [class.warn]="atFault('hodPrice')">{{
-            atFault('hodPrice')
-              ? (sessionIssue()!.reason | translate)
-              : sessionPercents().hod !== null
-                ? (sessionPercents().hod | number: '1.1-1') + ' %'
-                : '—'
-          }}</mat-hint>
-        </mat-form-field>
+          <!-- « No push » sits under the field it greys out (#302). -->
+          <div class="push-field">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ 'stats.fields.pushOpen' | translate }}</mat-label>
+              <input
+                #pushOpenField
+                matInput
+                appNumberMask
+                [decimals]="4"
+                [min]="0"
+                [number]="session().pushOpenPrice"
+                [disabled]="session().noPush"
+                (numberChange)="setSessionPrice('pushOpenPrice', $event)"
+                (blur)="saveSession()"
+                (keydown.enter)="$any($event.target).blur()"
+              />
+              <ui-form-field-reset matIconSuffix [for]="pushOpenField" />
+              <mat-hint [class.warn]="atFault('pushOpenPrice')">{{
+                atFault('pushOpenPrice')
+                  ? (sessionIssue()!.reason | translate)
+                  : sessionPercents().pushOpen !== null
+                    ? (sessionPercents().pushOpen | number: '1.1-1') + ' %'
+                    : '—'
+              }}</mat-hint>
+            </mat-form-field>
+            <mat-checkbox
+              [checked]="session().noPush"
+              (change)="toggleNoPush($event.checked)"
+              [matTooltip]="'stats.fields.noPushHint' | translate"
+            >
+              {{ 'stats.fields.noPush' | translate }}
+            </mat-checkbox>
+          </div>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'stats.fields.lod' | translate }}</mat-label>
-          <input
-            #lodField
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [number]="session().lodPrice"
-            (numberChange)="setSessionPrice('lodPrice', $event)"
-            (blur)="saveSession()"
-            (keydown.enter)="$any($event.target).blur()"
-          />
-          <ui-form-field-reset matIconSuffix [for]="lodField" />
-          <mat-hint [class.warn]="atFault('lodPrice')">{{
-            atFault('lodPrice')
-              ? (sessionIssue()!.reason | translate)
-              : sessionPercents().lod !== null
-                ? (sessionPercents().lod | number: '1.1-1') + ' %'
-                : '—'
-          }}</mat-hint>
-        </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.hod' | translate }}</mat-label>
+            <input
+              #hodField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().hodPrice"
+              (numberChange)="setSessionPrice('hodPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="hodField" />
+            <mat-hint [class.warn]="atFault('hodPrice')">{{
+              atFault('hodPrice')
+                ? (sessionIssue()!.reason | translate)
+                : sessionPercents().hod !== null
+                  ? (sessionPercents().hod | number: '1.1-1') + ' %'
+                  : '—'
+            }}</mat-hint>
+          </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'stats.fields.eod' | translate }}</mat-label>
-          <input
-            #eodField
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [number]="session().eodPrice"
-            (numberChange)="setSessionPrice('eodPrice', $event)"
-            (blur)="saveSession()"
-            (keydown.enter)="$any($event.target).blur()"
-          />
-          <ui-form-field-reset matIconSuffix [for]="eodField" />
-          <mat-hint [class.warn]="atFault('eodPrice')">{{
-            atFault('eodPrice')
-              ? (sessionIssue()!.reason | translate)
-              : sessionPercents().eod !== null
-                ? (sessionPercents().eod | number: '1.1-1') + ' %'
-                : '—'
-          }}</mat-hint>
-        </mat-form-field>
-      </form>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.lod' | translate }}</mat-label>
+            <input
+              #lodField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().lodPrice"
+              (numberChange)="setSessionPrice('lodPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="lodField" />
+            <mat-hint [class.warn]="atFault('lodPrice')">{{
+              atFault('lodPrice')
+                ? (sessionIssue()!.reason | translate)
+                : sessionPercents().lod !== null
+                  ? (sessionPercents().lod | number: '1.1-1') + ' %'
+                  : '—'
+            }}</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'stats.fields.eod' | translate }}</mat-label>
+            <input
+              #eodField
+              matInput
+              appNumberMask
+              [decimals]="4"
+              [min]="0"
+              [number]="session().eodPrice"
+              (numberChange)="setSessionPrice('eodPrice', $event)"
+              (blur)="saveSession()"
+              (keydown.enter)="$any($event.target).blur()"
+            />
+            <ui-form-field-reset matIconSuffix [for]="eodField" />
+            <mat-hint [class.warn]="atFault('eodPrice')">{{
+              atFault('eodPrice')
+                ? (sessionIssue()!.reason | translate)
+                : sessionPercents().eod !== null
+                  ? (sessionPercents().eod | number: '1.1-1') + ' %'
+                  : '—'
+            }}</mat-hint>
+          </mat-form-field>
+        </form>
+      }
 
       <div class="flags-row">
         <mat-checkbox [checked]="session().ssr" (change)="toggleFlag('ssr', $event.checked)">
@@ -551,22 +811,12 @@
 
       <app-period-filter labelled [selection]="period()" (selectionChange)="setPeriod($event)" />
 
-      <mat-form-field appearance="outline" class="filter-field" subscriptSizing="dynamic">
-        <mat-label>{{ 'stats.filters.pattern' | translate }}</mat-label>
-        <mat-select [value]="pattern()" (selectionChange)="setPattern($event.value)">
-          <mat-option [value]="null">{{ 'stats.filters.allPatterns' | translate }}</mat-option>
-          @for (p of patterns; track p) {
-            <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
       <mat-button-toggle-group
         class="status-tabs"
         [value]="status()"
         (change)="setStatus($event.value)"
       >
-        @for (tab of statusTabs; track tab) {
+        @for (tab of statusTabs(); track tab) {
           <mat-button-toggle [value]="tab">
             {{ 'stats.status.' + (tab ?? 'ALL') | translate }}
           </mat-button-toggle>
@@ -722,6 +972,227 @@
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="dtStart">
+            <th mat-header-cell *matHeaderCellDef stbCol="numeric" class="group-start">
+              {{ 'stats.fields.dtStart' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" stbCol="numeric" class="group-start">
+              {{ s.dtStartPrice !== null ? (s.dtStartPrice | price: s.previousClose) : '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dtTop">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              [matTooltip]="'stats.doubleTop.columnAHint' | translate"
+            >
+              {{ 'stats.doubleTop.columnA' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" stbCol="numeric">
+              @if (s.dtTopPrice !== null) {
+                {{ s.dtTopPrice | price: s.previousClose }}
+                @if (s.legs.extension !== null) {
+                  <small class="leg-note" [class.warn]="s.legs.extension < extensionCriterion">{{
+                    'stats.doubleTop.cellA'
+                      | translate
+                        : {
+                            leg: (s.legs.extension | number: '1.1-1'),
+                            withGap: (s.legs.extensionWithGap | number: '1.0-1'),
+                          }
+                  }}</small>
+                }
+              } @else {
+                —
+              }
+            </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric">
+              @if (summary(); as kpi) {
+                {{
+                  kpi.averageExtensionPercent !== null
+                    ? (kpi.averageExtensionPercent | number: '1.1-1') + ' %'
+                    : '—'
+                }}
+                <small class="leg-note">{{
+                  'stats.doubleTop.averageA'
+                    | translate
+                      : {
+                          withGap:
+                            kpi.averageExtensionWithGapPercent !== null
+                              ? (kpi.averageExtensionWithGapPercent | number: '1.1-1')
+                              : '—',
+                        }
+                }}</small>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dtLow">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              [matTooltip]="'stats.doubleTop.columnBHint' | translate"
+            >
+              {{ 'stats.doubleTop.columnB' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" stbCol="numeric">
+              @if (s.dtLowPrice !== null) {
+                {{ s.dtLowPrice | price: s.previousClose }}
+                @if (s.legs.rejection !== null) {
+                  <small
+                    class="leg-note"
+                    [class.warn]="-s.legs.rejection < rejectionCriterion"
+                    [matTooltip]="
+                      -s.legs.rejection < rejectionCriterion
+                        ? ('stats.doubleTop.breathHint' | translate)
+                        : ''
+                    "
+                    >{{ s.legs.rejection | number: '1.1-1' }} %</small
+                  >
+                }
+              } @else {
+                —
+              }
+            </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric">
+              @if (summary(); as kpi) {
+                {{
+                  kpi.averageRejectionPercent !== null
+                    ? (kpi.averageRejectionPercent | number: '1.1-1') + ' %'
+                    : '—'
+                }}
+                <small class="leg-note">{{
+                  'stats.doubleTop.averageB'
+                    | translate
+                      : {
+                          count: kpi.rejectionAtCriterionCount,
+                          total: kpi.completedDoubleTops,
+                          criterion: rejectionCriterion,
+                        }
+                }}</small>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dtRetest">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              [matTooltip]="'stats.doubleTop.columnCHint' | translate"
+            >
+              {{ 'stats.doubleTop.columnC' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" stbCol="numeric">
+              @if (s.dtRetestPrice !== null) {
+                {{ s.dtRetestPrice | price: s.previousClose }}
+                @if (s.legs.retest !== null && s.legs.retestToTop !== null) {
+                  <small class="leg-note">{{
+                    (s.legs.retestToTop >= 0
+                      ? 'stats.doubleTop.cellCTookTop'
+                      : 'stats.doubleTop.cellC'
+                    )
+                      | translate
+                        : {
+                            leg: (s.legs.retest | number: '1.1-1'),
+                            toTop: (s.legs.retestToTop | number: '1.1-1'),
+                          }
+                  }}</small>
+                }
+              } @else {
+                —
+              }
+            </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric">
+              @if (summary(); as kpi) {
+                {{
+                  kpi.averageRetestPercent !== null
+                    ? (kpi.averageRetestPercent | number: '1.1-1') + ' %'
+                    : '—'
+                }}
+                <small class="leg-note">{{
+                  'stats.doubleTop.averageC'
+                    | translate
+                      : {
+                          toTop:
+                            kpi.averageRetestToTopPercent !== null
+                              ? (kpi.averageRetestToTopPercent | number: '1.1-1')
+                              : '—',
+                        }
+                }}</small>
+              }
+            </td>
+          </ng-container>
+
+          <!-- The averages row of the DT view : a label over the columns before the legs. -->
+          <ng-container matColumnDef="dtAveragesLabel">
+            <td mat-footer-cell *matFooterCellDef colspan="9" class="averages-label">
+              {{
+                'stats.doubleTop.averages'
+                  | plural: summary()?.completedDoubleTops ?? 0
+                  | translate: { count: summary()?.completedDoubleTops ?? 0 }
+              }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="dtAveragesEnd">
+            <td mat-footer-cell *matFooterCellDef colspan="4"></td>
+          </ng-container>
+
+          <!-- « All » sums each stat up in its own pattern — a push and an extension don't add up. -->
+          <ng-container matColumnDef="brief">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              class="group-start"
+              [matTooltip]="'stats.fields.briefHint' | translate"
+            >
+              {{ 'stats.fields.brief' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" class="group-start brief">
+              @if (s.pattern === 'DT') {
+                <span class="leg">A</span>
+                {{ s.legs.extension !== null ? (s.legs.extension | number: '1.1-1') + ' %' : '—' }}
+                · <span class="leg">B</span>
+                {{ s.legs.rejection !== null ? (s.legs.rejection | number: '1.1-1') + ' %' : '—' }}
+                · <span class="leg">C</span>
+                {{
+                  s.legs.retestToTop === null
+                    ? '—'
+                    : ((s.legs.retestToTop >= 0
+                        ? 'stats.doubleTop.briefTookTop'
+                        : 'stats.doubleTop.briefToTop'
+                      ) | translate: { toTop: (s.legs.retestToTop | number: '1.1-1') })
+                }}
+              } @else {
+                @if (s.noPush) {
+                  <span class="flag-tag">{{ 'stats.fields.noPushTag' | translate }}</span>
+                } @else {
+                  {{
+                    'stats.fields.briefPush'
+                      | translate
+                        : {
+                            push:
+                              s.pushOpenPercent !== null
+                                ? (s.pushOpenPercent | number: '1.1-1') + ' %'
+                                : '—',
+                          }
+                  }}
+                }
+                ·
+                {{
+                  'stats.fields.briefLod'
+                    | translate
+                      : {
+                          lod:
+                            s.lodPercent !== null ? (s.lodPercent | number: '1.1-1') + ' %' : '—',
+                        }
+                }}
+              }
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="flags">
             <th mat-header-cell *matHeaderCellDef class="group-start">
               {{ 'stats.fields.flags' | translate }}
@@ -817,7 +1288,10 @@
               @if (!s.completed) {
                 <button mat-stroked-button stbSize="sm" type="button" (click)="open(s)">
                   <mat-icon>edit</mat-icon>
-                  {{ 'stats.actions.session' | translate }}
+                  {{
+                    (s.pattern === 'DT' ? 'stats.actions.doubleTop' : 'stats.actions.session')
+                      | translate
+                  }}
                 </button>
               } @else {
                 <button
@@ -844,12 +1318,19 @@
             </td>
           </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-header-row *matHeaderRowDef="columns()"></tr>
           <tr
             mat-row
-            *matRowDef="let s; columns: columns"
+            *matRowDef="let s; columns: columns()"
             [class.pending]="!s.completed"
             [class.editing]="s.id === completing()?.id"
+          ></tr>
+          <!-- Always declared : the table renders no row def added after its first pass. Out of the DT
+               view it has no column, so nothing shows. -->
+          <tr
+            mat-footer-row
+            *matFooterRowDef="footerColumns()"
+            [class.averages-row]="view() === 'DT'"
           ></tr>
         </table>
       </div>
