@@ -7,7 +7,6 @@ import { expect, isoToday, test } from '../fixtures';
  *
  * - the form is **completely empty** after each save — nothing survives into the next candidate
  *   (#315) — and the cursor is back on the ticker ;
- * - the pattern is kept between captures ;
  * - the gap and push previews are the figures the row then displays ;
  * - re-typing a ticker already captured that day flags it while typing and blocks the save.
  */
@@ -42,14 +41,6 @@ const NUMBER_FIELDS = [
 test('three candidates in a row, keyboard only, and a duplicate refused', async ({ api, page }) => {
   await page.goto('/candidates');
 
-  // DT for the whole morning : picked once, kept across the three captures.
-  await page.getByRole('combobox', { name: 'Pattern' }).focus();
-  await page.keyboard.press('Space');
-  await expect(page.getByRole('option', { name: 'DT — Double Top' })).toBeVisible();
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('combobox', { name: 'Pattern' })).toContainText('DT');
-
   await page.getByLabel('Ticker').focus();
   for (const capture of CAPTURES) {
     await expect(page.getByLabel('Ticker')).toBeFocused();
@@ -59,7 +50,6 @@ test('three candidates in a row, keyboard only, and a duplicate refused', async 
     await expect(page.getByText(`${capture.ticker} ajouté.`)).toBeVisible();
 
     await expectEmptyForm(page);
-    await expect(page.getByRole('combobox', { name: 'Pattern' })).toContainText('DT');
     const row = dayTable(page).getByRole('row').filter({ hasText: capture.ticker });
     await expect(row.locator('.mat-column-gap')).toHaveText(preview.gap);
     await expect(row.locator('.mat-column-push')).toHaveText(preview.push);
@@ -71,11 +61,8 @@ test('three candidates in a row, keyboard only, and a duplicate refused', async 
   await expect(page.getByRole('button', { name: 'Ajouter' })).toBeDisabled();
   await page.keyboard.press('Enter');
 
-  const day = await api.get<{ ticker: string; pattern: string }[]>(
-    `/api/candidates?date=${isoToday()}`,
-  );
+  const day = await api.get<{ ticker: string }[]>(`/api/candidates?date=${isoToday()}`);
   expect(day.map((c) => c.ticker).sort()).toEqual(['BNRG', 'KTTA', 'MLGO']);
-  expect(day.every((c) => c.pattern === 'DT')).toBe(true);
 });
 
 /** Ticker, then Tab through the figures and the note, at machine speed. */

@@ -382,7 +382,7 @@
               <mat-chip-set>
                 <mat-chip stbChip="ticker" disableRipple>{{ c.ticker }}</mat-chip>
               </mat-chip-set>
-              @if (c.promoted) {
+              @if (c.stats.length > 0) {
                 <span class="tag">{{ 'today.candidates.inStats' | translate }}</span>
               }
               <span class="mini-row__num muted">

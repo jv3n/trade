@@ -16,12 +16,12 @@
 
 .capture {
   display: grid;
-  grid-template-columns: 1.4fr 1fr repeat(6, 1fr);
+  grid-template-columns: 1.4fr repeat(6, 1fr);
   gap: s.$space-md;
   align-items: start;
 
   .field--note {
-    grid-column: span 5;
+    grid-column: span 4;
   }
 
   .mono {
@@ -77,18 +77,6 @@
 
 // ---- List ----
 
-// Pattern = category → indigo tag (colour rule).
-.pattern-tag {
-  display: inline-block;
-  padding: s.$space-hairline s.$space-sm;
-  border-radius: var(--radius-sm);
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  font-size: s.$font-2xs;
-  font-weight: 550;
-  white-space: nowrap;
-}
-
 // Expensive locate → warning (amber).
 td.warn {
   color: var(--color-warning);
@@ -106,7 +94,7 @@ tr.editing td {
   background: var(--color-accent-soft);
 }
 
-// « En stats » — a status, so indigo like the pattern tag (colour rule). A link to the stat (#383).
+// « ✓ GUS » / « ✓ DT » — a status, so indigo (colour rule). Each one links to its stat (#383).
 .stats-tag {
   display: inline-flex;
   align-items: center;

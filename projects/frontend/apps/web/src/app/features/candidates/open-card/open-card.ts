@@ -10,7 +10,6 @@ import {
   StbTooltipModule,
 } from '@portfolioai/ui';
 import { Candidate } from '../../../core/api/candidates/candidates.model';
-import { Pattern } from '../../../core/api/shared/pattern.model';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 import { percentChange } from '../../../shared/percent/percent';
 import { PricePipe } from '../../../shared/price/price.pipe';
@@ -20,7 +19,7 @@ import {
   targetPrice,
 } from '../candidates.math';
 
-/** The push at the open of the completed stats of one pattern — what a row can aim at. */
+/** The push at the open of the completed GUS stats — what a row can aim at. */
 export interface PushReferences {
   median: number | null;
   average: number | null;
@@ -54,7 +53,7 @@ export interface AtOpenChange {
 
 interface OpenRow {
   candidate: Candidate;
-  /** Push of the selected reference for the candidate's pattern — null without a completed stat. */
+  /** Push of the selected reference — null without a completed stat. */
   reference: number | null;
   /** Push aimed at : the candidate's own, else the reference. */
   push: number | null;
@@ -74,7 +73,7 @@ interface OpenRow {
  * - **The open** and **the target push** are typed here and handed to the page on blur
  *   ([atOpenChange]), which saves them on the candidate.
  * - **The target push** starts from the selected reference (median, average, 3rd quartile, max of
- *   the pattern's completed stats) and can be typed per row, because how far a push runs depends on
+ *   the completed GUS stats) and can be typed per row, because how far a push runs depends on
  *   the stock. Switching the reference only moves the rows without a push of their own ; the
  *   selected reference itself is a display setting, not stored.
  */
@@ -96,12 +95,12 @@ interface OpenRow {
   styleUrl: './open-card.scss',
 })
 export class OpenCard {
-  /** The day's candidates, in the order of the page's list. */
+  /** The day's candidates that aim at a push, in the order of the page's list. */
   readonly candidates = input.required<Candidate[]>();
-  /** References per pattern — a pattern missing here is still loading or has no completed stat. */
-  readonly references = input.required<Partial<Record<Pattern, PushReferences>>>();
-  /** No-push rate per pattern, over the same completed stats as [references]. */
-  readonly noPushRates = input<Partial<Record<Pattern, NoPushRate>>>({});
+  /** The GUS references — null while loading. */
+  readonly references = input.required<PushReferences | null>();
+  /** No-push rate over the same completed stats as [references]. */
+  readonly noPushRate = input<NoPushRate | null>(null);
   /** Past days are history : the open and the push are shown, not typed. */
   readonly readOnly = input(false);
 
@@ -114,46 +113,30 @@ export class OpenCard {
 
   readonly kind = signal<ReferenceKind>('average');
 
-  /**
-   * The references shown on the toggles — only when the whole day shares one pattern (the usual GUS
-   * morning) ; a mixed day shows the labels alone and each row applies its own pattern's figure.
-   */
-  readonly dayReferences = computed<PushReferences | null>(() => {
-    const patterns = new Set(this.candidates().map((c) => c.pattern));
-    if (patterns.size !== 1) return null;
-    const [pattern] = patterns;
-    return this.references()[pattern] ?? null;
-  });
-
-  /** The figure a toggle shows — null on a mixed day or without a completed stat. */
+  /** The figure a toggle shows — null without a completed stat. */
   dayReference(kind: ReferenceKind): number | null {
-    return this.dayReferences()?.[kind] ?? null;
+    return this.references()?.[kind] ?? null;
   }
 
   /**
-   * The no-push rate beside the toggles — like their figures, only on a one-pattern day ; hidden
-   * when no day went without a push, as under the stats page's KPI.
+   * The no-push rate beside the toggles — hidden when no day went without a push, as under the
+   * stats page's KPI.
    */
   readonly dayNoPushRate = computed(() => {
-    const patterns = new Set(this.candidates().map((c) => c.pattern));
-    if (patterns.size !== 1) return null;
-    const [pattern] = patterns;
-    const rate = this.noPushRates()[pattern];
+    const rate = this.noPushRate();
     if (!rate || rate.noPush === 0) return null;
     return { ...rate, percent: (rate.noPush / rate.completed) * 100 };
   });
 
-  /** No reference at all for the day's patterns — no completed stat yet. */
-  readonly noReference = computed(() =>
-    this.candidates().every((c) => (this.references()[c.pattern]?.[this.kind()] ?? null) === null),
-  );
+  /** No reference at all — no completed GUS stat yet. */
+  readonly noReference = computed(() => this.dayReference(this.kind()) === null);
 
   readonly rows = computed<OpenRow[]>(() => {
     const kind = this.kind();
     return this.candidates().map((candidate) => {
       // The number on screen is the number used (#311) : the push is shown at one decimal, so the
       // target price is computed from that one — `3.9 × 15.3 %` has to reproduce what is displayed.
-      const reference = roundToOneDecimal(this.references()[candidate.pattern]?.[kind] ?? null);
+      const reference = roundToOneDecimal(this.dayReference(kind));
       const own = roundToOneDecimal(candidate.targetPushPercent);
       // A push of its own that equals the reference has nothing to go back to (#320).
       const custom = own !== null && own !== reference;

@@ -22,7 +22,6 @@ import {
   StbIconModule,
   StbInputModule,
   StbProgressSpinnerModule,
-  StbSelectModule,
   StbTableModule,
   StbToast,
   StbTooltipModule,
@@ -35,15 +34,19 @@ import {
   catchError,
   filter,
   finalize,
-  forkJoin,
   map,
   of,
+  shareReplay,
   switchMap,
   tap,
 } from 'rxjs';
-import { Candidate, CandidateInput } from '../../core/api/candidates/candidates.model';
+import {
+  Candidate,
+  CandidateInput,
+  PROMOTION_PATTERNS,
+} from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
-import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
+import { Pattern } from '../../core/api/shared/pattern.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
@@ -59,7 +62,6 @@ import { AtOpenChange, NoPushRate, OpenCard, PushReferences } from './open-card/
 
 /** The capture form — numbers are `null` until typed. Float and volume in millions. */
 interface CaptureModel {
-  pattern: Pattern;
   ticker: string;
   previousClose: number | null;
   pmOpen: number | null;
@@ -75,13 +77,14 @@ export interface CandidateRow extends Candidate {
   gap: number | null;
   push: number | null;
   locatePct: number | null;
+  /** The patterns it can still be promoted to — one button each, gone once its stat exists. */
+  promotableTo: Pattern[];
 }
 
-type NumericField = Exclude<keyof CaptureModel, 'pattern' | 'ticker' | 'note'>;
+type NumericField = Exclude<keyof CaptureModel, 'ticker' | 'note'>;
 
-function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
+function blankCapture(): CaptureModel {
   return {
-    pattern,
     ticker: '',
     previousClose: null,
     pmOpen: null,
@@ -97,14 +100,17 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
  * Candidates page — the **morning capture** (cf. `mockup/PARCOURS.md › Étape 1` and
  * `mockup/candidat.html`) : a quick-entry form on top, the day's list below, browsed day by day.
  *
- * - **Quick entry** — Enter validates, the form resets (keeping the pattern) and the focus goes back
- *   to the ticker, so a whole radar scan is typed in one go. Gap % and push % preview live.
+ * - **Quick entry** — Enter validates, the form resets and the focus goes back to the ticker, so a
+ *   whole radar scan is typed in one go. Gap % and push % preview live. No pattern : it is chosen
+ *   when promoting.
  * - **Edit** — a row's edit button loads it into the same form, which then saves an update.
  * - **List** — sorted by gap (largest first), with push, locate / price (amber when expensive) and
  *   the note. Delete goes through the confirmation modal.
  * - **At the open** — the « À l'open » card ([OpenCard]) : the open and the target push typed at
- *   9:30 are saved on blur (an edit : no modal) ; the push references come from the stats summary
- *   of each pattern of the day.
+ *   9:30 are saved on blur (an edit : no modal) ; the push references come from the GUS stats, and
+ *   a candidate whose only stat is a DT is left out — the push aimed at is a GUS notion.
+ * - **Promotion** — « → GUS » and « → DT » per row, one stat per pattern ; « Tout passer en GUS »
+ *   promotes the candidates without any stat, never to DT.
  * - **Day navigation** — past days are read-only history : no form, no row actions.
  *
  * One candidate per (day, ticker) : the backend answers 409 on a duplicate, surfaced as a dedicated
@@ -127,7 +133,6 @@ function blankCapture(pattern: Pattern = DEFAULT_PATTERN): CaptureModel {
     StbIconModule,
     StbInputModule,
     StbProgressSpinnerModule,
-    StbSelectModule,
     StbTableModule,
     StbTooltipModule,
     PluralPipe,
@@ -147,11 +152,9 @@ export class CandidatesPage {
   private readonly tickerInput = viewChild<ElementRef<HTMLInputElement>>('tickerInput');
   private readonly document = inject(DOCUMENT);
 
-  readonly patterns = PATTERNS;
   readonly expensiveLocate = EXPENSIVE_LOCATE_PERCENT;
   readonly columns = [
     'ticker',
-    'pattern',
     'previousClose',
     'pmOpen',
     'pmHigh',
@@ -180,11 +183,25 @@ export class CandidatesPage {
   private listing?: Subscription;
   readonly candidates = signal<Candidate[]>([]);
   /**
-   * Push at the open of the completed stats, per pattern — the references of the « À l'open » card.
-   * Fetched once per pattern : they only move when a stat is completed.
+   * Push at the open of the completed GUS stats — the references of the « À l'open » card. Fetched
+   * once : they only move when a stat is completed.
    */
-  readonly pushReferences = signal<Partial<Record<Pattern, PushReferences>>>({});
-  readonly noPushRates = signal<Partial<Record<Pattern, NoPushRate>>>({});
+  readonly pushReferences = signal<PushReferences | null>(null);
+  readonly noPushRate = signal<NoPushRate | null>(null);
+  private readonly gusSummary$ = this.stats.summary({ pattern: 'GUS' }).pipe(
+    map((summary): GusSummary => ({
+      references: {
+        median: summary.medianPushOpenPercent,
+        average: summary.averagePushOpenPercent,
+        thirdQuartile: summary.thirdQuartilePushOpenPercent,
+        max: summary.maxPushOpenPercent,
+      },
+      rate: { noPush: summary.noPushCount, completed: summary.completed },
+    })),
+    // No summary = no reference, so no target price ; the candidates themselves still show.
+    catchError(() => of<GusSummary>({ references: NO_REFERENCES, rate: null })),
+    shareReplay(1),
+  );
   /** The day's candidates with their derived figures, largest gap first (no gap → last). */
   readonly rows = computed<CandidateRow[]>(() =>
     this.candidates()
@@ -193,8 +210,13 @@ export class CandidatesPage {
         gap: gapPercent(c.previousClose, c.pmOpen),
         push: pushPercent(c.pmOpen, c.pmHigh),
         locatePct: locatePercent(c.locatePerShare, c.pmOpen),
+        promotableTo: PROMOTION_PATTERNS.filter((p) => !c.stats.some((s) => s.pattern === p)),
       }))
       .sort((a, b) => (b.gap ?? -Infinity) - (a.gap ?? -Infinity)),
+  );
+  /** The « À l'open » rows : a candidate whose only stat is a DT has no push to aim at. */
+  readonly openRows = computed(() =>
+    this.rows().filter((c) => c.stats.length === 0 || c.stats.some((s) => s.pattern === 'GUS')),
   );
 
   // ---- Capture form ----
@@ -266,10 +288,6 @@ export class CandidatesPage {
 
   // ---- Capture form ----
 
-  setPattern(pattern: Pattern): void {
-    this.model.update((m) => ({ ...m, pattern }));
-  }
-
   setNumber(field: NumericField, value: number | null): void {
     this.model.update((m) => ({ ...m, [field]: value }));
   }
@@ -313,7 +331,6 @@ export class CandidatesPage {
   edit(candidate: Candidate): void {
     this.editingId.set(candidate.id);
     this.model.set({
-      pattern: candidate.pattern,
       ticker: candidate.ticker,
       previousClose: candidate.previousClose,
       pmOpen: candidate.pmOpen,
@@ -366,20 +383,24 @@ export class CandidatesPage {
 
   // ---- Promotion to the stats sheet (#189) ----
 
-  /** Candidates of the day not yet in the stats sheet — what « Promote all » would act on. */
-  readonly promotable = computed(() => this.rows().filter((c) => !c.promoted));
+  /** Candidates of the day without any stat — what « Tout passer en GUS » would act on. */
+  readonly promotable = computed(() => this.rows().filter((c) => c.stats.length === 0));
 
-  /** « → Stat » on a row : copies the candidate onto the sheet, where it starts "to complete". */
-  promote(candidate: Candidate): void {
+  /**
+   * « → GUS » / « → DT » on a row : copies the candidate onto the sheet in that pattern, where it
+   * starts "to complete". A candidate gets one stat per pattern.
+   */
+  promote(candidate: Candidate, pattern: Pattern): void {
     this.confirm
-      .ask('candidates.confirmPromote', { params: { ticker: candidate.ticker } })
+      .ask(`candidates.confirmPromote.${pattern}`, { params: { ticker: candidate.ticker } })
       .pipe(
         filter(Boolean),
-        switchMap(() => this.repo.promote(candidate.id)),
+        switchMap(() => this.repo.promote(candidate.id, pattern)),
         tap(() => {
           this.toasts.success(
             this.translate.instant('candidates.snackbar.promoteSuccess', {
               ticker: candidate.ticker,
+              pattern,
             }),
           );
           this.load();
@@ -397,9 +418,9 @@ export class CandidatesPage {
   }
 
   /**
-   * « Tout passer en stats » : promotes every candidate of the day still missing from the sheet.
-   * The modal names them, and the backend stays idempotent — anything already there comes back in
-   * `skipped` rather than failing the batch.
+   * « Tout passer en GUS » : promotes to GUS every candidate of the day without any stat — never
+   * to DT. The modal names them, and the backend stays idempotent : anything already there comes
+   * back in `skipped` rather than failing the batch, and the toast names it.
    */
   promoteAll(): void {
     const pending = this.promotable();
@@ -415,16 +436,22 @@ export class CandidatesPage {
         filter(Boolean),
         switchMap(() => this.repo.promoteDay(this.day())),
         tap((result) => {
-          this.toasts.success(
-            this.translate.instant(
-              pluralKey(
-                'candidates.snackbar.promoteAllSuccess',
-                result.promoted.length,
-                this.locale,
-              ),
-              { count: result.promoted.length },
-            ),
+          const promoted = this.translate.instant(
+            pluralKey('candidates.snackbar.promoteAllSuccess', result.promoted.length, this.locale),
+            { count: result.promoted.length },
           );
+          const skipped = result.skipped.length
+            ? ' ' +
+              this.translate.instant(
+                pluralKey(
+                  'candidates.snackbar.promoteAllSkipped',
+                  result.skipped.length,
+                  this.locale,
+                ),
+                { tickers: result.skipped.join(', ') },
+              )
+            : '';
+          this.toasts.success(promoted + skipped);
           this.load();
         }),
         catchError(() => {
@@ -471,7 +498,7 @@ export class CandidatesPage {
       .subscribe({
         next: (list) => {
           this.candidates.set(list);
-          this.loadPushReferences(list);
+          this.loadPushReferences();
         },
         error: () => {
           this.candidates.set([]);
@@ -480,42 +507,17 @@ export class CandidatesPage {
       });
   }
 
-  /** Fetches the push references of the patterns of the day not fetched yet. */
-  private loadPushReferences(list: Candidate[]): void {
-    const known = this.pushReferences();
-    const missing = [...new Set(list.map((c) => c.pattern))].filter((p) => !(p in known));
-    if (missing.length === 0) return;
-    forkJoin(
-      missing.map((pattern) =>
-        this.stats.summary({ pattern }).pipe(
-          map((summary): PatternSummary => ({
-            references: {
-              median: summary.medianPushOpenPercent,
-              average: summary.averagePushOpenPercent,
-              thirdQuartile: summary.thirdQuartilePushOpenPercent,
-              max: summary.maxPushOpenPercent,
-            },
-            rate: { noPush: summary.noPushCount, completed: summary.completed },
-          })),
-          // No summary = no reference, so no target price ; the candidates themselves still show.
-          catchError(() => of<PatternSummary>({ references: NO_REFERENCES, rate: null })),
-          map(({ references, rate }) => ({ pattern, references, rate })),
-        ),
-      ),
-    ).subscribe((loaded) => {
-      this.pushReferences.update((current) => ({
-        ...current,
-        ...Object.fromEntries(loaded.map((l) => [l.pattern, l.references])),
-      }));
-      this.noPushRates.update((current) => ({
-        ...current,
-        ...Object.fromEntries(loaded.filter((l) => l.rate).map((l) => [l.pattern, l.rate])),
-      }));
+  /** Reads the GUS references — the request is shared, so it only goes out once. */
+  private loadPushReferences(): void {
+    if (this.pushReferences()) return;
+    this.gusSummary$.subscribe(({ references, rate }) => {
+      this.pushReferences.set(references);
+      this.noPushRate.set(rate);
     });
   }
 
   /**
-   * Clears the form for the next capture — keeps the pattern (a scan is usually one pattern).
+   * Clears the form for the next capture.
    *
    * **Blurs first** (#315) : giving the focus back to the ticker fires `blur` on the field being
    * typed, and the number mask answers a blur by pushing the text it still shows back into the
@@ -529,7 +531,7 @@ export class CandidatesPage {
   private resetForm(): void {
     this.blurActiveField();
     this.editingId.set(null);
-    this.model.set(blankCapture(this.model().pattern));
+    this.model.set(blankCapture());
     this.captureForm().reset();
     this.focusTicker();
   }
@@ -548,7 +550,6 @@ export class CandidatesPage {
     const m = this.model();
     return {
       tradingDate: this.day(),
-      pattern: m.pattern,
       ticker: m.ticker,
       // Guarded non-null by `canSave`.
       previousClose: m.previousClose!,
@@ -572,8 +573,8 @@ export class CandidatesPage {
   }
 }
 
-/** What the open card reads from one pattern's stats summary. */
-interface PatternSummary {
+/** What the open card reads from the GUS stats summary. */
+interface GusSummary {
   references: PushReferences;
   rate: NoPushRate | null;
 }
@@ -588,7 +589,6 @@ const NO_REFERENCES: PushReferences = {
 function toCandidateInput(c: Candidate): CandidateInput {
   return {
     tradingDate: c.tradingDate,
-    pattern: c.pattern,
     ticker: c.ticker,
     previousClose: c.previousClose,
     pmOpen: c.pmOpen,

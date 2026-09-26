@@ -4,7 +4,6 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { startOfDay } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 import { Candidate } from '../../../core/api/candidates/candidates.model';
-import { Pattern } from '../../../core/api/shared/pattern.model';
 import { AtOpenChange, OpenCard, PushReferences } from './open-card';
 
 /**
@@ -13,8 +12,8 @@ import { AtOpenChange, OpenCard, PushReferences } from './open-card';
  * - **Target price** — open × (1 + target push), with the PM high vs the open and the gap in $ ;
  *   nothing without an open or without a reference.
  * - **References** — a row follows the selected one (average by default) ; switching it moves only
- *   the rows without a push of their own. The toggles show the figures only when the day shares one
- *   pattern — and so does the no-push rate of the same stats beside them (#332).
+ *   the rows without a push of their own. The toggles show the figures of the completed GUS stats,
+ *   and the no-push rate of the same stats beside them (#332).
  * - **Saving** — the open and the target push are handed to the page on blur, only when they
  *   changed ; typing the reference back, clearing the push or « back to the reference » hands over
  *   a `null` push (the row follows the reference again).
@@ -36,7 +35,6 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
     id: 'c-mlgo',
     tradingDate: startOfDay(new Date()),
-    pattern: 'GUS',
     ticker: 'MLGO',
     previousClose: 1.95,
     pmOpen: 3.1,
@@ -47,8 +45,7 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     note: 'Résistance 3,75',
     openPrice: 3.25,
     targetPushPercent: null,
-    promoted: false,
-    statId: null,
+    stats: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -57,7 +54,7 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
 
 function setup(
   candidates: Candidate[] = [makeCandidate()],
-  references: Partial<Record<Pattern, PushReferences>> = { GUS: GUS_REFERENCES },
+  references: PushReferences | null = GUS_REFERENCES,
 ): { fixture: ComponentFixture<OpenCard>; card: OpenCard; emitted: AtOpenChange[] } {
   TestBed.configureTestingModule({
     imports: [OpenCard],
@@ -93,8 +90,8 @@ describe('OpenCard', () => {
     expect(card.rows()[0].highVsOpen).toBeNull();
   });
 
-  it('has no reference nor target price while the pattern has no completed stat', () => {
-    const { card } = setup([makeCandidate()], {});
+  it('has no reference nor target price while no GUS stat is completed', () => {
+    const { card } = setup([makeCandidate()], null);
 
     expect(card.noReference()).toBe(true);
     expect(card.rows()[0].push).toBeNull();
@@ -131,47 +128,33 @@ describe('OpenCard', () => {
     expect(card.rows()[0].custom).toBe(false);
   });
 
-  it('shows the figures on the toggles only when the day shares one pattern', () => {
+  it('shows the GUS figures on the toggles', () => {
     expect(setup().card.dayReference('max')).toBe(21.5);
-    TestBed.resetTestingModule();
-
-    const mixed = setup(
-      [makeCandidate(), makeCandidate({ id: 'c-dt', ticker: 'VERB', pattern: 'DT' })],
-      { GUS: GUS_REFERENCES },
-    );
-    expect(mixed.card.dayReference('max')).toBeNull();
   });
 
   // 1 GUS in 11 never pushed : the references leave it out, the card says how often it happens.
   it('states the no-push rate of the same stats beside the references', () => {
     const { fixture, card } = setup();
-    fixture.componentRef.setInput('noPushRates', { GUS: { noPush: 1, completed: 11 } });
+    fixture.componentRef.setInput('noPushRate', { noPush: 1, completed: 11 });
 
     expect(card.dayNoPushRate()).toEqual(
       expect.objectContaining({ noPush: 1, completed: 11, percent: expect.closeTo(9.09, 2) }),
     );
   });
 
-  it('shows no no-push rate on a mixed day, nor when no day went without a push', () => {
-    const mixed = setup([
-      makeCandidate(),
-      makeCandidate({ id: 'c-dt', ticker: 'VERB', pattern: 'DT' }),
-    ]);
-    mixed.fixture.componentRef.setInput('noPushRates', { GUS: { noPush: 1, completed: 11 } });
-    expect(mixed.card.dayNoPushRate()).toBeNull();
-    TestBed.resetTestingModule();
-
-    const empty = setup();
+  it('shows no no-push rate when no day went without a push', () => {
+    const { fixture, card } = setup();
     // Nothing to warn about : the references cover every completed stat (same rule as /stats).
-    empty.fixture.componentRef.setInput('noPushRates', { GUS: { noPush: 0, completed: 11 } });
-    expect(empty.card.dayNoPushRate()).toBeNull();
+    fixture.componentRef.setInput('noPushRate', { noPush: 0, completed: 11 });
+    expect(card.dayNoPushRate()).toBeNull();
   });
 
   // #311 : « 3,9 × 15,3 % » must reproduce the target price printed beside it — the displayed
   // push drives it, not the unrounded average behind the reference.
   it('computes the target price from the push as it is displayed', () => {
     const { card } = setup([makeCandidate({ openPrice: 3.9 })], {
-      GUS: { ...GUS_REFERENCES, average: 15.32 },
+      ...GUS_REFERENCES,
+      average: 15.32,
     });
 
     expect(card.rows()[0].push).toBe(15.3);

@@ -11,9 +11,6 @@ import java.util.UUID
  * per pattern (#434). Gap %, push %, locate / price and the target price are derived client-side
  * from these fields and never stored. Float and volume are in millions of shares, the locate in $ /
  * share.
- *
- * [pattern], [promoted] and [statId] keep the current front working until it reads [stats] (#436),
- * which removes them.
  */
 data class CandidateDto(
   val id: UUID,
@@ -34,16 +31,4 @@ data class CandidateDto(
   val stats: List<CandidateStatDto>,
   val createdAt: Instant,
   val updatedAt: Instant,
-) {
-  /** Always GUS : the pattern the current front captures and reads its references for. */
-  val pattern: Pattern
-    get() = Pattern.GUS
-
-  /** True once it has any stat. */
-  val promoted: Boolean
-    get() = stats.isNotEmpty()
-
-  /** Its GUS stat, or its first one — what the single « in stats » badge links to. */
-  val statId: UUID?
-    get() = (stats.find { it.pattern == Pattern.GUS } ?: stats.firstOrNull())?.statId
-}
+)

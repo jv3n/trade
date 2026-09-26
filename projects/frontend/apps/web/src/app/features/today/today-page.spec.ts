@@ -24,13 +24,13 @@ import { TodayPage, marketStatusAt } from './today-page';
  *
  * - the **market status** comes from the New York clock, not the browser's ;
  * - the **current step** is the first one that isn't behind us, whatever the day looks like ;
- * - a step is done from the **data** : a reconciled morning, every captured candidate in the
- *   stats sheet, no stat left to complete whatever its day, a trade entered (#337) ;
+ * - a step is done from the **data** : a reconciled morning, every captured candidate with at least
+ *   one stat (#436), no stat left to complete whatever its day, a trade entered (#337) ;
  * - step 4 splits the stats to complete between the day's and the **overdue** ones, which carry
  *   their date ;
  * - a quiet day can be **settled** (#407) : « no candidate » empties steps 2 and 4, « no trade »
  *   step 5, and a candidate or a trade entered afterwards beats the mark ;
- * - « promote the remaining » **confirms** before creating stats ;
+ * - « Passer les N en GUS » **confirms** before creating stats ;
  * - a failing call leaves the page standing — it is the home page, it can't go blank.
  *
  * The clock is frozen on a Friday premarket so the states don't depend on when the suite runs.
@@ -185,8 +185,8 @@ describe('TodayPage', () => {
   it('captured candidates, all in the sheet, move the day on — the session is still ahead', () => {
     reconciledToday = true;
     candidates = [
-      makeCandidate({ promoted: true }),
-      makeCandidate({ id: 'c2', ticker: 'BNRG', promoted: true }),
+      makeCandidate({ stats: IN_STATS }),
+      makeCandidate({ id: 'c2', ticker: 'BNRG', stats: IN_STATS }),
     ];
     // Promoted this morning, so their stats wait for the session : step 4 is not behind us.
     statsToComplete = [makeStat(), makeStat({ id: 's2', ticker: 'BNRG' })];
@@ -200,16 +200,26 @@ describe('TodayPage', () => {
   // #337 : capturing one candidate was enough, and the promotion hid under step 4.
   it('the candidates step stays current while a candidate has not reached the sheet', () => {
     reconciledToday = true;
-    candidates = [makeCandidate({ promoted: true }), makeCandidate({ id: 'c2', promoted: false })];
+    candidates = [makeCandidate({ stats: IN_STATS }), makeCandidate({ id: 'c2' })];
     const page = setup();
 
     expect(page.pendingCandidates()).toHaveLength(1);
     expect(page.stepStates().candidates).toBe('current');
   });
 
+  // NXTT of the mockup : captured at 11:20 for a double top, it never needs a GUS stat.
+  it('a candidate with only a DT stat counts as promoted', () => {
+    reconciledToday = true;
+    candidates = [makeCandidate({ ticker: 'NXTT', stats: [{ pattern: 'DT', statId: 's-dt' }] })];
+    const page = setup();
+
+    expect(page.pendingCandidates()).toHaveLength(0);
+    expect(page.stepStates().candidates).toBe('done');
+  });
+
   it('the stats step stays open while a stat still waits for its session block', () => {
     reconciledToday = true;
-    candidates = [makeCandidate({ promoted: true })];
+    candidates = [makeCandidate({ stats: IN_STATS })];
     statsToComplete = [makeStat()];
     const page = setup();
 
@@ -219,7 +229,7 @@ describe('TodayPage', () => {
   // #337 : BNRG (17/09) and SLNH (18/09) sat half-filled with nothing on this page pointing at them.
   it('keeps the stats step open on a stat left from an earlier day, and dates it', () => {
     reconciledToday = true;
-    candidates = [makeCandidate({ promoted: true })];
+    candidates = [makeCandidate({ stats: IN_STATS })];
     statsToComplete = [
       makeStat({ id: 's-sgbx', ticker: 'SGBX' }),
       makeStat({ id: 's-bnrg', ticker: 'BNRG', tradeDate: new Date(2026, 8, 17) }),
@@ -260,7 +270,7 @@ describe('TodayPage', () => {
   // A failed call, or stats slower than the candidates, read as « nothing left » and ticked step 4.
   it('keeps the stats step open while the stats to complete are unknown', () => {
     reconciledToday = true;
-    candidates = [makeCandidate({ promoted: true })];
+    candidates = [makeCandidate({ stats: IN_STATS })];
     TestBed.overrideProvider(StatsRepository, {
       useValue: {
         findAll: () => throwError(() => new Error('500')),
@@ -287,7 +297,7 @@ describe('TodayPage', () => {
   // the moment step 2 promoted the candidates left.
   it('keeps the stats step open while candidates are still to promote', () => {
     reconciledToday = true;
-    candidates = [makeCandidate({ promoted: true }), makeCandidate({ id: 'c2', promoted: false })];
+    candidates = [makeCandidate({ stats: IN_STATS }), makeCandidate({ id: 'c2' })];
     const page = setup();
 
     expect(page.stepStates().stats).not.toBe('done');
@@ -303,7 +313,7 @@ describe('TodayPage', () => {
 
   it('the day is fully walked once a trade is in and nothing is left pending', () => {
     reconciledToday = true;
-    candidates = [makeCandidate({ promoted: true })];
+    candidates = [makeCandidate({ stats: IN_STATS })];
     todayTrades = [makeTrade()];
     vi.setSystemTime(new Date('2026-09-18T21:00:00Z')); // 17:00 NY — the session is over
     const page = setup();
@@ -339,7 +349,7 @@ describe('TodayPage', () => {
   it('a candidate captured after the mark puts step 2 back on its normal state', () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
-    candidates = [makeCandidate({ promoted: false })];
+    candidates = [makeCandidate()];
     const page = setup();
 
     expect(page.noCandidateToday()).toBe(false);
@@ -434,7 +444,7 @@ describe('TodayPage', () => {
   // ---------------------------------------------------------------------------
 
   it('« promote the remaining » confirms before creating the stats', () => {
-    candidates = [makeCandidate({ promoted: false })];
+    candidates = [makeCandidate()];
     const page = setup();
 
     page.promoteRemaining();
@@ -444,7 +454,7 @@ describe('TodayPage', () => {
 
   it('cancelling that confirmation creates nothing', () => {
     confirmed = false;
-    candidates = [makeCandidate({ promoted: false })];
+    candidates = [makeCandidate()];
     const page = setup();
 
     page.promoteRemaining();
@@ -453,7 +463,7 @@ describe('TodayPage', () => {
   });
 
   it('nothing pending, nothing asked — the action is a no-op', () => {
-    candidates = [makeCandidate({ promoted: true })];
+    candidates = [makeCandidate({ stats: IN_STATS })];
     const page = setup();
 
     page.promoteRemaining();
@@ -473,7 +483,7 @@ describe('TodayPage', () => {
         reconcile: () => of(makeReconciliation()),
       } as unknown as AccountRepository,
     });
-    candidates = [makeCandidate({ promoted: true })];
+    candidates = [makeCandidate({ stats: IN_STATS })];
 
     const page = setup();
 
@@ -541,11 +551,13 @@ function makeJournalSummary() {
   };
 }
 
+/** A GUS stat — what « in the stats sheet » means for step 2. */
+const IN_STATS: Candidate['stats'] = [{ pattern: 'GUS', statId: 's-gus' }];
+
 function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
     id: 'c1',
     tradingDate: new Date(),
-    pattern: 'GUS',
     ticker: 'SGBX',
     previousClose: 2.65,
     pmOpen: 4.05,
@@ -556,8 +568,7 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     note: null,
     openPrice: null,
     targetPushPercent: null,
-    promoted: false,
-    statId: null,
+    stats: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

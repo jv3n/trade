@@ -6,6 +6,7 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
 import com.portfolioai.candidates.application.CandidateService
 import com.portfolioai.candidates.application.dto.CandidateRequest
+import com.portfolioai.candidates.application.dto.CandidateStatDto
 import com.portfolioai.candidates.domain.Candidate
 import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
@@ -329,31 +330,32 @@ class CandidateIntegrationTest {
   }
 
   @Test
-  fun `a promoted candidate reports promoted in the listing and in findById`() {
+  fun `a promoted candidate lists its stat in the listing and in findById`() {
     val promotedOne = service.create(request(ticker = "KTTA"))
     val untouched = service.create(request(ticker = "SGBX"))
 
     service.promote(promotedOne.id)
 
-    assertFalse(promotedOne.promoted, "the capture itself is never born promoted")
-    assertTrue(service.findById(promotedOne.id).promoted)
-    assertFalse(service.findById(untouched.id).promoted)
+    assertTrue(promotedOne.stats.isEmpty(), "the capture itself is never born promoted")
+    assertEquals(1, service.findById(promotedOne.id).stats.size)
+    assertTrue(service.findById(untouched.id).stats.isEmpty())
     assertEquals(
-      mapOf("KTTA" to true, "SGBX" to false),
-      service.listForDate(DAY).associate { it.ticker to it.promoted },
+      mapOf("KTTA" to 1, "SGBX" to 0),
+      service.listForDate(DAY).associate { it.ticker to it.stats.size },
     )
   }
 
   @Test
-  fun `a promoted candidate points at the stat it became, for the in-stats link`() {
+  fun `a promoted candidate points at the stat it became, for the in-stats badge`() {
     val candidate = service.create(request(ticker = "KTTA"))
     // Read back through the listing : `create` builds its answer without asking for the stat.
-    assertNull(service.listForDate(DAY).single().statId, "no stat before promotion")
+    assertTrue(service.listForDate(DAY).single().stats.isEmpty(), "no stat before promotion")
 
     val stat = service.promote(candidate.id)
 
-    assertEquals(stat.id, service.findById(candidate.id).statId)
-    assertEquals(stat.id, service.listForDate(DAY).single().statId)
+    val expected = listOf(CandidateStatDto(Pattern.GUS, stat.id))
+    assertEquals(expected, service.findById(candidate.id).stats)
+    assertEquals(expected, service.listForDate(DAY).single().stats)
   }
 
   @Test
@@ -464,7 +466,7 @@ class CandidateIntegrationTest {
     assertEquals(listOf("BNRG", "SGBX"), outcome.promoted, "ticker-ascending, like the listing")
     assertEquals(emptyList<String>(), outcome.skipped)
     assertEquals(2, statRepo.count())
-    assertFalse(service.findById(yesterday.id).promoted, "another day is untouched")
+    assertTrue(service.findById(yesterday.id).stats.isEmpty(), "another day is untouched")
   }
 
   @Test
@@ -615,7 +617,7 @@ class CandidateIntegrationTest {
     val updated =
       service.update(candidate.id, request(ticker = "KTTA", openPrice = BigDecimal("4.20")))
 
-    assertTrue(updated.promoted, "an inline edit still reports the candidate as in stats")
+    assertEquals(1, updated.stats.size, "an inline edit still reports the candidate as in stats")
     assertEquals(0, BigDecimal("4.20").compareTo(statService.findById(stat.id).openPrice))
   }
 

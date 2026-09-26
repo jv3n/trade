@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { format, parseISO } from 'date-fns';
 import { Observable, map } from 'rxjs';
 import { Pattern } from '../../shared/pattern.model';
-import { BulkPromotion, Candidate, CandidateInput } from '../candidates.model';
+import { BulkPromotion, Candidate, CandidateInput, CandidateStat } from '../candidates.model';
 import { CandidatesRepository } from '../candidates.repository';
 
 // ---------------------------------------------------------------------------
@@ -15,7 +15,6 @@ import { CandidatesRepository } from '../candidates.repository';
 interface CandidateWireDto {
   id: string;
   tradingDate: string;
-  pattern: Pattern;
   ticker: string;
   previousClose: number;
   pmOpen: number;
@@ -26,16 +25,12 @@ interface CandidateWireDto {
   note: string | null;
   openPrice: number | null;
   targetPushPercent: number | null;
-  promoted: boolean;
-  statId: string | null;
+  stats: CandidateStat[];
   createdAt: string;
   updatedAt: string;
 }
 
-type CandidateWireRequest = Omit<
-  CandidateWireDto,
-  'id' | 'promoted' | 'statId' | 'createdAt' | 'updatedAt'
->;
+type CandidateWireRequest = Omit<CandidateWireDto, 'id' | 'stats' | 'createdAt' | 'updatedAt'>;
 
 function fromWire(w: CandidateWireDto): Candidate {
   return {
@@ -84,8 +79,11 @@ export class HttpCandidatesRepository extends CandidatesRepository {
   }
 
   // The created stat is in the response body ; the port drops it on purpose (see its KDoc).
-  promote(id: string): Observable<void> {
-    return this.http.post<unknown>(`${this.base}/${id}/promote`, {}).pipe(map(() => undefined));
+  promote(id: string, pattern: Pattern): Observable<void> {
+    const params = new HttpParams().set('pattern', pattern);
+    return this.http
+      .post<unknown>(`${this.base}/${id}/promote`, {}, { params })
+      .pipe(map(() => undefined));
   }
 
   promoteDay(date: Date): Observable<BulkPromotion> {
