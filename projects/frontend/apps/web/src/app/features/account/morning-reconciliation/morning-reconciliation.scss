@@ -13,8 +13,12 @@
   gap: s.$space-md;
   align-items: center;
 
-  @media (max-width: 900px) {
+  @media (max-width: s.$bp-narrow) {
     grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: s.$bp-phone) {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

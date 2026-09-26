@@ -52,7 +52,7 @@
   gap: s.$space-lg;
   align-items: start;
 
-  @media (max-width: 1100px) {
+  @media (max-width: s.$bp-wide) {
     grid-template-columns: 1fr;
   }
 }
@@ -73,7 +73,7 @@
 
 .step {
   display: grid;
-  grid-template-columns: 32px 1fr auto;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
   gap: s.$space-lg;
   align-items: start;
   padding: s.$space-lg 0;
@@ -196,6 +196,16 @@
     gap: s.$space-sm;
     flex-wrap: wrap;
     justify-content: flex-end;
+  }
+
+  // On a phone the actions go under the step's text, which keeps the full width.
+  @media (max-width: s.$bp-phone) {
+    grid-column: 2;
+    padding-top: 0;
+
+    &.actions {
+      justify-content: flex-start;
+    }
   }
 }
 

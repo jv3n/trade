@@ -34,8 +34,20 @@
 
       .day-nav {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 6px;
+      }
+
+      /* Sur téléphone, le widget prend la largeur de l'écran (#456), comme dans l'app. */
+      @media (max-width: 640px) {
+        .calc-widget {
+          /* L'inline de la démo fixe right / bottom : l'override doit passer devant. */
+          left: 8px;
+          right: 8px !important;
+          bottom: 8px !important;
+          width: auto;
+        }
       }
 
       td.note-cell {

@@ -604,6 +604,11 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
   statuses and categories (pattern, "in stats") ; the rest neutral, price moves and tickers
   included.
 - **Icons** : Material Symbols Rounded — the mapping is in `README.md`.
+- **On a phone** (#456) : **viewable, not a mobile app** — enough to open a screen and read it on
+  the move ; the morning capture and the completion panel stay desktop work, and a cross-platform
+  app is the plan later. Under 900 px the menu leaves the page : a top bar carries a menu button,
+  the menu opens as a drawer over the page and closes on a choice. Wide tables scroll inside their
+  card, never the page. Screens : [`mobile.html`](mobile.html).
 - **Alignment** : content aligned left (right after the menu), not centred — easier to read. A
   maximum width is kept so the lines don't stretch.
 - **Period filter** (stats, journal, account) : one shared control — presets from « today » to

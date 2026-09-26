@@ -8,6 +8,18 @@
   </button>
 
   <mat-toolbar color="primary">
+    @if (isNarrow()) {
+      <button
+        mat-icon-button
+        type="button"
+        class="menu-trigger"
+        [attr.aria-label]="'nav.menu' | translate"
+        [attr.aria-expanded]="menuOpen()"
+        (click)="menuOpen.set(!menuOpen())"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+    }
     <div class="toolbar-brand">
       <mat-icon svgIcon="ticker-story" class="brand-mark" aria-hidden="true"></mat-icon>
     </div>
@@ -47,8 +59,8 @@
   </mat-toolbar>
 
   <!--
-    Sidenav — `mode="side"` + `opened` = permanently docked on the left, hosting the primary
-    navigation. The order follows the life cycle of a ticker (#200) : Today, then Candidates →
+    Sidenav — docked on the left, hosting the primary navigation. Under the narrow breakpoint (#456)
+    it becomes a drawer over the page, opened by the toolbar's menu button and closed on a choice. The order follows the life cycle of a ticker (#200) : Today, then Candidates →
     Stats → Journal (each « → Stat » / « → Trade » button leads to the next tab), then Account,
     a ledger consulted now and then rather than a step. Lexicon and Settings sit apart at the
     bottom : a reference and a back-office, not part of the daily flow.
@@ -57,7 +69,13 @@
     so leaving it is one click on the menu the user already knows.
   -->
   <mat-sidenav-container class="ui-shell">
-    <mat-sidenav mode="side" opened class="ui-sidenav" disableClose>
+    <mat-sidenav
+      class="ui-sidenav"
+      [mode]="isNarrow() ? 'over' : 'side'"
+      [opened]="!isNarrow() || menuOpen()"
+      [disableClose]="!isNarrow()"
+      (openedChange)="menuOpen.set($event)"
+    >
       <mat-nav-list class="sidenav-list">
         <a
           mat-list-item

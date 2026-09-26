@@ -22,6 +22,7 @@
     }
   },
   "nav": {
+    "menu": "Menu",
     "today": "Today",
     "account": "Account",
     "journal": "Journal",

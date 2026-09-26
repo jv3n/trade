@@ -66,6 +66,16 @@ $icon-xl: 40px; // Empty states.
 // consumers that need to size below it. Keep in sync with the Material toolbar default.
 $toolbar-height: 64px;
 
+// ============================================================================
+// Breakpoints
+// ============================================================================
+
+// Three widths, and every `@media` of the lib and the app picks one (#456). Max-width queries :
+// the desktop layout is the default, narrower screens override it.
+$bp-wide: 1100px; // four-column rows fold to two
+$bp-narrow: 900px; // the sidenav leaves the page for a drawer, paddings tighten
+$bp-phone: 640px; // one column
+
 // Sidenav width. There is no collapsed rail since #200 — the menu is short enough to stay open.
 $sidenav-width: 240px;
 

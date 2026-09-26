@@ -11,6 +11,12 @@
 
 .ui-shell {
   height: calc(100vh - #{s.$toolbar-height});
+
+  // One stray wide element must never scroll the whole page sideways (#456) : a wide table scrolls
+  // inside its own card, the page does not.
+  .mat-drawer-content {
+    overflow-x: hidden;
+  }
 }
 
 .ui-sidenav {

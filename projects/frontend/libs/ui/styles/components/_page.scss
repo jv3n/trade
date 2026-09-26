@@ -39,7 +39,7 @@
   max-width: none;
 }
 
-@media (max-width: 900px) {
+@media (max-width: s.$bp-narrow) {
   .page {
     padding: s.$space-xl s.$space-lg;
   }
