@@ -19,6 +19,9 @@ import { CALCULATOR_DETACHED, CalculatorWidgets, OpenWidget } from './calculator
 import { copyStyles } from './copy-styles';
 import { documentPip } from './document-pip';
 
+/** One object, not a literal per read : the same reference keeps CdkDrag from being notified. */
+const ORIGIN = { x: 0, y: 0 };
+
 /**
  * One calculator floating over the page (#421) : its card under a header that drags it, detaches
  * it into its own window, or closes it. Escape closes it too.
@@ -53,12 +56,17 @@ export class CalculatorWidget {
 
   readonly widget = input.required<OpenWidget>();
   readonly calculator = computed(() => calculator(this.widget().key));
-  readonly position = computed(() => ({ x: this.widget().x, y: this.widget().y }));
-
   /** Offered only where the browser has the API ; the widget works in the page anyway. */
   readonly canDetach = documentPip() !== null;
   private readonly pipWindow = signal<Window | null>(null);
   readonly detached = computed(() => this.pipWindow() !== null);
+  /**
+   * Pinned to the origin while detached : a click brings the widget forward, and a page position
+   * handed to the drag then would translate the card out of its window, leaving it blank.
+   */
+  readonly position = computed(() =>
+    this.detached() ? ORIGIN : { x: this.widget().x, y: this.widget().y },
+  );
   private destroyed = false;
 
   constructor() {
