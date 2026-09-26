@@ -120,9 +120,36 @@ export class PatternsPage {
     if (this.scrollTo(pending.anchor)) this.pendingScroll = null;
   }
 
+  /**
+   * The panel in view is the feature, the glide is decoration : instant under reduced motion, and
+   * redone instantly when a browser silently drops the smooth scroll (#440).
+   */
   private scrollTo(anchor: string): boolean {
     const panel = this.host.nativeElement.querySelector(`#${anchor}`);
-    panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return panel !== null;
+    if (!panel) return false;
+    const smooth = !prefersReducedMotion();
+    const top = panel.getBoundingClientRect().top;
+    panel.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+    // A smooth scroll that runs has moved the panel within two frames. One already in place moves
+    // neither way : redoing its scroll is a harmless no-op.
+    if (smooth) {
+      afterTwoFrames(() => {
+        if (panel.isConnected && panel.getBoundingClientRect().top === top) {
+          panel.scrollIntoView({ behavior: 'auto', block: 'start' });
+        }
+      });
+    }
+    return true;
   }
+}
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+function afterTwoFrames(callback: () => void): void {
+  requestAnimationFrame(() => requestAnimationFrame(callback));
 }
