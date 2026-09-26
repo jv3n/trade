@@ -24,9 +24,11 @@ Legend : ✅ defined · 🟡 in progress · ❓ to define
 
 ### Pattern
 
-The **candidate**, the **stat** and the **trade** each carry a **pattern** (typed on the candidate,
-inherited by the stat and then by the trade). Only GUS is traded at first, but the list is planned
-now — and it **will grow over time** (DT and others will come) :
+The **stat** and the **trade** carry a **pattern** — **chosen when the candidate is promoted**,
+inherited by the trade. **A candidate has no pattern** (#428) : it is the ticker of the day and its
+premarket, not yet assigned to a setup — the same ticker can give a GUS in the morning and a double
+top late in the morning. The list is planned now and **will grow over time**, but **only GUS and DT
+are worked on for now** (#428) : the other values stay in the enum, with no screen of their own :
 
 | Value | Label | Description |
 |-------|-------|-------------|
@@ -39,13 +41,16 @@ now — and it **will grow over time** (DT and others will come) :
 ### The life cycle : candidate → stat → trade
 
 ```
-Candidate (morning) ──[ action : « → Stat » ]──▶ Stat ──[ action : « → Trade » ]──▶ Trade (journal)
+Candidate (morning) ──[ action : « → GUS » / « → DT » ]──▶ Stat ──[ action : « → Trade » ]──▶ Trade (journal)
 ```
 
 - Each step is a **manual action** : I decide.
 - In practice, **almost every candidate becomes a stat** (hence a "promote them all" button). Only
   some stats become a trade.
 - A candidate that is not promoted stays in the day's history.
+- **One stat per pattern** (#428) : a candidate promoted as a GUS in the morning can form a
+  **double top** late in the morning — two setups on the same ticker and day, so a GUS stat *and* a
+  DT stat, each with its own trade if taken.
 
 ---
 
@@ -86,7 +91,7 @@ type, no confirmation (a clean morning creates no correction) (#407).
 **Each step's title, text and action describe the same job** (#337) :
 
 - **Capture the candidates** (step 2) is done once **every** captured candidate is in the stats
-  sheet — capturing one is not enough. It carries the « Promote the N left » action : promotion is
+  sheet — has at least one stat, whatever its pattern (#428) — capturing one is not enough. It carries the « Promote the N left » action : promotion is
   morning work, before the session the stats are filled during.
 - **Complete the stats** (step 4) counts **every** stat still to complete, the earlier days
   included — a stat left half-filled on a previous day stays visible here until it is ticked. The
@@ -129,7 +134,6 @@ toggle to see the page at two moments of the day, and on a day with nothing to d
 
 | Data | Example | Source / detail |
 |------|---------|-----------------|
-| Pattern | GUS | Defaults to GUS (cf. the enum above) |
 | Ticker | `KTTA` | |
 | Previous close | 2.65 | Daily candle |
 | Premarket open | 4.05 | First premarket price, **4:00 am** |
@@ -153,6 +157,11 @@ toggle to see the page at two moments of the day, and on a day with nothing to d
   capture time.
 - One candidate per day and per ticker : a second entry for the same ticker on the same day is
   refused.
+- **No pattern at capture** (#428) : the pattern is chosen when promoting (step 2).
+- **A ticker spotted for a DT is captured when it forms**, usually late in the morning, with the
+  **same premarket** as the morning ones (previous close, PM open / high, float, volume, locate) — so
+  the DT KPIs can be compared with the GUS ones. A ticker already captured that morning is not
+  captured again : its DT is a second stat (step 2).
 - Previous close, PM open and PM high are mandatory (PM high ≥ PM open) ; float, volume, locate and
   note are optional.
 - Locate / price turns amber above 5 % (heavy borrowing cost).
@@ -160,7 +169,8 @@ toggle to see the page at two moments of the day, and on a day with nothing to d
 
 ### At the open (9:30)
 
-Once the market opens, an **« À l'open »** card lists the day's candidates. For each one I type the
+Once the market opens, an **« À l'open »** card lists the day's candidates — except one whose only
+stat is a DT : the target push is a GUS notion (#428). For each one I type the
 **open** and adjust the **target push**, because the average is only a starting point : how far a
 push runs depends on the stock. It tells me where to look for the push and whether I go for the
 trade.
@@ -168,7 +178,7 @@ trade.
 - **Target price** = open × (1 + target push), computed live, with the gap in $ and where the PM
   high stands vs the open (the PM high is often the resistance).
 - **The target push starts from a reference**, picked above the card among the push at the open of
-  the completed stats of the same pattern : **median, average (default), 3rd quartile, max** — with
+  the completed **GUS** stats : **median, average (default), 3rd quartile, max** — with
   the no-push rate of those stats beside them (#332).
 - A row keeps following the reference until I type another percentage in it ; a typed value stays
   specific to that candidate, and a « back to the reference » button undoes it (so does typing the
@@ -177,7 +187,7 @@ trade.
 - **Stored on the candidate** : the open and the typed target push (none = follows the reference),
   saved when leaving the field — an edit, no modal. The target price is recomputed, never stored.
 - Both are optional : a candidate without an open simply shows no target price, and without any
-  completed stat for the pattern there is no reference.
+  completed GUS stat there is no reference.
 - A target push **above 100 %** is shown in amber — a small cap can push 200 % and more, so it is
   kept, but it is rare enough to deserve a second look. Past **1000 %** it is a typo and is capped.
 - Past days are read-only : the card shows what was typed that morning.
@@ -186,28 +196,37 @@ trade.
 
 **Screen** : [`candidat.html`](candidat.html) — quick entry at the top (live gap / push preview),
 the « À l'open » card (open, target push, target price), the day's candidates sorted by gap,
-a « → Stat » button per row and a "promote them all" button, day-by-day navigation.
+« → GUS » and « → DT » per row, one badge per stat once promoted (SGBX has both, NXTT was captured
+at 11:20 for a DT) — and a "promote them all in GUS" button, day-by-day navigation.
 
 ---
 
 ## Step 2 — Candidate → stat ✅
 
-- **Only through an action button** : « → Stat » on a candidate row, or "promote them all". Nothing
+- **Only through an action button** : « → GUS » / « → DT » on a candidate row, or "promote them
+  all". Nothing
   is created automatically. (A stat can also be typed from scratch on the stats page, for a chart
   found afterwards — see step 5.)
-- The stat **takes every field of the candidate** (pattern, ticker, previous close, PM open / high,
-  gap, PM push, float, volume, locate, note, open) — not the target push, which is a plan.
+- The stat **takes every field of the candidate** (ticker, previous close, PM open / high, gap, PM
+  push, float, volume, locate, note, open) — not the target push, which is a plan — and **the pattern
+  of the button** used.
 - A candidate promoted before 9:30 has no open yet : the open typed on it afterwards also fills its
   stat, as long as the stat's open is still empty.
 - The stat is created "to complete" : the session data arrives at step 5.
 
 **Decided** :
 
-- A candidate already promoted shows "in stats" and cannot be promoted twice (refused). The badge
-  is a link : it opens the stats page on that stat, its session panel already open (#383) — right
-  after promoting is when you want to go and fill it.
-- "Promote them all" only handles the candidates missing from the sheet ; the ones already there are
-  left alone without failing the batch. The action is safe to replay.
+- **The pattern is chosen here** (#428) : « → GUS » in the morning, « → DT » when the double top
+  forms — both a creation, so both confirm. A candidate already promoted shows one badge per stat
+  (« ✓ GUS », « ✓ DT ») and the button of each pattern it has is gone : it cannot be promoted twice
+  in the same pattern (refused). Each badge is a link : it opens the stats page on that stat, its
+  panel already open (#383) — right after promoting is when you want to go and fill it.
+- The two stats of a candidate take the same premarket, then live their own lives.
+- Only GUS and DT have a button : SIR, SIV and discretionary are measured like a GUS, so a stat is
+  re-filed into them on the stats page (step 5).
+- "Promote them all" makes **GUS** stats of the candidates **without any stat** ; the others are
+  left alone without failing the batch — a DT stays a choice made by hand. The action is safe to
+  replay.
 - The stat keeps a link back to its candidate. Deleting that candidate later does not delete the
   stat : the link is simply cleared.
 
@@ -295,7 +314,8 @@ shared between users — a stat always belongs to its user.
 
 **Decided** :
 
-- One stat per day and per ticker (like the candidates) ; a second one is refused.
+- One stat per day, per ticker and **per pattern** (#428) ; a second one in the same pattern is
+  refused.
 - **Each field is saved on its own**, when leaving it — an edit, no modal. A half-filled stat is a
   normal state ; the percentages preview on whatever is filled.
 - **Completed is a check I tick myself** (✓, like reviewing a transaction in Monarch), not the
@@ -321,18 +341,19 @@ shared between users — a stat always belongs to its user.
   **pattern**, previous close, PM open, PM high, float, volume, locate, note, **editable** and saved
   field by field, gap and PM push shown live under their fields. Copied from the candidate at
   promotion, it can be fixed on the stat ; the stat keeps its own copy, the candidate is left alone.
-- **The pattern can be changed after the fact** (#393) — a ticker captured as GUS that turns out to
-  be a double top. It is a select at the head of the card, saved when changed like a flag. The row
+- **The pattern can be changed after the fact** (#393) — a filing mistake, among the patterns
+  measured the same way (GUS, SIR, SIV, discretionary). It is a select at the head of the card,
+  saved when changed like a flag. **Not to or from DT** (#428) : a double top has prices of its own,
+  and a GUS that turns into a double top is a second stat, not a re-filing. The row
   moves under the pattern filter and the KPIs and push references follow ; a trade born from the
-  stat takes the new pattern too. **The candidate keeps its own** : the capture records what was
-  thought in the morning, not a classification to keep current — by the time a stat is re-filed,
-  its « À l'open » row has done its job.
+  stat takes the new pattern too. The candidate is not concerned : it has no pattern.
 - **« New stat »** opens the two cards empty, with the **date** (any day up to today, never a future
   one), the pattern and the ticker on top : going through the charts, I find a ticker that matched
   my pattern a few days ago and never made it to my candidates — leaving it out would bias the stats
   towards the days I happened to be watching.
 - **« Create the stat »** asks for confirmation (it creates something) and needs the date, the
-  ticker and the three premarket prices. Same rules as any stat : one per day and per ticker, ticked
+  ticker and the three premarket prices. Picking DT swaps the session card for the double top one.
+  Same rules as any stat : one per day, per ticker and per pattern, ticked
   by hand once complete, « → Trade » available. It has no source candidate.
 - **No « Save » button** : each card shows where it stands next to its title — « saving… », then
   « ✓ saved at 09:42 » (« yesterday at 22:25 », or the date, when the last save is older — #342), or in red « not saved — … » when the server refuses (PM high under the PM
@@ -381,11 +402,49 @@ that never comes, so they count in the stats and are made easy to single out.
   It only informs : the default target push still follows the selected reference. Hidden when no
   day went without a push, like the stats page's KPI.
 
+### The double top stat (#428)
+
+A DT is measured by what makes it (`docs/pattern/DT.md`), not by the GUS session : the **premarket
+card stays the same**, the « Session » card becomes a **« Double top »** card of four prices, saved
+field by field like the rest.
+
+| Price | Example | Note |
+|-------|---------|------|
+| Start | 1.90 | Where the push starts — **pre-filled with the open**, moved when it starts from a later low |
+| Top | 2.95 | The top of the first push |
+| Rejection low | 2.36 | The low of the rejection |
+| Retest | 2.85 | The high of the retest, back toward the top |
+
+**What the app computes** — the three legs :
+
+- **A, the extension** = start → top (+55.3 %), and **with the gap**, from the previous close
+  (+163 %) — the Trading Desk's stats sheet keeps both, a gap plus a push can make 50 % without an
+  intraday 50 %. Amber under **50 %**.
+- **B, the rejection** = top → rejection low (−20.0 %). Amber under **17 %** : a normal breath, not a
+  rejection.
+- **C, the retest** = rejection low → retest (+20.8 %), and its **distance to the top** (−3.4 %, or
+  « top taken back ») — a DT often grazes its top without taking it.
+
+- The stat is checked with the **four prices** (« n / 4 prices ») ; same check, same rules.
+- The flags stay (SSR, price < $1, entry after 11 am, institutions > 20 %) ; « no push » does not
+  apply.
+- **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
+  table's columns and the averages. **DT** : completed DT stats, average extension (and with the
+  gap), average rejection (and how many reach 17 %), average retest distance to the top (and how
+  many took it back) ; the table shows the premarket, then start, A, B, C. **All** keeps what
+  compares across patterns — premarket, flags, check, trade — plus a one-line summary of each stat
+  in its own pattern, and no averages row : a push at the open and a DT extension don't add up.
+- The « À l'open » push references only use GUS stats, as before (same pattern).
+- **Data model** — to settle in the implementation : the four DT prices likely belong in a table of
+  their own, one row per DT stat, rather than as nullable columns on every stat.
+
 **Screen** : [`stats.html`](stats.html) — a « Premarket » card and a « Session » card for the stat
 being filled (live percentage preview, fields saved one by one with the save state next to each
 title, "n / 5 prices" — 4 with « No push » — and the check button), a « New stat » button, a table
 with the premarket data, the session data (partial for the stats in progress),
-the flags, the check column, and a « → Trade » button or a link to the existing trade.
+the flags, the check column, and a « → Trade » button or a link to the existing trade. The
+« SGBX · GUS / SGBX · DT » switch shows the two panels of one candidate's two stats, the GUS / DT /
+All switch the three views of the page.
 
 ---
 
