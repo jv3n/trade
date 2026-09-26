@@ -196,10 +196,54 @@
         cursor: not-allowed;
       }
 
+      /* Double top : quatre prix, les trois jambes A (extension), B (rejet), C (retest) se calculent entre eux. */
+      .dt-legs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        align-items: start;
+      }
+
+      .dt-legs .pct {
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        min-height: 16px;
+      }
+
+      .dt-legs .pct small {
+        display: block;
+        color: var(--text-muted);
+      }
+
+      /* Sous le critère de la fiche DT (extension < 50 %, rejet < 17 %) : un avertissement, pas un résultat. */
+      .pct.warn,
+      td .below {
+        color: var(--warn);
+      }
+
+      .leg {
+        display: inline-block;
+        min-width: 16px;
+        margin-right: 4px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      /* Le pattern choisit les KPIs, les colonnes et les moyennes : une barre à part, au-dessus des KPIs. */
+      .pattern-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
       @media (max-width: 1100px) {
         .complete,
         .premarket,
-        .identity {
+        .identity,
+        .dt-legs {
           grid-template-columns: repeat(2, 1fr);
         }
       }
@@ -227,14 +271,75 @@
             <p>Les candidats retenus, remplis au fil de la séance et cochés une fois complets.</p>
           </div>
           <div class="actions">
+            <div class="segmented" data-group="panel" title="Maquette : la stat ouverte dans le panneau — le même candidat SGBX a une stat GUS et une stat DT">
+              <button class="active" data-value="gus">SGBX · GUS</button>
+              <button data-value="dt">SGBX · DT</button>
+            </div>
             <button class="btn"><span class="icon">import_export</span> Import / export CSV</button>
             <button class="btn btn-primary" id="new-stat"><span class="icon">add</span> Nouvelle stat</button>
           </div>
         </header>
 
-        <section class="grid grid-4" style="margin-bottom: 16px">
+        <div class="pattern-bar">
+          <div class="segmented" data-group="pattern">
+            <button class="active" data-value="gus">GUS</button>
+            <button data-value="dt">DT</button>
+            <button data-value="all">Tous</button>
+          </div>
+          <span>les KPIs, les colonnes du tableau et les moyennes suivent le pattern — un GUS et un DT ne se mesurent pas pareil</span>
+        </div>
+
+        <!-- DT : les trois jambes du double top, sur les stats DT cochées (docs/pattern/DT.md). -->
+        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden>
+          <div class="card kpi">
+            <div class="label">Stats DT complétées</div>
+            <div class="value">3</div>
+            <div class="sub">septembre · <span style="color: var(--warn)">1 à compléter</span></div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Extension moyenne (A)</div>
+            <div class="value">+59,2 %</div>
+            <div class="sub">depuis le départ · <b>+82,9 %</b> avec le gap</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Rejet moyen (B)</div>
+            <div class="value">−18,9 %</div>
+            <div class="sub">depuis le top · <b>2 / 3</b> à 17 % ou plus</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Retest (C)</div>
+            <div class="value">−1,2 %</div>
+            <div class="sub">du top en moyenne · <b>1 / 3</b> a repris le top</div>
+          </div>
+        </section>
+
+        <!-- Tous : ce qui se compare d'un pattern à l'autre ; les moyennes restent dans chaque pattern. -->
+        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="all" hidden>
           <div class="card kpi">
             <div class="label">Stats complétées</div>
+            <div class="value">14</div>
+            <div class="sub">septembre · 11 GUS · 3 DT · <span style="color: var(--warn)">3 à compléter</span></div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Tradées</div>
+            <div class="value">9 / 14</div>
+            <div class="sub">8 GUS · 1 DT</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Candidats à deux stats</div>
+            <div class="value">1</div>
+            <div class="sub">GUS le matin, DT en fin de matinée (SGBX)</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Moyennes</div>
+            <div class="value" style="font-size: 16px">par pattern</div>
+            <div class="sub">choisis GUS ou DT pour le push, le LOD, l'extension, le rejet…</div>
+          </div>
+        </section>
+
+        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="gus">
+          <div class="card kpi">
+            <div class="label">Stats GUS complétées</div>
             <div class="value">11</div>
             <div class="sub">septembre · <span style="color: var(--warn)">2 à compléter</span></div>
           </div>
@@ -265,16 +370,16 @@
           <h2>
             <span data-mode="edit">Premarket — <span class="ticker">SGBX</span> <span class="muted" style="font-weight: 400">ven. 18/09</span><span class="save-state" id="premarket-state">✓ enregistré hier à 22:25</span></span>
             <span data-mode="new" hidden>Nouvelle stat</span>
-            <span class="hint" data-mode="edit">repris du candidat · modifiable · chaque champ s'enregistre à la sortie</span>
+            <span class="hint" data-mode="edit">repris du candidat · modifiable · chaque champ s'enregistre à la sortie<span data-group="panel" data-value="dt" hidden> · même candidat que la stat GUS, chaque stat garde sa copie</span></span>
             <span class="hint" data-mode="new" hidden>un chart trouvé après coup · n'importe quel jour jusqu'à aujourd'hui</span>
           </h2>
           <div class="identity" data-mode="new" hidden>
             <div class="field"><label>Date</label><input class="input" type="date" id="n-date" max="2026-09-21" value="2026-09-18" /></div>
             <div class="field">
               <label>Pattern</label>
-              <select class="input">
+              <select class="input" id="n-pattern" title="DT remplace la carte Séance par la carte Double top">
                 <option selected>GUS — Gap Up Short</option>
-<option>DT — Double Top</option>
+                <option>DT — Double Top</option>
                 <option>SIR — Short Into Resistance</option>
                 <option>SIV — Short Into VWAP</option>
                 <option>Discrétionnaire</option>
@@ -283,15 +388,23 @@
             <div class="field"><label>Ticker</label><input class="input mono" id="n-ticker" placeholder="KTTA" /></div>
           </div>
           <form class="premarket" onsubmit="return false">
-            <div class="field" data-mode="edit">
-              <label>Pattern</label>
-              <select class="input" id="p-pattern" title="S'enregistre au changement — le trade lié suit">
-                <option selected>GUS — Gap Up Short</option>
-                <option>DT — Double Top</option>
-                <option>SIR — Short Into Resistance</option>
-                <option>SIV — Short Into VWAP</option>
-                <option>Discrétionnaire</option>
-              </select>
+            <div data-mode="edit">
+              <!-- Reclasser reste possible entre les patterns qui se mesurent pareil ; un DT a ses propres prix, c'est une autre stat. -->
+              <div class="field" data-group="panel" data-value="gus">
+                <label>Pattern</label>
+                <select class="input" id="p-pattern" title="S'enregistre au changement — le trade lié suit. Un double top est une autre stat : « → DT » sur le candidat.">
+                  <option selected>GUS — Gap Up Short</option>
+                  <option>SIR — Short Into Resistance</option>
+                  <option>SIV — Short Into VWAP</option>
+                  <option>Discrétionnaire</option>
+                </select>
+              </div>
+              <div class="field" data-group="panel" data-value="dt" hidden>
+                <label>Pattern</label>
+                <span class="input" style="display: flex; align-items: center" title="Une stat DT reste un DT : ses prix n'ont pas de sens pour un autre pattern">
+                  <span class="tag tag-accent">DT</span>&nbsp;Double Top
+                </span>
+              </div>
             </div>
             <div class="field"><label>Clôture veille ($)</label><input class="input" id="p-close" data-pm value="1,12" /><span class="pct muted">&nbsp;</span></div>
             <div class="field"><label>Open PM ($)</label><input class="input" id="p-open" data-pm value="1,85" /><span class="pct muted" id="p-gap">—</span></div>
@@ -308,7 +421,7 @@
               class="btn btn-primary"
               id="new-create"
               data-confirm-title="Créer la stat ?"
-              data-confirm-body="Elle rejoint le tableau comme les stats du matin : une par jour et par ticker. Tu la coches une fois la séance complète."
+              data-confirm-body="Elle rejoint le tableau comme les stats du matin : une par jour, par ticker et par pattern. Tu la coches une fois la séance complète."
               data-confirm-ok="Créer la stat"
             >
               <span class="icon">add</span> Créer la stat
@@ -316,7 +429,47 @@
           </div>
         </section>
 
-        <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="session-panel">
+        <!-- Stat DT : le premarket reste le même, la séance devient les trois jambes du double top (docs/pattern/DT.md). -->
+        <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="dt-panel" data-group="panel" data-value="dt" hidden>
+          <h2>
+            <span>Double top<span class="save-state" id="dt-state">✓ enregistré à 11:48</span></span>
+            <span class="hint">en fin de matinée, quand il se forme · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %</span>
+          </h2>
+          <form class="dt-legs" onsubmit="return false">
+            <div class="field">
+              <label>Départ ($)</label>
+              <input class="input" id="dt-start" data-dt value="1,90" />
+              <span class="pct muted">l'open (9h30) par défaut — le bas d'où part la poussée</span>
+            </div>
+            <div class="field">
+              <label>Top ($)</label>
+              <input class="input" id="dt-top" data-dt value="2,95" />
+              <span class="pct" id="dt-a">—</span>
+            </div>
+            <div class="field">
+              <label>Bas du rejet ($)</label>
+              <input class="input" id="dt-low" data-dt value="2,36" />
+              <span class="pct" id="dt-b">—</span>
+            </div>
+            <div class="field">
+              <label>Retest ($)</label>
+              <input class="input" id="dt-retest" data-dt placeholder="2,85" />
+              <span class="pct muted" id="dt-c">—</span>
+            </div>
+          </form>
+          <div class="flags-row">
+            <label><input type="checkbox" data-flag /> SSR</label>
+            <label><input type="checkbox" data-flag /> Prix &lt; 1 $</label>
+            <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
+            <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
+            <span style="flex: 1"></span>
+            <span class="progress" id="dt-progress">3 / 4 prix saisis</span>
+            <button class="btn">Fermer</button>
+            <button class="btn btn-check" id="dt-check" disabled title="Il manque le retest"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
+          </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="session-panel" data-group="panel" data-value="gus">
           <h2>
             <span>Séance<span class="save-state" id="session-state">✓ enregistré à 09:42</span></span>
             <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open</span>
@@ -364,24 +517,190 @@
               <input class="input" type="date" aria-label="Du" value="2026-09-14" />
               <input class="input" type="date" aria-label="Au" value="2026-09-18" />
             </span>
-            <select class="input">
-              <option>Pattern : tous</option>
-              <option>GUS</option>
-              <option>DT</option>
-              <option>SIR</option>
-              <option>SIV</option>
-              <option>Discrétionnaire</option>
-            </select>
             <div class="segmented" data-group="status">
               <button class="active" data-value="all">Toutes</button>
               <button data-value="all">À compléter</button>
               <button data-value="all">Tradées</button>
               <button data-value="all">Non tradées</button>
-              <button data-value="no-push">Sans push</button>
+              <button data-value="no-push" title="GUS seulement : un double top n'a pas de push à l'open">Sans push</button>
             </div>
           </div>
 
-          <div class="table-wrap">
+          <!-- ============================================================ DT -->
+          <div class="table-wrap" data-group="pattern" data-value="dt" hidden>
+            <table>
+              <thead>
+                <tr class="group-head">
+                  <th colspan="3"></th>
+                  <th colspan="5" class="sep">Premarket — repris du candidat</th>
+                  <th colspan="4" class="sep">Double top — A extension · B rejet · C retest</th>
+                  <th colspan="3" class="sep"></th>
+                </tr>
+                <tr>
+                  <th>Date ↓</th>
+                  <th>Ticker</th>
+                  <th>Pattern</th>
+                  <th class="num sep">Gap</th>
+                  <th class="num">Push PM</th>
+                  <th class="num">Float</th>
+                  <th class="num">Volume</th>
+                  <th class="num">Locate</th>
+                  <th class="num sep">Départ</th>
+                  <th class="num" title="Du départ au top ; en dessous, avec le gap (depuis la clôture de la veille)">A — top</th>
+                  <th class="num" title="Du top au bas du rejet">B — bas</th>
+                  <th class="num" title="Du bas au haut du retest ; en dessous, l'écart au top">C — retest</th>
+                  <th class="sep">Flags</th>
+                  <th title="Complétée">✓</th>
+                  <th>Trade</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="pending">
+                  <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="num sep">1,90</td>
+                  <td class="num">2,95<small class="muted">+55,3 % · gap +163 %</small></td>
+                  <td class="num">2,36<small class="muted">−20,0 %</small></td>
+                  <td class="num muted">—</td>
+                  <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><button class="check" disabled title="Il manque le retest"><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><button class="btn btn-sm"><span class="icon">edit</span> Double top</button></td>
+                </tr>
+                <tr>
+                  <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td><td class="num">0,03</td>
+                  <td class="num sep">2,40</td>
+                  <td class="num">3,80<small class="muted">+58,3 % · gap +72,7 %</small></td>
+                  <td class="num">3,02<small class="muted">−20,5 %</small></td>
+                  <td class="num">3,68<small class="muted">+21,9 % · top −3,2 %</small></td>
+                  <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
+                  <td><a href="journal.html" class="tag tag-gain">+185</a></td>
+                </tr>
+                <tr>
+                  <td>11/09</td><td><span class="ticker">IMNN</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td><td class="num">0,02</td>
+                  <td class="num sep">2,10</td>
+                  <td class="num">3,40<small class="muted">+61,9 % · gap +74,4 %</small></td>
+                  <td class="num">2,70<small class="muted">−20,6 %</small></td>
+                  <td class="num">3,46<small class="muted">+28,1 % · top repris +1,8 %</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
+                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+                <tr>
+                  <td>08/09</td><td><span class="ticker">GRI</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">+21,9 %</td><td class="num">+6,4 %</td><td class="num">2,8 M</td><td class="num">3,3 M</td><td class="num">0,08</td>
+                  <td class="num sep">4,10</td>
+                  <td class="num">6,45<small class="muted">+57,3 % · gap +101,6 %</small></td>
+                  <td class="num">5,45<small class="below" title="Sous les 17 % de la fiche : une respiration plutôt qu'un rejet">−15,5 %</small></td>
+                  <td class="num">6,30<small class="muted">+15,6 % · top −2,3 %</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
+                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="9">Moyennes — 3 stats DT complétées</td>
+                  <td class="num">+59,2 %<small class="muted">gap +82,9 %</small></td>
+                  <td class="num">−18,9 %<small class="muted">2 / 3 ≥ 17 %</small></td>
+                  <td class="num">+21,9 %<small class="muted">top −1,2 %</small></td>
+                  <td colspan="3"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- ============================================================ Tous -->
+          <div class="table-wrap" data-group="pattern" data-value="all" hidden>
+            <table>
+              <thead>
+                <tr class="group-head">
+                  <th colspan="3"></th>
+                  <th colspan="5" class="sep">Premarket — repris du candidat</th>
+                  <th class="sep">Séance</th>
+                  <th colspan="3" class="sep"></th>
+                </tr>
+                <tr>
+                  <th>Date ↓</th>
+                  <th>Ticker</th>
+                  <th>Pattern</th>
+                  <th class="num sep">Gap</th>
+                  <th class="num">Push PM</th>
+                  <th class="num">Float</th>
+                  <th class="num">Volume</th>
+                  <th class="num">Locate</th>
+                  <th class="sep" title="Les chiffres qui résument la stat dans son pattern">En bref</th>
+                  <th class="sep">Flags</th>
+                  <th title="Complétée">✓</th>
+                  <th>Trade</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+58,4 %</td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td><td class="num">0,05</td>
+                  <td class="sep"><span class="tag">pas de push</span> · LOD −22,3 %</td>
+                  <td class="sep"></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td><button class="btn btn-sm"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+                <tr class="pending">
+                  <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="sep"><span class="leg">A</span>+55,3 % · <span class="leg">B</span>−20,0 % · <span class="leg">C</span>—</td>
+                  <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><button class="check" disabled><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><button class="btn btn-sm"><span class="icon">edit</span> Double top</button></td>
+                </tr>
+                <tr class="pending">
+                  <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="sep">push +15,8 % · LOD —</td>
+                  <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><button class="check" disabled><span class="icon">radio_button_unchecked</span></button></td>
+                  <td><button class="btn btn-sm"><span class="icon">edit</span> Séance</button></td>
+                </tr>
+                <tr>
+                  <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="sep">push +10,0 % · LOD −18,8 %</td>
+                  <td class="sep"></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td><a href="trade.html" class="tag tag-gain">+292</a></td>
+                </tr>
+                <tr>
+                  <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">+8,6 %</td><td class="num">+4,2 %</td><td class="num">6,1 M</td><td class="num">1,4 M</td><td class="num">0,03</td>
+                  <td class="sep"><span class="leg">A</span>+58,3 % · <span class="leg">B</span>−20,5 % · <span class="leg">C</span>top −3,2 %</td>
+                  <td class="sep"><span class="tag">après 11h</span></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td><a href="journal.html" class="tag tag-gain">+185</a></td>
+                </tr>
+                <tr>
+                  <td>16/09</td><td><span class="ticker">BNZI</span></td><td><span class="tag tag-accent">GUS</span></td>
+                  <td class="num sep">+61,8 %</td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td><td class="num">0,06</td>
+                  <td class="sep">push +5,2 % · LOD −15,9 %</td>
+                  <td class="sep"><span class="tag tag-warn">SSR</span></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td><a href="journal.html" class="tag tag-gain">+115</a></td>
+                </tr>
+                <tr>
+                  <td>11/09</td><td><span class="ticker">IMNN</span></td><td><span class="tag tag-accent">DT</span></td>
+                  <td class="num sep">+12,3 %</td><td class="num">+3,1 %</td><td class="num">7,5 M</td><td class="num">0,8 M</td><td class="num">0,02</td>
+                  <td class="sep"><span class="leg">A</span>+61,9 % · <span class="leg">B</span>−20,6 % · <span class="leg">C</span>top repris +1,8 %</td>
+                  <td class="sep"></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td><button class="btn btn-sm"><span class="icon">arrow_forward</span> Trade</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="muted" style="font-size: 12px; margin: 10px 0 0">Pas de ligne de moyennes sur « Tous » : un push à l'open et une extension de double top ne s'additionnent pas.</p>
+          </div>
+
+          <!-- ============================================================ GUS -->
+          <div class="table-wrap" data-group="pattern" data-value="gus">
             <table>
               <thead>
                 <tr class="group-head">
@@ -582,7 +901,7 @@
         </section>
 
         <p class="mockup-note">
-          Maquette statique — une stat naît d'un candidat (bouton « → Stat ») et reprend ses données premarket et l'open de 9h30. La
+          Maquette statique — une stat naît d’un candidat (bouton « → GUS » ou « → DT ») et reprend ses données premarket et l'open de 9h30. La
           séance se remplit au fil de la journée, champ par champ : Open, Push à l'open, HOD, LOD, EOD (en $) et les flags (SSR, prix
           &lt; 1 $, entrée après 11h, institutions &gt; 20 %), chacun enregistré à la sortie du champ, sans modale ; l'app calcule chaque % vs l'open. Une stat
           reste « à compléter » jusqu'à ce qu'on la coche (✓, comme une transaction revue dans Monarch) : la coche n'est possible
@@ -602,6 +921,18 @@
           jours-là comptent dans les stats — c'est un setup à part, à exécuter dès l'open : le push moyen ne compte que les stats qui
           ont poussé, et le taux de « sans push » s'affiche à côté ; le filtre « Sans push » les isole pour comparer leur premarket.
           « → Trade » crée le trade au journal (action manuelle). Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
+        </p>
+        <p class="mockup-note">
+          Double top (#428) — une stat DT garde le même premarket (repris du candidat, pour que ses KPIs se comparent à ceux du GUS),
+          mais sa séance est le double top lui-même : quatre prix, le départ (l'open par défaut, ou le bas d'où part la poussée), le
+          top, le bas du rejet et le haut du retest. L'app en tire les trois jambes : <b>A</b> l'extension (départ → top, ≥ 50 %, et
+          « avec le gap » depuis la clôture de la veille, comme la feuille de stats du Trading Desk), <b>B</b> le rejet (top → bas,
+          17-20 %, en ambre sous 17 % : une respiration), <b>C</b> le retest (bas → retest, et son écart au top — souvent frôlé sans
+          être repris). Elle se coche avec les quatre prix. Un candidat peut avoir <b>une stat par pattern</b> : SGBX, GUS le matin,
+          a aussi sa stat DT en fin de matinée — le sélecteur « SGBX · GUS / SGBX · DT » en haut montre les deux panneaux. Le pattern
+          d'une stat se change encore entre GUS, SIR, SIV et discrétionnaire (même séance) ; un DT a ses propres prix, c'est une autre
+          stat. En haut, GUS / DT / Tous choisit les KPIs, les colonnes et les moyennes ; « Tous » ne garde que ce qui se compare
+          (premarket, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
         </p>
       </main>
     </div>
@@ -866,6 +1197,67 @@
 
         snapshot();
         preview();
+      })();
+    </script>
+    <script>
+      // Double top : A = départ → top, B = top → bas du rejet, C = bas → retest (et son écart au top). Sous le critère de la
+      // fiche (A < 50 %, B < 17 %), le % passe en ambre ; la coche attend les quatre prix.
+      (function () {
+        const $ = (id) => document.getElementById(id);
+        const parse = (v) => parseFloat(String(v).replace(',', '.'));
+        const fmt = (pct) => (pct >= 0 ? '+' : '') + pct.toFixed(1).replace('.', ',') + ' %';
+        const move = (from, to) => ((to - from) / from) * 100;
+        const prevClose = () => parse($('p-close').value);
+        const prices = [$('dt-start'), $('dt-top'), $('dt-low'), $('dt-retest')];
+        const names = ['le départ', 'le top', 'le bas du rejet', 'le retest'];
+        const check = $('dt-check');
+        let done = false;
+
+        function leg(el, text, below, note) {
+          el.innerHTML = text + (note ? '<small>' + note + '</small>' : '');
+          el.className = text === '—' ? 'pct muted' : below ? 'pct warn' : 'pct';
+        }
+
+        function refresh() {
+          const [start, top, low, retest] = prices.map((p) => parse(p.value));
+          if (start > 0 && top > 0) {
+            const a = move(start, top);
+            const withGap = prevClose() > 0 ? fmt(move(prevClose(), top)) + ' avec le gap' : '';
+            leg($('dt-a'), 'A ' + fmt(a), a < 50, a < 50 ? 'sous les 50 % de la fiche · ' + withGap : withGap);
+          } else leg($('dt-a'), '—');
+          if (top > 0 && low > 0) {
+            const b = move(top, low);
+            leg($('dt-b'), 'B ' + fmt(b), -b < 17, -b < 17 ? 'sous 17 % : une respiration plutôt qu\'un rejet' : 'depuis le top');
+          } else leg($('dt-b'), '—');
+          if (low > 0 && retest > 0) {
+            const toTop = move(top, retest);
+            leg($('dt-c'), 'C ' + fmt(move(low, retest)), false, toTop >= 0 ? 'top repris ' + fmt(toTop) : fmt(toTop) + ' du top');
+          } else leg($('dt-c'), '—');
+
+          const missing = names.filter((_, i) => !(parse(prices[i].value) > 0));
+          $('dt-progress').textContent = 4 - missing.length + ' / 4 prix saisis';
+          check.disabled = missing.length > 0 && !done;
+          check.title = missing.length ? 'Il manque ' + missing.join(', ') : '';
+        }
+
+        prices.forEach((p) => {
+          p.addEventListener('input', refresh);
+          p.addEventListener('change', () => window.saveCue('dt-state'));
+        });
+        document.querySelectorAll('#dt-panel [data-flag]').forEach((f) => f.addEventListener('change', () => window.saveCue('dt-state')));
+        check.addEventListener('click', () => {
+          done = !done;
+          check.classList.toggle('done', done);
+          check.querySelector('[data-label]').textContent = done ? 'Complétée' : 'Marquer complétée';
+          refresh();
+        });
+        refresh();
+
+        // « Nouvelle stat » en DT : la carte Double top remplace la carte Séance.
+        $('n-pattern').addEventListener('change', (e) => {
+          const dt = e.target.value.startsWith('DT');
+          document.querySelector(`.segmented[data-group=panel] button[data-value=${dt ? 'dt' : 'gus'}]`).click();
+        });
       })();
     </script>
   </body>
