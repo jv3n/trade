@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { StbToast } from '@portfolioai/ui';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -119,6 +119,9 @@ describe('TodayPage', () => {
   });
 
   function setup(): TodayPage {
+    TestBed.inject(TranslateService).setTranslation('en', {
+      patterns: { short: { GUS: 'GUS', DT: 'DT' } },
+    });
     const fixture = TestBed.createComponent(TodayPage);
     fixture.detectChanges();
     return fixture.componentInstance;
@@ -238,7 +241,7 @@ describe('TodayPage', () => {
 
     expect(page.statsToCompleteToday().map((s) => s.ticker)).toEqual(['SGBX']);
     expect(page.overdueStats().map((s) => s.ticker)).toEqual(['BNRG']);
-    expect(page.overdueLine()).toEqual({ tickers: 'BNRG (09/17)', more: 0 }); // en locale
+    expect(page.overdueLine()).toEqual({ tickers: 'BNRG GUS (09/17)', more: 0 }); // en locale
     expect(page.stepStates().stats).not.toBe('done');
   });
 
@@ -281,6 +284,33 @@ describe('TodayPage', () => {
 
     expect(page.statsToCompleteTotal()).toBeNull();
     expect(page.stepStates().stats).not.toBe('done');
+  });
+
+  // #451 : on the rc3 recette, « FRESH1, FRESH2, FRESH1 » read as a duplicate row — it was
+  // FRESH1's GUS and its DT, split apart by the date order of the page.
+  it('names each stat of the day with its pattern, the stats of one ticker side by side', () => {
+    statsToComplete = [
+      makeStat({ id: 's1', ticker: 'FRESH1', pattern: 'DT' }),
+      makeStat({ id: 's2', ticker: 'FRESH2', pattern: 'GUS' }),
+      makeStat({ id: 's3', ticker: 'FRESH1', pattern: 'GUS' }),
+    ];
+    const page = setup();
+
+    expect(page.statsOf(page.statsToCompleteToday())).toBe('FRESH1 GUS, FRESH1 DT, FRESH2 GUS');
+  });
+
+  it('keeps the overdue stats newest first, the stats of one ticker side by side within a day', () => {
+    statsToComplete = [
+      makeStat({ id: 's1', ticker: 'VERB', pattern: 'DT', tradeDate: new Date(2026, 8, 17) }),
+      makeStat({ id: 's2', ticker: 'BNRG', pattern: 'GUS', tradeDate: new Date(2026, 8, 17) }),
+      makeStat({ id: 's3', ticker: 'VERB', pattern: 'GUS', tradeDate: new Date(2026, 8, 17) }),
+      makeStat({ id: 's4', ticker: 'CENN', pattern: 'GUS', tradeDate: new Date(2026, 7, 19) }),
+    ];
+    const page = setup();
+
+    expect(page.overdueLine().tickers).toBe(
+      'BNRG GUS (09/17), VERB GUS (09/17), VERB DT (09/17), CENN GUS (08/19)',
+    );
   });
 
   it('names five overdue stats and counts the rest', () => {
