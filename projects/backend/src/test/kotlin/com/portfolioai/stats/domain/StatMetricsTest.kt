@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test
  *   which is the favourable side for a short ;
  * - the null-safety contract — a missing price or a non-positive base yields null rather than a
  *   division blow-up, so a stat still "to complete" simply contributes nothing to an average ;
+ * - the three legs of a double top (#435) — a plain move between two of its prices ;
  * - the quantiles behind the « À l'open » references (#261) — interpolated like the spreadsheet
  *   `PERCENTILE.INC`, so a figure can be checked by hand.
  *
@@ -101,6 +102,42 @@ class StatMetricsTest {
     assertNull(StatMetrics.percentVsOpen(open = price("-1"), level = price("4.6200")))
     assertNull(StatMetrics.gapPercent(previousClose = BigDecimal.ZERO, pmOpen = price("4.05")))
     assertNull(StatMetrics.pmPushPercent(pmOpen = BigDecimal.ZERO, pmHigh = price("4.65")))
+  }
+
+  // ---------------------------------------------------------------------------
+  // Double top legs (#435) — the SGBX example of mockup/PARCOURS.md
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `leg A, the extension, is the rise from the start to the top`() {
+    // 1.90 -> 2.95 = +55.263... -> 55.26
+    val extension = StatMetrics.percentChange(from = price("1.90"), to = price("2.95"))
+
+    assertEquals(0, extension!!.compareTo(BigDecimal("55.26")), "got ${extension.toPlainString()}")
+  }
+
+  @Test
+  fun `leg B, the rejection, is a negative move from the top to the rejection low`() {
+    // 2.95 -> 2.36 = -20.00 : past the 17 % of the DT sheet
+    val rejection = StatMetrics.percentChange(from = price("2.95"), to = price("2.36"))
+
+    assertEquals(0, rejection!!.compareTo(BigDecimal("-20.00")), "got ${rejection.toPlainString()}")
+  }
+
+  @Test
+  fun `leg C, the retest, is the rise from the rejection low, and its distance to the top`() {
+    // 2.36 -> 2.85 = +20.762... -> 20.76 ; 2.85 against the 2.95 top = -3.389... -> -3.39
+    val retest = StatMetrics.percentChange(from = price("2.36"), to = price("2.85"))
+    val toTop = StatMetrics.percentChange(from = price("2.95"), to = price("2.85"))
+
+    assertEquals(0, retest!!.compareTo(BigDecimal("20.76")), "got ${retest.toPlainString()}")
+    assertEquals(0, toTop!!.compareTo(BigDecimal("-3.39")), "got ${toTop.toPlainString()}")
+  }
+
+  @Test
+  fun `a leg with a missing price is null, so a double top in progress weighs nothing`() {
+    assertNull(StatMetrics.percentChange(from = price("2.95"), to = null))
+    assertNull(StatMetrics.percentChange(from = null, to = price("2.36")))
   }
 
   // ---------------------------------------------------------------------------

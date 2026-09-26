@@ -26,10 +26,12 @@ import org.hibernate.type.SqlTypes
  * - **Premarket** ([previousClose] … [note]) — copied from the source candidate when the stat is
  *   created, and kept as-is afterwards. [candidateId] keeps the trace (deleting the candidate later
  *   nulls the link without touching the stat).
- * - **Session** ([openPrice] … [eodPrice]) — typed field by field during the day, any subset may be
- *   in. [completedAt] is the status : set when the owner ticks the stat, which needs the whole
- *   session block ([hasFullSession]) — the `ck_stat_entry_completed_whole` CHECK backs it up. A
- *   [noPush] stat has no push price, and is whole with the four others (#302).
+ * - **Session** — typed field by field during the day, any subset may be in. A GUS (and the
+ *   patterns measured like it) fills [openPrice] … [eodPrice] ; a DT fills its four prices instead,
+ *   [dtStartPrice] … [dtRetestPrice] (#428). [completedAt] is the status : set when the owner ticks
+ *   the stat, which needs the whole session of its pattern ([hasFullSession]) — the
+ *   `ck_stat_entry_completed_whole` CHECK backs it up. A [noPush] stat has no push price, and is
+ *   whole with the four others (#302).
  *
  * No percentage is stored : gap, premarket push, push at open, HOD / LOD / EOD are all derived from
  * the prices ([StatMetrics] server-side for the KPIs, `stats.math` on the front).
@@ -70,6 +72,14 @@ class StatEntry(
   @Column(name = "lod_price", precision = 18, scale = 4) var lodPrice: BigDecimal? = null,
   @Column(name = "eod_price", precision = 18, scale = 4) var eodPrice: BigDecimal? = null,
 
+  // ---- Double top (DT only — `ck_stat_entry_dt_prices_on_dt`) ----
+  /** Where the push starts — the open by default, a later low when the push starts from there. */
+  @Column(name = "dt_start_price", precision = 18, scale = 4) var dtStartPrice: BigDecimal? = null,
+  @Column(name = "dt_top_price", precision = 18, scale = 4) var dtTopPrice: BigDecimal? = null,
+  @Column(name = "dt_low_price", precision = 18, scale = 4) var dtLowPrice: BigDecimal? = null,
+  @Column(name = "dt_retest_price", precision = 18, scale = 4)
+  var dtRetestPrice: BigDecimal? = null,
+
   // ---- Flags ----
   @Column(nullable = false) var ssr: Boolean = false,
   @Column(name = "under_1_dollar", nullable = false) var under1Dollar: Boolean = false,
@@ -92,20 +102,35 @@ class StatEntry(
   val isCompleted: Boolean
     get() = completedAt != null
 
-  /** The session prices are in — five, or four on a [noPush] day. The precondition to tick. */
+  val isDoubleTop: Boolean
+    get() = pattern == Pattern.DT
+
+  /**
+   * The session prices of its pattern are in — five for a GUS, or four on a [noPush] day ; the four
+   * double top prices for a DT. The precondition to tick.
+   */
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
 
   /** Labels of the session prices still missing, in the sheet's order. */
   val missingSessionPrices: List<String>
     get() =
-      listOfNotNull(
-          "Open" to openPrice,
-          ("Push at open" to pushOpenPrice).takeUnless { noPush },
-          "HOD" to hodPrice,
-          "LOD" to lodPrice,
-          "EOD" to eodPrice,
-        )
+      (if (isDoubleTop) {
+          listOf(
+            "Start" to dtStartPrice,
+            "Top" to dtTopPrice,
+            "Rejection low" to dtLowPrice,
+            "Retest" to dtRetestPrice,
+          )
+        } else {
+          listOfNotNull(
+            "Open" to openPrice,
+            ("Push at open" to pushOpenPrice).takeUnless { noPush },
+            "HOD" to hodPrice,
+            "LOD" to lodPrice,
+            "EOD" to eodPrice,
+          )
+        })
         .filter { (_, price) -> price == null }
         .map { (label, _) -> label }
 }

@@ -79,34 +79,53 @@ class StatEntryService(
   /**
    * KPIs over the **whole filtered set**, not the current page : how many stats are completed / to
    * complete, the average push at open, LOD and EOD, the median / 3rd quartile / max push at open,
-   * and how many faded at the close. Percentages are recomputed from the prices ([StatMetrics]) —
-   * none of them is stored.
+   * and how many faded at the close — on the GUS-measured stats — plus the three legs of the
+   * completed double tops. Percentages are recomputed from the prices ([StatMetrics]) — none of
+   * them is stored.
    */
   @Transactional(readOnly = true)
   fun summarise(filter: StatEntryFilter): StatSummaryDto {
     val userId = authService.getCurrentUser().id
     val rows = repo.findAll(StatEntrySpecifications.matching(userId, filter))
     val completed = rows.filter { it.isCompleted }
+    val sessions = completed.filterNot { it.isDoubleTop }
+    val doubleTops = completed.filter { it.isDoubleTop }
     // The journal's "8 of 10 stats traded" KPI (#195) : one query for the whole filtered set,
     // the same read the listing already uses row by row.
     val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
-    val pushes = completed.mapNotNull { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) }
+    val pushes = sessions.mapNotNull { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) }
     return StatSummaryDto(
       completed = completed.size,
       toComplete = rows.size - completed.size,
       averagePushOpenPercent =
-        completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) },
+        sessions.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) },
       medianPushOpenPercent = StatMetrics.quantile(pushes, MEDIAN),
       thirdQuartilePushOpenPercent = StatMetrics.quantile(pushes, THIRD_QUARTILE),
       maxPushOpenPercent = pushes.maxOrNull(),
-      noPushCount = completed.count { it.noPush },
+      noPushCount = sessions.count { it.noPush },
       averageLodPercent =
-        completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
-      fadeCount = completed.count { it.eodPrice!! < it.openPrice!! },
+        sessions.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
+      fadeCount = sessions.count { it.eodPrice!! < it.openPrice!! },
+      averageEodPercent =
+        sessions.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
+      completedDoubleTops = doubleTops.size,
+      averageExtensionPercent =
+        doubleTops.averageOf { StatMetrics.percentChange(it.dtStartPrice, it.dtTopPrice) },
+      averageExtensionWithGapPercent =
+        doubleTops.averageOf { StatMetrics.percentChange(it.previousClose, it.dtTopPrice) },
+      averageRejectionPercent =
+        doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtLowPrice) },
+      rejectionAtCriterionCount =
+        doubleTops.count {
+          StatMetrics.percentChange(it.dtTopPrice, it.dtLowPrice)!! <= -DT_REJECTION_CRITERION
+        },
+      averageRetestPercent =
+        doubleTops.averageOf { StatMetrics.percentChange(it.dtLowPrice, it.dtRetestPrice) },
+      averageRetestToTopPercent =
+        doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtRetestPrice) },
+      retestTookTopCount = doubleTops.count { it.dtRetestPrice!! >= it.dtTopPrice!! },
       traded = traded,
       untraded = rows.size - traded,
-      averageEodPercent =
-        completed.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
     )
   }
 
@@ -145,15 +164,20 @@ class StatEntryService(
 
   /**
    * Gives the stats born from [candidateId] the [openPrice] typed on the candidate at 9:30 — for a
-   * candidate promoted before the open. A stat that already has an open keeps it : the one typed on
-   * the stat wins. No stat for that candidate → nothing to do.
+   * candidate promoted before the open. A double top takes it as its start. A stat that already has
+   * one keeps it : the one typed on the stat wins. No stat for that candidate → nothing to do.
    */
   @Transactional
   fun fillMissingOpen(candidateId: UUID, openPrice: BigDecimal) {
     val userId = authService.getCurrentUser().id
     for (stat in repo.findByUserIdAndCandidateIdIn(userId, listOf(candidateId))) {
-      if (stat.openPrice != null) continue
-      stat.openPrice = openPrice
+      if (stat.isDoubleTop) {
+        if (stat.dtStartPrice != null) continue
+        stat.dtStartPrice = openPrice
+      } else {
+        if (stat.openPrice != null) continue
+        stat.openPrice = openPrice
+      }
       stat.updatedAt = Instant.now()
     }
   }
@@ -213,7 +237,7 @@ class StatEntryService(
   /**
    * Creates a stat for the caller — the promotion of a candidate (#189), or [createByHand].
    * [candidateId] keeps the trace of the source candidate. A (day, ticker, pattern) already in the
-   * sheet is a 409.
+   * sheet is a 409. A double top born with an open starts from it, unless a start is sent.
    */
   @Transactional
   fun create(request: StatEntryRequest, candidateId: UUID? = null): StatEntryDto {
@@ -221,7 +245,11 @@ class StatEntryService(
     val ticker = request.cleanTicker()
     requireFree(user.id, request, ticker, ownId = null)
     val entry = newEntry(user, request, ticker, candidateId)
-    entry.apply(request, ticker)
+    val born =
+      if (request.pattern == Pattern.DT && request.dtStartPrice == null) {
+        request.copy(dtStartPrice = request.openPrice)
+      } else request
+    entry.apply(born, ticker)
     // Flushed here so a race lost on a unique constraint surfaces as the 409 of
     // `GlobalExceptionHandler`, not as a failed commit.
     return repo.saveAndFlush(entry).toDto()
@@ -267,8 +295,9 @@ class StatEntryService(
 
   /**
    * Ticks a stat as completed, or unticks it back to "to complete" — the ✓ of the sheet (#263).
-   * Ticking needs the session prices — four on a « no push » day — (400 naming the missing ones) ;
-   * ticking twice keeps the first date. Unticking is always allowed.
+   * Ticking needs the session prices of its pattern — four on a « no push » day, the four prices of
+   * a double top — (400 naming the missing ones) ; ticking twice keeps the first date. Unticking is
+   * always allowed.
    */
   @Transactional
   fun setCompleted(id: UUID, completed: Boolean): StatEntryDto {
@@ -281,7 +310,14 @@ class StatEntryService(
     }
     // Rows written before the range rule existed (#305) can hold an impossible set : the ✓ replays
     // it rather than blessing what a write would refuse today.
-    if (completed) {
+    if (completed && entry.isDoubleTop) {
+      requireDoubleTopShape(
+        entry.dtStartPrice,
+        entry.dtTopPrice,
+        entry.dtLowPrice,
+        entry.dtRetestPrice,
+      )
+    } else if (completed) {
       requireInsideTheDay(
         entry.hodPrice,
         entry.lodPrice,
@@ -361,17 +397,29 @@ class StatEntryService(
       pmHigh = request.pmHigh,
     )
 
-  /** Validates [request] and copies it onto this stat (ticker already cleaned). */
+  /**
+   * Validates [request] and copies it onto this stat (ticker already cleaned). A double top keeps
+   * its four prices and drops the GUS session (and « no push ») ; any other pattern the reverse.
+   */
   private fun StatEntry.apply(request: StatEntryRequest, cleanTicker: String) {
     val pmOpen = request.pmOpen.requirePositive("PM open")
     val pmHigh = request.pmHigh.requirePositive("PM high")
     if (pmHigh < pmOpen) throw badRequest("PM high must not be below the PM open")
-    val hod = request.hodPrice?.requirePositive("HOD")
-    val lod = request.lodPrice?.requirePositive("LOD")
-    val open = request.openPrice?.requirePositive("Open")
-    val push = if (request.noPush) null else request.pushOpenPrice?.requirePositive("Push at open")
-    val eod = request.eodPrice?.requirePositive("EOD")
+    val doubleTop = request.pattern == Pattern.DT
+    val gus = !doubleTop
+    val hod = request.hodPrice?.takeIf { gus }?.requirePositive("HOD")
+    val lod = request.lodPrice?.takeIf { gus }?.requirePositive("LOD")
+    val open = request.openPrice?.takeIf { gus }?.requirePositive("Open")
+    val noPush = gus && request.noPush
+    val push =
+      if (noPush) null else request.pushOpenPrice?.takeIf { gus }?.requirePositive("Push at open")
+    val eod = request.eodPrice?.takeIf { gus }?.requirePositive("EOD")
     requireInsideTheDay(hod, lod, listOf("Open" to open, "Push at open" to push, "EOD" to eod))
+    val dtStart = request.dtStartPrice?.takeIf { doubleTop }?.requirePositive("Start")
+    val dtTop = request.dtTopPrice?.takeIf { doubleTop }?.requirePositive("Top")
+    val dtLow = request.dtLowPrice?.takeIf { doubleTop }?.requirePositive("Rejection low")
+    val dtRetest = request.dtRetestPrice?.takeIf { doubleTop }?.requirePositive("Retest")
+    requireDoubleTopShape(dtStart, dtTop, dtLow, dtRetest)
 
     tradeDate = request.tradeDate
     pattern = request.pattern
@@ -389,11 +437,15 @@ class StatEntryService(
     hodPrice = hod
     lodPrice = lod
     eodPrice = eod
+    dtStartPrice = dtStart
+    dtTopPrice = dtTop
+    dtLowPrice = dtLow
+    dtRetestPrice = dtRetest
 
     ssr = request.ssr
     under1Dollar = request.under1Dollar
     entryAfter11am = request.entryAfter11am
-    noPush = request.noPush
+    this.noPush = noPush
     highInstitutions = request.highInstitutions
   }
 
@@ -415,6 +467,27 @@ class StatEntryService(
       if (price == null) continue
       if (hod != null && price > hod) throw badRequest("$label must not be above the HOD")
       if (lod != null && price < lod) throw badRequest("$label must not be below the LOD")
+    }
+  }
+
+  /**
+   * The shape of a double top (`docs/pattern/DT.md`) : the top not under the start, the rejection
+   * low not above the top, the retest not under the low. Each pair is checked once both are in.
+   */
+  private fun requireDoubleTopShape(
+    start: BigDecimal?,
+    top: BigDecimal?,
+    low: BigDecimal?,
+    retest: BigDecimal?,
+  ) {
+    if (start != null && top != null && top < start) {
+      throw badRequest("Top must not be below the start")
+    }
+    if (top != null && low != null && low > top) {
+      throw badRequest("Rejection low must not be above the top")
+    }
+    if (low != null && retest != null && retest < low) {
+      throw badRequest("Retest must not be below the rejection low")
     }
   }
 
@@ -440,5 +513,7 @@ class StatEntryService(
     val DEFAULT_SORT: Sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
     val MEDIAN = BigDecimal("0.5")
     val THIRD_QUARTILE = BigDecimal("0.75")
+    /** The rejection that makes a double top, per `docs/pattern/DT.md` — below, a normal breath. */
+    val DT_REJECTION_CRITERION = BigDecimal("17")
   }
 }

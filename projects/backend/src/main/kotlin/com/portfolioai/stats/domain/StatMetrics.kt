@@ -28,6 +28,12 @@ object StatMetrics {
     return change(open, level)
   }
 
+  /** A move between two prices — the legs of a double top (#428). Null when either is missing. */
+  fun percentChange(from: BigDecimal?, to: BigDecimal?): BigDecimal? {
+    if (from == null || to == null) return null
+    return change(from, to)
+  }
+
   /**
    * The [fraction] quantile of [values] (0.5 = median, 0.75 = 3rd quartile), interpolated between
    * the two nearest ranks — the spreadsheet `PERCENTILE.INC`, so the figures match a manual check.

@@ -18,7 +18,10 @@ import com.portfolioai.stats.domain.StatEntry
  */
 object StatEntryCsvEncoder {
 
-  /** Export layout, order-locked : premarket block, session block, the flags, then the status. */
+  /**
+   * Export layout, order-locked : premarket block, GUS session, double top prices, the flags, then
+   * the status.
+   */
   val HEADERS: List<String> =
     listOf(
       "Date",
@@ -36,6 +39,10 @@ object StatEntryCsvEncoder {
       "HOD",
       "LOD",
       "EOD",
+      "DT start",
+      "DT top",
+      "DT rejection low",
+      "DT retest",
       "SSR?",
       "<\$1 stock?",
       "Entry after 11AM?",
@@ -73,6 +80,10 @@ object StatEntryCsvEncoder {
         e.hodPrice?.toPlainString().orEmpty(),
         e.lodPrice?.toPlainString().orEmpty(),
         e.eodPrice?.toPlainString().orEmpty(),
+        e.dtStartPrice?.toPlainString().orEmpty(),
+        e.dtTopPrice?.toPlainString().orEmpty(),
+        e.dtLowPrice?.toPlainString().orEmpty(),
+        e.dtRetestPrice?.toPlainString().orEmpty(),
         e.ssr.toString(),
         e.under1Dollar.toString(),
         e.entryAfter11am.toString(),

@@ -10,8 +10,10 @@ import java.time.LocalDate
  *
  * The premarket prices are required and positive, with [pmHigh] >= [pmOpen] ; the session prices
  * are optional (all absent = the stat stays "to complete") but each one must be positive, and
- * [hodPrice] >= [lodPrice] when both are in. Percentages are never sent : they are derived from the
- * prices. Validation is done in-service (a clean 400, not a DB CHECK hit).
+ * [hodPrice] >= [lodPrice] when both are in. A DT sends its four prices instead of the GUS session
+ * (#428) : the top not under the start, the rejection low not above the top, the retest not under
+ * the low. Percentages are never sent : they are derived from the prices. Validation is done
+ * in-service (a clean 400, not a DB CHECK hit).
  */
 data class StatEntryRequest(
   val tradeDate: LocalDate,
@@ -31,6 +33,11 @@ data class StatEntryRequest(
   val hodPrice: BigDecimal? = null,
   val lodPrice: BigDecimal? = null,
   val eodPrice: BigDecimal? = null,
+  // ---- Double top (#428) — a DT only ; ignored and stored empty on any other pattern ----
+  val dtStartPrice: BigDecimal? = null,
+  val dtTopPrice: BigDecimal? = null,
+  val dtLowPrice: BigDecimal? = null,
+  val dtRetestPrice: BigDecimal? = null,
   // ---- Flags ----
   val ssr: Boolean = false,
   val under1Dollar: Boolean = false,

@@ -41,6 +41,11 @@ data class StatEntryDto(
   val hodPrice: BigDecimal?,
   val lodPrice: BigDecimal?,
   val eodPrice: BigDecimal?,
+  // ---- Double top (#428) — null on any other pattern ----
+  val dtStartPrice: BigDecimal?,
+  val dtTopPrice: BigDecimal?,
+  val dtLowPrice: BigDecimal?,
+  val dtRetestPrice: BigDecimal?,
   // ---- Flags ----
   val ssr: Boolean,
   val under1Dollar: Boolean,
@@ -73,6 +78,10 @@ fun StatEntry.toDto(tradeLink: TradeLinkDto? = null) =
     hodPrice = hodPrice,
     lodPrice = lodPrice,
     eodPrice = eodPrice,
+    dtStartPrice = dtStartPrice,
+    dtTopPrice = dtTopPrice,
+    dtLowPrice = dtLowPrice,
+    dtRetestPrice = dtRetestPrice,
     ssr = ssr,
     under1Dollar = under1Dollar,
     entryAfter11am = entryAfter11am,

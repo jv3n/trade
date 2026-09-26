@@ -53,9 +53,10 @@ import org.springframework.web.server.ResponseStatusException
  *          whose (day, ticker) GUS slot is held by an unrelated stat, come back in `skipped`
  *          without failing the batch.
  * - **The « À l'open » card (#261)** — the open is optional and positive, copied onto the stat on
- *   promotion ; typed after the promotion, it fills each stat only while that stat has no open of
- *   its own, and the stat keeps it once the candidate is deleted. The target push is optional and
- *   non-negative, and clearing it puts the row back on the card's reference.
+ *   promotion — as the start of a double top (#435) ; typed after the promotion, it fills each stat
+ *   only while that stat has no open (or start) of its own, and the stat keeps it once the
+ *   candidate is deleted. The target push is optional and non-negative, and clearing it puts the
+ *   row back on the card's reference.
  *
  * `AuthService` is overridden with `@MockitoBean` so the user-scope is deterministic.
  */
@@ -619,16 +620,42 @@ class CandidateIntegrationTest {
   }
 
   @Test
-  fun `an open typed after the promotions fills each of the candidate's stats`() {
+  fun `an open typed after the promotions fills the GUS open and the double top start`() {
     val candidate = service.create(request(ticker = "SGBX"))
     val gus = service.promote(candidate.id, Pattern.GUS)
     val dt = service.promote(candidate.id, Pattern.DT)
 
     service.update(candidate.id, request(ticker = "SGBX", openPrice = BigDecimal("4.20")))
 
-    listOf(gus, dt).forEach {
-      assertEquals(0, BigDecimal("4.20").compareTo(statService.findById(it.id).openPrice))
-    }
+    assertEquals(0, BigDecimal("4.20").compareTo(statService.findById(gus.id).openPrice))
+    val doubleTop = statService.findById(dt.id)
+    assertEquals(0, BigDecimal("4.20").compareTo(doubleTop.dtStartPrice))
+    assertNull(doubleTop.openPrice, "a double top has no GUS session")
+  }
+
+  @Test
+  fun `promoting a candidate with an open in DT starts the double top from it`() {
+    val candidate = service.create(request(ticker = "SGBX", openPrice = BigDecimal("1.90")))
+
+    val stat = service.promote(candidate.id, Pattern.DT)
+
+    assertEquals(0, BigDecimal("1.90").compareTo(stat.dtStartPrice))
+    assertNull(stat.openPrice)
+  }
+
+  @Test
+  fun `an open typed later never moves a double top start already typed on the stat`() {
+    val candidate = service.create(request(ticker = "SGBX"))
+    val dt = service.promote(candidate.id, Pattern.DT)
+    statRepo.save(statRepo.findById(dt.id).get().apply { dtStartPrice = BigDecimal("1.75") })
+
+    service.update(candidate.id, request(ticker = "SGBX", openPrice = BigDecimal("1.90")))
+
+    assertEquals(
+      0,
+      BigDecimal("1.75").compareTo(statService.findById(dt.id).dtStartPrice),
+      "a push starting from a later low keeps its own start",
+    )
   }
 
   @Test

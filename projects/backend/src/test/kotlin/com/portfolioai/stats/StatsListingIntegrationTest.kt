@@ -8,11 +8,13 @@ import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.application.dto.StatSummaryDto
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatStatus
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -52,6 +55,9 @@ import org.springframework.web.server.ResponseStatusException
  *   future day is refused, and the one-per-day-and-ticker rule still holds.
  * - **No push (#302)** — a stat whose stock never pushed after the open is ticked with the four
  *   other prices, keeps no push price, stays out of the push references and can be filtered on.
+ * - **Double top (#435)** — a DT is measured by its four prices, saved field by field and ticked
+ *   with all four ; their shape is checked, a DT drops the GUS session and a GUS the DT prices, the
+ *   start defaults to the open, and the database backs the per-pattern completion up.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
  *   set and averages the derived percentages (never stored) of the completed rows only, plus the
  *   median / 3rd quartile / max push at open behind the candidates' « À l'open » card (#261).
@@ -581,6 +587,189 @@ class StatsListingIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // Double top (#435)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `a double top saves its four prices one at a time and is ticked with them`() {
+    val stat = service.create(premarketRequest(ticker = "SGBX", pattern = Pattern.DT))
+    var request = premarketRequest(ticker = "SGBX", pattern = Pattern.DT)
+
+    request = request.copy(dtTopPrice = BigDecimal("2.95"))
+    service.update(stat.id, request)
+    request = request.copy(dtStartPrice = BigDecimal("1.90"))
+    service.update(stat.id, request)
+    request = request.copy(dtRetestPrice = BigDecimal("2.85"))
+    service.update(stat.id, request)
+    request = request.copy(dtLowPrice = BigDecimal("2.36"))
+    service.update(stat.id, request)
+
+    val ticked = service.setCompleted(stat.id, completed = true)
+    assertTrue(ticked.completed)
+    assertEquals(0, BigDecimal("1.90").compareTo(ticked.dtStartPrice))
+    assertEquals(0, BigDecimal("2.95").compareTo(ticked.dtTopPrice))
+    assertEquals(0, BigDecimal("2.36").compareTo(ticked.dtLowPrice))
+    assertEquals(0, BigDecimal("2.85").compareTo(ticked.dtRetestPrice))
+  }
+
+  @Test
+  fun `ticking a double top with a missing price is a 400 naming it`() {
+    val stat = service.create(doubleTopRequest(ticker = "SGBX").copy(dtRetestPrice = null))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.setCompleted(stat.id, completed = true)
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertEquals("Stat SGBX can't be completed yet — missing Retest", ex.reason)
+  }
+
+  @Test
+  fun `a completed double top can't lose one of its four prices`() {
+    val stat = createCompleted(doubleTopRequest(ticker = "SGBX"))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.update(stat.id, doubleTopRequest(ticker = "SGBX").copy(dtLowPrice = null))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("Rejection low"), "got ${ex.reason}")
+  }
+
+  @Test
+  fun `a double top ignores the GUS session and no push, a GUS ignores the double top prices`() {
+    val gusSession = fullSessionRequest(ticker = "SGBX")
+    val dt =
+      service.create(
+        doubleTopRequest(ticker = "SGBX")
+          .copy(
+            openPrice = gusSession.openPrice,
+            pushOpenPrice = gusSession.pushOpenPrice,
+            hodPrice = gusSession.hodPrice,
+            lodPrice = gusSession.lodPrice,
+            eodPrice = gusSession.eodPrice,
+            noPush = true,
+          )
+      )
+    val gus =
+      service.create(fullSessionRequest(ticker = "SGBX").copy(dtTopPrice = BigDecimal("2.95")))
+
+    assertEquals(
+      listOf(null, null, null, null, null),
+      listOf(dt.openPrice, dt.pushOpenPrice, dt.hodPrice, dt.lodPrice, dt.eodPrice),
+    )
+    assertFalse(dt.noPush, "« no push » does not apply to a double top")
+    assertNull(gus.dtTopPrice)
+  }
+
+  @Test
+  fun `a double top out of shape is a 400, naming the pair`() {
+    listOf(
+        doubleTopRequest().copy(dtTopPrice = BigDecimal("1.80")) to
+          "Top must not be below the start",
+        doubleTopRequest().copy(dtLowPrice = BigDecimal("3.10")) to
+          "Rejection low must not be above the top",
+        doubleTopRequest().copy(dtRetestPrice = BigDecimal("2.30")) to
+          "Retest must not be below the rejection low",
+      )
+      .forEach { (request, reason) ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.create(request) }
+        assertEquals(400, ex.statusCode.value())
+        assertEquals(reason, ex.reason)
+      }
+    assertEquals(0, repo.count())
+  }
+
+  @Test
+  fun `a double top price at zero is a 400`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(doubleTopRequest().copy(dtStartPrice = BigDecimal.ZERO))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertEquals("Start must be greater than zero", ex.reason)
+  }
+
+  @Test
+  fun `a double top typed with an open starts from it, unless a start is sent`() {
+    val fromOpen =
+      service.createByHand(
+        premarketRequest(ticker = "SGBX", pattern = Pattern.DT).copy(openPrice = BigDecimal("1.90"))
+      )
+    val fromLaterLow =
+      service.createByHand(
+        premarketRequest(ticker = "NXTT", pattern = Pattern.DT)
+          .copy(openPrice = BigDecimal("1.90"), dtStartPrice = BigDecimal("1.75"))
+      )
+
+    assertEquals(0, BigDecimal("1.90").compareTo(fromOpen.dtStartPrice))
+    assertEquals(0, BigDecimal("1.75").compareTo(fromLaterLow.dtStartPrice))
+  }
+
+  @Test
+  fun `the database refuses a ticked double top without its four prices`() {
+    val stat =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
+        pattern = Pattern.DT
+        dtStartPrice = BigDecimal("1.90")
+        dtTopPrice = BigDecimal("2.95")
+        completedAt = Instant.now()
+      }
+
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(stat) }
+  }
+
+  @Test
+  fun `the database refuses double top prices on a GUS`() {
+    val stat =
+      makeStat(testUser, ticker = "KTTA", tradeDate = DAY).apply {
+        dtTopPrice = BigDecimal("4.65")
+      }
+
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(stat) }
+  }
+
+  @Test
+  fun `summarise computes the double top legs on the completed double tops only`() {
+    createCompleted(doubleTopRequest(ticker = "SGBX"))
+    createCompleted(nxttDoubleTop())
+    // In progress : its legs must weigh nothing.
+    service.create(doubleTopRequest(ticker = "MULN").copy(dtRetestPrice = null))
+
+    val summary = service.summarise(noFilter)
+
+    assertEquals(2, summary.completedDoubleTops)
+    // SGBX start 1.90 -> top 2.95 = +55.26, NXTT 2.00 -> 3.00 = +50.00 -> 52.63.
+    assertEquals(0, BigDecimal("52.63").compareTo(summary.averageExtensionPercent))
+    // From the 1.12 previous close : +163.39 and +167.86 -> 165.63 (HALF_UP).
+    assertEquals(0, BigDecimal("165.63").compareTo(summary.averageExtensionWithGapPercent))
+    // SGBX 2.95 -> 2.36 = -20.00, NXTT 3.00 -> 2.70 = -10.00 -> -15.00.
+    assertEquals(0, BigDecimal("-15.00").compareTo(summary.averageRejectionPercent))
+    assertEquals(1, summary.rejectionAtCriterionCount, "only SGBX reached the 17 %")
+    // SGBX 2.36 -> 2.85 = +20.76, NXTT 2.70 -> 3.10 = +14.81 -> 17.79 (HALF_UP).
+    assertEquals(0, BigDecimal("17.79").compareTo(summary.averageRetestPercent))
+    // SGBX -3.39 under its top, NXTT +3.33 over it -> -0.03.
+    assertEquals(0, BigDecimal("-0.03").compareTo(summary.averageRetestToTopPercent))
+    assertEquals(1, summary.retestTookTopCount, "NXTT took its top back")
+  }
+
+  @Test
+  fun `the GUS figures are unchanged by the double tops`() {
+    seedThreeStats()
+    val before = service.summarise(noFilter)
+
+    createCompleted(doubleTopRequest(ticker = "SGBX"))
+    createCompleted(nxttDoubleTop())
+    val after = service.summarise(noFilter)
+
+    assertEquals(before.completed + 2, after.completed, "a double top is still a completed stat")
+    assertEquals(gusFigures(before), gusFigures(after))
+  }
+
+  // ---------------------------------------------------------------------------
   // KPIs
   // ---------------------------------------------------------------------------
 
@@ -774,6 +963,45 @@ class StatsListingIntegrationTest {
         hodPrice = BigDecimal("3.10"),
         lodPrice = BigDecimal("2.41"),
         eodPrice = BigDecimal("2.66"),
+      )
+
+  /** The summary figures read on the GUS session — the ones a double top must leave alone. */
+  private fun gusFigures(summary: StatSummaryDto) =
+    listOf(
+      summary.averagePushOpenPercent,
+      summary.medianPushOpenPercent,
+      summary.thirdQuartilePushOpenPercent,
+      summary.maxPushOpenPercent,
+      summary.noPushCount,
+      summary.averageLodPercent,
+      summary.fadeCount,
+      summary.averageEodPercent,
+    )
+
+  /**
+   * SGBX of `mockup/PARCOURS.md › The double top stat` : start 1.90, top 2.95, rejection low 2.36,
+   * retest 2.85 — off a 1.12 previous close.
+   */
+  private fun doubleTopRequest(ticker: String = "SGBX") =
+    premarketRequest(ticker = ticker, pattern = Pattern.DT)
+      .copy(
+        previousClose = BigDecimal("1.12"),
+        pmOpen = BigDecimal("1.50"),
+        pmHigh = BigDecimal("1.95"),
+        dtStartPrice = BigDecimal("1.90"),
+        dtTopPrice = BigDecimal("2.95"),
+        dtLowPrice = BigDecimal("2.36"),
+        dtRetestPrice = BigDecimal("2.85"),
+      )
+
+  /** A shallow double top whose retest took the top back : 2.00, 3.00, 2.70, 3.10. */
+  private fun nxttDoubleTop() =
+    doubleTopRequest(ticker = "NXTT")
+      .copy(
+        dtStartPrice = BigDecimal("2.00"),
+        dtTopPrice = BigDecimal("3.00"),
+        dtLowPrice = BigDecimal("2.70"),
+        dtRetestPrice = BigDecimal("3.10"),
       )
 
   private fun makeStat(owner: User, ticker: String, tradeDate: LocalDate) =
