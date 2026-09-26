@@ -15,7 +15,7 @@
   gap: s.$space-xl;
   align-items: start;
 
-  @media (max-width: 900px) {
+  @media (max-width: s.$bp-narrow) {
     grid-template-columns: 1fr;
   }
 }

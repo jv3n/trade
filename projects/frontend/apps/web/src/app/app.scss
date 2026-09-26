@@ -40,7 +40,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    @media (max-width: 900px) {
+    @media (max-width: s.$bp-narrow) {
       display: none;
     }
   }

@@ -127,7 +127,7 @@ $logo-size: 64px;
   max-width: 520px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: s.$bp-phone) {
   .login-hero {
     gap: s.$space-2xl;
   }

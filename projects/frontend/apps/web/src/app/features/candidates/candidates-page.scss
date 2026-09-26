@@ -4,6 +4,7 @@
 
 .day-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: s.$space-sm;
 
@@ -64,7 +65,7 @@
   }
 }
 
-@media (max-width: 1100px) {
+@media (max-width: s.$bp-wide) {
   .capture {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 

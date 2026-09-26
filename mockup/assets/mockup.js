@@ -64,6 +64,31 @@
     if (row) window.location.href = row.dataset.href;
   });
 
+  // ---------------------------------------------------------------- menu sur téléphone (#456)
+  //
+  // Sous 900 px, une barre en haut porte le bouton menu ; le menu s'ouvre en tiroir par-dessus la
+  // page et se referme sur un choix, un clic à côté ou Échap. `?nav=open` l'ouvre au chargement
+  // (vue « menu ouvert » de mobile.html).
+  document.addEventListener('DOMContentLoaded', () => {
+    const shell = document.querySelector('.shell');
+    const brand = shell?.querySelector('.sidenav .brand');
+    if (!shell || !brand) return;
+    const bar = document.createElement('div');
+    bar.className = 'mobile-bar';
+    bar.innerHTML = '<button class="btn btn-icon" aria-label="Menu"><span class="icon">menu</span></button>';
+    bar.appendChild(brand.cloneNode(true));
+    const scrim = document.createElement('div');
+    scrim.className = 'nav-scrim';
+    shell.insertBefore(bar, shell.querySelector('.main'));
+    shell.appendChild(scrim);
+    const setOpen = (open) => shell.classList.toggle('nav-open', open);
+    bar.querySelector('button').addEventListener('click', () => setOpen(true));
+    scrim.addEventListener('click', () => setOpen(false));
+    shell.querySelectorAll('.sidenav .nav-link').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+    document.addEventListener('keydown', (e) => e.key === 'Escape' && setOpen(false));
+    if (new URLSearchParams(location.search).get('nav') === 'open') setOpen(true);
+  });
+
   // ---------------------------------------------------------------- modale de confirmation
   //
   // Tout élément portant `data-confirm-title` ouvre une modale avant d'agir. Attributs :

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Téléphone — maquette</title>
+    <link rel="stylesheet" href="assets/mockup.css" />
+    <script src="assets/mockup.js" defer></script>
+    <style>
+      .phones-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 32px 24px;
+      }
+      .phones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px;
+      }
+      .phone figcaption {
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .phone figcaption span {
+        display: block;
+        font-weight: 400;
+        color: var(--text-muted);
+      }
+      .phone {
+        margin: 0;
+      }
+      .phone iframe {
+        display: block;
+        width: 390px;
+        height: 780px;
+        border: 8px solid var(--border-strong);
+        border-radius: 36px;
+        background: var(--bg);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phones-page">
+      <header class="page-header">
+        <div>
+          <h1>Sur téléphone</h1>
+          <p>
+            Chaque écran à 390 px de large, les vraies pages de la maquette — elles basculent sous 900 px. Consulter
+            en déplacement, pas refaire l'app (#456) : le menu passe en tiroir, rien d'autre ne change de fond.
+          </p>
+        </div>
+      </header>
+      <section class="phones">
+        <figure class="phone">
+          <figcaption>Aujourd'hui<span>La barre du haut, le bouton menu</span></figcaption>
+          <iframe src="aujourdhui.html" title="Aujourd'hui sur téléphone"></iframe>
+        </figure>
+        <figure class="phone">
+          <figcaption>Menu ouvert<span>Le tiroir par-dessus la page ; un choix le referme</span></figcaption>
+          <iframe src="aujourdhui.html?nav=open" title="Menu ouvert sur téléphone"></iframe>
+        </figure>
+        <figure class="phone">
+          <figcaption>Candidats<span>Le tableau défile dans sa carte, pas la page</span></figcaption>
+          <iframe src="candidat.html" title="Candidats sur téléphone"></iframe>
+        </figure>
+        <figure class="phone">
+          <figcaption>Stats<span>Les KPIs sur une colonne</span></figcaption>
+          <iframe src="stats.html" title="Stats sur téléphone"></iframe>
+        </figure>
+        <figure class="phone">
+          <figcaption>Journal</figcaption>
+          <iframe src="journal.html" title="Journal sur téléphone"></iframe>
+        </figure>
+        <figure class="phone">
+          <figcaption>Compte</figcaption>
+          <iframe src="compte.html" title="Compte sur téléphone"></iframe>
+        </figure>
+        <figure class="phone">
+          <figcaption>Patterns<span>La page de lecture, la plus probable en déplacement</span></figcaption>
+          <iframe src="patterns.html" title="Patterns sur téléphone"></iframe>
+        </figure>
+        <figure class="phone">
+          <figcaption>Lexique</figcaption>
+          <iframe src="lexique.html" title="Lexique sur téléphone"></iframe>
+        </figure>
+      </section>
+    </main>
+  </body>
+</html>

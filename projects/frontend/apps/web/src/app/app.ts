@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -18,6 +19,12 @@ import { LanguageService } from './core/app-state/language.service';
 import { ThemeService } from './core/app-state/theme.service';
 import { CalculatorLauncher } from './features/calculator/widgets/calculator-launcher';
 import { CalculatorWidgetLayer } from './features/calculator/widgets/calculator-widget-layer';
+
+/**
+ * Width under which the sidenav leaves the page for a drawer (#456) — `$bp-narrow` in
+ * `libs/ui/styles/_sizes.scss`, which the styles use for the same switch.
+ */
+const NARROW_VIEWPORT = '(max-width: 900px)';
 
 /**
  * Application shell — top toolbar + left sidenav + router outlet (v1.0 pivot layout, cf.
@@ -87,10 +94,34 @@ export class App {
     { initialValue: this.router.url },
   );
 
+  /**
+   * A narrow viewport (#456) : the sidenav becomes a drawer over the page, closed until the
+   * toolbar's menu button opens it. On a phone a docked 240 px sidenav leaves the page 150 px.
+   */
+  readonly isNarrow = toSignal(
+    inject(BreakpointObserver)
+      .observe(NARROW_VIEWPORT)
+      .pipe(map((state) => state.matches)),
+    { initialValue: false },
+  );
+
+  /** The drawer's state on a narrow viewport ; a docked sidenav ignores it. */
+  readonly menuOpen = signal(false);
+
   readonly isStandaloneRoute = computed(() => {
     const url = this.currentUrl();
     return url.startsWith('/login') || url.startsWith('/error');
   });
+
+  constructor() {
+    // Picking a page closes the drawer — it sits over the page it just opened. Crossing the
+    // breakpoint does too : a drawer left open would otherwise pop up over the page on the way down.
+    effect(() => {
+      this.currentUrl();
+      this.isNarrow();
+      this.menuOpen.set(false);
+    });
+  }
 
   /** Displayed in the user menu trigger ; falls back to email if Google didn't return a name. */
   readonly userDisplay = computed(() => {

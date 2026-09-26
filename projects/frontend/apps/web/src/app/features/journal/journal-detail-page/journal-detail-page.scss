@@ -95,7 +95,7 @@ $save-bar-room: 72px;
   gap: s.$space-lg;
   align-items: start;
 
-  @media (max-width: 1100px) {
+  @media (max-width: s.$bp-wide) {
     grid-template-columns: 1fr;
   }
 }
@@ -120,7 +120,7 @@ $save-bar-room: 72px;
   align-items: center;
   margin-bottom: s.$space-sm;
 
-  @media (max-width: 900px) {
+  @media (max-width: s.$bp-narrow) {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -167,7 +167,7 @@ $save-bar-room: 72px;
   gap: s.$space-md;
   align-items: center;
 
-  @media (max-width: 700px) {
+  @media (max-width: s.$bp-phone) {
     grid-template-columns: 1fr;
   }
 }
@@ -227,7 +227,7 @@ $save-bar-room: 72px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: s.$space-md;
 
-  @media (max-width: 900px) {
+  @media (max-width: s.$bp-narrow) {
     grid-template-columns: 1fr;
   }
 
