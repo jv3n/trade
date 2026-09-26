@@ -17,11 +17,4 @@
   margin-bottom: s.$space-md;
 
   @include mat.form-field-density(-5);
-
-  // A toggle group wider than the screen (the journal's patterns on a phone, #456) scrolls inside
-  // itself rather than being cut off.
-  mat-button-toggle-group {
-    max-width: 100%;
-    overflow-x: auto;
-  }
 }

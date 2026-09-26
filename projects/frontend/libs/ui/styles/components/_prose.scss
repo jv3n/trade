@@ -62,6 +62,13 @@
     width: 100%;
     margin: 0 0 s.$space-md;
     border-collapse: collapse;
+
+    // A table wider than a phone scrolls inside itself (#466) : the shell clips page-level
+    // overflow, which would cut its last column off. Block only there — above, it keeps its width.
+    @media (max-width: s.$bp-narrow) {
+      display: block;
+      overflow-x: auto;
+    }
   }
 
   th,

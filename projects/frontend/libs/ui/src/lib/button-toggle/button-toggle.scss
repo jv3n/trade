@@ -92,3 +92,11 @@
 .mat-button-toggle-group-appearance-standard {
   border: 1px solid var(--color-border);
 }
+
+// A group wider than its box (the journal's patterns, the candidates' reference values on a phone
+// — #456, #466) scrolls inside itself. Material's own `overflow: hidden` cuts the last choices off,
+// and it is injected after this sheet : the element selector lifts the rule above its (0,1,0).
+mat-button-toggle-group.mat-button-toggle-group {
+  max-width: 100%;
+  overflow-x: auto;
+}
