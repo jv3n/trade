@@ -93,13 +93,13 @@ export const appConfig: ApplicationConfig = {
         .stream('common.resetField')
         .subscribe((label: string) => intl.resetField.set(label));
     }),
-    // Register the PortfolioAI brand mark so any template can use `<mat-icon svgIcon="portfolioai">`.
+    // Register the brand mark so any template can use `<mat-icon svgIcon="ticker-story">`.
     // Loaded once at boot ; MatIconRegistry caches the SVG so subsequent uses don't re-fetch.
     provideAppInitializer(() => {
       // Ligature icon names come from https://fonts.google.com/icons — mapping of the app's icons
       // in `mockup/README.md`.
       inject(MatIconRegistry).addSvgIcon(
-        'portfolioai',
+        'ticker-story',
         inject(DomSanitizer).bypassSecurityTrustResourceUrl('img/logo/logo.svg'),
       );
     }),

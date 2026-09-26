@@ -46,12 +46,12 @@ function setup(currentUser: CurrentUser | null, queryParams: Record<string, stri
       { provide: ActivatedRoute, useValue: routeStub },
     ],
   });
-  // Stubs the `portfolioai` brand-mark icon so `<mat-icon svgIcon="portfolioai">` (rendered in
+  // Stubs the `ticker-story` brand-mark icon so `<mat-icon svgIcon="ticker-story">` (rendered in
   // both the toolbar and the login hero) doesn't log a "Unable to find icon" error during the
   // test run. The production registration lives in `app.config.ts > provideAppInitializer` ; the
   // unit-test harness doesn't fire app initializers, so we mirror it here with an empty SVG.
   TestBed.inject(MatIconRegistry).addSvgIconLiteral(
-    'portfolioai',
+    'ticker-story',
     TestBed.inject(DomSanitizer).bypassSecurityTrustHtml('<svg></svg>'),
   );
 }
@@ -117,9 +117,9 @@ describe('LoginPage', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('auth.login.title');
     expect(el.textContent).toContain('auth.login.tagline');
-    expect(el.textContent).toContain('auth.login.features.indicators.title');
-    expect(el.textContent).toContain('auth.login.features.narrative.title');
-    expect(el.textContent).toContain('auth.login.features.portfolio.title');
+    expect(el.textContent).toContain('auth.login.features.candidates.title');
+    expect(el.textContent).toContain('auth.login.features.journal.title');
+    expect(el.textContent).toContain('auth.login.features.account.title');
     expect(el.textContent).toContain('auth.login.signInWithGoogle');
     expect(el.textContent).toContain('auth.login.disclaimer');
   });

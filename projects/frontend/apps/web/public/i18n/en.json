@@ -881,22 +881,22 @@
   },
   "auth": {
     "login": {
-      "title": "PortfolioAI",
-      "tagline": "Market analysis that reads like a story, not a buy signal.",
+      "title": "Ticker Story",
+      "tagline": "My trading journal, from the morning capture to the post-mortem.",
       "signInWithGoogle": "Sign in with Google",
-      "disclaimer": "⚠️ This is not licensed financial advice. For educational use only.",
+      "disclaimer": "A personal tracking tool — not financial advice.",
       "features": {
-        "indicators": {
-          "title": "Computed indicators",
-          "description": "RSI, momentum, moving averages, drawdown — crunched server-side, never hallucinated by the AI."
+        "candidates": {
+          "title": "Candidates and stats",
+          "description": "The premarket captured every morning, completed at the close — gap, float, push, pattern."
         },
-        "narrative": {
-          "title": "AI narration",
-          "description": "A short read that digests the indicators and recent context. The AI writes, it doesn't decide."
+        "journal": {
+          "title": "Journal",
+          "description": "The executions, the retained P&L and the post-mortem of each trade."
         },
-        "portfolio": {
-          "title": "Connected portfolio",
-          "description": "Wealthsimple CSV import, historical snapshots, cross-position takes."
+        "account": {
+          "title": "Account",
+          "description": "The broker balance, reconciled every morning, in US or Canadian dollars."
         }
       }
     },
@@ -906,7 +906,7 @@
       "USER": "User"
     },
     "errors": {
-      "notAuthorized": "This account is not authorised to access PortfolioAI. Contact the administrator if you think this is a mistake.",
+      "notAuthorized": "This account is not authorised to access Ticker Story. Contact the administrator if you think this is a mistake.",
       "oauthFailed": "Google sign-in failed. Try again or contact the administrator if the issue persists."
     }
   },

@@ -881,22 +881,22 @@
   },
   "auth": {
     "login": {
-      "title": "PortfolioAI",
-      "tagline": "L'analyse de marché qui se lit comme une histoire, pas comme un signal d'achat.",
+      "title": "Ticker Story",
+      "tagline": "Mon journal de trading, de la capture du matin au post-mortem.",
       "signInWithGoogle": "Se connecter avec Google",
-      "disclaimer": "⚠️ Ceci n'est pas un conseil financier agréé. Usage éducatif uniquement.",
+      "disclaimer": "Outil de suivi personnel — pas un conseil financier.",
       "features": {
-        "indicators": {
-          "title": "Indicateurs calculés",
-          "description": "RSI, momentum, moyennes mobiles, drawdown — chiffrés côté serveur, jamais hallucinés par l'IA."
+        "candidates": {
+          "title": "Candidats et stats",
+          "description": "Le premarket capturé chaque matin, complété à la clôture — gap, float, push, pattern."
         },
-        "narrative": {
-          "title": "Narration IA",
-          "description": "Un texte court qui digère les indicateurs et le contexte récent. L'IA écrit, elle ne décide pas."
+        "journal": {
+          "title": "Journal",
+          "description": "Les exécutions, le P&L retenu et le post-mortem de chaque trade."
         },
-        "portfolio": {
-          "title": "Portefeuille connecté",
-          "description": "Import CSV Wealthsimple, snapshots historiques, lectures cross-position."
+        "account": {
+          "title": "Compte",
+          "description": "Le solde du courtier, rapproché chaque matin, en dollars US ou canadiens."
         }
       }
     },
@@ -906,7 +906,7 @@
       "USER": "Utilisateur"
     },
     "errors": {
-      "notAuthorized": "Ce compte n'est pas autorisé à accéder à PortfolioAI. Contacte l'administrateur si tu penses qu'il s'agit d'une erreur.",
+      "notAuthorized": "Ce compte n'est pas autorisé à accéder à Ticker Story. Contacte l'administrateur si tu penses qu'il s'agit d'une erreur.",
       "oauthFailed": "La connexion Google a échoué. Réessaie ou contacte l'administrateur si le problème persiste."
     }
   },

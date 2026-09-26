@@ -41,12 +41,12 @@ describe('App', () => {
         provideAuthStub({ email: 'admin@example.com', displayName: 'Admin', role: 'ADMIN' }),
       ],
     }).compileComponents();
-    // Stub the `portfolioai` brand-mark icon so `<mat-icon svgIcon="portfolioai">` in the toolbar
+    // Stub the `ticker-story` brand-mark icon so `<mat-icon svgIcon="ticker-story">` in the toolbar
     // doesn't log a "Unable to find icon" error during the test run. The production registration
     // lives in `app.config.ts > provideAppInitializer` ; the unit-test harness doesn't fire app
     // initializers, so we mirror it here with an empty SVG.
     TestBed.inject(MatIconRegistry).addSvgIconLiteral(
-      'portfolioai',
+      'ticker-story',
       TestBed.inject(DomSanitizer).bypassSecurityTrustHtml('<svg></svg>'),
     );
   });
