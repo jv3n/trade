@@ -19,7 +19,8 @@
     </div>
   }
 
-  <!-- KPI row — balance is the live one, the other two are scoped to the active filter. -->
+  <!-- KPI row — balance is the live one, the others are scoped to the active filter (the gap tile
+       to its dates only). -->
   @if (summary(); as s) {
     <section class="kpi-row">
       <mat-card class="kpi kpi--hero" appearance="outlined">
@@ -99,6 +100,31 @@
           }}
         </div>
       </mat-card>
+
+      @if (reconciliationGap(); as g) {
+        <mat-card
+          class="kpi"
+          appearance="outlined"
+          data-testid="reconciliation-gap"
+          [matTooltip]="'account.kpi.reconciliationGapHint' | translate"
+        >
+          <div class="kpi__label">{{ 'account.kpi.reconciliationGap' | translate }}</div>
+          <div class="kpi__value">
+            {{ g.credit ? '+' : '' }}{{ g.amount | number: '1.2-2'
+            }}{{ 'account.usdSuffix' | translate }}
+          </div>
+          <div class="kpi__sub">
+            @if (g.credit) {
+              {{ 'account.kpi.reconciliationGapCredit' | translate }}
+            } @else {
+              {{
+                'account.kpi.reconciliationGapShare'
+                  | translate: { share: g.share === null ? '—' : (g.share | number: '1.0-1') }
+              }}
+            }
+          </div>
+        </mat-card>
+      }
     </section>
   }
 

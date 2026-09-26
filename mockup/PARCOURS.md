@@ -673,6 +673,22 @@ refused on the field (the broker never shows one) and the button stays disabled 
 20 % of the computed balance** still goes through, but its confirmation says so and reads as a
 warning — at that size it is a typo far more often than a real drift.
 
+**Reconciliation gaps** (#338) : a KPI tile sums the period's corrections — what the broker took
+outside the trades : locates, the platform subscription, rounding, a mistyped P&L. Measured **by
+difference**, it catches every fee whatever its name, and no broker rule lives in the code (the
+schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)).
+
+- **Value** : the amount, without its sign (« 12,40 $ ») ; **sub-line** : its share of the period's
+  P&L (« 1,6 % du P&L »). Neutral colour — the label carries the direction.
+- **Not labelled « frais »** : the gap also carries rounding and a wrong P&L. It is an indicator, not
+  an accounting figure.
+- **Follows the dates, ignores the type filter** : under « Trades », « Dépôts / retraits » or
+  « Corrections » the ratio would read a plausible 0 % or divide by zero.
+- A **losing or flat period** shows the amount and a dash for the ratio. A period whose corrections
+  come out **net positive** (a credited-back locate) shows « +5,00 $ » and « crédit net » instead of
+  a percentage.
+- The balance tile takes **one column** instead of two, so the four tiles hold on one row.
+
 **Screen** : [`compte.html`](compte.html) — USD / CAD balance, the morning reconciliation panel
 (live gap), the history of the last reconciliations, the balance curve, the movements list.
 

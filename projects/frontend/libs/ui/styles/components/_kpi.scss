@@ -61,14 +61,9 @@
   }
 }
 
-// The page's headline figure (the account balance) — twice as wide, a bigger value.
+// The page's headline figure (the account balance) — a bigger value. One column like the others,
+// so the account page's four tiles hold on one row (#338).
 .kpi--hero {
-  grid-column: span 2;
-
-  @media (max-width: 640px) {
-    grid-column: span 1;
-  }
-
   .kpi__value {
     font-size: s.$font-3xl;
   }
