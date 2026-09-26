@@ -1,7 +1,6 @@
 package com.portfolioai.candidates.domain
 
 import com.portfolioai.auth.domain.User
-import com.portfolioai.shared.Pattern
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -13,13 +12,12 @@ import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.type.SqlTypes
 
 /**
  * A ticker spotted on the radar in the morning, captured with what is known in **premarket** only
  * (cf. `mockup/PARCOURS.md › Étape 1`). Scoped by [user] (`ON DELETE CASCADE`) ; one candidate per
- * (user, [tradingDate], [ticker]) — enforced by `ux_candidate_user_day_ticker`.
+ * (user, [tradingDate], [ticker]) — enforced by `ux_candidate_user_day_ticker`. It has no pattern :
+ * the pattern is chosen when promoting, one stat per pattern (#434).
  *
  * Nothing about sizing lives here (capital, risk, stop, ladders) : it isn't known at capture time.
  * The derived figures — gap %, push %, locate / price, target price — are never stored ; the front
@@ -36,7 +34,6 @@ class Candidate(
 
   /** Session the candidate was captured for — the list is browsed day by day. */
   @Column(name = "trading_date", nullable = false) var tradingDate: LocalDate,
-  @JdbcTypeCode(SqlTypes.NAMED_ENUM) @Column(nullable = false) var pattern: Pattern = Pattern.GUS,
   @Column(nullable = false, length = 20) var ticker: String,
 
   // ---- Premarket prices ----

@@ -19,7 +19,8 @@ import org.hibernate.type.SqlTypes
 /**
  * One stat row — a candidate that made it to the stats sheet, filled with how the session went as
  * the day goes (cf. `mockup/PARCOURS.md`, steps 2 and 5). Scoped by [user] (`ON DELETE CASCADE`) ;
- * one stat per (user, [tradeDate], [ticker]).
+ * one stat per (user, [tradeDate], [ticker], [pattern]) — a candidate can give a GUS and a DT
+ * (#434).
  *
  * Two blocks :
  * - **Premarket** ([previousClose] … [note]) — copied from the source candidate when the stat is

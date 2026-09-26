@@ -12,6 +12,7 @@ import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
@@ -34,8 +36,8 @@ import org.springframework.web.server.ResponseStatusException
  * launcher-session bootstrap, no per-class plumbing) for the **morning capture** model (#186).
  *
  * What it pins :
- * - **Save round-trip** — the ticker is normalised, every premarket field and the pattern (Postgres
- *   `pattern` ENUM) persist, a blank note is stored as null, and the pattern defaults to GUS.
+ * - **Save round-trip** — the ticker is normalised, every premarket field persists and a blank note
+ *   is stored as null. A candidate has no pattern : it is chosen when promoting (#434).
  * - **One candidate per (day, ticker)** — a second capture, or renaming onto a captured ticker, is
  *   a 409 ; the same ticker on another day or another user is fine.
  * - **In-service validation** — non-positive prices, a PM high below the PM open, a negative float
@@ -43,13 +45,16 @@ import org.springframework.web.server.ResponseStatusException
  * - **Day listing** — only the requested day's candidates come back.
  * - **Multi-tenant scope** — a foreign / missing id → 404 (never 403).
  * - **Promotion to the stats sheet (#189)** — promoting copies the whole premarket block onto a new
- *   stat that starts "to complete" and points back at the candidate, which then reports `promoted =
- *   true` ; promoting twice is a 409, and « Tout passer en stats » is idempotent — candidates
- *   already in the sheet (through their promotion or through an unrelated stat holding that (day,
- *   ticker) slot) come back in `skipped` without failing the batch.
+ *   stat of the chosen pattern that starts "to complete" and points back at the candidate, which
+ *   then lists it among its stats. **One stat per pattern (#434)** : a GUS then a DT make two
+ *   stats, a second GUS is a 409 — refused by the database too — and a pattern other than GUS or DT
+ *   is a
+ *     400. « Tout passer en GUS » is idempotent and never adds a DT — candidates with any stat, or
+ *          whose (day, ticker) GUS slot is held by an unrelated stat, come back in `skipped`
+ *          without failing the batch.
  * - **The « À l'open » card (#261)** — the open is optional and positive, copied onto the stat on
- *   promotion ; typed after the promotion, it fills the stat only while the stat has no open of its
- *   own, and the stat keeps it once the candidate is deleted. The target push is optional and
+ *   promotion ; typed after the promotion, it fills each stat only while that stat has no open of
+ *   its own, and the stat keeps it once the candidate is deleted. The target push is optional and
  *   non-negative, and clearing it puts the row back on the card's reference.
  *
  * `AuthService` is overridden with `@MockitoBean` so the user-scope is deterministic.
@@ -93,7 +98,6 @@ class CandidateIntegrationTest {
       service.create(
         request(
           ticker = " ktta ",
-          pattern = Pattern.DT,
           floatMillions = BigDecimal("8.2"),
           volumeMillions = BigDecimal("3.1"),
           locatePerShare = BigDecimal("0.03"),
@@ -103,7 +107,6 @@ class CandidateIntegrationTest {
 
     val reloaded = service.findById(saved.id)
     assertEquals("KTTA", reloaded.ticker, "ticker is trimmed + upper-cased")
-    assertEquals(Pattern.DT, reloaded.pattern, "the pattern survives the Postgres ENUM round-trip")
     assertEquals(0, BigDecimal("2.65").compareTo(reloaded.previousClose))
     assertEquals(0, BigDecimal("4.05").compareTo(reloaded.pmOpen))
     assertEquals(0, BigDecimal("4.65").compareTo(reloaded.pmHigh))
@@ -114,7 +117,7 @@ class CandidateIntegrationTest {
   }
 
   @Test
-  fun `the pattern defaults to GUS and the optional context stays null`() {
+  fun `the optional context stays null`() {
     val saved =
       service.create(
         CandidateRequest(
@@ -127,7 +130,6 @@ class CandidateIntegrationTest {
         )
       )
 
-    assertEquals(Pattern.GUS, saved.pattern)
     assertNull(saved.floatMillions)
     assertNull(saved.volumeMillions)
     assertNull(saved.locatePerShare)
@@ -253,11 +255,10 @@ class CandidateIntegrationTest {
     val updated =
       service.update(
         created.id,
-        request(ticker = "SGBX", pattern = Pattern.DISCRETIONARY, pmOpen = BigDecimal("4.20")),
+        request(ticker = "SGBX", pmOpen = BigDecimal("4.20")),
       )
 
     assertEquals("SGBX", updated.ticker)
-    assertEquals(Pattern.DISCRETIONARY, updated.pattern)
     assertEquals(0, BigDecimal("4.20").compareTo(updated.pmOpen))
     assertTrue(updated.updatedAt.isAfter(created.updatedAt))
   }
@@ -297,7 +298,6 @@ class CandidateIntegrationTest {
       service.create(
         request(
           ticker = "KTTA",
-          pattern = Pattern.DT,
           floatMillions = BigDecimal("8.2"),
           volumeMillions = BigDecimal("3.1"),
           locatePerShare = BigDecimal("0.03"),
@@ -305,12 +305,12 @@ class CandidateIntegrationTest {
         )
       )
 
-    val stat = service.promote(candidate.id)
+    val stat = service.promote(candidate.id, Pattern.DT)
 
     assertEquals(candidate.id, stat.candidateId, "the stat keeps a trace of its source candidate")
     assertEquals(DAY, stat.tradeDate)
     assertEquals("KTTA", stat.ticker)
-    assertEquals(Pattern.DT, stat.pattern, "the candidate's pattern follows it to the sheet")
+    assertEquals(Pattern.DT, stat.pattern, "the pattern is the one chosen when promoting")
     assertEquals(0, BigDecimal("2.65").compareTo(stat.previousClose))
     assertEquals(0, BigDecimal("4.05").compareTo(stat.pmOpen))
     assertEquals(0, BigDecimal("4.65").compareTo(stat.pmHigh))
@@ -356,18 +356,80 @@ class CandidateIntegrationTest {
   }
 
   @Test
-  fun `promoting the same candidate twice is a 409`() {
+  fun `promote makes a GUS stat when no pattern is asked`() {
     val candidate = service.create(request(ticker = "KTTA"))
-    service.promote(candidate.id)
 
-    val ex = assertThrows(ResponseStatusException::class.java) { service.promote(candidate.id) }
+    assertEquals(Pattern.GUS, service.promote(candidate.id).pattern)
+  }
+
+  // SGBX of the mockup : a GUS in the morning, then a double top late in the morning.
+  @Test
+  fun `a candidate promoted in GUS then in DT has two stats, one per pattern`() {
+    val candidate = service.create(request(ticker = "SGBX"))
+
+    val gus = service.promote(candidate.id, Pattern.GUS)
+    val dt = service.promote(candidate.id, Pattern.DT)
+
+    assertEquals(
+      listOf(Pattern.GUS to gus.id, Pattern.DT to dt.id),
+      service.findById(candidate.id).stats.map { it.pattern to it.statId },
+      "in the order of the patterns",
+    )
+    assertEquals(
+      listOf(Pattern.GUS, Pattern.DT),
+      service.listForDate(DAY).single().stats.map { it.pattern },
+    )
+  }
+
+  @Test
+  fun `promoting the same candidate twice in one pattern is a 409`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+    service.promote(candidate.id, Pattern.GUS)
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.promote(candidate.id, Pattern.GUS)
+      }
 
     assertEquals(409, ex.statusCode.value())
     assertEquals(1, statRepo.count(), "no duplicate stat")
   }
 
+  // The service checks first ; the index is what holds when two promotions race (#392).
   @Test
-  fun `promoting a candidate whose day and ticker is already taken by another stat is a 409`() {
+  fun `the database refuses a second stat with the same candidate and pattern`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+    service.promote(candidate.id, Pattern.GUS)
+    val twin =
+      StatEntry(
+        user = testUser,
+        candidateId = candidate.id,
+        tradeDate = DAY,
+        // Another ticker, so the (day, ticker, pattern) constraint is not the one that trips.
+        ticker = "KTTB",
+        previousClose = BigDecimal("2.65"),
+        pmOpen = BigDecimal("4.05"),
+        pmHigh = BigDecimal("4.65"),
+      )
+
+    assertThrows(DataIntegrityViolationException::class.java) { statRepo.saveAndFlush(twin) }
+  }
+
+  @Test
+  fun `promoting to a pattern other than GUS or DT is a 400`() {
+    val candidate = service.create(request(ticker = "KTTA"))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.promote(candidate.id, Pattern.SIR)
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertEquals(0, statRepo.count())
+  }
+
+  @Test
+  fun `promoting a candidate whose day, ticker and pattern is taken by another stat is a 409`() {
     val candidate = service.create(request(ticker = "KTTA"))
     statService.create(statRequest(ticker = "KTTA"))
 
@@ -430,6 +492,26 @@ class CandidateIntegrationTest {
     assertEquals(listOf("BNRG"), outcome.promoted)
     assertEquals(listOf("SGBX"), outcome.skipped)
     assertEquals(2, statRepo.count(), "the unrelated stat plus the one promotion")
+  }
+
+  @Test
+  fun `promoteDay leaves a candidate with a DT alone and only ever makes GUS stats`() {
+    val dtOnly = service.create(request(ticker = "NXTT"))
+    service.create(request(ticker = "BNRG"))
+    service.promote(dtOnly.id, Pattern.DT)
+
+    val outcome = service.promoteDay(DAY)
+
+    assertEquals(listOf("BNRG"), outcome.promoted)
+    assertEquals(
+      listOf("NXTT"),
+      outcome.skipped,
+      "captured for its double top, it keeps that alone",
+    )
+    assertEquals(
+      mapOf("BNRG" to listOf(Pattern.GUS), "NXTT" to listOf(Pattern.DT)),
+      service.listForDate(DAY).associate { c -> c.ticker to c.stats.map { it.pattern } },
+    )
   }
 
   @Test
@@ -537,6 +619,19 @@ class CandidateIntegrationTest {
   }
 
   @Test
+  fun `an open typed after the promotions fills each of the candidate's stats`() {
+    val candidate = service.create(request(ticker = "SGBX"))
+    val gus = service.promote(candidate.id, Pattern.GUS)
+    val dt = service.promote(candidate.id, Pattern.DT)
+
+    service.update(candidate.id, request(ticker = "SGBX", openPrice = BigDecimal("4.20")))
+
+    listOf(gus, dt).forEach {
+      assertEquals(0, BigDecimal("4.20").compareTo(statService.findById(it.id).openPrice))
+    }
+  }
+
+  @Test
   fun `an open typed on the candidate never overwrites the one already on the stat`() {
     val candidate = service.create(request(ticker = "KTTA"))
     val stat = service.promote(candidate.id)
@@ -590,7 +685,6 @@ class CandidateIntegrationTest {
   private fun request(
     ticker: String = "KTTA",
     tradingDate: LocalDate = DAY,
-    pattern: Pattern = Pattern.GUS,
     previousClose: BigDecimal = BigDecimal("2.65"),
     pmOpen: BigDecimal = BigDecimal("4.05"),
     pmHigh: BigDecimal = BigDecimal("4.65"),
@@ -603,7 +697,6 @@ class CandidateIntegrationTest {
   ) =
     CandidateRequest(
       tradingDate = tradingDate,
-      pattern = pattern,
       ticker = ticker,
       previousClose = previousClose,
       pmOpen = pmOpen,
@@ -617,8 +710,8 @@ class CandidateIntegrationTest {
     )
 
   /**
-   * A stat entered straight on the sheet, with no source candidate — what an already-taken (day,
-   * ticker) slot looks like when a promotion runs into it.
+   * A GUS stat entered straight on the sheet, with no source candidate — what an already-taken
+   * (day, ticker, GUS) slot looks like when a promotion runs into it.
    */
   private fun statRequest(ticker: String = "KTTA", tradeDate: LocalDate = DAY) =
     StatEntryRequest(

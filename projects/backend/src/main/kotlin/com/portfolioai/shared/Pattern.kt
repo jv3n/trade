@@ -1,8 +1,9 @@
 package com.portfolioai.shared
 
 /**
- * Trading pattern a candidate, a stat and a trade are tagged with. Shared by the three bounded
- * contexts (candidates → stats → journal), hence `shared/` rather than one module's `domain/`.
+ * Trading pattern a stat and a trade are tagged with — a candidate gets one per stat, when promoted
+ * (#434). Shared by the three bounded contexts (candidates → stats → journal), hence `shared/`
+ * rather than one module's `domain/`.
  *
  * Names must match the Postgres enum `pattern` (`V1__baseline.sql`, extended by `V9`) :
  * `@JdbcTypeCode(SqlTypes.NAMED_ENUM)` maps by name. The list is expected to grow — a new value is

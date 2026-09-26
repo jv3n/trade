@@ -1,6 +1,5 @@
 package com.portfolioai.candidates.application.dto
 
-import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -10,12 +9,11 @@ import java.time.LocalDate
  * [ticker] is trimmed + upper-cased by the service. The three premarket prices are required and
  * positive, with [pmHigh] ≥ [pmOpen] ; [floatMillions], [volumeMillions] and [locatePerShare] are
  * optional and non-negative. The « À l'open » pair is optional too : [openPrice] positive,
- * [targetPushPercent] between 0 and 1000 (null = follows the card's reference). [pattern] defaults
- * to GUS. Validation is done in-service (a clean 400, not a DB CHECK hit).
+ * [targetPushPercent] between 0 and 1000 (null = follows the card's reference). No pattern : it is
+ * chosen when promoting (#434). Validation is done in-service (a clean 400, not a DB CHECK hit).
  */
 data class CandidateRequest(
   val tradingDate: LocalDate,
-  val pattern: Pattern = Pattern.GUS,
   val ticker: String,
   val previousClose: BigDecimal,
   val pmOpen: BigDecimal,
