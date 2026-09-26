@@ -14,7 +14,8 @@ import { PatternsPage } from './patterns-page';
  * - a tab per folder, each an accordion of one panel per file, in order ; GUS open ;
  * - the collapsed header carries the file's title and revision date — « never revised » without ;
  * - a link to another file switches tab and opens that panel, then scrolls to it once the
- *   animation that moves it has ended — the tab's, or the panel's own on the same tab ;
+ *   animation that moves it has ended — the tab's, or the panel's own on the same tab — instantly
+ *   when the reader asks for reduced motion or the browser drops the smooth scroll ;
  * - a file that fails to load costs its own panel, never the page.
  */
 describe('PatternsPage', () => {
@@ -42,6 +43,7 @@ describe('PatternsPage', () => {
   const scrollIntoView = Element.prototype.scrollIntoView;
   afterEach(() => {
     Element.prototype.scrollIntoView = scrollIntoView;
+    vi.unstubAllGlobals();
     TestBed.resetTestingModule();
   });
 
@@ -129,6 +131,49 @@ describe('PatternsPage', () => {
     expect(scrolled).toEqual(['sheet-pattern-DT']);
   });
 
+  describe('the scroll to a linked panel', () => {
+    /** Follows the link to DT and lets its panel expand, on a browser behaving as described. */
+    async function followToDt(browser: { smoothScrolls: boolean; reducedMotion?: boolean }) {
+      vi.stubGlobal('requestAnimationFrame', (frame: FrameRequestCallback) => {
+        frame(0);
+        return 0;
+      });
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)' && !!browser.reducedMotion,
+      }));
+      const fixture = await setup();
+      const panel: HTMLElement = fixture.nativeElement.querySelector('#sheet-pattern-DT');
+      // Far below the fold, as on staging : the panel sits 2186 px down until a scroll lands it
+      // under the 64 px toolbar, where the scroll container starts.
+      let top = 2186;
+      panel.getBoundingClientRect = () => ({ top }) as DOMRect;
+      const behaviors: (ScrollBehavior | undefined)[] = [];
+      panel.scrollIntoView = (options?: boolean | ScrollIntoViewOptions) => {
+        const behavior = (options as ScrollIntoViewOptions).behavior;
+        behaviors.push(behavior);
+        if (behavior !== 'smooth' || browser.smoothScrolls) top = 64;
+      };
+
+      fixture.nativeElement.querySelector('a[href="#sheet-pattern-DT"]').click();
+      await fixture.whenStable();
+      fixture.componentInstance.settled('panel', 'sheet-pattern-DT');
+      return behaviors;
+    }
+
+    it('glides once on a browser that animates scrolling', async () => {
+      expect(await followToDt({ smoothScrolls: true })).toEqual(['smooth']);
+    });
+
+    // Measured on rc2 : the smooth scroll was dropped without a word, the panel never came into view.
+    it('jumps instead when the browser silently drops the smooth scroll', async () => {
+      expect(await followToDt({ smoothScrolls: false })).toEqual(['smooth', 'auto']);
+    });
+
+    it('jumps straight away when the reader asks for reduced motion', async () => {
+      expect(await followToDt({ smoothScrolls: true, reducedMotion: true })).toEqual(['auto']);
+    });
+  });
+
   it('reads the French twin of each file when the interface is in French', async () => {
     lang.set('fr');
     const asked: string[] = [];
@@ -163,8 +208,12 @@ function source(folder: string, file: string): string {
   return `# ${file}\n\n> The ${file} summary.\n\n${revised}---\n\n${link}${sibling}`;
 }
 
-/** Stubs `scrollIntoView` (jsdom has none) and records the id of every element scrolled to. */
+/**
+ * Stubs `scrollIntoView` (jsdom has none) and records the id of every element scrolled to. The
+ * frames that check the scroll landed never come : that check has specs of its own.
+ */
 function recordScrolls(): string[] {
+  vi.stubGlobal('requestAnimationFrame', () => 0);
   const scrolled: string[] = [];
   Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
     scrolled.push(this.id);
