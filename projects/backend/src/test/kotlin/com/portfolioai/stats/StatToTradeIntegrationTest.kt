@@ -188,9 +188,9 @@ class StatToTradeIntegrationTest {
   fun `re-filing a traded stat under another pattern moves its trade along`() {
     val trade = statService.promoteToTrade(stat.id)
 
-    statService.update(stat.id, completionRequest().copy(pattern = Pattern.DT))
+    statService.update(stat.id, completionRequest().copy(pattern = Pattern.SIV))
 
-    assertEquals(Pattern.DT, tradeRepo.findById(trade.id).orElseThrow().pattern)
+    assertEquals(Pattern.SIV, tradeRepo.findById(trade.id).orElseThrow().pattern)
   }
 
   @Test

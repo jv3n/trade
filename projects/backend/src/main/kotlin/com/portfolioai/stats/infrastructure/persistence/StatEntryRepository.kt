@@ -1,5 +1,6 @@
 package com.portfolioai.stats.infrastructure.persistence
 
+import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.domain.StatEntry
 import java.time.LocalDate
 import java.util.UUID
@@ -12,20 +13,22 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
  * any more, so every read scopes on the current user.
  *
  * The listing and the KPIs go through [JpaSpecificationExecutor] + [StatEntrySpecifications]
- * (scope + filters) ; [findByUserId] backs the CSV export, [findByUserIdAndTradeDateAndTicker] the
- * 409 on a duplicate (day, ticker), and [findByIdAndUserId] the user-scoped fetch behind edit and
- * delete (a foreign row never matches, so it can't be touched).
+ * (scope + filters) ; [findByUserId] backs the CSV export,
+ * [findByUserIdAndTradeDateAndTickerAndPattern] the 409 on a duplicate (day, ticker, pattern), and
+ * [findByIdAndUserId] the user-scoped fetch behind edit and delete (a foreign row never matches, so
+ * it can't be touched).
  */
 interface StatEntryRepository :
   JpaRepository<StatEntry, UUID>, JpaSpecificationExecutor<StatEntry> {
 
   fun findByUserId(userId: UUID, sort: Sort): List<StatEntry>
 
-  /** Natural-key lookup : one stat per (user, day, ticker). */
-  fun findByUserIdAndTradeDateAndTicker(
+  /** Natural-key lookup : one stat per (user, day, ticker, pattern). */
+  fun findByUserIdAndTradeDateAndTickerAndPattern(
     userId: UUID,
     tradeDate: LocalDate,
     ticker: String,
+    pattern: Pattern,
   ): StatEntry?
 
   fun findByIdAndUserId(id: UUID, userId: UUID): StatEntry?

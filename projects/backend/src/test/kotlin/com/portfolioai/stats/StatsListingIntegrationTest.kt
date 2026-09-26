@@ -43,8 +43,9 @@ import org.springframework.web.server.ResponseStatusException
  *   completion status — the tick stored in `completed_at`, not the prices (#263).
  * - **CRUD** — the premarket + session blocks round-trip through the real `NUMERIC` columns, an
  *   edit overwrites the row, a delete removes it.
- * - **One stat per (user, day, ticker)** — a second create is a 409, and so is renaming a stat onto
- *   a slot the caller already holds.
+ * - **One stat per (user, day, ticker, pattern)** (#434) — a second create is a 409, and so is
+ *   renaming a stat onto a slot the caller already holds ; the same day and ticker in another
+ *   pattern is a stat of its own. Re-filing a stat to or from DT is a 400.
  * - **Completion (#263)** — the session is saved field by field ; a stat is completed only when
  *   ticked, which needs the five prices, and a ticked stat can't lose a price.
  * - **By hand (#326)** — a stat typed on the stats page for a past day has no source candidate ; a
@@ -324,7 +325,7 @@ class StatsListingIntegrationTest {
   }
 
   @Test
-  fun `creating a second stat for the same day and ticker is a 409`() {
+  fun `creating a second stat for the same day, ticker and pattern is a 409`() {
     service.create(fullSessionRequest(ticker = "KTTA"))
 
     // Case-insensitive : the ticker is normalised before the check.
@@ -335,6 +336,33 @@ class StatsListingIntegrationTest {
 
     assertEquals(409, ex.statusCode.value())
     assertEquals(1, repo.count(), "no duplicate row")
+  }
+
+  // SGBX of the mockup : a GUS in the morning, and the double top it formed late in the morning.
+  @Test
+  fun `the same day and ticker in another pattern is a stat of its own`() {
+    service.create(premarketRequest(ticker = "SGBX", pattern = Pattern.GUS))
+
+    service.create(premarketRequest(ticker = "SGBX", pattern = Pattern.DT))
+
+    assertEquals(2, repo.count())
+  }
+
+  @Test
+  fun `re-filing a stat to or from DT is a 400 — a double top is a stat of its own`() {
+    val gus = service.create(premarketRequest(ticker = "SGBX", pattern = Pattern.GUS))
+    val dt = service.create(premarketRequest(ticker = "NXTT", pattern = Pattern.DT))
+
+    listOf(
+        gus.id to premarketRequest(ticker = "SGBX", pattern = Pattern.DT),
+        dt.id to premarketRequest(ticker = "NXTT", pattern = Pattern.GUS),
+      )
+      .forEach { (id, refiled) ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.update(id, refiled) }
+        assertEquals(400, ex.statusCode.value())
+      }
+    assertEquals(Pattern.GUS, repo.findById(gus.id).orElseThrow().pattern)
+    assertEquals(Pattern.DT, repo.findById(dt.id).orElseThrow().pattern)
   }
 
   @Test

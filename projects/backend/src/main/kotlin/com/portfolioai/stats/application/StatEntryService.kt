@@ -5,6 +5,7 @@ import com.portfolioai.auth.domain.User
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
+import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
@@ -38,8 +39,9 @@ import org.springframework.web.server.ResponseStatusException
  * missing-or-foreign id returns 404 (never 403) so we don't leak existence — same contract as the
  * journal / candidates / account.
  *
- * **One stat per (user, day, ticker)** — creating a second one is a 409 ; the DB unique constraint
- * `ux_stat_entry_user_day_ticker` is the race-safe backstop.
+ * **One stat per (user, day, ticker, pattern)** — creating a second one is a 409 ; the DB unique
+ * constraint `ux_stat_entry_user_day_ticker_pattern` is the race-safe backstop (#434). A double top
+ * is a stat of its own : re-filing a stat to or from DT is a 400.
  *
  * A stat is born from a candidate (the promotion action, #189, through [create]) or typed by hand
  * for a chart found afterwards, on any day up to today ([createByHand], #326). The CSV leg is
@@ -109,46 +111,51 @@ class StatEntryService(
   }
 
   /**
-   * The stat each of these candidates became, keyed by candidate — the "in stats" link of the
-   * candidates listing (#383) and the guard against promoting twice (#189). A candidate never
-   * promoted is absent. Read exposed to the `candidates` context through this application service,
-   * the way cross-context reads are done here.
+   * The stats each of these candidates became, by pattern (#434) — the "in stats" badges of the
+   * candidates listing (#383) and the guard against promoting twice in one pattern (#189). A
+   * candidate never promoted is absent. Read exposed to the `candidates` context through this
+   * application service, the way cross-context reads are done here.
    */
   @Transactional(readOnly = true)
-  fun statIdsByCandidate(candidateIds: Collection<UUID>): Map<UUID, UUID> {
+  fun statIdsByCandidate(candidateIds: Collection<UUID>): Map<UUID, Map<Pattern, UUID>> {
     if (candidateIds.isEmpty()) return emptyMap()
     val userId = authService.getCurrentUser().id
     return repo
       .findByUserIdAndCandidateIdIn(userId, candidateIds)
-      .mapNotNull { stat -> stat.candidateId?.let { it to stat.id } }
-      .toMap()
+      .filter { it.candidateId != null }
+      .groupBy { it.candidateId!! }
+      .mapValues { (_, stats) -> stats.associate { it.pattern to it.id } }
   }
 
   /**
-   * Whether the caller's sheet already holds a stat for that (day, ticker). Lets `candidates` skip
-   * a taken slot **before** calling [create] : catching the 409 instead would mark the surrounding
-   * transaction rollback-only, and the bulk promotion would fail as a whole.
+   * Whether the caller's sheet already holds a stat for that (day, ticker, pattern). Lets
+   * `candidates` skip a taken slot **before** calling [create] : catching the 409 instead would
+   * mark the surrounding transaction rollback-only, and the bulk promotion would fail as a whole.
    */
   @Transactional(readOnly = true)
-  fun existsForDayAndTicker(tradeDate: LocalDate, ticker: String): Boolean {
+  fun existsForDayAndTicker(tradeDate: LocalDate, ticker: String, pattern: Pattern): Boolean {
     val userId = authService.getCurrentUser().id
-    return repo.findByUserIdAndTradeDateAndTicker(userId, tradeDate, ticker.trim().uppercase()) !=
-      null
+    return repo.findByUserIdAndTradeDateAndTickerAndPattern(
+      userId,
+      tradeDate,
+      ticker.trim().uppercase(),
+      pattern,
+    ) != null
   }
 
   /**
-   * Gives the stat born from [candidateId] the [openPrice] typed on the candidate at 9:30 — for a
+   * Gives the stats born from [candidateId] the [openPrice] typed on the candidate at 9:30 — for a
    * candidate promoted before the open. A stat that already has an open keeps it : the one typed on
    * the stat wins. No stat for that candidate → nothing to do.
    */
   @Transactional
   fun fillMissingOpen(candidateId: UUID, openPrice: BigDecimal) {
     val userId = authService.getCurrentUser().id
-    val stat =
-      repo.findByUserIdAndCandidateIdIn(userId, listOf(candidateId)).firstOrNull() ?: return
-    if (stat.openPrice != null) return
-    stat.openPrice = openPrice
-    stat.updatedAt = Instant.now()
+    for (stat in repo.findByUserIdAndCandidateIdIn(userId, listOf(candidateId))) {
+      if (stat.openPrice != null) continue
+      stat.openPrice = openPrice
+      stat.updatedAt = Instant.now()
+    }
   }
 
   // ---- CRUD (user-scoped) --------------------------------------------------------------------
@@ -205,8 +212,8 @@ class StatEntryService(
 
   /**
    * Creates a stat for the caller — the promotion of a candidate (#189), or [createByHand].
-   * [candidateId] keeps the trace of the source candidate. A (day, ticker) already in the sheet is
-   * a 409.
+   * [candidateId] keeps the trace of the source candidate. A (day, ticker, pattern) already in the
+   * sheet is a 409.
    */
   @Transactional
   fun create(request: StatEntryRequest, candidateId: UUID? = null): StatEntryDto {
@@ -215,21 +222,32 @@ class StatEntryService(
     requireFree(user.id, request, ticker, ownId = null)
     val entry = newEntry(user, request, ticker, candidateId)
     entry.apply(request, ticker)
-    return repo.save(entry).toDto()
+    // Flushed here so a race lost on a unique constraint surfaces as the 409 of
+    // `GlobalExceptionHandler`, not as a failed commit.
+    return repo.saveAndFlush(entry).toDto()
   }
 
   /**
    * Overwrites a stat — the session panel sends the whole row back each time a field is left
    * (premarket recap + session prices + flags), so any subset of the session may come in. Renaming
-   * onto a (day, ticker) the caller already has is a 409. A ticked stat keeps its tick but can't
-   * lose a price : that is a 400, untick it first.
+   * onto a (day, ticker, pattern) the caller already has is a 409. A ticked stat keeps its tick but
+   * can't lose a price : that is a 400, untick it first. Re-filing to or from DT is a 400 : a GUS
+   * that becomes a double top is a second stat (#434).
    */
   @Transactional
   fun update(id: UUID, request: StatEntryRequest): StatEntryDto {
     val entry = loadOwned(id)
     val ticker = request.cleanTicker()
-    requireFree(entry.user.id, request, ticker, ownId = entry.id)
     val previousPattern = entry.pattern
+    if (
+      request.pattern != previousPattern && Pattern.DT in setOf(request.pattern, previousPattern)
+    ) {
+      throw badRequest(
+        "Stat ${entry.ticker} can't be re-filed from $previousPattern to ${request.pattern} — " +
+          "a double top is a stat of its own"
+      )
+    }
+    requireFree(entry.user.id, request, ticker, ownId = entry.id)
     entry.apply(request, ticker)
     if (entry.isCompleted && !entry.hasFullSession) {
       throw badRequest(
@@ -314,13 +332,19 @@ class StatEntryService(
       ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Stat entry $id not found")
   }
 
-  /** 409 when another stat of the same user already holds (day, ticker). */
+  /** 409 when another stat of the same user already holds (day, ticker, pattern). */
   private fun requireFree(userId: UUID, request: StatEntryRequest, ticker: String, ownId: UUID?) {
-    val existing = repo.findByUserIdAndTradeDateAndTicker(userId, request.tradeDate, ticker)
+    val existing =
+      repo.findByUserIdAndTradeDateAndTickerAndPattern(
+        userId,
+        request.tradeDate,
+        ticker,
+        request.pattern,
+      )
     if (existing != null && existing.id != ownId) {
       throw ResponseStatusException(
         HttpStatus.CONFLICT,
-        "Stat $ticker already exists on ${request.tradeDate}",
+        "Stat $ticker ${request.pattern} already exists on ${request.tradeDate}",
       )
     }
   }

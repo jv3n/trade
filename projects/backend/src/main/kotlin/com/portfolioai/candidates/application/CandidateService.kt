@@ -4,8 +4,10 @@ import com.portfolioai.auth.application.AuthService
 import com.portfolioai.candidates.application.dto.BulkPromotionDto
 import com.portfolioai.candidates.application.dto.CandidateDto
 import com.portfolioai.candidates.application.dto.CandidateRequest
+import com.portfolioai.candidates.application.dto.CandidateStatDto
 import com.portfolioai.candidates.domain.Candidate
 import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
+import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
@@ -21,6 +23,9 @@ import org.springframework.web.server.ResponseStatusException
 /** Past it, a target push is a typo : a small cap can push 200 % and more, not ten times over. */
 private val MAX_TARGET_PUSH_PERCENT = BigDecimal(1000)
 
+/** The patterns a candidate is promoted to for now (#428) — SIR, SIV and discretionary wait. */
+private val PROMOTABLE = setOf(Pattern.GUS, Pattern.DT)
+
 /**
  * Candidates service — the morning capture (cf. `mockup/PARCOURS.md › Étape 1`). Everything is
  * scoped to the current user, and a missing-or-foreign id → 404 (never 403) so we don't leak
@@ -33,8 +38,11 @@ private val MAX_TARGET_PUSH_PERCENT = BigDecimal(1000)
  * return a clean 400 rather than reaching the DB CHECK constraints, and so does a target push above
  * 1000 %.
  *
- * **The open typed at 9:30** travels to the stat : copied on promotion, and — for a candidate
- * promoted before the open — pushed onto its stat when typed later, as long as the stat has none.
+ * **A candidate has no pattern** (#434) : it is chosen when promoting, and a candidate gives one
+ * stat per pattern — a GUS in the morning, a DT late in the morning.
+ *
+ * **The open typed at 9:30** travels to the stats : copied on promotion, and — for a candidate
+ * promoted before the open — pushed onto its stats when typed later, as long as they have none.
  */
 @Service
 class CandidateService(
@@ -50,44 +58,47 @@ class CandidateService(
     val candidates =
       repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, date ?: LocalDate.now())
     // One query for the whole day rather than one per row.
-    val statIds = statEntryService.statIdsByCandidate(candidates.map { it.id })
-    return candidates.map { it.toDto(statId = statIds[it.id]) }
+    val stats = statEntryService.statIdsByCandidate(candidates.map { it.id })
+    return candidates.map { it.toDto(stats[it.id]) }
   }
 
   @Transactional(readOnly = true)
   fun findById(id: UUID): CandidateDto {
     val candidate = loadOwned(id)
-    return candidate.toDto(statId = statEntryService.statIdsByCandidate(listOf(id))[id])
+    return candidate.toDto(statEntryService.statIdsByCandidate(listOf(id))[id])
   }
 
   // ---- Promotion to the stats sheet (#189) ---------------------------------------------------
 
   /**
-   * Copies a candidate onto the stats sheet — the « → Stat » action, cf. `mockup/PARCOURS.md`
-   * step 2. The stat takes the whole premarket block and starts "to complete" ; the candidate keeps
-   * a trace through `stat_entry.candidate_id` and shows as promoted from then on.
+   * Copies a candidate onto the stats sheet as a [pattern] stat — the « → GUS » / « → DT » actions,
+   * cf. `mockup/PARCOURS.md` step 2. The stat takes the whole premarket block and starts "to
+   * complete" ; the candidate keeps a trace through `stat_entry.candidate_id`.
    *
-   * Promoting twice is a **409**, so the bulk action below stays idempotent. A stat that already
-   * exists for that (day, ticker) without coming from this candidate is a 409 too — raised by
-   * `StatEntryService`.
+   * Promoting twice in one pattern is a **409** — `ux_stat_entry_candidate_pattern` backs it up. A
+   * stat that already exists for that (day, ticker, pattern) without coming from this candidate is
+   * a 409 too — raised by `StatEntryService`. A pattern other than GUS or DT is a 400.
    */
   @Transactional
-  fun promote(id: UUID): StatEntryDto {
+  fun promote(id: UUID, pattern: Pattern = Pattern.GUS): StatEntryDto {
+    if (pattern !in PROMOTABLE)
+      throw badRequest("A candidate is promoted to GUS or DT, not $pattern")
     val candidate = loadOwned(id)
-    if (candidate.id in statEntryService.statIdsByCandidate(listOf(candidate.id))) {
+    val stats = statEntryService.statIdsByCandidate(listOf(candidate.id))[candidate.id].orEmpty()
+    if (pattern in stats) {
       throw ResponseStatusException(
         HttpStatus.CONFLICT,
-        "Candidate ${candidate.ticker} is already in the stats sheet",
+        "Candidate ${candidate.ticker} already has a $pattern stat",
       )
     }
-    return statEntryService.create(candidate.toStatRequest(), candidateId = candidate.id)
+    return statEntryService.create(candidate.toStatRequest(pattern), candidateId = candidate.id)
   }
 
   /**
-   * Promotes every candidate of a day that isn't in the stats sheet yet — « Tout passer en stats ».
-   * Idempotent by construction : already-promoted candidates are skipped, and a candidate whose
-   * (day, ticker) slot is taken by another stat is reported as skipped rather than failing the
-   * whole batch.
+   * Makes a GUS stat of every candidate of a day that has none yet — « Tout passer en GUS ». It
+   * never adds a DT : a double top is promoted one by one, when it forms. Idempotent by
+   * construction : a candidate with any stat is skipped, and so is one whose (day, ticker, GUS)
+   * slot is taken by another stat, rather than failing the whole batch.
    */
   @Transactional
   fun promoteDay(date: LocalDate?): BulkPromotionDto {
@@ -103,12 +114,16 @@ class CandidateService(
       // mark this transaction rollback-only and take the whole batch down with it.
       if (
         candidate.id in alreadyPromoted ||
-          statEntryService.existsForDayAndTicker(candidate.tradingDate, candidate.ticker)
+          statEntryService.existsForDayAndTicker(
+            candidate.tradingDate,
+            candidate.ticker,
+            Pattern.GUS,
+          )
       ) {
         skipped += candidate.ticker
         continue
       }
-      statEntryService.create(candidate.toStatRequest(), candidateId = candidate.id)
+      statEntryService.create(candidate.toStatRequest(Pattern.GUS), candidateId = candidate.id)
       promoted += candidate.ticker
     }
     return BulkPromotionDto(promoted = promoted, skipped = skipped)
@@ -141,7 +156,7 @@ class CandidateService(
     candidate.updatedAt = Instant.now()
     val saved = repo.save(candidate)
     saved.openPrice?.let { statEntryService.fillMissingOpen(saved.id, it) }
-    return saved.toDto(statId = statEntryService.statIdsByCandidate(listOf(saved.id))[saved.id])
+    return saved.toDto(statEntryService.statIdsByCandidate(listOf(saved.id))[saved.id])
   }
 
   @Transactional fun delete(id: UUID) = repo.delete(loadOwned(id))
@@ -169,7 +184,6 @@ class CandidateService(
     val pmHigh = request.pmHigh.requirePositive("PM high")
     if (pmHigh < pmOpen) throw badRequest("PM high must not be below the PM open")
     tradingDate = request.tradingDate
-    pattern = request.pattern
     ticker = cleanTicker
     previousClose = request.previousClose.requirePositive("Previous close")
     this.pmOpen = pmOpen
@@ -192,7 +206,7 @@ class CandidateService(
    * typed at 9:30. The rest of the session block stays empty — the new stat is "to complete" — and
    * the flags default to false.
    */
-  private fun Candidate.toStatRequest(): StatEntryRequest =
+  private fun Candidate.toStatRequest(pattern: Pattern): StatEntryRequest =
     StatEntryRequest(
       tradeDate = tradingDate,
       pattern = pattern,
@@ -207,11 +221,10 @@ class CandidateService(
       openPrice = openPrice,
     )
 
-  private fun Candidate.toDto(statId: UUID? = null): CandidateDto =
+  private fun Candidate.toDto(stats: Map<Pattern, UUID>? = null): CandidateDto =
     CandidateDto(
       id = id,
       tradingDate = tradingDate,
-      pattern = pattern,
       ticker = ticker,
       previousClose = previousClose,
       pmOpen = pmOpen,
@@ -222,8 +235,10 @@ class CandidateService(
       note = note,
       openPrice = openPrice,
       targetPushPercent = targetPushPercent,
-      promoted = statId != null,
-      statId = statId,
+      stats =
+        stats.orEmpty().toSortedMap().map { (pattern, statId) ->
+          CandidateStatDto(pattern, statId)
+        },
       createdAt = createdAt,
       updatedAt = updatedAt,
     )
