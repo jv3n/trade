@@ -7,7 +7,7 @@ export type Shelf = 'pattern' | 'notes';
 /** The files of each folder, in display order — patterns in the order of the Pattern menu. */
 export const SHELVES: Record<Shelf, readonly string[]> = {
   pattern: ['GUS', 'DT', 'SIR', 'SIV', 'penny-break'],
-  notes: ['execution-signals', 'four-sellers', 'stop-rule'],
+  notes: ['execution-signals', 'four-sellers', 'stop-rule', 'tradezero-fees'],
 };
 
 export interface SheetRef {
