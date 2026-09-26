@@ -29,6 +29,8 @@ import { AccountPage } from './account-page';
  *  - **A filter change rewinds to page 0** — page 4 of the previous result set means nothing.
  *  - **The balance column is the server's** — `balanceAfter` is rendered as received, never
  *    recomputed from the visible rows, or filtering to trades would renumber it.
+ *  - **The reconciliation-gap tile follows the dates only** (#338) — under a type filter half of
+ *    its ratio would be zeroed, and a plausible 0 % is worse than no figure.
  *
  * Creation and edition go through `MovementDialog` and are its concern, not the page's.
  */
@@ -163,6 +165,84 @@ describe('AccountPage', () => {
 
     const balances = fixture.componentInstance.movements().map((m) => m.balanceAfter);
     expect(balances).toEqual([1041.85, 1291.85]);
+  });
+
+  describe('reconciliation-gap tile', () => {
+    // October in the issue : $3,000 of P&L, $200 of corrections the broker took.
+    it("reads the period's corrections unsigned, and their share of the P&L", () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 3000, periodAdjustments: -200 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      const gap = fixture.componentInstance.reconciliationGap();
+      expect(gap?.amount).toBe(200);
+      expect(gap?.credit).toBe(false);
+      expect(gap?.share).toBeCloseTo(6.67, 2);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="reconciliation-gap"]'),
+      ).not.toBeNull();
+    });
+
+    it('reads a period without any correction as 0 and 0 %', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGap()).toEqual({
+        amount: 0,
+        credit: false,
+        share: 0,
+      });
+    });
+
+    it('keeps the amount but drops the ratio on a losing period', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: -420, periodAdjustments: -35 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      const gap = fixture.componentInstance.reconciliationGap();
+      expect(gap?.amount).toBe(35);
+      expect(gap?.share).toBeNull();
+    });
+
+    // A credited-back locate can leave the period's corrections net positive.
+    it('reads a net positive period as a credit, without a negative percentage', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodAdjustments: 5 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGap()).toEqual({
+        amount: 5,
+        credit: true,
+        share: null,
+      });
+    });
+
+    it('asks the summary once when no type is filtered', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(getSummary).toHaveBeenCalledTimes(1);
+    });
+
+    it('stays on the whole period when the type filter narrows the rest of the row', () => {
+      getSummary.mockImplementation((f?: AccountMovementFilter) =>
+        of(
+          f?.types
+            ? makeSummary({ periodPnl: 3000, periodAdjustments: 0 })
+            : makeSummary({ periodPnl: 3000, periodAdjustments: -200 }),
+        ),
+      );
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      getSummary.mockClear();
+
+      fixture.componentInstance.onTypeChange('trades');
+
+      const filters = getSummary.mock.calls.map((c) => c[0] as AccountMovementFilter);
+      expect(filters.map((f) => f.types)).toEqual([['TRADE'], null]);
+      expect(filters[1].dateFrom?.getTime()).toBe(filters[0].dateFrom?.getTime());
+      expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(200);
+    });
   });
 
   // ---------------------------------------------------------------------------

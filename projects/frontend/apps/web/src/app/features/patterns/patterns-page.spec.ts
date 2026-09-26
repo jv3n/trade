@@ -70,6 +70,7 @@ describe('PatternsPage', () => {
       'execution-signals',
       'four-sellers',
       'stop-rule',
+      'tradezero-fees',
     ]);
   });
 
@@ -183,7 +184,7 @@ describe('PatternsPage', () => {
     };
     await setup();
 
-    expect(asked).toHaveLength(8);
+    expect(asked).toHaveLength(9);
     expect(new Set(asked)).toEqual(new Set(['fr']));
   });
 
@@ -194,7 +195,7 @@ describe('PatternsPage', () => {
     const fixture = await setup();
     const notes = fixture.componentInstance.sheets().notes;
 
-    expect(notes.map((s) => s.unreadable ?? false)).toEqual([false, true, false]);
+    expect(notes.map((s) => s.unreadable ?? false)).toEqual([false, true, false, false]);
     expect(fixture.componentInstance.sheets().pattern).toHaveLength(5);
     expect(fixture.nativeElement.querySelector('mat-tab-group')).not.toBeNull();
   });

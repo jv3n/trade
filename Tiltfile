@@ -202,6 +202,16 @@ local_resource(
     links=[link("http://{}:{}".format(host, frontend_port), "App")],
 )
 
+# `npm start` copies the pattern sheets and notes into `public/docs/` once, at startup (#419) : a
+# sheet added or edited while the dev server runs never reaches the Patterns page without this.
+local_resource(
+    name="frontend-docs",
+    cmd="node projects/frontend/apps/web/tools/copy-docs.mjs",
+    env=tool_env,
+    deps=["docs/pattern", "docs/notes"],
+    labels=["app"],
+)
+
 local_resource(
     name="storybook",
     serve_cmd="cd projects/frontend && npm run storybook -- --host 0.0.0.0 --port {} --no-open".format(storybook_port),

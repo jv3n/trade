@@ -70,6 +70,17 @@ const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[]
   corrections: ['ADJUSTMENT'],
 };
 
+/**
+ * The period's reconciliation corrections as the tile reads them. [amount] is unsigned — the label
+ * carries the direction ; [credit] flags a period the broker ended up paying into. [share] is the
+ * percentage of the period's P&L, null when it would mislead (a flat or losing period, a credit).
+ */
+export interface ReconciliationGap {
+  amount: number;
+  credit: boolean;
+  share: number | null;
+}
+
 /** What the filter toolbar holds. The preset is UI-only — only the resolved dates reach the API. */
 interface AccountFilter {
   period: PeriodPresetKey;
@@ -86,7 +97,9 @@ interface AccountFilter {
  * **One filter drives everything.** The period + type toolbar feeds `/summary`, `/movements` and
  * the chart window at once, so the three always describe the same slice — a KPI row that disagreed
  * with the table below it would be worse than no KPI at all. The filter mirrors the journal's,
- * presets included, and only resolved dates travel to the backend.
+ * presets included, and only resolved dates travel to the backend. One exception : the
+ * reconciliation-gap tile (#338) follows the dates only — a type filter would zero half of its
+ * ratio and pass the result off as a measured 0 %.
  *
  * The balance column comes from the server (`balanceAfter`), never recomputed here : it is defined
  * over the whole history, so filtering to trades must not renumber it.
@@ -132,6 +145,8 @@ export class AccountPage {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly summary = signal<AccountSummary | null>(null);
+  /** The same summary over the period's dates with no type filter — what the gap tile reads. */
+  readonly periodSummary = signal<AccountSummary | null>(null);
   readonly movements = signal<AccountMovement[]>([]);
   readonly totalElements = signal(0);
   readonly pageIndex = signal(0);
@@ -181,6 +196,19 @@ export class AccountPage {
   readonly chartRange = computed<{ from: Date; to: Date } | null>(() => {
     const pts = this.clippedSeries();
     return pts.length ? { from: pts[0].date, to: pts[pts.length - 1].date } : null;
+  });
+
+  readonly reconciliationGap = computed<ReconciliationGap | null>(() => {
+    const s = this.periodSummary();
+    if (!s) return null;
+    // Corrections are negative when the broker took money : a positive sum is a credit.
+    const credit = s.periodAdjustments > 0;
+    const amount = Math.abs(s.periodAdjustments);
+    return {
+      amount,
+      credit,
+      share: !credit && s.periodPnl > 0 ? (amount / s.periodPnl) * 100 : null,
+    };
   });
 
   /**
@@ -334,10 +362,20 @@ export class AccountPage {
   private fetch(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.repo.getSummary(this.toApiFilter()).subscribe({
-      next: (s) => this.summary.set(s),
+    const apiFilter = this.toApiFilter();
+    this.repo.getSummary(apiFilter).subscribe({
+      next: (s) => {
+        this.summary.set(s);
+        if (!apiFilter.types) this.periodSummary.set(s);
+      },
       error: () => this.error.set(this.translate.instant('account.errors.load')),
     });
+    if (apiFilter.types) {
+      this.repo.getSummary({ ...apiFilter, types: null }).subscribe({
+        next: (s) => this.periodSummary.set(s),
+        error: () => this.error.set(this.translate.instant('account.errors.load')),
+      });
+    }
     // The whole series, always : the chart is clipped client-side, so changing the window doesn't
     // cost a round-trip and the curve keeps its shape when the user flips between presets.
     this.repo.getBalanceSeries().subscribe({
