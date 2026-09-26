@@ -994,14 +994,17 @@
               @if (s.dtTopPrice !== null) {
                 {{ s.dtTopPrice | price: s.previousClose }}
                 @if (s.legs.extension !== null) {
-                  <small class="leg-note" [class.warn]="s.legs.extension < extensionCriterion">{{
-                    'stats.doubleTop.cellA'
-                      | translate
-                        : {
-                            leg: (s.legs.extension | number: '1.1-1'),
-                            withGap: (s.legs.extensionWithGap | number: '1.0-1'),
-                          }
-                  }}</small>
+                  <!-- Only the extension is judged against the sheet's criterion, not the gap (#453). -->
+                  <small class="leg-note"
+                    ><span [class.warn]="s.legs.extension < extensionCriterion">{{
+                      'stats.doubleTop.cellA'
+                        | translate: { leg: (s.legs.extension | number: '1.1-1') }
+                    }}</span>
+                    {{
+                      'stats.doubleTop.cellAGap'
+                        | translate: { withGap: (s.legs.extensionWithGap | number: '1.0-1') }
+                    }}</small
+                  >
                 }
               } @else {
                 —

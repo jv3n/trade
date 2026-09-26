@@ -178,6 +178,7 @@
   font-size: s.$font-2xs;
   color: var(--color-text-muted);
 
+  .warn,
   &.warn {
     color: var(--color-warning);
   }

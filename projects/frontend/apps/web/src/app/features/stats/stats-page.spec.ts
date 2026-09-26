@@ -7,7 +7,7 @@ import {
   convertToParamMap,
   provideRouter,
 } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { StbToast, provideNativeDateAdapter } from '@portfolioai/ui';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
@@ -1143,6 +1143,24 @@ describe('StatsPage', () => {
     await fixture.whenStable();
 
     expect(footer()?.classList).not.toContain('no-averages');
+  });
+
+  // #453 : the gap figure is not judged against any criterion, yet it went amber with the extension.
+  it('ambers the extension of a double top under the criterion, never its gap figure', async () => {
+    // From 1,90 to 2,50 : +31,6 % from the start, under the 50 % criterion ; +123 % from the close.
+    const { fixture, page } = setup({ rows: [makeDoubleTop({ dtTopPrice: 2.5 })] });
+    TestBed.inject(TranslateService).setTranslation('en', {
+      stats: { doubleTop: { cellA: '{{leg}} %', cellAGap: '· gap {{withGap}} %' } },
+    });
+
+    page.setView('DT');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const note: HTMLElement = fixture.nativeElement.querySelector('.leg-note');
+    expect(note.classList).not.toContain('warn');
+    expect(note.querySelector('.warn')?.textContent).toContain('31.6');
+    expect(note.querySelector('.warn')?.textContent).not.toContain('123');
   });
 
   it('leaving the GUS view drops the « No push » tab it was on', () => {
