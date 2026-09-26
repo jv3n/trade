@@ -1130,6 +1130,21 @@ describe('StatsPage', () => {
     expect(fixture.nativeElement.querySelector('tr.averages-row')).toBeNull();
   });
 
+  // #452 : with no column, the footer row still laid out a blank 52 px band under the table.
+  it('collapses the empty footer row outside the DT view', async () => {
+    const { fixture, page } = setup({ rows: [makeStat()] });
+    const footer = (): Element | null =>
+      fixture.nativeElement.querySelector('tr.mat-mdc-footer-row');
+
+    expect(footer()?.classList).toContain('no-averages');
+
+    page.setView('DT');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(footer()?.classList).not.toContain('no-averages');
+  });
+
   it('leaving the GUS view drops the « No push » tab it was on', () => {
     const { fixture, page, repo } = setup({ rows: [makeStat()] });
     page.setStatus('NO_PUSH');
