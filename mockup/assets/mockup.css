@@ -22,6 +22,8 @@
   --text-faint: oklch(0.62 0.012 270);
 
   --accent: oklch(0.7 0.155 277);
+  --logo-tile: #ffffff;
+  --logo-mark: #111318;
   --accent-contrast: oklch(0.2 0.02 277);
   --gain: oklch(0.76 0.15 162);
   --loss: oklch(0.7 0.18 18);
@@ -48,6 +50,8 @@
   --text-faint: oklch(0.54 0.012 270);
 
   --accent: oklch(0.52 0.19 277);
+  --logo-tile: #111318;
+  --logo-mark: #e8eaf0;
   --accent-contrast: oklch(0.99 0 0);
   --gain: oklch(0.52 0.14 160);
   --loss: oklch(0.56 0.2 22);
@@ -161,9 +165,7 @@ h3 {
 .brand-mark {
   width: 24px;
   height: 24px;
-  border-radius: 7px;
-  background: linear-gradient(140deg, var(--accent), color-mix(in oklch, var(--accent) 40%, var(--gain)));
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--accent) 40%, transparent);
+  flex-shrink: 0;
 }
 
 .nav-link {

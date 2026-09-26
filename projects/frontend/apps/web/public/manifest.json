@@ -1,6 +1,6 @@
 {
-  "name": "PortfolioAI",
-  "short_name": "PortfolioAI",
+  "name": "Ticker Story",
+  "short_name": "Ticker Story",
   "description": "Journal de trading personnel — candidats, stats, trades.",
   "lang": "fr",
   "start_url": "/",

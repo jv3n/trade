@@ -22,6 +22,17 @@ Legend : ✅ defined · 🟡 in progress · ❓ to define
 - **Spotting : the radar** (an external tool) finds the day's tickers. The app doesn't replace the
   radar, it records what comes out of it.
 
+### Name and sign-in
+
+The app is **Ticker Story** (#457), served on `tickerstory.org`. Its mark stays the monoline **P**
+with its three small ticker lines, on a rounded tile — dark in the light theme, white in the dark
+one : kept on purpose, even though it no longer matches the name. Only what the user
+sees carries the name : the code's identifiers (`com.portfolioai`, `@portfolioai/ui`, the cloud
+resources) stay as they are.
+
+Out of session, the **sign-in page** says what the app does — candidates and stats, the journal, the
+account — and offers « Se connecter avec Google ». Screen : [`connexion.html`](connexion.html).
+
 ### Pattern
 
 The **stat** and the **trade** carry a **pattern** — **chosen when the candidate is promoted**,
