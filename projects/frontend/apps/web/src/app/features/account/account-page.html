@@ -23,7 +23,7 @@
        to its dates only). -->
   @if (summary(); as s) {
     <section class="kpi-row">
-      <mat-card class="kpi kpi--hero" appearance="outlined">
+      <mat-card class="kpi" appearance="outlined" data-testid="account-balance">
         <div class="kpi__label">
           <span>{{ 'account.currentBalance' | translate }}</span>
           <mat-button-toggle-group

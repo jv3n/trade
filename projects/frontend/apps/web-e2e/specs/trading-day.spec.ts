@@ -121,7 +121,9 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
   expect((await api.get<{ balance: number }>('/api/account/summary')).balance).toBe(BROKER_PNL);
   await page.goto('/account');
   await expect
-    .poll(async () => parseFrAmount(await page.locator('.kpi--hero .kpi__value').innerText()))
+    .poll(async () =>
+      parseFrAmount(await page.getByTestId('account-balance').locator('.kpi__value').innerText()),
+    )
     .toBe(BROKER_PNL);
 
   // ---- Re-filed under another pattern, the trade follows (#393) ----
