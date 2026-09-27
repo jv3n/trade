@@ -161,5 +161,5 @@ async function expectExactText(locator: Locator, text: string): Promise<void> {
 }
 
 function heroBalance(page: Page) {
-  return page.locator('.kpi--hero .kpi__value');
+  return page.getByTestId('account-balance').locator('.kpi__value');
 }

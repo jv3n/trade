@@ -60,11 +60,3 @@
     height: s.$icon-xs;
   }
 }
-
-// The page's headline figure (the account balance) — a bigger value. One column like the others,
-// so the account page's four tiles hold on one row (#338).
-.kpi--hero {
-  .kpi__value {
-    font-size: s.$font-3xl;
-  }
-}
