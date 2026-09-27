@@ -142,7 +142,7 @@ async function expectCleanMorning(api: Api, page: Page): Promise<void> {
 }
 
 function heroBalance(page: Page) {
-  return page.locator('.kpi--hero .kpi__value');
+  return page.getByTestId('account-balance').locator('.kpi__value');
 }
 
 async function typeBrokerBalance(page: Page, value: string): Promise<void> {

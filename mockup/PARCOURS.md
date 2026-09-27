@@ -684,6 +684,20 @@ compares it with the computed one. No gap → the reconciliation is simply times
 "correction" line puts the balance on the TradeZero figure. It catches whatever the adjusted P&L
 figures didn't cover (borrowing fees, rounding…).
 
+**The reconciliation gaps, as a KPI** (#338) : the fourth tile of the KPI row reads the period's
+corrections — what the broker took outside the trades (locates, subscription, rounding, a mistyped
+P&L) — as an amount and as a share of the period's P&L (« 12,40 $ · 1,6 % du P&L »). It is an
+indicator, not an accounting figure, and it is not called « fees » for that reason. It works by
+difference, so no fee type escapes it and no broker rule lives in the code.
+
+- **Unsigned** : the amount and the percentage lose the minus — the label carries the direction ;
+  net-positive corrections (a credited-back locate) read naturally, never as a negative percentage.
+- **Follows the dates, ignores the type filter** : under « Trades » or « Corrections » the ratio
+  would read a false 0 % or divide by zero, so the tile always reads every movement of the range.
+- **A flat or losing period** shows the amount and a dash for the ratio — a share of a loss means
+  nothing.
+- The balance tile drops to **one column** so the four tiles share the row.
+
 **A typed balance is checked before it rewrites the account** (#307) : a **negative** balance is
 refused on the field (the broker never shows one) and the button stays disabled ; a gap **above
 20 % of the computed balance** still goes through, but its confirmation says so and reads as a

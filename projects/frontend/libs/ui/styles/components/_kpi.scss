@@ -60,16 +60,3 @@
     height: s.$icon-xs;
   }
 }
-
-// The page's headline figure (the account balance) — twice as wide, a bigger value.
-.kpi--hero {
-  grid-column: span 2;
-
-  @media (max-width: s.$bp-phone) {
-    grid-column: span 1;
-  }
-
-  .kpi__value {
-    font-size: s.$font-3xl;
-  }
-}

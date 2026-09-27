@@ -19,10 +19,10 @@
     </div>
   }
 
-  <!-- KPI row — balance is the live one, the other two are scoped to the active filter. -->
+  <!-- KPI row — balance is the live one, the others are scoped to the active filter. -->
   @if (summary(); as s) {
     <section class="kpi-row">
-      <mat-card class="kpi kpi--hero" appearance="outlined">
+      <mat-card class="kpi" appearance="outlined" data-testid="account-balance">
         <div class="kpi__label">
           <span>{{ 'account.currentBalance' | translate }}</span>
           <mat-button-toggle-group
@@ -99,6 +99,27 @@
           }}
         </div>
       </mat-card>
+
+      @if (reconciliationGaps(); as g) {
+        <mat-card
+          class="kpi"
+          appearance="outlined"
+          data-testid="reconciliation-gaps"
+          [matTooltip]="'account.kpi.gapsHint' | translate"
+        >
+          <div class="kpi__label">{{ 'account.kpi.gaps' | translate }}</div>
+          <div class="kpi__value">
+            {{ g.amount | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
+          </div>
+          <div class="kpi__sub">
+            @if (g.shareOfPnl !== null) {
+              {{ 'account.kpi.gapsShare' | translate: { share: g.shareOfPnl | number: '1.0-1' } }}
+            } @else {
+              —
+            }
+          </div>
+        </mat-card>
+      }
     </section>
   }
 

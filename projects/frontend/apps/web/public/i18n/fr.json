@@ -361,7 +361,10 @@
       "periodWinners": "{{count}} gagnants",
       "periodWinnersOne": "{{count}} gagnant",
       "netInjected": "Apports nets de la période",
-      "netInjectedSub": "{{deposits}} dépôt · {{withdrawals}} retrait"
+      "netInjectedSub": "{{deposits}} dépôt · {{withdrawals}} retrait",
+      "gaps": "Écarts de rapprochement",
+      "gapsShare": "{{share}} % du P&L",
+      "gapsHint": "Ce que le courtier a pris hors trades — locates, abonnement, arrondis. Suit les dates, ignore le filtre de type."
     },
     "filter": {
       "type": "Type de mouvement",

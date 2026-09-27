@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -163,6 +163,109 @@ describe('AccountPage', () => {
 
     const balances = fixture.componentInstance.movements().map((m) => m.balanceAfter);
     expect(balances).toEqual([1041.85, 1291.85]);
+  });
+
+  /**
+   * The reconciliation-gaps KPI (#338) : the period's corrections as an amount and a share of the
+   * P&L. It follows the dates but never the type filter — three of the four type choices would
+   * otherwise zero one side of the ratio, two of them silently.
+   */
+  describe('reconciliation gaps', () => {
+    it('reads $200 of corrections on $3,000 of P&L as an unsigned 200 and 6.7 %', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 3000, periodAdjustments: -200 })));
+      TestBed.inject(TranslateService).setTranslation('en', {
+        account: { kpi: { gapsShare: '{{share}} % of the P&L' } },
+      });
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      const tile = gapsTile(fixture.nativeElement);
+      expect(tile.querySelector('.kpi__value')?.textContent).toContain('200.00');
+      expect(tile.querySelector('.kpi__value')?.textContent).not.toContain('-');
+      expect(tile.querySelector('.kpi__sub')?.textContent).toContain('6.7 % of the P&L');
+    });
+
+    it('reads 0 and 0 % on a period without a correction', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGaps()).toEqual({ amount: 0, shareOfPnl: 0 });
+    });
+
+    it('dashes the ratio on a losing period — a share of a loss means nothing', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: -420, periodAdjustments: -35 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGaps()).toEqual({
+        amount: 35,
+        shareOfPnl: null,
+      });
+      expect(gapsTile(fixture.nativeElement).querySelector('.kpi__sub')?.textContent).toContain(
+        '—',
+      );
+    });
+
+    it('dashes the ratio on a flat period instead of dividing by zero', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 0, periodAdjustments: -12.4 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGaps()?.shareOfPnl).toBeNull();
+    });
+
+    // A credited-back locate can leave the period's corrections net positive.
+    it('reads net-positive corrections without a negative percentage', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 500, periodAdjustments: 25 })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGaps()).toEqual({ amount: 25, shareOfPnl: 5 });
+    });
+
+    it('asks for no extra summary while the type filter is « all »', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(getSummary).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps reading every type when the filter narrows to corrections', () => {
+      getSummary.mockImplementation((f?: AccountMovementFilter) =>
+        of(
+          f?.types
+            ? makeSummary({ periodPnl: 0, periodAdjustments: -200 })
+            : makeSummary({ periodPnl: 3000, periodAdjustments: -200 }),
+        ),
+      );
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      getSummary.mockClear();
+
+      fixture.componentInstance.onTypeChange('corrections');
+
+      const sent = getSummary.mock.calls.map((c) => (c[0] as AccountMovementFilter).types);
+      expect(sent).toEqual([['ADJUSTMENT'], null]);
+      expect(fixture.componentInstance.reconciliationGaps()?.shareOfPnl).toBeCloseTo(6.67, 2);
+    });
+
+    it('follows a date change', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 1000, periodAdjustments: -80 })));
+
+      fixture.componentInstance.setPeriod({
+        period: 'custom',
+        dateFrom: new Date(2026, 6, 1),
+        dateTo: new Date(2026, 8, 30),
+      });
+
+      expect(fixture.componentInstance.reconciliationGaps()).toEqual({ amount: 80, shareOfPnl: 8 });
+    });
+
+    function gapsTile(root: HTMLElement): HTMLElement {
+      return root.querySelector('[data-testid="reconciliation-gaps"]') as HTMLElement;
+    }
   });
 
   // ---------------------------------------------------------------------------

@@ -78,15 +78,23 @@ interface AccountFilter {
   type: MovementTypeFilter;
 }
 
+/** The reconciliation-gaps KPI : the period's corrections, unsigned, and their share of the P&L. */
+export interface ReconciliationGaps {
+  amount: number;
+  /** In percent ; null when the P&L is flat or negative — a share of a loss means nothing. */
+  shareOfPnl: number | null;
+}
+
 /**
  * Broker cash-account page, laid out after `mockup/compte.html` (#229) : a KPI row (balance with
- * its USD / CAD switch, P&L of the period, net injected), the balance curve in its own card, and
- * the movements as a filterable table carrying the running balance.
+ * its USD / CAD switch, P&L of the period, net injected, reconciliation gaps), the balance curve in
+ * its own card, and the movements as a filterable table carrying the running balance.
  *
  * **One filter drives everything.** The period + type toolbar feeds `/summary`, `/movements` and
  * the chart window at once, so the three always describe the same slice — a KPI row that disagreed
  * with the table below it would be worse than no KPI at all. The filter mirrors the journal's,
- * presets included, and only resolved dates travel to the backend.
+ * presets included, and only resolved dates travel to the backend. One exception : the
+ * reconciliation-gaps KPI follows the dates but not the type (#338).
  *
  * The balance column comes from the server (`balanceAfter`), never recomputed here : it is defined
  * over the whole history, so filtering to trades must not renumber it.
@@ -132,6 +140,8 @@ export class AccountPage {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly summary = signal<AccountSummary | null>(null);
+  /** The period's summary across every type — only fetched while the type filter narrows it. */
+  private readonly untypedSummary = signal<AccountSummary | null>(null);
   readonly movements = signal<AccountMovement[]>([]);
   readonly totalElements = signal(0);
   readonly pageIndex = signal(0);
@@ -152,6 +162,17 @@ export class AccountPage {
   });
 
   readonly displayedColumns = ['valueDate', 'type', 'label', 'amount', 'balanceAfter', 'actions'];
+
+  /**
+   * Ignores the type filter (#338) : under « trades » or « cash » the corrections sum to 0 and the
+   * ratio would read a plausible 0 %, under « corrections » the P&L is 0 and it would divide by zero.
+   */
+  readonly reconciliationGaps = computed<ReconciliationGaps | null>(() => {
+    const s = this.appliedFilter().type === 'all' ? this.summary() : this.untypedSummary();
+    if (!s) return null;
+    const amount = Math.abs(s.periodAdjustments);
+    return { amount, shareOfPnl: s.periodPnl > 0 ? (amount * 100) / s.periodPnl : null };
+  });
 
   /** USD→other-currency rate for the hero toggle ; null until loaded (or if the lookup failed). */
   readonly rate = signal<ForexRate | null>(null);
@@ -334,10 +355,18 @@ export class AccountPage {
   private fetch(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.repo.getSummary(this.toApiFilter()).subscribe({
+    const apiFilter = this.toApiFilter();
+    this.repo.getSummary(apiFilter).subscribe({
       next: (s) => this.summary.set(s),
       error: () => this.error.set(this.translate.instant('account.errors.load')),
     });
+    this.untypedSummary.set(null);
+    if (apiFilter.types) {
+      this.repo.getSummary({ ...apiFilter, types: null }).subscribe({
+        next: (s) => this.untypedSummary.set(s),
+        error: () => this.error.set(this.translate.instant('account.errors.load')),
+      });
+    }
     // The whole series, always : the chart is clipped client-side, so changing the window doesn't
     // cost a round-trip and the curve keeps its shape when the user flips between presets.
     this.repo.getBalanceSeries().subscribe({

@@ -361,7 +361,10 @@
       "periodWinners": "{{count}} winners",
       "periodWinnersOne": "{{count}} winner",
       "netInjected": "Net injected for the period",
-      "netInjectedSub": "{{deposits}} deposited · {{withdrawals}} withdrawn"
+      "netInjectedSub": "{{deposits}} deposited · {{withdrawals}} withdrawn",
+      "gaps": "Reconciliation gaps",
+      "gapsShare": "{{share}} % of the P&L",
+      "gapsHint": "What the broker took outside the trades — locates, subscription, rounding. Follows the dates, ignores the type filter."
     },
     "filter": {
       "type": "Movement type",
