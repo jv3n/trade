@@ -46,6 +46,7 @@ import org.springframework.web.server.ResponseStatusException
  *   closed period's corrections stay put.
  * - The anchor is the morning : a clean morning gains a correction, a correction absorbed to zero
  *   goes and its morning stays.
+ * - The gap tile reads the mornings' recorded gap, which no absorption moves (#480).
  * - What would make a morning lie is refused : editing its correction directly, or settling an
  *   earlier morning once a later one is recorded.
  *
@@ -298,6 +299,59 @@ class AccountReconciliationIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // The gap tile reads what the mornings measured (#480)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the period's gap is what its mornings measured, and an absorbed fix does not move it`() {
+    val august = service.addMovement(deposit("2000.00", AUG_12))
+    morning("1850.00", SEP_28)
+
+    service.update(august.id, deposit("2001.00", AUG_12))
+
+    val september = service.summary(AccountMovementFilter(SEP_01, SEP_30))
+    assertAmount("-150.00", september.periodReconciliationGap!!, "what the broker took")
+    assertAmount("-151.00", september.periodAdjustments, "the correction holds the fix too")
+  }
+
+  @Test
+  fun `a period with no reconciled morning has no gap figure`() {
+    service.addMovement(deposit("2000.00", AUG_12))
+    morning("1850.00", SEP_28)
+
+    assertNull(service.summary(AccountMovementFilter(AUG_01, AUG_31)).periodReconciliationGap)
+  }
+
+  @Test
+  fun `a clean morning counts as a measured zero, not as no figure`() {
+    service.addMovement(deposit("2000.00", AUG_12))
+    morning("2000.00", SEP_28)
+
+    assertAmount(
+      "0.00",
+      service.summary(AccountMovementFilter(SEP_01, SEP_30)).periodReconciliationGap!!,
+    )
+  }
+
+  @Test
+  fun `a correction without a morning is not counted in the gap`() {
+    service.addMovement(deposit("2000.00", AUG_12))
+    morning("2000.00", SEP_28)
+    repo.save(
+      AccountMovement(
+        user = testUser,
+        type = AccountMovementType.ADJUSTMENT,
+        amount = BigDecimal("-50.00"),
+        valueDate = SEP_01,
+      )
+    )
+
+    val september = service.summary(AccountMovementFilter(SEP_01, SEP_30))
+    assertAmount("0.00", september.periodReconciliationGap!!)
+    assertAmount("-50.00", september.periodAdjustments)
+  }
+
+  // ---------------------------------------------------------------------------
   // What would make a morning lie — refused
   // ---------------------------------------------------------------------------
 
@@ -376,5 +430,6 @@ class AccountReconciliationIntegrationTest {
     val AUG_31: LocalDate = LocalDate.of(2026, 8, 31)
     val SEP_01: LocalDate = LocalDate.of(2026, 9, 1)
     val SEP_28: LocalDate = LocalDate.of(2026, 9, 28)
+    val SEP_30: LocalDate = LocalDate.of(2026, 9, 30)
   }
 }

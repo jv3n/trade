@@ -132,6 +132,26 @@ class MorningReconciliationIntegrationTest {
     assertEquals(0, BigDecimal("-5.00").compareTo(corrected.gap))
   }
 
+  // #480 : measuring a re-settle from the first pass's balance booked a same-day deposit as fees.
+  @Test
+  fun `re-settling after a row of that day was typed measures the gap without it`() {
+    accountService.addMovement(deposit("1000.00"))
+    service.reconcile(ReconciliationRequest(BigDecimal("987.60"), MONDAY)) // −12.40
+    accountService.addMovement(deposit("100.00")) // dated that same Monday, typed in between
+
+    val settled = service.reconcile(ReconciliationRequest(BigDecimal("1095.00"), MONDAY))
+
+    assertEquals(0, BigDecimal("1100.00").compareTo(settled.appBalance), "1 000 + 100")
+    assertEquals(0, BigDecimal("-5.00").compareTo(settled.gap), "not 1 095 − 1 000 = +95")
+    val correction =
+      movements.findByUserId(testUser.id).single { it.type == AccountMovementType.ADJUSTMENT }
+    assertEquals(0, BigDecimal("-5.00").compareTo(correction.amount), "set to the gap")
+    assertEquals(
+      0,
+      BigDecimal("1095.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
+    )
+  }
+
   @Test
   fun `a morning re-settled on the same figure keeps its correction, not a clean tick`() {
     accountService.addMovement(deposit("1000.00"))

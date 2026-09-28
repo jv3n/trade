@@ -75,6 +75,11 @@ export interface AccountSummary {
   periodWithdrawals: number;
   periodNetInjected: number;
   periodAdjustments: number;
+  /**
+   * Sum of the gaps the period's reconciled mornings recorded — unlike [periodAdjustments], no later
+   * edit moves it (#480). Null when no morning was reconciled in the period.
+   */
+  periodReconciliationGap: number | null;
   periodMovementCount: number;
 }
 

@@ -16,7 +16,8 @@ data class AccountMovementFilter(
   val types: List<AccountMovementType>? = null,
 ) {
   fun matches(movement: AccountMovement): Boolean =
-    (dateFrom == null || !movement.valueDate.isBefore(dateFrom)) &&
-      (dateTo == null || !movement.valueDate.isAfter(dateTo)) &&
-      (types.isNullOrEmpty() || movement.type in types)
+    covers(movement.valueDate) && (types.isNullOrEmpty() || movement.type in types)
+
+  fun covers(date: LocalDate): Boolean =
+    (dateFrom == null || !date.isBefore(dateFrom)) && (dateTo == null || !date.isAfter(dateTo))
 }

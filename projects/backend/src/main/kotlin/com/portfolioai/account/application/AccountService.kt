@@ -88,11 +88,17 @@ class AccountService(
   /**
    * Current balance, plus the figures of the filtered period. The balance itself is deliberately
    * **not** windowed — it is what the broker shows right now.
+   *
+   * Loads every movement and every reconciled morning of the user on each call, like the listing :
+   * deliberate at one user's ledger scale, and it keeps the period window a Kotlin predicate
+   * ([AccountMovementFilter.covers]) rather than a second, SQL-side definition of it.
    */
   @Transactional(readOnly = true)
   fun summary(filter: AccountMovementFilter): AccountSummaryDto {
-    val all = repo.findByUserId(authService.getCurrentUser().id)
+    val userId = authService.getCurrentUser().id
+    val all = repo.findByUserId(userId)
     val period = all.filter(filter::matches)
+    val mornings = reconciliations.findByUserId(userId).filter { filter.covers(it.valueDate) }
     fun sumOf(type: AccountMovementType): BigDecimal =
       period.filter { it.type == type }.fold(BigDecimal.ZERO) { acc, m -> acc + m.amount }
     val deposits = sumOf(AccountMovementType.DEPOSIT)
@@ -108,6 +114,8 @@ class AccountService(
       periodWithdrawals = withdrawals,
       periodNetInjected = deposits + withdrawals,
       periodAdjustments = sumOf(AccountMovementType.ADJUSTMENT),
+      periodReconciliationGap =
+        mornings.takeIf { it.isNotEmpty() }?.fold(BigDecimal.ZERO) { acc, r -> acc + r.gap },
       periodMovementCount = period.size.toLong(),
     )
   }

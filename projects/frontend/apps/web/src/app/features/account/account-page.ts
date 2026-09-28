@@ -71,9 +71,10 @@ const TYPES_BY_FILTER: Record<MovementTypeFilter, readonly AccountMovementType[]
 };
 
 /**
- * The period's reconciliation corrections as the tile reads them. [amount] is unsigned — the label
- * carries the direction ; [credit] flags a period the broker ended up paying into. [share] is the
- * percentage of the period's P&L, null when it would mislead (a flat or losing period, a credit).
+ * The gaps the period's reconciled mornings recorded, as the tile reads them. [amount] is unsigned
+ * — the label carries the direction ; [credit] flags a period the broker ended up paying into.
+ * [share] is the percentage of the period's P&L, null when it would mislead (a flat or losing
+ * period, a credit).
  */
 export interface ReconciliationGap {
   amount: number;
@@ -205,10 +206,11 @@ export class AccountPage {
 
   readonly reconciliationGap = computed<ReconciliationGap | null>(() => {
     const s = this.periodSummary();
-    if (!s) return null;
-    // Corrections are negative when the broker took money : a positive sum is a credit.
-    const credit = s.periodAdjustments > 0;
-    const amount = Math.abs(s.periodAdjustments);
+    // No reconciled morning in the period : nothing was measured, so no tile (#480).
+    if (!s || s.periodReconciliationGap === null) return null;
+    // A gap is negative when the broker took money : a positive sum is a credit.
+    const credit = s.periodReconciliationGap > 0;
+    const amount = Math.abs(s.periodReconciliationGap);
     return {
       amount,
       credit,
