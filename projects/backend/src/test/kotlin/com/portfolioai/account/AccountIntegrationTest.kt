@@ -1,7 +1,6 @@
 package com.portfolioai.account
 
 import com.portfolioai.account.application.AccountService
-import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.domain.AccountMovement
 import com.portfolioai.account.domain.AccountMovementFilter
@@ -38,8 +37,6 @@ import org.springframework.web.server.ResponseStatusException
  * - **Sign convention + derived balance** — deposits store +, withdrawals store −, and the balance
  *   is the plain sum over a user's movements. Catches a regression in `signedAmount` or in the
  *   `balanceFor` aggregate query (incl. the `account_movement_type` Postgres ENUM mapping).
- * - **Balance correction** — the target-balance → signed `ADJUSTMENT` delta arithmetic, and the
- *   no-op (zero delta) guard.
  * - **TRADE read-only contract** — a movement pushed from the journal can't be created / edited /
  *   deleted through the manual endpoints (400).
  * - **Multi-tenant scope** — foreign / missing id → 404 (never 403), and summary / listing never
@@ -118,37 +115,6 @@ class AccountIntegrationTest {
     val summary = service.summary(AccountMovementFilter())
     assertEquals(0, BigDecimal.ZERO.compareTo(summary.balance))
     assertEquals(0, summary.periodMovementCount)
-  }
-
-  // ---------------------------------------------------------------------------
-  // Balance correction
-  // ---------------------------------------------------------------------------
-
-  @Test
-  fun `correction records an ADJUSTMENT equal to target minus current balance`() {
-    service.addMovement(movement(AccountMovementType.DEPOSIT, "5000.00"))
-    // Real broker balance is 4 850 (50 of fees the journal never saw) → delta −150.
-    val correction =
-      service.correctBalance(CorrectionRequest(BigDecimal("4850.00"), LocalDate.of(2026, 6, 15)))
-
-    assertEquals(AccountMovementType.ADJUSTMENT, correction.type)
-    assertEquals(0, BigDecimal("-150.00").compareTo(correction.amount))
-    assertEquals(
-      0,
-      BigDecimal("4850.00").compareTo(service.summary(AccountMovementFilter()).balance),
-      "balance now matches",
-    )
-  }
-
-  @Test
-  fun `correction to the current balance is rejected — no no-op row`() {
-    service.addMovement(movement(AccountMovementType.DEPOSIT, "5000.00"))
-
-    val ex =
-      assertThrows(ResponseStatusException::class.java) {
-        service.correctBalance(CorrectionRequest(BigDecimal("5000.00"), LocalDate.of(2026, 6, 15)))
-      }
-    assertEquals(400, ex.statusCode.value())
   }
 
   // ---------------------------------------------------------------------------

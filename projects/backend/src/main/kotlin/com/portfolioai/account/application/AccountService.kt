@@ -3,7 +3,6 @@ package com.portfolioai.account.application
 import com.portfolioai.account.application.dto.AccountMovementDto
 import com.portfolioai.account.application.dto.AccountSummaryDto
 import com.portfolioai.account.application.dto.BalancePointDto
-import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.application.dto.toDto
 import com.portfolioai.account.domain.AccountMovement
@@ -32,7 +31,8 @@ import org.springframework.web.server.ResponseStatusException
  *
  * Movement provenance :
  * - `DEPOSIT` / `WITHDRAWAL` — created + edited + deleted here (manual cash in / out).
- * - `ADJUSTMENT` — created via [correctBalance] (target → signed delta), editable + deletable.
+ * - `ADJUSTMENT` — written by the morning reconciliation (through [AccountReconciler]) ; deletable,
+ *   and editable only when no morning owns it (legacy rows).
  * - `TRADE` — pushed from the journal (journal-integration slice), **read-only** here : create /
  *   update / delete via the manual endpoints are rejected with 400.
  *
@@ -174,31 +174,6 @@ class AccountService(
         amount = signedAmount(request.type, request.amount),
         valueDate = request.valueDate,
         note = request.note.cleanNote(),
-      )
-    val saved = repo.save(movement)
-    reconciler.added(saved)
-    return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
-  }
-
-  /**
-   * Records a balance correction : the real broker balance → an `ADJUSTMENT` of `target − current`.
-   * A zero delta (the derived balance already matches) is a 400 — nothing meaningful to record.
-   */
-  @Transactional
-  fun correctBalance(request: CorrectionRequest): AccountMovementDto {
-    val user = authService.getCurrentUser()
-    val delta = request.targetBalance.subtract(repo.balanceFor(user.id))
-    if (delta.signum() == 0) {
-      throw badRequest("Balance already matches the target — no correction recorded")
-    }
-    val movement =
-      AccountMovement(
-        user = user,
-        type = AccountMovementType.ADJUSTMENT,
-        amount = delta,
-        valueDate = request.valueDate,
-        note = request.note.cleanNote(),
-        targetBalance = request.targetBalance,
       )
     val saved = repo.save(movement)
     reconciler.added(saved)

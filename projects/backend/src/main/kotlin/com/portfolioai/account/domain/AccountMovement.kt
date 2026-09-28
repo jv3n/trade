@@ -44,12 +44,6 @@ class AccountMovement(
   @Column(name = "value_date", nullable = false) var valueDate: LocalDate,
   @Column(length = 2000) var note: String? = null,
 
-  /**
-   * The broker balance a correction was settled against. Non-null **only** on `ADJUSTMENT` rows ;
-   * informational — what moves a morning's correction is `AccountReconciler`, not this figure.
-   */
-  @Column(name = "target_balance", precision = 18, scale = 2) var targetBalance: BigDecimal? = null,
-
   /** Set only for TRADE movements (journal link). Null for manual movements. */
   @Column(name = "trade_entry_id") val tradeEntryId: UUID? = null,
 
