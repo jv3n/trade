@@ -18,11 +18,10 @@ import org.springframework.transaction.annotation.Transactional
  * - null or zero P&L → remove any existing movement (open / break-even / reopened / **deleted**
  *   trade — no balance impact, and `amount = 0` would violate the `account_movement` CHECK anyway).
  *
- * Editing or removing an existing movement also re-floats the latest balance correction (via
- * [AccountReconciler]) — a change to a trade's P&L moves the balance just like editing a deposit. A
- * brand-new trade's P&L is a real move, not a mistake to absorb, so it does **not** re-float. Trade
- * deletion now arrives here as a null-P&L event (published by `TradeEntryService.delete`) ; the DB
- * `ON DELETE CASCADE` on `trade_entry_id` is left as a safety net.
+ * Every change goes through [AccountReconciler] like a manual movement's : a P&L dated before a
+ * reconciled morning is absorbed by that morning, a later one moves the balance. Trade deletion
+ * arrives here as a null-P&L event (published by `TradeEntryService.delete`) ; the DB `ON DELETE
+ * CASCADE` on `trade_entry_id` is left as a safety net.
  *
  * [UserRepository.getReferenceById] yields a lazy proxy : we only need the FK to set `user_id`, not
  * a full load. The owner is always the trade's owner (carried on the event).
@@ -39,15 +38,15 @@ class AccountTradeSyncService(
     val existing = repo.findByTradeEntryId(event.tradeId)
     val pnl = event.profitDollars
     if (pnl == null || pnl.signum() == 0) {
-      // Trade went open / break-even (or its P&L row is being removed) — a change to an existing
-      // balance line, so re-float the latest correction. A no-op (never had a row) leaves it alone.
       if (existing != null) {
         repo.delete(existing)
-        reconciler.reconcile(event.userId)
+        reconciler.removed(existing)
       }
       return
     }
     if (existing != null) {
+      val oldValueDate = existing.valueDate
+      val oldAmount = existing.amount
       existing.amount = pnl
       existing.valueDate = event.tradeDate
       existing.note = event.ticker
@@ -55,22 +54,22 @@ class AccountTradeSyncService(
       existing.tradeSize = event.size
       existing.updatedAt = Instant.now()
       repo.save(existing)
-      // Editing a trade's realized P&L moves the balance → re-float the latest correction.
-      reconciler.reconcile(event.userId)
+      reconciler.changed(existing, oldValueDate, oldAmount)
     } else {
-      // Brand-new trade P&L is a real balance move, not a mistake to absorb — don't re-float.
-      repo.save(
-        AccountMovement(
-          user = userRepository.getReferenceById(event.userId),
-          type = AccountMovementType.TRADE,
-          amount = pnl,
-          valueDate = event.tradeDate,
-          note = event.ticker,
-          tradeDirection = event.direction,
-          tradeSize = event.size,
-          tradeEntryId = event.tradeId,
+      val created =
+        repo.save(
+          AccountMovement(
+            user = userRepository.getReferenceById(event.userId),
+            type = AccountMovementType.TRADE,
+            amount = pnl,
+            valueDate = event.tradeDate,
+            note = event.ticker,
+            tradeDirection = event.direction,
+            tradeSize = event.size,
+            tradeEntryId = event.tradeId,
+          )
         )
-      )
+      reconciler.added(created)
     }
   }
 }

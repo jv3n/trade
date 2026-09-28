@@ -1,10 +1,14 @@
 package com.portfolioai.account
 
+import com.portfolioai.account.application.AccountReconciliationService
 import com.portfolioai.account.application.AccountService
-import com.portfolioai.account.application.dto.CorrectionRequest
+import com.portfolioai.account.application.dto.MovementRequest
+import com.portfolioai.account.application.dto.ReconciliationDto
+import com.portfolioai.account.application.dto.ReconciliationRequest
 import com.portfolioai.account.domain.AccountMovementFilter
 import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
+import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
@@ -52,6 +56,8 @@ class AccountTradeSyncIntegrationTest {
   @Autowired private lateinit var tradeService: TradeEntryService
   @Autowired private lateinit var accountService: AccountService
   @Autowired private lateinit var accountRepo: AccountMovementRepository
+  @Autowired private lateinit var reconciliationService: AccountReconciliationService
+  @Autowired private lateinit var reconciliationRepo: AccountReconciliationRepository
   @Autowired private lateinit var tradeRepo: TradeEntryRepository
   @Autowired private lateinit var statRepo: StatEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
@@ -69,6 +75,7 @@ class AccountTradeSyncIntegrationTest {
 
   @BeforeEach
   fun setUp() {
+    reconciliationRepo.deleteAll()
     accountRepo.deleteAll()
     tradeRepo.deleteAll()
     statRepo.deleteAll()
@@ -262,57 +269,58 @@ class AccountTradeSyncIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
-  // Floating correction × trade lifecycle
+  // Reconciled mornings × trade lifecycle (#476)
   // ---------------------------------------------------------------------------
 
   @Test
-  fun `editing a trade P&L re-floats the latest correction onto its target`() {
-    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00")) // balance 300
-    accountService.correctBalance(
-      CorrectionRequest(BigDecimal("250.00"), TRADE_DATE)
-    ) // adj −50 → 250
+  fun `typing the broker P&L on a trade the morning measured moves its correction, not the balance`() {
+    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00"))
+    val morning = morning("250.00", NEXT_MORNING) // correction −50
 
     tradeService.update(trade.id, closedTrade(ticker = "BAC", pnl = "500.00"))
 
-    assertEquals(
-      0,
-      BigDecimal("250.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
-      "the correction absorbs the P&L change so the balance stays on target",
-    )
+    assertBalance("250.00")
+    assertAmount("-250.00", correctionOf(morning))
   }
 
   @Test
-  fun `deleting a trade re-floats the latest correction onto its target`() {
-    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00")) // balance 300
-    accountService.correctBalance(
-      CorrectionRequest(BigDecimal("250.00"), TRADE_DATE)
-    ) // adj −50 → 250
+  fun `deleting a trade the morning measured is absorbed by that morning`() {
+    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00"))
+    val morning = morning("250.00", NEXT_MORNING)
 
     tradeService.delete(trade.id)
 
-    // Before the removal event, the frozen −50 left the balance at −50 ; now it re-floats to 250.
-    assertEquals(
-      0,
-      BigDecimal("250.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
-    )
+    assertBalance("250.00")
+    assertAmount("250.00", correctionOf(morning))
+  }
+
+  // Scenario B of #474 on the journal path : the removal was absorbed, the new P&L was not.
+  @Test
+  fun `deleting a trade and re-creating it leaves every figure where it was`() {
+    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00"))
+    val morning = morning("250.00", NEXT_MORNING)
+
+    tradeService.delete(trade.id)
+    tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00"))
+
+    assertBalance("250.00")
+    assertAmount("-50.00", correctionOf(morning))
+    assertEquals(1, adjustmentCount(), "the round trip left no phantom correction (scenario C)")
   }
 
   @Test
-  fun `a brand-new trade after a correction still moves the balance`() {
-    tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00")) // balance 300
-    accountService.correctBalance(
-      CorrectionRequest(BigDecimal("250.00"), TRADE_DATE)
-    ) // adj −50 → 250
-
-    tradeService.create(
-      closedTrade(ticker = "GUS", pnl = "100.00", statEntryId = secondStat.id)
-    ) // fresh P&L, not a mistake
-
-    assertEquals(
-      0,
-      BigDecimal("350.00").compareTo(accountService.summary(AccountMovementFilter()).balance),
-      "250 + 100 — a new trade is a real move, not absorbed by the correction",
+  fun `a trade of the morning's own day moves the balance by its P&L, edits included`() {
+    accountService.addMovement(
+      MovementRequest(AccountMovementType.DEPOSIT, BigDecimal("1000.00"), PREVIOUS_DAY, null)
     )
+    val morning = morning("950.00", TRADE_DATE) // correction −50, before the session
+
+    val trade = tradeService.create(closedTrade(ticker = "BAC", pnl = "300.00"))
+    assertBalance("1250.00")
+    tradeService.update(trade.id, closedTrade(ticker = "BAC", pnl = "280.00"))
+
+    assertBalance("1230.00")
+    assertAmount("-50.00", correctionOf(morning))
   }
 
   // ---------------------------------------------------------------------------
@@ -328,6 +336,27 @@ class AccountTradeSyncIntegrationTest {
         pmHigh = BigDecimal("3.6000"),
       )
     )
+
+  private fun morning(brokerBalance: String, date: LocalDate): ReconciliationDto =
+    reconciliationService.reconcile(ReconciliationRequest(BigDecimal(brokerBalance), date))
+
+  /** The morning's correction amount as it stands now, 0 on a clean morning. */
+  private fun correctionOf(morning: ReconciliationDto): BigDecimal =
+    reconciliationRepo.findById(morning.id).orElseThrow().correctionId?.let {
+      accountRepo.findById(it).orElseThrow().amount
+    } ?: BigDecimal.ZERO
+
+  private fun adjustmentCount(): Int =
+    accountRepo.findByUserId(testUser.id).count { it.type == AccountMovementType.ADJUSTMENT }
+
+  private fun assertBalance(expected: String) {
+    val balance = accountService.summary(AccountMovementFilter()).balance
+    assertEquals(0, BigDecimal(expected).compareTo(balance), "balance $balance, expected $expected")
+  }
+
+  private fun assertAmount(expected: String, actual: BigDecimal) {
+    assertEquals(0, BigDecimal(expected).compareTo(actual), "got $actual, expected $expected")
+  }
 
   private fun tradeMovements() =
     accountRepo.findByUserId(testUser.id).filter { it.type == AccountMovementType.TRADE }
@@ -357,6 +386,8 @@ class AccountTradeSyncIntegrationTest {
   }
 
   private companion object {
+    val PREVIOUS_DAY: LocalDate = LocalDate.of(2026, 6, 12)
     val TRADE_DATE: LocalDate = LocalDate.of(2026, 6, 15)
+    val NEXT_MORNING: LocalDate = LocalDate.of(2026, 6, 16)
   }
 }

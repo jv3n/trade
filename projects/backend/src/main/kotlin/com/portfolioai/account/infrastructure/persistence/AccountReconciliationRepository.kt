@@ -23,6 +23,14 @@ interface AccountReconciliationRepository : JpaRepository<AccountReconciliation,
   fun findByIdAndUserId(id: UUID, userId: UUID): AccountReconciliation?
 
   /**
+   * The first morning strictly after [valueDate] — the one that measured a movement of that date.
+   */
+  fun findFirstByUserIdAndValueDateGreaterThanOrderByValueDateAsc(
+    userId: UUID,
+    valueDate: LocalDate,
+  ): AccountReconciliation?
+
+  /**
    * The morning a correction belongs to, if any. Deleting that `ADJUSTMENT` on its own must take
    * the reconciliation with it (#249) : the DB's `ON DELETE SET NULL` would otherwise leave a row
    * describing a correction that no longer exists.
