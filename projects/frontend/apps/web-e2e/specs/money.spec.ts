@@ -42,6 +42,8 @@ test.beforeEach(async ({ api, page }) => {
   });
   await page.goto('/account');
   await expect(heroBalance(page)).toContainText('10');
+  // The table opens on trades (#473) ; the corrections under test would never show.
+  await showAllMovementTypes(page);
 });
 
 test('a clean morning is timestamped without a dialog, and writes no correction', async ({
@@ -139,6 +141,11 @@ async function expectCleanMorning(api: Api, page: Page): Promise<void> {
   await expect(page.getByRole('cell', { name: 'Correction', exact: true })).toHaveCount(0);
   expect(parseFrAmount(await heroBalance(page).innerText())).toBe(DEPOSIT);
   expect(await ledgerSum(api)).toBe(DEPOSIT);
+}
+
+async function showAllMovementTypes(page: Page): Promise<void> {
+  await page.getByRole('combobox', { name: 'Type de mouvement' }).click();
+  await page.getByRole('option', { name: 'Tous les types' }).click();
 }
 
 function heroBalance(page: Page) {

@@ -83,6 +83,7 @@ test('tables and inputs follow the language, and a typed value reads back unchan
 
   // French : day first, comma decimals, narrow no-break space between the thousands.
   await page.goto('/account');
+  await showAllMovementTypes(page, 'Type de mouvement', 'Tous les types');
   await expect(page.getByRole('cell', { name: `${day}/${month}/${year}` })).toBeVisible();
   await expect(page.getByRole('cell', { name: `+12${NNBSP}345,60` })).toBeVisible();
   await page.goto('/candidates');
@@ -92,6 +93,7 @@ test('tables and inputs follow the language, and a typed value reads back unchan
   // English : month first, dot decimals, comma between the thousands.
   await setLanguage(api, 'en');
   await page.goto('/account');
+  await showAllMovementTypes(page, 'Movement type', 'All types');
   await expect(
     page.getByRole('cell', { name: `${Number(month)}/${Number(day)}/${year.slice(2)}` }),
   ).toBeVisible();
@@ -138,6 +140,12 @@ async function deposit(api: Api): Promise<void> {
     amount: DEPOSIT,
     valueDate: isoToday(),
   });
+}
+
+/** The table opens on trades (#473) — the deposit these tests read is not one. */
+async function showAllMovementTypes(page: Page, field: string, option: string): Promise<void> {
+  await page.getByRole('combobox', { name: field }).click();
+  await page.getByRole('option', { name: option }).click();
 }
 
 async function seedCandidate(api: Api): Promise<void> {

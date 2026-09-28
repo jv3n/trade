@@ -161,11 +161,14 @@ export class AccountPage {
 
   readonly typeFilters = MOVEMENT_TYPE_FILTERS;
 
-  /** Defaults to the running month — the question the page is opened to answer. */
+  /**
+   * Defaults to the running month's trades — what the page is opened for (#473) ; deposits and
+   * corrections are rare, and the KPI tiles keep counting them.
+   */
   readonly appliedFilter = signal<AccountFilter>({
     period: 'thisMonth',
     ...computePeriodRange('thisMonth'),
-    type: 'all',
+    type: 'trades',
   });
 
   readonly displayedColumns = ['valueDate', 'type', 'label', 'amount', 'balanceAfter', 'actions'];
