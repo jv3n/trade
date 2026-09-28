@@ -903,6 +903,9 @@ export class StatsPage {
       return;
     }
     if (sameSession(session, sessionOf(entry)) && samePremarket(premarket, premarketOf(entry))) {
+      // Typed back to what is stored after a refusal (#490) : nothing to send, but the row is
+      // saved as it was — a card still reading « non enregistré » would say the work is lost.
+      this.clearRefusals(entry.updatedAt);
       return;
     }
     if (entry.completed && missingPrices(session, premarket.pattern).length > 0) {
@@ -1304,6 +1307,15 @@ export class StatsPage {
     const state = this.saveStates()[card];
     const held = state.status === 'error' && HELD_REASONS.includes(state.reason ?? '');
     if (held) this.setSaveState(card, { status: 'saved', at, reason: null });
+  }
+
+  /** Every card left on a refusal reads saved again, at the stat's last write. */
+  private clearRefusals(at: Date): void {
+    for (const card of ['premarket', 'session'] as const) {
+      if (this.saveStates()[card].status === 'error') {
+        this.setSaveState(card, { status: 'saved', at, reason: null });
+      }
+    }
   }
 
   private setSaveState(card: SheetCard, state: SaveState): void {
