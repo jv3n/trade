@@ -3,6 +3,7 @@ package com.portfolioai.stats.application.dto
 import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Full payload of a stat — premarket block, session block and flags. Used by `PUT /api/stats/{id}`
@@ -38,6 +39,11 @@ data class StatEntryRequest(
   val dtTopPrice: BigDecimal? = null,
   val dtLowPrice: BigDecimal? = null,
   val dtRetestPrice: BigDecimal? = null,
+  /** When each DT price printed (#469), `HH:mm` on the trade date — seconds are dropped. */
+  val dtStartTime: LocalTime? = null,
+  val dtTopTime: LocalTime? = null,
+  val dtLowTime: LocalTime? = null,
+  val dtRetestTime: LocalTime? = null,
   // ---- Flags ----
   val ssr: Boolean = false,
   val under1Dollar: Boolean = false,

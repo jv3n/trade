@@ -7,6 +7,7 @@ import com.portfolioai.stats.domain.StatEntry
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -15,10 +16,10 @@ import org.junit.jupiter.api.Test
  * Unit spec for [StatEntryCsvEncoder] — the CSV export behind the download button.
  *
  * Pins the format contract a spreadsheet relies on : the BOM + CRLF Excel affordances, the
- * **25-column layout** (premarket block, GUS session, double top prices, flags — no derived
- * percentage), `toPlainString` numbers, `true` / `false` flags, empty cells for every absent value
- * — including the session prices of a stat still to complete and the prices of the other pattern —
- * and RFC 4180 quoting of free-text notes.
+ * **29-column layout** (premarket block, GUS session, double top prices and times, flags — no
+ * derived percentage), `toPlainString` numbers, `true` / `false` flags, empty cells for every
+ * absent value — including the session prices of a stat still to complete and the prices of the
+ * other pattern — and RFC 4180 quoting of free-text notes.
  *
  * No Spring / DB here : the encoder is pure and the entity is built in memory.
  */
@@ -30,7 +31,7 @@ class StatEntryCsvEncoderTest {
     val header = csv.removePrefix("﻿").substringBefore("\r\n")
 
     assertEquals(StatEntryCsvEncoder.HEADERS, header.split(","))
-    assertEquals(25, StatEntryCsvEncoder.HEADERS.size)
+    assertEquals(29, StatEntryCsvEncoder.HEADERS.size)
   }
 
   @Test
@@ -42,12 +43,12 @@ class StatEntryCsvEncoderTest {
   }
 
   @Test
-  fun `a completed stat renders the 25 columns in order, numbers in plain form`() {
+  fun `a completed stat renders the 29 columns in order, numbers in plain form`() {
     val csv = StatEntryCsvEncoder.encode(listOf(makeEntry()))
 
     assertEquals(
       "2026-09-17,GUS,KTTA,2.65,4.05,4.65,8.2,3.1,0.03,Push rejeté sous 4.65," +
-        "4.20,4.62,4.62,3.41,3.52,,,,,false,false,false,false,false,true",
+        "4.20,4.62,4.62,3.41,3.52,,,,,,,,,false,false,false,false,false,true",
       dataRowOf(csv),
     )
   }
@@ -59,7 +60,7 @@ class StatEntryCsvEncoderTest {
 
     assertEquals(
       "2026-09-18,GUS,SGBX,2.65,4.05,4.65,8.2,3.1,0.03,Push rejeté sous 4.65," +
-        ",,,,,,,,,false,false,false,false,false,false",
+        ",,,,,,,,,,,,,false,false,false,false,false,false",
       dataRowOf(csv),
     )
   }
@@ -91,13 +92,13 @@ class StatEntryCsvEncoderTest {
       )
     val cells = dataRowOf(csv).split(",")
 
-    // SSR / < $1 / after 11am sit at 19-21, « no push » at 22 and « institutions > 20 % » at 23.
-    assertEquals(listOf("true", "false", "true"), cells.subList(19, 22))
-    assertEquals("true", cells[23])
+    // SSR / < $1 / after 11am sit at 23-25, « no push » at 26 and « institutions > 20 % » at 27.
+    assertEquals(listOf("true", "false", "true"), cells.subList(23, 26))
+    assertEquals("true", cells[27])
   }
 
   @Test
-  fun `a double top fills its four prices and leaves the GUS session empty`() {
+  fun `a double top fills its four prices and times and leaves the GUS session empty`() {
     val dt =
       makeEntry(completed = false).apply {
         pattern = Pattern.DT
@@ -105,6 +106,10 @@ class StatEntryCsvEncoderTest {
         dtTopPrice = BigDecimal("2.95")
         dtLowPrice = BigDecimal("2.36")
         dtRetestPrice = BigDecimal("2.85")
+        dtStartTime = LocalTime.of(10, 2)
+        dtTopTime = LocalTime.of(10, 14)
+        dtLowTime = LocalTime.of(10, 21)
+        dtRetestTime = LocalTime.of(10, 38)
       }
     val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(dt))).split(",")
 
@@ -112,6 +117,8 @@ class StatEntryCsvEncoderTest {
     // Open / push / HOD / LOD / EOD at 10-14, then start / top / rejection low / retest at 15-18.
     assertEquals(listOf("", "", "", "", ""), cells.subList(10, 15))
     assertEquals(listOf("1.90", "2.95", "2.36", "2.85"), cells.subList(15, 19))
+    // Their times, to the minute, at 19-22 (#469).
+    assertEquals(listOf("10:02", "10:14", "10:21", "10:38"), cells.subList(19, 23))
   }
 
   @Test

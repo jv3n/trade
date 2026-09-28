@@ -47,6 +47,52 @@ export interface DoubleTopLegs {
   retestToTop: number | null;
 }
 
+/**
+ * TradeZero's extended session — the bounds of a double top's times (#469) : a premarket DT is
+ * real, a 02:10 is a typo. The backend refuses the same.
+ */
+export const DT_SESSION_OPENS = '04:00';
+export const DT_SESSION_CLOSES = '20:00';
+
+/** How long each leg of a double top took (#469), in minutes — null until both its times are in. */
+export interface DoubleTopDurations {
+  /** A : start → top. */
+  rise: number | null;
+  /** B : top → rejection low — how fast the rejection comes, the leg the entry depends on. */
+  rejection: number | null;
+  /** C : rejection low → retest. */
+  retest: number | null;
+  /** Start → retest. */
+  total: number | null;
+}
+
+/** Minutes from one `HH:mm` to another — null when either is missing or [to] comes first. */
+export function minutesBetween(from: string | null, to: string | null): number | null {
+  if (!from || !to) return null;
+  const minutes = toMinutes(to) - toMinutes(from);
+  return minutes >= 0 ? minutes : null;
+}
+
+export function doubleTopDurations(times: {
+  dtStartTime: string | null;
+  dtTopTime: string | null;
+  dtLowTime: string | null;
+  dtRetestTime: string | null;
+}): DoubleTopDurations {
+  const { dtStartTime: start, dtTopTime: top, dtLowTime: low, dtRetestTime: retest } = times;
+  return {
+    rise: minutesBetween(start, top),
+    rejection: minutesBetween(top, low),
+    retest: minutesBetween(low, retest),
+    total: minutesBetween(start, retest),
+  };
+}
+
+function toMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
 export function doubleTopLegs(prices: {
   previousClose: number | null;
   dtStartPrice: number | null;

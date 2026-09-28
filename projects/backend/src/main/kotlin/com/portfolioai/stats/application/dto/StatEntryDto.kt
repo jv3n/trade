@@ -6,6 +6,7 @@ import com.portfolioai.stats.domain.StatEntry
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 
 /**
@@ -46,6 +47,10 @@ data class StatEntryDto(
   val dtTopPrice: BigDecimal?,
   val dtLowPrice: BigDecimal?,
   val dtRetestPrice: BigDecimal?,
+  val dtStartTime: LocalTime?,
+  val dtTopTime: LocalTime?,
+  val dtLowTime: LocalTime?,
+  val dtRetestTime: LocalTime?,
   // ---- Flags ----
   val ssr: Boolean,
   val under1Dollar: Boolean,
@@ -82,6 +87,10 @@ fun StatEntry.toDto(tradeLink: TradeLinkDto? = null) =
     dtTopPrice = dtTopPrice,
     dtLowPrice = dtLowPrice,
     dtRetestPrice = dtRetestPrice,
+    dtStartTime = dtStartTime,
+    dtTopTime = dtTopTime,
+    dtLowTime = dtLowTime,
+    dtRetestTime = dtRetestTime,
     ssr = ssr,
     under1Dollar = under1Dollar,
     entryAfter11am = entryAfter11am,

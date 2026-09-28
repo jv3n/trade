@@ -84,6 +84,10 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     dtTopPrice: null,
     dtLowPrice: null,
     dtRetestPrice: null,
+    dtStartTime: null,
+    dtTopTime: null,
+    dtLowTime: null,
+    dtRetestTime: null,
     ssr: false,
     under1Dollar: false,
     entryAfter11am: false,
@@ -112,6 +116,9 @@ function makeDoubleTop(overrides: Partial<StatEntry> = {}): StatEntry {
     dtStartPrice: 1.9,
     dtTopPrice: 2.95,
     dtLowPrice: 2.36,
+    dtStartTime: '10:02',
+    dtTopTime: '10:14',
+    dtLowTime: '10:21',
     ...overrides,
   });
 }
@@ -152,6 +159,8 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     averageRetestPercent: null,
     averageRetestToTopPercent: null,
     retestTookTopCount: 0,
+    medianDoubleTopMinutes: null,
+    medianRejectionMinutes: null,
     traded: 8,
     untraded: 2,
     ...overrides,
@@ -1109,11 +1118,43 @@ describe('StatsPage', () => {
 
     expect(repo.lastFilter?.pattern).toBe('DT');
     expect(page.columns()).toEqual(
-      expect.arrayContaining(['dtStart', 'dtTop', 'dtLow', 'dtRetest']),
+      expect.arrayContaining(['dtStart', 'dtTop', 'dtLow', 'dtRetest', 'dtDuration']),
     );
     expect(page.columns()).not.toContain('pushOpen');
     expect(fixture.nativeElement.querySelector('tr.averages-row')).not.toBeNull();
     expect(page.statusTabs()).not.toContain('NO_PUSH');
+  });
+
+  // #469 : the question behind the times — does a double top really take half an hour ?
+  it('shows the median duration of the double tops in the DT view, a dash without any', async () => {
+    const { fixture, page, repo } = setup({ rows: [makeDoubleTop()] });
+    const tileValue = () =>
+      (fixture.nativeElement as HTMLElement)
+        .querySelector('[data-testid="dt-median-duration"] .kpi__value')
+        ?.textContent?.trim();
+
+    repo.summary.mockReturnValue(
+      of(
+        makeSummary({
+          completedDoubleTops: 3,
+          medianDoubleTopMinutes: 34,
+          medianRejectionMinutes: 7,
+        }),
+      ),
+    );
+    page.setView('DT');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(tileValue()).toBe('stats.kpi.minutes');
+
+    repo.summary.mockReturnValue(of(makeSummary({ medianDoubleTopMinutes: null })));
+    page.setView('GUS');
+    page.setView('DT');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(tileValue()).toBe('—');
   });
 
   it('« All » reads every pattern, sums each stat up in its own and has no averages row', async () => {
@@ -1213,24 +1254,92 @@ describe('StatsPage', () => {
     expect(legs.retestToTop).toBeCloseTo(-3.39, 2);
   });
 
-  it('counts four prices on a double top and names the one missing', () => {
+  it('counts four prices and four times on a double top and names what is missing', () => {
     const { page } = setup({ rows: [makeDoubleTop()] });
 
-    expect(page.sessionPriceCount()).toBe(4);
-    expect(page.sessionFilled()).toBe(3);
-    expect(page.sessionMissing()).toEqual(['stats.fields.dtRetest']);
-    expect(page.rows()[0].missing).toEqual(['stats.fields.dtRetest']);
+    expect(page.doubleTopProgress()).toEqual({ prices: 3, times: 3, total: 4 });
+    expect(page.sessionMissing()).toEqual([
+      'stats.fields.dtRetest',
+      'stats.fields.dtRetestTimeShort',
+    ]);
+    expect(page.rows()[0].missing).toEqual([
+      'stats.fields.dtRetest',
+      'stats.fields.dtRetestTimeShort',
+    ]);
   });
 
-  it('saves a double top price with the whole row, then ticks it with its four prices', () => {
+  // #469 : the price alone no longer ticks a double top — its time is required like it.
+  it('keeps the tick blocked on a double top with its four prices but a time missing', () => {
+    const { page } = setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
+
+    expect(page.sessionMissing()).toEqual(['stats.fields.dtRetestTimeShort']);
+    expect(page.tickBlockedReason()).not.toBe('');
+  });
+
+  // SGBX of the mockup : 10:02, 10:14, 10:21, 10:38.
+  it('reads how long each leg took, live, as the times are typed', () => {
+    const { page } = setup({ rows: [makeDoubleTop()] });
+
+    expect(page.doubleTopDurations()).toEqual({
+      rise: 12,
+      rejection: 7,
+      retest: null,
+      total: null,
+    });
+    page.setSessionTime('dtRetestTime', '10:38');
+
+    expect(page.doubleTopDurations()).toEqual({ rise: 12, rejection: 7, retest: 17, total: 36 });
+    expect(page.rows()[0].durations.rise).toBe(12);
+  });
+
+  it('sends nothing while the times go back, and points at the one that does', () => {
+    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+
+    page.setSessionTime('dtLowTime', '10:10');
+    page.saveSession();
+
+    expect(repo.update).not.toHaveBeenCalled();
+    expect(page.sessionIssue()?.reason).toBe('stats.save.timeOutOfOrder');
+    expect(page.atFault('dtLowTime')).toBe(true);
+    expect(page.atFault('dtTopTime')).toBe(true);
+    expect(page.atFault('dtStartTime')).toBe(false);
+  });
+
+  it('refuses a time outside the extended session, and takes a premarket one', () => {
+    const { page } = setup({ rows: [makeDoubleTop()] });
+
+    page.setSessionTime('dtStartTime', '02:10');
+    expect(page.sessionIssue()?.reason).toBe('stats.save.timeOutsideSession');
+    expect(page.atFault('dtStartTime')).toBe(true);
+
+    page.setSessionTime('dtStartTime', '07:30');
+    expect(page.sessionIssue()).toBeNull();
+  });
+
+  it('a cleared time goes back to null, not an empty string', () => {
+    const { page } = setup({ rows: [makeDoubleTop()] });
+
+    page.setSessionTime('dtTopTime', '');
+
+    expect(page.session().dtTopTime).toBeNull();
+  });
+
+  it('saves a double top price with the whole row, then ticks it with its four prices and times', () => {
     const { page, repo } = setup({ rows: [makeDoubleTop()] });
 
     page.setSessionPrice('dtRetestPrice', 2.85);
+    page.setSessionTime('dtRetestTime', '10:38');
     page.saveSession();
 
     expect(repo.update).toHaveBeenCalledWith(
       'stat-sgbx-dt',
-      expect.objectContaining({ pattern: 'DT', dtStartPrice: 1.9, dtRetestPrice: 2.85 }),
+      expect.objectContaining({
+        pattern: 'DT',
+        dtStartPrice: 1.9,
+        dtRetestPrice: 2.85,
+        dtStartTime: '10:02',
+        dtRetestTime: '10:38',
+      }),
     );
     expect(page.tickBlockedReason()).toBe('');
     page.toggleCompleted(page.completing()!);

@@ -33,6 +33,11 @@ import java.math.BigDecimal
  * @param averageRetestPercent Leg C : rejection low → retest.
  * @param averageRetestToTopPercent Where the retest ended against the top (negative = under it).
  * @param retestTookTopCount Double tops whose retest took the top back.
+ * @param medianDoubleTopMinutes Median duration of the completed double tops, start → retest, in
+ *   minutes (#469) — a median, not a mean : one DT that drags all afternoon would move an average
+ *   and say nothing about the typical one. Read against [completedDoubleTops].
+ * @param medianRejectionMinutes Median of leg B, top → rejection low — how fast the rejection
+ *   comes, the leg the entry depends on.
  * @param traded Stats of the filtered set that gave birth to a trade — the journal reads this pair
  *   as « 8 / 10 » and links to the ones left untraded (#195).
  * @param untraded Stats of the filtered set with no trade yet.
@@ -56,6 +61,8 @@ data class StatSummaryDto(
   val averageRetestPercent: BigDecimal?,
   val averageRetestToTopPercent: BigDecimal?,
   val retestTookTopCount: Int,
+  val medianDoubleTopMinutes: BigDecimal?,
+  val medianRejectionMinutes: BigDecimal?,
   val traded: Int,
   val untraded: Int,
 )

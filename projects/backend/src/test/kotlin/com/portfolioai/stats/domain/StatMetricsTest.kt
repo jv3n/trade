@@ -1,6 +1,7 @@
 package com.portfolioai.stats.domain
 
 import java.math.BigDecimal
+import java.time.LocalTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -138,6 +139,13 @@ class StatMetricsTest {
   fun `a leg with a missing price is null, so a double top in progress weighs nothing`() {
     assertNull(StatMetrics.percentChange(from = price("2.95"), to = null))
     assertNull(StatMetrics.percentChange(from = null, to = price("2.36")))
+  }
+
+  // Leg B of SGBX (#469) : a top at 10:14, the rejection low at 10:21.
+  @Test
+  fun `a leg's duration is the minutes between its two times, null when one is missing`() {
+    assertEquals(7L, StatMetrics.minutesBetween(LocalTime.of(10, 14), LocalTime.of(10, 21)))
+    assertNull(StatMetrics.minutesBetween(LocalTime.of(10, 14), null))
   }
 
   // ---------------------------------------------------------------------------

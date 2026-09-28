@@ -111,8 +111,24 @@
   }
 }
 
+// One row per point of the double top, like an execution in the journal : its time, then its
+// price — the leg it closes reads under each (#469).
 .session-form--dt {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  // The fields keep their own width : stretched over the card, a time and a price read as blanks.
+  // `minmax(0, …)` so they can still give way ; the modifier outranks `.session-form`'s own
+  // breakpoints, so it carries its narrow layout itself.
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  justify-content: start;
+
+  // On a phone the two no longer fit side by side (#456) : the time over its price.
+  @media (max-width: s.$bp-phone) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+// A time needs less room than a price.
+.time-field {
+  width: s.$space-4xl * 2;
 }
 
 // A column of its own so « No push » sits under the push field.

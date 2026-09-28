@@ -2,6 +2,8 @@ package com.portfolioai.stats.domain
 
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.Duration
+import java.time.LocalTime
 
 /**
  * Percentages derived from a stat's prices — **never stored**. Used server-side for the listing
@@ -32,6 +34,15 @@ object StatMetrics {
   fun percentChange(from: BigDecimal?, to: BigDecimal?): BigDecimal? {
     if (from == null || to == null) return null
     return change(from, to)
+  }
+
+  /**
+   * Minutes from [from] to [to] — a leg of a double top (#469). Null when either is missing ; the
+   * times are stored in order, so it is never negative.
+   */
+  fun minutesBetween(from: LocalTime?, to: LocalTime?): Long? {
+    if (from == null || to == null) return null
+    return Duration.between(from, to).toMinutes()
   }
 
   /**

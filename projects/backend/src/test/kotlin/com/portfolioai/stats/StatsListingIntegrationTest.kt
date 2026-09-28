@@ -16,6 +16,7 @@ import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -58,6 +59,9 @@ import org.springframework.web.server.ResponseStatusException
  * - **Double top (#435)** — a DT is measured by its four prices, saved field by field and ticked
  *   with all four ; their shape is checked, a DT drops the GUS session and a GUS the DT prices, the
  *   start defaults to the open, and the database backs the per-pattern completion up.
+ * - **Double top times (#469)** — each price has its time, to the minute, inside the extended
+ *   session and in order ; the four are required to tick, and the KPIs give the median duration and
+ *   the median rejection — a median, so one slow DT does not move the typical figure.
  * - **KPIs** — [StatEntryService.summarise] counts completed / to complete over the whole filtered
  *   set and averages the derived percentages (never stored) of the completed rows only, plus the
  *   median / 3rd quartile / max push at open behind the candidates' « À l'open » card (#261).
@@ -603,6 +607,14 @@ class StatsListingIntegrationTest {
     service.update(stat.id, request)
     request = request.copy(dtLowPrice = BigDecimal("2.36"))
     service.update(stat.id, request)
+    request =
+      request.copy(
+        dtStartTime = LocalTime.of(10, 2),
+        dtTopTime = LocalTime.of(10, 14),
+        dtLowTime = LocalTime.of(10, 21),
+        dtRetestTime = LocalTime.of(10, 38),
+      )
+    service.update(stat.id, request)
 
     val ticked = service.setCompleted(stat.id, completed = true)
     assertTrue(ticked.completed)
@@ -767,6 +779,131 @@ class StatsListingIntegrationTest {
 
     assertEquals(before.completed + 2, after.completed, "a double top is still a completed stat")
     assertEquals(gusFigures(before), gusFigures(after))
+  }
+
+  // ---------------------------------------------------------------------------
+  // Double top times (#469) — « does a DT really take half an hour ? »
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `ticking a double top with a price but no time is a 400 naming the time`() {
+    val stat = service.create(doubleTopRequest(ticker = "SGBX").copy(dtRetestTime = null))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.setCompleted(stat.id, completed = true)
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertEquals("Stat SGBX can't be completed yet — missing Retest time", ex.reason)
+  }
+
+  @Test
+  fun `a completed double top can't lose one of its four times`() {
+    val stat = createCompleted(doubleTopRequest(ticker = "SGBX"))
+
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.update(stat.id, doubleTopRequest(ticker = "SGBX").copy(dtTopTime = null))
+      }
+
+    assertEquals(400, ex.statusCode.value())
+    assertTrue(ex.reason!!.contains("Top time"), "got ${ex.reason}")
+  }
+
+  // A rejection low before its top is a typo, every time — and a negative leg would poison the
+  // median.
+  @Test
+  fun `times out of order are a 400 naming the one that goes back`() {
+    listOf(
+        doubleTopRequest().copy(dtTopTime = LocalTime.of(9, 58)) to
+          "Top time must not be before the start time",
+        doubleTopRequest().copy(dtLowTime = LocalTime.of(10, 10)) to
+          "Rejection low time must not be before the top time",
+        // With the top still blank, the low is ordered against the start.
+        doubleTopRequest().copy(dtTopTime = null, dtLowTime = LocalTime.of(9, 50)) to
+          "Rejection low time must not be before the start time",
+      )
+      .forEach { (request, reason) ->
+        val ex = assertThrows(ResponseStatusException::class.java) { service.create(request) }
+        assertEquals(400, ex.statusCode.value())
+        assertEquals(reason, ex.reason)
+      }
+    assertEquals(0, repo.count())
+  }
+
+  @Test
+  fun `a time outside the extended session is a 400, a premarket one is fine`() {
+    val ex =
+      assertThrows(ResponseStatusException::class.java) {
+        service.create(doubleTopRequest().copy(dtStartTime = LocalTime.of(2, 10)))
+      }
+    val premarket =
+      service.create(
+        doubleTopRequest(ticker = "NXTT")
+          .copy(dtStartTime = LocalTime.of(7, 30), dtTopTime = LocalTime.of(8, 5))
+      )
+
+    assertEquals(400, ex.statusCode.value())
+    assertEquals("Start time must be between 04:00 and 20:00", ex.reason)
+    assertEquals(LocalTime.of(7, 30), premarket.dtStartTime)
+  }
+
+  @Test
+  fun `a time is kept to the minute`() {
+    val stat = service.create(doubleTopRequest().copy(dtTopTime = LocalTime.of(10, 14, 37)))
+
+    assertEquals(LocalTime.of(10, 14), stat.dtTopTime)
+  }
+
+  @Test
+  fun `a GUS ignores the double top times`() {
+    val gus =
+      service.create(fullSessionRequest(ticker = "SGBX").copy(dtTopTime = LocalTime.of(10, 14)))
+
+    assertNull(gus.dtTopTime)
+  }
+
+  @Test
+  fun `the database refuses double top times on a GUS, and out of order`() {
+    val onGus =
+      makeStat(testUser, ticker = "KTTA", tradeDate = DAY).apply {
+        dtTopTime = LocalTime.of(10, 14)
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(onGus) }
+
+    val backwards =
+      makeStat(testUser, ticker = "SGBX", tradeDate = DAY).apply {
+        pattern = Pattern.DT
+        dtTopTime = LocalTime.of(10, 14)
+        dtLowTime = LocalTime.of(10, 2)
+      }
+    assertThrows(DataIntegrityViolationException::class.java) { repo.saveAndFlush(backwards) }
+  }
+
+  @Test
+  fun `summarise gives the median duration and the median rejection of the completed double tops`() {
+    // SGBX 10:02 -> 10:38 = 36 min, rejection 10:14 -> 10:21 = 7 ;
+    // NXTT 09:45 -> 10:50 = 65 min, rejection 10:05 -> 10:20 = 15.
+    createCompleted(doubleTopRequest(ticker = "SGBX"))
+    createCompleted(nxttDoubleTop())
+    // In progress : its times must weigh nothing.
+    service.create(doubleTopRequest(ticker = "MULN").copy(dtRetestTime = LocalTime.of(19, 0)))
+
+    val summary = service.summarise(noFilter)
+
+    assertEquals(0, BigDecimal("50.50").compareTo(summary.medianDoubleTopMinutes))
+    assertEquals(0, BigDecimal("11.00").compareTo(summary.medianRejectionMinutes))
+  }
+
+  @Test
+  fun `no completed double top means no median, not a zero`() {
+    seedThreeStats()
+
+    val summary = service.summarise(noFilter)
+
+    assertNull(summary.medianDoubleTopMinutes)
+    assertNull(summary.medianRejectionMinutes)
   }
 
   // ---------------------------------------------------------------------------
@@ -980,7 +1117,7 @@ class StatsListingIntegrationTest {
 
   /**
    * SGBX of `mockup/PARCOURS.md › The double top stat` : start 1.90, top 2.95, rejection low 2.36,
-   * retest 2.85 — off a 1.12 previous close.
+   * retest 2.85 — off a 1.12 previous close — at 10:02, 10:14, 10:21 and 10:38 (#469).
    */
   private fun doubleTopRequest(ticker: String = "SGBX") =
     premarketRequest(ticker = ticker, pattern = Pattern.DT)
@@ -992,9 +1129,16 @@ class StatsListingIntegrationTest {
         dtTopPrice = BigDecimal("2.95"),
         dtLowPrice = BigDecimal("2.36"),
         dtRetestPrice = BigDecimal("2.85"),
+        dtStartTime = LocalTime.of(10, 2),
+        dtTopTime = LocalTime.of(10, 14),
+        dtLowTime = LocalTime.of(10, 21),
+        dtRetestTime = LocalTime.of(10, 38),
       )
 
-  /** A shallow double top whose retest took the top back : 2.00, 3.00, 2.70, 3.10. */
+  /**
+   * A shallow double top whose retest took the top back : 2.00, 3.00, 2.70, 3.10 — and a slow one,
+   * 09:45 → 10:50.
+   */
   private fun nxttDoubleTop() =
     doubleTopRequest(ticker = "NXTT")
       .copy(
@@ -1002,6 +1146,10 @@ class StatsListingIntegrationTest {
         dtTopPrice = BigDecimal("3.00"),
         dtLowPrice = BigDecimal("2.70"),
         dtRetestPrice = BigDecimal("3.10"),
+        dtStartTime = LocalTime.of(9, 45),
+        dtTopTime = LocalTime.of(10, 5),
+        dtLowTime = LocalTime.of(10, 20),
+        dtRetestTime = LocalTime.of(10, 50),
       )
 
   private fun makeStat(owner: User, ticker: String, tradeDate: LocalDate) =

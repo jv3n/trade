@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { doubleTopLegs, gapPercent, percentVsOpen, pmPushPercent } from './stats.math';
+import {
+  doubleTopDurations,
+  doubleTopLegs,
+  gapPercent,
+  minutesBetween,
+  percentVsOpen,
+  pmPushPercent,
+} from './stats.math';
 
 /**
  * Pure-function spec for the stats' derived figures. Pins the formulas of `mockup/PARCOURS.md`
@@ -82,5 +89,32 @@ describe('doubleTopLegs', () => {
     expect(legs.retest).toBeNull();
     expect(legs.retestToTop).toBeNull();
     expect(legs.rejection).not.toBeNull();
+  });
+});
+
+// #469 — how long a double top takes, leg by leg : the SGBX of the mockup, 10:02 → 10:38.
+describe('doubleTopDurations', () => {
+  const sgbx = {
+    dtStartTime: '10:02',
+    dtTopTime: '10:14',
+    dtLowTime: '10:21',
+    dtRetestTime: '10:38',
+  };
+
+  it('reads each leg and the total in minutes', () => {
+    expect(doubleTopDurations(sgbx)).toEqual({ rise: 12, rejection: 7, retest: 17, total: 36 });
+  });
+
+  it('leaves a leg null until both its times are in', () => {
+    const durations = doubleTopDurations({ ...sgbx, dtRetestTime: null });
+
+    expect(durations.retest).toBeNull();
+    expect(durations.total).toBeNull();
+    expect(durations.rejection).toBe(7);
+  });
+
+  // Typed backwards, the panel says so on the field : a negative leg would only mislead.
+  it('never reads a negative leg', () => {
+    expect(minutesBetween('10:21', '10:14')).toBeNull();
   });
 });
