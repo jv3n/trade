@@ -45,11 +45,8 @@ class AccountMovement(
   @Column(length = 2000) var note: String? = null,
 
   /**
-   * The reconciled balance a correction targets. Non-null **only** for `ADJUSTMENT` rows created
-   * via `correctBalance` — the account re-floats the latest such row (`amount = targetBalance − Σ
-   * others`) whenever another line is edited or deleted, so the derived balance stays at the
-   * target. Null for deposits / withdrawals / trades and for legacy adjustments (which stay
-   * frozen).
+   * The broker balance a correction was settled against. Non-null **only** on `ADJUSTMENT` rows ;
+   * informational — what moves a morning's correction is `AccountReconciler`, not this figure.
    */
   @Column(name = "target_balance", precision = 18, scale = 2) var targetBalance: BigDecimal? = null,
 

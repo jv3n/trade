@@ -56,8 +56,7 @@ class AccountService(
    *   must not renumber it (#229). A SQL page cannot see the rows it excluded.
    * - a JPQL predicate on [AccountMovementType] makes Hibernate emit `cast(? as
    *   accountmovementtype)`, a type that does not exist in Postgres (the enum is
-   *   `account_movement_type`) — see `AccountMovementRepository.findLatestCorrection`. Filtering in
-   *   Kotlin sidesteps it.
+   *   `account_movement_type`), hence `SQLGrammarException`. Filtering in Kotlin sidesteps it.
    *
    * `summary` and `balanceSeries` already load the full history; at one user's ledger scale this is
    * a non-issue. The listing's order is therefore fixed (value date then creation, descending) and
@@ -163,6 +162,7 @@ class AccountService(
         note = request.note.cleanNote(),
       )
     val saved = repo.save(movement)
+    reconciler.added(saved)
     return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
   }
 
@@ -184,16 +184,17 @@ class AccountService(
         amount = delta,
         valueDate = request.valueDate,
         note = request.note.cleanNote(),
-        // Remember the reconciled target so the reconciler can re-float this row (keep the balance
-        // at
-        // `target`) when another line is edited or deleted later.
         targetBalance = request.targetBalance,
       )
     val saved = repo.save(movement)
+    reconciler.added(saved)
     return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
   }
 
-  /** Edits a manual movement. TRADE → 400 ; type change → 400 ; foreign / missing id → 404. */
+  /**
+   * Edits a manual movement. TRADE → 400 ; type change → 400 ; a morning's correction → 400 ;
+   * foreign / missing id → 404.
+   */
   @Transactional
   fun update(id: UUID, request: MovementRequest): AccountMovementDto {
     val movement = loadOwned(id)
@@ -203,18 +204,19 @@ class AccountService(
     if (request.type != movement.type) {
       throw badRequest("A movement's type can't be changed — delete it and create a new one")
     }
+    // The morning is the fact and its correction a consequence : an edit here would leave the
+    // morning claiming a broker balance the ledger no longer shows.
+    if (reconciliations.findByCorrectionId(movement.id) != null) {
+      throw badRequest("A morning's correction is changed by reconciling that morning again")
+    }
+    val oldValueDate = movement.valueDate
+    val oldAmount = movement.amount
     movement.amount = signedAmount(movement.type, request.amount)
     movement.valueDate = request.valueDate
     movement.note = request.note.cleanNote()
     movement.updatedAt = Instant.now()
     val saved = repo.save(movement)
-    // Editing a real line (deposit / withdrawal) shifts the balance → re-float the latest
-    // correction
-    // so it stays on its target. Editing an adjustment itself must not re-float it onto its own
-    // edit.
-    if (movement.type != AccountMovementType.ADJUSTMENT) {
-      reconciler.reconcile(movement.user.id)
-    }
+    reconciler.changed(saved, oldValueDate, oldAmount)
     return saved.toDto(runningBalances(saved.user.id).getValue(saved.id))
   }
 
@@ -233,9 +235,7 @@ class AccountService(
     // the FK still points here.
     reconciliations.findByCorrectionId(movement.id)?.let { reconciliations.delete(it) }
     repo.delete(movement)
-    // Removing a line shifts the balance → re-float the latest remaining correction. If the row we
-    // just deleted *was* the latest correction, this floats the previous one back onto its target.
-    reconciler.reconcile(movement.user.id)
+    reconciler.removed(movement)
   }
 
   private fun loadOwned(id: UUID): AccountMovement {

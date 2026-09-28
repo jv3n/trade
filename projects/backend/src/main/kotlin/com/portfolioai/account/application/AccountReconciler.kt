@@ -1,56 +1,127 @@
 package com.portfolioai.account.application
 
+import com.portfolioai.account.domain.AccountMovement
+import com.portfolioai.account.domain.AccountMovementType
+import com.portfolioai.account.domain.AccountReconciliation
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
+import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
+import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
-import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Re-floats a user's latest balance correction so the derived balance keeps matching the reconciled
- * target after another line is **edited or deleted**. Without this, a correction's delta was frozen
- * at creation : fixing an erroneous deposit / withdrawal (or re-syncing a trade's P&L) later moved
- * the balance while the adjustment stayed put, so the total drifted away from the target the user
- * reconciled to.
+ * Keeps every reconciled morning true (#476). On morning D the broker showed a balance that
+ * included every movement dated before D ; a later change to one of those movements does not move
+ * the broker's figure, so it must not move the account's either.
  *
- * The anchor is the most recent `ADJUSTMENT` carrying a `targetBalance` (see
- * [AccountMovementRepository.findLatestCorrection]). Only that one floats — older corrections were
- * real reconciliations at their own date and stay frozen, as do legacy adjustments (null target).
+ * A change of δ to a movement dated d is therefore absorbed by **the first reconciled morning
+ * strictly after d**, whose correction moves by −δ. With no such morning, nothing absorbs it and
+ * the balance moves by δ. Once that first morning has absorbed it, the balance at every later
+ * morning is unchanged, so their corrections have nothing to do.
  *
- * Recompute : `newDelta = target − (balance − anchor.amount)` where `balance − anchor.amount` is
- * the sum of every *other* movement. If the target is now reached without any plug (`newDelta ==
- * 0`) the anchor is deleted rather than left as a zero row (which the `account_movement` CHECK
- * forbids). If that deletion uncovers an older correction, the older one stays frozen — the balance
- * already sits on the anchor's target, so nothing more is owed.
+ * - Adding, editing and deleting are the same operation, so deleting a row and re-creating it
+ *   leaves every figure where it was.
+ * - A movement dated on the morning's own day is not absorbed by it : a trade of day D happens
+ *   after that morning. Known limit : a morning settled late in the day already counted that day's
+ *   rows, and a later edit to one of them moves the balance rather than that morning's correction.
+ * - The anchor is the morning, not its correction : a clean morning gains a correction when it
+ *   absorbs a change, and a correction absorbed down to zero is removed while its morning stays.
+ * - A correction without a morning (the bare `/corrections` endpoint, legacy rows) never absorbs.
+ * - The two moves that would make a morning lie are refused upstream : editing its correction
+ *   directly, and settling a morning earlier than one already recorded.
  *
- * Deliberately **not** triggered on *adding* a new deposit / withdrawal / trade : fresh cash or a
- * new trade's P&L is a real balance move, not a mistake to absorb. Only edits and deletes re-float.
- *
- * A separate `@Transactional` bean (not a method on `AccountService` / `AccountTradeSyncService`)
- * so both callers share it through Spring's proxy — a self-invocation would bypass AOP (cf.
- * CLAUDE.md), and it joins the caller's transaction so the recompute commits or rolls back with the
- * mutation.
+ * A separate `@Transactional` bean so `AccountService`, `AccountTradeSyncService` and
+ * `AccountReconciliationService` share it through Spring's proxy, inside their own transaction.
  */
 @Service
-class AccountReconciler(private val repo: AccountMovementRepository) {
+class AccountReconciler(
+  private val movements: AccountMovementRepository,
+  private val reconciliations: AccountReconciliationRepository,
+) {
 
   @Transactional
-  fun reconcile(userId: UUID) {
-    val anchor = repo.findLatestCorrection(userId, Pageable.ofSize(1)).firstOrNull() ?: return
-    val target = anchor.targetBalance ?: return
-    // `balanceFor` auto-flushes the caller's pending edit / delete first, so this is the
-    // post-mutation
-    // sum ; subtracting the anchor's own current amount leaves the sum of every other movement.
-    val othersSum = repo.balanceFor(userId).subtract(anchor.amount)
-    val newDelta = target.subtract(othersSum)
+  fun added(movement: AccountMovement) {
+    absorb(movement.user.id, listOf(movement.valueDate to movement.amount))
+  }
+
+  @Transactional
+  fun removed(movement: AccountMovement) {
+    absorb(movement.user.id, listOf(movement.valueDate to movement.amount.negate()))
+  }
+
+  /** [movement] already carries its new date and amount ; a date change can move two mornings. */
+  @Transactional
+  fun changed(movement: AccountMovement, oldValueDate: LocalDate, oldAmount: BigDecimal) {
+    absorb(
+      movement.user.id,
+      listOf(oldValueDate to oldAmount.negate(), movement.valueDate to movement.amount),
+    )
+  }
+
+  /**
+   * Sets [morning]'s correction to [amount] : created, updated in place, or removed at zero — the
+   * `amount <> 0` CHECK forbids a zero row. [morning] must already be persisted.
+   */
+  @Transactional
+  fun settle(morning: AccountReconciliation, amount: BigDecimal) {
+    val correction = correctionOf(morning)
     when {
-      newDelta.signum() == 0 -> repo.delete(anchor)
-      newDelta.compareTo(anchor.amount) != 0 -> {
-        anchor.amount = newDelta
-        anchor.updatedAt = Instant.now()
-        repo.save(anchor)
+      amount.signum() == 0 ->
+        correction?.let {
+          // Unlinked before the delete, or the next flush writes the dangling id back.
+          morning.correctionId = null
+          reconciliations.save(morning)
+          movements.delete(it)
+        }
+      correction != null -> {
+        if (correction.amount.compareTo(amount) == 0) return
+        correction.amount = amount
+        correction.targetBalance = morning.brokerBalance
+        correction.updatedAt = Instant.now()
+        movements.save(correction)
+      }
+      else -> {
+        val created =
+          movements.save(
+            AccountMovement(
+              user = morning.user,
+              type = AccountMovementType.ADJUSTMENT,
+              amount = amount,
+              valueDate = morning.valueDate,
+              targetBalance = morning.brokerBalance,
+            )
+          )
+        morning.correctionId = created.id
+        reconciliations.save(morning)
       }
     }
   }
+
+  /** The morning's correction, 0 on a clean morning. */
+  fun correctionAmount(morning: AccountReconciliation): BigDecimal =
+    correctionOf(morning)?.amount ?: BigDecimal.ZERO
+
+  /** The two sides of an edit can land on the same morning : they are netted before settling. */
+  private fun absorb(userId: UUID, changes: List<Pair<LocalDate, BigDecimal>>) {
+    val byMorning = LinkedHashMap<UUID, Pair<AccountReconciliation, BigDecimal>>()
+    for ((valueDate, delta) in changes) {
+      if (delta.signum() == 0) continue
+      val morning =
+        reconciliations.findFirstByUserIdAndValueDateGreaterThanOrderByValueDateAsc(
+          userId,
+          valueDate,
+        ) ?: continue
+      val netted = (byMorning[morning.id]?.second ?: BigDecimal.ZERO) + delta
+      byMorning[morning.id] = morning to netted
+    }
+    for ((morning, delta) in byMorning.values) {
+      if (delta.signum() != 0) settle(morning, correctionAmount(morning) - delta)
+    }
+  }
+
+  private fun correctionOf(morning: AccountReconciliation): AccountMovement? =
+    morning.correctionId?.let { movements.findById(it).orElse(null) }
 }

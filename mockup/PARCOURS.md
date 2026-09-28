@@ -684,6 +684,13 @@ compares it with the computed one. No gap → the reconciliation is simply times
 "correction" line puts the balance on the TradeZero figure. It catches whatever the adjusted P&L
 figures didn't cover (borrowing fees, rounding…).
 
+**A reconciled morning stays true** (#474, #476) : on morning D the broker's balance already
+counted every movement dated before D. So adding, fixing or deleting a movement dated `d` is
+absorbed by **the first reconciled morning after `d`** — its correction moves by the opposite
+amount, and the balance does not move. With no reconciled morning after it (today's trades, cash
+arrived since), the balance moves by exactly the change. A clean morning gains a correction when it
+absorbs one ; a correction absorbed down to zero disappears and its morning reads clean.
+
 **A typed balance is checked before it rewrites the account** (#307) : a **negative** balance is
 refused on the field (the broker never shows one) and the button stays disabled ; a gap **above
 20 % of the computed balance** still goes through, but its confirmation says so and reads as a

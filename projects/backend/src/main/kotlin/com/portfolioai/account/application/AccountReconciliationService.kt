@@ -1,6 +1,5 @@
 package com.portfolioai.account.application
 
-import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.ReconciliationDto
 import com.portfolioai.account.application.dto.ReconciliationRequest
 import com.portfolioai.account.application.dto.toDto
@@ -24,23 +23,23 @@ import org.springframework.web.server.ResponseStatusException
  * - **no gap** → the morning is simply timestamped. That row is the whole point of this service :
  *   before it, a clean morning left no trace, so "reconciled today ?" had no answer and the history
  *   had holes on exactly the good days.
- * - **a gap** → [AccountService.correctBalance] records the `ADJUSTMENT` that puts the balance on
- *   the broker's figure, and the reconciliation keeps its id.
+ * - **a gap** → the morning's `ADJUSTMENT` puts the balance on the broker's figure, and the
+ *   reconciliation keeps its id.
  *
- * Reconciling the same morning twice overwrites the row (it is one decision) : the correction
- * closes the distance from the balance as it stands then, so a mistyped figure is fixed by a second
- * plug rather than a stacked line — but the remembered gap stays measured from the balance the
- * morning started at, which is what that day actually cost.
+ * Reconciling the same morning twice overwrites the row (it is one decision) : the morning's own
+ * correction moves to close the distance from the balance as it stands then, so a mistyped figure
+ * leaves one line, not two — but the remembered gap stays measured from the balance the morning
+ * started at, which is what that day actually cost.
  *
- * [AccountService] is injected rather than re-implemented : the correction carries the re-floating
- * contract of `targetBalance` (see [AccountReconciler]), and duplicating that here would give the
- * balance two owners.
+ * The correction is written by [AccountReconciler], the one owner of the rule that keeps every
+ * reconciled morning true when an earlier movement changes (#476).
  */
 @Service
 class AccountReconciliationService(
   private val repo: AccountReconciliationRepository,
   private val movements: AccountMovementRepository,
   private val accountService: AccountService,
+  private val reconciler: AccountReconciler,
   private val authService: AuthService,
 ) {
 
@@ -52,6 +51,19 @@ class AccountReconciliationService(
       throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Broker balance must not be negative")
     }
     val user = authService.getCurrentUser()
+    // A later morning already counted everything before it : settling an earlier one now would
+    // move the balance under that later morning without it absorbing the change (#476).
+    if (
+      repo.findFirstByUserIdAndValueDateGreaterThanOrderByValueDateAsc(
+        user.id,
+        request.valueDate,
+      ) != null
+    ) {
+      throw ResponseStatusException(
+        HttpStatus.BAD_REQUEST,
+        "A later morning is already reconciled — mornings are settled in order",
+      )
+    }
     val existing = repo.findByUserIdAndValueDate(user.id, request.valueDate)
     val currentBalance = movements.balanceFor(user.id)
 
@@ -60,24 +72,11 @@ class AccountReconciliationService(
     // is the one the first pass recorded, not the balance its own correction already moved.
     val startingBalance = existing?.appBalance ?: currentBalance
     val gap = request.brokerBalance.subtract(startingBalance)
-    val correctionNeeded = request.brokerBalance.compareTo(currentBalance) != 0
-
-    val correctionId =
-      if (!correctionNeeded) existing?.correctionId
-      else
-        accountService
-          .correctBalance(
-            CorrectionRequest(targetBalance = request.brokerBalance, valueDate = request.valueDate)
-          )
-          .id
 
     val reconciliation =
       existing?.apply {
         brokerBalance = request.brokerBalance
         this.gap = gap
-        // Kept, not overwritten with null : the correction this morning produced is still in the
-        // ledger, and a history line claiming a clean morning would be a lie.
-        this.correctionId = correctionId
         updatedAt = Instant.now()
       }
         ?: AccountReconciliation(
@@ -86,9 +85,11 @@ class AccountReconciliationService(
           brokerBalance = request.brokerBalance,
           appBalance = startingBalance,
           gap = gap,
-          correctionId = correctionId,
         )
-    return repo.save(reconciliation).toDto()
+    val saved = repo.save(reconciliation)
+    val ownCorrection = reconciler.correctionAmount(saved)
+    reconciler.settle(saved, ownCorrection + request.brokerBalance.subtract(currentBalance))
+    return saved.toDto()
   }
 
   /**
@@ -101,9 +102,9 @@ class AccountReconciliationService(
    * never happened as recorded. Hence a cancellation that removes both, rather than one that breaks
    * the link between them.
    *
-   * The correction goes through [AccountService.delete] rather than the repository, so the
-   * re-floating contract stays in one place : removing it shifts the balance, and the previous
-   * correction has to float back onto its own target.
+   * The correction goes through [AccountService.delete] rather than the repository, so its removal
+   * is absorbed like any other : by the next reconciled morning if there is one, by the balance
+   * otherwise.
    */
   @Transactional
   fun cancel(id: UUID) {
