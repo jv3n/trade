@@ -33,6 +33,11 @@ export interface AccountMovement {
    */
   tradeDirection: TradeDirection | null;
   tradeSize: number | null;
+  /**
+   * Set only on a morning's correction : the gap that morning recorded. An [amount] that differs
+   * from it means a later fix to an earlier row was absorbed there (#476).
+   */
+  measuredGap: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

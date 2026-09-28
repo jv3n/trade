@@ -38,6 +38,7 @@ describe('HttpAccountRepository', () => {
       tradeEntryId: null,
       tradeDirection: null,
       tradeSize: null,
+      measuredGap: null,
       createdAt: '2026-06-15T10:00:00Z',
       updatedAt: '2026-06-15T10:00:00Z',
       ...overrides,

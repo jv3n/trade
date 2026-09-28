@@ -36,4 +36,7 @@ interface AccountReconciliationRepository : JpaRepository<AccountReconciliation,
    * describing a correction that no longer exists.
    */
   fun findByCorrectionId(correctionId: UUID): AccountReconciliation?
+
+  /** The mornings that left a correction — the listing reads their gap next to it (#477). */
+  fun findByUserIdAndCorrectionIdIsNotNull(userId: UUID): List<AccountReconciliation>
 }

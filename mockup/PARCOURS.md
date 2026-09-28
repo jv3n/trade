@@ -691,6 +691,15 @@ amount, and the balance does not move. With no reconciled morning after it (toda
 arrived since), the balance moves by exactly the change. A clean morning gains a correction when it
 absorbs one ; a correction absorbed down to zero disappears and its morning reads clean.
 
+**An absorbed correction says so** (#477) : in the movements table, a correction whose amount no
+longer matches what its morning measured carries an indigo **« ajustée »** tag (a status, not a
+warning — the gap was explained, not wrong) and, next to it, **« mesurée −15,40 $ US »** — the gap
+that morning recorded. A morning's correction with no note is labelled **« Rapprochement du 12/09 »**
+rather than a dash. The tag's tooltip says why : an earlier row was fixed since and absorbed there, so
+that morning's balance is still TradeZero's. A correction that was never adjusted looks as before.
+A morning's correction is not editable (#476) — it changes by reconciling that morning again ; it
+can be deleted, which takes its morning with it.
+
 **A typed balance is checked before it rewrites the account** (#307) : a **negative** balance is
 refused on the field (the broker never shows one) and the button stays disabled ; a gap **above
 20 % of the computed balance** still goes through, but its confirmation says so and reads as a

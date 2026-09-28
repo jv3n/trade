@@ -246,6 +246,22 @@ export class AccountPage {
     return m.tradeEntryId ? ['/journal', m.tradeEntryId] : ['/journal'];
   }
 
+  /** A correction settled by a morning reconciliation — the only rows that carry a measured gap. */
+  isMorningCorrection(m: AccountMovement): boolean {
+    return m.measuredGap !== null && m.measuredGap !== undefined;
+  }
+
+  /**
+   * A morning's correction that has absorbed a later fix to an earlier row (#476) : its amount no
+   * longer matches the gap its morning measured. Compared in cents — both come off the wire as
+   * floats. An absent field must read as « no morning », or every row would be tagged.
+   */
+  isAdjusted(m: AccountMovement): boolean {
+    const measured = m.measuredGap;
+    if (measured === null || measured === undefined) return false;
+    return Math.round(m.amount * 100) !== Math.round(measured * 100);
+  }
+
   canEdit(m: AccountMovement): boolean {
     return m.type === 'DEPOSIT' || m.type === 'WITHDRAWAL';
   }
