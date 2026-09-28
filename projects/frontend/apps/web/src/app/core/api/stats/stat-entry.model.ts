@@ -44,6 +44,14 @@ export interface StatEntry {
   dtLowPrice: number | null;
   /** The high of the retest, back toward the top. */
   dtRetestPrice: number | null;
+  /**
+   * When each of the four prices printed (#469) — `HH:mm`, wall-clock on [tradeDate], in order
+   * from start to retest. The legs' durations come from them.
+   */
+  dtStartTime: string | null;
+  dtTopTime: string | null;
+  dtLowTime: string | null;
+  dtRetestTime: string | null;
 
   // ---- Flags ----
   ssr: boolean;
@@ -55,7 +63,7 @@ export interface StatEntry {
   highInstitutions: boolean;
   /**
    * Ticked by the owner (#263) — needs the five session prices (four on a no-push day, the four
-   * double top prices on a DT), which alone don't tick it.
+   * double top prices and their times on a DT), which alone don't tick it.
    */
   completed: boolean;
 
@@ -134,6 +142,13 @@ export interface StatSummary {
   averageRetestToTopPercent: number | null;
   /** Double tops whose retest took the top back. */
   retestTookTopCount: number;
+  /**
+   * Median duration of the completed double tops, start → retest, in minutes (#469) — a median, so
+   * one DT that drags all afternoon does not move the typical figure. Null without any.
+   */
+  medianDoubleTopMinutes: number | null;
+  /** Median of leg B, top → rejection low, in minutes — how fast the rejection comes. */
+  medianRejectionMinutes: number | null;
   /** Stats of the filtered set that gave birth to a trade — the journal reads « traded / all ». */
   traded: number;
   untraded: number;

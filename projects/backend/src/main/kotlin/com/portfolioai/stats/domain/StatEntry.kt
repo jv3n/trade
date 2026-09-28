@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -28,10 +29,10 @@ import org.hibernate.type.SqlTypes
  *   nulls the link without touching the stat).
  * - **Session** — typed field by field during the day, any subset may be in. A GUS (and the
  *   patterns measured like it) fills [openPrice] … [eodPrice] ; a DT fills its four prices instead,
- *   [dtStartPrice] … [dtRetestPrice] (#428). [completedAt] is the status : set when the owner ticks
- *   the stat, which needs the whole session of its pattern ([hasFullSession]) — the
- *   `ck_stat_entry_completed_whole` CHECK backs it up. A [noPush] stat has no push price, and is
- *   whole with the four others (#302).
+ *   [dtStartPrice] … [dtRetestPrice] (#428), each with its time (#469). [completedAt] is the status
+ *   : set when the owner ticks the stat, which needs the whole session of its pattern
+ *   ([hasFullSession]) — the `ck_stat_entry_completed_whole` CHECK backs it up. A [noPush] stat has
+ *   no push price, and is whole with the four others (#302).
  *
  * No percentage is stored : gap, premarket push, push at open, HOD / LOD / EOD are all derived from
  * the prices ([StatMetrics] server-side for the KPIs, `stats.math` on the front).
@@ -79,6 +80,14 @@ class StatEntry(
   @Column(name = "dt_low_price", precision = 18, scale = 4) var dtLowPrice: BigDecimal? = null,
   @Column(name = "dt_retest_price", precision = 18, scale = 4)
   var dtRetestPrice: BigDecimal? = null,
+  /**
+   * When each of the four prices printed (#469), wall-clock on [tradeDate], to the minute — in
+   * order, start to retest. The legs' durations and the DT median come from them.
+   */
+  @Column(name = "dt_start_time") var dtStartTime: LocalTime? = null,
+  @Column(name = "dt_top_time") var dtTopTime: LocalTime? = null,
+  @Column(name = "dt_low_time") var dtLowTime: LocalTime? = null,
+  @Column(name = "dt_retest_time") var dtRetestTime: LocalTime? = null,
 
   // ---- Flags ----
   @Column(nullable = false) var ssr: Boolean = false,
@@ -107,12 +116,12 @@ class StatEntry(
 
   /**
    * The session prices of its pattern are in — five for a GUS, or four on a [noPush] day ; the four
-   * double top prices for a DT. The precondition to tick.
+   * double top prices and their four times for a DT. The precondition to tick.
    */
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
 
-  /** Labels of the session prices still missing, in the sheet's order. */
+  /** Labels of the session prices (and a DT's times) still missing, in the sheet's order. */
   val missingSessionPrices: List<String>
     get() =
       (if (isDoubleTop) {
@@ -121,6 +130,10 @@ class StatEntry(
             "Top" to dtTopPrice,
             "Rejection low" to dtLowPrice,
             "Retest" to dtRetestPrice,
+            "Start time" to dtStartTime,
+            "Top time" to dtTopTime,
+            "Rejection low time" to dtLowTime,
+            "Retest time" to dtRetestTime,
           )
         } else {
           listOfNotNull(

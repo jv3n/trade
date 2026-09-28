@@ -65,7 +65,11 @@ import { PricePipe } from '../../shared/price/price.pipe';
 import {
   DT_EXTENSION_CRITERION,
   DT_REJECTION_CRITERION,
+  DT_SESSION_CLOSES,
+  DT_SESSION_OPENS,
+  DoubleTopDurations,
   DoubleTopLegs,
+  doubleTopDurations,
   doubleTopLegs,
   gapPercent,
   percentVsOpen,
@@ -92,6 +96,11 @@ interface SessionModel {
   dtTopPrice: number | null;
   dtLowPrice: number | null;
   dtRetestPrice: number | null;
+  /** `HH:mm`, null until typed (#469). */
+  dtStartTime: string | null;
+  dtTopTime: string | null;
+  dtLowTime: string | null;
+  dtRetestTime: string | null;
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;
@@ -148,6 +157,8 @@ export interface StatRow extends StatEntry {
   eodPercent: number | null;
   /** The double top legs — null on any other pattern, or until their prices are in. */
   legs: DoubleTopLegs;
+  /** How long each leg took (#469) — null on any other pattern, or until its times are in. */
+  durations: DoubleTopDurations;
   /** Label keys of the session prices still missing — the ✓ stays disabled until it's empty. */
   missing: string[];
   /** Why the day's range refuses this row (#305) — null when it holds. Blocks the ✓ too. */
@@ -190,12 +201,21 @@ const DOUBLE_TOP_FOOTER_COLUMNS: readonly string[] = [
   'dtTop',
   'dtLow',
   'dtRetest',
+  'dtDuration',
   'dtAveragesEnd',
 ];
 const NO_COLUMNS: readonly string[] = [];
 const COLUMNS: Record<StatView, readonly string[]> = {
   GUS: [...LEADING_COLUMNS, 'openPrice', 'pushOpen', 'hod', 'lod', 'eod', ...TRAILING_COLUMNS],
-  DT: [...LEADING_COLUMNS, 'dtStart', 'dtTop', 'dtLow', 'dtRetest', ...TRAILING_COLUMNS],
+  DT: [
+    ...LEADING_COLUMNS,
+    'dtStart',
+    'dtTop',
+    'dtLow',
+    'dtRetest',
+    'dtDuration',
+    ...TRAILING_COLUMNS,
+  ],
   ALL: [...LEADING_COLUMNS, 'brief', ...TRAILING_COLUMNS],
 };
 
@@ -216,6 +236,10 @@ const BLANK_SESSION: SessionModel = {
   dtTopPrice: null,
   dtLowPrice: null,
   dtRetestPrice: null,
+  dtStartTime: null,
+  dtTopTime: null,
+  dtLowTime: null,
+  dtRetestTime: null,
   ssr: false,
   under1Dollar: false,
   entryAfter11am: false,
@@ -253,6 +277,12 @@ type SessionPrice =
   | 'dtLowPrice'
   | 'dtRetestPrice';
 
+/** The four times of a double top (#469). */
+type SessionTime = 'dtStartTime' | 'dtTopTime' | 'dtLowTime' | 'dtRetestTime';
+
+/** A field the session card can point at when something is wrong with it. */
+type SessionField = SessionPrice | SessionTime;
+
 /** The five session prices, in the sheet's order, with the label key naming them. */
 const SESSION_PRICES: readonly { field: SessionPrice; label: string }[] = [
   { field: 'openPrice', label: 'stats.fields.openPriceShort' },
@@ -270,20 +300,36 @@ const DOUBLE_TOP_PRICES: readonly { field: SessionPrice; label: string }[] = [
   { field: 'dtRetestPrice', label: 'stats.fields.dtRetest' },
 ];
 
+/** Their four times, in the same order — required to tick like the prices (#469). */
+const DOUBLE_TOP_TIMES: readonly { field: SessionTime; label: string }[] = [
+  { field: 'dtStartTime', label: 'stats.fields.dtStartTimeShort' },
+  { field: 'dtTopTime', label: 'stats.fields.dtTopTimeShort' },
+  { field: 'dtLowTime', label: 'stats.fields.dtLowTimeShort' },
+  { field: 'dtRetestTime', label: 'stats.fields.dtRetestTimeShort' },
+];
+
 /** The session prices a stat needs — all five, four on a no-push day, the four of a double top. */
 function expectedPrices(session: Pick<SessionModel, 'noPush'>, pattern: Pattern) {
   if (pattern === 'DT') return DOUBLE_TOP_PRICES;
   return SESSION_PRICES.filter(({ field }) => !(session.noPush && field === 'pushOpenPrice'));
 }
 
-/** Label keys of the session prices still missing — what stands between a stat and its tick. */
+/**
+ * Label keys of the session prices still missing — and a double top's times (#469) — what stands
+ * between a stat and its tick.
+ */
 export function missingPrices(
-  session: Pick<SessionModel, SessionPrice | 'noPush'>,
+  session: Pick<SessionModel, SessionField | 'noPush'>,
   pattern: Pattern,
 ): string[] {
-  return expectedPrices(session, pattern)
+  const prices = expectedPrices(session, pattern)
     .filter(({ field }) => !isPositive(session[field]))
     .map((p) => p.label);
+  if (pattern !== 'DT') return prices;
+  return [
+    ...prices,
+    ...DOUBLE_TOP_TIMES.filter(({ field }) => !session[field]).map((t) => t.label),
+  ];
 }
 
 function premarketOf(entry: StatEntry): PremarketModel {
@@ -317,7 +363,7 @@ export function premarketProblem(m: PremarketModel): string | null {
 export function sessionProblem(
   session: SessionModel,
   pattern: Pattern,
-): { reason: string; fields: SessionPrice[] } | null {
+): { reason: string; fields: SessionField[] } | null {
   if (pattern === 'DT') return doubleTopProblem(session);
   const { hodPrice: hod, lodPrice: lod } = session;
   if (hod !== null && lod !== null && hod < lod) {
@@ -337,7 +383,7 @@ export function sessionProblem(
  */
 function doubleTopProblem(
   session: SessionModel,
-): { reason: string; fields: SessionPrice[] } | null {
+): { reason: string; fields: SessionField[] } | null {
   const { dtStartPrice: start, dtTopPrice: top, dtLowPrice: low, dtRetestPrice: retest } = session;
   if (start !== null && top !== null && top < start) {
     return { reason: 'stats.save.topBelowStart', fields: ['dtStartPrice', 'dtTopPrice'] };
@@ -347,6 +393,29 @@ function doubleTopProblem(
   }
   if (low !== null && retest !== null && retest < low) {
     return { reason: 'stats.save.retestBelowLow', fields: ['dtLowPrice', 'dtRetestPrice'] };
+  }
+  return doubleTopTimesProblem(session);
+}
+
+/**
+ * The four times of a double top (#469) : inside the extended session, and in order — each against
+ * the latest one typed before it, so a gap in the middle still orders the rest. The backend refuses
+ * the same ; a negative leg would poison the median.
+ */
+function doubleTopTimesProblem(
+  session: SessionModel,
+): { reason: string; fields: SessionField[] } | null {
+  let previous: SessionTime | null = null;
+  for (const { field } of DOUBLE_TOP_TIMES) {
+    const time = session[field];
+    if (!time) continue;
+    if (time < DT_SESSION_OPENS || time > DT_SESSION_CLOSES) {
+      return { reason: 'stats.save.timeOutsideSession', fields: [field] };
+    }
+    if (previous !== null && time < session[previous]!) {
+      return { reason: 'stats.save.timeOutOfOrder', fields: [previous, field] };
+    }
+    previous = field;
   }
   return null;
 }
@@ -362,6 +431,10 @@ function sessionOf(entry: StatEntry): SessionModel {
     dtTopPrice: entry.dtTopPrice,
     dtLowPrice: entry.dtLowPrice,
     dtRetestPrice: entry.dtRetestPrice,
+    dtStartTime: entry.dtStartTime,
+    dtTopTime: entry.dtTopTime,
+    dtLowTime: entry.dtLowTime,
+    dtRetestTime: entry.dtRetestTime,
     ssr: entry.ssr,
     under1Dollar: entry.under1Dollar,
     entryAfter11am: entry.entryAfter11am,
@@ -530,6 +603,7 @@ export class StatsPage {
       lodPercent: percentVsOpen(e.openPrice, e.lodPrice),
       eodPercent: percentVsOpen(e.openPrice, e.eodPrice),
       legs: doubleTopLegs(e),
+      durations: doubleTopDurations(e),
       missing: missingPrices(e, e.pattern),
       // A row written before the range rule existed can still hold an impossible set : the ✓ of
       // the table answers for it like the panel's does, and the backend replays it on the tick.
@@ -603,6 +677,19 @@ export class StatsPage {
     doubleTopLegs({ ...this.session(), previousClose: this.premarket().previousClose }),
   );
 
+  /** How long each leg of the double top being typed took, live (#469). */
+  readonly doubleTopDurations = computed(() => doubleTopDurations(this.session()));
+
+  /** « 3 / 4 prix · 2 / 4 heures » — the prices and the times a double top needs to tick. */
+  readonly doubleTopProgress = computed(() => {
+    const m = this.session();
+    return {
+      prices: DOUBLE_TOP_PRICES.filter(({ field }) => isPositive(m[field])).length,
+      times: DOUBLE_TOP_TIMES.filter(({ field }) => !!m[field]).length,
+      total: DOUBLE_TOP_PRICES.length,
+    };
+  });
+
   /** Live % vs the open for each session input, as the user types. */
   readonly sessionPercents = computed(() => {
     const m = this.session();
@@ -647,7 +734,7 @@ export class StatsPage {
   readonly sessionIssue = computed(() => sessionProblem(this.session(), this.panelPattern()));
 
   /** True when [field] takes part in the current incoherence — its own hint then says which. */
-  atFault(field: SessionPrice): boolean {
+  atFault(field: SessionField): boolean {
     return this.sessionIssue()?.fields.includes(field) ?? false;
   }
 
@@ -768,6 +855,11 @@ export class StatsPage {
 
   setSessionPrice(field: SessionPrice, value: number | null): void {
     this.session.update((m) => ({ ...m, [field]: value }));
+  }
+
+  /** A native time input gives `HH:mm`, or an empty string once cleared. */
+  setSessionTime(field: SessionTime, value: string): void {
+    this.session.update((m) => ({ ...m, [field]: value || null }));
   }
 
   toggleFlag(
@@ -1023,7 +1115,7 @@ export class StatsPage {
   }
 
   /** « Il manque HOD, EOD » — the ✓'s tooltip while it can't tick. */
-  missingLabel(entry: Pick<SessionModel, SessionPrice | 'noPush'>, pattern: Pattern): string {
+  missingLabel(entry: Pick<SessionModel, SessionField | 'noPush'>, pattern: Pattern): string {
     const fields = missingPrices(entry, pattern).map((key) => this.translate.instant(key));
     return this.translate.instant('stats.completion.missing', { fields: fields.join(', ') });
   }

@@ -416,15 +416,20 @@ that never comes, so they count in the stats and are made easy to single out.
 ### The double top stat (#428)
 
 A DT is measured by what makes it (`docs/pattern/DT.md`), not by the GUS session : the **premarket
-card stays the same**, the « Session » card becomes a **« Double top »** card of four prices, saved
-field by field like the rest.
+card stays the same**, the « Session » card becomes a **« Double top »** card of four points — a
+**time and a price** each (#469) — saved field by field like the rest. The card reads **one row per
+point**, like an execution in the journal : point, time, price, then the leg it closes.
 
-| Price | Example | Note |
-|-------|---------|------|
-| Start | 1.90 | Where the push starts — **pre-filled with the open**, moved when it starts from a later low |
-| Top | 2.95 | The top of the first push |
-| Rejection low | 2.36 | The low of the rejection |
-| Retest | 2.85 | The high of the retest, back toward the top |
+| Point | Time | Price | Note |
+|-------|------|-------|------|
+| Start | 10:02 | 1.90 | Where the push starts — **pre-filled with the open**, moved when it starts from a later low |
+| Top | 10:14 | 2.95 | The top of the first push |
+| Rejection low | 10:21 | 2.36 | The low of the rejection |
+| Retest | 10:38 | 2.85 | The high of the retest, back toward the top |
+
+The times are wall-clock on the stat's day, to the minute. They go **in order** — start ≤ top ≤ low ≤
+retest — and a time that goes back is refused, the field at fault pointed out like a bad price : a DT
+whose low precedes its top is a typo.
 
 **What the app computes** — the three legs :
 
@@ -436,13 +441,20 @@ field by field like the rest.
 - **C, the retest** = rejection low → retest (+20.8 %), and its **distance to the top** (−3.4 %, or
   « top taken back ») — a DT often grazes its top without taking it.
 
-- The stat is checked with the **four prices** (« n / 4 prices ») ; same check, same rules.
+- **Each leg also has a duration** (#469) : A start → top, B top → low (how fast the rejection comes
+  — the one the entry depends on), C low → retest, and the **total** start → retest. The question
+  behind it : does a double top really play out over about half an hour ?
+- The stat is checked with the **four prices and the four times** (« n / 4 prices · n / 4 times ») ;
+  same check, same rules.
 - The flags stay (SSR, price < $1, entry after 11 am, institutions > 20 %) ; « no push » does not
   apply.
 - **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
   table's columns and the averages. **DT** : completed DT stats, average extension (and with the
   gap), average rejection (and how many reach 17 %), average retest distance to the top (and how
-  many took it back) ; the table shows the premarket, then start, A, B, C. **All** keeps what
+  many took it back), and the **median duration** start → retest with its `n` and the median
+  rejection (B) — a median, not a mean : one DT that drags all afternoon would move an average and
+  say nothing about the typical one. The table shows the premarket, then start, A, B, C and the
+  duration (total, and the three legs under it) ; its footer carries the median. **All** keeps what
   compares across patterns — premarket, flags, check, trade — plus a one-line summary of each stat
   in its own pattern, and no averages row : a push at the open and a DT extension don't add up.
 - The « À l'open » push references only use GUS stats, as before (same pattern).

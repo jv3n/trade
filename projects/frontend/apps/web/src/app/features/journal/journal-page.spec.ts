@@ -341,6 +341,8 @@ function makeStatSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     averageRetestPercent: null,
     averageRetestToTopPercent: null,
     retestTookTopCount: 0,
+    medianDoubleTopMinutes: null,
+    medianRejectionMinutes: null,
     traded: 8,
     untraded: 2,
     ...overrides,

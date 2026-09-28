@@ -128,6 +128,8 @@ class MockStatsRepository extends StatsRepository {
       averageRetestPercent: null,
       averageRetestToTopPercent: null,
       retestTookTopCount: 0,
+      medianDoubleTopMinutes: null,
+      medianRejectionMinutes: null,
       traded: 8,
       untraded: 2,
     }),

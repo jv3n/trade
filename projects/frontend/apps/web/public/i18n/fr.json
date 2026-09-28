@@ -577,6 +577,10 @@
       "rejectionSub": "depuis le top · {{count}} / {{total}} à {{criterion}} % ou plus",
       "retest": "Retest (C)",
       "retestSub": "du top en moyenne · {{count}} / {{total}} ont repris le top",
+      "duration": "Durée médiane",
+      "durationSub": "départ → retest · n = {{count}} · rejet (B) {{rejection}} min",
+      "durationHint": "Médiane, pas moyenne : un DT qui traîne tout l'après-midi ne déplace pas le chiffre typique",
+      "minutes": "{{minutes}} min",
       "traded": "Tradées",
       "tradedSub": "stats qui ont donné un trade",
       "averages": "Moyennes",
@@ -642,6 +646,16 @@
       "dtTopPrice": "Top ($)",
       "dtLowPrice": "Bas du rejet ($)",
       "dtRetestPrice": "Retest ($)",
+      "dtStartTime": "Heure du départ",
+      "dtTopTime": "Heure du top",
+      "dtLowTime": "Heure du bas",
+      "dtRetestTime": "Heure du retest",
+      "dtStartTimeShort": "l'heure du départ",
+      "dtTopTimeShort": "l'heure du top",
+      "dtLowTimeShort": "l'heure du bas",
+      "dtRetestTimeShort": "l'heure du retest",
+      "dtDuration": "Durée",
+      "dtDurationHint": "Du départ au retest ; en dessous, les trois jambes",
       "brief": "En bref",
       "briefHint": "Les chiffres qui résument la stat dans son pattern",
       "briefPush": "push {{push}}",
@@ -708,7 +722,9 @@
       "serverRefused": "le serveur a refusé la modification",
       "topBelowStart": "le top est sous le départ",
       "lowAboveTop": "le bas du rejet est au-dessus du top",
-      "retestBelowLow": "le retest est sous le bas du rejet"
+      "retestBelowLow": "le retest est sous le bas du rejet",
+      "timeOutOfOrder": "les heures vont dans l'ordre : départ, top, bas, retest",
+      "timeOutsideSession": "une heure entre 04:00 et 20:00"
     },
     "confirmCreate": {
       "title": "Créer la stat {{ticker}} ?",
@@ -729,7 +745,7 @@
     },
     "doubleTop": {
       "title": "Double top",
-      "hint": "en fin de matinée, quand il se forme · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %",
+      "hint": "en fin de matinée, quand il se forme · chaque prix avec son heure · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %",
       "startHint": "l'open (9h30) par défaut — le bas d'où part la poussée",
       "legA": "A {{leg}} % · {{withGap}} % avec le gap",
       "legB": "B {{leg}} % depuis le top",
@@ -753,7 +769,13 @@
       "averages": "Moyennes — {{count}} stats DT complétées",
       "averagesOne": "Moyennes — {{count}} stat DT complétée",
       "briefToTop": "top {{toTop}} %",
-      "briefTookTop": "top repris {{toTop}} %"
+      "briefTookTop": "top repris {{toTop}} %",
+      "durationA": "A · {{minutes}} min",
+      "durationB": "B · {{minutes}} min",
+      "durationC": "C · {{minutes}} min · total {{total}} min",
+      "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
+      "medianDuration": "méd. {{minutes}} min",
+      "progress": "{{prices}} / {{total}} prix · {{times}} / {{total}} heures"
     }
   },
   "calculator": {

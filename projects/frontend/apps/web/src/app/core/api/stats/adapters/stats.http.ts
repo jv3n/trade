@@ -43,6 +43,11 @@ interface StatEntryWireDto {
   dtTopPrice: number | null;
   dtLowPrice: number | null;
   dtRetestPrice: number | null;
+  /** `HH:mm:ss` from Jackson's `LocalTime` — cut to the minute on the way in. */
+  dtStartTime: string | null;
+  dtTopTime: string | null;
+  dtLowTime: string | null;
+  dtRetestTime: string | null;
   ssr: boolean;
   under1Dollar: boolean;
   entryAfter11am: boolean;
@@ -73,9 +78,17 @@ function fromWire(w: StatEntryWireDto): StatEntry {
   return {
     ...w,
     tradeDate: parseISO(w.tradeDate),
+    dtStartTime: toMinute(w.dtStartTime),
+    dtTopTime: toMinute(w.dtTopTime),
+    dtLowTime: toMinute(w.dtLowTime),
+    dtRetestTime: toMinute(w.dtRetestTime),
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };
+}
+
+function toMinute(time: string | null): string | null {
+  return time ? time.slice(0, 5) : null;
 }
 
 function toWire(input: StatEntryInput): StatEntryWireRequest {

@@ -577,6 +577,10 @@
       "rejectionSub": "from the top · {{count}} / {{total}} at {{criterion}} % or more",
       "retest": "Retest (C)",
       "retestSub": "from the top on average · {{count}} / {{total}} took the top back",
+      "duration": "Median duration",
+      "durationSub": "start → retest · n = {{count}} · rejection (B) {{rejection}} min",
+      "durationHint": "A median, not a mean : one DT that drags all afternoon does not move the typical figure",
+      "minutes": "{{minutes}} min",
       "traded": "Traded",
       "tradedSub": "stats that gave a trade",
       "averages": "Averages",
@@ -642,6 +646,16 @@
       "dtTopPrice": "Top ($)",
       "dtLowPrice": "Rejection low ($)",
       "dtRetestPrice": "Retest ($)",
+      "dtStartTime": "Start time",
+      "dtTopTime": "Top time",
+      "dtLowTime": "Low time",
+      "dtRetestTime": "Retest time",
+      "dtStartTimeShort": "the start time",
+      "dtTopTimeShort": "the top time",
+      "dtLowTimeShort": "the low time",
+      "dtRetestTimeShort": "the retest time",
+      "dtDuration": "Duration",
+      "dtDurationHint": "From the start to the retest ; below, the three legs",
       "brief": "In short",
       "briefHint": "The figures that sum the stat up in its own pattern",
       "briefPush": "push {{push}}",
@@ -708,7 +722,9 @@
       "serverRefused": "the server refused the change",
       "topBelowStart": "the top is under the start",
       "lowAboveTop": "the rejection low is above the top",
-      "retestBelowLow": "the retest is under the rejection low"
+      "retestBelowLow": "the retest is under the rejection low",
+      "timeOutOfOrder": "the times go in order : start, top, low, retest",
+      "timeOutsideSession": "a time between 04:00 and 20:00"
     },
     "confirmCreate": {
       "title": "Create the {{ticker}} stat?",
@@ -729,7 +745,7 @@
     },
     "doubleTop": {
       "title": "Double top",
-      "hint": "late in the morning, when it forms · each field saves when you leave it · A ≥ 50 %, B 17-20 %",
+      "hint": "late in the morning, when it forms · each price with its time · each field saves when you leave it · A ≥ 50 %, B 17-20 %",
       "startHint": "the 9:30 open by default — the low the push starts from",
       "legA": "A {{leg}} % · {{withGap}} % with the gap",
       "legB": "B {{leg}} % from the top",
@@ -753,7 +769,13 @@
       "averages": "Averages — {{count}} completed DT stats",
       "averagesOne": "Averages — {{count}} completed DT stat",
       "briefToTop": "top {{toTop}} %",
-      "briefTookTop": "top taken back {{toTop}} %"
+      "briefTookTop": "top taken back {{toTop}} %",
+      "durationA": "A · {{minutes}} min",
+      "durationB": "B · {{minutes}} min",
+      "durationC": "C · {{minutes}} min · total {{total}} min",
+      "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
+      "medianDuration": "med. {{minutes}} min",
+      "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times"
     }
   },
   "calculator": {

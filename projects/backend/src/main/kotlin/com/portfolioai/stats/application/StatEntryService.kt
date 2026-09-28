@@ -19,6 +19,8 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -124,6 +126,10 @@ class StatEntryService(
       averageRetestToTopPercent =
         doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtRetestPrice) },
       retestTookTopCount = doubleTops.count { it.dtRetestPrice!! >= it.dtTopPrice!! },
+      medianDoubleTopMinutes =
+        doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtStartTime, it.dtRetestTime) },
+      medianRejectionMinutes =
+        doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtTopTime, it.dtLowTime) },
       traded = traded,
       untraded = rows.size - traded,
     )
@@ -317,6 +323,12 @@ class StatEntryService(
         entry.dtLowPrice,
         entry.dtRetestPrice,
       )
+      requireDoubleTopTimesInOrder(
+        entry.dtStartTime,
+        entry.dtTopTime,
+        entry.dtLowTime,
+        entry.dtRetestTime,
+      )
     } else if (completed) {
       requireInsideTheDay(
         entry.hodPrice,
@@ -420,6 +432,11 @@ class StatEntryService(
     val dtLow = request.dtLowPrice?.takeIf { doubleTop }?.requirePositive("Rejection low")
     val dtRetest = request.dtRetestPrice?.takeIf { doubleTop }?.requirePositive("Retest")
     requireDoubleTopShape(dtStart, dtTop, dtLow, dtRetest)
+    val dtStartTime = request.dtStartTime?.takeIf { doubleTop }?.inSession("Start time")
+    val dtTopTime = request.dtTopTime?.takeIf { doubleTop }?.inSession("Top time")
+    val dtLowTime = request.dtLowTime?.takeIf { doubleTop }?.inSession("Rejection low time")
+    val dtRetestTime = request.dtRetestTime?.takeIf { doubleTop }?.inSession("Retest time")
+    requireDoubleTopTimesInOrder(dtStartTime, dtTopTime, dtLowTime, dtRetestTime)
 
     tradeDate = request.tradeDate
     pattern = request.pattern
@@ -441,6 +458,10 @@ class StatEntryService(
     dtTopPrice = dtTop
     dtLowPrice = dtLow
     dtRetestPrice = dtRetest
+    this.dtStartTime = dtStartTime
+    this.dtTopTime = dtTopTime
+    this.dtLowTime = dtLowTime
+    this.dtRetestTime = dtRetestTime
 
     ssr = request.ssr
     under1Dollar = request.under1Dollar
@@ -491,6 +512,37 @@ class StatEntryService(
     }
   }
 
+  /**
+   * The four moments of a double top go in order (#469) : start ≤ top ≤ low ≤ retest. Each time is
+   * checked against the latest one typed before it, so a gap in the middle still orders the rest.
+   */
+  private fun requireDoubleTopTimesInOrder(
+    start: LocalTime?,
+    top: LocalTime?,
+    low: LocalTime?,
+    retest: LocalTime?,
+  ) {
+    var previous: Pair<String, LocalTime>? = null
+    for ((label, time) in
+      listOf("Start" to start, "Top" to top, "Rejection low" to low, "Retest" to retest)) {
+      if (time == null) continue
+      previous?.let { (previousLabel, previousTime) ->
+        if (time < previousTime) {
+          throw badRequest("$label time must not be before the ${previousLabel.lowercase()} time")
+        }
+      }
+      previous = label to time
+    }
+  }
+
+  /** To the minute, inside TradeZero's extended session — a premarket DT is real, 02:10 a typo. */
+  private fun LocalTime.inSession(label: String): LocalTime =
+    truncatedTo(ChronoUnit.MINUTES).also {
+      if (it < SESSION_OPENS || it > SESSION_CLOSES) {
+        throw badRequest("$label must be between $SESSION_OPENS and $SESSION_CLOSES")
+      }
+    }
+
   private fun BigDecimal.requirePositive(label: String): BigDecimal = also {
     if (it.signum() <= 0) throw badRequest("$label must be greater than zero")
   }
@@ -508,6 +560,10 @@ class StatEntryService(
     return values.reduce(BigDecimal::add).divide(BigDecimal(values.size), 2, RoundingMode.HALF_UP)
   }
 
+  /** Median of a duration in minutes over the rows that yield one ; null when none does. */
+  private fun List<StatEntry>.medianMinutes(metric: (StatEntry) -> Long?): BigDecimal? =
+    StatMetrics.quantile(mapNotNull(metric).map(::BigDecimal), MEDIAN)
+
   private companion object {
     /** Newest-first, `createdAt` tiebreaker. Export order + implicit listing sort. */
     val DEFAULT_SORT: Sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
@@ -515,5 +571,8 @@ class StatEntryService(
     val THIRD_QUARTILE = BigDecimal("0.75")
     /** The rejection that makes a double top, per `docs/pattern/DT.md` — below, a normal breath. */
     val DT_REJECTION_CRITERION = BigDecimal("17")
+    /** TradeZero's extended session — the bounds of a double top's times (#469). */
+    val SESSION_OPENS: LocalTime = LocalTime.of(4, 0)
+    val SESSION_CLOSES: LocalTime = LocalTime.of(20, 0)
   }
 }

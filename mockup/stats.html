@@ -197,22 +197,33 @@
       }
 
       /* Double top : quatre prix, les trois jambes A (extension), B (rejet), C (retest) se calculent entre eux. */
-      .dt-legs {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
-        align-items: start;
+      /* Une ligne par point, comme une exécution du journal : heure, prix, puis l'étape qu'il ferme (#469). */
+      .dt-rows {
+        width: 100%;
       }
 
-      .dt-legs .pct {
+      .dt-rows td {
+        vertical-align: middle;
+      }
+
+      .dt-rows .input {
+        width: 110px;
+      }
+
+      .dt-rows .pct {
         font-size: 12px;
         font-variant-numeric: tabular-nums;
         min-height: 16px;
       }
 
-      .dt-legs .pct small {
+      .dt-rows .pct small {
         display: block;
         color: var(--text-muted);
+      }
+
+      /* Une heure hors ordre : le champ fautif le dit, comme un prix premarket manquant. */
+      .dt-rows .input.invalid {
+        border-color: var(--warn);
       }
 
       /* Sous le critère de la fiche DT (extension < 50 %, rejet < 17 %) : un avertissement, pas un résultat. */
@@ -242,8 +253,7 @@
       @media (max-width: 1100px) {
         .complete,
         .premarket,
-        .identity,
-        .dt-legs {
+        .identity {
           grid-template-columns: repeat(2, 1fr);
         }
       }
@@ -290,7 +300,7 @@
         </div>
 
         <!-- DT : les trois jambes du double top, sur les stats DT cochées (docs/pattern/DT.md). -->
-        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden>
+        <section class="grid grid-5" style="margin-bottom: 16px" data-group="pattern" data-value="dt" hidden>
           <div class="card kpi">
             <div class="label">Stats DT complétées</div>
             <div class="value">3</div>
@@ -310,6 +320,11 @@
             <div class="label">Retest (C)</div>
             <div class="value">−1,2 %</div>
             <div class="sub">du top en moyenne · <b>1 / 3</b> a repris le top</div>
+          </div>
+          <div class="card kpi" title="Médiane, pas moyenne : un DT qui traîne tout l'après-midi ne déplace pas le chiffre typique">
+            <div class="label">Durée médiane</div>
+            <div class="value">34 min</div>
+            <div class="sub">départ → retest · <b>n = 3</b> · rejet (B) 7 min</div>
           </div>
         </section>
 
@@ -433,29 +448,45 @@
         <section class="card" style="margin-bottom: 16px; border-color: var(--warn)" id="dt-panel" data-group="panel" data-value="dt" hidden>
           <h2>
             <span>Double top<span class="save-state" id="dt-state">✓ enregistré à 11:48</span></span>
-            <span class="hint">en fin de matinée, quand il se forme · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %</span>
+            <span class="hint">en fin de matinée, quand il se forme · chaque prix avec son heure · chaque champ s'enregistre à la sortie · A ≥ 50 %, B 17-20 %</span>
           </h2>
-          <form class="dt-legs" onsubmit="return false">
-            <div class="field">
-              <label>Départ ($)</label>
-              <input class="input" id="dt-start" data-dt value="1,90" />
-              <span class="pct muted">l'open (9h30) par défaut — le bas d'où part la poussée</span>
-            </div>
-            <div class="field">
-              <label>Top ($)</label>
-              <input class="input" id="dt-top" data-dt value="2,95" />
-              <span class="pct" id="dt-a">—</span>
-            </div>
-            <div class="field">
-              <label>Bas du rejet ($)</label>
-              <input class="input" id="dt-low" data-dt value="2,36" />
-              <span class="pct" id="dt-b">—</span>
-            </div>
-            <div class="field">
-              <label>Retest ($)</label>
-              <input class="input" id="dt-retest" data-dt placeholder="2,85" />
-              <span class="pct muted" id="dt-c">—</span>
-            </div>
+          <form onsubmit="return false">
+            <table class="dt-rows">
+              <thead>
+                <tr>
+                  <th>Point</th>
+                  <th>Heure</th>
+                  <th class="num">Prix ($)</th>
+                  <th>Étape</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Départ</td>
+                  <td><input class="input" type="time" id="dt-start-time" data-dt-time value="10:02" /></td>
+                  <td><input class="input" id="dt-start" data-dt value="1,90" /></td>
+                  <td><span class="pct muted">l'open (9h30) par défaut — le bas d'où part la poussée</span></td>
+                </tr>
+                <tr>
+                  <td>Top</td>
+                  <td><input class="input" type="time" id="dt-top-time" data-dt-time value="10:14" /></td>
+                  <td><input class="input" id="dt-top" data-dt value="2,95" /></td>
+                  <td><span class="pct" id="dt-a">—</span></td>
+                </tr>
+                <tr>
+                  <td>Bas du rejet</td>
+                  <td><input class="input" type="time" id="dt-low-time" data-dt-time value="10:21" /></td>
+                  <td><input class="input" id="dt-low" data-dt value="2,36" /></td>
+                  <td><span class="pct" id="dt-b">—</span></td>
+                </tr>
+                <tr>
+                  <td>Retest</td>
+                  <td><input class="input" type="time" id="dt-retest-time" data-dt-time /></td>
+                  <td><input class="input" id="dt-retest" data-dt placeholder="2,85" /></td>
+                  <td><span class="pct muted" id="dt-c">—</span></td>
+                </tr>
+              </tbody>
+            </table>
           </form>
           <div class="flags-row">
             <label><input type="checkbox" data-flag /> SSR</label>
@@ -463,7 +494,7 @@
             <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
             <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
             <span style="flex: 1"></span>
-            <span class="progress" id="dt-progress">3 / 4 prix saisis</span>
+            <span class="progress" id="dt-progress">3 / 4 prix · 3 / 4 heures</span>
             <button class="btn">Fermer</button>
             <button class="btn btn-check" id="dt-check" disabled title="Il manque le retest"><span class="icon">check_circle</span> <span data-label>Marquer complétée</span></button>
           </div>
@@ -549,6 +580,7 @@
                   <th class="num" title="Du départ au top ; en dessous, avec le gap (depuis la clôture de la veille)">A — top</th>
                   <th class="num" title="Du top au bas du rejet">B — bas</th>
                   <th class="num" title="Du bas au haut du retest ; en dessous, l'écart au top">C — retest</th>
+                  <th class="num" title="Du départ au retest ; en dessous, les trois jambes">Durée</th>
                   <th class="sep">Flags</th>
                   <th title="Complétée">✓</th>
                   <th>Trade</th>
@@ -562,6 +594,7 @@
                   <td class="num">2,95<small class="muted">+55,3 % · gap +163 %</small></td>
                   <td class="num">2,36<small class="muted">−20,0 %</small></td>
                   <td class="num muted">—</td>
+                  <td class="num muted">—<small class="muted">A 12 · B 7</small></td>
                   <td class="sep"><span class="tag">après 11h</span></td>
                   <td><button class="check" disabled title="Il manque le retest"><span class="icon">radio_button_unchecked</span></button></td>
                   <td><button class="btn btn-sm"><span class="icon">edit</span> Double top</button></td>
@@ -573,6 +606,7 @@
                   <td class="num">3,80<small class="muted">+58,3 % · gap +72,7 %</small></td>
                   <td class="num">3,02<small class="muted">−20,5 %</small></td>
                   <td class="num">3,68<small class="muted">+21,9 % · top −3,2 %</small></td>
+                  <td class="num">38 min<small class="muted">A 12 · B 9 · C 17</small></td>
                   <td class="sep"><span class="tag">après 11h</span></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><a href="journal.html" class="tag tag-gain">+185</a></td>
@@ -584,6 +618,7 @@
                   <td class="num">3,40<small class="muted">+61,9 % · gap +74,4 %</small></td>
                   <td class="num">2,70<small class="muted">−20,6 %</small></td>
                   <td class="num">3,46<small class="muted">+28,1 % · top repris +1,8 %</small></td>
+                  <td class="num">34 min<small class="muted">A 15 · B 7 · C 12</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -595,6 +630,7 @@
                   <td class="num">6,45<small class="muted">+57,3 % · gap +101,6 %</small></td>
                   <td class="num">5,45<small class="below" title="Sous les 17 % de la fiche : une respiration plutôt qu'un rejet">−15,5 %</small></td>
                   <td class="num">6,30<small class="muted">+15,6 % · top −2,3 %</small></td>
+                  <td class="num">26 min<small class="muted">A 10 · B 6 · C 10</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
@@ -606,6 +642,7 @@
                   <td class="num">+59,2 %<small class="muted">gap +82,9 %</small></td>
                   <td class="num">−18,9 %<small class="muted">2 / 3 ≥ 17 %</small></td>
                   <td class="num">+21,9 %<small class="muted">top −1,2 %</small></td>
+                  <td class="num" title="Médiane, pas moyenne">méd. 34 min<small class="muted">n = 3 · B 7</small></td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -1210,6 +1247,17 @@
         const prevClose = () => parse($('p-close').value);
         const prices = [$('dt-start'), $('dt-top'), $('dt-low'), $('dt-retest')];
         const names = ['le départ', 'le top', 'le bas du rejet', 'le retest'];
+        const times = [$('dt-start-time'), $('dt-top-time'), $('dt-low-time'), $('dt-retest-time')];
+        const minutes = (el) => {
+          const [h, m] = el.value.split(':').map(Number);
+          return el.value ? h * 60 + m : null;
+        };
+        // Écart en minutes entre deux heures saisies, ou rien si l'une manque ou si l'ordre est cassé.
+        const span = (i) => {
+          const from = minutes(times[i]);
+          const to = minutes(times[i + 1]);
+          return from !== null && to !== null && to >= from ? ' · ' + (to - from) + ' min' : '';
+        };
         const check = $('dt-check');
         let done = false;
 
@@ -1223,24 +1271,38 @@
           if (start > 0 && top > 0) {
             const a = move(start, top);
             const withGap = prevClose() > 0 ? fmt(move(prevClose(), top)) + ' avec le gap' : '';
-            leg($('dt-a'), 'A ' + fmt(a), a < 50, a < 50 ? 'sous les 50 % de la fiche · ' + withGap : withGap);
+            leg($('dt-a'), 'A ' + fmt(a) + span(0), a < 50, a < 50 ? 'sous les 50 % de la fiche · ' + withGap : withGap);
           } else leg($('dt-a'), '—');
           if (top > 0 && low > 0) {
             const b = move(top, low);
-            leg($('dt-b'), 'B ' + fmt(b), -b < 17, -b < 17 ? 'sous 17 % : une respiration plutôt qu\'un rejet' : 'depuis le top');
+            leg($('dt-b'), 'B ' + fmt(b) + span(1), -b < 17, -b < 17 ? 'sous 17 % : une respiration plutôt qu\'un rejet' : 'depuis le top');
           } else leg($('dt-b'), '—');
           if (low > 0 && retest > 0) {
             const toTop = move(top, retest);
-            leg($('dt-c'), 'C ' + fmt(move(low, retest)), false, toTop >= 0 ? 'top repris ' + fmt(toTop) : fmt(toTop) + ' du top');
+            leg($('dt-c'), 'C ' + fmt(move(low, retest)) + span(2), false, toTop >= 0 ? 'top repris ' + fmt(toTop) : fmt(toTop) + ' du top');
           } else leg($('dt-c'), '—');
 
+          // Les heures vont dans l'ordre : départ ≤ top ≤ bas ≤ retest. La première qui recule est fautive.
+          let outOfOrder = null;
+          times.forEach((t, i) => {
+            const prev = i > 0 ? minutes(times[i - 1]) : null;
+            const bad = outOfOrder === null && prev !== null && minutes(t) !== null && minutes(t) < prev;
+            if (bad) outOfOrder = i;
+            t.classList.toggle('invalid', bad);
+            t.title = bad ? 'Avant ' + names[i - 1] + " : les heures vont dans l'ordre" : '';
+          });
+
           const missing = names.filter((_, i) => !(parse(prices[i].value) > 0));
-          $('dt-progress').textContent = 4 - missing.length + ' / 4 prix saisis';
-          check.disabled = missing.length > 0 && !done;
-          check.title = missing.length ? 'Il manque ' + missing.join(', ') : '';
+          const missingTimes = names.filter((_, i) => minutes(times[i]) === null);
+          $('dt-progress').textContent =
+            4 - missing.length + ' / 4 prix · ' + (4 - missingTimes.length) + ' / 4 heures';
+          const blockers = [...missing, ...missingTimes.map((n) => "l'heure de " + n)];
+          if (outOfOrder !== null) blockers.push("des heures dans l'ordre");
+          check.disabled = blockers.length > 0 && !done;
+          check.title = blockers.length ? 'Il manque ' + blockers.join(', ') : '';
         }
 
-        prices.forEach((p) => {
+        [...prices, ...times].forEach((p) => {
           p.addEventListener('input', refresh);
           p.addEventListener('change', () => window.saveCue('dt-state'));
         });
