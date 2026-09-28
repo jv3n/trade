@@ -1305,6 +1305,24 @@ describe('StatsPage', () => {
     expect(page.atFault('dtStartTime')).toBe(false);
   });
 
+  // #490 : the natural way out of a refusal is to put the stored value back — nothing to send, and
+  // the card must stop saying « non enregistré ».
+  it('reads saved again when a refused time is typed back to the stored one', () => {
+    const { page, repo } = setup({ rows: [makeDoubleTop()] });
+
+    page.setSessionTime('dtStartTime', '03:00');
+    page.saveSession();
+    expect(page.saveStates().session.status).toBe('error');
+
+    page.setSessionTime('dtStartTime', '10:02');
+    page.saveSession();
+
+    expect(page.saveStates().session).toEqual(
+      expect.objectContaining({ status: 'saved', reason: null }),
+    );
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
   it('refuses a time outside the extended session, and takes a premarket one', () => {
     const { page } = setup({ rows: [makeDoubleTop()] });
 
