@@ -226,7 +226,34 @@
                   </span>
                 }
               } @else {
-                {{ m.note || '—' }}
+                @if (isMorningCorrection(m) && !m.note) {
+                  {{
+                    'account.morningCorrection'
+                      | translate: { date: (m.valueDate | date: 'shortDate') }
+                  }}
+                } @else {
+                  {{ m.note || '—' }}
+                }
+                @if (isAdjusted(m)) {
+                  @let measured =
+                    ((m.measuredGap ?? 0) > 0 ? '+' : '') +
+                    (m.measuredGap | number: '1.2-2') +
+                    ('account.usdSuffix' | translate);
+                  <span
+                    class="type-tag type-tag--adjusted"
+                    tabindex="0"
+                    data-testid="adjusted-correction"
+                    [matTooltip]="
+                      'account.adjusted.tooltip'
+                        | translate: { amount: measured, date: (m.valueDate | date: 'shortDate') }
+                    "
+                  >
+                    {{ 'account.adjusted.tag' | translate }}
+                  </span>
+                  <span class="muted">{{
+                    'account.adjusted.measured' | translate: { amount: measured }
+                  }}</span>
+                }
               }
             </td>
           </ng-container>

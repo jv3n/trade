@@ -319,6 +319,71 @@ describe('AccountPage', () => {
   // Factories — each test overrides only the field it is about.
   // ---------------------------------------------------------------------------
 
+  /**
+   * #477 : a morning's correction can absorb a later fix to an earlier row (#476), and a row whose
+   * amount rewrote itself has to say so. The mark is keyed on the gap its morning measured — never
+   * on the row type alone, so an untouched correction looks exactly as before.
+   */
+  describe('adjusted correction', () => {
+    function renderRows(movements: AccountMovement[]): HTMLElement {
+      page = makePage(movements);
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.componentInstance.onTypeChange('all');
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('marks a correction whose amount moved away from what its morning measured', () => {
+      const el = renderRows([
+        makeMovement({ type: 'ADJUSTMENT', amount: -12.4, measuredGap: -15.4, note: null }),
+      ]);
+
+      expect(el.querySelector('[data-testid="adjusted-correction"]')).not.toBeNull();
+    });
+
+    it('leaves a correction that still matches its morning unmarked', () => {
+      const el = renderRows([
+        makeMovement({ type: 'ADJUSTMENT', amount: -12.4, measuredGap: -12.4, note: null }),
+      ]);
+
+      expect(el.querySelector('[data-testid="adjusted-correction"]')).toBeNull();
+    });
+
+    // Float noise off the wire (0.1 + 0.2) must not read as an adjustment.
+    it('compares in cents, not in raw floats', () => {
+      const cmp = TestBed.createComponent(AccountPage).componentInstance;
+
+      expect(
+        cmp.isAdjusted(makeMovement({ type: 'ADJUSTMENT', amount: 0.1 + 0.2, measuredGap: 0.3 })),
+      ).toBe(false);
+    });
+
+    it('never marks a movement that has no morning behind it', () => {
+      const cmp = TestBed.createComponent(AccountPage).componentInstance;
+
+      expect(cmp.isAdjusted(makeMovement({ type: 'ADJUSTMENT', amount: -50 }))).toBe(false);
+      expect(cmp.isAdjusted(makeMovement({ type: 'DEPOSIT', amount: 1000 }))).toBe(false);
+    });
+
+    // A backend serialising without nulls would drop the field : undefined must not tag every row.
+    it('reads an absent measured gap as no morning, not as an adjustment', () => {
+      const cmp = TestBed.createComponent(AccountPage).componentInstance;
+      const withoutField = makeMovement({ type: 'DEPOSIT', amount: 1000 });
+      delete (withoutField as Partial<AccountMovement>).measuredGap;
+
+      expect(cmp.isAdjusted(withoutField)).toBe(false);
+      expect(cmp.isMorningCorrection(withoutField)).toBe(false);
+    });
+
+    it('names a morning correction without a note after its morning, not with a dash', () => {
+      const el = renderRows([
+        makeMovement({ type: 'ADJUSTMENT', amount: -12.4, measuredGap: -12.4, note: null }),
+      ]);
+
+      expect(el.textContent).toContain('account.morningCorrection');
+    });
+  });
+
   function makeMovement(overrides: Partial<AccountMovement> = {}): AccountMovement {
     return {
       id: 'm1',
@@ -330,6 +395,7 @@ describe('AccountPage', () => {
       tradeEntryId: null,
       tradeDirection: null,
       tradeSize: null,
+      measuredGap: null,
       createdAt: new Date(2026, 8, 15),
       updatedAt: new Date(2026, 8, 15),
       ...overrides,

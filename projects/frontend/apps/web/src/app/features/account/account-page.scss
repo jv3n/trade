@@ -69,7 +69,9 @@
   font-size: s.$font-xs;
   white-space: nowrap;
 
-  &--trade {
+  // Indigo : a category (a trade) or a status (an adjusted correction), never a warning.
+  &--trade,
+  &--adjusted {
     background: var(--color-accent-soft);
     color: var(--color-accent);
   }

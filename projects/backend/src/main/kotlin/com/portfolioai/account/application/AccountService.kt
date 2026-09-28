@@ -75,7 +75,13 @@ class AccountService(
         )
     val from = (pageable.pageNumber * pageable.pageSize).coerceAtMost(matching.size)
     val to = (from + pageable.pageSize).coerceAtMost(matching.size)
-    val page = matching.subList(from, to).map { it.toDto(balances.getValue(it.id)) }
+    val measuredGaps =
+      reconciliations
+        .findByUserIdAndCorrectionIdIsNotNull(userId)
+        .mapNotNull { morning -> morning.correctionId?.let { it to morning.gap } }
+        .toMap()
+    val page =
+      matching.subList(from, to).map { it.toDto(balances.getValue(it.id), measuredGaps[it.id]) }
     return PageImpl(page, pageable, matching.size.toLong())
   }
 

@@ -308,6 +308,12 @@
     },
     "movements": "Movements",
     "viewTrade": "View the trade",
+    "morningCorrection": "Morning of {{date}}",
+    "adjusted": {
+      "tag": "adjusted",
+      "measured": "measured {{amount}}",
+      "tooltip": "Measured at {{amount}} on the morning of {{date}}. An earlier row fixed since was absorbed here : that morning's balance is still TradeZero's."
+    },
     "type": {
       "DEPOSIT": "Deposit",
       "WITHDRAWAL": "Withdrawal",

@@ -31,6 +31,7 @@ interface AccountMovementWireDto {
   tradeEntryId: string | null;
   tradeDirection: TradeDirection | null;
   tradeSize: number | null;
+  measuredGap: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +77,7 @@ function fromWire(w: AccountMovementWireDto): AccountMovement {
     tradeEntryId: w.tradeEntryId,
     tradeDirection: w.tradeDirection,
     tradeSize: w.tradeSize,
+    measuredGap: w.measuredGap,
     createdAt: parseISO(w.createdAt),
     updatedAt: parseISO(w.updatedAt),
   };

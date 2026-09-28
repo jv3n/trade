@@ -308,6 +308,12 @@
     },
     "movements": "Mouvements",
     "viewTrade": "Voir le trade",
+    "morningCorrection": "Rapprochement du {{date}}",
+    "adjusted": {
+      "tag": "ajustée",
+      "measured": "mesurée {{amount}}",
+      "tooltip": "Mesurée à {{amount}} le matin du {{date}}. Une ligne antérieure corrigée depuis a été absorbée ici : le solde de ce matin-là reste celui de TradeZero."
+    },
     "type": {
       "DEPOSIT": "Dépôt",
       "WITHDRAWAL": "Retrait",

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.web.server.ResponseStatusException
 
@@ -258,6 +259,42 @@ class AccountReconciliationIntegrationTest {
     service.delete(deposit.id)
 
     assertBalance("-50.00")
+  }
+
+  // What the movements table reads to mark a correction that absorbed a fix (#477).
+  @Test
+  fun `the listing carries the gap a morning measured next to its correction`() {
+    val august = service.addMovement(deposit("2000.00", AUG_12))
+    val settled = morning("1850.00", SEP_28)
+    service.update(august.id, deposit("2001.00", AUG_12))
+
+    val rows = service.findAllPaged(AccountMovementFilter(), PageRequest.of(0, 25)).content
+
+    val correction = rows.single { it.id == settled.correctionId }
+    assertAmount("-150.00", correction.measuredGap!!, "what the morning measured")
+    assertAmount("-151.00", correction.amount, "what it holds after absorbing the fix")
+    assertNull(
+      rows.single { it.id == august.id }.measuredGap,
+      "only a morning's correction has one",
+    )
+  }
+
+  /**
+   * The false positive #477 has to avoid : fixing a mistyped figure moves the correction, and
+   * nothing was absorbed. It holds because a re-settle measures its gap from where the morning
+   * started (`appBalance`), so gap and correction land on the same figure.
+   */
+  @Test
+  fun `re-settling a mistyped morning keeps its correction equal to the gap it measured`() {
+    service.addMovement(deposit("2000.00", AUG_12))
+    morning("1985.00", SEP_28) // typo
+    val settled = morning("1850.00", SEP_28)
+
+    val rows = service.findAllPaged(AccountMovementFilter(), PageRequest.of(0, 25)).content
+
+    val correction = rows.single { it.id == settled.correctionId }
+    assertAmount("-150.00", correction.amount)
+    assertAmount("-150.00", correction.measuredGap!!, "not tagged as adjusted")
   }
 
   // ---------------------------------------------------------------------------
