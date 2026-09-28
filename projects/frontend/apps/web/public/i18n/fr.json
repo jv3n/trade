@@ -334,7 +334,6 @@
       "amount": "Montant",
       "valueDate": "Date",
       "note": "Note",
-      "targetBalance": "Solde réel chez le broker",
       "label": "Libellé",
       "balanceAfter": "Solde"
     },
@@ -353,7 +352,6 @@
       "deleteSuccess": "Mouvement supprimé.",
       "deleteError": "Impossible de supprimer le mouvement. Réessaie.",
       "correctSuccess": "Balance corrigée.",
-      "correctError": "Impossible de corriger la balance. Réessaie.",
       "reconcileSuccess": "Matin rapproché.",
       "reconcileError": "Impossible de rapprocher ce matin. Réessaie.",
       "cancelReconciliationSuccess": "Rapprochement annulé.",

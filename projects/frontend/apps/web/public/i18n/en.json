@@ -334,7 +334,6 @@
       "amount": "Amount",
       "valueDate": "Date",
       "note": "Note",
-      "targetBalance": "Real broker balance",
       "label": "Label",
       "balanceAfter": "Balance"
     },
@@ -353,7 +352,6 @@
       "deleteSuccess": "Movement deleted.",
       "deleteError": "Couldn't delete the movement. Please retry.",
       "correctSuccess": "Balance corrected.",
-      "correctError": "Couldn't correct the balance. Please retry.",
       "reconcileSuccess": "Morning reconciled.",
       "reconcileError": "Couldn't reconcile this morning. Please retry.",
       "cancelReconciliationSuccess": "Reconciliation cancelled.",

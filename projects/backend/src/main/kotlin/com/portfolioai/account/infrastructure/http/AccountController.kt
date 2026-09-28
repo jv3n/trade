@@ -5,7 +5,6 @@ import com.portfolioai.account.application.AccountService
 import com.portfolioai.account.application.dto.AccountMovementDto
 import com.portfolioai.account.application.dto.AccountSummaryDto
 import com.portfolioai.account.application.dto.BalancePointDto
-import com.portfolioai.account.application.dto.CorrectionRequest
 import com.portfolioai.account.application.dto.MovementRequest
 import com.portfolioai.account.application.dto.ReconciliationDto
 import com.portfolioai.account.application.dto.ReconciliationRequest
@@ -89,12 +88,6 @@ class AccountController(
   @PostMapping("/movements")
   @ResponseStatus(HttpStatus.CREATED)
   fun add(@RequestBody request: MovementRequest): AccountMovementDto = service.addMovement(request)
-
-  /** Records a balance correction : the real broker balance → an ADJUSTMENT of the signed delta. */
-  @PostMapping("/corrections")
-  @ResponseStatus(HttpStatus.CREATED)
-  fun correct(@RequestBody request: CorrectionRequest): AccountMovementDto =
-    service.correctBalance(request)
 
   /** Edits a manual movement (DEPOSIT / WITHDRAWAL / ADJUSTMENT). TRADE → 400, foreign id → 404. */
   @PutMapping("/movements/{id}")

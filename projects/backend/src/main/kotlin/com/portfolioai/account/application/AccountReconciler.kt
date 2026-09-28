@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional
  *   rows, and a later edit to one of them moves the balance rather than that morning's correction.
  * - The anchor is the morning, not its correction : a clean morning gains a correction when it
  *   absorbs a change, and a correction absorbed down to zero is removed while its morning stays.
- * - A correction without a morning (the bare `/corrections` endpoint, legacy rows) never absorbs.
+ * - A correction without a morning (a legacy row) never absorbs.
  * - The two moves that would make a morning lie are refused upstream : editing its correction
  *   directly, and settling a morning earlier than one already recorded.
  *
@@ -79,7 +79,6 @@ class AccountReconciler(
       correction != null -> {
         if (correction.amount.compareTo(amount) == 0) return
         correction.amount = amount
-        correction.targetBalance = morning.brokerBalance
         correction.updatedAt = Instant.now()
         movements.save(correction)
       }
@@ -91,7 +90,6 @@ class AccountReconciler(
               type = AccountMovementType.ADJUSTMENT,
               amount = amount,
               valueDate = morning.valueDate,
-              targetBalance = morning.brokerBalance,
             )
           )
         morning.correctionId = created.id
