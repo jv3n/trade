@@ -7,6 +7,7 @@ import com.portfolioai.account.domain.AccountReconciliation
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
 import com.portfolioai.auth.application.AuthService
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.PageRequest
@@ -26,10 +27,11 @@ import org.springframework.web.server.ResponseStatusException
  * - **a gap** → the morning's `ADJUSTMENT` puts the balance on the broker's figure, and the
  *   reconciliation keeps its id.
  *
- * Reconciling the same morning twice overwrites the row (it is one decision) : the morning's own
- * correction moves to close the distance from the balance as it stands then, so a mistyped figure
- * leaves one line, not two — but the remembered gap stays measured from the balance the morning
- * started at, which is what that day actually cost.
+ * Reconciling the same morning twice overwrites the row (it is one decision) : the gap is measured
+ * again from the app's balance without that morning's own correction, and the correction is set to
+ * it — so a mistyped figure leaves one line, not two, and a typo's gap does not stack on the real
+ * one. Correction and gap are equal when a pass settles ; only a later absorption (#476) moves the
+ * correction away from the gap.
  *
  * The correction is written by [AccountReconciler], the one owner of the rule that keeps every
  * reconciled morning true when an earlier movement changes (#476).
@@ -65,17 +67,18 @@ class AccountReconciliationService(
       )
     }
     val existing = repo.findByUserIdAndValueDate(user.id, request.valueDate)
-    val currentBalance = movements.balanceFor(user.id)
 
-    // The correction closes the distance from where the balance **is** ; the gap the morning is
-    // remembered by is measured from where it **started** — on a second pass, that starting point
-    // is the one the first pass recorded, not the balance its own correction already moved.
-    val startingBalance = existing?.appBalance ?: currentBalance
+    // The app's balance without this morning's own correction : on a second pass, the first one's
+    // plug is taken back out, and a row typed for that day in between is counted — measuring from
+    // the first pass's figure would book that row as broker fees (#480).
+    val ownCorrection = existing?.let { reconciler.correctionAmount(it) } ?: BigDecimal.ZERO
+    val startingBalance = movements.balanceFor(user.id).subtract(ownCorrection)
     val gap = request.brokerBalance.subtract(startingBalance)
 
     val reconciliation =
       existing?.apply {
         brokerBalance = request.brokerBalance
+        appBalance = startingBalance
         this.gap = gap
         updatedAt = Instant.now()
       }
@@ -87,8 +90,7 @@ class AccountReconciliationService(
           gap = gap,
         )
     val saved = repo.save(reconciliation)
-    val ownCorrection = reconciler.correctionAmount(saved)
-    reconciler.settle(saved, ownCorrection + request.brokerBalance.subtract(currentBalance))
+    reconciler.settle(saved, gap)
     return saved.toDto()
   }
 

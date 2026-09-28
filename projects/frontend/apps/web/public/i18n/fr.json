@@ -372,7 +372,7 @@
       "reconciliationGapShare": "{{share}} % du P&L",
       "reconciliationGapCredit": "crédit net",
       "reconciliationGapNoShare": "— · P&L nul ou en perte",
-      "reconciliationGapHint": "Ce que le courtier a pris hors trades — locates, abonnement, arrondis. Suit les dates, pas le filtre de type."
+      "reconciliationGapHint": "Ce que le courtier a pris hors trades — locates, abonnement, arrondis. Lu aux matins rapprochés de la période : une ligne corrigée depuis ne le change pas. Suit les dates, pas le filtre de type."
     },
     "filter": {
       "type": "Type de mouvement",

@@ -184,7 +184,9 @@ describe('AccountPage', () => {
   describe('reconciliation-gap tile', () => {
     // October in the issue : $3,000 of P&L, $200 of corrections the broker took.
     it("reads the period's corrections unsigned, and their share of the P&L", () => {
-      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 3000, periodAdjustments: -200 })));
+      getSummary.mockReturnValue(
+        of(makeSummary({ periodPnl: 3000, periodReconciliationGap: -200 })),
+      );
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
 
@@ -209,7 +211,9 @@ describe('AccountPage', () => {
     });
 
     it('keeps the amount but drops the ratio on a losing period', () => {
-      getSummary.mockReturnValue(of(makeSummary({ periodPnl: -420, periodAdjustments: -35 })));
+      getSummary.mockReturnValue(
+        of(makeSummary({ periodPnl: -420, periodReconciliationGap: -35 })),
+      );
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
 
@@ -220,7 +224,7 @@ describe('AccountPage', () => {
 
     // A credited-back locate can leave the period's corrections net positive.
     it('reads a net positive period as a credit, without a negative percentage', () => {
-      getSummary.mockReturnValue(of(makeSummary({ periodAdjustments: 5 })));
+      getSummary.mockReturnValue(of(makeSummary({ periodReconciliationGap: 5 })));
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
 
@@ -229,6 +233,29 @@ describe('AccountPage', () => {
         credit: true,
         share: null,
       });
+    });
+
+    // #480 : no reconciled morning in the period means nothing was measured — no plausible 0.
+    it('hides the tile when no morning was reconciled in the period', () => {
+      getSummary.mockReturnValue(of(makeSummary({ periodReconciliationGap: null })));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGap()).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="reconciliation-gap"]')).toBeNull();
+    });
+
+    // #480 : the corrections can hold a later fix absorbed into them ; the tile must not read it.
+    it("reads the mornings' recorded gap, not the corrections' current amount", () => {
+      getSummary.mockReturnValue(
+        of(
+          makeSummary({ periodPnl: 3000, periodAdjustments: -201, periodReconciliationGap: -200 }),
+        ),
+      );
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(200);
     });
 
     it('asks the summary once when no type is filtered', () => {
@@ -246,8 +273,8 @@ describe('AccountPage', () => {
       getSummary.mockImplementation((f?: AccountMovementFilter) =>
         of(
           f?.types
-            ? makeSummary({ periodPnl: 3000, periodAdjustments: 0 })
-            : makeSummary({ periodPnl: 3000, periodAdjustments: -200 }),
+            ? makeSummary({ periodPnl: 3000, periodReconciliationGap: 0 })
+            : makeSummary({ periodPnl: 3000, periodReconciliationGap: -200 }),
         ),
       );
       const fixture = TestBed.createComponent(AccountPage);
@@ -267,14 +294,14 @@ describe('AccountPage', () => {
         if (f?.types) return of(makeSummary());
         untyped++;
         if (untyped === 2) return superseded;
-        return of(makeSummary({ periodAdjustments: untyped === 3 ? -80 : 0 }));
+        return of(makeSummary({ periodReconciliationGap: untyped === 3 ? -80 : 0 }));
       });
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
 
       fixture.componentInstance.onTypeChange('trades');
       fixture.componentInstance.onTypeChange('cash');
-      superseded.next(makeSummary({ periodAdjustments: -999 }));
+      superseded.next(makeSummary({ periodReconciliationGap: -999 }));
 
       expect(superseded.observed).toBe(false);
       expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(80);
@@ -296,7 +323,7 @@ describe('AccountPage', () => {
     });
 
     it('reads a dash, not « — % of the P&L », when the period made no profit', () => {
-      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 0, periodAdjustments: -12.4 })));
+      getSummary.mockReturnValue(of(makeSummary({ periodPnl: 0, periodReconciliationGap: -12.4 })));
       TestBed.inject(TranslateService).setTranslation('en', {
         account: {
           kpi: {
@@ -422,6 +449,7 @@ describe('AccountPage', () => {
       periodWithdrawals: -500,
       periodNetInjected: 500,
       periodAdjustments: 0,
+      periodReconciliationGap: 0,
       periodMovementCount: 10,
       ...overrides,
     };

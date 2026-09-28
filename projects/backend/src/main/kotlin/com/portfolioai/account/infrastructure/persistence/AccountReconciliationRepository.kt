@@ -13,6 +13,8 @@ import org.springframework.data.jpa.repository.JpaRepository
  */
 interface AccountReconciliationRepository : JpaRepository<AccountReconciliation, UUID> {
 
+  fun findByUserId(userId: UUID): List<AccountReconciliation>
+
   fun findByUserIdAndValueDate(userId: UUID, valueDate: LocalDate): AccountReconciliation?
 
   fun findByUserIdOrderByValueDateDesc(

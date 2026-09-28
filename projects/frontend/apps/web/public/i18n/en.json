@@ -372,7 +372,7 @@
       "reconciliationGapShare": "{{share}} % of the P&L",
       "reconciliationGapCredit": "net credit",
       "reconciliationGapNoShare": "— · flat or losing P&L",
-      "reconciliationGapHint": "What the broker took outside the trades — locates, subscription, rounding. Follows the dates, not the type filter."
+      "reconciliationGapHint": "What the broker took outside the trades — locates, subscription, rounding. Read at the period's reconciled mornings : a row fixed since does not change it. Follows the dates, not the type filter."
     },
     "filter": {
       "type": "Movement type",

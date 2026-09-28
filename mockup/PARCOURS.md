@@ -716,6 +716,12 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
   an accounting figure.
 - **Follows the dates, ignores the type filter** : under « Trades », « Dépôts / retraits » or
   « Corrections » the ratio would read a plausible 0 % or divide by zero.
+- **Reads the mornings, not the corrections** (#480) : the figure is the sum of the gaps the
+  period's reconciled mornings recorded. A correction can absorb a later fix to an older row (#476)
+  and then holds more than what the broker took ; a recorded gap never moves, so the same period
+  reads the same tomorrow. The window is the mornings dated in the period — a morning measures the
+  day before it, a one-day shift accepted so the tile agrees with the movements table. With no
+  reconciled morning in the period the tile is hidden : nothing was measured, and a 0 would lie.
 - A **losing or flat period** shows the amount and a dash for the ratio. A period whose corrections
   come out **net positive** (a credited-back locate) shows « +5,00 $ » and « crédit net » instead of
   a percentage.
