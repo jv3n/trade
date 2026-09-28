@@ -15,24 +15,23 @@ import { AccountRepository, PagedResult } from '../../core/api/account/account.r
 import { ForexRepository } from '../../core/api/forex/forex.repository';
 import { BalanceCurrencyService } from '../../core/app-state/balance-currency.service';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { computePeriodRange } from '../../shared/period-preset/period-preset';
 import { AccountPage } from './account-page';
 
 /**
  * Pins the listing behaviour of [AccountPage] after the #229 redesign — what a typecheck can't
  * catch :
  *
- *  - **One filter drives the whole page** — the period and type controls feed `/movements` **and**
- *    `/summary` with the same window. A KPI row describing a different slice than the table under
- *    it would be worse than no KPI at all.
+ *  - **The period drives the page, the type only the table** (#488) — the period feeds `/movements`
+ *    **and** `/summary` with the same window ; the type filter narrows the table and never the KPI
+ *    tiles, which describe the period rather than the rows picked under them.
  *  - **Presets travel as dates** — `thisMonth` and friends are a UI vocabulary ; only `dateFrom` /
  *    `dateTo` reach the repository, exactly like the journal's filter.
  *  - **The table opens on trades** (#473) — the rows the page is opened for ; the KPI row is not
- *    narrowed by that default where it matters (the gap tile).
+ *    narrowed by that default.
  *  - **A filter change rewinds to page 0** — page 4 of the previous result set means nothing.
  *  - **The balance column is the server's** — `balanceAfter` is rendered as received, never
  *    recomputed from the visible rows, or filtering to trades would renumber it.
- *  - **The reconciliation-gap tile follows the dates only** (#338) — under a type filter half of
- *    its ratio would be zeroed, and a plausible 0 % is worse than no figure.
  *
  * Creation and edition go through `MovementDialog` and are its concern, not the page's.
  */
@@ -181,6 +180,42 @@ describe('AccountPage', () => {
     expect(balances).toEqual([1041.85, 1291.85]);
   });
 
+  /**
+   * #488 : the tiles describe the period, not the table's rows. Fed by the type filter, the page
+   * opened on « Apports nets 0,00 » under the default « Trades » — September held −850 of cash.
+   */
+  describe('type filter', () => {
+    it('narrows the table only : the tiles keep the whole period', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      getSummary.mockClear();
+      findMovements.mockClear();
+
+      fixture.componentInstance.onTypeChange('cash');
+
+      expect(getSummary).not.toHaveBeenCalled();
+      expect((findMovements.mock.calls[0][0] as AccountMovementFilter).types).toEqual([
+        'DEPOSIT',
+        'WITHDRAWAL',
+      ]);
+    });
+
+    it('keeps the net injected of the period under the default « Trades »', () => {
+      getSummary.mockImplementation((f?: AccountMovementFilter) =>
+        of(
+          f?.types
+            ? makeSummary({ periodNetInjected: 0 })
+            : makeSummary({ periodNetInjected: -850 }),
+        ),
+      );
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.appliedFilter().type).toBe('trades');
+      expect(fixture.componentInstance.summary()?.periodNetInjected).toBe(-850);
+    });
+  });
+
   describe('reconciliation-gap tile', () => {
     // October in the issue : $3,000 of P&L, $200 of corrections the broker took.
     it("reads the period's corrections unsigned, and their share of the P&L", () => {
@@ -258,68 +293,46 @@ describe('AccountPage', () => {
       expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(200);
     });
 
-    it('asks the summary once when no type is filtered', () => {
+    it('asks the summary once per load, over the dates only', () => {
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
-      getSummary.mockClear();
-
-      fixture.componentInstance.onTypeChange('all');
 
       expect(getSummary).toHaveBeenCalledTimes(1);
+      expect((getSummary.mock.calls[0][0] as AccountMovementFilter).types).toBeNull();
     });
 
-    // The default « Trades » filter (#473) makes this the case of every load, not an edge case.
-    it('stays on the whole period when the type filter narrows the rest of the row', () => {
-      getSummary.mockImplementation((f?: AccountMovementFilter) =>
-        of(
-          f?.types
-            ? makeSummary({ periodPnl: 3000, periodReconciliationGap: 0 })
-            : makeSummary({ periodPnl: 3000, periodReconciliationGap: -200 }),
-        ),
-      );
-      const fixture = TestBed.createComponent(AccountPage);
-      fixture.detectChanges();
-
-      const filters = getSummary.mock.calls.map((c) => c[0] as AccountMovementFilter);
-      expect(filters.map((f) => f.types)).toEqual([['TRADE'], null]);
-      expect(filters[1].dateFrom?.getTime()).toBe(filters[0].dateFrom?.getTime());
-      expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(200);
-    });
-
-    // Flipping the type filter quickly used to let an older answer overwrite a newer one.
-    it('drops the answer of a superseded filter when it lands after the current one', () => {
+    // A period moved quickly used to let an older answer overwrite a newer one.
+    it('drops the answer of a superseded period when it lands after the current one', () => {
       const superseded = new Subject<AccountSummary>();
-      let untyped = 0;
-      getSummary.mockImplementation((f?: AccountMovementFilter) => {
-        if (f?.types) return of(makeSummary());
-        untyped++;
-        if (untyped === 2) return superseded;
-        return of(makeSummary({ periodReconciliationGap: untyped === 3 ? -80 : 0 }));
+      let calls = 0;
+      getSummary.mockImplementation(() => {
+        calls++;
+        if (calls === 2) return superseded;
+        return of(makeSummary({ periodReconciliationGap: calls === 3 ? -80 : 0 }));
       });
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
 
-      fixture.componentInstance.onTypeChange('trades');
-      fixture.componentInstance.onTypeChange('cash');
+      fixture.componentInstance.setPeriod({
+        period: 'lastMonth',
+        ...computePeriodRange('lastMonth'),
+      });
+      fixture.componentInstance.setPeriod({
+        period: 'thisMonth',
+        ...computePeriodRange('thisMonth'),
+      });
       superseded.next(makeSummary({ periodReconciliationGap: -999 }));
 
       expect(superseded.observed).toBe(false);
       expect(fixture.componentInstance.reconciliationGap()?.amount).toBe(80);
     });
 
-    it('hides the tile alone, without a page error, when only its own call fails', () => {
+    it('flags the page when the summary fails', () => {
+      getSummary.mockReturnValue(throwError(() => new Error('503')));
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
-      getSummary.mockImplementation((f?: AccountMovementFilter) =>
-        f?.types ? of(makeSummary()) : throwError(() => new Error('503')),
-      );
 
-      fixture.componentInstance.onTypeChange('trades');
-      fixture.detectChanges();
-
-      expect(fixture.componentInstance.error()).toBeNull();
-      expect(fixture.componentInstance.reconciliationGap()).toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-testid="reconciliation-gap"]')).toBeNull();
+      expect(fixture.componentInstance.error()).not.toBeNull();
     });
 
     it('reads a dash, not « — % of the P&L », when the period made no profit', () => {
