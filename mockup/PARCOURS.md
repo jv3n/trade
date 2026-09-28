@@ -705,6 +705,10 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
   a percentage.
 - The balance tile takes **one column** instead of two, so the four tiles hold on one row.
 
+**The movements table opens on « Trades »** (#473) — the rows the page is opened for ; « Tous les
+types » is one click away, and the period keeps its own default (« Ce mois »). Corrections are
+hidden by default, so the gap tile above is what keeps them in sight.
+
 **Screen** : [`compte.html`](compte.html) — USD / CAD balance, the morning reconciliation panel
 (live gap), the history of the last reconciliations, the balance curve, the movements list.
 

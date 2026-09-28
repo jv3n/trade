@@ -26,6 +26,8 @@ import { AccountPage } from './account-page';
  *    it would be worse than no KPI at all.
  *  - **Presets travel as dates** — `thisMonth` and friends are a UI vocabulary ; only `dateFrom` /
  *    `dateTo` reach the repository, exactly like the journal's filter.
+ *  - **The table opens on trades** (#473) — the rows the page is opened for ; the KPI row is not
+ *    narrowed by that default where it matters (the gap tile).
  *  - **A filter change rewinds to page 0** — page 4 of the previous result set means nothing.
  *  - **The balance column is the server's** — `balanceAfter` is rendered as received, never
  *    recomputed from the visible rows, or filtering to trades would renumber it.
@@ -117,9 +119,21 @@ describe('AccountPage', () => {
     expect(sent.types).toEqual(['DEPOSIT', 'WITHDRAWAL']);
   });
 
+  it('opens on the trades, the rows the page is opened for', () => {
+    const fixture = TestBed.createComponent(AccountPage);
+    fixture.detectChanges();
+
+    const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
+    expect(fixture.componentInstance.appliedFilter().type).toBe('trades');
+    expect(sent.types).toEqual(['TRADE']);
+  });
+
   it('asks for every type when the filter is « all »', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
+    findMovements.mockClear();
+
+    fixture.componentInstance.onTypeChange('all');
 
     const sent = findMovements.mock.calls[0][0] as AccountMovementFilter;
     expect(sent.types).toBeNull();
@@ -131,7 +145,7 @@ describe('AccountPage', () => {
     fixture.componentInstance.onPage({ pageIndex: 3, pageSize: 25, length: 200 });
     expect(fixture.componentInstance.pageIndex()).toBe(3);
 
-    fixture.componentInstance.onTypeChange('trades');
+    fixture.componentInstance.onTypeChange('cash');
 
     expect(fixture.componentInstance.pageIndex()).toBe(0);
   });
@@ -220,10 +234,14 @@ describe('AccountPage', () => {
     it('asks the summary once when no type is filtered', () => {
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
+      getSummary.mockClear();
+
+      fixture.componentInstance.onTypeChange('all');
 
       expect(getSummary).toHaveBeenCalledTimes(1);
     });
 
+    // The default « Trades » filter (#473) makes this the case of every load, not an edge case.
     it('stays on the whole period when the type filter narrows the rest of the row', () => {
       getSummary.mockImplementation((f?: AccountMovementFilter) =>
         of(
@@ -234,9 +252,6 @@ describe('AccountPage', () => {
       );
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
-      getSummary.mockClear();
-
-      fixture.componentInstance.onTypeChange('trades');
 
       const filters = getSummary.mock.calls.map((c) => c[0] as AccountMovementFilter);
       expect(filters.map((f) => f.types)).toEqual([['TRADE'], null]);
