@@ -95,12 +95,12 @@ interface AccountFilter {
  * its USD / CAD switch, P&L of the period, net injected), the balance curve in its own card, and
  * the movements as a filterable table carrying the running balance.
  *
- * **One filter drives everything.** The period + type toolbar feeds `/summary`, `/movements` and
- * the chart window at once, so the three always describe the same slice — a KPI row that disagreed
- * with the table below it would be worse than no KPI at all. The filter mirrors the journal's,
- * presets included, and only resolved dates travel to the backend. One exception : the
- * reconciliation-gap tile (#338) follows the dates only — a type filter would zero half of its
- * ratio and pass the result off as a measured 0 %.
+ * **The period drives the page, the type only the table.** The period feeds `/summary`, the chart
+ * window and `/movements` ; the type filter narrows the movements table and nothing else. The KPI
+ * tiles describe the period — its P&L, the cash injected, the reconciliation gaps — not the rows
+ * picked below them : fed by the table's type, « Trades » read 0 of net injected and « Dépôts /
+ * retraits » a P&L of 0 (#488). The filter mirrors the journal's, presets included, and only
+ * resolved dates travel to the backend.
  *
  * The balance column comes from the server (`balanceAfter`), never recomputed here : it is defined
  * over the whole history, so filtering to trades must not renumber it.
@@ -145,11 +145,10 @@ export class AccountPage {
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  /** The period's figures, over its dates only — never narrowed by the table's type filter. */
   readonly summary = signal<AccountSummary | null>(null);
-  /** The same summary over the period's dates with no type filter — what the gap tile reads. */
-  readonly periodSummary = signal<AccountSummary | null>(null);
-  /** The in-flight summary calls — cancelled on refetch so a stale answer never lands last. */
-  private summaryCalls?: Subscription;
+  /** The in-flight summary call — cancelled on refetch so a stale answer never lands last. */
+  private summaryCall?: Subscription;
   readonly movements = signal<AccountMovement[]>([]);
   readonly totalElements = signal(0);
   readonly pageIndex = signal(0);
@@ -205,7 +204,7 @@ export class AccountPage {
   });
 
   readonly reconciliationGap = computed<ReconciliationGap | null>(() => {
-    const s = this.periodSummary();
+    const s = this.summary();
     // No reconciled morning in the period : nothing was measured, so no tile (#480).
     if (!s || s.periodReconciliationGap === null) return null;
     // A gap is negative when the broker took money : a positive sum is a credit.
@@ -305,8 +304,11 @@ export class AccountPage {
     this.applyFilter({ ...this.appliedFilter(), ...selection });
   }
 
+  /** The type narrows the table only : the tiles and the curve keep the period's figures. */
   onTypeChange(type: MovementTypeFilter): void {
-    this.applyFilter({ ...this.appliedFilter(), type });
+    this.appliedFilter.set({ ...this.appliedFilter(), type });
+    this.pageIndex.set(0);
+    this.fetchMovements();
   }
 
   setCurrency(currency: BalanceCurrency): void {
@@ -385,24 +387,12 @@ export class AccountPage {
   private fetch(): void {
     this.loading.set(true);
     this.error.set(null);
-    const apiFilter = this.toApiFilter();
-    this.summaryCalls?.unsubscribe();
-    this.summaryCalls = this.repo.getSummary(apiFilter).subscribe({
-      next: (s) => {
-        this.summary.set(s);
-        if (!apiFilter.types) this.periodSummary.set(s);
-      },
+    const { dateFrom, dateTo } = this.toApiFilter();
+    this.summaryCall?.unsubscribe();
+    this.summaryCall = this.repo.getSummary({ dateFrom, dateTo, types: null }).subscribe({
+      next: (s) => this.summary.set(s),
       error: () => this.error.set(this.translate.instant('account.errors.load')),
     });
-    if (apiFilter.types) {
-      this.summaryCalls.add(
-        this.repo.getSummary({ ...apiFilter, types: null }).subscribe({
-          next: (s) => this.periodSummary.set(s),
-          // Only the gap tile is missing then — hide it rather than flag the whole page.
-          error: () => this.periodSummary.set(null),
-        }),
-      );
-    }
     // The whole series, always : the chart is clipped client-side, so changing the window doesn't
     // cost a round-trip and the curve keeps its shape when the user flips between presets.
     this.repo.getBalanceSeries().subscribe({
