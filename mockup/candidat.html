@@ -249,6 +249,94 @@
         font-variant-numeric: tabular-nums;
         font-size: 13px;
       }
+
+      /* #496 — le solde repris du compte, l'échelle des entrées, les avertissements. */
+      .calc-widget .row + .row,
+      .calc-widget .field + .row {
+        margin-top: 8px;
+      }
+
+      .calc-widget .field .from-app {
+        font-size: 11px;
+        color: var(--text-faint);
+      }
+
+      .calc-widget .stop-presets {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        font-size: 11px;
+        color: var(--text-faint);
+      }
+
+      .calc-widget .reading {
+        margin: 4px 0 0;
+        font-size: 11px;
+        color: var(--text-muted);
+        text-align: right;
+      }
+
+      .calc-widget .ladder {
+        width: 100%;
+        margin-top: 10px;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .calc-widget .ladder th,
+      .calc-widget .ladder td {
+        padding: 4px 6px;
+        text-align: right;
+      }
+
+      .calc-widget .ladder th:first-child,
+      .calc-widget .ladder td:first-child {
+        text-align: left;
+      }
+
+      .calc-widget .ladder tr.current td {
+        background: var(--accent-soft);
+        font-weight: 600;
+      }
+
+      .calc-widget .ladder tr.refused td {
+        color: var(--warn);
+      }
+
+      .calc-widget .result.headline output {
+        font-size: 20px;
+      }
+
+      .calc-widget .broker {
+        margin-top: 10px;
+        border-top: 1px solid var(--border);
+        padding-top: 8px;
+        font-size: 12px;
+      }
+
+      .calc-widget .broker summary {
+        cursor: pointer;
+        color: var(--text-muted);
+      }
+
+      .calc-widget .broker summary span {
+        color: var(--text-faint);
+      }
+
+      .calc-widget .broker .row {
+        margin-top: 8px;
+      }
+
+      .calc-widget .calc-note {
+        margin: 8px 0 0;
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .calc-widget .calc-note.warn {
+        color: var(--warn);
+      }
     </style>
   </head>
   <body>
@@ -272,11 +360,11 @@
           <div class="launcher">
             <button class="btn btn-sm" data-toggle-launcher><span class="icon">calculate</span> Calculatrices</button>
             <div class="launcher-menu" hidden>
+              <!-- #496 : « P&L du short » et « Prix moyen après un renfort » retirés (le journal les calcule depuis les exécutions). -->
               <button><span class="icon">percent</span> Variation en %</button>
-              <button><span class="icon">straighten</span> Taille de position <span class="open-tag">ouverte</span></button>
-              <button><span class="icon">payments</span> P&amp;L du short</button>
-              <button><span class="icon">compare_arrows</span> Distance et R:R</button>
-              <button><span class="icon">stacked_line_chart</span> Prix moyen après un renfort</button>
+              <button data-open-widget="w-max"><span class="icon">vertical_align_top</span> Taille maximale <span class="open-tag">ouverte</span></button>
+              <button data-open-widget="w-size"><span class="icon">straighten</span> Taille de position <span class="open-tag">ouverte</span></button>
+              <button data-open-widget="w-rr"><span class="icon">compare_arrows</span> Distance et R:R <span class="open-tag" hidden>ouverte</span></button>
             </div>
           </div>
         </div>
@@ -578,7 +666,10 @@
 
         <!-- #421 : une calculatrice flottante, déplaçable par son en-tête, au-dessus de la page.
              « Détacher » l'envoie dans sa propre fenêtre toujours au premier plan (Document PiP). -->
-        <section class="calc-widget" role="dialog" aria-label="Taille de position" style="right: 32px; bottom: 32px">
+        <!-- #496 : tout est exprimé en % de l'open, comme le reste de l'app ; le risque en % du solde.
+             Chaque ligne porte la marge que demande son nombre d'actions (plancher par action de TradeZero) ;
+             une ligne que le buying power ne couvre pas est marquée, pas présentée comme disponible. -->
+        <section class="calc-widget" id="w-size" role="dialog" aria-label="Taille de position" style="left: 280px; bottom: 32px">
           <header>
             <span class="icon grip">drag_indicator</span>
             <span class="title">Taille de position</span>
@@ -586,14 +677,101 @@
             <button class="btn btn-sm btn-icon" title="Fermer" data-close-widget><span class="icon">close</span></button>
           </header>
           <div class="body">
-            <p class="muted" style="margin: 0 0 12px; font-size: 12px">Combien d'actions shorter pour qu'un stop placé au-dessus de l'entrée ne coûte jamais plus que le risque choisi.</p>
-            <div class="field"><label>Risque</label><div class="affix"><input class="input" value="100" /><span>$ US</span></div></div>
-            <div class="row" style="margin-top: 8px">
-              <div class="field"><label>Entrée</label><input class="input" value="3,23" /></div>
-              <div class="field"><label>Stop</label><input class="input" value="3,45" /></div>
+            <p class="muted" style="margin: 0 0 12px; font-size: 12px">Combien d'actions shorter à chaque niveau d'entrée au-dessus de l'open, pour qu'un stop ne coûte jamais plus que le risque choisi.</p>
+            <div class="row">
+              <div class="field"><label>Solde</label><div class="affix"><input class="input" data-balance value="4 820,00" /><span>$ US</span></div></div>
+              <div class="field"><label>Risque (% du solde)</label><div class="affix"><input class="input" data-size="risk" value="5" /><span>%</span></div></div>
             </div>
-            <div class="result"><span>Actions (arrondi à l'unité inférieure)</span><output>454</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
-            <div class="result"><span>Risque réellement pris</span><output>99,88 $ US</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <div class="result"><span>Risque en dollars</span><output data-out="riskUsd">—</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <div class="row" style="margin-top: 8px">
+              <div class="field"><label>Open</label><input class="input" data-size="open" value="3,35" /></div>
+              <div class="field"><label>Stop (% / open)</label><div class="affix"><input class="input" data-size="stop" value="31" /><span>%</span></div></div>
+            </div>
+            <div class="stop-presets">
+              <div class="segmented" data-stop-presets>
+                <button data-pct="40">+40 %</button>
+                <button class="active" data-pct="31">+31 %</button>
+              </div>
+              <span style="margin-left: auto">stop à <strong data-out="stopPrice">—</strong></span>
+            </div>
+            <div class="field" style="margin-top: 8px"><label>Prix actuel</label><input class="input" data-size="current" value="4,02" placeholder="facultatif" /></div>
+            <table class="ladder">
+              <thead>
+                <tr><th>Entrée</th><th>Prix</th><th>Actions</th><th>Engagé</th><th>Marge</th></tr>
+              </thead>
+              <tbody data-ladder></tbody>
+            </table>
+            <p class="calc-note warn" data-over-note hidden>En ambre : la marge dépasse le buying power (<span data-out="bpLine"></span>) — l'ordre serait refusé.</p>
+            <details class="broker">
+              <summary>Règles du broker <span data-out="brokerLine"></span></summary>
+              <div class="row" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+                <div class="field"><label>Levier</label><div class="affix"><input class="input" data-broker="leverage" value="2" /><span>×</span></div></div>
+                <div class="field"><label>Plancher</label><div class="affix"><input class="input" data-broker="floor" value="2,50" /><span>$/act.</span></div></div>
+                <div class="field"><label>Sécurité</label><div class="affix"><input class="input" data-broker="safety" value="5" /><span>%</span></div></div>
+              </div>
+              <p class="calc-note">Réglages du broker, gardés d'une visite à l'autre. <a href="patterns.html#sheet-notes-tradezero-margin">Règles de marge TradeZero</a> — la note, ses sources, vérifiée le 29/09/2026.</p>
+            </details>
+          </div>
+        </section>
+
+        <!-- #496 : le calcul ne change pas ; le résultat est nommé en entier et se lit en une ligne. -->
+        <section class="calc-widget" id="w-rr" role="dialog" aria-label="Distance et R:R" style="right: 440px; bottom: 32px" hidden>
+          <header>
+            <span class="icon grip">drag_indicator</span>
+            <span class="title">Distance et R:R</span>
+            <button class="btn btn-sm btn-icon" title="Détacher dans une fenêtre"><span class="icon">picture_in_picture_alt</span></button>
+            <button class="btn btn-sm btn-icon" title="Fermer" data-close-widget><span class="icon">close</span></button>
+          </header>
+          <div class="body">
+            <p class="muted" style="margin: 0 0 12px; font-size: 12px">Avant d'entrer : la distance jusqu'au stop et jusqu'à l'objectif, et ce qu'on risque pour ce qu'on vise.</p>
+            <div class="row" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+              <div class="field"><label>Prix actuel</label><input class="input" value="3,23" /></div>
+              <div class="field"><label>Stop</label><input class="input" value="3,45" /></div>
+              <div class="field"><label>Objectif</label><input class="input" value="2,70" /></div>
+            </div>
+            <div class="result"><span>Jusqu'au stop</span><output>+6,8 % · 0,22 $ US</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <div class="result"><span>Jusqu'à l'objectif</span><output>−16,4 % · 0,53 $ US</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <div class="result"><span>Risque : Gain (R:R)</span><output>1 : 2,4</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <p class="reading">Tu risques 1 pour gagner 2,4.</p>
+          </div>
+        </section>
+
+        <!-- #496 : la plus grande taille que le broker acceptera, tout de suite — le nombre à taper dans le ticket.
+             Deux plafonds : la marge (levier × solde, au plancher par action) et, facultatif, un % du solde ;
+             la ligne dit lequel a joué. -->
+        <section class="calc-widget" id="w-max" role="dialog" aria-label="Taille maximale" style="right: 32px; bottom: 32px">
+          <header>
+            <span class="icon grip">drag_indicator</span>
+            <span class="title">Taille maximale</span>
+            <button class="btn btn-sm btn-icon" title="Détacher dans une fenêtre"><span class="icon">picture_in_picture_alt</span></button>
+            <button class="btn btn-sm btn-icon" title="Fermer" data-close-widget><span class="icon">close</span></button>
+          </header>
+          <div class="body">
+            <p class="muted" style="margin: 0 0 12px; font-size: 12px">La plus grande taille que le broker acceptera sur ce titre — pour placer l'ordre une fois, sans se le faire refuser.</p>
+            <div class="row">
+              <div class="field"><label>Solde</label><div class="affix"><input class="input" data-balance value="4 820,00" /><span>$ US</span></div></div>
+              <div class="field"><label>Prix de l'action</label><input class="input" data-max="price" value="0,65" /></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Plafond (% du solde)</label><div class="affix"><input class="input" data-max="ceiling" value="" placeholder="aucun" /><span>%</span></div></div>
+              <div class="field"><label>Locate</label><div class="affix"><input class="input" data-max="locate" value="0,0120" placeholder="facultatif" /><span>$/act.</span></div></div>
+            </div>
+            <div class="result headline"><span>Actions max.</span><output data-out="maxShares">—</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <p class="reading" data-out="bound"></p>
+            <div class="result"><span>Valeur de la position</span><output data-out="maxValue">—</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <div class="result"><span>Marge prise · buying power restant</span><output data-out="maxMargin">—</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <div class="result"><span>Coût des locates</span><output data-out="maxLocate">—</output><button class="btn btn-sm btn-icon" title="Copier"><span class="icon">content_copy</span></button></div>
+            <p class="calc-note">Les locates se paient que le trade soit pris ou non.</p>
+            <details class="broker">
+              <summary>Règles du broker <span data-out="brokerLine"></span></summary>
+              <div class="row" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+                <div class="field"><label>Levier</label><div class="affix"><input class="input" data-broker="leverage" value="2" /><span>×</span></div></div>
+                <div class="field"><label>Plancher</label><div class="affix"><input class="input" data-broker="floor" value="2,50" /><span>$/act.</span></div></div>
+                <div class="field"><label>Lot</label><input class="input" data-broker="lot" value="100" /></div>
+                <div class="field"><label>Sécurité</label><div class="affix"><input class="input" data-broker="safety" value="5" /><span>%</span></div></div>
+              </div>
+              <p class="calc-note">Réglages du broker, gardés d'une visite à l'autre. <a href="patterns.html#sheet-notes-tradezero-margin">Règles de marge TradeZero</a> — la note, ses sources, vérifiée le 29/09/2026.</p>
+            </details>
           </div>
         </section>
       </main>
@@ -708,27 +886,137 @@
           const menu = document.querySelector('.launcher-menu');
           if (toggle) menu.hidden = !menu.hidden;
           else if (!event.target.closest('.launcher-menu')) menu.hidden = true;
+          const open = event.target.closest('[data-open-widget]');
+          if (open) {
+            document.getElementById(open.dataset.openWidget).hidden = false;
+            menu.hidden = true;
+          }
           if (event.target.closest('[data-close-widget]')) event.target.closest('.calc-widget').hidden = true;
+          document.querySelectorAll('[data-open-widget]').forEach((b) => {
+            b.querySelector('.open-tag').hidden = document.getElementById(b.dataset.openWidget).hidden;
+          });
         });
-        const widget = document.querySelector('.calc-widget');
-        const header = widget.querySelector('header');
-        header.addEventListener('pointerdown', (event) => {
-          if (event.target.closest('button')) return;
-          const box = widget.getBoundingClientRect();
-          const dx = event.clientX - box.left;
-          const dy = event.clientY - box.top;
-          const move = (e) => {
-            const x = Math.min(Math.max(0, e.clientX - dx), window.innerWidth - box.width);
-            const y = Math.min(Math.max(0, e.clientY - dy), window.innerHeight - box.height);
-            Object.assign(widget.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' });
-          };
-          const stop = () => {
-            document.removeEventListener('pointermove', move);
-            document.removeEventListener('pointerup', stop);
-          };
-          document.addEventListener('pointermove', move);
-          document.addEventListener('pointerup', stop);
+        document.querySelectorAll('.calc-widget').forEach((widget) => {
+          const header = widget.querySelector('header');
+          header.addEventListener('pointerdown', (event) => {
+            if (event.target.closest('button')) return;
+            const box = widget.getBoundingClientRect();
+            const dx = event.clientX - box.left;
+            const dy = event.clientY - box.top;
+            const move = (e) => {
+              const x = Math.min(Math.max(0, e.clientX - dx), window.innerWidth - box.width);
+              const y = Math.min(Math.max(0, e.clientY - dy), window.innerHeight - box.height);
+              Object.assign(widget.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' });
+            };
+            const stop = () => {
+              document.removeEventListener('pointermove', move);
+              document.removeEventListener('pointerup', stop);
+            };
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', stop);
+          });
         });
+      })();
+
+      // Maquette #496 : l'échelle depuis l'open avec sa marge, et la taille maximale que le broker acceptera.
+      (function () {
+        const parse = (v) => parseFloat(String(v).replace(/\s/g, '').replace(',', '.'));
+        const fr = (v, d) => v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+        const usd = (v) => fr(v, 2) + ' $ US';
+        const price = (v) => fr(v, v < 1 ? 4 : 2);
+        const out = (name, text) => document.querySelectorAll(`[data-out="${name}"]`).forEach((el) => (el.textContent = text));
+        const val = (sel) => parse(document.querySelector(sel).value);
+        const LEVELS = [5, 7, 10, 15, 20, 25, 30];
+
+        // Le broker : levier × solde, moins la sécurité ; la marge d'une action = max(prix, plancher).
+        function broker() {
+          const leverage = val('[data-broker="leverage"]');
+          const floor = val('[data-broker="floor"]') || 0;
+          const safety = val('[data-broker="safety"]') || 0;
+          const lot = val('[data-broker="lot"]') || 1;
+          const balance = val('[data-balance]');
+          const power = balance * leverage;
+          out('brokerLine', `· levier ${fr(leverage, 0)} · ${price(floor)} $/act. · lot ${fr(lot, 0)} · sécurité ${fr(safety, 0)} %`);
+          return { floor, lot, balance, power, usable: power * (1 - safety / 100) };
+        }
+
+        function size() {
+          const b = broker();
+          const risk = (b.balance * val('[data-size="risk"]')) / 100;
+          const open = val('[data-size="open"]');
+          const stopPct = val('[data-size="stop"]');
+          const current = val('[data-size="current"]');
+          out('riskUsd', risk > 0 ? usd(risk) : '—');
+          out('bpLine', fr(b.usable, 0) + ' $ utilisables');
+          const body = document.querySelector('[data-ladder]');
+          if (!(risk > 0 && open > 0 && stopPct > 0)) {
+            out('stopPrice', '—');
+            body.innerHTML = '';
+            return;
+          }
+          out('stopPrice', price(open * (1 + stopPct / 100)));
+          const levels = LEVELS.filter((l) => l < stopPct);
+          const currentPct = current > 0 ? ((current - open) / open) * 100 : null;
+          const nearest = currentPct === null ? null : levels.reduce((a, c) => (Math.abs(c - currentPct) < Math.abs(a - currentPct) ? c : a));
+          let over = false;
+          body.innerHTML = levels
+            .map((l) => {
+              const entry = open * (1 + l / 100);
+              const shares = Math.floor(risk / ((open * (stopPct - l)) / 100));
+              const margin = shares * Math.max(entry, b.floor);
+              const refused = margin > b.usable;
+              over ||= refused;
+              return `<tr class="${l === nearest ? 'current' : ''} ${refused ? 'refused' : ''}"><td>+${l} %</td><td>${price(entry)}</td><td>${fr(shares, 0)}</td><td>${fr(shares * entry, 0)}</td><td>${fr(margin, 0)}</td></tr>`;
+            })
+            .join('');
+          document.querySelector('[data-over-note]').hidden = !over;
+        }
+
+        function max() {
+          const b = broker();
+          const p = val('[data-max="price"]');
+          const ceiling = val('[data-max="ceiling"]');
+          const locate = val('[data-max="locate"]');
+          const names = ['maxShares', 'maxValue', 'maxMargin', 'maxLocate', 'bound'];
+          if (!(b.balance > 0 && b.power > 0 && p > 0)) return names.forEach((n) => out(n, n === 'bound' ? '' : '—'));
+          const perShare = Math.max(p, b.floor);
+          const byMargin = b.usable / perShare;
+          const byCeiling = ceiling > 0 ? (b.balance * ceiling) / 100 / p : Infinity;
+          const shares = Math.floor(Math.min(byMargin, byCeiling) / b.lot) * b.lot;
+          if (shares <= 0) return names.forEach((n) => out(n, n === 'bound' ? 'Pas même un lot.' : '—'));
+          const value = shares * p;
+          const margin = shares * perShare;
+          out('maxShares', fr(shares, 0));
+          out(
+            'bound',
+            byMargin <= byCeiling
+              ? `Limité par la marge : ${fr(Math.floor(byMargin), 0)} actions à ${price(perShare)} $/action.`
+              : `Limité par ton plafond de ${fr(ceiling, 0)} % du solde.`,
+          );
+          out('maxValue', usd(value) + ' · ' + fr((value / b.balance) * 100, 1) + ' % du solde');
+          out('maxMargin', fr(margin, 0) + ' $ · reste ' + fr(b.power - margin, 0) + ' $');
+          out('maxLocate', locate >= 0 ? usd(shares * locate) + ' · ' + fr(((shares * locate) / value) * 100, 1) + ' %' : '—');
+        }
+
+        const all = () => (size(), max());
+        // Un seul solde et un seul jeu de règles du broker : les modifier dans un widget les modifie dans l'autre.
+        document.querySelectorAll('[data-balance], [data-broker]').forEach((input) =>
+          input.addEventListener('input', () => {
+            const key = input.dataset.broker ? `[data-broker="${input.dataset.broker}"]` : '[data-balance]';
+            document.querySelectorAll(key).forEach((other) => other !== input && (other.value = input.value));
+            all();
+          }),
+        );
+        document.querySelectorAll('[data-size]').forEach((i) => i.addEventListener('input', size));
+        document.querySelectorAll('[data-max]').forEach((i) => i.addEventListener('input', max));
+        document.querySelector('[data-stop-presets]').addEventListener('click', (e) => {
+          const btn = e.target.closest('button');
+          if (!btn) return;
+          document.querySelector('[data-size="stop"]').value = btn.dataset.pct;
+          document.querySelectorAll('[data-stop-presets] button').forEach((x) => x.classList.toggle('active', x === btn));
+          size();
+        });
+        all();
       })();
     </script>
   </body>

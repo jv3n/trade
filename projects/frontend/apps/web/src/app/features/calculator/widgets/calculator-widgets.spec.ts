@@ -20,17 +20,17 @@ describe('CalculatorWidgets', () => {
 
   it('opens a calculator once, and brings it forward when asked again', () => {
     widgets.show('size');
-    widgets.show('pnl');
+    widgets.show('max');
     widgets.show('size');
 
-    expect(widgets.open().map((w) => w.key)).toEqual(['size', 'pnl']);
-    const [size, pnl] = widgets.open();
-    expect(size.z).toBeGreaterThan(pnl.z);
+    expect(widgets.open().map((w) => w.key)).toEqual(['size', 'max']);
+    const [size, max] = widgets.open();
+    expect(size.z).toBeGreaterThan(max.z);
   });
 
   it('lands each new widget a little lower and to the left of the previous one', () => {
     widgets.show('size');
-    widgets.show('pnl');
+    widgets.show('rr');
     const [first, second] = widgets.open();
 
     expect(second.y).toBeGreaterThan(first.y);
@@ -51,11 +51,11 @@ describe('CalculatorWidgets', () => {
 
   it('remembers where a widget was dropped, and closes one alone', () => {
     widgets.show('size');
-    widgets.show('pnl');
+    widgets.show('rr');
     widgets.moveTo('size', 40, 120);
-    widgets.close('pnl');
+    widgets.close('rr');
 
     expect(widgets.open()).toEqual([expect.objectContaining({ key: 'size', x: 40, y: 120 })]);
-    expect(widgets.isOpen('pnl')).toBe(false);
+    expect(widgets.isOpen('rr')).toBe(false);
   });
 });

@@ -785,17 +785,18 @@
       "to": "À",
       "price": "Prix",
       "percent": "Variation",
-      "risk": "Risque",
-      "entry": "Entrée",
+      "balance": "Solde",
+      "risk": "Risque (% du solde)",
+      "open": "Open",
       "stop": "Stop",
-      "cover": "Rachat",
-      "shares": "Actions",
-      "fees": "Frais",
+      "stopOverOpen": "Stop (% / open)",
+      "sharePrice": "Prix de l'action",
       "currentPrice": "Prix actuel",
       "target": "Objectif",
-      "firstShares": "1re entrée",
-      "addShares": "Renfort",
-      "optional": "facultatif"
+      "optional": "facultatif",
+      "ceiling": "Plafond (% du solde)",
+      "locate": "Locate",
+      "none": "aucun"
     },
     "move": {
       "title": "Variation en %",
@@ -803,38 +804,60 @@
       "result": "Variation",
       "price": "Prix obtenu"
     },
+    "max": {
+      "title": "Taille maximale",
+      "description": "La plus grande taille que le broker acceptera sur ce titre — pour placer l'ordre une fois, sans se le faire refuser.",
+      "shares": "Actions max.",
+      "boundByMargin": "Limité par la marge : {{shares}} actions à {{perShare}} $/action.",
+      "boundByCeiling": "Limité par ton plafond de {{ceiling}} % du solde.",
+      "value": "Valeur de la position",
+      "ofBalance": "{{percent}} % du solde",
+      "margin": "Marge prise",
+      "left": "reste {{amount}} $",
+      "locates": "Coût des locates",
+      "locatesPaid": "Les locates se paient que le trade soit pris ou non.",
+      "underLot": "Pas même un lot : la marge ou le plafond ne le permettent pas."
+    },
     "size": {
       "title": "Taille de position",
-      "description": "Combien d'actions shorter pour qu'un stop placé au-dessus de l'entrée ne coûte jamais plus que le risque choisi.",
-      "shares": "Actions (arrondi à l'unité inférieure)",
-      "realRisk": "Risque réellement pris",
-      "wrongSide": "Sur un short, le stop se place au-dessus de l'entrée.",
-      "tooFar": "Avec ce risque, le stop est trop loin : pas même une action."
-    },
-    "pnl": {
-      "title": "P&L du short",
-      "description": "Le résultat d'un short, de l'entrée au rachat, en dollars et en % de la position, frais compris.",
-      "result": "P&L",
-      "percent": "Rendement sur la position"
+      "description": "Combien d'actions shorter à chaque niveau d'entrée au-dessus de l'open, pour qu'un stop ne coûte jamais plus que le risque choisi.",
+      "riskDollars": "Risque en dollars",
+      "presets": "Repères de stop",
+      "stopAt": "stop à {{price}}",
+      "level": "Entrée",
+      "price": "Prix",
+      "shares": "Actions",
+      "engaged": "Engagé $",
+      "aboveStop": "Le prix actuel est au-dessus du stop : le trade est invalidé, aucun niveau à prendre.",
+      "noLevel": "Le stop est sous le premier niveau d'entrée (+5 %) : aucun niveau pour shorter.",
+      "tooFar": "Avec ce risque, le stop est trop loin : pas même une action.",
+      "margin": "Marge $",
+      "refused": "En ambre : la marge dépasse le buying power utilisable ({{usable}} $) — l'ordre serait refusé."
     },
     "rr": {
       "title": "Distance et R:R",
-      "description": "Avant d'entrer : la distance jusqu'au stop et jusqu'à l'objectif, et le ratio risque / gain entre les deux.",
+      "description": "Avant d'entrer : la distance jusqu'au stop et jusqu'à l'objectif, et ce qu'on risque pour ce qu'on vise.",
       "toStop": "Jusqu'au stop",
       "toTarget": "Jusqu'à l'objectif",
-      "ratio": "R:R",
+      "ratio": "Risque : Gain (R:R)",
+      "reading": "Tu risques 1 pour gagner {{ratio}}.",
       "stopWrongSide": "Sur un short, le stop se place au-dessus du prix.",
       "targetWrongSide": "Sur un short, l'objectif se place en dessous du prix."
     },
-    "avg": {
-      "title": "Prix moyen après un renfort",
-      "description": "Le nouveau prix moyen et la position totale après un renfort.",
-      "average": "Prix moyen",
-      "total": "Position totale (actions)"
+    "broker": {
+      "title": "Règles du broker",
+      "leverage": "Levier",
+      "floor": "Plancher",
+      "lot": "Lot",
+      "safety": "Sécurité",
+      "remembered": "Réglages du broker, gardés d'une visite à l'autre.",
+      "note": "Règles de marge TradeZero",
+      "checkedOn": "vérifiées le {{date}}"
     },
     "units": {
       "percent": "%",
-      "shares": "actions"
+      "perShare": "$/act.",
+      "times": "×"
     },
     "launcher": {
       "open": "Calculatrices",

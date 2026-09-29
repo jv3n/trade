@@ -1,33 +1,100 @@
-<!-- The risk on a row of its own : with its unit inside, it needs a field's full width (#408). -->
 <div class="calc-row">
+  <app-calc-field
+    field="balance"
+    label="calculator.fields.balance"
+    decimals="2"
+    suffix="account.usdUnit"
+  />
   <app-calc-field
     field="sizeRisk"
     label="calculator.fields.risk"
     decimals="2"
-    suffix="account.usdUnit"
+    suffix="calculator.units.percent"
   />
 </div>
-<div class="calc-row">
-  <app-calc-field field="sizeEntry" label="calculator.fields.entry" decimals="4" />
-  <app-calc-field field="sizeStop" label="calculator.fields.stop" decimals="4" />
-</div>
-@let s = size();
+@let r = risk();
 <app-calc-result
-  label="calculator.size.shares"
-  [text]="s ? (s.shares | number: '1.0-0') : '—'"
-  [value]="s?.shares ?? null"
-  digits="0"
-/>
-<app-calc-result
-  label="calculator.size.realRisk"
-  [text]="s ? (s.risk | number: '1.2-2') + ('account.usdSuffix' | translate) : '—'"
-  [value]="s?.risk ?? null"
+  label="calculator.size.riskDollars"
+  [text]="r !== null ? (r | number: '1.2-2') + ('account.usdSuffix' | translate) : '—'"
+  [value]="r"
   digits="2"
 />
+<div class="calc-row">
+  <app-calc-field field="sizeOpen" label="calculator.fields.open" decimals="4" />
+  <app-calc-field
+    field="sizeStop"
+    label="calculator.fields.stopOverOpen"
+    decimals="1"
+    suffix="calculator.units.percent"
+  />
+</div>
+<div class="calc-presets">
+  <mat-button-toggle-group
+    [hideSingleSelectionIndicator]="true"
+    [value]="store.values().sizeStop"
+    (change)="store.set('sizeStop', $event.value)"
+    [attr.aria-label]="'calculator.size.presets' | translate"
+  >
+    @for (p of stopPresets; track p) {
+      <mat-button-toggle [value]="p">+{{ p }} %</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+  @if (stop(); as s) {
+    <span class="calc-presets__stop">
+      {{ 'calculator.size.stopAt' | translate: { price: (s | price) } }}
+    </span>
+  }
+</div>
+<div class="calc-row">
+  <app-calc-field
+    field="sizeCurrent"
+    label="calculator.fields.currentPrice"
+    decimals="4"
+    placeholder="calculator.fields.optional"
+  />
+</div>
+@if (ladder(); as rows) {
+  <table class="calc-ladder">
+    <thead>
+      <tr>
+        <th>{{ 'calculator.size.level' | translate }}</th>
+        <th>{{ 'calculator.size.price' | translate }}</th>
+        <th>{{ 'calculator.size.shares' | translate }}</th>
+        <th>{{ 'calculator.size.engaged' | translate }}</th>
+        <th>{{ 'calculator.size.margin' | translate }}</th>
+        <th>
+          <span class="cdk-visually-hidden">{{ 'calculator.copy' | translate }}</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows; track row.level) {
+        <tr
+          [class.calc-ladder__current]="row.level === current()"
+          [class.calc-ladder__refused]="isRefused(row)"
+        >
+          <td>+{{ row.level }} %</td>
+          <td>{{ row.price | price: store.values().sizeOpen }}</td>
+          <td>{{ row.shares | number: '1.0-0' }}</td>
+          <td>{{ row.engaged | number: '1.0-0' }}</td>
+          <td>{{ row.margin | number: '1.0-0' }}</td>
+          <td><app-calc-copy [value]="row.shares" digits="0" /></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  @if (aboveStop()) {
+    <p class="calc-error">{{ 'calculator.size.aboveStop' | translate }}</p>
+  }
+  @if (anyRefused()) {
+    <p class="calc-error">
+      {{ 'calculator.size.refused' | translate: { usable: (usable() | number: '1.0-0') } }}
+    </p>
+  }
+}
 @if (issue(); as problem) {
   <p class="calc-error">
-    {{
-      (problem === 'too-far' ? 'calculator.size.tooFar' : 'calculator.size.wrongSide') | translate
-    }}
+    {{ (problem === 'too-far' ? 'calculator.size.tooFar' : 'calculator.size.noLevel') | translate }}
   </p>
 }
+<app-calc-broker />

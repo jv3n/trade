@@ -7,7 +7,7 @@ export type Shelf = 'pattern' | 'notes';
 /** The files of each folder, in display order — patterns in the order of the Pattern menu. */
 export const SHELVES: Record<Shelf, readonly string[]> = {
   pattern: ['GUS', 'DT', 'SIR', 'SIV', 'penny-break'],
-  notes: ['execution-signals', 'four-sellers', 'stop-rule', 'tradezero-fees'],
+  notes: ['execution-signals', 'four-sellers', 'stop-rule', 'tradezero-fees', 'tradezero-margin'],
 };
 
 export interface SheetRef {
@@ -60,6 +60,11 @@ const MD_LINK = /\[([^\]]*)\]\([^)]*\)/g;
 const REVISED = /^\*(?:Last revised|Dernière révision) : (\d{4}-\d{2}-\d{2})\b.*$/m;
 /** `DT.md`, `DT.fr.md`, `../notes/four-sellers.md#section` — a link to another file of the docs. */
 const DOC_LINK = /^(?:\.\.\/(pattern|notes)\/)?([\w-]+)(?:\.fr)?\.md(?:#.*)?$/;
+const EXTERNAL_LINK = /^https?:\/\//;
+
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
 
 /**
  * One renderer per folder, since a relative link resolves against the folder of the file it sits
@@ -75,7 +80,13 @@ function rendererFor(shelf: Shelf): Marked {
       ) {
         const text = this.parser.parseInline(token.tokens);
         const doc = DOC_LINK.exec(token.href);
-        if (!doc) return false;
+        // A source on the web opens beside the app : the note is read while sizing a position,
+        // and leaving the page loses the place (review of #498).
+        if (!doc) {
+          return EXTERNAL_LINK.test(token.href)
+            ? `<a href="${escapeAttribute(token.href)}" target="_blank" rel="noopener">${text}</a>`
+            : false;
+        }
         const target: SheetRef = { shelf: (doc[1] as Shelf | undefined) ?? shelf, file: doc[2] };
         return SHELVES[target.shelf].includes(target.file)
           ? `<a href="#${sheetAnchor(target)}">${text}</a>`

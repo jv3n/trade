@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
-import { Component, ElementRef, inject, signal } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   StbExpansionModule,
@@ -39,6 +40,9 @@ export class PatternsPage {
   private readonly repo = inject(PatternsRepository);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly language = inject(LanguageService);
+  private readonly injector = inject(Injector);
+  /** `/patterns#sheet-notes-tradezero-margin` — how a calculator points at its note (#496). */
+  private readonly linked = inject(ActivatedRoute, { optional: true })?.snapshot.fragment ?? null;
 
   readonly tabs = TABS;
   readonly loading = signal(true);
@@ -73,7 +77,18 @@ export class PatternsPage {
     forkJoin({ pattern: load('pattern'), notes: load('notes') }).subscribe((sheets) => {
       this.sheets.set(sheets);
       this.loading.set(false);
+      this.openLinked();
     });
+  }
+
+  /** Arrived on a sheet's anchor : its tab, its panel open, in view once rendered. */
+  private openLinked(): void {
+    const target = this.linked ? sheetOf(this.linked) : null;
+    if (!target) return;
+    const anchor = sheetAnchor(target);
+    this.tab.set(TABS.indexOf(target.shelf));
+    this.setOpen(anchor, true);
+    afterNextRender(() => this.scrollTo(anchor), { injector: this.injector });
   }
 
   setOpen(anchor: string, opened: boolean): void {

@@ -785,17 +785,18 @@
       "to": "To",
       "price": "Price",
       "percent": "Move",
-      "risk": "Risk",
-      "entry": "Entry",
+      "balance": "Balance",
+      "risk": "Risk (% of balance)",
+      "open": "Open",
       "stop": "Stop",
-      "cover": "Cover",
-      "shares": "Shares",
-      "fees": "Fees",
+      "stopOverOpen": "Stop (% / open)",
+      "sharePrice": "Share price",
       "currentPrice": "Current price",
       "target": "Target",
-      "firstShares": "First entry",
-      "addShares": "Add",
-      "optional": "optional"
+      "optional": "optional",
+      "ceiling": "Ceiling (% of balance)",
+      "locate": "Locate",
+      "none": "none"
     },
     "move": {
       "title": "Percent move",
@@ -803,38 +804,60 @@
       "result": "Move",
       "price": "Resulting price"
     },
+    "max": {
+      "title": "Max size",
+      "description": "The largest size the broker will accept on this stock — to place the order once, without it coming back refused.",
+      "shares": "Max shares",
+      "boundByMargin": "Bound by the margin: {{shares}} shares at {{perShare}} $/share.",
+      "boundByCeiling": "Bound by your ceiling of {{ceiling}} % of the balance.",
+      "value": "Position value",
+      "ofBalance": "{{percent}} % of the balance",
+      "margin": "Margin taken",
+      "left": "{{amount}} $ left",
+      "locates": "Locate cost",
+      "locatesPaid": "Locates are paid whether the trade is taken or not.",
+      "underLot": "Not even one lot: the margin or the ceiling doesn't allow it."
+    },
     "size": {
       "title": "Position size",
-      "description": "How many shares to short so that a stop above the entry never costs more than the risk you chose.",
-      "shares": "Shares (rounded down)",
-      "realRisk": "Risk actually taken",
-      "wrongSide": "On a short, the stop goes above the entry.",
-      "tooFar": "With this risk, the stop is too far: not even one share."
-    },
-    "pnl": {
-      "title": "Short P&L",
-      "description": "The result of a short from entry to cover, in dollars and in % of the position, fees included.",
-      "result": "P&L",
-      "percent": "Return on the position"
+      "description": "How many shares to short at each entry level above the open, so that a stop never costs more than the risk you chose.",
+      "riskDollars": "Risk in dollars",
+      "presets": "Stop presets",
+      "stopAt": "stop at {{price}}",
+      "level": "Entry",
+      "price": "Price",
+      "shares": "Shares",
+      "engaged": "Engaged $",
+      "aboveStop": "The current price is above the stop: the trade is invalidated, no level to take.",
+      "noLevel": "The stop is under the first entry level (+5 %): no level left to short from.",
+      "tooFar": "With this risk, the stop is too far: not even one share.",
+      "margin": "Margin $",
+      "refused": "In amber: the margin exceeds the usable buying power ({{usable}} $) — the order would be refused."
     },
     "rr": {
       "title": "Distance and R:R",
-      "description": "Before entering: the distance to the stop and to the target, and the risk / reward ratio between them.",
+      "description": "Before entering: the distance to the stop and to the target, and what you risk for what you aim at.",
       "toStop": "To the stop",
       "toTarget": "To the target",
-      "ratio": "R:R",
+      "ratio": "Risk : Reward (R:R)",
+      "reading": "You risk 1 to make {{ratio}}.",
       "stopWrongSide": "On a short, the stop goes above the price.",
       "targetWrongSide": "On a short, the target goes below the price."
     },
-    "avg": {
-      "title": "Average price after a scale-in",
-      "description": "The new average price and the whole position after adding to a trade.",
-      "average": "Average price",
-      "total": "Total position (shares)"
+    "broker": {
+      "title": "Broker rules",
+      "leverage": "Leverage",
+      "floor": "Floor",
+      "lot": "Lot",
+      "safety": "Safety",
+      "remembered": "Broker settings, kept from one visit to the next.",
+      "note": "TradeZero margin rules",
+      "checkedOn": "checked on {{date}}"
     },
     "units": {
       "percent": "%",
-      "shares": "shares"
+      "perShare": "$/sh.",
+      "times": "×"
     },
     "launcher": {
       "open": "Calculators",

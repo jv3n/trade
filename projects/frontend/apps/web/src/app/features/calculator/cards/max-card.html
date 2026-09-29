@@ -1,0 +1,90 @@
+<div class="calc-row">
+  <app-calc-field
+    field="balance"
+    label="calculator.fields.balance"
+    decimals="2"
+    suffix="account.usdUnit"
+  />
+  <app-calc-field field="maxPrice" label="calculator.fields.sharePrice" decimals="4" />
+</div>
+<div class="calc-row">
+  <app-calc-field
+    field="maxCeiling"
+    label="calculator.fields.ceiling"
+    decimals="1"
+    suffix="calculator.units.percent"
+    placeholder="calculator.fields.none"
+  />
+  <app-calc-field
+    field="maxLocate"
+    label="calculator.fields.locate"
+    decimals="4"
+    suffix="calculator.units.perShare"
+    placeholder="calculator.fields.optional"
+  />
+</div>
+@let s = size();
+<app-calc-result
+  label="calculator.max.shares"
+  [text]="s ? (s.shares | number: '1.0-0') : '—'"
+  [value]="s?.shares ?? null"
+  digits="0"
+  headline
+/>
+@if (s) {
+  <p class="calc-reading">
+    @if (s.bound === 'margin') {
+      {{
+        'calculator.max.boundByMargin'
+          | translate: { shares: (s.marginCap | number: '1.0-0'), perShare: (s.perShare | price) }
+      }}
+    } @else {
+      {{ 'calculator.max.boundByCeiling' | translate: { ceiling: (ceiling() | number: '1.0-1') } }}
+    }
+  </p>
+}
+<app-calc-result
+  label="calculator.max.value"
+  [text]="
+    s
+      ? (s.value | number: '1.2-2') +
+        ('account.usdSuffix' | translate) +
+        ' · ' +
+        ('calculator.max.ofBalance' | translate: { percent: (s.balancePercent | number: '1.1-1') })
+      : '—'
+  "
+  [value]="s?.value ?? null"
+  digits="2"
+/>
+<app-calc-result
+  label="calculator.max.margin"
+  [text]="
+    s
+      ? (s.margin | number: '1.0-0') +
+        ('account.usdSuffix' | translate) +
+        ' · ' +
+        ('calculator.max.left' | translate: { amount: (s.buyingPowerLeft | number: '1.0-0') })
+      : '—'
+  "
+  [value]="s?.margin ?? null"
+  digits="2"
+/>
+<app-calc-result
+  label="calculator.max.locates"
+  [text]="
+    s && s.locateCost !== null
+      ? (s.locateCost | number: '1.2-2') +
+        ('account.usdSuffix' | translate) +
+        ' · ' +
+        (s.locatePercent | number: '1.1-1') +
+        ' %'
+      : '—'
+  "
+  [value]="s?.locateCost ?? null"
+  digits="2"
+/>
+<p class="calc-reading calc-reading--left">{{ 'calculator.max.locatesPaid' | translate }}</p>
+@if (underLot()) {
+  <p class="calc-error">{{ 'calculator.max.underLot' | translate }}</p>
+}
+<app-calc-broker withLot />

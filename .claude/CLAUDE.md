@@ -217,5 +217,5 @@ The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues
 ### Documentation
 
 - **Product** : `mockup/PARCOURS.md` is the functional reference — update it when a product decision is made or changed, and keep the matching mockup page in sync.
-- **Trading domain** : `docs/pattern/` holds the pattern sheets (`GUS.md`, `DT.md`, `SIR.md`, `penny-break.md` ; `SIV.md` still to write), each with its revision date ; `docs/notes/` holds what is not a pattern (`execution-signals.md`, `four-sellers.md`, `stop-rule.md`).
+- **Trading domain** : `docs/pattern/` holds the pattern sheets (`GUS.md`, `DT.md`, `SIR.md`, `penny-break.md` ; `SIV.md` still to write), each with its revision date ; `docs/notes/` holds what is not a pattern (`execution-signals.md`, `four-sellers.md`, `stop-rule.md`, `tradezero-fees.md`, `tradezero-margin.md` — the last one documents the broker rules the sizing calculators model, keep its defaults table and `calculator.store.ts` in step).
 - The former `docs/` doc set was deleted on 2026-09-18. Don't recreate technical doc files unless the user asks — code, KDoc / JSDoc and these skills carry the technical knowledge.

@@ -39,6 +39,11 @@
   [value]="r"
   digits="1"
 />
+@if (r !== null) {
+  <p class="calc-reading">
+    {{ 'calculator.rr.reading' | translate: { ratio: (r | number: '1.1-1') } }}
+  </p>
+}
 @if (stopWrongSide()) {
   <p class="calc-error">{{ 'calculator.rr.stopWrongSide' | translate }}</p>
 }
