@@ -1,13 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
-  averageAfterAdd,
+  BrokerRules,
+  LadderRow,
+  MaxSize,
+  entryLadder,
+  marginPerShare,
+  maxSize,
+  nearestLevel,
   percentMove,
-  positionSize,
   priceAfterMove,
+  riskInDollars,
   riskReward,
-  shortPnl,
   stopDistance,
+  stopPrice,
   targetDistance,
+  usableBuyingPower,
 } from './calculator.math';
 
 /**
@@ -42,44 +49,166 @@ describe('calculator math', () => {
     });
   });
 
-  describe('positionSize', () => {
-    it('rounds the share count down, and gives the risk that count really takes', () => {
-      // 100 $ over 0.22 $ a share is 454.5 : half a share can't be shorted.
-      const size = positionSize(100, 3.23, 3.45);
-
-      expect(size).toEqual({ shares: 454, risk: expect.closeTo(99.88, 2) });
+  describe('riskInDollars / stopPrice', () => {
+    it('turns a risk in % of the balance into dollars', () => {
+      expect(riskInDollars(4820, 5)).toBeCloseTo(241, 2);
+      expect(riskInDollars(null, 5)).toBeNull();
     });
 
-    it('names a stop at or under the entry rather than sizing from it', () => {
-      expect(positionSize(100, 3.23, 3.0)).toBe('wrong-side');
-      expect(positionSize(100, 3.23, 3.23)).toBe('wrong-side');
-    });
-
-    // A risk smaller than what one share stands to lose : 0.50 $ against 0.80 $ up to this stop.
-    it('says the stop is too far rather than answering zero shares', () => {
-      expect(positionSize(0.5, 3.2, 4.0)).toBe('too-far');
-    });
-
-    it('waits for the risk, the entry and the stop', () => {
-      expect(positionSize(null, 3.23, 3.45)).toBeNull();
+    it('places the stop a percent above the open', () => {
+      expect(stopPrice(3.35, 40)).toBeCloseTo(4.69, 2);
+      expect(stopPrice(3.35, null)).toBeNull();
     });
   });
 
-  describe('shortPnl', () => {
-    it('gains when the cover is under the entry, fees taken off', () => {
-      const pnl = shortPnl(3.23, 2.7, 454, 4.5)!;
+  describe('entryLadder', () => {
+    // The tracker's own tab : open 3.35, stop +40 %. It rounds to the nearest share ; half a share
+    // can't be shorted, so the ladder rounds down.
+    it('sizes each entry level above the open against the same stop', () => {
+      const rows = entryLadder(500, 3.35, 40, 2.5) as LadderRow[];
 
-      expect(pnl.dollars).toBeCloseTo(236.12, 2);
-      expect(pnl.percent).toBeCloseTo(16.1, 1);
+      expect(rows.map((r) => r.level)).toEqual([5, 7, 10, 15, 20, 25, 30]);
+      expect(rows.at(-1)).toEqual({
+        level: 30,
+        price: expect.closeTo(4.355, 3),
+        shares: 1492,
+        engaged: expect.closeTo(6497.66, 2),
+        // Above the floor, the margin is the position's value.
+        margin: expect.closeTo(6497.66, 2),
+      });
+      expect(rows[2].shares).toBe(497);
     });
 
-    it('loses when the cover is above the entry', () => {
-      expect(shortPnl(3.23, 3.45, 454, null)!.dollars).toBeCloseTo(-99.88, 2);
+    // A $0.50 open under a $2.50 floor : each share holds $2.50 of margin, five times its price.
+    it('holds the floor per share as margin under it, not the price', () => {
+      const first = (entryLadder(500, 0.5, 40, 2.5) as LadderRow[])[0];
+
+      expect(first.shares).toBe(2857);
+      expect(first.engaged).toBeCloseTo(1499.9, 1);
+      expect(first.margin).toBeCloseTo(7142.5, 2);
     });
 
-    it('treats the fees as optional, but not the shares', () => {
-      expect(shortPnl(3.23, 2.7, 454, null)!.dollars).toBeCloseTo(240.62, 2);
-      expect(shortPnl(3.23, 2.7, null, 4.5)).toBeNull();
+    it('leaves out the levels at or above the stop', () => {
+      const rows = entryLadder(500, 3.35, 20, 2.5) as LadderRow[];
+
+      expect(rows.map((r) => r.level)).toEqual([5, 7, 10, 15]);
+    });
+
+    it('names a stop under the first level rather than an empty ladder', () => {
+      expect(entryLadder(500, 3.35, 5, 2.5)).toBe('no-level');
+    });
+
+    // 0.10 $ of risk against 0.34 $ a share even at +30 %, the level closest to the stop.
+    it('says the stop is too far when the risk covers no share at any level', () => {
+      expect(entryLadder(0.1, 3.35, 40, 2.5)).toBe('too-far');
+    });
+
+    it('waits for the risk, the open and the stop', () => {
+      expect(entryLadder(null, 3.35, 40, 2.5)).toBeNull();
+      expect(entryLadder(500, null, 40, 2.5)).toBeNull();
+    });
+  });
+
+  describe('nearestLevel', () => {
+    const rows = entryLadder(241, 3.35, 40, 2.5) as LadderRow[];
+
+    it('picks the level closest to where the price stands against the open', () => {
+      // 4.02 is +20 % over 3.35 ; 3.60 is +7.5 %, nearer +7 than +10.
+      expect(nearestLevel(rows, 3.35, 4.02, 40)).toBe(20);
+      expect(nearestLevel(rows, 3.35, 3.6, 40)).toBe(7);
+    });
+
+    it('highlights nothing without a current price', () => {
+      expect(nearestLevel(rows, 3.35, null, 40)).toBeNull();
+    });
+
+    // Review of #498 : open 0.50, stop +40 %, the price at 0.90 still pointed at the +30 % row.
+    it('names a price at or past the stop instead of pointing at the last row', () => {
+      expect(nearestLevel(rows, 0.5, 0.9, 40)).toBe('above-stop');
+      expect(nearestLevel(rows, 0.5, 0.7, 40)).toBe('above-stop');
+    });
+
+    it('highlights nothing under the open, where no entry level sits', () => {
+      expect(nearestLevel(rows, 0.5, 0.3, 40)).toBeNull();
+    });
+  });
+
+  describe('marginPerShare / usableBuyingPower', () => {
+    // TradeZero's own example : 1 000 shares at $1.50 hold $5 000, not $1 500.
+    it('takes the floor per share under it, the price above it', () => {
+      expect(1000 * marginPerShare(1.5, 5)).toBe(5000);
+      expect(marginPerShare(6.2, 5)).toBe(6.2);
+    });
+
+    it('leaves the margin on the price with no floor', () => {
+      expect(marginPerShare(0.65, 0)).toBe(0.65);
+      expect(marginPerShare(0.65, null)).toBe(0.65);
+    });
+
+    it('levers the balance, less the safety margin', () => {
+      expect(usableBuyingPower(4820, 2, 5)).toBeCloseTo(9158, 2);
+      expect(usableBuyingPower(4820, 2, null)).toBe(9640);
+      expect(usableBuyingPower(4820, null, 5)).toBeNull();
+    });
+  });
+
+  describe('maxSize', () => {
+    const rules: BrokerRules = { leverage: 2, floor: 2.5, lot: 100, safety: 5 };
+
+    it('caps a cheap stock by the margin, rounded down to the lot, and says so', () => {
+      // 9 158 $ usable over 2.50 $ a share is 3 663 shares : 3 600 in lots of 100.
+      expect(maxSize(4820, 0.65, rules, null, 0.012)).toEqual({
+        shares: 3600,
+        bound: 'margin',
+        marginCap: 3663,
+        perShare: 2.5,
+        value: expect.closeTo(2340, 2),
+        balancePercent: expect.closeTo(48.55, 2),
+        margin: expect.closeTo(9000, 2),
+        buyingPowerLeft: expect.closeTo(640, 2),
+        locateCost: expect.closeTo(43.2, 2),
+        locatePercent: expect.closeTo(1.85, 2),
+      });
+    });
+
+    // The issue's case : $20 000 of buying power, a $2.50 floor — the price no longer matters.
+    it('gives the same share count at any price under the floor', () => {
+      const flat: BrokerRules = { leverage: 2, floor: 2.5, lot: 100, safety: 0 };
+      const at = (price: number) => (maxSize(10000, price, flat, null, null) as MaxSize).shares;
+
+      expect([at(0.39), at(0.65), at(1.3)]).toEqual([8000, 8000, 8000]);
+    });
+
+    it('lets the ceiling in % of the balance bind when it is the lower cap', () => {
+      // 40 % of 4 820 $ at 3.35 $ is 575 shares, far under the 2 733 the margin allows.
+      const size = maxSize(4820, 3.35, rules, 40, null) as MaxSize;
+
+      expect(size.shares).toBe(500);
+      expect(size.bound).toBe('ceiling');
+    });
+
+    it('caps nothing with an empty ceiling, and costs no locate before one is typed', () => {
+      const size = maxSize(4820, 3.35, rules, null, null) as MaxSize;
+
+      expect(size.shares).toBe(2700);
+      expect(size.locateCost).toBeNull();
+    });
+
+    it('sizes on the price alone with a floor of zero', () => {
+      const size = maxSize(4820, 0.65, { ...rules, floor: 0 }, null, null) as MaxSize;
+
+      expect(size.perShare).toBe(0.65);
+      expect(size.shares).toBe(14000);
+    });
+
+    it('says not even one lot fits rather than answering zero', () => {
+      expect(maxSize(100, 0.5, rules, null, null)).toBe('under-lot');
+    });
+
+    it('waits for the balance, the price and the leverage', () => {
+      expect(maxSize(null, 0.65, rules, null, null)).toBeNull();
+      expect(maxSize(4820, null, rules, null, null)).toBeNull();
+      expect(maxSize(4820, 0.65, { ...rules, leverage: null }, null, null)).toBeNull();
     });
   });
 
@@ -108,19 +237,6 @@ describe('calculator math', () => {
       expect(stopDistance(3.1, 3.0)).toBe('wrong-side');
       expect(targetDistance(3.1, 3.2)).toBe('wrong-side');
       expect(riskReward(3.1, 3.0, 2.5)).toBeNull();
-    });
-  });
-
-  describe('averageAfterAdd', () => {
-    it('weighs each entry by its shares', () => {
-      expect(averageAfterAdd(200, 3.1, 150, 3.4)).toEqual({
-        average: expect.closeTo(3.2286, 4),
-        shares: 350,
-      });
-    });
-
-    it('waits for both entries', () => {
-      expect(averageAfterAdd(200, 3.1, null, 3.4)).toBeNull();
     });
   });
 });

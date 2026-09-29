@@ -82,6 +82,18 @@ describe('parseSheet', () => {
     expect(gus().bodyHtml).not.toContain('old.md');
   });
 
+  // The margin note is opened while sizing a position : its sources must not replace the app.
+  it('opens a link to the web beside the app', () => {
+    const note = parseSheet(
+      { shelf: 'notes', file: 'tradezero-margin' },
+      '# Margin\n\n> Per share.\n\nSee the [support page](https://tradezero.com/support?q=a&b=1).',
+    );
+
+    expect(note.bodyHtml).toContain(
+      '<a href="https://tradezero.com/support?q=a&amp;b=1" target="_blank" rel="noopener">support page</a>',
+    );
+  });
+
   it('resolves a note linking back to a sheet', () => {
     const note = parseSheet(
       { shelf: 'notes', file: 'four-sellers' },

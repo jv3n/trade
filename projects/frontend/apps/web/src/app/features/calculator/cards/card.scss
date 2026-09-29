@@ -1,4 +1,4 @@
-// The inside of a calculator card, shared by the five : it sits under its floating widget's header
+// The inside of a calculator card, shared by the four : it sits under its floating widget's header
 // — so no card chrome here.
 
 @use 'sizes' as s;
@@ -32,4 +32,69 @@
   margin: s.$space-sm 0 0;
   font-size: s.$font-xs;
   color: var(--color-warning);
+}
+
+// How a result reads, under it : « Tu risques 1 pour gagner 2,4 ».
+.calc-reading {
+  margin: s.$space-xs 0 0;
+  font-size: s.$font-xs;
+  color: var(--color-text-muted);
+  text-align: right;
+
+  &--left {
+    text-align: left;
+  }
+}
+
+.calc-presets {
+  display: flex;
+  align-items: center;
+  gap: s.$space-sm;
+  margin-top: s.$space-sm;
+
+  &__stop {
+    margin-left: auto;
+    font-size: s.$font-xs;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  & + .calc-row {
+    margin-top: s.$space-md;
+  }
+}
+
+.calc-ladder {
+  width: 100%;
+  margin-top: s.$space-md;
+  border-collapse: collapse;
+  font-size: s.$font-xs;
+  font-variant-numeric: tabular-nums;
+
+  th {
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+
+  th,
+  td {
+    padding: 0 s.$space-xs;
+    text-align: right;
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: left;
+  }
+
+  // The level nearest the current price : where the short would go in now.
+  &__current td {
+    background: var(--color-accent-soft);
+    font-weight: 600;
+  }
+
+  // A row the buying power cannot cover : the broker would refuse it, a warning.
+  &__refused td {
+    color: var(--color-warning);
+  }
 }

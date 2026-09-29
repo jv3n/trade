@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { Observable, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,6 +14,7 @@ import { PatternsPage } from './patterns-page';
  *
  * - a tab per folder, each an accordion of one panel per file, in order ; GUS open ;
  * - the collapsed header carries the file's title and revision date — « never revised » without ;
+ * - an address carrying a file's anchor opens on it — how a calculator links to its note ;
  * - a link to another file switches tab and opens that panel, then scrolls to it once the
  *   animation that moves it has ended — the tab's, or the panel's own on the same tab — instantly
  *   when the reader asks for reduced motion or the browser drops the smooth scroll ;
@@ -71,7 +73,24 @@ describe('PatternsPage', () => {
       'four-sellers',
       'stop-rule',
       'tradezero-fees',
+      'tradezero-margin',
     ]);
+  });
+
+  // A calculator links to its note as `/patterns#sheet-notes-tradezero-margin` (#496).
+  it('opens the note the address points at, on its tab', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { fragment: 'sheet-notes-tradezero-margin' } },
+        },
+      ],
+    });
+    const fixture = await setup();
+
+    expect(fixture.componentInstance.tab()).toBe(1);
+    expect(fixture.componentInstance.open().has('sheet-notes-tradezero-margin')).toBe(true);
   });
 
   it('dates each sheet, and calls one without a revision line never revised', async () => {
@@ -184,7 +203,7 @@ describe('PatternsPage', () => {
     };
     await setup();
 
-    expect(asked).toHaveLength(9);
+    expect(asked).toHaveLength(10);
     expect(new Set(asked)).toEqual(new Set(['fr']));
   });
 
@@ -195,7 +214,7 @@ describe('PatternsPage', () => {
     const fixture = await setup();
     const notes = fixture.componentInstance.sheets().notes;
 
-    expect(notes.map((s) => s.unreadable ?? false)).toEqual([false, true, false, false]);
+    expect(notes.map((s) => s.unreadable ?? false)).toEqual([false, true, false, false, false]);
     expect(fixture.componentInstance.sheets().pattern).toHaveLength(5);
     expect(fixture.nativeElement.querySelector('mat-tab-group')).not.toBeNull();
   });

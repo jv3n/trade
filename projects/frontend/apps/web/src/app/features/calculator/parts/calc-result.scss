@@ -24,13 +24,8 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
   }
-}
 
-// Green / red : an outcome, the one case the colour rule reserves the pair for.
-.profit-positive {
-  color: var(--color-success);
-}
-
-.profit-negative {
-  color: var(--color-danger);
+  &--headline &__value {
+    font-size: s.$font-xl;
+  }
 }

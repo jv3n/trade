@@ -1,8 +1,13 @@
 import { Clipboard } from '@angular/cdk/clipboard';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
+import { EMPTY } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { AccountRepository } from '../../../core/api/account/account.repository';
+import { PatternsRepository } from '../../../core/api/patterns/patterns.repository';
+import { LanguageService } from '../../../core/app-state/language.service';
 import { ThemeService } from '../../../core/app-state/theme.service';
 import { SizeCard } from '../cards/size-card';
 import { CalculatorWidget } from './calculator-widget';
@@ -32,6 +37,10 @@ describe('CalculatorWidget', () => {
         provideTranslateService({ lang: 'en' }),
         { provide: Clipboard, useValue: { copy: vi.fn() } },
         { provide: ThemeService, useValue: { resolved: theme } },
+        provideRouter([]),
+        { provide: AccountRepository, useValue: { getSummary: () => EMPTY } },
+        { provide: PatternsRepository, useValue: { markdown: () => EMPTY } },
+        { provide: LanguageService, useValue: { lang: () => 'en' } },
       ],
     });
     const widgets = TestBed.inject(CalculatorWidgets);

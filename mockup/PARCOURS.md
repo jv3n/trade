@@ -477,7 +477,7 @@ The **small calculations** a trader redoes by hand — in a phone calculator or 
 *while* looking at something else : typing a candidate, reading a stat, watching TradeZero. So they
 are not a page (#421 removed it) but **floating widgets**, called from anywhere.
 
-- **A launcher in the top bar**, on every page, next to the account : a menu of the five
+- **A launcher in the top bar**, on every page, next to the account : a menu of the four
   calculators. A calculator already open is marked « ouverte » ; picking it again brings it forward
   rather than opening a second one.
 - **Each one opens as a floating widget** over the page, under a header : a grip, the title,
@@ -490,30 +490,79 @@ are not a page (#421 removed it) but **floating widgets**, called from anywhere.
   styled and themed like the app, so it stays visible over TradeZero during the session. Closing that
   window puts the widget back in the page. Where the browser lacks the API, the button is absent and
   the widget works in the page.
-- **A scratchpad, front only** : no backend, nothing saved, nothing read. The values survive a widget
-  closed and opened again, or a trip to another page ; **a reload leaves nothing** — no widget open,
-  no value kept (#388). It works on any ticker, including one that is not in the candidates.
+- **A scratchpad, front only** : the figures typed are not saved. They survive a widget closed and
+  opened again, or a trip to another page ; **a reload leaves no figure** — no widget open, no price
+  kept (#388). It works on any ticker, including one that is not in the candidates.
+- **Two exceptions (#496)** :
+  - **the account balance is read** : it prefills the « Solde » field of the two sizing calculators —
+    one field shared by both, editable, back to the account's figure after a reload ;
+  - **the settings are remembered** in the browser, from one visit to the next : the stop preset, the
+    ceiling in % of the balance, and the **broker rules** (leverage, margin floor per share, lot,
+    safety margin). They are choices, not figures of a trade — retyping them every morning would be
+    the error.
 
-**The five calculators** :
+**The four calculators** — the short P&L and the average after a scale-in were dropped (#496) : the
+journal computes both from the executions, with real fills and fees, and keeps them.
+
+**The broker's margin rule shapes both sizing calculators (#496).** TradeZero does not size a short
+against its value : under a threshold it charges a **flat amount per share** — 1 000 shares shorted
+at $1.50 take $5 000 of margin, not $1 500. So the margin of a share is `max(price, floor)`, the
+buying power is `balance × leverage`, and **under the floor the share count stops depending on the
+price** : with $20 000 of buying power and a $2.50 floor the cap is 8 000 shares at $0.39, $0.65 and
+$1.30 alike. A size that respects the risk but not the margin is one the platform refuses.
+
+- **« Règles du broker »**, a folded section at the foot of both sizing calculators, its summary line
+  giving the values in use (« levier 2 · 2,50 $/act. · lot 100 · sécurité 5 % »). Unfolded :
+  **leverage** (default 2), **margin floor per share** (default $2.50, `0` for a margin in % of value
+  with no floor), **lot** (default 100, the max size only) and a **safety margin** (default 5 %) that
+  keeps the size just under the wall — a floor moved overnight must not turn it into a rejection.
+  One set shared by both calculators, remembered. Under the fields, the link to the **TradeZero
+  margin note** with its « vérifiée le » date.
+- **The note** is `docs/notes/tradezero-margin.md` (and its French twin), shown with the other notes
+  on the Patterns page : the three published schedules (US, International, Canada), clickable
+  sources opening in a new tab (the note is read while sizing, leaving the app would lose the place), the values the calculators use by default next to them, and the open question — which
+  schedule this account is on. It documents, it does not lock : the values stay editable in the
+  calculators.
 
 1. **Percent move** : from / to → signed percent (`3,23 → 2,70 = −16,4 %`), and the inverse, a price
    and a percent → the resulting price.
-2. **Position size** (short) : risk in $, entry, stop → the share count, **rounded down**, and the
-   risk actually taken with it. A stop at or below the entry is an amber error, never a negative
-   count ; a stop so far that the risk doesn't cover one share says so, rather than « 0 ».
-3. **Short P&L** : entry, cover, shares, fees (optional) → the result in $ and in % of the position,
-   green / red like the KPI cards (an outcome).
+2. **Max size** (#496) — *how many can I short without being refused* : the largest size the broker
+   will accept on this stock, right now, to place the order once. The balance, the **share price**,
+   an optional **ceiling in % of the balance** (any value, 40, 80… ; empty, it caps nothing) and an
+   optional **locate cost per share**, plus the broker rules. The sums :
+   `byMargin = balance × leverage × (1 − safety) ÷ max(price, floor)`,
+   `byCeiling = balance × ceiling ÷ price`, `shares = ⌊min(byMargin, byCeiling) ÷ lot⌋ × lot` —
+   rounded **down** to the lot, rounding up is how the order comes back refused. The outputs :
+   - **the max in shares**, big, first — the number typed into the ticket ;
+   - **one line naming the cap that bound** : « Limité par la marge : 3 663 actions à 2,50 $/action »
+     or « Limité par ton plafond de 80 % du solde » ;
+   - the position's value and **the % of the balance it really is** — on a cheap stock the margin
+     rule makes it much smaller than expected ;
+   - the margin it takes and the buying power left, to judge a second position ;
+   - the **locate cost**, in $ and in % of the position, and the reminder that locates are paid
+     whether the trade is taken or not.
+3. **Position size** (short), **keyed off the open** like the rest of the app : the balance, the risk
+   in **% of the balance** (its value in $ spelled out as a result), the open, and the stop in **%
+   above the open** — two presets, `+40 %` and `+31 %` (the tracker's), the stop price shown next to
+   them. The output is a **ladder of entry levels** (+5, +7, +10, +15, +20, +25, +30 % over the open,
+   the ones at or above the stop left out) : for each, the price, the share count **rounded down**
+   (`risk ÷ (stop − entry)`, copied in one click), the capital engaged and **the margin it needs**
+   (`shares × max(price, floor)`). A row the usable buying power cannot cover is **amber**, with a
+   line saying the order would be refused — never shown as if it were available. A current price,
+   optional, highlights the nearest level — none under the open, and at or past the stop an amber
+   line says the trade is invalidated instead of pointing at a row. A stop under the first level says so rather than an
+   empty ladder.
 4. **Distance and R:R** : current price, stop, target → the distance to each in % and in $ per share,
-   and the R:R (`1 : 1,7`). The stop reads from the price and the stop alone — the target is often
-   decided later. A stop under the price or a target above it is an amber error, each its own.
-5. **Average price after a scale-in** : shares and price of the first entry and of the add → the new
-   average and the total position.
+   and the ratio, labelled in full « Risque : Gain (R:R) » (`1 : 2,4`) with its reading under it —
+   « Tu risques 1 pour gagner 2,4 ». The stop reads from the price and the stop alone — the target is
+   often decided later. A stop under the price or a target above it is an amber error, each its own.
 
 - **Results update as you type**, no « Compute » button. An incomplete card shows `—`, never `0`.
-- **Short labels, the unit inside the field** (#408) : « Risque » with `$ US` as a suffix, « Frais »
-  with `$ US` and « facultatif » as its placeholder, « 1re entrée » / « Renfort » with `actions`,
-  « Variation » with `%`. The risk of the position size gets a row of its own : with its unit inside,
-  it needs a field's full width.
+- **Short labels, the unit inside the field** (#408) : « Solde » with `$ US` as a suffix,
+  « Variation » with `%`, « facultatif » as the placeholder of an optional field. A percent **of
+  something** shows `%` inside the field **and** names its base in the label — « Risque (% du
+  solde) », « Plafond (% du solde) », « Stop (% / open) » : a bare `%` would not say which, and a longer
+  suffix leaves no room for the number.
 - **Both decimal separators** are accepted : the numeric keypad gives `.`, the French layout `,`.
 - **Formats of the rest of the app** : percentages to one decimal, prices at the price precision (2
   decimals from $1, 4 below — #311), amounts with `$ US`, share counts grouped.
@@ -521,10 +570,11 @@ are not a page (#421 removed it) but **floating widgets**, called from anywhere.
   spreadsheet or a field of the app : no grouping, no currency, a dot for the decimals (`1234.50`,
   #406). For a distance, the $ per share.
 
-**Later** : prefilling from a candidate (previous close, open…).
+**Later** : prefilling from a candidate or a stat (open, price, the stat's locate…) ; for the GUS
+fade, which often has no target, a « hit rate needed to break even » from the stop alone.
 
-**Screen** : the launcher and a widget on [`candidat.html`](candidat.html) — the widget drags by its
-header.
+**Screen** : the launcher and the widgets on [`candidat.html`](candidat.html) — each drags by its
+header, the menu opens the others.
 
 ---
 
