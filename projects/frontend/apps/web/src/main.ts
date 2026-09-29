@@ -16,15 +16,19 @@ import { appConfig } from './app/app.config';
 // (no routing traces, no HTTP interceptor — we run `tracesSampleRate: 0`).
 const GLITCHTIP_DSN = 'https://08ffb135c4b94b60b7e143b37a1df8e9@app.glitchtip.com/23873';
 
-// Production only (#404). Staging is a recette like local and reports nothing — and it ships this
-// very bundle, so the build can't tell them apart : the host does. Dev builds (`isDevMode()`) are
-// skipped too, whatever host serves them. The SDK stays in the bundle either way (~30 KB gzipped).
-const PRODUCTION_HOST = 'tickerstory.org';
+// Production and staging both report, each under its own environment (#462) : they ship this very
+// bundle, so the build can't tell them apart — the host does. Any other host, and dev builds
+// (`isDevMode()`), report nothing. The SDK stays in the bundle either way (~30 KB gzipped).
+const ENVIRONMENT_BY_HOST: Record<string, string> = {
+  'tickerstory.org': 'prod',
+  'staging.tickerstory.org': 'staging',
+};
+const environment = ENVIRONMENT_BY_HOST[location.hostname];
 
-if (!isDevMode() && location.hostname === PRODUCTION_HOST) {
+if (!isDevMode() && environment) {
   Sentry.init({
     dsn: GLITCHTIP_DSN,
-    environment: 'prod',
+    environment,
     // 100% errors + 0% performance traces — same policy as backend (`application-prod.yml`).
     // Optimizes the GlitchTip free tier quota and avoids burning 5K events/mo on noisy spans.
     tracesSampleRate: 0,

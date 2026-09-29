@@ -2,8 +2,8 @@
 
 The « recette » : where a release candidate (`vX.Y.Z-rcN`) is tried on a real deployment before it
 reaches production (#297). Same image and Spring profile as production ; its own Cloud Run service,
-database, runtime account and admin list — nothing else is shared but the Google OAuth client. No
-error tracking : like local, staging sends nothing to GlitchTip (#404).
+database, runtime account and admin list — nothing else is shared but the Google OAuth client and
+the GlitchTip projects, where staging reports under its own environment (#462).
 
 | | Production | Staging |
 |---|---|---|
@@ -12,10 +12,10 @@ error tracking : like local, staging sends nothing to GlitchTip (#404).
 | Runtime account | `portfolioai-runtime@` | `portfolioai-staging-runtime@` |
 | Database | its Supabase project | Supabase project `trade-staging`, demo data |
 | Secrets | `supabase-db-url`, `app-admin-emails` | `supabase-db-url-staging`, `app-admin-emails-staging` |
-| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret` | same |
+| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret`, `sentry-dsn-backend` | same |
 | Instances | 0 → 3 | 0 → 1 |
-| Error tracking | GlitchTip (`sentry-dsn-backend`) | none |
-| Environment name (`SENTRY_ENVIRONMENT`) | `prod` | `staging` — only feeds the settings page's chip |
+| Error tracking | GlitchTip (`sentry-dsn-backend`) | same projects, same secret |
+| Environment name (`SENTRY_ENVIRONMENT`) | `prod` | `staging` — splits GlitchTip's dashboard and feeds the settings page's chip |
 | GitHub environment | `production`, required reviewer | `staging`, none |
 
 ## One-time setup
@@ -48,7 +48,7 @@ printf '%s' 'you@example.com' | gcloud secrets create app-admin-emails-staging -
 # Read access, secret by secret — the staging account never sees the production database
 SA=portfolioai-staging-runtime@trade-496613.iam.gserviceaccount.com
 for s in supabase-db-url-staging app-admin-emails-staging \
-         google-oauth-client-id google-oauth-client-secret; do
+         google-oauth-client-id google-oauth-client-secret sentry-dsn-backend; do
   gcloud secrets add-iam-policy-binding "$s" \
     --member="serviceAccount:$SA" --role=roles/secretmanager.secretAccessor
 done
