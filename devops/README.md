@@ -11,7 +11,7 @@ tag** picks where a build goes :
 Both run the Spring profile `prod`. What differs is passed by the workflow : the service, the public
 URL, the runtime service account, the database and admin-list secrets (`*-staging` for staging) and
 the environment name (`staging` / `prod`, the settings page's chip). The Google OAuth client is
-shared. Error tracking is production's only : staging is a recette, like local (#404).
+shared. Both environments report to the same GlitchTip projects, under their own environment (#462).
 
 - [`prod/README.md`](prod/README.md) — what is wired for production.
 - [`staging/README.md`](staging/README.md) — what staging adds, and how to set it up.
@@ -38,8 +38,11 @@ browser ──► Cloudflare ─────────────────
   reached through the **session pooler** (the direct connection is IPv6-only, Cloud Run egress is
   IPv4). Flyway migrates the schema at boot. Production is dumped monthly to Cloudflare R2, 12 kept.
 - **Google OAuth** — one client for both environments, with the redirect URI of each.
-- **GlitchTip** (Sentry-compatible) — production only. Staging and local send nothing : the backend
-  has no `SENTRY_DSN` there, the frontend only initialises on `tickerstory.org`.
+- **GlitchTip** (Sentry-compatible) — production and staging, one project for the backend and one
+  for the frontend, split by environment (`prod` / `staging`). The frontend picks it from the host ;
+  the backend reads `SENTRY_ENVIRONMENT` and sends one INFO event at every boot, so a mute DSN shows
+  on the next deploy (#462) — never resolve nor ignore that « Backend started » issue, it is the
+  proof the pipe works. Local sends nothing.
 
 | | Production | Staging |
 |---|---|---|
@@ -49,8 +52,8 @@ browser ──► Cloudflare ─────────────────
 | Runtime account | `portfolioai-runtime@` | `portfolioai-staging-runtime@` |
 | Supabase project | the production one | `trade-staging` |
 | Own secrets | `supabase-db-url`, `app-admin-emails` | `supabase-db-url-staging`, `app-admin-emails-staging` |
-| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret` | same |
-| Error tracking | GlitchTip, `sentry-dsn-backend` | none |
+| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret`, `sentry-dsn-backend` | same |
+| Error tracking | GlitchTip, `sentry-dsn-backend`, `environment: prod` | same, `environment: staging` |
 | Data | real, backed up monthly | test data, no backup |
 
 Consoles : [Cloudflare](https://dash.cloudflare.com/) ·
