@@ -62,6 +62,9 @@ Candidate (morning) ──[ action : « → GUS » / « → DT » ]──▶ Sta
 - **One stat per pattern** (#428) : a candidate promoted as a GUS in the morning can form a
   **double top** late in the morning — two setups on the same ticker and day, so a GUS stat *and* a
   DT stat, each with its own trade if taken.
+- **Several trades per stat** (#500) : a **trade is one round-trip** — it ends when the position is
+  back to flat. Short, cover, short again on the same ticker is two trades on the same stat, each
+  with its own entry, exit, duration and P&L.
 
 ---
 
@@ -268,8 +271,37 @@ the journal). As a consequence : no real-time screen, no live position tracking.
 | Post-mortem | "What happened" + "Mistake / to improve" |
 | Chart screenshot | One image (PNG / JPEG / WebP, 5 MB max) |
 
-**What the app computes** : position, average entry / exit (and their distance to the open), P&L in
-$ and %, duration of the trade.
+**What the app computes** : the **max position** (the most shares held at once — not the sum of the
+entries, a scale-in then a partial cover then a re-add counts the peak), average entry / exit (and
+their distance to the open), P&L in $ and %, duration of the trade.
+
+**One trade per round-trip** (#500) : the executions of a ticker can be typed one after the other,
+as they read on the TradeZero statement. While typing, the table marks each **return to flat** (« à
+plat — la suite devient le trade 2 ») ; **saving cuts there** : the fills up to the first flat stay on
+the sheet, each following round-trip becomes a new trade on the same stat (toast « 2 trades créés »),
+and every part's figures — average entry / exit, max position, P&L, duration — are recomputed from its
+own fills only. The post-mortem and the screenshot stay on the sheet being edited, the new trades
+start empty. Fills that do not come back to flat make the last part an **open trade** : no exit, no
+P&L until it closes (a position carried overnight is not modelled — the day is the stat's). Since a
+trade never goes through flat, its duration is first entry → last exit : time in the market only.
+The header lists the stat's trades (number and retained P&L), the stats row shows one P&L tag per
+trade and the journal one row per trade (« SDEV 2/3 »). The « → Trade » button of a stat only
+creates the first one ; the next ones are born from the split. Deleting a trade leaves the others and
+the stat.
+
+**The real P&L is spread over the parts** : TradeZero gives it per ticker and day, not per
+round-trip, so a real P&L typed on a sheet that gets split covers all of its parts. Each part gets its
+computed P&L plus a share of the gap (real − computed) **pro rata of its shares** — the gap is fees,
+and fees follow volume — the rounding remainder on the last part. The account total is the typed
+figure to the cent, each part with its own account movement. On a trade that is already one of
+several, the real P&L typed is that trade's own. It can only be typed once every part is closed.
+
+**Migration of the merged trades** (#500) : the existing trades are cut the same way, executions
+untouched — walked in order, cut at every return to flat (the seven September trades become
+thirteen), and a real P&L already typed is spread by the rule above, so the account balance does not
+move. The post-mortem and the screenshot stay on the first part, which is not always the one they
+are about (SDEV's story is its third round-trip, the re-entry at 2.706) : moving them is done by hand,
+by copying the text to the right trade.
 
 **Adjustable P&L** : the P&L is computed from the executions, but I can type in the **real P&L** of
 the TradeZero statement to absorb the broker's fees and rounding (a few cents to a few dollars — I
