@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Trade KTTA — maquette</title>
+    <title>Trade SDEV — maquette</title>
     <link rel="stylesheet" href="assets/mockup.css" />
     <script src="assets/mockup.js" defer></script>
   </head>
@@ -26,36 +26,43 @@
         <p style="margin: 0 0 10px"><a href="journal.html"><span class="icon icon-sm">arrow_back</span> Journal</a></p>
         <header class="page-header">
           <div>
-            <h1><span class="ticker" style="font-size: 18px">KTTA</span> &nbsp;Short · jeudi 17 septembre 2026</h1>
+            <h1><span class="ticker" style="font-size: 18px">SDEV</span> &nbsp;Short · lundi 29 septembre 2026</h1>
             <p>
-              <span class="tag tag-accent">GUS</span> · créé depuis la <a href="stats.html">stat du 17/09</a>
+              <span class="tag tag-accent">GUS</span> · créé depuis la <a href="stats.html">stat du 29/09</a>
+            </p>
+            <p style="margin-top: 6px">
+              <span class="muted">Trades SDEV du jour :</span>
+              <a href="trade.html" class="tag tag-loss" title="10:33 → 10:48">1 · −339</a>
+              <a href="trade.html" class="tag tag-loss" title="11:00 → 11:04">2 · −444</a>
+              <a href="trade.html" class="tag tag-loss" style="outline: 2px solid currentColor" title="11:08 → 11:09 — ce trade">3 · −684</a>
+              <span class="muted">· total −1 468,26 $</span>
             </p>
           </div>
           <div class="actions">
-            <button class="btn" data-confirm-title="Supprimer le trade KTTA du 17/09 ?" data-confirm-body="Définitif : les exécutions, le post-mortem et la capture sont supprimés, et le mouvement de +291,85 $ disparaît du compte. La stat du jour est conservée." data-confirm-ok="Supprimer le trade" data-confirm-danger><span class="icon">delete</span> Supprimer</button>
+            <button class="btn" data-confirm-title="Supprimer le trade SDEV 3 du 29/09 ?" data-confirm-body="Définitif : les exécutions, le post-mortem et la capture de ce trade sont supprimés, et le mouvement de −684,42 $ disparaît du compte. Les deux autres trades SDEV du jour et la stat sont conservés." data-confirm-ok="Supprimer le trade" data-confirm-danger><span class="icon">delete</span> Supprimer</button>
           </div>
         </header>
 
         <section class="grid grid-4" style="margin-bottom: 16px">
           <div class="card kpi">
             <div class="label">P&amp;L retenu</div>
-            <div class="value gain">+291,85 $</div>
-            <div class="sub">+18,5 % · ajusté de −2,15 vs calculé</div>
+            <div class="value loss">−684,42 $</div>
+            <div class="sub">−8,4 % · ajusté de −117,42 vs calculé</div>
           </div>
           <div class="card kpi">
-            <div class="label">Position</div>
-            <div class="value">350</div>
-            <div class="sub">actions shortées</div>
+            <div class="label">Position max</div>
+            <div class="value">3 000</div>
+            <div class="sub">actions shortées au plus fort</div>
           </div>
           <div class="card kpi">
             <div class="label">Entrée / sortie moyennes</div>
-            <div class="value">4,50 → 3,66</div>
-            <div class="sub">vs open 4,20 : +7,1 % → −12,9 %</div>
+            <div class="value">2,71 → 2,90</div>
+            <div class="sub">vs open 2,30 : +17,7 % → +25,9 %</div>
           </div>
           <div class="card kpi">
             <div class="label">Durée</div>
-            <div class="value">3 h 34</div>
-            <div class="sub">09:41 → 13:15</div>
+            <div class="value">1 min</div>
+            <div class="sub">11:08 → 11:09 · 4 min après le trade 2</div>
           </div>
         </section>
 
@@ -76,35 +83,19 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>09:41</td>
+                  <td>11:08</td>
                   <td><span class="tag tag-accent">Short</span></td>
-                  <td class="num">200</td>
-                  <td class="num">4,41</td>
-                  <td class="num">882,00</td>
+                  <td class="num">3 000</td>
+                  <td class="num">2,706</td>
+                  <td class="num">8 118,00</td>
                   <td class="num"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button></td>
                 </tr>
                 <tr>
-                  <td>09:52</td>
-                  <td><span class="tag tag-accent">Short</span></td>
-                  <td class="num">150</td>
-                  <td class="num">4,62</td>
-                  <td class="num">693,00</td>
-                  <td class="num"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button></td>
-                </tr>
-                <tr>
-                  <td>10:48</td>
+                  <td>11:09</td>
                   <td><span class="tag">Cover</span></td>
-                  <td class="num">150</td>
-                  <td class="num">3,78</td>
-                  <td class="num">567,00</td>
-                  <td class="num"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button></td>
-                </tr>
-                <tr>
-                  <td>13:15</td>
-                  <td><span class="tag">Cover</span></td>
-                  <td class="num">200</td>
-                  <td class="num">3,57</td>
-                  <td class="num">714,00</td>
+                  <td class="num">3 000</td>
+                  <td class="num">2,895</td>
+                  <td class="num">8 685,00</td>
                   <td class="num"><button class="btn btn-sm btn-icon" title="Modifier"><span class="icon">edit</span></button></td>
                 </tr>
               </tbody>
@@ -113,7 +104,7 @@
                   <td colspan="2">Position fermée — P&amp;L calculé</td>
                   <td class="num">0</td>
                   <td></td>
-                  <td class="num gain">+294,00</td>
+                  <td class="num loss">−567,00</td>
                   <td></td>
                 </tr>
               </tfoot>
@@ -124,15 +115,15 @@
             <div class="grid grid-3" style="align-items: end">
               <div class="field">
                 <label>Calculé (exécutions)</label>
-                <div class="input" style="background: transparent">294,00</div>
+                <div class="input" style="background: transparent">−567,00</div>
               </div>
               <div class="field">
                 <label>Réel (relevé broker)</label>
-                <input class="input" id="pnl-real" value="291,85" />
+                <input class="input" id="pnl-real" value="−684,42" />
               </div>
               <div class="field">
                 <label>Écart (frais, arrondis)</label>
-                <div class="input loss" id="pnl-gap" style="background: transparent">−2,15</div>
+                <div class="input loss" id="pnl-gap" style="background: transparent">−117,42</div>
               </div>
             </div>
             <p class="muted" style="margin: 8px 0 0; font-size: 12px">
@@ -144,23 +135,55 @@
             <h2>Contexte du jour <a class="hint" href="stats.html">voir la stat <span class="icon icon-sm">arrow_forward</span></a></h2>
             <dl class="kv">
               <dt>Clôture veille · open PM · high PM</dt>
-              <dd>2,65 · 4,05 · 4,65</dd>
+              <dd>1,48 · 2,10 · 2,38</dd>
               <dt>Gap · push PM</dt>
-              <dd>+52,8 % · +14,8 %</dd>
+              <dd>+41,9 % · +13,3 %</dd>
               <dt>Float · volume · locate</dt>
-              <dd>8,2 M · 3,1 M · 0,03</dd>
+              <dd>6,4 M · 5,8 M · 0,04</dd>
               <dt>Open</dt>
-              <dd>4,20</dd>
+              <dd>2,30</dd>
               <dt>Push à l'open</dt>
-              <dd>4,62 <span class="muted">+10,0 %</span></dd>
+              <dd>2,95 <span class="muted">+28,3 %</span></dd>
               <dt>HOD</dt>
-              <dd>4,62 <span class="muted">+10,0 %</span></dd>
+              <dd>2,95 <span class="muted">+28,3 %</span></dd>
               <dt>LOD</dt>
-              <dd>3,41 <span class="muted">−18,8 %</span></dd>
+              <dd>1,96 <span class="muted">−14,8 %</span></dd>
               <dt>EOD</dt>
-              <dd>3,52 <span class="muted">−16,2 %</span></dd>
+              <dd>2,04 <span class="muted">−11,3 %</span></dd>
             </dl>
           </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 16px">
+          <h2>Pendant la saisie — retour à plat <span class="hint">illustration : les exécutions de la journée tapées à la suite sur le trade 1</span></h2>
+          <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Heure</th>
+                <th>Type</th>
+                <th class="num">Actions</th>
+                <th class="num">Prix</th>
+                <th class="num">Position</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>10:33</td><td><span class="tag tag-accent">Short</span></td><td class="num">3 000</td><td class="num">2,246</td><td class="num">3 000</td></tr>
+              <tr><td>10:48</td><td><span class="tag">Cover</span></td><td class="num">3 000</td><td class="num">2,32</td><td class="num">0</td></tr>
+              <tr><td colspan="5" class="muted" style="text-align: center; font-size: 12px"><span class="icon icon-sm">content_cut</span> À plat — la suite devient le <b>trade 2</b> à l'enregistrement</td></tr>
+              <tr><td>11:00</td><td><span class="tag tag-accent">Short</span></td><td class="num">3 000</td><td class="num">2,236</td><td class="num">3 000</td></tr>
+              <tr><td>11:04</td><td><span class="tag">Cover</span></td><td class="num">3 000</td><td class="num">2,345</td><td class="num">0</td></tr>
+              <tr><td colspan="5" class="muted" style="text-align: center; font-size: 12px"><span class="icon icon-sm">content_cut</span> À plat — la suite devient le <b>trade 3</b> à l'enregistrement</td></tr>
+              <tr><td>11:08</td><td><span class="tag tag-accent">Short</span></td><td class="num">3 000</td><td class="num">2,706</td><td class="num">3 000</td></tr>
+              <tr><td>11:09</td><td><span class="tag">Cover</span></td><td class="num">3 000</td><td class="num">2,895</td><td class="num">0</td></tr>
+            </tbody>
+          </table>
+          </div>
+          <p class="muted" style="margin: 8px 0 0; font-size: 12px">
+            Enregistrer garde les deux premières lignes sur ce trade et crée les trades 2 et 3 sur la même stat
+            (toast « 2 trades créés », les pastilles de l'en-tête apparaissent). Le post-mortem et la capture restent sur ce trade, les nouveaux partent vides.
+            Un P&amp;L réel saisi couvre les trois : l'écart au calculé est réparti au prorata des actions, le total au compte reste celui saisi.
+          </p>
         </section>
 
         <section class="card" style="margin-bottom: 16px">
@@ -168,14 +191,11 @@
           <div class="grid grid-2">
             <div class="field">
               <label>Ce qui s'est passé</label>
-              <div class="note">
-                Push à 4,62 rejeté sous la résistance de 4,65 (high premarket). Deuxième entrée sur le rejet, cover moitié à 3,78, le
-                reste sous VWAP après le flush de midi.
-              </div>
+              <div class="note">Ré-entrée à 2,706, 20 % au-dessus de la sortie de 10:48, stoppée une minute plus tard.</div>
             </div>
             <div class="field">
               <label>Erreur / à améliorer</label>
-              <div class="note">Couvert la 2ᵉ moitié trop tôt : LOD à 3,41, j'avais un objectif à 3,36 et je l'ai abandonné par peur du rebond.</div>
+              <div class="note">Pas de ré-entrée après deux stops sur le même ticker.</div>
             </div>
           </div>
         </section>
@@ -187,6 +207,8 @@
 
         <p class="mockup-note">
           Maquette statique — un trade naît d'une stat (bouton « → Trade ») et hérite de son pattern et de son contexte (lecture seule).
+          Un trade est un aller-retour : il se termine quand la position revient à plat. Une stat peut en porter plusieurs (#500) ;
+          l'en-tête les liste, et « Position max » est la plus grosse position tenue à un instant, pas la somme des entrées.
           On saisit : exécutions, post-mortem, capture. Le P&amp;L est calculé à partir des exécutions, et peut être ajusté à la main
           (frais, arrondis du broker) ; c'est le P&amp;L retenu qui remonte au compte. Le P&amp;L réel ne se saisit qu'une fois la
           position clôturée : tant qu'il reste des actions ouvertes, le champ est grisé (« Une fois la position clôturée »).
@@ -197,7 +219,7 @@
     <script>
       // Écart entre P&L réel saisi et P&L calculé (accepte la virgule décimale).
       (function () {
-        const computed = 294.0;
+        const computed = -567.0;
         const input = document.getElementById('pnl-real');
         const out = document.getElementById('pnl-gap');
         input.addEventListener('input', () => {
