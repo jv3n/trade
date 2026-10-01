@@ -33,6 +33,13 @@ interface StatEntryRepository :
 
   fun findByIdAndUserId(id: UUID, userId: UUID): StatEntry?
 
+  /** The caller's stats of one ticker on one day — one per pattern (#507). */
+  fun findByUserIdAndTradeDateAndTicker(
+    userId: UUID,
+    tradeDate: LocalDate,
+    ticker: String,
+  ): List<StatEntry>
+
   /** Backs the "in stats" flag of the candidates listing — one query for a whole day. */
   fun findByUserIdAndCandidateIdIn(userId: UUID, candidateIds: Collection<UUID>): List<StatEntry>
 }

@@ -144,6 +144,12 @@ class MockStatsRepository extends StatsRepository {
   promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
     throwError(() => new Error('not used')),
   );
+  createSibling = vi.fn((_id: string, _pattern: Pattern): Observable<StatEntry> =>
+    throwError(() => new Error('not used')),
+  );
+  freePatterns = vi.fn((_id: string): Observable<Pattern[]> =>
+    throwError(() => new Error('not used')),
+  );
   exportCsv = vi.fn((): Observable<Blob> => throwError(() => new Error('not used')));
 }
 

@@ -75,6 +75,19 @@
     grid-column: 1 / -1;
   }
 
+  // « Same ticker, another pattern » (#507) : the pick and its button, next to the pattern.
+  &__sibling {
+    grid-column: span 2;
+    display: flex;
+    align-items: center;
+    gap: s.$space-sm;
+
+    mat-form-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
   @media (max-width: s.$bp-wide) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

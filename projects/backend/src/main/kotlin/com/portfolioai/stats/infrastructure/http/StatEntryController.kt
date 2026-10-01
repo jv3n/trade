@@ -6,6 +6,7 @@ import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatCompletionRequest
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
+import com.portfolioai.stats.application.dto.StatSiblingRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
 import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatStatus
@@ -126,6 +127,22 @@ class StatEntryController(private val service: StatEntryService) {
   @PostMapping("/{id}/trade")
   @ResponseStatus(HttpStatus.CREATED)
   fun promoteToTrade(@PathVariable id: UUID): TradeEntryDto = service.promoteToTrade(id)
+
+  /**
+   * « Same ticker, another pattern » (#507) — creates a stat on the same day and ticker under
+   * [StatSiblingRequest.pattern], the day's prices carried over. A pattern already taken that day
+   * → 409.
+   */
+  @PostMapping("/{id}/sibling")
+  @ResponseStatus(HttpStatus.CREATED)
+  fun createSibling(
+    @PathVariable id: UUID,
+    @RequestBody request: StatSiblingRequest,
+  ): StatEntryDto = service.createSibling(id, request.pattern)
+
+  /** The patterns this stat's day and ticker don't have yet — what « another pattern » offers. */
+  @GetMapping("/{id}/free-patterns")
+  fun freePatterns(@PathVariable id: UUID): List<Pattern> = service.freePatterns(id)
 
   /**
    * CSV export of the caller's stats — a spreadsheet-friendly copy, no import counterpart.

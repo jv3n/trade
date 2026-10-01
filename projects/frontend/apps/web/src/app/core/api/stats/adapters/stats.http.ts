@@ -199,6 +199,16 @@ export class HttpStatsRepository extends StatsRepository {
       .pipe(map(tradeEntryFromWire));
   }
 
+  createSibling(id: string, pattern: Pattern): Observable<StatEntry> {
+    return this.http
+      .post<StatEntryWireDto>(`${this.base}/${id}/sibling`, { pattern })
+      .pipe(map(fromWire));
+  }
+
+  freePatterns(id: string): Observable<Pattern[]> {
+    return this.http.get<Pattern[]>(`${this.base}/${id}/free-patterns`);
+  }
+
   /**
    * Streams the export endpoint as a binary `Blob` so the consumer can hand it to a download trick
    * (`URL.createObjectURL` + anchor click). The server sets the `Content-Disposition` filename.
