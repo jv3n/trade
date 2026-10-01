@@ -65,7 +65,14 @@ interface StatEntryWireDto {
 /** Body of `PUT /api/stats/{id}` — the backend `StatEntryRequest`. */
 type StatEntryWireRequest = Omit<
   StatEntryWireDto,
-  'id' | 'candidateId' | 'completed' | 'outOfPattern' | 'trades' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'candidateId'
+  | 'completed'
+  | 'under1Dollar'
+  | 'outOfPattern'
+  | 'trades'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
 // `parseISO('2026-06-04')` → midnight LOCAL (no UTC shift) ; `parseISO('…Z')` → instant. Same
@@ -128,6 +135,7 @@ function buildFilterParams(filter?: StatEntryFilter): HttpParams {
   if (filter.status) params = params.set('status', filter.status);
   if (filter.noPush) params = params.set('noPush', true);
   if (filter.outOfPattern) params = params.set('outOfPattern', true);
+  if (filter.under1Dollar) params = params.set('under1Dollar', true);
   return params;
 }
 

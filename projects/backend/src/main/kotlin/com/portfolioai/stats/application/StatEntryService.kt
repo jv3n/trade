@@ -75,22 +75,22 @@ class StatEntryService(
         PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
       else pageable
     val page =
-      if (filter.outOfPattern == true) outOfPatternPage(spec, effective)
-      else repo.findAll(spec, effective)
+      if (filter.hasDerived) derivedPage(spec, effective, filter) else repo.findAll(spec, effective)
     // One query for the whole page rather than one per row — same shape as the candidates listing.
     val links = tradeEntryService.tradeLinksByStat(page.content.map { it.id })
     return page.map { it.toDto(links[it.id].orEmpty()) }
   }
 
   /**
-   * The « out of pattern » toggle (#499) pages in memory : the rule is [StatEntry.outOfPattern],
-   * and a copy in SQL could drift from it. A personal sheet holds a few hundred stats a year.
+   * The derived toggles (#499) page in memory : their rules live on [StatEntry], and a copy in SQL
+   * could drift from them. A personal sheet holds a few hundred stats a year.
    */
-  private fun outOfPatternPage(
+  private fun derivedPage(
     spec: Specification<StatEntry>,
     pageable: Pageable,
+    filter: StatEntryFilter,
   ): Page<StatEntry> {
-    val rows = repo.findAll(spec, pageable.sort).filter { it.outOfPattern.isNotEmpty() }
+    val rows = repo.findAll(spec, pageable.sort).filter(filter::matchesDerived)
     val from = minOf(pageable.offset.toInt(), rows.size)
     val to = minOf(from + pageable.pageSize, rows.size)
     return PageImpl(rows.subList(from, to), pageable, rows.size.toLong())
@@ -112,9 +112,7 @@ class StatEntryService(
   fun summarise(filter: StatEntryFilter): StatSummaryDto {
     val userId = authService.getCurrentUser().id
     val rows =
-      repo.findAll(StatEntrySpecifications.matching(userId, filter)).filter {
-        filter.outOfPattern != true || it.outOfPattern.isNotEmpty()
-      }
+      repo.findAll(StatEntrySpecifications.matching(userId, filter)).filter(filter::matchesDerived)
     val completed = rows.filter { it.isCompleted }
     val measured = if (filter.pattern == null) emptyList() else completed
     val sessions = measured.filterNot { it.isDoubleTop }
@@ -451,7 +449,6 @@ class StatEntryService(
       lodPrice = lodPrice,
       eodPrice = eodPrice,
       ssr = ssr,
-      under1Dollar = under1Dollar,
       highInstitutions = highInstitutions,
     )
 
@@ -539,8 +536,8 @@ class StatEntryService(
     this.dtRetestTime = dtRetestTime
 
     ssr = request.ssr
-    under1Dollar = request.under1Dollar
-    entryAfter11am = request.entryAfter11am
+    // A double top derives it from its retest (#499) : a box sent for one would say something else.
+    entryAfter11am = request.entryAfter11am && !doubleTop
     this.noPush = noPush
     highInstitutions = request.highInstitutions
   }

@@ -59,7 +59,9 @@ export interface StatEntry {
 
   // ---- Flags ----
   ssr: boolean;
+  /** Opened under a dollar — derived from the open by the backend (#499), never typed. */
   under1Dollar: boolean;
+  /** Ticked on a GUS ; derived from the retest time on a double top (#499). */
   entryAfter11am: boolean;
   /** The stock never pushed after the open (#302) — [pushOpenPrice] stays null. */
   noPush: boolean;
@@ -99,7 +101,14 @@ export interface StatTradeLink {
 /** Update payload — the completion panel sends the whole row back (premarket + session + flags). */
 export type StatEntryInput = Omit<
   StatEntry,
-  'id' | 'candidateId' | 'completed' | 'outOfPattern' | 'trades' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'candidateId'
+  | 'completed'
+  | 'under1Dollar'
+  | 'outOfPattern'
+  | 'trades'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
 /** Completion status a listing can be narrowed to. Mirrors the backend `StatStatus`. */
@@ -119,6 +128,8 @@ export interface StatEntryFilter {
   noPush?: boolean | null;
   /** True keeps the stats flagged out of pattern only (#499) — combines with every other axis. */
   outOfPattern?: boolean | null;
+  /** True keeps the stats opened under a dollar only (#499). */
+  under1Dollar?: boolean | null;
 }
 
 /**

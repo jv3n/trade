@@ -91,7 +91,10 @@ class StatEntry(
 
   // ---- Flags ----
   @Column(nullable = false) var ssr: Boolean = false,
-  @Column(name = "under_1_dollar", nullable = false) var under1Dollar: Boolean = false,
+  /**
+   * Ticked by hand on the patterns that store no entry time ; a double top derives it from its
+   * retest instead (#499) — read [entersAfter11am], not this.
+   */
   @Column(name = "entry_after_11am", nullable = false) var entryAfter11am: Boolean = false,
   /** The stock never pushed after the open (#302) — [pushOpenPrice] stays empty. */
   @Column(name = "no_push", nullable = false) var noPush: Boolean = false,
@@ -120,6 +123,20 @@ class StatEntry(
    */
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
+
+  /**
+   * The open under a dollar, where the margin floor bites (#499) — derived from the price, no
+   * longer a box restating it. A double top reads its start, which is the open unless moved.
+   */
+  val under1Dollar: Boolean
+    get() = (openPrice ?: dtStartPrice)?.let { it < ONE_DOLLAR } ?: false
+
+  /**
+   * Entered after 11 am : a double top is entered on its retest, so its retest time says it (#499)
+   * ; the other patterns store no entry time, so it stays the box ticked by hand.
+   */
+  val entersAfter11am: Boolean
+    get() = if (isDoubleTop) dtRetestTime?.let { it >= LATE_ENTRY } ?: false else entryAfter11am
 
   /**
    * Why the recorded prices say this was not the setup (#499) — empty when nothing does. Computed,
@@ -167,4 +184,9 @@ class StatEntry(
         })
         .filter { (_, price) -> price == null }
         .map { (label, _) -> label }
+
+  private companion object {
+    val ONE_DOLLAR = BigDecimal.ONE
+    val LATE_ENTRY: LocalTime = LocalTime.of(11, 0)
+  }
 }

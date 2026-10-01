@@ -143,7 +143,6 @@ class LocalDataSeeder(
       lodPrice = price(lod),
       eodPrice = price(eod),
       ssr = random.nextDouble() < 0.45,
-      under1Dollar = previousClose < 1.0,
       entryAfter11am = random.nextDouble() < 0.2,
       // A GUS candidate is screened on low institutional ownership, so the flag is the exception.
       highInstitutions = random.nextDouble() < 0.15,

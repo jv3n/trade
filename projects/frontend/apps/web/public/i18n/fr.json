@@ -658,7 +658,7 @@
       "eod": "EOD",
       "flags": "Flags",
       "ssr": "SSR",
-      "under1Dollar": "Prix < 1 $",
+      "under1Dollar": "< 1 $",
       "entryAfter11am": "Entrée après 11h",
       "highInstitutions": "Institutions > 20 %",
       "highInstitutionsShort": "Inst. > 20 %",
@@ -818,7 +818,9 @@
       "durationC": "C · {{minutes}} min · total {{total}} min",
       "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
       "medianDuration": "méd. {{minutes}} min",
-      "progress": "{{prices}} / {{total}} prix · {{times}} / {{total}} heures"
+      "progress": "{{prices}} / {{total}} prix · {{times}} / {{total}} heures",
+      "lateEntry": "après 11h — retest à {{time}}",
+      "lateEntryHint": "Déduit de l'heure du retest, pas coché : un double top s'entre sur le retest."
     },
     "sibling": {
       "label": "Même ticker, autre pattern",
@@ -838,7 +840,9 @@
     "derived": {
       "label": "Filtres déduits des prix",
       "OUT_OF_PATTERN": "Hors pattern",
-      "OUT_OF_PATTERN_HINT": "Ce que les prix enregistrés disent ne pas être le setup — un DT dont le retest reprend le top, un GUS hors de la fourchette de la fiche. Se combine avec les onglets."
+      "OUT_OF_PATTERN_HINT": "Ce que les prix enregistrés disent ne pas être le setup — un DT dont le retest reprend le top, un GUS hors de la fourchette de la fiche. Se combine avec les onglets.",
+      "UNDER_1_DOLLAR": "Sous 1 $",
+      "UNDER_1_DOLLAR_HINT": "Open sous 1 $ — déduit du prix, plus une case à cocher. Se combine avec les onglets."
     },
     "outOfPattern": {
       "tag": "hors pattern",

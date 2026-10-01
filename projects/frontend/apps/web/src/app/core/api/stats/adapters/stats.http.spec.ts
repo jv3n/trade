@@ -61,6 +61,7 @@ describe('HttpStatsRepository', () => {
         pattern: 'GUS',
         status: 'TO_COMPLETE',
         outOfPattern: true,
+        under1Dollar: true,
       })
       .subscribe();
 
@@ -71,6 +72,7 @@ describe('HttpStatsRepository', () => {
     expect(req.request.params.get('pattern')).toBe('GUS');
     expect(req.request.params.get('status')).toBe('TO_COMPLETE');
     expect(req.request.params.get('outOfPattern')).toBe('true');
+    expect(req.request.params.get('under1Dollar')).toBe('true');
     req.flush(wirePageFixture([]));
   });
 
@@ -171,7 +173,6 @@ describe('HttpStatsRepository', () => {
       dtLowTime: null,
       dtRetestTime: null,
       ssr: true,
-      under1Dollar: false,
       entryAfter11am: false,
       noPush: false,
       highInstitutions: false,
@@ -332,7 +333,6 @@ describe('HttpStatsRepository', () => {
       dtLowTime: null,
       dtRetestTime: null,
       ssr: true,
-      under1Dollar: false,
       entryAfter11am: false,
       noPush: false,
       highInstitutions: false,

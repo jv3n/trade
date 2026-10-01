@@ -54,7 +54,9 @@ data class StatEntryDto(
   val dtRetestTime: LocalTime?,
   // ---- Flags ----
   val ssr: Boolean,
+  /** Derived from the open (#499) — read-only, no longer a box. */
   val under1Dollar: Boolean,
+  /** Derived from the retest time on a double top (#499), the box ticked on the other patterns. */
   val entryAfter11am: Boolean,
   val noPush: Boolean,
   val highInstitutions: Boolean,
@@ -95,7 +97,7 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     dtRetestTime = dtRetestTime,
     ssr = ssr,
     under1Dollar = under1Dollar,
-    entryAfter11am = entryAfter11am,
+    entryAfter11am = entersAfter11am,
     noPush = noPush,
     highInstitutions = highInstitutions,
     completed = isCompleted,
