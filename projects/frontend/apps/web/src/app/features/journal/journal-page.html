@@ -272,6 +272,14 @@
             </th>
             <td mat-cell *matCellDef="let d" stbCol="numeric">
               {{ durationLabel(d.durationMinutes) }}
+              <!-- @if on a number skips 0 : a fully timed day shows nothing. -->
+              @if (missingDuration(d); as missing) {
+                <span
+                  class="muted partial"
+                  [matTooltip]="'journal.fields.partialDuration' | translate: { missing }"
+                  >*</span
+                >
+              }
             </td>
           </ng-container>
 
@@ -295,6 +303,13 @@
               {{
                 d.retainedProfitDollars !== null ? (d.retainedProfitDollars | number: '1.2-2') : '—'
               }}
+              @if (missingPnl(d); as missing) {
+                <span
+                  class="muted partial"
+                  [matTooltip]="'journal.fields.partialPnl' | translate: { missing }"
+                  >*</span
+                >
+              }
             </td>
           </ng-container>
 

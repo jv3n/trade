@@ -446,7 +446,9 @@
       "maxSize": "Max position",
       "maxSizeHint": "The largest of the day's trades — never an exposure summed or netted between a short and a long",
       "cumulatedDuration": "Cumulated duration",
-      "cumulatedDurationHint": "The sum of the trades' durations"
+      "cumulatedDurationHint": "The sum of the trades' durations",
+      "partialPnl": "Trades with no P&L yet: {{missing}}. The sum covers the others.",
+      "partialDuration": "Trades with no fill times: {{missing}}. The cumulated duration leaves them out."
     },
     "enums": {
       "status": {

@@ -231,6 +231,29 @@ describe('JournalPage', () => {
     });
   });
 
+  it('a row whose sums leave trades out says how many, and a complete row says nothing', () => {
+    // ZEO-like day (#515) : one trade still open, one with no fill times — the sums stay.
+    const partial = makeDay([
+      makeTrade({ id: 't1', retainedProfitDollars: -120, durationMinutes: 12 }),
+      makeTrade({ id: 't2', retainedProfitDollars: null, durationMinutes: 4 }),
+      makeTrade({ id: 't3', retainedProfitDollars: -80, durationMinutes: null }),
+    ]);
+    const complete = makeDay([
+      makeTrade({ id: 't4', ticker: 'KTTA', retainedProfitDollars: 291.85, durationMinutes: 214 }),
+    ]);
+    nextPage = makePage([partial, complete], 2);
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+
+    expect(page.missingPnl(partial)).toBe(1);
+    expect(page.missingDuration(partial)).toBe(1);
+    expect(page.missingPnl(complete)).toBe(0);
+    const rows = fixture.nativeElement.querySelectorAll('tr.journal-row');
+    expect(rows[0].querySelectorAll('.partial')).toHaveLength(2);
+    expect(rows[1].querySelectorAll('.partial')).toHaveLength(0);
+  });
+
   it('« 20 min » under an hour, « 3 h 04 » above', () => {
     const fixture = TestBed.createComponent(JournalPage);
     const page = fixture.componentInstance;

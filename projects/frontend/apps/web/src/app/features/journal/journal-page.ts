@@ -340,6 +340,19 @@ export class JournalPage {
     void this.router.navigate(['/journal', entry.id]);
   }
 
+  /**
+   * Trades of the row with no retained P&L yet (#515) — the row's sum then covers only part of the
+   * day. Kept rather than blanked : a day's realised P&L is worth more than its open position.
+   */
+  missingPnl(day: JournalDay): number {
+    return day.trades.filter((t) => t.retainedProfitDollars === null).length;
+  }
+
+  /** Trades of the row with no duration — their fill times are missing, the sum leaves them out. */
+  missingDuration(day: JournalDay): number {
+    return day.trades.filter((t) => t.durationMinutes === null).length;
+  }
+
   /** « 20 min », « 3 h 34 » — the durations of the rows and of their trades. */
   durationLabel(minutes: number | null): string {
     if (minutes === null) return '—';

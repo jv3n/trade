@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StbToast } from '@portfolioai/ui';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
@@ -35,6 +35,8 @@ describe('JournalDetailPage', () => {
   /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
   let confirmed: boolean;
   let deleteScreenshot: ReturnType<typeof vi.fn>;
+  /** The route's id — a test moves it to another trade of the same stat. */
+  let params: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
 
   // Default doubles — a test overrides the one it is about, before calling `setup()`.
   beforeEach(() => {
@@ -47,6 +49,7 @@ describe('JournalDetailPage', () => {
     deleteSubject = new Subject<void>();
     confirmed = true;
     deleteScreenshot = vi.fn(() => of(makeTrade({ hasScreenshot: false })));
+    params = new BehaviorSubject(convertToParamMap({ id: 'abc-123' }));
     TestBed.configureTestingModule({
       imports: [JournalDetailPage],
       providers: [
@@ -72,7 +75,7 @@ describe('JournalDetailPage', () => {
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
         {
           provide: ActivatedRoute,
-          useValue: { paramMap: of(convertToParamMap({ id: 'abc-123' })) },
+          useValue: { paramMap: params },
         },
       ],
     });
@@ -292,6 +295,56 @@ describe('JournalDetailPage', () => {
 
     expect(page.hasUnsavedChanges()).toBe(true);
     expect(unload()).toBe(true);
+  });
+
+  // ---- Moving between the trades of one stat (#515) ----
+  // Only the route's parameter changes : the component is reused and `unsavedChangesGuard` never
+  // runs, so the page asks by itself.
+
+  it('moving to another trade of the stat with an unsaved post-mortem asks first', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+    page.setNote('Re-entered 20 % above my exit.');
+
+    params.next(convertToParamMap({ id: 't3' }));
+
+    expect(ask).toHaveBeenCalledWith('common.confirmLeave', { variant: 'danger' });
+    expect(findById).toHaveBeenLastCalledWith('t3');
+  });
+
+  it('staying keeps the text, puts the URL back and does not reload the sheet', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => {
+      // What the router does with the restored URL : the same id comes back.
+      params.next(convertToParamMap({ id: 'abc-123' }));
+      return Promise.resolve(true);
+    });
+    page.setNote('Re-entered 20 % above my exit.');
+    confirmed = false;
+
+    params.next(convertToParamMap({ id: 't3' }));
+
+    expect(navigate).toHaveBeenCalledWith(['/journal', 'abc-123'], { replaceUrl: true });
+    expect(findById).toHaveBeenCalledTimes(1);
+    expect(page.draft()?.note).toBe('Re-entered 20 % above my exit.');
+  });
+
+  it('moving between trades with nothing unsaved asks nothing', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+
+    params.next(convertToParamMap({ id: 't3' }));
+
+    expect(ask).not.toHaveBeenCalled();
+    expect(findById).toHaveBeenLastCalledWith('t3');
   });
 
   it('leaves without asking once the trade is deleted', () => {
