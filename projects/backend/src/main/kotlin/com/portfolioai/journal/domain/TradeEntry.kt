@@ -17,6 +17,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import org.hibernate.annotations.BatchSize
 import org.hibernate.annotations.JdbcTypeCode
@@ -184,6 +185,10 @@ class TradeEntry(
     }
   }
 
+  /** Time of the first fill — orders the trades of a stat through the day. Null before any fill. */
+  val openedAt: LocalTime?
+    get() = executions.firstOrNull()?.executedAt
+
   /** Copies the derived aggregates from [TradePositionCalculator] onto the flat columns. */
   fun applyAggregates(aggregates: TradePositionCalculator.Aggregates) {
     size = aggregates.size
@@ -191,5 +196,13 @@ class TradeEntry(
     exitPrice = aggregates.avgExit
     profitDollars = aggregates.profitDollars
     gainPercent = aggregates.gainPercent
+  }
+
+  companion object {
+    /**
+     * The trades of one stat in the day's order (#500) : by first fill, untimed last, then created.
+     */
+    val DAY_ORDER: Comparator<TradeEntry> =
+      compareBy<TradeEntry, LocalTime?>(nullsLast()) { it.openedAt }.thenBy { it.createdAt }
   }
 }

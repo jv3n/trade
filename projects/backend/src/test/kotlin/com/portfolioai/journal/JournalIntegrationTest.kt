@@ -822,9 +822,9 @@ class JournalIntegrationTest {
    * owner's stat : the FK is mandatory and user-scoped in practice.
    */
   /**
-   * A stat of its own for the next trade — one trade per stat since #193 (unique index), so the
-   * filter tests can't hang several rows off the shared [stat]. The ticker is a throwaway counter :
-   * these stats only exist to satisfy the FK, the trade carries the ticker under test.
+   * A stat of its own for the next trade, so each filter-test row stands on its own stat rather
+   * than reading as one more trade of the shared [stat]. The ticker is a throwaway counter : these
+   * stats only exist to satisfy the FK, the trade carries the ticker under test.
    */
   private fun freshStat(user: User) =
     statRepo.save(sampleStat(user = user, ticker = "S${statCounter++}"))
