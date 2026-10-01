@@ -28,6 +28,7 @@
 
     @if (auth.isAuthenticated()) {
       <app-calculator-launcher />
+      <app-notes-launcher />
       <button
         mat-button
         type="button"
@@ -156,8 +157,9 @@
     </mat-sidenav-content>
   </mat-sidenav-container>
 
-  <!-- The floating calculators (#421), over every page. -->
+  <!-- The floating calculators (#421) and the day's notes (#521), over every page. -->
   @if (auth.isAuthenticated()) {
     <app-calculator-widget-layer />
+    <app-notes-layer />
   }
 }

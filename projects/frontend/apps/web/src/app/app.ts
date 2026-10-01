@@ -19,6 +19,8 @@ import { LanguageService } from './core/app-state/language.service';
 import { ThemeService } from './core/app-state/theme.service';
 import { CalculatorLauncher } from './features/calculator/widgets/calculator-launcher';
 import { CalculatorWidgetLayer } from './features/calculator/widgets/calculator-widget-layer';
+import { NotesLauncher } from './features/notes/notes-launcher';
+import { NotesLayer } from './features/notes/notes-layer';
 
 /**
  * Width under which the sidenav leaves the page for a drawer (#456) — `$bp-narrow` in
@@ -59,6 +61,8 @@ const NARROW_VIEWPORT = '(max-width: 900px)';
     TranslatePipe,
     CalculatorLauncher,
     CalculatorWidgetLayer,
+    NotesLauncher,
+    NotesLayer,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',

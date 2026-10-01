@@ -674,6 +674,46 @@ header, the menu opens the others.
 
 ---
 
+## Tool — Notes (#521)
+
+While the session runs : somewhere to drop a thought and a few tickers to keep an eye on, without
+leaving the page. Not a journal entry, not a stat — **a scrap of paper that lives for the day**.
+
+- **A « Notes » button in the top bar**, next to « Calculatrices » : a menu with **« Nouveau
+  post-it »**, then every post-it of the day (named by its first line, « Post-it n » while empty)
+  and the watchlist, each **toggled on its own** and marked « ouvert » while it is.
+  - **Post-its, as many as wanted** — each a free-text window with its own colour and place. What
+    is typed is kept. « Fermer » keeps a post-it in the menu with its text — an empty one carries
+    nothing, so it goes ; **« Supprimer »** removes it — confirmed only when it holds text.
+  - **Tickers à surveiller** — a list : a ticker typed then Enter adds it, a click on its chip removes
+    it. Uppercased and trimmed like everywhere else ; a ticker already in the list is not added twice.
+- Both are **small floating windows**, dragged by their header and kept inside the window, under the
+  top bar ; closing one and opening it again loses nothing.
+- **« Détacher »**, like the calculators : the window moves into its own always-on-top window
+  (Document Picture-in-Picture), so the notes stay in view over TradeZero during the session ;
+  closing that window puts it back in the page. Absent where the browser lacks the API.
+- **A colour per window** — green, blue, yellow or red — the colour **of the window itself**, like a
+  real post-it. Nothing hangs off it : not a status, not a filter (so the colour rule of the
+  interface does not apply).
+- **Kept in the browser** (`localStorage`, like the calculators' settings) : per window the content,
+  the colour, the position and whether it is open — per post-it too. No endpoint, no table : unlike the theme and the
+  language, which follow the user from one machine to the next, these notes die tonight. **Known
+  limit, accepted** : they live in one browser — opened on the other machine, they are not there.
+- **Emptied on a new day** : the store carries the date it was written on. On another day — at the
+  first load, or at the first keystroke of a tab left open past midnight — the **open** post-its
+  come back **empty** in place, the closed ones go, and the watchlist is emptied ; each window kept
+  keeps its colour, its position and its open state.
+- **A window always comes back in reach** : a position dropped on a big screen is brought back
+  inside a smaller one, and the windows follow a resize — the header stays grabbable. The day is the **local** date : premarket starts at 04:00 and the session
+  ends at 20:00, midnight never cuts a session in two.
+- Dropping a window is a position write, not a save : nothing to confirm.
+- **On a phone** a floating window is a nuisance : under the phone width the windows dock as a
+  full-width panel, and dragging is off.
+
+**Screen** : the « Notes » button and the two windows on [`candidat.html`](candidat.html).
+
+---
+
 ## Reference — Patterns (review sheets)
 
 Outside the daily flow, next to the lexicon : the **pattern sheets** and the **trading notes**, to

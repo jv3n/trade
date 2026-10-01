@@ -940,6 +940,38 @@
       "close": "Close"
     }
   },
+  "notes": {
+    "launcher": {
+      "open": "Notes",
+      "isOpen": "open",
+      "newPostit": "New post-it"
+    },
+    "postit": {
+      "title": "Post-it {{n}}",
+      "placeholder": "An idea, a level, a rule to keep in mind…"
+    },
+    "watchlist": {
+      "title": "Tickers to watch",
+      "placeholder": "Add a ticker, Enter",
+      "add": "Add a ticker",
+      "remove": "Remove"
+    },
+    "color": "Colour",
+    "colors": {
+      "green": "Green",
+      "blue": "Blue",
+      "yellow": "Yellow",
+      "red": "Red"
+    },
+    "detach": "Detach into a window",
+    "close": "Close — the content is kept",
+    "delete": "Delete the post-it",
+    "confirmDelete": {
+      "title": "Delete this post-it?",
+      "message": "Its text is lost. To keep it out of sight, close it instead.",
+      "confirm": "Delete"
+    }
+  },
   "patternSheets": {
     "title": "Patterns",
     "subtitle": "The pattern sheets and the trading notes, to reread before the session — as written in the repository.",

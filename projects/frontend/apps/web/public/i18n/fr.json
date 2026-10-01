@@ -940,6 +940,38 @@
       "close": "Fermer"
     }
   },
+  "notes": {
+    "launcher": {
+      "open": "Notes",
+      "isOpen": "ouvert",
+      "newPostit": "Nouveau post-it"
+    },
+    "postit": {
+      "title": "Post-it {{n}}",
+      "placeholder": "Une idée, un niveau, une règle à garder en tête…"
+    },
+    "watchlist": {
+      "title": "Tickers à surveiller",
+      "placeholder": "Ajouter un ticker, Entrée",
+      "add": "Ajouter un ticker",
+      "remove": "Retirer"
+    },
+    "color": "Couleur",
+    "colors": {
+      "green": "Vert",
+      "blue": "Bleu",
+      "yellow": "Jaune",
+      "red": "Rouge"
+    },
+    "detach": "Détacher dans une fenêtre",
+    "close": "Fermer — le contenu est gardé",
+    "delete": "Supprimer le post-it",
+    "confirmDelete": {
+      "title": "Supprimer ce post-it ?",
+      "message": "Son texte est perdu. Pour le garder sans l'afficher, ferme-le plutôt.",
+      "confirm": "Supprimer"
+    }
+  },
   "patternSheets": {
     "title": "Patterns",
     "subtitle": "Les fiches des patterns et les notes de trading, à relire avant la séance — telles qu'écrites dans le dépôt.",

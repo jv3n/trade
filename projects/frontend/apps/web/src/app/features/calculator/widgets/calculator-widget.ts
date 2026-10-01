@@ -14,10 +14,10 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { StbButtonModule, StbIconModule, StbTooltipModule } from '@portfolioai/ui';
 import { ThemeService } from '../../../core/app-state/theme.service';
+import { copyStyles } from '../../../shared/picture-in-picture/copy-styles';
+import { documentPip } from '../../../shared/picture-in-picture/document-pip';
 import { calculator } from '../calculators';
 import { CALCULATOR_DETACHED, CalculatorWidgets, OpenWidget } from './calculator-widgets';
-import { copyStyles } from './copy-styles';
-import { documentPip } from './document-pip';
 
 /** One object, not a literal per read : the same reference keeps CdkDrag from being notified. */
 const ORIGIN = { x: 0, y: 0 };

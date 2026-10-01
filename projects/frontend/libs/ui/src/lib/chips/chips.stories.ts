@@ -93,3 +93,19 @@ export default meta;
 type Story = StoryObj<Demo>;
 
 export const Default: Story = {};
+
+/** A set lying on a note's paper (#521) — the chips take the paper's ink in both themes. */
+export const OnPaper: Story = {
+  render: () => ({
+    template: `
+      <div style="padding: 12px; width: 280px; border-radius: 8px; background: var(--color-note-yellow)">
+        <mat-chip-set stbChipSet="paper">
+          <mat-chip stbChip="ticker">MLGO</mat-chip>
+          <mat-chip stbChip="ticker">ATXG</mat-chip>
+          <mat-chip stbChip="ticker">VERB</mat-chip>
+        </mat-chip-set>
+      </div>
+    `,
+  }),
+  decorators: [moduleMetadata({ imports: [StbChipsModule] })],
+};

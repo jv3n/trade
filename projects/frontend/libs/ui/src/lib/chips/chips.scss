@@ -166,3 +166,23 @@
   --mat-chip-focus-state-layer-color: var(--color-warning);
   --mat-chip-with-icon-icon-color: var(--color-warning);
 }
+
+// ============================================================================
+// `[stbChipSet]` surfaces — applied by the `StbChipSet` directive on the set host.
+// ============================================================================
+
+// `paper` — a light paper whatever the theme (the note windows, #521). The chips inside take the
+// paper's ink (`--color-on-note`) on a whitened paper, instead of the page's surface tokens, which
+// turn dark with the theme. Two classes : it wins over a lone variant class on the chip.
+.stb-chip-set--paper .mat-mdc-chip,
+.stb-chip-set--paper .stb-chip--ticker {
+  --mat-chip-label-text-color: var(--color-on-note);
+  --mat-chip-selected-label-text-color: var(--color-on-note);
+  --mat-chip-elevated-container-color: color-mix(in oklch, white 55%, transparent);
+  --mat-chip-elevated-selected-container-color: color-mix(in oklch, white 55%, transparent);
+  --mat-chip-outline-color: color-mix(in oklch, var(--color-on-note) 25%, transparent);
+  --mat-chip-hover-state-layer-color: var(--color-on-note);
+  --mat-chip-focus-state-layer-color: var(--color-on-note);
+  --mat-chip-with-icon-icon-color: var(--color-on-note);
+  --mat-chip-with-trailing-icon-trailing-icon-color: var(--color-on-note);
+}

@@ -173,6 +173,108 @@
         color: var(--accent);
       }
 
+      /* #521 — les notes du jour : un post-it et une liste de tickers, flottants comme les calculatrices.
+         La couleur est celle de la fenêtre, comme un vrai post-it — pas un statut. */
+      .note-window {
+        --note: oklch(0.93 0.09 95);
+        position: fixed;
+        z-index: 20;
+        width: 280px;
+        background: var(--note);
+        color: oklch(0.25 0.02 260);
+        border: 1px solid color-mix(in oklch, var(--note), black 15%);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+      .note-window[data-color='green'] { --note: oklch(0.9 0.08 150); }
+      .note-window[data-color='blue'] { --note: oklch(0.9 0.06 240); }
+      .note-window[data-color='yellow'] { --note: oklch(0.93 0.09 95); }
+      .note-window[data-color='red'] { --note: oklch(0.88 0.08 25); }
+      .note-window header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 6px 6px 10px;
+        cursor: grab;
+        user-select: none;
+      }
+      .note-window header .title {
+        flex: 1;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .note-window .swatches {
+        display: flex;
+        gap: 4px;
+      }
+      .note-window .swatches button {
+        width: 14px;
+        height: 14px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid rgb(0 0 0 / 0.25);
+        cursor: pointer;
+      }
+      .note-window .swatches button[aria-pressed='true'] {
+        outline: 2px solid oklch(0.25 0.02 260);
+        outline-offset: 1px;
+      }
+      .note-window .btn-icon {
+        color: inherit;
+        background: transparent;
+        border-color: transparent;
+      }
+      .note-window .body {
+        padding: 0 10px 10px;
+      }
+      .note-window textarea {
+        width: 100%;
+        min-height: 150px;
+        resize: vertical;
+        padding: 6px;
+        background: transparent;
+        border: 0;
+        color: inherit;
+        font: inherit;
+        font-size: 13px;
+        outline: none;
+      }
+      .note-window .ticker-input {
+        width: 100%;
+        padding: 6px 8px;
+        background: rgb(255 255 255 / 0.55);
+        border: 1px solid rgb(0 0 0 / 0.15);
+        border-radius: var(--radius-sm);
+        color: inherit;
+        font: inherit;
+        font-family: var(--mono, monospace);
+        text-transform: uppercase;
+      }
+      .note-window .watch {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .note-window .watch button {
+        cursor: pointer;
+        border: 0;
+      }
+      /* Sous la largeur téléphone, une fenêtre flottante gêne : les notes se rangent en panneau pleine largeur. */
+      @media (max-width: 640px) {
+        .note-window {
+          position: static;
+          width: auto;
+          margin: 12px 0;
+        }
+        .note-window header {
+          cursor: default;
+        }
+        .note-window header .grip {
+          display: none;
+        }
+      }
+
       .calc-widget {
         position: fixed;
         z-index: 20;
@@ -365,6 +467,16 @@
               <button data-open-widget="w-max"><span class="icon">vertical_align_top</span> Taille maximale <span class="open-tag">ouverte</span></button>
               <button data-open-widget="w-size"><span class="icon">straighten</span> Taille de position <span class="open-tag">ouverte</span></button>
               <button data-open-widget="w-rr"><span class="icon">compare_arrows</span> Distance et R:R <span class="open-tag" hidden>ouverte</span></button>
+            </div>
+          </div>
+          <!-- #521 : les notes du jour — chaque fenêtre s'ouvre et se ferme seule, sans rien perdre de son contenu. -->
+          <div class="launcher">
+            <button class="btn btn-sm" data-toggle-notes><span class="icon">sticky_note_2</span> Notes</button>
+            <div class="launcher-menu notes-menu" hidden>
+              <button data-new-postit><span class="icon">add</span> Nouveau post-it</button>
+              <button data-toggle-note="n-postit"><span class="icon">edit_note</span> SGBX : push PM rejeté sous… <span class="open-tag">ouvert</span></button>
+              <button data-toggle-note="n-postit-2"><span class="icon">edit_note</span> Pas de ré-entrée après deux… <span class="open-tag" hidden>ouvert</span></button>
+              <button data-toggle-note="n-watch"><span class="icon">visibility</span> Tickers à surveiller <span class="open-tag">ouvert</span></button>
             </div>
           </div>
         </div>
@@ -664,6 +776,70 @@
           notion GUS.
         </p>
 
+        <!-- #521 : le post-it du jour. Gardé dans le navigateur ; vidé au premier chargement d'un nouveau jour
+             (la couleur, la position et l'état ouvert restent). -->
+        <section class="note-window" id="n-postit" data-color="yellow" role="dialog" aria-label="Post-it" style="left: 300px; top: 120px">
+          <header>
+            <span class="icon grip">drag_indicator</span>
+            <span class="title">Post-it 1</span>
+            <span class="swatches" aria-label="Couleur">
+              <button style="background: oklch(0.9 0.08 150)" data-swatch="green" title="Vert" aria-pressed="false"></button>
+              <button style="background: oklch(0.9 0.06 240)" data-swatch="blue" title="Bleu" aria-pressed="false"></button>
+              <button style="background: oklch(0.93 0.09 95)" data-swatch="yellow" title="Jaune" aria-pressed="true"></button>
+              <button style="background: oklch(0.88 0.08 25)" data-swatch="red" title="Rouge" aria-pressed="false"></button>
+            </span>
+            <button class="btn btn-sm btn-icon" title="Détacher dans une fenêtre"><span class="icon">picture_in_picture_alt</span></button>
+            <button class="btn btn-sm btn-icon" title="Supprimer le post-it — demandé seulement s'il contient du texte" data-confirm-title="Supprimer ce post-it ?" data-confirm-body="Son texte est perdu. Pour le garder sans l'afficher, ferme-le plutôt." data-confirm-ok="Supprimer" data-confirm-danger><span class="icon">delete</span></button>
+            <button class="btn btn-sm btn-icon" title="Fermer — le contenu est gardé" data-close-note><span class="icon">close</span></button>
+          </header>
+          <div class="body">
+            <textarea aria-label="Note">SGBX : push PM rejeté sous 2,46, voir si l'open tient au-dessus de 1,90.</textarea>
+          </div>
+        </section>
+
+        <!-- #521 : un deuxième post-it, fermé — il reste dans le menu avec son texte. -->
+        <section class="note-window" id="n-postit-2" data-color="green" role="dialog" aria-label="Post-it 2" style="left: 328px; top: 148px" hidden>
+          <header>
+            <span class="icon grip">drag_indicator</span>
+            <span class="title">Post-it 2</span>
+            <span class="swatches" aria-label="Couleur">
+              <button style="background: oklch(0.9 0.08 150)" data-swatch="green" title="Vert" aria-pressed="true"></button>
+              <button style="background: oklch(0.9 0.06 240)" data-swatch="blue" title="Bleu" aria-pressed="false"></button>
+              <button style="background: oklch(0.93 0.09 95)" data-swatch="yellow" title="Jaune" aria-pressed="false"></button>
+              <button style="background: oklch(0.88 0.08 25)" data-swatch="red" title="Rouge" aria-pressed="false"></button>
+            </span>
+            <button class="btn btn-sm btn-icon" title="Supprimer le post-it"><span class="icon">delete</span></button>
+            <button class="btn btn-sm btn-icon" title="Fermer — le contenu est gardé" data-close-note><span class="icon">close</span></button>
+          </header>
+          <div class="body">
+            <textarea aria-label="Note">Pas de ré-entrée après deux stops sur le même ticker.</textarea>
+          </div>
+        </section>
+
+        <!-- #521 : les tickers à surveiller — Entrée ajoute (en majuscules, sans espaces), un clic retire. -->
+        <section class="note-window" id="n-watch" data-color="blue" role="dialog" aria-label="Tickers à surveiller" style="left: 600px; top: 120px">
+          <header>
+            <span class="icon grip">drag_indicator</span>
+            <span class="title">Tickers à surveiller</span>
+            <span class="swatches" aria-label="Couleur">
+              <button style="background: oklch(0.9 0.08 150)" data-swatch="green" title="Vert" aria-pressed="false"></button>
+              <button style="background: oklch(0.9 0.06 240)" data-swatch="blue" title="Bleu" aria-pressed="true"></button>
+              <button style="background: oklch(0.93 0.09 95)" data-swatch="yellow" title="Jaune" aria-pressed="false"></button>
+              <button style="background: oklch(0.88 0.08 25)" data-swatch="red" title="Rouge" aria-pressed="false"></button>
+            </span>
+            <button class="btn btn-sm btn-icon" title="Détacher dans une fenêtre"><span class="icon">picture_in_picture_alt</span></button>
+            <button class="btn btn-sm btn-icon" title="Fermer — la liste est gardée" data-close-note><span class="icon">close</span></button>
+          </header>
+          <div class="body">
+            <input class="ticker-input" placeholder="Ajouter un ticker, Entrée" aria-label="Ajouter un ticker" />
+            <div class="watch">
+              <button class="ticker" title="Retirer">MLGO <span class="icon icon-sm">close</span></button>
+              <button class="ticker" title="Retirer">ATXG <span class="icon icon-sm">close</span></button>
+              <button class="ticker" title="Retirer">VERB <span class="icon icon-sm">close</span></button>
+            </div>
+          </div>
+        </section>
+
         <!-- #421 : une calculatrice flottante, déplaçable par son en-tête, au-dessus de la page.
              « Détacher » l'envoie dans sa propre fenêtre toujours au premier plan (Document PiP). -->
         <!-- #496 : tout est exprimé en % de l'open, comme le reste de l'app ; le risque en % du solde.
@@ -907,6 +1083,64 @@
               const x = Math.min(Math.max(0, e.clientX - dx), window.innerWidth - box.width);
               const y = Math.min(Math.max(0, e.clientY - dy), window.innerHeight - box.height);
               Object.assign(widget.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' });
+            };
+            const stop = () => {
+              document.removeEventListener('pointermove', move);
+              document.removeEventListener('pointerup', stop);
+            };
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', stop);
+          });
+        });
+      })();
+
+      // Maquette #521 : les notes — chaque fenêtre bascule seule, se déplace par son en-tête, change de couleur.
+      (function () {
+        const menu = document.querySelector('.notes-menu');
+        const tags = () =>
+          menu.querySelectorAll('[data-toggle-note]').forEach((b) => {
+            b.querySelector('.open-tag').hidden = document.getElementById(b.dataset.toggleNote).hidden;
+          });
+        document.addEventListener('click', (event) => {
+          if (event.target.closest('[data-toggle-notes]')) menu.hidden = !menu.hidden;
+          else if (!event.target.closest('.notes-menu')) menu.hidden = true;
+          const toggle = event.target.closest('[data-toggle-note]');
+          if (toggle) {
+            const win = document.getElementById(toggle.dataset.toggleNote);
+            win.hidden = !win.hidden;
+          }
+          if (event.target.closest('[data-close-note]')) event.target.closest('.note-window').hidden = true;
+          const swatch = event.target.closest('[data-swatch]');
+          if (swatch) {
+            const win = swatch.closest('.note-window');
+            win.dataset.color = swatch.dataset.swatch;
+            win.querySelectorAll('[data-swatch]').forEach((b) => b.setAttribute('aria-pressed', String(b === swatch)));
+          }
+          const chip = event.target.closest('.watch .ticker');
+          if (chip) chip.remove();
+          tags();
+        });
+        document.querySelector('.ticker-input').addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter') return;
+          const ticker = event.target.value.trim().toUpperCase();
+          if (!ticker) return;
+          const chip = document.createElement('button');
+          chip.className = 'ticker';
+          chip.title = 'Retirer';
+          chip.innerHTML = ticker + ' <span class="icon icon-sm">close</span>';
+          document.querySelector('.watch').append(chip);
+          event.target.value = '';
+        });
+        document.querySelectorAll('.note-window').forEach((win) => {
+          win.querySelector('header').addEventListener('pointerdown', (event) => {
+            if (event.target.closest('button') || matchMedia('(max-width: 640px)').matches) return;
+            const box = win.getBoundingClientRect();
+            const dx = event.clientX - box.left;
+            const dy = event.clientY - box.top;
+            const move = (e) => {
+              const x = Math.min(Math.max(0, e.clientX - dx), window.innerWidth - box.width);
+              const y = Math.min(Math.max(0, e.clientY - dy), window.innerHeight - box.height);
+              Object.assign(win.style, { left: x + 'px', top: y + 'px' });
             };
             const stop = () => {
               document.removeEventListener('pointermove', move);

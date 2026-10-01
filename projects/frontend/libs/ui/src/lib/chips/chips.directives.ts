@@ -23,3 +23,23 @@ export class StbChip {
   readonly stbChip = input.required<StbChipVariant>();
   protected readonly hostClass = computed(() => `stb-chip--${this.stbChip()}`);
 }
+
+/**
+ * The surface a chip set lies on, when it is not the page's — apply via `[stbChipSet]` on
+ * `<mat-chip-set>`, `<mat-chip-listbox>` or `<mat-chip-grid>`. Posts a `.stb-chip-set--{surface}`
+ * class ; `chips.scss` re-tints the chips inside it.
+ *
+ *  - `paper` → a light paper whatever the theme (the note windows, #521) : the chips take the
+ *    paper's ink instead of the page's surface, so a dark theme does not drop dark chips on it.
+ */
+export type StbChipSetSurface = 'paper';
+
+@Directive({
+  selector: 'mat-chip-set[stbChipSet], mat-chip-listbox[stbChipSet], mat-chip-grid[stbChipSet]',
+
+  host: { '[class]': 'hostClass()' },
+})
+export class StbChipSet {
+  readonly stbChipSet = input.required<StbChipSetSurface>();
+  protected readonly hostClass = computed(() => `stb-chip-set--${this.stbChipSet()}`);
+}
