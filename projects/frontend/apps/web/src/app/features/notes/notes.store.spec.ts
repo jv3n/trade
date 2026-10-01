@@ -8,7 +8,8 @@ import { NotesStore, WATCHLIST, localDay } from './notes.store';
  * - what is written survives a reload : every post-it's text, the tickers, and per window its
  *   colour, position and open state ;
  * - another day — at the first load, or at the first write of a tab left open past midnight —
- *   empties the open post-its in place, drops the closed ones, and empties the watchlist ;
+ *   empties in place the open post-its ever written in, drops every other one, and empties the
+ *   watchlist ;
  * - closing keeps a post-it with text, an empty one goes ; deleting removes it ;
  * - a ticker is uppercased and trimmed, and never listed twice ;
  * - storage holding anything, or blocked, never breaks the page.
@@ -75,7 +76,9 @@ describe('NotesStore', () => {
     expect(after.tickers()).toEqual(['MLGO']);
   });
 
-  it('a new day empties the open post-its in place, drops the closed ones and empties the list', () => {
+  it('a new day empties the written open post-its in place, drops the closed and the never-written ones, and empties the list', () => {
+    // Recette of v2.10.0-rc1 (#535) : three open post-its went through the night, two never
+    // written in, and the menu kept all three — the empty ones go now.
     const friday = load();
     const open = friday.addPostIt();
     friday.setText(open, 'Pas de ré-entrée après deux stops');
@@ -84,6 +87,7 @@ describe('NotesStore', () => {
     const closed = friday.addPostIt();
     friday.setText(closed, 'SGBX : voir l’open');
     friday.close(closed);
+    friday.addPostIt(); // open, never written in
     friday.toggle(WATCHLIST);
     friday.addTicker('ATXG');
 
@@ -91,10 +95,29 @@ describe('NotesStore', () => {
     const monday = load();
 
     expect(monday.postits()).toEqual([
-      { id: open, text: '', open: true, color: 'red', x: 600, y: 40 },
+      { id: open, text: '', written: true, open: true, color: 'red', x: 600, y: 40 },
     ]);
     expect(monday.tickers()).toEqual([]);
     expect(monday.isOpen(WATCHLIST)).toBe(true);
+  });
+
+  // Review of #536 : kept only while it held text, a post-it written on Monday came back empty on
+  // Tuesday and went at Wednesday's turn, colour and place with it.
+  it('a post-it written in once keeps its place through a quiet day', () => {
+    const monday = load();
+    const rules = monday.addPostIt();
+    monday.setText(rules, 'Règles du jour');
+    monday.setColor(rules, 'red');
+    monday.moveTo(rules, 900, 500);
+
+    vi.setSystemTime(new Date(2026, 8, 22, 7, 45)); // Tuesday, nothing written
+    load();
+    vi.setSystemTime(new Date(2026, 8, 23, 7, 45)); // Wednesday
+    const wednesday = load();
+
+    expect(wednesday.postits()).toEqual([
+      { id: rules, text: '', written: true, open: true, color: 'red', x: 900, y: 500 },
+    ]);
   });
 
   // A trading tab stays open overnight : the first keystroke stamped yesterday's notes with today's
@@ -178,7 +201,7 @@ describe('NotesStore', () => {
     const notes = load();
 
     expect(notes.postits()).toEqual([
-      { id: 'p-1', text: '', open: false, color: 'yellow', x: null, y: null },
+      { id: 'p-1', text: '', written: false, open: false, color: 'yellow', x: null, y: null },
     ]);
     expect(notes.tickers()).toEqual(['MLGO']);
     expect(notes.window(WATCHLIST)).toEqual({ open: false, color: 'blue', x: null, y: null });

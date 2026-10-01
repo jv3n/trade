@@ -20,6 +20,8 @@ export interface NoteWindowState {
 export interface PostIt extends NoteWindowState {
   id: string;
   text: string;
+  /** Written in at least once — what keeps its place from one day to the next, empty or not. */
+  written: boolean;
 }
 
 export interface NotesState {
@@ -41,8 +43,9 @@ export function localDay(now: Date = new Date()): string {
  * The notes of the day (#521) — post-its, as many as wanted, and one ticker watchlist : scraps of
  * paper for the session. Kept in the browser, like the calculators' settings : no endpoint, they
  * die tonight. On another day — at the first load, or at the first write of a tab left open past
- * midnight — the open post-its come back empty in place, the closed ones go, and the watchlist is
- * emptied ; every window kept keeps its colour, its position and whether it was open.
+ * midnight — an open post-it that held text comes back empty in place, every other one goes, and
+ * the watchlist is emptied ; every window kept keeps its colour, its position and whether it was
+ * open.
  *
  * Known limit, accepted : the notes live in one browser.
  */
@@ -71,7 +74,10 @@ export class NotesStore {
     const id = newId();
     this.write((s) => ({
       ...s,
-      postits: [...s.postits, { id, text: '', open: true, color: 'yellow', x: null, y: null }],
+      postits: [
+        ...s.postits,
+        { id, text: '', written: false, open: true, color: 'yellow', x: null, y: null },
+      ],
     }));
     this.front.set(id);
     return id;
@@ -89,12 +95,12 @@ export class NotesStore {
   }
 
   /**
-   * Closed, a post-it stays in the menu with its text — an empty one carries nothing, so it goes :
-   * otherwise every « Nouveau post-it » of every morning would stay a line of the menu.
+   * Closed, a post-it stays in the menu with its text — one never written in carries nothing, so it
+   * goes : otherwise every « Nouveau post-it » of every morning would stay a line of the menu.
    */
   close(key: string): void {
     const postit = this._state().postits.find((p) => p.id === key);
-    if (postit && !postit.text.trim()) {
+    if (postit && !postit.written && !postit.text.trim()) {
       this.removePostIt(key);
       return;
     }
@@ -113,7 +119,9 @@ export class NotesStore {
   setText(id: string, text: string): void {
     this.write((s) => ({
       ...s,
-      postits: s.postits.map((p) => (p.id === id ? { ...p, text } : p)),
+      postits: s.postits.map((p) =>
+        p.id === id ? { ...p, text, written: p.written || !!text.trim() } : p,
+      ),
     }));
   }
 
@@ -150,11 +158,17 @@ export class NotesStore {
   }
 }
 
-/** Another day : the open post-its come back empty in place, the closed ones go, the list empties. */
+/**
+ * Another day : an open post-it ever written in comes back empty in place — a red one kept bottom
+ * right for the day's rules stays there through a quiet morning — and every other one goes, so
+ * post-its never written in do not pile up from day to day.
+ */
 function turnThePage(state: NotesState, today: string): NotesState {
   return {
     day: today,
-    postits: state.postits.filter((p) => p.open).map((p) => ({ ...p, text: '' })),
+    postits: state.postits
+      .filter((p) => p.open && (p.written || p.text.trim()))
+      .map((p) => ({ ...p, text: '', written: true })),
     tickers: [],
     watchlist: state.watchlist,
   };
@@ -179,11 +193,15 @@ function readState(today: string): NotesState {
     day: typeof stored.day === 'string' ? stored.day : today,
     postits: (Array.isArray(stored.postits) ? stored.postits : [])
       .filter((p): p is PostIt => typeof p?.id === 'string')
-      .map((p) => ({
-        id: p.id,
-        text: typeof p.text === 'string' ? p.text : '',
-        ...readWindow(p, 'yellow'),
-      })),
+      .map((p) => {
+        const text = typeof p.text === 'string' ? p.text : '';
+        return {
+          id: p.id,
+          text,
+          written: typeof p.written === 'boolean' ? p.written : !!text.trim(),
+          ...readWindow(p, 'yellow'),
+        };
+      }),
     tickers: Array.isArray(stored.tickers)
       ? stored.tickers.filter((t): t is string => typeof t === 'string')
       : [],

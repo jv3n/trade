@@ -690,8 +690,8 @@ leaving the page. Not a journal entry, not a stat — **a scrap of paper that li
   post-it »**, then every post-it of the day (named by its first line, « Post-it n » while empty)
   and the watchlist, each **toggled on its own** and marked « ouvert » while it is.
   - **Post-its, as many as wanted** — each a free-text window with its own colour and place. What
-    is typed is kept. « Fermer » keeps a post-it in the menu with its text — an empty one carries
-    nothing, so it goes ; **« Supprimer »** removes it — confirmed only when it holds text.
+    is typed is kept. « Fermer » keeps a post-it in the menu with its text — one never written in
+    carries nothing, so it goes ; **« Supprimer »** removes it — confirmed only when it holds text.
   - **Tickers à surveiller** — a list : a ticker typed then Enter adds it, a click on its chip removes
     it. Uppercased and trimmed like everywhere else ; a ticker already in the list is not added twice.
 - Both are **small floating windows**, dragged by their header and kept inside the window, under the
@@ -707,9 +707,10 @@ leaving the page. Not a journal entry, not a stat — **a scrap of paper that li
   language, which follow the user from one machine to the next, these notes die tonight. **Known
   limit, accepted** : they live in one browser — opened on the other machine, they are not there.
 - **Emptied on a new day** : the store carries the date it was written on. On another day — at the
-  first load, or at the first keystroke of a tab left open past midnight — the **open** post-its
-  come back **empty** in place, the closed ones go, and the watchlist is emptied ; each window kept
-  keeps its colour, its position and its open state.
+  first load, or at the first keystroke of a tab left open past midnight — an **open** post-it
+  **ever written in** comes back **empty** in place (a « règles du jour » kept red in its corner
+  stays there through a quiet morning), every other one goes (closed, or never written in), and the
+  watchlist is emptied ; each window kept keeps its colour, its position and its open state.
 - **A window always comes back in reach** : a position dropped on a big screen is brought back
   inside a smaller one, and the windows follow a resize — the header stays grabbable. The day is the **local** date : premarket starts at 04:00 and the session
   ends at 20:00, midnight never cuts a session in two.
