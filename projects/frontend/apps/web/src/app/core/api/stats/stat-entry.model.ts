@@ -11,6 +11,9 @@ import { Pattern } from '../shared/pattern.model';
  * four prices of a double top for a DT stat. No percentage is stored : gap, premarket push, the
  * session percentages and the double top legs are derived by `features/stats/stats.math`.
  */
+/** Why a stat was not the setup (#499) : a DT whose retest took the top, a price off the sheet. */
+export type OutOfPatternReason = 'RETEST_TOOK_TOP' | 'PRICE_OUT_OF_RANGE';
+
 export interface StatEntry {
   id: string;
   /** The candidate this stat came from — null once that candidate is deleted. */
@@ -67,6 +70,11 @@ export interface StatEntry {
    * double top prices and their times on a DT), which alone don't tick it.
    */
   completed: boolean;
+  /**
+   * Why the recorded prices say this was not the setup (#499) — empty when nothing does. Computed by
+   * the backend, never ticked ; the stat still counts in every KPI.
+   */
+  outOfPattern: OutOfPatternReason[];
 
   // ---- Journal link (#193) ----
   /**
@@ -91,7 +99,7 @@ export interface StatTradeLink {
 /** Update payload — the completion panel sends the whole row back (premarket + session + flags). */
 export type StatEntryInput = Omit<
   StatEntry,
-  'id' | 'candidateId' | 'completed' | 'trades' | 'createdAt' | 'updatedAt'
+  'id' | 'candidateId' | 'completed' | 'outOfPattern' | 'trades' | 'createdAt' | 'updatedAt'
 >;
 
 /** Completion status a listing can be narrowed to. Mirrors the backend `StatStatus`. */
@@ -109,6 +117,8 @@ export interface StatEntryFilter {
   status?: StatStatus | null;
   /** True keeps the no-push days only. */
   noPush?: boolean | null;
+  /** True keeps the stats flagged out of pattern only (#499) — combines with every other axis. */
+  outOfPattern?: boolean | null;
 }
 
 /**

@@ -60,6 +60,7 @@ describe('HttpStatsRepository', () => {
         dateTo: new Date(2026, 8, 30),
         pattern: 'GUS',
         status: 'TO_COMPLETE',
+        outOfPattern: true,
       })
       .subscribe();
 
@@ -69,6 +70,7 @@ describe('HttpStatsRepository', () => {
     expect(req.request.params.get('dateTo')).toBe('2026-09-30');
     expect(req.request.params.get('pattern')).toBe('GUS');
     expect(req.request.params.get('status')).toBe('TO_COMPLETE');
+    expect(req.request.params.get('outOfPattern')).toBe('true');
     req.flush(wirePageFixture([]));
   });
 
@@ -297,6 +299,7 @@ describe('HttpStatsRepository', () => {
       noPush: false,
       highInstitutions: false,
       completed: true,
+      outOfPattern: [],
       trades: [],
       createdAt: '2026-09-17T12:00:00Z',
       updatedAt: '2026-09-17T21:00:00Z',

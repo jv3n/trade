@@ -9,7 +9,7 @@
   </header>
 
   <!-- KPIs — computed by the backend over the filtered set, not the current page (#195). -->
-  <section class="kpi-row">
+  <section class="kpi-row kpi-row--five">
     <div class="card kpi">
       <div class="kpi__label">{{ 'journal.kpi.pnl' | translate }}</div>
       @if (summary(); as s) {
@@ -80,6 +80,37 @@
           } @else {
             {{ 'journal.kpi.allTraded' | translate }}
           }
+        </div>
+      } @else {
+        <div class="kpi__value">—</div>
+      }
+    </div>
+
+    <!-- A discipline number (#499), beside the P&L, never mixed into it. -->
+    <div
+      class="card kpi"
+      data-testid="out-of-pattern"
+      [matTooltip]="'journal.kpi.outOfPatternHint' | translate"
+    >
+      <div class="kpi__label">{{ 'journal.kpi.outOfPattern' | translate }}</div>
+      @if (summary(); as s) {
+        <div
+          class="kpi__value"
+          [class.profit-positive]="s.outOfPatternPnl > 0"
+          [class.profit-negative]="s.outOfPatternPnl < 0"
+        >
+          {{ s.outOfPatternPnl | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
+        </div>
+        <div class="kpi__sub">
+          {{
+            'journal.kpi.outOfPatternSub'
+              | plural: s.outOfPatternCount
+              | translate
+                : {
+                    count: s.outOfPatternCount,
+                    inRules: (s.inRulesPnl | number: '1.2-2'),
+                  }
+          }}
         </div>
       } @else {
         <div class="kpi__value">—</div>

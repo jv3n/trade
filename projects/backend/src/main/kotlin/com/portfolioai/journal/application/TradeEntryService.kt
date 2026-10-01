@@ -10,6 +10,7 @@ import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.application.dto.TradeLinkDto
 import com.portfolioai.journal.application.dto.toDto
 import com.portfolioai.journal.application.dto.toLinkDto
+import com.portfolioai.journal.domain.OutOfPatternStats
 import com.portfolioai.journal.domain.TradeAttachment
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
@@ -49,6 +50,7 @@ class TradeEntryService(
   private val attachmentRepo: TradeAttachmentRepository,
   private val authService: AuthService,
   private val events: ApplicationEventPublisher,
+  private val outOfPatternStats: OutOfPatternStats,
 ) {
 
   @Transactional(readOnly = true)
@@ -115,9 +117,10 @@ class TradeEntryService(
 
   /**
    * KPIs over the **whole filtered set**, not the current page : realized P&L, win rate, average
-   * win / loss and profit factor (#195). Loads the filtered rows and folds them in memory — a
-   * personal journal counts in the hundreds of rows a year, and the alternative (four aggregate
-   * queries) would duplicate the retained-P&L rule in SQL.
+   * win / loss and profit factor (#195), and the P&L of the trades taken on out-of-pattern stats
+   * beside the in-rules one (#499). Loads the filtered rows and folds them in memory — a personal
+   * journal counts in the hundreds of rows a year, and the alternative (four aggregate queries)
+   * would duplicate the retained-P&L rule in SQL.
    */
   @Transactional(readOnly = true)
   fun summarise(filter: TradeEntryFilter): JournalSummaryDto {
@@ -128,6 +131,9 @@ class TradeEntryService(
     val losses = realized.filter { it.signum() < 0 }
     val winSum = wins.fold(BigDecimal.ZERO, BigDecimal::add)
     val lossSum = losses.fold(BigDecimal.ZERO, BigDecimal::add)
+    val closed = rows.filter { it.retainedProfit != null }
+    val outIds = outOfPatternStats.among(closed.map { it.statEntryId }.toSet())
+    val (outOfPattern, inRules) = closed.partition { it.statEntryId in outIds }
     return JournalSummaryDto(
       tradeCount = realized.size,
       retainedPnl = realized.fold(BigDecimal.ZERO, BigDecimal::add),
@@ -139,6 +145,9 @@ class TradeEntryService(
       // No loser yet : the ratio is undefined, not infinite — the front shows a dash.
       profitFactor =
         if (losses.isEmpty()) null else winSum.divide(lossSum.abs(), 2, RoundingMode.HALF_UP),
+      outOfPatternCount = outOfPattern.size,
+      outOfPatternPnl = outOfPattern.sumOf { it.retainedProfit!! },
+      inRulesPnl = inRules.sumOf { it.retainedProfit!! },
     )
   }
 

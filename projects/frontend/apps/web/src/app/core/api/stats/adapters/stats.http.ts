@@ -6,6 +6,7 @@ import { TradeEntryWireDto, tradeEntryFromWire } from '../../journal/adapters/jo
 import { TradeEntry } from '../../journal/trade-entry.model';
 import { Pattern } from '../../shared/pattern.model';
 import {
+  OutOfPatternReason,
   PageRequest,
   PagedResult,
   StatEntry,
@@ -55,6 +56,7 @@ interface StatEntryWireDto {
   noPush: boolean;
   highInstitutions: boolean;
   completed: boolean;
+  outOfPattern: OutOfPatternReason[];
   trades: StatTradeLink[];
   createdAt: string;
   updatedAt: string;
@@ -63,7 +65,7 @@ interface StatEntryWireDto {
 /** Body of `PUT /api/stats/{id}` — the backend `StatEntryRequest`. */
 type StatEntryWireRequest = Omit<
   StatEntryWireDto,
-  'id' | 'candidateId' | 'completed' | 'trades' | 'createdAt' | 'updatedAt'
+  'id' | 'candidateId' | 'completed' | 'outOfPattern' | 'trades' | 'createdAt' | 'updatedAt'
 >;
 
 // `parseISO('2026-06-04')` → midnight LOCAL (no UTC shift) ; `parseISO('…Z')` → instant. Same
@@ -125,6 +127,7 @@ function buildFilterParams(filter?: StatEntryFilter): HttpParams {
   if (filter.pattern) params = params.set('pattern', filter.pattern);
   if (filter.status) params = params.set('status', filter.status);
   if (filter.noPush) params = params.set('noPush', true);
+  if (filter.outOfPattern) params = params.set('outOfPattern', true);
   return params;
 }
 

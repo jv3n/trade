@@ -50,6 +50,7 @@ import {
 } from 'rxjs';
 import { DEFAULT_PATTERN, PATTERNS, Pattern } from '../../core/api/shared/pattern.model';
 import {
+  OutOfPatternReason,
   StatEntry,
   StatEntryFilter,
   StatEntryInput,
@@ -179,6 +180,13 @@ export interface StatRow extends StatEntry {
  * of the filter, singled out to compare their premarket with the days that pushed.
  */
 export type StatTab = StatStatus | 'NO_PUSH' | null;
+
+/**
+ * Filters on a condition the app derives (#499) — toggles beside the tabs, not tabs : they combine
+ * with any of them, and with each other.
+ */
+export type DerivedFilter = 'OUT_OF_PATTERN';
+const DERIVED_FILTERS: readonly DerivedFilter[] = ['OUT_OF_PATTERN'];
 const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_PUSH'];
 
 /**
@@ -259,6 +267,12 @@ const COLUMNS: Record<StatView, readonly string[]> = {
 
 function tabFromQuery(value: string | null): StatTab {
   return STATUS_TABS.find((tab) => tab !== null && tab === value) ?? null;
+}
+
+/** `?derived=OUT_OF_PATTERN` (repeated or comma-separated) — unknown values are dropped. */
+function derivedFromQuery(values: readonly string[]): readonly DerivedFilter[] {
+  const named = new Set(values.flatMap((value) => value.split(',')));
+  return DERIVED_FILTERS.filter((filter) => named.has(filter));
 }
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -614,6 +628,13 @@ export class StatsPage {
     return tab === 'TO_COMPLETE' || tab === 'COMPLETED' ? 'ALL' : 'GUS';
   });
   readonly status = linkedSignal<StatTab>(() => this.queryTab());
+  readonly derivedFilters = DERIVED_FILTERS;
+  /** Read off `?derived=` like the tab off `?status=` (#499), so a link can carry the toggles. */
+  private readonly queryDerived = toSignal(
+    this.route.queryParamMap.pipe(map((params) => derivedFromQuery(params.getAll('derived')))),
+    { requireSync: true },
+  );
+  readonly derived = linkedSignal<readonly DerivedFilter[]>(() => this.queryDerived());
   /** The views measured like a GUS session — their own tab, cumulative and medians row (#499). */
   readonly sessionView = computed(() => isSessionView(this.view()));
   /** « No push » belongs to the session views : a double top has no push at the open. */
@@ -871,6 +892,18 @@ export class StatsPage {
   setStatus(status: StatTab): void {
     this.status.set(status);
     this.pageIndex.set(0);
+  }
+
+  setDerived(filters: readonly DerivedFilter[]): void {
+    this.derived.set(filters);
+    this.pageIndex.set(0);
+  }
+
+  /** The out-of-pattern tag's tooltip : what the recorded prices say, reason by reason (#499). */
+  outOfPatternHint(reasons: readonly OutOfPatternReason[]): string {
+    return reasons
+      .map((reason) => this.translate.instant('stats.outOfPattern.' + reason))
+      .join(' · ');
   }
 
   onSortChange(sort: Sort): void {
@@ -1320,6 +1353,7 @@ export class StatsPage {
       pattern: view === 'ALL' ? null : view,
       status: tab === 'NO_PUSH' ? null : tab,
       noPush: tab === 'NO_PUSH' || null,
+      outOfPattern: this.derived().includes('OUT_OF_PATTERN') || null,
     };
   }
 

@@ -165,6 +165,23 @@ describe('JournalPage', () => {
     expect(last.patterns).toBeUndefined();
   });
 
+  // #499 : a discipline number, beside the P&L — together they make it.
+  it('shows the out-of-pattern P&L with the in-rules one beside it', async () => {
+    summary.mockReturnValue(
+      of(makeSummary({ outOfPatternCount: 1, outOfPatternPnl: -233.55, inRulesPnl: 985.4 })),
+    );
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const card = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="out-of-pattern"]',
+    );
+    expect(card?.querySelector('.kpi__value')?.textContent).toContain('-233.55');
+    expect(card?.querySelector('.kpi__value')?.classList).toContain('profit-negative');
+  });
+
   it('a failing summary empties its cards without taking the listing down', () => {
     summary.mockReturnValue(throwError(() => new Error('500')));
     nextPage = makePage([makeDay([makeTrade()])], 1);
@@ -432,6 +449,9 @@ function makeSummary(overrides: Partial<JournalSummary> = {}): JournalSummary {
     averageWin: 175,
     averageLoss: -149,
     profitFactor: 3.52,
+    outOfPatternCount: 0,
+    outOfPatternPnl: 0,
+    inRulesPnl: 0,
     ...overrides,
   };
 }

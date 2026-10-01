@@ -2,6 +2,7 @@ package com.portfolioai.stats.application.dto
 
 import com.portfolioai.journal.application.dto.TradeLinkDto
 import com.portfolioai.shared.Pattern
+import com.portfolioai.stats.domain.OutOfPatternReason
 import com.portfolioai.stats.domain.StatEntry
 import java.math.BigDecimal
 import java.time.Instant
@@ -58,6 +59,8 @@ data class StatEntryDto(
   val noPush: Boolean,
   val highInstitutions: Boolean,
   val completed: Boolean,
+  /** Why the recorded prices say this was not the setup (#499) — empty when nothing does. */
+  val outOfPattern: List<OutOfPatternReason>,
   val trades: List<TradeLinkDto>,
   val createdAt: Instant,
   val updatedAt: Instant,
@@ -96,6 +99,7 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     noPush = noPush,
     highInstitutions = highInstitutions,
     completed = isCompleted,
+    outOfPattern = outOfPattern,
     trades = trades,
     createdAt = createdAt,
     updatedAt = updatedAt,

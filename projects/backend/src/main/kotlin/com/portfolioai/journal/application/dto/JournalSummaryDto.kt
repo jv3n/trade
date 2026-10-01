@@ -20,6 +20,10 @@ import java.math.BigDecimal
  * @param averageLoss Average of the losers — **negative**, null with no loser.
  * @param profitFactor Σ wins ÷ |Σ losses|, null with no loser (an undefined ratio, not an infinite
  *   one).
+ * @param outOfPatternCount Closed trades taken on a stat the recorded prices say was not the setup
+ *   (#499) — part of [tradeCount].
+ * @param outOfPatternPnl Σ their retained P&L — a discipline number, never a strategy one.
+ * @param inRulesPnl Σ the retained P&L of the others ; with [outOfPatternPnl], [retainedPnl].
  */
 data class JournalSummaryDto(
   val tradeCount: Int,
@@ -30,4 +34,7 @@ data class JournalSummaryDto(
   val averageWin: BigDecimal?,
   val averageLoss: BigDecimal?,
   val profitFactor: BigDecimal?,
+  val outOfPatternCount: Int,
+  val outOfPatternPnl: BigDecimal,
+  val inRulesPnl: BigDecimal,
 )
