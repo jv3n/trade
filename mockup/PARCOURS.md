@@ -61,10 +61,11 @@ Candidate (morning) ──[ action : « → GUS » / « → DT » ]──▶ Sta
 - A candidate that is not promoted stays in the day's history.
 - **One stat per pattern** (#428) : a candidate promoted as a GUS in the morning can form a
   **double top** late in the morning — two setups on the same ticker and day, so a GUS stat *and* a
-  DT stat, each with its own trade if taken.
-- **Several trades per stat** (#500) : a **trade is one round-trip** — it ends when the position is
-  back to flat. Short, cover, short again on the same ticker is two trades on the same stat, each
-  with its own entry, exit, duration and P&L.
+  DT stat, each with its own trades if taken. A stat of another pattern can also be **born from an
+  existing one** (#507) : same day, same ticker, the day's prices carried over.
+- **Several trades per stat** (#500) : I take the same name more than once in a day, short or long,
+  and **I say where a trade ends** — each one is created by hand (« + Trade »), with its own
+  direction, executions, P&L, post-mortem, screenshot and account line.
 
 ---
 
@@ -259,49 +260,37 @@ the journal). As a consequence : no real-time screen, no live position tracking.
 
 - **Only through the « → Trade » action button** on a stat row. No blank trade can be created from
   the journal.
+- **Several trades per stat** (#500) : the button stays on the stat once it has a trade (« + Trade »)
+  and creates the next one, empty — same date, ticker and pattern. Each trade has its **own
+  direction** : one stat can hold a short and a long.
+  Another trade under **another pattern** (a GUS then a DT, or a discretionary long) goes through
+  another stat, born from this one (« Same ticker, another pattern », #507).
 - The trade **inherits the stat's pattern** and shows its context (premarket + session), read-only.
-  If the stat's pattern is changed later, **the trade follows** (#393) : it is a filing correction,
+  If the stat's pattern is changed later, **the trades follow** (#393) : it is a filing correction,
   not a different decision.
 
 **What I type in on the trade** :
 
 | Block | Content |
 |-------|---------|
-| Executions | Time, kind (short / cover), share count, price — one row per TradeZero fill |
+| Executions | Time, kind (entry / exit), share count, price — one row per TradeZero fill |
 | Post-mortem | "What happened" + "Mistake / to improve" |
 | Chart screenshot | One image (PNG / JPEG / WebP, 5 MB max) |
 
 **What the app computes** : the **max position** (the most shares held at once — not the sum of the
-entries, a scale-in then a partial cover then a re-add counts the peak), average entry / exit (and
-their distance to the open), P&L in $ and %, duration of the trade.
+entries : a scale-in, a partial cover and a re-add count the peak), average entry / exit (and their
+distance to the open), P&L in $ and %, duration of the trade (first entry → last exit).
 
-**One trade per round-trip** (#500) : the executions of a ticker can be typed one after the other,
-as they read on the TradeZero statement. While typing, the table marks each **return to flat** (« à
-plat — la suite devient le trade 2 ») ; **saving cuts there** : the fills up to the first flat stay on
-the sheet, each following round-trip becomes a new trade on the same stat (toast « 2 trades créés »),
-and every part's figures — average entry / exit, max position, P&L, duration — are recomputed from its
-own fills only. The post-mortem and the screenshot stay on the sheet being edited, the new trades
-start empty. Fills that do not come back to flat make the last part an **open trade** : no exit, no
-P&L until it closes (a position carried overnight is not modelled — the day is the stat's). Since a
-trade never goes through flat, its duration is first entry → last exit : time in the market only.
-The header lists the stat's trades (number and retained P&L), the stats row shows one P&L tag per
-trade and the journal one row per trade (« SDEV 2/3 »). The « → Trade » button of a stat only
-creates the first one ; the next ones are born from the split. Deleting a trade leaves the others and
-the stat.
+**No automatic split** (#500) : the app never decides where a trade ends. An exit followed by a
+re-entry and an add after the stock pushes higher are the same sequence of fills to it, and « back to
+flat » stops meaning anything once a long and a short can be taken on the same ticker in a day. So the
+executions saved on a trade stay on it, whatever they do — a second trade is one I create. What a
+trade contains is my call, and so is what its duration covers.
 
-**The real P&L is spread over the parts** : TradeZero gives it per ticker and day, not per
-round-trip, so a real P&L typed on a sheet that gets split covers all of its parts. Each part gets its
-computed P&L plus a share of the gap (real − computed) **pro rata of its shares** — the gap is fees,
-and fees follow volume — the rounding remainder on the last part. The account total is the typed
-figure to the cent, each part with its own account movement. On a trade that is already one of
-several, the real P&L typed is that trade's own. It can only be typed once every part is closed.
-
-**Migration of the merged trades** (#500) : the existing trades are cut the same way, executions
-untouched — walked in order, cut at every return to flat (the seven September trades become
-thirteen), and a real P&L already typed is spread by the rule above, so the account balance does not
-move. The post-mortem and the screenshot stay on the first part, which is not always the one they
-are about (SDEV's story is its third round-trip, the re-entry at 2.706) : moving them is done by hand,
-by copying the text to the right trade.
+**The trades of a stat** : the trade sheet lists them in its header (number and retained P&L, the
+total beside, the current one outlined) ; the stats row shows one P&L tag per trade ; deleting a trade
+leaves the others, the stat and their account lines — the balance moves by that trade's retained P&L
+alone. The numbering is positional, recomputed when a trade goes : not an identity.
 
 **Adjustable P&L** : the P&L is computed from the executions, but I can type in the **real P&L** of
 the TradeZero statement to absorb the broker's fees and rounding (a few cents to a few dollars — I
@@ -317,6 +306,17 @@ silently.
 
 **Removed** : the pre-trade checklist, the "execution" block (front / back side, short on
 resistance, exit strategy), play A / B, the risk indicators (budget, R multiple).
+
+**The journal lists one row per ticker and per day** (#500) : the trades of a day on one name — of
+one stat or of two (a GUS and a DT, #507) — are one row, carrying a chip per pattern and per
+direction, the number of trades, the **max position** (the largest of the day's trades — never a
+netted or summed exposure : a short of 350 and a long of 200 add up to nothing real), the day's P&L
+and the **cumulated duration** (the sum of the trades' durations — not time in the market, since a
+trade may now contain a flat stretch). Average entry, average exit and P&L % stay : filled on a
+single-trade row and on each trade of an opened row, blank on a row carrying several. A single-trade
+row opens its sheet, as before ; a row with several opens onto its trades, each a link to its sheet.
+Sorting, filtering and paging count rows, not trades ; the **CSV export stays one line per trade** —
+it is a dump the import reads back.
 
 **Screens** : [`journal.html`](journal.html) (list + KPIs, pattern filter) and
 [`trade.html`](trade.html) (the trade sheet).
@@ -390,6 +390,14 @@ shared between users — a stat always belongs to its user.
   and a GUS that turns into a double top is a second stat, not a re-filing. The row
   moves under the pattern filter and the KPIs and push references follow ; a trade born from the
   stat takes the new pattern too. The candidate is not concerned : it has no pattern.
+- **« Same ticker, another pattern »** (#507) : at the head of the premarket card, a stat gives birth
+  to another one — same day, same ticker, a pattern still free for them (one stat per pattern, as
+  ever). **The day's prices are carried over** (previous close, premarket, open, HOD / LOD / EOD) :
+  they belong to the day, not to the setup ; what is specific to the pattern starts empty. It is an
+  ordinary stat from there : its own check, its own trades, its own line in its pattern's
+  statistics. This is how a trade under another pattern gets recorded — the GUS in the morning, a DT
+  or a discretionary long in the afternoon : a trade always takes its stat's pattern, so a different
+  setup is a different stat. Asks for confirmation (it creates something).
 - **« New stat »** opens the two cards empty, with the **date** (any day up to today, never a future
   one), the pattern and the ticker on top : going through the charts, I find a ticker that matched
   my pattern a few days ago and never made it to my candidates — leaving it out would bias the stats
@@ -497,7 +505,8 @@ whose low precedes its top is a typo.
 being filled (live percentage preview, fields saved one by one with the save state next to each
 title, "n / 5 prices" — 4 with « No push » — and the check button), a « New stat » button, a table
 with the premarket data, the session data (partial for the stats in progress),
-the flags, the check column, and a « → Trade » button or a link to the existing trade. The
+the flags, the check column, and a « → Trade » button or one P&L tag per trade, each a link to it,
+with « + » for the next one. The
 « SGBX · GUS / SGBX · DT » switch shows the two panels of one candidate's two stats, the GUS / DT /
 All switch the three views of the page.
 
@@ -729,8 +738,8 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
     **filtered set**, never the displayed page. The card shows the total beside the count, so
     « completed » can't be mistaken for « all of them ».
   - a **counted trade** is one carrying a **retained P&L** (closed, or with a broker P&L typed on
-    it). An open position has none, so the journal's KPI card counts fewer trades than its table
-    lists rows — and says « closed trades » for that reason.
+    it). An open position has none, so the journal's KPI card counts the closed trades — and says
+    « closed trades » — while its table lists ticker-days, several trades to a row (#500).
   - a **break-even trade** counts in the journal but leaves **no line on the account** : it moved
     nothing, and the ledger records balance moves. It is the one case where the two counts differ
     by design, so the account says « trades on the account ».

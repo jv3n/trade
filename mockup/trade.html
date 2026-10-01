@@ -39,7 +39,7 @@
             </p>
           </div>
           <div class="actions">
-            <button class="btn" data-confirm-title="Supprimer le trade SDEV 3 du 29/09 ?" data-confirm-body="Définitif : les exécutions, le post-mortem et la capture de ce trade sont supprimés, et le mouvement de −684,42 $ disparaît du compte. Les deux autres trades SDEV du jour et la stat sont conservés." data-confirm-ok="Supprimer le trade" data-confirm-danger><span class="icon">delete</span> Supprimer</button>
+            <button class="btn" data-confirm-title="Supprimer le trade SDEV 3 du 29/09 ?" data-confirm-body="Définitif : les exécutions, le post-mortem et la capture de ce trade sont supprimés, et le mouvement de −684,42 $ disparaît du compte. Les deux autres trades SDEV du jour, leurs lignes au compte et la stat sont conservés : le solde ne bouge que de ce trade." data-confirm-ok="Supprimer le trade" data-confirm-danger><span class="icon">delete</span> Supprimer</button>
           </div>
         </header>
 
@@ -155,38 +155,6 @@
         </section>
 
         <section class="card" style="margin-bottom: 16px">
-          <h2>Pendant la saisie — retour à plat <span class="hint">illustration : les exécutions de la journée tapées à la suite sur le trade 1</span></h2>
-          <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Heure</th>
-                <th>Type</th>
-                <th class="num">Actions</th>
-                <th class="num">Prix</th>
-                <th class="num">Position</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>10:33</td><td><span class="tag tag-accent">Short</span></td><td class="num">3 000</td><td class="num">2,246</td><td class="num">3 000</td></tr>
-              <tr><td>10:48</td><td><span class="tag">Cover</span></td><td class="num">3 000</td><td class="num">2,32</td><td class="num">0</td></tr>
-              <tr><td colspan="5" class="muted" style="text-align: center; font-size: 12px"><span class="icon icon-sm">content_cut</span> À plat — la suite devient le <b>trade 2</b> à l'enregistrement</td></tr>
-              <tr><td>11:00</td><td><span class="tag tag-accent">Short</span></td><td class="num">3 000</td><td class="num">2,236</td><td class="num">3 000</td></tr>
-              <tr><td>11:04</td><td><span class="tag">Cover</span></td><td class="num">3 000</td><td class="num">2,345</td><td class="num">0</td></tr>
-              <tr><td colspan="5" class="muted" style="text-align: center; font-size: 12px"><span class="icon icon-sm">content_cut</span> À plat — la suite devient le <b>trade 3</b> à l'enregistrement</td></tr>
-              <tr><td>11:08</td><td><span class="tag tag-accent">Short</span></td><td class="num">3 000</td><td class="num">2,706</td><td class="num">3 000</td></tr>
-              <tr><td>11:09</td><td><span class="tag">Cover</span></td><td class="num">3 000</td><td class="num">2,895</td><td class="num">0</td></tr>
-            </tbody>
-          </table>
-          </div>
-          <p class="muted" style="margin: 8px 0 0; font-size: 12px">
-            Enregistrer garde les deux premières lignes sur ce trade et crée les trades 2 et 3 sur la même stat
-            (toast « 2 trades créés », les pastilles de l'en-tête apparaissent). Le post-mortem et la capture restent sur ce trade, les nouveaux partent vides.
-            Un P&amp;L réel saisi couvre les trois : l'écart au calculé est réparti au prorata des actions, le total au compte reste celui saisi.
-          </p>
-        </section>
-
-        <section class="card" style="margin-bottom: 16px">
           <h2>Post-mortem</h2>
           <div class="grid grid-2">
             <div class="field">
@@ -207,8 +175,9 @@
 
         <p class="mockup-note">
           Maquette statique — un trade naît d'une stat (bouton « → Trade ») et hérite de son pattern et de son contexte (lecture seule).
-          Un trade est un aller-retour : il se termine quand la position revient à plat. Une stat peut en porter plusieurs (#500) ;
-          l'en-tête les liste, et « Position max » est la plus grosse position tenue à un instant, pas la somme des entrées.
+          Une stat peut porter plusieurs trades, créés un par un (« + Trade » sur la stat, #500), chacun avec son sens, ses
+          exécutions, son P&amp;L réel et son post-mortem : l'app ne découpe jamais un trade d'elle-même. L'en-tête liste les trades
+          de la stat, et « Position max » est la plus grosse position tenue à un instant, pas la somme des entrées.
           On saisit : exécutions, post-mortem, capture. Le P&amp;L est calculé à partir des exécutions, et peut être ajusté à la main
           (frais, arrondis du broker) ; c'est le P&amp;L retenu qui remonte au compte. Le P&amp;L réel ne se saisit qu'une fois la
           position clôturée : tant qu'il reste des actions ouvertes, le champ est grisé (« Une fois la position clôturée »).
