@@ -61,10 +61,11 @@ class StatEntryController(private val service: StatEntryService) {
     @RequestParam(required = false) status: StatStatus? = null,
     @RequestParam(required = false) noPush: Boolean? = null,
     @RequestParam(required = false) outOfPattern: Boolean? = null,
+    @RequestParam(required = false) under1Dollar: Boolean? = null,
     @PageableDefault(size = 50) pageable: Pageable,
   ): Page<StatEntryDto> =
     service.findAllPaged(
-      filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern),
+      filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern, under1Dollar),
       pageable,
     )
 
@@ -84,8 +85,11 @@ class StatEntryController(private val service: StatEntryService) {
     @RequestParam(required = false) status: StatStatus? = null,
     @RequestParam(required = false) noPush: Boolean? = null,
     @RequestParam(required = false) outOfPattern: Boolean? = null,
+    @RequestParam(required = false) under1Dollar: Boolean? = null,
   ): StatSummaryDto =
-    service.summarise(filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern))
+    service.summarise(
+      filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern, under1Dollar)
+    )
 
   /**
    * Creates a stat typed by hand (#326) — premarket, session and flags in one go. A future day →
@@ -172,6 +176,7 @@ class StatEntryController(private val service: StatEntryService) {
     status: StatStatus?,
     noPush: Boolean?,
     outOfPattern: Boolean?,
+    under1Dollar: Boolean?,
   ) =
     StatEntryFilter(
       query = q,
@@ -181,5 +186,6 @@ class StatEntryController(private val service: StatEntryService) {
       status = status,
       noPush = noPush,
       outOfPattern = outOfPattern,
+      under1Dollar = under1Dollar,
     )
 }

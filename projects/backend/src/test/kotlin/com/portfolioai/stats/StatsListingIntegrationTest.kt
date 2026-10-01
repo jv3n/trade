@@ -960,6 +960,46 @@ class StatsListingIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // Derived flags (#499)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the under-a-dollar flag and toggle come from the open, not from a box`() {
+    createCompleted(fullSessionRequest(ticker = "KTTA"))
+    // MULN 10/09 of the mockup : opened at 0.88.
+    createCompleted(
+      fullSessionRequest(ticker = "MULN", tradeDate = DAY.minusDays(7))
+        .copy(
+          openPrice = BigDecimal("0.88"),
+          pushOpenPrice = BigDecimal("0.95"),
+          hodPrice = BigDecimal("0.95"),
+          lodPrice = BigDecimal("0.71"),
+          eodPrice = BigDecimal("0.74"),
+        )
+    )
+
+    val underOne = service.findAllPaged(StatEntryFilter(under1Dollar = true), PageRequest.of(0, 10))
+
+    assertEquals(listOf("MULN"), underOne.content.map { it.ticker })
+    assertTrue(underOne.content.single().under1Dollar)
+    assertEquals(1, service.summarise(gusOnly.copy(under1Dollar = true)).completed)
+  }
+
+  @Test
+  fun `a double top's entry after 11 am follows its retest time, whatever box is sent`() {
+    // SGBX retested at 10:38 — a box sent ticked says nothing, and is not kept.
+    val early = service.create(doubleTopRequest().copy(entryAfter11am = true))
+
+    assertFalse(early.entryAfter11am)
+    assertFalse(repo.findById(early.id).orElseThrow().entryAfter11am, "not stored on a DT")
+
+    val late =
+      service.update(early.id, doubleTopRequest().copy(dtRetestTime = LocalTime.of(11, 12)))
+
+    assertTrue(late.entryAfter11am)
+  }
+
+  // ---------------------------------------------------------------------------
   // KPIs
   // ---------------------------------------------------------------------------
 

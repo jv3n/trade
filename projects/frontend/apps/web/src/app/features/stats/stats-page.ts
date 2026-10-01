@@ -106,7 +106,6 @@ interface SessionModel {
   dtLowTime: string | null;
   dtRetestTime: string | null;
   ssr: boolean;
-  under1Dollar: boolean;
   entryAfter11am: boolean;
   noPush: boolean;
   highInstitutions: boolean;
@@ -185,8 +184,8 @@ export type StatTab = StatStatus | 'NO_PUSH' | null;
  * Filters on a condition the app derives (#499) — toggles beside the tabs, not tabs : they combine
  * with any of them, and with each other.
  */
-export type DerivedFilter = 'OUT_OF_PATTERN';
-const DERIVED_FILTERS: readonly DerivedFilter[] = ['OUT_OF_PATTERN'];
+export type DerivedFilter = 'OUT_OF_PATTERN' | 'UNDER_1_DOLLAR';
+const DERIVED_FILTERS: readonly DerivedFilter[] = ['OUT_OF_PATTERN', 'UNDER_1_DOLLAR'];
 const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_PUSH'];
 
 /**
@@ -276,6 +275,8 @@ function derivedFromQuery(values: readonly string[]): readonly DerivedFilter[] {
 }
 
 const DEFAULT_PAGE_SIZE = 25;
+/** The backend's `StatEntry.entersAfter11am` threshold — `HH:mm` compares as text. */
+const LATE_ENTRY = '11:00';
 
 /** Empty session block — what the panel shows before a stat is picked. */
 const BLANK_SESSION: SessionModel = {
@@ -293,7 +294,6 @@ const BLANK_SESSION: SessionModel = {
   dtLowTime: null,
   dtRetestTime: null,
   ssr: false,
-  under1Dollar: false,
   entryAfter11am: false,
   noPush: false,
   highInstitutions: false,
@@ -488,7 +488,6 @@ function sessionOf(entry: StatEntry): SessionModel {
     dtLowTime: entry.dtLowTime,
     dtRetestTime: entry.dtRetestTime,
     ssr: entry.ssr,
-    under1Dollar: entry.under1Dollar,
     entryAfter11am: entry.entryAfter11am,
     noPush: entry.noPush,
     highInstitutions: entry.highInstitutions,
@@ -762,6 +761,15 @@ export class StatsPage {
     doubleTopLegs({ ...this.session(), previousClose: this.premarket().previousClose }),
   );
 
+  /**
+   * The retest time when it says « after 11 am » (#499) : a double top is entered on its retest, so
+   * the panel shows it rather than a box. Null before 11, or until the time is typed.
+   */
+  readonly doubleTopLateRetest = computed(() => {
+    const retest = this.session().dtRetestTime;
+    return retest !== null && retest >= LATE_ENTRY ? retest : null;
+  });
+
   /** How long each leg of the double top being typed took, live (#469). */
   readonly doubleTopDurations = computed(() => doubleTopDurations(this.session()));
 
@@ -1010,10 +1018,7 @@ export class StatsPage {
     this.session.update((m) => ({ ...m, [field]: value || null }));
   }
 
-  toggleFlag(
-    field: 'ssr' | 'under1Dollar' | 'entryAfter11am' | 'highInstitutions',
-    value: boolean,
-  ): void {
+  toggleFlag(field: 'ssr' | 'entryAfter11am' | 'highInstitutions', value: boolean): void {
     this.session.update((m) => ({ ...m, [field]: value }));
     this.saveSession('session');
   }
@@ -1354,6 +1359,7 @@ export class StatsPage {
       status: tab === 'NO_PUSH' ? null : tab,
       noPush: tab === 'NO_PUSH' || null,
       outOfPattern: this.derived().includes('OUT_OF_PATTERN') || null,
+      under1Dollar: this.derived().includes('UNDER_1_DOLLAR') || null,
     };
   }
 

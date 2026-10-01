@@ -658,7 +658,7 @@
       "eod": "EOD",
       "flags": "Flags",
       "ssr": "SSR",
-      "under1Dollar": "Under $1",
+      "under1Dollar": "< $1",
       "entryAfter11am": "Entry after 11 am",
       "highInstitutions": "Institutions > 20 %",
       "highInstitutionsShort": "Inst. > 20 %",
@@ -818,7 +818,9 @@
       "durationC": "C · {{minutes}} min · total {{total}} min",
       "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
       "medianDuration": "med. {{minutes}} min",
-      "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times"
+      "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times",
+      "lateEntry": "after 11 am — retest at {{time}}",
+      "lateEntryHint": "Derived from the retest time, not ticked : a double top is entered on its retest."
     },
     "sibling": {
       "label": "Same ticker, another pattern",
@@ -838,7 +840,9 @@
     "derived": {
       "label": "Filters derived from the prices",
       "OUT_OF_PATTERN": "Out of pattern",
-      "OUT_OF_PATTERN_HINT": "What the recorded prices say was not the setup — a DT whose retest takes the top back, a GUS outside the sheet's price range. Combines with the tabs."
+      "OUT_OF_PATTERN_HINT": "What the recorded prices say was not the setup — a DT whose retest takes the top back, a GUS outside the sheet's price range. Combines with the tabs.",
+      "UNDER_1_DOLLAR": "Under $1",
+      "UNDER_1_DOLLAR_HINT": "Open under $1 — derived from the price, no longer a box. Combines with the tabs."
     },
     "outOfPattern": {
       "tag": "out of pattern",

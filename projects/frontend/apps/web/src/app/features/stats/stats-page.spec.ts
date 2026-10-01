@@ -995,6 +995,39 @@ describe('StatsPage', () => {
     expect(repo.lastFilter?.status).toBe('COMPLETED');
   });
 
+  it('the « Under $1 » toggle combines with « Out of pattern », and comes from ?derived= too', () => {
+    const { page, repo } = setup({
+      rows: [makeStat()],
+      query: { derived: 'UNDER_1_DOLLAR' },
+    });
+    expect(repo.lastFilter?.under1Dollar).toBe(true);
+    expect(repo.lastFilter?.outOfPattern).toBeNull();
+
+    page.setDerived(['OUT_OF_PATTERN', 'UNDER_1_DOLLAR']);
+    TestBed.tick();
+
+    expect(repo.lastFilter?.under1Dollar).toBe(true);
+    expect(repo.lastFilter?.outOfPattern).toBe(true);
+  });
+
+  // #499 : SDEV's double top ran 11:03 -> 12:13 and the box was left unticked.
+  it('a double top shows « after 11 am » from its retest time, never a box', async () => {
+    // The double top is still to complete : the panel opens on it.
+    const { fixture, page } = setup({ rows: [makeDoubleTop()] });
+    await fixture.whenStable();
+    expect(page.isDoubleTop()).toBe(true);
+
+    page.setSessionTime('dtRetestTime', '10:38');
+    expect(page.doubleTopLateRetest()).toBeNull();
+    page.setSessionTime('dtRetestTime', '11:12');
+    expect(page.doubleTopLateRetest()).toBe('11:12');
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement as HTMLElement;
+    expect(panel.querySelector('[data-testid="dt-late-entry"]')).not.toBeNull();
+    expect(panel.textContent).not.toContain('stats.fields.entryAfter11am');
+  });
+
   it('tags a stat out of pattern, with what the recorded prices say', async () => {
     const { fixture } = setup({
       rows: [

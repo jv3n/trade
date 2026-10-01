@@ -94,7 +94,7 @@ object StatEntryCsvEncoder {
         e.dtRetestTime?.toString().orEmpty(),
         e.ssr.toString(),
         e.under1Dollar.toString(),
-        e.entryAfter11am.toString(),
+        e.entersAfter11am.toString(),
         e.noPush.toString(),
         e.highInstitutions.toString(),
         e.isCompleted.toString(),
