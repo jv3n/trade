@@ -46,7 +46,7 @@ data class StatEntryRequest(
   val dtRetestTime: LocalTime? = null,
   // ---- Flags ----
   val ssr: Boolean = false,
-  val under1Dollar: Boolean = false,
+  /** Ignored on a double top, which derives it from its retest time (#499). */
   val entryAfter11am: Boolean = false,
   /** The stock never pushed after the open — [pushOpenPrice] is then ignored and stored empty. */
   val noPush: Boolean = false,

@@ -81,20 +81,23 @@ class StatEntryCsvEncoderTest {
   fun `the flags render as true or false, never blank`() {
     val csv =
       StatEntryCsvEncoder.encode(
-        listOf(
-          makeEntry(
-            ssr = true,
-            under1Dollar = false,
-            entryAfter11am = true,
-            highInstitutions = true,
-          )
-        )
+        listOf(makeEntry(ssr = true, entryAfter11am = true, highInstitutions = true))
       )
     val cells = dataRowOf(csv).split(",")
 
     // SSR / < $1 / after 11am sit at 23-25, « no push » at 26 and « institutions > 20 % » at 27.
     assertEquals(listOf("true", "false", "true"), cells.subList(23, 26))
     assertEquals("true", cells[27])
+  }
+
+  @Test
+  fun `the derived flags are exported as derived — under a dollar off the open (#499)`() {
+    // MULN 10/09 of the mockup opened at 0.88 : no box any more, the price says it.
+    val muln = makeEntry().apply { openPrice = BigDecimal("0.88") }
+
+    val cells = dataRowOf(StatEntryCsvEncoder.encode(listOf(muln))).split(",")
+
+    assertEquals("true", cells[24])
   }
 
   @Test
@@ -157,7 +160,6 @@ class StatEntryCsvEncoderTest {
     volumeMillions: BigDecimal? = BigDecimal("3.1"),
     locatePerShare: BigDecimal? = BigDecimal("0.03"),
     ssr: Boolean = false,
-    under1Dollar: Boolean = false,
     entryAfter11am: Boolean = false,
     highInstitutions: Boolean = false,
   ): StatEntry =
@@ -180,7 +182,6 @@ class StatEntryCsvEncoderTest {
       lodPrice = if (completed) BigDecimal("3.41") else null,
       eodPrice = if (completed) BigDecimal("3.52") else null,
       ssr = ssr,
-      under1Dollar = under1Dollar,
       entryAfter11am = entryAfter11am,
       highInstitutions = highInstitutions,
     )
