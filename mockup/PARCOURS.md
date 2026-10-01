@@ -97,7 +97,13 @@ lexicon is a reference at hand, outside the trading day. The calculators are not
 float, from the top bar's launcher. The future
 monitoring / charts tab will sit between Journal and Account.
 
-**The morning reconciliation happens right inside step 1** : app balance, typed TradeZero balance,
+**The morning opens on yesterday's stats** (#531) : the app is only opened in the morning, so the
+stats of a session are completed the next day, before anything else. The steps read : 1 complete
+yesterday's stats · 2 reconciliation · 3 candidates · 4 session · 5 the day's trades. The trades
+stay on the day : they are entered once the trading is over, sometimes at 10 am, not the next
+morning.
+
+**The morning reconciliation happens right inside step 2** : app balance, typed TradeZero balance,
 live gap, and a button to validate (or to create the correction when there is a gap). No need to
 open the account page in the morning. Most mornings TradeZero shows the app's own balance : an
 **« Aucun écart »** button next to it reconciles at the computed balance in one click, nothing to
@@ -105,25 +111,26 @@ type, no confirmation (a clean morning creates no correction) (#407).
 
 **Each step's title, text and action describe the same job** (#337) :
 
-- **Capture the candidates** (step 2) is done once **every** captured candidate is in the stats
+- **Capture the candidates** (step 3) is done once **every** captured candidate is in the stats
   sheet — has at least one stat, whatever its pattern (#428) — capturing one is not enough. It carries the « Promote the N left » action : promotion is
   morning work, before the session the stats are filled during.
-- **Complete the stats** (step 4) counts **every** stat still to complete, the earlier days
-  included — a stat left half-filled on a previous day stays visible here until it is ticked. The
-  earlier days are listed in amber (« Overdue : GLND (21/09), KTTA (17/09) »), even in the morning ;
-  the day's own stats are normal until the close. Its single action opens the stats sheet, where the
-  session panel opens on the first stat to complete. The step is done once none is left, any day.
+- **Complete yesterday's stats** (step 1, #531) counts the stats still to complete **before
+  today** — the day's own are not in it : they cannot be completed before their session, and they
+  are tomorrow morning's. **Yesterday** — the previous trading day, so Friday on a Monday — is the
+  normal case ; anything older is overdue and listed in amber (« Overdue : GLND (21/09), KTTA
+  (17/09) ») until it is ticked (#337). Its single action opens the stats sheet, where the session
+  panel opens on the first stat to complete. The step is **done when nothing is left before
+  today** — a morning with nothing to finish is simply done, whatever the day's candidates.
 
 **A quiet day can be done too** (#407). Some days nothing on the radar is worth a candidate, and
 many days end without a trade : « nothing today » is an answer, not a step left undone.
 
-- **« Aucun candidat aujourd'hui »** on step 2, while the day has no candidate : steps 2 and 4 read
-  « nothing today ». Step 4 only while no stat of an earlier day is still to complete — an overdue
-  stat keeps it open, as usual.
+- **« Aucun candidat aujourd'hui »** on step 3, while the day has no candidate : step 3 reads
+  « nothing today ». It says nothing of the stats step, which looks at the days before today.
 - **« Pas de trade aujourd'hui »** on step 5, while the day has no trade : step 5 reads « nothing
   today ». Independent of the first — a day with stats and no trade is the common case.
-- **« Aucun écart »** on step 1, for the morning TradeZero shows the app's balance : a real, clean
-  reconciliation at the computed balance — step 1 is done (green check), not « nothing today ».
+- **« Aucun écart »** on step 2, for the morning TradeZero shows the app's balance : a real, clean
+  reconciliation at the computed balance — step 2 is done (green check), not « nothing today ».
   Same block on the account page. Undone with the reconciliation's own « Annuler ».
 - One click, no confirmation (nothing is created or deleted), and **« Annuler »** next to the state.
   Capturing a candidate or entering a trade afterwards overrides the mark : the data wins. The

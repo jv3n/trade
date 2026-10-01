@@ -241,8 +241,24 @@
             <div data-group="moment" data-value="matin">
               <h2>Déroulé du jour <span class="hint">0 étape faite sur 5</span></h2>
               <ol class="steps">
+                <!-- #531 : l'app s'ouvre le matin — les stats de la séance se finissent le lendemain, avant tout le reste. -->
                 <li class="step current">
                   <span class="step-dot">1</span>
+                  <div>
+                    <div class="step-title">
+                      Compléter les stats de la veille <span class="tag tag-warn">3 à compléter</span>
+                    </div>
+                    <div class="step-body">
+                      KTTA GUS attend son HOD, son LOD et son EOD.
+                      <span style="color: var(--warn)">En retard : BNZI GUS (16/09), SNTG GUS (15/09).</span>
+                    </div>
+                  </div>
+                  <!-- #337 : une stat laissée incomplète plus tôt que la veille reste visible ici, en ambre, jusqu'à ce qu'elle soit cochée. -->
+                  <div class="step-action"><a class="btn btn-sm btn-primary" href="stats.html">Compléter</a></div>
+                </li>
+
+                <li class="step">
+                  <span class="step-dot">2</span>
                   <div>
                     <div class="step-title">Rapprochement du matin</div>
                     <div class="step-body">Saisis le solde affiché par TradeZero : l'app le compare à son solde calculé.</div>
@@ -276,7 +292,7 @@
                 </li>
 
                 <li class="step">
-                  <span class="step-dot">2</span>
+                  <span class="step-dot">3</span>
                   <div>
                     <div class="step-title">Saisir les candidats</div>
                     <div class="step-body">Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.</div>
@@ -284,12 +300,12 @@
                   <!-- #407 : rien au radar ? Un clic, sans confirmation — rien n'est créé ni supprimé. -->
                   <div class="step-action actions">
                     <a class="btn btn-sm" href="candidat.html"><span class="icon">add</span> Saisir</a>
-                    <button class="btn btn-sm" title="Rien au radar : les étapes 2 et 4 passent à « rien aujourd'hui »">Aucun candidat aujourd'hui</button>
+                    <button class="btn btn-sm" title="Rien au radar : l'étape passe à « rien aujourd'hui »">Aucun candidat aujourd'hui</button>
                   </div>
                 </li>
 
                 <li class="step upcoming">
-                  <span class="step-dot">3</span>
+                  <span class="step-dot">4</span>
                   <div>
                     <div class="step-title">Séance <span class="step-time">09:30 → 16:00</span></div>
                     <div class="step-body">Sur TradeZero — rien à faire dans l'app.</div>
@@ -297,20 +313,6 @@
                   <div></div>
                 </li>
 
-                <li class="step upcoming">
-                  <span class="step-dot">4</span>
-                  <div>
-                    <div class="step-title">
-                      Compléter les stats <span class="step-time">à partir de 16:00</span> <span class="tag tag-warn">2 en retard</span>
-                    </div>
-                    <div class="step-body">
-                      Finir la séance (HOD, LOD, EOD) de chaque stat du jour, puis la cocher.
-                      <span style="color: var(--warn)">En retard : GLND GUS (21/09), KTTA GUS (17/09).</span>
-                    </div>
-                  </div>
-                  <!-- #337 : une stat laissée incomplète un jour précédent reste visible ici jusqu'à ce qu'elle soit cochée. -->
-                  <div class="step-action"><a class="btn btn-sm" href="stats.html">Compléter</a></div>
-                </li>
 
                 <li class="step upcoming">
                   <span class="step-dot">5</span>
@@ -325,8 +327,17 @@
 
             <!-- ============================================================ 16h15 -->
             <div data-group="moment" data-value="soir" hidden>
-              <h2>Déroulé du jour <span class="hint">3 étapes faites sur 5</span></h2>
+              <h2>Déroulé du jour <span class="hint">4 étapes faites sur 5</span></h2>
               <ol class="steps">
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
+                    <div class="step-title">Compléter les stats de la veille</div>
+                    <div class="step-body">Rien à compléter d'avant aujourd'hui.</div>
+                  </div>
+                  <div></div>
+                </li>
+
                 <li class="step done">
                   <span class="step-dot"><span class="icon">check</span></span>
                   <div>
@@ -336,9 +347,9 @@
                   <div></div>
                 </li>
 
-                <!-- #337 : l'étape n'est cochée qu'une fois tous les candidats passés en stats ; la promotion vit ici, pas à l'étape 4. -->
+                <!-- #337 : l'étape n'est cochée qu'une fois tous les candidats passés en stats ; la promotion vit ici. -->
                 <li class="step current">
-                  <span class="step-dot">2</span>
+                  <span class="step-dot">3</span>
                   <div>
                     <div class="step-title">Saisir les candidats</div>
                     <div class="step-body">5 candidats saisis — SGBX, BNRG, MLGO, ATXG, VERB. 4 ne sont pas encore passés en stats.</div>
@@ -358,17 +369,6 @@
                   <div></div>
                 </li>
 
-                <li class="step">
-                  <span class="step-dot">4</span>
-                  <div>
-                    <div class="step-title">Compléter les stats <span class="tag tag-warn">3 à compléter</span></div>
-                    <div class="step-body">
-                      Aujourd'hui : SGBX GUS attend son HOD, son LOD et son EOD.
-                      <span style="color: var(--warn)">En retard : GLND GUS (21/09), KTTA GUS (17/09).</span>
-                    </div>
-                  </div>
-                  <div class="step-action"><a class="btn btn-sm btn-primary" href="stats.html">Compléter</a></div>
-                </li>
 
                 <li class="step">
                   <span class="step-dot">5</span>
@@ -392,13 +392,22 @@
                 <li class="step done">
                   <span class="step-dot"><span class="icon">check</span></span>
                   <div>
+                    <div class="step-title">Compléter les stats de la veille</div>
+                    <div class="step-body">Rien à compléter d'avant aujourd'hui.</div>
+                  </div>
+                  <div></div>
+                </li>
+
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
                     <div class="step-title">Rapprochement du matin <span class="step-time">08:31</span></div>
                     <div class="step-body">Solde TradeZero 27 359,95 $ US — aucun écart.</div>
                   </div>
                   <div></div>
                 </li>
 
-                <!-- Marqué « aucun candidat » à 08:40 : l'étape 4 suit, puisqu'il n'y a aucune stat du jour. -->
+                <!-- Marqué « aucun candidat » à 08:40. -->
                 <li class="step none">
                   <span class="step-dot"><span class="icon">remove</span></span>
                   <div>
@@ -418,15 +427,6 @@
                   <div></div>
                 </li>
 
-                <!-- Seulement sans stat en retard : une stat laissée un jour précédent garde l'étape ouverte (#337). -->
-                <li class="step none">
-                  <span class="step-dot"><span class="icon">remove</span></span>
-                  <div>
-                    <div class="step-title">Compléter les stats</div>
-                    <div class="step-body">Rien à compléter aujourd'hui.</div>
-                  </div>
-                  <div></div>
-                </li>
 
                 <li class="step none">
                   <span class="step-dot"><span class="icon">remove</span></span>
@@ -504,8 +504,9 @@
         <p class="mockup-note">
           Maquette statique — page d'accueil. La bascule « 8h00 / 16h15 » n'existe que dans la maquette : elle montre la même page à deux
           moments. Dans l'app, l'état des étapes se déduit de l'heure et des données. Le rapprochement du matin se fait directement ici
-          (l'écart se calcule en direct) ; le détail des mouvements reste dans Compte. L'étape 2 n'est cochée qu'une fois tous les candidats
-          passés en stats ; l'étape 4 compte toutes les stats à compléter, celles des jours précédents en ambre.
+          (l'écart se calcule en direct) ; le détail des mouvements reste dans Compte. L'étape des candidats n'est cochée qu'une fois tous les
+          candidats passés en stats. L'étape 1 (#531) compte les stats à compléter d'avant aujourd'hui : la veille est le cas normal
+          (l'app ne s'ouvre que le matin), les jours d'avant sont en retard, en ambre. Sans rien d'avant aujourd'hui, elle est faite.
         </p>
       </main>
     </div>

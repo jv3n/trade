@@ -71,9 +71,8 @@
         "body": "On TradeZero — nothing to do in the app."
       },
       "stats": {
-        "title": "Complete the stats",
-        "from": "from 4:00 pm",
-        "body": "Finish the session (HOD, LOD, EOD) of each stat of the day, then tick it.",
+        "title": "Complete yesterday's stats",
+        "body": "Finish the session (HOD, LOD, EOD) of yesterday's stats, then tick them.",
         "pending": "{{count}} to complete",
         "toComplete": "{{tickers}} still waiting for their session block.",
         "toCompleteOne": "{{tickers}} is still waiting for its session block.",
@@ -81,7 +80,7 @@
         "overdueMore": "Overdue: {{tickers}} and {{count}} more.",
         "overdueMoreOne": "Overdue: {{tickers}} and {{count}} more.",
         "overdueTag": "{{count}} overdue",
-        "none": "Nothing to complete today."
+        "done": "Nothing to complete from before today."
       },
       "trades": {
         "title": "Enter the day's trades",

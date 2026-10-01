@@ -3,7 +3,13 @@ import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { StbButtonModule, StbChipsModule, StbIconModule, StbToast } from '@portfolioai/ui';
-import { endOfWeek, startOfWeek } from 'date-fns';
+import {
+  differenceInCalendarDays,
+  endOfWeek,
+  startOfWeek,
+  subBusinessDays,
+  subDays,
+} from 'date-fns';
 import { EMPTY, catchError, filter, switchMap, tap } from 'rxjs';
 import { AccountSummary } from '../../core/api/account/account.model';
 import { AccountRepository } from '../../core/api/account/account.repository';
@@ -26,7 +32,11 @@ export type MarketStatus = 'PREMARKET' | 'OPEN' | 'CLOSED';
 
 /** The five steps of the day, in order. */
 export type StepKey = 'reconciliation' | 'candidates' | 'session' | 'stats' | 'trades';
-const STEPS: readonly StepKey[] = ['reconciliation', 'candidates', 'session', 'stats', 'trades'];
+/**
+ * The morning opens on yesterday's stats (#531) : the app is only opened in the morning, so the
+ * stats of a session are completed the next day, before anything else.
+ */
+const STEPS: readonly StepKey[] = ['stats', 'reconciliation', 'candidates', 'session', 'trades'];
 
 /**
  * `done` = behind us, `none` = nothing to do today, as the user declared it (#407), `current` =
@@ -149,22 +159,26 @@ export class TodayPage {
     this.candidates().filter((c) => c.stats.length === 0),
   );
   /**
-   * Step 4 counts every stat still to complete, whatever its day (#337) : a stat left half-filled
-   * on an earlier day is overdue, and nothing else in the daily flow would point at it.
+   * Step 1 counts the stats still to complete **before today** (#531) — the day's own cannot be
+   * completed before its session. The previous trading day is the normal case ; anything older is
+   * overdue (#337), and nothing else in the daily flow would point at it.
    */
-  readonly statsToCompleteToday = computed(() =>
+  // Weekends only : the morning after a market holiday reads the day before it as overdue (amber),
+  // which leaves the count, the done state and the action untouched — accepted (#531).
+  private readonly previousTradingDay = subBusinessDays(this.today, 1);
+  readonly yesterdayStats = computed(() =>
     this.statsToComplete()
-      .filter((s) => isSameDay(s.tradeDate, this.today))
+      .filter((s) => differenceInCalendarDays(s.tradeDate, this.previousTradingDay) >= 0)
       .sort(byTickerThenPattern),
   );
   readonly overdueStats = computed(() =>
     this.statsToComplete()
-      .filter((s) => !isSameDay(s.tradeDate, this.today))
+      .filter((s) => differenceInCalendarDays(s.tradeDate, this.previousTradingDay) < 0)
       .sort((a, b) => b.tradeDate.getTime() - a.tradeDate.getTime() || byTickerThenPattern(a, b)),
   );
-  /** The day's stats come first (newest first), so every stat past them is overdue. */
+  /** Yesterday's stats come first (newest first), so every stat past them is overdue. */
   readonly overdueTotal = computed(
-    () => (this.statsToCompleteTotal() ?? 0) - this.statsToCompleteToday().length,
+    () => (this.statsToCompleteTotal() ?? 0) - this.yesterdayStats().length,
   );
   /**
    * « GLND GUS (21/09), KTTA DT (17/09) » — overdue stats carry their day, the ticker alone is ambiguous.
@@ -197,24 +211,21 @@ export class TodayPage {
     // The session is behind us once New York has closed — there is nothing to do in the app while
     // it runs, so it can't be "done" any earlier.
     session: this.marketStatus === 'CLOSED' && newYorkMinutes(this.today).minutes >= SESSION_CLOSE,
-    // Pending candidates are stats not created yet : without them, step 4 would tick and then
-    // untick as soon as step 2 promotes them.
-    stats:
-      this.candidates().length > 0 &&
-      this.pendingCandidates().length === 0 &&
-      this.statsToCompleteTotal() === 0,
+    // Nothing left before today — a morning with nothing to finish is simply done. Unknown is not
+    // « nothing left ».
+    stats: this.statsToCompleteTotal() === 0,
     trades: this.todayTrades().length > 0,
   }));
 
   /**
-   * Steps declared empty for the day (#407). « No candidate » empties step 4 too, unless an overdue
-   * stat keeps it open — or the stats are unknown, which is not « nothing left ».
+   * Steps declared empty for the day (#407). The stats step never is : it looks at the days before
+   * today (#531), which a mark about today says nothing of.
    */
   private readonly none = computed<Record<StepKey, boolean>>(() => ({
     reconciliation: false,
     candidates: this.noCandidateToday(),
     session: false,
-    stats: this.noCandidateToday() && this.statsToCompleteTotal() === 0,
+    stats: false,
     trades: this.noTradeToday(),
   }));
 
@@ -347,7 +358,7 @@ export class TodayPage {
     });
     this.statsRepo
       .findAll(
-        { status: 'TO_COMPLETE' },
+        { status: 'TO_COMPLETE', dateTo: subDays(this.today, 1) },
         { pageIndex: 0, pageSize: 50, sortField: 'tradeDate', sortDirection: 'desc' },
       )
       .subscribe({

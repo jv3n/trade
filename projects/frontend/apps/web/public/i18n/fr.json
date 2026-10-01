@@ -71,9 +71,8 @@
         "body": "Sur TradeZero — rien à faire dans l'app."
       },
       "stats": {
-        "title": "Compléter les stats",
-        "from": "à partir de 16:00",
-        "body": "Finir la séance (HOD, LOD, EOD) de chaque stat du jour, puis la cocher.",
+        "title": "Compléter les stats de la veille",
+        "body": "Finir la séance (HOD, LOD, EOD) des stats de la veille, puis les cocher.",
         "pending": "{{count}} à compléter",
         "toComplete": "{{tickers}} attendent leur bloc de séance.",
         "toCompleteOne": "{{tickers}} attend son bloc de séance.",
@@ -81,7 +80,7 @@
         "overdueMore": "En retard : {{tickers}} et {{count}} autres.",
         "overdueMoreOne": "En retard : {{tickers}} et {{count}} autre.",
         "overdueTag": "{{count}} en retard",
-        "none": "Rien à compléter aujourd'hui."
+        "done": "Rien à compléter d'avant aujourd'hui."
       },
       "trades": {
         "title": "Saisir les trades du jour",
