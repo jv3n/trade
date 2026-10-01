@@ -8,15 +8,17 @@ import { Api, expect, isoToday, newYorkTime, test } from '../fixtures';
  * - « Aucun écart », « Aucun candidat aujourd'hui » and « Pas de trade aujourd'hui » settle the day
  *   in three clicks, and the marks survive a reload (they are stored per day) ;
  * - « Pas de trade » settles step 5 alone — a day with candidates and no trade is the common case ;
- * - **the data beats the mark** : a candidate captured afterwards puts step 2 back, and deleting it
- *   brings the mark back, as declared ; « Annuler » clears it.
+ * - **the data beats the mark** : a candidate captured afterwards puts the candidates step back, and
+ *   deleting it brings the mark back, as declared ; « Annuler » clears it.
+ * - the stats step looks at the days before today (#531) : with nothing left there it is done, and
+ *   « Aucun candidat aujourd'hui » says nothing of it.
  *
  * The clock is frozen at 17:00 in New York on the real date : the session step is only behind us
  * once New York has closed.
  */
 
-/** The five steps, in order. */
-const STEPS = ['reconciliation', 'candidates', 'session', 'stats', 'trades'] as const;
+/** The five steps, in order — yesterday's stats first since #531. */
+const STEPS = ['stats', 'reconciliation', 'candidates', 'session', 'trades'] as const;
 type Step = (typeof STEPS)[number];
 
 test.beforeEach(async ({ api, page }) => {
@@ -40,7 +42,7 @@ test('a quiet day reaches 5 of 5 in three clicks, and stays there after a reload
   await expect(step(page, 'reconciliation')).toHaveClass(/step--done/);
   await page.getByRole('button', { name: "Aucun candidat aujourd'hui" }).click();
   await expect(step(page, 'candidates')).toHaveClass(/step--none/);
-  await expect(step(page, 'stats')).toHaveClass(/step--none/);
+  await expect(step(page, 'stats')).toHaveClass(/step--done/);
   await page.getByRole('button', { name: "Pas de trade aujourd'hui" }).click();
   await expect(step(page, 'trades')).toHaveClass(/step--none/);
 
