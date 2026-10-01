@@ -506,7 +506,9 @@ discipline number, never read as a strategy number. The flag shows in the flags 
 
 **A checkbox survives only if the app cannot derive it.** « Price < $1 » goes : a box restating a
 price, wrong on a third of the stats. It becomes a « < $1 » tag derived from the open and an
-**« Under $1 »** toggle. Both toggles sit beside the status tabs, not among them : they combine with
+**« Under $1 »** toggle — known **once the open is typed** : in premarket a stat whose PM prices
+sit under a dollar carries no tag yet, on purpose (the margin floor bites on the price traded, and
+the PM prices are not it ; the box could be ticked early, but was wrong a third of the time). Both toggles sit beside the status tabs, not among them : they combine with
 any tab (the out-of-pattern stats among the completed ones, the traded ones…) and with each other. « Entry after 11 am » is derived from the retest time on a DT, and stays a
 checkbox on a GUS. SSR, institutions > 20 % and no push stay : nothing else recorded says them.
 
