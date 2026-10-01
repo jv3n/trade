@@ -108,9 +108,9 @@ describe('HttpStatsRepository', () => {
       completed: 3,
       toComplete: 1,
       averagePushOpenPercent: 9.6,
-      averageLodPercent: -12.3,
+      medianLodPercent: -12.3,
       fadeCount: 2,
-      averageEodPercent: -3.7,
+      medianEodPercent: -3.7,
       traded: 2,
       untraded: 2,
     });
