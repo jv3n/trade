@@ -29,7 +29,7 @@
   <!-- KPIs — computed by the backend over the filtered set, not the current page. -->
   @if (summary(); as kpi) {
     @if (view() === 'DT') {
-      <section class="kpi-row">
+      <section class="kpi-row kpi-row--five">
         <div class="card kpi">
           <div class="kpi__label">{{ 'stats.kpi.completedDt' | translate }}</div>
           <div class="kpi__value">{{ kpi.completedDoubleTops }}</div>
@@ -160,7 +160,7 @@
         </div>
       </section>
     } @else {
-      <section class="kpi-row">
+      <section class="kpi-row kpi-row--five">
         <div class="card kpi">
           <div class="kpi__label">
             {{
@@ -204,11 +204,11 @@
           </div>
         } @else {
           <div class="card kpi">
-            <div class="kpi__label">{{ 'stats.kpi.averagePushOpen' | translate }}</div>
+            <div class="kpi__label">{{ 'stats.kpi.medianPushOpen' | translate }}</div>
             <div class="kpi__value">
               {{
-                kpi.averagePushOpenPercent !== null
-                  ? (kpi.averagePushOpenPercent | number: '1.1-1') + ' %'
+                kpi.medianPushOpenPercent !== null
+                  ? (kpi.medianPushOpenPercent | number: '1.1-1') + ' %'
                   : '—'
               }}
             </div>
@@ -232,12 +232,10 @@
           </div>
         }
         <div class="card kpi">
-          <div class="kpi__label">{{ 'stats.kpi.averageLod' | translate }}</div>
+          <div class="kpi__label">{{ 'stats.kpi.medianLod' | translate }}</div>
           <div class="kpi__value">
             {{
-              kpi.averageLodPercent !== null
-                ? (kpi.averageLodPercent | number: '1.1-1') + ' %'
-                : '—'
+              kpi.medianLodPercent !== null ? (kpi.medianLodPercent | number: '1.1-1') + ' %' : '—'
             }}
           </div>
           <div class="kpi__sub">{{ 'stats.kpi.vsOpen' | translate }}</div>
@@ -252,9 +250,36 @@
                 | translate
                   : {
                       total: kpi.completed,
-                      average:
-                        kpi.averageEodPercent !== null
-                          ? (kpi.averageEodPercent | number: '1.1-1') + ' %'
+                      median:
+                        kpi.medianEodPercent !== null
+                          ? (kpi.medianEodPercent | number: '1.1-1') + ' %'
+                          : '—',
+                    }
+            }}
+          </div>
+        </div>
+        <!-- No threshold yet (#499) : the median is what will tell where the line sits. -->
+        <div class="card kpi" [matTooltip]="'stats.kpi.holdHint' | translate">
+          <div class="kpi__label">{{ 'stats.kpi.medianHold' | translate }}</div>
+          <div class="kpi__value">
+            {{
+              kpi.medianHoldPercent !== null
+                ? (kpi.medianHoldPercent | number: '1.1-1') + ' %'
+                : '—'
+            }}
+          </div>
+          <div class="kpi__sub">
+            {{
+              'stats.kpi.holdSub'
+                | translate
+                  : {
+                      open:
+                        kpi.medianCumulativeOpenPercent !== null
+                          ? (kpi.medianCumulativeOpenPercent | number: '1.1-1') + ' %'
+                          : '—',
+                      pmHigh:
+                        kpi.medianCumulativePmHighPercent !== null
+                          ? (kpi.medianCumulativePmHighPercent | number: '1.1-1') + ' %'
                           : '—',
                     }
             }}
@@ -444,7 +469,10 @@
                   ? ('stats.fields.pmPush' | translate) +
                     ' ' +
                     (premarketPercents().pmPush | number: '1.1-1') +
-                    ' %'
+                    ' % · ' +
+                    ('stats.fields.cumulative'
+                      | translate
+                        : { value: (premarketPercents().cumulativePmHigh | number: '1.1-1') })
                   : '—'
           }}</mat-hint>
         </mat-form-field>
@@ -763,7 +791,14 @@
             <mat-hint [class.warn]="atFault('openPrice')">{{
               atFault('openPrice')
                 ? (sessionIssue()!.reason | translate)
-                : ('stats.complete.percentBase' | translate)
+                : openPercents().hold !== null && openPercents().cumulative !== null
+                  ? ('stats.complete.percentBaseWithHold'
+                    | translate
+                      : {
+                          hold: (openPercents().hold | number: '1.1-1'),
+                          cumulative: (openPercents().cumulative | number: '1.1-1'),
+                        })
+                  : ('stats.complete.percentBase' | translate)
             }}</mat-hint>
           </mat-form-field>
 
@@ -1016,11 +1051,24 @@
           </ng-container>
 
           <ng-container matColumnDef="gap">
-            <th mat-header-cell *matHeaderCellDef stbCol="numeric" class="group-start">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              class="group-start"
+              [matTooltip]="'stats.fields.gapHint' | translate"
+            >
               {{ 'stats.fields.gap' | translate }}
             </th>
             <td mat-cell *matCellDef="let s" stbCol="numeric" class="group-start">
               {{ s.gap !== null ? (s.gap | number: '1.1-1') + ' %' : '—' }}
+              <!-- The cumulative belongs to the GUS-measured views (#499) : DT and « All » keep the gap alone. -->
+              @if (sessionView() && s.cumulativePmHigh !== null) {
+                <small class="leg-note">{{
+                  'stats.fields.cumulativePmHigh'
+                    | translate: { value: (s.cumulativePmHigh | number: '1.1-1') }
+                }}</small>
+              }
             </td>
           </ng-container>
 
@@ -1061,11 +1109,53 @@
           </ng-container>
 
           <ng-container matColumnDef="openPrice">
-            <th mat-header-cell *matHeaderCellDef stbCol="numeric" class="group-start">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              class="group-start"
+              [matTooltip]="'stats.fields.openHint' | translate"
+            >
               {{ 'stats.fields.openPriceShort' | translate }}
             </th>
             <td mat-cell *matCellDef="let s" stbCol="numeric" class="group-start">
               {{ s.openPrice !== null ? (s.openPrice | price: s.previousClose) : '—' }}
+              @if (s.cumulativeOpen !== null) {
+                <small class="leg-note">{{
+                  'stats.fields.cumulative'
+                    | translate: { value: (s.cumulativeOpen | number: '1.1-1') }
+                }}</small>
+              }
+            </td>
+          </ng-container>
+
+          <!-- PM high → open (#499) : neutral, no threshold yet. -->
+          <ng-container matColumnDef="hold">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              stbCol="numeric"
+              [matTooltip]="'stats.fields.holdHint' | translate"
+            >
+              {{ 'stats.fields.hold' | translate }}
+            </th>
+            <td mat-cell *matCellDef="let s" stbCol="numeric">
+              {{ s.hold !== null ? (s.hold | number: '1.1-1') + ' %' : '—' }}
+            </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric">
+              @if (summary(); as kpi) {
+                {{
+                  kpi.medianHoldPercent !== null
+                    ? (kpi.medianHoldPercent | number: '1.1-1') + ' %'
+                    : '—'
+                }}
+                @if (kpi.medianCumulativeOpenPercent !== null) {
+                  <small class="leg-note">{{
+                    'stats.fields.cumulative'
+                      | translate: { value: (kpi.medianCumulativeOpenPercent | number: '1.1-1') }
+                  }}</small>
+                }
+              }
             </td>
           </ng-container>
 
@@ -1082,6 +1172,21 @@
                 }}
               }
             </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric">
+              @if (summary(); as kpi) {
+                {{
+                  kpi.medianPushOpenPercent !== null
+                    ? (kpi.medianPushOpenPercent | number: '1.1-1') + ' %'
+                    : '—'
+                }}
+                @if (kpi.noPushCount > 0) {
+                  <small class="leg-note">{{
+                    'stats.fields.pushedCount'
+                      | translate: { count: kpi.completed - kpi.noPushCount }
+                  }}</small>
+                }
+              }
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="hod">
@@ -1091,6 +1196,7 @@
             <td mat-cell *matCellDef="let s" stbCol="numeric">
               {{ s.hodPercent !== null ? (s.hodPercent | number: '1.1-1') + ' %' : '—' }}
             </td>
+            <td mat-footer-cell *matFooterCellDef></td>
           </ng-container>
 
           <ng-container matColumnDef="lod">
@@ -1100,6 +1206,10 @@
             <td mat-cell *matCellDef="let s" stbCol="numeric">
               {{ s.lodPercent !== null ? (s.lodPercent | number: '1.1-1') + ' %' : '—' }}
             </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric">
+              @let lod = summary()?.medianLodPercent ?? null;
+              {{ lod !== null ? (lod | number: '1.1-1') + ' %' : '' }}
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="eod">
@@ -1108,6 +1218,10 @@
             </th>
             <td mat-cell *matCellDef="let s" stbCol="numeric">
               {{ s.eodPercent !== null ? (s.eodPercent | number: '1.1-1') + ' %' : '—' }}
+            </td>
+            <td mat-footer-cell *matFooterCellDef stbCol="numeric">
+              @let eod = summary()?.medianEodPercent ?? null;
+              {{ eod !== null ? (eod | number: '1.1-1') + ' %' : '' }}
             </td>
           </ng-container>
 
@@ -1321,6 +1435,20 @@
             <td mat-footer-cell *matFooterCellDef colspan="4"></td>
           </ng-container>
 
+          <!-- The medians row of a session view (#499) : medians, not means, like the cards. -->
+          <ng-container matColumnDef="sessionMediansLabel">
+            <td mat-footer-cell *matFooterCellDef colspan="9" class="averages-label">
+              {{
+                'stats.complete.medians'
+                  | plural: summary()?.completed ?? 0
+                  | translate: { count: summary()?.completed ?? 0 }
+              }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="sessionMediansEnd">
+            <td mat-footer-cell *matFooterCellDef colspan="4"></td>
+          </ng-container>
+
           <!-- « All » sums each stat up in its own pattern — a push and an extension don't add up. -->
           <ng-container matColumnDef="brief">
             <th
@@ -1520,13 +1648,13 @@
             [class.pending]="!s.completed"
             [class.editing]="s.id === completing()?.id"
           ></tr>
-          <!-- Always declared : the table renders no row def added after its first pass. Out of the DT
-               view it has no column, but still lays out a full-height row — hence the class (#452). -->
+          <!-- Always declared : the table renders no row def added after its first pass. On « All » it
+               has no column, but still lays out a full-height row — hence the class (#452). -->
           <tr
             mat-footer-row
             *matFooterRowDef="footerColumns()"
-            [class.averages-row]="view() === 'DT'"
-            [class.no-averages]="view() !== 'DT'"
+            [class.averages-row]="view() !== 'ALL'"
+            [class.no-averages]="view() === 'ALL'"
           ></tr>
         </table>
       </div>

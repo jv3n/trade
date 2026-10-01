@@ -578,12 +578,10 @@
       "completed": "Completed stats",
       "toComplete": "{{count}} to complete · {{total}} in total",
       "allDone": "Nothing to complete · {{total}} in total",
-      "averagePushOpen": "Average push at open",
-      "averageLod": "Average LOD",
       "vsOpen": "vs open",
       "fade": "Fade at the close",
-      "fadeSub": "EOD below the open · over the {{total}} completed · average {{average}}",
-      "fadeSubOne": "EOD below the open · over the {{total}} completed · average {{average}}",
+      "fadeSub": "EOD below the open · over the {{total}} completed · median {{median}}",
+      "fadeSubOne": "EOD below the open · over the {{total}} completed · median {{median}}",
       "noPushSub": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
       "noPushSubOne": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
       "noPushDays": "Days without a push",
@@ -604,7 +602,12 @@
       "averages": "Averages",
       "byPattern": "by pattern",
       "byPatternSub": "pick a pattern for the push, the LOD, the extension, the rejection… — never a mix",
-      "completedOf": "Completed {{pattern}} stats"
+      "completedOf": "Completed {{pattern}} stats",
+      "medianPushOpen": "Median push at open",
+      "medianLod": "Median LOD",
+      "medianHold": "Median hold",
+      "holdSub": "PM high → open · cumulative at the open {{open}} · at the PM high {{pmHigh}}",
+      "holdHint": "What is left of the premarket at the bell. No threshold yet : over time, this card will tell below which hold a candidate is dropped."
     },
     "complete": {
       "title": "Session",
@@ -612,7 +615,10 @@
       "percentBase": "base of the percentages",
       "hodBelowLod": "HOD is below the LOD",
       "progress": "{{filled}} / {{total}} prices in",
-      "close": "Close"
+      "close": "Close",
+      "percentBaseWithHold": "base of the percentages · hold {{hold}} % · cumulative {{cumulative}} %",
+      "medians": "Medians — {{count}} completed stats",
+      "mediansOne": "Medians — {{count}} completed stat"
     },
     "completion": {
       "tick": "Mark completed",
@@ -678,7 +684,14 @@
       "brief": "In short",
       "briefHint": "The figures that sum the stat up in its own pattern",
       "briefPush": "push {{push}}",
-      "briefLod": "LOD {{lod}}"
+      "briefLod": "LOD {{lod}}",
+      "hold": "Hold",
+      "holdHint": "PM high → open : what is left of the premarket at 9:30",
+      "gapHint": "Previous close → PM open ; under it, the cumulative up to the PM high — the highest the scanner showed",
+      "openHint": "Under it, the cumulative from the previous close — what the scanner still showed at the bell",
+      "cumulative": "cumulative {{value}} %",
+      "cumulativePmHigh": "cumulative {{value}} % at the PM high",
+      "pushedCount": "{{count}} with a push"
     },
     "actions": {
       "edit": "Edit the session",

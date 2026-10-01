@@ -113,7 +113,8 @@ export interface StatEntryFilter {
 
 /**
  * KPIs of the stats page, computed by the backend over the **filtered set** (not the current page).
- * Averages and quantiles cover the completed stats only and are whole-number percentages ; they
+ * The session cards read medians (#499) — one or two big movers dragged the averages. Medians,
+ * averages and quantiles cover the completed stats only and are whole-number percentages ; they
  * are null when no completed stat matches. The session figures read the GUS-measured stats, the
  * double top figures the DT stats only.
  */
@@ -127,10 +128,16 @@ export interface StatSummary {
   maxPushOpenPercent: number | null;
   /** Completed stats ticked « no push » — they stay out of the push figures above. */
   noPushCount: number;
-  averageLodPercent: number | null;
+  medianLodPercent: number | null;
   /** Completed stats whose EOD closed below the open — the GUS thesis playing out. */
   fadeCount: number;
-  averageEodPercent: number | null;
+  medianEodPercent: number | null;
+  /** Median hold, PM high → open (#499) : what survives of the premarket at the bell. */
+  medianHoldPercent: number | null;
+  /** Median previous close → PM high — the highest the scanner showed that morning. */
+  medianCumulativePmHighPercent: number | null;
+  /** Median previous close → open — what the scanner still showed at the bell. */
+  medianCumulativeOpenPercent: number | null;
   /** Completed stats that are double tops — part of [completed]. */
   completedDoubleTops: number;
   /** Leg A, start → top. */

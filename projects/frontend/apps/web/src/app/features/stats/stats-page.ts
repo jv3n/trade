@@ -70,9 +70,11 @@ import {
   DT_SESSION_OPENS,
   DoubleTopDurations,
   DoubleTopLegs,
+  cumulativePercent,
   doubleTopDurations,
   doubleTopLegs,
   gapPercent,
+  holdPercent,
   percentVsOpen,
   pmPushPercent,
 } from './stats.math';
@@ -152,6 +154,12 @@ type PremarketPrice =
 export interface StatRow extends StatEntry {
   gap: number | null;
   pmPush: number | null;
+  /** Previous close → PM high (#499), the scanner's reading — shown under the gap. */
+  cumulativePmHigh: number | null;
+  /** Previous close → open, what the scanner still showed at the bell — shown under the open. */
+  cumulativeOpen: number | null;
+  /** PM high → open (#499) : what survives of the premarket. */
+  hold: number | null;
   pushOpenPercent: number | null;
   hodPercent: number | null;
   lodPercent: number | null;
@@ -212,9 +220,20 @@ const DOUBLE_TOP_FOOTER_COLUMNS: readonly string[] = [
   'dtAveragesEnd',
 ];
 const NO_COLUMNS: readonly string[] = [];
+/** The medians row of the session views (#499) : a label over the columns up to the open. */
+const SESSION_FOOTER_COLUMNS: readonly string[] = [
+  'sessionMediansLabel',
+  'hold',
+  'pushOpen',
+  'hod',
+  'lod',
+  'eod',
+  'sessionMediansEnd',
+];
 const SESSION_COLUMNS: readonly string[] = [
   ...LEADING_COLUMNS,
   'openPrice',
+  'hold',
   'pushOpen',
   'hod',
   'lod',
@@ -595,19 +614,26 @@ export class StatsPage {
     return tab === 'TO_COMPLETE' || tab === 'COMPLETED' ? 'ALL' : 'GUS';
   });
   readonly status = linkedSignal<StatTab>(() => this.queryTab());
+  /** The views measured like a GUS session — their own tab, cumulative and medians row (#499). */
+  readonly sessionView = computed(() => isSessionView(this.view()));
   /** « No push » belongs to the session views : a double top has no push at the open. */
   readonly statusTabs = computed(() =>
-    isSessionView(this.view()) ? STATUS_TABS : STATUS_TABS.filter((tab) => tab !== 'NO_PUSH'),
+    this.sessionView() ? STATUS_TABS : STATUS_TABS.filter((tab) => tab !== 'NO_PUSH'),
   );
 
   // ---- Sort ----
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
   readonly columns = computed(() => COLUMNS[this.view()]);
-  /** The averages row of the DT view — its label spans the columns before the legs. */
-  readonly footerColumns = computed(() =>
-    this.view() === 'DT' ? DOUBLE_TOP_FOOTER_COLUMNS : NO_COLUMNS,
-  );
+  /**
+   * The bottom row : the DT view's averages, a session view's medians (#499) — its label spans the
+   * columns before the figures. « All » has none.
+   */
+  readonly footerColumns = computed(() => {
+    const view = this.view();
+    if (view === 'DT') return DOUBLE_TOP_FOOTER_COLUMNS;
+    return isSessionView(view) ? SESSION_FOOTER_COLUMNS : NO_COLUMNS;
+  });
   readonly extensionCriterion = DT_EXTENSION_CRITERION;
   readonly rejectionCriterion = DT_REJECTION_CRITERION;
 
@@ -617,6 +643,9 @@ export class StatsPage {
       ...e,
       gap: gapPercent(e.previousClose, e.pmOpen),
       pmPush: pmPushPercent(e.pmOpen, e.pmHigh),
+      cumulativePmHigh: cumulativePercent(e.previousClose, e.pmHigh),
+      cumulativeOpen: cumulativePercent(e.previousClose, e.openPrice),
+      hold: holdPercent(e.pmHigh, e.openPrice),
       pushOpenPercent: percentVsOpen(e.openPrice, e.pushOpenPrice),
       hodPercent: percentVsOpen(e.openPrice, e.hodPrice),
       lodPercent: percentVsOpen(e.openPrice, e.lodPrice),
@@ -664,12 +693,23 @@ export class StatsPage {
    */
   private keepPanelOnNextLoad = true;
 
-  /** Live gap and premarket push under their fields, as the user types. */
+  /** Live gap, premarket push and cumulative at the PM high under their fields, as the user types. */
   readonly premarketPercents = computed(() => {
     const m = this.premarket();
     return {
       gap: gapPercent(m.previousClose, m.pmOpen),
       pmPush: pmPushPercent(m.pmOpen, m.pmHigh),
+      cumulativePmHigh: cumulativePercent(m.previousClose, m.pmHigh),
+    };
+  });
+
+  /** Hold and cumulative at the open under the session's open (#499) — they read the premarket card. */
+  readonly openPercents = computed(() => {
+    const { previousClose, pmHigh } = this.premarket();
+    const open = this.session().openPrice;
+    return {
+      hold: holdPercent(pmHigh, open),
+      cumulative: cumulativePercent(previousClose, open),
     };
   });
 

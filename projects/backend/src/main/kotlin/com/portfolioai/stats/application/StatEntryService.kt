@@ -80,10 +80,10 @@ class StatEntryService(
 
   /**
    * KPIs over the **whole filtered set**, not the current page : how many stats are completed / to
-   * complete, the average push at open, LOD and EOD, the median / 3rd quartile / max push at open,
-   * and how many faded at the close — on the session-measured stats — plus the three legs of the
-   * completed double tops. Percentages are recomputed from the prices ([StatMetrics]) — none of
-   * them is stored.
+   * complete, the average / median / 3rd quartile / max push at open, the median LOD, EOD, hold and
+   * cumulative readings (#499), and how many faded at the close — on the session-measured stats —
+   * plus the three legs of the completed double tops. Percentages are recomputed from the prices
+   * ([StatMetrics]) — none of them is stored.
    *
    * **Averages need a pattern** (#512) : each pattern is measured on its own stats, so without one
    * in the filter only the counts are computed (completed, to complete, traded) and every average
@@ -112,11 +112,14 @@ class StatEntryService(
       thirdQuartilePushOpenPercent = StatMetrics.quantile(pushes, THIRD_QUARTILE),
       maxPushOpenPercent = pushes.maxOrNull(),
       noPushCount = sessions.count { it.noPush },
-      averageLodPercent =
-        sessions.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
+      medianLodPercent = sessions.medianOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
       fadeCount = sessions.count { it.eodPrice!! < it.openPrice!! },
-      averageEodPercent =
-        sessions.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
+      medianEodPercent = sessions.medianOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
+      medianHoldPercent = sessions.medianOf { StatMetrics.holdPercent(it.pmHigh, it.openPrice) },
+      medianCumulativePmHighPercent =
+        sessions.medianOf { StatMetrics.cumulativePercent(it.previousClose, it.pmHigh) },
+      medianCumulativeOpenPercent =
+        sessions.medianOf { StatMetrics.cumulativePercent(it.previousClose, it.openPrice) },
       completedDoubleTops = doubleTops.size,
       averageExtensionPercent =
         doubleTops.averageOf { StatMetrics.percentChange(it.dtStartPrice, it.dtTopPrice) },
@@ -610,6 +613,10 @@ class StatEntryService(
     if (values.isEmpty()) return null
     return values.reduce(BigDecimal::add).divide(BigDecimal(values.size), 2, RoundingMode.HALF_UP)
   }
+
+  /** Median of a derived percentage over the rows that yield one ; null when none does. */
+  private fun List<StatEntry>.medianOf(metric: (StatEntry) -> BigDecimal?): BigDecimal? =
+    StatMetrics.quantile(mapNotNull(metric), MEDIAN)
 
   /** Median of a duration in minutes over the rows that yield one ; null when none does. */
   private fun List<StatEntry>.medianMinutes(metric: (StatEntry) -> Long?): BigDecimal? =

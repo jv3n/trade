@@ -6,9 +6,11 @@ import java.math.BigDecimal
  * KPIs of the stats page, computed over the **filtered set** (not the current page) — the mockup
  * reads them as "September : 10 completed, 1 to complete".
  *
- * Averages and quantiles cover the completed stats only and are whole-number percentages (`9.60` =
- * +9.60 %) ; they are null when no completed stat matches the filter. The session figures read the
- * GUS session, so they leave the double tops out ; the DT figures read the double tops only (#428).
+ * Medians, averages and quantiles cover the completed stats only and are whole-number percentages
+ * (`9.60` = +9.60 %) ; they are null when no completed stat matches the filter. The session cards
+ * read **medians** (#499) : one or two big movers dragged the averages by up to 7 points. The
+ * session figures read the GUS session, so they leave the double tops out ; the DT figures read the
+ * double tops only (#428).
  *
  * @param completed Number of completed stats matching the filter.
  * @param toComplete Number of stats still waiting for their session block.
@@ -19,10 +21,15 @@ import java.math.BigDecimal
  * @param thirdQuartilePushOpenPercent 3rd quartile of the push at open.
  * @param maxPushOpenPercent Largest push at open.
  * @param noPushCount Completed stats ticked « no push » (#302) — read against [completed].
- * @param averageLodPercent Average LOD, vs the open.
+ * @param medianLodPercent Median LOD, vs the open.
  * @param fadeCount Completed stats whose EOD closed **below** the open (the GUS thesis playing
  *   out).
- * @param averageEodPercent Average EOD, vs the open.
+ * @param medianEodPercent Median EOD, vs the open.
+ * @param medianHoldPercent Median hold, PM high → open (#499) : what survives of the premarket.
+ * @param medianCumulativePmHighPercent Median previous close → PM high — the highest the scanner
+ *   showed that morning.
+ * @param medianCumulativeOpenPercent Median previous close → open — what the scanner still showed
+ *   at the bell.
  * @param completedDoubleTops Completed stats that are double tops — part of [completed].
  * @param averageExtensionPercent Leg A of the double tops : start → top.
  * @param averageExtensionWithGapPercent Leg A counted from the previous close — a gap plus a push
@@ -50,9 +57,12 @@ data class StatSummaryDto(
   val thirdQuartilePushOpenPercent: BigDecimal?,
   val maxPushOpenPercent: BigDecimal?,
   val noPushCount: Int,
-  val averageLodPercent: BigDecimal?,
+  val medianLodPercent: BigDecimal?,
   val fadeCount: Int,
-  val averageEodPercent: BigDecimal?,
+  val medianEodPercent: BigDecimal?,
+  val medianHoldPercent: BigDecimal?,
+  val medianCumulativePmHighPercent: BigDecimal?,
+  val medianCumulativeOpenPercent: BigDecimal?,
   val completedDoubleTops: Int,
   val averageExtensionPercent: BigDecimal?,
   val averageExtensionWithGapPercent: BigDecimal?,

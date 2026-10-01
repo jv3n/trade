@@ -920,7 +920,7 @@ class StatsListingIntegrationTest {
   // ---------------------------------------------------------------------------
 
   @Test
-  fun `summarise counts the two buckets and averages the derived percentages of the completed rows`() {
+  fun `summarise counts the two buckets and takes the medians of the completed rows`() {
     seedThreeStats()
 
     // The counts over every pattern — the stat to complete is SGBX's double top ; the averages on
@@ -933,11 +933,46 @@ class StatsListingIntegrationTest {
     assertEquals(2, summary.completed)
     // KTTA push at open +10.00 (4.20 -> 4.62), BNZI +5.17 (2.90 -> 3.05) -> average 7.59 (HALF_UP).
     assertEquals(0, BigDecimal("7.59").compareTo(summary.averagePushOpenPercent))
-    // KTTA LOD -18.81 (3.41), BNZI -15.86 (2.44) -> average -17.34.
-    assertEquals(0, BigDecimal("-17.34").compareTo(summary.averageLodPercent))
-    // KTTA EOD -16.19 (3.52), BNZI -11.03 (2.58) -> average -13.61.
-    assertEquals(0, BigDecimal("-13.61").compareTo(summary.averageEodPercent))
+    // KTTA LOD -18.81 (3.41), BNZI -15.86 (2.44) -> median -17.335 -> -17.34.
+    assertEquals(0, BigDecimal("-17.34").compareTo(summary.medianLodPercent))
+    // KTTA EOD -16.19 (3.52), BNZI -11.03 (2.58) -> median -13.61.
+    assertEquals(0, BigDecimal("-13.61").compareTo(summary.medianEodPercent))
     assertEquals(2, summary.fadeCount, "both closed below their open — the GUS thesis playing out")
+  }
+
+  @Test
+  fun `summarise gives the median hold and the median cumulative readings of the completed rows`() {
+    seedThreeStats()
+
+    val summary = service.summarise(gusOnly)
+
+    // KTTA : close 2.65, PM high 4.65, open 4.20 -> hold -9.68, cumulative +75.47 / +58.49.
+    // BNZI : close 1.85, PM high 3.37, open 2.90 -> hold -13.95, cumulative +82.16 / +56.76.
+    assertEquals(0, BigDecimal("-11.82").compareTo(summary.medianHoldPercent))
+    assertEquals(0, BigDecimal("78.82").compareTo(summary.medianCumulativePmHighPercent))
+    assertEquals(0, BigDecimal("57.63").compareTo(summary.medianCumulativeOpenPercent))
+  }
+
+  @Test
+  fun `one big mover moves the average, not the median`() {
+    // AEHL-like day (#499) : LOD -2.6 % among two -18 / -16 % days. The median stays on the
+    // typical day ; with an odd count it is the middle value itself, not an interpolation.
+    seedThreeStats()
+    createCompleted(
+      fullSessionRequest(ticker = "AEHL", tradeDate = DAY.minusDays(2))
+        .copy(
+          openPrice = BigDecimal("1.90"),
+          pushOpenPrice = BigDecimal("2.48"),
+          hodPrice = BigDecimal("2.48"),
+          lodPrice = BigDecimal("1.85"),
+          eodPrice = BigDecimal("2.31"),
+        )
+    )
+
+    val summary = service.summarise(gusOnly)
+
+    // LODs : KTTA -18.81, BNZI -15.86, AEHL -2.63 -> the middle one.
+    assertEquals(0, BigDecimal("-15.86").compareTo(summary.medianLodPercent))
   }
 
   @Test
@@ -1031,7 +1066,8 @@ class StatsListingIntegrationTest {
 
     assertEquals(2, summary.completed)
     assertNull(summary.averagePushOpenPercent)
-    assertNull(summary.averageLodPercent)
+    assertNull(summary.medianLodPercent)
+    assertNull(summary.medianHoldPercent)
     assertEquals(0, summary.fadeCount)
     assertNull(summary.averageExtensionPercent)
   }
@@ -1055,15 +1091,17 @@ class StatsListingIntegrationTest {
   }
 
   @Test
-  fun `summarise over an empty sheet reports zeroes and null averages`() {
+  fun `summarise over an empty sheet reports zeroes and null figures`() {
     val summary = service.summarise(gusOnly)
 
     assertEquals(0, summary.completed)
     assertEquals(0, summary.toComplete)
     assertEquals(0, summary.fadeCount)
-    assertNull(summary.averagePushOpenPercent, "no completed stat -> no average, not zero")
-    assertNull(summary.averageLodPercent)
-    assertNull(summary.averageEodPercent)
+    assertNull(summary.averagePushOpenPercent, "no completed stat -> no figure, not zero")
+    assertNull(summary.medianLodPercent)
+    assertNull(summary.medianEodPercent)
+    assertNull(summary.medianHoldPercent)
+    assertNull(summary.medianCumulativeOpenPercent)
   }
 
   // ---------------------------------------------------------------------------
@@ -1156,9 +1194,12 @@ class StatsListingIntegrationTest {
       summary.thirdQuartilePushOpenPercent,
       summary.maxPushOpenPercent,
       summary.noPushCount,
-      summary.averageLodPercent,
+      summary.medianLodPercent,
       summary.fadeCount,
-      summary.averageEodPercent,
+      summary.medianEodPercent,
+      summary.medianHoldPercent,
+      summary.medianCumulativePmHighPercent,
+      summary.medianCumulativeOpenPercent,
     )
 
   /**
