@@ -2,6 +2,7 @@ package com.portfolioai.journal.application
 
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.User
+import com.portfolioai.journal.application.dto.JournalDayDto
 import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.application.dto.ScreenshotContent
 import com.portfolioai.journal.application.dto.TradeEntryDto
@@ -24,6 +25,7 @@ import java.time.Instant
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -88,6 +90,27 @@ class TradeEntryService(
         PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
       else pageable
     return repo.findAll(spec, effective).map { it.toDto() }
+  }
+
+  /**
+   * The journal's rows (#500) : the filtered trades folded into one row per ticker and day, sorted
+   * and paged as rows — a page of ten is ten ticker-days, however many trades they hold. The filter
+   * applies to the trades first, so a row only carries the trades that match it.
+   *
+   * Grouped in memory, like [summarise] : a personal journal counts in the hundreds of trades a
+   * year, and grouping in SQL would duplicate the retained-P&L and duration rules. The sort
+   * properties are the row's own (see [JournalDays.comparator]) ; the default puts the latest day
+   * first.
+   */
+  @Transactional(readOnly = true)
+  fun findDaysPaged(filter: TradeEntryFilter, pageable: Pageable): Page<JournalDayDto> {
+    val userId = authService.getCurrentUser().id
+    val trades = repo.findAll(TradeEntrySpecifications.matching(userId, filter))
+    val days = JournalDays.group(trades).sortedWith(JournalDays.comparator(pageable.sort))
+    if (pageable.isUnpaged) return PageImpl(days)
+    val from = minOf(pageable.offset.toInt(), days.size)
+    val to = minOf(from + pageable.pageSize, days.size)
+    return PageImpl(days.subList(from, to), pageable, days.size.toLong())
   }
 
   /**

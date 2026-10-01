@@ -6,6 +6,7 @@ import { Pattern } from '../../shared/pattern.model';
 import { JournalRepository, PageRequest, PagedResult } from '../journal.repository';
 import {
   ExecutionKind,
+  JournalDay,
   JournalSummary,
   TradeDirection,
   TradeEntry,
@@ -166,6 +167,25 @@ function fromPageWire(p: SpringPageWireDto<TradeEntryWireDto>): PagedResult<Trad
   };
 }
 
+interface JournalDayWireDto {
+  tradeDate: string;
+  ticker: string;
+  patterns: Pattern[];
+  directions: TradeDirection[];
+  tradeCount: number;
+  maxSize: number | null;
+  openPrice: number | null;
+  exitPrice: number | null;
+  retainedGainPercent: number | null;
+  durationMinutes: number | null;
+  retainedProfitDollars: number | null;
+  trades: TradeEntryWireDto[];
+}
+
+function journalDayFromWire(w: JournalDayWireDto): JournalDay {
+  return { ...w, tradeDate: parseISO(w.tradeDate), trades: w.trades.map(tradeEntryFromWire) };
+}
+
 // Filter → `HttpParams`. The multi-value `patterns` field uses the repeated
 // `?pattern=GUS&pattern=DT` form Spring expects ; empty arrays / blank strings / nullish values
 // are omitted entirely so the backend treats them as "no filter on that axis".
@@ -199,6 +219,31 @@ function buildFilterParams(filter?: TradeEntryFilter): HttpParams {
 export class HttpJournalRepository extends JournalRepository {
   private readonly http = inject(HttpClient);
   private readonly base = '/api/journal/trades';
+
+  /**
+   * The rows are sorted on their own figures server-side ; no tie-breaker to append, the backend
+   * breaks ties with the latest day first.
+   */
+  findDays(filter?: TradeEntryFilter, page?: PageRequest): Observable<PagedResult<JournalDay>> {
+    let params = buildFilterParams(filter);
+    if (page) {
+      params = params.set('page', page.pageIndex).set('size', page.pageSize);
+      if (page.sortField && page.sortDirection) {
+        params = params.set('sort', `${page.sortField},${page.sortDirection}`);
+      }
+    }
+    return this.http
+      .get<SpringPageWireDto<JournalDayWireDto>>(`${this.base}/days`, { params })
+      .pipe(
+        map((p) => ({
+          content: p.content.map(journalDayFromWire),
+          pageIndex: p.number,
+          pageSize: p.size,
+          totalElements: p.totalElements,
+          totalPages: p.totalPages,
+        })),
+      );
+  }
 
   findAll(filter?: TradeEntryFilter, page?: PageRequest): Observable<PagedResult<TradeEntry>> {
     let params = buildFilterParams(filter);

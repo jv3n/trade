@@ -35,6 +35,7 @@ import {
 } from '@portfolioai/ui';
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
 import {
+  JournalDay,
   JournalSummary,
   TradeEntry,
   TradeEntryFilter,
@@ -94,8 +95,14 @@ function defaultFilter(): FilterFormModel {
 
 const DEFAULT_PAGE_SIZE = 10;
 
+/** A row's identity — one ticker on one day (#500). */
+function dayKey(day: JournalDay): string {
+  return `${day.tradeDate.toDateString()}|${day.ticker}`;
+}
+
 /**
- * Trading journal landing page — table of every trade for the current user, plus :
+ * Trading journal landing page — one row per ticker and day (#500), its trades read by opening it,
+ * plus :
  *   - **Search** : ticker LIKE %q% via the backend `?q=…` query param (debounced 250 ms).
  *   - **Server-side sort** : MatSort emits `(active, direction)` → forwarded as Spring's
  *     `?sort=field,direction`. Sorting a column always queries page 0 so we don't strand the
@@ -108,8 +115,9 @@ const DEFAULT_PAGE_SIZE = 10;
  *     pattern, and outcome (all / winners / losers). They apply on click and refetch.
  *   - **Pagination** : `<mat-paginator>` below the table. Default 10 rows per page. Filter /
  *     search / sort changes reset the index to 0.
- *   - **Open / delete** : a row opens the trade page, where everything is edited in place (#194) ;
- *     delete goes through the confirmation modal (`ConfirmService`). There is no « add » here since
+ *   - **Open / delete** : a single-trade row opens the trade page, where everything is edited in
+ *     place (#194) ; a row of several opens onto its trades, each opening its page. Delete is per
+ *     trade, through the confirmation modal (`ConfirmService`). There is no « add » here since
  *     #193 — a trade is born from a stat, on the stats sheet. A delete refetches the current page
  *     rather than splicing locally.
  *
@@ -157,7 +165,9 @@ export class JournalPage {
   private summaryFetch?: Subscription;
   private statSummaryFetch?: Subscription;
   readonly error = signal<string | null>(null);
-  readonly entries = signal<TradeEntry[]>([]);
+  readonly days = signal<JournalDay[]>([]);
+  /** The multi-trade rows opened onto their trades. */
+  readonly expanded = signal<ReadonlySet<string>>(new Set());
   readonly totalElements = signal(0);
 
   // ---- Pagination ----
@@ -204,16 +214,21 @@ export class JournalPage {
   readonly patterns = PATTERNS;
 
   readonly columns = [
+    'expand',
     'tradeDate',
     'ticker',
-    'pattern',
-    'size',
+    'patterns',
+    'directions',
+    'tradeCount',
+    'maxSize',
     'openPrice',
     'exitPrice',
+    'durationMinutes',
     'retainedProfitDollars',
     'retainedGainPercent',
     'actions',
   ] as const;
+  readonly detailColumns = ['detail'] as const;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
@@ -294,24 +309,66 @@ export class JournalPage {
   // stats sheet. No edit either (#194) : the trade page owns the edition. The journal only opens
   // and deletes.
 
-  /** Row click → dedicated detail view. The ticker chip + action buttons stop propagation. */
+  /**
+   * Row click : a single-trade row goes straight to its sheet — the common case stays one click ; a
+   * row holding several opens onto them, or closes back.
+   */
+  openRow(day: JournalDay): void {
+    if (day.tradeCount === 1) {
+      this.openDetail(day.trades[0]);
+      return;
+    }
+    const key = dayKey(day);
+    this.expanded.update((open) => {
+      const next = new Set(open);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  }
+
+  isExpanded(day: JournalDay): boolean {
+    return this.expanded().has(dayKey(day));
+  }
+
+  /**
+   * `when` of the detail row : every row of several trades has one, empty while closed. mat-table
+   * only evaluates `when` as the data renders, so opening a row must not depend on it.
+   */
+  readonly hasTrades = (_index: number, day: JournalDay): boolean => day.tradeCount > 1;
+
   openDetail(entry: TradeEntry): void {
     void this.router.navigate(['/journal', entry.id]);
   }
 
-  delete(entry: TradeEntry): void {
-    // Decided BEFORE the request : if we're about to delete the **last row** of a non-zero
-    // page, we should backstep one page after the delete. Computing this from the current
-    // signals (entries + pageIndex) once confirmed is safe — they reflect the state the user
-    // is staring at.
+  /** « 20 min », « 3 h 34 » — the durations of the rows and of their trades. */
+  durationLabel(minutes: number | null): string {
+    if (minutes === null) return '—';
+    if (minutes < 60) return this.translate.instant('journal.duration.minutes', { minutes });
+    return this.translate.instant('journal.duration.hours', {
+      hours: Math.floor(minutes / 60),
+      minutes: String(minutes % 60).padStart(2, '0'),
+    });
+  }
+
+  /**
+   * Deletes one trade. A trade among several of its day says the others stay, and that the balance
+   * moves by this trade's P&L alone (#500).
+   */
+  delete(entry: TradeEntry, day: JournalDay): void {
+    // Decided BEFORE the request : deleting the last trade of the **last row** of a non-zero page
+    // should backstep one page afterwards.
     let willEmptyPage = false;
+    const key = day.tradeCount > 1 ? 'journal.confirmDeleteOne' : 'journal.confirmDelete';
 
     this.confirm
-      .ask('journal.confirmDelete', { params: { ticker: entry.ticker }, variant: 'danger' })
+      .ask(key, {
+        params: { ticker: entry.ticker, others: day.tradeCount - 1 },
+        variant: 'danger',
+      })
       .pipe(
         filter(Boolean),
         switchMap(() => {
-          willEmptyPage = this.entries().length === 1 && this.pageIndex() > 0;
+          willEmptyPage = this.days().length === 1 && day.tradeCount === 1 && this.pageIndex() > 0;
           return this.repo.delete(entry.id);
         }),
         tap(() => {
@@ -371,9 +428,9 @@ export class JournalPage {
     this.listing?.unsubscribe();
     this.loading.set(true);
     this.error.set(null);
-    this.listing = this.repo.findAll(filter, page).subscribe({
+    this.listing = this.repo.findDays(filter, page).subscribe({
       next: (result) => {
-        this.entries.set(result.content);
+        this.days.set(result.content);
         this.totalElements.set(result.totalElements);
         this.loading.set(false);
       },

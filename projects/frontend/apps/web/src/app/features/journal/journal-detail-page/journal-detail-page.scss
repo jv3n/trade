@@ -54,6 +54,30 @@ $save-bar-room: 72px;
     font-size: s.$font-xs;
     color: var(--color-text-muted);
   }
+
+  // The stat's trades (#500) — an outcome each, so green / red ; the current one outlined.
+  .siblings {
+    display: flex;
+    align-items: center;
+    gap: s.$space-sm;
+    flex-wrap: wrap;
+    margin: s.$space-sm 0 0;
+    font-size: s.$font-xs;
+  }
+}
+
+.sibling-tag {
+  padding: s.$space-hairline s.$space-sm;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  font-size: s.$font-2xs;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+
+  &--current {
+    outline: 2px solid currentColor;
+  }
 }
 
 // Indigo = status / category, per the colour rule — never green / red for a pattern.

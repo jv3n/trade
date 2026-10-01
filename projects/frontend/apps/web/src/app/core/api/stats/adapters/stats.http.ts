@@ -12,6 +12,7 @@ import {
   StatEntryFilter,
   StatEntryInput,
   StatSummary,
+  StatTradeLink,
 } from '../stat-entry.model';
 import { StatsRepository } from '../stats.repository';
 
@@ -54,8 +55,7 @@ interface StatEntryWireDto {
   noPush: boolean;
   highInstitutions: boolean;
   completed: boolean;
-  tradeId: string | null;
-  tradeRetainedProfitDollars: number | null;
+  trades: StatTradeLink[];
   createdAt: string;
   updatedAt: string;
 }
@@ -63,13 +63,7 @@ interface StatEntryWireDto {
 /** Body of `PUT /api/stats/{id}` — the backend `StatEntryRequest`. */
 type StatEntryWireRequest = Omit<
   StatEntryWireDto,
-  | 'id'
-  | 'candidateId'
-  | 'completed'
-  | 'tradeId'
-  | 'tradeRetainedProfitDollars'
-  | 'createdAt'
-  | 'updatedAt'
+  'id' | 'candidateId' | 'completed' | 'trades' | 'createdAt' | 'updatedAt'
 >;
 
 // `parseISO('2026-06-04')` → midnight LOCAL (no UTC shift) ; `parseISO('…Z')` → instant. Same

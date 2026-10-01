@@ -388,7 +388,7 @@
   },
   "journal": {
     "title": "Journal de trading",
-    "subtitle": "Consigne chaque trade avec son setup, son exécution et son débrief.",
+    "subtitle": "Une ligne par ticker et par jour, ses trades à l'ouverture. Un trade se crée depuis une stat.",
     "kpi": {
       "pnl": "P&L de la période",
       "trades": "{{count}} trades clôturés",
@@ -441,7 +441,12 @@
       "shares": "Actions",
       "price": "Prix",
       "note": "Notes",
-      "errorNote": "Erreur / leçon"
+      "errorNote": "Erreur / leçon",
+      "tradeCount": "Trades",
+      "maxSize": "Position max",
+      "maxSizeHint": "Le plus gros des trades de la journée — jamais une exposition additionnée ou compensée entre un short et un long",
+      "cumulatedDuration": "Durée cumulée",
+      "cumulatedDurationHint": "La somme des durées des trades"
     },
     "enums": {
       "status": {
@@ -483,8 +488,8 @@
       "kpi": {
         "retained": "P&L retenu",
         "adjusted": "ajusté de {{gap}} $ US vs calculé",
-        "position": "Position",
-        "positionSub": "actions sur la position",
+        "position": "Position max",
+        "positionSub": "actions tenues au plus fort",
         "avgPrices": "Entrée / sortie moyennes",
         "vsOpen": "vs open {{open}} : {{entry}} → {{exit}}",
         "noOpen": "Open de la séance non saisi sur la stat.",
@@ -530,7 +535,9 @@
         "uploadError": "Échec de l'envoi de la capture. Réessaie.",
         "deleteSuccess": "Capture supprimée.",
         "deleteError": "Échec de la suppression de la capture. Réessaie."
-      }
+      },
+      "statTrades": "Trades {{ticker}} de la stat :",
+      "statTotal": "total {{total}} $ US"
     },
     "snackbar": {
       "createSuccess": "Trade {{ticker}} créé.",
@@ -544,7 +551,17 @@
       "title": "Effacer le P&L broker ?",
       "message": "La position n'est plus clôturée : le P&L broker de {{amount}} $ US est effacé et ne compte plus au compte.",
       "confirm": "Enregistrer et effacer"
-    }
+    },
+    "confirmDeleteOne": {
+      "title": "Supprimer ce trade {{ticker}} ?",
+      "message": "Définitif : ses exécutions, son post-mortem et sa capture sont supprimés, et son mouvement disparaît du compte — le solde ne bouge que de ce trade. Les autres trades {{ticker}} du jour ({{others}}), leurs lignes au compte et la stat sont conservés.",
+      "confirm": "Supprimer le trade"
+    },
+    "duration": {
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}} h {{minutes}}"
+    },
+    "dayTrade": "Trade {{n}}"
   },
   "stats": {
     "title": "Stats",
@@ -667,7 +684,8 @@
       "toTrade": "Trade",
       "openTrade": "Voir le trade",
       "session": "Séance",
-      "doubleTop": "Double top"
+      "doubleTop": "Double top",
+      "anotherTrade": "Un autre trade sur cette stat"
     },
     "confirmPromoteTrade": {
       "title": "Créer le trade {{ticker}} ?",
@@ -789,6 +807,11 @@
       "title": "Créer la stat {{pattern}} de {{ticker}} ?",
       "message": "Même jour, même ticker : les prix de la journée (clôture veille, premarket, open, HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
       "confirm": "Créer la stat"
+    },
+    "confirmAnotherTrade": {
+      "title": "Créer un autre trade {{ticker}} ?",
+      "message": "Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern ».",
+      "confirm": "Créer le trade"
     }
   },
   "calculator": {

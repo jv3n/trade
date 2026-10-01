@@ -3,6 +3,8 @@
 // `.empty-state` come from the lib (`libs/ui/styles/`) — only the journal-specific arrangement lives
 // here.
 
+@use 'sizes' as s;
+
 // ---- KPIs ----
 
 .muted {
@@ -34,4 +36,49 @@
 // Rows navigate to the detail view on click (ticker chip + action buttons stop propagation).
 .journal-row {
   cursor: pointer;
+}
+
+// ---- One row per ticker and day (#500) ----
+
+.tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: s.$space-xs;
+}
+
+// A row of several trades opens onto them : one line each, a link to its sheet.
+.journal-row--open td {
+  border-bottom-color: transparent;
+}
+
+.day-trades {
+  padding: 0 0 s.$space-sm;
+
+  &--closed {
+    padding: 0;
+    border-bottom-width: 0;
+  }
+}
+
+.day-trade {
+  display: grid;
+  grid-template-columns: 8rem 6rem 6rem 5rem 10rem 5rem 7rem 5rem auto;
+  align-items: center;
+  gap: s.$space-md;
+  padding: s.$space-xs s.$space-lg s.$space-xs s.$space-3xl;
+  font-size: s.$font-xs;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-2);
+  }
+
+  &__name {
+    color: var(--color-text-muted);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
 }

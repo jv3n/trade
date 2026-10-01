@@ -99,6 +99,27 @@ export interface TradeEntry {
 }
 
 /**
+ * One row of the journal (#500) : the trades of one ticker on one day — of one stat or of two (#507)
+ * — in the day's order. [maxSize] is the largest of the trades, never a sum or a net between a
+ * short and a long ; [openPrice], [exitPrice] and [retainedGainPercent] are only set on a
+ * single-trade row ; [durationMinutes] adds the trades' durations up (« durée cumulée »).
+ */
+export interface JournalDay {
+  tradeDate: Date;
+  ticker: string;
+  patterns: Pattern[];
+  directions: TradeDirection[];
+  tradeCount: number;
+  maxSize: number | null;
+  openPrice: number | null;
+  exitPrice: number | null;
+  retainedGainPercent: number | null;
+  durationMinutes: number | null;
+  retainedProfitDollars: number | null;
+  trades: TradeEntry[];
+}
+
+/**
  * KPIs of the journal listing, computed by the backend over the **whole filtered set** (not the
  * current page). Every figure is built on the retained P&L, and open positions count in none of
  * them. Nullable fields have no meaning yet : no closed trade, no winner, no loser (and with no

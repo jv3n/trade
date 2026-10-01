@@ -493,6 +493,50 @@ class JournalIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // The journal's rows : one per ticker and day (#500)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the rows page ticker-days, not trades — three trades on one name are one row`() {
+    repeat(3) { service.create(sampleRequest(ticker = "SDEV", exitPrice = BigDecimal("3.0000"))) }
+    service.create(
+      sampleRequest(
+        ticker = "KTTA",
+        tradeDate = LocalDate.of(2026, 6, 3),
+        exitPrice = BigDecimal("3.0000"),
+        statEntryId = freshStat(testUser).id,
+      )
+    )
+
+    val page = service.findDaysPaged(TradeEntryFilter(), PageRequest.of(0, 1))
+
+    assertEquals(2, page.totalElements, "two ticker-days, whatever the four trades")
+    assertEquals("SDEV", page.content.single().ticker, "the latest day first")
+    assertEquals(3, page.content.single().tradeCount)
+  }
+
+  @Test
+  fun `the filter applies to the trades before they are grouped`() {
+    // A winner and a loser on the same name : « losers » shows the row with the loser alone.
+    service.create(sampleRequest(ticker = "SDEV", exitPrice = BigDecimal("3.0000")))
+    service.create(sampleRequest(ticker = "SDEV", exitPrice = BigDecimal("3.5000")))
+
+    val losers =
+      service.findDaysPaged(TradeEntryFilter(status = TradeStatus.LOSING), PageRequest.of(0, 10))
+
+    assertEquals(1, losers.content.single().tradeCount)
+    assertTrue(losers.content.single().retainedProfitDollars!!.signum() < 0)
+  }
+
+  @Test
+  fun `the rows never carry another user's trades`() {
+    service.create(sampleRequest(ticker = "SDEV", exitPrice = BigDecimal("3.0000")))
+    org.mockito.kotlin.whenever(authService.getCurrentUser()).thenReturn(otherUser)
+
+    assertEquals(0, service.findDaysPaged(TradeEntryFilter(), PageRequest.of(0, 10)).totalElements)
+  }
+
+  // ---------------------------------------------------------------------------
   // Filter Specifications
   // ---------------------------------------------------------------------------
 

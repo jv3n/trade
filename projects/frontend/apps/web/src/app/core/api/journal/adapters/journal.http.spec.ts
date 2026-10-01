@@ -187,6 +187,58 @@ describe('HttpJournalRepository', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // findDays — the journal's rows, one per ticker and day (#500)
+  // ---------------------------------------------------------------------------
+
+  it('findDays reads /days with the listing filter, the page and the row sort', () => {
+    repo
+      .findDays(
+        { query: 'sdev', status: 'LOSING' },
+        { pageIndex: 0, pageSize: 10, sortField: 'retainedProfitDollars', sortDirection: 'asc' },
+      )
+      .subscribe();
+
+    const req = http.expectOne((r) => r.url === '/api/journal/trades/days');
+    expect(req.request.params.get('q')).toBe('sdev');
+    expect(req.request.params.get('status')).toBe('LOSING');
+    expect(req.request.params.getAll('sort')).toEqual(['retainedProfitDollars,asc']);
+    req.flush(wirePageFixture([]));
+  });
+
+  it('findDays parses the day of the row and of its trades', () => {
+    repo.findDays().subscribe((result) => {
+      const day = result.content[0];
+      expect(day.tradeDate.getDate()).toBe(29);
+      expect(day.tradeCount).toBe(2);
+      expect(day.trades[1].tradeDate).toBeInstanceOf(Date);
+      expect(day.trades[1].id).toBe('t2');
+    });
+
+    http.expectOne('/api/journal/trades/days').flush({
+      content: [
+        {
+          tradeDate: '2026-09-29',
+          ticker: 'SDEV',
+          patterns: ['GUS'],
+          directions: ['SHORT'],
+          tradeCount: 2,
+          maxSize: 3000,
+          openPrice: null,
+          exitPrice: null,
+          retainedGainPercent: null,
+          durationMinutes: 19,
+          retainedProfitDollars: -783.84,
+          trades: [wireFixture({ id: 't1' }), wireFixture({ id: 't2' })],
+        },
+      ],
+      number: 0,
+      size: 10,
+      totalElements: 1,
+      totalPages: 1,
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // update — domain → wire mapping. There is no create : a trade is born from a stat (#193).
   // ---------------------------------------------------------------------------
 

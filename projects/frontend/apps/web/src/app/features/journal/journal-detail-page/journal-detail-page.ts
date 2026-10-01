@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe, formatNumber } from '@angular/common';
 import { Component, DestroyRef, LOCALE_ID, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -176,7 +177,8 @@ export class JournalDetailPage implements HasUnsavedChanges {
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
 
-  private readonly id = this.route.snapshot.paramMap.get('id') ?? '';
+  /** Follows the route : the header's tags move between the trades of one stat on this page. */
+  private id = '';
 
   readonly entry = signal<TradeEntry | null>(null);
   readonly loading = signal(true);
@@ -293,6 +295,16 @@ export class JournalDetailPage implements HasUnsavedChanges {
   // ---- Day context (the stat the trade was born from) -----------------------------------------
   readonly context = signal<DayContext | null>(null);
 
+  /** The trades of the same stat, this one included, in the day's order (#500). */
+  readonly statTrades = computed(() => this.context()?.stat.trades ?? []);
+  /** Their retained P&L added up — null until one of them has one. */
+  readonly statTotal = computed(() => {
+    const pnls = this.statTrades()
+      .map((t) => t.retainedProfitDollars)
+      .filter((p): p is number => p !== null);
+    return pnls.length === 0 ? null : pnls.reduce((a, b) => a + b, 0);
+  });
+
   /** Average entry / exit measured against the session open — « vs open » of the mockup's KPI. */
   readonly entryVsOpen = computed(() =>
     percentVsOpen(this.context()?.stat.openPrice ?? null, this.preview().avgEntry),
@@ -313,7 +325,12 @@ export class JournalDetailPage implements HasUnsavedChanges {
   constructor() {
     // Revoke the object URL when the view is torn down — otherwise the blob leaks.
     inject(DestroyRef).onDestroy(() => this.clearObjectUrl());
-    this.load();
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.id = params.get('id') ?? '';
+      this.clearObjectUrl();
+      this.context.set(null);
+      this.load();
+    });
   }
 
   private load(): void {
@@ -500,7 +517,10 @@ export class JournalDetailPage implements HasUnsavedChanges {
     const entry = this.entry();
     if (!entry) return;
     this.confirm
-      .ask('journal.confirmDelete', { params: { ticker: entry.ticker }, variant: 'danger' })
+      .ask(this.statTrades().length > 1 ? 'journal.confirmDeleteOne' : 'journal.confirmDelete', {
+        params: { ticker: entry.ticker, others: this.statTrades().length - 1 },
+        variant: 'danger',
+      })
       .pipe(
         filter(Boolean),
         switchMap(() => this.repo.delete(entry.id)),

@@ -1,13 +1,14 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { of, Subject, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { provideNativeDateAdapter, StbToast } from '@portfolioai/ui';
 import { JournalRepository, PagedResult } from '../../core/api/journal/journal.repository';
 import {
+  JournalDay,
   JournalSummary,
   TradeEntry,
   TradeEntryFilter,
@@ -29,6 +30,8 @@ import { JournalPage } from './journal-page';
  *    panel when the repository throws.
  *  - **Cancelling the confirmation short-circuits the call** — no delete request fires when the
  *    user backs out of the confirmation modal (`ConfirmService`, stubbed here).
+ *  - **One row per ticker and day** (#500) — a single-trade row opens its sheet in one click, a
+ *    row of several opens onto them ; deleting one of several says the others stay.
  *  - **Filters and KPIs** (#195) — the page opens on the running month, the toolbar filters apply
  *    on click and rewind to page 0, the two summaries follow the same period as the listing, and a
  *    failing summary never takes the table down with it.
@@ -37,8 +40,9 @@ import { JournalPage } from './journal-page';
  * and is edited on its own page (#194). What is left here is the listing, the filters and delete.
  */
 describe('JournalPage', () => {
-  let nextPage: PagedResult<TradeEntry>;
-  let findAll: ReturnType<typeof vi.fn>;
+  let nextPage: PagedResult<JournalDay>;
+  let findDays: ReturnType<typeof vi.fn>;
+  let ask: Mock<(key: string, options?: unknown) => Observable<boolean>>;
   let deleteSubject: Subject<void>;
   /** What the (stubbed) confirmation modal answers — confirmed unless a test says otherwise. */
   let confirmed: boolean;
@@ -48,7 +52,8 @@ describe('JournalPage', () => {
 
   beforeEach(async () => {
     nextPage = makePage([], 0);
-    findAll = vi.fn(() => of(nextPage));
+    findDays = vi.fn(() => of(nextPage));
+    ask = vi.fn((_key: string, _options?: unknown) => of(confirmed));
     deleteSubject = new Subject<void>();
     confirmed = true;
     toastShown = vi.fn();
@@ -69,7 +74,7 @@ describe('JournalPage', () => {
         {
           provide: JournalRepository,
           useValue: {
-            findAll,
+            findDays,
             summary,
             findById: () => of({} as unknown),
             create: () => of({} as unknown),
@@ -89,7 +94,10 @@ describe('JournalPage', () => {
             error: (message: string) => toastShown('error', message),
           },
         },
-        { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
+        {
+          provide: ConfirmService,
+          useValue: { ask: (key: string, options?: unknown) => ask(key, options) },
+        },
       ],
     }).compileComponents();
   });
@@ -108,7 +116,7 @@ describe('JournalPage', () => {
     expect(page.appliedFilter().period).toBe('thisMonth');
     expect(page.appliedFilter().dateFrom).not.toBeNull();
 
-    const listed = findAll.mock.calls[0][0] as TradeEntryFilter;
+    const listed = findDays.mock.calls[0][0] as TradeEntryFilter;
     const summarised = summary.mock.calls[0][0] as TradeEntryFilter;
     expect(summarised.dateFrom).toEqual(listed.dateFrom);
     expect(summarised.dateTo).toEqual(listed.dateTo);
@@ -128,7 +136,7 @@ describe('JournalPage', () => {
     fixture.detectChanges();
 
     expect(page.pageIndex()).toBe(0);
-    const last = findAll.mock.calls.at(-1)?.[0] as TradeEntryFilter;
+    const last = findDays.mock.calls.at(-1)?.[0] as TradeEntryFilter;
     expect(last.patterns).toEqual(['DT']);
   });
 
@@ -140,7 +148,7 @@ describe('JournalPage', () => {
     page.setStatus('PROFITABLE');
     fixture.detectChanges();
 
-    expect((findAll.mock.calls.at(-1)?.[0] as TradeEntryFilter).status).toBe('PROFITABLE');
+    expect((findDays.mock.calls.at(-1)?.[0] as TradeEntryFilter).status).toBe('PROFITABLE');
     expect((summary.mock.calls.at(-1)?.[0] as TradeEntryFilter).status).toBe('PROFITABLE');
   });
 
@@ -159,15 +167,77 @@ describe('JournalPage', () => {
 
   it('a failing summary empties its cards without taking the listing down', () => {
     summary.mockReturnValue(throwError(() => new Error('500')));
-    nextPage = makePage([makeTrade()], 1);
+    nextPage = makePage([makeDay([makeTrade()])], 1);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
     const page = fixture.componentInstance;
 
     expect(page.summary()).toBeNull();
-    expect(page.entries()).toHaveLength(1);
+    expect(page.days()).toHaveLength(1);
     expect(page.error()).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------
+  // One row per ticker and day (#500)
+  // ---------------------------------------------------------------------------
+
+  it('a single-trade row opens its trade sheet in one click', () => {
+    const day = makeDay([makeTrade()]);
+    nextPage = makePage([day], 1);
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    fixture.componentInstance.openRow(day);
+
+    expect(navigate).toHaveBeenCalledWith(['/journal', 'id-1']);
+  });
+
+  it('a row of several trades opens onto them, and a second click closes it', () => {
+    // SDEV, 29/09 : three trades on one name, one row.
+    const day = makeDay([
+      makeTrade({ id: 't1', ticker: 'SDEV' }),
+      makeTrade({ id: 't2', ticker: 'SDEV' }),
+      makeTrade({ id: 't3', ticker: 'SDEV' }),
+    ]);
+    nextPage = makePage([day], 1);
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    page.openRow(day);
+    fixture.detectChanges();
+    expect(page.isExpanded(day)).toBe(true);
+    expect(fixture.nativeElement.querySelectorAll('.day-trade')).toHaveLength(3);
+    expect(navigate).not.toHaveBeenCalled();
+
+    page.openRow(day);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.day-trade')).toHaveLength(0);
+  });
+
+  it('deleting one of several trades says the others are kept', () => {
+    const trades = [makeTrade({ id: 't1' }), makeTrade({ id: 't2' })];
+    const fixture = TestBed.createComponent(JournalPage);
+    fixture.detectChanges();
+
+    fixture.componentInstance.delete(trades[1], makeDay(trades));
+
+    expect(ask).toHaveBeenCalledWith('journal.confirmDeleteOne', {
+      params: { ticker: 'BAC', others: 1 },
+      variant: 'danger',
+    });
+  });
+
+  it('« 20 min » under an hour, « 3 h 04 » above', () => {
+    const fixture = TestBed.createComponent(JournalPage);
+    const page = fixture.componentInstance;
+
+    expect(page.durationLabel(20)).toBe('journal.duration.minutes');
+    expect(page.durationLabel(184)).toBe('journal.duration.hours');
+    expect(page.durationLabel(null)).toBe('—');
   });
 
   // ---------------------------------------------------------------------------
@@ -177,7 +247,7 @@ describe('JournalPage', () => {
   it('delete on the last row of a non-zero page decrements pageIndex instead of refetching', () => {
     // 21 trades total, 10 per page → page 2 carries the single 21st row. Deleting it would
     // leave page 2 with zero rows after a naive refetch.
-    nextPage = makePage([makeTrade()], 21);
+    nextPage = makePage([makeDay([makeTrade()])], 21);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
@@ -185,35 +255,35 @@ describe('JournalPage', () => {
     page.pageIndex.set(2);
     fixture.detectChanges();
 
-    const callsBefore = findAll.mock.calls.length;
-    page.delete(makeTrade());
+    const callsBefore = findDays.mock.calls.length;
+    page.delete(makeTrade(), makeDay([makeTrade()]));
     deleteSubject.next();
     deleteSubject.complete();
     fixture.detectChanges();
 
     expect(page.pageIndex()).toBe(1);
     // pageIndex change itself triggers the effect → exactly one additional fetch.
-    expect(findAll.mock.calls.length).toBe(callsBefore + 1);
+    expect(findDays.mock.calls.length).toBe(callsBefore + 1);
     expect(toastShown).toHaveBeenCalledWith('success', expect.any(String));
   });
 
   it('delete on the last row of page 0 does NOT decrement pageIndex (refetches in place)', () => {
     // Only one trade, on page 0. The naive refetch is correct here — we don't want to bump
     // pageIndex into negative territory.
-    nextPage = makePage([makeTrade()], 1);
+    nextPage = makePage([makeDay([makeTrade()])], 1);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
     const page = fixture.componentInstance;
 
-    const callsBefore = findAll.mock.calls.length;
-    page.delete(makeTrade());
+    const callsBefore = findDays.mock.calls.length;
+    page.delete(makeTrade(), makeDay([makeTrade()]));
     deleteSubject.next();
     deleteSubject.complete();
     fixture.detectChanges();
 
     expect(page.pageIndex()).toBe(0);
-    expect(findAll.mock.calls.length).toBe(callsBefore + 1);
+    expect(findDays.mock.calls.length).toBe(callsBefore + 1);
   });
 
   // ---------------------------------------------------------------------------
@@ -221,7 +291,10 @@ describe('JournalPage', () => {
   // ---------------------------------------------------------------------------
 
   it('delete on a multi-row page refetches the current page (no pageIndex change)', () => {
-    nextPage = makePage([makeTrade(), makeTrade({ id: 'id-2', ticker: 'AAPL' })], 12);
+    nextPage = makePage(
+      [makeDay([makeTrade()]), makeDay([makeTrade({ id: 'id-2', ticker: 'AAPL' })])],
+      12,
+    );
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
@@ -229,14 +302,14 @@ describe('JournalPage', () => {
     page.pageIndex.set(1);
     fixture.detectChanges();
 
-    const callsBefore = findAll.mock.calls.length;
-    page.delete(makeTrade());
+    const callsBefore = findDays.mock.calls.length;
+    page.delete(makeTrade(), makeDay([makeTrade()]));
     deleteSubject.next();
     deleteSubject.complete();
     fixture.detectChanges();
 
     expect(page.pageIndex()).toBe(1);
-    expect(findAll.mock.calls.length).toBe(callsBefore + 1);
+    expect(findDays.mock.calls.length).toBe(callsBefore + 1);
   });
 
   // ---------------------------------------------------------------------------
@@ -244,13 +317,13 @@ describe('JournalPage', () => {
   // ---------------------------------------------------------------------------
 
   it('delete error fires an error snackbar', () => {
-    nextPage = makePage([makeTrade()], 1);
+    nextPage = makePage([makeDay([makeTrade()])], 1);
 
     const fixture = TestBed.createComponent(JournalPage);
     fixture.detectChanges();
     const page = fixture.componentInstance;
 
-    page.delete(makeTrade());
+    page.delete(makeTrade(), makeDay([makeTrade()]));
     deleteSubject.error(new Error('500 from server'));
     fixture.detectChanges();
 
@@ -269,7 +342,7 @@ describe('JournalPage', () => {
     const deleteSpy = vi.spyOn(deleteSubject, 'subscribe');
     confirmed = false;
 
-    page.delete(makeTrade());
+    page.delete(makeTrade(), makeDay([makeTrade()]));
 
     expect(deleteSpy).not.toHaveBeenCalled();
     expect(toastShown).not.toHaveBeenCalled();
@@ -304,6 +377,25 @@ function makeTrade(overrides: Partial<TradeEntry> = {}): TradeEntry {
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
+  };
+}
+
+/** The row of [trades] — one ticker and day, the figures added up the way the backend does. */
+function makeDay(trades: TradeEntry[]): JournalDay {
+  const single = trades.length === 1 ? trades[0] : null;
+  return {
+    tradeDate: trades[0].tradeDate,
+    ticker: trades[0].ticker,
+    patterns: [...new Set(trades.map((t) => t.pattern))],
+    directions: [...new Set(trades.flatMap((t) => (t.direction ? [t.direction] : [])))],
+    tradeCount: trades.length,
+    maxSize: Math.max(...trades.map((t) => t.size ?? 0)),
+    openPrice: single?.openPrice ?? null,
+    exitPrice: single?.exitPrice ?? null,
+    retainedGainPercent: single?.retainedGainPercent ?? null,
+    durationMinutes: null,
+    retainedProfitDollars: null,
+    trades,
   };
 }
 
@@ -349,7 +441,7 @@ function makeStatSummary(overrides: Partial<StatSummary> = {}): StatSummary {
   };
 }
 
-function makePage(content: TradeEntry[], total: number): PagedResult<TradeEntry> {
+function makePage(content: JournalDay[], total: number): PagedResult<JournalDay> {
   return {
     content,
     pageIndex: 0,

@@ -1,3 +1,4 @@
+import { TradeDirection } from '../journal/trade-entry.model';
 import { Pattern } from '../shared/pattern.model';
 
 /**
@@ -68,25 +69,29 @@ export interface StatEntry {
   completed: boolean;
 
   // ---- Journal link (#193) ----
-  /** The trade this stat gave birth to — one at most. Null = the row offers the « → Trade » action. */
-  tradeId: string | null;
-  /** That trade's retained P&L, what the link is labelled with. Null while its position is open. */
-  tradeRetainedProfitDollars: number | null;
+  /**
+   * The trades born from this stat, in the day's order (#500). Empty = the row offers « → Trade » ;
+   * otherwise one tag per trade, and « + » for the next one.
+   */
+  trades: StatTradeLink[];
 
   createdAt: Date;
   updatedAt: Date;
 }
 
+/** A trade of a stat, as the stats row and the trade sheet's header show it. */
+export interface StatTradeLink {
+  tradeId: string;
+  /** Null until the trade's first execution is typed in. */
+  direction: TradeDirection | null;
+  /** The P&L that counts — real if typed, else computed. Null while the trade is open. */
+  retainedProfitDollars: number | null;
+}
+
 /** Update payload — the completion panel sends the whole row back (premarket + session + flags). */
 export type StatEntryInput = Omit<
   StatEntry,
-  | 'id'
-  | 'candidateId'
-  | 'completed'
-  | 'tradeId'
-  | 'tradeRetainedProfitDollars'
-  | 'createdAt'
-  | 'updatedAt'
+  'id' | 'candidateId' | 'completed' | 'trades' | 'createdAt' | 'updatedAt'
 >;
 
 /** Completion status a listing can be narrowed to. Mirrors the backend `StatStatus`. */

@@ -19,9 +19,8 @@ import java.util.UUID
  *
  * [trades] mirror the journal side of the stat → trade link (#193), several per stat in the day's
  * order (#500) : empty means the stat has no trade yet and the listing offers the « → Trade »
- * action ; otherwise one link per trade, labelled by its retained P&L (null while it is open).
- * [tradeId] (the first trade) and [tradeRetainedProfitDollars] (the sum over the trades) are the
- * single-link shape the stats page reads until it shows each trade (#504).
+ * action ; otherwise one tag per trade, labelled by its retained P&L (null while it is open), and
+ * « + » for the next one.
  */
 data class StatEntryDto(
   val id: UUID,
@@ -59,8 +58,6 @@ data class StatEntryDto(
   val noPush: Boolean,
   val highInstitutions: Boolean,
   val completed: Boolean,
-  val tradeId: UUID?,
-  val tradeRetainedProfitDollars: BigDecimal?,
   val trades: List<TradeLinkDto>,
   val createdAt: Instant,
   val updatedAt: Instant,
@@ -99,9 +96,6 @@ fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
     noPush = noPush,
     highInstitutions = highInstitutions,
     completed = isCompleted,
-    tradeId = trades.firstOrNull()?.tradeId,
-    tradeRetainedProfitDollars =
-      trades.mapNotNull { it.retainedProfitDollars }.reduceOrNull(BigDecimal::add),
     trades = trades,
     createdAt = createdAt,
     updatedAt = updatedAt,

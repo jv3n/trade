@@ -246,17 +246,19 @@ describe('HttpStatsRepository', () => {
 
   it('a traded stat carries its trade link through the page mapping', () => {
     repo.findAll().subscribe((page) => {
-      expect(page.content[0].tradeId).toBe('trade-9');
-      expect(page.content[0].tradeRetainedProfitDollars).toBe(291.35);
+      expect(page.content[0].trades).toEqual([
+        { tradeId: 'trade-9', direction: 'SHORT', retainedProfitDollars: 291.35 },
+      ]);
     });
 
-    http
-      .expectOne('/api/stats')
-      .flush(
-        wirePageFixture([
-          { ...wireStat(), tradeId: 'trade-9', tradeRetainedProfitDollars: 291.35 },
-        ]),
-      );
+    http.expectOne('/api/stats').flush(
+      wirePageFixture([
+        {
+          ...wireStat(),
+          trades: [{ tradeId: 'trade-9', direction: 'SHORT', retainedProfitDollars: 291.35 }],
+        },
+      ]),
+    );
   });
 
   // ---- Fixtures --------------------------------------------------------------------------------
@@ -295,8 +297,7 @@ describe('HttpStatsRepository', () => {
       noPush: false,
       highInstitutions: false,
       completed: true,
-      tradeId: null,
-      tradeRetainedProfitDollars: null,
+      trades: [],
       createdAt: '2026-09-17T12:00:00Z',
       updatedAt: '2026-09-17T21:00:00Z',
     };

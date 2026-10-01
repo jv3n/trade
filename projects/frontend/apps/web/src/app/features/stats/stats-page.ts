@@ -1187,13 +1187,13 @@ export class StatsPage {
   // ---- Row actions ----
 
   /**
-   * « → Trade » (#193) — confirmed, then the backend creates the trade and we land straight on its
-   * page : the point of the action is to go and type the executions. One trade per stat, so the
-   * button is gone from that row on the way back.
+   * « → Trade » / « + » (#193, #500) — confirmed, then the backend creates the stat's next trade and
+   * we land straight on its page : the point of the action is to go and type the executions.
    */
   promoteToTrade(entry: StatEntry): void {
+    const key = entry.trades.length > 0 ? 'stats.confirmAnotherTrade' : 'stats.confirmPromoteTrade';
     this.confirm
-      .ask('stats.confirmPromoteTrade', { params: { ticker: entry.ticker } })
+      .ask(key, { params: { ticker: entry.ticker } })
       .pipe(
         filter(Boolean),
         switchMap(() => this.repo.promoteToTrade(entry.id)),
