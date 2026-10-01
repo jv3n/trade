@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { TradeEntry } from '../journal/trade-entry.model';
+import { Pattern } from '../shared/pattern.model';
 import {
   PageRequest,
   PagedResult,
@@ -60,12 +61,20 @@ export abstract class StatsRepository {
   abstract delete(id: string): Observable<void>;
 
   /**
-   * « → Trade » (#193) — creates the journal trade this stat gave birth to and returns it, so the
-   * caller can navigate straight to its page. The trade inherits the stat's date, ticker and
-   * pattern. One trade per stat : a stat that already has one answers 409, and its row shows a link
-   * instead of the action.
+   * « → Trade » (#193) — creates the next journal trade of this stat and returns it, so the caller
+   * can navigate straight to its page. The trade inherits the stat's date, ticker and pattern ; a
+   * stat carries as many trades as I take (#500).
    */
   abstract promoteToTrade(id: string): Observable<TradeEntry>;
+
+  /**
+   * « Same ticker, another pattern » (#507) — creates the stat of [pattern] on this stat's day and
+   * ticker, the day's prices carried over, and returns it. A pattern already taken that day → 409.
+   */
+  abstract createSibling(id: string, pattern: Pattern): Observable<StatEntry>;
+
+  /** The patterns this stat's day and ticker have no stat for yet — what [createSibling] takes. */
+  abstract freePatterns(id: string): Observable<Pattern[]>;
 
   /**
    * Downloads the caller's stats as a CSV blob (UTF-8 with BOM, RFC 4180). Same layout as the

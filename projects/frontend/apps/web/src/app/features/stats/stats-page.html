@@ -352,6 +352,26 @@
               </mat-select>
             }
           </mat-form-field>
+          @if (freePatterns().length > 0) {
+            <div class="premarket-form__sibling">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'stats.sibling.label' | translate }}</mat-label>
+                <mat-select
+                  [value]="siblingPattern()"
+                  (selectionChange)="siblingPattern.set($event.value)"
+                  [matTooltip]="'stats.sibling.hint' | translate"
+                >
+                  @for (p of freePatterns(); track p) {
+                    <mat-option [value]="p">{{ 'patterns.long.' + p | translate }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button mat-stroked-button type="button" (click)="createSibling()">
+                <mat-icon>add</mat-icon>
+                {{ 'stats.sibling.create' | translate }}
+              </button>
+            </div>
+          }
         }
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'stats.fields.previousClose' | translate }}</mat-label>

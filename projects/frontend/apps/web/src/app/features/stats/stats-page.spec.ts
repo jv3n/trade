@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
@@ -12,6 +13,7 @@ import { StbToast, provideNativeDateAdapter } from '@portfolioai/ui';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
+import { Pattern } from '../../core/api/shared/pattern.model';
 import {
   PageRequest,
   PagedResult,
@@ -203,6 +205,12 @@ class MockStatsRepository extends StatsRepository {
   delete = vi.fn((_id: string): Observable<void> => of(undefined));
   promoteToTrade = vi.fn((_id: string): Observable<TradeEntry> =>
     of({ id: 'trade-1' } as TradeEntry),
+  );
+  createSibling = vi.fn((_id: string, pattern: Pattern): Observable<StatEntry> =>
+    of(makeStat({ id: 'stat-sibling', pattern, pushOpenPrice: null, completed: false })),
+  );
+  freePatterns = vi.fn((_id: string): Observable<Pattern[]> =>
+    of(['DT', 'SIR', 'SIV', 'DISCRETIONARY']),
   );
   exportCsv = vi.fn((): Observable<Blob> => of(new Blob()));
 }
@@ -688,6 +696,84 @@ describe('StatsPage', () => {
     const row = page.rows()[0];
     expect(row.tradeId).toBe('trade-7');
     expect(row.tradeRetainedProfitDollars).toBe(291.35);
+  });
+
+  // ---- Same ticker, another pattern (#507) ----
+
+  it('opening a stat offers the patterns its day and ticker have free, the first one picked', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    page.open(makeStat());
+    fixture.detectChanges();
+
+    expect(repo.freePatterns).toHaveBeenCalledWith('stat-ktta');
+    expect(page.freePatterns()).toEqual(['DT', 'SIR', 'SIV', 'DISCRETIONARY']);
+    expect(page.siblingPattern()).toBe('DT');
+    expect(fixture.nativeElement.querySelector('.premarket-form__sibling')).not.toBeNull();
+  });
+
+  it('a day whose patterns are all taken shows no « another pattern » action', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    repo.freePatterns.mockReturnValue(of([]));
+    page.open(makeStat());
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.premarket-form__sibling')).toBeNull();
+  });
+
+  it('creates the stat of the picked pattern once confirmed, then opens it in the panel', () => {
+    // KTTA, 17/09 : the GUS short of the morning, then a long on the bounce — its own stat.
+    const { page, repo, toastShown } = setup({ rows: [makeStat()] });
+    page.open(makeStat());
+    page.siblingPattern.set('DISCRETIONARY');
+
+    page.createSibling();
+
+    expect(repo.createSibling).toHaveBeenCalledWith('stat-ktta', 'DISCRETIONARY');
+    expect(toastShown).toHaveBeenCalledWith('success', 'stats.snackbar.siblingSuccess');
+    expect(page.completing()?.id).toBe('stat-sibling');
+    expect(page.completing()?.pattern).toBe('DISCRETIONARY');
+  });
+
+  it('a double top born from the GUS lands in the DT view', () => {
+    const { page } = setup({ rows: [makeStat()] });
+    page.setView('GUS');
+    page.open(makeStat());
+    page.siblingPattern.set('DT');
+
+    page.createSibling();
+
+    expect(page.view()).toBe('DT');
+  });
+
+  it('a cancelled confirmation creates no stat', () => {
+    const { page, repo } = setup({ rows: [makeStat()], confirmed: false });
+    page.open(makeStat());
+
+    page.createSibling();
+
+    expect(repo.createSibling).not.toHaveBeenCalled();
+    expect(page.completing()?.id).toBe('stat-ktta');
+  });
+
+  it('re-filing the open stat reloads the free patterns — the one it took is no longer offered', () => {
+    const { page, repo } = setup({ rows: [makeStat()] });
+    page.open(makeStat());
+    repo.freePatterns.mockReturnValue(of(['DT', 'SIV', 'GUS', 'DISCRETIONARY']));
+
+    page.setPremarketPattern('SIR');
+
+    expect(page.freePatterns()).toContain('GUS');
+    expect(page.freePatterns()).not.toContain('SIR');
+  });
+
+  it('a pattern taken in the meantime says so instead of a generic error', () => {
+    const { page, repo, toastShown } = setup({ rows: [makeStat()] });
+    repo.createSibling.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+    page.open(makeStat());
+
+    page.createSibling();
+
+    expect(toastShown).toHaveBeenCalledWith('error', 'stats.snackbar.siblingConflict');
   });
 
   // ---- Filters ----

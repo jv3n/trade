@@ -221,6 +221,33 @@ class StatEntryService(
   }
 
   /**
+   * « Same ticker, another pattern » (#507) — a stat born from [id] : same day, same ticker, same
+   * source candidate, and the [pattern] picked among the free ones. **The day's prices are carried
+   * over** — premarket, open, HOD / LOD / EOD, float, volume, locate, and the flags that describe
+   * the day (SSR, under $1, institutions) : they belong to the day, not to the setup. What is
+   * specific to a pattern starts empty : the push and « no push », the « after 11 am » entry, the
+   * double-top prices (a double top starts from the open, as when it is born from a candidate), the
+   * note. A pattern the day and ticker already have is a 409.
+   */
+  @Transactional
+  fun createSibling(id: UUID, pattern: Pattern): StatEntryDto {
+    val source = loadOwned(id)
+    return create(source.siblingRequest(pattern), candidateId = source.candidateId)
+  }
+
+  /** The patterns [id]'s day and ticker don't have a stat for yet — what a sibling can take. */
+  @Transactional(readOnly = true)
+  fun freePatterns(id: UUID): List<Pattern> {
+    val source = loadOwned(id)
+    val taken =
+      repo
+        .findByUserIdAndTradeDateAndTicker(source.user.id, source.tradeDate, source.ticker)
+        .map { it.pattern }
+        .toSet()
+    return Pattern.entries.filterNot { it in taken }
+  }
+
+  /**
    * A stat typed by hand on the stats page (#326) — a ticker that matched the pattern a few days
    * ago and never made it to the candidates. Any day up to today : a future day is a 400. Same
    * rules as any stat otherwise, and no source candidate.
@@ -373,6 +400,26 @@ class StatEntryService(
     return repo.findByIdAndUserId(id, userId)
       ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Stat entry $id not found")
   }
+
+  private fun StatEntry.siblingRequest(pattern: Pattern) =
+    StatEntryRequest(
+      tradeDate = tradeDate,
+      pattern = pattern,
+      ticker = ticker,
+      previousClose = previousClose,
+      pmOpen = pmOpen,
+      pmHigh = pmHigh,
+      floatMillions = floatMillions,
+      volumeMillions = volumeMillions,
+      locatePerShare = locatePerShare,
+      openPrice = openPrice,
+      hodPrice = hodPrice,
+      lodPrice = lodPrice,
+      eodPrice = eodPrice,
+      ssr = ssr,
+      under1Dollar = under1Dollar,
+      highInstitutions = highInstitutions,
+    )
 
   /** 409 when another stat of the same user already holds (day, ticker, pattern). */
   private fun requireFree(userId: UUID, request: StatEntryRequest, ticker: String, ownId: UUID?) {
