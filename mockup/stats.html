@@ -250,6 +250,19 @@
         color: var(--text-muted);
       }
 
+      /* Bascules de filtre (#499) : enfoncées, elles prennent l'apparence de l'onglet actif. */
+      .filter-toggles {
+        display: inline-flex;
+        gap: 6px;
+      }
+      .filter-toggle[aria-pressed='true'] {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow:
+          0 0 0 1px var(--accent),
+          var(--shadow);
+      }
+
       @media (max-width: 1100px) {
         .complete,
         .premarket,
@@ -335,12 +348,12 @@
         <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="all" hidden>
           <div class="card kpi">
             <div class="label">Stats complétées</div>
-            <div class="value">15</div>
-            <div class="sub">septembre · 11 GUS · 3 DT · 1 discr. · <span style="color: var(--warn)">3 à compléter</span></div>
+            <div class="value">16</div>
+            <div class="sub">septembre · 12 GUS · 3 DT · 1 discr. · <span style="color: var(--warn)">3 à compléter</span></div>
           </div>
           <div class="card kpi">
             <div class="label">Tradées</div>
-            <div class="value">10 / 15</div>
+            <div class="value">10 / 16</div>
             <div class="sub">8 GUS · 1 DT · 1 discr.</div>
           </div>
           <div class="card kpi">
@@ -363,19 +376,19 @@
             <div class="sub">septembre · toutes complétées</div>
           </div>
           <div class="card kpi">
-            <div class="label">Push à l'open moyen</div>
+            <div class="label">Push à l'open médian</div>
             <div class="value">+10,0 %</div>
             <div class="sub">vs open · repris du GUS du jour avec les autres prix de la journée (#517)</div>
           </div>
           <div class="card kpi">
-            <div class="label">LOD moyen</div>
+            <div class="label">LOD médian</div>
             <div class="value">−18,8 %</div>
             <div class="sub">vs open</div>
           </div>
           <div class="card kpi">
             <div class="label">Fade à la clôture</div>
             <div class="value">1 / 1</div>
-            <div class="sub">EOD sous l'open · moyenne −16,2 %</div>
+            <div class="sub">EOD sous l'open · médiane −16,2 %</div>
           </div>
         </section>
         <section class="card" style="margin-bottom: 16px" data-group="pattern" data-value="sir" hidden>
@@ -385,32 +398,38 @@
           <p class="muted" style="margin: 0">Aucune stat SIV sur la période. Les cartes et le tableau sont ceux du GUS, sur les seules stats SIV.</p>
         </section>
 
-        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="gus">
+        <!-- #499 : médianes, pas moyennes — un ou deux gros mouvements tiraient « LOD moyen » de 7 points. -->
+        <section class="grid grid-5" style="margin-bottom: 16px" data-group="pattern" data-value="gus">
           <div class="card kpi">
             <div class="label">Stats GUS complétées</div>
-            <div class="value">11</div>
+            <div class="value">12</div>
             <div class="sub">septembre · <span style="color: var(--warn)">2 à compléter</span></div>
           </div>
           <div class="card kpi" data-group="status" data-value="all">
-            <div class="label">Push à l'open moyen</div>
-            <div class="value">+9,6 %</div>
-            <div class="sub">vs open · sur les 10 qui ont poussé · <b>1 / 11 sans push</b> (9 %)</div>
+            <div class="label">Push à l'open médian</div>
+            <div class="value">+8,0 %</div>
+            <div class="sub">vs open · sur les 11 qui ont poussé · <b>1 / 12 sans push</b> (8 %)</div>
           </div>
           <!-- Onglet « Sans push » : un push moyen n'y a rien à dire, la carte donne leur fréquence (#334). -->
           <div class="card kpi" data-group="status" data-value="no-push" hidden>
             <div class="label">Jours sans push</div>
-            <div class="value">1 / 11</div>
-            <div class="sub">9 % des stats complétées de la période</div>
+            <div class="value">1 / 12</div>
+            <div class="sub">8 % des stats complétées de la période</div>
           </div>
           <div class="card kpi">
-            <div class="label">LOD moyen</div>
-            <div class="value">−13,2 %</div>
+            <div class="label">LOD médian</div>
+            <div class="value">−15,4 %</div>
             <div class="sub">vs open</div>
           </div>
           <div class="card kpi">
             <div class="label">Fade à la clôture</div>
-            <div class="value">8 / 11</div>
-            <div class="sub">EOD sous l'open · moyenne −4,7 %</div>
+            <div class="value">9 / 12</div>
+            <div class="sub">EOD sous l'open · médiane −11,2 %</div>
+          </div>
+          <div class="card kpi" title="High PM → open : ce qui reste du premarket à la cloche. Où placer le seuil sous lequel on ne prend plus, c'est cette carte qui le dira dans deux mois.">
+            <div class="label">Tenue médiane</div>
+            <div class="value">−17,3 %</div>
+            <div class="sub">high PM → open · cumul à l'open <b>+42,9 %</b> · au high PM +74,9 %</div>
           </div>
         </section>
 
@@ -467,7 +486,7 @@
             </div>
             <div class="field"><label>Clôture veille ($)</label><input class="input" id="p-close" data-pm value="1,12" /><span class="pct muted">&nbsp;</span></div>
             <div class="field"><label>Open PM ($)</label><input class="input" id="p-open" data-pm value="1,85" /><span class="pct muted" id="p-gap">—</span></div>
-            <div class="field"><label>High PM ($)</label><input class="input" id="p-high" data-pm value="2,46" /><span class="pct muted" id="p-push">—</span></div>
+            <div class="field"><label>High PM ($)</label><input class="input" id="p-high" data-pm value="2,46" /><span class="pct muted" id="p-push">—</span><span class="pct muted" id="p-cumul">—</span></div>
             <div class="field"><label>Float (M)</label><input class="input" data-pm-opt value="3,9" /></div>
             <div class="field"><label>Volume (M)</label><input class="input" data-pm-opt value="9,7" /></div>
             <div class="field"><label>Locate ($ / action)</label><input class="input" data-pm-opt value="0,12" /></div>
@@ -534,9 +553,8 @@
           </form>
           <div class="flags-row">
             <label><input type="checkbox" data-flag /> SSR</label>
-            <label><input type="checkbox" data-flag /> Prix &lt; 1 $</label>
-            <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
             <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
+            <span class="tag" title="Déduit de l'heure du retest, pas coché : l'entrée d'un double top se prend sur le retest">après 11h — retest à 11:12</span>
             <span style="flex: 1"></span>
             <span class="progress" id="dt-progress">3 / 4 prix · 3 / 4 heures</span>
             <button class="btn">Fermer</button>
@@ -550,7 +568,7 @@
             <span class="hint">à remplir au fil de la journée · chaque champ s'enregistre à la sortie · les % se calculent vs l'open</span>
           </h2>
           <form class="complete" onsubmit="return false">
-            <div class="field"><label>Open ($)</label><input class="input" id="c-open" data-price value="1,90" /><span class="pct muted">repris du candidat (9h30)</span></div>
+            <div class="field"><label>Open ($)</label><input class="input" id="c-open" data-price value="1,90" /><span class="pct muted">repris du candidat (9h30) · tenue −22,8 % · cumul +69,6 %</span></div>
             <div class="field">
               <label>Push à l'open ($)</label>
               <input class="input" id="c-push" data-pct data-price value="2,20" /><span class="pct muted">—</span>
@@ -562,7 +580,6 @@
           </form>
           <div class="flags-row">
             <label><input type="checkbox" data-flag /> SSR</label>
-            <label><input type="checkbox" data-flag /> Prix &lt; 1 $</label>
             <label><input type="checkbox" data-flag checked /> Entrée après 11h</label>
             <label title="Plus de 20 % du float détenu par des institutions"><input type="checkbox" data-flag /> Institutions &gt; 20 %</label>
             <span style="flex: 1"></span>
@@ -599,6 +616,11 @@
               <button data-value="all">Non tradées</button>
               <button data-value="no-push" title="GUS seulement : un double top n'a pas de push à l'open">Sans push</button>
             </div>
+            <!-- #499 : deux conditions que l'app déduit — des bascules qui se combinent avec les onglets, pas un onglet de plus. -->
+            <span class="filter-toggles">
+              <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Ce que les prix enregistrés disent ne pas être le setup — un DT dont le retest reprend le top, un prix hors de la fourchette de la fiche. Se combine avec les onglets.">Hors pattern</button>
+              <button class="btn btn-sm filter-toggle" aria-pressed="false" title="Open sous 1 $ — déduit du prix, plus une case à cocher. Se combine avec les onglets.">Sous 1 $</button>
+            </span>
           </div>
 
           <!-- ============================================================ DT -->
@@ -661,11 +683,11 @@
                   <td class="num sep">2,10</td>
                   <td class="num">3,40<small class="muted">+61,9 % · gap +74,4 %</small></td>
                   <td class="num">2,70<small class="muted">−20,6 %</small></td>
-                  <td class="num">3,46<small class="muted">+28,1 % · top repris +1,8 %</small></td>
+                  <td class="num">3,46<small class="below" title="Le retest reprend le top : une cassure, pas un double top">+28,1 % · top repris +1,8 %</small></td>
                   <td class="num">34 min<small class="muted">A 15 · B 7 · C 12</small></td>
-                  <td class="sep"></td>
+                  <td class="sep"><span class="tag tag-warn" title="Le retest (3,46) reprend le top (3,40) : le double top ne s'est pas formé. La stat reste dans les chiffres du DT — c'est le trade qui n'a pas suivi la fiche.">hors pattern</span></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
-                  <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
+                  <td><a href="trade.html" class="tag tag-loss">−234</a></td>
                 </tr>
                 <tr>
                   <td>08/09</td><td><span class="ticker">GRI</span></td><td><span class="tag tag-accent">DT</span></td>
@@ -823,19 +845,20 @@
                 <tr class="group-head">
                   <th colspan="3"></th>
                   <th colspan="5" class="sep">Premarket — repris du candidat</th>
-                  <th colspan="5" class="sep">Séance — saisie en journée (% vs open)</th>
+                  <th colspan="6" class="sep">Séance — saisie en journée (% vs open)</th>
                   <th colspan="3" class="sep"></th>
                 </tr>
                 <tr>
                   <th>Date ↓</th>
                   <th>Ticker</th>
                   <th>Pattern</th>
-                  <th class="num sep">Gap</th>
+                  <th class="num sep" title="Clôture de la veille → open PM ; en dessous, le cumul jusqu'au high PM — ce que le scanner a montré de plus haut">Gap</th>
                   <th class="num">Push PM</th>
                   <th class="num">Float</th>
                   <th class="num">Volume</th>
                   <th class="num">Locate</th>
-                  <th class="num sep">Open</th>
+                  <th class="num sep" title="En dessous, le cumul depuis la clôture de la veille — ce que le scanner montrait à la cloche">Open</th>
+                  <th class="num" title="High PM → open : ce qui reste du premarket à 9h30">Tenue</th>
                   <th class="num">Push open</th>
                   <th class="num">HOD</th>
                   <th class="num">LOD</th>
@@ -848,8 +871,9 @@
               <tbody>
                 <tr>
                   <td>29/09</td><td><span class="ticker">SDEV</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+41,9 %</td><td class="num">+13,3 %</td><td class="num">6,4 M</td><td class="num">5,8 M</td><td class="num">0,04</td>
-                  <td class="num sep">2,30</td>
+                  <td class="num sep">+41,9 %<small class="muted">cumul +60,8 % au high PM</small></td><td class="num">+13,3 %</td><td class="num">6,4 M</td><td class="num">5,8 M</td><td class="num">0,04</td>
+                  <td class="num sep">2,30<small class="muted">cumul +40,7 %</small></td>
+                  <td class="num">−12,5 %</td>
                   <td class="num">2,95<small class="muted">+28,3 %</small></td>
                   <td class="num">2,95<small class="muted">+28,3 %</small></td>
                   <td class="num">1,96<small class="muted">−14,8 %</small></td>
@@ -860,8 +884,9 @@
                 </tr>
                 <tr>
                   <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+58,4 %</td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td><td class="num">0,05</td>
-                  <td class="num sep">3,10</td>
+                  <td class="num sep">+58,4 %<small class="muted">cumul +77,6 % au high PM</small></td><td class="num">+12,1 %</td><td class="num">5,2 M</td><td class="num">6,1 M</td><td class="num">0,05</td>
+                  <td class="num sep">3,10<small class="muted">cumul +63,0 %</small></td>
+                  <td class="num">−8,2 %</td>
                   <td class="num"><span class="tag">pas de push</span></td>
                   <td class="num">3,10<small class="muted">+0,0 %</small></td>
                   <td class="num">2,41<small class="muted">−22,3 %</small></td>
@@ -872,8 +897,9 @@
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">SGBX</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+65,2 %</td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
-                  <td class="num sep">1,90</td>
+                  <td class="num sep">+65,2 %<small class="muted">cumul +119,7 % au high PM</small></td><td class="num">+33,0 %</td><td class="num">3,9 M</td><td class="num">9,7 M</td><td class="num">0,12</td>
+                  <td class="num sep">1,90<small class="muted">cumul +69,6 %</small></td>
+                  <td class="num">−22,8 %</td>
                   <td class="num">2,20<small class="muted">+15,8 %</small></td>
                   <td class="num muted">—</td>
                   <td class="num muted">—</td>
@@ -884,8 +910,9 @@
                 </tr>
                 <tr class="pending">
                   <td>18/09</td><td><span class="ticker">BNRG</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+63,6 %</td><td class="num">+10,0 %</td><td class="num">11,2 M</td><td class="num">2,1 M</td><td class="num">0,08</td>
-                  <td class="num sep">5,50</td>
+                  <td class="num sep">+63,6 %<small class="muted">cumul +80,0 % au high PM</small></td><td class="num">+10,0 %</td><td class="num">11,2 M</td><td class="num">2,1 M</td><td class="num">0,08</td>
+                  <td class="num sep">5,50<small class="muted">cumul +56,0 %</small></td>
+                  <td class="num">−13,3 %</td>
                   <td class="num">5,88<small class="muted">+6,9 %</small></td>
                   <td class="num">5,95<small class="muted">+8,2 %</small></td>
                   <td class="num">4,62<small class="muted">−16,0 %</small></td>
@@ -896,8 +923,9 @@
                 </tr>
                 <tr>
                   <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
-                  <td class="num sep">4,20</td>
+                  <td class="num sep">+52,8 %<small class="muted">cumul +75,4 % au high PM</small></td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="num sep">4,20<small class="muted">cumul +43,7 %</small></td>
+                  <td class="num">−18,1 %</td>
                   <td class="num">4,62<small class="muted">+10,0 %</small></td>
                   <td class="num">4,62<small class="muted">+10,0 %</small></td>
                   <td class="num">3,41<small class="muted">−18,8 %</small></td>
@@ -908,8 +936,9 @@
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">BNZI</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+61,8 %</td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td><td class="num">0,06</td>
-                  <td class="num sep">2,90</td>
+                  <td class="num sep">+61,8 %<small class="muted">cumul +82,3 % au high PM</small></td><td class="num">+12,7 %</td><td class="num">4,5 M</td><td class="num">6,2 M</td><td class="num">0,06</td>
+                  <td class="num sep">2,90<small class="muted">cumul +45,7 %</small></td>
+                  <td class="num">−20,1 %</td>
                   <td class="num">3,05<small class="muted">+5,2 %</small></td>
                   <td class="num">3,05<small class="muted">+5,2 %</small></td>
                   <td class="num">2,44<small class="muted">−15,9 %</small></td>
@@ -920,8 +949,9 @@
                 </tr>
                 <tr>
                   <td>15/09</td><td><span class="ticker">SNTG</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+54,4 %</td><td class="num">+8,2 %</td><td class="num">12,0 M</td><td class="num">2,4 M</td><td class="num">0,05</td>
-                  <td class="num sep">6,00</td>
+                  <td class="num sep">+54,4 %<small class="muted">cumul +67,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">12,0 M</td><td class="num">2,4 M</td><td class="num">0,05</td>
+                  <td class="num sep">6,00<small class="muted">cumul +51,0 %</small></td>
+                  <td class="num">−9,6 %</td>
                   <td class="num">6,55<small class="muted">+9,2 %</small></td>
                   <td class="num">7,14<small class="muted">+19,0 %</small></td>
                   <td class="num">5,80<small class="muted">−3,3 %</small></td>
@@ -932,8 +962,9 @@
                 </tr>
                 <tr>
                   <td>12/09</td><td><span class="ticker">NUWE</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+56,4 %</td><td class="num">+11,5 %</td><td class="num">6,7 M</td><td class="num">3,8 M</td><td class="num">0,04</td>
-                  <td class="num sep">3,20</td>
+                  <td class="num sep">+56,4 %<small class="muted">cumul +74,4 % au high PM</small></td><td class="num">+11,5 %</td><td class="num">6,7 M</td><td class="num">3,8 M</td><td class="num">0,04</td>
+                  <td class="num sep">3,20<small class="muted">cumul +42,8 %</small></td>
+                  <td class="num">−18,1 %</td>
                   <td class="num">3,38<small class="muted">+5,6 %</small></td>
                   <td class="num">3,38<small class="muted">+5,6 %</small></td>
                   <td class="num">2,52<small class="muted">−21,3 %</small></td>
@@ -944,8 +975,9 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">HOTH</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+54,3 %</td><td class="num">+9,0 %</td><td class="num">18,3 M</td><td class="num">1,9 M</td><td class="num">0,07</td>
-                  <td class="num sep">7,30</td>
+                  <td class="num sep">+54,3 %<small class="muted">cumul +68,2 % au high PM</small></td><td class="num">+9,0 %</td><td class="num">18,3 M</td><td class="num">1,9 M</td><td class="num">0,07</td>
+                  <td class="num sep">7,30<small class="muted">cumul +43,0 %</small></td>
+                  <td class="num">−15,0 %</td>
                   <td class="num">7,60<small class="muted">+4,1 %</small></td>
                   <td class="num">7,82<small class="muted">+7,1 %</small></td>
                   <td class="num">6,90<small class="muted">−5,5 %</small></td>
@@ -956,8 +988,9 @@
                 </tr>
                 <tr>
                   <td>11/09</td><td><span class="ticker">ZVSA</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+54,5 %</td><td class="num">+16,2 %</td><td class="num">5,1 M</td><td class="num">7,0 M</td><td class="num">0,10</td>
-                  <td class="num sep">3,55</td>
+                  <td class="num sep">+54,5 %<small class="muted">cumul +79,5 % au high PM</small></td><td class="num">+16,2 %</td><td class="num">5,1 M</td><td class="num">7,0 M</td><td class="num">0,10</td>
+                  <td class="num sep">3,55<small class="muted">cumul +38,1 %</small></td>
+                  <td class="num">−23,1 %</td>
                   <td class="num">4,10<small class="muted">+15,5 %</small></td>
                   <td class="num">4,40<small class="muted">+23,9 %</small></td>
                   <td class="num">3,30<small class="muted">−7,0 %</small></td>
@@ -968,8 +1001,9 @@
                 </tr>
                 <tr>
                   <td>10/09</td><td><span class="ticker">AEHL</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+78,2 %</td><td class="num">+13,9 %</td><td class="num">3,4 M</td><td class="num">11,5 M</td><td class="num">0,09</td>
-                  <td class="num sep">1,90</td>
+                  <td class="num sep">+78,2 %<small class="muted">cumul +103,0 % au high PM</small></td><td class="num">+13,9 %</td><td class="num">3,4 M</td><td class="num">11,5 M</td><td class="num">0,09</td>
+                  <td class="num sep">1,90<small class="muted">cumul +0,7 %</small></td>
+                  <td class="num">−50,4 %</td>
                   <td class="num">2,48<small class="muted">+30,5 %</small></td>
                   <td class="num">2,48<small class="muted">+30,5 %</small></td>
                   <td class="num">1,85<small class="muted">−2,6 %</small></td>
@@ -980,20 +1014,22 @@
                 </tr>
                 <tr>
                   <td>10/09</td><td><span class="ticker">MULN</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+63,5 %</td><td class="num">+14,1 %</td><td class="num">22,0 M</td><td class="num">15,3 M</td><td class="num">0,01</td>
-                  <td class="num sep">0,88</td>
+                  <td class="num sep">+63,5 %<small class="muted">cumul +86,6 % au high PM</small></td><td class="num">+14,1 %</td><td class="num">22,0 M</td><td class="num">15,3 M</td><td class="num">0,01</td>
+                  <td class="num sep">0,88<small class="muted">cumul +56,0 %</small></td>
+                  <td class="num">−16,4 %</td>
                   <td class="num">0,95<small class="muted">+8,0 %</small></td>
                   <td class="num">0,95<small class="muted">+8,0 %</small></td>
                   <td class="num">0,71<small class="muted">−19,3 %</small></td>
                   <td class="num">0,74<small class="muted">−15,9 %</small></td>
-                  <td class="sep"><span class="tag tag-warn">&lt; 1 $</span></td>
+                  <td class="sep"><span class="tag tag-warn" title="Déduit de l'open, pas coché : sous 1 $, c'est le buying power qui limite">&lt; 1 $</span></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
                   <td><button class="btn btn-sm" data-confirm-title="Créer le trade {ticker} ?" data-confirm-body="Le trade hérite du pattern et du contexte de la stat. Tu ajouteras ensuite les exécutions, le P&amp;L réel, le post-mortem et la capture du chart." data-confirm-ok="Créer le trade"><span class="icon">arrow_forward</span> Trade</button></td>
                 </tr>
                 <tr>
                   <td>09/09</td><td><span class="ticker">CRKN</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+58,1 %</td><td class="num">+8,2 %</td><td class="num">9,9 M</td><td class="num">4,4 M</td><td class="num">0,03</td>
-                  <td class="num sep">5,00</td>
+                  <td class="num sep">+58,1 %<small class="muted">cumul +71,1 % au high PM</small></td><td class="num">+8,2 %</td><td class="num">9,9 M</td><td class="num">4,4 M</td><td class="num">0,03</td>
+                  <td class="num sep">5,00<small class="muted">cumul +37,4 %</small></td>
+                  <td class="num">−19,7 %</td>
                   <td class="num">5,21<small class="muted">+4,2 %</small></td>
                   <td class="num">5,21<small class="muted">+4,2 %</small></td>
                   <td class="num">3,85<small class="muted">−23,0 %</small></td>
@@ -1004,8 +1040,9 @@
                 </tr>
                 <tr>
                   <td>08/09</td><td><span class="ticker">TOP</span></td><td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num sep">+48,7 %</td><td class="num">+8,3 %</td><td class="num">32,0 M</td><td class="num">1,2 M</td><td class="num">0,02</td>
-                  <td class="num sep">8,50</td>
+                  <td class="num sep">+48,7 %<small class="muted">cumul +61,0 % au high PM</small></td><td class="num">+8,3 %</td><td class="num">32,0 M</td><td class="num">1,2 M</td><td class="num">0,02</td>
+                  <td class="num sep">8,50<small class="muted">cumul +41,9 %</small></td>
+                  <td class="num">−11,9 %</td>
                   <td class="num">8,80<small class="muted">+3,5 %</small></td>
                   <td class="num">8,95<small class="muted">+5,3 %</small></td>
                   <td class="num">7,95<small class="muted">−6,5 %</small></td>
@@ -1017,11 +1054,12 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="9">Moyennes — 11 stats complétées</td>
-                  <td class="num">+9,6 %<small class="muted">10 avec push</small></td>
+                  <td colspan="9" title="Médianes, pas moyennes : un ou deux gros mouvements ne déplacent pas le chiffre typique">Médianes — 12 stats complétées</td>
+                  <td class="num">−17,3 %<small class="muted">cumul +42,9 %</small></td>
+                  <td class="num">+8,0 %<small class="muted">11 avec push</small></td>
                   <td class="num"></td>
-                  <td class="num">−13,2 %</td>
-                  <td class="num">−4,7 %</td>
+                  <td class="num">−15,4 %</td>
+                  <td class="num">−11,2 %</td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -1031,11 +1069,11 @@
 
         <p class="mockup-note">
           Maquette statique — une stat naît d’un candidat (bouton « → GUS » ou « → DT ») et reprend ses données premarket et l'open de 9h30. La
-          séance se remplit au fil de la journée, champ par champ : Open, Push à l'open, HOD, LOD, EOD (en $) et les flags (SSR, prix
-          &lt; 1 $, entrée après 11h, institutions &gt; 20 %), chacun enregistré à la sortie du champ, sans modale ; l'app calcule chaque % vs l'open. Une stat
+          séance se remplit au fil de la journée, champ par champ : Open, Push à l'open, HOD, LOD, EOD (en $) et les flags (SSR, entrée après 11h,
+          institutions &gt; 20 %), chacun enregistré à la sortie du champ, sans modale ; l'app calcule chaque % vs l'open. Une stat
           reste « à compléter » jusqu'à ce qu'on la coche (✓, comme une transaction revue dans Monarch) : la coche n'est possible
           qu'avec les cinq prix et se décoche d'un clic. La coche d'une stat complétée est verte. Vider un prix d'une stat cochée est refusé — il faut la décocher d'abord. Les
-          KPIs et les moyennes ne comptent que les stats cochées.
+          KPIs et les médianes ne comptent que les stats cochées.
           Le premarket est une carte à part, modifiable comme la séance (champ par champ, à la sortie) : repris du candidat, il se
           corrige sur la stat — la stat garde sa propre copie. « Nouvelle stat » ouvre les deux cartes vides, avec la date (n'importe
           quel jour jusqu'à aujourd'hui), le pattern et le ticker : pour un chart qui colle au pattern trouvé après coup. « Créer la
@@ -1062,6 +1100,25 @@
           d'une stat se change encore entre GUS, SIR, SIV et discrétionnaire (même séance) ; un DT a ses propres prix, c'est une autre
           stat. En haut, GUS / DT / Tous choisit les KPIs, les colonnes et les moyennes ; « Tous » ne garde que ce qui se compare
           (premarket, flags, trade) et résume chaque stat dans son pattern, sans ligne de moyennes.
+        </p>
+        <p class="mockup-note">
+          Mesurer le GUS avec les chiffres sur lesquels il se décide (#499). Le <b>gap</b> de l'app (clôture veille → open PM) et le
+          <b>push PM</b> (open PM → high PM) restent : leur découpage dit si le mouvement s'est fait marché fermé ou en direct. Mais
+          le critère « gap ≥ 45 % » de la fiche se lit sur le scanner TradeZero, qui mesure <b>clôture veille → prix du moment</b> :
+          le tableau donne ce cumul sous le gap (jusqu'au high PM, le plus haut que le scanner a montré) et sous l'open (ce qu'il
+          montrait à la cloche). La <b>tenue</b> (high PM → open) dit ce qui reste du premarket à 9h30 — AEHL perd la moitié avant
+          la cloche, et aucune colonne ne le disait. Gap, push et tenue se composent (en log, ils s'additionnent exactement) en cumul
+          à l'open ; à l'écran tout reste en %. Pas encore de seuil de tenue : la carte « Tenue médiane » le dira sur la durée.
+          Les cartes et la ligne du bas du GUS passent en <b>médianes</b> (comme la durée du DT) : un ou deux gros mouvements ne
+          tirent plus « LOD » de 7 points. <b>Hors pattern</b> — un drapeau ambre, calculé, jamais coché : il ne porte que ce que les
+          prix enregistrés vérifient au moment de l'entrée (un DT dont le retest reprend le top, IMNN le 11/09 ; un prix hors de la
+          fourchette de la fiche ; la tenue, une fois un seuil fixé). Jamais le gap : BKYI aurait été marqué sur 24,9 % quand le
+          scanner affichait 113 %. Une stat hors pattern <b>reste dans les chiffres</b> — les échecs sont le dénominateur ; c'est le
+          trade qui n'a pas suivi la fiche, et le journal sépare son P&amp;L. « Hors pattern » et « Sous 1 $ » sont deux bascules
+          à côté des onglets, pas des onglets : elles se combinent avec eux (les stats hors pattern parmi les complétées, les tradées…)
+          et entre elles. Une case ne survit que si l'app ne peut pas la
+          déduire : « Prix &lt; 1 $ » disparaît (déduit de l'open, filtre « Sous 1 $ ») ; « Entrée après 11h » se déduit de l'heure
+          du retest pour un DT et reste cochée à la main pour un GUS, qui n'enregistre pas d'heure.
         </p>
       </main>
     </div>
@@ -1183,6 +1240,11 @@
       });
     </script>
     <script>
+      // Bascules « Hors pattern » / « Sous 1 $ » : indépendantes l'une de l'autre et des onglets.
+      document.querySelectorAll('.filter-toggle').forEach((b) =>
+        b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))),
+      );
+
       // Carte premarket : gap et push PM recalculés à la frappe ; « Nouvelle stat » vide les deux cartes et ajoute date, pattern, ticker.
       (function () {
         const $ = (id) => document.getElementById(id);
@@ -1206,6 +1268,7 @@
         function preview() {
           show($('p-gap'), 'gap', parse($('p-close').value), parse($('p-open').value));
           show($('p-push'), 'push PM', parse($('p-open').value), parse($('p-high').value));
+          show($('p-cumul'), 'cumul', parse($('p-close').value), parse($('p-high').value));
           const edit = !isNew();
           required().forEach((input) => {
             const empty = edit && !(parse(input.value) > 0);

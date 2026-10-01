@@ -339,12 +339,12 @@ push once it has happened, the flags as they come — and the rest after the 4 p
 | LOD | 3.41 | Low of Day |
 | EOD | 3.52 | Close |
 | SSR | yes / no | |
-| Price < $1 | yes / no | |
-| Entry after 11 am | yes / no | Kept even though in theory I shouldn't be doing it |
+| Entry after 11 am | yes / no | Kept even though in theory I shouldn't be doing it — ticked on a GUS, which stores no entry time ; **derived** from the retest time on a DT (#499) |
 | Institutions > 20 % | yes / no | More than 20 % of the float held by institutions, read on the broker screen — ticked by hand (#349, #369) |
 
 **What the app computes** : push at the open %, HOD %, LOD %, EOD %, all **vs the open** — e.g. push
-at the open (4.62 − 4.20) ÷ 4.20 = +10.0 %.
+at the open (4.62 − 4.20) ÷ 4.20 = +10.0 % ; and from the premarket, the **hold** and the two
+**cumulative** readings of the scanner (#499, below).
 
 **Institutional ownership** came back as a flag (#349) — « Institutions > 20 % », ticked by hand
 like the other three (#369 fixed a label that read the other way round). Low ownership is a GUS entry
@@ -370,7 +370,7 @@ shared between users — a stat always belongs to its user.
 - The KPIs, the averages and the push references of the « À l'open » card only count **checked**
   stats, so a half-filled day doesn't skew them ; the flags default to no.
 - No percentage is stored : everything is recomputed from the prices.
-- The KPIs on top (completed, average push at the open, average LOD, fade) cover **the whole
+- The KPIs on top (completed, median push at the open, median LOD, fade, median hold) cover **the whole
   filter**, not the displayed page.
 - No CSV import : neither for the stats (a stat is born from a candidate, or typed by hand) nor for
   the journal (a trade is born from a stat). Both keep a CSV **export** — premarket block, session block and flags
@@ -436,7 +436,7 @@ that never comes, so they count in the stats and are made easy to single out.
 - A no-push stat is **checked with the four other prices** (open, HOD, LOD, EOD) — the panel counts
   « n / 4 prices ». HOD stays required : on a no-push day it is the open or the later bounce.
 - In the table, the push column shows a neutral « no push » tag (not an outcome, not a warning).
-- The **average push at the open** only counts the stats that pushed, so the 0 % days don't drag it
+- The **median push at the open** only counts the stats that pushed, so the 0 % days don't drag it
   down ; its KPI shows the **no-push rate** underneath (« 1 / 11 without a push »). The no-push days
   count in everything else (LOD, fade, EOD).
 - A **« No push »** button in the table's filter isolates them, to compare their premarket (gap, PM
@@ -455,6 +455,53 @@ that never comes, so they count in the stats and are made easy to single out.
   so a target built on « the average day pushes 9.6 % » doesn't silently assume a push is coming.
   It only informs : the default target push still follows the selected reference. Hidden when no
   day went without a push, like the stats page's KPI.
+
+### Measuring the GUS with the numbers it is decided on (#499)
+
+**Two gaps under one name.** The app's **gap** is previous close → premarket open ; the TradeZero
+scanner, on which the `gap ≥ 45 %` criterion of `docs/pattern/GUS.md` is read, measures **previous
+close → the price right now** (CAPR, measured live : 36.8 % on the scanner, 16.6 % for the app's
+gap). Both stay — the gap / PM push split says whether the move happened while the market was shut
+or is being bid in real time, which for a short seller is the thesis. What was missing is the
+**cumulative** figure, the one the 45 % rule speaks :
+
+- **cumulative at the PM high** = previous close → PM high, the highest the scanner showed that
+  morning — shown under the gap ;
+- **cumulative at the open** = previous close → open (9:30), what it still showed at the bell —
+  shown under the open.
+
+**Hold** = PM high → open, `(open − pmHigh) / pmHigh` : what survives of the premarket at 9:30. Its
+own column, in the session group. « It pushes at the premarket open, settles until 9:30 ; if it
+collapses before, I don't take it » — LXEH lost half before the bell with nothing on screen to say so.
+No threshold yet : the « median hold » card will tell where the line sits.
+
+Gap, PM push and hold **compose** into the cumulative at the open — in log they add exactly — but
+everything is shown in percent, the unit the scanner, the broker and the tracker speak. Nothing is
+stored : all three are recomputed from the prices, like the session percentages.
+
+**Medians, not means** on the GUS cards and the table's footer row (and on the SIR / SIV /
+discretionary ones, measured like it) : one or two big movers dragged « average LOD » by up to 7
+points. The DT already reads a median duration ; its leg averages stay for now.
+
+**Out of pattern** — a computed amber flag, never ticked by hand, carrying only what the recorded
+prices verify **at the moment of the entry** :
+
+- a DT whose retest is at or above the top — a breakout, not a double top ;
+- a price outside the pattern sheet's range (the open, for a GUS : ~$0.30 – $10) ;
+- the hold, once a threshold exists.
+
+**Never the gap** : on the app's gap BKYI would have been flagged on 24.9 % when the scanner showed
+113 %. A stat flagged out of pattern **stays in the statistics** — the failures are the denominator,
+and « fade 8 / 10 » must not become 8 / 8. What it splits is the P&L : the journal shows the P&L of
+the trades taken on out-of-pattern stats in a card of its own, beside the in-rules one — a
+discipline number, never read as a strategy number. The flag shows in the flags column, and an
+**« Out of pattern »** toggle isolates those stats.
+
+**A checkbox survives only if the app cannot derive it.** « Price < $1 » goes : a box restating a
+price, wrong on a third of the stats. It becomes a « < $1 » tag derived from the open and an
+**« Under $1 »** toggle. Both toggles sit beside the status tabs, not among them : they combine with
+any tab (the out-of-pattern stats among the completed ones, the traded ones…) and with each other. « Entry after 11 am » is derived from the retest time on a DT, and stays a
+checkbox on a GUS. SSR, institutions > 20 % and no push stay : nothing else recorded says them.
 
 ### The double top stat (#428)
 
@@ -489,8 +536,8 @@ whose low precedes its top is a typo.
   behind it : does a double top really play out over about half an hour ?
 - The stat is checked with the **four prices and the four times** (« n / 4 prices · n / 4 times ») ;
   same check, same rules.
-- The flags stay (SSR, price < $1, entry after 11 am, institutions > 20 %) ; « no push » does not
-  apply.
+- The flags stay (SSR, institutions > 20 %) ; « entry after 11 am » is **derived** from the retest
+  time — a DT is entered on the retest (#499) ; « no push » does not apply.
 - **The page follows the pattern** : a **GUS / DT / SIR / SIV / Discretionary / All** switch above
   the KPIs picks the KPIs, the table's columns and the averages. **Every pattern has its own
   numbers** (#512) : SIR, SIV and discretionary are measured like the GUS — completed, push at the
@@ -742,7 +789,7 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
 - **What a KPI counts, it says** (#309) — three pages read the same trading days, so they share one
   vocabulary :
   - a **completed stat** is one that was **ticked** (its five session prices in, four on a no-push
-    day). Every stats KPI — the average push, the LOD, the fade — is measured on those, over the
+    day). Every stats KPI — the push, the LOD, the fade — is measured on those, over the
     **filtered set**, never the displayed page. The card shows the total beside the count, so
     « completed » can't be mistaken for « all of them ».
   - a **counted trade** is one carrying a **retained P&L** (closed, or with a broker P&L typed on

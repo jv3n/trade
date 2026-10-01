@@ -3,7 +3,7 @@
 > **Shorter** une small-cap américaine qui a gappé en premarket sans fondamental derrière. Le pari :
 > le prix retombe pendant la séance, parce que le pump est artificiel.
 
-*Dernière révision : 2026-09-25, d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
+*Dernière révision : 2026-10-01 (gap lu comme le scanner, #499), d'après la séance du Trading Desk du 14 septembre, « Les Patterns ».*
 
 ---
 
@@ -14,7 +14,7 @@ Tous les critères doivent tenir **en même temps**. Un KO → pas de trade.
 | # | Critère | Valeur | Pourquoi |
 |---|---------|--------|----------|
 | 1 | **Prix** | ~0,30 $ – 10 $ | La zone de volatilité extrême, où jouent les pumps. Le broker autorisait les shorts à partir de 1 $, puis 0,50 $, maintenant 0,30 $ ; sous 1 $, c'est le buying power qui limite en pratique. |
-| 2 | **Gap up** | ≥ +45 % | Open premarket (4 h) vs la clôture de la veille. En dessous, c'est du bruit ; au-dessus, c'est un vrai décrochage qui attend d'être corrigé. |
+| 2 | **Gap up** | ≥ +45 % | Clôture de la veille → prix du moment, comme le lit le scanner TradeZero — pas l'open premarket. Sur la page stats, c'est le chiffre **cumulé** (au high PM, puis à l'open), pas la colonne « gap », qui s'arrête à l'open premarket. En dessous, c'est du bruit ; au-dessus, c'est un vrai décrochage qui attend d'être corrigé. |
 | 3 | **Float** | ≥ 1,5 M | En dessous, ça squeeze. Le plancher est passé de 3 M à 2 M puis 1,5 M au fil des stats. |
 | 4 | **Daily** | Plat ou baissier | Le pump devient un pic dans une tendance baissière → retour à la moyenne. Le seul critère qui demande du jugement — section à part plus bas. |
 | 5 | **Entreprise** | Faible | Pas de revenus, pas de catalyseur → rien pour tenir le prix. |
