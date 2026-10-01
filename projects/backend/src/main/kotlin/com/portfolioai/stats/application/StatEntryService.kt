@@ -81,17 +81,23 @@ class StatEntryService(
   /**
    * KPIs over the **whole filtered set**, not the current page : how many stats are completed / to
    * complete, the average push at open, LOD and EOD, the median / 3rd quartile / max push at open,
-   * and how many faded at the close — on the GUS-measured stats — plus the three legs of the
+   * and how many faded at the close — on the session-measured stats — plus the three legs of the
    * completed double tops. Percentages are recomputed from the prices ([StatMetrics]) — none of
    * them is stored.
+   *
+   * **Averages need a pattern** (#512) : each pattern is measured on its own stats, so without one
+   * in the filter only the counts are computed (completed, to complete, traded) and every average
+   * stays empty. A GUS and the stat born from it (#507) share the day's open, LOD and EOD : mixed,
+   * that ticker-day would count twice.
    */
   @Transactional(readOnly = true)
   fun summarise(filter: StatEntryFilter): StatSummaryDto {
     val userId = authService.getCurrentUser().id
     val rows = repo.findAll(StatEntrySpecifications.matching(userId, filter))
     val completed = rows.filter { it.isCompleted }
-    val sessions = completed.filterNot { it.isDoubleTop }
-    val doubleTops = completed.filter { it.isDoubleTop }
+    val measured = if (filter.pattern == null) emptyList() else completed
+    val sessions = measured.filterNot { it.isDoubleTop }
+    val doubleTops = measured.filter { it.isDoubleTop }
     // The journal's "8 of 10 stats traded" KPI (#195) : one query for the whole filtered set,
     // the same read the listing already uses row by row. Keyed by stat, so a stat traded three
     // times still counts once (#500).

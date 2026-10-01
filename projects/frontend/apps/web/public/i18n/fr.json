@@ -586,7 +586,6 @@
       "noPushSubOne": "vs open · sur {{pushed}} qui a poussé · {{count}} / {{total}} sans push",
       "noPushDays": "Jours sans push",
       "noPushShare": "{{share}} % des stats complétées de la période",
-      "completedGus": "Stats GUS complétées",
       "completedDt": "Stats DT complétées",
       "extension": "Extension moyenne (A)",
       "extensionSub": "depuis le départ · {{withGap}} avec le gap",
@@ -602,7 +601,8 @@
       "tradedSub": "stats qui ont donné un trade",
       "averages": "Moyennes",
       "byPattern": "par pattern",
-      "byPatternSub": "choisis GUS ou DT pour le push, le LOD, l'extension, le rejet…"
+      "byPatternSub": "choisis un pattern pour le push, le LOD, l'extension, le rejet… — jamais un mélange",
+      "completedOf": "Stats {{pattern}} complétées"
     },
     "complete": {
       "title": "Séance",
@@ -759,9 +759,12 @@
     },
     "view": {
       "label": "Pattern affiché",
-      "hint": "les KPIs, les colonnes du tableau et les moyennes suivent le pattern — un GUS et un DT ne se mesurent pas pareil",
+      "hint": "les KPIs, les colonnes du tableau et les moyennes suivent le pattern — chaque pattern a ses chiffres, SIR, SIV et discrétionnaire se mesurent comme le GUS",
       "GUS": "GUS",
       "DT": "DT",
+      "SIR": "SIR",
+      "SIV": "SIV",
+      "DISCRETIONARY": "Discr.",
       "ALL": "Tous"
     },
     "doubleTop": {

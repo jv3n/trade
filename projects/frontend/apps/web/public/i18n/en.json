@@ -586,7 +586,6 @@
       "noPushSubOne": "vs open · over the {{pushed}} that pushed · {{count}} / {{total}} without a push",
       "noPushDays": "Days without a push",
       "noPushShare": "{{share}} % of the period's completed stats",
-      "completedGus": "Completed GUS stats",
       "completedDt": "Completed DT stats",
       "extension": "Average extension (A)",
       "extensionSub": "from the start · {{withGap}} with the gap",
@@ -602,7 +601,8 @@
       "tradedSub": "stats that gave a trade",
       "averages": "Averages",
       "byPattern": "by pattern",
-      "byPatternSub": "pick GUS or DT for the push, the LOD, the extension, the rejection…"
+      "byPatternSub": "pick a pattern for the push, the LOD, the extension, the rejection… — never a mix",
+      "completedOf": "Completed {{pattern}} stats"
     },
     "complete": {
       "title": "Session",
@@ -759,9 +759,12 @@
     },
     "view": {
       "label": "Pattern shown",
-      "hint": "the KPIs, the table's columns and the averages follow the pattern — a GUS and a DT are not measured alike",
+      "hint": "the KPIs, the table's columns and the averages follow the pattern — every pattern has its own numbers, SIR, SIV and discretionary are measured like the GUS",
       "GUS": "GUS",
       "DT": "DT",
+      "SIR": "SIR",
+      "SIV": "SIV",
+      "DISCRETIONARY": "Discr.",
       "ALL": "All"
     },
     "doubleTop": {

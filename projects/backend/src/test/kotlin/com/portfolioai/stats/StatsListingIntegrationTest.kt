@@ -83,6 +83,11 @@ class StatsListingIntegrationTest {
   private lateinit var otherUser: User
 
   private val noFilter = StatEntryFilter()
+  /**
+   * Averages are measured per pattern (#512) : the GUS figures on the GUS stats, the DT's on its.
+   */
+  private val gusOnly = StatEntryFilter(pattern = Pattern.GUS)
+  private val dtOnly = StatEntryFilter(pattern = Pattern.DT)
 
   @BeforeEach
   fun setUp() {
@@ -751,7 +756,7 @@ class StatsListingIntegrationTest {
     // In progress : its legs must weigh nothing.
     service.create(doubleTopRequest(ticker = "MULN").copy(dtRetestPrice = null))
 
-    val summary = service.summarise(noFilter)
+    val summary = service.summarise(dtOnly)
 
     assertEquals(2, summary.completedDoubleTops)
     // SGBX start 1.90 -> top 2.95 = +55.26, NXTT 2.00 -> 3.00 = +50.00 -> 52.63.
@@ -771,14 +776,18 @@ class StatsListingIntegrationTest {
   @Test
   fun `the GUS figures are unchanged by the double tops`() {
     seedThreeStats()
-    val before = service.summarise(noFilter)
+    val before = service.summarise(gusOnly)
+    val countedBefore = service.summarise(noFilter).completed
 
     createCompleted(doubleTopRequest(ticker = "SGBX"))
     createCompleted(nxttDoubleTop())
-    val after = service.summarise(noFilter)
 
-    assertEquals(before.completed + 2, after.completed, "a double top is still a completed stat")
-    assertEquals(gusFigures(before), gusFigures(after))
+    assertEquals(
+      countedBefore + 2,
+      service.summarise(noFilter).completed,
+      "a double top is still a completed stat",
+    )
+    assertEquals(gusFigures(before), gusFigures(service.summarise(gusOnly)))
   }
 
   // ---------------------------------------------------------------------------
@@ -890,7 +899,7 @@ class StatsListingIntegrationTest {
     // In progress : its times must weigh nothing.
     service.create(doubleTopRequest(ticker = "MULN").copy(dtRetestTime = LocalTime.of(19, 0)))
 
-    val summary = service.summarise(noFilter)
+    val summary = service.summarise(dtOnly)
 
     assertEquals(0, BigDecimal("50.50").compareTo(summary.medianDoubleTopMinutes))
     assertEquals(0, BigDecimal("11.00").compareTo(summary.medianRejectionMinutes))
@@ -900,7 +909,7 @@ class StatsListingIntegrationTest {
   fun `no completed double top means no median, not a zero`() {
     seedThreeStats()
 
-    val summary = service.summarise(noFilter)
+    val summary = service.summarise(dtOnly)
 
     assertNull(summary.medianDoubleTopMinutes)
     assertNull(summary.medianRejectionMinutes)
@@ -914,10 +923,14 @@ class StatsListingIntegrationTest {
   fun `summarise counts the two buckets and averages the derived percentages of the completed rows`() {
     seedThreeStats()
 
-    val summary = service.summarise(noFilter)
+    // The counts over every pattern — the stat to complete is SGBX's double top ; the averages on
+    // the GUS stats alone (#512).
+    val counts = service.summarise(noFilter)
+    val summary = service.summarise(gusOnly)
 
+    assertEquals(2, counts.completed)
+    assertEquals(1, counts.toComplete)
     assertEquals(2, summary.completed)
-    assertEquals(1, summary.toComplete)
     // KTTA push at open +10.00 (4.20 -> 4.62), BNZI +5.17 (2.90 -> 3.05) -> average 7.59 (HALF_UP).
     assertEquals(0, BigDecimal("7.59").compareTo(summary.averagePushOpenPercent))
     // KTTA LOD -18.81 (3.41), BNZI -15.86 (2.44) -> average -17.34.
@@ -931,7 +944,7 @@ class StatsListingIntegrationTest {
   fun `summarise gives the median, 3rd quartile and max push at open of the completed rows`() {
     seedThreeStats()
 
-    val summary = service.summarise(noFilter)
+    val summary = service.summarise(gusOnly)
 
     // Completed pushes : BNZI +5.17, KTTA +10.00 ; the stat to complete has none and weighs
     // nothing.
@@ -946,7 +959,7 @@ class StatsListingIntegrationTest {
     seedThreeStats()
     createCompleted(noPushRequest())
 
-    val summary = service.summarise(noFilter)
+    val summary = service.summarise(gusOnly)
 
     assertEquals(3, summary.completed)
     assertEquals(1, summary.noPushCount)
@@ -970,7 +983,7 @@ class StatsListingIntegrationTest {
   fun `summarise has no push reference without a completed stat`() {
     service.create(premarketRequest(ticker = "KTTA"))
 
-    val summary = service.summarise(noFilter)
+    val summary = service.summarise(gusOnly)
 
     assertNull(summary.medianPushOpenPercent)
     assertNull(summary.thirdQuartilePushOpenPercent)
@@ -981,7 +994,8 @@ class StatsListingIntegrationTest {
   fun `summarise honours the same filter as the listing`() {
     seedThreeStats()
 
-    val september17 = service.summarise(StatEntryFilter(dateFrom = DAY, dateTo = DAY))
+    val september17 =
+      service.summarise(StatEntryFilter(dateFrom = DAY, dateTo = DAY, pattern = Pattern.GUS))
 
     assertEquals(1, september17.completed)
     assertEquals(0, september17.toComplete)
@@ -1002,15 +1016,53 @@ class StatsListingIntegrationTest {
         )
     )
 
-    val summary = service.summarise(noFilter)
+    val summary = service.summarise(gusOnly)
 
     assertEquals(1, summary.completed)
     assertEquals(0, summary.fadeCount)
   }
 
   @Test
-  fun `summarise over an empty sheet reports zeroes and null averages`() {
+  fun `without a pattern the summary counts the stats but averages nothing`() {
+    // Every pattern is measured on its own stats (#512) : a mix would be a figure of no pattern.
+    seedThreeStats()
+
     val summary = service.summarise(noFilter)
+
+    assertEquals(2, summary.completed)
+    assertNull(summary.averagePushOpenPercent)
+    assertNull(summary.averageLodPercent)
+    assertEquals(0, summary.fadeCount)
+    assertNull(summary.averageExtensionPercent)
+  }
+
+  @Test
+  fun `a stat born from a GUS counts in its own pattern, never in the GUS figures`() {
+    // KTTA, 17/09 : a GUS and the discretionary stat born from it share the day's open, LOD and
+    // EOD (#507). Mixed in, that ticker-day would count twice in the GUS averages.
+    seedThreeStats()
+    val gusBefore = service.summarise(gusOnly)
+    val source = service.findAllPaged(gusOnly, PageRequest.of(0, 50)).content.first { it.completed }
+    val sibling = service.createSibling(source.id, Pattern.DISCRETIONARY)
+    // The push is the setup's reading, left empty on the sibling : typed before the tick.
+    service.update(
+      sibling.id,
+      fullSessionRequest(ticker = source.ticker, tradeDate = source.tradeDate)
+        .copy(pattern = Pattern.DISCRETIONARY),
+    )
+    service.setCompleted(sibling.id, true)
+
+    val discretionary = service.summarise(StatEntryFilter(pattern = Pattern.DISCRETIONARY))
+
+    assertEquals(gusFigures(gusBefore), gusFigures(service.summarise(gusOnly)))
+    assertEquals(gusBefore.completed, service.summarise(gusOnly).completed)
+    assertEquals(1, discretionary.completed)
+    assertEquals(1, discretionary.fadeCount, "measured like a GUS, on its own stat")
+  }
+
+  @Test
+  fun `summarise over an empty sheet reports zeroes and null averages`() {
+    val summary = service.summarise(gusOnly)
 
     assertEquals(0, summary.completed)
     assertEquals(0, summary.toComplete)
