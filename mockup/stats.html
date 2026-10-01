@@ -407,7 +407,7 @@
               <!-- Reclasser reste possible entre les patterns qui se mesurent pareil ; un DT a ses propres prix, c'est une autre stat. -->
               <div class="field" data-group="panel" data-value="gus">
                 <label>Pattern</label>
-                <select class="input" id="p-pattern" title="S'enregistre au changement — le trade lié suit. Un double top est une autre stat : « → DT » sur le candidat.">
+                <select class="input" id="p-pattern" title="S'enregistre au changement — les trades liés suivent. Un autre pattern le même jour est une autre stat : « Même ticker, autre pattern » ci-dessous, ou « → DT » sur le candidat.">
                   <option selected>GUS — Gap Up Short</option>
                   <option>SIR — Short Into Resistance</option>
                   <option>SIV — Short Into VWAP</option>
@@ -418,6 +418,17 @@
                 <label>Pattern</label>
                 <span class="input" style="display: flex; align-items: center" title="Une stat DT reste un DT : ses prix n'ont pas de sens pour un autre pattern">
                   <span class="tag tag-accent">DT</span>&nbsp;Double Top
+                </span>
+              </div>
+              <div class="field" title="#507 — un nouveau trade sous un autre pattern passe par sa propre stat">
+                <label>Même ticker, autre pattern</label>
+                <span style="display: flex; gap: 6px">
+                  <select class="input" aria-label="Pattern de la nouvelle stat" title="Seulement les patterns encore libres pour SGBX le 18/09 — GUS et DT existent déjà">
+                    <option>SIR — Short Into Resistance</option>
+                    <option>SIV — Short Into VWAP</option>
+                    <option selected>Discrétionnaire</option>
+                  </select>
+                  <button class="btn btn-sm" type="button" data-confirm-title="Créer une autre stat SGBX du 18/09 ?" data-confirm-body="Même jour, même ticker, un autre pattern : les prix de la journée (clôture veille, premarket, open, HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern." data-confirm-ok="Créer la stat"><span class="icon">add</span> Stat</button>
                 </span>
               </div>
             </div>
@@ -705,7 +716,15 @@
                   <td class="sep">push +10,0 % · LOD −18,8 %</td>
                   <td class="sep"></td>
                   <td><button class="check done"><span class="icon">check_circle</span></button></td>
-                  <td><a href="trade.html" class="tag tag-gain">+292</a></td>
+                  <td style="white-space: nowrap"><a href="trade.html" class="tag tag-gain">+292</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
+                </tr>
+                <tr>
+                  <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">Discrétionnaire</span></td>
+                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="sep" title="Née de la stat GUS du jour (#507) : les prix de la journée sont repris">push +10,0 % · LOD −18,8 %</td>
+                  <td class="sep"></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td style="white-space: nowrap"><a href="trade.html" class="tag tag-gain" title="Long sur le rebond du LOD">+64</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">PRSO</span></td><td><span class="tag tag-accent">DT</span></td>
@@ -776,7 +795,7 @@
                   <td class="num">2,04<small class="muted">−11,3 %</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
-                  <td style="white-space: nowrap"><a href="trade.html" class="tag tag-loss" title="Trade 1 · 10:33 → 10:48">−339</a> <a href="trade.html" class="tag tag-loss" title="Trade 2 · 11:00 → 11:04">−444</a> <a href="trade.html" class="tag tag-loss" title="Trade 3 · 11:08 → 11:09">−684</a></td>
+                  <td style="white-space: nowrap"><a href="trade.html" class="tag tag-loss" title="Trade 1 · 10:33 → 10:48">−339</a> <a href="trade.html" class="tag tag-loss" title="Trade 2 · 11:00 → 11:04">−444</a> <a href="trade.html" class="tag tag-loss" title="Trade 3 · 11:08 → 11:09">−684</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
                 </tr>
                 <tr>
                   <td>21/09</td><td><span class="ticker">GLND</span></td><td><span class="tag tag-accent">GUS</span></td>
@@ -824,7 +843,7 @@
                   <td class="num">3,52<small class="muted">−16,2 %</small></td>
                   <td class="sep"></td>
                   <td><button class="check done" title="Complétée — cliquer pour la repasser à compléter"><span class="icon">check_circle</span></button></td>
-                  <td><a href="trade.html" class="tag tag-gain">+292</a></td>
+                  <td style="white-space: nowrap"><a href="trade.html" class="tag tag-gain">+292</a> <button class="btn btn-sm btn-icon" title="Un autre trade sur cette stat" data-confirm-title="Créer un autre trade {ticker} ?" data-confirm-body="Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&amp;L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern » sur la stat." data-confirm-ok="Créer le trade"><span class="icon">add</span></button></td>
                 </tr>
                 <tr>
                   <td>16/09</td><td><span class="ticker">BNZI</span></td><td><span class="tag tag-accent">GUS</span></td>
@@ -969,7 +988,7 @@
           l'open, rebond vers 11h seulement). Cocher grise et vide le champ, et la stat se coche avec les quatre autres prix. Ces
           jours-là comptent dans les stats — c'est un setup à part, à exécuter dès l'open : le push moyen ne compte que les stats qui
           ont poussé, et le taux de « sans push » s'affiche à côté ; le filtre « Sans push » les isole pour comparer leur premarket.
-          « → Trade » crée le trade au journal (action manuelle). Une stat peut porter plusieurs trades — un par aller-retour (#500, SDEV le 29/09) : une pastille par trade, dans l'ordre de la journée. Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
+          « → Trade » crée le trade au journal (action manuelle). Une stat peut porter plusieurs trades, créés un par un avec « + » (#500, SDEV le 29/09) : une pastille par trade, dans l'ordre de la journée, chacun avec son sens — KTTA le 17/09 a un GUS short et, née de lui (#507), une stat discrétionnaire avec un long sur le rebond. Les variations de prix restent neutres : la couleur est réservée aux résultats (lien vers le trade).
         </p>
         <p class="mockup-note">
           Double top (#428) — une stat DT garde le même premarket (repris du candidat, pour que ses KPIs se comparent à ceux du GUS),
