@@ -297,54 +297,35 @@ describe('JournalDetailPage', () => {
     expect(unload()).toBe(true);
   });
 
-  // ---- Moving between the trades of one stat (#515) ----
-  // Only the route's parameter changes : the component is reused and `unsavedChangesGuard` never
-  // runs, so the page asks by itself.
+  // ---- Moving between the trades of one stat (#515, #517) ----
+  // `unsavedChangesGuard` runs on a parameter-only change too : the sheet asking again on top of
+  // it showed two dialogs for one click, and the previous trade under the new URL in between.
 
-  it('moving to another trade of the stat with an unsaved post-mortem asks first', () => {
+  it('moving to another trade of the stat asks nothing of its own — the router guard does', () => {
     findById = vi.fn(() => of(closedTrade()));
     const fixture = setup();
     fixture.detectChanges();
     const page = fixture.componentInstance;
     const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
     page.setNote('Re-entered 20 % above my exit.');
-
-    params.next(convertToParamMap({ id: 't3' }));
-
-    expect(ask).toHaveBeenCalledWith('common.confirmLeave', { variant: 'danger' });
-    expect(findById).toHaveBeenLastCalledWith('t3');
-  });
-
-  it('staying keeps the text, puts the URL back and does not reload the sheet', () => {
-    findById = vi.fn(() => of(closedTrade()));
-    const fixture = setup();
-    fixture.detectChanges();
-    const page = fixture.componentInstance;
-    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => {
-      // What the router does with the restored URL : the same id comes back.
-      params.next(convertToParamMap({ id: 'abc-123' }));
-      return Promise.resolve(true);
-    });
-    page.setNote('Re-entered 20 % above my exit.');
-    confirmed = false;
-
-    params.next(convertToParamMap({ id: 't3' }));
-
-    expect(navigate).toHaveBeenCalledWith(['/journal', 'abc-123'], { replaceUrl: true });
-    expect(findById).toHaveBeenCalledTimes(1);
-    expect(page.draft()?.note).toBe('Re-entered 20 % above my exit.');
-  });
-
-  it('moving between trades with nothing unsaved asks nothing', () => {
-    findById = vi.fn(() => of(closedTrade()));
-    const fixture = setup();
-    fixture.detectChanges();
-    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
 
     params.next(convertToParamMap({ id: 't3' }));
 
     expect(ask).not.toHaveBeenCalled();
     expect(findById).toHaveBeenLastCalledWith('t3');
+  });
+
+  it('saving refreshes the header : the tag of the trade, the total and the order', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+    const page = fixture.componentInstance;
+    statFindById.mockClear();
+    page.setNote('Faded the push as planned.');
+
+    page.save();
+
+    expect(statFindById).toHaveBeenCalledWith('stat-1');
   });
 
   it('leaves without asking once the trade is deleted', () => {

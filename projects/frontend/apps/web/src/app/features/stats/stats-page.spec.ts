@@ -785,6 +785,16 @@ describe('StatsPage', () => {
     expect(page.freePatterns()).not.toContain('SIR');
   });
 
+  it('a session stat missing its push says so on its disabled tick, in the row and the panel', () => {
+    // Recette #517 : a stat whose row looks full but stops at 4 / 5 must say what is missing.
+    const stat = makeStat({ pattern: 'DISCRETIONARY', pushOpenPrice: null, completed: false });
+    const { page } = setup({ rows: [stat] });
+    page.open(stat);
+
+    expect(page.rowBlockedReason(page.rows()[0])).toBe('stats.completion.missing');
+    expect(page.tickBlockedReason()).toBe('stats.completion.missing');
+  });
+
   it('a pattern taken in the meantime says so instead of a generic error', () => {
     const { page, repo, toastShown } = setup({ rows: [makeStat()] });
     repo.createSibling.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
