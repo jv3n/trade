@@ -11,7 +11,7 @@ import { Candidate } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { TradeEntry } from '../../core/api/journal/trade-entry.model';
-import { StatEntry } from '../../core/api/stats/stat-entry.model';
+import { StatEntry, StatEntryFilter } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
 import { TradingDayRepository } from '../../core/api/trading-day/trading-day.repository';
@@ -146,13 +146,21 @@ describe('TodayPage', () => {
   // The walk-through
   // ---------------------------------------------------------------------------
 
-  it('a fresh morning puts the reconciliation first and leaves the rest to come', () => {
+  // #531 : the app is opened in the morning, so the stats of a session are completed the next day.
+  it("opens the morning on yesterday's stats, the four other steps in their order", () => {
     const page = setup();
 
+    expect(page.steps).toEqual(['stats', 'reconciliation', 'candidates', 'session', 'trades']);
+  });
+
+  it('a morning with nothing left from before today is done, and the reconciliation comes next', () => {
+    const page = setup();
+
+    expect(page.stepStates().stats).toBe('done');
     expect(page.stepStates().reconciliation).toBe('current');
     expect(page.stepStates().candidates).toBe('todo');
     expect(page.stepStates().trades).toBe('todo');
-    expect(page.doneCount()).toBe(0);
+    expect(page.doneCount()).toBe(1);
   });
 
   it('once the morning is reconciled, the candidates become the current step', () => {
@@ -182,7 +190,7 @@ describe('TodayPage', () => {
     page.onSettled();
 
     expect(page.stepStates().reconciliation).toBe('current');
-    expect(page.doneCount()).toBe(0);
+    expect(page.doneCount()).toBe(1);
   });
 
   it('captured candidates, all in the sheet, move the day on — the session is still ahead', () => {
@@ -191,13 +199,11 @@ describe('TodayPage', () => {
       makeCandidate({ stats: IN_STATS }),
       makeCandidate({ id: 'c2', ticker: 'BNRG', stats: IN_STATS }),
     ];
-    // Promoted this morning, so their stats wait for the session : step 4 is not behind us.
-    statsToComplete = [makeStat(), makeStat({ id: 's2', ticker: 'BNRG' })];
     const page = setup();
 
     expect(page.stepStates().candidates).toBe('done');
     expect(page.stepStates().session).toBe('current');
-    expect(page.doneCount()).toBe(2);
+    expect(page.doneCount()).toBe(3);
   });
 
   // #337 : capturing one candidate was enough, and the promotion hid under step 4.
@@ -220,47 +226,64 @@ describe('TodayPage', () => {
     expect(page.stepStates().candidates).toBe('done');
   });
 
-  it('the stats step stays open while a stat still waits for its session block', () => {
-    reconciledToday = true;
-    candidates = [makeCandidate({ stats: IN_STATS })];
-    statsToComplete = [makeStat()];
+  it('a stat of yesterday still to complete is the first thing of the morning', () => {
+    statsToComplete = [makeStat({ tradeDate: YESTERDAY })];
     const page = setup();
 
-    expect(page.stepStates().stats).not.toBe('done');
+    expect(page.stepStates().stats).toBe('current');
+    expect(page.stepStates().reconciliation).toBe('todo');
   });
 
   // #337 : BNRG (17/09) and SLNH (18/09) sat half-filled with nothing on this page pointing at them.
   it('keeps the stats step open on a stat left from an earlier day, and dates it', () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS })];
+    // Yesterday is the normal case (#531) : only the day before it is overdue.
     statsToComplete = [
-      makeStat({ id: 's-sgbx', ticker: 'SGBX' }),
-      makeStat({ id: 's-bnrg', ticker: 'BNRG', tradeDate: new Date(2026, 8, 17) }),
+      makeStat({ id: 's-sgbx', ticker: 'SGBX', tradeDate: YESTERDAY }),
+      makeStat({ id: 's-bnrg', ticker: 'BNRG', tradeDate: new Date(2026, 8, 16) }),
     ];
     const page = setup();
 
-    expect(page.statsToCompleteToday().map((s) => s.ticker)).toEqual(['SGBX']);
+    expect(page.yesterdayStats().map((s) => s.ticker)).toEqual(['SGBX']);
     expect(page.overdueStats().map((s) => s.ticker)).toEqual(['BNRG']);
-    expect(page.overdueLine()).toEqual({ tickers: 'BNRG GUS (09/17)', more: 0 }); // en locale
+    expect(page.overdueLine()).toEqual({ tickers: 'BNRG GUS (09/16)', more: 0 }); // en locale
     expect(page.stepStates().stats).not.toBe('done');
   });
 
-  it('asks for the stats to complete of every day, not only today', () => {
-    const findAll = vi.fn(() => of(page([])));
+  it("asks for the stats to complete of every day before today — the day's own are not in it", () => {
+    const findAll = vi.fn((_filter: StatEntryFilter, _page: unknown) => of(page([])));
     TestBed.overrideProvider(StatsRepository, {
       useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
     });
     setup();
 
-    expect(findAll).toHaveBeenCalledWith(
-      { status: 'TO_COMPLETE' },
+    const [filter, paging] = findAll.mock.calls[0];
+    expect(filter.status).toBe('TO_COMPLETE');
+    expect(filter.dateFrom).toBeUndefined();
+    expect(filter.dateTo?.getDate()).toBe(17);
+    expect(paging).toEqual(
       expect.objectContaining({ sortField: 'tradeDate', sortDirection: 'desc' }),
     );
   });
 
+  it('on a Monday, Friday is yesterday and Thursday is overdue', () => {
+    vi.setSystemTime(new Date('2026-09-21T12:30:00Z')); // Monday 08:30 NY
+    statsToComplete = [
+      makeStat({ id: 's-fri', ticker: 'SGBX', tradeDate: new Date(2026, 8, 18) }),
+      makeStat({ id: 's-thu', ticker: 'BNRG', tradeDate: YESTERDAY }),
+    ];
+    const page = setup();
+
+    expect(page.yesterdayStats().map((s) => s.ticker)).toEqual(['SGBX']);
+    expect(page.overdueStats().map((s) => s.ticker)).toEqual(['BNRG']);
+  });
+
   // Back from two weeks off, the page said « 50 to complete » when there were 63.
   it('counts every stat to complete, not the length of the page it received', () => {
-    const findAll = vi.fn(() => of({ ...page([makeStat()]), totalElements: 63 }));
+    const findAll = vi.fn(() =>
+      of({ ...page([makeStat({ tradeDate: YESTERDAY })]), totalElements: 63 }),
+    );
     TestBed.overrideProvider(StatsRepository, {
       useValue: { findAll, summary: () => of(makeStatSummary()) } as unknown as StatsRepository,
     });
@@ -290,32 +313,32 @@ describe('TodayPage', () => {
   // FRESH1's GUS and its DT, split apart by the date order of the page.
   it('names each stat of the day with its pattern, the stats of one ticker side by side', () => {
     statsToComplete = [
-      makeStat({ id: 's1', ticker: 'FRESH1', pattern: 'DT' }),
-      makeStat({ id: 's2', ticker: 'FRESH2', pattern: 'GUS' }),
-      makeStat({ id: 's3', ticker: 'FRESH1', pattern: 'GUS' }),
+      makeStat({ id: 's1', ticker: 'FRESH1', pattern: 'DT', tradeDate: YESTERDAY }),
+      makeStat({ id: 's2', ticker: 'FRESH2', pattern: 'GUS', tradeDate: YESTERDAY }),
+      makeStat({ id: 's3', ticker: 'FRESH1', pattern: 'GUS', tradeDate: YESTERDAY }),
     ];
     const page = setup();
 
-    expect(page.statsOf(page.statsToCompleteToday())).toBe('FRESH1 GUS, FRESH1 DT, FRESH2 GUS');
+    expect(page.statsOf(page.yesterdayStats())).toBe('FRESH1 GUS, FRESH1 DT, FRESH2 GUS');
   });
 
   it('keeps the overdue stats newest first, the stats of one ticker side by side within a day', () => {
     statsToComplete = [
-      makeStat({ id: 's1', ticker: 'VERB', pattern: 'DT', tradeDate: new Date(2026, 8, 17) }),
-      makeStat({ id: 's2', ticker: 'BNRG', pattern: 'GUS', tradeDate: new Date(2026, 8, 17) }),
-      makeStat({ id: 's3', ticker: 'VERB', pattern: 'GUS', tradeDate: new Date(2026, 8, 17) }),
+      makeStat({ id: 's1', ticker: 'VERB', pattern: 'DT', tradeDate: new Date(2026, 8, 16) }),
+      makeStat({ id: 's2', ticker: 'BNRG', pattern: 'GUS', tradeDate: new Date(2026, 8, 16) }),
+      makeStat({ id: 's3', ticker: 'VERB', pattern: 'GUS', tradeDate: new Date(2026, 8, 16) }),
       makeStat({ id: 's4', ticker: 'CENN', pattern: 'GUS', tradeDate: new Date(2026, 7, 19) }),
     ];
     const page = setup();
 
     expect(page.overdueLine().tickers).toBe(
-      'BNRG GUS (09/17), VERB GUS (09/17), VERB DT (09/17), CENN GUS (08/19)',
+      'BNRG GUS (09/16), VERB GUS (09/16), VERB DT (09/16), CENN GUS (08/19)',
     );
   });
 
   it('names five overdue stats and counts the rest', () => {
     statsToComplete = ['GLND', 'KTTA', 'SLNH', 'BNRG', 'MLGO', 'ATXG', 'VERB'].map((ticker, i) =>
-      makeStat({ id: `s-${ticker}`, ticker, tradeDate: new Date(2026, 8, 17 - i) }),
+      makeStat({ id: `s-${ticker}`, ticker, tradeDate: new Date(2026, 8, 16 - i) }),
     );
     const page = setup();
 
@@ -323,22 +346,14 @@ describe('TodayPage', () => {
     expect(page.overdueLine().more).toBe(2);
   });
 
-  // The guard was dropped once step 2 took the promotion over ; step 4 then ticked, and unticked
-  // the moment step 2 promoted the candidates left.
-  it('keeps the stats step open while candidates are still to promote', () => {
+  // #531 : the day's candidates become stats completed tomorrow — they no longer hold step 1.
+  it("the stats step does not wait on the day's candidates, promoted or not", () => {
     reconciledToday = true;
     candidates = [makeCandidate({ stats: IN_STATS }), makeCandidate({ id: 'c2' })];
     const page = setup();
 
-    expect(page.stepStates().stats).not.toBe('done');
-  });
-
-  it('a day with no candidate at all never counts its stats as done', () => {
-    reconciledToday = true;
-    const page = setup();
-
-    // Nothing to complete *because* nothing was captured — that is not a day's work done.
-    expect(page.stepStates().stats).not.toBe('done');
+    expect(page.stepStates().stats).toBe('done');
+    expect(page.stepStates().candidates).toBe('current');
   });
 
   it('the day is fully walked once a trade is in and nothing is left pending', () => {
@@ -356,24 +371,25 @@ describe('TodayPage', () => {
   // Nothing today (#407)
   // ---------------------------------------------------------------------------
 
-  it('« no candidate today » settles steps 2 and 4 and moves the day on to the session', () => {
+  it('« no candidate today » settles the candidates step and moves the day on to the session', () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
     const page = setup();
 
     expect(page.stepStates().candidates).toBe('none');
-    expect(page.stepStates().stats).toBe('none');
+    expect(page.stepStates().stats).toBe('done');
     expect(page.stepStates().session).toBe('current');
   });
 
-  it('an overdue stat keeps step 4 open on a day with no candidate', () => {
+  // #531 : the mark is about today, the stats step about the days before it.
+  it("« no candidate today » says nothing of yesterday's stats", () => {
     reconciledToday = true;
     tradingDay = { ...tradingDay, noCandidateAt: new Date() };
-    statsToComplete = [makeStat({ tradeDate: new Date(2026, 8, 17) })];
+    statsToComplete = [makeStat({ tradeDate: YESTERDAY })];
     const page = setup();
 
     expect(page.stepStates().candidates).toBe('none');
-    expect(page.stepStates().stats).not.toBe('none');
+    expect(page.stepStates().stats).toBe('current');
   });
 
   it('a candidate captured after the mark puts step 2 back on its normal state', () => {
@@ -589,6 +605,8 @@ function makeJournalSummary() {
 
 /** A GUS stat — what « in the stats sheet » means for step 2. */
 const IN_STATS: Candidate['stats'] = [{ pattern: 'GUS', statId: 's-gus' }];
+/** The trading day before FRIDAY_PREMARKET — « la veille » (#531). */
+const YESTERDAY = new Date(2026, 8, 17);
 
 function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
