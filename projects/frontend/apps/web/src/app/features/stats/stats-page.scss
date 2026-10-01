@@ -172,18 +172,6 @@
 
 // ---- Table ----
 
-// Pattern = category → indigo tag (colour rule).
-.pattern-tag {
-  display: inline-block;
-  padding: s.$space-hairline s.$space-sm;
-  border-radius: var(--radius-sm);
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  font-size: s.$font-2xs;
-  font-weight: 550;
-  white-space: nowrap;
-}
-
 // Flags are alerts → amber.
 .flags {
   display: inline-flex;
@@ -260,6 +248,13 @@ tr.editing td {
 // ---- Journal link (#193) ----
 // The « → Trade » column shows the retained P&L of the trade the stat gave birth to. Green / red
 // here is legitimate : it is an outcome, the one case the colour rule reserves the pair for.
+.trade-links {
+  display: inline-flex;
+  align-items: center;
+  gap: s.$space-sm;
+  white-space: nowrap;
+}
+
 .trade-link {
   font-variant-numeric: tabular-nums;
   text-decoration: none;

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.whenever
@@ -113,7 +114,10 @@ class StatToTradeIntegrationTest {
 
     assertEquals(stat.id, second.statEntryId)
     assertEquals(2, tradeRepo.findAll().size)
-    assertEquals(first.id, statService.findById(stat.id).tradeId, "the single link stays the first")
+    assertEquals(
+      listOf(first.id, second.id),
+      statService.findById(stat.id).trades.map { it.tradeId },
+    )
   }
 
   @Test
@@ -132,11 +136,6 @@ class StatToTradeIntegrationTest {
     assertEquals(
       listOf(BigDecimal("294.00"), BigDecimal("64.00")),
       row.trades.map { it.retainedProfitDollars },
-    )
-    assertEquals(
-      0,
-      row.tradeRetainedProfitDollars!!.compareTo(BigDecimal("358.00")),
-      "the single link reads the stat's total, not one trade picked at random",
     )
   }
 
@@ -171,12 +170,11 @@ class StatToTradeIntegrationTest {
   fun `a stat without a trade carries no link — the listing offers the action`() {
     val row = statService.findAllPaged(StatEntryFilter(), PageRequest.of(0, 50)).content.single()
 
-    assertNull(row.tradeId)
-    assertNull(row.tradeRetainedProfitDollars)
+    assertTrue(row.trades.isEmpty())
   }
 
   @Test
-  fun `a traded stat carries the trade id and its retained P&L`() {
+  fun `a traded stat carries the link to its trade and its retained P&L`() {
     val trade = statService.promoteToTrade(stat.id)
     // The trade is filled in afterwards, on its own page : SHORT 100 @ 5 covered @ 4 → 100 $, with
     // the broker statement reading 97.60 once the fees are in.
@@ -199,10 +197,10 @@ class StatToTradeIntegrationTest {
 
     val row = statService.findById(stat.id)
 
-    assertEquals(trade.id, row.tradeId)
+    assertEquals(trade.id, row.trades.single().tradeId)
     assertEquals(
       0,
-      row.tradeRetainedProfitDollars!!.compareTo(BigDecimal("97.60")),
+      row.trades.single().retainedProfitDollars!!.compareTo(BigDecimal("97.60")),
       "the link shows the retained P&L — the real one here, not the 100 computed",
     )
   }
@@ -238,7 +236,7 @@ class StatToTradeIntegrationTest {
 
     val updated = statService.update(stat.id, completionRequest())
 
-    assertEquals(trade.id, updated.tradeId)
+    assertEquals(listOf(trade.id), updated.trades.map { it.tradeId })
     assertNotNull(updated.openPrice, "the session block did land")
   }
 
