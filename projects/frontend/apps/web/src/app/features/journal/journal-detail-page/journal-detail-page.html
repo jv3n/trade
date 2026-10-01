@@ -40,6 +40,34 @@
               'journal.enums.positionStatus.' + preview().status | translate
             }}</span>
           </p>
+          @if (statTrades().length > 1) {
+            <!-- The stat's trades (#500) : one tag each, the current one outlined. -->
+            <p class="siblings">
+              <span class="muted">{{
+                'journal.detail.statTrades' | translate: { ticker: e.ticker }
+              }}</span>
+              @for (t of statTrades(); track t.tradeId; let i = $index) {
+                <a
+                  class="sibling-tag"
+                  [routerLink]="['/journal', t.tradeId]"
+                  [class.sibling-tag--current]="t.tradeId === e.id"
+                  [class.gain]="(t.retainedProfitDollars ?? 0) > 0"
+                  [class.loss]="(t.retainedProfitDollars ?? 0) < 0"
+                  >{{ i + 1 }} ·
+                  {{
+                    t.retainedProfitDollars !== null
+                      ? (t.retainedProfitDollars | number: '1.0-0')
+                      : '—'
+                  }}</a
+                >
+              }
+              @if (statTotal() !== null) {
+                <span class="muted">{{
+                  'journal.detail.statTotal' | translate: { total: (statTotal() | number: '1.2-2') }
+                }}</span>
+              }
+            </p>
+          }
         </div>
         <div class="header-actions">
           <button mat-stroked-button type="button" (click)="delete()">

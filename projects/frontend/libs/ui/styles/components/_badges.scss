@@ -5,6 +5,18 @@
 
 @use '../sizes' as s;
 
+// A category — a pattern, a direction — as an indigo tag (colour rule) : stats and journal tables.
+.pattern-tag {
+  display: inline-block;
+  padding: s.$space-hairline s.$space-sm;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-size: s.$font-2xs;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
 .confidence-badge {
   font-size: s.$font-xs;
   font-weight: 600;

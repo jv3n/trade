@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { StbToast } from '@portfolioai/ui';
 import { Subject, of, throwError } from 'rxjs';
@@ -72,7 +72,7 @@ describe('JournalDetailPage', () => {
         { provide: ConfirmService, useValue: { ask: () => of(confirmed) } },
         {
           provide: ActivatedRoute,
-          useValue: { snapshot: { paramMap: { get: () => 'abc-123' } } },
+          useValue: { paramMap: of(convertToParamMap({ id: 'abc-123' })) },
         },
       ],
     });
@@ -387,6 +387,63 @@ describe('JournalDetailPage', () => {
     expect(navigate).toHaveBeenCalledWith(['/journal']);
   });
 
+  // ---- The stat's other trades (#500) ----
+
+  it('lists the trades of its stat in the header, the current one outlined, with their total', () => {
+    // SDEV, 29/09 : three trades on one stat, this sheet the third.
+    findById = vi.fn(() => of({ ...closedTrade(), ticker: 'SDEV' }));
+    statFindById = vi.fn(() =>
+      of(
+        makeStat({
+          trades: [
+            { tradeId: 't1', direction: 'SHORT', retainedProfitDollars: -339.42 },
+            { tradeId: 't2', direction: 'SHORT', retainedProfitDollars: -444.42 },
+            { tradeId: 'abc-123', direction: 'SHORT', retainedProfitDollars: -684.42 },
+          ],
+        }),
+      ),
+    );
+    const fixture = setup();
+    fixture.detectChanges();
+
+    const tags = fixture.nativeElement.querySelectorAll('.sibling-tag');
+    expect(tags).toHaveLength(3);
+    expect(tags[2].classList).toContain('sibling-tag--current');
+    expect(fixture.componentInstance.statTotal()).toBeCloseTo(-1468.26, 2);
+  });
+
+  it('a stat with a single trade shows no tags', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    const fixture = setup();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.siblings')).toBeNull();
+  });
+
+  it('deleting one of several trades says the others are kept', () => {
+    findById = vi.fn(() => of(closedTrade()));
+    statFindById = vi.fn(() =>
+      of(
+        makeStat({
+          trades: [
+            { tradeId: 'abc-123', direction: 'SHORT', retainedProfitDollars: 291.85 },
+            { tradeId: 't2', direction: 'BUY', retainedProfitDollars: 64 },
+          ],
+        }),
+      ),
+    );
+    const fixture = setup();
+    fixture.detectChanges();
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+
+    fixture.componentInstance.delete();
+
+    expect(ask).toHaveBeenCalledWith('journal.confirmDeleteOne', {
+      params: { ticker: 'KTTA', others: 1 },
+      variant: 'danger',
+    });
+  });
+
   it('removeScreenshot calls the repository and clears the flag on the entry', () => {
     // Start without a screenshot so load() doesn't reach for a blob (jsdom has no
     // URL.createObjectURL) — we're pinning the delete wiring, not the object-URL preview.
@@ -474,8 +531,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     noPush: false,
     highInstitutions: false,
     completed: true,
-    tradeId: 'abc-123',
-    tradeRetainedProfitDollars: null,
+    trades: [{ tradeId: 'abc-123', direction: 'SHORT', retainedProfitDollars: null }],
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

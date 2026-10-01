@@ -1435,20 +1435,34 @@
           <ng-container matColumnDef="trade">
             <th mat-header-cell *matHeaderCellDef>{{ 'stats.fields.trade' | translate }}</th>
             <td mat-cell *matCellDef="let s">
-              @if (s.tradeId) {
-                <a
-                  [routerLink]="['/journal', s.tradeId]"
-                  class="trade-link"
-                  [class.profit-positive]="(s.tradeRetainedProfitDollars ?? 0) > 0"
-                  [class.profit-negative]="(s.tradeRetainedProfitDollars ?? 0) < 0"
-                >
-                  {{
-                    s.tradeRetainedProfitDollars !== null
-                      ? (s.tradeRetainedProfitDollars | number: '1.2-2') +
-                        ('account.usdSuffix' | translate)
-                      : ('stats.actions.openTrade' | translate)
-                  }}
-                </a>
+              @if (s.trades.length > 0) {
+                <!-- One tag per trade, in the day's order, and « + » for the next one (#500). -->
+                <span class="trade-links">
+                  @for (t of s.trades; track t.tradeId) {
+                    <a
+                      [routerLink]="['/journal', t.tradeId]"
+                      class="trade-link"
+                      [class.profit-positive]="(t.retainedProfitDollars ?? 0) > 0"
+                      [class.profit-negative]="(t.retainedProfitDollars ?? 0) < 0"
+                    >
+                      {{
+                        t.retainedProfitDollars !== null
+                          ? (t.retainedProfitDollars | number: '1.2-2') +
+                            ('account.usdSuffix' | translate)
+                          : ('stats.actions.openTrade' | translate)
+                      }}
+                    </a>
+                  }
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="promoteToTrade(s)"
+                    [matTooltip]="'stats.actions.anotherTrade' | translate"
+                    [attr.aria-label]="'stats.actions.anotherTrade' | translate"
+                  >
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </span>
               } @else {
                 <button mat-stroked-button stbSize="sm" type="button" (click)="promoteToTrade(s)">
                   <mat-icon>arrow_forward</mat-icon>

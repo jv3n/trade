@@ -24,7 +24,7 @@ const OTHER_STATS = 30;
 interface Stat {
   id: string;
   completed: boolean;
-  tradeId: string | null;
+  trades: { tradeId: string }[];
   pattern: string;
 }
 interface Trade {
@@ -101,7 +101,7 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
     .getByRole('button', { name: 'Créer le trade' })
     .click();
   await expect(page).toHaveURL(/\/journal\/[0-9a-f-]+$/);
-  const tradeId = (await api.get<Stat>(`/api/stats/${statId}`)).tradeId!;
+  const tradeId = (await api.get<Stat>(`/api/stats/${statId}`)).trades[0].tradeId;
 
   // ---- The executions and the broker P&L ----
   await pickOption(page, page.getByLabel('Sens'), 'Short');
@@ -128,7 +128,11 @@ test('a full trading day moves the balance by the broker P&L, and the trade foll
 
   // ---- Re-filed under another pattern, the trade follows (#393) ----
   await page.goto(`/stats?stat=${statId}`);
-  await pickOption(page, premarket.getByLabel('Pattern'), 'SIR — Short Into Resistance');
+  await pickOption(
+    page,
+    premarket.getByLabel('Pattern', { exact: true }),
+    'SIR — Short Into Resistance',
+  );
   await expect.poll(async () => (await api.get<Stat>(`/api/stats/${statId}`)).pattern).toBe('SIR');
   expect((await api.get<Trade>(`/api/journal/trades/${tradeId}`)).pattern).toBe('SIR');
   await page.goto('/journal');

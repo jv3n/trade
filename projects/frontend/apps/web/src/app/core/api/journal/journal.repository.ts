@@ -1,5 +1,11 @@
 import { Observable } from 'rxjs';
-import { JournalSummary, TradeEntry, TradeEntryFilter, TradeEntryInput } from './trade-entry.model';
+import {
+  JournalDay,
+  JournalSummary,
+  TradeEntry,
+  TradeEntryFilter,
+  TradeEntryInput,
+} from './trade-entry.model';
 
 /**
  * Port — CRUD over the trading journal. The port speaks the **domain** language only :
@@ -21,6 +27,15 @@ export abstract class JournalRepository {
     page?: PageRequest,
   ): Observable<PagedResult<TradeEntry>>;
   abstract findById(id: string): Observable<TradeEntry>;
+
+  /**
+   * The journal's rows (#500) — one per ticker and day, the same filter as [findAll], paged and
+   * sorted as rows : a page of ten is ten ticker-days, whatever the trades they hold.
+   */
+  abstract findDays(
+    filter?: TradeEntryFilter,
+    page?: PageRequest,
+  ): Observable<PagedResult<JournalDay>>;
 
   /**
    * KPIs over the same filter as [findAll] — P&L, win rate, average win / loss, profit factor.

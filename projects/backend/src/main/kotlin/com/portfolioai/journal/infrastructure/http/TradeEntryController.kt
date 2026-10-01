@@ -1,6 +1,7 @@
 package com.portfolioai.journal.infrastructure.http
 
 import com.portfolioai.journal.application.TradeEntryService
+import com.portfolioai.journal.application.dto.JournalDayDto
 import com.portfolioai.journal.application.dto.JournalSummaryDto
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
@@ -69,6 +70,37 @@ class TradeEntryController(private val service: TradeEntryService) {
     @PageableDefault(size = 50) pageable: Pageable,
   ): Page<TradeEntryDto> =
     service.findAllPaged(
+      TradeEntryFilter(
+        query = q,
+        dateFrom = dateFrom,
+        dateTo = dateTo,
+        patterns = pattern,
+        status = status,
+      ),
+      pageable,
+    )
+
+  /**
+   * The journal's rows (#500) — one per ticker and day, the same filters as [findAll], paged and
+   * sorted as rows (`?sort=retainedProfitDollars,desc` orders the days by their P&L). Sort on
+   * `tradeDate`, `ticker`, `tradeCount`, `maxSize`, `openPrice`, `exitPrice`,
+   * `retainedGainPercent`, `durationMinutes` or `retainedProfitDollars` ; anything else falls back
+   * to the latest day first.
+   */
+  @GetMapping("/days")
+  fun findDays(
+    @RequestParam(required = false) q: String? = null,
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateFrom: LocalDate? = null,
+    @RequestParam(required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    dateTo: LocalDate? = null,
+    @RequestParam(required = false) pattern: List<Pattern>? = null,
+    @RequestParam(required = false) status: TradeStatus? = null,
+    @PageableDefault(size = 50) pageable: Pageable,
+  ): Page<JournalDayDto> =
+    service.findDaysPaged(
       TradeEntryFilter(
         query = q,
         dateFrom = dateFrom,

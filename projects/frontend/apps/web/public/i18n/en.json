@@ -388,7 +388,7 @@
   },
   "journal": {
     "title": "Trading journal",
-    "subtitle": "Log every trade with its setup, execution and review.",
+    "subtitle": "One row per ticker and day, its trades when opened. A trade is born from a stat.",
     "kpi": {
       "pnl": "P&L over the period",
       "trades": "{{count}} closed trades",
@@ -441,7 +441,12 @@
       "shares": "Shares",
       "price": "Price",
       "note": "Notes",
-      "errorNote": "Mistake / lesson"
+      "errorNote": "Mistake / lesson",
+      "tradeCount": "Trades",
+      "maxSize": "Max position",
+      "maxSizeHint": "The largest of the day's trades — never an exposure summed or netted between a short and a long",
+      "cumulatedDuration": "Cumulated duration",
+      "cumulatedDurationHint": "The sum of the trades' durations"
     },
     "enums": {
       "status": {
@@ -483,8 +488,8 @@
       "kpi": {
         "retained": "Retained P&L",
         "adjusted": "adjusted by {{gap}} USD vs computed",
-        "position": "Position",
-        "positionSub": "shares in the position",
+        "position": "Max position",
+        "positionSub": "shares held at the peak",
         "avgPrices": "Average entry / exit",
         "vsOpen": "vs open {{open}}: {{entry}} → {{exit}}",
         "noOpen": "Session open not filled in on the stat.",
@@ -530,7 +535,9 @@
         "uploadError": "Couldn't upload the screenshot. Try again.",
         "deleteSuccess": "Screenshot removed.",
         "deleteError": "Couldn't remove the screenshot. Try again."
-      }
+      },
+      "statTrades": "{{ticker}} trades of the stat:",
+      "statTotal": "total {{total}} $ US"
     },
     "snackbar": {
       "createSuccess": "Trade {{ticker}} created.",
@@ -544,7 +551,17 @@
       "title": "Erase the broker P&L?",
       "message": "The position is no longer closed: the broker P&L of {{amount}} USD is erased and no longer counts in the account.",
       "confirm": "Save and erase"
-    }
+    },
+    "confirmDeleteOne": {
+      "title": "Delete this {{ticker}} trade?",
+      "message": "Permanent: its executions, post-mortem and chart capture are deleted, and its movement disappears from the account — the balance moves by this trade alone. The other {{ticker}} trades of the day ({{others}}), their account lines and the stat are kept.",
+      "confirm": "Delete the trade"
+    },
+    "duration": {
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}} h {{minutes}}"
+    },
+    "dayTrade": "Trade {{n}}"
   },
   "stats": {
     "title": "Stats",
@@ -667,7 +684,8 @@
       "toTrade": "Trade",
       "openTrade": "Open the trade",
       "session": "Session",
-      "doubleTop": "Double top"
+      "doubleTop": "Double top",
+      "anotherTrade": "Another trade on this stat"
     },
     "confirmPromoteTrade": {
       "title": "Create the {{ticker}} trade?",
@@ -789,6 +807,11 @@
       "title": "Create the {{pattern}} stat of {{ticker}}?",
       "message": "Same day, same ticker: the day's prices (previous close, premarket, open, HOD, LOD, EOD) are carried over, what belongs to the pattern starts empty. It has its own trades and only counts in its pattern's stats.",
       "confirm": "Create the stat"
+    },
+    "confirmAnotherTrade": {
+      "title": "Create another {{ticker}} trade?",
+      "message": "A new empty trade on the same stat: same pattern, its own direction, executions, P&L and post-mortem. The existing trades don't change. Under another pattern, it's another stat: « Same ticker, another pattern ».",
+      "confirm": "Create the trade"
     }
   },
   "calculator": {

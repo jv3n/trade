@@ -34,6 +34,20 @@ const EMPTY: PositionAggregates = {
   valid: true,
 };
 
+/**
+ * The most shares held at once, walking the fills in order (#500) — not the sum of the entries : a
+ * scale-in, a partial cover and a re-add count the peak. Mirrors the backend's `maxPosition`.
+ */
+function maxPosition(legs: TradeExecutionInput[]): number {
+  let held = 0;
+  let peak = 0;
+  for (const leg of legs) {
+    held += leg.kind === 'ENTRY' ? leg.shares : -leg.shares;
+    peak = Math.max(peak, held);
+  }
+  return peak;
+}
+
 function weightedAverage(legs: TradeExecutionInput[]): number {
   const totalShares = legs.reduce((acc, l) => acc + l.shares, 0);
   const notional = legs.reduce((acc, l) => acc + l.price * l.shares, 0);
@@ -56,13 +70,13 @@ export function computePositionAggregates(
   const entryShares = entries.reduce((acc, l) => acc + l.shares, 0);
   const exitShares = exits.reduce((acc, l) => acc + l.shares, 0);
   if (exitShares > entryShares) {
-    return { ...EMPTY, size: entryShares, avgEntry: weightedAverage(entries), valid: false };
+    return { ...EMPTY, size: maxPosition(legs), avgEntry: weightedAverage(entries), valid: false };
   }
 
   const avgEntry = weightedAverage(entries);
   if (exitShares === 0) {
     return {
-      size: entryShares,
+      size: maxPosition(legs),
       avgEntry,
       avgExit: null,
       profitDollars: null,
@@ -78,7 +92,7 @@ export function computePositionAggregates(
   const gainPercent = (profitDollars / (avgEntry * exitShares)) * 100;
 
   return {
-    size: entryShares,
+    size: maxPosition(legs),
     avgEntry,
     avgExit,
     profitDollars,

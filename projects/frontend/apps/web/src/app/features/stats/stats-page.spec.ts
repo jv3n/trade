@@ -96,8 +96,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     highInstitutions: true,
     noPush: false,
     completed: true,
-    tradeId: null,
-    tradeRetainedProfitDollars: null,
+    trades: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -689,13 +688,33 @@ describe('StatsPage', () => {
     expect(repo.promoteToTrade).not.toHaveBeenCalled();
   });
 
-  it('a stat that already has a trade carries the link instead of the action', () => {
-    const traded = makeStat({ tradeId: 'trade-7', tradeRetainedProfitDollars: 291.35 });
-    const { page } = setup({ rows: [traded] });
+  it('a traded stat shows one tag per trade and « + » for the next one', () => {
+    // KTTA, 17/09 : a GUS short and, later, a second trade on the same stat (#500).
+    const traded = makeStat({
+      trades: [
+        { tradeId: 'trade-7', direction: 'SHORT', retainedProfitDollars: 291.35 },
+        { tradeId: 'trade-8', direction: 'SHORT', retainedProfitDollars: -64 },
+      ],
+    });
+    const { fixture } = setup({ rows: [traded] });
+    fixture.detectChanges();
 
-    const row = page.rows()[0];
-    expect(row.tradeId).toBe('trade-7');
-    expect(row.tradeRetainedProfitDollars).toBe(291.35);
+    expect(fixture.nativeElement.querySelectorAll('.trade-link')).toHaveLength(2);
+    expect(fixture.nativeElement.querySelector('.trade-links button')).not.toBeNull();
+  });
+
+  it('« + » on a traded stat asks for another trade, not the first one', () => {
+    const traded = makeStat({
+      trades: [{ tradeId: 'trade-7', direction: 'SHORT', retainedProfitDollars: 291.35 }],
+    });
+    const { page, repo } = setup({ rows: [traded] });
+    const ask = vi.spyOn(TestBed.inject(ConfirmService), 'ask');
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    page.promoteToTrade(traded);
+
+    expect(ask).toHaveBeenCalledWith('stats.confirmAnotherTrade', { params: { ticker: 'KTTA' } });
+    expect(repo.promoteToTrade).toHaveBeenCalledWith('stat-ktta');
   });
 
   // ---- Same ticker, another pattern (#507) ----

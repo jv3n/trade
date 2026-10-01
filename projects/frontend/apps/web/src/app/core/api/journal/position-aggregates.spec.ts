@@ -85,4 +85,18 @@ describe('computePositionAggregates', () => {
     const agg = computePositionAggregates(null, [entry(100, 5)]);
     expect(agg.valid).toBe(false);
   });
+
+  it('the size is the most shares held at once, not the sum of the entries', () => {
+    // BTTC (#500) : 1 000 shares sold short in all, never more than 600 at once.
+    const agg = computePositionAggregates('SHORT', [
+      { kind: 'ENTRY', shares: 400, price: 0.62, executedAt: null },
+      { kind: 'ENTRY', shares: 200, price: 0.64, executedAt: null },
+      { kind: 'EXIT', shares: 400, price: 0.6, executedAt: null },
+      { kind: 'ENTRY', shares: 400, price: 0.63, executedAt: null },
+      { kind: 'EXIT', shares: 600, price: 0.59, executedAt: null },
+    ]);
+
+    expect(agg.size).toBe(600);
+    expect(agg.status).toBe('CLOSED');
+  });
 });

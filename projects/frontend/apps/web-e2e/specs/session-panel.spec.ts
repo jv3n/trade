@@ -112,7 +112,7 @@ test('the pattern saves as soon as it is picked', async ({ api, page }) => {
   const stat = await seedStat(api);
   await openPanel(page, stat);
 
-  await premarket(page).getByLabel('Pattern').click();
+  await premarket(page).getByLabel('Pattern', { exact: true }).click();
   // SIR, measured like a GUS : re-filing to or from DT is refused, a double top is a stat of its own.
   await page.getByRole('option', { name: 'SIR — Short Into Resistance' }).click();
 
