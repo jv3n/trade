@@ -446,7 +446,9 @@
       "maxSize": "Position max",
       "maxSizeHint": "Le plus gros des trades de la journée — jamais une exposition additionnée ou compensée entre un short et un long",
       "cumulatedDuration": "Durée cumulée",
-      "cumulatedDurationHint": "La somme des durées des trades"
+      "cumulatedDurationHint": "La somme des durées des trades",
+      "partialPnl": "Trades sans P&L pour l'instant : {{missing}}. La somme couvre les autres.",
+      "partialDuration": "Trades sans heures de fill : {{missing}}. La durée cumulée les laisse de côté."
     },
     "enums": {
       "status": {
