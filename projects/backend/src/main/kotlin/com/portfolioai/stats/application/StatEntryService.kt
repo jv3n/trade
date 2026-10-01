@@ -229,11 +229,13 @@ class StatEntryService(
   /**
    * « Same ticker, another pattern » (#507) — a stat born from [id] : same day, same ticker, same
    * source candidate, and the [pattern] picked among the free ones. **The day's prices are carried
-   * over** — premarket, open, HOD / LOD / EOD, float, volume, locate, and the flags that describe
-   * the day (SSR, under $1, institutions) : they belong to the day, not to the setup. What is
-   * specific to a pattern starts empty : the push and « no push », the « after 11 am » entry, the
-   * double-top prices (a double top starts from the open, as when it is born from a candidate), the
-   * note. A pattern the day and ticker already have is a 409.
+   * over** — premarket, open, push at the open (or « no push »), HOD / LOD / EOD, float, volume,
+   * locate, and the flags that describe the day (SSR, under $1, institutions) : they belong to the
+   * day, not to the setup, so a session-measured sibling is completable as born (#517) and two
+   * stats of one day never disagree about what the stock did. What is specific to a pattern starts
+   * empty : the « after 11 am » entry, the double-top prices (a double top starts from the open, as
+   * when it is born from a candidate, and keeps none of the session), the note. A pattern the day
+   * and ticker already have is a 409.
    */
   @Transactional
   fun createSibling(id: UUID, pattern: Pattern): StatEntryDto {
@@ -419,6 +421,8 @@ class StatEntryService(
       volumeMillions = volumeMillions,
       locatePerShare = locatePerShare,
       openPrice = openPrice,
+      pushOpenPrice = pushOpenPrice,
+      noPush = noPush,
       hodPrice = hodPrice,
       lodPrice = lodPrice,
       eodPrice = eodPrice,

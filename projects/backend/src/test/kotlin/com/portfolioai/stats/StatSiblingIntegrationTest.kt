@@ -34,9 +34,10 @@ import org.springframework.web.server.ResponseStatusException
  *
  * What is protected here :
  *
- * - **the day's prices are carried over** (premarket, open, HOD / LOD / EOD, float, volume, locate,
- *   the day's flags) and what belongs to the setup starts empty (push, « no push », « after 11 am
- *   », the note, the double-top prices — a double top starts from the open) ;
+ * - **the day's prices are carried over** (premarket, open, push or « no push », HOD / LOD / EOD,
+ *   float, volume, locate, the day's flags) — a session-measured sibling is completable as born
+ *   (#517) — and what belongs to the setup starts empty (« after 11 am », the note, the double-top
+ *   prices — a double top starts from the open) ;
  * - the sibling keeps the day, the ticker and the source candidate ;
  * - **one stat per pattern** still holds : a pattern the day already has is a 409, and only the
  *   free ones are offered ;
@@ -83,10 +84,45 @@ class StatSiblingIntegrationTest {
     assertEquals(0, sibling.lodPrice!!.compareTo(BigDecimal("3.4100")))
     assertEquals(0, sibling.eodPrice!!.compareTo(BigDecimal("3.5200")))
     assertTrue(sibling.ssr, "SSR is the day's, whatever the setup")
-    assertNull(sibling.pushOpenPrice, "the push at the open is the GUS's reading")
+    assertEquals(0, sibling.pushOpenPrice!!.compareTo(BigDecimal("4.6200")), "the day pushed")
     assertFalse(sibling.entryAfter11am)
     assertNull(sibling.note)
     assertFalse(sibling.completed, "ticked by hand, like any stat")
+  }
+
+  @Test
+  fun `a sibling of a GUS is completable as born — five prices in, the tick goes through`() {
+    // Recette #517 : without the push the sibling sat at 4 / 5 with nothing typed wrong.
+    val sibling = statService.createSibling(gus.id, Pattern.SIR)
+
+    assertTrue(statService.setCompleted(sibling.id, true).completed)
+  }
+
+  @Test
+  fun `a GUS day with no push gives a sibling with no push either`() {
+    gus.pushOpenPrice = null
+    gus.noPush = true
+    statRepo.save(gus)
+
+    val sibling = statService.createSibling(gus.id, Pattern.DISCRETIONARY)
+
+    assertTrue(sibling.noPush)
+    assertNull(sibling.pushOpenPrice)
+  }
+
+  @Test
+  fun `a double top born from a no-push day carries no « no push » — its view never shows one`() {
+    // The « Sans push » tab is hidden outside the session views : a DT holding the flag would
+    // carry a fact nothing on its own page can show or clear.
+    gus.pushOpenPrice = null
+    gus.noPush = true
+    statRepo.save(gus)
+
+    val dt = statService.createSibling(gus.id, Pattern.DT)
+
+    assertFalse(dt.noPush)
+    assertNull(dt.pushOpenPrice)
+    assertEquals(0, dt.dtStartPrice!!.compareTo(BigDecimal("4.2000")), "still from the open")
   }
 
   @Test
@@ -96,6 +132,8 @@ class StatSiblingIntegrationTest {
     assertEquals(0, dt.dtStartPrice!!.compareTo(BigDecimal("4.2000")))
     assertNull(dt.dtTopPrice)
     assertNull(dt.openPrice, "a double top has its own prices, not the GUS session")
+    assertNull(dt.pushOpenPrice)
+    assertFalse(dt.noPush)
     assertEquals(0, dt.previousClose.compareTo(BigDecimal("2.6500")))
   }
 

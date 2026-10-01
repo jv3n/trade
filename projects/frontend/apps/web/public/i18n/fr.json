@@ -810,7 +810,7 @@
     },
     "confirmSibling": {
       "title": "Créer la stat {{pattern}} de {{ticker}} ?",
-      "message": "Même jour, même ticker : les prix de la journée (clôture veille, premarket, open, HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
+      "message": "Même jour, même ticker : les prix de la journée (clôture veille, premarket, open, push ou « pas de push », HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
       "confirm": "Créer la stat"
     },
     "confirmAnotherTrade": {

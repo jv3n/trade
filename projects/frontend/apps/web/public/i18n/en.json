@@ -810,7 +810,7 @@
     },
     "confirmSibling": {
       "title": "Create the {{pattern}} stat of {{ticker}}?",
-      "message": "Same day, same ticker: the day's prices (previous close, premarket, open, HOD, LOD, EOD) are carried over, what belongs to the pattern starts empty. It has its own trades and only counts in its pattern's stats.",
+      "message": "Same day, same ticker: the day's prices (previous close, premarket, open, push or « no push », HOD, LOD, EOD) are carried over, what belongs to the pattern starts empty. It has its own trades and only counts in its pattern's stats.",
       "confirm": "Create the stat"
     },
     "confirmAnotherTrade": {

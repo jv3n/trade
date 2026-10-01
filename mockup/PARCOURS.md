@@ -392,8 +392,11 @@ shared between users — a stat always belongs to its user.
   stat takes the new pattern too. The candidate is not concerned : it has no pattern.
 - **« Same ticker, another pattern »** (#507) : at the head of the premarket card, a stat gives birth
   to another one — same day, same ticker, a pattern still free for them (one stat per pattern, as
-  ever). **The day's prices are carried over** (previous close, premarket, open, HOD / LOD / EOD) :
-  they belong to the day, not to the setup ; what is specific to the pattern starts empty. It is an
+  ever). **The day's prices are carried over** (previous close, premarket, open, the push at the
+  open or « no push », HOD / LOD / EOD) : they belong to the day, not to the setup, so a SIR, SIV or
+  discretionary sibling is completable as born and two stats of one day never disagree about what
+  the stock did (#517) ; what is specific to the pattern starts empty. A double top keeps none of the
+  session : it starts from the open and types its own four prices. It is an
   ordinary stat from there : its own check, its own trades, its own line in its pattern's
   statistics. This is how a trade under another pattern gets recorded — the GUS in the morning, a DT
   or a discretionary long in the afternoon : a trade always takes its stat's pattern, so a different
