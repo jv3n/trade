@@ -175,15 +175,21 @@ const STATUS_TABS: readonly StatTab[] = [null, 'TO_COMPLETE', 'COMPLETED', 'NO_P
 
 /**
  * The views of the page (#437) : the KPIs, the table's columns and the averages follow the pattern
- * — a GUS and a double top are not measured alike. « All » keeps what compares across patterns.
+ * — a GUS and a double top are not measured alike. Every pattern has its own view and its own
+ * numbers (#512) : SIR, SIV and discretionary are measured like the GUS, on their own stats.
+ * « All » keeps what compares across patterns, and no average.
  */
-export type StatView = 'GUS' | 'DT' | 'ALL';
-const VIEWS: readonly StatView[] = ['GUS', 'DT', 'ALL'];
+export type StatView = Pattern | 'ALL';
+const VIEWS: readonly StatView[] = ['GUS', 'DT', 'SIR', 'SIV', 'DISCRETIONARY', 'ALL'];
 
-/** The view a stat shows in — SIR, SIV and discretionary only in « All ». */
+/** The view a stat shows in — its pattern's own. */
 function viewOf(pattern: Pattern): StatView {
-  if (pattern === 'GUS' || pattern === 'DT') return pattern;
-  return 'ALL';
+  return pattern;
+}
+
+/** The views measured like a GUS session — open, push, HOD / LOD / EOD — and their « no push » tab. */
+function isSessionView(view: StatView): boolean {
+  return view !== 'DT' && view !== 'ALL';
 }
 
 const LEADING_COLUMNS = [
@@ -206,8 +212,20 @@ const DOUBLE_TOP_FOOTER_COLUMNS: readonly string[] = [
   'dtAveragesEnd',
 ];
 const NO_COLUMNS: readonly string[] = [];
+const SESSION_COLUMNS: readonly string[] = [
+  ...LEADING_COLUMNS,
+  'openPrice',
+  'pushOpen',
+  'hod',
+  'lod',
+  'eod',
+  ...TRAILING_COLUMNS,
+];
 const COLUMNS: Record<StatView, readonly string[]> = {
-  GUS: [...LEADING_COLUMNS, 'openPrice', 'pushOpen', 'hod', 'lod', 'eod', ...TRAILING_COLUMNS],
+  GUS: SESSION_COLUMNS,
+  SIR: SESSION_COLUMNS,
+  SIV: SESSION_COLUMNS,
+  DISCRETIONARY: SESSION_COLUMNS,
   DT: [
     ...LEADING_COLUMNS,
     'dtStart',
@@ -577,9 +595,9 @@ export class StatsPage {
     return tab === 'TO_COMPLETE' || tab === 'COMPLETED' ? 'ALL' : 'GUS';
   });
   readonly status = linkedSignal<StatTab>(() => this.queryTab());
-  /** « No push » is a GUS notion : a double top has no push at the open. */
+  /** « No push » belongs to the session views : a double top has no push at the open. */
   readonly statusTabs = computed(() =>
-    this.view() === 'GUS' ? STATUS_TABS : STATUS_TABS.filter((tab) => tab !== 'NO_PUSH'),
+    isSessionView(this.view()) ? STATUS_TABS : STATUS_TABS.filter((tab) => tab !== 'NO_PUSH'),
   );
 
   // ---- Sort ----
@@ -806,7 +824,7 @@ export class StatsPage {
 
   setView(view: StatView): void {
     this.view.set(view);
-    if (view !== 'GUS' && this.status() === 'NO_PUSH') this.status.set(null);
+    if (!isSessionView(view) && this.status() === 'NO_PUSH') this.status.set(null);
     this.pageIndex.set(0);
   }
 

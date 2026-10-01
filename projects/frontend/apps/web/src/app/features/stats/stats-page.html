@@ -162,7 +162,12 @@
     } @else {
       <section class="kpi-row">
         <div class="card kpi">
-          <div class="kpi__label">{{ 'stats.kpi.completedGus' | translate }}</div>
+          <div class="kpi__label">
+            {{
+              'stats.kpi.completedOf'
+                | translate: { pattern: 'patterns.short.' + view() | translate }
+            }}
+          </div>
           <div class="kpi__value">{{ kpi.completed }}</div>
           <div class="kpi__sub">
             @if (kpi.toComplete > 0) {

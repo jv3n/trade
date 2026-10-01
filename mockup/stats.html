@@ -294,9 +294,12 @@
           <div class="segmented" data-group="pattern">
             <button class="active" data-value="gus">GUS</button>
             <button data-value="dt">DT</button>
+            <button data-value="sir">SIR</button>
+            <button data-value="siv">SIV</button>
+            <button data-value="disc">Discr.</button>
             <button data-value="all">Tous</button>
           </div>
-          <span>les KPIs, les colonnes du tableau et les moyennes suivent le pattern — un GUS et un DT ne se mesurent pas pareil</span>
+          <span>les KPIs, les colonnes du tableau et les moyennes suivent le pattern — chaque pattern a ses chiffres (#512) ; SIR, SIV et discrétionnaire se mesurent comme le GUS, sur leurs seules stats</span>
         </div>
 
         <!-- DT : les trois jambes du double top, sur les stats DT cochées (docs/pattern/DT.md). -->
@@ -332,13 +335,13 @@
         <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="all" hidden>
           <div class="card kpi">
             <div class="label">Stats complétées</div>
-            <div class="value">14</div>
-            <div class="sub">septembre · 11 GUS · 3 DT · <span style="color: var(--warn)">3 à compléter</span></div>
+            <div class="value">15</div>
+            <div class="sub">septembre · 11 GUS · 3 DT · 1 discr. · <span style="color: var(--warn)">3 à compléter</span></div>
           </div>
           <div class="card kpi">
             <div class="label">Tradées</div>
-            <div class="value">9 / 14</div>
-            <div class="sub">8 GUS · 1 DT</div>
+            <div class="value">10 / 15</div>
+            <div class="sub">8 GUS · 1 DT · 1 discr.</div>
           </div>
           <div class="card kpi">
             <div class="label">Candidats à deux stats</div>
@@ -348,8 +351,38 @@
           <div class="card kpi">
             <div class="label">Moyennes</div>
             <div class="value" style="font-size: 16px">par pattern</div>
-            <div class="sub">choisis GUS ou DT pour le push, le LOD, l'extension, le rejet…</div>
+            <div class="sub">choisis un pattern pour le push, le LOD, l'extension, le rejet… — jamais un mélange</div>
           </div>
+        </section>
+
+        <!-- SIR / SIV / Discrétionnaire (#512) : les cartes du GUS, sur les seules stats du pattern. -->
+        <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="disc" hidden>
+          <div class="card kpi">
+            <div class="label">Stats discrétionnaires complétées</div>
+            <div class="value">1</div>
+            <div class="sub">septembre · toutes complétées</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Push à l'open moyen</div>
+            <div class="value">—</div>
+            <div class="sub">aucune n'a de push saisi — la stat née d'un GUS (#507) ne le reprend pas</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">LOD moyen</div>
+            <div class="value">−18,8 %</div>
+            <div class="sub">vs open</div>
+          </div>
+          <div class="card kpi">
+            <div class="label">Fade à la clôture</div>
+            <div class="value">1 / 1</div>
+            <div class="sub">EOD sous l'open · moyenne −16,2 %</div>
+          </div>
+        </section>
+        <section class="card" style="margin-bottom: 16px" data-group="pattern" data-value="sir" hidden>
+          <p class="muted" style="margin: 0">Aucune stat SIR sur la période. Les cartes et le tableau sont ceux du GUS, sur les seules stats SIR.</p>
+        </section>
+        <section class="card" style="margin-bottom: 16px" data-group="pattern" data-value="siv" hidden>
+          <p class="muted" style="margin: 0">Aucune stat SIV sur la période. Les cartes et le tableau sont ceux du GUS, sur les seules stats SIV.</p>
         </section>
 
         <section class="grid grid-4" style="margin-bottom: 16px" data-group="pattern" data-value="gus">
@@ -753,6 +786,34 @@
               </tbody>
             </table>
             <p class="muted" style="font-size: 12px; margin: 10px 0 0">Pas de ligne de moyennes sur « Tous » : un push à l'open et une extension de double top ne s'additionnent pas.</p>
+          </div>
+
+          <!-- ============================================================ Discrétionnaire (#512) -->
+          <div class="table-wrap" data-group="pattern" data-value="disc" hidden>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date ↓</th><th>Ticker</th><th>Pattern</th>
+                  <th class="num sep">Gap</th><th class="num">Push PM</th><th class="num">Float</th><th class="num">Volume</th><th class="num">Locate</th>
+                  <th class="num sep">Open</th><th class="num">Push open</th><th class="num">HOD</th><th class="num">LOD</th><th class="num">EOD</th>
+                  <th class="sep">Flags</th><th title="Complétée">✓</th><th>Trade</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>17/09</td><td><span class="ticker">KTTA</span></td><td><span class="tag tag-accent">Discrétionnaire</span></td>
+                  <td class="num sep">+52,8 %</td><td class="num">+14,8 %</td><td class="num">8,2 M</td><td class="num">3,1 M</td><td class="num">0,03</td>
+                  <td class="num sep">4,20</td>
+                  <td class="num muted">—</td>
+                  <td class="num">4,62<small class="muted">+10,0 %</small></td>
+                  <td class="num">3,41<small class="muted">−18,8 %</small></td>
+                  <td class="num">3,52<small class="muted">−16,2 %</small></td>
+                  <td class="sep"></td>
+                  <td><button class="check done"><span class="icon">check_circle</span></button></td>
+                  <td><a href="trade.html" class="tag tag-gain" title="Long sur le rebond du LOD">+64</a></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <!-- ============================================================ GUS -->
