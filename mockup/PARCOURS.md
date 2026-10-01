@@ -488,15 +488,20 @@ whose low precedes its top is a typo.
   same check, same rules.
 - The flags stay (SSR, price < $1, entry after 11 am, institutions > 20 %) ; « no push » does not
   apply.
-- **The page follows the pattern** : a **GUS / DT / All** switch above the KPIs picks the KPIs, the
-  table's columns and the averages. **DT** : completed DT stats, average extension (and with the
+- **The page follows the pattern** : a **GUS / DT / SIR / SIV / Discretionary / All** switch above
+  the KPIs picks the KPIs, the table's columns and the averages. **Every pattern has its own
+  numbers** (#512) : SIR, SIV and discretionary are measured like the GUS — completed, push at the
+  open, LOD, fade — on their own stats only, never folded into the GUS's. A ticker-day carrying a
+  GUS and a sibling stat (#507) shares its open, LOD and EOD between them : counted in each pattern's
+  numbers, it is never counted twice in one. **DT** : completed DT stats, average extension (and with the
   gap), average rejection (and how many reach 17 %), average retest distance to the top (and how
   many took it back), and the **median duration** start → retest with its `n` and the median
   rejection (B) — a median, not a mean : one DT that drags all afternoon would move an average and
   say nothing about the typical one. The table shows the premarket, then start, A, B, C and the
   duration (total, and the three legs under it) ; its footer carries the median. **All** keeps what
   compares across patterns — premarket, flags, check, trade — plus a one-line summary of each stat
-  in its own pattern, and no averages row : a push at the open and a DT extension don't add up.
+  in its own pattern, and no averages, neither in the cards nor in a row : a push at the open and a
+  DT extension don't add up, and the summary computes none without a pattern.
 - The « À l'open » push references only use GUS stats, as before (same pattern).
 - **Data model** — the four DT prices are nullable columns on the stat rather than a table of their
   own, so the database CHECK can keep a ticked stat whole, pattern by pattern (#435).
@@ -507,8 +512,8 @@ title, "n / 5 prices" — 4 with « No push » — and the check button), a « N
 with the premarket data, the session data (partial for the stats in progress),
 the flags, the check column, and a « → Trade » button or one P&L tag per trade, each a link to it,
 with « + » for the next one. The
-« SGBX · GUS / SGBX · DT » switch shows the two panels of one candidate's two stats, the GUS / DT /
-All switch the three views of the page.
+« SGBX · GUS / SGBX · DT » switch shows the two panels of one candidate's two stats, the pattern
+switch the six views of the page.
 
 ---
 

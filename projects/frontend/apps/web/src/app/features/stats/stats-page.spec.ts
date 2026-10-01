@@ -1320,6 +1320,31 @@ describe('StatsPage', () => {
     expect(repo.lastFilter?.noPush).toBeNull();
   });
 
+  // ---- Every pattern its own numbers (#512) ----
+
+  it('a SIR view lists and summarises the SIR stats alone, measured like the GUS', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+
+    page.setView('SIR');
+    fixture.detectChanges();
+
+    expect(repo.lastFilter?.pattern).toBe('SIR');
+    expect(repo.summary).toHaveBeenLastCalledWith(expect.objectContaining({ pattern: 'SIR' }));
+    expect(page.columns()).toContain('pushOpen');
+    expect(page.statusTabs()).toContain('NO_PUSH');
+  });
+
+  it('a discretionary stat born from a GUS opens in the discretionary view, not in « All »', () => {
+    const { page } = setup({ rows: [makeStat()] });
+    page.setView('GUS');
+    page.open(makeStat());
+    page.siblingPattern.set('DISCRETIONARY');
+
+    page.createSibling();
+
+    expect(page.view()).toBe('DISCRETIONARY');
+  });
+
   // A double top left to complete is one of them : the GUS view would hide it.
   it('lands on « All » from a link naming the stats to complete', () => {
     const { page, repo } = setup({ query: { status: 'TO_COMPLETE' } });
