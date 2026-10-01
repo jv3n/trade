@@ -690,14 +690,17 @@
       "createSuccess": "Stat {{ticker}} créée.",
       "createConflict": "{{ticker}} a déjà une stat ce jour-là.",
       "createError": "Impossible de créer la stat {{ticker}}. Réessaie.",
-      "editDropped": "{{ticker}} : la modification non enregistrée est abandonnée."
+      "editDropped": "{{ticker}} : la modification non enregistrée est abandonnée.",
+      "siblingSuccess": "Stat {{pattern}} de {{ticker}} créée.",
+      "siblingConflict": "{{ticker}} a déjà une stat {{pattern}} ce jour-là.",
+      "siblingError": "Impossible de créer la stat {{pattern}} de {{ticker}}. Réessaie."
     },
     "premarket": {
       "title": "Premarket —",
       "hint": "repris du candidat · modifiable · chaque champ s'enregistre à la sortie",
       "required": "requis",
       "doubleTopFixed": "Une stat DT reste un DT : ses prix n'ont pas de sens pour un autre pattern",
-      "refileHint": "S'enregistre au changement — le trade lié suit. Un double top est une autre stat : « → DT » sur le candidat."
+      "refileHint": "S'enregistre au changement — les trades liés suivent. Un autre pattern le même jour est une autre stat : « Même ticker, autre pattern », ou « → DT » sur le candidat."
     },
     "create": {
       "open": "Nouvelle stat",
@@ -776,6 +779,16 @@
       "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
       "medianDuration": "méd. {{minutes}} min",
       "progress": "{{prices}} / {{total}} prix · {{times}} / {{total}} heures"
+    },
+    "sibling": {
+      "label": "Même ticker, autre pattern",
+      "hint": "Un trade sous un autre pattern passe par sa propre stat : même jour et même ticker, les prix de la journée repris. Seulement les patterns encore libres ce jour-là.",
+      "create": "Stat"
+    },
+    "confirmSibling": {
+      "title": "Créer la stat {{pattern}} de {{ticker}} ?",
+      "message": "Même jour, même ticker : les prix de la journée (clôture veille, premarket, open, HOD, LOD, EOD) sont repris, ce qui est propre au pattern part vide. Elle a ses propres trades et ne compte que dans les stats de son pattern.",
+      "confirm": "Créer la stat"
     }
   },
   "calculator": {

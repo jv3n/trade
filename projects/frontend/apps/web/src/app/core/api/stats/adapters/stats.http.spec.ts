@@ -186,6 +186,28 @@ describe('HttpStatsRepository', () => {
     req.flush(wireStat());
   });
 
+  it('createSibling POSTs the picked pattern to /:id/sibling and parses the stat born from it', () => {
+    repo.createSibling('stat-1', 'DT').subscribe((stat) => {
+      expect(stat.tradeDate).toBeInstanceOf(Date);
+      expect(stat.tradeDate.getDate()).toBe(17);
+    });
+
+    const req = http.expectOne('/api/stats/stat-1/sibling');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ pattern: 'DT' });
+    req.flush(wireStat());
+  });
+
+  it('freePatterns reads the patterns still free for that day and ticker', () => {
+    repo.freePatterns('stat-1').subscribe((patterns) => {
+      expect(patterns).toEqual(['SIR', 'DISCRETIONARY']);
+    });
+
+    const req = http.expectOne('/api/stats/stat-1/free-patterns');
+    expect(req.request.method).toBe('GET');
+    req.flush(['SIR', 'DISCRETIONARY']);
+  });
+
   it('promoteToTrade POSTs to /:id/trade and parses the journal trade that comes back', () => {
     // The response is a journal wire DTO, not a stat — the mapping is the journal adapter's, and
     // what the caller needs from it is the id to navigate to (#193).

@@ -690,14 +690,17 @@
       "createSuccess": "Stat {{ticker}} created.",
       "createConflict": "{{ticker}} already has a stat that day.",
       "createError": "Could not create the {{ticker}} stat. Try again.",
-      "editDropped": "{{ticker}}: the unsaved edit was dropped."
+      "editDropped": "{{ticker}}: the unsaved edit was dropped.",
+      "siblingSuccess": "{{pattern}} stat of {{ticker}} created.",
+      "siblingConflict": "{{ticker}} already has a {{pattern}} stat that day.",
+      "siblingError": "Could not create the {{pattern}} stat of {{ticker}}. Try again."
     },
     "premarket": {
       "title": "Premarket —",
       "hint": "copied from the candidate · editable · each field is saved when left",
       "required": "required",
       "doubleTopFixed": "A DT stat stays a DT: its prices mean nothing to another pattern",
-      "refileHint": "Saves on change — the linked trade follows. A double top is a stat of its own: « → DT » on the candidate."
+      "refileHint": "Saves on change — the linked trades follow. Another pattern the same day is another stat: « Same ticker, another pattern », or « → DT » on the candidate."
     },
     "create": {
       "open": "New stat",
@@ -776,6 +779,16 @@
       "durationLegs": "A {{rise}} · B {{rejection}} · C {{retest}}",
       "medianDuration": "med. {{minutes}} min",
       "progress": "{{prices}} / {{total}} prices · {{times}} / {{total}} times"
+    },
+    "sibling": {
+      "label": "Same ticker, another pattern",
+      "hint": "A trade under another pattern goes through its own stat: same day and ticker, the day's prices carried over. Only the patterns still free that day.",
+      "create": "Stat"
+    },
+    "confirmSibling": {
+      "title": "Create the {{pattern}} stat of {{ticker}}?",
+      "message": "Same day, same ticker: the day's prices (previous close, premarket, open, HOD, LOD, EOD) are carried over, what belongs to the pattern starts empty. It has its own trades and only counts in its pattern's stats.",
+      "confirm": "Create the stat"
     }
   },
   "calculator": {

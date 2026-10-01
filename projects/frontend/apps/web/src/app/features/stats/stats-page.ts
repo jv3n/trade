@@ -44,6 +44,7 @@ import {
   distinctUntilChanged,
   filter,
   map,
+  of,
   switchMap,
   tap,
 } from 'rxjs';
@@ -625,6 +626,11 @@ export class StatsPage {
     pattern: DEFAULT_PATTERN,
     ticker: '',
   });
+  // ---- Same ticker, another pattern (#507) ----
+  /** The patterns the open stat's day and ticker have no stat for yet — empty hides the action. */
+  readonly freePatterns = signal<Pattern[]>([]);
+  readonly siblingPattern = signal<Pattern | null>(null);
+
   /** A stat is dated up to today — the picker stops there, the backend refuses a future day. */
   readonly maxDate = startOfDay(new Date());
   /** Rows the user closed — they stop auto-opening the panel for this visit. */
@@ -837,6 +843,57 @@ export class StatsPage {
     // Both cards open on what is already in : saved at the stat's last update.
     const saved: SaveState = { status: 'saved', at: entry.updatedAt, reason: null };
     this.saveStates.set({ premarket: saved, session: saved });
+    this.loadFreePatterns(entry);
+  }
+
+  /** Not worth an error banner : without the list, the action simply doesn't show. */
+  private loadFreePatterns(entry: StatEntry): void {
+    this.freePatterns.set([]);
+    this.siblingPattern.set(null);
+    this.repo
+      .freePatterns(entry.id)
+      .pipe(catchError(() => of<Pattern[]>([])))
+      .subscribe((patterns) => {
+        // The panel may have moved on to another stat while the request was in flight.
+        if (this.completing()?.id !== entry.id) return;
+        this.freePatterns.set(patterns);
+        this.siblingPattern.set(patterns[0] ?? null);
+      });
+  }
+
+  /**
+   * « Same ticker, another pattern » (#507) — confirmed (it creates something), then the new stat
+   * opens in the panel with the day's prices already in, like a stat just typed by hand.
+   */
+  createSibling(): void {
+    const source = this.completing();
+    const pattern = this.siblingPattern();
+    if (!source || !pattern) return;
+    const params = {
+      ticker: source.ticker,
+      pattern: this.translate.instant('patterns.long.' + pattern),
+    };
+    this.confirm
+      .ask('stats.confirmSibling', { params })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.repo.createSibling(source.id, pattern)),
+        tap((saved) => {
+          this.toasts.success(this.translate.instant('stats.snackbar.siblingSuccess', params));
+          this.followView(saved);
+          this.open(saved);
+          this.refetch();
+        }),
+        catchError((err: unknown) => {
+          const key =
+            err instanceof HttpErrorResponse && err.status === 409
+              ? 'stats.snackbar.siblingConflict'
+              : 'stats.snackbar.siblingError';
+          this.toasts.error(this.translate.instant(key, params));
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   }
 
   setPremarketPrice(field: PremarketPrice, value: number | null): void {
@@ -930,6 +987,10 @@ export class StatsPage {
           this.releaseHeldCard(card === 'premarket' ? 'session' : 'premarket', at);
           // The KPIs only count ticked stats : editing one of them moves them.
           if (saved.completed) this.refreshSummary();
+          // Re-filed : the pattern it left is free again, the one it took no longer is.
+          if (saved.pattern !== entry.pattern && this.completing()?.id === saved.id) {
+            this.loadFreePatterns(saved);
+          }
         }),
         catchError(() => {
           this.patchRow(entry);
