@@ -388,6 +388,9 @@ describe('HttpJournalRepository', () => {
       averageWin: 175,
       averageLoss: -149,
       profitFactor: 3.52,
+      outOfPatternCount: 0,
+      outOfPatternPnl: 0,
+      inRulesPnl: 0,
     });
   });
 });

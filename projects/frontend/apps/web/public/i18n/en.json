@@ -403,7 +403,11 @@
       "tradedStats": "Traded stats",
       "untraded": "{{count}} untraded stats",
       "untradedOne": "{{count}} untraded stat",
-      "allTraded": "Every stat of the period was traded"
+      "allTraded": "Every stat of the period was traded",
+      "outOfPattern": "Out of pattern",
+      "outOfPatternSub": "{{count}} trades · in the rules {{inRules}}",
+      "outOfPatternSubOne": "{{count}} trade · in the rules {{inRules}}",
+      "outOfPatternHint": "Trades taken on a stat the recorded prices say was out of pattern. A discipline number, not a strategy one : with the in-rules one, it makes the period's P&L."
     },
     "searchPlaceholder": "Search ticker…",
     "filterPanel": {
@@ -830,6 +834,16 @@
       "title": "Create another {{ticker}} trade?",
       "message": "A new empty trade on the same stat: same pattern, its own direction, executions, P&L and post-mortem. The existing trades don't change. Under another pattern, it's another stat: « Same ticker, another pattern ».",
       "confirm": "Create the trade"
+    },
+    "derived": {
+      "label": "Filters derived from the prices",
+      "OUT_OF_PATTERN": "Out of pattern",
+      "OUT_OF_PATTERN_HINT": "What the recorded prices say was not the setup — a DT whose retest takes the top back, a GUS outside the sheet's price range. Combines with the tabs."
+    },
+    "outOfPattern": {
+      "tag": "out of pattern",
+      "RETEST_TOOK_TOP": "The retest takes the top back : a breakout, not a double top",
+      "PRICE_OUT_OF_RANGE": "The open is outside the sheet's price range (~$0.30 – $10)"
     }
   },
   "calculator": {

@@ -403,7 +403,11 @@
       "tradedStats": "Stats tradées",
       "untraded": "{{count}} stats non tradées",
       "untradedOne": "{{count}} stat non tradée",
-      "allTraded": "Toutes les stats de la période ont été tradées"
+      "allTraded": "Toutes les stats de la période ont été tradées",
+      "outOfPattern": "Hors pattern",
+      "outOfPatternSub": "{{count}} trades · dans les règles {{inRules}}",
+      "outOfPatternSubOne": "{{count}} trade · dans les règles {{inRules}}",
+      "outOfPatternHint": "Les trades pris sur une stat que les prix enregistrés disent hors pattern. Un chiffre de discipline, pas de stratégie : avec celui des règles, il fait le P&L de la période."
     },
     "searchPlaceholder": "Rechercher un ticker…",
     "filterPanel": {
@@ -830,6 +834,16 @@
       "title": "Créer un autre trade {{ticker}} ?",
       "message": "Un nouveau trade vide sur la même stat : même pattern, son propre sens, ses exécutions, son P&L et son post-mortem. Les trades existants ne changent pas. Sous un autre pattern, c'est une autre stat : « Même ticker, autre pattern ».",
       "confirm": "Créer le trade"
+    },
+    "derived": {
+      "label": "Filtres déduits des prix",
+      "OUT_OF_PATTERN": "Hors pattern",
+      "OUT_OF_PATTERN_HINT": "Ce que les prix enregistrés disent ne pas être le setup — un DT dont le retest reprend le top, un GUS hors de la fourchette de la fiche. Se combine avec les onglets."
+    },
+    "outOfPattern": {
+      "tag": "hors pattern",
+      "RETEST_TOOK_TOP": "Le retest reprend le top : une cassure, pas un double top",
+      "PRICE_OUT_OF_RANGE": "L'open sort de la fourchette de prix de la fiche (~0,30 $ – 10 $)"
     }
   },
   "calculator": {

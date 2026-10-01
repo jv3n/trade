@@ -60,9 +60,13 @@ class StatEntryController(private val service: StatEntryService) {
     @RequestParam(required = false) pattern: Pattern? = null,
     @RequestParam(required = false) status: StatStatus? = null,
     @RequestParam(required = false) noPush: Boolean? = null,
+    @RequestParam(required = false) outOfPattern: Boolean? = null,
     @PageableDefault(size = 50) pageable: Pageable,
   ): Page<StatEntryDto> =
-    service.findAllPaged(filterOf(q, dateFrom, dateTo, pattern, status, noPush), pageable)
+    service.findAllPaged(
+      filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern),
+      pageable,
+    )
 
   /**
    * KPIs over the same filter as the listing, computed on the whole filtered set (not the page).
@@ -79,7 +83,9 @@ class StatEntryController(private val service: StatEntryService) {
     @RequestParam(required = false) pattern: Pattern? = null,
     @RequestParam(required = false) status: StatStatus? = null,
     @RequestParam(required = false) noPush: Boolean? = null,
-  ): StatSummaryDto = service.summarise(filterOf(q, dateFrom, dateTo, pattern, status, noPush))
+    @RequestParam(required = false) outOfPattern: Boolean? = null,
+  ): StatSummaryDto =
+    service.summarise(filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern))
 
   /**
    * Creates a stat typed by hand (#326) — premarket, session and flags in one go. A future day →
@@ -165,6 +171,7 @@ class StatEntryController(private val service: StatEntryService) {
     pattern: Pattern?,
     status: StatStatus?,
     noPush: Boolean?,
+    outOfPattern: Boolean?,
   ) =
     StatEntryFilter(
       query = q,
@@ -173,5 +180,6 @@ class StatEntryController(private val service: StatEntryService) {
       pattern = pattern,
       status = status,
       noPush = noPush,
+      outOfPattern = outOfPattern,
     )
 }

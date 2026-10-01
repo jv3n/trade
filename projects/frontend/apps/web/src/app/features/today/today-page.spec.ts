@@ -581,6 +581,9 @@ function makeJournalSummary() {
     averageWin: 291.85,
     averageLoss: null,
     profitFactor: null,
+    outOfPatternCount: 0,
+    outOfPatternPnl: 0,
+    inRulesPnl: 0,
   };
 }
 
@@ -641,6 +644,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     noPush: false,
     highInstitutions: false,
     completed: false,
+    outOfPattern: [],
     trades: [],
     createdAt: new Date(),
     updatedAt: new Date(),

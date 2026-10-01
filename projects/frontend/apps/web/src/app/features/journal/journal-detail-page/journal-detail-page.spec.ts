@@ -565,6 +565,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     noPush: false,
     highInstitutions: false,
     completed: true,
+    outOfPattern: [],
     trades: [{ tradeId: 'abc-123', direction: 'SHORT', retainedProfitDollars: null }],
     createdAt: new Date(),
     updatedAt: new Date(),
