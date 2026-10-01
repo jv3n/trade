@@ -15,7 +15,7 @@ import {
   StbToast,
   StbTooltipModule,
 } from '@portfolioai/ui';
-import { EMPTY, catchError, filter, finalize, from, map, of, switchMap, tap } from 'rxjs';
+import { EMPTY, catchError, filter, finalize, from, of, switchMap, tap } from 'rxjs';
 import { JournalRepository } from '../../../core/api/journal/journal.repository';
 import {
   PositionAggregates,
@@ -325,32 +325,14 @@ export class JournalDetailPage implements HasUnsavedChanges {
   constructor() {
     // Revoke the object URL when the view is torn down — otherwise the blob leaks.
     inject(DestroyRef).onDestroy(() => this.clearObjectUrl());
-    // A parameter-only change reuses the component, so `unsavedChangesGuard` never runs between two
-    // trades of one stat (#515) — the header's tags and the back button both land here.
-    this.route.paramMap
-      .pipe(
-        switchMap((params) => {
-          const next = params.get('id') ?? '';
-          if (!this.id || next === this.id || !this.hasUnsavedChanges()) return of(next);
-          return this.confirm
-            .ask('common.confirmLeave', { variant: 'danger' })
-            .pipe(map((leave) => (leave ? next : null)));
-        }),
-        takeUntilDestroyed(),
-      )
-      .subscribe((next) => {
-        if (next === null) {
-          // Refused : the URL goes back to the trade being edited ; it re-emits that same id, which
-          // the guard below drops — reloading would lose the very text the refusal kept.
-          void this.router.navigate(['/journal', this.id], { replaceUrl: true });
-          return;
-        }
-        if (next === this.id) return;
-        this.id = next;
-        this.clearObjectUrl();
-        this.context.set(null);
-        this.load();
-      });
+    // The header's tags move between the trades of one stat on this page : `unsavedChangesGuard`
+    // runs on a parameter-only change too, so leaving an unsaved draft is asked once, by the router.
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.id = params.get('id') ?? '';
+      this.clearObjectUrl();
+      this.context.set(null);
+      this.load();
+    });
   }
 
   private load(): void {
@@ -515,6 +497,8 @@ export class JournalDetailPage implements HasUnsavedChanges {
         switchMap(() => this.repo.update(entry.id, input)),
         tap((saved) => {
           this.accept(saved);
+          // The header's tags read the stat : this trade's P&L, the total and the day's order (#517).
+          this.loadContext(saved.statEntryId);
           this.toasts.success(
             this.translate.instant('journal.snackbar.updateSuccess', { ticker: saved.ticker }),
           );

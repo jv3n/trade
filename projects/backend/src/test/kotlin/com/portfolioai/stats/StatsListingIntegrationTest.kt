@@ -1044,12 +1044,6 @@ class StatsListingIntegrationTest {
     val gusBefore = service.summarise(gusOnly)
     val source = service.findAllPaged(gusOnly, PageRequest.of(0, 50)).content.first { it.completed }
     val sibling = service.createSibling(source.id, Pattern.DISCRETIONARY)
-    // The push is the setup's reading, left empty on the sibling : typed before the tick.
-    service.update(
-      sibling.id,
-      fullSessionRequest(ticker = source.ticker, tradeDate = source.tradeDate)
-        .copy(pattern = Pattern.DISCRETIONARY),
-    )
     service.setCompleted(sibling.id, true)
 
     val discretionary = service.summarise(StatEntryFilter(pattern = Pattern.DISCRETIONARY))
