@@ -3,7 +3,7 @@
 > **Short** a US small-cap that gapped up in premarket with no fundamental behind it. The bet : the
 > price falls back during the session because the pump is artificial.
 
-*Last revised : 2026-09-25, from the Trading Desk session of 14 September, « Les Patterns ».*
+*Last revised : 2026-10-01 (gap read as the scanner does, #499), from the Trading Desk session of 14 September, « Les Patterns ».*
 
 ---
 
@@ -14,7 +14,7 @@ Every criterion has to hold **at the same time**. One KO → no trade.
 | # | Criterion | Value | Why |
 |---|-----------|-------|-----|
 | 1 | **Price** | ~$0.30 – $10 | The zone of extreme volatility, where the pumps play. The broker allowed shorts from $1, then $0.50, now $0.30 ; under $1, buying power is the practical limit. |
-| 2 | **Gap up** | ≥ +45 % | Premarket open (4:00 am) vs the previous close. Below that it is noise ; above it is a real disconnect waiting to be corrected. |
+| 2 | **Gap up** | ≥ +45 % | Previous close → the price right now, as the TradeZero scanner reads it — not the premarket open. On the stats page it is the **cumulative** figure (at the PM high, then at the open), not the « gap » column, which stops at the premarket open. Below that it is noise ; above it is a real disconnect waiting to be corrected. |
 | 3 | **Float** | ≥ 1.5M | Under it, it squeezes. The floor moved 3M → 2M → 1.5M as the stats were re-run. |
 | 4 | **Daily chart** | Flat or downtrend | The pump becomes a spike inside a downtrend → mean reversion. The one criterion that takes judgement — its own section below. |
 | 5 | **Company** | Weak | No revenue, no catalyst → nothing to hold the price up. |
