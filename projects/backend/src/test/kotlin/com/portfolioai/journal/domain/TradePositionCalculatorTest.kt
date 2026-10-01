@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test
  * - weighted-average entry/exit across multiple legs at different prices ;
  * - realized P&L is computed on the **exited** shares only (partial closes) ;
  * - the open / partial / closed fill status ;
+ * - the size as the most shares held at once, not the sum of the entries (#500) ;
  * - the trade duration derived from the fill times (#192) ;
  * - inconsistent inputs (exit-without-entry, over-exit, missing direction) are rejected, not
  *   silently mis-computed.
@@ -136,6 +137,39 @@ class TradePositionCalculatorTest {
 
     assertEquals(33L, TradePositionCalculator.duration(legs), "9h42 → 10h15")
     assertEquals(33L, TradePositionCalculator.compute(TradeDirection.SHORT, legs).durationMinutes)
+  }
+
+  @Test
+  fun `the size is the most shares held at once, not the sum of the entries`() {
+    // BTTC, one trade with a genuine scale-in (#500) : 1 000 shares sold short in all, never more
+    // than 600 at once. The sum read 1 000, and every margin figure built on it was off.
+    val agg =
+      TradePositionCalculator.compute(
+        TradeDirection.SHORT,
+        listOf(
+          entry(400, "0.62"),
+          entry(200, "0.64"),
+          exit(400, "0.60"),
+          entry(400, "0.63"),
+          exit(600, "0.59"),
+        ),
+      )
+
+    assertEquals(600, agg.size)
+    assertEquals(PositionStatus.CLOSED, agg.status)
+  }
+
+  @Test
+  fun `an exit and a re-entry inside one trade count the peak, not the two legs`() {
+    // Nothing splits a trade any more (#500) : SDEV's first two round-trips left in one trade
+    // held 3 000 shares at most, never 6 000.
+    val agg =
+      TradePositionCalculator.compute(
+        TradeDirection.SHORT,
+        listOf(entry(3000, "2.246"), exit(3000, "2.32"), entry(3000, "2.236"), exit(3000, "2.345")),
+      )
+
+    assertEquals(3000, agg.size)
   }
 
   @Test

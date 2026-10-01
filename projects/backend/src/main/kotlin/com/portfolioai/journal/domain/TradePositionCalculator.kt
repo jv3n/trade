@@ -89,9 +89,10 @@ object TradePositionCalculator {
     }
 
     val avgEntry = weightedAverage(entries)
+    val size = maxPosition(legs)
     if (exitShares == 0) {
       return Aggregates(
-        size = entryShares,
+        size = size,
         avgEntry = avgEntry,
         avgExit = null,
         profitDollars = null,
@@ -116,7 +117,7 @@ object TradePositionCalculator {
         .setScale(GAIN_SCALE, RoundingMode.HALF_UP)
 
     return Aggregates(
-      size = entryShares,
+      size = size,
       avgEntry = avgEntry,
       avgExit = avgExit,
       profitDollars = profit,
@@ -142,6 +143,17 @@ object TradePositionCalculator {
         ?: return null
     return Duration.between(start, end).toMinutes().takeIf { it >= 0 }
   }
+
+  /**
+   * The most shares held at once, walking the fills in order (#500) — not the sum of the entries :
+   * a scale-in, a partial cover and a re-add count the peak, not every share ever traded.
+   */
+  private fun maxPosition(legs: List<Leg>): Int =
+    legs
+      .runningFold(0) { held, leg ->
+        if (leg.kind == ExecutionKind.ENTRY) held + leg.shares else held - leg.shares
+      }
+      .max()
 
   /**
    * Σ(shares × price) / Σ(shares), rounded to the price scale. Caller guarantees a non-empty list.

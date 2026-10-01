@@ -1,5 +1,6 @@
 package com.portfolioai.stats
 
+import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
@@ -18,6 +19,7 @@ import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -40,11 +42,13 @@ import org.springframework.web.server.ResponseStatusException
  *
  * - the trade **inherits** the stat's date, ticker and pattern, and starts empty (no execution, no
  *   P&L) — the rest is typed on the trade page ;
- * - **one trade per stat** : a second promotion is a 409, never a second row ;
- * - the stats listing carries the link back (trade id + retained P&L) so the UI can swap the button
- *   for a link, and it survives an edit of the stat ;
- * - a stat that gave birth to a trade **can't be deleted** — 409 rather than the 500 the ON DELETE
- *   RESTRICT would otherwise produce ;
+ * - **several trades per stat** (#500) : each promotion creates the next one, short or long, each
+ *   with its own account line — deleting one leaves the others ;
+ * - the stats listing carries the links back (one per trade, in the day's order, with direction and
+ *   retained P&L) so the UI can swap the button for them, and they survive an edit of the stat ;
+ *   the « traded » KPI still counts stats, not trades ;
+ * - a stat that still carries **any** trade **can't be deleted** — 409 rather than the 500 the ON
+ *   DELETE RESTRICT would otherwise produce ;
  * - a stat **re-filed under another pattern** takes its trade along (#393).
  *
  * `AuthService` is mocked so the user scope is deterministic ; a second user is seeded to check the
@@ -58,6 +62,7 @@ class StatToTradeIntegrationTest {
   @Autowired private lateinit var statRepo: StatEntryRepository
   @Autowired private lateinit var tradeRepo: TradeEntryRepository
   @Autowired private lateinit var userRepository: UserRepository
+  @Autowired private lateinit var movementRepo: AccountMovementRepository
 
   @MockitoBean private lateinit var authService: AuthService
 
@@ -101,14 +106,55 @@ class StatToTradeIntegrationTest {
   }
 
   @Test
-  fun `promoting the same stat twice is a 409 — one trade per stat`() {
-    statService.promoteToTrade(stat.id)
+  fun `promoting a traded stat again creates the next trade — the first one is left alone`() {
+    val first = statService.promoteToTrade(stat.id)
 
-    val ex =
-      assertThrows(ResponseStatusException::class.java) { statService.promoteToTrade(stat.id) }
+    val second = statService.promoteToTrade(stat.id)
 
-    assertEquals(409, ex.statusCode.value())
-    assertEquals(1, tradeRepo.findAll().size, "the second call must not have created a row")
+    assertEquals(stat.id, second.statEntryId)
+    assertEquals(2, tradeRepo.findAll().size)
+    assertEquals(first.id, statService.findById(stat.id).tradeId, "the single link stays the first")
+  }
+
+  @Test
+  fun `a stat lists its trades in the day's order, a short and a long side by side`() {
+    // KTTA, 17/09 : the GUS short in the morning, then a long on the bounce off the low — typed in
+    // the reverse order, listed in the day's.
+    val long = statService.promoteToTrade(stat.id)
+    fill(long.id, TradeDirection.BUY, 200, "3.45", "3.77", LocalTime.of(14, 20))
+    val short = statService.promoteToTrade(stat.id)
+    fill(short.id, TradeDirection.SHORT, 350, "4.50", "3.66", LocalTime.of(9, 41))
+
+    val row = statService.findById(stat.id)
+
+    assertEquals(listOf(short.id, long.id), row.trades.map { it.tradeId })
+    assertEquals(listOf(TradeDirection.SHORT, TradeDirection.BUY), row.trades.map { it.direction })
+    assertEquals(
+      listOf(BigDecimal("294.00"), BigDecimal("64.00")),
+      row.trades.map { it.retainedProfitDollars },
+    )
+    assertEquals(
+      0,
+      row.tradeRetainedProfitDollars!!.compareTo(BigDecimal("358.00")),
+      "the single link reads the stat's total, not one trade picked at random",
+    )
+  }
+
+  @Test
+  fun `each trade of a stat has its own account line, and deleting one leaves the others`() {
+    val short = statService.promoteToTrade(stat.id)
+    fill(short.id, TradeDirection.SHORT, 350, "4.50", "3.66", LocalTime.of(9, 41))
+    val long = statService.promoteToTrade(stat.id)
+    fill(long.id, TradeDirection.BUY, 200, "3.45", "3.77", LocalTime.of(14, 20))
+
+    tradeService.delete(long.id)
+
+    assertEquals(listOf(short.id), statService.findById(stat.id).trades.map { it.tradeId })
+    assertEquals(
+      0,
+      movementRepo.findByTradeEntryId(short.id)!!.amount.compareTo(BigDecimal("294.00")),
+    )
+    assertNull(movementRepo.findByTradeEntryId(long.id), "the deleted trade's line went with it")
   }
 
   @Test
@@ -175,6 +221,18 @@ class StatToTradeIntegrationTest {
   }
 
   @Test
+  fun `a stat traded three times still counts once in the traded KPI`() {
+    // « 8 / 10 traded stats » counts stats : three trades on one must not read « 3 / 2 ».
+    statRepo.save(sampleStat(testUser, ticker = "BNZI"))
+    repeat(3) { statService.promoteToTrade(stat.id) }
+
+    val summary = statService.summarise(StatEntryFilter())
+
+    assertEquals(1, summary.traded)
+    assertEquals(1, summary.untraded)
+  }
+
+  @Test
   fun `completing a traded stat keeps the link — the button must not come back`() {
     val trade = statService.promoteToTrade(stat.id)
 
@@ -213,18 +271,54 @@ class StatToTradeIntegrationTest {
   }
 
   @Test
-  fun `deleting the trade frees the stat — it can be deleted, and promoted again`() {
+  fun `deleting a stat stays a 409 while any of its trades is left`() {
+    val first = statService.promoteToTrade(stat.id)
+    statService.promoteToTrade(stat.id)
+    tradeService.delete(first.id)
+
+    val ex = assertThrows(ResponseStatusException::class.java) { statService.delete(stat.id) }
+
+    assertEquals(409, ex.statusCode.value())
+  }
+
+  @Test
+  fun `deleting all its trades frees the stat — it can be deleted`() {
     val trade = statService.promoteToTrade(stat.id)
     tradeService.delete(trade.id)
 
-    val again = statService.promoteToTrade(stat.id)
+    statService.delete(stat.id)
 
-    assertEquals(stat.id, again.statEntryId, "the slot is free again once the trade is gone")
+    assertNull(statRepo.findByIdAndUserId(stat.id, testUser.id))
   }
 
   // ---------------------------------------------------------------------------
   // Sample factories
   // ---------------------------------------------------------------------------
+
+  /** Types one entry and one exit of [shares] on trade [id], a minute apart from [at]. */
+  private fun fill(
+    id: UUID,
+    direction: TradeDirection,
+    shares: Int,
+    entry: String,
+    exit: String,
+    at: LocalTime,
+  ) =
+    tradeService.update(
+      id,
+      TradeEntryRequest(
+        statEntryId = stat.id,
+        tradeDate = stat.tradeDate,
+        ticker = stat.ticker,
+        pattern = Pattern.GUS,
+        direction = direction,
+        executions =
+          listOf(
+            ExecutionRequest(ExecutionKind.ENTRY, shares, BigDecimal(entry), at),
+            ExecutionRequest(ExecutionKind.EXIT, shares, BigDecimal(exit), at.plusMinutes(1)),
+          ),
+      ),
+    )
 
   private fun saveUser(prefix: String) =
     userRepository.save(
