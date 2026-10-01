@@ -57,7 +57,7 @@ jobs:
       # rebuilds the configuration on each run. `problems=warn` : a plugin that isn't compatible
       # (detekt, kover, git-properties…) costs the cache, not the build (#398).
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6.3.0
+        uses: gradle/actions/setup-gradle@v6.4.0
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/master' }}
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
