@@ -40,6 +40,11 @@
 
 // ---- One row per ticker and day (#500) ----
 
+.partial {
+  margin-left: s.$space-hairline;
+  cursor: help;
+}
+
 .tags {
   display: inline-flex;
   flex-wrap: wrap;
