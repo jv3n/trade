@@ -127,7 +127,15 @@
   border-radius: var(--radius-sm);
   color: inherit;
   font: inherit;
+  font-size: s.$font-sm;
   text-transform: uppercase;
+
+  // The hint reads as a hint : small and in its own case — only what is typed is a ticker.
+  &::placeholder {
+    font-size: s.$font-xs;
+    text-transform: none;
+    color: color-mix(in oklch, var(--color-on-note), transparent 45%);
+  }
 }
 
 .note-window__tickers {
