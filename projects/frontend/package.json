@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "prepare": "node -e \"try { require('child_process').execSync('git config core.hooksPath .githooks', { stdio: 'ignore' }) } catch {}\"",
     "prestart": "node apps/web/tools/copy-docs.mjs",
     "start": "ng serve web",
     "prebuild": "node apps/web/tools/copy-docs.mjs",

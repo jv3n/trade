@@ -11,8 +11,9 @@
 # build has no format gate in CI and Spotless only fails late in `./gradlew build`, so this hook is
 # the earliest (and only local) enforcement point.
 #
-# Activated via `git config core.hooksPath .githooks` (run once per clone — see
-# docs/technique/developpement.md). Bypass in a pinch with `git commit --no-verify`.
+# Activated by `git config core.hooksPath .githooks`, which `npm install` in projects/frontend runs
+# for you (its `prepare` script) — a clone that never ran it commits unformatted, and CI's
+# `spotlessKotlinCheck` is the first to say so. Bypass in a pinch with `git commit --no-verify`.
 #
 # Caveat (partial staging) : formatting runs on the working-tree copy, so if a file is only
 # partially staged (`git add -p`), re-staging pulls in its unstaged hunks too. Same limitation as
