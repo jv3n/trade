@@ -26,7 +26,7 @@
         <header class="page-header">
           <div>
             <h1>Journal</h1>
-            <p>Chaque trade : exécutions, post-mortem, capture du chart. Un trade se crée depuis une stat.</p>
+            <p>Une ligne par ticker et par jour, ses trades à l'ouverture. Un trade se crée depuis une stat.</p>
           </div>
           <div class="actions">
             <button class="btn"><span class="icon">import_export</span> Import / export CSV</button>
@@ -36,23 +36,23 @@
         <section class="grid grid-4" style="margin-bottom: 16px">
           <div class="card kpi">
             <div class="label">P&amp;L septembre</div>
-            <div class="value gain">+751,85 $ US</div>
-            <div class="sub">8 trades</div>
+            <div class="value loss">−652,41 $ US</div>
+            <div class="sub">12 trades clôturés</div>
           </div>
           <div class="card kpi">
             <div class="label">Taux de réussite</div>
-            <div class="value">75 %</div>
-            <div class="sub">6 gagnants · 2 perdants</div>
+            <div class="value">58 %</div>
+            <div class="sub">7 gagnants · 5 perdants</div>
           </div>
           <div class="card kpi">
             <div class="label">Gain moyen / perte moyenne</div>
-            <div class="value"><span class="gain">+175</span> <span class="muted">/</span> <span class="loss">−149</span></div>
-            <div class="sub">Profit factor 3,52</div>
+            <div class="value"><span class="gain">+159</span> <span class="muted">/</span> <span class="loss">−353</span></div>
+            <div class="sub">Profit factor 0,63</div>
           </div>
           <div class="card kpi">
             <div class="label">Stats tradées</div>
-            <div class="value">8 / 10</div>
-            <div class="sub"><a href="stats.html">2 stats non tradées <span class="icon icon-sm">arrow_forward</span></a></div>
+            <div class="value">10 / 14</div>
+            <div class="sub"><a href="stats.html">4 stats non tradées <span class="icon icon-sm">arrow_forward</span></a></div>
           </div>
         </section>
 
@@ -93,133 +93,192 @@
             <table>
               <thead>
                 <tr>
+                  <th style="width: 28px"></th>
                   <th>Date ↓</th>
                   <th>Ticker</th>
                   <th>Pattern</th>
-                  <th class="num" title="Position max tenue à un instant">Actions</th>
+                  <th>Sens</th>
+                  <th class="num">Trades</th>
+                  <th class="num" title="Le plus gros des trades de la journée — jamais une exposition additionnée ou compensée entre un short et un long">Position max</th>
                   <th class="num">Entrée moy.</th>
                   <th class="num">Sortie moy.</th>
+                  <th class="num" title="La somme des durées des trades">Durée cumulée</th>
                   <th class="num">P&amp;L ($ US)</th>
                   <th class="num">P&amp;L %</th>
                 </tr>
               </thead>
               <tbody>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" title="Plusieurs trades : la ligne s'ouvre sur eux">
+                  <td><span class="icon icon-sm">expand_more</span></td>
                   <td>29/09</td>
-                  <td><span class="ticker">SDEV</span> <span class="muted" title="1ᵉ trade SDEV du jour sur 3">1/3</span></td>
+                  <td><span class="ticker">SDEV</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">3</td>
+                  <td class="num">3 000</td>
+                  <td class="num muted" title="Plusieurs trades : voir chacun">—</td>
+                  <td class="num muted" title="Plusieurs trades : voir chacun">—</td>
+                  <td class="num">20 min</td>
+                  <td class="num loss">−1 468,26</td>
+                  <td class="num muted" title="Plusieurs trades : voir chacun">—</td>
+                </tr>
+                <tr class="clickable" data-href="trade.html" style="font-size: 12px">
+                  <td></td>
+                  <td class="muted" colspan="2" style="padding-left: 28px">Trade 1 · 10:33 → 10:48</td>
+                  <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td></td>
                   <td class="num">3 000</td>
                   <td class="num">2,25</td>
                   <td class="num">2,32</td>
+                  <td class="num">15 min</td>
                   <td class="num loss">−339,42</td>
                   <td class="num loss">−5,0 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
-                  <td>29/09</td>
-                  <td><span class="ticker">SDEV</span> <span class="muted" title="2ᵉ trade SDEV du jour sur 3">2/3</span></td>
+                <tr class="clickable" data-href="trade.html" style="font-size: 12px">
+                  <td></td>
+                  <td class="muted" colspan="2" style="padding-left: 28px">Trade 2 · 11:00 → 11:04</td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td></td>
                   <td class="num">3 000</td>
                   <td class="num">2,24</td>
                   <td class="num">2,35</td>
+                  <td class="num">4 min</td>
                   <td class="num loss">−444,42</td>
                   <td class="num loss">−6,6 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
-                  <td>29/09</td>
-                  <td><span class="ticker">SDEV</span> <span class="muted" title="3ᵉ trade SDEV du jour sur 3">3/3</span></td>
+                <tr class="clickable" data-href="trade.html" style="font-size: 12px">
+                  <td></td>
+                  <td class="muted" colspan="2" style="padding-left: 28px">Trade 3 · 11:08 → 11:09</td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td></td>
                   <td class="num">3 000</td>
                   <td class="num">2,71</td>
                   <td class="num">2,90</td>
+                  <td class="num">1 min</td>
                   <td class="num loss">−684,42</td>
                   <td class="num loss">−8,4 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" title="Deux stats du même jour sur ce ticker, un GUS et un discrétionnaire : une seule ligne">
+                  <td><span class="icon icon-sm">chevron_right</span></td>
                   <td>17/09</td>
                   <td><span class="ticker">KTTA</span></td>
-                  <td><span class="tag tag-accent">GUS</span></td>
-                  <td class="num">350</td>
-                  <td class="num">4,50</td>
-                  <td class="num">3,66</td>
-                  <td class="num gain">+291,85</td>
-                  <td class="num gain">+18,5 %</td>
+                  <td><span class="tag tag-accent">GUS</span> <span class="tag tag-accent">Discrétionnaire</span></td>
+                  <td><span class="tag">Short</span> <span class="tag">Long</span></td>
+                  <td class="num">2</td>
+                  <td class="num" title="Le short de 350 — le long de 200 ne s'y ajoute pas">350</td>
+                  <td class="num muted" title="Plusieurs trades : voir chacun">—</td>
+                  <td class="num muted" title="Plusieurs trades : voir chacun">—</td>
+                  <td class="num">4 h 06</td>
+                  <td class="num gain">+355,85</td>
+                  <td class="num muted" title="Plusieurs trades : voir chacun">—</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" data-href="trade.html" title="Un seul trade : ouvre sa fiche">
+                  <td></td>
                   <td>16/09</td>
                   <td><span class="ticker">BNZI</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">1</td>
                   <td class="num">500</td>
                   <td class="num">2,84</td>
                   <td class="num">2,61</td>
+                  <td class="num">52 min</td>
                   <td class="num gain">+115,00</td>
                   <td class="num gain">+8,1 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" data-href="trade.html" title="Un seul trade : ouvre sa fiche">
+                  <td></td>
                   <td>15/09</td>
                   <td><span class="ticker">SNTG</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">1</td>
                   <td class="num">200</td>
                   <td class="num">6,10</td>
                   <td class="num">6,72</td>
+                  <td class="num">18 min</td>
                   <td class="num loss">−124,00</td>
                   <td class="num loss">−10,2 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" data-href="trade.html" title="Un seul trade : ouvre sa fiche">
+                  <td></td>
                   <td>12/09</td>
                   <td><span class="ticker">NUWE</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">1</td>
                   <td class="num">400</td>
                   <td class="num">3,25</td>
                   <td class="num">2,70</td>
+                  <td class="num">1 h 05</td>
                   <td class="num gain">+220,00</td>
                   <td class="num gain">+16,9 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" data-href="trade.html" title="Un seul trade : ouvre sa fiche">
+                  <td></td>
                   <td>11/09</td>
                   <td><span class="ticker">HOTH</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">1</td>
                   <td class="num">250</td>
                   <td class="num">7,40</td>
                   <td class="num">7,28</td>
+                  <td class="num">9 min</td>
                   <td class="num gain">+30,00</td>
                   <td class="num gain">+1,6 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" data-href="trade.html" title="Un seul trade : ouvre sa fiche">
+                  <td></td>
                   <td>10/09</td>
                   <td><span class="ticker">AEHL</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">1</td>
                   <td class="num">600</td>
                   <td class="num">1,92</td>
                   <td class="num">2,21</td>
+                  <td class="num">26 min</td>
                   <td class="num loss">−174,00</td>
                   <td class="num loss">−15,1 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" data-href="trade.html" title="Un seul trade : ouvre sa fiche">
+                  <td></td>
                   <td>09/09</td>
                   <td><span class="ticker">CRKN</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">1</td>
                   <td class="num">300</td>
                   <td class="num">5,05</td>
                   <td class="num">3,98</td>
+                  <td class="num">2 h 12</td>
                   <td class="num gain">+321,00</td>
                   <td class="num gain">+21,2 %</td>
                 </tr>
-                <tr class="clickable" data-href="trade.html">
+                <tr class="clickable" data-href="trade.html" title="Un seul trade : ouvre sa fiche">
+                  <td></td>
                   <td>08/09</td>
                   <td><span class="ticker">TOP</span></td>
                   <td><span class="tag tag-accent">GUS</span></td>
+                  <td><span class="tag">Short</span></td>
+                  <td class="num">1</td>
                   <td class="num">150</td>
                   <td class="num">8,60</td>
                   <td class="num">8,12</td>
+                  <td class="num">14 min</td>
                   <td class="num gain">+72,00</td>
                   <td class="num gain">+5,6 %</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="7">Total — 11 trades</td>
-                  <td class="num loss">−716,41</td>
-                  
+                  <td colspan="10">Total — 9 lignes, 12 trades</td>
+                  <td class="num loss">−652,41</td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>
@@ -227,7 +286,13 @@
         </section>
 
         <p class="mockup-note">
-          Maquette statique — cliquer une ligne ouvre la fiche du trade. Un trade naît d’une stat (bouton « → Trade ») et hérite de son pattern. Chaque aller-retour est une ligne : trois trades SDEV le même jour donnent trois lignes « 1/3 », « 2/3 », « 3/3 », et « Actions » est la position max, pas la somme des entrées (#500).
+          Maquette statique — une ligne par ticker et par jour (#500) : les trades d'un même nom le même jour, d'une stat ou de deux
+          (KTTA : un GUS short le matin, puis un long discrétionnaire sur le rebond, sa stat née de la GUS, #507), avec une puce par pattern et par sens, la position max (le plus gros des trades
+          du jour, jamais une somme entre un short et un long), la durée cumulée (la somme des durées des trades) et le P&amp;L du jour ;
+          entrée, sortie et P&amp;L % sur une ligne à un seul trade et sur chaque trade d'une ligne ouverte, vides sur une ligne qui en
+          porte plusieurs. Une ligne à un seul
+          trade ouvre sa fiche ; une ligne à plusieurs s'ouvre sur ses trades (SDEV, ouverte), chacun menant à sa fiche. Tri, filtres et
+          pagination comptent des lignes ; l'export CSV reste une ligne par trade.
         </p>
       </main>
     </div>
