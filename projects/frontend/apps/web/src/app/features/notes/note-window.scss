@@ -1,0 +1,160 @@
+// A note window (#521) — after the post-it of `mockup/candidat.html` : a post-it's width, the
+// paper colour the user picked, over the page, dragged by its header.
+
+@use 'sizes' as s;
+
+.note-window {
+  --note-paper: var(--color-note-yellow);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 280px;
+  pointer-events: auto;
+  background: var(--note-paper);
+  color: var(--color-on-note);
+  border: 1px solid color-mix(in oklch, var(--note-paper), black 15%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  outline: none;
+}
+
+.note-window--green {
+  --note-paper: var(--color-note-green);
+}
+
+.note-window--blue {
+  --note-paper: var(--color-note-blue);
+}
+
+.note-window--yellow {
+  --note-paper: var(--color-note-yellow);
+}
+
+.note-window--red {
+  --note-paper: var(--color-note-red);
+}
+
+.note-window--front {
+  z-index: 2;
+}
+
+.note-window__header {
+  display: flex;
+  align-items: center;
+  gap: s.$space-xs;
+  padding: s.$space-xs s.$space-xs s.$space-xs s.$space-md;
+  cursor: grab;
+  user-select: none;
+
+  .mat-mdc-icon-button {
+    color: inherit;
+  }
+}
+
+.note-window__grip {
+  font-size: s.$icon-sm;
+  width: s.$icon-sm;
+  height: s.$icon-sm;
+  opacity: 0.6;
+}
+
+.note-window__title {
+  flex: 1;
+  font-size: s.$font-sm;
+  font-weight: 600;
+}
+
+.note-window__swatches {
+  display: flex;
+  gap: s.$space-xs;
+}
+
+.note-window__swatch {
+  width: s.$icon-xs;
+  height: s.$icon-xs;
+  padding: 0;
+  border: 1px solid color-mix(in oklch, var(--color-on-note), transparent 70%);
+  border-radius: 50%;
+  cursor: pointer;
+
+  &[aria-pressed='true'] {
+    outline: 2px solid var(--color-on-note);
+    outline-offset: 1px;
+  }
+}
+
+.note-window__swatch--green {
+  background: var(--color-note-green);
+}
+
+.note-window__swatch--blue {
+  background: var(--color-note-blue);
+}
+
+.note-window__swatch--yellow {
+  background: var(--color-note-yellow);
+}
+
+.note-window__swatch--red {
+  background: var(--color-note-red);
+}
+
+.note-window__body {
+  padding: 0 s.$space-md s.$space-md;
+}
+
+.note-window__text {
+  display: block;
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  padding: s.$space-xs;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: s.$font-sm;
+  outline: none;
+}
+
+.note-window__ticker-input {
+  width: 100%;
+  padding: s.$space-xs s.$space-sm;
+  background: color-mix(in oklch, var(--note-paper), white 35%);
+  border: 1px solid color-mix(in oklch, var(--color-on-note), transparent 80%);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.note-window__tickers {
+  display: block;
+  margin-top: s.$space-sm;
+}
+
+// Docked on a phone : a full-width panel, no float, no drag cursor.
+.note-window--docked {
+  position: static;
+  width: auto;
+  border-radius: 0;
+
+  .note-window__header {
+    cursor: default;
+  }
+}
+
+// In its own window : the window is the frame.
+.note-window--detached {
+  position: static;
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+
+  .note-window__header {
+    cursor: default;
+  }
+}

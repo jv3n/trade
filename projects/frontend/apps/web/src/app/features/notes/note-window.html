@@ -1,0 +1,120 @@
+<section
+  class="note-window"
+  [class]="'note-window--' + state().color"
+  cdkDrag
+  cdkDragBoundary=".notes-layer"
+  [cdkDragDisabled]="docked() || detached()"
+  [cdkDragFreeDragPosition]="position()"
+  (cdkDragEnded)="dropped($event)"
+  [class.note-window--docked]="docked()"
+  [class.note-window--detached]="detached()"
+  [class.note-window--front]="notes.front() === key()"
+  role="dialog"
+  [attr.aria-label]="
+    isWatchlist()
+      ? ('notes.watchlist.title' | translate)
+      : ('notes.postit.title' | translate: { n: number() })
+  "
+  tabindex="-1"
+  (pointerdown)="focus()"
+  (keydown.escape)="close()"
+>
+  <header class="note-window__header" cdkDragHandle>
+    @if (!docked() && !detached()) {
+      <mat-icon class="note-window__grip" aria-hidden="true">drag_indicator</mat-icon>
+    }
+    <span class="note-window__title">
+      {{
+        isWatchlist()
+          ? ('notes.watchlist.title' | translate)
+          : ('notes.postit.title' | translate: { n: number() })
+      }}
+    </span>
+    <span class="note-window__swatches" role="group" [attr.aria-label]="'notes.color' | translate">
+      @for (color of colors; track color) {
+        <button
+          type="button"
+          class="note-window__swatch"
+          [class]="'note-window__swatch--' + color"
+          [attr.aria-pressed]="state().color === color"
+          [attr.aria-label]="'notes.colors.' + color | translate"
+          (click)="notes.setColor(key(), color)"
+        ></button>
+      }
+    </span>
+    @if (canDetach && !detached()) {
+      <button
+        mat-icon-button
+        stbSize="sm"
+        type="button"
+        (click)="detach()"
+        [matTooltip]="'notes.detach' | translate"
+        [attr.aria-label]="'notes.detach' | translate"
+      >
+        <mat-icon>picture_in_picture_alt</mat-icon>
+      </button>
+    }
+    @if (!isWatchlist()) {
+      <button
+        mat-icon-button
+        stbSize="sm"
+        type="button"
+        (click)="remove()"
+        [matTooltip]="'notes.delete' | translate"
+        [matTooltipDisabled]="detached()"
+        [attr.aria-label]="'notes.delete' | translate"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+    }
+    <button
+      mat-icon-button
+      stbSize="sm"
+      type="button"
+      (click)="close()"
+      [matTooltip]="'notes.close' | translate"
+      [matTooltipDisabled]="detached()"
+      [attr.aria-label]="'notes.close' | translate"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="note-window__body">
+    @if (!isWatchlist()) {
+      <textarea
+        class="note-window__text"
+        [value]="text()"
+        (input)="onText($any($event.target).value)"
+        [attr.aria-label]="'notes.postit.title' | translate: { n: number() }"
+        [placeholder]="'notes.postit.placeholder' | translate"
+      ></textarea>
+    } @else {
+      <input
+        #tickerField
+        class="note-window__ticker-input"
+        type="text"
+        autocomplete="off"
+        [placeholder]="'notes.watchlist.placeholder' | translate"
+        [attr.aria-label]="'notes.watchlist.add' | translate"
+        (keydown.enter)="addTicker(tickerField)"
+      />
+      @if (notes.tickers().length > 0) {
+        <mat-chip-set class="note-window__tickers" stbChipSet="paper">
+          @for (ticker of notes.tickers(); track ticker) {
+            <mat-chip
+              stbChip="ticker"
+              disableRipple
+              (click)="notes.removeTicker(ticker)"
+              [matTooltip]="'notes.watchlist.remove' | translate"
+              [matTooltipDisabled]="detached()"
+            >
+              {{ ticker }}
+              <mat-icon matChipTrailingIcon>close</mat-icon>
+            </mat-chip>
+          }
+        </mat-chip-set>
+      }
+    }
+  </div>
+</section>

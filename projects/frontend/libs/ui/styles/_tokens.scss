@@ -111,6 +111,15 @@
 // resolves against the active theme's solid colours.
 :root,
 [data-theme='light'] {
+  // Post-it papers (#521) — the colour of a note window itself, chosen by the user : not an
+  // outcome, a warning nor a status, so outside the colour usage rule above. Pastel paper with
+  // dark ink in both themes, like a real post-it.
+  --color-note-green: oklch(0.9 0.08 150);
+  --color-note-blue: oklch(0.9 0.06 240);
+  --color-note-yellow: oklch(0.93 0.09 95);
+  --color-note-red: oklch(0.88 0.08 25);
+  --color-on-note: oklch(0.25 0.02 260);
+
   --color-accent-soft: color-mix(in oklch, var(--color-accent) var(--soft-mix), transparent);
   --color-success-soft: color-mix(in oklch, var(--color-success) var(--soft-mix), transparent);
   --color-warning-soft: color-mix(in oklch, var(--color-warning) var(--soft-mix), transparent);
