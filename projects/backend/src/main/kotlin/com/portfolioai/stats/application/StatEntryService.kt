@@ -75,7 +75,7 @@ class StatEntryService(
     val page = repo.findAll(spec, effective)
     // One query for the whole page rather than one per row — same shape as the candidates listing.
     val links = tradeEntryService.tradeLinksByStat(page.content.map { it.id })
-    return page.map { it.toDto(links[it.id]) }
+    return page.map { it.toDto(links[it.id].orEmpty()) }
   }
 
   /**
@@ -93,7 +93,8 @@ class StatEntryService(
     val sessions = completed.filterNot { it.isDoubleTop }
     val doubleTops = completed.filter { it.isDoubleTop }
     // The journal's "8 of 10 stats traded" KPI (#195) : one query for the whole filtered set,
-    // the same read the listing already uses row by row.
+    // the same read the listing already uses row by row. Keyed by stat, so a stat traded three
+    // times still counts once (#500).
     val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
     val pushes = sessions.mapNotNull { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) }
     return StatSummaryDto(
@@ -193,30 +194,22 @@ class StatEntryService(
   @Transactional(readOnly = true)
   fun findById(id: UUID): StatEntryDto {
     val entry = loadOwned(id)
-    return entry.toDto(tradeEntryService.tradeLinksByStat(listOf(entry.id))[entry.id])
+    return entry.toDto(tradeEntryService.tradeLinksByStat(listOf(entry.id))[entry.id].orEmpty())
   }
 
   // ---- Promotion to the journal (#193) --------------------------------------------------------
 
   /**
-   * Creates the trade this stat gave birth to — the « → Trade » action, cf. `mockup/PARCOURS.md`
-   * step 4. The trade inherits the stat's date, ticker and pattern and starts empty : executions,
-   * real P&L, post-mortem and screenshot are typed on the trade page afterwards.
+   * Creates a trade on this stat — the « → Trade » / « + Trade » action, cf. `mockup/PARCOURS.md`
+   * step 4. The trade inherits the stat's date, ticker and pattern and starts empty : direction,
+   * executions, real P&L, post-mortem and screenshot are typed on the trade page afterwards.
    *
-   * **One trade per stat** : a second call is a 409, and the listing shows a link to the existing
-   * trade instead of the button from then on. The unique index `ux_trade_entry_stat_entry_id` is
-   * the race-safe backstop.
+   * **As many as I take** (#500) : each call creates the next one, and nothing ever splits a trade
+   * — where a trade ends is mine to say. A trade under another pattern goes through another stat.
    */
   @Transactional
   fun promoteToTrade(id: UUID): TradeEntryDto {
     val stat = loadOwned(id)
-    val existing = tradeEntryService.tradeLinksByStat(listOf(stat.id))[stat.id]
-    if (existing != null) {
-      throw ResponseStatusException(
-        HttpStatus.CONFLICT,
-        "Stat ${stat.ticker} already has a trade in the journal",
-      )
-    }
     return tradeEntryService.create(
       TradeEntryRequest(
         statEntryId = stat.id,
@@ -296,7 +289,7 @@ class StatEntryService(
     }
     // The completion panel replaces its row with this response — dropping the link would make the
     // « → Trade » button reappear on a stat that already has its trade.
-    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id])
+    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
   }
 
   /**
@@ -343,13 +336,14 @@ class StatEntryService(
     entry.completedAt = if (completed) entry.completedAt ?: Instant.now() else null
     entry.updatedAt = Instant.now()
     val saved = repo.save(entry)
-    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id])
+    return saved.toDto(tradeEntryService.tradeLinksByStat(listOf(saved.id))[saved.id].orEmpty())
   }
 
   /**
-   * Deletes a stat. A stat that gave birth to a trade is a **409** : the FK is ON DELETE RESTRICT
-   * (#192), so letting it reach the DB would surface as a 500 — and deleting the trade silently
-   * would throw away the P&L the account is built on. The trade goes first, from the journal.
+   * Deletes a stat. A stat that still carries **any** trade is a **409** : the FK is ON DELETE
+   * RESTRICT (#192), so letting it reach the DB would surface as a 500 — and deleting the trades
+   * silently would throw away the P&L the account is built on. The trades go first, from the
+   * journal.
    */
   @Transactional
   fun delete(id: UUID) {

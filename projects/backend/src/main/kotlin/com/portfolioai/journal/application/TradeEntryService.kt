@@ -140,23 +140,25 @@ class TradeEntryService(
   @Transactional(readOnly = true) fun findById(id: UUID): TradeEntryDto = loadOwned(id).toDto()
 
   /**
-   * The caller's trades born from these stats, keyed by stat id — at most one per stat (#193). Read
-   * exposed to the `stats` context through this application service, the way cross-context reads
-   * are done here : the stats listing swaps the « → Trade » button for a link to the trade, and
-   * `StatEntryService` guards against promoting the same stat twice.
+   * The caller's trades born from these stats, keyed by stat id, each stat's in the day's order —
+   * several per stat since #500 ; a stat without a trade has no key. Read exposed to the `stats`
+   * context through this application service, the way cross-context reads are done here : the stats
+   * listing shows a link per trade, counts the traded stats, and refuses to delete a stat while any
+   * of its trades exists.
    */
   @Transactional(readOnly = true)
-  fun tradeLinksByStat(statEntryIds: Collection<UUID>): Map<UUID, TradeLinkDto> {
+  fun tradeLinksByStat(statEntryIds: Collection<UUID>): Map<UUID, List<TradeLinkDto>> {
     if (statEntryIds.isEmpty()) return emptyMap()
     val userId = authService.getCurrentUser().id
-    return repo.findByUserIdAndStatEntryIdIn(userId, statEntryIds).associate {
-      it.statEntryId to it.toLinkDto()
-    }
+    return repo
+      .findByUserIdAndStatEntryIdIn(userId, statEntryIds)
+      .groupBy { it.statEntryId }
+      .mapValues { (_, trades) -> trades.sortedWith(TradeEntry.DAY_ORDER).map { it.toLinkDto() } }
   }
 
   /**
-   * Moves the trade born from [statEntryId] onto its stat's new [pattern] (#393) — the stat was
-   * re-filed, and the trade follows. No trade yet is a no-op. Driven by `StatPatternChangedEvent`.
+   * Moves the trades born from [statEntryId] onto their stat's new [pattern] (#393) — the stat was
+   * re-filed, and its trades follow. No trade yet is a no-op. Driven by `StatPatternChangedEvent`.
    */
   @Transactional
   fun followStatPattern(statEntryId: UUID, userId: UUID, pattern: Pattern) {

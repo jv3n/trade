@@ -17,10 +17,11 @@ import java.util.UUID
  * preview of the session panel. [completed] is the status the owner ticks (#263) — a stat with its
  * five prices in but not ticked is still "to complete".
  *
- * [tradeId] / [tradeRetainedProfitDollars] mirror the journal side of the stat → trade link (#193)
- * : null means the stat has no trade yet and the listing offers the « → Trade » action ; non-null
- * means it shows a link to that trade instead, labelled by its retained P&L (itself null while the
- * position is open).
+ * [trades] mirror the journal side of the stat → trade link (#193), several per stat in the day's
+ * order (#500) : empty means the stat has no trade yet and the listing offers the « → Trade »
+ * action ; otherwise one link per trade, labelled by its retained P&L (null while it is open).
+ * [tradeId] (the first trade) and [tradeRetainedProfitDollars] (the sum over the trades) are the
+ * single-link shape the stats page reads until it shows each trade (#504).
  */
 data class StatEntryDto(
   val id: UUID,
@@ -60,11 +61,12 @@ data class StatEntryDto(
   val completed: Boolean,
   val tradeId: UUID?,
   val tradeRetainedProfitDollars: BigDecimal?,
+  val trades: List<TradeLinkDto>,
   val createdAt: Instant,
   val updatedAt: Instant,
 )
 
-fun StatEntry.toDto(tradeLink: TradeLinkDto? = null) =
+fun StatEntry.toDto(trades: List<TradeLinkDto> = emptyList()) =
   StatEntryDto(
     id = id,
     candidateId = candidateId,
@@ -97,8 +99,10 @@ fun StatEntry.toDto(tradeLink: TradeLinkDto? = null) =
     noPush = noPush,
     highInstitutions = highInstitutions,
     completed = isCompleted,
-    tradeId = tradeLink?.tradeId,
-    tradeRetainedProfitDollars = tradeLink?.retainedProfitDollars,
+    tradeId = trades.firstOrNull()?.tradeId,
+    tradeRetainedProfitDollars =
+      trades.mapNotNull { it.retainedProfitDollars }.reduceOrNull(BigDecimal::add),
+    trades = trades,
     createdAt = createdAt,
     updatedAt = updatedAt,
   )

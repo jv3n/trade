@@ -20,8 +20,8 @@ interface TradeEntryRepository :
   fun findByIdAndUserId(id: UUID, userId: UUID): TradeEntry?
 
   /**
-   * The caller trades born from these stats — one per stat at most (unique index, #193). Backs the
-   * link the stats listing shows in place of the « → Trade » button, in one query per page.
+   * The caller's trades born from these stats — several per stat since #500. Backs the links the
+   * stats listing shows in place of the « → Trade » button, in one query per page.
    */
   fun findByUserIdAndStatEntryIdIn(userId: UUID, statEntryIds: Collection<UUID>): List<TradeEntry>
 
