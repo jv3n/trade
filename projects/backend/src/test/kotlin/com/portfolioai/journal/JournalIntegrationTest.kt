@@ -457,6 +457,38 @@ class JournalIntegrationTest {
   }
 
   @Test
+  fun `the summary splits the P&L of the trades taken out of pattern from the in-rules one`() {
+    // IMNN 11/09 of the mockup : a DT whose retest (3.46) took the top (3.40) back — a breakout,
+    // not a double top. A discipline number : the period's P&L is still the sum of both.
+    val breakout =
+      statRepo.save(
+        sampleStat(user = testUser, ticker = "IMNN").apply {
+          pattern = Pattern.DT
+          dtTopPrice = BigDecimal("3.40")
+          dtRetestPrice = BigDecimal("3.46")
+        }
+      )
+    repo.save(
+      sampleEntity(
+        user = testUser,
+        ticker = "IMNN",
+        statEntryId = breakout.id,
+        profitDollars = BigDecimal("-233.55"),
+      )
+    )
+    // Still open on the same stat : no P&L, so in neither figure.
+    repo.save(sampleEntity(user = testUser, ticker = "IMNN", statEntryId = breakout.id))
+    repo.save(sampleEntity(user = testUser, ticker = "KTTA", profitDollars = BigDecimal("292.00")))
+
+    val summary = service.summarise(TradeEntryFilter())
+
+    assertEquals(1, summary.outOfPatternCount)
+    assertEquals(0, BigDecimal("-233.55").compareTo(summary.outOfPatternPnl))
+    assertEquals(0, BigDecimal("292.00").compareTo(summary.inRulesPnl))
+    assertEquals(0, BigDecimal("58.45").compareTo(summary.retainedPnl))
+  }
+
+  @Test
   fun `an empty journal summarises to zero, not to a division by zero`() {
     val summary = service.summarise(TradeEntryFilter())
 
@@ -466,6 +498,9 @@ class JournalIntegrationTest {
     assertNull(summary.averageWin)
     assertNull(summary.averageLoss)
     assertNull(summary.profitFactor, "no loser : the ratio is undefined, not infinite")
+    assertEquals(0, summary.outOfPatternCount)
+    assertEquals(0, BigDecimal.ZERO.compareTo(summary.outOfPatternPnl))
+    assertEquals(0, BigDecimal.ZERO.compareTo(summary.inRulesPnl))
   }
 
   @Test
@@ -881,10 +916,11 @@ class JournalIntegrationTest {
     exitPrice: BigDecimal? = null,
     profitDollars: BigDecimal? = null,
     realProfitDollars: BigDecimal? = null,
+    statEntryId: UUID = freshStat(user).id,
   ) =
     TradeEntry(
       user = user,
-      statEntryId = freshStat(user).id,
+      statEntryId = statEntryId,
       tradeDate = tradeDate,
       ticker = ticker,
       pattern = pattern,

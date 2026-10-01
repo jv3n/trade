@@ -134,6 +134,13 @@ export interface JournalSummary {
   averageWin: number | null;
   averageLoss: number | null;
   profitFactor: number | null;
+  /**
+   * Closed trades taken on a stat the recorded prices say was not the setup (#499), and their P&L
+   * beside the others' — a discipline number : together they make [retainedPnl].
+   */
+  outOfPatternCount: number;
+  outOfPatternPnl: number;
+  inRulesPnl: number;
 }
 
 /**

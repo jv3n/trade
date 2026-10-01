@@ -96,6 +96,7 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     highInstitutions: true,
     noPush: false,
     completed: true,
+    outOfPattern: [],
     trades: [],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -962,6 +963,53 @@ describe('StatsPage', () => {
 
     expect(repo.lastFilter?.noPush).toBe(true);
     expect(repo.lastFilter?.status).toBeNull();
+  });
+
+  // #499 : a tab could not be combined — the flagged stats are worth reading among the completed.
+  it('the « Out of pattern » toggle combines with the status tab and rewinds to page 0', () => {
+    const { fixture, page, repo } = setup({ rows: [makeStat()] });
+    page.pageIndex.set(2);
+
+    page.setStatus('COMPLETED');
+    page.setDerived(['OUT_OF_PATTERN']);
+    fixture.detectChanges();
+
+    expect(page.pageIndex()).toBe(0);
+    expect(repo.lastFilter?.status).toBe('COMPLETED');
+    expect(repo.lastFilter?.outOfPattern).toBe(true);
+    expect(repo.summary.mock.calls.at(-1)?.[0]).toEqual(repo.lastFilter);
+
+    page.setDerived([]);
+    fixture.detectChanges();
+    expect(repo.lastFilter?.outOfPattern).toBeNull();
+  });
+
+  it('opens with the toggles named by ?derived=, the way the tab follows ?status=', () => {
+    const { page, repo } = setup({
+      rows: [makeStat()],
+      query: { status: 'COMPLETED', derived: 'OUT_OF_PATTERN,UNKNOWN' },
+    });
+
+    expect(page.derived()).toEqual(['OUT_OF_PATTERN']);
+    expect(repo.lastFilter?.outOfPattern).toBe(true);
+    expect(repo.lastFilter?.status).toBe('COMPLETED');
+  });
+
+  it('tags a stat out of pattern, with what the recorded prices say', async () => {
+    const { fixture } = setup({
+      rows: [
+        makeStat(),
+        makeStat({ id: 'stat-imnn', ticker: 'IMNN', outOfPattern: ['PRICE_OUT_OF_RANGE'] }),
+      ],
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const tags = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      '[data-testid="out-of-pattern"]',
+    );
+    expect(tags).toHaveLength(1);
+    expect(tags[0].textContent).toContain('stats.outOfPattern.tag');
   });
 
   // #334 : on this tab the average push read « — » over « 0 that pushed ».

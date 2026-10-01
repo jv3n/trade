@@ -121,6 +121,27 @@ class StatEntry(
   val hasFullSession: Boolean
     get() = missingSessionPrices.isEmpty()
 
+  /**
+   * Why the recorded prices say this was not the setup (#499) — empty when nothing does. Computed,
+   * never ticked ; a flagged stat still counts in every KPI : the failures are the denominator.
+   */
+  val outOfPattern: List<OutOfPatternReason>
+    get() = buildList {
+      val top = dtTopPrice
+      val retest = dtRetestPrice
+      if (isDoubleTop && top != null && retest != null && retest >= top) {
+        add(OutOfPatternReason.RETEST_TOOK_TOP)
+      }
+      val open = openPrice
+      if (
+        pattern == Pattern.GUS &&
+          open != null &&
+          (open < OutOfPatternReason.GUS_MIN_PRICE || open > OutOfPatternReason.GUS_MAX_PRICE)
+      ) {
+        add(OutOfPatternReason.PRICE_OUT_OF_RANGE)
+      }
+    }
+
   /** Labels of the session prices (and a DT's times) still missing, in the sheet's order. */
   val missingSessionPrices: List<String>
     get() =

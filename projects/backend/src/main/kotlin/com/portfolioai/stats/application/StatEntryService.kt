@@ -24,9 +24,11 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -72,10 +74,26 @@ class StatEntryService(
       if (pageable.sort.isUnsorted)
         PageRequest.of(pageable.pageNumber, pageable.pageSize, DEFAULT_SORT)
       else pageable
-    val page = repo.findAll(spec, effective)
+    val page =
+      if (filter.outOfPattern == true) outOfPatternPage(spec, effective)
+      else repo.findAll(spec, effective)
     // One query for the whole page rather than one per row — same shape as the candidates listing.
     val links = tradeEntryService.tradeLinksByStat(page.content.map { it.id })
     return page.map { it.toDto(links[it.id].orEmpty()) }
+  }
+
+  /**
+   * The « out of pattern » toggle (#499) pages in memory : the rule is [StatEntry.outOfPattern],
+   * and a copy in SQL could drift from it. A personal sheet holds a few hundred stats a year.
+   */
+  private fun outOfPatternPage(
+    spec: Specification<StatEntry>,
+    pageable: Pageable,
+  ): Page<StatEntry> {
+    val rows = repo.findAll(spec, pageable.sort).filter { it.outOfPattern.isNotEmpty() }
+    val from = minOf(pageable.offset.toInt(), rows.size)
+    val to = minOf(from + pageable.pageSize, rows.size)
+    return PageImpl(rows.subList(from, to), pageable, rows.size.toLong())
   }
 
   /**
@@ -93,7 +111,10 @@ class StatEntryService(
   @Transactional(readOnly = true)
   fun summarise(filter: StatEntryFilter): StatSummaryDto {
     val userId = authService.getCurrentUser().id
-    val rows = repo.findAll(StatEntrySpecifications.matching(userId, filter))
+    val rows =
+      repo.findAll(StatEntrySpecifications.matching(userId, filter)).filter {
+        filter.outOfPattern != true || it.outOfPattern.isNotEmpty()
+      }
     val completed = rows.filter { it.isCompleted }
     val measured = if (filter.pattern == null) emptyList() else completed
     val sessions = measured.filterNot { it.isDoubleTop }

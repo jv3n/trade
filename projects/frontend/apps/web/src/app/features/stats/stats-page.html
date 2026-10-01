@@ -996,6 +996,24 @@
           </mat-button-toggle>
         }
       </mat-button-toggle-group>
+
+      <!-- Derived conditions (#499) : independent toggles, combined with the tab and each other. -->
+      <mat-button-toggle-group
+        multiple
+        class="derived-filters"
+        [value]="derived()"
+        (change)="setDerived($event.value)"
+        [attr.aria-label]="'stats.derived.label' | translate"
+      >
+        @for (filter of derivedFilters; track filter) {
+          <mat-button-toggle
+            [value]="filter"
+            [matTooltip]="'stats.derived.' + filter + '_HINT' | translate"
+          >
+            {{ 'stats.derived.' + filter | translate }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
     </div>
 
     @if (error(); as msg) {
@@ -1521,6 +1539,14 @@
                   <span class="flag-tag">{{
                     'stats.fields.highInstitutionsShort' | translate
                   }}</span>
+                }
+                @if (s.outOfPattern.length > 0) {
+                  <span
+                    class="flag-tag"
+                    data-testid="out-of-pattern"
+                    [matTooltip]="outOfPatternHint(s.outOfPattern)"
+                    >{{ 'stats.outOfPattern.tag' | translate }}</span
+                  >
                 }
               </span>
             </td>

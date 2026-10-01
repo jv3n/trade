@@ -9,6 +9,7 @@ import com.portfolioai.shared.Pattern
 import com.portfolioai.stats.application.StatEntryService
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
+import com.portfolioai.stats.domain.OutOfPatternReason
 import com.portfolioai.stats.domain.StatEntry
 import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatStatus
@@ -916,6 +917,49 @@ class StatsListingIntegrationTest {
   }
 
   // ---------------------------------------------------------------------------
+  // Out of pattern (#499)
+  // ---------------------------------------------------------------------------
+
+  @Test
+  fun `the listing flags the stats the recorded prices say were not the setup`() {
+    seedOutOfPattern()
+
+    val flags =
+      service.findAllPaged(noFilter, PageRequest.of(0, 10)).content.associate {
+        it.ticker to it.outOfPattern
+      }
+
+    assertEquals(emptyList<OutOfPatternReason>(), flags["KTTA"])
+    assertEquals(listOf(OutOfPatternReason.RETEST_TOOK_TOP), flags["IMNN"])
+    assertEquals(listOf(OutOfPatternReason.PRICE_OUT_OF_RANGE), flags["MEGA"])
+  }
+
+  @Test
+  fun `the out-of-pattern toggle keeps the flagged stats only, and pages them`() {
+    seedOutOfPattern()
+
+    val first = service.findAllPaged(outOfPatternOnly, PageRequest.of(0, 1))
+    val second = service.findAllPaged(outOfPatternOnly, PageRequest.of(1, 1))
+
+    assertEquals(2, first.totalElements)
+    // Default sort, latest day first : IMNN (09/18) then MEGA (09/16).
+    assertEquals(listOf("IMNN"), first.content.map { it.ticker })
+    assertEquals(listOf("MEGA"), second.content.map { it.ticker })
+  }
+
+  @Test
+  fun `a stat flagged out of pattern still counts in its pattern's KPIs`() {
+    // The failures are the denominator : « fade 8 / 10 » must not become 8 / 8.
+    seedOutOfPattern()
+
+    val gus = service.summarise(gusOnly)
+    val gusOut = service.summarise(gusOnly.copy(outOfPattern = true))
+
+    assertEquals(2, gus.completed, "KTTA and MEGA")
+    assertEquals(1, gusOut.completed, "the toggle narrows the KPIs like the listing")
+  }
+
+  // ---------------------------------------------------------------------------
   // KPIs
   // ---------------------------------------------------------------------------
 
@@ -1174,6 +1218,30 @@ class StatsListingIntegrationTest {
         ssr = ssr,
         entryAfter11am = entryAfter11am,
       )
+
+  private val outOfPatternOnly = StatEntryFilter(outOfPattern = true)
+
+  /**
+   * KTTA in pattern ; IMNN, a DT whose retest (3.00) took the top (2.95) back ; MEGA, a GUS opened
+   * at 12.40, above the sheet's $10.
+   */
+  private fun seedOutOfPattern() {
+    createCompleted(fullSessionRequest(ticker = "KTTA", tradeDate = DAY))
+    createCompleted(
+      doubleTopRequest(ticker = "IMNN")
+        .copy(tradeDate = DAY.plusDays(1), dtRetestPrice = BigDecimal("3.00"))
+    )
+    createCompleted(
+      fullSessionRequest(ticker = "MEGA", tradeDate = DAY.minusDays(1))
+        .copy(
+          openPrice = BigDecimal("12.40"),
+          pushOpenPrice = BigDecimal("12.80"),
+          hodPrice = BigDecimal("12.80"),
+          lodPrice = BigDecimal("11.00"),
+          eodPrice = BigDecimal("11.50"),
+        )
+    )
+  }
 
   /** GLND : open 3.10, no push, HOD 3.10 (the open), LOD 2.41, EOD 2.66. */
   private fun noPushRequest() =
