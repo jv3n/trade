@@ -21,6 +21,24 @@ export function pmPushPercent(pmOpen: number | null, pmHigh: number | null): num
 }
 
 /**
+ * Hold % = (open − PM high) ÷ PM high (#499) : what survives of the premarket at 9:30.
+ */
+export function holdPercent(pmHigh: number | null, open: number | null): number | null {
+  return percentChange(pmHigh, open);
+}
+
+/**
+ * A level read from the previous close, as the TradeZero scanner does (#499) — the PM high, or the
+ * open. The `gap ≥ 45 %` criterion of the GUS sheet speaks this figure, not [gapPercent].
+ */
+export function cumulativePercent(
+  previousClose: number | null,
+  level: number | null,
+): number | null {
+  return percentChange(previousClose, level);
+}
+
+/**
  * Any session level against the session open — push at open, HOD, LOD, EOD. Negative means the
  * level sat under the open, which is what a short is after.
  */

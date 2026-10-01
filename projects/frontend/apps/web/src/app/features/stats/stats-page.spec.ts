@@ -149,9 +149,12 @@ function makeSummary(overrides: Partial<StatSummary> = {}): StatSummary {
     thirdQuartilePushOpenPercent: 14.2,
     maxPushOpenPercent: 21.5,
     noPushCount: 0,
-    averageLodPercent: -12.3,
+    medianLodPercent: -12.3,
     fadeCount: 7,
-    averageEodPercent: -3.7,
+    medianEodPercent: -3.7,
+    medianHoldPercent: -17.3,
+    medianCumulativePmHighPercent: 74.9,
+    medianCumulativeOpenPercent: 42.9,
     completedDoubleTops: 0,
     averageExtensionPercent: null,
     averageExtensionWithGapPercent: null,
@@ -295,6 +298,26 @@ describe('StatsPage', () => {
     expect(row.eodPercent).toBeCloseTo(-16.19, 2);
   });
 
+  // #499 : the scanner reads close → price right now, so the 45 % rule needs the cumulative figure.
+  it('derives the cumulative readings and the hold of each row from its prices', () => {
+    const { page } = setup({ rows: [makeStat()] });
+
+    const row = page.rows()[0];
+    // KTTA : close 2.65, PM high 4.65, open 4.20.
+    expect(row.cumulativePmHigh).toBeCloseTo(75.47, 2);
+    expect(row.cumulativeOpen).toBeCloseTo(58.49, 2);
+    expect(row.hold).toBeCloseTo(-9.68, 2);
+  });
+
+  it('has no hold and no cumulative at the open before the open is typed', () => {
+    const { page } = setup({ rows: [makePending()] });
+
+    const row = page.rows()[0];
+    expect(row.hold).toBeNull();
+    expect(row.cumulativeOpen).toBeNull();
+    expect(row.cumulativePmHigh).not.toBeNull();
+  });
+
   it('shows an error banner when the listing fails', () => {
     const { fixture, page, repo } = setup();
     repo.findAll.mockReturnValue(throwError(() => new Error('500 from server')));
@@ -314,6 +337,17 @@ describe('StatsPage', () => {
 
     expect(page.completing()?.id).toBe(pending.id);
     expect(page.session().openPrice).toBeNull();
+  });
+
+  it('previews the hold and the cumulative at the open under the open, read off the premarket', () => {
+    const { page } = setup({ rows: [makePending()] });
+
+    expect(page.openPercents()).toEqual({ hold: null, cumulative: null });
+    page.setSessionPrice('openPrice', 4.2);
+
+    expect(page.openPercents().hold).toBeCloseTo(-9.68, 2);
+    expect(page.openPercents().cumulative).toBeCloseTo(58.49, 2);
+    expect(page.premarketPercents().cumulativePmHigh).toBeCloseTo(75.47, 2);
   });
 
   it('saves the whole row when a field is left — session updated, premarket untouched', () => {
@@ -1224,6 +1258,57 @@ describe('StatsPage', () => {
     expect(page.columns()).not.toContain('dtTop');
   });
 
+  // #499 : one or two big movers dragged the averages by up to 7 points.
+  it('the GUS view shows a hold column next to the open and a medians row', async () => {
+    const { fixture, page } = setup({ rows: [makeStat()] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const columns = page.columns();
+
+    expect(columns.indexOf('hold')).toBe(columns.indexOf('openPrice') + 1);
+    expect(page.footerColumns()).toEqual(
+      expect.arrayContaining(['sessionMediansLabel', 'hold', 'pushOpen', 'lod', 'eod']),
+    );
+    expect(fixture.nativeElement.querySelector('tr.averages-row')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('stats.complete.medians');
+  });
+
+  it('shows the cumulative under the gap on the GUS view only, never on the DT one', async () => {
+    const { fixture, page } = setup({ rows: [makeStat()] });
+    const gapNote = (): Element | null =>
+      fixture.nativeElement.querySelector('td.mat-column-gap .leg-note');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(gapNote()?.textContent).toContain('stats.fields.cumulativePmHigh');
+
+    page.setView('DT');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(gapNote()).toBeNull();
+  });
+
+  it('reads the median hold card off the summary', async () => {
+    const { fixture } = setup({ rows: [makeStat()] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const labels = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.kpi'),
+      (tile) => tile.querySelector('.kpi__label')?.textContent?.trim(),
+    );
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        'stats.kpi.medianPushOpen',
+        'stats.kpi.medianLod',
+        'stats.kpi.medianHold',
+      ]),
+    );
+    expect(fixture.nativeElement.textContent).toContain('-17.3 %');
+  });
+
   it('the DT view reads the double tops, shows their legs and their averages row', async () => {
     const { fixture, page, repo } = setup({ rows: [makeDoubleTop({ dtRetestPrice: 2.85 })] });
 
@@ -1287,18 +1372,18 @@ describe('StatsPage', () => {
   });
 
   // #452 : with no column, the footer row still laid out a blank 52 px band under the table.
-  it('collapses the empty footer row outside the DT view', async () => {
+  it('collapses the empty footer row on « All » only', async () => {
     const { fixture, page } = setup({ rows: [makeStat()] });
     const footer = (): Element | null =>
       fixture.nativeElement.querySelector('tr.mat-mdc-footer-row');
 
-    expect(footer()?.classList).toContain('no-averages');
+    expect(footer()?.classList).not.toContain('no-averages');
 
-    page.setView('DT');
+    page.setView('ALL');
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(footer()?.classList).not.toContain('no-averages');
+    expect(footer()?.classList).toContain('no-averages');
   });
 
   // #453 : the gap figure is not judged against any criterion, yet it went amber with the extension.

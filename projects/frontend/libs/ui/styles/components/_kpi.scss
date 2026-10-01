@@ -18,6 +18,20 @@
   }
 }
 
+// Five figures on one row — the stats views measured with a fifth card (DT duration, GUS hold).
+// The breakpoints are repeated : declared after `.kpi-row`, the five columns would override them.
+.kpi-row--five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+
+  @media (max-width: s.$bp-wide) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: s.$bp-phone) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 // A `mat-card` tile has no padding of its own — give it the page card's.
 .kpi.mat-mdc-card {
   padding: s.$card-padding-y s.$card-padding-x;

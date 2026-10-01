@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cumulativePercent,
   doubleTopDurations,
   doubleTopLegs,
   gapPercent,
+  holdPercent,
   minutesBetween,
   percentVsOpen,
   pmPushPercent,
@@ -32,6 +34,30 @@ describe('pmPushPercent', () => {
 
   it('returns null when the PM open is not positive', () => {
     expect(pmPushPercent(0, 4.65)).toBeNull();
+  });
+});
+
+// #499 : the scanner's reading, and what survives of the premarket at the bell.
+describe('cumulativePercent', () => {
+  it('reads a level from the previous close, as the scanner does', () => {
+    // CAPR, measured live : close 8.57, price 11.72 — the scanner showed ~36 %.
+    expect(cumulativePercent(8.57, 11.72)).toBeCloseTo(36.76, 2);
+  });
+
+  it('composes the gap and the PM push rather than adding them', () => {
+    // BKYI : +24.85 % then +70.62 % is +113 %, not +95.5 %.
+    expect(cumulativePercent(1.69, 3.6)).toBeCloseTo(113.02, 2);
+  });
+});
+
+describe('holdPercent', () => {
+  it('measures the open against the PM high', () => {
+    // LXEH : PM high 3.39, open 1.68 — half the premarket gone before the bell.
+    expect(holdPercent(3.39, 1.68)).toBeCloseTo(-50.44, 2);
+  });
+
+  it('returns null until the open is in', () => {
+    expect(holdPercent(3.39, null)).toBeNull();
   });
 });
 

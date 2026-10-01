@@ -578,12 +578,10 @@
       "completed": "Stats complétées",
       "toComplete": "{{count}} à compléter · {{total}} au total",
       "allDone": "Rien à compléter · {{total}} au total",
-      "averagePushOpen": "Push à l'open moyen",
-      "averageLod": "LOD moyen",
       "vsOpen": "vs open",
       "fade": "Fade à la clôture",
-      "fadeSub": "EOD sous l'open · sur les {{total}} complétées · moyenne {{average}}",
-      "fadeSubOne": "EOD sous l'open · sur {{total}} complétée · moyenne {{average}}",
+      "fadeSub": "EOD sous l'open · sur les {{total}} complétées · médiane {{median}}",
+      "fadeSubOne": "EOD sous l'open · sur {{total}} complétée · médiane {{median}}",
       "noPushSub": "vs open · sur les {{pushed}} qui ont poussé · {{count}} / {{total}} sans push",
       "noPushSubOne": "vs open · sur {{pushed}} qui a poussé · {{count}} / {{total}} sans push",
       "noPushDays": "Jours sans push",
@@ -604,7 +602,12 @@
       "averages": "Moyennes",
       "byPattern": "par pattern",
       "byPatternSub": "choisis un pattern pour le push, le LOD, l'extension, le rejet… — jamais un mélange",
-      "completedOf": "Stats {{pattern}} complétées"
+      "completedOf": "Stats {{pattern}} complétées",
+      "medianPushOpen": "Push à l'open médian",
+      "medianLod": "LOD médian",
+      "medianHold": "Tenue médiane",
+      "holdSub": "high PM → open · cumul à l'open {{open}} · au high PM {{pmHigh}}",
+      "holdHint": "Ce qui reste du premarket à la cloche. Pas encore de seuil : c'est cette carte qui dira, sur la durée, sous quelle tenue on ne prend plus."
     },
     "complete": {
       "title": "Séance",
@@ -612,7 +615,10 @@
       "percentBase": "base des %",
       "hodBelowLod": "Le HOD est sous le LOD",
       "progress": "{{filled}} / {{total}} prix saisis",
-      "close": "Fermer"
+      "close": "Fermer",
+      "percentBaseWithHold": "base des % · tenue {{hold}} % · cumul {{cumulative}} %",
+      "medians": "Médianes — {{count}} stats complétées",
+      "mediansOne": "Médianes — {{count}} stat complétée"
     },
     "completion": {
       "tick": "Marquer complétée",
@@ -678,7 +684,14 @@
       "brief": "En bref",
       "briefHint": "Les chiffres qui résument la stat dans son pattern",
       "briefPush": "push {{push}}",
-      "briefLod": "LOD {{lod}}"
+      "briefLod": "LOD {{lod}}",
+      "hold": "Tenue",
+      "holdHint": "High PM → open : ce qui reste du premarket à 9h30",
+      "gapHint": "Clôture de la veille → open PM ; en dessous, le cumul jusqu'au high PM — le plus haut que le scanner a montré",
+      "openHint": "En dessous, le cumul depuis la clôture de la veille — ce que le scanner montrait à la cloche",
+      "cumulative": "cumul {{value}} %",
+      "cumulativePmHigh": "cumul {{value}} % au high PM",
+      "pushedCount": "{{count}} avec push"
     },
     "actions": {
       "edit": "Modifier la séance",

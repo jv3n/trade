@@ -45,6 +45,46 @@ class StatMetricsTest {
     assertEquals(0, push!!.compareTo(BigDecimal("14.81")), "got ${push.toPlainString()}")
   }
 
+  @Test
+  fun `the cumulative reading is the scanner's — previous close to the level, not to the PM open`() {
+    // CAPR, measured live (#499) : close 8.57, price 11.72 -> +36.76 %, the scanner's ~36 %.
+    val cumulative =
+      StatMetrics.cumulativePercent(previousClose = price("8.57"), level = price("11.72"))
+
+    assertEquals(
+      0,
+      cumulative!!.compareTo(BigDecimal("36.76")),
+      "got ${cumulative.toPlainString()}",
+    )
+  }
+
+  @Test
+  fun `gap and premarket push compose into the cumulative, they don't add`() {
+    // BKYI (#499) : close 1.69, PM open 2.11, PM high 3.60 — +24.85 % then +70.62 % is +113.02 %,
+    // not the +95.47 % a sum would say.
+    val gap = StatMetrics.gapPercent(price("1.69"), price("2.11"))!!
+    val push = StatMetrics.pmPushPercent(price("2.11"), price("3.60"))!!
+    val cumulative = StatMetrics.cumulativePercent(price("1.69"), price("3.60"))!!
+
+    assertEquals(0, gap.compareTo(BigDecimal("24.85")), "got ${gap.toPlainString()}")
+    assertEquals(0, push.compareTo(BigDecimal("70.62")), "got ${push.toPlainString()}")
+    assertEquals(0, cumulative.compareTo(BigDecimal("113.02")), "got ${cumulative.toPlainString()}")
+  }
+
+  @Test
+  fun `the hold is what is left of the PM high at the open`() {
+    // LXEH (#499) : PM high 3.39, open 1.68 — half the premarket gone before the bell.
+    val hold = StatMetrics.holdPercent(pmHigh = price("3.39"), open = price("1.68"))
+
+    assertEquals(0, hold!!.compareTo(BigDecimal("-50.44")), "got ${hold.toPlainString()}")
+  }
+
+  @Test
+  fun `no open yet means no hold and no cumulative at the open`() {
+    assertNull(StatMetrics.holdPercent(pmHigh = price("3.39"), open = null))
+    assertNull(StatMetrics.cumulativePercent(previousClose = price("1.69"), level = null))
+  }
+
   // ---------------------------------------------------------------------------
   // Session, vs the open
   // ---------------------------------------------------------------------------
