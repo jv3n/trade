@@ -102,6 +102,18 @@ jobs:
       - name: Configure Docker credential helper for Artifact Registry
         run: gcloud auth configure-docker northamerica-northeast1-docker.pkg.dev --quiet
 
+      # The image build uploads the frontend source maps (#463) and skips it silently without a
+      # token : fail here instead, before a release ships stack traces nobody can read.
+      - name: Check the GlitchTip upload settings
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.GLITCHTIP_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.GLITCHTIP_ORG }}
+        run: |
+          if [[ -z "$SENTRY_AUTH_TOKEN" || -z "$SENTRY_ORG" ]]; then
+            echo "::error::Set the GLITCHTIP_AUTH_TOKEN secret and the GLITCHTIP_ORG variable. See devops/README.md."
+            exit 1
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -114,6 +126,9 @@ jobs:
           # release and `build.version` on `/actuator/info`.
           build-args: |
             APP_VERSION=${{ github.event.release.tag_name }}
+            SENTRY_ORG=${{ vars.GLITCHTIP_ORG }}
+          secrets: |
+            sentry_auth_token=${{ secrets.GLITCHTIP_AUTH_TOKEN }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

@@ -43,6 +43,9 @@ browser ──► Cloudflare ─────────────────
   the backend reads `SENTRY_ENVIRONMENT` and sends one INFO event at every boot, so a mute DSN shows
   on the next deploy (#462) — never resolve nor ignore that « Backend started » issue, it is the
   proof the pipe works. Local sends nothing.
+  Every image build uploads the frontend source maps under the release tag (#463), then drops them
+  from the bundle. The deploy needs a GlitchTip auth token (scope `project:releases`) in the
+  `GLITCHTIP_AUTH_TOKEN` secret and the organisation slug in the `GLITCHTIP_ORG` variable.
 
 | | Production | Staging |
 |---|---|---|

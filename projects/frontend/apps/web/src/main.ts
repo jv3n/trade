@@ -25,10 +25,15 @@ const ENVIRONMENT_BY_HOST: Record<string, string> = {
 };
 const environment = ENVIRONMENT_BY_HOST[location.hostname];
 
+// The release tag, passed by the Docker build (`ng build --define`) — the key the source maps
+// uploaded at deploy are filed under. Absent from any other build.
+declare const APP_RELEASE: string;
+
 if (!isDevMode() && environment) {
   Sentry.init({
     dsn: GLITCHTIP_DSN,
     environment,
+    release: typeof APP_RELEASE === 'undefined' ? undefined : APP_RELEASE,
     // 100% errors + 0% performance traces — same policy as backend (`application-prod.yml`).
     // Optimizes the GlitchTip free tier quota and avoids burning 5K events/mo on noisy spans.
     tracesSampleRate: 0,
