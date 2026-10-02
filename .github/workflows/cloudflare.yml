@@ -1,0 +1,48 @@
+name: Cloudflare Workers CI
+
+# The Workers front every request of both environments : a change to them, or a wrangler bump from
+# Dependabot, must prove both environments still bundle before it can be merged (#494).
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'devops/cloudflare/**'
+      - '.github/workflows/cloudflare.yml'
+  pull_request:
+    paths:
+      - 'devops/cloudflare/**'
+      - '.github/workflows/cloudflare.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Bundle both Workers
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: 'projects/frontend/.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: devops/cloudflare/package-lock.json
+
+      - name: Install dependencies
+        working-directory: devops/cloudflare
+        run: npm ci
+
+      # `--dry-run` bundles without deploying and needs no Cloudflare credentials.
+      - name: Bundle prod and staging
+        working-directory: devops/cloudflare
+        run: npm run check

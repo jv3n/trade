@@ -78,10 +78,11 @@ it for step 5.
 
 Same set-up as production, pointed at the staging service :
 
-- **DNS** — a proxied record `staging` on `tickerstory.org`.
-- **Worker** — the route `staging.tickerstory.org/*`, proxying to the staging `*.run.app` URL the
-  way production's route proxies to its own. The app doesn't read the forwarded host (Cloud Run
-  strips it) : its public URL comes from `APP_FRONTEND_URL`, which the workflow sets.
+- **Worker** — `tickerstory-staging`, attached to `staging.tickerstory.org` as a custom domain (the
+  DNS record is the Worker itself). Set `ORIGIN_HOST` in
+  [`../cloudflare/wrangler.toml`](../cloudflare/wrangler.toml) to the staging `*.run.app` URL, then
+  `npm run deploy:staging` there. The app doesn't read the forwarded host (Cloud Run strips it) :
+  its public URL comes from `APP_FRONTEND_URL`, which the workflow sets.
 
 ### 6. Google OAuth — the redirect URI
 

@@ -28,8 +28,8 @@ browser ──► Cloudflare ─────────────────
 
 - **Cloudflare** owns the domain `tickerstory.org`. Each environment has a Worker attached as a
   *custom domain* (the DNS record is the Worker itself, type `Worker`) : it forwards every request to
-  the Cloud Run URL with the right `Host`, and passes the public host in `X-Forwarded-Host`. The
-  Workers' code lives in Cloudflare only (*Workers & Pages*), not in this repository.
+  the Cloud Run URL with the right `Host`, and passes the public host in `X-Forwarded-Host`. Their
+  code and config live in [`cloudflare/`](cloudflare/README.md), deployed with wrangler (#494).
 - **GCP** (project `trade-496613`, region `northamerica-northeast1`) runs the app : one Cloud Run
   service per environment, scale-to-zero, the image from Artifact Registry. Each service runs as its
   own runtime service account, which can read only its own secrets. GitHub Actions deploys through
