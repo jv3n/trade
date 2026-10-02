@@ -1,0 +1,16 @@
+# One script, one Worker per environment : `wrangler deploy --env prod | staging`.
+# The hosts are plain vars, not secrets — the `*.run.app` URLs are public.
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+# Each Worker is the DNS record of its host (custom domain) : no workers.dev address.
+workers_dev = false
+
+[env.prod]
+name = "tickerstory-proxy"
+routes = [{ pattern = "tickerstory.org", custom_domain = true }]
+vars = { PUBLIC_HOST = "tickerstory.org", ORIGIN_HOST = "portfolioai-vybmfauwxq-nn.a.run.app" }
+
+[env.staging]
+name = "tickerstory-staging"
+routes = [{ pattern = "staging.tickerstory.org", custom_domain = true }]
+vars = { PUBLIC_HOST = "staging.tickerstory.org", ORIGIN_HOST = "portfolioai-staging-vybmfauwxq-nn.a.run.app" }
