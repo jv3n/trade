@@ -14,12 +14,12 @@ import org.testcontainers.utility.DockerImageName
  * Without the opt-in Testcontainers silently ignores the flag and spins a fresh container each run
  * (~5 s overhead). Either way the tests are fully decoupled from Tilt / docker-compose.
  *
- * Image pinned to `postgres:16` — the CI used to provision the same image via the `services:` block
- * in `.github/workflows/backend.yml`. Prod (Supabase) runs PG 17 : the tests trail it by a major
- * until this image moves too (follow-up of #402).
+ * Image pinned to Supabase's major (`postgres:17`, #410) : the tests stand in for the production
+ * database. When Supabase moves, four places move with it : this image, `docker-compose.yml`,
+ * `e2e.yml`, and the dump client of `backup-postgres.yml` — the only one that fails loudly.
  */
 object PostgresContainer :
-  PostgreSQLContainer<PostgresContainer>(DockerImageName.parse("postgres:16")) {
+  PostgreSQLContainer<PostgresContainer>(DockerImageName.parse("postgres:17")) {
 
   init {
     withDatabaseName(DB_NAME)

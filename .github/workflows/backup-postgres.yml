@@ -50,7 +50,8 @@ jobs:
       # The client follows Supabase's major (17) : pg_dump refuses a newer server, and a dump from a
       # newer client may not restore on it. Called by its full path — Ubuntu's `pg_dump` wrapper
       # runs the newest client installed, whatever is pinned here. When Supabase upgrades, the
-      # dump fails red (version mismatch) and this number moves with it (#402).
+      # dump fails red (version mismatch) and this number moves with it (#402) — along with the
+      # images listed in `PostgresContainer.kt` (#410).
       - name: Install postgresql-client-17
         run: |
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
