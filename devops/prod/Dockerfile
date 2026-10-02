@@ -34,7 +34,26 @@ RUN npm ci --no-audit --no-fund --prefer-offline
 COPY projects/frontend/ ./
 COPY docs/pattern/ /docs/pattern/
 COPY docs/notes/ /docs/notes/
-RUN npm run build
+
+# The release tag goes into the bundle (`Sentry.init > release`) and files the source maps in
+# GlitchTip (#463). The maps are built hidden (no `sourceMappingURL`), uploaded, then deleted : they
+# never reach the served bundle. Without the token (a local `docker build`) the upload is skipped —
+# `deploy.yml` checks the secret is set before it builds. A failed upload only warns : GlitchTip
+# being down must not block a release, it costs that one release its readable traces.
+ARG APP_VERSION=0.0.0-SNAPSHOT
+ARG SENTRY_URL=https://app.glitchtip.com/
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT=portfolioai-frontend
+RUN --mount=type=secret,id=sentry_auth_token \
+    npm run build -- --define "APP_RELEASE='${APP_VERSION}'" \
+ && BROWSER_DIR=$(echo dist/*/browser) \
+ && if [ -s /run/secrets/sentry_auth_token ]; then \
+      export SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token)" SENTRY_URL SENTRY_ORG SENTRY_PROJECT \
+      && { npx sentry-cli sourcemaps inject "$BROWSER_DIR" \
+           && npx sentry-cli sourcemaps upload --release="$APP_VERSION" "$BROWSER_DIR" \
+           || echo "WARNING : source maps not uploaded, $APP_VERSION reports minified traces."; }; \
+    else echo "No sentry_auth_token secret : source maps not uploaded."; fi \
+ && find "$BROWSER_DIR" -name '*.map' -delete
 
 # Angular 17+ output layout: dist/<app-name>/browser/
 # Adjust the path below if angular.json's outputPath is customized.
