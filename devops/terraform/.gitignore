@@ -1,0 +1,6 @@
+.terraform/
+*.tfplan
+crash.log
+# The state lives in GCS ; a local copy is never committed.
+*.tfstate
+*.tfstate.*

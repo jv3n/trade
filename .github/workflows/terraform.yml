@@ -1,0 +1,48 @@
+name: Terraform CI
+
+# Format and validity only : a `plan` needs GCP credentials and is run by hand, its output pasted
+# in the PR (devops/terraform/README.md).
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'devops/terraform/**'
+      - '.github/workflows/terraform.yml'
+  pull_request:
+    paths:
+      - 'devops/terraform/**'
+      - '.github/workflows/terraform.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format and validate
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.4
+
+      - name: Format
+        working-directory: devops/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Validate every root
+        working-directory: devops/terraform
+        run: |
+          for root in project production staging; do
+            terraform -chdir="$root" init -backend=false -input=false
+            terraform -chdir="$root" validate
+          done
