@@ -31,7 +31,7 @@ class AuthService(private val userRepository: UserRepository) {
     val principal =
       authentication.principal as? AppUserPrincipal
         ?: error(
-          "Unexpected principal type ${authentication.principal::class.java.name} — expected AppUserPrincipal (AppOAuth2User or AppOidcUser)"
+          "Unexpected principal type ${authentication.principal?.javaClass?.name} — expected AppUserPrincipal (AppOAuth2User or AppOidcUser)"
         )
     return userRepository.findById(principal.userId).orElseThrow {
       IllegalStateException("Authenticated user ${principal.userId} no longer exists in DB")

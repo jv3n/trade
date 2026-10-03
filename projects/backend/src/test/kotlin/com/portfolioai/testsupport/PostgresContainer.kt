@@ -1,6 +1,6 @@
 package com.portfolioai.testsupport
 
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
@@ -18,8 +18,7 @@ import org.testcontainers.utility.DockerImageName
  * database. When Supabase moves, four places move with it : this image, `docker-compose.yml`,
  * `e2e.yml`, and the dump client of `backup-postgres.yml` — the only one that fails loudly.
  */
-object PostgresContainer :
-  PostgreSQLContainer<PostgresContainer>(DockerImageName.parse("postgres:17")) {
+object PostgresContainer : PostgreSQLContainer(DockerImageName.parse("postgres:17")) {
 
   init {
     withDatabaseName(DB_NAME)
