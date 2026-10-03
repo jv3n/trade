@@ -1,7 +1,7 @@
 name: Terraform CI
 
-# Format, lint and validity only : a `plan` needs GCP credentials and is run by hand, its output pasted
-# in the PR (devops/terraform/README.md).
+# Format, lint and validity on every change ; on a PR, the plan of the three roots too, posted as a
+# comment by a read-only account (#563). `apply` stays by hand (devops/terraform/README.md).
 on:
   push:
     branches: [master]
@@ -11,6 +11,7 @@ on:
       - 'devops/env/**/.terraform.lock.hcl'
       - 'devops/.terraform-version'
       - 'devops/.tflint.hcl'
+      - 'devops/tools/terraform/**'
       - '.github/workflows/terraform.yml'
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - 'devops/env/**/.terraform.lock.hcl'
       - 'devops/.terraform-version'
       - 'devops/.tflint.hcl'
+      - 'devops/tools/terraform/**'
       - '.github/workflows/terraform.yml'
 
 permissions:
@@ -71,3 +73,65 @@ jobs:
             terraform -chdir="$root" init -backend=false -input=false
             terraform -chdir="$root" validate
           done
+
+  plan:
+    name: Plan every root
+    needs: check
+    # The variable is set once the read-only account exists — until then, no plan rather than a red PR.
+    if: github.event_name == 'pull_request' && vars.GCP_TF_PLAN_SA != ''
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the Terraform version
+        id: tf
+        run: echo "version=$(cat devops/.terraform-version)" >> "$GITHUB_OUTPUT"
+
+      # No wrapper : it swallows the exit code `-detailed-exitcode` reports.
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ steps.tf.outputs.version }}
+          terraform_wrapper: false
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_PLAN_SA }}
+
+      - name: Plan
+        id: plan
+        run: |
+          status=0
+          devops/tools/terraform/plan-all.sh "$RUNNER_TEMP/plan.md" || status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      # One comment per PR, rewritten on every push, so the plan read in review is the last one.
+      - name: Post the plan on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          marker='<!-- terraform-plan -->'
+          body=$(printf '%s\n## Terraform plan\n\n%s\n\n<sub>Commit %s — read-only account, `-lock=false`.</sub>\n' \
+            "$marker" "$(cat "$RUNNER_TEMP/plan.md")" "$SHA")
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)
+          if [[ -n "$id" ]]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" > /dev/null
+          fi
+
+      # Changes are what a PR is for ; only a plan that could not run fails the job.
+      - name: Fail on a plan error
+        if: steps.plan.outputs.status == '1'
+        run: |
+          echo "::error::A Terraform plan failed — see the PR comment or the Plan step."
+          exit 1
