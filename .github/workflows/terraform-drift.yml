@@ -1,0 +1,55 @@
+name: Terraform drift
+
+# Plans the three roots weekly with the read-only account (#563) : a change made in the console, or a
+# `deploy.yml` that starts setting a field Terraform manages, fails this run instead of waiting for
+# the next manual plan. Fixing it means reverting the change, or bringing it into the code.
+on:
+  schedule:
+    - cron: '0 12 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    name: Plan every root
+    if: vars.GCP_TF_PLAN_SA != ''
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the Terraform version
+        id: tf
+        run: echo "version=$(cat devops/.terraform-version)" >> "$GITHUB_OUTPUT"
+
+      # No wrapper : it swallows the exit code `-detailed-exitcode` reports.
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ steps.tf.outputs.version }}
+          terraform_wrapper: false
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_TF_PLAN_SA }}
+
+      - name: Plan
+        run: |
+          status=0
+          devops/tools/terraform/plan-all.sh "$RUNNER_TEMP/plan.md" || status=$?
+          cat "$RUNNER_TEMP/plan.md" >> "$GITHUB_STEP_SUMMARY"
+          case $status in
+            0) echo "No drift : every root matches the code." ;;
+            2) echo "::error::Drift — the infrastructure differs from the code, see the job summary." ; exit 1 ;;
+            *) echo "::error::A Terraform plan failed — see the job summary." ; exit 1 ;;
+          esac
