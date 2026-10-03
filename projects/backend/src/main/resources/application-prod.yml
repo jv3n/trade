@@ -44,10 +44,11 @@ logging:
     org.springframework.web: WARN
     okhttp3: WARN
     org.flywaydb.core: INFO
-  pattern:
-    # Single line for Cloud Logging. `[%X{userId:-}]` carries the userId UUID of an authenticated
-    # request — never the email (cf. `CLAUDE.md > Backend`).
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{userId:-}] %logger{36} - %msg%n"
+  # JSON lines Cloud Logging reads : severity, trace, and the MDC's `userId` — never the email
+  # (cf. `CLAUDE.md > Backend`).
+  structured:
+    format:
+      console: com.portfolioai.shared.GcpStructuredLogFormatter
 
 sentry:
   dsn: ${SENTRY_DSN:}
@@ -60,6 +61,11 @@ sentry:
   traces-sample-rate: 0.0
   # Frames outside these packages show up greyed out in the stack trace.
   in-app-includes: com.portfolioai
+
+app:
+  logging:
+    # Set by `deploy.yml` from `vars.GCP_PROJECT` ; staging and production share the project.
+    gcp-project-id: ${GCP_PROJECT_ID:trade-496613}
 
 management:
   endpoints:
