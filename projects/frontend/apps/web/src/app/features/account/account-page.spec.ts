@@ -216,6 +216,46 @@ describe('AccountPage', () => {
     });
   });
 
+  /**
+   * The banner tracks each call on its own (#493) : with a single flag, the listing reloaded by the
+   * type filter used to leave the banner of its own earlier failure above 23 freshly loaded rows.
+   */
+  describe('load error banner', () => {
+    it('goes away once the failed listing loads again under another type', () => {
+      findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.error()).not.toBeNull();
+
+      fixture.componentInstance.onTypeChange('all');
+
+      expect(fixture.componentInstance.error()).toBeNull();
+    });
+
+    it('stays while the summary is still missing, even when the listing loads', () => {
+      getSummary.mockReturnValue(throwError(() => new Error('503')));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      fixture.componentInstance.onTypeChange('cash');
+
+      expect(fixture.componentInstance.error()).not.toBeNull();
+    });
+
+    it('goes away once a new period loads everything that had failed', () => {
+      getSummary.mockReturnValueOnce(throwError(() => new Error('503')));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      fixture.componentInstance.setPeriod({
+        period: 'lastMonth',
+        ...computePeriodRange('lastMonth'),
+      });
+
+      expect(fixture.componentInstance.error()).toBeNull();
+    });
+  });
+
   describe('reconciliation-gap tile', () => {
     // October in the issue : $3,000 of P&L, $200 of corrections the broker took.
     it("reads the period's corrections unsigned, and their share of the P&L", () => {
