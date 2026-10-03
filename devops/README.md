@@ -66,10 +66,23 @@ Consoles : [Cloudflare](https://dash.cloudflare.com/) ·
 [Supabase](https://supabase.com/dashboard/projects) ·
 [deploy runs](https://github.com/jv3n/trade/actions/workflows/deploy.yml).
 
+## Who owns what
+
+| Owner | Holds | Changed by |
+|---|---|---|
+| **Terraform** — [`terraform/`](terraform/README.md) | the deploy and runtime accounts, Workload Identity Federation, the secret containers and who reads them, Artifact Registry, the Cloud Run services and their public access | a PR with the `plan`, `apply` by hand after merge |
+| **`deploy.yml`** | every Cloud Run revision : image, env vars, mounted secrets, scaling, memory, runtime account | a release (see Releasing) |
+| **wrangler** — [`cloudflare/`](cloudflare/README.md) | both Workers and their custom domains | `npm run deploy:<env>` there |
+| **by hand** | secret values, the Supabase projects, the Terraform state bucket, the enabled GCP APIs, the GitHub environments, the OAuth client | their console, or `gcloud secrets versions add` |
+
+Terraform ignores the services' `template`, so a release never shows up as a drift. To change the
+infrastructure or add an environment, see [`terraform/README.md`](terraform/README.md).
+
 ## Secrets
 
 Every credential the project holds, and where. A new one gets its row here in the PR that
-introduces it ; one no longer read is deleted at its source and here.
+introduces it ; one no longer read is deleted at its source and here. A Secret Manager secret and
+its readers are declared in [`terraform/`](terraform/README.md) ; its value is added by hand.
 
 | Name | Lives in | Read by | For | Secret ? |
 |---|---|---|---|---|

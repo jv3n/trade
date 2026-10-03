@@ -43,3 +43,21 @@ existing resource is brought in with an `import` block, and its PR's plan reads 
 change, 0 to destroy`.
 
 CI runs `terraform fmt -check` and `terraform validate` on every root — no credentials, no plan.
+
+## Adding an environment
+
+1. Copy `staging/` to `<env>/`, without its `imports.tf` (nothing exists yet to import). In
+   `versions.tf`, set the backend `prefix` to `<env>` ; in `main.tf`, the module's `name`, `service`,
+   `secret_suffix` and `runtime_display_name`.
+2. `terraform init`, then `terraform plan -out=create.tfplan` : it only adds — the runtime account,
+   its two secrets, their read access and the shared ones', the Cloud Run service and its public
+   access. The PR carries that plan ; `apply` it after the merge.
+3. Add the secret values — Terraform created empty containers :
+
+   ```bash
+   printf '%s' '<value>' | gcloud secrets versions add <name><suffix> --data-file=-
+   ```
+
+The service starts on Google's `hello` image ; the first deploy of `deploy.yml` replaces it. A new
+environment also needs its route in `deploy.yml` (tag → service, secret suffix) and its GitHub
+environment.
