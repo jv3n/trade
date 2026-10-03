@@ -8,15 +8,13 @@ import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSiblingRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
-import com.portfolioai.stats.domain.StatEntryFilter
-import com.portfolioai.stats.domain.StatStatus
 import io.swagger.v3.oas.annotations.tags.Tag
 import java.time.LocalDate
 import java.util.UUID
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
-import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -28,7 +26,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -50,46 +47,16 @@ class StatEntryController(private val service: StatEntryService) {
    */
   @GetMapping
   fun findAll(
-    @RequestParam(required = false) q: String? = null,
-    @RequestParam(required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    dateFrom: LocalDate? = null,
-    @RequestParam(required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    dateTo: LocalDate? = null,
-    @RequestParam(required = false) pattern: Pattern? = null,
-    @RequestParam(required = false) status: StatStatus? = null,
-    @RequestParam(required = false) noPush: Boolean? = null,
-    @RequestParam(required = false) outOfPattern: Boolean? = null,
-    @RequestParam(required = false) under1Dollar: Boolean? = null,
-    @PageableDefault(size = 50) pageable: Pageable,
-  ): Page<StatEntryDto> =
-    service.findAllPaged(
-      filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern, under1Dollar),
-      pageable,
-    )
+    @ParameterObject query: StatListingQuery,
+    @ParameterObject @PageableDefault(size = 50) pageable: Pageable,
+  ): Page<StatEntryDto> = service.findAllPaged(query.toFilter(), pageable)
 
   /**
    * KPIs over the same filter as the listing, computed on the whole filtered set (not the page).
    */
   @GetMapping("/summary")
-  fun summary(
-    @RequestParam(required = false) q: String? = null,
-    @RequestParam(required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    dateFrom: LocalDate? = null,
-    @RequestParam(required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    dateTo: LocalDate? = null,
-    @RequestParam(required = false) pattern: Pattern? = null,
-    @RequestParam(required = false) status: StatStatus? = null,
-    @RequestParam(required = false) noPush: Boolean? = null,
-    @RequestParam(required = false) outOfPattern: Boolean? = null,
-    @RequestParam(required = false) under1Dollar: Boolean? = null,
-  ): StatSummaryDto =
-    service.summarise(
-      filterOf(q, dateFrom, dateTo, pattern, status, noPush, outOfPattern, under1Dollar)
-    )
+  fun summary(@ParameterObject query: StatListingQuery): StatSummaryDto =
+    service.summarise(query.toFilter())
 
   /**
    * Creates a stat typed by hand (#326) — premarket, session and flags in one go. A future day →
@@ -167,25 +134,4 @@ class StatEntryController(private val service: StatEntryService) {
       .contentType(MediaType.parseMediaType("text/csv; charset=utf-8"))
       .body(csv)
   }
-
-  private fun filterOf(
-    q: String?,
-    dateFrom: LocalDate?,
-    dateTo: LocalDate?,
-    pattern: Pattern?,
-    status: StatStatus?,
-    noPush: Boolean?,
-    outOfPattern: Boolean?,
-    under1Dollar: Boolean?,
-  ) =
-    StatEntryFilter(
-      query = q,
-      dateFrom = dateFrom,
-      dateTo = dateTo,
-      pattern = pattern,
-      status = status,
-      noPush = noPush,
-      outOfPattern = outOfPattern,
-      under1Dollar = under1Dollar,
-    )
 }
