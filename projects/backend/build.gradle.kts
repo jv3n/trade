@@ -7,8 +7,8 @@ plugins {
   id("com.diffplug.spotless") version "8.10.3"
   // Detekt — Kotlin static analysis (cyclomatic complexity, magic numbers, long methods,
   // potential bugs). Complements Spotless, which only handles formatting. See the `detekt { … }`
-  // block below for the ramp-up strategy.
-  id("io.gitlab.arturbosch.detekt") version "1.23.8"
+  // block below for the ramp-up strategy. An alpha on purpose : 1.23.x can't run on JDK 25.
+  id("dev.detekt") version "2.0.0-alpha.6"
   // Kover — Kotlin test coverage (replaces JaCoCo for pure Kotlin DSL projects). Instruments the
   // `test` task automatically; reports are generated on demand via `koverHtmlReport` /
   // `koverXmlReport`. See the `kover { … }` block below for the excludes configuration (entry
@@ -48,7 +48,16 @@ version =
       ?.takeIf { it.isNotBlank() }
     ?: "0.0.0-SNAPSHOT"
 
-java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+// The JDK major comes from `.tool-versions` at the repo root, the one place it is pinned
+// (`java temurin-25.0.4+7.0.LTS` → 25) : CI, the image and Tilt read the same line.
+val javaMajor =
+  providers.fileContents(layout.projectDirectory.file("../../.tool-versions")).asText.map { text ->
+    val line = text.lines().firstOrNull { it.startsWith("java ") }
+    requireNotNull(line) { "no `java` line in .tool-versions" }
+    line.substringAfter("java ").substringAfterLast('-').substringBefore('.').toInt()
+  }
+
+java { toolchain { languageVersion = javaMajor.map { JavaLanguageVersion.of(it) } } }
 
 // ----------------------------------------------------------------------------- build dir (WSL)
 //
@@ -222,21 +231,38 @@ detekt {
   config.setFrom("$projectDir/config/detekt/detekt.yml")
 }
 
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-  jvmTarget = "21"
+// Detekt 2 only runs the rules needing type information (`LongParameterList`,
+// `UnsafeCallOnNullableType`…) in its per-compilation tasks, so `check` runs `detektMain` +
+// `detektTest` and merges their SARIF into the one file CI uploads. The plain `detekt` task would
+// repeat the untyped half of the same analysis : off.
+val detektMergeSarif by
+  tasks.registering(dev.detekt.gradle.report.ReportMergeTask::class) {
+    output = layout.buildDirectory.file("reports/detekt/merged.sarif")
+    input.from(
+      listOf("detektMain", "detektTest").map { name ->
+        tasks.named<dev.detekt.gradle.Detekt>(name).flatMap { it.reports.sarif.outputLocation }
+      }
+    )
+  }
+
+tasks.named("detekt") { enabled = false }
+
+tasks.named("check") { dependsOn("detektMain", "detektTest") }
+
+listOf("detektMain", "detektTest").forEach { name ->
+  tasks.named(name) { finalizedBy(detektMergeSarif) }
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
   reports {
     html.required.set(true)
     // SARIF is the format GitHub Code Scanning consumes — see the upload step in
     // `.github/workflows/backend.yml`. Findings show up in the Security tab alongside the CodeQL
     // results.
     sarif.required.set(true)
-    xml.required.set(false)
-    md.required.set(false)
+    checkstyle.required.set(false)
+    markdown.required.set(false)
   }
-}
-
-tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach {
-  jvmTarget = "21"
 }
 
 // ----------------------------------------------------------------------------- Kover
@@ -263,22 +289,3 @@ kover {
     }
   }
 }
-
-// Detekt 1.23.x ships an embedded Kotlin compiler (2.0.21 in 1.23.8). With Kotlin 2.1 on the
-// project side, the runtime classpath ends up with an incompatible stdlib and Detekt refuses to
-// load ("detekt was compiled with Kotlin 2.0.21 but is currently running with 2.3.21"). We isolate
-// the `detekt` classpath on the Kotlin version it expects — this affects neither `compileKotlin`
-// nor `compileTestKotlin`, which stay on 2.3.21. Remove this the day Detekt 2.0 ships stable with
-// native Kotlin 2.1+ support. Important: the pinned version must track the one expected by the
-// active Detekt version — a Detekt patch bump can shift the embedded Kotlin version
-// (1.23.7 → 2.0.10, 1.23.8 → 2.0.21).
-configurations
-  .matching { it.name == "detekt" }
-  .configureEach {
-    resolutionStrategy.eachDependency {
-      if (requested.group == "org.jetbrains.kotlin") {
-        useVersion("2.0.21")
-        because("Detekt 1.23.8 was compiled against Kotlin 2.0.21 — pin its classpath to match")
-      }
-    }
-  }

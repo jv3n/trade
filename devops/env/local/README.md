@@ -30,6 +30,23 @@ volume, then start again — the migrations replay, and the demo data comes back
 tilt down && docker compose down -v && tilt up
 ```
 
+## Moving to a new JDK
+
+`.tool-versions` is the one place the JDK is pinned (`java temurin-<version>`, mise's format) : Tilt
+reads it for `JAVA_HOME`, Gradle for its toolchain major, CI for `setup-java`, `deploy.yml` for the
+image's Temurin tag. A bump is that line, then `mise install`.
+
+Gradle doesn't look in mise's folders on its own, so IntelliJ or a bare `./gradlew` can't find the
+toolchain. Point it there once, in `~/.gradle/gradle.properties` (machine-local, not this repo) — mise's `temurin-<major>`
+symlink follows patch updates :
+
+```properties
+org.gradle.java.installations.paths=/home/<you>/.local/share/mise/installs/java/temurin-25
+```
+
+After removing a JDK, stop the Gradle and Kotlin daemons still running on it (`./gradlew --stop`,
+or kill them) : a daemon on a deleted JDK can't start the test JVMs (`posix_spawn failed, error: 2`).
+
 ## Maintenance
 
 The script follows the database schema. When a model changes, update the seed **in the same PR**, so

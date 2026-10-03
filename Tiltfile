@@ -42,7 +42,9 @@ e2e_ui_port = dotenv.get("E2E_UI_HOST_PORT", "9323")
 spring_profiles = "local,e2e"
 
 node_version = tools.get("nodejs", "24.21.0")
-java_major = tools.get("java", "openjdk-21").replace("openjdk-", "").replace("temurin-", "").split(".")[0]
+if "java" not in tools:
+    fail("no java line in .tool-versions — it pins the JDK for Tilt, Gradle, CI and the image")
+java_major = tools["java"].replace("openjdk-", "").replace("temurin-", "").split(".")[0]
 
 # ─────────────────────────────────────────── platform & toolchain
 
