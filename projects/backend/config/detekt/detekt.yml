@@ -70,6 +70,15 @@ complexity:
     # table (TwelveDataClient.outputSizeFor, MockMarketChartClient.barCountFor — each branch is
     # one expression). The metric counts branches, but the cognitive load is low.
     allowedComplexity: 24
+  LargeClass:
+    active: true
+    # An integration test reads top to bottom as the spec of its area (CLAUDE.md > Tests as
+    # documentation) : its length follows the behaviours it pins. Split one by behaviour when it
+    # gets hard to read, not by line count.
+    excludes:
+      - '**/test/**'
+      - '**/*Test.kt'
+      - '**/*Tests.kt'
   TooManyFunctions:
     active: true
     allowedFunctionsPerClass: 15
