@@ -63,3 +63,19 @@ resource "google_service_account_iam_member" "github_deploy_wif" {
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/projects/${local.project_number}/locations/global/workloadIdentityPools/github/attribute.repository/jv3n/trade"
 }
+
+# Containers only : values are added by hand (`gcloud secrets versions add`) and never reach the state.
+# Who reads them is granted by each environment.
+resource "google_secret_manager_secret" "shared" {
+  for_each = toset(["google-oauth-client-id", "google-oauth-client-secret", "sentry-dsn-backend"])
+
+  secret_id = each.value
+
+  replication {
+    auto {}
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}

@@ -16,3 +16,41 @@ resource "google_service_account_iam_member" "deploy_acts_as_runtime" {
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${var.deploy_account_email}"
 }
+
+# Containers only : values are added by hand (`gcloud secrets versions add`) and never reach the state.
+resource "google_secret_manager_secret" "own" {
+  for_each = toset(["supabase-db-url", "app-admin-emails"])
+
+  secret_id = "${each.value}${var.secret_suffix}"
+
+  replication {
+    auto {}
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "google_secret_manager_secret_iam_member" "runtime_reads_own" {
+  for_each = google_secret_manager_secret.own
+
+  secret_id = each.value.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = google_service_account.runtime.member
+}
+
+# The shared secrets belong to the `project` root ; each environment only grants itself read access.
+data "google_secret_manager_secret" "shared" {
+  for_each = toset(["google-oauth-client-id", "google-oauth-client-secret", "sentry-dsn-backend"])
+
+  secret_id = each.value
+}
+
+resource "google_secret_manager_secret_iam_member" "runtime_reads_shared" {
+  for_each = data.google_secret_manager_secret.shared
+
+  secret_id = each.value.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = google_service_account.runtime.member
+}

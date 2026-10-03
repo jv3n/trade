@@ -23,3 +23,9 @@ import {
   to = google_service_account_iam_member.github_deploy_wif
   id = "projects/trade-496613/serviceAccounts/github-deploy@trade-496613.iam.gserviceaccount.com roles/iam.workloadIdentityUser principalSet://iam.googleapis.com/projects/912181505110/locations/global/workloadIdentityPools/github/attribute.repository/jv3n/trade"
 }
+
+import {
+  for_each = toset(["google-oauth-client-id", "google-oauth-client-secret", "sentry-dsn-backend"])
+  to       = google_secret_manager_secret.shared[each.value]
+  id       = "projects/trade-496613/secrets/${each.value}"
+}
