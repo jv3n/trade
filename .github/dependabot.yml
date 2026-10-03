@@ -1,8 +1,8 @@
 # Dependabot — one grouped PR per ecosystem, patch and minor only.
 #
-# **No majors** : a major can carry silent breaking changes (springdoc 3.x targets Spring Boot 4,
-# Kotlin 2.1 → 2.3 breaks Detekt's pinned `resolutionStrategy`), so they are taken on by hand when
-# the context is ready. The specific `ignore` blocks below add the bumps that are known to be
+# **No majors** : a major can carry silent breaking changes (Spring Boot 4 swapped starters and
+# Jackson for Jackson 3, #557 ; Kotlin 2.1 → 2.3 breaks Detekt's pinned `resolutionStrategy`), so
+# they are taken on by hand when the context is ready. The specific `ignore` blocks below add the bumps that are known to be
 # blocked by a peer dependency ; Dependabot reopens them on its own once that changes.
 #
 # The trade-off of grouping : when CI breaks, the guilty bump is bisected by hand inside the PR.

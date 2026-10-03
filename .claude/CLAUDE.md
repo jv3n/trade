@@ -19,7 +19,7 @@ Personal trading tracker — short small-caps, **GUS** (gap-up short, $1–$10) 
 | Frontend     | Angular 22 + Angular Material 22                |
 | Design system | `libs/ui` — `@portfolioai/ui` (ng-packagr)      |
 | Storybook    | Storybook 10.4 (`projects: ui`)                  |
-| Backend      | Kotlin + Spring Boot 3 + Hibernate 6            |
+| Backend      | Kotlin + Spring Boot 4 + Hibernate 7            |
 | Build        | Gradle (Kotlin DSL) ; Angular CLI workspace     |
 | DB           | PostgreSQL + Flyway                             |
 | Tests        | Vitest (frontend), JUnit 5 + Testcontainers (backend), Playwright (e2e, `apps/web-e2e`) |

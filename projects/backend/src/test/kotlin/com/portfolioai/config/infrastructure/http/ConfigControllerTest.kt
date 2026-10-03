@@ -1,6 +1,5 @@
 package com.portfolioai.config.infrastructure.http
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.portfolioai.config.application.AppConfigService
 import com.portfolioai.config.application.ConfigKeys
 import com.portfolioai.shared.GlobalExceptionHandler
@@ -9,8 +8,8 @@ import org.mockito.BDDMockito.given
 import org.mockito.BDDMockito.willThrow
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
@@ -19,6 +18,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 
 /**
  * `@WebMvcTest` slice for [ConfigController]. The runtime config endpoints are simple CRUD on top

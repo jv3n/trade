@@ -1,6 +1,5 @@
 package com.portfolioai.e2e
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
@@ -13,8 +12,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
@@ -27,6 +26,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import tools.jackson.databind.ObjectMapper
 
 /**
  * Pins the end-to-end suite's way in (#367), under the `e2e` profile :
@@ -88,7 +88,7 @@ class E2eSessionIntegrationTest {
         .andReturn()
         .response
         .contentAsString
-    val statId = json.readTree(stat)["id"].asText()
+    val statId = json.readTree(stat)["id"].asString()
     mvc
       .perform(post("/api/stats/$statId/trade").cookie(session).with(csrf()))
       .andExpect(status().isCreated)
@@ -133,6 +133,6 @@ class E2eSessionIntegrationTest {
 
   private fun email(session: Cookie): String {
     val me = mvc.perform(get("/api/me").cookie(session)).andReturn().response.contentAsString
-    return json.readTree(me)["email"].asText()
+    return json.readTree(me)["email"].asString()
   }
 }

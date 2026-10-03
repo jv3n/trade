@@ -35,11 +35,9 @@ class SessionStoreConfig {
       repository.setConversionService(
         GenericConversionService().apply {
           addConverter(Any::class.java, ByteArray::class.java, SerializingConverter())
-          addConverter(
-            ByteArray::class.java,
-            Any::class.java,
-            LenientDeserializer(DeserializingConverter(classLoader)),
-          )
+          // Types read from the converter's generics : the explicit-class overload wants a non-null
+          // target, and this one returns null on purpose.
+          addConverter(LenientDeserializer(DeserializingConverter(classLoader)))
         }
       )
     }
@@ -48,7 +46,7 @@ class SessionStoreConfig {
 
 /** Deserialises a session attribute, or drops it when its bytes no longer match the classes. */
 internal class LenientDeserializer(private val delegate: DeserializingConverter) :
-  Converter<ByteArray, Any> {
+  Converter<ByteArray, Any?> {
 
   private val log = LoggerFactory.getLogger(javaClass)
 

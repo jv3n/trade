@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
@@ -58,7 +58,7 @@ class SessionStoreIntegrationTest {
     val cookie = login()
 
     val context = contextOf(sessionId(cookie))
-    assertInstanceOf(AppOAuth2User::class.java, context.authentication.principal)
+    assertInstanceOf(AppOAuth2User::class.java, context.authentication?.principal)
     mvc.perform(get("/api/me").cookie(cookie)).andExpect(status().isOk)
   }
 
@@ -81,7 +81,7 @@ class SessionStoreIntegrationTest {
     )
     sessions.save(session)
 
-    val read = contextOf(session.id).authentication.principal as AppOidcUser
+    val read = contextOf(session.id).authentication?.principal as AppOidcUser
     assertEquals(userId, read.userId)
     assertEquals("google-sub-1", read.name)
   }

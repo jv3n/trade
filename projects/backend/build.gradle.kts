@@ -1,7 +1,7 @@
 plugins {
   kotlin("jvm") version "2.4.10"
   kotlin("plugin.spring") version "2.4.10"
-  id("org.springframework.boot") version "3.5.16"
+  id("org.springframework.boot") version "4.1.1"
   id("io.spring.dependency-management") version "1.1.7"
   kotlin("plugin.jpa") version "2.4.10"
   id("com.diffplug.spotless") version "8.10.3"
@@ -72,34 +72,36 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-  implementation("org.springframework.boot:spring-boot-starter-web")
+  implementation("org.springframework.boot:spring-boot-starter-webmvc")
   implementation("com.github.ben-manes.caffeine:caffeine")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+  implementation("tools.jackson.module:jackson-module-kotlin")
   // springdoc-openapi — auto-generates an OpenAPI 3.0 schema from Spring controllers + Jackson DTOs
   // and serves Swagger UI at /swagger-ui.html. Activated only in the `local` profile (see
   // application-local.yml) ; the root application.yml keeps both `springdoc.api-docs.enabled` and
   // `springdoc.swagger-ui.enabled` to false so no env reachable from the outside ever exposes the
   // schema. Surfaced in Tilt as a link on the `backend` resource for one-click access during dev.
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.9.1")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
   // Sessions in Postgres rather than in the JVM (#460) : Cloud Run serves up to three instances
   // with no affinity and scales to zero, so an in-memory session was lost on the wrong instance,
   // after every idle period and on every deploy. The tables come from `V14__spring_session.sql`.
-  implementation("org.springframework.session:spring-session-jdbc")
-  implementation("org.flywaydb:flyway-core")
+  implementation("org.springframework.boot:spring-boot-starter-session-jdbc")
+  // Boot 4 only auto-configures Flyway through its own starter : `flyway-core` alone would leave
+  // the migrations unapplied and `ddl-auto: validate` failing at boot.
+  implementation("org.springframework.boot:spring-boot-starter-flyway")
   implementation("org.flywaydb:flyway-database-postgresql")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("org.apache.commons:commons-csv:1.14.1")
   // Sentry SDK — error tracking + breadcrumbs + user context. Points at GlitchTip via `sentry.dsn`
   // (Sentry-compatible ingest API) in prod ; no-op when the DSN is empty (dev local default). The
   // Spring Boot starter auto-instruments uncaught controller exceptions and pulls in the Logback
-  // appender so MDC values (notably `userId`) become event extras automatically. The `-jakarta`
-  // variant targets Spring Boot 3 (Jakarta EE) — picking `sentry-spring-boot-starter` (no suffix)
-  // would silently link the javax-namespaced classes and the bean wiring would crash at boot.
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.58.0")
+  // appender so MDC values (notably `userId`) become event extras automatically. The `-4` artifact
+  // is the Spring Boot 4 one ; the `-jakarta` starter targets Boot 3 and doesn't wire on Boot 4.
+  implementation("io.sentry:sentry-spring-boot-4-starter:8.58.0")
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
-  testImplementation("org.springframework.security:spring-security-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+  testImplementation("org.springframework.boot:spring-boot-starter-security-test")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
   // Kotlin-friendly matchers for Mockito (any(), eq(), times() that respect Kotlin's non-null
   // types — the Java equivalents return `null` for non-nullable parameters and crash).
@@ -114,8 +116,8 @@ dependencies {
   // `testsupport/PostgresContainer.kt`) and stays warm between runs when the dev opts into reuse
   // (`testcontainers.reuse.enable=true` in `~/.testcontainers.properties`). Docker is the only
   // host-side prerequisite — already required for Tilt anyway.
-  testImplementation("org.testcontainers:postgresql:1.21.4")
-  testImplementation("org.testcontainers:junit-jupiter:1.21.4")
+  testImplementation("org.testcontainers:testcontainers-postgresql")
+  testImplementation("org.testcontainers:testcontainers-junit-jupiter")
   // Promoted from testRuntimeOnly → testImplementation 2026-05-24 : `TestcontainersBootstrap`
   // implements `LauncherSessionListener` (the SPI hook that boots the Postgres container before
   // any test class loads), which needs the launcher API visible at compile time. The runtime SPI

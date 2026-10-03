@@ -1,6 +1,6 @@
 ---
 name: spring-boot
-description: Spring Boot conventions for the PortfolioAI backend (Kotlin + Spring Boot 3.x). Use when adding a controller, service, configuration class, event listener, transactional boundary, runtime-editable setting, profile-specific bean, Flyway migration, or integration test. Skips general Spring tutorial content.
+description: Spring Boot conventions for the PortfolioAI backend (Kotlin + Spring Boot 4.x). Use when adding a controller, service, configuration class, event listener, transactional boundary, runtime-editable setting, profile-specific bean, Flyway migration, or integration test. Skips general Spring tutorial content.
 ---
 
 # Spring Boot Conventions
