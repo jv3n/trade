@@ -1127,7 +1127,10 @@
           const chip = document.createElement('button');
           chip.className = 'ticker';
           chip.title = 'Retirer';
-          chip.innerHTML = ticker + ' <span class="icon icon-sm">close</span>';
+          const close = document.createElement('span');
+          close.className = 'icon icon-sm';
+          close.textContent = 'close';
+          chip.append(ticker + ' ', close);
           document.querySelector('.watch').append(chip);
           event.target.value = '';
         });
