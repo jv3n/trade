@@ -8,7 +8,10 @@ import com.portfolioai.candidates.application.dto.CandidateStatDto
 import com.portfolioai.candidates.domain.Candidate
 import com.portfolioai.candidates.infrastructure.persistence.CandidateRepository
 import com.portfolioai.shared.Pattern
-import com.portfolioai.stats.application.StatEntryService
+import com.portfolioai.shared.badRequest
+import com.portfolioai.shared.requireNonNegative
+import com.portfolioai.shared.requirePositive
+import com.portfolioai.stats.application.CandidateStatLinks
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import java.math.BigDecimal
@@ -48,7 +51,7 @@ private val PROMOTABLE = setOf(Pattern.GUS, Pattern.DT)
 class CandidateService(
   private val repo: CandidateRepository,
   private val authService: AuthService,
-  private val statEntryService: StatEntryService,
+  private val statLinks: CandidateStatLinks,
 ) {
 
   /** A day's candidates (default today), ticker-ascending — the front sorts by gap. */
@@ -58,14 +61,14 @@ class CandidateService(
     val candidates =
       repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, date ?: LocalDate.now())
     // One query for the whole day rather than one per row.
-    val stats = statEntryService.statIdsByCandidate(candidates.map { it.id })
+    val stats = statLinks.statIdsByCandidate(candidates.map { it.id })
     return candidates.map { it.toDto(stats[it.id]) }
   }
 
   @Transactional(readOnly = true)
   fun findById(id: UUID): CandidateDto {
     val candidate = loadOwned(id)
-    return candidate.toDto(statEntryService.statIdsByCandidate(listOf(id))[id])
+    return candidate.toDto(statLinks.statIdsByCandidate(listOf(id))[id])
   }
 
   // ---- Promotion to the stats sheet (#189) ---------------------------------------------------
@@ -84,14 +87,14 @@ class CandidateService(
     if (pattern !in PROMOTABLE)
       throw badRequest("A candidate is promoted to GUS or DT, not $pattern")
     val candidate = loadOwned(id)
-    val stats = statEntryService.statIdsByCandidate(listOf(candidate.id))[candidate.id].orEmpty()
+    val stats = statLinks.statIdsByCandidate(listOf(candidate.id))[candidate.id].orEmpty()
     if (pattern in stats) {
       throw ResponseStatusException(
         HttpStatus.CONFLICT,
         "Candidate ${candidate.ticker} already has a $pattern stat",
       )
     }
-    return statEntryService.create(candidate.toStatRequest(pattern), candidateId = candidate.id)
+    return statLinks.promote(candidate.toStatRequest(pattern), candidateId = candidate.id)
   }
 
   /**
@@ -105,7 +108,7 @@ class CandidateService(
     val userId = authService.getCurrentUser().id
     val day = date ?: LocalDate.now()
     val candidates = repo.findByUserIdAndTradingDateOrderByTickerAsc(userId, day)
-    val alreadyPromoted = statEntryService.statIdsByCandidate(candidates.map { it.id })
+    val alreadyPromoted = statLinks.statIdsByCandidate(candidates.map { it.id })
 
     val promoted = mutableListOf<String>()
     val skipped = mutableListOf<String>()
@@ -114,7 +117,7 @@ class CandidateService(
       // mark this transaction rollback-only and take the whole batch down with it.
       if (
         candidate.id in alreadyPromoted ||
-          statEntryService.existsForDayAndTicker(
+          statLinks.existsForDayAndTicker(
             candidate.tradingDate,
             candidate.ticker,
             Pattern.GUS,
@@ -123,7 +126,7 @@ class CandidateService(
         skipped += candidate.ticker
         continue
       }
-      statEntryService.create(candidate.toStatRequest(Pattern.GUS), candidateId = candidate.id)
+      statLinks.promote(candidate.toStatRequest(Pattern.GUS), candidateId = candidate.id)
       promoted += candidate.ticker
     }
     return BulkPromotionDto(promoted = promoted, skipped = skipped)
@@ -143,7 +146,7 @@ class CandidateService(
         pmOpen = request.pmOpen,
         pmHigh = request.pmHigh,
       )
-    candidate.apply(request, ticker)
+    candidate.fillFrom(request, ticker)
     return repo.save(candidate).toDto()
   }
 
@@ -152,11 +155,11 @@ class CandidateService(
     val candidate = loadOwned(id)
     val ticker = request.cleanTicker()
     requireFree(candidate.user.id, request.tradingDate, ticker, ownId = candidate.id)
-    candidate.apply(request, ticker)
+    candidate.fillFrom(request, ticker)
     candidate.updatedAt = Instant.now()
     val saved = repo.save(candidate)
-    saved.openPrice?.let { statEntryService.fillMissingOpen(saved.id, it) }
-    return saved.toDto(statEntryService.statIdsByCandidate(listOf(saved.id))[saved.id])
+    saved.openPrice?.let { statLinks.fillMissingOpen(saved.id, it) }
+    return saved.toDto(statLinks.statIdsByCandidate(listOf(saved.id))[saved.id])
   }
 
   @Transactional fun delete(id: UUID) = repo.delete(loadOwned(id))
@@ -179,7 +182,7 @@ class CandidateService(
   }
 
   /** Validates [request] and copies it onto this candidate (ticker already cleaned). */
-  private fun Candidate.apply(request: CandidateRequest, cleanTicker: String) {
+  private fun Candidate.fillFrom(request: CandidateRequest, cleanTicker: String) {
     val pmOpen = request.pmOpen.requirePositive("PM open")
     val pmHigh = request.pmHigh.requirePositive("PM high")
     if (pmHigh < pmOpen) throw badRequest("PM high must not be below the PM open")
@@ -245,14 +248,4 @@ class CandidateService(
 
   private fun CandidateRequest.cleanTicker(): String =
     ticker.trim().uppercase().ifEmpty { throw badRequest("Ticker must not be blank") }
-
-  private fun BigDecimal.requirePositive(label: String): BigDecimal = also {
-    if (it.signum() <= 0) throw badRequest("$label must be greater than zero")
-  }
-
-  private fun BigDecimal.requireNonNegative(label: String): BigDecimal = also {
-    if (it.signum() < 0) throw badRequest("$label must not be negative")
-  }
-
-  private fun badRequest(message: String) = ResponseStatusException(HttpStatus.BAD_REQUEST, message)
 }
