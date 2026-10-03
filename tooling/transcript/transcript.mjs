@@ -204,10 +204,7 @@ function render({ title, url, postId, label, duration, cues }) {
   let current = null;
   let previous = '';
   for (const cue of cues) {
-    const text = cue.text
-      .replace(/<[^>]+>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const text = stripTags(cue.text).replace(/\s+/g, ' ').trim();
     // Auto-generated tracks repeat a line across consecutive cues.
     if (!text || text === previous) continue;
     previous = text;
@@ -236,10 +233,23 @@ function findTranscript(postId) {
   );
 }
 
+// Plain text out : tags are removed until none is left, since removing one can join two halves
+// into a new one (`<<b>script>`).
+function stripTags(text) {
+  let previous;
+  let current = text;
+  do {
+    previous = current;
+    current = current.replace(/<[^>]*>/g, '');
+  } while (current !== previous);
+  return current;
+}
+
 function addToIndex({ date, title, url, postId, file }) {
   const index = readFileSync(INDEX, 'utf8');
   if (index.includes(postId)) return;
-  const row = `| ${date} | ${title.replace(/\|/g, '\\|')} | [The Trading Desk](${url}) | [${file}](transcripts/${file}) |`;
+  const cell = title.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+  const row = `| ${date} | ${cell} | [The Trading Desk](${url}) | [${file}](transcripts/${file}) |`;
   writeFileSync(INDEX, `${index.trimEnd()}\n${row}\n`);
 }
 
