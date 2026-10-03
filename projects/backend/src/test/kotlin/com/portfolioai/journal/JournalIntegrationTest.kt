@@ -4,6 +4,7 @@ import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.Role
 import com.portfolioai.auth.domain.User
 import com.portfolioai.auth.infrastructure.persistence.UserRepository
+import com.portfolioai.journal.application.TradeAttachmentService
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.ExecutionRequest
 import com.portfolioai.journal.application.dto.TradeEntryRequest
@@ -70,6 +71,7 @@ import org.springframework.web.server.ResponseStatusException
 class JournalIntegrationTest {
 
   @Autowired private lateinit var service: TradeEntryService
+  @Autowired private lateinit var attachments: TradeAttachmentService
   @Autowired private lateinit var repo: TradeEntryRepository
   @Autowired private lateinit var attachmentRepo: TradeAttachmentRepository
   @Autowired private lateinit var statRepo: StatEntryRepository
@@ -741,10 +743,10 @@ class JournalIntegrationTest {
     assertFalse(created.hasScreenshot, "starts without a screenshot")
 
     val bytes = byteArrayOf(1, 2, 3, 4)
-    val dto = service.attachScreenshot(created.id, bytes, "image/png", "setup.png")
+    val dto = attachments.attachScreenshot(created.id, bytes, "image/png", "setup.png")
 
     assertTrue(dto.hasScreenshot, "flag flips on attach")
-    val screenshot = service.getScreenshot(created.id)
+    val screenshot = attachments.getScreenshot(created.id)
     assertArrayEquals(bytes, screenshot.bytes)
     assertEquals("image/png", screenshot.contentType)
   }
@@ -752,10 +754,10 @@ class JournalIntegrationTest {
   @Test
   fun `attaching twice replaces the image — a single attachment per trade`() {
     val created = service.create(sampleRequest(ticker = "BAC"))
-    service.attachScreenshot(created.id, byteArrayOf(1), "image/png", "a.png")
-    service.attachScreenshot(created.id, byteArrayOf(2, 2), "image/webp", "b.webp")
+    attachments.attachScreenshot(created.id, byteArrayOf(1), "image/png", "a.png")
+    attachments.attachScreenshot(created.id, byteArrayOf(2, 2), "image/webp", "b.webp")
 
-    val screenshot = service.getScreenshot(created.id)
+    val screenshot = attachments.getScreenshot(created.id)
     assertArrayEquals(byteArrayOf(2, 2), screenshot.bytes, "second upload wins")
     assertEquals("image/webp", screenshot.contentType)
   }
@@ -763,12 +765,13 @@ class JournalIntegrationTest {
   @Test
   fun `deleteScreenshot clears the flag and removes the attachment (getScreenshot then 404)`() {
     val created = service.create(sampleRequest(ticker = "BAC"))
-    service.attachScreenshot(created.id, byteArrayOf(1, 2), "image/png", "s.png")
+    attachments.attachScreenshot(created.id, byteArrayOf(1, 2), "image/png", "s.png")
 
-    val dto = service.deleteScreenshot(created.id)
+    val dto = attachments.deleteScreenshot(created.id)
     assertFalse(dto.hasScreenshot)
 
-    val ex = assertThrows(ResponseStatusException::class.java) { service.getScreenshot(created.id) }
+    val ex =
+      assertThrows(ResponseStatusException::class.java) { attachments.getScreenshot(created.id) }
     assertEquals(404, ex.statusCode.value())
   }
 
@@ -776,7 +779,7 @@ class JournalIntegrationTest {
   fun `attachScreenshot rejects a non-image content type`() {
     val created = service.create(sampleRequest(ticker = "BAC"))
     assertThrows(IllegalArgumentException::class.java) {
-      service.attachScreenshot(created.id, byteArrayOf(1, 2), "application/pdf", "x.pdf")
+      attachments.attachScreenshot(created.id, byteArrayOf(1, 2), "application/pdf", "x.pdf")
     }
   }
 
@@ -785,25 +788,26 @@ class JournalIntegrationTest {
     val created = service.create(sampleRequest(ticker = "BAC"))
     val tooBig = ByteArray(5 * 1024 * 1024 + 1) // just over the 5 MB limit
     assertThrows(IllegalArgumentException::class.java) {
-      service.attachScreenshot(created.id, tooBig, "image/png", "big.png")
+      attachments.attachScreenshot(created.id, tooBig, "image/png", "big.png")
     }
   }
 
   @Test
   fun `getScreenshot on a foreign-user trade returns 404 — no cross-tenant read`() {
     val created = service.create(sampleRequest(ticker = "BAC"))
-    service.attachScreenshot(created.id, byteArrayOf(1, 2), "image/png", "s.png")
+    attachments.attachScreenshot(created.id, byteArrayOf(1, 2), "image/png", "s.png")
 
     // Flip the current user — the screenshot belongs to testUser, not otherUser.
     org.mockito.kotlin.whenever(authService.getCurrentUser()).thenReturn(otherUser)
-    val ex = assertThrows(ResponseStatusException::class.java) { service.getScreenshot(created.id) }
+    val ex =
+      assertThrows(ResponseStatusException::class.java) { attachments.getScreenshot(created.id) }
     assertEquals(404, ex.statusCode.value())
   }
 
   @Test
   fun `deleting a trade cascades to its screenshot attachment`() {
     val created = service.create(sampleRequest(ticker = "BAC"))
-    service.attachScreenshot(created.id, byteArrayOf(1, 2), "image/png", "s.png")
+    attachments.attachScreenshot(created.id, byteArrayOf(1, 2), "image/png", "s.png")
     assertNotNull(attachmentRepo.findByTradeEntryId(created.id))
 
     service.delete(created.id)

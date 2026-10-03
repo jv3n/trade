@@ -4,24 +4,20 @@ import com.portfolioai.auth.application.AuthService
 import com.portfolioai.auth.domain.User
 import com.portfolioai.journal.application.dto.JournalDayDto
 import com.portfolioai.journal.application.dto.JournalSummaryDto
-import com.portfolioai.journal.application.dto.ScreenshotContent
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.journal.application.dto.TradeLinkDto
 import com.portfolioai.journal.application.dto.toDto
 import com.portfolioai.journal.application.dto.toLinkDto
 import com.portfolioai.journal.domain.OutOfPatternStats
-import com.portfolioai.journal.domain.TradeAttachment
 import com.portfolioai.journal.domain.TradeEntry
 import com.portfolioai.journal.domain.TradeEntryFilter
 import com.portfolioai.journal.domain.TradePositionCalculator
 import com.portfolioai.journal.domain.TradePositionCalculator.PositionStatus
-import com.portfolioai.journal.infrastructure.persistence.TradeAttachmentRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntryRepository
 import com.portfolioai.journal.infrastructure.persistence.TradeEntrySpecifications
 import com.portfolioai.shared.Pattern
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.Instant
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
@@ -47,7 +43,6 @@ import org.springframework.web.server.ResponseStatusException
 @Service
 class TradeEntryService(
   private val repo: TradeEntryRepository,
-  private val attachmentRepo: TradeAttachmentRepository,
   private val authService: AuthService,
   private val events: ApplicationEventPublisher,
   private val outOfPatternStats: OutOfPatternStats,
@@ -125,48 +120,16 @@ class TradeEntryService(
   @Transactional(readOnly = true)
   fun summarise(filter: TradeEntryFilter): JournalSummaryDto {
     val userId = authService.getCurrentUser().id
-    val rows = repo.findAll(TradeEntrySpecifications.matching(userId, filter))
-    val realized = rows.mapNotNull { it.retainedProfit }
-    val wins = realized.filter { it.signum() > 0 }
-    val losses = realized.filter { it.signum() < 0 }
-    val winSum = wins.fold(BigDecimal.ZERO, BigDecimal::add)
-    val lossSum = losses.fold(BigDecimal.ZERO, BigDecimal::add)
-    val closed = rows.filter { it.retainedProfit != null }
-    val outIds = outOfPatternStats.among(closed.map { it.statEntryId }.toSet())
-    val (outOfPattern, inRules) = closed.partition { it.statEntryId in outIds }
-    return JournalSummaryDto(
-      tradeCount = realized.size,
-      retainedPnl = realized.fold(BigDecimal.ZERO, BigDecimal::add),
-      winCount = wins.size,
-      lossCount = losses.size,
-      winRatePercent = percentage(wins.size, realized.size),
-      averageWin = average(winSum, wins.size),
-      averageLoss = average(lossSum, losses.size),
-      // No loser yet : the ratio is undefined, not infinite — the front shows a dash.
-      profitFactor =
-        if (losses.isEmpty()) null else winSum.divide(lossSum.abs(), 2, RoundingMode.HALF_UP),
-      outOfPatternCount = outOfPattern.size,
-      outOfPatternPnl = outOfPattern.sumOf { it.retainedProfit!! },
-      inRulesPnl = inRules.sumOf { it.retainedProfit!! },
+    return journalSummaryOf(
+      repo.findAll(TradeEntrySpecifications.matching(userId, filter)),
+      outOfPatternStats,
     )
   }
-
-  private fun percentage(part: Int, total: Int): BigDecimal? =
-    if (total == 0) null
-    else BigDecimal(part * 100).divide(BigDecimal(total), 2, RoundingMode.HALF_UP)
-
-  private fun average(sum: BigDecimal, count: Int): BigDecimal? =
-    if (count == 0) null else sum.divide(BigDecimal(count), 2, RoundingMode.HALF_UP)
 
   companion object {
     /** Used as the implicit sort when the client doesn't send any `sort` URL param. */
     private val DEFAULT_SORT: Sort =
       Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
-
-    /** Screenshot upload guardrails (issue #110) — enforced in-service (→ 400) before the DB. */
-    private val ALLOWED_IMAGE_TYPES = setOf("image/png", "image/jpeg", "image/webp")
-    private const val BYTES_PER_MB = 1024 * 1024
-    private const val MAX_SCREENSHOT_BYTES = 5 * BYTES_PER_MB
   }
 
   @Transactional(readOnly = true) fun findById(id: UUID): TradeEntryDto = loadOwned(id).toDto()
@@ -266,77 +229,6 @@ class TradeEntryService(
       )
     )
     repo.delete(entry)
-  }
-
-  // ---------------------------------------------------------------------------
-  // Screenshot attachment (issue #110) — one optional image per trade, stored as bytea in
-  // `trade_attachment`. Out of the CSV flow ; managed from the detail view once the trade exists.
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Attaches (or replaces) the trade's single screenshot. Validates the content type against
-   * [ALLOWED_IMAGE_TYPES] and the size against [MAX_SCREENSHOT_BYTES] → HTTP 400 on violation. Sets
-   * the denormalized [TradeEntry.hasScreenshot] flag so the listing DTO reflects presence without a
-   * join.
-   */
-  @Transactional
-  fun attachScreenshot(
-    id: UUID,
-    bytes: ByteArray,
-    contentType: String?,
-    filename: String?,
-  ): TradeEntryDto {
-    require(bytes.isNotEmpty()) { "Screenshot file is empty" }
-    require(bytes.size <= MAX_SCREENSHOT_BYTES) {
-      "Screenshot exceeds the ${MAX_SCREENSHOT_BYTES / BYTES_PER_MB} MB limit"
-    }
-    val normalizedType = contentType?.lowercase()
-    require(normalizedType in ALLOWED_IMAGE_TYPES) {
-      "Unsupported image type '$contentType' — allowed: ${ALLOWED_IMAGE_TYPES.joinToString(", ")}"
-    }
-
-    val entry = loadOwned(id)
-    val existing = attachmentRepo.findByTradeEntryId(entry.id)
-    if (existing != null) {
-      existing.content = bytes
-      existing.contentType = normalizedType!!
-      existing.filename = filename
-      existing.sizeBytes = bytes.size
-      attachmentRepo.save(existing)
-    } else {
-      attachmentRepo.save(
-        TradeAttachment(
-          tradeEntry = entry,
-          content = bytes,
-          contentType = normalizedType!!,
-          filename = filename,
-          sizeBytes = bytes.size,
-        )
-      )
-    }
-    entry.hasScreenshot = true
-    entry.updatedAt = Instant.now()
-    return repo.saveAndFlush(entry).toDto()
-  }
-
-  /** Returns the trade's screenshot bytes + content type, or 404 if none (or trade not owned). */
-  @Transactional(readOnly = true)
-  fun getScreenshot(id: UUID): ScreenshotContent {
-    val entry = loadOwned(id)
-    val attachment =
-      attachmentRepo.findByTradeEntryId(entry.id)
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "No screenshot for trade $id")
-    return ScreenshotContent(bytes = attachment.content, contentType = attachment.contentType)
-  }
-
-  /** Removes the trade's screenshot (no-op-safe) and clears the [TradeEntry.hasScreenshot] flag. */
-  @Transactional
-  fun deleteScreenshot(id: UUID): TradeEntryDto {
-    val entry = loadOwned(id)
-    attachmentRepo.deleteByTradeEntryId(entry.id)
-    entry.hasScreenshot = false
-    entry.updatedAt = Instant.now()
-    return repo.saveAndFlush(entry).toDto()
   }
 
   /**
