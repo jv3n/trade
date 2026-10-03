@@ -36,7 +36,7 @@ jobs:
         run: |
           TAG="${{ github.event.release.tag_name }}"
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
-            echo "::error::Release tag '$TAG' must match ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ (e.g. v0.7.0 or v0.7.0-rc1). See devops/README.md > Releasing."
+            echo "::error::Release tag '$TAG' must match ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ (e.g. v0.7.0 or v0.7.0-rc1). See devops/docs/releasing.md."
             exit 1
           fi
           # The tag routes the deploy, the pre-release box is what GitHub shows : they must agree,
@@ -110,7 +110,7 @@ jobs:
           SENTRY_ORG: ${{ vars.GLITCHTIP_ORG }}
         run: |
           if [[ -z "$SENTRY_AUTH_TOKEN" || -z "$SENTRY_ORG" ]]; then
-            echo "::error::Set the GLITCHTIP_AUTH_TOKEN secret and the GLITCHTIP_ORG variable. See devops/README.md."
+            echo "::error::Set the GLITCHTIP_AUTH_TOKEN secret and the GLITCHTIP_ORG variable. See devops/docs/architecture.md."
             exit 1
           fi
 
@@ -118,7 +118,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: devops/prod/Dockerfile
+          file: devops/docker/Dockerfile
           platforms: linux/amd64
           push: true
           tags: northamerica-northeast1-docker.pkg.dev/${{ vars.GCP_PROJECT }}/backend/portfolioai:${{ github.event.release.tag_name }}

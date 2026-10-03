@@ -64,7 +64,8 @@ trade/
 │   └── data-input-local/                           # real broker exports (gitignored)
 ├── tooling/                                        # Own package.json ; transcript/ — CLI pulling a training's captions + the transcripts
 ├── mockup/                                         # Target product : static HTML mockups + PARCOURS.md (user journey)
-├── devops/prod/                                    # Dockerfile + service.yaml (Cloud Run deploy)
+├── devops/                                         # env/<local|staging|production> (README + Terraform root), terraform/ (shared root + module),
+│                                                   # docker/ (the image), cloudflare/ (Workers), docs/ (architecture, secrets, releasing)
 ├── .github/workflows/                              # backend.yml, frontend.yml, codeql.yml, deploy.yml, …
 ├── Tiltfile                                        # local infra — Postgres + backend + frontend
 ├── docker-compose.yml                              # services managed by Tilt
@@ -211,7 +212,7 @@ The open backlog lives in **[GitHub Issues](https://github.com/jv3n/trade/issues
 
 - Three label dimensions, combinable: **priority** (`prio:P1` 🔴 / `prio:P2` 🟡 / `prio:P3` 🟢), **module** (`module:today` / `module:candidates` / `module:stats` / `module:journal` / `module:account` / `module:lexicon` / `module:settings` / `module:ui`), **type** (`enhancement` / `bug` / `tech-debt` / `documentation` / `question`). Use `gh` from **WSL** (`wsl.exe -e bash -lc 'gh …'`) — `gh` is not on the Windows/Git-Bash PATH.
 - Issues move through the **Trade Board** GitHub project (project 2, owner `jv3n`) : Backlog → Ready → In progress → In review → **Test** → Done.
-- A merged fix is not done until it has been tried on staging (a `vX.Y.Z-rcN` release, see `devops/README.md > Releasing`). So a PR references its issues with **`Refs #N`, never `Closes` / `Fixes` / `Resolves`** (they close the issue on merge) ; once merged, suggest moving the issue to **Test**. Only the user moves it to Done.
+- A merged fix is not done until it has been tried on staging (a `vX.Y.Z-rcN` release, see `devops/docs/releasing.md`). So a PR references its issues with **`Refs #N`, never `Closes` / `Fixes` / `Resolves`** (they close the issue on merge) ; once merged, suggest moving the issue to **Test**. Only the user moves it to Done.
 - Never run `gh issue close/reopen`, label edits or board status changes autonomously — same rule as git: suggest, the user confirms in the current turn.
 
 ### Documentation

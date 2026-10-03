@@ -1,9 +1,9 @@
 -- Local demo data — mirrors the mockups (`mockup/`, September 2026) so every screen has something
 -- realistic to show. **Local and staging databases only** : this is not a Flyway migration and never
--- runs in prod (loading it on staging : `devops/staging/README.md` > Demo data).
+-- runs in prod (loading it on staging : `devops/env/staging/README.md` > Demo data).
 --
 -- Run it from the Tilt UI (`postgres` resource → "Seed") or by hand :
---   docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/local/seed-demo.sql
+--   docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/env/local/seed-demo.sql
 --
 -- Everything belongs to the first user in `app_user` (log in once first).
 -- The script aborts if that user already has data, so it never overwrites anything : use Tilt's

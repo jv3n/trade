@@ -2,7 +2,7 @@
 
 Google Cloud Run + Supabase Postgres, deployed from `.github/workflows/deploy.yml` when a GitHub
 Release `vX.Y.Z` is published — a pre-release `vX.Y.Z-rcN` goes to [staging](../staging/README.md)
-instead (see [`../README.md`](../README.md) for the release process). The Spring config lives with its siblings in
+instead (see [`../../docs/releasing.md`](../../docs/releasing.md) for the release process). The Spring config lives with its siblings in
 `projects/backend/src/main/resources/application-prod.yml` — committed, secret-free, loaded when
 Cloud Run sets `SPRING_PROFILES_ACTIVE=prod`.
 
@@ -10,23 +10,28 @@ Cloud Run sets `SPRING_PROFILES_ACTIVE=prod`.
 
 | File | Status | Purpose |
 |---|---|---|
-| `Dockerfile` | Functional | Multi-stage build (Node frontend → Temurin JDK backend → JRE runtime, ~200 MB final image). Non-root `spring` user, `-XX:MaxRAMPercentage=75`. |
+| `*.tf` | Functional | The production Terraform root : runtime account, own secrets, Cloud Run service (see [`../../terraform/`](../../terraform/README.md)). |
 | `service.yaml` | Stub | Cloud Run service descriptor, kept as documentation of the full shape. The deploy is imperative (`gcloud run deploy` in the workflow), so **the workflow is the source of truth**. |
 
 ## What is wired, GCP side (`trade-496613`)
 
-- Billing account linked, and the `run`, `artifactregistry`, `secretmanager`, `iam`,
-  `iamcredentials`, `sts` APIs enabled.
+Described in Terraform — this folder and [`../../terraform/project/`](../../terraform/README.md) :
+
 - Two service accounts, deploy and runtime kept separate :
   - `github-deploy@` — `run.admin` + `artifactregistry.writer` on the project,
-    `iam.serviceAccountUser` on the runtime account ;
+    `iam.serviceAccountUser` on the runtime account, `secretmanager.secretAccessor` on
+    `supabase-db-url` (the monthly backup) ;
   - `portfolioai-runtime@` — `secretmanager.secretAccessor`, per secret.
 - Workload Identity Federation : pool + provider `github`, with an attribute condition on the
   repository owner. No long-lived service-account key exists anywhere.
 - Artifact Registry repository `northamerica-northeast1-docker.pkg.dev/trade-496613/backend`.
-- Secret Manager holds `google-oauth-client-id`, `google-oauth-client-secret`, `app-admin-emails`,
-  `supabase-db-url` (JDBC URL of the Supabase session pooler, credentials inline, `sslmode=require`)
-  and `sentry-dsn-backend`.
+- The Secret Manager containers `google-oauth-client-id`, `google-oauth-client-secret`,
+  `app-admin-emails`, `supabase-db-url` (JDBC URL of the Supabase session pooler, credentials
+  inline, `sslmode=require`) and `sentry-dsn-backend` — their values are added by hand.
+- The Cloud Run service `portfolioai` and its public access ; its revisions belong to `deploy.yml`.
+
+By hand : the billing account, and the `run`, `artifactregistry`, `secretmanager`, `iam`,
+`iamcredentials`, `sts` APIs enabled.
 
 ## What is wired, GitHub side (`jv3n/trade`)
 

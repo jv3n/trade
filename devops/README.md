@@ -1,115 +1,20 @@
-# Environments and releases
+# DevOps
 
-Two deployed environments, one image, one workflow (`.github/workflows/deploy.yml`). The **release
-tag** picks where a build goes :
+Two deployed environments, **staging** and **production**, plus the local stack. One image, one
+deploy workflow (`.github/workflows/deploy.yml`), the GCP side described in Terraform.
 
-| Tag | Published as | Goes to | URL | GitHub environment |
-|---|---|---|---|---|
-| `vX.Y.Z-rcN` | pre-release | **staging** — Cloud Run `portfolioai-staging` | https://staging.tickerstory.org/ | `staging` — no reviewer, tags `v*-rc*` only |
-| `vX.Y.Z` | release | **production** — Cloud Run `portfolioai` | https://tickerstory.org/ | `production` — required reviewer, tags `v*.*.*` only |
+| Folder | Holds |
+|---|---|
+| [`env/local/`](env/local/README.md) | the local stack (Tilt) : demo data, Postgres upgrades |
+| [`env/staging/`](env/staging/README.md) | staging : what it adds over production, its set-up, its Terraform root |
+| [`env/production/`](env/production/README.md) | production : what is wired, its Terraform root, `service.yaml` |
+| [`terraform/`](terraform/README.md) | what both environments share (`project/` root) and the `environment` module ; how to change the infrastructure, add an environment |
+| [`cloudflare/`](cloudflare/README.md) | both Workers, deployed with wrangler |
+| `docker/` | the `Dockerfile` of the one image both environments run |
+| `tools/tilt/` | the scripts behind Tilt's buttons |
 
-Both run the Spring profile `prod`. What differs is passed by the workflow : the service, the public
-URL, the runtime service account, the database and admin-list secrets (`*-staging` for staging) and
-the environment name (`staging` / `prod`, the settings page's chip). The Google OAuth client is
-shared. Both environments report to the same GlitchTip projects, under their own environment (#462).
-
-- [`prod/README.md`](prod/README.md) — what is wired for production.
-- [`staging/README.md`](staging/README.md) — what staging adds, and how to set it up.
-- [`local/README.md`](local/README.md) — the local stack (Tilt).
-
-## How a request reaches the app
-
-```
-browser ──► Cloudflare ──────────────────► GCP Cloud Run ───────────► Supabase Postgres
-            DNS + Worker (custom domain)   one service per env        one project per env
-            rewrites the host to *.run.app reads its secrets from
-                                           Secret Manager
-```
-
-- **Cloudflare** owns the domain `tickerstory.org`. Each environment has a Worker attached as a
-  *custom domain* (the DNS record is the Worker itself, type `Worker`) : it forwards every request to
-  the Cloud Run URL with the right `Host`, and passes the public host in `X-Forwarded-Host`. Their
-  code and config live in [`cloudflare/`](cloudflare/README.md), deployed with wrangler (#494).
-- **GCP** (project `trade-496613`, region `northamerica-northeast1`) runs the app : one Cloud Run
-  service per environment, scale-to-zero, the image from Artifact Registry. Each service runs as its
-  own runtime service account, which can read only its own secrets. GitHub Actions deploys through
-  Workload Identity Federation — no service-account key exists anywhere.
-- **Supabase** (region `ca-central-1`, free tier) holds the database : one project per environment,
-  reached through the **session pooler** (the direct connection is IPv6-only, Cloud Run egress is
-  IPv4). Flyway migrates the schema at boot. Production is dumped monthly to Cloudflare R2, 12 kept.
-- **Google OAuth** — one client for both environments, with the redirect URI of each.
-- **GlitchTip** (Sentry-compatible) — production and staging, one project for the backend and one
-  for the frontend, split by environment (`prod` / `staging`). The frontend picks it from the host ;
-  the backend reads `SENTRY_ENVIRONMENT` and sends one INFO event at every boot, so a mute DSN shows
-  on the next deploy (#462) — never resolve nor ignore that « Backend started » issue, it is the
-  proof the pipe works. Local sends nothing.
-  Every image build uploads the frontend source maps under the release tag (#463), then drops them
-  from the bundle. The deploy needs a GlitchTip auth token (scope `project:releases`) in the
-  `GLITCHTIP_AUTH_TOKEN` secret and the organisation slug in the `GLITCHTIP_ORG` variable.
-
-| | Production | Staging |
-|---|---|---|
-| Public URL | https://tickerstory.org/ | https://staging.tickerstory.org/ |
-| Cloudflare Worker | `tickerstory-proxy` | `tickerstory-staging` |
-| Cloud Run service | `portfolioai` (0 → 3 instances) | `portfolioai-staging` (0 → 1) |
-| Runtime account | `portfolioai-runtime@` | `portfolioai-staging-runtime@` |
-| Supabase project | the production one | `trade-staging` |
-| Own secrets | `supabase-db-url`, `app-admin-emails` | `supabase-db-url-staging`, `app-admin-emails-staging` |
-| Shared secrets | `google-oauth-client-id`, `google-oauth-client-secret`, `sentry-dsn-backend` | same |
-| Error tracking | GlitchTip, `sentry-dsn-backend`, `environment: prod` | same, `environment: staging` |
-| Data | real, backed up monthly | test data, no backup |
-
-Consoles : [Cloudflare](https://dash.cloudflare.com/) ·
-[Cloud Run](https://console.cloud.google.com/run?project=trade-496613) ·
-[Secret Manager](https://console.cloud.google.com/security/secret-manager?project=trade-496613) ·
-[OAuth client](https://console.cloud.google.com/apis/credentials?project=trade-496613) ·
-[Supabase](https://supabase.com/dashboard/projects) ·
-[deploy runs](https://github.com/jv3n/trade/actions/workflows/deploy.yml).
-
-## Secrets
-
-Every credential the project holds, and where. A new one gets its row here in the PR that
-introduces it ; one no longer read is deleted at its source and here.
-
-| Name | Lives in | Read by | For | Secret ? |
-|---|---|---|---|---|
-| `supabase-db-url` | GCP Secret Manager | `portfolioai-runtime@`, `github-deploy@` | production JDBC URL (password inside) ; the monthly backup | **yes** |
-| `supabase-db-url-staging` | GCP Secret Manager | `portfolioai-staging-runtime@` | staging JDBC URL | **yes** |
-| `google-oauth-client-secret` | GCP Secret Manager | both runtimes | Google login | **yes** |
-| `google-oauth-client-id` | GCP Secret Manager | both runtimes | Google login | no — shown in the login URL |
-| `app-admin-emails` / `-staging` | GCP Secret Manager | its runtime | ADMIN role at first login | no — personal data |
-| `sentry-dsn-backend` | GCP Secret Manager | both runtimes | backend → GlitchTip | no — a DSN only ingests |
-| `GLITCHTIP_AUTH_TOKEN` | GitHub, repo secret | `deploy.yml` (image build) | frontend source-map upload | **yes** |
-| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | GitHub, repo secret | `backup-postgres.yml` | write to the R2 backup bucket | **yes** |
-| `R2_ACCOUNT_ID` | GitHub, repo secret | `backup-postgres.yml` | R2 endpoint | no |
-| `GRADLE_ENCRYPTION_KEY` | GitHub — **not set** | `backend.yml` | encrypts the Gradle configuration cache | **yes** |
-| wrangler session | your machine (`wrangler login`) | `devops/cloudflare` deploys | Cloudflare Workers | **yes** |
-| `.env` | your machine | Tilt | local Google OAuth client, admin emails | **yes** |
-
-No long-lived GCP key exists : GitHub reaches GCP through Workload Identity Federation, Cloud Run
-reads Secret Manager as its runtime account. The GitHub *variables* (`GCP_*`, `GLITCHTIP_ORG`) hold
-identifiers, not secrets.
-
-**Rotating** — Secret Manager : `gcloud secrets versions add <name> --data-file=-`, then a deploy
-(revisions read `:latest` at start). GitHub : `gh secret set <NAME> --repo jv3n/trade`, read at the
-next run.
-
-## Releasing
-
-1. **Candidate** — on GitHub, *Releases → Draft a new release*, tag `vX.Y.Z-rc1` on `master`, tick
-   **Set as a pre-release**, publish. The workflow deploys it to staging, with no approval.
-2. **Try it** on https://staging.tickerstory.org/. A problem : fix it on `master`, publish
-   `vX.Y.Z-rc2`, try again.
-3. **Release** — once a candidate is good, publish `vX.Y.Z` (same commit, pre-release box
-   unticked). The workflow waits for the `production` approval, then deploys.
-
-The workflow refuses a tag and a pre-release box that disagree (an `-rc` published as a release, or a
-final version published as a pre-release), so a candidate can't reach production by mistake.
-
-The final release rebuilds the image from the same commit rather than re-tagging the candidate's :
-the version baked into the image (`/actuator/info`, Sentry) is then the final one.
-
-## Versioning
-
-SemVer on the product : **major** for a change that breaks the data or the flow (v2.0.0 reset the
-database), **minor** for a feature, **patch** for fixes only.
+| Doc | |
+|---|---|
+| [`docs/architecture.md`](docs/architecture.md) | how a request reaches the app ; who owns what (Terraform, `deploy.yml`, wrangler, by hand) |
+| [`docs/secrets.md`](docs/secrets.md) | every credential, where it lives, who reads it ; rotating |
+| [`docs/releasing.md`](docs/releasing.md) | tags → environments, publishing a release, versioning |

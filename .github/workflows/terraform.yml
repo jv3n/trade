@@ -1,0 +1,73 @@
+name: Terraform CI
+
+# Format, lint and validity only : a `plan` needs GCP credentials and is run by hand, its output pasted
+# in the PR (devops/terraform/README.md).
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'devops/terraform/**'
+      - 'devops/env/**/*.tf'
+      - 'devops/env/**/.terraform.lock.hcl'
+      - 'devops/.terraform-version'
+      - 'devops/.tflint.hcl'
+      - '.github/workflows/terraform.yml'
+  pull_request:
+    paths:
+      - 'devops/terraform/**'
+      - 'devops/env/**/*.tf'
+      - 'devops/env/**/.terraform.lock.hcl'
+      - 'devops/.terraform-version'
+      - 'devops/.tflint.hcl'
+      - '.github/workflows/terraform.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format, lint and validate
+    # Pinned rather than ubuntu-latest : a new image is adopted on purpose, never by a label move.
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the Terraform version
+        id: tf
+        run: echo "version=$(cat devops/.terraform-version)" >> "$GITHUB_OUTPUT"
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ steps.tf.outputs.version }}
+
+      - name: Format
+        working-directory: devops
+        run: terraform fmt -check -recursive terraform env
+
+      - uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: v0.64.0
+
+      # Catches what `validate` lets through, such as a declared variable nobody reads.
+      - name: Lint
+        working-directory: devops
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init --config="$PWD/.tflint.hcl"
+          tflint --recursive --config="$PWD/.tflint.hcl" --format=compact
+
+      - name: Validate every root
+        working-directory: devops
+        run: |
+          for root in terraform/project env/production env/staging; do
+            terraform -chdir="$root" init -backend=false -input=false
+            terraform -chdir="$root" validate
+          done

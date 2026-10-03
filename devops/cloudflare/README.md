@@ -2,7 +2,7 @@
 
 Every request of both environments goes through a Worker attached to its host as a *custom domain*
 (the DNS record is the Worker itself). It re-addresses the request to the environment's Cloud Run
-service — see [`../README.md`](../README.md) > How a request reaches the app.
+service — see [`../docs/architecture.md`](../docs/architecture.md).
 
 | Env | Worker | Host | Origin |
 |---|---|---|---|
