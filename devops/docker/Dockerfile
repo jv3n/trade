@@ -45,6 +45,8 @@ COPY docs/notes/ /docs/notes/
 # never reach the served bundle. Without the token (a local `docker build`) the upload is skipped —
 # `deploy.yml` checks the secret is set before it builds. A failed upload only warns : GlitchTip
 # being down must not block a release, it costs that one release its readable traces.
+# Release files matched by name, not `sourcemaps upload` : GlitchTip registers its artifact bundle
+# but stores nothing (#568). No `releases finalize` either — GlitchTip answers it with a 405.
 ARG APP_VERSION=0.0.0-SNAPSHOT
 ARG SENTRY_URL=https://app.glitchtip.com/
 ARG SENTRY_ORG
@@ -54,8 +56,9 @@ RUN --mount=type=secret,id=sentry_auth_token \
  && BROWSER_DIR=$(echo dist/*/browser) \
  && if [ -s /run/secrets/sentry_auth_token ]; then \
       export SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token)" SENTRY_URL SENTRY_ORG SENTRY_PROJECT \
-      && { npx sentry-cli sourcemaps inject "$BROWSER_DIR" \
-           && npx sentry-cli sourcemaps upload --release="$APP_VERSION" "$BROWSER_DIR" \
+      && { npx sentry-cli releases new "$APP_VERSION" \
+           && npx sentry-cli releases files "$APP_VERSION" upload-sourcemaps "$BROWSER_DIR" \
+                --url-prefix '~/' --rewrite --validate \
            || echo "WARNING : source maps not uploaded, $APP_VERSION reports minified traces."; }; \
     else echo "No sentry_auth_token secret : source maps not uploaded."; fi \
  && find "$BROWSER_DIR" -name '*.map' -delete
