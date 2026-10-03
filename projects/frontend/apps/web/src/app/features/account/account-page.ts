@@ -90,6 +90,9 @@ interface AccountFilter {
   type: MovementTypeFilter;
 }
 
+/** The calls behind the page, each able to fail on its own. */
+type LoadCall = 'summary' | 'series' | 'movements';
+
 /**
  * Broker cash-account page, laid out after `mockup/compte.html` (#229) : a KPI row (balance with
  * its USD / CAD switch, P&L of the period, net injected), the balance curve in its own card, and
@@ -144,7 +147,14 @@ export class AccountPage {
   private readonly toasts = inject(StbToast);
 
   readonly loading = signal(true);
-  readonly error = signal<string | null>(null);
+  /**
+   * The calls whose last attempt failed. Each clears itself on its next success, so the banner
+   * stays while anything is still missing and goes once everything loaded again (#493).
+   */
+  private readonly failedCalls = signal<ReadonlySet<LoadCall>>(new Set());
+  readonly error = computed<string | null>(() =>
+    this.failedCalls().size > 0 ? this.translate.instant('account.errors.load') : null,
+  );
   /** The period's figures, over its dates only — never narrowed by the table's type filter. */
   readonly summary = signal<AccountSummary | null>(null);
   /** The in-flight summary call — cancelled on refetch so a stale answer never lands last. */
@@ -386,18 +396,23 @@ export class AccountPage {
 
   private fetch(): void {
     this.loading.set(true);
-    this.error.set(null);
     const { dateFrom, dateTo } = this.toApiFilter();
     this.summaryCall?.unsubscribe();
     this.summaryCall = this.repo.getSummary({ dateFrom, dateTo, types: null }).subscribe({
-      next: (s) => this.summary.set(s),
-      error: () => this.error.set(this.translate.instant('account.errors.load')),
+      next: (s) => {
+        this.summary.set(s);
+        this.markLoaded('summary', true);
+      },
+      error: () => this.markLoaded('summary', false),
     });
     // The whole series, always : the chart is clipped client-side, so changing the window doesn't
     // cost a round-trip and the curve keeps its shape when the user flips between presets.
     this.repo.getBalanceSeries().subscribe({
-      next: (pts) => this.series.set(pts),
-      error: () => this.error.set(this.translate.instant('account.errors.load')),
+      next: (pts) => {
+        this.series.set(pts);
+        this.markLoaded('series', true);
+      },
+      error: () => this.markLoaded('series', false),
     });
     this.fetchMovements();
   }
@@ -425,12 +440,22 @@ export class AccountPage {
         next: (page) => {
           this.movements.set(page.content);
           this.totalElements.set(page.totalElements);
+          this.markLoaded('movements', true);
           this.loading.set(false);
         },
         error: () => {
-          this.error.set(this.translate.instant('account.errors.load'));
+          this.markLoaded('movements', false);
           this.loading.set(false);
         },
       });
+  }
+
+  private markLoaded(call: LoadCall, loaded: boolean): void {
+    this.failedCalls.update((failed) => {
+      const next = new Set(failed);
+      if (loaded) next.delete(call);
+      else next.add(call);
+      return next;
+    });
   }
 }
