@@ -25,3 +25,13 @@ import {
   to       = module.environment.google_secret_manager_secret_iam_member.runtime_reads_shared[each.value]
   id       = "projects/trade-496613/secrets/${each.value} roles/secretmanager.secretAccessor serviceAccount:portfolioai-staging-runtime@trade-496613.iam.gserviceaccount.com"
 }
+
+import {
+  to = module.environment.google_cloud_run_v2_service.app
+  id = "projects/trade-496613/locations/northamerica-northeast1/services/portfolioai-staging"
+}
+
+import {
+  to = module.environment.google_cloud_run_v2_service_iam_member.public
+  id = "projects/trade-496613/locations/northamerica-northeast1/services/portfolioai-staging roles/run.invoker allUsers"
+}

@@ -54,3 +54,29 @@ resource "google_secret_manager_secret_iam_member" "runtime_reads_shared" {
   role      = "roles/secretmanager.secretAccessor"
   member    = google_service_account.runtime.member
 }
+
+# Terraform owns the service ; `deploy.yml` owns every revision (image, env, secrets, scaling, account).
+resource "google_cloud_run_v2_service" "app" {
+  name     = var.service
+  location = "northamerica-northeast1"
+  ingress  = "INGRESS_TRAFFIC_ALL"
+
+  # Only used when the service is created : the backend repository has no untagged image to start from.
+  template {
+    containers {
+      image = "us-docker.pkg.dev/cloudrun/container/hello"
+    }
+  }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [template, client, client_version]
+  }
+}
+
+resource "google_cloud_run_v2_service_iam_member" "public" {
+  name     = google_cloud_run_v2_service.app.name
+  location = google_cloud_run_v2_service.app.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

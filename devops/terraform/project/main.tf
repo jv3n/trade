@@ -79,3 +79,14 @@ resource "google_secret_manager_secret" "shared" {
     prevent_destroy = true
   }
 }
+
+resource "google_artifact_registry_repository" "backend" {
+  repository_id = "backend"
+  location      = "northamerica-northeast1"
+  format        = "DOCKER"
+  description   = "PortfolioAI Docker images (backend + future workers)"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}

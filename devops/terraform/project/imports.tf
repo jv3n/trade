@@ -29,3 +29,8 @@ import {
   to       = google_secret_manager_secret.shared[each.value]
   id       = "projects/trade-496613/secrets/${each.value}"
 }
+
+import {
+  to = google_artifact_registry_repository.backend
+  id = "projects/trade-496613/locations/northamerica-northeast1/repositories/backend"
+}
