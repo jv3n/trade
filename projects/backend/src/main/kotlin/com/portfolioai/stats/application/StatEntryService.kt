@@ -1,11 +1,11 @@
 package com.portfolioai.stats.application
 
 import com.portfolioai.auth.application.AuthService
-import com.portfolioai.auth.domain.User
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.TradeEntryDto
 import com.portfolioai.journal.application.dto.TradeEntryRequest
 import com.portfolioai.shared.Pattern
+import com.portfolioai.shared.badRequest
 import com.portfolioai.stats.application.dto.StatEntryDto
 import com.portfolioai.stats.application.dto.StatEntryRequest
 import com.portfolioai.stats.application.dto.StatSummaryDto
@@ -15,12 +15,8 @@ import com.portfolioai.stats.domain.StatEntryFilter
 import com.portfolioai.stats.domain.StatMetrics
 import com.portfolioai.stats.infrastructure.persistence.StatEntryRepository
 import com.portfolioai.stats.infrastructure.persistence.StatEntrySpecifications
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.Page
@@ -113,108 +109,11 @@ class StatEntryService(
     val userId = authService.getCurrentUser().id
     val rows =
       repo.findAll(StatEntrySpecifications.matching(userId, filter)).filter(filter::matchesDerived)
-    val completed = rows.filter { it.isCompleted }
-    val measured = if (filter.pattern == null) emptyList() else completed
-    val sessions = measured.filterNot { it.isDoubleTop }
-    val doubleTops = measured.filter { it.isDoubleTop }
     // The journal's "8 of 10 stats traded" KPI (#195) : one query for the whole filtered set,
     // the same read the listing already uses row by row. Keyed by stat, so a stat traded three
     // times still counts once (#500).
     val traded = tradeEntryService.tradeLinksByStat(rows.map { it.id }).size
-    val pushes = sessions.mapNotNull { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) }
-    return StatSummaryDto(
-      completed = completed.size,
-      toComplete = rows.size - completed.size,
-      averagePushOpenPercent =
-        sessions.averageOf { StatMetrics.percentVsOpen(it.openPrice, it.pushOpenPrice) },
-      medianPushOpenPercent = StatMetrics.quantile(pushes, MEDIAN),
-      thirdQuartilePushOpenPercent = StatMetrics.quantile(pushes, THIRD_QUARTILE),
-      maxPushOpenPercent = pushes.maxOrNull(),
-      noPushCount = sessions.count { it.noPush },
-      medianLodPercent = sessions.medianOf { StatMetrics.percentVsOpen(it.openPrice, it.lodPrice) },
-      fadeCount = sessions.count { it.eodPrice!! < it.openPrice!! },
-      medianEodPercent = sessions.medianOf { StatMetrics.percentVsOpen(it.openPrice, it.eodPrice) },
-      medianHoldPercent = sessions.medianOf { StatMetrics.holdPercent(it.pmHigh, it.openPrice) },
-      medianCumulativePmHighPercent =
-        sessions.medianOf { StatMetrics.cumulativePercent(it.previousClose, it.pmHigh) },
-      medianCumulativeOpenPercent =
-        sessions.medianOf { StatMetrics.cumulativePercent(it.previousClose, it.openPrice) },
-      completedDoubleTops = doubleTops.size,
-      averageExtensionPercent =
-        doubleTops.averageOf { StatMetrics.percentChange(it.dtStartPrice, it.dtTopPrice) },
-      averageExtensionWithGapPercent =
-        doubleTops.averageOf { StatMetrics.percentChange(it.previousClose, it.dtTopPrice) },
-      averageRejectionPercent =
-        doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtLowPrice) },
-      rejectionAtCriterionCount =
-        doubleTops.count {
-          StatMetrics.percentChange(it.dtTopPrice, it.dtLowPrice)!! <= -DT_REJECTION_CRITERION
-        },
-      averageRetestPercent =
-        doubleTops.averageOf { StatMetrics.percentChange(it.dtLowPrice, it.dtRetestPrice) },
-      averageRetestToTopPercent =
-        doubleTops.averageOf { StatMetrics.percentChange(it.dtTopPrice, it.dtRetestPrice) },
-      retestTookTopCount = doubleTops.count { it.dtRetestPrice!! >= it.dtTopPrice!! },
-      medianDoubleTopMinutes =
-        doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtStartTime, it.dtRetestTime) },
-      medianRejectionMinutes =
-        doubleTops.medianMinutes { StatMetrics.minutesBetween(it.dtTopTime, it.dtLowTime) },
-      traded = traded,
-      untraded = rows.size - traded,
-    )
-  }
-
-  /**
-   * The stats each of these candidates became, by pattern (#434) — the "in stats" badges of the
-   * candidates listing (#383) and the guard against promoting twice in one pattern (#189). A
-   * candidate never promoted is absent. Read exposed to the `candidates` context through this
-   * application service, the way cross-context reads are done here.
-   */
-  @Transactional(readOnly = true)
-  fun statIdsByCandidate(candidateIds: Collection<UUID>): Map<UUID, Map<Pattern, UUID>> {
-    if (candidateIds.isEmpty()) return emptyMap()
-    val userId = authService.getCurrentUser().id
-    return repo
-      .findByUserIdAndCandidateIdIn(userId, candidateIds)
-      .filter { it.candidateId != null }
-      .groupBy { it.candidateId!! }
-      .mapValues { (_, stats) -> stats.associate { it.pattern to it.id } }
-  }
-
-  /**
-   * Whether the caller's sheet already holds a stat for that (day, ticker, pattern). Lets
-   * `candidates` skip a taken slot **before** calling [create] : catching the 409 instead would
-   * mark the surrounding transaction rollback-only, and the bulk promotion would fail as a whole.
-   */
-  @Transactional(readOnly = true)
-  fun existsForDayAndTicker(tradeDate: LocalDate, ticker: String, pattern: Pattern): Boolean {
-    val userId = authService.getCurrentUser().id
-    return repo.findByUserIdAndTradeDateAndTickerAndPattern(
-      userId,
-      tradeDate,
-      ticker.trim().uppercase(),
-      pattern,
-    ) != null
-  }
-
-  /**
-   * Gives the stats born from [candidateId] the [openPrice] typed on the candidate at 9:30 — for a
-   * candidate promoted before the open. A double top takes it as its start. A stat that already has
-   * one keeps it : the one typed on the stat wins. No stat for that candidate → nothing to do.
-   */
-  @Transactional
-  fun fillMissingOpen(candidateId: UUID, openPrice: BigDecimal) {
-    val userId = authService.getCurrentUser().id
-    for (stat in repo.findByUserIdAndCandidateIdIn(userId, listOf(candidateId))) {
-      if (stat.isDoubleTop) {
-        if (stat.dtStartPrice != null) continue
-        stat.dtStartPrice = openPrice
-      } else {
-        if (stat.openPrice != null) continue
-        stat.openPrice = openPrice
-      }
-      stat.updatedAt = Instant.now()
-    }
+    return statSummaryOf(rows, filter.pattern, traded)
   }
 
   // ---- CRUD (user-scoped) --------------------------------------------------------------------
@@ -305,7 +204,7 @@ class StatEntryService(
       if (request.pattern == Pattern.DT && request.dtStartPrice == null) {
         request.copy(dtStartPrice = request.openPrice)
       } else request
-    entry.apply(born, ticker)
+    entry.fillFrom(born, ticker)
     // Flushed here so a race lost on a unique constraint surfaces as the 409 of
     // `GlobalExceptionHandler`, not as a failed commit.
     return repo.saveAndFlush(entry).toDto()
@@ -332,7 +231,7 @@ class StatEntryService(
       )
     }
     requireFree(entry.user.id, request, ticker, ownId = entry.id)
-    entry.apply(request, ticker)
+    entry.fillFrom(request, ticker)
     if (entry.isCompleted && !entry.hasFullSession) {
       throw badRequest(
         "Stat ${entry.ticker} is completed — untick it before clearing " +
@@ -431,27 +330,6 @@ class StatEntryService(
       ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Stat entry $id not found")
   }
 
-  private fun StatEntry.siblingRequest(pattern: Pattern) =
-    StatEntryRequest(
-      tradeDate = tradeDate,
-      pattern = pattern,
-      ticker = ticker,
-      previousClose = previousClose,
-      pmOpen = pmOpen,
-      pmHigh = pmHigh,
-      floatMillions = floatMillions,
-      volumeMillions = volumeMillions,
-      locatePerShare = locatePerShare,
-      openPrice = openPrice,
-      pushOpenPrice = pushOpenPrice,
-      noPush = noPush,
-      hodPrice = hodPrice,
-      lodPrice = lodPrice,
-      eodPrice = eodPrice,
-      ssr = ssr,
-      highInstitutions = highInstitutions,
-    )
-
   /** 409 when another stat of the same user already holds (day, ticker, pattern). */
   private fun requireFree(userId: UUID, request: StatEntryRequest, ticker: String, ownId: UUID?) {
     val existing =
@@ -469,186 +347,8 @@ class StatEntryService(
     }
   }
 
-  /** A blank shell — [apply] does the validation and fills every field right after. */
-  private fun newEntry(user: User, request: StatEntryRequest, ticker: String, candidateId: UUID?) =
-    StatEntry(
-      user = user,
-      candidateId = candidateId,
-      tradeDate = request.tradeDate,
-      ticker = ticker,
-      previousClose = request.previousClose,
-      pmOpen = request.pmOpen,
-      pmHigh = request.pmHigh,
-    )
-
-  /**
-   * Validates [request] and copies it onto this stat (ticker already cleaned). A double top keeps
-   * its four prices and drops the GUS session (and « no push ») ; any other pattern the reverse.
-   */
-  private fun StatEntry.apply(request: StatEntryRequest, cleanTicker: String) {
-    val pmOpen = request.pmOpen.requirePositive("PM open")
-    val pmHigh = request.pmHigh.requirePositive("PM high")
-    if (pmHigh < pmOpen) throw badRequest("PM high must not be below the PM open")
-    val doubleTop = request.pattern == Pattern.DT
-    val gus = !doubleTop
-    val hod = request.hodPrice?.takeIf { gus }?.requirePositive("HOD")
-    val lod = request.lodPrice?.takeIf { gus }?.requirePositive("LOD")
-    val open = request.openPrice?.takeIf { gus }?.requirePositive("Open")
-    val noPush = gus && request.noPush
-    val push =
-      if (noPush) null else request.pushOpenPrice?.takeIf { gus }?.requirePositive("Push at open")
-    val eod = request.eodPrice?.takeIf { gus }?.requirePositive("EOD")
-    requireInsideTheDay(hod, lod, listOf("Open" to open, "Push at open" to push, "EOD" to eod))
-    val dtStart = request.dtStartPrice?.takeIf { doubleTop }?.requirePositive("Start")
-    val dtTop = request.dtTopPrice?.takeIf { doubleTop }?.requirePositive("Top")
-    val dtLow = request.dtLowPrice?.takeIf { doubleTop }?.requirePositive("Rejection low")
-    val dtRetest = request.dtRetestPrice?.takeIf { doubleTop }?.requirePositive("Retest")
-    requireDoubleTopShape(dtStart, dtTop, dtLow, dtRetest)
-    val dtStartTime = request.dtStartTime?.takeIf { doubleTop }?.inSession("Start time")
-    val dtTopTime = request.dtTopTime?.takeIf { doubleTop }?.inSession("Top time")
-    val dtLowTime = request.dtLowTime?.takeIf { doubleTop }?.inSession("Rejection low time")
-    val dtRetestTime = request.dtRetestTime?.takeIf { doubleTop }?.inSession("Retest time")
-    requireDoubleTopTimesInOrder(dtStartTime, dtTopTime, dtLowTime, dtRetestTime)
-
-    tradeDate = request.tradeDate
-    pattern = request.pattern
-    ticker = cleanTicker
-    previousClose = request.previousClose.requirePositive("Previous close")
-    this.pmOpen = pmOpen
-    this.pmHigh = pmHigh
-    floatMillions = request.floatMillions?.requireNonNegative("Float")
-    volumeMillions = request.volumeMillions?.requireNonNegative("Volume")
-    locatePerShare = request.locatePerShare?.requireNonNegative("Locate")
-    note = request.note?.trim()?.ifEmpty { null }
-
-    openPrice = open
-    pushOpenPrice = push
-    hodPrice = hod
-    lodPrice = lod
-    eodPrice = eod
-    dtStartPrice = dtStart
-    dtTopPrice = dtTop
-    dtLowPrice = dtLow
-    dtRetestPrice = dtRetest
-    this.dtStartTime = dtStartTime
-    this.dtTopTime = dtTopTime
-    this.dtLowTime = dtLowTime
-    this.dtRetestTime = dtRetestTime
-
-    ssr = request.ssr
-    // A double top derives it from its retest (#499) : a box sent for one would say something else.
-    entryAfter11am = request.entryAfter11am && !doubleTop
-    this.noPush = noPush
-    highInstitutions = request.highInstitutions
-  }
-
-  private fun StatEntryRequest.cleanTicker(): String =
-    ticker.trim().uppercase().ifEmpty { throw badRequest("Ticker must not be blank") }
-
-  /**
-   * The day's range holds every price it contains (#305) : `LOD <= open, push, EOD <= HOD`. The HOD
-   * / LOD pair was checked, the three prices inside were not — a stat could carry a HOD of 1 under
-   * a push of 10 and still be ticked.
-   */
-  private fun requireInsideTheDay(
-    hod: BigDecimal?,
-    lod: BigDecimal?,
-    prices: List<Pair<String, BigDecimal?>>,
-  ) {
-    if (hod != null && lod != null && hod < lod) throw badRequest("HOD must not be below the LOD")
-    for ((label, price) in prices) {
-      if (price == null) continue
-      if (hod != null && price > hod) throw badRequest("$label must not be above the HOD")
-      if (lod != null && price < lod) throw badRequest("$label must not be below the LOD")
-    }
-  }
-
-  /**
-   * The shape of a double top (`docs/pattern/DT.md`) : the top not under the start, the rejection
-   * low not above the top, the retest not under the low. Each pair is checked once both are in.
-   */
-  private fun requireDoubleTopShape(
-    start: BigDecimal?,
-    top: BigDecimal?,
-    low: BigDecimal?,
-    retest: BigDecimal?,
-  ) {
-    if (start != null && top != null && top < start) {
-      throw badRequest("Top must not be below the start")
-    }
-    if (top != null && low != null && low > top) {
-      throw badRequest("Rejection low must not be above the top")
-    }
-    if (low != null && retest != null && retest < low) {
-      throw badRequest("Retest must not be below the rejection low")
-    }
-  }
-
-  /**
-   * The four moments of a double top go in order (#469) : start ≤ top ≤ low ≤ retest. Each time is
-   * checked against the latest one typed before it, so a gap in the middle still orders the rest.
-   */
-  private fun requireDoubleTopTimesInOrder(
-    start: LocalTime?,
-    top: LocalTime?,
-    low: LocalTime?,
-    retest: LocalTime?,
-  ) {
-    var previous: Pair<String, LocalTime>? = null
-    for ((label, time) in
-      listOf("Start" to start, "Top" to top, "Rejection low" to low, "Retest" to retest)) {
-      if (time == null) continue
-      previous?.let { (previousLabel, previousTime) ->
-        if (time < previousTime) {
-          throw badRequest("$label time must not be before the ${previousLabel.lowercase()} time")
-        }
-      }
-      previous = label to time
-    }
-  }
-
-  /** To the minute, inside TradeZero's extended session — a premarket DT is real, 02:10 a typo. */
-  private fun LocalTime.inSession(label: String): LocalTime =
-    truncatedTo(ChronoUnit.MINUTES).also {
-      if (it < SESSION_OPENS || it > SESSION_CLOSES) {
-        throw badRequest("$label must be between $SESSION_OPENS and $SESSION_CLOSES")
-      }
-    }
-
-  private fun BigDecimal.requirePositive(label: String): BigDecimal = also {
-    if (it.signum() <= 0) throw badRequest("$label must be greater than zero")
-  }
-
-  private fun BigDecimal.requireNonNegative(label: String): BigDecimal = also {
-    if (it.signum() < 0) throw badRequest("$label must not be negative")
-  }
-
-  private fun badRequest(message: String) = ResponseStatusException(HttpStatus.BAD_REQUEST, message)
-
-  /** Average of a derived percentage over the rows that yield one ; null when none does. */
-  private fun List<StatEntry>.averageOf(metric: (StatEntry) -> BigDecimal?): BigDecimal? {
-    val values = mapNotNull(metric)
-    if (values.isEmpty()) return null
-    return values.reduce(BigDecimal::add).divide(BigDecimal(values.size), 2, RoundingMode.HALF_UP)
-  }
-
-  /** Median of a derived percentage over the rows that yield one ; null when none does. */
-  private fun List<StatEntry>.medianOf(metric: (StatEntry) -> BigDecimal?): BigDecimal? =
-    StatMetrics.quantile(mapNotNull(metric), MEDIAN)
-
-  /** Median of a duration in minutes over the rows that yield one ; null when none does. */
-  private fun List<StatEntry>.medianMinutes(metric: (StatEntry) -> Long?): BigDecimal? =
-    StatMetrics.quantile(mapNotNull(metric).map(::BigDecimal), MEDIAN)
-
   private companion object {
     /** Newest-first, `createdAt` tiebreaker. Export order + implicit listing sort. */
     val DEFAULT_SORT: Sort = Sort.by(Sort.Order.desc("tradeDate"), Sort.Order.desc("createdAt"))
-    val MEDIAN = BigDecimal("0.5")
-    val THIRD_QUARTILE = BigDecimal("0.75")
-    /** The rejection that makes a double top, per `docs/pattern/DT.md` — below, a normal breath. */
-    val DT_REJECTION_CRITERION = BigDecimal("17")
-    /** TradeZero's extended session — the bounds of a double top's times (#469). */
-    val SESSION_OPENS: LocalTime = LocalTime.of(4, 0)
-    val SESSION_CLOSES: LocalTime = LocalTime.of(20, 0)
   }
 }

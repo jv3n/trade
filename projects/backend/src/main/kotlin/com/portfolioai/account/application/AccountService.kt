@@ -11,6 +11,8 @@ import com.portfolioai.account.domain.AccountMovementType
 import com.portfolioai.account.infrastructure.persistence.AccountMovementRepository
 import com.portfolioai.account.infrastructure.persistence.AccountReconciliationRepository
 import com.portfolioai.auth.application.AuthService
+import com.portfolioai.shared.badRequest
+import com.portfolioai.shared.requirePositive
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -239,18 +241,12 @@ class AccountService(
    */
   private fun signedAmount(type: AccountMovementType, amount: BigDecimal): BigDecimal =
     when (type) {
-      AccountMovementType.DEPOSIT -> amount.requirePositive()
-      AccountMovementType.WITHDRAWAL -> amount.requirePositive().negate()
+      AccountMovementType.DEPOSIT -> amount.requirePositive("Amount")
+      AccountMovementType.WITHDRAWAL -> amount.requirePositive("Amount").negate()
       AccountMovementType.ADJUSTMENT ->
         amount.also { if (it.signum() == 0) throw badRequest("Adjustment amount must not be zero") }
       AccountMovementType.TRADE -> throw badRequest("TRADE movements can't be created manually")
     }
 
-  private fun BigDecimal.requirePositive(): BigDecimal = also {
-    if (it.signum() <= 0) throw badRequest("Amount must be greater than zero")
-  }
-
   private fun String?.cleanNote(): String? = this?.trim()?.ifEmpty { null }
-
-  private fun badRequest(message: String) = ResponseStatusException(HttpStatus.BAD_REQUEST, message)
 }
