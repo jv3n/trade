@@ -5,10 +5,12 @@ on:
     branches: [master]
     paths:
       - 'projects/backend/**'
+      - '.tool-versions'
       - '.github/workflows/backend.yml'
   pull_request:
     paths:
       - 'projects/backend/**'
+      - '.tool-versions'
       - '.github/workflows/backend.yml'
 
 # Workflow-level baseline — every job inherits `contents: read`. Linters (Sonar / CodeQL
@@ -41,10 +43,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up JDK 21
+      # The JDK is the one `.tool-versions` pins : `temurin-25.0.4+7.0.LTS` → `25.0.4+7.0.LTS`, setup-java's own spelling.
+      - name: Read the Java version
+        id: java
+        run: |
+          version=$(sed -nE 's/^java temurin-(.+)$/\1/p' .tool-versions)
+          test -n "$version" || { echo '::error::no "java temurin-…" line in .tool-versions'; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK
         uses: actions/setup-java@v6
         with:
-          java-version: '21'
+          java-version: ${{ steps.java.outputs.version }}
           distribution: 'temurin'
 
       # Replaces a manual `actions/cache` on `~/.gradle` with the Gradle-maintained action that
@@ -76,10 +86,10 @@ jobs:
       # report — otherwise we'd stack a false "SARIF missing" error on top of the real Detekt
       # failure and confuse the CI summary.
       - name: Upload Detekt SARIF to Code Scanning
-        if: always() && hashFiles('projects/backend/build/reports/detekt/detekt.sarif') != ''
+        if: always() && hashFiles('projects/backend/build/reports/detekt/merged.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4.38.2
         with:
-          sarif_file: projects/backend/build/reports/detekt/detekt.sarif
+          sarif_file: projects/backend/build/reports/detekt/merged.sarif
           category: detekt
 
       # HTML report as a downloadable artifact for offline review (linked from the Actions run).
@@ -88,7 +98,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: detekt-report
-          path: projects/backend/build/reports/detekt/detekt.html
+          path: |
+            projects/backend/build/reports/detekt/main.html
+            projects/backend/build/reports/detekt/test.html
           if-no-files-found: ignore
 
       # Kover HTML browseable locally — download the artifact, unzip, open `index.html` to

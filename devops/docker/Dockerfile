@@ -1,3 +1,4 @@
+# check=skip=InvalidDefaultArgInFrom
 # PortfolioAI production Dockerfile — multi-stage build for Cloud Run linux/amd64
 #
 # Targets:
@@ -6,13 +7,17 @@
 #                                  frontend's compiled output in `src/main/resources/static/`
 #   - Stage 3 (runtime):           minimal JRE-only image, ~200 MB
 #
-# Built from the repo root:
-#   docker build -f devops/docker/Dockerfile -t portfolioai-backend:dev .
+# Built from the repo root, with the JDK `.tool-versions` pins (`25.0.4+7` → tag `25.0.4_7`) :
+#   docker build -f devops/docker/Dockerfile -t portfolioai-backend:dev \
+#     --build-arg JAVA_VERSION=$(sed -nE 's/^java temurin-(.+)\.0\.LTS$/\1/p' .tool-versions | tr + _) .
 #
 # Pushed to Artifact Registry (cf. devops/env/production/README.md for the full command):
 #   docker tag portfolioai-backend:dev \
 #     northamerica-northeast1-docker.pkg.dev/trade-496613/backend/portfolioai:<tag>
 #   docker push northamerica-northeast1-docker.pkg.dev/trade-496613/backend/portfolioai:<tag>
+
+# No default on purpose : `.tool-versions` is the one place the JDK is pinned, `deploy.yml` reads it.
+ARG JAVA_VERSION
 
 # ---------------------------------------------------------------------------
 # Stage 1 — Angular frontend
@@ -61,14 +66,16 @@ RUN --mount=type=secret,id=sentry_auth_token \
 # ---------------------------------------------------------------------------
 # Stage 2 — Spring Boot backend (with frontend embedded)
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:21-jdk-jammy AS backend-builder
+FROM eclipse-temurin:${JAVA_VERSION}-jdk-jammy AS backend-builder
 
 # Passed by `deploy.yml` (= the GitHub Release tag) and surfaced on `/actuator/info > build.version`.
 ARG APP_VERSION=0.0.0-SNAPSHOT
 
 WORKDIR /app
 
-# Cache the gradle wrapper + dependency resolution before copying source
+# Cache the gradle wrapper + dependency resolution before copying source. `.tool-versions` first :
+# the Gradle toolchain reads the JDK major there.
+COPY .tool-versions ./
 COPY projects/backend/gradle/ ./projects/backend/gradle/
 COPY projects/backend/gradlew projects/backend/build.gradle.kts projects/backend/settings.gradle.kts projects/backend/gradle.properties ./projects/backend/
 RUN cd projects/backend && ./gradlew --no-daemon dependencies > /dev/null 2>&1 || true
@@ -94,7 +101,7 @@ RUN cd projects/backend && ./gradlew --no-daemon bootJar -x test -Pversion=$APP_
 # ---------------------------------------------------------------------------
 # Stage 3 — Minimal runtime image
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM eclipse-temurin:${JAVA_VERSION}-jre-jammy AS runtime
 
 # Run as non-root for defense in depth
 RUN groupadd --system spring && useradd --system --gid spring --no-create-home spring

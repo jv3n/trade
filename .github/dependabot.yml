@@ -1,9 +1,10 @@
 # Dependabot — one grouped PR per ecosystem, patch and minor only.
 #
 # **No majors** : a major can carry silent breaking changes (Spring Boot 4 swapped starters and
-# Jackson for Jackson 3, #557 ; Kotlin 2.1 → 2.3 breaks Detekt's pinned `resolutionStrategy`), so
-# they are taken on by hand when the context is ready. The specific `ignore` blocks below add the bumps that are known to be
-# blocked by a peer dependency ; Dependabot reopens them on its own once that changes.
+# Jackson for Jackson 3, #557 ; Detekt 2 renamed its plugin and its config keys, #570), so they are
+# taken on by hand when the context is ready. The specific `ignore` blocks below add the bumps that
+# are known to be blocked by a peer dependency ; Dependabot reopens them on its own once that
+# changes.
 #
 # The trade-off of grouping : when CI breaks, the guilty bump is bisected by hand inside the PR.
 
@@ -45,6 +46,10 @@ updates:
         versions: ['2.4.20']
       - dependency-name: 'org.jetbrains.kotlin*'
         versions: ['2.4.20']
+      # Detekt runs a pre-release (#573) : no alpha → alpha step lands in a grouped PR unchosen.
+      # `< 2.0.0` covers every 2.0.0 pre-release and lets the stable 2.0.0 through.
+      - dependency-name: 'dev.detekt*'
+        versions: ['< 2.0.0']
 
   # ─────────────────────────────────────────────────────────────────────── Frontend npm
   - package-ecosystem: npm

@@ -57,11 +57,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up JDK 21
+      # The JDK is the one `.tool-versions` pins : `temurin-25.0.4+7.0.LTS` → `25.0.4+7.0.LTS`, setup-java's own spelling.
+      - name: Read the Java version
+        if: matrix.language == 'java-kotlin'
+        id: java
+        run: |
+          version=$(sed -nE 's/^java temurin-(.+)$/\1/p' .tool-versions)
+          test -n "$version" || { echo '::error::no "java temurin-…" line in .tool-versions'; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK
         if: matrix.language == 'java-kotlin'
         uses: actions/setup-java@v6
         with:
-          java-version: '21'
+          java-version: ${{ steps.java.outputs.version }}
           distribution: temurin
 
       # Dependency cache only — the build cache is deliberately not shared with backend.yml :

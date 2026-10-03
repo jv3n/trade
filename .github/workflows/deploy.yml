@@ -87,6 +87,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The image's JDK is the one `.tool-versions` pins, as a Temurin tag : `25.0.4+7` → `25.0.4_7`.
+      - name: Read the Java version
+        id: java
+        run: |
+          version=$(sed -nE 's/^java temurin-(.+)\.0\.LTS$/\1/p' .tool-versions)
+          test -n "$version" || { echo '::error::no "java temurin-…" line in .tool-versions'; exit 1; }
+          echo "tag=${version//+/_}" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
@@ -125,6 +133,7 @@ jobs:
           # One source of truth : the release tag is the image tag, the OCI label, the Sentry
           # release and `build.version` on `/actuator/info`.
           build-args: |
+            JAVA_VERSION=${{ steps.java.outputs.tag }}
             APP_VERSION=${{ github.event.release.tag_name }}
             SENTRY_ORG=${{ vars.GLITCHTIP_ORG }}
           secrets: |

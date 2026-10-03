@@ -16,10 +16,6 @@
 # Anything we can't tame here without losing real signal is fixed in code instead. See the
 # backlog entry "ESLint on the frontend" for the symmetric story on the JS side.
 
-build:
-  maxIssues: 0
-  excludeCorrectable: false
-
 config:
   validation: true
 
@@ -28,24 +24,25 @@ config:
 complexity:
   LongMethod:
     active: true
-    # Default 60 — bumped because LLM prompt builders and CSV parsers legitimately stretch.
+    # Default 60 allowed — raised because LLM prompt builders and CSV parsers legitimately stretch.
     # `CsvImportService.import` (~135 lines) and `.parseCsv` (~120 lines) are sequences of column
     # reads + lifecycle bookkeeping that read better as a single linear flow than as a chain of
     # private helpers ; the alternative would scatter the per-row decision (open / closed /
     # reopened, batch counters, warnings) across 4-5 functions and force the reader to jump.
     # Splitting them wouldn't make them more testable either — the unit test asserts on the
     # final `CsvImportResult` shape, not on intermediate steps.
-    threshold: 150
+    # Detekt 2 reports past the value, 1.x from it : every 1.x threshold N is N - 1 here.
+    allowedLines: 149
   LongParameterList:
     active: true
-    functionThreshold: 8
+    allowedFunctionParameters: 7
     # JPA entities (`Asset`, `Recommendation`, `TickerNarrativeSnapshot`…) have 8-14 `@Column`
     # params by design — that's the schema, not a code smell. Annotation-based exclusion below
     # also catches `@Embeddable` and `@MappedSuperclass`. `AppConfigService` used to carry 14
     # `@Value` injected defaults and bumped this threshold to 16 ; the v3 refactor (ticket #B6,
     # split those into `SecretsDefaults` / `DataProvidersDefaults` /
     # `LlmDefaults` `@Component` data classes, dropping the service constructor back to 6 params.
-    # Threshold kept at 8 (the function threshold, for symmetry) — two distinct patterns govern
+    # Kept at 7 allowed (the function one, for symmetry) — two distinct patterns govern
     # what to do when a bean approaches it :
     #
     # 1. **Config-defaults bean** (lots of `@Value` constructor params bundling YAML keys with
@@ -60,7 +57,7 @@ complexity:
     #    failure / event-granularity contracts. **Suppress at the class** with
     #    `@Suppress("LongParameterList")` + a comment justifying the exception. See
     #    `TickerNarrativeExecutor` (8 deps, 2026-05-15) for the canonical instance.
-    constructorThreshold: 8
+    allowedConstructorParameters: 7
     ignoreDefaultParameters: true
     ignoreDataClasses: true
     ignoreAnnotated:
@@ -69,24 +66,24 @@ complexity:
       - 'MappedSuperclass'
   CyclomaticComplexMethod:
     active: true
-    # Default 15 — bumped for `when` blocks with many branches that are intrinsically a lookup
+    # Default 14 allowed — raised for `when` blocks with many branches that are intrinsically a lookup
     # table (TwelveDataClient.outputSizeFor, MockMarketChartClient.barCountFor — each branch is
     # one expression). The metric counts branches, but the cognitive load is low.
-    threshold: 25
+    allowedComplexity: 24
   TooManyFunctions:
     active: true
-    thresholdInClasses: 16
-    thresholdInObjects: 16
-    thresholdInFiles: 18
+    allowedFunctionsPerClass: 15
+    allowedFunctionsPerObject: 15
+    allowedFunctionsPerFile: 17
   NestedBlockDepth:
     active: true
-    threshold: 5
+    allowedDepth: 4
   ComplexCondition:
     active: true
-    # Default 4 — bumped to 5 for null-check chains in JSON / CSV mappers (`if (open == null
+    # Default 3 allowed — raised to 4 for null-check chains in JSON / CSV mappers (`if (open == null
     # || high == null || low == null || close == null || volume == null)` legitimately reads
     # that way and is clearer than a helper).
-    threshold: 5
+    allowedConditions: 4
 
 # -------------------------------------------------------------------- style ---------------------
 
@@ -199,6 +196,10 @@ style:
       - 'PathVariable'
   UnusedPrivateProperty:
     active: true
+  VarCouldBeVal:
+    active: true
+    # Spring injects `@Autowired private lateinit var` fields in the tests : they can't be `val`.
+    ignoreLateinitVar: true
 
 # -------------------------------------------------------------------- exceptions ----------------
 
