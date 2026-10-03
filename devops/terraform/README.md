@@ -5,7 +5,7 @@ The GCP infrastructure of both environments (#330). Three roots, one state each 
 
 | Root | Holds |
 |---|---|
-| `terraform/project/` | what both environments share : the deploy account, Workload Identity Federation, Artifact Registry, the shared secrets |
+| `terraform/project/` | what both environments share : the deploy and plan accounts, Workload Identity Federation, Artifact Registry, the shared secrets |
 | [`env/production/`](../env/production/README.md), [`env/staging/`](../env/staging/README.md) | one environment each, through `terraform/modules/environment` : its runtime account, its own secrets, its Cloud Run service |
 
 This folder holds what is common ; each environment's root lives with its README.
@@ -37,7 +37,7 @@ gcloud storage buckets update gs://trade-496613-tfstate --versioning
 ## Changing the infrastructure
 
 ```bash
-terraform plan -out=change.tfplan          # in the PR description
+terraform plan -out=change.tfplan          # CI posts the same plan on the PR
 terraform apply change.tfplan              # by hand, after the merge
 ```
 
@@ -46,7 +46,7 @@ existing resource is brought in with an `import` block, and its PR's plan reads 
 change, 0 to destroy` ; the block is deleted once applied — it would fail on an empty project.
 
 CI runs `terraform fmt -check`, `tflint` (`devops/.tflint.hcl` : every Terraform rule, the Google
-ruleset) and `terraform validate` on every root — no credentials, no plan. Locally, from `devops/` :
+ruleset) and `terraform validate` on every root, without credentials. Locally, from `devops/` :
 
 ```bash
 tflint --init --config="$PWD/.tflint.hcl" && tflint --recursive --config="$PWD/.tflint.hcl"
@@ -56,6 +56,38 @@ tflint --init --config="$PWD/.tflint.hcl" && tflint --recursive --config="$PWD/.
 are pinned and nothing bumps them — Dependabot only moves `setup-tflint`. A stale pin fails
 silently (CI stays green, no new rules), so bump both by hand once a year. Keep them pinned : with
 `preset = "all"`, a floating ruleset would one day fail CI on code nobody touched.
+
+## Plan in CI, drift every week
+
+Both run `devops/tools/terraform/plan-all.sh` on the three roots as **`terraform-plan`**, a
+read-only account of the `project` root — one viewer role per kind of resource the roots hold,
+`roles/iam.securityReviewer` for their IAM policies, object read on the state bucket only —
+reached through Workload Identity Federation. `-lock=false` : it never writes the
+state either.
+
+- **On a PR touching Terraform** (`terraform.yml > Plan every root`) — the three plans land in one
+  PR comment, rewritten on every push. A destroy or replace on `project` or `production` is called
+  out. Changes don't fail the job ; a plan that can't run does.
+- **Every Monday** (`terraform-drift.yml`, also by hand from the Actions tab) — fails when a root is
+  not « No changes ». A change made in the console, or by `deploy.yml` on a field Terraform manages,
+  shows up here : revert it, or bring it into the code. The plans are in the run's summary.
+
+Set up once — both jobs skip while `GCP_TF_PLAN_SA` is unset :
+
+```bash
+cd devops/terraform/project && terraform apply      # creates terraform-plan and its grants
+gh variable set GCP_TF_PLAN_SA --repo jv3n/trade \
+  --body terraform-plan@trade-496613.iam.gserviceaccount.com
+```
+
+It holds read roles only — this lists the six of `main.tf` (`run.viewer`, `iam.serviceAccountViewer`,
+`iam.workloadIdentityPoolViewer`, `secretmanager.viewer`, `artifactregistry.reader`,
+`iam.securityReviewer`), nothing else :
+
+```bash
+gcloud projects get-iam-policy trade-496613 --flatten=bindings \
+  --filter=bindings.members:terraform-plan@ --format='value(bindings.role)'
+```
 
 ## Adding an environment
 
