@@ -1,5 +1,6 @@
 package com.portfolioai.journal.infrastructure.http
 
+import com.portfolioai.journal.application.TradeAttachmentService
 import com.portfolioai.journal.application.TradeEntryService
 import com.portfolioai.journal.application.dto.JournalDayDto
 import com.portfolioai.journal.application.dto.JournalSummaryDto
@@ -37,7 +38,10 @@ import org.springframework.web.multipart.MultipartFile
 )
 @RestController
 @RequestMapping("/api/journal/trades")
-class TradeEntryController(private val service: TradeEntryService) {
+class TradeEntryController(
+  private val service: TradeEntryService,
+  private val attachments: TradeAttachmentService,
+) {
 
   /**
    * Filtered + paginated listing. Every filter parameter is optional ; absence means "no filter on
@@ -178,12 +182,12 @@ class TradeEntryController(private val service: TradeEntryService) {
     @PathVariable id: UUID,
     @RequestParam("file") file: MultipartFile,
   ): TradeEntryDto =
-    service.attachScreenshot(id, file.bytes, file.contentType, file.originalFilename)
+    attachments.attachScreenshot(id, file.bytes, file.contentType, file.originalFilename)
 
   /** Serves the screenshot bytes inline with their stored content type (404 if none). */
   @GetMapping("/{id}/screenshot")
   fun getScreenshot(@PathVariable id: UUID): ResponseEntity<ByteArray> {
-    val screenshot = service.getScreenshot(id)
+    val screenshot = attachments.getScreenshot(id)
     return ResponseEntity.ok()
       .contentType(MediaType.parseMediaType(screenshot.contentType))
       .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
@@ -192,5 +196,5 @@ class TradeEntryController(private val service: TradeEntryService) {
 
   /** Removes the trade's screenshot. Returns the refreshed trade (`hasScreenshot = false`). */
   @DeleteMapping("/{id}/screenshot")
-  fun deleteScreenshot(@PathVariable id: UUID): TradeEntryDto = service.deleteScreenshot(id)
+  fun deleteScreenshot(@PathVariable id: UUID): TradeEntryDto = attachments.deleteScreenshot(id)
 }
