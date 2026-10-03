@@ -43,8 +43,10 @@ spring:
   session:
     jdbc:
       # The tables come from Flyway (`V14__spring_session.sql`), never from Spring Session itself.
-      # Expired sessions are purged by its default cleanup cron, every minute.
       initialize-schema: never
+      # Once a day, not the default every minute : on Cloud Run the purge runs between requests,
+      # without CPU, and fails to connect (#582). An expired session is refused on read anyway.
+      cleanup-cron: "0 0 4 * * *"
 
   flyway:
     enabled: true
