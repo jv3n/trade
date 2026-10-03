@@ -186,7 +186,7 @@ class StatEntry(
         .map { (label, _) -> label }
 
   private companion object {
-    val ONE_DOLLAR = BigDecimal.ONE
+    val ONE_DOLLAR: BigDecimal = BigDecimal.ONE
     val LATE_ENTRY: LocalTime = LocalTime.of(11, 0)
   }
 }

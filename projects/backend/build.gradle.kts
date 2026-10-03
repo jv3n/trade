@@ -229,6 +229,9 @@ detekt {
   allRules = false
   ignoreFailures = true
   config.setFrom("$projectDir/config/detekt/detekt.yml")
+  // SARIF paths from the repository root (`projects/backend/src/…`) : Detekt 2 defaults to the
+  // Gradle root, and Code Scanning can't link a `src/…` path to a file.
+  basePath.set(file("../.."))
 }
 
 // Detekt 2 only runs the rules needing type information (`LongParameterList`,
