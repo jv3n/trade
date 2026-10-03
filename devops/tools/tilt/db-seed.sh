@@ -7,5 +7,5 @@
 require_postgres
 
 step "Seeding demo data"
-psql_exec <devops/local/seed-demo.sql
+psql_exec <devops/env/local/seed-demo.sql
 ok "demo data loaded"

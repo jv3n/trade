@@ -14,7 +14,7 @@ Flyway migration — nothing of it reaches production.
 By hand :
 
 ```bash
-docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/local/seed-demo.sql
+docker exec -i portfolioai-postgres psql -U portfolioai -d portfolioai -v ON_ERROR_STOP=1 < devops/env/local/seed-demo.sql
 ```
 
 The data belongs to the first user in `app_user`. The script stops if that user already has data :

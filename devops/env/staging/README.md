@@ -31,32 +31,23 @@ To do once, in this order, before the first `-rc` release. Project `trade-496613
 
 Flyway creates the schema at the first boot ; nothing to run by hand.
 
-### 2. GCP — runtime account and secrets
+### 2. GCP — Terraform, then the secret values
+
+The runtime account, the staging secrets, who reads them and the Cloud Run service are this
+folder's Terraform root. On an empty project, follow steps 2 and 3 of *Adding an environment* in
+[`../../terraform/`](../../terraform/README.md) — `plan` adds, `apply` creates :
+
+- the runtime account `portfolioai-staging-runtime@`, which `github-deploy@` may act as ;
+- the containers `supabase-db-url-staging` and `app-admin-emails-staging`, read by the staging
+  account alongside the shared ones — never the production database ;
+- the service `portfolioai-staging`, public, on Google's `hello` image until the first deploy.
+
+Then the values Terraform never holds :
 
 ```bash
-gcloud config set project trade-496613
-
-# Runtime account of the staging service
-gcloud iam service-accounts create portfolioai-staging-runtime \
-  --display-name="PortfolioAI staging runtime"
-
-# Staging-only secrets
 printf '%s' 'jdbc:postgresql://…pooler.supabase.com:5432/postgres?user=…&password=…&sslmode=require' \
-  | gcloud secrets create supabase-db-url-staging --data-file=-
-printf '%s' 'you@example.com' | gcloud secrets create app-admin-emails-staging --data-file=-
-
-# Read access, secret by secret — the staging account never sees the production database
-SA=portfolioai-staging-runtime@trade-496613.iam.gserviceaccount.com
-for s in supabase-db-url-staging app-admin-emails-staging \
-         google-oauth-client-id google-oauth-client-secret sentry-dsn-backend; do
-  gcloud secrets add-iam-policy-binding "$s" \
-    --member="serviceAccount:$SA" --role=roles/secretmanager.secretAccessor
-done
-
-# The deploy account may run the service as that account
-gcloud iam service-accounts add-iam-policy-binding "$SA" \
-  --member=serviceAccount:github-deploy@trade-496613.iam.gserviceaccount.com \
-  --role=roles/iam.serviceAccountUser
+  | gcloud secrets versions add supabase-db-url-staging --data-file=-
+printf '%s' 'you@example.com' | gcloud secrets versions add app-admin-emails-staging --data-file=-
 ```
 
 ### 3. GitHub — the `staging` environment
@@ -70,9 +61,9 @@ gcloud iam service-accounts add-iam-policy-binding "$SA" \
 
 ### 4. First deploy
 
-Publish a pre-release `vX.Y.Z-rc1` (see [`../README.md`](../README.md) > Releasing). The workflow
-creates the `portfolioai-staging` service and prints its `*.run.app` URL in the run summary — keep
-it for step 5.
+Publish a pre-release `vX.Y.Z-rc1` (see [`../../docs/releasing.md`](../../docs/releasing.md)). The workflow
+deploys the app on the `portfolioai-staging` service and prints its `*.run.app` URL in the run
+summary — keep it for step 5.
 
 ### 5. Cloudflare — `staging.tickerstory.org`
 
@@ -80,7 +71,7 @@ Same set-up as production, pointed at the staging service :
 
 - **Worker** — `tickerstory-staging`, attached to `staging.tickerstory.org` as a custom domain (the
   DNS record is the Worker itself). Set `ORIGIN_HOST` in
-  [`../cloudflare/wrangler.toml`](../cloudflare/wrangler.toml) to the staging `*.run.app` URL, then
+  [`../../cloudflare/wrangler.toml`](../../cloudflare/wrangler.toml) to the staging `*.run.app` URL, then
   `npm run deploy:staging` there. The app doesn't read the forwarded host (Cloud Run strips it) :
   its public URL comes from `APP_FRONTEND_URL`, which the workflow sets.
 
@@ -98,7 +89,7 @@ https://staging.tickerstory.org/ (it creates your user), then :
 
 ```bash
 psql "postgresql://…pooler.supabase.com:5432/postgres?sslmode=require" \
-  -v ON_ERROR_STOP=1 -f devops/local/seed-demo.sql
+  -v ON_ERROR_STOP=1 -f devops/env/local/seed-demo.sql
 ```
 
 The script refuses to run on a user that already has data.

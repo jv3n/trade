@@ -7,9 +7,9 @@
 #   - Stage 3 (runtime):           minimal JRE-only image, ~200 MB
 #
 # Built from the repo root:
-#   docker build -f devops/prod/Dockerfile -t portfolioai-backend:dev .
+#   docker build -f devops/docker/Dockerfile -t portfolioai-backend:dev .
 #
-# Pushed to Artifact Registry (cf. devops/prod/README.md for the full command):
+# Pushed to Artifact Registry (cf. devops/env/production/README.md for the full command):
 #   docker tag portfolioai-backend:dev \
 #     northamerica-northeast1-docker.pkg.dev/trade-496613/backend/portfolioai:<tag>
 #   docker push northamerica-northeast1-docker.pkg.dev/trade-496613/backend/portfolioai:<tag>
