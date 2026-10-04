@@ -7,6 +7,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   EMPTY,
+  Observable,
   Subject,
   Subscription,
   catchError,
@@ -27,11 +28,13 @@ import {
   StbIconModule,
   StbInputModule,
   StbPaginatorModule,
-  StbProgressSpinnerModule,
+  StbSkeletonKpiRow,
+  StbSkeletonTable,
   StbSortHeaderModule,
   StbTableModule,
   StbToast,
   StbTooltipModule,
+  stbLoadGate,
 } from '@portfolioai/ui';
 import { JournalRepository, PageRequest } from '../../core/api/journal/journal.repository';
 import {
@@ -53,6 +56,11 @@ import {
 } from '../../shared/period-preset/period-preset';
 import { PluralPipe } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
+import {
+  skeletonHeaderKeys,
+  toSkeletonColumns,
+  type SkeletonColumnDefs,
+} from '../../shared/skeleton-columns/skeleton-columns';
 
 /**
  * Sort state for the journal table — same shape as ic3's `IcSortRequest` :
@@ -124,6 +132,24 @@ function dayKey(day: JournalDay): string {
  * One effect watches (`searchTerm`, `appliedFilter`, `sort`, `pageIndex`, `pageSize`) and
  * refetches when any of them changes.
  */
+/** The listing's columns as its skeleton shows them (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  // The chevron of a day with several trades.
+  expand: { variant: 'blank', width: '24px' },
+  tradeDate: { key: 'journal.fields.tradeDate' },
+  ticker: { key: 'journal.fields.ticker', variant: 'ticker' },
+  patterns: { key: 'journal.fields.pattern' },
+  directions: { key: 'journal.fields.direction' },
+  tradeCount: { key: 'journal.fields.tradeCount', variant: 'numeric' },
+  maxSize: { key: 'journal.fields.maxSize', variant: 'numeric' },
+  openPrice: { key: 'journal.fields.openPrice', variant: 'numeric' },
+  exitPrice: { key: 'journal.fields.exitPrice', variant: 'numeric' },
+  durationMinutes: { key: 'journal.fields.cumulatedDuration', variant: 'numeric' },
+  retainedProfitDollars: { key: 'journal.fields.retainedProfitDollars', variant: 'numeric' },
+  retainedGainPercent: { key: 'journal.fields.gainPercent', variant: 'numeric' },
+  actions: { variant: 'actions' },
+};
+
 @Component({
   selector: 'app-journal-page',
 
@@ -140,8 +166,9 @@ function dayKey(day: JournalDay): string {
     StbIconModule,
     StbInputModule,
     StbPaginatorModule,
-    StbProgressSpinnerModule,
     StbSortHeaderModule,
+    StbSkeletonTable,
+    StbSkeletonKpiRow,
     StbTableModule,
     StbTooltipModule,
     PluralPipe,
@@ -229,6 +256,18 @@ export class JournalPage {
     'actions',
   ] as const;
   readonly detailColumns = ['detail'] as const;
+
+  /** First load only (#539) : a refetch dims the table instead. */
+  readonly gate = stbLoadGate(this.loading);
+  private readonly headerLabels = toSignal(
+    this.translate.stream(skeletonHeaderKeys(SKELETON_COLUMNS)) as Observable<
+      Record<string, string>
+    >,
+    { initialValue: {} },
+  );
+  readonly skeletonColumns = computed(() =>
+    toSkeletonColumns(this.columns, SKELETON_COLUMNS, this.headerLabels()),
+  );
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {

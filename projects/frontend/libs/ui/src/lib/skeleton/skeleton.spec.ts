@@ -51,6 +51,7 @@ class Host {
     { label: 'Ticker', variant: 'ticker' },
     { label: 'P&L ($ US)', variant: 'numeric' },
     { label: '', variant: 'actions' },
+    { label: '✓', variant: 'blank', width: '36px' },
   ];
 }
 
@@ -85,7 +86,7 @@ describe('skeletons', () => {
     show('table');
 
     const headers = [...el.querySelectorAll('th')].map((th) => th.textContent?.trim());
-    expect(headers).toEqual(['Date', 'Ticker', 'P&L ($ US)', '']);
+    expect(headers).toEqual(['Date', 'Ticker', 'P&L ($ US)', '', '✓']);
     expect(el.querySelectorAll('tr[mat-row]').length).toBe(4);
   });
 
@@ -96,6 +97,15 @@ describe('skeletons', () => {
     expect(cells[1].querySelector('.stb-skeleton--chip')).not.toBeNull();
     expect(cells[2].classList).toContain('stb-col--numeric');
     expect(cells[3].querySelector('ui-skeleton')).toBeNull();
+  });
+
+  // A narrow icon column sized by its content : a ghost bar there shifted the columns (#542).
+  it('holds a blank column at the width of its real content, without a ghost', () => {
+    show('table');
+
+    const cell = el.querySelectorAll('tr[mat-row]')[0].querySelectorAll('td')[4];
+    expect(cell.querySelector('ui-skeleton')).toBeNull();
+    expect(cell.querySelector<HTMLElement>('.stb-skeleton-spacer')?.style.width).toBe('36px');
   });
 
   it('marks the region busy and gives it its spoken label', () => {
