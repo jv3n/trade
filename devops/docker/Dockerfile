@@ -45,20 +45,27 @@ COPY docs/notes/ /docs/notes/
 # never reach the served bundle. Without the token (a local `docker build`) the upload is skipped —
 # `deploy.yml` checks the secret is set before it builds. A failed upload only warns : GlitchTip
 # being down must not block a release, it costs that one release its readable traces.
-# Release files matched by name, not `sourcemaps upload` : GlitchTip registers its artifact bundle
-# but stores nothing (#568). No `releases finalize` either — GlitchTip answers it with a 405.
+# `glitchtip-cli`, not `sentry-cli`, which always sends an artifact bundle GlitchTip registers without
+# storing (#568). Static linux/amd64 binary pinned by checksum, fetched in the upload branch : an
+# unreachable GitLab costs the readable traces, never the build.
 ARG APP_VERSION=0.0.0-SNAPSHOT
 ARG SENTRY_URL=https://app.glitchtip.com/
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT=portfolioai-frontend
+ARG GLITCHTIP_CLI_VERSION=v1.0.0
+ARG GLITCHTIP_CLI_SHA256=de1c035aa61931a6265d7b29b1614781dfee925466142a907508cb097082dfef
 RUN --mount=type=secret,id=sentry_auth_token \
     npm run build -- --define "APP_RELEASE='${APP_VERSION}'" \
  && BROWSER_DIR=$(echo dist/*/browser) \
  && if [ -s /run/secrets/sentry_auth_token ]; then \
       export SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token)" SENTRY_URL SENTRY_ORG SENTRY_PROJECT \
-      && { npx sentry-cli releases new "$APP_VERSION" \
-           && npx sentry-cli releases files "$APP_VERSION" upload-sourcemaps "$BROWSER_DIR" \
-                --url-prefix '~/' --rewrite --validate \
+      && { wget -qO /tmp/glitchtip-cli \
+             "https://gitlab.com/glitchtip/glitchtip-cli/-/jobs/artifacts/${GLITCHTIP_CLI_VERSION}/raw/artifacts/glitchtip-cli-linux-x86_64?job=build-linux-x86_64" \
+           && echo "${GLITCHTIP_CLI_SHA256}  /tmp/glitchtip-cli" | sha256sum -c - \
+           && chmod +x /tmp/glitchtip-cli \
+           && /tmp/glitchtip-cli sourcemaps inject "$BROWSER_DIR" \
+           && /tmp/glitchtip-cli sourcemaps upload --release "$APP_VERSION" --project "$SENTRY_PROJECT" \
+                --validate "$BROWSER_DIR" \
            || echo "WARNING : source maps not uploaded, $APP_VERSION reports minified traces."; }; \
     else echo "No sentry_auth_token secret : source maps not uploaded."; fi \
  && find "$BROWSER_DIR" -name '*.map' -delete
