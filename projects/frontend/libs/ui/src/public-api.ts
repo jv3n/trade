@@ -26,6 +26,7 @@ export * from './lib/paginator';
 export * from './lib/progress-spinner';
 export * from './lib/select';
 export * from './lib/sidenav';
+export * from './lib/skeleton';
 export * from './lib/snack-bar';
 export * from './lib/sort-header';
 export * from './lib/table';

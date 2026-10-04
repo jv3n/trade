@@ -1,0 +1,106 @@
+// Skeleton loading (#539) — the blocks of `ui-skeleton` and the patterns built on it, plus the fade
+// the content arrives with. Global rather than component styles so a pattern can align its blocks
+// through the table's own column classes (`.stb-col--numeric`).
+//
+// Neutral only : `--color-skeleton` with a highlight sweeping across. Under reduced motion the
+// sweep and the fade go — `_base.scss` stops animations on elements, not on the `::after` here.
+
+@use '../../../styles/sizes' as s;
+
+.stb-skeleton-host {
+  display: flex;
+  flex-direction: column;
+  gap: s.$space-sm;
+}
+
+.stb-skeleton {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  background: var(--color-skeleton);
+  border-radius: var(--radius-sm);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--color-skeleton-shine), transparent);
+    transform: translateX(-100%);
+    animation: stb-skeleton-sweep 1.6s ease-in-out infinite;
+  }
+}
+
+.stb-skeleton--text {
+  height: s.$font-xs;
+}
+
+.stb-skeleton--line {
+  height: 10px;
+}
+
+.stb-skeleton--block {
+  height: s.$space-4xl;
+}
+
+.stb-skeleton--circle {
+  width: s.$space-2xl;
+  height: s.$space-2xl;
+  border-radius: 50%;
+}
+
+.stb-skeleton--chip {
+  width: 58px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+}
+
+// Ghost cells take the alignment of the column they stand for.
+.stb-col--numeric .stb-skeleton-host {
+  align-items: flex-end;
+}
+
+.stb-skeleton-kpi-value .stb-skeleton {
+  width: 70%;
+  height: 26px;
+  margin: s.$space-xs 0;
+}
+
+.stb-skeleton-title {
+  margin-bottom: s.$space-sm;
+
+  .stb-skeleton {
+    height: s.$font-lg;
+  }
+}
+
+.stb-skeleton-card {
+  padding: s.$card-padding-y s.$card-padding-x;
+}
+
+.stb-fade-in {
+  animation: stb-fade-in 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stb-skeleton::after {
+    display: none;
+  }
+}
+
+// Storybook's reduced-motion story, which can't switch the OS setting.
+.stb-skeleton-still .stb-skeleton::after {
+  display: none;
+}
+
+@keyframes stb-skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes stb-fade-in {
+  from {
+    opacity: 0;
+  }
+}
