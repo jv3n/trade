@@ -65,6 +65,10 @@ RUN --mount=type=secret,id=sentry_auth_token \
            && chmod +x /tmp/glitchtip-cli \
            && node apps/web/tools/strip-debug-ids.mjs "$BROWSER_DIR" \
            && /tmp/glitchtip-cli sourcemaps inject "$BROWSER_DIR" \
+           && total=$(ls "$BROWSER_DIR"/*.js | wc -l) \
+           && injected=$(grep -lF '_sentryDebugIds[' "$BROWSER_DIR"/*.js | wc -l) \
+           && { [ "$injected" -eq "$total" ] \
+                || echo "WARNING : debug ids injected in $injected of $total bundles, the others report minified traces."; } \
            && /tmp/glitchtip-cli sourcemaps upload --release "$APP_VERSION" --project "$SENTRY_PROJECT" \
                 --validate "$BROWSER_DIR" \
            || echo "WARNING : source maps not uploaded, $APP_VERSION reports minified traces."; }; \
