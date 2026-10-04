@@ -65,6 +65,8 @@ export class MorningReconciliation {
 
   /** The app's derived balance — null while the host is still loading its summary. */
   readonly appBalance = input<number | null>(null);
+  /** The host failed to load the balance : the form says why it waits instead of the usual note. */
+  readonly balanceUnavailable = input(false);
   /**
    * Step 1 of the Today page drops the history to stay a single line. Declared as a boolean
    * attribute so the host writes `compact`, not `[compact]="true"`.

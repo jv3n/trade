@@ -38,12 +38,14 @@ import { AccountPage } from './account-page';
 describe('AccountPage', () => {
   let findMovements: ReturnType<typeof vi.fn>;
   let getSummary: ReturnType<typeof vi.fn>;
+  let getBalanceSeries: ReturnType<typeof vi.fn>;
   let page: PagedResult<AccountMovement>;
 
   beforeEach(async () => {
     page = makePage([]);
     findMovements = vi.fn((_filter?: AccountMovementFilter) => of(page));
     getSummary = vi.fn((_filter?: AccountMovementFilter) => of(makeSummary()));
+    getBalanceSeries = vi.fn(() => of([]));
 
     await TestBed.configureTestingModule({
       imports: [AccountPage],
@@ -59,7 +61,7 @@ describe('AccountPage', () => {
           useValue: {
             findMovements,
             getSummary,
-            getBalanceSeries: () => of([]),
+            getBalanceSeries,
             addMovement: () => of({} as unknown),
             updateMovement: () => of({} as unknown),
             deleteMovement: () => of(undefined),
@@ -225,11 +227,11 @@ describe('AccountPage', () => {
       findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
-      expect(fixture.componentInstance.error()).not.toBeNull();
+      expect(fixture.componentInstance.loadFailed()).toBe(true);
 
       fixture.componentInstance.onTypeChange('all');
 
-      expect(fixture.componentInstance.error()).toBeNull();
+      expect(fixture.componentInstance.loadFailed()).toBe(false);
     });
 
     it('stays while the summary is still missing, even when the listing loads', () => {
@@ -239,7 +241,7 @@ describe('AccountPage', () => {
 
       fixture.componentInstance.onTypeChange('cash');
 
-      expect(fixture.componentInstance.error()).not.toBeNull();
+      expect(fixture.componentInstance.loadFailed()).toBe(true);
     });
 
     it('goes away once a new period loads everything that had failed', () => {
@@ -252,7 +254,128 @@ describe('AccountPage', () => {
         ...computePeriodRange('lastMonth'),
       });
 
-      expect(fixture.componentInstance.error()).toBeNull();
+      expect(fixture.componentInstance.loadFailed()).toBe(false);
+    });
+
+    it('shows « Retry » at work while the failed call is tried again', () => {
+      getSummary.mockReturnValueOnce(throwError(() => new Error('503')));
+      const pending = new Subject<AccountSummary>();
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      getSummary.mockReturnValueOnce(pending);
+
+      fixture.componentInstance.retry();
+      expect(fixture.componentInstance.retrying()).toBe(true);
+
+      pending.error(new Error('503'));
+      expect(fixture.componentInstance.retrying()).toBe(false);
+      expect(fixture.componentInstance.summaryFailed()).toBe(true);
+    });
+
+    // A late success of a superseded listing used to clear the banner over another period's rows.
+    it('drops the answer of a superseded listing when it lands after the current one', () => {
+      const superseded = new Subject<PagedResult<AccountMovement>>();
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      findMovements.mockReturnValueOnce(superseded);
+      fixture.componentInstance.onTypeChange('cash');
+      findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
+      fixture.componentInstance.onTypeChange('all');
+
+      superseded.next(makePage([makeMovement()]));
+
+      expect(superseded.observed).toBe(false);
+      expect(fixture.componentInstance.movementsFailed()).toBe(true);
+    });
+
+    it('« Retry » reruns the calls that failed, and only those', () => {
+      findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      getSummary.mockClear();
+      getBalanceSeries.mockClear();
+      findMovements.mockClear();
+
+      fixture.componentInstance.retry();
+
+      expect(findMovements).toHaveBeenCalledTimes(1);
+      expect(getSummary).not.toHaveBeenCalled();
+      expect(getBalanceSeries).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.loadFailed()).toBe(false);
+    });
+  });
+
+  /**
+   * A figure on the page is current or visibly absent (#493) : what a failed call feeds reads
+   * « unavailable », never the figure of the previous render.
+   */
+  describe('unavailable figures', () => {
+    it('shows the tiles unavailable rather than hiding them when the summary fails', () => {
+      getSummary.mockReturnValue(throwError(() => new Error('503')));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      const tiles = fixture.nativeElement.querySelector('[data-testid="kpi-unavailable"]');
+      expect(tiles?.querySelectorAll('.kpi').length).toBe(3);
+      expect(tiles?.textContent).toContain('—');
+    });
+
+    // A period whose summary fails used to leave the previous period's balance on screen — and in
+    // the reconciliation, which would have measured a gap against it.
+    it('withholds the balance from the reconciliation once the summary fails on a new period', () => {
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      expect(fixture.componentInstance.appBalance()).toBe(makeSummary().balance);
+
+      getSummary.mockReturnValue(throwError(() => new Error('503')));
+      fixture.componentInstance.setPeriod({
+        period: 'lastMonth',
+        ...computePeriodRange('lastMonth'),
+      });
+
+      expect(fixture.componentInstance.appBalance()).toBeNull();
+    });
+
+    it('says the curve is unavailable when the series fails', () => {
+      getBalanceSeries.mockReturnValue(throwError(() => new Error('503')));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.seriesFailed()).toBe(true);
+      expect(fixture.nativeElement.querySelector('.chart-empty')?.textContent).toContain(
+        'account.chartUnavailable',
+      );
+    });
+
+    // The range is computed from the series : after a failed reload it would date the previous
+    // points, clipped to the new period — a stale figure next to « unavailable ».
+    it('drops the curve range once the series fails after a first load', () => {
+      // One point : enough for a range, short of the chart, whose ResizeObserver jsdom lacks.
+      getBalanceSeries.mockReturnValue(of([{ date: new Date(), balance: 27360 }]));
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.chart-card .hint')).not.toBeNull();
+
+      getBalanceSeries.mockReturnValue(throwError(() => new Error('503')));
+      fixture.componentInstance.onReconciled();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.chart-card .hint')).toBeNull();
+    });
+
+    it('replaces the rows with « unavailable » when the listing fails', () => {
+      page = makePage([makeMovement()]);
+      const fixture = TestBed.createComponent(AccountPage);
+      fixture.detectChanges();
+
+      findMovements.mockReturnValueOnce(throwError(() => new Error('503')));
+      fixture.componentInstance.onTypeChange('all');
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="movements-unavailable"]'),
+      ).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('table')).toBeNull();
     });
   });
 
@@ -372,7 +495,7 @@ describe('AccountPage', () => {
       const fixture = TestBed.createComponent(AccountPage);
       fixture.detectChanges();
 
-      expect(fixture.componentInstance.error()).not.toBeNull();
+      expect(fixture.componentInstance.loadFailed()).toBe(true);
     });
 
     it('reads a dash, not « — % of the P&L », when the period made no profit', () => {

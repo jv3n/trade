@@ -939,8 +939,20 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
 types » is one click away, and the period keeps its own default (« Ce mois »). Corrections are
 hidden by default, so the gap tile above is what keeps them in sight.
 
+**A figure on the page is current or visibly absent** (#493) : the page loads in three calls — the
+period's figures (the KPI tiles), the balance curve, the movements. When one fails, what it feeds
+shows **« — »** and **« Indisponible »** in place of its value — the tiles (the gap tile is left out :
+whether the period had a reconciled morning is not known), « Courbe indisponible », « Mouvements
+indisponibles » — never the figure of the previous render. **The morning reconciliation waits for
+the balance** : with the period's figures missing, « Solde app » reads « — » and both buttons are
+disabled — a gap measured against a stale balance would write a wrong correction. One red banner above says that part of
+the account could not be loaded ; it stays while any call is still failing and goes once all of
+them loaded again. Its **« Réessayer »** button reruns the failed calls only. No automatic retry :
+a failing backend is not hammered, and the user decides when to try again.
+
 **Screen** : [`compte.html`](compte.html) — USD / CAD balance, the morning reconciliation panel
-(live gap), the history of the last reconciliations, the balance curve, the movements list.
+(live gap), the history of the last reconciliations, the balance curve, the movements list ; a
+mockup-only switch shows the page with its calls failing.
 
 ---
 

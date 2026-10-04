@@ -149,16 +149,35 @@ export class AccountPage {
   readonly loading = signal(true);
   /**
    * The calls whose last attempt failed. Each clears itself on its next success, so the banner
-   * stays while anything is still missing and goes once everything loaded again (#493).
+   * stays while anything is still missing and goes once everything loaded again (#493). What a
+   * failed call feeds reads « unavailable » rather than its previous figure.
    */
   private readonly failedCalls = signal<ReadonlySet<LoadCall>>(new Set());
-  readonly error = computed<string | null>(() =>
-    this.failedCalls().size > 0 ? this.translate.instant('account.errors.load') : null,
+  readonly loadFailed = computed(() => this.failedCalls().size > 0);
+  private readonly inFlight = signal<ReadonlySet<LoadCall>>(new Set());
+  /** A failed call is being tried again — the banner's « Retry » shows it is at work. */
+  readonly retrying = computed(() => [...this.failedCalls()].some((c) => this.inFlight().has(c)));
+  readonly summaryFailed = computed(() => this.failedCalls().has('summary'));
+  readonly seriesFailed = computed(() => this.failedCalls().has('series'));
+  readonly movementsFailed = computed(() => this.failedCalls().has('movements'));
+  /**
+   * The balance the morning reconciliation measures against — null while the summary is missing :
+   * a gap taken against a stale balance would write a wrong correction.
+   */
+  readonly appBalance = computed(() =>
+    this.summaryFailed() ? null : (this.summary()?.balance ?? null),
   );
+  readonly unavailableKpis = [
+    'account.currentBalance',
+    'account.kpi.periodPnl',
+    'account.kpi.netInjected',
+  ] as const;
   /** The period's figures, over its dates only — never narrowed by the table's type filter. */
   readonly summary = signal<AccountSummary | null>(null);
-  /** The in-flight summary call — cancelled on refetch so a stale answer never lands last. */
+  /** The in-flight calls — each cancelled on refetch so a stale answer never lands last. */
   private summaryCall?: Subscription;
+  private seriesCall?: Subscription;
+  private movementsCall?: Subscription;
   readonly movements = signal<AccountMovement[]>([]);
   readonly totalElements = signal(0);
   readonly pageIndex = signal(0);
@@ -304,6 +323,14 @@ export class AccountPage {
     this.fetch();
   }
 
+  /** The banner's « Retry » — reruns the calls that failed, and only those. */
+  retry(): void {
+    const failed = this.failedCalls();
+    if (failed.has('summary')) this.fetchSummary();
+    if (failed.has('series')) this.fetchSeries();
+    if (failed.has('movements')) this.fetchMovements();
+  }
+
   onPage(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
@@ -395,9 +422,15 @@ export class AccountPage {
   }
 
   private fetch(): void {
-    this.loading.set(true);
+    this.fetchSummary();
+    this.fetchSeries();
+    this.fetchMovements();
+  }
+
+  private fetchSummary(): void {
     const { dateFrom, dateTo } = this.toApiFilter();
     this.summaryCall?.unsubscribe();
+    this.started('summary');
     this.summaryCall = this.repo.getSummary({ dateFrom, dateTo, types: null }).subscribe({
       next: (s) => {
         this.summary.set(s);
@@ -405,16 +438,20 @@ export class AccountPage {
       },
       error: () => this.markLoaded('summary', false),
     });
+  }
+
+  private fetchSeries(): void {
     // The whole series, always : the chart is clipped client-side, so changing the window doesn't
     // cost a round-trip and the curve keeps its shape when the user flips between presets.
-    this.repo.getBalanceSeries().subscribe({
+    this.seriesCall?.unsubscribe();
+    this.started('series');
+    this.seriesCall = this.repo.getBalanceSeries().subscribe({
       next: (pts) => {
         this.series.set(pts);
         this.markLoaded('series', true);
       },
       error: () => this.markLoaded('series', false),
     });
-    this.fetchMovements();
   }
 
   /**
@@ -431,7 +468,9 @@ export class AccountPage {
 
   private fetchMovements(): void {
     this.loading.set(true);
-    this.repo
+    this.movementsCall?.unsubscribe();
+    this.started('movements');
+    this.movementsCall = this.repo
       .findMovements(this.toApiFilter(), {
         pageIndex: this.pageIndex(),
         pageSize: this.pageSize(),
@@ -450,7 +489,16 @@ export class AccountPage {
       });
   }
 
+  private started(call: LoadCall): void {
+    this.inFlight.update((calls) => new Set(calls).add(call));
+  }
+
   private markLoaded(call: LoadCall, loaded: boolean): void {
+    this.inFlight.update((calls) => {
+      const next = new Set(calls);
+      next.delete(call);
+      return next;
+    });
     this.failedCalls.update((failed) => {
       const next = new Set(failed);
       if (loaded) next.delete(call);

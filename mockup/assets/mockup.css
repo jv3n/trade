@@ -964,3 +964,25 @@ dialog.confirm.danger .confirm-icon {
     transition: none !important;
   }
 }
+
+/* Bandeau d'erreur de chargement, comme `.error-banner` de la lib (#493). */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--loss-soft);
+  border: 1px solid var(--loss);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  color: var(--loss);
+  margin-bottom: 16px;
+}
+
+.error-banner .btn {
+  margin-left: auto;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
