@@ -12,16 +12,33 @@
     </div>
   </header>
 
-  @if (error(); as msg) {
+  @if (loadFailed()) {
     <div class="error-banner">
       <mat-icon>error</mat-icon>
-      <span>{{ msg }}</span>
+      <span>{{ 'account.errors.load' | translate }}</span>
+      <button mat-stroked-button type="button" [disabled]="retrying()" (click)="retry()">
+        @if (retrying()) {
+          <mat-spinner diameter="16" />
+        }
+        {{ 'account.errors.retry' | translate }}
+      </button>
     </div>
   }
 
   <!-- KPI row — balance is the live one, the others are scoped to the active filter (the gap tile
        to its dates only). -->
-  @if (summary(); as s) {
+  @if (summaryFailed()) {
+    <!-- The gap tile is left out : whether the period had a reconciled morning is not known. -->
+    <section class="kpi-row" data-testid="kpi-unavailable">
+      @for (label of unavailableKpis; track label) {
+        <mat-card class="kpi" appearance="outlined">
+          <div class="kpi__label">{{ label | translate }}</div>
+          <div class="kpi__value kpi__value--unavailable">—</div>
+          <div class="kpi__sub">{{ 'account.unavailable' | translate }}</div>
+        </mat-card>
+      }
+    </section>
+  } @else if (summary(); as s) {
     <section class="kpi-row">
       <mat-card class="kpi" appearance="outlined" data-testid="account-balance">
         <div class="kpi__label">
@@ -140,7 +157,8 @@
       <span class="hint">{{ 'account.reconciliation.hint' | translate }}</span>
     </h3>
     <app-morning-reconciliation
-      [appBalance]="summary()?.balance ?? null"
+      [appBalance]="appBalance()"
+      [balanceUnavailable]="summaryFailed()"
       (settled)="onReconciled()"
     />
   </mat-card>
@@ -148,11 +166,14 @@
   <mat-card class="chart-card" appearance="outlined">
     <h3 class="card-title">
       <span>{{ 'account.chartTitle' | translate }}</span>
-      @if (chartRange(); as r) {
+      <!-- The range comes from the series : a failed one would date the previous points. -->
+      @if (!seriesFailed() && chartRange(); as r) {
         <span class="hint">{{ r.from | date: 'shortDate' }} → {{ r.to | date: 'shortDate' }}</span>
       }
     </h3>
-    @if (chartPoints().length >= 2) {
+    @if (seriesFailed()) {
+      <p class="chart-empty">{{ 'account.chartUnavailable' | translate }}</p>
+    } @else if (chartPoints().length >= 2) {
       <ui-area-chart [points]="chartPoints()" [unit]="currencySuffixKey() | translate" />
     } @else {
       <p class="chart-empty">{{ 'account.chartEmpty' | translate }}</p>
@@ -186,6 +207,11 @@
       <div class="loading-state">
         <mat-spinner diameter="20" />
         <span>{{ 'account.loading' | translate }}</span>
+      </div>
+    } @else if (movementsFailed()) {
+      <div class="empty-state" data-testid="movements-unavailable">
+        <mat-icon>cloud_off</mat-icon>
+        <p>{{ 'account.movementsUnavailable' | translate }}</p>
       </div>
     } @else if (movements().length === 0) {
       <div class="empty-state">

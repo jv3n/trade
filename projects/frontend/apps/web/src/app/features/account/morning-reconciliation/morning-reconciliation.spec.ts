@@ -92,6 +92,17 @@ describe('MorningReconciliation', () => {
     expect(page.gap()).toBe(0);
   });
 
+  it('says why it waits when the host could not load the balance', () => {
+    const fixture = TestBed.createComponent(MorningReconciliation);
+    fixture.componentRef.setInput('appBalance', null);
+    fixture.componentRef.setInput('balanceUnavailable', true);
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[data-testid="balance-unavailable"]')).not.toBeNull();
+    expect(el.textContent).not.toContain('account.reconciliation.note');
+  });
+
   it('waits for the host balance before computing anything', () => {
     const page = setup(null).componentInstance;
 

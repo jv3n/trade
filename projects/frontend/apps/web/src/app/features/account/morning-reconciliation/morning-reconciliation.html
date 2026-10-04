@@ -92,7 +92,13 @@
   </button>
 </div>
 
-<p class="hint note">{{ 'account.reconciliation.note' | translate }}</p>
+@if (balanceUnavailable()) {
+  <p class="hint note" data-testid="balance-unavailable">
+    {{ 'account.reconciliation.balanceUnavailable' | translate }}
+  </p>
+} @else {
+  <p class="hint note">{{ 'account.reconciliation.note' | translate }}</p>
+}
 
 <!-- The history is the account page's recap ; step 1 of the Today page stays a single line. -->
 @if (!compact() && history().length > 0) {

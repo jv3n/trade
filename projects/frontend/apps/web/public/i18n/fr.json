@@ -267,6 +267,7 @@
       "validate": "Valider le rapprochement",
       "createCorrection": "Créer la correction",
       "note": "Aucun écart : le rapprochement est simplement horodaté. En cas d'écart, une ligne « Correction » cale le solde sur TradeZero.",
+      "balanceUnavailable": "Solde calculé indisponible : le rapprochement attend qu'il soit rechargé — un écart mesuré contre un ancien solde écrirait une fausse correction.",
       "history": "Derniers rapprochements :",
       "doneClean": "Rapproché ce matin — aucun écart.",
       "doneCorrected": "Rapproché ce matin — une correction de {{gap}} $ a été enregistrée.",
@@ -294,16 +295,20 @@
       "CAD": "CAD"
     },
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · taux BCE, {{date}}",
-    "usdSuffix": "\u00a0$\u00a0US",
-    "usdUnit": "$\u00a0US",
-    "cadSuffix": "\u00a0$\u00a0CA",
+    "usdSuffix": " $ US",
+    "usdUnit": "$ US",
+    "cadSuffix": " $ CA",
     "fxUnavailable": "Taux de change indisponible pour le moment.",
+    "unavailable": "Indisponible",
     "addMovement": "Ajouter un mouvement",
     "chartEmpty": "Pas assez de mouvements pour tracer la courbe du solde.",
+    "chartUnavailable": "Courbe indisponible",
     "loading": "Chargement du compte…",
     "empty": "Aucun mouvement pour l'instant. Ajoute un dépôt pour commencer.",
+    "movementsUnavailable": "Mouvements indisponibles",
     "errors": {
-      "load": "Impossible de charger le compte. Réessaie."
+      "load": "Une partie du compte n'a pas pu être chargée.",
+      "retry": "Réessayer"
     },
     "movements": "Mouvements",
     "viewTrade": "Voir le trade",

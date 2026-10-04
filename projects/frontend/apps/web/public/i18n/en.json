@@ -267,6 +267,7 @@
       "validate": "Validate the reconciliation",
       "createCorrection": "Create the correction",
       "note": "No gap : the reconciliation is simply timestamped. With a gap, a « Correction » line puts the balance on the TradeZero figure.",
+      "balanceUnavailable": "Computed balance unavailable : the reconciliation waits for it to reload — a gap measured against a stale balance would write a wrong correction.",
       "history": "Last reconciliations:",
       "doneClean": "Reconciled this morning — no gap.",
       "doneCorrected": "Reconciled this morning — a correction of {{gap}} $ was recorded.",
@@ -294,16 +295,20 @@
       "CAD": "CAD"
     },
     "fxRate": "1 {{base}} = {{rate}} {{quote}} · ECB rate, {{date}}",
-    "usdSuffix": "\u00a0USD",
+    "usdSuffix": " USD",
     "usdUnit": "USD",
-    "cadSuffix": "\u00a0CAD",
+    "cadSuffix": " CAD",
     "fxUnavailable": "Exchange rate unavailable right now.",
+    "unavailable": "Unavailable",
     "addMovement": "Add movement",
     "chartEmpty": "Not enough movements to draw the balance curve.",
+    "chartUnavailable": "Balance curve unavailable",
     "loading": "Loading account…",
     "empty": "No movement yet. Add a deposit to get started.",
+    "movementsUnavailable": "Movements unavailable",
     "errors": {
-      "load": "Couldn't load the account. Please retry."
+      "load": "Part of the account couldn't be loaded.",
+      "retry": "Retry"
     },
     "movements": "Movements",
     "viewTrade": "View the trade",

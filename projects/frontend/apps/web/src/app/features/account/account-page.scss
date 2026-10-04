@@ -94,3 +94,11 @@
 .neg {
   color: var(--color-danger);
 }
+
+.kpi__value--unavailable {
+  color: var(--color-text-muted);
+}
+
+.error-banner button {
+  margin-left: auto;
+}
