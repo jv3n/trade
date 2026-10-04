@@ -10,8 +10,16 @@ import { StbSkeleton } from './skeleton.component';
 export interface StbSkeletonColumn {
   /** The header as the real table shows it — already translated. */
   label: string;
-  /** The `stbCol` variant of the real column, or `ticker` for a chip-shaped cell. */
-  variant?: StbTableColVariant | 'ticker';
+  /**
+   * The `stbCol` variant of the real column, `ticker` for a chip-shaped cell, or `blank` for a
+   * narrow icon column whose cell holds no ghost.
+   */
+  variant?: StbTableColVariant | 'ticker' | 'blank';
+  /**
+   * For a `blank` cell : the width of what the real cell holds (an icon, a small button), kept by
+   * an invisible spacer so the column sizes like the real one.
+   */
+  width?: string;
 }
 
 /** Ghost widths vary per cell so the rows don't read as a grid of identical bars. */
@@ -35,7 +43,9 @@ function ghostWidth(row: number, col: number): number {
           <ng-container [matColumnDef]="'c' + c">
             <th mat-header-cell *matHeaderCellDef [class]="cellClass(col)">{{ col.label }}</th>
             <td mat-cell *matCellDef="let r" [class]="cellClass(col)">
-              @if (col.variant !== 'actions') {
+              @if (col.variant === 'blank') {
+                <span class="stb-skeleton-spacer" [style.width]="col.width ?? null"></span>
+              } @else if (col.variant !== 'actions') {
                 <ui-skeleton
                   [variant]="col.variant === 'ticker' ? 'chip' : 'text'"
                   [width]="col.variant === 'ticker' ? null : ghostWidth(r, c)"
@@ -67,7 +77,9 @@ export class StbSkeletonTable {
   protected readonly ghostWidth = ghostWidth;
 
   protected cellClass(col: StbSkeletonColumn): string {
-    return col.variant && col.variant !== 'ticker' ? `stb-col--${col.variant}` : '';
+    return col.variant && col.variant !== 'ticker' && col.variant !== 'blank'
+      ? `stb-col--${col.variant}`
+      : '';
   }
 }
 

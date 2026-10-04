@@ -29,17 +29,17 @@ export function stbLoadGate(loading: () => boolean, options: StbLoadGateOptions 
   let showTimer: ReturnType<typeof setTimeout> | undefined;
   let hideTimer: ReturnType<typeof setTimeout> | undefined;
   let shownAt = 0;
-  let first = true;
+
+  // Read at creation, not on the first effect run : a load answered synchronously is over by then.
+  if (!untracked(loading) && isDevMode()) {
+    console.warn(
+      'stbLoadGate: `loading` was false when the gate was created — the skeleton will never show.',
+    );
+  }
 
   effect(() => {
     const busy = loading();
     untracked(() => {
-      if (first && !busy && isDevMode()) {
-        console.warn(
-          'stbLoadGate: `loading` was false when the gate was created — the skeleton will never show.',
-        );
-      }
-      first = false;
       if (content()) return;
       if (busy) {
         // A load back on within the minimum : the hand-over waits for it.

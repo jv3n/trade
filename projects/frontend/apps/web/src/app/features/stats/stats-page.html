@@ -287,6 +287,8 @@
         </div>
       </section>
     }
+  } @else if (gate.skeleton()) {
+    <ui-skeleton-kpi-row [label]="'stats.loading' | translate" [count]="view() === 'ALL' ? 4 : 5" />
   }
 
   <!--
@@ -1027,18 +1029,17 @@
         <mat-icon>error</mat-icon>
         <span>{{ msg }}</span>
       </div>
-    } @else if (loading() && rows().length === 0) {
-      <div class="loading-state">
-        <mat-spinner diameter="20" />
-        <span>{{ 'stats.loading' | translate }}</span>
-      </div>
+    } @else if (gate.skeleton()) {
+      <ui-skeleton-table [columns]="skeletonColumns()" [label]="'stats.loading' | translate" />
+    } @else if (!gate.content()) {
+      <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
     } @else if (rows().length === 0) {
       <div class="empty-state">
         <mat-icon>query_stats</mat-icon>
         <p>{{ 'stats.empty' | translate }}</p>
       </div>
     } @else {
-      <div stbTable [busy]="loading()">
+      <div stbTable class="stb-fade-in" [busy]="loading()">
         <table
           mat-table
           [dataSource]="rows()"

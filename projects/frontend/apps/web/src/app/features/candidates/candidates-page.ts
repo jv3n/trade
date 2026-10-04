@@ -11,6 +11,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormField, form, maxLength, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -21,10 +22,11 @@ import {
   StbFormFieldModule,
   StbIconModule,
   StbInputModule,
-  StbProgressSpinnerModule,
+  StbSkeletonTable,
   StbTableModule,
   StbToast,
   StbTooltipModule,
+  stbLoadGate,
 } from '@portfolioai/ui';
 import { addDays, isBefore, isSameDay, isWeekend, startOfDay } from 'date-fns';
 import {
@@ -52,6 +54,11 @@ import { ConfirmService } from '../../core/app-state/confirm.service';
 import { NumberMaskDirective } from '../../shared/number-mask/number-mask.directive';
 import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
+import {
+  skeletonHeaderKeys,
+  toSkeletonColumns,
+  type SkeletonColumnDefs,
+} from '../../shared/skeleton-columns/skeleton-columns';
 import {
   EXPENSIVE_LOCATE_PERCENT,
   gapPercent,
@@ -116,6 +123,22 @@ function blankCapture(): CaptureModel {
  * One candidate per (day, ticker) : the backend answers 409 on a duplicate, surfaced as a dedicated
  * toast. The derived figures come from the pure `candidates.math` helpers.
  */
+/** The listing's columns as its skeleton shows them (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  ticker: { key: 'candidates.fields.ticker', variant: 'ticker' },
+  previousClose: { key: 'candidates.fields.previousCloseShort', variant: 'numeric' },
+  pmOpen: { key: 'candidates.fields.pmOpenShort', variant: 'numeric' },
+  pmHigh: { key: 'candidates.fields.pmHighShort', variant: 'numeric' },
+  gap: { key: 'candidates.fields.gap', variant: 'numeric' },
+  push: { key: 'candidates.fields.push', variant: 'numeric' },
+  float: { key: 'candidates.fields.floatShort', variant: 'numeric' },
+  volume: { key: 'candidates.fields.volumeShort', variant: 'numeric' },
+  locate: { key: 'candidates.fields.locateShort', variant: 'numeric' },
+  locatePct: { key: 'candidates.fields.locatePercent', variant: 'numeric' },
+  note: { key: 'candidates.fields.note' },
+  actions: { variant: 'actions' },
+};
+
 @Component({
   selector: 'app-candidates-page',
   imports: [
@@ -132,7 +155,7 @@ function blankCapture(): CaptureModel {
     StbFormFieldModule,
     StbIconModule,
     StbInputModule,
-    StbProgressSpinnerModule,
+    StbSkeletonTable,
     StbTableModule,
     StbTooltipModule,
     PluralPipe,
@@ -179,6 +202,18 @@ export class CandidatesPage {
   // ---- List ----
   readonly loading = signal(true);
   readonly loadError = signal(false);
+
+  /** First load only (#539) : a refetch dims the table instead. */
+  readonly gate = stbLoadGate(this.loading);
+  private readonly headerLabels = toSignal(
+    this.translate.stream(skeletonHeaderKeys(SKELETON_COLUMNS)) as Observable<
+      Record<string, string>
+    >,
+    { initialValue: {} },
+  );
+  readonly skeletonColumns = computed(() =>
+    toSkeletonColumns(this.columns, SKELETON_COLUMNS, this.headerLabels()),
+  );
   // A superseded day is dropped, or a slow answer for yesterday lands on today's page (#370).
   private listing?: Subscription;
   readonly candidates = signal<Candidate[]>([]);

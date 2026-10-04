@@ -225,6 +225,8 @@ function setup(
     query?: Record<string, string>;
     /** What `?stat=` fetches — by default a GUS stat with the asked id. */
     byId?: StatEntry;
+    /** The first listing answer, held back — a first load still running. */
+    firstAnswer?: Observable<PagedResult<StatEntry>>;
   } = {},
 ): {
   fixture: ComponentFixture<StatsPage>;
@@ -258,6 +260,7 @@ function setup(
   const repo = TestBed.inject(StatsRepository) as MockStatsRepository;
   repo.rows = options.rows ?? [];
   if (options.byId) repo.findById.mockReturnValue(of(options.byId));
+  if (options.firstAnswer) repo.findAll.mockReturnValueOnce(options.firstAnswer);
   const fixture = TestBed.createComponent(StatsPage);
   fixture.detectChanges();
   return { fixture, page: fixture.componentInstance, repo, toastShown, query };
@@ -887,6 +890,33 @@ describe('StatsPage', () => {
     fixture.detectChanges();
 
     expect(page.status()).toBe('COMPLETED');
+  });
+
+  // #542 : the first load showed a spinner, then the table jumped in.
+  it('shows the table skeleton on a slow first load, then the rows once they land', () => {
+    vi.useFakeTimers();
+    const firstAnswer = new Subject<PagedResult<StatEntry>>();
+    const { fixture } = setup({ firstAnswer });
+    const el: HTMLElement = fixture.nativeElement;
+
+    vi.advanceTimersByTime(200);
+    fixture.detectChanges();
+    expect(el.querySelector('ui-skeleton-table')).not.toBeNull();
+
+    firstAnswer.next({
+      content: [makeStat()],
+      pageIndex: 0,
+      pageSize: 25,
+      totalElements: 1,
+      totalPages: 1,
+    });
+    firstAnswer.complete();
+    fixture.detectChanges();
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+    expect(el.querySelector('ui-skeleton-table')).toBeNull();
+    expect(el.querySelector('.stb-table')).not.toBeNull();
+    vi.useRealTimers();
   });
 
   // #370 : the table was unmounted for the length of every refetch, which read as a page reload.

@@ -55,6 +55,12 @@
   border-radius: var(--radius-pill);
 }
 
+// Holds a narrow icon column at the width of what its real cell shows.
+.stb-skeleton-spacer {
+  display: inline-block;
+  height: 1px;
+}
+
 // Ghost cells take the alignment of the column they stand for.
 .stb-col--numeric .stb-skeleton-host {
   align-items: flex-end;
