@@ -63,6 +63,7 @@ RUN --mount=type=secret,id=sentry_auth_token \
              "https://gitlab.com/glitchtip/glitchtip-cli/-/jobs/artifacts/${GLITCHTIP_CLI_VERSION}/raw/artifacts/glitchtip-cli-linux-x86_64?job=build-linux-x86_64" \
            && echo "${GLITCHTIP_CLI_SHA256}  /tmp/glitchtip-cli" | sha256sum -c - \
            && chmod +x /tmp/glitchtip-cli \
+           && node apps/web/tools/strip-debug-ids.mjs "$BROWSER_DIR" \
            && /tmp/glitchtip-cli sourcemaps inject "$BROWSER_DIR" \
            && /tmp/glitchtip-cli sourcemaps upload --release "$APP_VERSION" --project "$SENTRY_PROJECT" \
                 --validate "$BROWSER_DIR" \
