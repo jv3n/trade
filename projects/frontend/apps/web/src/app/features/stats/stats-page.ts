@@ -25,12 +25,14 @@ import {
   StbIconModule,
   StbInputModule,
   StbPaginatorModule,
-  StbProgressSpinnerModule,
   StbSelectModule,
+  StbSkeletonKpiRow,
+  StbSkeletonTable,
   StbSortHeaderModule,
   StbTableModule,
   StbToast,
   StbTooltipModule,
+  stbLoadGate,
 } from '@portfolioai/ui';
 import { isToday, isYesterday, startOfDay } from 'date-fns';
 import {
@@ -64,6 +66,11 @@ import { PeriodFilter } from '../../shared/period-filter/period-filter';
 import { PeriodSelection } from '../../shared/period-preset/period-preset';
 import { PluralPipe } from '../../shared/plural/plural';
 import { PricePipe } from '../../shared/price/price.pipe';
+import {
+  skeletonHeaderKeys,
+  toSkeletonColumns,
+  type SkeletonColumnDefs,
+} from '../../shared/skeleton-columns/skeleton-columns';
 import {
   DT_EXTENSION_CRITERION,
   DT_REJECTION_CRITERION,
@@ -521,6 +528,35 @@ function sessionOf(entry: StatEntry): SessionModel {
  * column (#193) is the **only** way a trade comes into existence : one per stat, confirmed, and the
  * row shows a link to that trade from then on.
  */
+/** The listing's columns as its skeleton shows them (#539). */
+const SKELETON_COLUMNS: SkeletonColumnDefs = {
+  tradeDate: { key: 'stats.fields.tradeDate' },
+  ticker: { key: 'stats.fields.ticker', variant: 'ticker' },
+  pattern: { key: 'stats.fields.pattern' },
+  gap: { key: 'stats.fields.gap', variant: 'numeric' },
+  pmPush: { key: 'stats.fields.pmPush', variant: 'numeric' },
+  float: { key: 'stats.fields.float', variant: 'numeric' },
+  volume: { key: 'stats.fields.volume', variant: 'numeric' },
+  locate: { key: 'stats.fields.locate', variant: 'numeric' },
+  openPrice: { key: 'stats.fields.openPriceShort', variant: 'numeric' },
+  hold: { key: 'stats.fields.hold', variant: 'numeric' },
+  pushOpen: { key: 'stats.fields.pushOpen', variant: 'numeric' },
+  hod: { key: 'stats.fields.hod', variant: 'numeric' },
+  lod: { key: 'stats.fields.lod', variant: 'numeric' },
+  eod: { key: 'stats.fields.eod', variant: 'numeric' },
+  dtStart: { key: 'stats.fields.dtStart', variant: 'numeric' },
+  dtTop: { key: 'stats.doubleTop.columnA', variant: 'numeric' },
+  dtLow: { key: 'stats.doubleTop.columnB', variant: 'numeric' },
+  dtRetest: { key: 'stats.doubleTop.columnC', variant: 'numeric' },
+  dtDuration: { key: 'stats.fields.dtDuration', variant: 'numeric' },
+  brief: { key: 'stats.fields.brief' },
+  flags: { key: 'stats.fields.flags' },
+  // The completion tick : a small icon button.
+  completed: { text: '✓', variant: 'blank', width: '36px' },
+  trade: { key: 'stats.fields.trade' },
+  actions: { variant: 'actions' },
+};
+
 @Component({
   selector: 'app-stats-page',
   imports: [
@@ -539,9 +575,10 @@ function sessionOf(entry: StatEntry): SessionModel {
     StbIconModule,
     StbInputModule,
     StbPaginatorModule,
-    StbProgressSpinnerModule,
     StbSelectModule,
     StbSortHeaderModule,
+    StbSkeletonTable,
+    StbSkeletonKpiRow,
     StbTableModule,
     StbTooltipModule,
     PluralPipe,
@@ -645,6 +682,18 @@ export class StatsPage {
   readonly sort = signal<SortRequest>({ columnName: '', isAscending: true });
 
   readonly columns = computed(() => COLUMNS[this.view()]);
+
+  /** First load only (#539) : a refetch dims the table instead. */
+  readonly gate = stbLoadGate(this.loading);
+  private readonly headerLabels = toSignal(
+    this.translate.stream(skeletonHeaderKeys(SKELETON_COLUMNS)) as Observable<
+      Record<string, string>
+    >,
+    { initialValue: {} },
+  );
+  readonly skeletonColumns = computed(() =>
+    toSkeletonColumns(this.columns(), SKELETON_COLUMNS, this.headerLabels()),
+  );
   /**
    * The bottom row : the DT view's averages, a session view's medians (#499) — its label spans the
    * columns before the figures. « All » has none.

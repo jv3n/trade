@@ -157,7 +157,13 @@ class MockStatsRepository extends StatsRepository {
 }
 
 function setup(
-  options: { list?: Candidate[]; confirmed?: boolean; referencesFail?: boolean } = {},
+  options: {
+    list?: Candidate[];
+    confirmed?: boolean;
+    referencesFail?: boolean;
+    /** The day's answer, held back — a first load still running. */
+    answer?: Observable<Candidate[]>;
+  } = {},
 ): {
   fixture: ComponentFixture<CandidatesPage>;
   page: CandidatesPage;
@@ -187,7 +193,7 @@ function setup(
   });
   const repo = TestBed.inject(CandidatesRepository) as MockCandidatesRepository;
   const stats = TestBed.inject(StatsRepository) as MockStatsRepository;
-  repo.listForDate.mockReturnValue(of(options.list ?? []));
+  repo.listForDate.mockReturnValue(options.answer ?? of(options.list ?? []));
   if (options.referencesFail) {
     stats.summary.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
   }
@@ -210,6 +216,27 @@ function lastToast(toastShown: ReturnType<typeof vi.fn>): string {
 
 describe('CandidatesPage', () => {
   // ---- List ----
+
+  // #542 : the first load showed a spinner, then the table jumped in.
+  it('shows the table skeleton on a slow first load, then the rows once they land', () => {
+    vi.useFakeTimers();
+    const answer = new Subject<Candidate[]>();
+    const { fixture } = setup({ answer });
+    const el: HTMLElement = fixture.nativeElement;
+
+    vi.advanceTimersByTime(200);
+    fixture.detectChanges();
+    expect(el.querySelector('ui-skeleton-table')).not.toBeNull();
+
+    answer.next([makeCandidate()]);
+    answer.complete();
+    fixture.detectChanges();
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+    expect(el.querySelector('ui-skeleton-table')).toBeNull();
+    expect(el.querySelector('.stb-table')).not.toBeNull();
+    vi.useRealTimers();
+  });
 
   it("loads today's candidates on init", () => {
     const { repo } = setup();
