@@ -986,3 +986,130 @@ dialog.confirm.danger .confirm-icon {
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* Squelettes de chargement (#539) : neutres, à la forme du contenu, balayage lent. */
+.sk {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.sk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--text) 7%, transparent), transparent);
+  transform: translateX(-100%);
+  animation: sk-sweep 1.6s ease-in-out infinite;
+}
+
+@keyframes sk-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.sk-text {
+  height: 12px;
+  border-radius: 4px;
+}
+
+.sk-line {
+  height: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.sk-title {
+  height: 16px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+}
+
+.sk-value {
+  height: 26px;
+  width: 70%;
+  border-radius: 6px;
+  margin: 10px 0 8px;
+}
+
+.sk-chip {
+  height: 22px;
+  width: 58px;
+  border-radius: 999px;
+}
+
+.sk-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+
+td.num .sk-num {
+  margin-left: auto;
+}
+
+.sk-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.fade-in {
+  animation: fade-in 150ms ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Mouvement réduit : ni balayage ni fondu, un aplat fixe — comme la règle globale de la lib. */
+@media (prefers-reduced-motion: reduce) {
+  .sk::after {
+    display: none;
+  }
+
+  .fade-in {
+    animation: none;
+  }
+}
+
+.reduce-motion .sk::after {
+  display: none;
+}
+
+.reduce-motion .fade-in {
+  animation: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Le spinner d'une action en cours (bouton), qui reste. */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: -2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

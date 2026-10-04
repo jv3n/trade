@@ -822,6 +822,15 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
 - **Period filter** (stats, journal, account) : one shared control — presets from « today » to
   « last year », « all time », and « custom range », which reveals a from / to date picker. It
   filters the listing and the KPIs alike.
+- **Loading** (#539) : a page's **first load** shows a **skeleton** shaped like what is coming —
+  the real table header over ghost rows that follow its columns (numbers right-aligned, tickers as
+  chip-shaped blocks), the KPI row, a card's title and lines, Today's steps — never a spinner then a
+  jump. **Neutral only**, a slow shimmer ; under reduced motion a still fill, no shimmer, no fade.
+  It appears after **~180 ms** (a fast answer never flashes it), stays **at least ~300 ms** once
+  shown, and the content replaces it with a **150 ms fade**. A **refetch** (filter, page, sort) keeps
+  the content in place and dims it, as today. **Inline spinners stay for actions** (saving,
+  uploading, exporting) : they say « working on your click », not « the page is loading ». Today
+  shows no step as « to do » before all its data is in. Screen : [`chargement.html`](chargement.html).
 - **Dense forms** : Material fields at 40 px (density -4), and no space reserved under a field until
   there is an error to show.
 - **Numeric fields** : focusing one selects its value, so typing replaces it — at 9:30 there is no
