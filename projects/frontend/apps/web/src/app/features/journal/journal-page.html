@@ -10,7 +10,7 @@
 
   <!-- KPIs — computed by the backend over the filtered set, not the current page (#195). -->
   @if (gate.skeleton()) {
-    <ui-skeleton-kpi-row [label]="'journal.loading' | translate" [count]="5" />
+    <ui-skeleton-kpi-row [count]="5" />
   } @else {
     <section class="stb-fade-in kpi-row kpi-row--five">
       <div class="card kpi">

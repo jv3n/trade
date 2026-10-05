@@ -288,7 +288,7 @@
       </section>
     }
   } @else if (gate.skeleton()) {
-    <ui-skeleton-kpi-row [label]="'stats.loading' | translate" [count]="view() === 'ALL' ? 4 : 5" />
+    <ui-skeleton-kpi-row [count]="view() === 'ALL' ? 4 : 5" />
   }
 
   <!--
