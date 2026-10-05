@@ -26,7 +26,6 @@ data class StatEntryRequest(
   val pmHigh: BigDecimal,
   val floatMillions: BigDecimal? = null,
   val volumeMillions: BigDecimal? = null,
-  val locatePerShare: BigDecimal? = null,
   val note: String? = null,
   // ---- Session ----
   val openPrice: BigDecimal? = null,

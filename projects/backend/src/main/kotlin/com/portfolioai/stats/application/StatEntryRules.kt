@@ -67,7 +67,6 @@ internal fun StatEntry.fillFrom(request: StatEntryRequest, cleanTicker: String) 
   this.pmHigh = pmHigh
   floatMillions = request.floatMillions?.requireNonNegative("Float")
   volumeMillions = request.volumeMillions?.requireNonNegative("Volume")
-  locatePerShare = request.locatePerShare?.requireNonNegative("Locate")
   note = request.note?.trim()?.ifEmpty { null }
 
   openPrice = open
@@ -174,7 +173,6 @@ internal fun StatEntry.siblingRequest(pattern: Pattern) =
     pmHigh = pmHigh,
     floatMillions = floatMillions,
     volumeMillions = volumeMillions,
-    locatePerShare = locatePerShare,
     openPrice = openPrice,
     pushOpenPrice = pushOpenPrice,
     noPush = noPush,

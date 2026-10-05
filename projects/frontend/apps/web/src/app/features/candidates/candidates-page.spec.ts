@@ -65,7 +65,6 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     pmHigh: 4.65,
     floatMillions: 8.2,
     volumeMillions: 3.1,
-    locatePerShare: 0.03,
     note: 'Résistance 4,65 — high PM, pas de news',
     openPrice: null,
     targetPushPercent: null,
@@ -269,7 +268,6 @@ describe('CandidatesPage', () => {
     const ktta = page.rows()[2];
     expect(ktta.gap).toBeCloseTo(52.83, 2);
     expect(ktta.push).toBeCloseTo(14.81, 2);
-    expect(ktta.locatePct).toBeCloseTo(0.74, 2);
   });
 
   // ---- Quick entry ----
@@ -306,7 +304,6 @@ describe('CandidatesPage', () => {
   it('creates the candidate for the browsed day, without a pattern, then resets the form', () => {
     const { page, repo, toastShown } = setup();
     fillKtta(page);
-    page.setNumber('locatePerShare', 0.03);
 
     page.submit();
 
@@ -317,7 +314,6 @@ describe('CandidatesPage', () => {
         previousClose: 2.65,
         pmOpen: 4.05,
         pmHigh: 4.65,
-        locatePerShare: 0.03,
         floatMillions: null,
       }),
     );

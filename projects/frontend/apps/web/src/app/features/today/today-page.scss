@@ -188,6 +188,30 @@
   margin-left: s.$space-xs;
 }
 
+// The tickers of the locates step (#625) — each one opens its locates.
+.locate-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: s.$space-sm s.$space-md;
+}
+
+.locate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: s.$space-xs;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .step-action {
   padding-top: s.$space-xs;
 

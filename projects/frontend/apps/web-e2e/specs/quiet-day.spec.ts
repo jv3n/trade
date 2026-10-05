@@ -17,8 +17,11 @@ import { Api, expect, isoToday, newYorkTime, test } from '../fixtures';
  * once New York has closed.
  */
 
-/** The five steps, in order — yesterday's stats first since #531. */
-const STEPS = ['stats', 'reconciliation', 'candidates', 'session', 'trades'] as const;
+/**
+ * The steps, in order — yesterday's stats first since #531, the optional locates one (a key, not a
+ * number, and not counted in « n étapes faites sur 5 ») after the candidates (#625).
+ */
+const STEPS = ['stats', 'reconciliation', 'candidates', 'locates', 'session', 'trades'] as const;
 type Step = (typeof STEPS)[number];
 
 test.beforeEach(async ({ api, page }) => {

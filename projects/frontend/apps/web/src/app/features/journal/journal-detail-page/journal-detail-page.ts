@@ -5,6 +5,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
+  MatDialog,
   StbButtonModule,
   StbChipsModule,
   StbFormFieldModule,
@@ -34,14 +35,23 @@ import {
   TradeEntryInput,
   TradeExecutionInput,
 } from '../../../core/api/journal/trade-entry.model';
+import { Locate } from '../../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../../core/api/locates/locates.repository';
 import { StatEntry } from '../../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../../core/api/stats/stats.repository';
 import { ConfirmService } from '../../../core/app-state/confirm.service';
 import { HasUnsavedChanges } from '../../../core/router/unsaved-changes.guard';
 import { compressImage } from '../../../shared/image/compress-image';
+import {
+  blendedLocatePercent,
+  locateBreach,
+  locatePercent,
+  sumCents,
+} from '../../../shared/locate-cost/locate-cost';
 import { NumberMaskDirective } from '../../../shared/number-mask/number-mask.directive';
 import { PluralPipe } from '../../../shared/plural/plural';
 import { PricePipe } from '../../../shared/price/price.pipe';
+import { LocatesDialog, LocatesDialogData } from '../../locates/locates-dialog/locates-dialog';
 import { gapPercent, percentVsOpen, pmPushPercent } from '../../stats/stats.math';
 
 /**
@@ -136,10 +146,13 @@ function spanMinutes(executions: ExecRow[]): number | null {
  * - **P&L block** — computed (from the executions), real (typed off the broker statement) and the
  *   live gap between them (fees, rounding). Empty real ⇒ the computed one is retained, and the
  *   retained one is what reaches the account.
- * - **Day context** — the stat's premarket + session values, read-only, fetched by `statEntryId`.
+ * - **Day context** — the stat's premarket + session values, read-only, fetched by `statEntryId`,
+ *   and the day's locates on the ticker (#609) : edited here (#625) — the page open when the figures
+ *   are checked against the broker — and outside the trade's P&L : each one has its own account
+ *   line.
  * - **Post-mortem** — « what happened » + « mistake / to improve », and the chart screenshot.
  *
- * Everything is edited **in the page** (no dialog — `MatDialog` is kept for confirmations) : the
+ * Everything is edited **in the page** (no dialog but the day's locates) : the
  * draft lives in [draft], [dirty] drives the save bar, and Save sends the whole trade back. Leaving
  * with the draft unsaved asks first (`unsavedChangesGuard`, and the browser prompt on tab close).
  */
@@ -176,6 +189,8 @@ function spanMinutes(executions: ExecRow[]): number | null {
 export class JournalDetailPage implements HasUnsavedChanges {
   private readonly repo = inject(JournalRepository);
   private readonly statsRepo = inject(StatsRepository);
+  private readonly locatesRepo = inject(LocatesRepository);
+  private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
   private readonly locale = inject(LOCALE_ID);
   private readonly translate = inject(TranslateService);
@@ -323,6 +338,46 @@ export class JournalDetailPage implements HasUnsavedChanges {
     percentVsOpen(this.context()?.stat.openPrice ?? null, this.preview().avgExit),
   );
 
+  /** The day's locates on the ticker — `null` until read ; [locatesFailed] when they could not be. */
+  readonly dayLocates = signal<Locate[] | null>(null);
+  readonly locatesFailed = signal(false);
+  readonly locatesTotal = computed(() => sumCents((this.dayLocates() ?? []).map((l) => l.cost)));
+  /** The day's weight on the ticker, across top-ups — the 2 % rule checked for the day. */
+  readonly locatesPercent = computed(() => blendedLocatePercent(this.dayLocates() ?? []));
+  readonly breach = locateBreach;
+
+  /** A locate's weight against the share's price — `null` when it was typed without one. */
+  percentOf(locate: Locate): number | null {
+    return locatePercent(locate.pricePerShare, locate.stockPrice);
+  }
+
+  /** The shares located, to weigh against the position — 2 500 located for 2 000 shorted. */
+  readonly locatesShares = computed(() =>
+    (this.dayLocates() ?? []).reduce((sum, l) => sum + l.shares, 0),
+  );
+
+  /** The trade's day and ticker locates, to top up or fix — a top-up starts from the last price paid. */
+  editLocates(): void {
+    const entry = this.entry();
+    if (!entry) return;
+    const data: LocatesDialogData = {
+      tradingDate: entry.tradeDate,
+      ticker: entry.ticker,
+      lastPrice: this.dayLocates()?.at(-1)?.pricePerShare ?? null,
+      stockPrice: this.context()?.stat.pmOpen ?? null,
+    };
+    this.dialog
+      .open<LocatesDialog, LocatesDialogData, boolean>(LocatesDialog, {
+        data,
+        width: '520px',
+        maxWidth: '95vw',
+        autoFocus: '.locate-add input',
+      })
+      .afterClosed()
+      .pipe(filter(Boolean))
+      .subscribe(() => this.loadLocates(entry.tradeDate, entry.ticker));
+  }
+
   // ---- Screenshot (issue #110) ----
   readonly screenshotUrl = signal<SafeUrl | null>(null);
   readonly screenshotUploading = signal(false);
@@ -341,6 +396,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
       this.id = params.get('id') ?? '';
       this.clearObjectUrl();
       this.context.set(null);
+      this.dayLocates.set(null);
       this.load();
     });
   }
@@ -354,6 +410,7 @@ export class JournalDetailPage implements HasUnsavedChanges {
         this.loading.set(false);
         if (e.hasScreenshot) this.loadScreenshot(e.id);
         this.loadContext(e.statEntryId);
+        this.loadLocates(e.tradeDate, e.ticker);
       },
       error: () => {
         this.error.set(true);
@@ -387,6 +444,17 @@ export class JournalDetailPage implements HasUnsavedChanges {
           eodPercent: percentVsOpen(stat.openPrice, stat.eodPrice),
         }),
       error: () => this.context.set(null),
+    });
+  }
+
+  private loadLocates(day: Date, ticker: string): void {
+    this.locatesFailed.set(false);
+    this.locatesRepo.listForDate(day, ticker).subscribe({
+      next: (locates) => this.dayLocates.set(locates),
+      error: () => {
+        this.dayLocates.set(null);
+        this.locatesFailed.set(true);
+      },
     });
   }
 

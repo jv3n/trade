@@ -5,6 +5,10 @@
       <p class="description">{{ 'account.subtitle' | translate }}</p>
     </div>
     <div class="header-actions">
+      <button mat-stroked-button type="button" (click)="openLocate()">
+        <mat-icon>key</mat-icon>
+        <span>{{ 'account.addLocate' | translate }}</span>
+      </button>
       <button mat-flat-button type="button" (click)="openAdd()">
         <mat-icon>add</mat-icon>
         <span>{{ 'account.addMovement' | translate }}</span>
@@ -39,7 +43,7 @@
       }
     </section>
   } @else if (summary(); as s) {
-    <section class="stb-fade-in kpi-row">
+    <section class="stb-fade-in kpi-row" [class.kpi-row--five]="reconciliationGap() !== null">
       <mat-card class="kpi" appearance="outlined" data-testid="account-balance">
         <div class="kpi__label">
           <span>{{ 'account.currentBalance' | translate }}</span>
@@ -144,6 +148,30 @@
           </div>
         </mat-card>
       }
+
+      @let l = locatesOf(s);
+      <mat-card
+        class="kpi"
+        appearance="outlined"
+        data-testid="period-locates"
+        [matTooltip]="'account.kpi.locatesHint' | translate"
+      >
+        <div class="kpi__label">{{ 'account.kpi.locates' | translate }}</div>
+        <div class="kpi__value">
+          {{ l.total | number: '1.2-2' }}{{ 'account.usdSuffix' | translate }}
+        </div>
+        <div class="kpi__sub">
+          <!-- Amber : a warning on the discipline, not an outcome (colour rule). -->
+          <span [class.warn]="l.paidForNothing > 0" data-testid="paid-for-nothing">{{
+            'account.kpi.locatesPaidForNothing'
+              | translate
+                : {
+                    amount:
+                      (l.paidForNothing | number: '1.2-2') + ('account.usdSuffix' | translate),
+                  }
+          }}</span>
+        </div>
+      </mat-card>
     </section>
   } @else if (gate.skeleton()) {
     <ui-skeleton-kpi-row />
@@ -215,9 +243,17 @@
         <p>{{ 'account.movementsUnavailable' | translate }}</p>
       </div>
     } @else if (movements().length === 0) {
-      <div class="stb-fade-in empty-state">
+      <!-- « Add a deposit » is the empty account's message, not an empty filter's (#624). -->
+      <div class="stb-fade-in empty-state" data-testid="movements-empty">
         <mat-icon>account_balance_wallet</mat-icon>
-        <p>{{ 'account.empty' | translate }}</p>
+        @if (appliedFilter().type === 'all') {
+          <p>{{ 'account.empty' | translate }}</p>
+        } @else {
+          <p>{{ 'account.emptyFiltered' | translate }}</p>
+          <button mat-stroked-button type="button" (click)="onTypeChange('all')">
+            {{ 'account.filter.types.all' | translate }}
+          </button>
+        }
       </div>
     } @else {
       <div stbTable class="stb-fade-in" [busy]="loading()">
@@ -230,13 +266,16 @@
           <ng-container matColumnDef="type">
             <th mat-header-cell *matHeaderCellDef>{{ 'account.fields.type' | translate }}</th>
             <td mat-cell *matCellDef="let m">
-              <span class="type-tag" [class.type-tag--trade]="m.type === 'TRADE'">
+              <span
+                class="type-tag"
+                [class.type-tag--trade]="m.type === 'TRADE' || m.type === 'LOCATE'"
+              >
                 {{ 'account.type.' + m.type | translate }}
               </span>
             </td>
           </ng-container>
 
-          <!-- « KTTA short 350 » for a trade, the free note otherwise. -->
+          <!-- « KTTA short 350 » for a trade, « SGBX 2,000 shares » for a locate, the note otherwise. -->
           <ng-container matColumnDef="label">
             <th mat-header-cell *matHeaderCellDef>{{ 'account.fields.label' | translate }}</th>
             <td mat-cell *matCellDef="let m">
@@ -251,6 +290,15 @@
                       {{ m.tradeSize }}
                     }
                   </span>
+                }
+              } @else if (m.type === 'LOCATE') {
+                <mat-chip-set class="inline-chip">
+                  <mat-chip stbChip="ticker" disableRipple>{{ m.locateTicker }}</mat-chip>
+                </mat-chip-set>
+                @if (m.locateShares !== null) {
+                  <span class="muted">{{
+                    'account.locateShares' | translate: { shares: (m.locateShares | number) }
+                  }}</span>
                 }
               } @else {
                 @if (isMorningCorrection(m) && !m.note) {
@@ -321,6 +369,17 @@
                   <span>{{ 'account.viewTrade' | translate }}</span>
                   <mat-icon iconPositionEnd>arrow_forward</mat-icon>
                 </a>
+              } @else if (m.type === 'LOCATE') {
+                <button
+                  mat-icon-button
+                  type="button"
+                  stbDanger
+                  (click)="deleteLocate(m)"
+                  [matTooltip]="'account.actions.deleteLocate' | translate"
+                  [attr.aria-label]="'account.actions.deleteLocate' | translate"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
               } @else {
                 @if (canEdit(m)) {
                   <button

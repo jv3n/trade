@@ -249,6 +249,18 @@ $save-bar-room: 72px;
     font-variant-numeric: tabular-nums;
     color: var(--color-text);
   }
+
+  // A value followed by an icon button : centred on the button, which is taller than the text.
+  dd.kv__with-action {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: s.$space-xs;
+  }
+
+  dt.kv__centred {
+    align-self: center;
+  }
 }
 
 // ---- Post-mortem ----

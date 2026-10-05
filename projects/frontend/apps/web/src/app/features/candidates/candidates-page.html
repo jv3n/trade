@@ -157,20 +157,6 @@
           <span matTextSuffix>M</span>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'candidates.fields.locate' | translate }}</mat-label>
-          <input
-            #locateField
-            matInput
-            appNumberMask
-            [decimals]="4"
-            [min]="0"
-            [number]="model().locatePerShare"
-            (numberChange)="setNumber('locatePerShare', $event)"
-          />
-          <ui-form-field-reset matIconSuffix [for]="locateField" />
-        </mat-form-field>
-
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="field--note">
           <mat-label>{{ 'candidates.fields.note' | translate }}</mat-label>
           <input #noteField matInput autocomplete="off" [formField]="captureForm.note" />
@@ -323,29 +309,6 @@
             </th>
             <td mat-cell *matCellDef="let c" stbCol="numeric">
               {{ c.volumeMillions !== null ? (c.volumeMillions | number: '1.1-2') + ' M' : '—' }}
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="locate">
-            <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-              {{ 'candidates.fields.locateShort' | translate }}
-            </th>
-            <td mat-cell *matCellDef="let c" stbCol="numeric">
-              {{ c.locatePerShare !== null ? (c.locatePerShare | price) : '—' }}
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="locatePct">
-            <th mat-header-cell *matHeaderCellDef stbCol="numeric">
-              {{ 'candidates.fields.locatePercent' | translate }}
-            </th>
-            <td
-              mat-cell
-              *matCellDef="let c"
-              stbCol="numeric"
-              [class.warn]="c.locatePct !== null && c.locatePct > expensiveLocate"
-            >
-              {{ c.locatePct !== null ? (c.locatePct | number: '1.1-1') + ' %' : '—' }}
             </td>
           </ng-container>
 

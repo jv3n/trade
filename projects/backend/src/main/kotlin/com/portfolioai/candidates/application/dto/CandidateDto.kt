@@ -8,9 +8,8 @@ import java.util.UUID
 
 /**
  * One candidate as exposed to the front — the raw morning capture, plus the stats it became, one
- * per pattern (#434). Gap %, push %, locate / price and the target price are derived client-side
- * from these fields and never stored. Float and volume are in millions of shares, the locate in $ /
- * share.
+ * per pattern (#434). Gap %, push % and the target price are derived client-side from these fields
+ * and never stored. Float and volume are in millions of shares.
  */
 data class CandidateDto(
   val id: UUID,
@@ -21,7 +20,6 @@ data class CandidateDto(
   val pmHigh: BigDecimal,
   val floatMillions: BigDecimal?,
   val volumeMillions: BigDecimal?,
-  val locatePerShare: BigDecimal?,
   val note: String?,
   /** Session open typed at 9:30 — null until then. */
   val openPrice: BigDecimal?,

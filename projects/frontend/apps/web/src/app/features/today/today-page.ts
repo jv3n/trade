@@ -3,11 +3,13 @@ import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
+  MatDialog,
   StbButtonModule,
   StbChipsModule,
   StbIconModule,
   StbSkeleton,
   StbToast,
+  StbTooltipModule,
   stbLoadGate,
 } from '@portfolioai/ui';
 import {
@@ -24,26 +26,45 @@ import { Candidate } from '../../core/api/candidates/candidates.model';
 import { CandidatesRepository } from '../../core/api/candidates/candidates.repository';
 import { JournalRepository } from '../../core/api/journal/journal.repository';
 import { JournalSummary, TradeEntry } from '../../core/api/journal/trade-entry.model';
+import { Locate, LocateInput } from '../../core/api/locates/locates.model';
+import { LocatesRepository } from '../../core/api/locates/locates.repository';
 import { PATTERNS } from '../../core/api/shared/pattern.model';
 import { StatEntry } from '../../core/api/stats/stat-entry.model';
 import { StatsRepository } from '../../core/api/stats/stats.repository';
 import { TradingDay, TradingDayMarks } from '../../core/api/trading-day/trading-day.model';
 import { TradingDayRepository } from '../../core/api/trading-day/trading-day.repository';
 import { ConfirmService } from '../../core/app-state/confirm.service';
+import { sumCents } from '../../shared/locate-cost/locate-cost';
 import { PluralPipe, pluralKey } from '../../shared/plural/plural';
 import { MorningReconciliation } from '../account/morning-reconciliation/morning-reconciliation';
 import { gapPercent, pushPercent } from '../candidates/candidates.math';
+import { LocatesDialog, LocatesDialogData } from '../locates/locates-dialog/locates-dialog';
+import { NewLocateDialog } from '../locates/new-locate-dialog/new-locate-dialog';
 
 /** Where the trading day stands, from the New York clock. */
 export type MarketStatus = 'PREMARKET' | 'OPEN' | 'CLOSED';
 
-/** The five steps of the day, in order. */
-export type StepKey = 'reconciliation' | 'candidates' | 'session' | 'stats' | 'trades';
+/** The steps of the day, in order — five, and the optional locates one. */
+export type StepKey = 'reconciliation' | 'candidates' | 'locates' | 'session' | 'stats' | 'trades';
 /**
  * The morning opens on yesterday's stats (#531) : the app is only opened in the morning, so the
  * stats of a session are completed the next day, before anything else.
  */
-const STEPS: readonly StepKey[] = ['stats', 'reconciliation', 'candidates', 'session', 'trades'];
+const STEPS: readonly StepKey[] = [
+  'stats',
+  'reconciliation',
+  'candidates',
+  'locates',
+  'session',
+  'trades',
+];
+
+/**
+ * A locate is a cost recorded when it happens, not something owed every day (#625) : its step reads
+ * done once there is one, and is never the current step nor counted in the progress.
+ */
+const OPTIONAL_STEPS: readonly StepKey[] = ['locates'];
+const REQUIRED_STEPS = STEPS.filter((key) => !OPTIONAL_STEPS.includes(key));
 
 /**
  * `done` = behind us, `none` = nothing to do today, as the user declared it (#407), `current` =
@@ -52,10 +73,11 @@ const STEPS: readonly StepKey[] = ['stats', 'reconciliation', 'candidates', 'ses
 export type StepState = 'done' | 'none' | 'current' | 'todo';
 
 /** The calls a step's state is read from — the side column's figures are not among them. */
-type StepSource = 'reconciliations' | 'candidates' | 'stats' | 'trades' | 'tradingDay';
+type StepSource = 'reconciliations' | 'candidates' | 'locates' | 'stats' | 'trades' | 'tradingDay';
 const STEP_SOURCES: readonly StepSource[] = [
   'reconciliations',
   'candidates',
+  'locates',
   'stats',
   'trades',
   'tradingDay',
@@ -66,8 +88,16 @@ const PREMARKET_OPEN = 4 * 60;
 const SESSION_OPEN = 9 * 60 + 30;
 const SESSION_CLOSE = 16 * 60;
 
-/** Overdue stats named on step 4 ; the rest is counted. */
+/** Overdue stats named on step 1 ; the rest is counted. */
 const OVERDUE_SHOWN = 5;
+
+/** One ticker's locates of the day, added up — a top-up is the same ticker. */
+export interface TickerLocates {
+  ticker: string;
+  shares: number;
+  /** The last price paid — where a top-up's price starts. */
+  lastPrice: number;
+}
 
 /** A ticker with a GUS and a DT to complete lists its two stats side by side (#451). */
 const byTickerThenPattern = (a: StatEntry, b: StatEntry): number =>
@@ -106,11 +136,12 @@ export function marketStatusAt(now: Date): MarketStatus {
  * of leaving the user to remember where they are (`mockup/aujourdhui.html`, `PARCOURS.md` ›
  * Accueil).
  *
- * **The five steps** carry a state derived from the data and from the New York clock : morning
- * reconciliation (done inline, step 1 hosts the same block as the account
- * page), candidates captured, session (nothing to do in the app), stats completed after the 4 pm
- * close, trades entered. The first step that isn't behind us is the current one — that is the whole
- * point of the page, so it must be right whatever time it is opened. The one stored input is the
+ * **The five steps** carry a state derived from the data and from the New York clock : yesterday's
+ * stats completed, morning reconciliation (done inline, step 2 hosts the same block as the account
+ * page), candidates captured, session (nothing to do in the app), trades entered — with the
+ * optional « shares located » (#625) between the candidates and the session, a key in place of a
+ * number. The first step that isn't behind us is the current one — that is the whole point of the
+ * page, so it must be right whatever time it is opened. The one stored input is the
  * day's « nothing today » marks (#407) — no candidate, no trade — and the data beats them : a
  * candidate or a trade entered afterwards puts the step back on its normal state.
  *
@@ -134,6 +165,7 @@ export function marketStatusAt(now: Date): MarketStatus {
     PluralPipe,
     TranslatePipe,
     StbSkeleton,
+    StbTooltipModule,
   ],
 })
 export class TodayPage {
@@ -142,6 +174,8 @@ export class TodayPage {
   private readonly statsRepo = inject(StatsRepository);
   private readonly journalRepo = inject(JournalRepository);
   private readonly tradingDayRepo = inject(TradingDayRepository);
+  private readonly locatesRepo = inject(LocatesRepository);
+  private readonly dialog = inject(MatDialog);
   private readonly confirm = inject(ConfirmService);
   private readonly translate = inject(TranslateService);
   private readonly toasts = inject(StbToast);
@@ -151,11 +185,13 @@ export class TodayPage {
   readonly today = new Date();
   readonly marketStatus = marketStatusAt(this.today);
   readonly steps = STEPS;
+  readonly requiredStepCount = REQUIRED_STEPS.length;
 
   // ---- What the day is made of ----
   readonly accountSummary = signal<AccountSummary | null>(null);
   readonly reconciledToday = signal(false);
   readonly candidates = signal<Candidate[]>([]);
+  readonly dayLocates = signal<Locate[]>([]);
   /** Newest first, one page : the count of the step comes from [statsToCompleteTotal]. */
   readonly statsToComplete = signal<StatEntry[]>([]);
   /** `null` until the stats answer, or when they fail : unknown is not « nothing left ». */
@@ -222,6 +258,18 @@ export class TodayPage {
     };
   });
 
+  /** The day's locates, one row per ticker. */
+  readonly locatesByTicker = computed<TickerLocates[]>(() => {
+    const groups = new Map<string, Locate[]>();
+    for (const l of this.dayLocates()) groups.set(l.ticker, [...(groups.get(l.ticker) ?? []), l]);
+    return [...groups.entries()].map(([ticker, locates]) => ({
+      ticker,
+      shares: locates.reduce((sum, l) => sum + l.shares, 0),
+      lastPrice: locates[locates.length - 1].pricePerShare,
+    }));
+  });
+  readonly locatesTotal = computed(() => sumCents(this.dayLocates().map((l) => l.cost)));
+
   /** « Aucun candidat aujourd'hui » holds only while the day really has none : the data wins. */
   readonly noCandidateToday = computed(
     () => this.tradingDay()?.noCandidateAt != null && this.candidates().length === 0,
@@ -230,14 +278,19 @@ export class TodayPage {
     () => this.tradingDay()?.noTradeAt != null && this.todayTrades().length === 0,
   );
 
+  /** New York has closed : the session is behind us. */
+  private readonly sessionOver =
+    this.marketStatus === 'CLOSED' && newYorkMinutes(this.today).minutes >= SESSION_CLOSE;
+
   /** Whether each step is behind us, from the data and the clock. */
   private readonly done = computed<Record<StepKey, boolean>>(() => ({
     reconciliation: this.reconciledToday(),
     // Captured is not enough : the step is done once every candidate has a stat (#337).
     candidates: this.candidates().length > 0 && this.pendingCandidates().length === 0,
+    locates: this.dayLocates().length > 0,
     // The session is behind us once New York has closed — there is nothing to do in the app while
     // it runs, so it can't be "done" any earlier.
-    session: this.marketStatus === 'CLOSED' && newYorkMinutes(this.today).minutes >= SESSION_CLOSE,
+    session: this.sessionOver,
     // Nothing left before today — a morning with nothing to finish is simply done. Unknown is not
     // « nothing left ».
     stats: this.statsToCompleteTotal() === 0,
@@ -246,11 +299,13 @@ export class TodayPage {
 
   /**
    * Steps declared empty for the day (#407). The stats step never is : it looks at the days before
-   * today (#531), which a mark about today says nothing of.
+   * today (#531), which a mark about today says nothing of. The locates step never is : it is
+   * optional, not owed.
    */
   private readonly none = computed<Record<StepKey, boolean>>(() => ({
     reconciliation: false,
     candidates: this.noCandidateToday(),
+    locates: false,
     session: false,
     stats: false,
     trades: this.noTradeToday(),
@@ -264,7 +319,7 @@ export class TodayPage {
   readonly stepStates = computed<Record<StepKey, StepState>>(() => {
     const done = this.done();
     const none = this.none();
-    const current = STEPS.find((key) => !done[key] && !none[key]);
+    const current = REQUIRED_STEPS.find((key) => !done[key] && !none[key]);
     return STEPS.reduce(
       (acc, key) => {
         acc[key] = done[key] ? 'done' : none[key] ? 'none' : key === current ? 'current' : 'todo';
@@ -276,7 +331,12 @@ export class TodayPage {
 
   /** « Nothing today » counts : the step is settled, which is what the progress reads. */
   readonly doneCount = computed(
-    () => STEPS.filter((key) => this.done()[key] || this.none()[key]).length,
+    () => REQUIRED_STEPS.filter((key) => this.done()[key] || this.none()[key]).length,
+  );
+
+  /** Nothing located, and nothing left to locate : no candidate, or the session is over. */
+  readonly nothingLocated = computed(
+    () => this.dayLocates().length === 0 && (this.noCandidateToday() || this.sessionOver),
   );
 
   constructor() {
@@ -348,6 +408,55 @@ export class TodayPage {
     });
   }
 
+  /** « Louer » of the locates step : a new one, on any ticker. */
+  addLocate(): void {
+    this.dialog
+      .open<NewLocateDialog, void, LocateInput | undefined>(NewLocateDialog, {
+        width: '480px',
+        maxWidth: '95vw',
+        autoFocus: 'first-tabbable',
+      })
+      .afterClosed()
+      .pipe(
+        filter((input): input is LocateInput => !!input),
+        switchMap((input) =>
+          this.locatesRepo.create(input).pipe(
+            tap((saved) => {
+              this.toasts.success(
+                this.translate.instant('locates.snackbar.createSuccess', { ticker: saved.ticker }),
+              );
+              this.fetchLocates();
+            }),
+            catchError(() => {
+              this.toasts.error(this.translate.instant('locates.snackbar.saveError'));
+              return EMPTY;
+            }),
+          ),
+        ),
+      )
+      .subscribe();
+  }
+
+  /** A ticker of the step : its locates of the day, to top up or fix. */
+  openLocates(row: TickerLocates): void {
+    const data: LocatesDialogData = {
+      tradingDate: this.today,
+      ticker: row.ticker,
+      lastPrice: row.lastPrice,
+      stockPrice: this.candidates().find((c) => c.ticker === row.ticker)?.pmOpen ?? null,
+    };
+    this.dialog
+      .open<LocatesDialog, LocatesDialogData, boolean>(LocatesDialog, {
+        data,
+        width: '520px',
+        maxWidth: '95vw',
+        autoFocus: '.locate-add input',
+      })
+      .afterClosed()
+      .pipe(filter(Boolean))
+      .subscribe(() => this.fetchLocates());
+  }
+
   /** « KTTA, BNZI, SNTG » — the tickers of a list, for the one-line recap of a step. */
   tickersOf(rows: { ticker: string }[]): string {
     return rows.map((r) => r.ticker).join(', ');
@@ -386,6 +495,7 @@ export class TodayPage {
         next: (rows) => this.candidates.set(rows),
         error: () => this.candidates.set([]),
       });
+    this.fetchLocates();
     this.statsRepo
       .findAll(
         { status: 'TO_COMPLETE', dateTo: subDays(this.today, 1) },
@@ -423,6 +533,16 @@ export class TodayPage {
     this.journalRepo.summary(day).subscribe({ next: (s) => this.dayPnl.set(s) });
     this.journalRepo.summary(week).subscribe({ next: (s) => this.weekPnl.set(s) });
     this.journalRepo.summary(month).subscribe({ next: (s) => this.monthPnl.set(s) });
+  }
+
+  private fetchLocates(): void {
+    this.locatesRepo
+      .listForDate(this.today)
+      .pipe(finalize(() => this.answered('locates')))
+      .subscribe({
+        next: (locates) => this.dayLocates.set(locates),
+        error: () => this.dayLocates.set([]),
+      });
   }
 
   private answered(source: StepSource): void {

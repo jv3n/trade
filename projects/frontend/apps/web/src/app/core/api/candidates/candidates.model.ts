@@ -5,10 +5,11 @@ import { Pattern } from '../shared/pattern.model';
  * known in premarket only (cf. `mockup/PARCOURS.md › Étape 1`). The wire format (ISO date strings)
  * is owned by the HTTP adapter ; consumers stay in `Date` land.
  *
- * Only the captured fields live here : gap %, push %, locate / price and the target price are
- * derived by `features/candidates/candidates.math`, never stored. Float and volume are in **millions** of
- * shares, the locate in $ / share. One candidate per (day, ticker) — a duplicate is a 409. It has no
- * pattern : the pattern is chosen when promoting, one stat per pattern.
+ * Only the captured fields live here : gap %, push % and the target price are derived by
+ * `features/candidates/candidates.math`, never stored. Float and volume are in **millions** of
+ * shares. No locate : a locate is a cost, recorded on its own (#625). One candidate per (day,
+ * ticker) — a duplicate is a 409. It has no pattern : the pattern is chosen when promoting, one stat
+ * per pattern.
  */
 export interface Candidate {
   id: string;
@@ -23,7 +24,6 @@ export interface Candidate {
   floatMillions: number | null;
   /** TradeZero volume at capture time. */
   volumeMillions: number | null;
-  locatePerShare: number | null;
   note: string | null;
   /** Session open, typed at 9:30 — `null` until then. Carried over to the stat on promotion. */
   openPrice: number | null;

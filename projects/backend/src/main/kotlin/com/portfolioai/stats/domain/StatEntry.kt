@@ -59,8 +59,6 @@ class StatEntry(
   @Column(name = "float_millions", precision = 12, scale = 2) var floatMillions: BigDecimal? = null,
   @Column(name = "volume_millions", precision = 12, scale = 2)
   var volumeMillions: BigDecimal? = null,
-  @Column(name = "locate_per_share", precision = 10, scale = 4)
-  var locatePerShare: BigDecimal? = null,
   @Column(length = 2000) var note: String? = null,
 
   // ---- Session (entered at the 4 pm close) ----

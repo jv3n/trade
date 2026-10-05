@@ -15,6 +15,8 @@ import { HttpJournalRepository } from './api/journal/adapters/journal.http';
 import { JournalRepository } from './api/journal/journal.repository';
 import { HttpLexiconRepository } from './api/lexicon/adapters/lexicon.http';
 import { LexiconRepository } from './api/lexicon/lexicon.repository';
+import { HttpLocatesRepository } from './api/locates/adapters/locates.http';
+import { LocatesRepository } from './api/locates/locates.repository';
 import { HttpPatternsRepository } from './api/patterns/adapters/patterns.http';
 import { PatternsRepository } from './api/patterns/patterns.repository';
 import { HttpStatsRepository } from './api/stats/adapters/stats.http';
@@ -35,6 +37,7 @@ export function provideRepositories(): EnvironmentProviders {
     { provide: AuthRepository, useClass: HttpAuthRepository },
     { provide: JournalRepository, useClass: HttpJournalRepository },
     { provide: CandidatesRepository, useClass: HttpCandidatesRepository },
+    { provide: LocatesRepository, useClass: HttpLocatesRepository },
     { provide: StatsRepository, useClass: HttpStatsRepository },
     { provide: TradingDayRepository, useClass: HttpTradingDayRepository },
     { provide: LexiconRepository, useClass: HttpLexiconRepository },

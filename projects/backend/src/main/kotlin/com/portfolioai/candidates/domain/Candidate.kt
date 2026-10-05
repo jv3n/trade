@@ -20,9 +20,9 @@ import java.util.UUID
  * the pattern is chosen when promoting, one stat per pattern (#434).
  *
  * Nothing about sizing lives here (capital, risk, stop, ladders) : it isn't known at capture time.
- * The derived figures — gap %, push %, locate / price, target price — are never stored ; the front
- * computes them from [previousClose], [pmOpen], [pmHigh], [locatePerShare], [openPrice] and
- * [targetPushPercent].
+ * The derived figures — gap %, push %, target price — are never stored ; the front computes them
+ * from [previousClose], [pmOpen], [pmHigh], [openPrice] and [targetPushPercent]. A locate is not
+ * part of the setup : it is a cost, recorded on its own (#625).
  */
 @Entity
 @Table(name = "candidate")
@@ -44,14 +44,11 @@ class Candidate(
   @Column(name = "pm_open", nullable = false, precision = 18, scale = 4) var pmOpen: BigDecimal,
   @Column(name = "pm_high", nullable = false, precision = 18, scale = 4) var pmHigh: BigDecimal,
 
-  // ---- Context (millions of shares, locate in $ / share) ----
+  // ---- Context (millions of shares) ----
   @Column(name = "float_millions", precision = 12, scale = 2) var floatMillions: BigDecimal? = null,
   /** TradeZero volume **at capture time** — a rough read of the interest, not the day's volume. */
   @Column(name = "volume_millions", precision = 12, scale = 2)
   var volumeMillions: BigDecimal? = null,
-  /** Cost to borrow one share to short. */
-  @Column(name = "locate_per_share", precision = 10, scale = 4)
-  var locatePerShare: BigDecimal? = null,
   @Column(length = 2000) var note: String? = null,
 
   // ---- At the open ----

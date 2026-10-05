@@ -42,7 +42,7 @@ import org.springframework.web.server.ResponseStatusException
  * - **One candidate per (day, ticker)** — a second capture, or renaming onto a captured ticker, is
  *   a 409 ; the same ticker on another day or another user is fine.
  * - **In-service validation** — non-positive prices, a PM high below the PM open, a negative float
- *   / volume / locate and a blank ticker return a clean 400, not a DB CHECK violation.
+ *   / volume and a blank ticker return a clean 400, not a DB CHECK violation.
  * - **Day listing** — only the requested day's candidates come back.
  * - **Multi-tenant scope** — a foreign / missing id → 404 (never 403).
  * - **Promotion to the stats sheet (#189)** — promoting copies the whole premarket block onto a new
@@ -102,7 +102,6 @@ class CandidateIntegrationTest {
           ticker = " ktta ",
           floatMillions = BigDecimal("8.2"),
           volumeMillions = BigDecimal("3.1"),
-          locatePerShare = BigDecimal("0.03"),
           note = "  Résistance 4,65 — high PM, pas de news  ",
         )
       )
@@ -114,7 +113,6 @@ class CandidateIntegrationTest {
     assertEquals(0, BigDecimal("4.65").compareTo(reloaded.pmHigh))
     assertEquals(0, BigDecimal("8.2").compareTo(reloaded.floatMillions))
     assertEquals(0, BigDecimal("3.1").compareTo(reloaded.volumeMillions))
-    assertEquals(0, BigDecimal("0.03").compareTo(reloaded.locatePerShare))
     assertEquals("Résistance 4,65 — high PM, pas de news", reloaded.note, "note is trimmed")
   }
 
@@ -134,7 +132,6 @@ class CandidateIntegrationTest {
 
     assertNull(saved.floatMillions)
     assertNull(saved.volumeMillions)
-    assertNull(saved.locatePerShare)
     assertNull(saved.note, "a blank note is stored as null")
   }
 
@@ -211,11 +208,10 @@ class CandidateIntegrationTest {
   }
 
   @Test
-  fun `a negative float, volume or locate is a 400`() {
+  fun `a negative float or volume is a 400`() {
     listOf(
         request(floatMillions = BigDecimal("-1")),
         request(volumeMillions = BigDecimal("-0.5")),
-        request(locatePerShare = BigDecimal("-0.01")),
       )
       .forEach { invalid ->
         val ex = assertThrows(ResponseStatusException::class.java) { service.create(invalid) }
@@ -302,7 +298,6 @@ class CandidateIntegrationTest {
           ticker = "KTTA",
           floatMillions = BigDecimal("8.2"),
           volumeMillions = BigDecimal("3.1"),
-          locatePerShare = BigDecimal("0.03"),
           note = "Push rejeté sous 4,65",
         )
       )
@@ -318,7 +313,6 @@ class CandidateIntegrationTest {
     assertEquals(0, BigDecimal("4.65").compareTo(stat.pmHigh))
     assertEquals(0, BigDecimal("8.2").compareTo(stat.floatMillions))
     assertEquals(0, BigDecimal("3.1").compareTo(stat.volumeMillions))
-    assertEquals(0, BigDecimal("0.03").compareTo(stat.locatePerShare))
     assertEquals("Push rejeté sous 4,65", stat.note)
 
     assertFalse(stat.completed, "the session block is only filled after the 4 pm close")
@@ -555,7 +549,7 @@ class CandidateIntegrationTest {
     val candidate = service.create(request(ticker = "SGBX", openPrice = BigDecimal("1.90")))
     assertNull(candidate.targetPushPercent, "a new candidate follows the card's reference")
 
-    // Tight float, expensive locate : this one is expected to run further than the average.
+    // Tight float : this one is expected to run further than the average.
     val typed =
       service.update(
         candidate.id,
@@ -719,7 +713,6 @@ class CandidateIntegrationTest {
     pmHigh: BigDecimal = BigDecimal("4.65"),
     floatMillions: BigDecimal? = null,
     volumeMillions: BigDecimal? = null,
-    locatePerShare: BigDecimal? = null,
     note: String? = null,
     openPrice: BigDecimal? = null,
     targetPushPercent: BigDecimal? = null,
@@ -732,7 +725,6 @@ class CandidateIntegrationTest {
       pmHigh = pmHigh,
       floatMillions = floatMillions,
       volumeMillions = volumeMillions,
-      locatePerShare = locatePerShare,
       note = note,
       openPrice = openPrice,
       targetPushPercent = targetPushPercent,

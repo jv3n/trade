@@ -41,7 +41,6 @@ function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
     pmHigh: 3.72,
     floatMillions: 6.4,
     volumeMillions: 4.8,
-    locatePerShare: 0.04,
     note: 'Résistance 3,75',
     openPrice: 3.25,
     targetPushPercent: null,

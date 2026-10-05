@@ -59,12 +59,7 @@ import {
   toSkeletonColumns,
   type SkeletonColumnDefs,
 } from '../../shared/skeleton-columns/skeleton-columns';
-import {
-  EXPENSIVE_LOCATE_PERCENT,
-  gapPercent,
-  locatePercent,
-  pushPercent,
-} from './candidates.math';
+import { gapPercent, pushPercent } from './candidates.math';
 import { AtOpenChange, NoPushRate, OpenCard, PushReferences } from './open-card/open-card';
 
 /** The capture form — numbers are `null` until typed. Float and volume in millions. */
@@ -75,7 +70,6 @@ interface CaptureModel {
   pmHigh: number | null;
   floatMillions: number | null;
   volumeMillions: number | null;
-  locatePerShare: number | null;
   note: string;
 }
 
@@ -83,7 +77,6 @@ interface CaptureModel {
 export interface CandidateRow extends Candidate {
   gap: number | null;
   push: number | null;
-  locatePct: number | null;
   /** The patterns it can still be promoted to — one button each, gone once its stat exists. */
   promotableTo: Pattern[];
 }
@@ -98,7 +91,6 @@ function blankCapture(): CaptureModel {
     pmHigh: null,
     floatMillions: null,
     volumeMillions: null,
-    locatePerShare: null,
     note: '',
   };
 }
@@ -113,8 +105,6 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
   push: { key: 'candidates.fields.push', variant: 'numeric' },
   float: { key: 'candidates.fields.floatShort', variant: 'numeric' },
   volume: { key: 'candidates.fields.volumeShort', variant: 'numeric' },
-  locate: { key: 'candidates.fields.locateShort', variant: 'numeric' },
-  locatePct: { key: 'candidates.fields.locatePercent', variant: 'numeric' },
   note: { key: 'candidates.fields.note' },
   actions: { variant: 'actions' },
 };
@@ -127,8 +117,8 @@ const SKELETON_COLUMNS: SkeletonColumnDefs = {
  *   whole radar scan is typed in one go. Gap % and push % preview live. No pattern : it is chosen
  *   when promoting.
  * - **Edit** — a row's edit button loads it into the same form, which then saves an update.
- * - **List** — sorted by gap (largest first), with push, locate / price (amber when expensive) and
- *   the note. Delete goes through the confirmation modal.
+ * - **List** — sorted by gap (largest first), with push and the note. Delete goes through the
+ *   confirmation modal.
  * - **At the open** — the « À l'open » card ([OpenCard]) : the open and the target push typed at
  *   9:30 are saved on blur (an edit : no modal) ; the push references come from the GUS stats, and
  *   a candidate whose only stat is a DT is left out — the push aimed at is a GUS notion.
@@ -175,7 +165,6 @@ export class CandidatesPage {
   private readonly tickerInput = viewChild<ElementRef<HTMLInputElement>>('tickerInput');
   private readonly document = inject(DOCUMENT);
 
-  readonly expensiveLocate = EXPENSIVE_LOCATE_PERCENT;
   readonly columns = [
     'ticker',
     'previousClose',
@@ -185,8 +174,6 @@ export class CandidatesPage {
     'push',
     'float',
     'volume',
-    'locate',
-    'locatePct',
     'note',
     'actions',
   ] as const;
@@ -244,7 +231,6 @@ export class CandidatesPage {
         ...c,
         gap: gapPercent(c.previousClose, c.pmOpen),
         push: pushPercent(c.pmOpen, c.pmHigh),
-        locatePct: locatePercent(c.locatePerShare, c.pmOpen),
         promotableTo: PROMOTION_PATTERNS.filter((p) => !c.stats.some((s) => s.pattern === p)),
       }))
       .sort((a, b) => (b.gap ?? -Infinity) - (a.gap ?? -Infinity)),
@@ -372,7 +358,6 @@ export class CandidatesPage {
       pmHigh: candidate.pmHigh,
       floatMillions: candidate.floatMillions,
       volumeMillions: candidate.volumeMillions,
-      locatePerShare: candidate.locatePerShare,
       note: candidate.note ?? '',
     });
     this.focusTicker();
@@ -592,7 +577,6 @@ export class CandidatesPage {
       pmHigh: m.pmHigh!,
       floatMillions: m.floatMillions,
       volumeMillions: m.volumeMillions,
-      locatePerShare: m.locatePerShare,
       note: m.note,
       // The form doesn't show the « À l'open » pair : an edit keeps what was typed in the card.
       ...this.atOpenOf(this.editingId()),
@@ -630,7 +614,6 @@ function toCandidateInput(c: Candidate): CandidateInput {
     pmHigh: c.pmHigh,
     floatMillions: c.floatMillions,
     volumeMillions: c.volumeMillions,
-    locatePerShare: c.locatePerShare,
     note: c.note,
     openPrice: c.openPrice,
     targetPushPercent: c.targetPushPercent,

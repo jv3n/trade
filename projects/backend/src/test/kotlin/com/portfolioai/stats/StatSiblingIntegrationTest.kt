@@ -35,9 +35,9 @@ import org.springframework.web.server.ResponseStatusException
  * What is protected here :
  *
  * - **the day's prices are carried over** (premarket, open, push or « no push », HOD / LOD / EOD,
- *   float, volume, locate, the day's flags) — a session-measured sibling is completable as born
- *   (#517) — and what belongs to the setup starts empty (« after 11 am », the note, the double-top
- *   prices — a double top starts from the open) ;
+ *   float, volume, the day's flags) — a session-measured sibling is completable as born (#517) —
+ *   and what belongs to the setup starts empty (« after 11 am », the note, the double-top prices —
+ *   a double top starts from the open) ;
  * - the sibling keeps the day, the ticker and the source candidate ;
  * - **one stat per pattern** still holds : a pattern the day already has is a 409, and only the
  *   free ones are offered ;
@@ -218,7 +218,6 @@ class StatSiblingIntegrationTest {
       .apply {
         floatMillions = BigDecimal("8.20")
         volumeMillions = BigDecimal("3.10")
-        locatePerShare = BigDecimal("0.0300")
         note = "Rejected under the PM high."
         openPrice = BigDecimal("4.2000")
         pushOpenPrice = BigDecimal("4.6200")

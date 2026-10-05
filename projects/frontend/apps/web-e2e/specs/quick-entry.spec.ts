@@ -13,30 +13,23 @@ import { expect, isoToday, test } from '../fixtures';
 
 interface Capture {
   ticker: string;
-  /** Previous close, PM open, PM high, float, volume, locate — in the form's tab order. */
-  figures: [string, string, string, string, string, string];
+  /** Previous close, PM open, PM high, float, volume — in the form's tab order. */
+  figures: [string, string, string, string, string];
   note: string;
 }
 
 const CAPTURES: Capture[] = [
   {
     ticker: 'KTTA',
-    figures: ['2.65', '4.05', '4.65', '8.2', '3.1', '0.03'],
+    figures: ['2.65', '4.05', '4.65', '8.2', '3.1'],
     note: 'Résistance 4,65 — high PM, pas de news',
   },
-  { ticker: 'BNRG', figures: ['1.20', '1.80', '2.10', '12', '5.4', ''], note: '' },
-  { ticker: 'MLGO', figures: ['3.10', '4.00', '4.40', '', '', ''], note: 'Offering possible' },
+  { ticker: 'BNRG', figures: ['1.20', '1.80', '2.10', '12', '5.4'], note: '' },
+  { ticker: 'MLGO', figures: ['3.10', '4.00', '4.40', '', ''], note: 'Offering possible' },
 ];
 
 /** The capture form's fields, in tab order after the ticker. */
-const NUMBER_FIELDS = [
-  'Clôture veille ($)',
-  'Open PM 4h00 ($)',
-  'High PM ($)',
-  'Float',
-  'Volume',
-  'Locate ($ / action)',
-];
+const NUMBER_FIELDS = ['Clôture veille ($)', 'Open PM 4h00 ($)', 'High PM ($)', 'Float', 'Volume'];
 
 test('three candidates in a row, keyboard only, and a duplicate refused', async ({ api, page }) => {
   await page.goto('/candidates');

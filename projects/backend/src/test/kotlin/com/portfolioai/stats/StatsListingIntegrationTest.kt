@@ -1236,7 +1236,6 @@ class StatsListingIntegrationTest {
       pmHigh = BigDecimal("4.65"),
       floatMillions = BigDecimal("8.2"),
       volumeMillions = BigDecimal("3.1"),
-      locatePerShare = BigDecimal("0.03"),
       note = "Push rejeté sous 4,65",
     )
 

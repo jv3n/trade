@@ -1,0 +1,102 @@
+<h2 mat-dialog-title>{{ 'locates.newTitle' | translate }}</h2>
+
+<form (submit)="$event.preventDefault(); submit()">
+  <mat-dialog-content>
+    <p class="lead">{{ 'locates.newLead' | translate }}</p>
+
+    <div class="locate-grid">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" (click)="picker.open()">
+        <mat-label>{{ 'locates.date' | translate }}</mat-label>
+        <input
+          matInput
+          readonly
+          [matDatepicker]="picker"
+          [value]="tradingDate()"
+          (dateChange)="setDate($event.value)"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'locates.ticker' | translate }}</mat-label>
+        <input
+          matInput
+          class="mono"
+          autocomplete="off"
+          placeholder="ATXG"
+          [formField]="textForm.ticker"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'locates.sharesLocated' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="0"
+          [min]="0"
+          [number]="shares()"
+          (numberChange)="shares.set($event)"
+          inputmode="numeric"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'locates.price' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="4"
+          [min]="0"
+          [number]="price()"
+          (numberChange)="price.set($event)"
+          inputmode="decimal"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'locates.stockPrice' | translate }}</mat-label>
+        <input
+          matInput
+          appNumberMask
+          [decimals]="4"
+          [min]="0"
+          [placeholder]="'locates.optional' | translate"
+          [number]="stockPrice()"
+          (numberChange)="setStockPrice($event)"
+          inputmode="decimal"
+        />
+      </mat-form-field>
+    </div>
+
+    <p class="cost">
+      {{ 'locates.costLabel' | translate }}
+      <strong [class.muted]="cost() === null">
+        {{
+          cost() !== null ? (cost()! | number: '1.2-2') + ('account.usdSuffix' | translate) : '—'
+        }}
+      </strong>
+      @if (percent() !== null) {
+        <span data-testid="locate-percent" [class.muted]="!breach()" [class.warn]="breach()">
+          · {{ 'locates.percentOfPrice' | translate: { percent: (percent()! | number: '1.2-2') } }}
+        </span>
+      }
+    </p>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full-width">
+      <mat-label>{{ 'locates.note' | translate }}</mat-label>
+      <input matInput autocomplete="off" [formField]="textForm.note" />
+    </mat-form-field>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button type="button" (click)="cancel()">
+      {{ 'common.cancel' | translate }}
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canSave()">
+      <mat-icon>key</mat-icon>
+      <span>{{ 'locates.add' | translate }}</span>
+    </button>
+  </mat-dialog-actions>
+</form>

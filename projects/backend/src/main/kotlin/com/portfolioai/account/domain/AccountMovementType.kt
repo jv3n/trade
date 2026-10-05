@@ -10,10 +10,12 @@ package com.portfolioai.account.domain
  * - [WITHDRAWAL] — cash out, amount < 0
  * - [TRADE] — realized P&L pushed from the journal, amount ± (read-only here)
  * - [ADJUSTMENT] — manual balance correction (broker fees / financing / slippage), amount ±
+ * - [LOCATE] — a locate's cost pushed from the `locate` context, amount < 0 (read-only here)
  */
 enum class AccountMovementType {
   DEPOSIT,
   WITHDRAWAL,
   TRADE,
   ADJUSTMENT,
+  LOCATE,
 }

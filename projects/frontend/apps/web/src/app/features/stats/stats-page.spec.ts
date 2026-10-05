@@ -75,7 +75,6 @@ function makeStat(overrides: Partial<StatEntry> = {}): StatEntry {
     pmHigh: 4.65,
     floatMillions: 8.2,
     volumeMillions: 3.1,
-    locatePerShare: 0.03,
     note: 'Résistance 4,65',
     openPrice: 4.2,
     pushOpenPrice: 4.62,

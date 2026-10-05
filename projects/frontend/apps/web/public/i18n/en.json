@@ -49,7 +49,7 @@
       },
       "candidates": {
         "title": "Capture the candidates",
-        "body": "After the radar screen : ticker, previous close, PM open / high, float, volume, locate.",
+        "body": "After the radar screen : ticker, previous close, PM open / high, float, volume.",
         "captured": "{{count}} candidates captured — {{tickers}}.",
         "capturedOne": "{{count}} candidate captured — {{tickers}}.",
         "notPromoted": "{{count}} candidates have no stat yet.",
@@ -65,6 +65,11 @@
           "confirm": "Promote it to GUS"
         },
         "none": "No candidate today — nothing made it past the radar."
+      },
+      "locates": {
+        "title": "Locate the shares",
+        "body": "Located on TradeZero? Type the shares and the price: paid whether or not the trade follows.",
+        "none": "Nothing located today."
       },
       "session": {
         "title": "Session",
@@ -99,6 +104,7 @@
       "pickStat": "Pick a stat",
       "openJournal": "Open the journal",
       "noCandidate": "No candidate today",
+      "locate": "Locate",
       "noTrade": "No trade today",
       "undo": "Undo"
     },
@@ -163,9 +169,6 @@
       "floatShort": "Float",
       "volume": "Volume",
       "volumeShort": "Volume",
-      "locate": "Locate ($ / share)",
-      "locateShort": "Locate",
-      "locatePercent": "Locate / price",
       "gap": "Gap",
       "push": "Push",
       "note": "Note"
@@ -212,7 +215,7 @@
     "confirmPromote": {
       "GUS": {
         "title": "Promote {{ticker}} to a GUS stat?",
-        "message": "The GUS stat takes every candidate field (previous close, PM open and high, float, volume, locate, note, 9:30 open). You will fill it in as the session goes, then tick it.",
+        "message": "The GUS stat takes every candidate field (previous close, PM open and high, float, volume, note, 9:30 open). You will fill it in as the session goes, then tick it.",
         "confirm": "Promote to GUS"
       },
       "DT": {
@@ -253,6 +256,45 @@
       "promoteAllSkipped": "{{tickers}} already had a stat, left alone.",
       "promoteAllSkippedOne": "{{tickers}} already had a stat, left alone."
     }
+  },
+  "locates": {
+    "title": "Locates",
+    "lead": "Paid whether or not the trade is taken: the amount leaves the account as soon as it is saved.",
+    "shares": "Shares",
+    "sharesLocated": "Shares located",
+    "sharesCount": "{{shares}} shares",
+    "price": "$ / share",
+    "stockPrice": "Share price ($)",
+    "percent": "% of price",
+    "percentOfPrice": "{{percent}} % of the share's price",
+    "optional": "optional",
+    "cost": "Cost (USD)",
+    "costLabel": "Cost:",
+    "priceHint": "A top-up starts from the last price paid; correct it when the locate went at another price.",
+    "add": "Locate",
+    "close": "Close",
+    "edit": "Correct",
+    "save": "Save",
+    "delete": "Delete",
+    "loadError": "Couldn't load the locates. Please retry.",
+    "confirmDelete": {
+      "title": "Delete this {{ticker}} locate?",
+      "message": "The locate and its account line are deleted: the amount goes back to the balance.",
+      "confirm": "Delete"
+    },
+    "snackbar": {
+      "createSuccess": "{{ticker}} locate saved.",
+      "updateSuccess": "Locate corrected.",
+      "deleteSuccess": "Locate deleted.",
+      "saveError": "Couldn't save the locate. Please retry.",
+      "deleteError": "Couldn't delete the locate. Please retry."
+    },
+    "newTitle": "New locate",
+    "newLead": "Paid whether or not the trade is taken: the amount leaves the account.",
+    "ticker": "Ticker",
+    "date": "Date",
+    "note": "Note",
+    "openTicker": "The {{ticker}} locates — top up or fix"
   },
   "account": {
     "title": "Account",
@@ -301,10 +343,12 @@
     "fxUnavailable": "Exchange rate unavailable right now.",
     "unavailable": "Unavailable",
     "addMovement": "Add movement",
+    "addLocate": "Locate",
     "chartEmpty": "Not enough movements to draw the balance curve.",
     "chartUnavailable": "Balance curve unavailable",
     "loading": "Loading account…",
     "empty": "No movement yet. Add a deposit to get started.",
+    "emptyFiltered": "No movement for this filter over the period.",
     "movementsUnavailable": "Movements unavailable",
     "errors": {
       "load": "Part of the account couldn't be loaded.",
@@ -312,6 +356,7 @@
     },
     "movements": "Movements",
     "viewTrade": "View the trade",
+    "locateShares": "{{shares}} shares located",
     "morningCorrection": "Morning of {{date}}",
     "adjusted": {
       "tag": "adjusted",
@@ -322,11 +367,13 @@
       "DEPOSIT": "Deposit",
       "WITHDRAWAL": "Withdrawal",
       "TRADE": "Trade",
-      "ADJUSTMENT": "Correction"
+      "ADJUSTMENT": "Correction",
+      "LOCATE": "Locate"
     },
     "actions": {
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "deleteLocate": "Delete the locate"
     },
     "confirmDelete": {
       "title": "Delete this movement?",
@@ -374,15 +421,19 @@
       "reconciliationGapShare": "{{share}} % of the P&L",
       "reconciliationGapCredit": "net credit",
       "reconciliationGapNoShare": "— · flat or losing P&L",
-      "reconciliationGapHint": "What the broker took outside the trades — locates, subscription, rounding. Read at the period's reconciled mornings : a row fixed since does not change it. Follows the dates, not the type filter."
+      "reconciliationGapHint": "What the broker took outside the trades — locates, subscription, rounding. Read at the period's reconciled mornings : a row fixed since does not change it. Follows the dates, not the type filter.",
+      "locates": "Locates for the period",
+      "locatesPaidForNothing": "including {{amount}} paid for nothing",
+      "locatesHint": "The locates taken over the period. « Paid for nothing »: on a ticker with no trade that day — today's count once New York has closed (4 pm). An upper bound: a locate listed back and partly refunded counts in full, its refund being an adjustment. Follows the dates, not the type filter."
     },
     "filter": {
       "type": "Movement type",
       "types": {
         "all": "All types",
-        "trades": "Trades",
+        "trades": "Trades and locates",
         "cash": "Deposits / withdrawals",
-        "corrections": "Corrections"
+        "corrections": "Corrections",
+        "locates": "Locates"
       }
     },
     "direction": {
@@ -530,7 +581,10 @@
         "link": "view the stat",
         "premarket": "Previous close · PM open · PM high",
         "gapPush": "Gap · PM push",
-        "floatVolumeLocate": "Float · volume · locate",
+        "floatVolume": "Float · volume",
+        "dayLocates": "Day's locates",
+        "locatesUnavailable": "Unavailable",
+        "editLocates": "Top up or fix the day's locates",
         "unavailable": "Day context unavailable."
       },
       "screenshot": {
@@ -652,7 +706,6 @@
       "pmPush": "PM push",
       "float": "Float",
       "volume": "Volume",
-      "locate": "Locate",
       "note": "Note",
       "openPrice": "Open ($)",
       "openPriceShort": "Open",
