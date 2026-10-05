@@ -91,9 +91,10 @@ $save-bar-room: 72px;
   color: var(--color-text-muted);
 }
 
-// The header skeleton's tag (#612) : a real tag, so its line takes the real height, text hidden.
+// The header skeleton's tag (#612) : a real tag, so its line takes the real height — whatever the
+// pattern, hence a width of its own rather than a pattern's name.
 .header-skeleton__tag {
-  color: transparent;
+  min-width: s.$space-3xl;
   background: var(--color-skeleton);
 }
 

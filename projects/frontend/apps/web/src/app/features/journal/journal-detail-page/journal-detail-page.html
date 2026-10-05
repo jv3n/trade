@@ -5,7 +5,8 @@
   </a>
 
   @if (gate.skeleton()) {
-    <!-- The real header's own frame, so the page below starts where it will once the trade lands. -->
+    <!-- The real header's own frame, so the page below starts where it will once the trade lands.
+         Not the « trades of the stat » line : it shows only on a stat with several, unknown yet. -->
     <header class="content-header" aria-busy="true">
       <span class="cdk-visually-hidden">{{ 'journal.detail.loading' | translate }}</span>
       <div class="header-row" aria-hidden="true">
@@ -16,7 +17,7 @@
             <ui-skeleton [width]="200" />
           </h2>
           <p class="subtitle">
-            <span class="tag header-skeleton__tag">{{ 'patterns.short.GUS' | translate }}</span>
+            <span class="tag header-skeleton__tag">&nbsp;</span>
             <ui-skeleton [width]="160" />
           </p>
         </div>
