@@ -24,6 +24,7 @@ stays in French : it mirrors the app's own interface.
 | CSV export | `import_export` |
 | Promote to stat / to trade, "view" links | `arrow_forward` |
 | Promote every candidate | `keyboard_double_arrow_right` |
+| Locate (« Louer », the day's locates) | `key` |
 | Previous / next day, back | `chevron_left` · `chevron_right` · `arrow_back` |
 | Step done, "in stats" status | `check` |
 | Light / dark theme | `light_mode` · `dark_mode` |

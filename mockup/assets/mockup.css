@@ -1113,3 +1113,15 @@ td.num .sk-num {
     transform: rotate(360deg);
   }
 }
+
+/* #602 : la boîte « Nouveau locate » du compte. */
+dialog.locate-dialog {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.locate-add {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}

@@ -295,13 +295,23 @@
                   <span class="step-dot">3</span>
                   <div>
                     <div class="step-title">Saisir les candidats</div>
-                    <div class="step-body">Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume, locate.</div>
+                    <div class="step-body">Après l'analyse au radar : ticker, clôture veille, open / high PM, float, volume.</div>
                   </div>
                   <!-- #407 : rien au radar ? Un clic, sans confirmation — rien n'est créé ni supprimé. -->
                   <div class="step-action actions">
                     <a class="btn btn-sm" href="candidat.html"><span class="icon">add</span> Saisir</a>
                     <button class="btn btn-sm" title="Rien au radar : l'étape passe à « rien aujourd'hui »">Aucun candidat aujourd'hui</button>
                   </div>
+                </li>
+
+                <!-- #625 : un locate est un coût, saisi dans la journée — étape facultative, jamais l'étape courante ni comptée. -->
+                <li class="step upcoming">
+                  <span class="step-dot"><span class="icon">key</span></span>
+                  <div>
+                    <div class="step-title">Louer les actions</div>
+                    <div class="step-body">Loué sur TradeZero ? Saisis les actions et le prix : payé que le trade soit pris ou non.</div>
+                  </div>
+                  <div class="step-action actions"><button class="btn btn-sm"><span class="icon">key</span> Louer</button></div>
                 </li>
 
                 <li class="step upcoming">
@@ -327,7 +337,7 @@
 
             <!-- ============================================================ 16h15 -->
             <div data-group="moment" data-value="soir" hidden>
-              <h2>Déroulé du jour <span class="hint">4 étapes faites sur 5</span></h2>
+              <h2>Déroulé du jour <span class="hint">3 étapes faites sur 5</span></h2>
               <ol class="steps">
                 <li class="step done">
                   <span class="step-dot"><span class="icon">check</span></span>
@@ -358,6 +368,16 @@
                     <a class="btn btn-sm" href="candidat.html">Voir</a>
                     <button class="btn btn-sm btn-primary" data-confirm-title="Passer 4 candidats en GUS ?" data-confirm-body="BNRG, MLGO, ATXG et VERB deviennent des stats GUS à remplir au fil de la séance. SGBX est déjà en stats. Un DT se choisit à la main, sur la page Candidats, quand il se forme." data-confirm-ok="Tout passer en GUS"><span class="icon">keyboard_double_arrow_right</span> Passer les 4 en GUS</button>
                   </div>
+                </li>
+
+                <!-- #625 : une ligne par ticker (actions cumulées) — elle ouvre ses locates pour compléter ou corriger. -->
+                <li class="step done">
+                  <span class="step-dot"><span class="icon">check</span></span>
+                  <div>
+                    <div class="step-title">Louer les actions <span class="step-time">520,00 $ US</span></div>
+                    <div class="step-body"><a href="#" title="Les locates SGBX — compléter ou corriger"><span class="ticker">SGBX</span> 3 000 actions</a> · <a href="#" title="Les locates MLGO — compléter ou corriger"><span class="ticker">MLGO</span> 2 000 actions</a></div>
+                  </div>
+                  <div class="step-action actions"><button class="btn btn-sm"><span class="icon">key</span> Louer</button></div>
                 </li>
 
                 <li class="step done">
@@ -416,6 +436,16 @@
                   </div>
                   <!-- Le lien reste : un jour qui n'est finalement pas calme n'a pas à passer par « Annuler ». -->
                   <div class="step-action"><a class="btn btn-sm" href="candidat.html"><span class="icon">add</span> Saisir</a></div>
+                </li>
+
+                <!-- #625 : aucun candidat — rien à louer. Étape facultative : jamais l'étape courante, hors du compte des étapes. -->
+                <li class="step upcoming">
+                  <span class="step-dot"><span class="icon">key</span></span>
+                  <div>
+                    <div class="step-title">Louer les actions</div>
+                    <div class="step-body">Rien de loué aujourd'hui.</div>
+                  </div>
+                  <div class="step-action actions"><button class="btn btn-sm"><span class="icon">key</span> Louer</button></div>
                 </li>
 
                 <li class="step done">

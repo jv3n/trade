@@ -99,9 +99,9 @@ monitoring / charts tab will sit between Journal and Account.
 
 **The morning opens on yesterday's stats** (#531) : the app is only opened in the morning, so the
 stats of a session are completed the next day, before anything else. The steps read : 1 complete
-yesterday's stats · 2 reconciliation · 3 candidates · 4 session · 5 the day's trades. The trades
-stay on the day : they are entered once the trading is over, sometimes at 10 am, not the next
-morning.
+yesterday's stats · 2 reconciliation · 3 candidates · (shares located, optional — #625) · 4 session ·
+5 the day's trades. The trades stay on the day : they are entered once the trading is over, sometimes at
+10 am, not the next morning.
 
 **The morning reconciliation happens right inside step 2** : app balance, typed TradeZero balance,
 live gap, and a button to validate (or to create the correction when there is a gap). No need to
@@ -112,8 +112,15 @@ type, no confirmation (a clean morning creates no correction) (#407).
 **Each step's title, text and action describe the same job** (#337) :
 
 - **Capture the candidates** (step 3) is done once **every** captured candidate is in the stats
-  sheet — has at least one stat, whatever its pattern (#428) — capturing one is not enough. It carries the « Promote the N left » action : promotion is
-  morning work, before the session the stats are filled during.
+  sheet — has at least one stat, whatever its pattern (#428) — capturing one is not enough. It
+  carries the « Promote the N left » action : promotion is morning work, before the session the
+  stats are filled during.
+- **Locate the shares** (#625, a key in place of a number) lists the day's locates, one ticker per row (shares added
+  up), each opening its locates to top up or fix, and « Louer » types a new one. It is **optional** :
+  a locate is a cost recorded when it happens, not something owed every day. Ticked once a locate
+  is in, it is **never the current step** and does not count in « n étapes faites sur 5 » ; with no
+  candidate, or once New York has closed with nothing located, it reads « Rien de loué
+  aujourd'hui ».
 - **Complete yesterday's stats** (step 1, #531) counts the stats still to complete **before
   today** — the day's own are not in it : they cannot be completed before their session, and they
   are tomorrow morning's. **Yesterday** — the previous trading day, so Friday on a Monday — is the
@@ -139,12 +146,58 @@ many days end without a trade : « nothing today » is an answer, not a step lef
   trade of the day brings the « nothing today » state back, at the time of the original mark. On
   purpose — the declaration was true, and the record of the quiet days stays what the user said.
 - The state is **neutral**, a grey dash in the dot — a status, not an outcome, so never green. A
-  step in that state counts as done in « n étapes faites sur 5 ».
+  step in that state counts as done in « n étapes faites sur 5 » (the optional locates step aside).
 - The mark is **stored per day** (backend), so it survives a reload or another device, and the quiet
   days stay on record for the stats later. Today only, for now.
 
 **Screen** : [`aujourdhui.html`](aujourdhui.html). The mockup has an « 8h00 / 16h15 / Jour calme »
 toggle to see the page at two moments of the day, and on a day with nothing to do.
+
+---
+
+## Locates (#602, #625)
+
+A locate is paid **before** the trade, and **whether or not the trade happens** — on TradeZero per
+share located, not per share shorted. It is a **cost**, not a property of the stock : nothing about
+shares located belongs next to gap, float or push, which measure the setup — this one eats the net.
+So it is typed on the day, where money and execution live, and reaches the account as an expense,
+never as a trade.
+
+- **Where it is typed** : the **« Louer les actions »** step of **Today**, after the candidates ;
+  the **« Locate »** button of the **Account** page ; and the **trade sheet**, which lists the
+  locates of its day and ticker and lets them be topped up or fixed — the page open when the
+  figures are checked against the broker statement. **Not on Candidates nor Stats** : those sheets
+  measure, they do not spend.
+- **A locate is a (day, ticker)** : I type the day, the ticker, the **shares located** and the price
+  per share ; the **cost = shares × price**. Nothing links it to a candidate or a trade — it is
+  matched to the day's trades by ticker, so a locate typed before the trade exists still shows on
+  it.
+- **The share's price when the locate is bought** is kept with it, for one rule : **a locate stays
+  under 2 % of the share's price**. Its **weight = price per share ÷ share price** (0,05 $ on a
+  2,40 $ share = 2,08 %) shows live while typing, in the dialog's « % du prix » column and next to
+  each locate on the trade sheet, always with two decimals ; **at 2 % or more it reads amber** — a
+  warning on the discipline. The day's **blended weight** on a ticker, cost ÷ (shares × share
+  price) across top-ups at different prices, sits on the dialog's total row and next to the trade
+  sheet's total : it answers « was this ticker under 2 % today ».
+- **The share's price starts from the day's PM open** of the candidate on that ticker (the stat's
+  on the trade sheet), a top-up from the last share price typed — matched by (day, ticker), never a
+  link — and stays correctable. It is optional : a locate typed without it has no weight.
+- **No quote on the candidate nor the stat** : the locate has nothing to do with the setup, only
+  with the account — the former « Locate » field of the capture and of the stat is gone, with its
+  locate / price ratio. The price is typed on the locate ; a top-up starts from the last price
+  paid on that ticker that day.
+- **Several locates per ticker and per day** (a top-up, often at another price) : Today's step
+  shows one row per ticker with their total shares, and the day's total. The locates of a (day,
+  ticker) open in one dialog : each row **corrected in place** (shares, price — an edit, no
+  confirmation) or deleted, their total of shares and cost, and the form that adds one.
+- A locate is **never cancelled** by the app : once taken it is spent. Deleting one is fixing a
+  typo — its account line goes with it.
+- **A locate listed back** on TradeZero (unused, taken by another trader) refunds part of its
+  cost : that refund is an ordinary **adjustment** on the account — typed by hand, or caught by the
+  next morning's reconciliation. The locate itself keeps what was paid : its shares were paid for.
+
+**Screens** : [`aujourdhui.html`](aujourdhui.html) (step 4), [`compte.html`](compte.html)
+(« Locate » and the lines), [`trade.html`](trade.html) (the day's locates of the trade).
 
 ---
 
@@ -162,15 +215,12 @@ toggle to see the page at two moments of the day, and on a day with nothing to d
 | Premarket high | 4.65 | |
 | Float | 8.2 M | |
 | Volume | 3.1 M | TradeZero, **at capture time** — gives the general idea of the volume, enough to validate the pattern |
-| Locate | $0.03 / share | Cost of borrowing the share to short |
 | Note | « Résistance 4,65 » | Free text, optional |
 
 **What the app computes** (nothing to type) :
 
 - **Gap %** = (PM open − previous close) ÷ previous close → +52.8 % here.
 - **Push %** = (PM high − PM open) ÷ PM open → +14.8 % here.
-- **Locate / price** = locate ÷ PM open → the weight of the borrowing cost *(a proposal, to keep or
-  not)*.
 
 **Decided** :
 
@@ -181,12 +231,12 @@ toggle to see the page at two moments of the day, and on a day with nothing to d
   refused.
 - **No pattern at capture** (#428) : the pattern is chosen when promoting (step 2).
 - **A ticker spotted for a DT is captured when it forms**, usually late in the morning, with the
-  **same premarket** as the morning ones (previous close, PM open / high, float, volume, locate) — so
+  **same premarket** as the morning ones (previous close, PM open / high, float, volume) — so
   the DT KPIs can be compared with the GUS ones. A ticker already captured that morning is not
   captured again : its DT is a second stat (step 2).
-- Previous close, PM open and PM high are mandatory (PM high ≥ PM open) ; float, volume, locate and
-  note are optional.
-- Locate / price turns amber above 5 % (heavy borrowing cost).
+- Previous close, PM open and PM high are mandatory (PM high ≥ PM open) ; float, volume and note
+  are optional.
+- No locate here (#625) : it is a cost, recorded on its own — see « Locates » above.
 - Past days are read-only (history).
 
 ### At the open (9:30)
@@ -230,7 +280,7 @@ at 11:20 for a DT) — and a "promote them all in GUS" button, day-by-day naviga
   is created automatically. (A stat can also be typed from scratch on the stats page, for a chart
   found afterwards — see step 5.)
 - The stat **takes every field of the candidate** (ticker, previous close, PM open / high, gap, PM
-  push, float, volume, locate, note, open) — not the target push, which is a plan — and **the pattern
+  push, float, volume, note, open) — not the target push, which is a plan — and **the pattern
   of the button** used.
 - A candidate promoted before 9:30 has no open yet : the open typed on it afterwards also fills its
   stat, as long as the stat's open is still empty.
@@ -305,6 +355,12 @@ don't know the exact fees in advance). The app shows the computed one, the real 
 **retained P&L** (the real one if typed, else the computed one) is what reaches the account.
 The real P&L can only be typed **once the position is closed** : on an open or partial position the
 field is greyed out, since no exit backs the amount yet.
+
+**The day's locates** (#609, #625) : the day context lists the locates of the trade's day and
+ticker (« 2 000 × 0,04 (1,7 %) + 500 × 0,06 (2,5 %) = 110,00 $ US · 2 500 actions » — each one's
+weight against the share's price when typed, and the shares to weigh against the position), and its key opens them to **top up or fix** — a top-up starting from the last price
+paid. They stay **outside the trade's P&L** : each one has its own
+account line, or it would be counted twice.
 
 **Saving** : the trade sheet is edited as a whole and saved with the « Save » bar that shows up as
 soon as something changed. Leaving the page with changes not saved asks first (« Leave without
@@ -388,7 +444,7 @@ shared between users — a stat always belongs to its user.
 **Editing the premarket, and a stat from scratch** (#326) :
 
 - The premarket is a **card of its own**, above the session one and built the same way : the
-  **pattern**, previous close, PM open, PM high, float, volume, locate, note, **editable** and saved
+  **pattern**, previous close, PM open, PM high, float, volume, note, **editable** and saved
   field by field, gap and PM push shown live under their fields. Copied from the candidate at
   promotion, it can be fixed on the stat ; the stat keeps its own copy, the candidate is left alone.
 - **The pattern can be changed after the fact** (#393) — a filing mistake, among the patterns
@@ -675,7 +731,7 @@ $1.30 alike. A size that respects the risk but not the margin is one the platfor
   spreadsheet or a field of the app : no grouping, no currency, a dot for the decimals (`1234.50`,
   #406). For a distance, the $ per share.
 
-**Later** : prefilling from a candidate or a stat (open, price, the stat's locate…) ; for the GUS
+**Later** : prefilling from a candidate or a stat (open, price…) ; for the GUS
 fade, which often has no target, a « hit rate needed to break even » from the stop alone.
 
 **Screen** : the launcher and the widgets on [`candidat.html`](candidat.html) — each drags by its
@@ -808,9 +864,9 @@ Reachable from the bottom of the menu (under Lexicon). A secondary menu on the l
 - **The morning entry** : validated as is (inline form + live gap / push preview).
 - **The stats table** : every column stays, horizontal scrolling is not a problem.
 - **Colours** : green / red for outcomes (P&L, amounts, gaps) — plus one status, the green check of
-  a completed stat ; amber for warnings (SSR, < $1, expensive locate, to complete) ; indigo for
-  statuses and categories (pattern, "in stats") ; the rest neutral, price moves and tickers
-  included.
+  a completed stat ; amber for warnings (SSR, < $1, to complete, locates paid for nothing) ;
+  indigo for statuses and categories (pattern, "in stats") ; the rest neutral, price moves and
+  tickers included.
 - **Icons** : Material Symbols Rounded — the mapping is in `README.md`.
 - **On a phone** (#456) : **viewable, not a mobile app** — enough to open a screen and read it on
   the move ; the morning capture and the completion panel stay desktop work, and a cross-platform
@@ -887,6 +943,7 @@ The balance is **derived from the movements** :
 | Movement | Origin |
 |----------|--------|
 | Trade | **Automatic** — every journal trade shows up with its retained P&L (not editable from the account) |
+| Locate | **Automatic** — every locate shows up as an expense, − shares × price (#602) ; typed from Today, the trade sheet or « Locate », deleted from its line, never edited as a movement |
 | Deposit / withdrawal | Typed by hand |
 | Correction | Created by the **morning reconciliation** |
 
@@ -944,9 +1001,22 @@ schedule is in [`docs/notes/tradezero-fees.md`](../docs/notes/tradezero-fees.md)
   a percentage.
 - The balance tile takes **one column** instead of two, so the four tiles hold on one row.
 
-**The movements table opens on « Trades »** (#473) — the rows the page is opened for ; « Tous les
-types » is one click away, and the period keeps its own default (« Ce mois »). Corrections are
-hidden by default, so the gap tile above is what keeps them in sight.
+**The movements table opens on « Trades et locates »** (#473, #624) — the automatic lines the page
+is opened for, so a locate just typed is never hidden ; « Tous les types » is one click away, and
+the period keeps its own default (« Ce mois »). Corrections are hidden by default, so the gap tile
+above is what keeps them in sight. A filter that matches nothing says so — « Aucun mouvement pour
+ce filtre » with a button back to « Tous les types » — rather than the empty account's « ajoute
+un dépôt ».
+
+**Locates** (#602, #625) : a **« Locate »** button types a locate — date, ticker, shares, price per
+share, the share's price (optional), the cost and the weight shown live. Each locate is its own line, like a trade's : labelled with its ticker
+and shares, never edited as a movement — its delete button deletes the locate itself. The
+**retained P&L of a trade stays gross of locates** — the locate is never inside it, or it would be
+counted twice. A fifth KPI tile, **« Locates » of the period**, shows underneath
+the part **paid for nothing** — on a ticker with no trade that day, today's counted once **New York
+has closed** (16:00, the market clock of the Today page) — in amber : what the discipline costs. It
+is an **upper bound** : a locate listed back and partly refunded still counts in full, its refund
+being an adjustment.
 
 **A figure on the page is current or visibly absent** (#493) : the page loads in three calls — the
 period's figures (the KPI tiles), the balance curve, the movements. When one fails, what it feeds
