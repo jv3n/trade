@@ -9,24 +9,24 @@
   } @else if (!gate.content()) {
     <!-- The first load, inside its show delay : nothing yet, so a fast answer never flashes. -->
   } @else if (loadError()) {
-    <div class="error-banner">
+    <div class="stb-fade-in error-banner">
       <mat-icon aria-hidden="true">error</mat-icon>
       <span>{{ 'settings.accessControlPage.errors.load' | translate }}</span>
     </div>
   } @else {
     @if (isOpenMode()) {
-      <div class="warn-banner" role="alert">
+      <div class="stb-fade-in warn-banner" role="alert">
         <mat-icon aria-hidden="true">lock_open</mat-icon>
         <span>{{ 'settings.accessControlPage.openModeNote' | translate }}</span>
       </div>
     }
 
-    <div class="info-banner">
+    <div class="stb-fade-in info-banner">
       <mat-icon aria-hidden="true">info</mat-icon>
       <span>{{ 'settings.accessControlPage.adminNote' | translate }}</span>
     </div>
 
-    <section class="config-card emails-card" aria-labelledby="emails-display-header">
+    <section class="stb-fade-in config-card emails-card" aria-labelledby="emails-display-header">
       <div class="card-header">
         <h3 id="emails-display-header">
           {{ 'settings.accessControlPage.currentLabel' | translate }}
@@ -52,7 +52,7 @@
       }
     </section>
 
-    <mat-form-field appearance="outline" class="add-email-field">
+    <mat-form-field appearance="outline" class="stb-fade-in add-email-field">
       <mat-label>{{ 'settings.accessControlPage.addLabel' | translate }}</mat-label>
       <input
         matInput
@@ -82,7 +82,7 @@
       </p>
     }
 
-    <div class="actions">
+    <div class="stb-fade-in actions">
       <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="save()">
         {{
           (saving() ? 'settings.accessControlPage.saving' : 'settings.accessControlPage.save')
